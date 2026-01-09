@@ -16,6 +16,9 @@ import { formatUsdValue, formatAmount } from '@/utils/number';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { Account } from '@/core/services/preference';
 import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { ITokenItem } from '@/store/tokens';
+import { columnConverter } from '@/databases/entities/_helpers';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
 export const geTokenDecimals = async (
@@ -458,3 +461,28 @@ export function checkIfTokenBalanceEnough(
     customLevel,
   };
 }
+
+export const tokenItemEntityToTokenItem = (
+  token: TokenItemEntity,
+): ITokenItem => {
+  return {
+    ...token,
+    usd_value: token.price * token.amount,
+    cex_ids:
+      typeof token.cex_ids === 'string' // TODO: 处理干净后移除兼容逻辑
+        ? columnConverter.jsonStringToObj(token.cex_ids)
+        : token.cex_ids,
+  };
+};
+
+export const tokenItemToITokenItem = (
+  token: TokenItem,
+  owner: string,
+): ITokenItem => {
+  return {
+    ...token,
+    usd_value: token.price * token.amount,
+    owner_addr: owner,
+    cex_ids: token.cex_ids || [],
+  };
+};

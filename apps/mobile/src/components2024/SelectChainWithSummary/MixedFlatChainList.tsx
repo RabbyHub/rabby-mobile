@@ -6,17 +6,18 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
-import { useLocalTokens } from '@/screens/Home/hooks/token';
 import {
   useChainBalances,
   useMatteredChainBalancesAll,
 } from '@/hooks/accountChainBalance';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
-import { useLoadAssets } from '@/screens/Search/useAssets';
-import { CombineTokensItem, useAssetsTokens } from '@/screens/Home/hooks/store';
-import { Account } from '@/core/services/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
+import { Account } from '@/core/services/preference';
+import {
+  getChainSelectorCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 
 export default function MixedFlatChainList({
   style,
@@ -42,29 +43,48 @@ export default function MixedFlatChainList({
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   account?: Account | null;
 }) {
-  const { getCacheTop10Assets } = useLoadAssets();
+  const { top10Addresses } = useAccountInfo();
+  const selectedAddresses = useMemo(() => {
+    if (needAllAddresses) {
+      return top10Addresses;
+    }
+    if (currentAccount?.address) {
+      return [currentAccount.address];
+    }
+    return [];
+  }, [needAllAddresses, top10Addresses, currentAccount?.address]);
+  const registerChainSelector = useTokenListComputedStore(
+    state => state.registerChainSelector,
+  );
+  const chainSelectorKey = useMemo(
+    () => getChainSelectorCacheKey(selectedAddresses),
+    [selectedAddresses],
+  );
+  useEffect(() => {
+    registerChainSelector(selectedAddresses);
+  }, [selectedAddresses, registerChainSelector]);
 
-  const { tokens: cacheAssets } = useAssetsTokens({
-    hideCombined: false,
+  const tokens = useTokenListComputedStore(state => {
+    return state.chainSelectorCache[chainSelectorKey] || [];
   });
 
   const { styles } = useTheme2024({ getStyle });
-  const { tokenList } = useLocalTokens(currentAccount?.address);
   const { matteredChainBalances } = useChainBalances();
   const { matteredChainBalancesAll } = useMatteredChainBalancesAll();
 
   const tokenListMap = useMemo(() => {
-    if (!tokenList || needAllAddresses) {
+    if (!tokens) {
       return {};
     }
-    const res = tokenList.reduce((map, item) => {
+    const res = tokens.reduce((map, item) => {
       if (item.price * item.amount < 10) {
         return map;
       }
-      if (map[item.chain]) {
+      const c = map[item.chain];
+      if (c) {
         return {
           ...map,
-          [item.chain]: [...map[item.chain], item],
+          [item.chain]: [...c, item],
         };
       } else {
         return {
@@ -72,46 +92,23 @@ export default function MixedFlatChainList({
           [item.chain]: [item],
         };
       }
-    }, {} as Record<string, TokenItem[]>);
+    }, {} as Record<string, ITokenItem[]>);
     for (const key in res) {
-      const list = res[key];
-      const chainUsdValue = matteredChainBalances[key]?.usd_value || 0;
+      const list = res[key]!;
+      const chainUsdValue = needAllAddresses
+        ? matteredChainBalancesAll[key]?.usd_value || 0
+        : matteredChainBalances[key]?.usd_value || 0;
       res[key] = list.filter(item => {
         return item.price * item.amount > chainUsdValue * 0.1;
       });
     }
     return res;
-  }, [tokenList, matteredChainBalances, needAllAddresses]);
-
-  const cacheAssetsMap = useMemo(() => {
-    if (!cacheAssets || cacheAssets[0]?._unHold || !needAllAddresses) {
-      return {};
-    }
-    const res = cacheAssets.reduce((map, item) => {
-      if (item.totalUsdValue < 10) {
-        return map;
-      }
-      if (map[item.chain]) {
-        return {
-          ...map,
-          [item.chain]: [...map[item.chain], item],
-        };
-      } else {
-        return {
-          ...map,
-          [item.chain]: [item],
-        };
-      }
-    }, {} as Record<string, CombineTokensItem[]>);
-    for (const key in res) {
-      const list = res[key];
-      const chainUsdValue = matteredChainBalancesAll[key]?.usd_value || 0;
-      res[key] = list.filter(item => {
-        return item.totalUsdValue > chainUsdValue * 0.1;
-      });
-    }
-    return res;
-  }, [cacheAssets, matteredChainBalancesAll, needAllAddresses]);
+  }, [
+    tokens,
+    matteredChainBalances,
+    needAllAddresses,
+    matteredChainBalancesAll,
+  ]);
 
   const sections = React.useMemo(() => {
     return [
@@ -125,22 +122,6 @@ export default function MixedFlatChainList({
       },
     ];
   }, [matteredList, unmatteredList]);
-
-  useEffect(() => {
-    let id;
-    if (needAllAddresses) {
-      id = setTimeout(() => {
-        getCacheTop10Assets({
-          disableNFT: true,
-          disableDefi: true,
-        });
-      }, 200);
-    }
-    return () => {
-      id && clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needAllAddresses]);
 
   return (
     <BottomSheetSectionList<Chain>
@@ -168,23 +149,13 @@ export default function MixedFlatChainList({
               onPress={onChange}
               disabled={disabled}
               disabledTips={disabledTips}
-              tokens={
-                needAllAddresses
-                  ? orderBy(
-                      cacheAssetsMap[item.serverId],
-                      a => a.totalUsdValue,
-                      'desc',
-                    )
-                      .filter(t => t.is_core)
-                      .slice(0, 5)
-                  : orderBy(
-                      tokenListMap[item.serverId],
-                      a => a.price * a.amount,
-                      'desc',
-                    )
-                      .filter(t => t.is_core)
-                      .slice(0, 5)
-              }
+              tokens={orderBy(
+                tokenListMap[item.serverId],
+                a => a.price * a.amount,
+                'desc',
+              )
+                .filter(t => t.is_core)
+                .slice(0, 5)}
             />
           </View>
         );

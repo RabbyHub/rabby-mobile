@@ -1,17 +1,10 @@
 import BigNumber from 'bignumber.js';
 import { isAppChain } from '@/screens/Home/utils/appchain';
-import {
-  AbstractPortfolioToken,
-  AbstractProject,
-  DisplayNftItem,
-} from './types';
+import { AbstractProject, DisplayNftItem } from './types';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import {
-  AssetsMapState,
-  assetsMapStore,
-  computeAssetsApis,
-} from './hooks/store';
+import { assetsMapStore, computeAssetsApis } from './hooks/store';
+import tokenStore, { ITokenItem } from '@/store/tokens';
 import { debounce, isEqual } from 'lodash';
 import { getTop10MyAddresses } from '@/core/apis/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
@@ -56,13 +49,17 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
 }
 
 const debounceComputeChainList = debounce<
-  Parameters<typeof assetsMapStore.subscribe>[0]
+  Parameters<typeof assetsMapStore.subscribe | typeof tokenStore.subscribe>[0]
 >(async () => {
-  const top10Addresses = await getTop10MyAddresses();
+  const top10Addresses = (await getTop10MyAddresses()).map(item =>
+    item.toLowerCase(),
+  );
 
   setFinalInfo(computeChainsListV2(top10Addresses));
 }, 100);
+
 assetsMapStore.subscribe(debounceComputeChainList);
+tokenStore.subscribe(debounceComputeChainList);
 
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();
@@ -164,32 +161,26 @@ export const apisAddrChainStatics = {
       },
     };
   },
-  computeChainAssetsToken: (tokens: AbstractPortfolioToken[]) => {
+  computeChainAssetsToken: (tokens: ITokenItem[]) => {
     const chainUnit: ChainAssetsUnit = {};
     tokens?.forEach(token => {
       const chainId = token.chain;
       if (!chainUnit[chainId]) {
         chainUnit[chainId] = new BigNumber(0);
       }
-      if (token._isExcludeBalance) {
-        return;
+      if (token.is_core) {
+        chainUnit[chainId] = chainUnit[chainId].plus(token.usd_value || 0);
       }
-      chainUnit[chainId] = chainUnit[chainId].plus(token._usdValue || 0);
     });
 
     return chainUnit;
   },
-  updateToken: debounce((addr: string, tokens: AbstractPortfolioToken[]) => {
+  updateToken: (addr: string, tokens: ITokenItem[]) => {
     addr = addr.toLowerCase();
-
     const prevFinalInfo =
       addrChainStaticsStore.getState()[addr] ||
       apisAddrChainStatics.makeFinalInfo();
-    const combinedTokens = computeAssetsApis.memoTokens([addr], {
-      [addr]: tokens,
-    });
-
-    const token = apisAddrChainStatics.computeChainAssetsToken(combinedTokens);
+    const token = apisAddrChainStatics.computeChainAssetsToken(tokens);
     // if (isEqual(prevFinalInfo.token, token)) return ;
     prevFinalInfo.token = token;
 
@@ -203,7 +194,7 @@ export const apisAddrChainStatics = {
         [addr]: { ...prevFinalInfo, computedResult: computed },
       };
     });
-  }, 300),
+  },
   computeChainAssetsPortfolio: (portfolios: AbstractProject[]) => {
     const chainUnit: ChainAssetsUnit = {};
     portfolios?.forEach(portfolio => {
@@ -225,7 +216,6 @@ export const apisAddrChainStatics = {
   },
   updatePortfolio: debounce((addr: string, _portfolios: DisplayedProject[]) => {
     addr = addr.toLowerCase();
-
     const prevFinalInfo =
       addrChainStaticsStore.getState()[addr] ||
       apisAddrChainStatics.makeFinalInfo();
@@ -261,7 +251,6 @@ export const apisAddrChainStatics = {
   },
   updateNft: debounce((addr: string, nftList: DisplayNftItem[]) => {
     addr = addr.toLowerCase();
-
     const prevFinalInfo =
       addrChainStaticsStore.getState()[addr] ||
       apisAddrChainStatics.makeFinalInfo();
@@ -335,47 +324,38 @@ export const apisAddrChainStatics = {
 };
 
 /* computation section :start */
-function computeChainsListV2(
-  caredAddresses: string[],
-  {
-    combinedTokens,
-    combinedPortfolios,
-    combinedNfts,
-  }: // retFinalInfo,
-  {
-    combinedTokens?: ReturnType<typeof computeAssetsApis.memoTokens>;
-    combinedPortfolios?: ReturnType<typeof computeAssetsApis.memoPortfolios>;
-    combinedNfts?: ReturnType<typeof computeAssetsApis.memoNfts>;
-    // retFinalInfo?: FinalInfo;
-  } = {},
-) {
+function computeChainsListV2(caredAddresses: string[]) {
   const finalInfo = /* retFinalInfo ||  */ apisAddrChainStatics.makeFinalInfo();
 
   const chainUnit: ChainAssetsUnit = {};
 
   const assetsMap = assetsMapStore.getState();
-
-  const tokens =
-    combinedTokens ||
-    computeAssetsApis.memoTokens(caredAddresses, assetsMap.tokensMap);
+  const tokenListMap = tokenStore.getState().tokenListMap;
+  const addrsInStore = Object.keys(tokenListMap);
+  addrsInStore.forEach(addr => {
+    apisAddrChainStatics.updateToken(addr, tokenListMap[addr]!);
+  });
+  const tokens = addrsInStore
+    .filter(key => caredAddresses.includes(key))
+    .map(key => tokenListMap[key] || [])
+    .flat()
+    .filter(token => token.is_core);
   tokens?.forEach(token => {
     const chainId = token.chain;
     if (!finalInfo.token[chainId]) {
       finalInfo.token[chainId] = new BigNumber(0);
     }
-    if (token._isExcludeBalance) {
-      return;
-    }
     finalInfo.token[chainId] = finalInfo.token[chainId].plus(
-      token._usdValue || 0,
+      token.usd_value || 0,
     );
     chainUnit[chainId] = chainUnit[chainId] || new BigNumber(0);
-    chainUnit[chainId] = chainUnit[chainId].plus(token._usdValue || 0);
+    chainUnit[chainId] = chainUnit[chainId].plus(token.usd_value || 0);
   });
 
-  const portfolios =
-    combinedPortfolios ||
-    computeAssetsApis.memoPortfolios(caredAddresses, assetsMap.portfoliosMap);
+  const portfolios = computeAssetsApis.memoPortfolios(
+    caredAddresses,
+    assetsMap.portfoliosMap,
+  );
   portfolios?.forEach(portfolio => {
     const chainId = portfolio.chain;
     // ignore app chain percent
@@ -395,9 +375,7 @@ function computeChainsListV2(
     chainUnit[chainId] = chainUnit[chainId].plus(portfolio.netWorth || 0);
   });
 
-  const nfts =
-    combinedNfts ||
-    computeAssetsApis.memoNfts(caredAddresses, assetsMap.nftsMap);
+  const nfts = computeAssetsApis.memoNfts(caredAddresses, assetsMap.nftsMap);
   nfts?.forEach(nft => {
     const chainId = nft.chain;
     if (!finalInfo.nft[chainId]) {

@@ -8,13 +8,15 @@ import {
 } from '@/constant/perps';
 import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
-import { useTokens } from '@/hooks/chainAndToken/useToken';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
+import useTokenList, {
+  getPerpsTokenSelectCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -27,24 +29,41 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
   visible?: boolean;
   account?: Account | null;
-  onSelect?(token: AbstractPortfolioToken): Promise<void>;
+  onSelect?(token: ITokenItem): Promise<void>;
 }> = ({ onClose, visible, account, onSelect }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
+  const registerPerpsTokenSelect = useTokenListComputedStore(
+    state => state.registerPerpsTokenSelect,
+  );
+  const perpsTokenKey = useMemo(() => {
+    if (!account?.address) {
+      return null;
+    }
+    return getPerpsTokenSelectCacheKey(account.address);
+  }, [account?.address]);
+  useEffect(() => {
+    if (!account?.address) {
+      return;
+    }
+    registerPerpsTokenSelect(account.address);
+  }, [account?.address, registerPerpsTokenSelect]);
 
-  const { tokens: _tokens, updateData } = useTokens(account?.address, {
-    visible: false,
-    force: true,
+  const _tokens = useTokenListComputedStore(state => {
+    if (!perpsTokenKey) {
+      return [];
+    }
+    return state.perpsTokenSelectCache[perpsTokenKey] || [];
   });
+  const { getTokenList } = useTokenList();
 
   const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
     async () => {
@@ -57,7 +76,7 @@ export const PerpsSelectTokenPopup: React.FC<{
         ARB_USDC_TOKEN_SERVER_CHAIN,
         ARB_USDC_TOKEN_ID,
       );
-      return ensureAbstractPortfolioToken(arbUsdcToken);
+      return tokenItemToITokenItem(arbUsdcToken, '');
     },
     {
       refreshDeps: [account?.address],
@@ -74,7 +93,7 @@ export const PerpsSelectTokenPopup: React.FC<{
             item =>
               !(
                 item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-                isSameAddress(item._tokenId, ARB_USDC_TOKEN_ID)
+                isSameAddress(item.id, ARB_USDC_TOKEN_ID)
               ) && item.is_core,
           ) || []),
         ];
@@ -82,51 +101,51 @@ export const PerpsSelectTokenPopup: React.FC<{
 
   useEffect(() => {
     if (visible) {
-      updateData();
+      if (account) {
+        getTokenList(account.address, true);
+      }
       runFetchUsdcToken();
     }
-  }, [runFetchUsdcToken, updateData, visible]);
+  }, [runFetchUsdcToken, getTokenList, visible, account]);
 
-  const renderItem = useMemoizedFn(
-    ({ item }: { item: AbstractPortfolioToken }) => {
-      return (
-        <TouchableOpacity
-          style={[styles.tokenListItem]}
-          onPress={() => {
-            onSelect?.(item);
-          }}>
-          <View style={styles.box}>
-            <AssetAvatar
-              size={46}
-              chain={item.chain}
-              logo={item.logo_url}
-              chainSize={18}
-            />
-            <Text
-              style={StyleSheet.flatten([
-                {
-                  marginLeft: 8,
-                },
-                styles.text,
-              ])}>
-              {getTokenSymbol(item)}
-            </Text>
-            {item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            item._tokenId === ARB_USDC_TOKEN_ID ? (
-              <View style={styles.depositTag}>
-                <Text style={styles.depositTagText}>
-                  {t('page.perps.PerpsDepositTokenModal.directTag')}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          <Text style={styles.text}>
-            {formatUsdValue(item.amount * item.price || 0)}
+  const renderItem = useMemoizedFn(({ item }: { item: ITokenItem }) => {
+    return (
+      <TouchableOpacity
+        style={[styles.tokenListItem]}
+        onPress={() => {
+          onSelect?.(item);
+        }}>
+        <View style={styles.box}>
+          <AssetAvatar
+            size={46}
+            chain={item.chain}
+            logo={item.logo_url}
+            chainSize={18}
+          />
+          <Text
+            style={StyleSheet.flatten([
+              {
+                marginLeft: 8,
+              },
+              styles.text,
+            ])}>
+            {getTokenSymbol(item)}
           </Text>
-        </TouchableOpacity>
-      );
-    },
-  );
+          {item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+          item.id === ARB_USDC_TOKEN_ID ? (
+            <View style={styles.depositTag}>
+              <Text style={styles.depositTagText}>
+                {t('page.perps.PerpsDepositTokenModal.directTag')}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <Text style={styles.text}>
+          {formatUsdValue(item.amount * item.price || 0)}
+        </Text>
+      </TouchableOpacity>
+    );
+  });
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 

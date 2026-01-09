@@ -21,7 +21,7 @@ import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { naviPush } from '@/utils/navigation';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import {
@@ -118,7 +118,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
 
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(token),
+      token: tokenItemToITokenItem(token, ''),
       needUseCacheToken: true,
       isSingleAddress,
       account,

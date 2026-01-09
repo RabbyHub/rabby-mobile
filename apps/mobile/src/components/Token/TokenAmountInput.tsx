@@ -10,20 +10,14 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { ITokenCheck, TokenSelectorProps } from './TokenSelectorSheetModal';
-import {
-  formatSpeicalAmount,
-  formatTokenAmount,
-  splitNumberByStep,
-} from '@/utils/number';
+import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { useTranslation } from 'react-i18next';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
-import { tokenAmountBn } from '@/screens/Swap/utils';
 
 function useLoadTokenList({
   onTokenChange,
@@ -206,7 +200,6 @@ export const TokenAmountInput = React.forwardRef<
             token={token}
             disableItemCheck={disableItemCheck}
             onTokenChange={handleCurrentTokenChange}
-            excludeTokens={excludeTokens}
             type="send"
             placeholder={placeholder}
             supportChains={[]}

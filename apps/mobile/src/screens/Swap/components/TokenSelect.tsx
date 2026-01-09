@@ -11,37 +11,23 @@ import React, {
 } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
-
-import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
 import {
   ITokenCheck,
   useTokenSelectorModalVisible,
 } from '@/components/Token/TokenSelectorSheetModal';
-import useAsync from 'react-use/lib/useAsync';
-import { useSortToken } from '@/hooks/chainAndToken/useToken';
-import {
-  abstractTokenToTokenItem,
-  DisplayedToken,
-  getTokenSymbol,
-} from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
-import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { customTestnetService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
 import { Account } from '@/core/services/preference';
-import {
-  makeKeyForTokenItemMaybeWithOwner,
-  TokenItemMaybeWithOwner,
-} from '@/databases/hooks/token';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
@@ -54,6 +40,9 @@ import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
+import { tagTokenItemFavorite } from '@/screens/Home/utils/token';
+import { ITokenItem } from '@/store/tokens';
+import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -61,8 +50,6 @@ interface TokenSelectProps {
   onTokenChange(token: TokenItem): void;
   accountInScreen?: Account | null;
   chainId: string;
-  useSwapTokenList?: boolean;
-  excludeTokens?: TokenItem['id'][];
   type?: ComponentProps<typeof TokenSelectorSheetModal>['type'];
   disableItemCheck?: ITokenCheck;
   placeholder?: string;
@@ -81,7 +68,6 @@ interface TokenSelectProps {
   supportChains?: CHAINS_ENUM[];
   searchPlaceholder?: string;
 }
-const defaultExcludeTokens = [];
 
 type QueryConditions = {
   keyword: string;
@@ -99,10 +85,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       onTokenChange,
       accountInScreen,
       chainId,
-      excludeTokens = defaultExcludeTokens,
       type = 'send',
       placeholder,
-      useSwapTokenList = false,
       supportChains,
       searchPlaceholder,
       disableItemCheck,
@@ -116,13 +100,20 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       chainServerId: chainId,
     });
 
-    const [, setUpdateNonce] = useState(0);
-    const [favoriteFilterValue, setFavoriteFilterValue] =
+    const [_favoriteFilterValue, setFavoriteFilterValue] =
       useState<FavoriteFilterType>('all');
 
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebouncedValue(_queryConds, 250);
+    const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
     const currentAccount = queryConds.account;
+
+    const favoriteFilterValue = useMemo(() => {
+      if (queryConds.keyword?.trim().length > 0) {
+        return 'all';
+      }
+      return _favoriteFilterValue;
+    }, [_favoriteFilterValue, queryConds.keyword]);
 
     const {
       visible: tokenSelectorVisible,
@@ -136,18 +127,16 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
 
     const {
       tokens,
-      existedTokens,
-      getCacheTokens,
       checkIsExpireAndUpdate,
       loadToken,
       loadOnVisibleChanged,
       isLoading: isLoadingAllTokens,
+      isSearching,
     } = useSelectTokens({
       currentAccount,
-      noNeedTokens: !tokenSelectorVisible,
-      keyword: queryConds.keyword,
       chain_server_id: queryConds.chainServerId,
-      type: type,
+      isLpTokenEnabled,
+      keyword: queryConds.keyword,
     });
 
     useImperativeHandle(ref, () => ({
@@ -157,23 +146,20 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       },
     }));
 
+    const hasHandledTokenSelectorVisibleRef = useRef(false);
+
     // fetch tokens
     useEffect(() => {
       (async () => {
-        tokenSelectorVisible;
-        useSwapTokenList;
-
-        if (!existedTokens) {
-          if (type === 'send') {
-            currentAccount?.address &&
-              (await getCacheTokens([currentAccount.address]));
-          } else {
-            await getCacheTokens([], { isTop10: true });
-          }
+        if (!tokenSelectorVisible) {
+          return;
         }
-
+        if (!hasHandledTokenSelectorVisibleRef.current) {
+          hasHandledTokenSelectorVisibleRef.current = true;
+          return;
+        }
         if (currentAccount?.address) {
-          loadToken(currentAccount.address, true);
+          loadToken(currentAccount.address);
         } else {
           checkIsExpireAndUpdate();
         }
@@ -181,82 +167,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
     }, [
       tokenSelectorVisible,
       currentAccount?.address,
-      useSwapTokenList,
       loadToken,
       checkIsExpireAndUpdate,
-      getCacheTokens,
-      existedTokens,
-      type,
     ]);
-
-    const currentAddress = currentAccount?.address;
-    // swap token list
-    const { value: swapTokenList, loading: swapTokenListLoading } =
-      useAsync(async () => {
-        if (!currentAddress || !useSwapTokenList || !tokenSelectorVisible) {
-          return [];
-        }
-        const list = await openapi.getSwapTokenList(
-          currentAddress,
-          queryConds.chainServerId ? queryConds.chainServerId : undefined,
-        );
-        return list;
-      }, [
-        queryConds.chainServerId,
-        currentAddress,
-        useSwapTokenList,
-        tokenSelectorVisible,
-      ]);
-
-    const allRemoteTokens = useSortToken(tokens, accountInScreen);
-
-    const searchedLocalTokensWithOwner = useMemo(
-      () =>
-        (type === 'swapTo' || type === 'bridgeFrom' || type === 'swapFrom') &&
-        queryConds.keyword
-          ? tokens
-          : tokens.map(
-              e =>
-                ({
-                  ...abstractTokenToTokenItem(e),
-                  ownerAccount:
-                    'ownerAccount' in e ? e.ownerAccount : undefined,
-                } as TokenItemMaybeWithOwner),
-            ),
-      [type, queryConds.keyword, tokens],
-    );
-
-    const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
-      useMemo(() => {
-        return {
-          isSearchLoading: isLoadingAllTokens,
-          allTokens: allRemoteTokens,
-          allTokenItems: useSwapTokenList
-            ? swapTokenList || []
-            : searchedLocalTokensWithOwner,
-          searchedTokenByQuery: searchedLocalTokensWithOwner,
-        };
-      }, [
-        isLoadingAllTokens,
-        allRemoteTokens,
-        useSwapTokenList,
-        swapTokenList,
-        searchedLocalTokensWithOwner,
-      ]);
-
-    const isExcludedTokens = useCallback(
-      (e: AbstractPortfolioToken | TokenItemMaybeWithOwner) => {
-        return !!excludeTokens?.includes(
-          e instanceof DisplayedToken ? e._tokenId : e.id,
-        );
-      },
-      [excludeTokens],
-    );
-
-    const isFromModalType = useMemo(
-      () => type === 'swapFrom' || type === 'bridgeFrom' || type === 'send',
-      [type],
-    );
 
     const { userTokenSettings, fetchUserTokenSettings } =
       useUserTokenSettings();
@@ -265,77 +178,34 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       [userTokenSettings.pinedQueue],
     );
 
-    const foldTokensList = useMemo(() => {
-      if (!isFromModalType || queryConds.keyword) {
-        return [];
-      }
-
-      let filteredTokens = allTokens.filter(i => {
-        const condition = !!i._isFold || (!i.is_core && !i._isPined);
-        return condition;
+    const { data: favoriteTokens, loading: favoriteTokensLoading } =
+      useFavoriteTokens({
+        focus: favoriteFilterValue === 'favorite',
+        address: currentAccount?.address,
+        chainId: queryConds.chainServerId,
       });
 
+    const isListLoading = useMemo(() => {
+      if (isSearching) {
+        return true;
+      }
+      if (isLpTokenEnabled) {
+        return isLoadingAllTokens;
+      }
       if (favoriteFilterValue === 'favorite') {
-        filteredTokens = filteredTokens.filter(token =>
-          pinedQueue?.some(
-            x => x.chainId === token.chain && x.tokenId === token._tokenId,
-          ),
-        );
+        return favoriteTokensLoading;
       }
-
-      const list = convertSmallTokenList(filteredTokens).map(
-        e =>
-          ({
-            ...abstractTokenToTokenItem(e),
-            ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
-          } as TokenItemMaybeWithOwner),
-      );
-      return uniqBy(
-        list.filter(e => !isExcludedTokens(e)),
-        e => makeKeyForTokenItemMaybeWithOwner(e),
-      );
+      if (hasHandledTokenSelectorVisibleRef.current) {
+        return false;
+      }
+      return isLoadingAllTokens;
     }, [
-      allTokens,
-      isExcludedTokens,
-      isFromModalType,
-      queryConds.keyword,
       favoriteFilterValue,
-      pinedQueue,
+      favoriteTokensLoading,
+      isLoadingAllTokens,
+      isLpTokenEnabled,
+      isSearching,
     ]);
-
-    const availableToken = useMemo(() => {
-      const _tokens = queryConds.chainServerId
-        ? allTokenItems.filter(t => t.chain === queryConds.chainServerId)
-        : allTokenItems;
-      return uniqBy(queryConds.keyword ? searchedTokenByQuery : _tokens, t => {
-        return makeKeyForTokenItemMaybeWithOwner(t);
-      }).filter((e: TokenItemMaybeWithOwner) => {
-        const res =
-          !isExcludedTokens(e) &&
-          !foldTokensList.some(f => {
-            return (
-              f.chain === e.chain &&
-              f.id === e.id &&
-              f?.ownerAccount?.address.toLowerCase() ===
-                e?.ownerAccount?.address.toLowerCase()
-            );
-          });
-        return res;
-      });
-    }, [
-      queryConds.chainServerId,
-      queryConds.keyword,
-      allTokenItems,
-      searchedTokenByQuery,
-      isExcludedTokens,
-      foldTokensList,
-    ]);
-
-    const isListLoading = queryConds.keyword
-      ? isSearchLoading
-      : useSwapTokenList
-      ? swapTokenListLoading
-      : isLoadingAllTokens;
 
     const handleSearchTokens = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
@@ -362,16 +232,18 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
         onChange && onChange('');
         onTokenChange(t);
         setTokenSelectorVisible(false);
+        setIsLpTokenEnabled(false);
       },
-      [onChange, onTokenChange, setTokenSelectorVisible],
+      [onChange, onTokenChange, setTokenSelectorVisible, setIsLpTokenEnabled],
     );
 
     const handleTokenSelectorClose = useCallback(() => {
       //FIXME: snap to close will retrigger render
       setTimeout(() => {
         setTokenSelectorVisible(false);
+        setIsLpTokenEnabled(false);
       }, 0);
-    }, [setTokenSelectorVisible]);
+    }, [setTokenSelectorVisible, setIsLpTokenEnabled]);
 
     const resetQueryConds = useCallback(() => {
       setQueryConds(prev => ({
@@ -382,13 +254,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
     }, [chainId, accountInScreen]);
 
     const handleSelectToken = useCallback(() => {
-      if (allTokenItems.length > 0) {
-        setUpdateNonce(prev => prev + 1);
-      }
-
       resetQueryConds();
       setTokenSelectorVisible(true);
-    }, [allTokenItems, resetQueryConds, setTokenSelectorVisible]);
+    }, [resetQueryConds, setTokenSelectorVisible]);
 
     useEffect(() => {
       setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
@@ -411,26 +279,21 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       }, [currentAccount?.address, fetchUserTokenSettings]),
     );
 
-    const list = useMemo(() => {
-      let filteredTokens = availableToken;
-
+    const unFoldTokenList = useMemo(() => {
       if (favoriteFilterValue === 'favorite') {
-        filteredTokens = availableToken.filter(token =>
-          pinedQueue?.some(
-            x => x.chainId === token.chain && x.tokenId === token.id,
-          ),
-        );
+        return favoriteTokens.map(e => ({
+          ...e,
+          isPin: true,
+        }));
       }
-
-      const tokensWithPinStatus = filteredTokens.map(e => ({
+      const tokensWithPinStatus = tokens?.map(e => ({
         ...e,
-        isPined: pinedQueue?.some(
+        isPin: pinedQueue?.some(
           x => x.chainId === e.chain && x.tokenId === e.id,
         ),
-      })) as TokenItem[];
-
+      })) as ITokenItem[];
       return tokensWithPinStatus;
-    }, [availableToken, pinedQueue, favoriteFilterValue]);
+    }, [favoriteFilterValue, tokens, favoriteTokens, pinedQueue]);
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {
@@ -511,15 +374,27 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
     });
 
     const testnetTokenList = useMemo(() => {
+      if (!currentAccount?.address) {
+        return [];
+      }
+      const list = rawTestnetTokenList.map(item => {
+        const i = tokenItemToITokenItem(item, currentAccount.address);
+        return tagTokenItemFavorite(i, { pinedQueue }) as ITokenItem;
+      });
       if (favoriteFilterValue === 'favorite') {
-        return rawTestnetTokenList.filter(token =>
+        return list.filter(token =>
           pinedQueue?.some(
             x => x.chainId === token.chain && x.tokenId === token.id,
           ),
         );
       }
-      return rawTestnetTokenList;
-    }, [rawTestnetTokenList, favoriteFilterValue, pinedQueue]);
+      return list;
+    }, [
+      rawTestnetTokenList,
+      favoriteFilterValue,
+      pinedQueue,
+      currentAccount?.address,
+    ]);
 
     return (
       <>
@@ -561,15 +436,14 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
           ref={tokenSelectorModalRef}
           visible={tokenSelectorVisible}
           unshiftList={[]}
-          list={selectedTab === 'testnet' ? testnetTokenList : list}
-          foldTokensList={selectedTab === 'testnet' ? [] : foldTokensList}
+          list={selectedTab === 'testnet' ? testnetTokenList : unFoldTokenList}
           onConfirm={handleCurrentTokenChange}
           onCancel={handleTokenSelectorClose}
           onSearch={handleSearchTokens}
           isLoading={
             selectedTab === 'testnet' ? testnetTokenListLoading : isListLoading
           }
-          showFavoriteFilter
+          showFavoriteFilter={!queryConds.keyword}
           favoriteFilterValue={favoriteFilterValue}
           onFavoriteFilterChange={setFavoriteFilterValue}
           type={type}
@@ -585,6 +459,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
           showTestNetSwitch={isShowTestnet}
           selectTab={selectedTab}
           onTabChange={onTabChange}
+          showLpTokenSwitch={!queryConds.keyword}
+          isLpTokenEnabled={isLpTokenEnabled}
+          onLpTokenChange={setIsLpTokenEnabled}
         />
       </>
     );

@@ -357,6 +357,7 @@ export function updateAssetListByAddress(
     }
     case 'tokens': {
       const lowerAddress = address.toLowerCase();
+      console.log('setTokensMap', lowerAddress, payload.data);
       setTokensMap(pre => ({
         ...pre,
         [lowerAddress]: payload.data,

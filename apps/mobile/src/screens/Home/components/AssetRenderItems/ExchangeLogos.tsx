@@ -6,11 +6,12 @@ import { Image, Text, View } from 'react-native';
 interface Props {
   logos: string[];
 }
+const MAX_CEX_LENGTH = 3;
 export const ExchangeLogos = ({ logos }: Props) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const displayLogos = useMemo(() => {
-    if (logos.length > 4) {
-      return logos.slice(0, 4);
+    if (logos.length > MAX_CEX_LENGTH) {
+      return logos.slice(0, MAX_CEX_LENGTH);
     }
     return logos;
   }, [logos]);
@@ -25,8 +26,8 @@ export const ExchangeLogos = ({ logos }: Props) => {
       {displayLogos.map(logo => (
         <Image key={logo} source={{ uri: logo }} style={styles.logo} />
       ))}
-      {logos.length > 4 && (
-        <Text style={styles.moreCex}>+{logos.length - 4}</Text>
+      {logos.length > MAX_CEX_LENGTH && (
+        <Text style={styles.moreCex}>+{logos.length - MAX_CEX_LENGTH}</Text>
       )}
     </View>
   );

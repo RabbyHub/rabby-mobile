@@ -1,302 +1,219 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import _, { add } from 'lodash';
-import { isAddress } from 'viem';
-import BigNumber from 'bignumber.js';
-import * as Sentry from '@sentry/react-native';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { useMyAccounts } from '@/hooks/account';
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { tokenItem2AbstractTokenWithOwner } from '@/utils/token';
 import {
   makeTokenSettingSets,
-  tagTokenItemV2,
+  tagTokenItemFavorite,
 } from '@/screens/Home/utils/token';
-import { TokenSelectType } from '@/components/Token/TokenSelectorSheetModal';
-import { openapi } from '@/core/request';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { Account } from '@/core/services/preference';
-import { formatUsdValue } from '@/utils/number';
-import { formatAmount } from '@/utils/math';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import useTokenList, {
+  getTokenSelectCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 
-import {
-  LocalDBTokenItem,
-  useInMemoryTokens,
-  useSelectTokensThreadSafe,
-} from '@/components/Token/hooks/selectToken';
+import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken';
+import { openapi } from '@/core/request';
+import { tokenItemToITokenItem } from '@/utils/token';
 
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
-  noNeedTokens = false,
-  keyword,
   chain_server_id,
-  type,
+  isLpTokenEnabled,
+  keyword,
 }: {
   currentAccount?: Account | null;
-  noNeedTokens?: boolean;
-  keyword?: string;
   chain_server_id?: string;
-  type?: TokenSelectType;
+  isLpTokenEnabled?: boolean;
+  keyword?: string;
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
+  const prevCurrentAddress = useRef(
+    currentAccount?.address || _currentAccount?.address,
+  );
+  const lastCurrentAddressRef = useRef(
+    currentAccount?.address || _currentAccount?.address,
+  );
   const { top10Addresses } = useAccountInfo();
 
-  const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  // 产品需求：当 x 掉地址选择时搜索视图下仍然展示当前地址的余额，用 ref 缓存最后一个 currentAddress 实现
+  useEffect(() => {
+    if (currentAddress !== lastCurrentAddressRef.current) {
+      prevCurrentAddress.current = lastCurrentAddressRef.current;
+      lastCurrentAddressRef.current = currentAddress;
+    }
+  }, [currentAddress]);
 
-  const [isFirstFetch, setIsFirstFetch] = useState(true);
+  const tokenSelectAddresses = useMemo(() => {
+    if (currentAddress) {
+      return [currentAddress];
+    }
+    if (keyword && prevCurrentAddress.current) {
+      // 产品需求：x 掉当前地址后默认视图下展示多地址的余额，搜索视图下只展示当前地址的余额
+      return [prevCurrentAddress.current];
+    }
+    return top10Addresses;
+  }, [currentAddress, top10Addresses, keyword]);
 
-  const enableSearchTokensV2 = useMemo(
-    () =>
-      keyword &&
-      type &&
-      (['swapFrom', 'swapTo', 'bridgeFrom'] as TokenSelectType[]).some(
-        e => e === type,
-      ),
-    [keyword, type],
+  const { isLoading, isLoadingByAddress, batchGetTokenList, getTokenList } =
+    useTokenList();
+
+  const registerTokenSelect = useTokenListComputedStore(
+    state => state.registerTokenSelect,
   );
 
-  const {
-    value: swapToTokenSearchResult,
-    loading: swapToTokenSearchResultLoading,
-  } = useAsync(async () => {
-    if (enableSearchTokensV2 && keyword) {
-      const list = await openapi.searchTokensV2({
-        q: keyword,
-        chain_id: chain_server_id || '',
-      });
-
-      const filterAddresses = currentAddress
-        ? [currentAddress]
-        : top10Addresses;
-
-      const tokenList = list.map(token => ({
-        chain: token.chain,
-        tokenId: token.id,
-      }));
-
-      let localAmounts: Array<{
-        chain: string;
-        tokenId: string;
-        amount: number;
-      }> = [];
-      if (filterAddresses.length > 0 && tokenList.length > 0) {
-        try {
-          localAmounts = await TokenItemEntity.getTokenListAmount({
-            owner_addr: filterAddresses,
-            tokenList,
-          });
-        } catch (error) {
-          console.error('Failed to get local token amounts:', error);
-        }
-      }
-
-      const amountMap = new Map<string, number>();
-      localAmounts.forEach(item => {
-        const key = `${item.chain}-${item.tokenId}`;
-        amountMap.set(key, item.amount);
-      });
-
-      return list
-        .filter(e => (chain_server_id ? e.chain === chain_server_id : true))
-        .filter(e =>
-          isAddress(keyword, { strict: false }) ? true : !!e.is_core,
-        )
-        .map(e => {
-          const key = `${e.chain}-${e.id}`;
-          const localAmount = amountMap.get(key) || 0;
-
-          const amountBn = new BigNumber(localAmount);
-          const priceBn = new BigNumber(e.price || 0);
-          const usdValue = amountBn.times(priceBn).toNumber();
-
-          return {
-            ...e,
-            _isPined: false,
-            _isFold: false,
-            _isExcludeBalance: false,
-            _usdValueStr: usdValue ? formatUsdValue(usdValue) : '$0',
-            _amountStr: localAmount ? formatAmount(localAmount) : '0',
-            _tokenId: e.id,
-          } as any as AbstractPortfolioToken;
-        });
+  const isLoadingToken = useMemo(() => {
+    if (!currentAccount) {
+      return isLoading;
     }
-    return [];
-  }, [
-    enableSearchTokensV2,
-    currentAddress,
-    top10Addresses,
-    keyword,
-    chain_server_id,
-  ]);
+    const address = currentAccount.address.toLowerCase();
+    if (isLpTokenEnabled) {
+      return isLoadingByAddress[address]?.allLoading;
+    }
+    return isLoadingByAddress[address]?.loading;
+  }, [currentAccount, isLpTokenEnabled, isLoadingByAddress, isLoading]);
 
-  const {
-    isLoadingToken,
-    userTokenSettings,
-    getCacheTokens,
-    checkIsExpireAndUpdate: _checkIsExpireAndUpdate,
-    loadToken,
-    fetchTokens,
-    fetchAccountsAndTokenSettings,
-  } = useSelectTokensThreadSafe();
+  const { fetchAccountsAndTokenSettings, userTokenSettings } =
+    useSelectTokensThreadSafe();
+
+  const loadToken = useCallback(
+    (address?: string) => {
+      if (!address) {
+        return;
+      }
+      getTokenList(address, true);
+    },
+    [getTokenList],
+  );
 
   const firstLoadedRef = useRef(false);
   useEffect(() => {
-    if (!currentAddress) return;
+    if (!currentAddress) {
+      return;
+    }
     if (!firstLoadedRef.current) {
       firstLoadedRef.current = true;
-      fetchTokens({ currentAddress });
+      getTokenList(currentAddress, true);
     }
-  }, [currentAddress, fetchTokens]);
+  }, [currentAddress, getTokenList]);
 
-  const tokensInMemory = useInMemoryTokens(currentAddress);
+  const { value: searchTokenResult, loading: searchingToken } =
+    useAsync(async () => {
+      const address = currentAddress || prevCurrentAddress.current || '';
+      if (keyword) {
+        const list = await openapi.searchToken(
+          address,
+          keyword,
+          chain_server_id || '',
+        );
+        return list.map(item => tokenItemToITokenItem(item, address));
+      }
+      return [];
+    }, [chain_server_id, currentAddress, keyword]);
 
-  // filter tokens
-  const tokens = useMemo(() => {
-    if (noNeedTokens) return [];
-    let resTokens: LocalDBTokenItem[] = Array.from(tokensInMemory);
-    if (chain_server_id) {
-      resTokens = tokensInMemory.filter(
-        token => token.chain === chain_server_id,
-      );
-    }
-    if (keyword) {
-      resTokens = resTokens
-        .filter(item => {
-          const matchKeyWords = [item.id, item.symbol];
-          return matchKeyWords.some(i =>
-            i?.toLowerCase().includes(keyword.toLowerCase()),
-          );
-        })
-        .sort((a, b) => {
-          const keywordLower = keyword.toLowerCase();
-          const aIdLower = a.id?.toLowerCase() || '';
-          const bIdLower = b.id?.toLowerCase() || '';
-          const aSymbolLower = a.symbol?.toLowerCase() || '';
-          const bSymbolLower = b.symbol?.toLowerCase() || '';
+  const tokenSelectKey = useMemo(
+    () =>
+      getTokenSelectCacheKey(
+        tokenSelectAddresses,
+        chain_server_id,
+        keyword,
+        isLpTokenEnabled,
+      ),
+    [tokenSelectAddresses, chain_server_id, keyword, isLpTokenEnabled],
+  );
 
-          // Check exact matches
-          const aExactMatch =
-            aIdLower === keywordLower || aSymbolLower === keywordLower;
-          const bExactMatch =
-            bIdLower === keywordLower || bSymbolLower === keywordLower;
-
-          // Check is_core status
-          const aIsCore = a.is_core;
-          const bIsCore = b.is_core;
-
-          // Calculate scores based on match type and is_core status
-          const getScore = (exactMatch: boolean, isCore: boolean) => {
-            if (exactMatch && isCore) {
-              return 4;
-            }
-            if (exactMatch && !isCore) {
-              return 3;
-            }
-            if (!exactMatch && isCore) {
-              return 2;
-            }
-            return 1;
-          };
-
-          const aScore = getScore(aExactMatch, aIsCore);
-          const bScore = getScore(bExactMatch, bIsCore);
-
-          // Compare scores
-          if (aScore !== bScore) {
-            return bScore - aScore; // Higher score comes first
-          }
-
-          // If scores are equal, use is_suspicious as tiebreaker
-          if (a.is_suspicious !== b.is_suspicious) {
-            return a.is_suspicious ? 1 : -1;
-          }
-
-          // If still equal, prioritize id matches over symbol matches
-          const aIdMatch = aIdLower.includes(keywordLower);
-          const bIdMatch = bIdLower.includes(keywordLower);
-          const aSymbolMatch = aSymbolLower.includes(keywordLower);
-          const bSymbolMatch = bSymbolLower.includes(keywordLower);
-
-          if (aIdMatch && !bIdMatch) {
-            return -1;
-          }
-          if (!aIdMatch && bIdMatch) {
-            return 1;
-          }
-          if (aSymbolMatch && !bSymbolMatch) {
-            return -1;
-          }
-          if (!aSymbolMatch && bSymbolMatch) {
-            return 1;
-          }
-
-          // sort with balance
-          const aUsdValue = a.usd_value || a.price * a.amount;
-          const bUsdValue = b.usd_value || b.price * b.amount;
-          return bUsdValue - aUsdValue;
-        });
-    } else {
-      resTokens = resTokens.sort((a, b) => {
-        const aUsdValue = a.usd_value || a.price * a.amount;
-        const bUsdValue = b.usd_value || b.price * b.amount;
-        return bUsdValue - aUsdValue;
-      });
-    }
-
-    return resTokens;
-  }, [noNeedTokens, tokensInMemory, chain_server_id, keyword]);
-
-  const tokenWithOwner = useMemo(() => {
-    if (enableSearchTokensV2 && keyword) {
-      return (
-        swapToTokenSearchResult?.map(token =>
-          tagTokenItemV2(
-            {
-              ...token,
-
-              _tokenId: token.id,
-            },
-            makeTokenSettingSets(userTokenSettings),
-          ),
-        ) || []
-      );
-    }
-    const tokenItems = tokens.map(token => {
-      return {
-        ...token,
-        ownerAccount:
-          currentAccount &&
-          isSameAddress(currentAccount.address, token.owner_addr)
-            ? currentAccount
-            : accounts.find(acc =>
-                isSameAddress(acc.address, token.owner_addr),
-              ),
-      };
-    });
-    return tokenItems.map(token => {
-      const data = tokenItem2AbstractTokenWithOwner(token, token.ownerAccount);
-      return tagTokenItemV2(data, makeTokenSettingSets(userTokenSettings));
-    });
+  useEffect(() => {
+    registerTokenSelect(
+      tokenSelectAddresses,
+      chain_server_id,
+      keyword,
+      isLpTokenEnabled,
+    );
   }, [
-    accounts,
-    currentAccount,
-    enableSearchTokensV2,
+    registerTokenSelect,
+    tokenSelectAddresses,
+    chain_server_id,
     keyword,
-    swapToTokenSearchResult,
-    tokens,
-    userTokenSettings,
+    isLpTokenEnabled,
   ]);
 
-  const checkIsExpireAndUpdate = useCallback(async () => {
-    return _checkIsExpireAndUpdate().finally(() => {
-      setIsFirstFetch(false);
+  const tokens = useTokenListComputedStore(state => {
+    return state.tokenSelectCache[tokenSelectKey] || [];
+  });
+
+  const mergedTokens = useMemo(() => {
+    if (!keyword || !searchTokenResult?.length) {
+      return tokens;
+    }
+    const seen = new Set(tokens.map(token => `${token.chain}:${token.id}`));
+    const mergedList = tokens.slice();
+    searchTokenResult.forEach(token => {
+      const key = `${token.chain}:${token.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        mergedList.push(token);
+      }
     });
-  }, [_checkIsExpireAndUpdate]);
+    return mergedList;
+  }, [keyword, searchTokenResult, tokens]);
+
+  const formatToken = useCallback(
+    (token: ITokenItem) =>
+      tagTokenItemFavorite(token, makeTokenSettingSets(userTokenSettings)),
+    [userTokenSettings],
+  );
+
+  const tokenWithOwner = useMemo(() => {
+    return mergedTokens.map(formatToken);
+  }, [mergedTokens, formatToken]);
+
+  const shouldLoadRecommended = useMemo(() => {
+    if (
+      !currentAddress ||
+      isLpTokenEnabled ||
+      keyword ||
+      (searchTokenResult && searchTokenResult.length > 0)
+    ) {
+      return false;
+    }
+    return tokens.length === 0;
+  }, [
+    currentAddress,
+    isLpTokenEnabled,
+    keyword,
+    searchTokenResult,
+    tokens.length,
+  ]);
+
+  const { value: recommendedTokens, loading: loadingRecommendedTokens } =
+    useAsync(async () => {
+      if (!shouldLoadRecommended || !currentAddress) {
+        return [];
+      }
+      const list = await openapi.getSwapTokenList(
+        currentAddress,
+        chain_server_id || '',
+      );
+      return list.map(item => tokenItemToITokenItem(item, ''));
+    }, [shouldLoadRecommended, currentAddress, chain_server_id]);
+
+  const finalTokens = useMemo(() => {
+    if (recommendedTokens && recommendedTokens.length > 0) {
+      const formattedRecommended = recommendedTokens.map(formatToken);
+      return [...tokenWithOwner, ...formattedRecommended];
+    }
+    return tokenWithOwner;
+  }, [tokenWithOwner, recommendedTokens, formatToken]);
+
+  const checkIsExpireAndUpdate = useCallback(async () => {
+    if (currentAccount) {
+      return;
+    }
+    return batchGetTokenList(top10Addresses);
+  }, [batchGetTokenList, currentAccount, top10Addresses]);
 
   const loadOnVisibleChanged = useCallback(
     (nextVisible = false) => {
@@ -308,13 +225,12 @@ export const useSelectTokens = ({
   );
 
   return {
-    tokens: tokenWithOwner,
-    existedTokens: !!tokensInMemory.length,
-    isLoading: isLoadingToken || swapToTokenSearchResultLoading,
-    getCacheTokens,
+    tokens: finalTokens,
+    existedTokens: !!tokens.length,
+    isSearching: searchingToken || loadingRecommendedTokens,
+    isLoading: isLoadingToken,
     checkIsExpireAndUpdate,
     loadToken,
-    refreshing: !!isLoadingToken && !isFirstFetch,
     loadOnVisibleChanged,
   };
 };
