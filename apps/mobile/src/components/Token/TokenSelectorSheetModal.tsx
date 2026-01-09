@@ -14,9 +14,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  SectionListRenderItem,
   TextInput,
-  Pressable,
   Dimensions,
   Alert,
   ListRenderItem,
@@ -24,11 +22,8 @@ import {
 import {
   BottomSheetBackdropProps,
   BottomSheetFlatList,
-  BottomSheetSectionList,
+  BottomSheetFlatListMethods,
 } from '@gorhom/bottom-sheet';
-import RcTipCC from '@/assets2024/icons/common/tips.svg';
-import RcFoldCC from '@/assets2024/icons/common/fold.svg';
-import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import {
@@ -41,12 +36,10 @@ import { SheetModalShowType, useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  getTokenSymbol,
-  SMALL_TOKEN_ID,
   type DisplayedTokenWithOwner,
   type TokenItemFromAbstractPortfolioToken,
 } from '@/utils/token';
-import { formatAmount, formatPrice, formatTokenAmount } from '@/utils/number';
+import { formatPrice, formatTokenAmount } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
 import { findChainByServerID } from '@/utils/chain';
@@ -60,16 +53,7 @@ import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 import { useTranslation } from 'react-i18next';
-import { TextBadge } from '@/screens/Address/components/PinBadge';
-import { ellipsisOverflowedText } from '@/utils/text';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { useMemoizedFn } from 'ahooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import {
   CompositeScreenProps,
   useFocusEffect,
@@ -86,27 +70,19 @@ import {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { TokenItemContextMenu } from './TokenContextMenu';
-import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
+import {
+  ExternalTokenRow,
+  formatPercentage,
+} from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
-import { useUserTokenSettings } from '@/hooks/useTokenSettings';
-import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
-import { SCAM_TOKEN_HAEDER_ID } from './constant';
-import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
-import { Favorite } from '@/components2024/Favorite';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { FavoriteTag } from '@/components2024/Favorite';
 import {
   getLatestNavigationName,
   navigateDeprecated,
 } from '@/utils/navigation';
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
-import {
-  useAnimatedGestureHandler,
-  runOnJS,
-  useSharedValue,
-} from 'react-native-reanimated';
-import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useRefState } from '@/hooks/common/useRefState';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { ExchangeLogos } from '@/screens/Home/components/AssetRenderItems/ExchangeLogos';
@@ -115,6 +91,10 @@ import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { touchedFeedback } from '@/utils/touch';
 import { ITokenItem } from '@/store/tokens';
 import { useMyAccounts } from '@/hooks/account';
+import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
+import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
+import { isLpToken } from '@/utils/lpToken';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -123,18 +103,8 @@ type SwapRouteProps = CompositeScreenProps<
 
 type TokenListItem =
   | {
-      type: 'unfold_token' | 'fold_token';
+      type: 'unfold_token';
       data: ITokenItem;
-    }
-  | {
-      type: 'toggle_token_fold';
-    }
-  | {
-      type: 'scam_token';
-      data: {
-        total: number;
-        logoUrls: string[];
-      };
     }
   | {
       type: 'empty-token';
@@ -150,13 +120,6 @@ export const isSwapTokenType = (s?: string) =>
 const hiddenZIndex = -9999;
 
 const ITEM_HEIGHT = 72;
-
-const hitSlop = {
-  top: 10,
-  bottom: 10,
-  left: 10,
-  right: 10,
-};
 
 export type ITokenCheck = (token: TokenItem) => {
   disable: boolean;
@@ -177,10 +140,6 @@ export type TokenSelectType =
   | 'bridgeFrom'
   | 'bridgeTo';
 
-type TokenItemFromAbstractPortfolioTokenWithExtra =
-  TokenItemFromAbstractPortfolioToken & {
-    logoUrls?: string[];
-  };
 export type TokenItemForRender = {
   _chain: string;
   recentList: ((
@@ -234,10 +193,10 @@ export interface TokenSelectorProps<
   favoriteFilterValue?: FavoriteFilterType;
   onFavoriteFilterChange?: (value: FavoriteFilterType) => void;
   disableSort?: boolean;
+  showLpTokenSwitch?: boolean;
+  isLpTokenEnabled?: boolean;
+  onLpTokenChange?: (value: boolean) => void;
 }
-const filterTestnetTokenItem = (token: ITokenItem | TokenItem) => {
-  return !findChainByServerID(token.chain)?.isTestnet;
-};
 
 const isAndroid = Platform.OS === 'android';
 
@@ -312,8 +271,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     {
       visible,
       list,
-      foldTokensList = [],
-      scamTokensList = [],
       displayAccountFilter = false,
       filterAccount,
       chainServerId,
@@ -332,14 +289,18 @@ export const TokenSelectorSheetModal = React.forwardRef<
       showTestNetSwitch,
       selectTab,
       onTabChange,
-      showFavoriteFilter = false,
+      showFavoriteFilter: _showFavoriteFilter,
       favoriteFilterValue = 'all',
-      onFavoriteFilterChange,
+      onFavoriteFilterChange: _onFavoriteFilterChange,
+      showLpTokenSwitch: _showLpTokenSwitch,
+      isLpTokenEnabled = false,
+      onLpTokenChange: _onLpTokenChange,
     },
     ref,
   ) => {
     const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
       useSheetModal();
+    const listRef = useRef<BottomSheetFlatListMethods>(null);
     const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
     const { list: cexList } = useCexSupportList();
 
@@ -358,22 +319,39 @@ export const TokenSelectorSheetModal = React.forwardRef<
       }
     }, [visible]);
 
-    const [fold, setFold] = useState(true);
-    const [isScamFold, setIsScamFold] = useState(true);
-
     const { t } = useTranslation();
     const isBridgeTo = type === 'bridgeTo';
     const isSwapTo = type === 'swapTo';
-    const isSend = type === 'send';
+
+    const onLpTokenChange = useCallback(
+      (value: boolean) => {
+        if (value) {
+          _onFavoriteFilterChange?.('all');
+        }
+        _onLpTokenChange?.(value);
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+      },
+      [_onLpTokenChange, _onFavoriteFilterChange],
+    );
+    const onFavoriteFilterChange = useCallback(
+      (value: FavoriteFilterType) => {
+        if (value === 'favorite') {
+          _onLpTokenChange?.(false);
+        }
+        _onFavoriteFilterChange?.(value);
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+      },
+      [_onFavoriteFilterChange, _onLpTokenChange],
+    );
 
     useEffect(() => {
       if (!visible) {
         setIsInputActive(false);
-        setFold(true);
-        setIsScamFold(true);
+        onLpTokenChange?.(false);
+        onFavoriteFilterChange?.('all');
         setQuery('');
       }
-    }, [visible]);
+    }, [onFavoriteFilterChange, onLpTokenChange, visible]);
 
     const { bottom } = useSafeAreaInsets();
 
@@ -384,12 +362,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const inputRef = useRef<TextInput | null>(null);
 
     const [query, setQuery] = useState('');
+    const debouncedQuery = useDebouncedValue(query, 250); // 跟外面组件用一样的 debounce，不然组件里的 UI 状态先变会导致 UI 闪一下
     const [isInputActive, setIsInputActive] = useState(false);
 
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
     const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
-    const { pinToken, removePinedToken } = useUserTokenSettings();
 
     const isSwapRoute =
       route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
@@ -436,13 +414,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
       };
     }, [chainServerId, filterAccount]);
 
-    useDebounce(
-      () => {
-        onSearch(isBridgeTo ? query : { ...chainSearchCtx, keyword: query });
-      },
-      150,
-      [chainSearchCtx, query],
-    );
+    useEffect(() => {
+      onSearch(isBridgeTo ? query : { ...chainSearchCtx, keyword: query });
+    }, [chainSearchCtx, isBridgeTo, onSearch, query]);
 
     const handleQueryChange = (value: string) => {
       setQuery(value);
@@ -462,50 +436,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
         items.push({ type: 'unfold_token', data: token });
       });
 
-      const hasFoldSection =
-        foldTokensList.length > 0 || scamTokensList.length > 0;
-      if (hasFoldSection) {
-        items.push({ type: 'toggle_token_fold' });
-        if (!fold) {
-          foldTokensList.forEach(token => {
-            items.push({ type: 'fold_token', data: token });
-          });
-          if (scamTokensList.length > 0) {
-            if (isScamFold) {
-              items.push({
-                type: 'scam_token',
-                data: {
-                  total: scamTokensList.length,
-                  logoUrls: scamTokensList.slice(0, 3).map(i => i.logo_url),
-                },
-              });
-            } else {
-              scamTokensList.forEach(token => {
-                items.push({ type: 'fold_token', data: token });
-              });
-            }
-          }
-        }
-      }
-
       return items;
-    }, [list, foldTokensList, scamTokensList, fold, isScamFold]);
-
-    const foldTokensUsdValue = useMemo(() => {
-      if (!foldTokensList.length) {
-        return '';
-      }
-
-      const totalUsdValue = foldTokensList.reduce(
-        (acc, token) => acc + (token.usd_value || 0),
-        0,
-      );
-
-      return formatNetworth(totalUsdValue);
-    }, [foldTokensList]);
+    }, [list]);
 
     const needToTokenMarketInfo = useMemo(() => {
-      return type === 'swapTo' || type === 'bridgeTo';
+      return !!type && ['swapTo', 'bridgeTo'].includes(type);
     }, [type]);
     const { accounts } = useMyAccounts({ disableAutoFetch: true });
 
@@ -543,13 +478,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
       );
     }, [isLoading]);
 
-    const onPressToken = useCallback(() => {
-      if (!fold) {
-        setIsScamFold(true);
-      }
-      return setFold(pre => !pre);
-    }, [fold]);
-
     const longPressTriggered = useRef(false);
     const renderItemRenderComponent = useCallback<
       ListRenderItem<TokenListItem[][number]>
@@ -559,77 +487,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           return null;
         }
 
-        const renderFoldToggle = () => {
-          return (
-            <View style={StyleSheet.flatten([styles.tokenRowWrap])}>
-              <View style={styles.tokenRowTokenWrap}>
-                <View style={styles.tokenRowTokenInner}>
-                  <TouchableOpacity
-                    onPress={onPressToken}
-                    style={styles.tokenRowTokenInnerSmallToken}>
-                    <Text style={styles.actionText}>
-                      {fold ? 'All' : 'Less'}
-                    </Text>
-                    {fold ? (
-                      <RcUnFoldCC
-                        style={styles.arrow}
-                        color={colors2024['neutral-secondary']}
-                      />
-                    ) : (
-                      <RcFoldCC
-                        style={styles.arrow}
-                        color={colors2024['neutral-secondary']}
-                      />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={styles.tokenRowUsdValueWrap}>
-                <Text style={styles.tokenRowUsdValue}>
-                  {foldTokensUsdValue}
-                </Text>
-              </View>
-            </View>
-          );
-        };
-
         switch (item.type) {
-          case 'toggle_token_fold':
-            return renderFoldToggle();
-          case 'scam_token':
-            return (
-              <ScamTokenHeader
-                onPress={() => {
-                  setIsScamFold(false);
-                }}
-                style={styles.scamHeader}
-                total={item.data.total}
-                logoUrls={item.data.logoUrls}
-              />
-            );
-          case 'fold_token':
           case 'unfold_token': {
             const token = item.data;
-
-            if (token.id === SCAM_TOKEN_HAEDER_ID) {
-              return (
-                <ScamTokenHeader
-                  onPress={() => {
-                    setIsScamFold(false);
-                  }}
-                  style={styles.scamHeader}
-                  total={scamTokensList.length}
-                  logoUrls={scamTokensList
-                    .slice(0, 3)
-                    .map(scamToken => scamToken.logo_url)}
-                />
-              );
-            }
-
-            if (token.id === SMALL_TOKEN_ID) {
-              return renderFoldToggle();
-            }
-
             const {
               disable: lightDisable,
               reason: disableReason,
@@ -659,13 +519,26 @@ export const TokenSelectorSheetModal = React.forwardRef<
               currentChainItem &&
               !supportChains.includes(currentChainItem.enum);
 
-            const cexLogos =
-              token?.cex_ids
-                ?.map(
-                  id => cexList.find(item => item.id === id)?.logo_url || '',
-                )
-                .filter(i => !!i) || [];
-
+            let percentColor = colors2024['red-default'];
+            if (
+              !token.price_24h_change ||
+              Math.abs(Number(token.price_24h_change)) < 0.00001
+            ) {
+              percentColor = colors2024['neutral-secondary'];
+            }
+            if (Number(token.price_24h_change) > 0) {
+              percentColor = colors2024['green-default'];
+            }
+            const cexLogos = token?.cex_ids?.length
+              ? token.cex_ids
+                  .map(
+                    id =>
+                      cexList.find(_item => _item.id === id)?.logo_url || '',
+                  )
+                  .filter(i => !!i) || []
+              : (token as TokenItemWithEntity).identity?.cex_list?.map(
+                  _item => _item.logo_url,
+                ) || [];
             const alertDisabledToken = () => {
               if (disabled) {
                 disabledTips && toast.info(disabledTips);
@@ -691,7 +564,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               }
             };
 
-            if (query) {
+            if (debouncedQuery) {
               return (
                 <View style={{ marginTop: 8, marginHorizontal: 16 }}>
                   <TokenItemContextMenu
@@ -715,7 +588,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           longPressTriggered.current = false;
                           return;
                         }
-                        if (alertDisabledToken()) return true;
+                        if (alertDisabledToken()) {
+                          return true;
+                        }
                         onConfirm(token);
                         toggleShowSheetModal('collapse');
                       }}>
@@ -728,34 +603,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           (disabled || lightDisable) &&
                             styles.tokenItemDisabled,
                         ]}
-                        rightSlot={
-                          <Pressable
-                            style={styles.rightSlot}
-                            onPress={e => {
-                              e.stopPropagation();
-                              if (isPined) {
-                                removePinedToken(token);
-                              } else {
-                                pinToken(token);
-                              }
-                            }}
-                            hitSlop={{
-                              top: 20,
-                              bottom: 20,
-                              left: 20,
-                              right: 20,
-                            }}>
-                            <RcIconFavorite
-                              width={22}
-                              height={21}
-                              color={
-                                isPined
-                                  ? colors2024['orange-default']
-                                  : colors2024['neutral-line']
-                              }
-                            />
-                          </Pressable>
-                        }
                         onPressRightIcon={() => {
                           setTimeout(() => {
                             toggleShowSheetModal('destroy');
@@ -791,6 +638,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           )
                         }
                       />
+                      {isPined && <FavoriteTag style={styles.favoriteTag} />}
                     </TouchableOpacity>
                   </TokenItemContextMenu>
                 </View>
@@ -822,7 +670,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         return;
                       }
 
-                      if (alertDisabledToken()) return true;
+                      if (alertDisabledToken()) {
+                        return true;
+                      }
                       onConfirm(token);
                       toggleShowSheetModal('collapse');
                     }}
@@ -859,12 +709,20 @@ export const TokenSelectorSheetModal = React.forwardRef<
                                 style={[
                                   styles.tokenName,
                                   !needToTokenMarketInfo &&
+                                    !isLpToken(token) &&
                                     styles.tokenNameFullWidth,
                                 ]}
                                 ellipsizeMode="tail"
                                 numberOfLines={1}>
                                 {token?.symbol}
                               </Text>
+                              {isLpToken(token) && (
+                                <View style={styles.lpTokenIconContainer}>
+                                  <LpTokenIcon
+                                    protocolId={token.protocol_id || ''}
+                                  />
+                                </View>
+                              )}
                               {needToTokenMarketInfo && (
                                 <View style={styles.exchangeLogosContainer}>
                                   <ExchangeLogos logos={cexLogos} />
@@ -904,9 +762,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
                               )
                             ) : (
                               <Text
-                                style={[styles.tokenPrice, { marginTop: 4 }]}
-                                numberOfLines={1}>
-                                {`$${formatPrice(token.price)}`}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                                style={[
+                                  styles.tokenHeaderAmount,
+                                  // isExcludeBalanceShowTips && styles.textSecondary,
+                                ]}>
+                                {formatTokenAmount(token.amount)} {token.symbol}
                               </Text>
                             )}
                             {isBridgeTo && (
@@ -948,31 +810,27 @@ export const TokenSelectorSheetModal = React.forwardRef<
                               styles.utilMl,
                               styles.tokenInfoColRight,
                             ]}>
-                            <Text
-                              numberOfLines={1}
-                              ellipsizeMode="tail"
-                              style={[
-                                styles.tokenHeaderAmount,
-                                { marginTop: 4 },
-                                // isExcludeBalanceShowTips && styles.textSecondary,
-                              ]}>
-                              {formatTokenAmount(token.amount)} {token.symbol}
-                            </Text>
+                            <View style={styles.priceInfo}>
+                              <Text
+                                style={[styles.tokenPrice]}
+                                numberOfLines={1}>
+                                {`@$${formatPrice(token.price)}`}
+                              </Text>
+                              <Text
+                                style={StyleSheet.compose(styles.percent, {
+                                  ...(!token.is_core &&
+                                  (token.usd_value || 0) > 0
+                                    ? styles.exclude
+                                    : {}),
+                                  color: percentColor,
+                                })}>
+                                {formatPercentage(
+                                  Number(token.price_24h_change) || 0,
+                                )}
+                              </Text>
+                            </View>
                           </View>
                         </View>
-                      </View>
-                      <View style={styles.tokenRight}>
-                        <Favorite
-                          favorite={isPined}
-                          style={styles.favorite}
-                          handlePressFavorite={() => {
-                            if (isPined) {
-                              removePinedToken(token);
-                            } else {
-                              pinToken(token);
-                            }
-                          }}
-                        />
                       </View>
                     </View>
                     {lightDisable && (
@@ -995,6 +853,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         </Text>
                       </View>
                     )}
+                    {isPined && <FavoriteTag style={styles.favoriteTag} />}
                   </TouchableOpacity>
                 </TokenItemContextMenu>
               </View>
@@ -1010,7 +869,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         accounts,
         chainSearchCtx.filterAccountItem,
         supportChains,
-        query,
+        debouncedQuery,
         needToTokenMarketInfo,
         type,
         styles,
@@ -1021,19 +880,26 @@ export const TokenSelectorSheetModal = React.forwardRef<
         disabledTips,
         onConfirm,
         toggleShowSheetModal,
-        removePinedToken,
-        pinToken,
-        fold,
-        foldTokensUsdValue,
-        onPressToken,
-        scamTokensList,
-        setIsScamFold,
       ],
     );
 
     const inputNotActiveAndNoQuery = useMemo(() => {
       return !(query || isInputActive);
     }, [query, isInputActive]);
+
+    const showFavoriteFilter = useMemo(() => {
+      if (isInputActive) {
+        return false;
+      }
+      return _showFavoriteFilter;
+    }, [_showFavoriteFilter, isInputActive]);
+
+    const showLpTokenSwitch = useMemo(() => {
+      if (isInputActive) {
+        return false;
+      }
+      return _showLpTokenSwitch;
+    }, [_showLpTokenSwitch, isInputActive]);
 
     const { willShowChainFilter, willShowAccountFilter, willShowFilterRow } =
       useMemo(() => {
@@ -1060,31 +926,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         showFavoriteFilter,
       ]);
 
-    // Used to prevent repeated triggering
-    const hasTriggered = useSharedValue(false);
-
-    const onGestureEvent = useAnimatedGestureHandler({
-      onStart: () => {
-        hasTriggered.value = false;
-      },
-      onActive: event => {
-        if (!onFavoriteFilterChange || hasTriggered.value) {
-          return;
-        }
-        // Set threshold, trigger if exceeded
-        const threshold = 50;
-        if (Math.abs(event.translationX) > Math.abs(event.translationY)) {
-          if (event.translationX > threshold) {
-            hasTriggered.value = true;
-            runOnJS(onFavoriteFilterChange)?.('all');
-          } else if (event.translationX < -threshold) {
-            hasTriggered.value = true;
-            runOnJS(onFavoriteFilterChange)?.('favorite');
-          }
-        }
-      },
-    });
-
     const { onHardwareBackHandler } = useHandleBackPressClosable(
       useCallback(() => {
         onCancel();
@@ -1102,7 +943,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
         // enableDismissOnClose={false}
         enableDismissOnClose
         onChange={idx => {
-          if (idx < 0) onCancel();
+          if (idx < 0) {
+            onCancel();
+          }
         }}
         {...{
           containerStyle:
@@ -1200,15 +1043,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
               !willShowFilterRow && { display: 'none' },
             ]}>
             <View style={styles.leftFilters}>
-              {showFavoriteFilter && (
-                <FavoriteFilterItem
-                  value={favoriteFilterValue}
-                  onChange={onFavoriteFilterChange || (() => {})}
-                />
-              )}
-            </View>
-
-            <View style={styles.rightFilters}>
               {willShowAccountFilter && (
                 <AccountFilterItem
                   filterAccount={filterAccount}
@@ -1246,54 +1080,63 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   />
                 </View>
               )}
+              {showFavoriteFilter && (
+                <FavoriteFilterItem
+                  value={favoriteFilterValue}
+                  onChange={onFavoriteFilterChange || (() => {})}
+                />
+              )}
+            </View>
+
+            <View style={styles.rightFilters}>
+              {showLpTokenSwitch && (
+                <LpTokenSwitch
+                  isEnabled={isLpTokenEnabled}
+                  onValueChange={onLpTokenChange}
+                />
+              )}
             </View>
           </View>
           {(!isSwapTo || (query && !list.length)) && <>{customHeaderTitle}</>}
-          <PanGestureHandler
-            onGestureEvent={onGestureEvent}
-            activeOffsetX={[-10, 10]}
-            failOffsetY={[-5, 5]}>
-            <BottomSheetFlatList
-              contentInset={{ bottom: 30 }}
-              keyboardShouldPersistTaps="handled"
-              style={[styles.scrollView]}
-              onScrollBeginDrag={() => Keyboard.dismiss()}
-              windowSize={5}
-              data={dataList}
-              showsVerticalScrollIndicator={false}
-              keyExtractor={item => {
-                if (
-                  item.type === 'unfold_token' ||
-                  item.type === 'fold_token'
-                ) {
-                  return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
-                }
-                if (item.type === 'scam_token') {
-                  return `scam-token-${item.data.total}`;
-                }
-                if (item.type === 'empty-assets') {
-                  return `empty-assets-${item.data}`;
-                }
-                return item.type;
-              }}
-              ListHeaderComponent={ListHeader}
-              ListEmptyComponent={
-                isLoading ? null : (
-                  <NotMatchedHolder
-                    style={{
-                      height: 400,
-                    }}
-                    text="No tokens"
-                  />
-                )
+          <BottomSheetFlatList
+            contentInset={{ bottom: 30 }}
+            keyboardShouldPersistTaps="handled"
+            style={[styles.scrollView]}
+            onScrollBeginDrag={() => Keyboard.dismiss()}
+            windowSize={5}
+            ref={listRef}
+            data={dataList}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={item => {
+              if (item.type === 'unfold_token') {
+                return `${item.type}-${item.data.owner_addr}-${item.data.chain}-${item.data.id}`;
               }
-              extraData={isLoading}
-              initialNumToRender={20}
-              maxToRenderPerBatch={20}
-              onEndReachedThreshold={0.3}
-              renderItem={renderItemRenderComponent}
-            />
-          </PanGestureHandler>
+              if (item.type === 'empty-assets') {
+                return `empty-assets-${item.data}`;
+              }
+              return item.type;
+            }}
+            ListHeaderComponent={ListHeader}
+            ListEmptyComponent={
+              isLoading ? null : (
+                <NotMatchedHolder
+                  style={{
+                    height: 400,
+                  }}
+                  text={
+                    isLpTokenEnabled
+                      ? t('component.TokenSelector.placeholders.noLpTokens')
+                      : t('component.TokenSelector.placeholders.noTokens')
+                  }
+                />
+              )
+            }
+            extraData={isLoading}
+            initialNumToRender={20}
+            maxToRenderPerBatch={20}
+            onEndReachedThreshold={0.3}
+            renderItem={renderItemRenderComponent}
+          />
         </AutoLockView>
       </AppBottomSheetModal>
     );
@@ -1372,7 +1215,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['green-light-1'],
       paddingHorizontal: 6,
       paddingVertical: 1,
-      marginTop: 5,
     },
     tardeLevelText: {
       color: colors2024['green-default'],
@@ -1405,6 +1247,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'relative',
       borderRadius: 12,
       alignItems: 'center',
+      overflow: 'hidden',
     },
     filterRowScrollView: {
       height: 34,
@@ -1562,6 +1405,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     tokenNameFullWidth: {
       width: '100%',
     },
+    lpTokenIconContainer: {
+      marginLeft: 0,
+      flexShrink: 0,
+      justifyContent: 'flex-start',
+    },
     exchangeLogosContainer: {
       maxWidth: '100%',
       flexShrink: 1,
@@ -1573,12 +1421,27 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
     },
+    exclude: {
+      color: colors2024['neutral-info'],
+    },
+    percent: {
+      textAlign: 'right',
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
+    },
     searchBar: {
       flex: 1,
     },
     tokenInfoColRight: {
       alignItems: 'flex-end',
       textAlign: 'right',
+    },
+    priceInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
     },
     tokenHeaderAmount: {
       color: colors2024['neutral-secondary'],
@@ -1587,7 +1450,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 18,
       textAlign: 'right',
       width: '100%',
-      maxWidth: '100%',
+      maxWidth: 200,
       fontFamily: 'SF Pro Rounded',
     },
     textSecondary: {
@@ -1661,6 +1524,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flex: 1,
       minHeight: 32,
       marginBottom: 0,
+    },
+    favoriteTag: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
     },
     lightDisableIcon: {},
     lightDisableText: {

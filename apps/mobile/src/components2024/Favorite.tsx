@@ -1,6 +1,7 @@
-import { Pressable, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export const Favorite = ({
   favorite,
@@ -30,3 +31,29 @@ export const Favorite = ({
     </Pressable>
   );
 };
+
+export const FavoriteTag = ({ style }: { style?: StyleProp<ViewStyle> }) => {
+  const { colors2024, styles } = useTheme2024({ getStyle });
+  return (
+    <View style={[styles.favoriteTag, style]}>
+      <RcIconFavorite
+        width={13}
+        height={12}
+        color={colors2024['orange-default']}
+      />
+    </View>
+  );
+};
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  return {
+    favoriteTag: {
+      backgroundColor: colors2024['orange-light-1'],
+      width: 34.6,
+      height: 18,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderTopRightRadius: 16,
+      borderBottomLeftRadius: 16,
+    },
+  };
+});

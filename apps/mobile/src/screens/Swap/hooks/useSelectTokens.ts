@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import useAsync from 'react-use/lib/useAsync';
 
 import {
   makeTokenSettingSets,
@@ -7,45 +8,82 @@ import {
 import { Account } from '@/core/services/preference';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
-import useTokenList, { ITokenItem } from '@/store/tokens';
+import useTokenList, {
+  getTokenSelectCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 
 import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken';
+import { openapi } from '@/core/request';
+import { tokenItemToITokenItem } from '@/utils/token';
 
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
   chain_server_id,
+  isLpTokenEnabled,
+  keyword,
 }: {
   currentAccount?: Account | null;
   chain_server_id?: string;
+  isLpTokenEnabled?: boolean;
+  keyword?: string;
 }) => {
   const currentAccount = useDebouncedValue(_currentAccount, 100);
   const currentAddress = currentAccount?.address || _currentAccount?.address;
+  const prevCurrentAddress = useRef(
+    currentAccount?.address || _currentAccount?.address,
+  );
+  const lastCurrentAddressRef = useRef(
+    currentAccount?.address || _currentAccount?.address,
+  );
   const { top10Addresses } = useAccountInfo();
 
-  const [isFirstFetch, setIsFirstFetch] = useState(true);
+  // 产品需求：当 x 掉地址选择时搜索视图下仍然展示当前地址的余额，用 ref 缓存最后一个 currentAddress 实现
+  useEffect(() => {
+    if (currentAddress !== lastCurrentAddressRef.current) {
+      prevCurrentAddress.current = lastCurrentAddressRef.current;
+      lastCurrentAddressRef.current = currentAddress;
+    }
+  }, [currentAddress]);
 
-  const {
-    isLoading,
-    isLoadingByAddress,
-    forTokenSelect,
-    batchGetTokenList,
-    getTokenList,
-  } = useTokenList();
+  const tokenSelectAddresses = useMemo(() => {
+    if (currentAddress) {
+      return [currentAddress];
+    }
+    if (keyword && prevCurrentAddress.current) {
+      // 产品需求：x 掉当前地址后默认视图下展示多地址的余额，搜索视图下只展示当前地址的余额
+      return [prevCurrentAddress.current];
+    }
+    return top10Addresses;
+  }, [currentAddress, top10Addresses, keyword]);
+
+  const { isLoading, isLoadingByAddress, batchGetTokenList, getTokenList } =
+    useTokenList();
+
+  const registerTokenSelect = useTokenListComputedStore(
+    state => state.registerTokenSelect,
+  );
 
   const isLoadingToken = useMemo(() => {
     if (!currentAccount) {
       return isLoading;
     }
     const address = currentAccount.address.toLowerCase();
-    return isLoadingByAddress[address];
-  }, [isLoading, isLoadingByAddress, currentAccount]);
+    if (isLpTokenEnabled) {
+      return isLoadingByAddress[address]?.allLoading;
+    }
+    return isLoadingByAddress[address]?.loading;
+  }, [currentAccount, isLpTokenEnabled, isLoadingByAddress, isLoading]);
 
   const { fetchAccountsAndTokenSettings, userTokenSettings } =
     useSelectTokensThreadSafe();
 
   const loadToken = useCallback(
     (address?: string) => {
-      if (!address) return;
+      if (!address) {
+        return;
+      }
       getTokenList(address, true);
     },
     [getTokenList],
@@ -53,38 +91,128 @@ export const useSelectTokens = ({
 
   const firstLoadedRef = useRef(false);
   useEffect(() => {
-    if (!currentAddress) return;
+    if (!currentAddress) {
+      return;
+    }
     if (!firstLoadedRef.current) {
       firstLoadedRef.current = true;
       getTokenList(currentAddress, true);
     }
   }, [currentAddress, getTokenList]);
 
-  const tokens = forTokenSelect(currentAddress, chain_server_id);
+  const { value: searchTokenResult, loading: searchingToken } =
+    useAsync(async () => {
+      const address = currentAddress || prevCurrentAddress.current || '';
+      if (keyword) {
+        const list = await openapi.searchToken(
+          address,
+          keyword,
+          chain_server_id || '',
+        );
+        return list.map(item => tokenItemToITokenItem(item, address));
+      }
+      return [];
+    }, [chain_server_id, currentAddress, keyword]);
+
+  const tokenSelectKey = useMemo(
+    () =>
+      getTokenSelectCacheKey(
+        tokenSelectAddresses,
+        chain_server_id,
+        keyword,
+        isLpTokenEnabled,
+      ),
+    [tokenSelectAddresses, chain_server_id, keyword, isLpTokenEnabled],
+  );
+
+  useEffect(() => {
+    registerTokenSelect(
+      tokenSelectAddresses,
+      chain_server_id,
+      keyword,
+      isLpTokenEnabled,
+    );
+  }, [
+    registerTokenSelect,
+    tokenSelectAddresses,
+    chain_server_id,
+    keyword,
+    isLpTokenEnabled,
+  ]);
+
+  const tokens = useTokenListComputedStore(state => {
+    return state.tokenSelectCache[tokenSelectKey] || [];
+  });
+
+  const mergedTokens = useMemo(() => {
+    if (!keyword || !searchTokenResult?.length) {
+      return tokens;
+    }
+    const seen = new Set(tokens.map(token => `${token.chain}:${token.id}`));
+    const mergedList = tokens.slice();
+    searchTokenResult.forEach(token => {
+      const key = `${token.chain}:${token.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        mergedList.push(token);
+      }
+    });
+    return mergedList;
+  }, [keyword, searchTokenResult, tokens]);
+
+  const formatToken = useCallback(
+    (token: ITokenItem) =>
+      tagTokenItemFavorite(token, makeTokenSettingSets(userTokenSettings)),
+    [userTokenSettings],
+  );
 
   const tokenWithOwner = useMemo(() => {
-    const formatToken = (token: ITokenItem) => {
-      const tagedToken = tagTokenItemFavorite(
-        token,
-        makeTokenSettingSets(userTokenSettings),
-      );
-      return tagedToken;
-    };
+    return mergedTokens.map(formatToken);
+  }, [mergedTokens, formatToken]);
 
-    return {
-      unFoldTokens: tokens.unFoldTokens.map(formatToken),
-      foldTokens: tokens.foldTokens.map(formatToken),
-      scamTokens: tokens.scamTokens.map(formatToken),
-    };
-  }, [tokens, userTokenSettings]);
+  const shouldLoadRecommended = useMemo(() => {
+    if (
+      !currentAddress ||
+      isLpTokenEnabled ||
+      keyword ||
+      (searchTokenResult && searchTokenResult.length > 0)
+    ) {
+      return false;
+    }
+    return tokens.length === 0;
+  }, [
+    currentAddress,
+    isLpTokenEnabled,
+    keyword,
+    searchTokenResult,
+    tokens.length,
+  ]);
+
+  const { value: recommendedTokens, loading: loadingRecommendedTokens } =
+    useAsync(async () => {
+      if (!shouldLoadRecommended || !currentAddress) {
+        return [];
+      }
+      const list = await openapi.getSwapTokenList(
+        currentAddress,
+        chain_server_id || '',
+      );
+      return list.map(item => tokenItemToITokenItem(item, ''));
+    }, [shouldLoadRecommended, currentAddress, chain_server_id]);
+
+  const finalTokens = useMemo(() => {
+    if (recommendedTokens && recommendedTokens.length > 0) {
+      const formattedRecommended = recommendedTokens.map(formatToken);
+      return [...tokenWithOwner, ...formattedRecommended];
+    }
+    return tokenWithOwner;
+  }, [tokenWithOwner, recommendedTokens, formatToken]);
 
   const checkIsExpireAndUpdate = useCallback(async () => {
     if (currentAccount) {
       return;
     }
-    return batchGetTokenList(top10Addresses).finally(() => {
-      setIsFirstFetch(false);
-    });
+    return batchGetTokenList(top10Addresses);
   }, [batchGetTokenList, currentAccount, top10Addresses]);
 
   const loadOnVisibleChanged = useCallback(
@@ -97,16 +225,12 @@ export const useSelectTokens = ({
   );
 
   return {
-    tokens: tokenWithOwner,
-    existedTokens: !!(
-      tokens.foldTokens.length +
-      tokens.unFoldTokens.length +
-      tokens.scamTokens.length
-    ),
+    tokens: finalTokens,
+    existedTokens: !!tokens.length,
+    isSearching: searchingToken || loadingRecommendedTokens,
     isLoading: isLoadingToken,
     checkIsExpireAndUpdate,
     loadToken,
-    refreshing: !!isLoadingToken && !isFirstFetch,
     loadOnVisibleChanged,
   };
 };

@@ -23,7 +23,7 @@ import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
 import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 import {
-  TokenRowSectionHeader,
+  TokenRowSectionLpTokenHeader,
   TokenRowV2,
 } from './components/AssetRenderItems';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -32,7 +32,11 @@ import {
   useSingleHomeChain,
   useSingleHomeSelectData,
 } from './hooks/singleHome';
-import useTokenList, { ITokenItem } from '@/store/tokens';
+import useTokenList, {
+  getSingleAssetsCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 import { formatNetworth } from '@/utils/math';
 
 type TokenListItem =
@@ -85,6 +89,7 @@ export const TokenList = ({
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
+  const [isLpTokenEnabled, setIsLpTokenEnabled] = useState(false);
 
   const focusedTab = useFocusedTab();
   const isFocused = useMemo(() => {
@@ -103,17 +108,43 @@ export const TokenList = ({
     [],
   );
 
-  const { unFoldTokens, foldTokens, scamTokens } = useTokenList(
+  const registerSingleAssets = useTokenListComputedStore(
+    state => state.registerSingleAssets,
+  );
+
+  const singleAssetsKey = useMemo(() => {
+    if (!currentAddress) {
+      return null;
+    }
+    return getSingleAssetsCacheKey(
+      currentAddress,
+      selectedChain,
+      isLpTokenEnabled,
+    );
+  }, [currentAddress, selectedChain, isLpTokenEnabled]);
+
+  useEffect(() => {
+    if (!currentAddress) {
+      return;
+    }
+    registerSingleAssets(currentAddress, selectedChain, isLpTokenEnabled);
+  }, [currentAddress, selectedChain, isLpTokenEnabled, registerSingleAssets]);
+
+  const { unFoldTokens, foldTokens, scamTokens } = useTokenListComputedStore(
     useShallow(state =>
-      currentAddress
-        ? state.forSingleAssets(currentAddress, selectedChain)
+      singleAssetsKey
+        ? state.singleAssetsCache[singleAssetsKey] || emptyResult
         : emptyResult,
     ),
   );
 
   const isLoading = useTokenList(state => {
     if (!lowerAddress) return false;
-    return !!state.isLoadingByAddress[lowerAddress];
+    return !!state.isLoadingByAddress[lowerAddress]?.loading;
+  });
+  const isAllLoading = useTokenList(state => {
+    if (!lowerAddress) return false;
+    return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
   });
   const { getTokenList } = useTokenList();
 
@@ -142,7 +173,7 @@ export const TokenList = ({
     });
 
     const hasFoldSection = foldTokens.length > 0 || scamTokens.length > 0;
-    if (hasFoldSection) {
+    if (hasFoldSection || isLpTokenEnabled) {
       items.push({ type: 'toggle_token_fold' });
       if (!foldHideList) {
         foldTokens.forEach(token => {
@@ -166,7 +197,10 @@ export const TokenList = ({
       }
     }
 
-    if (isLoading && items.length === 0) {
+    if (
+      (isLoading && items.length === 0) ||
+      (isAllLoading && isLpTokenEnabled)
+    ) {
       items.push(
         ...Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton' as const,
@@ -199,7 +233,9 @@ export const TokenList = ({
     foldHideList,
     foldScam,
     foldTokens,
+    isAllLoading,
     isLoading,
+    isLpTokenEnabled,
     noAnyAssets,
     scamTokens,
     t,
@@ -267,17 +303,20 @@ export const TokenList = ({
           );
         case 'toggle_token_fold':
           return (
-            <TokenRowSectionHeader
-              str={foldTokenUsdValue}
+            <TokenRowSectionLpTokenHeader
+              isEnabled={isLpTokenEnabled}
+              onValueChange={setIsLpTokenEnabled}
               fold={foldHideList}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
                 styles.buttonHeader,
                 !isLight && styles.bg2,
               ])}
+              str={foldTokenUsdValue}
               onPressFold={() => {
                 if (!foldHideList) {
                   setFoldScam(true);
+                  setIsLpTokenEnabled(false);
                 }
                 setFoldHideList(pre => !pre);
               }}
@@ -314,6 +353,7 @@ export const TokenList = ({
       foldTokenUsdValue,
       handleOpenTokenDetail,
       isLight,
+      isLpTokenEnabled,
       styles,
     ],
   );

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import orderBy from 'lodash/orderBy';
 
@@ -7,10 +7,14 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
 import { useChainBalances, useMatteredChainBalancesAll } from '@/hooks/account';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
-import useTokenList, { ITokenItem } from '@/store/tokens';
-import { useShallow } from 'zustand/shallow';
+import useTokenList, {
+  getChainSelectorCacheKey,
+  ITokenItem,
+  useTokenListComputedStore,
+} from '@/store/tokens';
 
 export default function MixedFlatChainList({
   style,
@@ -36,9 +40,30 @@ export default function MixedFlatChainList({
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   account?: Account | null;
 }) {
-  const tokens = useTokenList(
-    useShallow(s => s.forChainSelector(currentAccount?.address)),
+  const { top10Addresses } = useAccountInfo();
+  const selectedAddresses = useMemo(() => {
+    if (needAllAddresses) {
+      return top10Addresses;
+    }
+    if (currentAccount?.address) {
+      return [currentAccount.address];
+    }
+    return [];
+  }, [needAllAddresses, top10Addresses, currentAccount?.address]);
+  const registerChainSelector = useTokenListComputedStore(
+    state => state.registerChainSelector,
   );
+  const chainSelectorKey = useMemo(
+    () => getChainSelectorCacheKey(selectedAddresses),
+    [selectedAddresses],
+  );
+  useEffect(() => {
+    registerChainSelector(selectedAddresses);
+  }, [selectedAddresses, registerChainSelector]);
+
+  const tokens = useTokenListComputedStore(state => {
+    return state.chainSelectorCache[chainSelectorKey] || [];
+  });
 
   const { styles } = useTheme2024({ getStyle });
   const { matteredChainBalances } = useChainBalances();
