@@ -219,6 +219,7 @@ export const TokenList = () => {
       <MemoizedTokenRowSectionHeader
         style={styles.tokenSectionHeader}
         fold={foldHideList}
+        str={foldTokenUsdValue}
         onPressFold={handleToggleTokenFold}
         isEnabled={isLpTokenEnabled}
         onValueChange={setIsLpTokenEnabled}

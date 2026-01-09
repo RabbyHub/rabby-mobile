@@ -24,6 +24,8 @@ import { trigger } from 'react-native-haptic-feedback';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { findChain } from '@/utils/chain';
 import { ITokenItem } from '@/store/tokens';
+import { isLpToken } from '@/utils/lpToken';
+import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -94,6 +96,11 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             ellipsizeMode="tail">
             {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
+          {isLpToken(token) && (
+            <View style={styles.lpTokenIconContainer}>
+              <LpTokenIcon protocolId={token.protocol_id || ''} />
+            </View>
+          )}
           {showCopyIcon && !isNativeToken && (
             <TouchableOpacity
               style={styles.touchBox}
@@ -123,6 +130,11 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  lpTokenIconContainer: {
+    marginLeft: 0,
+    flexShrink: 0,
+    justifyContent: 'flex-start',
   },
   tokenSymbol: {
     flexShrink: 1,
