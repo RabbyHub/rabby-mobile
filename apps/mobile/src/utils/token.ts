@@ -230,11 +230,11 @@ export class DisplayedToken implements AbstractPortfolioToken {
   decimals: number;
   display_symbol: string | null;
   raw_amount_hex_str?: string;
-  is_core: boolean;
+  is_core: boolean | null;
   is_wallet: boolean;
   name: string;
   optimized_symbol: string;
-  is_verified: boolean;
+  is_verified: boolean | null;
   time_at: number;
   price_24h_change?: number | null;
   low_credit_score?: boolean;
