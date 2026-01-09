@@ -1022,13 +1022,13 @@ export class PreferenceService {
 
   getUserTokenSettingsSync = () => {
     return {
-      foldTokens: this.store.foldTokens || [],
-      unfoldTokens: this.store.unfoldTokens || [],
-      includeDefiAndTokens: this.store.includeDefiAndTokens || [],
-      excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
+      foldTokens: [],
+      unfoldTokens: [],
+      includeDefiAndTokens: [],
+      excludeDefiAndTokens: [],
       pinedQueue: this.store.pinedQueue || [],
-      foldNfts: this.store.foldNfts || [],
-      unfoldNfts: this.store.unFoldNfts || [],
+      foldNfts: [],
+      unfoldNfts: [],
       foldDefis: [],
       // foldDefis: this.store.foldDefis || [],
       unFoldDefis: [],

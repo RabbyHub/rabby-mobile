@@ -123,9 +123,15 @@ function getMultiAssetsFoldResultFromParts({
 }
 
 const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) => {
-  const aUsdValue = a.is_core ? a.usd_value || 0 : -1;
-  const bUsdValue = b.is_core ? b.usd_value || 0 : -1;
-  return bUsdValue - aUsdValue;
+  if (a.is_core && !b.is_core) {
+    return -1;
+  }
+  if (!a.is_core && b.is_core) {
+    return 1;
+  }
+  const aValue = (a.price ?? 0) * (a.amount ?? 0);
+  const bValue = (b.price ?? 0) * (b.amount ?? 0);
+  return bValue - aValue;
 };
 
 const sortByUsdValueDesc = (list: ITokenItem[]) =>
@@ -397,6 +403,7 @@ const computeTokenSelect = (
     sortedUnfoldTokens = searchAndSortTokens(tokens);
   } else if (isLpTokenEnabled) {
     sortedUnfoldTokens = filterAndSortTokens(tokens);
+    console.log('CUSTOM_LOGGER:=>: ', sortedUnfoldTokens);
   } else {
     sortedUnfoldTokens = sortByUsdValueDesc(tokens);
   }
