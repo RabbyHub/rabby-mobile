@@ -173,7 +173,7 @@ export const TokenList = ({
     });
 
     const hasFoldSection = foldTokens.length > 0 || scamTokens.length > 0;
-    if (hasFoldSection) {
+    if (hasFoldSection || isLpTokenEnabled) {
       items.push({ type: 'toggle_token_fold' });
       if (!foldHideList) {
         foldTokens.forEach(token => {
