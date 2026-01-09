@@ -26,7 +26,11 @@ export const LpTokenDescription: React.FC<{
       <Text style={styles.title}>
         {t('component.lpTokenModal.desc', { protocolId })}
       </Text>
-      <Button containerStyle={styles.button} title="Got it" onPress={onClose} />
+      <Button
+        containerStyle={styles.button}
+        title={t('global.GotIt')}
+        onPress={onClose}
+      />
     </AutoLockView>
   );
 };
