@@ -791,7 +791,7 @@ export class PreferenceService {
     this.store.sendEnableTime = time;
   };
 
-  setAutoLockTime = (time: number) => {
+  setAutoLockExpireTime = (time: number) => {
     this.store.autoLockTime = time;
   };
   setHiddenBalance = (value: boolean) => {

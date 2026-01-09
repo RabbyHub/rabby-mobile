@@ -1,16 +1,7 @@
-import { useCallback, useEffect, useMemo } from 'react';
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
-import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { apisAutoLock } from '@/core/apis';
-import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { preferenceService } from '@/core/services';
 import { isNonPublicProductionEnv } from '@/constant';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 
@@ -135,54 +126,6 @@ export function useForceAllowScreenshot() {
     iosForceAllowScreenRecord: result.iosForceAllowScreenRecord,
     forceAllowScreenshot: isAllowScreenshot(result),
     setAllowScreenshot,
-  };
-}
-
-const autoLockState = zCreate<{
-  minutes: number;
-}>(() => ({
-  minutes:
-    apisAutoLock.getPersistedAutoLockTimes()?.minutes ||
-    DEFAULT_AUTO_LOCK_MINUTES,
-}));
-function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
-  autoLockState.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.minutes, valOrFunc);
-
-    return { ...prev, minutes: newVal };
-  });
-}
-
-runIIFEFunc(() => {
-  const times = apisAutoLock.getPersistedAutoLockTimes();
-  setAutoLockMinutes(times.minutes);
-});
-
-export function useAutoLockTimeMinites() {
-  const autoLockMinutes = autoLockState(s => s.minutes);
-
-  return { autoLockMinutes };
-}
-
-const onAutoLockTimeMsChange = (ms: number) => {
-  const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
-  setAutoLockMinutes(minutes);
-  preferenceService.setPreference({
-    autoLockTime: minutes,
-  });
-  apisAutoLock.refreshAutolockTimeout();
-};
-export function useAutoLockTimeMs() {
-  const autoLockMinutes = autoLockState(s => s.minutes);
-
-  const autoLockMs = useMemo(
-    () => autoLockMinutes * 60 * 1000,
-    [autoLockMinutes],
-  );
-
-  return {
-    autoLockMs,
-    onAutoLockTimeMsChange,
   };
 }
 
