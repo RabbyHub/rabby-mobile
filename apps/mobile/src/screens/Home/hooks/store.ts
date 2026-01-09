@@ -1,5 +1,4 @@
 import BigNumber from 'bignumber.js';
-import { atom, useAtom } from 'jotai';
 
 import { formatNetworth } from '@/utils/math';
 import {
@@ -8,7 +7,6 @@ import {
   DisplayNftItem,
 } from '../types';
 import { DisplayedProject } from '../utils/project';
-import { formatAmount } from '@/utils/number';
 import { useCallback, useEffect, useMemo } from 'react';
 import { preferenceService } from '@/core/services';
 import { usePinTokens } from '@/screens/Search/usePinTokens';
@@ -17,13 +15,8 @@ import { tagProfiles } from './usePortfolio';
 import { tagNfts } from './nft';
 // import { tokenNonceAtom, deFiNonceAtom, nftNonceAtom } from './refresh';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import {
-  makeAvoidParallelAsyncFunc,
-  resolveValFromUpdater,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { eventBus, EventBusListeners } from '@/utils/events';
 
 type OriginalCombineTokensItem = AbstractPortfolioToken & {
@@ -56,109 +49,6 @@ export interface IAssets {
   tokens?: AbstractPortfolioToken[];
   nfts?: DisplayNftItem[];
 }
-
-function encodeTokenKey(chain: string, id: string) {
-  return `${chain.toLowerCase()}-${id.toLowerCase()}`;
-}
-
-export const combinedTokens = (
-  tokensMap: { [address: string]: AbstractPortfolioToken[] },
-  caredAddresses: string[],
-  filter?: {
-    chain?: string;
-    tokenId?: string;
-  },
-): CombineTokensItem[] => {
-  const { unfoldTokens = [] } =
-    preferenceService.getUserTokenSettingsSync() || {};
-  const unfoldTokensSet = new Set(
-    unfoldTokens.map(item => encodeTokenKey(item.chainId, item.tokenId)),
-  );
-  const tokens: OriginalCombineTokensItem[] = [];
-  const lowerAddresses = new Set(
-    Object.keys(tokensMap).map(i => i.toLowerCase()),
-  );
-  const caredAddressesSet = new Set(caredAddresses.map(i => i.toLowerCase()));
-
-  Object.entries(tokensMap).forEach(([address, tokenList]) => {
-    if (
-      !lowerAddresses.has(address.toLowerCase()) ||
-      !caredAddressesSet.has(address.toLowerCase())
-    ) {
-      return;
-    }
-    lowerAddresses.delete(address.toLowerCase());
-    tokenList?.forEach(token => {
-      if (filter) {
-        if (filter.chain && filter.tokenId) {
-          if (
-            filter.chain.toLowerCase() !== token.chain.toLowerCase() ||
-            filter.tokenId.toLowerCase() !== token._tokenId.toLowerCase()
-          ) {
-            return;
-          }
-        }
-      }
-      tokens.push({
-        ...token,
-        totalAmount: new BigNumber(token.amount || 0),
-        totalUsdValue: new BigNumber(token._usdValue || 0),
-        address,
-      });
-    });
-  });
-
-  const coreTokens = tokens.filter(i => i.is_core);
-  const listLength = coreTokens.length || 0;
-  const totalValue = coreTokens.reduce(
-    (acc, curr) => acc + (curr.totalUsdValue.toNumber() || 0),
-    0,
-  );
-  const threshold = Math.min((totalValue || 0) / 100, 1000);
-  const thresholdIndex = coreTokens
-    ? coreTokens.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
-    : -1;
-
-  const hasExpandSwitch =
-    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
-
-  return tokens
-    .sort((a, b) =>
-      a.totalUsdValue.gt(b.totalUsdValue)
-        ? -1
-        : a.totalUsdValue.lt(b.totalUsdValue)
-        ? 1
-        : 0,
-    )
-    .map(i => {
-      if (
-        !hasExpandSwitch ||
-        !i.is_core ||
-        i._isManualFold ||
-        unfoldTokensSet.has(encodeTokenKey(i.chain, i._tokenId))
-      ) {
-        return {
-          ...i,
-          totalAmount: i.totalAmount.toNumber(),
-          totalUsdValue: i.totalUsdValue?.toNumber(),
-          _usdValue: i.totalUsdValue?.toNumber(),
-          _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
-          _amountStr: formatAmount(i.totalAmount.toNumber()),
-        };
-      } else {
-        return {
-          ...i,
-          totalAmount: i.totalAmount.toNumber(),
-          totalUsdValue: i.totalUsdValue?.toNumber(),
-          _usdValue: i.totalUsdValue?.toNumber(),
-          _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
-          _amountStr: formatAmount(i.totalAmount.toNumber()),
-          _isFold: (i.totalUsdValue?.toNumber() || 0) < threshold,
-          _isMiniFold: (i.totalUsdValue?.toNumber() || 0) < threshold,
-        };
-      }
-    });
-};
 
 // function encodePortfolioKey(chain: string, id: string) {
 //   return `${chain.toLowerCase()}-${id.toLowerCase()}`;
@@ -493,15 +383,6 @@ export function useOnNftRefresh() {
 }
 
 export const computeAssetsApis = {
-  memoTokens: (
-    caredAddresses: string[],
-    tokensMap?: AssetsMapState['tokensMap'],
-  ) => {
-    const globalTokensMap = tokensMap || assetsMapStore.getState().tokensMap;
-    const tokens = combinedTokens(globalTokensMap, caredAddresses);
-
-    return tokens;
-  },
   memoPortfolios: (
     caredAddresses: string[],
     portfoliosMap?: AssetsMapState['portfoliosMap'],
@@ -518,31 +399,6 @@ export const computeAssetsApis = {
 
     return nfts;
   },
-};
-
-let top20TokensCache: CombineTokensItem[] = [];
-export const useAssetsTokens = ({
-  hideCombined = false,
-}: {
-  hideCombined?: boolean;
-}) => {
-  const globalTokensMap = assetsMapStore(s => s.tokensMap);
-
-  const { top10Addresses } = useAccountInfo();
-
-  const memoTokens = useMemo(() => {
-    if (hideCombined) {
-      return top20TokensCache;
-    }
-
-    const tokens = combinedTokens(globalTokensMap, top10Addresses);
-    top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 20);
-    return tokens;
-  }, [hideCombined, globalTokensMap, top10Addresses]);
-
-  return {
-    tokens: memoTokens,
-  };
 };
 
 let top10PortfoliosCache: CombineDefiItem[] = [];

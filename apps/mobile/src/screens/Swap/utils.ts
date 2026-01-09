@@ -18,9 +18,9 @@ export function isSwapWrapToken(
   chain: CHAINS_ENUM,
 ) {
   const wrapTokens = [
-    WrapTokenAddressMap[chain as keyof typeof WrapTokenAddressMap],
-    findChainByEnum(chain)?.nativeTokenAddress ||
-      CHAINS[chain].nativeTokenAddress,
+    WrapTokenAddressMap[chain as keyof typeof WrapTokenAddressMap]!,
+    (findChainByEnum(chain)?.nativeTokenAddress ||
+      CHAINS[chain].nativeTokenAddress)!,
   ];
   return (
     !!payTokenId &&

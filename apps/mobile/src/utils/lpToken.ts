@@ -1,6 +1,6 @@
 interface IsLpTokenProps {
-  is_verified?: boolean;
-  is_core?: boolean;
+  is_verified?: boolean | null;
+  is_core?: boolean | null;
   protocol_id?: string;
 }
 

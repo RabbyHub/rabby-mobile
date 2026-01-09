@@ -21,7 +21,7 @@ export const useShowImportMoreAddressPopup = () => {
       passphrase?: string;
       keyringId?: number;
       account?: KeyringAccountWithAlias;
-      brand: string;
+      brandName: string;
     }) => {
       Keyboard.dismiss();
       if (modalRef.current) {

@@ -81,10 +81,6 @@ export const TokenList = () => {
   const getAccountByAddress = useFindAccountByAddress();
   const { isFocused } = useIsFocusedCurrentTab(TabName.token);
 
-  // const { tokens: _rawTokens } = useAssetsTokens({
-  //   hideCombined: false,
-  // });
-
   const emptyResult = useMemo(
     () => ({
       unFoldTokens: [] as ITokenItem[],

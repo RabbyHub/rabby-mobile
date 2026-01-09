@@ -19,8 +19,8 @@ export interface ITokenItem {
   decimals: number;
   display_symbol: string | null;
   id: string;
-  is_core: boolean;
-  is_verified: boolean;
+  is_core: boolean | null;
+  is_verified: boolean | null;
   is_wallet: boolean;
   logo_url: string;
   name: string;
@@ -360,7 +360,7 @@ const computeTokenSelect = (
       const bExactMatch =
         bIdLower === keywordLower || bSymbolLower === keywordLower;
 
-      const getScore = (exactMatch: boolean, isCore: boolean) => {
+      const getScore = (exactMatch: boolean, isCore: boolean | null) => {
         if (exactMatch && isCore) {
           return 4;
         }
