@@ -24,6 +24,7 @@ import {
 import {
   BottomSheetBackdropProps,
   BottomSheetFlatList,
+  BottomSheetFlatListMethods,
   BottomSheetSectionList,
 } from '@gorhom/bottom-sheet';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
@@ -350,6 +351,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
   ) => {
     const { sheetModalRef: tokenSelectorModalRef, toggleShowSheetModal } =
       useSheetModal();
+    const listRef = useRef<BottomSheetFlatListMethods>(null);
     const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
     const { list: cexList } = useCexSupportList();
 
@@ -382,6 +384,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           _onFavoriteFilterChange?.('all');
         }
         _onLpTokenChange?.(value);
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
       },
       [_onLpTokenChange, _onFavoriteFilterChange],
     );
@@ -1321,6 +1324,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               style={[styles.scrollView]}
               onScrollBeginDrag={() => Keyboard.dismiss()}
               windowSize={5}
+              ref={listRef}
               data={dataList}
               showsVerticalScrollIndicator={false}
               keyExtractor={item => {
