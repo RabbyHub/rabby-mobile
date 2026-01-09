@@ -76,7 +76,7 @@ export const ImportSuccessScreen2024 = () => {
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const { t } = useTranslation();
-  const { getTokenList } = useTokenList();
+  const getTokenList = useTokenList(s => s.getTokenList);
 
   const route =
     useRoute<

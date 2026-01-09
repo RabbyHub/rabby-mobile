@@ -63,7 +63,7 @@ export const PerpsSelectTokenPopup: React.FC<{
     }
     return state.perpsTokenSelectCache[perpsTokenKey] || [];
   });
-  const { getTokenList } = useTokenList();
+  const getTokenList = useTokenList(s => s.getTokenList);
 
   const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
     async () => {

@@ -111,7 +111,7 @@ export const TokenList = () => {
     useShallow(state => state.multiAssetsCache[multiAssetsKey] || emptyResult),
   );
 
-  const { isLoading } = useTokenList();
+  const isLoading = useTokenList(s => s.isLoading);
 
   const foldTokenUsdValue = useMemo(() => {
     const usdValue = foldTokens
@@ -122,7 +122,7 @@ export const TokenList = () => {
     return formatNetworth(usdValue * currency.usd_rate, false, currency.symbol);
   }, [foldTokens, currency]);
 
-  const { batchGetTokenList } = useTokenList();
+  const batchGetTokenList = useTokenList(s => s.batchGetTokenList);
 
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
