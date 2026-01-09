@@ -1244,6 +1244,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'relative',
       borderRadius: 12,
       alignItems: 'center',
+      overflow: 'hidden',
     },
     filterRowScrollView: {
       height: 34,
