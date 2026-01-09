@@ -34,6 +34,11 @@ export const TIME_SETTINGS: {
     getLabel: () => t('global.time.mins', { t: 5 }),
     milliseconds: 5 * 60 * 1000,
   },
+  {
+    key: 'never',
+    getLabel: () => t('global.autolock.never'),
+    milliseconds: -1,
+  },
 ];
 
 if (__DEV__) {

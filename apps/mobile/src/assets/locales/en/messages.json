@@ -3308,7 +3308,10 @@
       }
     },
     "check": "Check",
-    "gotIt": "Got It"
+    "gotIt": "Got It",
+    "autolock": {
+      "never": "Never"
+    }
   },
   "background": {
     "error": {
