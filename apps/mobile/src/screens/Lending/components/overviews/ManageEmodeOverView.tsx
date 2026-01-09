@@ -19,7 +19,7 @@ import {
 import TokenIcon from '../TokenIcon';
 import { isHFEmpty } from '../../utils';
 import { useMode } from '../../hooks/useMode';
-import { useLendingISummary, useLendingSummary } from '../../hooks';
+import { useLendingISummary } from '../../hooks';
 import HealthFactorText from '../HealthFactorText';
 import { CategorySelector } from '../EmodeCategory/CategorySelector';
 

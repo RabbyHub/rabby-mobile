@@ -100,3 +100,41 @@ export const getFromToken = (
     totalDebtUSD: reserve.totalDebtUSD,
   };
 };
+
+export const getCollateralTokens = (
+  user: UserSummary,
+  chainId: number,
+): SwappableToken[] => {
+  if (!user) {
+    return [];
+  }
+  return user?.userReservesData
+    .filter(userReserve => userReserve.underlyingBalance !== '0')
+    .map<SwappableToken | undefined>(position => {
+      //const isWrappedNative =
+      //  WRAPPED_NATIVE_CURRENCIES[
+      //    chainId as SupportedChainId
+      //  ]?.address?.toLowerCase() === position.underlyingAsset.toLowerCase();
+      //const nativeToken = isWrappedNative
+      //  ? TOKEN_LIST.tokens.find(
+      //      t => t.extensions?.isNative && t.chainId === chainId,
+      //    )
+      //  : undefined;
+
+      return {
+        addressToSwap: position.reserve.aTokenAddress,
+        addressForUsdPrice: position.reserve.aTokenAddress,
+        underlyingAddress: position.reserve.underlyingAsset,
+        decimals: position.reserve.decimals,
+        symbol: position.reserve.symbol,
+        name: position.reserve.name,
+        balance: position.underlyingBalance,
+        chainId,
+        usdPrice: position.reserve.priceInUSD,
+        supplyAPY: position.reserve.supplyAPY,
+        variableBorrowAPY: position.reserve.variableBorrowAPY,
+        totalDebtUSD: position.reserve.totalDebtUSD,
+      };
+    })
+    .filter(token => token !== undefined);
+};

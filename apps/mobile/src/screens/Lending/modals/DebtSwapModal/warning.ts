@@ -49,7 +49,7 @@ export const getPriceImpactData = ({
   fromAmount: string;
   toAmount: string;
 }) => {
-  if (!fromToken || !toToken || !fromAmount || !toAmount) {
+  if (!fromToken || !toToken || !Number(fromAmount) || !Number(toAmount)) {
     return {
       showWarning: false,
       showConfirmation: false,

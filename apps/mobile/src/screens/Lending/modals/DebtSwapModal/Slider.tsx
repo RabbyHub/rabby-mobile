@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 
-import { useWindowDimensions, View } from 'react-native';
+import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -20,11 +20,13 @@ interface DebtSwapModalSliderProps {
   fromToken: SwappableToken;
   slider: number;
   onChangeSlider: (value: number) => void;
+  style?: StyleProp<ViewStyle>;
 }
 const DebtSwapModalSlider = ({
   fromToken,
   slider,
   onChangeSlider,
+  style,
 }: DebtSwapModalSliderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const showBubble = useSharedValue(false);
@@ -69,7 +71,7 @@ const DebtSwapModalSlider = ({
     <Slider
       key={`${fromToken?.underlyingAddress}`}
       allowTouchTrack={true}
-      style={styles.slider}
+      style={[styles.slider, style]}
       value={slider}
       onSlidingStart={() => {
         showBubble.value = true;
