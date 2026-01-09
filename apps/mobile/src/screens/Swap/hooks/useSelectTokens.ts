@@ -18,6 +18,8 @@ import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken'
 import { openapi } from '@/core/request';
 import { tokenItemToITokenItem } from '@/utils/token';
 
+const EMPTY_TOKEN_LIST: ITokenItem[] = [];
+
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
   chain_server_id,
@@ -58,8 +60,10 @@ export const useSelectTokens = ({
     return top10Addresses;
   }, [currentAddress, top10Addresses, keyword]);
 
-  const { isLoading, isLoadingByAddress, batchGetTokenList, getTokenList } =
-    useTokenList();
+  const isLoading = useTokenList(s => s.isLoading);
+  const isLoadingByAddress = useTokenList(s => s.isLoadingByAddress);
+  const batchGetTokenList = useTokenList(s => s.batchGetTokenList);
+  const getTokenList = useTokenList(s => s.getTokenList);
 
   const registerTokenSelect = useTokenListComputedStore(
     state => state.registerTokenSelect,
@@ -141,8 +145,12 @@ export const useSelectTokens = ({
   ]);
 
   const tokens = useTokenListComputedStore(state => {
-    return state.tokenSelectCache[tokenSelectKey] || [];
+    return state.tokenSelectCache[tokenSelectKey] || EMPTY_TOKEN_LIST;
   });
+
+  useEffect(() => {
+    console.log('tokens', tokens);
+  }, [tokens]);
 
   const mergedTokens = useMemo(() => {
     if (!keyword || !searchTokenResult?.length) {
