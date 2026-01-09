@@ -19,9 +19,8 @@ import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain } from './global';
 import { getTriedUnlock, storeApiLock } from './useLock';
 import SplashScreen from 'react-native-splash-screen';
-import { storeApisAccounts, useAccounts } from './account';
-import { useLoadLockInfo } from '@/hooks/useLock';
-import { storeApisBiometrics, useBiometrics } from './biometrics';
+import { storeApiAccounts } from './account';
+import { storeApisBiometrics } from './biometrics';
 // import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
 import { RefLikeObject } from '@/utils/type';
@@ -106,12 +105,12 @@ export function useInitializeAppOnTop() {
       sendUserAddressEvent();
 
       doInitializeApis();
-      storeApisAccounts.fetchAccounts();
+      storeApiAccounts.fetchAccounts();
       perpsService.unlockAgentWallets();
     };
     const onLock = () => {
       storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: false }));
-      storeApisAccounts.fetchAccounts();
+      storeApiAccounts.fetchAccounts();
       setBrowserState({
         isShowBrowser: false,
         isShowSearch: false,

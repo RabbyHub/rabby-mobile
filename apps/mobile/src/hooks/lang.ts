@@ -115,22 +115,20 @@ export function useAppLanguage() {
   };
 }
 
-/**
- * @description only call this hook once in the app
- */
-export function useTriggerI18nChangeOnAppTop() {
-  const { currentLanguage } = useAppLanguage();
+function i18nChange(lang: SupportedLang) {
+  i18n
+    .changeLanguage(filterSupportedLang(lang))
+    .then(() => {
+      console.debug(`[useTriggerI18nChangeOnAppTop] current language: ${lang}`);
+    })
+    .catch(error => {
+      console.error(error);
+    });
+}
 
-  useEffect(() => {
-    i18n
-      .changeLanguage(currentLanguage)
-      .then(() => {
-        console.debug(
-          `[useTriggerI18nChangeOnAppTop] current language: ${currentLanguage}`,
-        );
-      })
-      .catch(error => {
-        console.error(error);
-      });
-  }, [currentLanguage]);
+export function startSubscribeLangChange() {
+  i18nChange(langStore.getState().lang);
+  langStore.subscribe(async state => {
+    i18nChange(state.lang);
+  });
 }

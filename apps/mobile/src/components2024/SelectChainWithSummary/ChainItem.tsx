@@ -6,7 +6,10 @@ import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useChainBalances, useMatteredChainBalancesAll } from '@/hooks/account';
+import {
+  useChainBalances,
+  useMatteredChainBalancesAll,
+} from '@/hooks/accountChainBalance';
 import { RcWalletCC } from '@/assets/icons/common';
 import { formatUsdValue } from '@/utils/number';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';

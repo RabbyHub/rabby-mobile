@@ -1,7 +1,7 @@
 import {
   EVENT_NAMES,
   MODAL_NAMES,
-} from '@/components/GlobalBottomSheetModal/types';
+} from '@/components2024/GlobalBottomSheetModal/types';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { eventBus, EVENTS } from './events';

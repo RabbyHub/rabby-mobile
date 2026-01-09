@@ -44,7 +44,7 @@ import {
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
+import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
 import { createGetStyles2024 } from '@/utils/styles';

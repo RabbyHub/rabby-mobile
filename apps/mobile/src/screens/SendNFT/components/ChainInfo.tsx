@@ -8,7 +8,7 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { SelectSortedChainProps } from '@/components/SelectSortedChain';
+import { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
 import { useFindChain } from '@/hooks/useFindChain';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
