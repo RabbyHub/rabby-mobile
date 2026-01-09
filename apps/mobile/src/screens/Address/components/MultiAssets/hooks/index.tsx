@@ -112,7 +112,9 @@ export async function getShowReceiveAddressTip(options?: {
     const myAccounts = await storeApiAccounts
       .fetchAccounts()
       .then(accounts => filterMyAccounts(accounts));
-    const accountsToCheck = filterDirectlySignableAccounts(myAccounts);
+    const accountsToCheck = myAccounts.filter(account =>
+      isAccountToShowReceiveTip(account),
+    );
     if (accountsToCheck.length !== 1) return null;
 
     targetAccount = accountsToCheck[0];

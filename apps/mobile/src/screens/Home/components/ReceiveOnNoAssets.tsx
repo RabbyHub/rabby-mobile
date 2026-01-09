@@ -51,7 +51,7 @@ export function ReceiveOnNoAssets({
           {t('page.address.receiveAssets.title')}
         </Text>
         {!isForSingle && (
-          <AddressItem address={account.address} fetchAccount={false}>
+          <AddressItem account={account} fetchAccount={false}>
             {({ WalletIcon, WalletName }) => (
               <View style={styles.accountItem}>
                 <WalletIcon style={styles.accountAvatar} />
