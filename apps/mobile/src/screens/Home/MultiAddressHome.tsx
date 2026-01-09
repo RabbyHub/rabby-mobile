@@ -9,7 +9,6 @@ import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import { RootNames } from '@/constant/layout';
-import { IS_ANDROID } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,8 +21,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  Animated,
-  PanResponder,
   Dimensions,
   Platform,
   RefreshControl,
@@ -33,7 +30,16 @@ import {
   AppState,
   useWindowDimensions,
 } from 'react-native';
-import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+  Extrapolate,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -115,10 +121,9 @@ import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History } from '@/databases/hooks/history';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
-import { BrowserFavorite } from '../Browser/BrowserScreen/components/BrowserSearch/BrowserFavorite';
-import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { trigger } from 'react-native-haptic-feedback';
+import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -137,7 +142,9 @@ const OverViewComponent = React.memo(
     tabsOpacityRef,
   }: // multi24HBalanceReturn,
   React.ComponentProps<TabMultiAssetsProps['OverViewComponent']> & {
-    tabsOpacityRef?: React.MutableRefObject<Animated.AnimatedInterpolation<number> | null>;
+    tabsOpacityRef?: React.MutableRefObject<
+      import('react-native-reanimated').SharedValue<number> | null
+    >;
   }) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
@@ -491,97 +498,122 @@ const OverViewComponent = React.memo(
     );
 
     const { bottom } = useSafeAreaInsets();
-    const { safeOffHeader, safeTop } = useSafeSizes();
+    const { safeTop } = useSafeSizes();
 
     const [isExpanded, setIsExpanded] = useState(false);
     const pullDistanceRef = useRef(0);
-    const pullDistanceAnim = useRef(new Animated.Value(0)).current;
+    const pullDistanceAnim = useSharedValue(0);
     const isAutoExpandedRef = useRef(false);
     const contentHeightRef = useRef(0);
     const layoutHeightRef = useRef(0);
-    const isAtBottomRef = useRef(false);
     const gestureStartYRef = useRef(0);
     const dismissThreshold = 80;
-    const panelTranslateY = useMemo(
-      () =>
-        pullDistanceAnim.interpolate({
-          inputRange: [0, pullThreshold],
-          outputRange: [height - safeTop, 0],
-          extrapolate: 'clamp',
-        }),
-      [height, pullDistanceAnim, pullThreshold, safeTop],
-    );
-    const panelScale = useMemo(
-      () =>
-        pullDistanceAnim.interpolate({
-          inputRange: [0, pullThreshold],
-          outputRange: isExpanded ? [1, 1] : [0.75, 1],
-          extrapolate: 'clamp',
-        }),
-      [pullDistanceAnim, pullThreshold, isExpanded],
-    );
-    const panelOpacity = useMemo(
-      () =>
-        pullDistanceAnim.interpolate({
-          inputRange: [0, pullThreshold * 0.8],
-          outputRange: [0, 1],
-          extrapolate: 'clamp',
-        }),
-      [pullDistanceAnim, pullThreshold],
-    );
-    const contentTranslateY = useMemo(
-      () =>
-        pullDistanceAnim.interpolate({
-          inputRange: [0, pullThreshold],
-          outputRange: [0, -height + safeTop + 20],
-          extrapolate: 'clamp',
-        }),
-      [height, pullDistanceAnim, pullThreshold, safeTop],
-    );
-    const tabsOpacity = useMemo(
-      () =>
-        pullDistanceAnim.interpolate({
-          inputRange: [0, pullThreshold * 0.5],
-          outputRange: [1, 0],
-          extrapolate: 'clamp',
-        }),
-      [pullDistanceAnim, pullThreshold],
+    const panelTranslateYStyle = useAnimatedStyle(() => {
+      return {
+        transform: [
+          {
+            translateY: interpolate(
+              pullDistanceAnim.value,
+              [0, pullThreshold],
+              [height - safeTop, 0],
+              Extrapolate.CLAMP,
+            ),
+          },
+        ],
+      };
+    }, [height, pullThreshold, safeTop]);
+
+    const panelScaleStyle = useAnimatedStyle(() => {
+      return {
+        transform: [
+          {
+            scale: interpolate(
+              pullDistanceAnim.value,
+              [0, pullThreshold],
+              isExpanded ? [1, 1] : [0.75, 1],
+              Extrapolate.CLAMP,
+            ),
+          },
+        ],
+      };
+    }, [pullThreshold, isExpanded]);
+
+    const contentTranslateYStyle = useAnimatedStyle(() => {
+      return {
+        transform: [
+          {
+            translateY: interpolate(
+              pullDistanceAnim.value,
+              [0, pullThreshold],
+              [0, -height + safeTop + 20],
+              Extrapolate.CLAMP,
+            ),
+          },
+        ],
+      };
+    }, [height, pullThreshold, safeTop]);
+
+    const tabsOpacityValue = useSharedValue(1);
+
+    useAnimatedReaction(
+      () => pullDistanceAnim.value,
+      value => {
+        tabsOpacityValue.value = interpolate(
+          value,
+          [0, pullThreshold * 0.5],
+          [1, 0],
+          Extrapolate.CLAMP,
+        );
+      },
+      [pullThreshold],
     );
 
     useEffect(() => {
       if (tabsOpacityRef) {
-        tabsOpacityRef.current = tabsOpacity;
+        tabsOpacityRef.current = tabsOpacityValue;
       }
-    }, [tabsOpacity, tabsOpacityRef]);
-    const overlayOpacity = useMemo(() => {
-      return pullDistanceAnim.interpolate({
-        inputRange: [0, pullThreshold * 0.3, pullThreshold],
-        outputRange: isExpanded ? [0, 0, 0] : [0, 1, 0],
-        extrapolate: 'clamp',
-      });
-    }, [pullDistanceAnim, pullThreshold, isExpanded]);
+    }, [tabsOpacityRef, tabsOpacityValue]);
 
-    useEffect(() => {
-      pullDistanceAnim.addListener(({ value }) => {
-        if (value >= pullThreshold) {
-          setIsExpanded(true);
-        } else if (value === 0) {
-          setIsExpanded(false);
-        }
-      });
-      return () => {
-        pullDistanceAnim.removeAllListeners();
+    const overlayOpacityStyle = useAnimatedStyle(() => {
+      return {
+        opacity: interpolate(
+          pullDistanceAnim.value,
+          [0, pullThreshold * 0.3, pullThreshold],
+          isExpanded ? [0, 0, 0] : [0, 1, 0],
+          Extrapolate.CLAMP,
+        ),
       };
-    }, [pullDistanceAnim]);
+    }, [pullThreshold, isExpanded]);
+
+    useAnimatedReaction(
+      () => pullDistanceAnim.value,
+      value => {
+        if (value >= pullThreshold) {
+          // runOnJS(setIsExpanded)(true);
+        } else if (value === 0) {
+          // runOnJS(setIsExpanded)(false);
+        }
+      },
+      [pullThreshold],
+    );
 
     const updatePullDistance = useCallback(
       (distance: number) => {
         if (isAutoExpandedRef.current) return;
         pullDistanceRef.current = distance;
-        pullDistanceAnim.setValue(distance);
+        pullDistanceAnim.value = distance;
       },
       [pullDistanceAnim],
     );
+
+    const setExpandedState = useCallback((threshold: number) => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+      isAutoExpandedRef.current = true;
+      pullDistanceRef.current = threshold;
+    }, []);
 
     const triggerAutoExpand = useCallback(() => {
       if (isAutoExpandedRef.current) return;
@@ -591,211 +623,96 @@ const OverViewComponent = React.memo(
       });
       isAutoExpandedRef.current = true;
       pullDistanceRef.current = pullThreshold;
-      Animated.timing(pullDistanceAnim, {
-        toValue: pullThreshold,
+      pullDistanceAnim.value = withTiming(pullThreshold, {
         duration: 220,
-        useNativeDriver: true,
-      }).start();
-    }, [pullDistanceAnim, pullThreshold]);
-
-    const handlePullRelease = useCallback(() => {
-      if (pullDistanceRef.current >= pullThreshold) {
-        isAutoExpandedRef.current = true;
-        Animated.timing(pullDistanceAnim, {
-          toValue: pullThreshold,
-          duration: 220,
-          useNativeDriver: true,
-        }).start();
-        return;
-      }
-      isAutoExpandedRef.current = false;
-      Animated.timing(pullDistanceAnim, {
-        toValue: 0,
-        duration: 180,
-        useNativeDriver: true,
-      }).start();
+      });
     }, [pullDistanceAnim, pullThreshold]);
 
     const collapsePanel = useCallback(() => {
       isAutoExpandedRef.current = false;
       pullDistanceRef.current = 0;
-      Animated.timing(pullDistanceAnim, {
-        toValue: 0,
+      pullDistanceAnim.value = withTiming(0, {
         duration: 220,
-        useNativeDriver: true,
-      }).start();
+      });
     }, [pullDistanceAnim]);
 
-    const checkIsAtBottom = useCallback(() => {
-      if (!contentHeightRef.current || !layoutHeightRef.current) {
-        return false;
-      }
-      const maxOffset = Math.max(
-        0,
-        contentHeightRef.current - layoutHeightRef.current,
-      );
-      // For Android, we need to check the current scroll position
-      // Since we can't get it synchronously, we rely on the ref but also check if content is smaller than layout
-      if (contentHeightRef.current <= layoutHeightRef.current) {
-        return true; // Already at bottom if content fits in view
-      }
-      return isAtBottomRef.current;
-    }, []);
+    const expandPanGesture = Gesture.Pan()
+      .onStart(() => {
+        'worklet';
+      })
+      .onUpdate(event => {
+        'worklet';
+        if (!isAutoExpandedRef.current) {
+          return;
+        }
+        const nextDistance = Math.max(0, pullThreshold - event.translationY);
+        pullDistanceAnim.value = nextDistance;
+      })
+      .onEnd(event => {
+        'worklet';
+        if (!isAutoExpandedRef.current) {
+          return;
+        }
+        if (event.translationY > dismissThreshold) {
+          runOnJS(collapsePanel)();
+          return;
+        }
+        pullDistanceAnim.value = withTiming(pullThreshold, {
+          duration: 180,
+        });
+        runOnJS((threshold: number) => {
+          pullDistanceRef.current = threshold;
+        })(pullThreshold);
+      })
+      .onFinalize(() => {
+        'worklet';
+        if (!isAutoExpandedRef.current) {
+          return;
+        }
+        pullDistanceAnim.value = withTiming(pullThreshold, {
+          duration: 180,
+        });
+      });
 
-    const expandPanResponder = useRef(
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => {
-          if (IS_ANDROID) {
-            // On Android, allow capture when expanded
-            return isAutoExpandedRef.current;
-          }
-          return isAutoExpandedRef.current;
-        },
-        onMoveShouldSetPanResponder: (_, gestureState) => {
-          if (IS_ANDROID) {
-            // On Android, capture swipe down gestures when expanded
-            return isAutoExpandedRef.current && gestureState.dy > 5;
-          }
-          return isAutoExpandedRef.current && Math.abs(gestureState.dy) > 2;
-        },
-        onPanResponderMove: (_, gestureState) => {
-          if (!isAutoExpandedRef.current) {
-            return;
-          }
-          if (IS_ANDROID) {
-            // On Android, handle swipe down differently
-            const distance = Math.max(0, gestureState.dy);
-            const nextDistance = Math.max(0, pullThreshold - distance);
-            console.log('[Android Swipe Down] Moving:', {
-              dy: gestureState.dy,
-              distance,
-              nextDistance,
-            });
-            pullDistanceRef.current = nextDistance;
-            pullDistanceAnim.setValue(nextDistance);
-          } else {
-            const nextDistance = Math.max(0, pullThreshold - gestureState.dy);
-            pullDistanceRef.current = nextDistance;
-            pullDistanceAnim.setValue(nextDistance);
-          }
-        },
-        onPanResponderRelease: (_, gestureState) => {
-          if (!isAutoExpandedRef.current) {
-            return;
-          }
-          console.log('[Android Swipe Down] Released:', {
-            dy: gestureState.dy,
-            dismissThreshold,
-          });
-          if (gestureState.dy > dismissThreshold) {
-            console.log('[Android Swipe Down] Collapsing panel');
-            collapsePanel();
-            return;
-          }
-          Animated.timing(pullDistanceAnim, {
-            toValue: pullThreshold,
-            duration: 180,
-            useNativeDriver: true,
-          }).start();
-        },
-        onPanResponderTerminate: () => {
-          if (!isAutoExpandedRef.current) {
-            return;
-          }
-          Animated.timing(pullDistanceAnim, {
-            toValue: pullThreshold,
-            duration: 180,
-            useNativeDriver: true,
-          }).start();
-        },
-      }),
-    ).current;
+    // Swipe up gesture handler
+    const swipeUpGesture = Gesture.Pan()
+      .onStart(event => {
+        // 'worklet';
+        // runOnJS((y: number) => {
+        //   gestureStartYRef.current = y;
+        // })(event.absoluteY);
+      })
+      .onUpdate(event => {
+        'worklet';
+        // if (isAutoExpandedRef.current) {
+        //   return;
+        // }
 
-    // Android-specific swipe up gesture handler
-    const androidSwipeUpResponder = useRef(
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => {
-          // On Android, always allow gesture capture if not expanded
-          const shouldCapture = !isAutoExpandedRef.current;
-          console.log('[Android Swipe] onStartShouldSetPanResponder:', {
-            contentHeight: contentHeightRef.current,
-            layoutHeight: layoutHeightRef.current,
-            isExpanded: isAutoExpandedRef.current,
-            shouldCapture,
-          });
-          return shouldCapture;
-        },
-        onMoveShouldSetPanResponder: (_, gestureState) => {
-          // Only capture swipe up gestures (dy < 0)
-          const shouldCapture =
-            !isAutoExpandedRef.current && gestureState.dy < -8;
-          console.log('[Android Swipe] onMoveShouldSetPanResponder:', {
-            dy: gestureState.dy,
-            shouldCapture,
-          });
-          return shouldCapture;
-        },
-        onPanResponderGrant: event => {
-          console.log('[Android Swipe] Gesture granted');
-          gestureStartYRef.current = event.nativeEvent.pageY;
-        },
-        onPanResponderMove: (event, gestureState) => {
-          if (isAutoExpandedRef.current) {
-            return;
-          }
-
-          const distance = Math.max(0, -gestureState.dy);
-          const clamped = Math.min(distance, pullThreshold);
-          console.log('[Android Swipe] Moving:', {
-            dy: gestureState.dy,
-            distance,
-            clamped,
-          });
-          pullDistanceRef.current = clamped;
-          pullDistanceAnim.setValue(clamped);
-        },
-        onPanResponderRelease: (_, gestureState) => {
-          console.log('[Android Swipe] Released:', {
-            dy: gestureState.dy,
-            distance: pullDistanceRef.current,
-            threshold: pullThreshold * 0.4,
-          });
-
-          const distance = Math.max(0, -gestureState.dy);
-          if (distance >= pullThreshold * 0.4) {
-            console.log('[Android Swipe] Expanding panel');
-            isAutoExpandedRef.current = true;
-            Animated.timing(pullDistanceAnim, {
-              toValue: pullThreshold,
-              duration: 220,
-              useNativeDriver: true,
-            }).start();
-          } else {
-            console.log('[Android Swipe] Collapsing back');
-            Animated.timing(pullDistanceAnim, {
-              toValue: 0,
-              duration: 180,
-              useNativeDriver: true,
-            }).start();
-          }
-        },
-        onPanResponderTerminate: () => {
-          console.log('[Android Swipe] Gesture terminated');
-          if (!isAutoExpandedRef.current) {
-            Animated.timing(pullDistanceAnim, {
-              toValue: 0,
-              duration: 180,
-              useNativeDriver: true,
-            }).start();
-          }
-        },
-      }),
-    ).current;
+        // const distance = Math.max(0, -event.translationY);
+        // const clamped = Math.min(distance, pullThreshold);
+        // pullDistanceAnim.value = clamped;
+      })
+      .onEnd(event => {
+        // 'worklet';
+        // const distance = Math.max(0, -event.translationY);
+        // if (distance >= pullThreshold * 0.4) {
+        //   pullDistanceAnim.value = withTiming(pullThreshold, {
+        //     duration: 220,
+        //   });
+        //   runOnJS(setExpandedState)(pullThreshold);
+        // } else {
+        //   pullDistanceAnim.value = withTiming(0, {
+        //     duration: 180,
+        //   });
+        // }
+      })
+      .onFinalize(() => {
+        'worklet';
+      });
 
     const scrollY = useCurrentTabScrollY();
     const handleScrollYChange = useCallback(
       (currentScrollY: number) => {
-        if (Platform.OS === 'android') return; // Android uses onScroll instead
         if (isAutoExpandedRef.current) return;
         if (!contentHeightRef.current || !layoutHeightRef.current) return;
         const maxOffset = Math.max(
@@ -816,7 +733,6 @@ const OverViewComponent = React.memo(
     useAnimatedReaction(
       () => scrollY.value,
       currentScrollY => {
-        if (Platform.OS === 'android') return; // Android uses onScroll instead
         runOnJS(handleScrollYChange)(currentScrollY);
       },
       [handleScrollYChange],
@@ -826,10 +742,7 @@ const OverViewComponent = React.memo(
 
     return (
       <View style={styles.pullUpWrapper}>
-        <Animated.View
-          style={{
-            transform: [{ translateY: contentTranslateY }],
-          }}>
+        <Animated.View style={contentTranslateYStyle}>
           <Tabs.ScrollView
             tvParallaxProperties={undefined}
             showsVerticalScrollIndicator={false}
@@ -853,59 +766,6 @@ const OverViewComponent = React.memo(
             }}
             onLayout={event => {
               layoutHeightRef.current = event.nativeEvent.layout.height;
-            }}
-            onMomentumScrollEnd={
-              Platform.OS === 'android'
-                ? event => {
-                    const { contentOffset, layoutMeasurement, contentSize } =
-                      event.nativeEvent;
-                    const maxOffset = Math.max(
-                      0,
-                      contentSize.height - layoutMeasurement.height,
-                    );
-                    const currentScrollY = contentOffset.y;
-                    const wasAtBottom = isAtBottomRef.current;
-                    isAtBottomRef.current = currentScrollY >= maxOffset - 20;
-
-                    console.log('[Android Swipe] onMomentumScrollEnd:', {
-                      currentScrollY,
-                      maxOffset,
-                      diff: maxOffset - currentScrollY,
-                      contentHeight: contentSize.height,
-                      layoutHeight: layoutMeasurement.height,
-                      isAtBottom: isAtBottomRef.current,
-                      wasAtBottom,
-                    });
-
-                    if (!wasAtBottom && isAtBottomRef.current) {
-                      console.log(
-                        '[Android Swipe] Reached bottom, swipe up enabled',
-                      );
-                    }
-                  }
-                : undefined
-            }
-            onScrollEndDrag={event => {
-              if (Platform.OS === 'android') {
-                const { contentOffset, layoutMeasurement, contentSize } =
-                  event.nativeEvent;
-                const maxOffset = Math.max(
-                  0,
-                  contentSize.height - layoutMeasurement.height,
-                );
-                const currentScrollY = contentOffset.y;
-                const wasAtBottom = isAtBottomRef.current;
-                isAtBottomRef.current = currentScrollY >= maxOffset - 20;
-
-                console.log('[Android Swipe] onScrollEndDrag:', {
-                  currentScrollY,
-                  maxOffset,
-                  diff: maxOffset - currentScrollY,
-                  isAtBottom: isAtBottomRef.current,
-                  wasAtBottom,
-                });
-              }
-              handlePullRelease();
             }}
             refreshControl={
               <RefreshControl refreshing={false} onRefresh={onRefresh} />
@@ -952,59 +812,55 @@ const OverViewComponent = React.memo(
               </View>
               <BrowserSearchEntry />
               {/* <View style={styles.searchBarPlaceholder} /> */}
-              <View
-                {...(IS_ANDROID ? androidSwipeUpResponder.panHandlers : {})}
-                style={styles.swipeUpHint}>
-                <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
-                <Text style={styles.swipeUpHintText}>
-                  Swipe up to explore more dApps
-                </Text>
-              </View>
+              {/* <GestureDetector gesture={swipeUpGesture}>
+                <View style={styles.swipeUpHint}>
+                  <RcIconDoubleArrowCC
+                    color={colors2024['neutral-secondary']}
+                  />
+                  <Text style={styles.swipeUpHintText}>
+                    Swipe up to explore more dApps
+                  </Text>
+                </View>
+              </GestureDetector> */}
             </View>
           </Tabs.ScrollView>
         </Animated.View>
-        <Animated.View
-          pointerEvents="auto"
-          {...expandPanResponder.panHandlers}
-          style={[
-            styles.pullUpPanel,
-            {
-              // paddingTop: safeTop,
-              height: height - safeTop,
-              // opacity: panelOpacity,
-              transform: [
-                { translateY: panelTranslateY },
-                // { scale: panelScale },
-              ],
-            },
-          ]}>
+        <GestureDetector gesture={expandPanGesture}>
           <Animated.View
+            pointerEvents="auto"
             style={[
-              styles.pullOverlay,
+              styles.pullUpPanel,
+              panelTranslateYStyle,
               {
-                // top: -90 + safeTop,
-                top: -90,
-                opacity: overlayOpacity,
+                // paddingTop: safeTop,
+                height: height - safeTop,
               },
-            ]}
-          />
-          <Animated.View
-            style={{
-              transformOrigin: 'top',
-              transform: [{ scale: panelScale }],
-            }}>
-            <BrowserFavoriteManage
-              onPressHome={() => {
-                Animated.timing(pullDistanceAnim, {
-                  toValue: 0,
-                  duration: 180,
-                  useNativeDriver: true,
-                }).start();
-                isAutoExpandedRef.current = false;
-              }}
+            ]}>
+            <Animated.View
+              style={[
+                styles.pullOverlay,
+                {
+                  // top: -90 + safeTop,
+                  top: -90,
+                },
+                overlayOpacityStyle,
+              ]}
             />
+            <Animated.View
+              style={[
+                {
+                  transformOrigin: 'top',
+                },
+                panelScaleStyle,
+              ]}>
+              <BrowserFavoriteManage
+                onPressHome={() => {
+                  collapsePanel();
+                }}
+              />
+            </Animated.View>
           </Animated.View>
-        </Animated.View>
+        </GestureDetector>
       </View>
     );
   },
@@ -1030,9 +886,9 @@ function MultiAddressHome(): JSX.Element {
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
-  const tabsOpacityRef = useRef<Animated.AnimatedInterpolation<number> | null>(
-    null,
-  );
+  const tabsOpacityRef = useRef<
+    import('react-native-reanimated').SharedValue<number> | null
+  >(null);
 
   const combinedData = useScene24hBalanceLightWeightData('Home');
   useRendererDetect({ name: 'MultiAddressHome' });
@@ -1140,7 +996,6 @@ function MultiAddressHome(): JSX.Element {
         <TabsMultiAssets
           onIndexChange={onIndexChange}
           OverViewComponent={WrappedOverViewComponent}
-          tabsOpacity={tabsOpacityRef.current || undefined}
         />
 
         {/* show search bar when Overview tab */}
@@ -1154,523 +1009,519 @@ function MultiAddressHome(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, bottomSafeArea }) => ({
-    screenContainer: {
-      paddingTop: 0,
-    },
-    paddingContainer: {
-      paddingHorizontal: 0,
-      flex: 1,
-      flexGrow: 1,
-    },
-    container: {
-      borderWidth: 1,
-      borderColor: 'red',
-      flexGrow: 1,
-      minHeight: '100%',
-    },
-    headerContainer: {
-      backgroundColor: 'transparent',
-      paddingTop: 64,
-    },
-    bgImage: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-    },
-    redDot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: colors2024['red-default'],
-      position: 'absolute',
-      top: 0,
-      right: 13,
-    },
-    rootScreenContainer: {
-      // ...makeDebugBorder(),
-      // paddingHorizontal: 20,
-      flex: 1,
-      position: 'relative',
-      overflow: 'hidden',
-    },
-    scroll: {
-      flex: 1,
-      marginTop: TAB_HEADER_MIN_HEIGHT,
-      marginBottom: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
-    },
-    scrollContainer: {
-      // paddingTop: 88,
-      flexGrow: 1,
-      minHeight: '100%',
-      marginTop: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
-    },
-    menuHeader: {
-      height: 30,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-      marginHorizontal: 4,
-      margin: 12,
-      marginBottom: 16,
-      marginTop: 0,
-    },
-    pinHeader: {
-      marginTop: -8,
-    },
-    pinGridText: {
-      color: colors2024['neutral-body'],
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 20,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    gridText: {
-      color: colors2024['neutral-title-1'],
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 20,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    badgeWrapper: {
-      display: 'flex',
-      flexDirection: 'row',
-      width: '100%',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    iconWrapper: {
-      // height: 36,
-      // width: 36,
-      // backgroundColor: colors2024['brand-light-1'],
-      // borderRadius: 12,
-      // justifyContent: 'center',
-      // alignItems: 'center',
-    },
-    rightBadgeWrapper: {
-      position: 'relative',
-      right: -4,
-      alignSelf: 'flex-start',
-    },
-    badgeStyle: {},
-    headerText: {
-      color: colors2024['neutral-title-1'],
-      fontWeight: '700',
-      fontSize: 17,
-      lineHeight: 22,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    pinGrid: {
-      flexDirection: 'row',
-      flexWrap: 'nowrap',
-      borderRadius: 8,
-      gap: 10,
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-      width: '100%',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-      marginTop: 20,
-    },
-    emptyItem: {
-      backgroundColor: 'transparent',
-    },
-    pinGridItem: {
-      backgroundColor: colord(
-        isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
-      )
-        .alpha(0.6)
-        .toRgbString(),
-      borderRadius: 10,
-      flexShrink: 0,
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingHorizontal: 10,
-      height: 42,
-      gap: 10,
-      position: 'relative',
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      borderWidth: 1,
-    },
-    menuContainer: {
-      marginTop: 0,
-    },
-    grid: {
-      marginTop: 0,
-      // flexDirection: 'row',
-      // flexWrap: 'wrap',
-      // borderRadius: 8,
-      // gap: ITEM_GRID_GAP,
-      // justifyContent: 'space-between',
-      // alignItems: 'flex-start',
-      width: '100%',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-      // paddingHorizontal: 8,
-      // paddingVertical: 12,
-      // paddingTop: 16,re
-    },
-    gridGradientOutline: {
-      backgroundColor: 'transparent',
-      paddingHorizontal: 8,
-      paddingTop: 16,
-      paddingBottom: 12,
-      width: '100%',
-      gap: 16,
-    },
-    gridItemsWrap: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      borderRadius: 8,
-      rowGap: ITEM_GRID_GAP + 2,
-      columnGap: ITEM_GRID_GAP,
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      width: '100%',
-    },
-    primaryActionsContainer: {
-      flexDirection: 'row',
-      gap: 10,
-    },
-    primaryActionButton: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 4,
-      borderRadius: 10,
-      height: 52,
-      paddingHorizontal: 16,
-    },
-    primaryActionText: {
-      color: colors2024['neutral-InvertHighlight'],
-      fontWeight: '700',
-      fontSize: 18,
-      lineHeight: 22,
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
-    },
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  screenContainer: {
+    paddingTop: 0,
+  },
+  paddingContainer: {
+    paddingHorizontal: 0,
+    flex: 1,
+    flexGrow: 1,
+  },
+  container: {
+    borderWidth: 1,
+    borderColor: 'red',
+    flexGrow: 1,
+    minHeight: '100%',
+  },
+  headerContainer: {
+    backgroundColor: 'transparent',
+    paddingTop: 64,
+  },
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  redDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors2024['red-default'],
+    position: 'absolute',
+    top: 0,
+    right: 13,
+  },
+  rootScreenContainer: {
+    // ...makeDebugBorder(),
+    // paddingHorizontal: 20,
+    flex: 1,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  scroll: {
+    flex: 1,
+    marginTop: TAB_HEADER_MIN_HEIGHT,
+    marginBottom: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
+  },
+  scrollContainer: {
+    // paddingTop: 88,
+    flexGrow: 1,
+    minHeight: '100%',
+    marginTop: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
+  },
+  menuHeader: {
+    height: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
+    marginHorizontal: 4,
+    margin: 12,
+    marginBottom: 16,
+    marginTop: 0,
+  },
+  pinHeader: {
+    marginTop: -8,
+  },
+  pinGridText: {
+    color: colors2024['neutral-body'],
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
+  },
+  gridText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
+  },
+  badgeWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  iconWrapper: {
+    // height: 36,
+    // width: 36,
+    // backgroundColor: colors2024['brand-light-1'],
+    // borderRadius: 12,
+    // justifyContent: 'center',
+    // alignItems: 'center',
+  },
+  rightBadgeWrapper: {
+    position: 'relative',
+    right: -4,
+    alignSelf: 'flex-start',
+  },
+  badgeStyle: {},
+  headerText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
+    fontSize: 17,
+    lineHeight: 22,
+    textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
+  },
+  pinGrid: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    borderRadius: 8,
+    gap: 10,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    marginTop: 20,
+  },
+  emptyItem: {
+    backgroundColor: 'transparent',
+  },
+  pinGridItem: {
+    backgroundColor: colord(
+      isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+    )
+      .alpha(0.6)
+      .toRgbString(),
+    borderRadius: 10,
+    flexShrink: 0,
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    height: 42,
+    gap: 10,
+    position: 'relative',
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderWidth: 1,
+  },
+  menuContainer: {
+    marginTop: 0,
+  },
+  grid: {
+    marginTop: 0,
+    // flexDirection: 'row',
+    // flexWrap: 'wrap',
+    // borderRadius: 8,
+    // gap: ITEM_GRID_GAP,
+    // justifyContent: 'space-between',
+    // alignItems: 'flex-start',
+    width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    // paddingHorizontal: 8,
+    // paddingVertical: 12,
+    // paddingTop: 16,re
+  },
+  gridGradientOutline: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
+    paddingTop: 16,
+    paddingBottom: 12,
+    width: '100%',
+    gap: 16,
+  },
+  gridItemsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    borderRadius: 8,
+    rowGap: ITEM_GRID_GAP + 2,
+    columnGap: ITEM_GRID_GAP,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  primaryActionsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  primaryActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderRadius: 10,
+    height: 52,
+    paddingHorizontal: 16,
+  },
+  primaryActionText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+  },
 
-    gridItem: {
-      borderWidth: 2,
-      borderColor: isLight
-        ? colors2024['neutral-InvertHighlight']
-        : 'transparent',
-      backgroundColor: isLight
-        ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
-        : colors2024['neutral-bg-2'],
-      width: '48%', // default
-      minWidth: 0,
-      borderRadius: 16,
-      flexShrink: 0,
-      padding: 16,
-      display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
-      height: 96,
-      gap: 8,
-      position: 'relative',
-    },
-    pendingContainer: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    pendingBlur: {
-      paddingLeft: 20,
-      paddingRight: 18,
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 8,
-      gap: 0,
-      width: 'auto',
-      borderRadius: 20,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: colors2024['neutral-bg-1'],
-      backgroundColor: colord(
-        isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
-      )
-        .alpha(IS_ANDROID ? 1 : 0.89)
-        .toRgbString(),
-    },
-    pendingText: {
-      marginLeft: 2,
-      color: colors2024['orange-default'],
-      fontWeight: '700',
-      fontSize: 16,
-      lineHeight: 20,
-      fontFamily: 'SF Pro Rounded',
-    },
-    floatBottom: {
-      // position: 'absolute',
-      // bottom: 0,
-      // left: 0,
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: Dimensions.get('window').width,
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+  gridItem: {
+    borderWidth: 2,
+    borderColor: isLight
+      ? colors2024['neutral-InvertHighlight']
+      : 'transparent',
+    backgroundColor: isLight
+      ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
+      : colors2024['neutral-bg-2'],
+    width: '48%', // default
+    minWidth: 0,
+    borderRadius: 16,
+    flexShrink: 0,
+    padding: 16,
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    height: 96,
+    gap: 8,
+    position: 'relative',
+  },
+  pendingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pendingBlur: {
+    paddingLeft: 20,
+    paddingRight: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    gap: 0,
+    width: 'auto',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: colors2024['neutral-bg-1'],
+    backgroundColor: colord(
+      isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+    )
+      .alpha(0.89)
+      .toRgbString(),
+  },
+  pendingText: {
+    marginLeft: 2,
+    color: colors2024['orange-default'],
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+  },
+  floatBottom: {
+    // position: 'absolute',
+    // bottom: 0,
+    // left: 0,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: Dimensions.get('window').width,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
 
-      // height: 128,
-    },
-    search: {
-      width: '100%',
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      height: 60,
-      borderRadius: 100,
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginVertical: 20,
-      paddingHorizontal: 28,
-      gap: 8,
-    },
-    searchText: {
-      fontSize: 22,
-      lineHeight: 28,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-    },
+    // height: 128,
+  },
+  search: {
+    width: '100%',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    height: 60,
+    borderRadius: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    paddingHorizontal: 28,
+    gap: 8,
+  },
+  searchText: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
 
-    noAssetsContainer: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      paddingHorizontal: 16,
-      paddingBottom: 50,
-      borderRadius: 50,
-      overflow: 'hidden',
-    },
-    bgLeft: { position: 'absolute', top: 0, left: 0 },
-    bgRight: { position: 'absolute', top: 35, right: 0 },
-    bgb1: {
-      position: 'absolute',
-      top: 52,
-      left: 16,
-      transform: [{ scale: 0.5 }],
-    },
-    bgb2: {
-      position: 'absolute',
-      top: 76,
-      right: 34,
-      transform: [{ scale: 0.5 }],
-    },
-    noAssetsTitle: {
-      color: colors2024['neutral-title-1'],
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 28,
-      fontStyle: 'normal',
-      fontWeight: '700',
-      lineHeight: 36,
-      marginVertical: 42,
-    },
+  noAssetsContainer: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    paddingHorizontal: 16,
+    paddingBottom: 50,
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
+  bgLeft: { position: 'absolute', top: 0, left: 0 },
+  bgRight: { position: 'absolute', top: 35, right: 0 },
+  bgb1: {
+    position: 'absolute',
+    top: 52,
+    left: 16,
+    transform: [{ scale: 0.5 }],
+  },
+  bgb2: {
+    position: 'absolute',
+    top: 76,
+    right: 34,
+    transform: [{ scale: 0.5 }],
+  },
+  noAssetsTitle: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 28,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 36,
+    marginVertical: 42,
+  },
 
-    noAssetsItem: {
-      paddingHorizontal: 16,
-      paddingVertical: 26,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      borderRadius: 24,
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    noAssetsIconWrapper: {
-      width: 28,
-      height: 28,
-      backgroundColor: colors2024['brand-light-1'],
-      borderRadius: 9.8,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    buyIcon: {
-      alignSelf: 'flex-start',
-    },
-    noAssetsRight: {
-      gap: 4,
-      flexWrap: 'wrap',
-      flex: 1,
-    },
-    noAssetsItemName: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
-      fontStyle: 'normal',
-      fontWeight: '700',
-      lineHeight: 22,
-    },
-    noAssetsItemDesc: {
-      maxWidth: '100%',
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontStyle: 'normal',
-      fontWeight: '400',
-      lineHeight: 20,
-    },
-    hidden: {
-      display: 'none',
-    },
-    curveBox: {
-      paddingHorizontal: 15,
-      paddingTop: 12,
-    },
-    curveCard: {
-      borderRadius: 20,
-      paddingVertical: 24,
-      paddingHorizontal: 20,
-      borderWidth: 0,
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-line'],
-      backgroundColor: 'transparent',
-    },
-    curveCardInner: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%',
-    },
-    shadowView: {
-      ...Platform.select({
-        ios: {
-          shadowColor: colors2024['neutral-black'],
-          shadowOffset: {
-            width: 0,
-            height: 4,
-          },
-          shadowOpacity: 0.03,
-          shadowRadius: 10,
-          elevation: 8,
+  noAssetsItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 26,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  noAssetsIconWrapper: {
+    width: 28,
+    height: 28,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 9.8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buyIcon: {
+    alignSelf: 'flex-start',
+  },
+  noAssetsRight: {
+    gap: 4,
+    flexWrap: 'wrap',
+    flex: 1,
+  },
+  noAssetsItemName: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  noAssetsItemDesc: {
+    maxWidth: '100%',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  hidden: {
+    display: 'none',
+  },
+  curveBox: {
+    paddingHorizontal: 15,
+    paddingTop: 12,
+  },
+  curveCard: {
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderWidth: 0,
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-line'],
+    backgroundColor: 'transparent',
+  },
+  curveCardInner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  shadowView: {
+    ...Platform.select({
+      ios: {
+        shadowColor: colors2024['neutral-black'],
+        shadowOffset: {
+          width: 0,
+          height: 4,
         },
-      }),
-    },
-    skeleton: {
-      borderRadius: 8,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    curveContainer: {
-      gap: 6,
-    },
-    arrow: {
-      width: 42,
-      height: 42,
-      borderRadius: 30,
-    },
-    changePercent: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    netWorth: {
-      fontSize: 42,
-      lineHeight: 46,
-      fontWeight: '900',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    changeSection: {
-      flexDirection: 'row',
-      gap: 2,
-      marginTop: 4,
-      alignItems: 'center',
-    },
-    changeTime: {
-      fontSize: 16,
-      fontWeight: '400',
-      lineHeight: 20,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      marginLeft: 4,
-    },
-    globalWarning: {
-      marginHorizontal: 16,
-      marginTop: 16,
-      marginBottom: -16,
-    },
-    searchBarPlaceholder: {
-      height: 80,
-    },
-    topWrapper: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-    },
-    pullUpWrapper: {
-      flex: 1,
-    },
-    pullUpPanel: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-    },
-    pullOverlay: {
-      position: 'absolute',
-      top: -90,
-      transform: [{ translateX: -501 }],
-      left: '50%',
-      height: 1002,
-      width: 1002,
-      borderRadius: 10000,
-      backgroundColor: colors2024['brand-light-1'],
-      zIndex: 10,
-      pointerEvents: 'none',
-    },
-    swipeUpHint: {
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: 16,
-      paddingVertical: IS_ANDROID ? 20 : 0,
-      minHeight: IS_ANDROID ? 80 : 'auto',
-    },
-    swipeUpHintFixed: {
-      position: 'absolute',
-      bottom: 16,
-      left: 0,
-      right: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 5,
-    },
-    swipeUpHintText: {
-      marginTop: 4,
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-    },
-  }),
-);
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 8,
+      },
+    }),
+  },
+  skeleton: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  curveContainer: {
+    gap: 6,
+  },
+  arrow: {
+    width: 42,
+    height: 42,
+    borderRadius: 30,
+  },
+  changePercent: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  netWorth: {
+    fontSize: 42,
+    lineHeight: 46,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changeSection: {
+    flexDirection: 'row',
+    gap: 2,
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  changeTime: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
+  },
+  globalWarning: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: -16,
+  },
+  searchBarPlaceholder: {
+    height: 80,
+  },
+  topWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+  },
+  pullUpWrapper: {
+    flex: 1,
+  },
+  pullUpPanel: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  pullOverlay: {
+    position: 'absolute',
+    top: -90,
+    transform: [{ translateX: -501 }],
+    left: '50%',
+    height: 1002,
+    width: 1002,
+    borderRadius: 10000,
+    backgroundColor: colors2024['brand-light-1'],
+    zIndex: 10,
+    pointerEvents: 'none',
+  },
+  swipeUpHint: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  swipeUpHintFixed: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  swipeUpHintText: {
+    marginTop: 4,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+}));
 
 export default MultiAddressHome;
