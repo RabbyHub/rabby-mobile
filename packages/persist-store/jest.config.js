@@ -11,6 +11,7 @@ const baseConfig = require('../../jest.config.packages');
 const displayName = path.basename(__dirname);
 
 module.exports = merge(baseConfig, {
+  preset: "react-native",
   // The display name when running multiple projects
   displayName,
 

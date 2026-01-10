@@ -19,11 +19,6 @@ export type PerfEventBusListeners = {
 
   APP_NAVIGATION_READY: (ctx: { readyRootName: string }) => void;
 
-  ACCOUNTS_MAYBE_CHANGED: (ctx: {
-    accounts: Account[];
-    confirmed?: boolean;
-  }) => void;
-
   ACCOUNTS_BALANCE_UPDATE: (ctx: {
     prevState: AccountsBalanceState['balance'];
     nextState: AccountsBalanceState['balance'];
