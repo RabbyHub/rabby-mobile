@@ -188,9 +188,6 @@ export function useAccountHomeShowReceiveTip(
     eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
 
     const sub = perfEvents.subscribe('HOME_WILL_BE_REFRESHED_MANUALLY', () => {
-      console.log(
-        '[feat] ACCOUNTS_MAYBE_CHANGED received in useAccountHomeShowReceiveTip',
-      );
       detect();
     });
 
