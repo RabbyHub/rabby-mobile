@@ -128,6 +128,7 @@ import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { isNonPublicProductionEnv } from '@/constant';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
+import { perfEvents } from '@/core/utils/perf';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -313,6 +314,8 @@ const OverViewComponent = React.memo(
 
     const onRefresh = useCallback(() => {
       if (!couldDoRefresh()) return;
+
+      perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
       Promise.all([
         // force update balance from server api
         triggerUpdate(true).then(balanceAccounts =>

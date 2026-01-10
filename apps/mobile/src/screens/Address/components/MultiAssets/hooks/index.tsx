@@ -5,6 +5,7 @@ import {
   isHardwareAccount,
 } from '@/core/apis/account';
 import { openapi } from '@/core/request';
+import { perfEvents } from '@/core/utils/perf';
 import {
   KeyringAccountWithAlias,
   storeApiAccounts,
@@ -18,8 +19,11 @@ import {
 import { apisAccountsBalance } from '@/hooks/useAccountsBalance';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 export const isTabsSwiping = {
   value: false,
@@ -141,7 +145,7 @@ export async function getShowReceiveAddressTip(options?: {
     targetAccount.evmBalance ??
     0;
 
-  let borned = false;
+  let borned = true;
   try {
     const addressDesc = await openapi.addrDesc(targetAccount.address);
     borned = addressDesc.desc.born_at != null;
@@ -159,11 +163,10 @@ export async function getShowReceiveAddressTip(options?: {
 export function useAccountHomeShowReceiveTip(
   caredAccount?: KeyringAccountWithAlias | null,
 ) {
-  const { accounts } = useMyAccounts({ disableAutoFetch: true });
-  const asyncResult = useAsync(
-    () =>
-      getShowReceiveAddressTip({ caredAccount, isForSingle: !!caredAccount }),
-    [caredAccount, accounts],
+  const isForSingle = !!caredAccount;
+  const [asyncResult, detect] = useAsyncFn(
+    () => getShowReceiveAddressTip({ caredAccount, isForSingle }),
+    [caredAccount, isForSingle],
   );
 
   if (asyncResult.error) {
@@ -179,6 +182,33 @@ export function useAccountHomeShowReceiveTip(
     !asyncResult.value?.borned
       ? targetAccount
       : null;
+
+  useEffect(() => {
+    detect();
+  }, [detect]);
+
+  useEffect(() => {
+    if (isForSingle) return;
+
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] = () => {
+      detect();
+    };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    const sub = perfEvents.subscribe('HOME_WILL_BE_REFRESHED_MANUALLY', () => {
+      detect();
+    });
+
+    // const timer = setInterval(() => {
+    //   detect();
+    // }, 5 * 60 * 1000); // every 5 minutes
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      sub.remove();
+      // clearInterval(timer);
+    };
+  }, [isForSingle, detect]);
 
   return {
     targetAccount,

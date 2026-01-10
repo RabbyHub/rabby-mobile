@@ -1,5 +1,8 @@
 import { makeJsEEClass } from '@/core/services/_utils';
-import { AccountsBalanceState, BalanceAccountType } from '@/hooks/useAccountsBalance';
+import {
+  AccountsBalanceState,
+  BalanceAccountType,
+} from '@/hooks/useAccountsBalance';
 import {
   AddressBalanceUpdaterSource,
   BalanceState,
@@ -16,7 +19,10 @@ export type PerfEventBusListeners = {
 
   APP_NAVIGATION_READY: (ctx: { readyRootName: string }) => void;
 
-  ACCOUNTS_MAYBE_CHANGED: (ctx: { accounts: Account[]; confirmed?: boolean }) => void;
+  ACCOUNTS_MAYBE_CHANGED: (ctx: {
+    accounts: Account[];
+    confirmed?: boolean;
+  }) => void;
 
   ACCOUNTS_BALANCE_UPDATE: (ctx: {
     prevState: AccountsBalanceState['balance'];
@@ -28,6 +34,8 @@ export type PerfEventBusListeners = {
   }) => void;
 
   NAV_BACK_ON_HOME: () => void;
+
+  HOME_WILL_BE_REFRESHED_MANUALLY: () => void;
 
   CHANGE_PREVENT_SCREENSHOT: (isPrevented: boolean) => void;
 
