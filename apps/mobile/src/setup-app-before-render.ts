@@ -35,6 +35,7 @@ import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { startCheckClearAction } from './utils/clipboard';
+import tokenListStore from './store/tokens';
 
 startSubscribeLangChange();
 
@@ -74,3 +75,5 @@ startComputationThread();
 trimNoLongerSupportsOnUnlock();
 
 startCheckClearAction();
+
+tokenListStore.getState().initStore();

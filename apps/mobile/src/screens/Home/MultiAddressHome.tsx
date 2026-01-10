@@ -107,10 +107,6 @@ import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidan
 import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
-import {
-  RNGHPressable,
-  RNGHTouchableOpacity,
-} from '@/components/customized/reexports';
 import { TABITEM_H } from './components/CustomTabBar';
 import {
   refreshSuccessAndFailList,
@@ -128,7 +124,6 @@ import {
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
-import useTokenList from '@/store/tokens';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { isNonPublicProductionEnv } from '@/constant';
@@ -150,7 +145,6 @@ const OverViewComponent = React.memo(
   ({}: React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
-    const tokenListStore = useTokenList();
     const { styles, colors2024 } = useTheme2024({
       getStyle,
     });
@@ -316,11 +310,6 @@ const OverViewComponent = React.memo(
         });
       }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
     );
-
-    useEffect(() => {
-      tokenListStore.initStore();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const onRefresh = useCallback(() => {
       if (!couldDoRefresh()) return;

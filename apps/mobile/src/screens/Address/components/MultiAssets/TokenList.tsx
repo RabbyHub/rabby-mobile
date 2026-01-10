@@ -63,6 +63,8 @@ type TokenListItem =
       data: string;
     };
 
+const { batchGetTokenList } = useTokenList.getState();
+
 export const TokenList = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -111,7 +113,7 @@ export const TokenList = () => {
     useShallow(state => state.multiAssetsCache[multiAssetsKey] || emptyResult),
   );
 
-  const { isLoading } = useTokenList();
+  const isLoading = useTokenList(s => s.isLoading);
 
   const foldTokenUsdValue = useMemo(() => {
     const usdValue = foldTokens
@@ -122,11 +124,8 @@ export const TokenList = () => {
     return formatNetworth(usdValue * currency.usd_rate, false, currency.symbol);
   }, [foldTokens, currency]);
 
-  const { batchGetTokenList } = useTokenList();
-
   useEffect(() => {
     batchGetTokenList(top10Addresses);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [top10Addresses]);
 
   const hasNoAssets =
@@ -167,7 +166,7 @@ export const TokenList = () => {
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [batchGetTokenList, top10Addresses]);
+  }, [top10Addresses]);
 
   const dataList = useMemo(() => {
     const items: TokenListItem[] = [];
