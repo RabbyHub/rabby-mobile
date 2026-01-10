@@ -120,11 +120,11 @@ export function useInitializeAppOnTop() {
         trigger: '',
       });
     };
-    keyringService.on('unlock', onUnlock);
+    const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
     keyringService.on('lock', onLock);
 
     return () => {
-      keyringService.off('unlock', onUnlock);
+      sub.remove();
       keyringService.off('lock', onLock);
     };
   }, []);
@@ -141,16 +141,16 @@ export function useInitializeAppOnTop() {
       //   });
       // }
     };
-    keyringService.on('unlock', onUnlock);
+    const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
 
     return () => {
-      keyringService.off('unlock', onUnlock);
+      sub.remove();
     };
   }, []);
 }
 
 export function subscribeUnlockToFetchAccounts() {
-  keyringService.on('unlock', async () => {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
     if (!accounts?.length) {
       replace(RootNames.StackGetStarted, {

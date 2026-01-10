@@ -22,8 +22,9 @@ import {
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { useShallow } from 'zustand/react/shallow';
 import { perfEvents } from '@/core/utils/perf';
-import { getTop10MyAccounts } from '@/core/apis/account';
+import { accountEvents, getTop10MyAccounts } from '@/core/apis/account';
 import { keyringService } from '@/core/services';
+import { debounce } from 'lodash';
 
 const queues: Record<BalanceScene, PQueue> = {
   Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
@@ -318,26 +319,34 @@ export const refresh24hAssets = async ({
   });
 };
 
-runIIFEFunc(() => {
-  keyringService.on('unlock', async () => {
+export function startProcessScene24hBalanceEvents() {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
     const balanceAccounts = await fetchTotalBalance('from_cache');
     await refresh24hAssets({ balanceAccounts });
   });
 
   perfEvents.subscribe('ACCOUNTS_BALANCE_UPDATE', async data => {
     await refresh24hAssets({
-      // force: data.nextState !== data.prevState,
       balanceAccounts: data.nextState,
     });
   });
 
-  perfEvents.subscribe('ACCOUNTS_MAYBE_CHANGED', async ctx => {
-    const balanceAccounts = await fetchTotalBalance(
-      ctx?.confirmed ? 'from_api' : 'from_cache',
-    );
-    await refresh24hAssets({ balanceAccounts, force: ctx?.confirmed });
-  });
-});
+  accountEvents.on(
+    'ACCOUNT_ADDED',
+    debounce(async ({ accounts, scene }) => {
+      const balanceAccounts = await fetchTotalBalance('from_cache');
+      await refresh24hAssets({ balanceAccounts, force: true });
+    }, 500),
+  );
+
+  accountEvents.on(
+    'ACCOUNT_REMOVED',
+    debounce(async ({ removedAccounts }) => {
+      const balanceAccounts = await fetchTotalBalance('from_cache');
+      await refresh24hAssets({ balanceAccounts, force: true });
+    }, 500),
+  );
+}
 
 export function useScene24hBalanceCombinedData(scene: BalanceScene) {
   const combinedData = scene24hBalanceStore(s => s.combinedData[scene]);
@@ -347,18 +356,16 @@ export function useScene24hBalanceCombinedData(scene: BalanceScene) {
 
 export function useMultiHome24hBalanceCurveChart() {
   const combinedData = scene24hBalanceStore(
-    useShallow(
-      s => {
-        const sceneData = s.combinedData['Home'];
+    useShallow(s => {
+      const sceneData = s.combinedData['Home'];
 
-        return {
-          rawNetWorth: sceneData.rawNetWorth,
-          rawChange: sceneData.rawChange,
-          changePercent: sceneData.changePercent,
-          isLoss: sceneData.isLoss,
-        }
-      }
-    )
+      return {
+        rawNetWorth: sceneData.rawNetWorth,
+        rawChange: sceneData.rawChange,
+        changePercent: sceneData.changePercent,
+        isLoss: sceneData.isLoss,
+      };
+    }),
   );
 
   return { combinedData };

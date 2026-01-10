@@ -167,9 +167,13 @@ export const sortAccountsByBalance = <
 };
 
 export function isMyAccount<T extends KeyringAccount | KeyringAccountWithAlias>(
-  account: T
+  account: T,
 ) {
-  return account.type !== KEYRING_CLASS.WATCH && account.type !== KEYRING_CLASS.GNOSIS && account.type !== KEYRING_CLASS.WALLETCONNECT
+  return (
+    account.type !== KEYRING_CLASS.WATCH &&
+    account.type !== KEYRING_CLASS.GNOSIS &&
+    account.type !== KEYRING_CLASS.WALLETCONNECT
+  );
 }
 
 export const filterMyAccounts = <
@@ -247,15 +251,22 @@ export const fetchAllAccounts = makeAvoidParallelAsyncFunc(
 
 export async function getAccountList(options?: {
   filter?: 'onlyMine' | 'onlyOthers' | 'all';
-  sortBy?: ('highlight')[];
+  sortBy?: 'highlight'[];
 }) {
   const {
     filter = 'all',
-    sortBy = filter === 'onlyOthers' ? [] : ['highlight']
+    sortBy = filter === 'onlyOthers' ? [] : ['highlight'],
   } = options || {};
 
   const allAccounts = await fetchAllAccounts();
-  const accounts = filter === 'all' ? allAccounts : filter === 'onlyMine' ? filterMyAccounts(allAccounts) : filter === 'onlyOthers' ? allAccounts.filter(a => !isMyAccount(a)) : allAccounts;
+  const accounts =
+    filter === 'all'
+      ? allAccounts
+      : filter === 'onlyMine'
+      ? filterMyAccounts(allAccounts)
+      : filter === 'onlyOthers'
+      ? allAccounts.filter(a => !isMyAccount(a))
+      : allAccounts;
 
   let sortedAccounts = accounts;
 
@@ -342,7 +353,7 @@ export const getTop10MyAccounts = makeAvoidParallelAsyncFunc(
       filter: 'onlyMine',
     });
 
-    return filterOutTop10Accounts(sortedAccounts, { gatherSameAddress })
+    return filterOutTop10Accounts(sortedAccounts, { gatherSameAddress });
   },
 );
 
@@ -362,6 +373,7 @@ export type PerfAccountEventBusListeners = {
     accounts: KeyringEventAccount[];
     scene?: 'privateKey' | 'memonics' | 'hardware' | 'syncExtension';
   }) => void;
+  ACCOUNT_REMOVED: (ctx: { removedAccounts: KeyringEventAccount[] }) => void;
 };
 const { EventEmitter: AccountEE } =
   makeJsEEClass<PerfAccountEventBusListeners>();

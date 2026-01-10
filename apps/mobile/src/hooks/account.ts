@@ -14,21 +14,10 @@ import {
 import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
 import { getWalletIcon } from '@/utils/walletInfo';
-import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  DisplayChainWithWhiteLogo,
-  formatChainToDisplay,
-  varyAndSortChainItems,
-} from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { coerceFloat } from '@/utils/number';
-import { requestOpenApiMultipleNets } from '@/utils/openapi';
-import * as apiBalance from '@/core/apis/balance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
-import { isEqual, unionBy } from 'lodash';
-import { BalanceEntity } from '@/databases/entities/balance';
+import { isEqual } from 'lodash';
 import { updateHistoryTimeSingleAddress } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -39,6 +28,7 @@ import {
 } from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import {
+  makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
   runIIFEFunc,
   UpdaterOrPartials,
@@ -76,29 +66,29 @@ const zAccountStore = zCreate<Store>((set, get) => {
   };
 });
 
-const fetchAndSet = (options?: { confirmChanged?: boolean }) => {
-  fetchAllAccounts().then(accounts => {
+const fetchAndSet = makeAvoidParallelAsyncFunc(async () => {
+  return fetchAllAccounts().then(accounts => {
     setAccounts(accounts);
   });
-};
+});
 
 async function fetchNewlyAddedAccounts() {
   return AccountInfoEntity.getAccountsAddedIn(
     NEWLY_ADDED_ACCOUNT_DURATION,
   ).then(accounts => {
-    zAccountStore.setState(prev => {
-      const newVal = accounts.reduce((accu, cur) => {
-        accu[cur._db_id] = cur;
-        return accu;
-      }, {} as Store['newlyAddedAccounts']);
+    // zAccountStore.setState(prev => {
+    //   const newVal = accounts.reduce((accu, cur) => {
+    //     accu[cur._db_id] = cur;
+    //     return accu;
+    //   }, {} as Store['newlyAddedAccounts']);
 
-      if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
+    //   if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
 
-      return {
-        ...prev,
-        newlyAddedAccounts: newVal,
-      };
-    });
+    //   return {
+    //     ...prev,
+    //     newlyAddedAccounts: newVal,
+    //   };
+    // });
 
     return accounts;
   });
@@ -137,7 +127,7 @@ export function useDevNewlyAddedAccounts() {
 }
 
 export function startManageAccountStoreLifecycle() {
-  keyringService.once('unlock', () => {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', () => {
     fetchAndSet();
   });
 
@@ -147,6 +137,10 @@ export function startManageAccountStoreLifecycle() {
   // removedAccount
   keyringService.on('removedAccount', async (account: Account) => {
     fetchAndSet();
+
+    accountEvents.emit('ACCOUNT_REMOVED', {
+      removedAccounts: [account],
+    });
 
     await AccountInfoEntity.deleteByAccount(account);
     await fetchNewlyAddedAccounts();
@@ -181,29 +175,22 @@ export function startManageAccountStoreLifecycle() {
   }, 60 * 1e3);
 }
 
+// 简单打个补丁先避免 balance 和 evmBalance 变化触发 ACCOUNTS_MAYBE_CHANGED
+// TODO: 彻底解决这个问题
+const stripAccountsForDiff = (accounts: KeyringAccountWithAlias[]) =>
+  accounts.map(account => {
+    const { balance, evmBalance, ...rest } = account;
+    return rest;
+  });
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
   zAccountStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.accounts, valOrFunc, {
-      strict: false,
-    });
-    // 简单打个补丁先避免 balance 和 evmBalance 变化触发 ACCOUNTS_MAYBE_CHANGED
-    // TODO: 彻底解决这个问题
-    const stripAccountsForDiff = (accounts: KeyringAccountWithAlias[]) =>
-      accounts.map(account => {
-        const { balance, evmBalance, ...rest } = account;
-        return rest;
-      });
-    const changed = !isEqual(
-      stripAccountsForDiff(prev.accounts),
-      stripAccountsForDiff(newVal),
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.accounts,
+      valOrFunc,
+      {
+        strict: true,
+      },
     );
-
-    setTimeout(() => {
-      perfEvents.emit('ACCOUNTS_MAYBE_CHANGED', {
-        accounts: newVal,
-        confirmed: changed,
-      });
-    }, 0);
 
     if (changed) {
       return { ...prev, accounts: newVal };
@@ -251,12 +238,12 @@ function setPinAddresses(
   });
 }
 
-const doFetchAccounts = async () => {
+const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
   const nextAccounts = await fetchAllAccounts();
   setAccounts(nextAccounts);
 
   return nextAccounts;
-};
+});
 
 async function removeAccount(account: KeyringAccount) {
   const accounts = await getAllAccounts();

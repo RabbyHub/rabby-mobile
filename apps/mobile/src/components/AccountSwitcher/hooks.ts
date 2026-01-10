@@ -12,6 +12,7 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { zCreate } from '@/core/utils/reexports';
 import { keyringService } from '@/core/services';
 import { ITokenItem } from '@/store/tokens';
+import { perfEvents } from '@/core/utils/perf';
 
 type AccountSwitcherState = {
   /**
@@ -200,9 +201,9 @@ export const fetchTop5TokensForAllAccountsOnce = () => {
 export function startFetchOnceTop5TokensForAllAccounts() {
   const onUnlock = () => {
     fetchTop5TokensForAllAccountsOnce();
-    keyringService.off('unlock', onUnlock);
+    sub.remove();
   };
-  keyringService.on('unlock', onUnlock);
+  const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
 }
 
 export function useTopTokensForAddress(options?: {

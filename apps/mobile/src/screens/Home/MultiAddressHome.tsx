@@ -129,6 +129,7 @@ import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { isNonPublicProductionEnv } from '@/constant';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { perfEvents } from '@/core/utils/perf';
+import { refreshDayCurve } from '@/hooks/useMultiCurve';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -296,19 +297,19 @@ const OverViewComponent = React.memo(
     );
 
     const { myTop10Addresses } = useAccountInfo();
-    console.log('[MultiAddressHome] refresh MultiAddressHome exec');
+
     useFocusEffect(
       useCallback(() => {
         if (!couldDoRefresh()) return;
-        requestAnimationFrame(() => {
-          triggerUpdate().then(balanceAccounts =>
-            refresh24hAssets({ balanceAccounts }),
-          );
-          triggerUpdateAlert();
-          // // leave here to measure perf impact
-          // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-          syncTop10History(myTop10Addresses, false);
+        triggerUpdate().then(balanceAccounts => {
+          // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+          refresh24hAssets({ balanceAccounts });
+          refreshDayCurve({ balanceAccounts });
         });
+        triggerUpdateAlert();
+        // // leave here to measure perf impact
+        // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
+        syncTop10History(myTop10Addresses, false);
       }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
     );
 
@@ -318,9 +319,10 @@ const OverViewComponent = React.memo(
       perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
       Promise.all([
         // force update balance from server api
-        triggerUpdate(true).then(balanceAccounts =>
-          refresh24hAssets({ force: true, balanceAccounts }),
-        ),
+        triggerUpdate(true).then(balanceAccounts => {
+          refresh24hAssets({ force: true, balanceAccounts });
+          refreshDayCurve({ force: true, balanceAccounts });
+        }),
         checkAddressesEligibility(true),
       ]).finally(() => {
         // update at background

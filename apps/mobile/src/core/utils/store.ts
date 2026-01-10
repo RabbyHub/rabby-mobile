@@ -10,7 +10,7 @@ export function resolveValFromUpdater<Val = unknown>(
     /**
      * @default true
      */
-    strict?: boolean;
+    strict?: boolean | ((prevVal: Val, newVal: Val) => boolean);
     /**
      * @default true
      */
@@ -56,7 +56,9 @@ export function resolveValFromUpdater<Val = unknown>(
     ret.newVal = input as Val;
   }
 
-  if (strictCompare) {
+  if (typeof strictCompare === 'function') {
+    ret.changed = strictCompare(prevVal, ret.newVal);
+  } else if (strictCompare) {
     ret.changed = !isEqual(prevVal, ret.newVal);
   } else {
     ret.changed = prevVal !== ret.newVal;

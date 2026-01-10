@@ -35,6 +35,16 @@ describe('utils', () => {
       expect(changed).toBe(false);
       expect(newVal).toEqual({ ...prev });
     });
+
+    it('customize compare function', () => {
+      const prev = { a: 1, b: 2, c: 3 };
+      const input = { a: 1, b: 20, c: 3 };
+      const { newVal, changed } = resolveValFromUpdater(prev, input, {
+        strict: (prevVal, newVal) => prevVal.b !== newVal.b,
+      });
+      expect(changed).toBe(true);
+      expect(newVal).toEqual({ a: 1, b: 20, c: 3 });
+    });
   });
 
   describe('resolveValFromUpdater(array)', () => {

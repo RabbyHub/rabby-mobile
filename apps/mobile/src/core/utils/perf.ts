@@ -22,6 +22,7 @@ export type PerfEventBusListeners = {
   ACCOUNTS_BALANCE_UPDATE: (ctx: {
     prevState: AccountsBalanceState['balance'];
     nextState: AccountsBalanceState['balance'];
+    setFromRemoteApi?: boolean;
   }) => void;
 
   CONTACTS_ALIASES_UPDATE: (ctx: {
@@ -46,6 +47,8 @@ export type PerfEventBusListeners = {
     force: boolean;
     fromScene: AddressBalanceUpdaterSource;
   }) => void;
+
+  USER_MANUALLY_UNLOCK: () => void;
 };
 type PerfListeners = {
   [P: string]: (data: any) => void;

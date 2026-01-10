@@ -154,7 +154,6 @@ export const MultiChart = memo(function MultiChart({
   const { styles } = useTheme2024({ getStyle });
 
   const { combinedData: data } = useMultiHome24hBalanceCurveChart();
-  const { isLoadingNew: loading24hBalance } = useSceneIsLoadingNew('Home');
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
@@ -184,7 +183,6 @@ export const MultiChart = memo(function MultiChart({
         ]}>
         <LineChart.Provider data={chartsData}>
           <ChartHeader
-            loading={loading24hBalance}
             rawNetWorth={data.rawNetWorth}
             rawChange={data.rawChange}
             changePercent={data.changePercent}
@@ -194,7 +192,11 @@ export const MultiChart = memo(function MultiChart({
             matteredAccountCount={matteredAccountCount}
             toggleFoldMultiChart={toggleFoldMultiChart}
           />
-          <ChartContent data={chartsData} hideType={hideType} isLoss={data.isLoss} />
+          <ChartContent
+            data={chartsData}
+            hideType={hideType}
+            isLoss={data.isLoss}
+          />
         </LineChart.Provider>
       </View>
     </View>
@@ -208,7 +210,6 @@ interface IHeaderProps {
   isLoss: boolean;
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
-  loading: boolean;
   matteredAccountCount?: number;
   toggleFoldMultiChart: () => void;
 }
@@ -220,7 +221,6 @@ const ChartHeader = React.memo(
     isLoss,
     hideType,
     data: _data,
-    loading,
     matteredAccountCount,
     toggleFoldMultiChart,
   }: IHeaderProps) => {
@@ -230,6 +230,7 @@ const ChartHeader = React.memo(
     const debouncedRawNetWorth = useDebouncedValue(rawNetWorth, 300);
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
 
+    const { isLoadingNew: loading } = useSceneIsLoadingNew('Home');
     const { isFoldMultiChart } = useFoldMultiChartStore();
 
     const netWorth = useMemo(() => {

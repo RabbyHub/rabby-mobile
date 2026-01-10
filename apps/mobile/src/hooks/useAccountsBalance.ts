@@ -6,7 +6,11 @@ import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { unionBy } from 'lodash';
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import { resolveValFromUpdater, runIIFEFunc, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
@@ -40,22 +44,23 @@ export type AccountsBalanceState = {
   matteredAccountLength: number;
 };
 const balanceStore = zCreate(
-  zMutative<AccountsBalanceState>(
-    () => ({
-      balance: {},
-      notMatteredBalance: {},
-      matteredAccountLength: 0,
-    })
-  )
+  zMutative<AccountsBalanceState>(() => ({
+    balance: {},
+    notMatteredBalance: {},
+    matteredAccountLength: 0,
+  })),
 );
 
 runIIFEFunc(() => {
-  keyringService.once('unlock', () => {
+  perfEvents.once('USER_MANUALLY_UNLOCK', () => {
     getTop10MyAccounts().then(({ top10Accounts }) => {
       const result = top10Accounts.reduce((acc, account) => {
         const lcAddr = account.address.toLowerCase();
         const cacheData = preferenceService.getAddressBalance(lcAddr);
-        acc[lcAddr] = makeAccountBalanceFromCache(account, { res: cacheData, notMattered: false });
+        acc[lcAddr] = makeAccountBalanceFromCache(account, {
+          res: cacheData,
+          notMattered: false,
+        });
 
         return acc;
       }, {} as Record<string, BalanceAccountType>);
@@ -63,7 +68,7 @@ runIIFEFunc(() => {
       setAccountsBalance(result);
     });
   });
-})
+});
 
 export function getBalanceCacheAccounts() {
   return balanceStore.getState().balance;
@@ -77,28 +82,42 @@ export function useBalanceAccounts() {
 
 function setAccountsBalance(
   valOrFunc: UpdaterOrPartials<AccountsBalanceState['balance']>,
-  options?: { notMattered?: boolean },
+  options?: { notMattered?: boolean; setFromRemoteApi?: boolean },
 ) {
-  const { notMattered = false } = options || {};
+  const { notMattered = false, setFromRemoteApi } = options || {};
   if (!notMattered) {
     balanceStore.setState(prev => {
-      const { newVal, changed } = resolveValFromUpdater(prev.balance, valOrFunc, {
-        strict: true,
-      });
-      if (!changed) return prev;
+      const { newVal, changed, isChangedObjectInput } = resolveValFromUpdater(
+        prev.balance,
+        valOrFunc,
+        {
+          strict: true,
+        },
+      );
 
-      perfEvents.emit('ACCOUNTS_BALANCE_UPDATE', {
-        prevState: prev.balance,
-        nextState: newVal,
-      });
+      if (changed || isChangedObjectInput) {
+        setTimeout(() => {
+          perfEvents.emit('ACCOUNTS_BALANCE_UPDATE', {
+            prevState: prev.balance,
+            nextState: newVal,
+            setFromRemoteApi: setFromRemoteApi,
+          });
+        }, 0);
+      }
+
+      if (changed) return prev;
 
       prev.balance = newVal;
     });
   } else {
     balanceStore.setState(prev => {
-      const { newVal, changed } = resolveValFromUpdater(prev.notMatteredBalance, valOrFunc, {
-        strict: true,
-      });
+      const { newVal, changed } = resolveValFromUpdater(
+        prev.notMatteredBalance,
+        valOrFunc,
+        {
+          strict: true,
+        },
+      );
       if (!changed) return prev;
 
       prev.notMatteredBalance = newVal;
@@ -132,7 +151,8 @@ export function useLoadBalanceFromApiStage() {
 
 function computeTotalBalance(
   addresses: string[],
-  balanceAccounts: AccountsBalanceState['balance'] = balanceStore.getState().balance,
+  balanceAccounts: AccountsBalanceState['balance'] = balanceStore.getState()
+    .balance,
 ) {
   let total = 0;
   let totalEvm = 0;
@@ -162,10 +182,13 @@ export const apisAccountsBalance = {
   },
 };
 
-function makeAccountBalanceFromCache(account: Account, options?: {
-  res?: EvmTotalBalanceResponse | null;
-  notMattered: boolean;
-}) {
+function makeAccountBalanceFromCache(
+  account: Account,
+  options?: {
+    res?: EvmTotalBalanceResponse | null;
+    notMattered: boolean;
+  },
+) {
   const { res = null, notMattered = false } = options || {};
   const lcAddr = account.address.toLowerCase();
   const cacheData = res || preferenceService.getAddressBalance(lcAddr);
@@ -189,10 +212,13 @@ function makeAccountBalanceFromCache(account: Account, options?: {
   return accountBalance;
 }
 
-async function fetchAccountsBalanceFromApi(accounts: Account[], options?: {
-  retBalance?: Record<string, BalanceAccountType>;
-  notMattered?: boolean;
-}) {
+async function fetchAccountsBalanceFromApi(
+  accounts: Account[],
+  options?: {
+    retBalance?: Record<string, BalanceAccountType>;
+    notMattered?: boolean;
+  },
+) {
   const { retBalance = {}, notMattered = false } = options || {};
   // get from server api by queue
   const queue = new PQueue({ interval: 2000, intervalCap: 10 });
@@ -204,12 +230,19 @@ async function fetchAccountsBalanceFromApi(accounts: Account[], options?: {
     // batch fetch by queue
     queue.add(async () => {
       try {
-        const resData = await apiBalance.getAddressBalance(lcAddr, { force: true });
-        retBalance[lcAddr] = makeAccountBalanceFromCache(account, { res: resData, notMattered });
+        const resData = await apiBalance.getAddressBalance(lcAddr, {
+          force: true,
+        });
+        retBalance[lcAddr] = makeAccountBalanceFromCache(account, {
+          res: resData,
+          notMattered,
+        });
       } catch (e) {
         console.error('fetchTotalBalance error', e);
         // api fetch error fallback get from cache store
-        retBalance[lcAddr] = makeAccountBalanceFromCache(account, { notMattered });
+        retBalance[lcAddr] = makeAccountBalanceFromCache(account, {
+          notMattered,
+        });
       }
     });
   }
@@ -233,13 +266,18 @@ export const fetchTotalBalance = makeSWRKeyAsyncFunc(
         const { accounts } = await getAccountList({ filter: 'onlyOthers' });
         caredAccounts = accounts;
       }
-      const uniqueList = unionBy(caredAccounts, account => account.address.toLowerCase());
+      const uniqueList = unionBy(caredAccounts, account =>
+        account.address.toLowerCase(),
+      );
       const notMattered = fetchType === 'not_mattered:from_api';
       // first get from cache store
-      uniqueList.map((account) => {
+      uniqueList.map(account => {
         const lcAddr = account.address.toLowerCase();
         const cacheData = preferenceService.getAddressBalance(lcAddr);
-        retBalances[lcAddr] = makeAccountBalanceFromCache(account, { res: cacheData, notMattered });
+        retBalances[lcAddr] = makeAccountBalanceFromCache(account, {
+          res: cacheData,
+          notMattered,
+        });
       });
       setAccountsBalance(retBalances, { notMattered });
 
@@ -247,8 +285,14 @@ export const fetchTotalBalance = makeSWRKeyAsyncFunc(
         case 'from_api': {
           const top10Accounts = uniqueList.slice(0, 10);
           setLoading(prev => ({ ...prev, loadBalanceFromApiStage: 'loading' }));
-          const { retBalance } = await fetchAccountsBalanceFromApi(top10Accounts, { notMattered: false });
-          setAccountsBalance(retBalance, { notMattered: false });
+          const { retBalance } = await fetchAccountsBalanceFromApi(
+            top10Accounts,
+            { notMattered: false },
+          );
+          setAccountsBalance(retBalance, {
+            notMattered: false,
+            setFromRemoteApi: true,
+          });
           setLoading(prev => ({
             ...prev,
             loadBalanceFromApiStage: 'finished',
@@ -256,7 +300,10 @@ export const fetchTotalBalance = makeSWRKeyAsyncFunc(
         }
         case 'not_mattered:from_api': {
           const top10Accounts = uniqueList.slice(0, 10);
-          const { retBalance } = await fetchAccountsBalanceFromApi(top10Accounts, { notMattered: true });
+          const { retBalance } = await fetchAccountsBalanceFromApi(
+            top10Accounts,
+            { notMattered: true },
+          );
           setAccountsBalance(retBalance, { notMattered: true });
           break;
         }
