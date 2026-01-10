@@ -1,4 +1,5 @@
 import {
+  accountEvents,
   filterDirectlySignableAccounts,
   filterOutTop10Accounts,
   isDirectlySignableAccount,
@@ -207,6 +208,24 @@ export function useAccountHomeShowReceiveTip(
       eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
       sub.remove();
       // clearInterval(timer);
+    };
+  }, [isForSingle, detect]);
+
+  useEffect(() => {
+    if (isForSingle) return;
+
+    const onAccountsChanged = () => {
+      detect();
+    };
+    const subAdd = accountEvents.subscribe('ACCOUNT_ADDED', onAccountsChanged);
+    const subRemove = accountEvents.subscribe(
+      'ACCOUNT_REMOVED',
+      onAccountsChanged,
+    );
+
+    return () => {
+      subAdd.remove();
+      subRemove.remove();
     };
   }, [isForSingle, detect]);
 
