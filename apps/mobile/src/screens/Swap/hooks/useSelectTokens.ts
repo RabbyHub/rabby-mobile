@@ -39,7 +39,7 @@ export const useSelectTokens = ({
   const lastCurrentAddressRef = useRef(
     currentAccount?.address || _currentAccount?.address,
   );
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
 
   // 产品需求：当 x 掉地址选择时搜索视图下仍然展示当前地址的余额，用 ref 缓存最后一个 currentAddress 实现
   useEffect(() => {
@@ -57,8 +57,8 @@ export const useSelectTokens = ({
       // 产品需求：x 掉当前地址后默认视图下展示多地址的余额，搜索视图下只展示当前地址的余额
       return [prevCurrentAddress.current];
     }
-    return top10Addresses;
-  }, [currentAddress, top10Addresses, keyword]);
+    return myTop10Addresses;
+  }, [currentAddress, myTop10Addresses, keyword]);
 
   const isLoading = useTokenList(s => s.isLoading);
   const isLoadingByAddress = useTokenList(s => s.isLoadingByAddress);
@@ -216,8 +216,8 @@ export const useSelectTokens = ({
     if (currentAccount) {
       return;
     }
-    return batchGetTokenList(top10Addresses);
-  }, [batchGetTokenList, currentAccount, top10Addresses]);
+    return batchGetTokenList(myTop10Addresses);
+  }, [batchGetTokenList, currentAccount, myTop10Addresses]);
 
   const loadOnVisibleChanged = useCallback(
     (nextVisible = false) => {

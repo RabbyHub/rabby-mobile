@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Text, View, TouchableOpacity, Pressable } from 'react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 import { AddressEntry } from './RenderRow/AddressEntry';
@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
+import useAccountsBalance, { fetchTotalBalance } from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -37,7 +37,7 @@ interface AddressListProps {
   onMoreAddressListPress?: () => void;
   isManageMode?: boolean;
 }
-export const AddressList = ({
+const AddressList = ({
   showMarkIfNewlyAdded = true,
   onAddAddressPress,
   onDone,
@@ -47,7 +47,7 @@ export const AddressList = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const { top10Accounts, top10Records, notMatterAccounts, fetchAccounts } =
+  const { myTop10Accounts, myTop10Records, notMatteredAccounts, fetchAccounts } =
     useAccountInfo();
 
   const { triggerUpdate, balanceAccounts } = useAccountsBalance();
@@ -56,38 +56,30 @@ export const AddressList = ({
 
   useBalanceUpdate(triggerUpdate);
 
-  const list = useMemo(() => {
-    return top10Accounts.map(item => {
-      const account = balanceAccounts.find(acc =>
-        isSameAddress(acc.address, item.address),
-      );
-      return {
-        ...item,
-        balance: account?.balance || item.balance || 0,
-        evmBalance: account?.evmBalance || item.evmBalance || 0,
-      };
-    });
-  }, [balanceAccounts, top10Accounts]);
-
   const addressListData = useMemo(() => {
-    return list
+    return myTop10Accounts
       .map(item => {
-        const endNetWorth = item.evmBalance;
+        const account = balanceAccounts[item.address.toLowerCase()];
+
+        const balance = account?.balance || item.balance || 0;
+        const evmBalance = account?.evmBalance || item.evmBalance || 0;
+
         const changeData = multi24hBalance[item.address.toLowerCase()];
         const startValue = changeData?.total_usd_value || 0;
         const { changePercent, assetsChange } = computeBalanceChange(
-          endNetWorth,
+          evmBalance,
           startValue,
         );
         return {
           ...item,
-          balance: item.balance,
+          balance,
+          evmBalance,
           changPercent: changeData ? changePercent : undefined,
           isLoss: changeData ? assetsChange < 0 : undefined,
         };
       })
       .sort((a, b) => b.balance - a.balance);
-  }, [list, multi24hBalance]);
+  }, [balanceAccounts, myTop10Accounts, multi24hBalance]);
 
   const renderItem = useCallback(
     ({ item }) => {
@@ -148,15 +140,15 @@ export const AddressList = ({
   }, [onMoreAddressListPress]);
 
   const notMatterAvatarList = useMemo(() => {
-    return notMatterAccounts
-      .filter(x => !top10Records.has(x.address.toLowerCase()))
+    return notMatteredAccounts
+      .filter(x => !myTop10Records.has(x.address.toLowerCase()))
       .slice(0, 3);
-  }, [notMatterAccounts, top10Records]);
+  }, [notMatteredAccounts, myTop10Records]);
 
   const renderFooter = useCallback(
     () => (
       <View>
-        {notMatterAccounts.length > 0 && (
+        {notMatteredAccounts.length > 0 && (
           <View style={styles.moreWalletsContainer}>
             <View style={styles.moreWalletsHintContainer}>
               <View style={styles.horizontalLine} />
@@ -247,7 +239,7 @@ export const AddressList = ({
       </View>
     ),
     [
-      notMatterAccounts,
+      notMatteredAccounts,
       notMatterAvatarList,
       colors2024,
       onAddAddressPress,
@@ -305,6 +297,10 @@ export const AddressListModal = ({
   const switchManageMode = () => {
     setIsManageMode(e => !e);
   };
+
+  useEffect(() => {
+    fetchTotalBalance('not_mattered:from_api');
+  }, []);
 
   if (moreAddressList) {
     return (

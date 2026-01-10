@@ -1,10 +1,12 @@
 import {
+  accountEvents,
   filterDirectlySignableAccounts,
   filterOutTop10Accounts,
   isDirectlySignableAccount,
   isHardwareAccount,
 } from '@/core/apis/account';
 import { openapi } from '@/core/request';
+import { perfEvents } from '@/core/utils/perf';
 import {
   KeyringAccountWithAlias,
   storeApiAccounts,
@@ -18,9 +20,11 @@ import {
 import { apisAccountsBalance } from '@/hooks/useAccountsBalance';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 export const isTabsSwiping = {
   value: false,
@@ -37,25 +41,30 @@ export function useAccountInfo() {
   );
 
   const sortedList = useSortAddressList(myAccounts);
-  const { top10Accounts, top10Addresses, notTop10Accounts, top10Records } =
-    useCreationWithShallowCompare(() => {
-      const {
-        top10Accounts,
-        top10Addresses,
-        top10Records,
-        restAccounts: notTop10Accounts,
-      } = filterOutTop10Accounts(sortedList, { gatherSameAddress: false });
+  const {
+    myTop10Accounts,
+    myTop10Addresses,
+    myTop10Records,
+    myNotTop10Accounts,
+  } = useCreationWithShallowCompare(() => {
+    const {
+      top10Accounts: myTop10Accounts,
+      top10Addresses: myTop10Addresses,
+      top10Records: myTop10Records,
+      restAccounts: myNotTop10Accounts,
+    } = filterOutTop10Accounts(sortedList, { gatherSameAddress: false });
 
-      return {
-        top10Accounts,
-        top10Addresses,
-        top10Records,
-        notTop10Accounts,
-      };
-    }, [sortedList]);
-  const stableTop10Addresses = useCreationWithDeepCompare(
-    () => top10Addresses,
-    [top10Addresses],
+    return {
+      myTop10Accounts,
+      myTop10Addresses,
+      myTop10Records,
+      myNotTop10Accounts,
+    };
+  }, [sortedList]);
+
+  const stableTop10Addresses = useCreationWithShallowCompare(
+    () => myTop10Addresses,
+    [myTop10Addresses],
   );
 
   const { hasWatchAddress, hasSafeAddress, gnosisAccounts, watchAccounts } =
@@ -80,23 +89,24 @@ export function useAccountInfo() {
       return ret;
     }, [accounts]);
 
-  const notMatterAccounts = useCreationWithShallowCompare(() => {
-    return [...notTop10Accounts, ...gnosisAccounts, ...watchAccounts];
-  }, [notTop10Accounts, gnosisAccounts, watchAccounts]);
+  const notMatteredAccounts = useCreationWithShallowCompare(() => {
+    return [...myNotTop10Accounts, ...gnosisAccounts, ...watchAccounts];
+  }, [myNotTop10Accounts, gnosisAccounts, watchAccounts]);
 
   return {
-    top10Accounts,
-    top10Addresses: stableTop10Addresses,
-    top10Records,
-    notMatterAccounts,
+    myTop10Accounts,
+    myTop10Addresses: stableTop10Addresses,
+    myTop10Records,
+    myNotTop10Accounts,
+    notMatteredAccounts,
     gnosisAccounts,
     watchAccounts,
-    notTop10Accounts,
     list: sortedList,
     hasWatchAddress,
     hasSafeAddress,
     fetchAccounts,
     rawAllAccounts: accounts,
+    matteredAccountCount: filterMyAccounts(sortedList).length,
   };
 }
 
@@ -136,7 +146,7 @@ export async function getShowReceiveAddressTip(options?: {
     targetAccount.evmBalance ??
     0;
 
-  let borned = false;
+  let borned = true;
   try {
     const addressDesc = await openapi.addrDesc(targetAccount.address);
     borned = addressDesc.desc.born_at != null;
@@ -154,11 +164,10 @@ export async function getShowReceiveAddressTip(options?: {
 export function useAccountHomeShowReceiveTip(
   caredAccount?: KeyringAccountWithAlias | null,
 ) {
-  const { accounts } = useMyAccounts({ disableAutoFetch: true });
-  const asyncResult = useAsync(
-    () =>
-      getShowReceiveAddressTip({ caredAccount, isForSingle: !!caredAccount }),
-    [caredAccount, accounts],
+  const isForSingle = !!caredAccount;
+  const [asyncResult, detect] = useAsyncFn(
+    () => getShowReceiveAddressTip({ caredAccount, isForSingle }),
+    [caredAccount, isForSingle],
   );
 
   if (asyncResult.error) {
@@ -174,6 +183,51 @@ export function useAccountHomeShowReceiveTip(
     !asyncResult.value?.borned
       ? targetAccount
       : null;
+
+  useEffect(() => {
+    detect();
+  }, [detect]);
+
+  useEffect(() => {
+    if (isForSingle) return;
+
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] = () => {
+      detect();
+    };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    const sub = perfEvents.subscribe('HOME_WILL_BE_REFRESHED_MANUALLY', () => {
+      detect();
+    });
+
+    // const timer = setInterval(() => {
+    //   detect();
+    // }, 5 * 60 * 1000); // every 5 minutes
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      sub.remove();
+      // clearInterval(timer);
+    };
+  }, [isForSingle, detect]);
+
+  useEffect(() => {
+    if (isForSingle) return;
+
+    const onAccountsChanged = () => {
+      detect();
+    };
+    const subAdd = accountEvents.subscribe('ACCOUNT_ADDED', onAccountsChanged);
+    const subRemove = accountEvents.subscribe(
+      'ACCOUNT_REMOVED',
+      onAccountsChanged,
+    );
+
+    return () => {
+      subAdd.remove();
+      subRemove.remove();
+    };
+  }, [isForSingle, detect]);
 
   return {
     targetAccount,
