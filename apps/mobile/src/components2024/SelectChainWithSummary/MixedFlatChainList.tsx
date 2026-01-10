@@ -14,6 +14,7 @@ import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
 import {
+  EMPTY_TOKEN_LIST,
   getChainSelectorCacheKey,
   ITokenItem,
   useTokenListComputedStore,
@@ -65,7 +66,7 @@ export default function MixedFlatChainList({
   }, [selectedAddresses, registerChainSelector]);
 
   const tokens = useTokenListComputedStore(state => {
-    return state.chainSelectorCache[chainSelectorKey] || [];
+    return state.chainSelectorCache[chainSelectorKey] || EMPTY_TOKEN_LIST;
   });
 
   const { styles } = useTheme2024({ getStyle });
