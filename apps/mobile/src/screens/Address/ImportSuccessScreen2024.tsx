@@ -76,7 +76,6 @@ export const ImportSuccessScreen2024 = () => {
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const { t } = useTranslation();
-  const { getTokenList } = useTokenList();
 
   const route =
     useRoute<
@@ -252,14 +251,13 @@ export const ImportSuccessScreen2024 = () => {
       const syncAddresses =
         addresses.length > 10 ? addresses.slice(0, 10) : addresses;
       syncAddresses.forEach(address => {
-        getTokenList(address);
+        useTokenList.getState().getTokenList(address);
         syncProtocols(address);
       });
       syncMultiAddressesHistory(syncAddresses);
       eventBus.emit('PERPS_ADD_ADDRESSES', syncAddresses);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+  }, [state, t]);
   React.useEffect(() => {
     setTimeout(() => fetchAccounts(), 0);
   }, [fetchAccounts]);

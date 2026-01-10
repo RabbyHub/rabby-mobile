@@ -146,7 +146,7 @@ export const TokenList = ({
     if (!lowerAddress) return false;
     return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
   });
-  const { getTokenList } = useTokenList();
+  const getTokenList = useTokenList(s => s.getTokenList);
 
   useEffect(() => {
     if (!isFocused || !currentAddress) {

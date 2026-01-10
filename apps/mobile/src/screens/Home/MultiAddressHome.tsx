@@ -107,10 +107,6 @@ import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidan
 import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
-import {
-  RNGHPressable,
-  RNGHTouchableOpacity,
-} from '@/components/customized/reexports';
 import { TABITEM_H } from './components/CustomTabBar';
 import {
   refreshSuccessAndFailList,
@@ -128,7 +124,6 @@ import {
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
-import useTokenList from '@/store/tokens';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { isNonPublicProductionEnv } from '@/constant';

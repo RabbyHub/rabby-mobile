@@ -13,6 +13,7 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import useTokenList, {
+  EMPTY_TOKEN_LIST,
   getPerpsTokenSelectCacheKey,
   ITokenItem,
   useTokenListComputedStore,
@@ -59,11 +60,10 @@ export const PerpsSelectTokenPopup: React.FC<{
 
   const _tokens = useTokenListComputedStore(state => {
     if (!perpsTokenKey) {
-      return [];
+      return EMPTY_TOKEN_LIST;
     }
-    return state.perpsTokenSelectCache[perpsTokenKey] || [];
+    return state.perpsTokenSelectCache[perpsTokenKey] || EMPTY_TOKEN_LIST;
   });
-  const { getTokenList } = useTokenList();
 
   const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
     async () => {
@@ -102,11 +102,11 @@ export const PerpsSelectTokenPopup: React.FC<{
   useEffect(() => {
     if (visible) {
       if (account) {
-        getTokenList(account.address, true);
+        useTokenList.getState().getTokenList(account.address, true);
       }
       runFetchUsdcToken();
     }
-  }, [runFetchUsdcToken, getTokenList, visible, account]);
+  }, [runFetchUsdcToken, visible, account]);
 
   const renderItem = useMemoizedFn(({ item }: { item: ITokenItem }) => {
     return (

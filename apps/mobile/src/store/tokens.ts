@@ -729,6 +729,7 @@ const touchCacheParams = <T>(
   return [] as string[];
 };
 
+export const EMPTY_TOKEN_LIST = [];
 export const useTokenListComputedStore = zCreate<TokenListComputedState>(
   set => ({
     multiAssetsCache: {},
