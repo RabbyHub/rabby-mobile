@@ -183,14 +183,26 @@ export function startManageAccountStoreLifecycle() {
 
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
   zAccountStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.accounts,
-      valOrFunc,
-      { strict: true },
+    const { newVal } = resolveValFromUpdater(prev.accounts, valOrFunc, {
+      strict: false,
+    });
+    // 简单打个补丁先避免 balance 和 evmBalance 变化触发 ACCOUNTS_MAYBE_CHANGED
+    // TODO: 彻底解决这个问题
+    const stripAccountsForDiff = (accounts: KeyringAccountWithAlias[]) =>
+      accounts.map(account => {
+        const { balance, evmBalance, ...rest } = account;
+        return rest;
+      });
+    const changed = !isEqual(
+      stripAccountsForDiff(prev.accounts),
+      stripAccountsForDiff(newVal),
     );
 
     setTimeout(() => {
-      perfEvents.emit('ACCOUNTS_MAYBE_CHANGED', { accounts: newVal, confirmed: changed });
+      perfEvents.emit('ACCOUNTS_MAYBE_CHANGED', {
+        accounts: newVal,
+        confirmed: changed,
+      });
     }, 0);
 
     if (changed) {
