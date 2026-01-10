@@ -140,7 +140,7 @@ export const useSearchTokens = (filterText?: string) => {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const searchedRef = useRef<string>('');
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
 
   const handleSearch = async (text?: string) => {
     if (!text) {
@@ -165,10 +165,10 @@ export const useSearchTokens = (filterText?: string) => {
         tokenId: string;
         amount: number;
       }> = [];
-      if (top10Addresses.length > 0 && tokenList.length > 0) {
+      if (myTop10Addresses.length > 0 && tokenList.length > 0) {
         try {
           localAmounts = await TokenItemEntity.getTokenListAmount({
-            owner_addr: top10Addresses,
+            owner_addr: myTop10Addresses,
             tokenList,
           });
         } catch (error) {

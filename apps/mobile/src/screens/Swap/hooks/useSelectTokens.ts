@@ -18,6 +18,8 @@ import { useSelectTokensThreadSafe } from '@/components/Token/hooks/selectToken'
 import { openapi } from '@/core/request';
 import { tokenItemToITokenItem } from '@/utils/token';
 
+const EMPTY_TOKEN_LIST: ITokenItem[] = [];
+
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
   chain_server_id,
@@ -37,7 +39,7 @@ export const useSelectTokens = ({
   const lastCurrentAddressRef = useRef(
     currentAccount?.address || _currentAccount?.address,
   );
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
 
   // 产品需求：当 x 掉地址选择时搜索视图下仍然展示当前地址的余额，用 ref 缓存最后一个 currentAddress 实现
   useEffect(() => {
@@ -55,11 +57,13 @@ export const useSelectTokens = ({
       // 产品需求：x 掉当前地址后默认视图下展示多地址的余额，搜索视图下只展示当前地址的余额
       return [prevCurrentAddress.current];
     }
-    return top10Addresses;
-  }, [currentAddress, top10Addresses, keyword]);
+    return myTop10Addresses;
+  }, [currentAddress, myTop10Addresses, keyword]);
 
-  const { isLoading, isLoadingByAddress, batchGetTokenList, getTokenList } =
-    useTokenList();
+  const isLoading = useTokenList(s => s.isLoading);
+  const isLoadingByAddress = useTokenList(s => s.isLoadingByAddress);
+  const batchGetTokenList = useTokenList(s => s.batchGetTokenList);
+  const getTokenList = useTokenList(s => s.getTokenList);
 
   const registerTokenSelect = useTokenListComputedStore(
     state => state.registerTokenSelect,
@@ -141,7 +145,7 @@ export const useSelectTokens = ({
   ]);
 
   const tokens = useTokenListComputedStore(state => {
-    return state.tokenSelectCache[tokenSelectKey] || [];
+    return state.tokenSelectCache[tokenSelectKey] || EMPTY_TOKEN_LIST;
   });
 
   const mergedTokens = useMemo(() => {
@@ -212,8 +216,8 @@ export const useSelectTokens = ({
     if (currentAccount) {
       return;
     }
-    return batchGetTokenList(top10Addresses);
-  }, [batchGetTokenList, currentAccount, top10Addresses]);
+    return batchGetTokenList(myTop10Addresses);
+  }, [batchGetTokenList, currentAccount, myTop10Addresses]);
 
   const loadOnVisibleChanged = useCallback(
     (nextVisible = false) => {

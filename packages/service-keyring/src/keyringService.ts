@@ -288,7 +288,7 @@ export class KeyringService extends RNEventEmitter {
         );
       })
       .then(this.persistAllKeyrings.bind(this))
-      .then(this.setUnlocked.bind(this))
+      .then(() => this._setUnlocked({ scene: 'finish:importPrivateKey' }))
       .then(this.fullUpdate.bind(this))
       .then(() => keyring);
   }
@@ -372,9 +372,9 @@ export class KeyringService extends RNEventEmitter {
    *
    * @fires KeyringController#unlock
    */
-  setUnlocked(): void {
+  private _setUnlocked(options: { scene: 'unlock' | 'finish:importPrivateKey' | 'finish:createKeyringWithMnemonics' }): void {
     this.memStore.updateState({ isUnlocked: true });
-    this.emit('unlock');
+    this.emit('unlock', { scene: options.scene });
   }
 
   _isSubmittingPassword = false;
@@ -405,7 +405,7 @@ export class KeyringService extends RNEventEmitter {
     } catch {
       //
     } finally {
-      this.setUnlocked();
+      this._setUnlocked({ scene: 'unlock' });
       this._isSubmittingPassword = false;
     }
 
@@ -1148,7 +1148,7 @@ export class KeyringService extends RNEventEmitter {
         //   return null;
         // })
         .then(this.persistAllKeyrings.bind(this))
-        .then(this.setUnlocked.bind(this))
+        .then(() => this._setUnlocked({ scene: 'finish:createKeyringWithMnemonics' }))
         .then(this.fullUpdate.bind(this))
         .then(() => keyring)
     );

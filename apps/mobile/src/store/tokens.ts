@@ -1,9 +1,8 @@
-import { getTop10MyAddresses } from '@/core/apis/account';
+import { getTop10MyAccounts } from '@/core/apis/account';
 import { openapi } from '@/core/request';
 import { zCreate } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
-import { waitQueueFinished } from '@/hooks/useMultiCurve';
 import { queryTokensCache } from '@/screens/Home/utils/token';
 import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
@@ -12,6 +11,14 @@ import {
   tokenItemToITokenItem,
 } from '@/utils/token';
 import PQueue from 'p-queue';
+
+const waitQueueFinished = (q: PQueue) => {
+  return new Promise(resolve => {
+    q.on('idle', () => {
+      resolve(null);
+    });
+  });
+};
 
 export interface ITokenItem {
   amount: number;
@@ -453,7 +460,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
   async initStore() {
     // 在 App 启动时执行，初始化冷备数据
     // 取 Top10 地址
-    const top10Addresses = await getTop10MyAddresses(true);
+    const { top10Addresses } = await getTop10MyAccounts(true);
     const tokenMap = await TokenItemEntity.getDefaultTokensByAddresses(
       top10Addresses,
     );
@@ -722,6 +729,7 @@ const touchCacheParams = <T>(
   return [] as string[];
 };
 
+export const EMPTY_TOKEN_LIST = [];
 export const useTokenListComputedStore = zCreate<TokenListComputedState>(
   set => ({
     multiAssetsCache: {},

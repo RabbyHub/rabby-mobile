@@ -14,21 +14,10 @@ import {
 import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
 import { getWalletIcon } from '@/utils/walletInfo';
-import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  DisplayChainWithWhiteLogo,
-  formatChainToDisplay,
-  varyAndSortChainItems,
-} from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { coerceFloat } from '@/utils/number';
-import { requestOpenApiMultipleNets } from '@/utils/openapi';
-import * as apiBalance from '@/core/apis/balance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
-import { isEqual, unionBy } from 'lodash';
-import { BalanceEntity } from '@/databases/entities/balance';
+import { isEqual } from 'lodash';
 import { updateHistoryTimeSingleAddress } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -39,6 +28,7 @@ import {
 } from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import {
+  makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
   runIIFEFunc,
   UpdaterOrPartials,
@@ -49,6 +39,7 @@ import { perfEvents } from '@/core/utils/perf';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';
 import { ormEvents } from '@/databases/entities/_helpers';
+import { InteractionManager } from 'react-native';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -75,11 +66,11 @@ const zAccountStore = zCreate<Store>((set, get) => {
   };
 });
 
-const fetchAndSet = (options?: { confirmChanged?: boolean }) => {
-  fetchAllAccounts().then(accounts => {
+const fetchAndSet = makeAvoidParallelAsyncFunc(async () => {
+  return fetchAllAccounts().then(accounts => {
     setAccounts(accounts);
   });
-};
+});
 
 async function fetchNewlyAddedAccounts() {
   return AccountInfoEntity.getAccountsAddedIn(
@@ -136,7 +127,7 @@ export function useDevNewlyAddedAccounts() {
 }
 
 export function startManageAccountStoreLifecycle() {
-  keyringService.once('unlock', () => {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', () => {
     fetchAndSet();
   });
 
@@ -146,6 +137,10 @@ export function startManageAccountStoreLifecycle() {
   // removedAccount
   keyringService.on('removedAccount', async (account: Account) => {
     fetchAndSet();
+
+    accountEvents.emit('ACCOUNT_REMOVED', {
+      removedAccounts: [account],
+    });
 
     await AccountInfoEntity.deleteByAccount(account);
     await fetchNewlyAddedAccounts();
@@ -168,23 +163,34 @@ export function startManageAccountStoreLifecycle() {
 
   fetchNewlyAddedAccounts();
   setInterval(() => {
-    fetchNewlyAddedAccounts();
-
-    AccountInfoEntity.trimExpiredAccounts(NEWLY_ADDED_ACCOUNT_DURATION);
+    InteractionManager.runAfterInteractions(() => {
+      fetchNewlyAddedAccounts();
+    });
   }, 10 * 1e3);
+
+  setInterval(() => {
+    InteractionManager.runAfterInteractions(() => {
+      AccountInfoEntity.trimExpiredAccounts(NEWLY_ADDED_ACCOUNT_DURATION);
+    });
+  }, 60 * 1e3);
 }
 
+// 简单打个补丁先避免 balance 和 evmBalance 变化触发 ACCOUNTS_MAYBE_CHANGED
+// TODO: 彻底解决这个问题
+const stripAccountsForDiff = (accounts: KeyringAccountWithAlias[]) =>
+  accounts.map(account => {
+    const { balance, evmBalance, ...rest } = account;
+    return rest;
+  });
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
   zAccountStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
       prev.accounts,
       valOrFunc,
-      { strict: true },
+      {
+        strict: true,
+      },
     );
-
-    setTimeout(() => {
-      perfEvents.emit('ACCOUNTS_MAYBE_CHANGED', { confirmed: changed });
-    }, 0);
 
     if (changed) {
       return { ...prev, accounts: newVal };
@@ -232,12 +238,12 @@ function setPinAddresses(
   });
 }
 
-const doFetchAccounts = async () => {
+const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
   const nextAccounts = await fetchAllAccounts();
   setAccounts(nextAccounts);
 
   return nextAccounts;
-};
+});
 
 async function removeAccount(account: KeyringAccount) {
   const accounts = await getAllAccounts();
@@ -400,9 +406,7 @@ export const usePinnedAccountList = () => {
           KEYRING_TYPE.WalletConnectKeyring,
         ].includes(item.type)
       ) {
-        const account = balanceAccounts.find(acc =>
-          isSameAddress(acc.address, item.address),
-        );
+        const account = balanceAccounts[item.address.toLowerCase()];
         res.push({
           ...item,
           balance: account?.balance || item.balance || 0,

@@ -35,6 +35,9 @@ import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { startCheckClearAction } from './utils/clipboard';
+import tokenListStore from './store/tokens';
+import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
+import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 
 startSubscribeLangChange();
 
@@ -70,7 +73,11 @@ rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
 startComputationThread();
+startProcessScene24hBalanceEvents();
+startProcessMultiCurveEvents();
 
 trimNoLongerSupportsOnUnlock();
 
 startCheckClearAction();
+
+tokenListStore.getState().initStore();

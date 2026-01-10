@@ -75,8 +75,8 @@ export const useOfflineChain = () => {
   const { balanceAccounts } = useAccountsBalance();
 
   const list = useMemo(() => {
-    const accountChainBalanceList = balanceAccounts.map(
-      e => preferenceService.getAddressBalance(e.address)?.chain_list,
+    const accountChainBalanceList = Object.keys(balanceAccounts).map(
+      addr => preferenceService.getAddressBalance(addr)?.chain_list,
     );
 
     return offlineList

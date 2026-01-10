@@ -104,13 +104,9 @@ import {
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
+import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
-import {
-  RNGHPressable,
-  RNGHTouchableOpacity,
-} from '@/components/customized/reexports';
 import { TABITEM_H } from './components/CustomTabBar';
 import {
   refreshSuccessAndFailList,
@@ -128,11 +124,12 @@ import {
 } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
 import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
-import useTokenList from '@/store/tokens';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { isNonPublicProductionEnv } from '@/constant';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
+import { perfEvents } from '@/core/utils/perf';
+import { refreshDayCurve } from '@/hooks/useMultiCurve';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -150,7 +147,6 @@ const OverViewComponent = React.memo(
   ({}: React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
-    const tokenListStore = useTokenList();
     const { styles, colors2024 } = useTheme2024({
       getStyle,
     });
@@ -300,44 +296,47 @@ const OverViewComponent = React.memo(
       }, []),
     );
 
-    const { top10Addresses } = useAccountInfo();
-    console.log('[MultiAddressHome] refresh MultiAddressHome exec');
+    const { myTop10Addresses } = useAccountInfo();
+
     useFocusEffect(
       useCallback(() => {
         if (!couldDoRefresh()) return;
-        requestAnimationFrame(() => {
-          triggerUpdate().then(balanceAccounts =>
-            refresh24hAssets({ balanceAccounts }),
-          );
-          triggerUpdateAlert();
-          // // leave here to measure perf impact
-          // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-          syncTop10History(top10Addresses, false);
+        triggerUpdate().then(balanceAccounts => {
+          // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+          refresh24hAssets({ balanceAccounts });
+          refreshDayCurve({ balanceAccounts });
         });
-      }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
+        triggerUpdateAlert();
+        // // leave here to measure perf impact
+        // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
+        syncTop10History(myTop10Addresses, false);
+      }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
     );
-
-    useEffect(() => {
-      tokenListStore.initStore();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const onRefresh = useCallback(() => {
       if (!couldDoRefresh()) return;
+
+      perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
       Promise.all([
         // force update balance from server api
-        triggerUpdate(true).then(balanceAccounts =>
-          refresh24hAssets({ force: true, balanceAccounts }),
-        ),
+        triggerUpdate(true).then(balanceAccounts => {
+          refresh24hAssets({ force: true, balanceAccounts });
+          refreshDayCurve({ force: true, balanceAccounts });
+        }),
         checkAddressesEligibility(true),
       ]).finally(() => {
         // update at background
         forceUpdate();
         apisLending.fetchLendingData();
-        syncTop10History(top10Addresses, true);
+        syncTop10History(myTop10Addresses, true);
         currencyService.syncCurrencyList(true);
       });
-    }, [triggerUpdate, checkAddressesEligibility, forceUpdate, top10Addresses]);
+    }, [
+      triggerUpdate,
+      checkAddressesEligibility,
+      forceUpdate,
+      myTop10Addresses,
+    ]);
 
     // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
     const handlePressWatchlist = useCallback(() => {
@@ -654,10 +653,6 @@ function MultiAddressHome(): JSX.Element {
       });
     }
   }, []);
-
-  const setIsFoldMultiChart = useFoldMultiChartStore(
-    s => s.setIsFoldMultiChart,
-  );
 
   useEffect(() => {
     apisHomeTabIndex.setTabIndex(0);

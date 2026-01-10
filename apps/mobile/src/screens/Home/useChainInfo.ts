@@ -6,7 +6,7 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { assetsMapStore, computeAssetsApis } from './hooks/store';
 import tokenStore, { ITokenItem } from '@/store/tokens';
 import { debounce, isEqual } from 'lodash';
-import { getTop10MyAddresses } from '@/core/apis/account';
+import { getTop10MyAccounts } from '@/core/apis/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { DisplayedProject } from './utils/project';
@@ -51,9 +51,7 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
 const debounceComputeChainList = debounce<
   Parameters<typeof assetsMapStore.subscribe | typeof tokenStore.subscribe>[0]
 >(async () => {
-  const top10Addresses = (await getTop10MyAddresses()).map(item =>
-    item.toLowerCase(),
-  );
+  const { top10Addresses } = (await getTop10MyAccounts());
 
   setFinalInfo(computeChainsListV2(top10Addresses));
 }, 100);

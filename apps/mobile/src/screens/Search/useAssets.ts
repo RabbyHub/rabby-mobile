@@ -28,7 +28,7 @@ import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useCallback } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { getTop10MyAddresses } from '@/core/apis/account';
+import { getTop10MyAccounts } from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
@@ -378,7 +378,7 @@ export const useLoadAssets = () => {
       },
     ) => {
       const addresses =
-        options?.realTimeAddresses || (await getTop10MyAddresses());
+        options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses;
       removeUnNeedAssets(addresses);
       const { disableDefi, disableNFT } = options || {};
       if (!options?.ignoreLoading) {
@@ -419,7 +419,7 @@ export const useLoadAssets = () => {
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
       const addresses =
-        options?.realTimeAddresses || (await getTop10MyAddresses());
+        options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses;
       removeUnNeedAssets(addresses);
       const isCurrentShortCacheFetch = !!(
         options?.maxTokenLength ||

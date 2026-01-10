@@ -4,7 +4,6 @@ import React from 'react';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { useTheme2024 } from '@/hooks/theme';
-import { AddressListScreen } from '@/screens/Address/AddressListScreen';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
@@ -99,22 +98,6 @@ export function AddressNavigator() {
         },
         headerTitle: '',
       })}>
-      {/* <AddressStack.Screen
-        name={RootNames.AddressList}
-        component={AddressListScreen}
-        options={mergeScreenOptions2024([
-          {
-            headerTitle: t('page.addressDetail.addressListScreen.title', {
-              count: mainAddressCount,
-            }),
-            title: 'Address',
-            headerTintColor: colors2024['neutral-title-1'],
-            headerTitleStyle: styles.headerTitleText,
-            // eslint-disable-next-line react/no-unstable-nested-components
-            headerRight: () => <AddressListScreenButton type="address" />,
-          },
-        ])}
-      /> */}
       <AddressStack.Screen
         name={RootNames.ReceiveAddressList}
         component={ReceiveAddressListScreen}

@@ -14,6 +14,7 @@ import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
 import {
+  EMPTY_TOKEN_LIST,
   getChainSelectorCacheKey,
   ITokenItem,
   useTokenListComputedStore,
@@ -43,16 +44,16 @@ export default function MixedFlatChainList({
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
   account?: Account | null;
 }) {
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
   const selectedAddresses = useMemo(() => {
     if (needAllAddresses) {
-      return top10Addresses;
+      return myTop10Addresses;
     }
     if (currentAccount?.address) {
       return [currentAccount.address];
     }
     return [];
-  }, [needAllAddresses, top10Addresses, currentAccount?.address]);
+  }, [needAllAddresses, myTop10Addresses, currentAccount?.address]);
   const registerChainSelector = useTokenListComputedStore(
     state => state.registerChainSelector,
   );
@@ -65,7 +66,7 @@ export default function MixedFlatChainList({
   }, [selectedAddresses, registerChainSelector]);
 
   const tokens = useTokenListComputedStore(state => {
-    return state.chainSelectorCache[chainSelectorKey] || [];
+    return state.chainSelectorCache[chainSelectorKey] || EMPTY_TOKEN_LIST;
   });
 
   const { styles } = useTheme2024({ getStyle });

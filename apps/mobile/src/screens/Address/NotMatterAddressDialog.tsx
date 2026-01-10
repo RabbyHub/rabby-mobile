@@ -16,8 +16,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IS_IOS } from '@/core/native/utils';
 import ArrowLeftSVG from '@/components/AccountSelectModalTx/icons/nav-left-cc.svg';
 import { ManageSetting } from './components/ManageSetting';
-import { useAddressDetailModal } from './useAddressDetailModal';
-import { toast } from '@/components2024/Toast';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -27,7 +25,7 @@ export const NotMatterAddressDialog: React.FC<{
   onBack?: () => void;
   showBackArrow?: boolean;
 }> = ({ onDone, onBack, showBackArrow = true }) => {
-  const { notTop10Accounts, gnosisAccounts, watchAccounts, fetchAccounts } =
+  const { myNotTop10Accounts, gnosisAccounts, watchAccounts, fetchAccounts } =
     useAccountInfo();
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -75,14 +73,14 @@ export const NotMatterAddressDialog: React.FC<{
     const result: Array<{
       title: string;
       data: KeyringAccountWithAlias[];
-      type: 'notTop10Accounts' | 'gnosisAccounts' | 'watchAccounts';
+      type: 'myNotTop10Accounts' | 'gnosisAccounts' | 'watchAccounts';
     }> = [];
 
-    if (notTop10Accounts.length > 0) {
+    if (myNotTop10Accounts.length > 0) {
       result.push({
         title: t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
-        data: notTop10Accounts,
-        type: 'notTop10Accounts',
+        data: myNotTop10Accounts,
+        type: 'myNotTop10Accounts',
       });
     }
 
@@ -103,7 +101,7 @@ export const NotMatterAddressDialog: React.FC<{
     }
 
     return result;
-  }, [notTop10Accounts, gnosisAccounts, watchAccounts, t]);
+  }, [myNotTop10Accounts, gnosisAccounts, watchAccounts, t]);
 
   const renderSectionHeader = useCallback(
     ({ section }) => (
