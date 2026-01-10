@@ -76,19 +76,19 @@ async function fetchNewlyAddedAccounts() {
   return AccountInfoEntity.getAccountsAddedIn(
     NEWLY_ADDED_ACCOUNT_DURATION,
   ).then(accounts => {
-    // zAccountStore.setState(prev => {
-    //   const newVal = accounts.reduce((accu, cur) => {
-    //     accu[cur._db_id] = cur;
-    //     return accu;
-    //   }, {} as Store['newlyAddedAccounts']);
+    zAccountStore.setState(prev => {
+      const newVal = accounts.reduce((accu, cur) => {
+        accu[cur._db_id] = cur;
+        return accu;
+      }, {} as Store['newlyAddedAccounts']);
 
-    //   if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
+      if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
 
-    //   return {
-    //     ...prev,
-    //     newlyAddedAccounts: newVal,
-    //   };
-    // });
+      return {
+        ...prev,
+        newlyAddedAccounts: newVal,
+      };
+    });
 
     return accounts;
   });
