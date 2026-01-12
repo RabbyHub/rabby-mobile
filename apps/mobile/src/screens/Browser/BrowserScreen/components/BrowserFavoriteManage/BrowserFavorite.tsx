@@ -7,13 +7,16 @@ import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { SimultaneousGesture } from 'react-native-gesture-handler';
 
 export function BrowserFavorite({
   onPress,
   isInBottomSheet,
+  scrollableGesture,
 }: {
   onPress?(dapp: DappInfo): void;
   isInBottomSheet?: boolean;
+  scrollableGesture?: SimultaneousGesture;
 }) {
   const { styles } = useTheme2024({
     getStyle,
@@ -61,6 +64,7 @@ export function BrowserFavorite({
   return (
     <View style={styles.container}>
       <BrowserSiteCardList
+        scrollableGesture={scrollableGesture}
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.title}>

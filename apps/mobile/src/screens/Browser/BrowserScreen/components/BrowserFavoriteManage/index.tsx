@@ -12,15 +12,18 @@ import { BrowserFavorite } from './BrowserFavorite';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ReactIconHome } from '@/assets2024/icons/browser';
+import { SimultaneousGesture } from 'react-native-gesture-handler';
 
 export const activeTabAtom = atom('favorites');
 
 export function BrowserFavoriteManage({
   isInBottomSheet,
   onPressHome,
+  scrollableGesture,
 }: {
   isInBottomSheet?: boolean;
   onPressHome?(): void;
+  scrollableGesture?: SimultaneousGesture;
 }): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
@@ -41,6 +44,7 @@ export function BrowserFavoriteManage({
     <View style={styles.page}>
       <View style={styles.favoritesList}>
         <BrowserFavorite
+          scrollableGesture={scrollableGesture}
           isInBottomSheet={isInBottomSheet}
           onPress={dapp => {
             openTab(dapp.url || dapp.origin);

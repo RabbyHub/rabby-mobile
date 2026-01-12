@@ -1,5 +1,4 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Animated } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -22,6 +21,8 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { useHomeTabIndex } from '@/hooks/navigation';
 import { runIIFEFunc } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { useHomeDrawerAnimateStore } from '@/screens/Home/hooks/useHomeDrawerAnimateStore';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -39,7 +40,6 @@ export const TAB_HEADER_MIN_HEIGHT = 44;
 export interface TabMultiAssetsProps {
   onIndexChange(index: number): void;
   OverViewComponent: React.FC<{}>;
-  tabsOpacity?: Animated.AnimatedInterpolation<number>;
 }
 
 export const enum TabName {
@@ -84,9 +84,14 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   // multi24HBalanceReturn,
   // overViewContent,
   OverViewComponent,
-  tabsOpacity,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+
+  const tabsOpacity = useHomeDrawerAnimateStore(state => state.tabsOpacity);
+  const tabsStyle = useAnimatedStyle(() => ({
+    opacity: tabsOpacity.value,
+    pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'auto',
+  }));
 
   const renderTabBar = React.useCallback(
     (
@@ -94,16 +99,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         typeof HomeCustomMaterialTabBar
       >['materialTabBarProps'],
     ) => (
-      <Animated.View
-        style={{
-          opacity: tabsOpacity || 1,
-          pointerEvents:
-            (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto',
-        }}
-        // pointerEvents={
-        //   (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto'
-        // }
-      >
+      <Animated.View style={tabsStyle}>
         <HomeCustomMaterialTabBar
           materialTabBarProps={{
             ..._props,
@@ -111,7 +107,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         />
       </Animated.View>
     ),
-    [tabsOpacity],
+    [tabsStyle],
   );
 
   const renderLabel = useCallback(
@@ -129,16 +125,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   >(
     props => {
       return (
-        <Animated.View
-          style={{
-            opacity: tabsOpacity || 1,
-            pointerEvents:
-              (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto',
-          }}
-          // pointerEvents={
-          //   (tabsOpacity as any)?.__getValue?.() < 0.1 ? 'none' : 'auto'
-          // }
-        >
+        <Animated.View style={tabsStyle}>
           <TabsTopHeader
             // data={data}
             // loading={loading}
@@ -148,11 +135,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         </Animated.View>
       );
     },
-    [
-      tabsOpacity,
-      // tabIndex,
-      /* data, loading */
-    ],
+    [tabsStyle],
   );
 
   const handleTabChange = useCallback(
