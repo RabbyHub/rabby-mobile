@@ -4537,12 +4537,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethereumjs/common@npm:4.2.0, @ethereumjs/common@npm:^4.1.0, @ethereumjs/common@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "@ethereumjs/common@npm:4.2.0"
+"@ethereumjs/common@npm:4.4.0, @ethereumjs/common@npm:^4.4.0":
+  version: 4.4.0
+  resolution: "@ethereumjs/common@npm:4.4.0"
   dependencies:
-    "@ethereumjs/util": ^9.0.2
-  checksum: ef97c688d2e9618bb1328d32f5f2f1a9e73b7b896ba5ca83d474d25f1b1b7411276c3448f594639af99fc9b07c8f840be21cbd04e3052324ce81f5014820d392
+    "@ethereumjs/util": ^9.1.0
+  checksum: 6b8cbfcfb5bdde839545c89dce3665706733260e26455d0eb3bcbc3c09e371ae629d51032b95d86f2aeeb15325244a6622171f9005165266fefd923eaa99f1c5
   languageName: node
   linkType: hard
 
@@ -4553,35 +4553,6 @@ __metadata:
     "@ethereumjs/util": ^10.0.0
     eventemitter3: ^5.0.1
   checksum: c4d955737f6db92f7e8513221db03c8b2eacc36e66393da7c4b8ef31231b257c769fd62b92de0d41a21dc104e583398858b05270d747ce0f24b7c4cfc679ed98
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/common@npm:^2.6.4":
-  version: 2.6.5
-  resolution: "@ethereumjs/common@npm:2.6.5"
-  dependencies:
-    crc-32: ^1.2.0
-    ethereumjs-util: ^7.1.5
-  checksum: 0143386f267ef01b7a8bb1847596f964ad58643c084e5fd8e3a0271a7bf8428605dbf38cbb92c84f6622080ad095abeb765f178c02d86ec52abf9e8a4c0e4ecf
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/common@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "@ethereumjs/common@npm:3.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40ethereumjs%2Fcommon%2F-%2Fcommon-3.2.0.tgz"
-  dependencies:
-    "@ethereumjs/util": ^8.1.0
-    crc-32: ^1.2.0
-  checksum: cb9cc11f5c868cb577ba611cebf55046e509218bbb89b47ccce010776dafe8256d70f8f43fab238aec74cf71f62601cd5842bc03a83261200802de365732a14b
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/common@npm:^4.3.0":
-  version: 4.3.0
-  resolution: "@ethereumjs/common@npm:4.3.0"
-  dependencies:
-    "@ethereumjs/util": ^9.0.3
-  checksum: f423ae3f3c2b9db3fbc99ab36d6ec961529abdc9defbc400f85d8553ef18f98af96dbf218b67a37f6f6e637a8e19aa9857214b63f5a932240668f84364e7d4ff
   languageName: node
   linkType: hard
 
@@ -4612,92 +4583,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethereumjs/rlp@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "@ethereumjs/rlp@npm:5.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40ethereumjs%2Frlp%2F-%2Frlp-5.0.1.tgz"
-  bin:
-    rlp: bin/rlp.cjs
-  checksum: eddff08718c3b8312007ef51a951dff6b2c1152f9f9ea6fb9eec65d50caf3fa53f5894d79d6d450eef70a5ef3b0688be044912096aa8d263345a0d9debb4d477
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/tx@npm:5":
-  version: 5.2.1
-  resolution: "@ethereumjs/tx@npm:5.2.1"
+"@ethereumjs/tx@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@ethereumjs/tx@npm:5.4.0"
   dependencies:
-    "@ethereumjs/common": ^4.2.0
+    "@ethereumjs/common": ^4.4.0
     "@ethereumjs/rlp": ^5.0.2
-    "@ethereumjs/util": ^9.0.2
-    ethereum-cryptography: ^2.1.3
-  peerDependencies:
-    c-kzg: ^2.1.2
-  peerDependenciesMeta:
-    c-kzg:
-      optional: true
-  checksum: 851aafd64d094f6773c407c604697c3683ae9470dd79c427a3fda933bd9dbc247ca65f443bf0297aa546536fed8abf97d29a8a8d433bb2297529fd618e9ba81d
+    "@ethereumjs/util": ^9.1.0
+    ethereum-cryptography: ^2.2.1
+  checksum: 72882a977dee4a15b5216ccdee906b6d9488e3ab93cadc1d6639a841e81b91c71d01221c56ac541026d592b8b33345cdc5468e711013e8fa33ac6da18089cf2c
   languageName: node
   linkType: hard
 
-"@ethereumjs/tx@npm:5.1.0":
-  version: 5.1.0
-  resolution: "@ethereumjs/tx@npm:5.1.0"
+"@ethereumjs/tx@patch:@ethereumjs/tx@npm%3A5.4.0#./.yarn/patches/@ethereumjs-tx-npm-5.4.0-0c4a0f973e.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 5.4.0
+  resolution: "@ethereumjs/tx@patch:@ethereumjs/tx@npm%3A5.4.0#./.yarn/patches/@ethereumjs-tx-npm-5.4.0-0c4a0f973e.patch::version=5.4.0&hash=44398b&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
-    "@ethereumjs/common": ^4.1.0
-    "@ethereumjs/rlp": ^5.0.1
-    "@ethereumjs/util": ^9.0.1
-    ethereum-cryptography: ^2.1.2
-  peerDependencies:
-    c-kzg: ^2.1.2
-  peerDependenciesMeta:
-    c-kzg:
-      optional: true
-  checksum: fd17b337f7a64a6a29b1d279c52ac5bfb9655cda06858b198b85a306cc978d25b871acc4ec57e0c29bab50a7c9600d934837fb62052cbde7dc88223be7ebc740
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/tx@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "@ethereumjs/tx@npm:10.0.0"
-  dependencies:
-    "@ethereumjs/common": ^10.0.0
-    "@ethereumjs/rlp": ^10.0.0
-    "@ethereumjs/util": ^10.0.0
-    ethereum-cryptography: ^3.2.0
-  checksum: c49c7b978ada697c7920310ad577bd9c663f6a6ee4a484186805762eb07624759cccfc34992062e444800e654d443575094106578076ec3649af3eafa7b49846
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/tx@npm:^3.3.2":
-  version: 3.5.2
-  resolution: "@ethereumjs/tx@npm:3.5.2"
-  dependencies:
-    "@ethereumjs/common": ^2.6.4
-    ethereumjs-util: ^7.1.5
-  checksum: a34a7228a623b40300484d15875b9f31f0a612cfeab64a845f6866cf0bfe439519e9455ac6396149f29bc527cf0ee277ace082ae013a1075dcbf7193220a0146
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/tx@npm:^4.1.2, @ethereumjs/tx@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "@ethereumjs/tx@npm:4.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40ethereumjs%2Ftx%2F-%2Ftx-4.2.0.tgz"
-  dependencies:
-    "@ethereumjs/common": ^3.2.0
-    "@ethereumjs/rlp": ^4.0.1
-    "@ethereumjs/util": ^8.1.0
-    ethereum-cryptography: ^2.0.0
-  checksum: 87a3f5f2452cfbf6712f8847525a80c213210ed453c211c793c5df801fe35ecef28bae17fadd222fcbdd94277478a47e52d2b916a90a6b30cda21f1e0cdaee42
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/tx@npm:^5.3.0":
-  version: 5.3.0
-  resolution: "@ethereumjs/tx@npm:5.3.0"
-  dependencies:
-    "@ethereumjs/common": ^4.3.0
+    "@ethereumjs/common": ^4.4.0
     "@ethereumjs/rlp": ^5.0.2
-    "@ethereumjs/util": ^9.0.3
-    ethereum-cryptography: ^2.1.3
-  checksum: 1fa6ef7a5eea7605ca065ab4df5446bdbf17a368267b60cdbb315cfcd78ac82dc689ba020093ae3d42940ad196bfffbfa705fd51f30a277c6eb60b04432db743
+    "@ethereumjs/util": ^9.1.0
+    ethereum-cryptography: ^2.2.1
+  checksum: 62d85e61bc7e48e95a912d7378dc96bf54d44549d4260d9999741c735493e6dc1da22e41d4de3d83591147bd3bec3f3ba096a0b91f310fc697e73afc2ac43732
   languageName: node
   linkType: hard
 
@@ -4716,7 +4622,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethereumjs/util@npm:9.1.0":
+"@ethereumjs/util@npm:9.1.0, @ethereumjs/util@npm:^9.1.0":
   version: 9.1.0
   resolution: "@ethereumjs/util@npm:9.1.0"
   dependencies:
@@ -4758,43 +4664,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethereumjs/util@npm:^9.0.0, @ethereumjs/util@npm:^9.0.3":
+"@ethereumjs/util@npm:^9.0.0":
   version: 9.0.3
   resolution: "@ethereumjs/util@npm:9.0.3"
   dependencies:
     "@ethereumjs/rlp": ^5.0.2
     ethereum-cryptography: ^2.1.3
   checksum: 231dae61268c84d514a6c992a770559bb94a21c753c02287d08781cbeae01a6e5b5479af9f0d3d412d532fda6e9b1eeb746e617a68b738907a4a8ee4e24d79a6
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/util@npm:^9.0.1":
-  version: 9.0.1
-  resolution: "@ethereumjs/util@npm:9.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40ethereumjs%2Futil%2F-%2Futil-9.0.1.tgz"
-  dependencies:
-    "@ethereumjs/rlp": ^5.0.1
-    ethereum-cryptography: ^2.1.2
-  peerDependencies:
-    c-kzg: ^2.1.2
-  peerDependenciesMeta:
-    c-kzg:
-      optional: true
-  checksum: 3569dcc0106f5e962e62811be66b5f49529c9d1a29671908568528b2b45d6cae03cb497fc755a1ae4144170f749133308494be42255ac98b61c930d143ed26f4
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/util@npm:^9.0.2":
-  version: 9.0.2
-  resolution: "@ethereumjs/util@npm:9.0.2"
-  dependencies:
-    "@ethereumjs/rlp": ^5.0.2
-    ethereum-cryptography: ^2.1.3
-  peerDependencies:
-    c-kzg: ^2.1.2
-  peerDependenciesMeta:
-    c-kzg:
-      optional: true
-  checksum: cfac8c92beafc3ad1e7d7bce59027cde1f3cfd32623dea57c2295afbc1e33549799d39f92bdcf3cb7a8626b4620b0ba90af945534773fc9480c59def0e25e07d
   languageName: node
   linkType: hard
 
@@ -8123,6 +7999,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/abi-utils@npm:^2.0.2":
+  version: 2.0.4
+  resolution: "@metamask/abi-utils@npm:2.0.4"
+  dependencies:
+    "@metamask/superstruct": ^3.1.0
+    "@metamask/utils": ^9.0.0
+  checksum: 85b15419248ddec1ab59ec5f3e41276f7509dadd9ced871658fa3cc04805ad35ace96986416aaecd24e3630e92b0ed078328966c92383ffa9b1cc3f0f357ad6c
+  languageName: node
+  linkType: hard
+
 "@metamask/action-utils@npm:^1.0.0":
   version: 1.0.0
   resolution: "@metamask/action-utils@npm:1.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40metamask%2Faction-utils%2F-%2Faction-utils-1.0.0.tgz"
@@ -8359,20 +8245,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metamask/eth-sig-util@npm:^4.0.0":
-  version: 4.0.1
-  resolution: "@metamask/eth-sig-util@npm:4.0.1"
+"@metamask/eth-sig-util@npm:7.0.1":
+  version: 7.0.1
+  resolution: "@metamask/eth-sig-util@npm:7.0.1"
   dependencies:
-    ethereumjs-abi: ^0.6.8
-    ethereumjs-util: ^6.2.1
-    ethjs-util: ^0.1.6
+    "@ethereumjs/util": ^8.1.0
+    "@metamask/abi-utils": ^2.0.2
+    "@metamask/utils": ^8.1.0
+    ethereum-cryptography: ^2.1.2
     tweetnacl: ^1.0.3
     tweetnacl-util: ^0.15.1
-  checksum: 740df4c92a1282e6be4c00c86c1a8ccfb93e767596e43f6da895aa5bab4a28fc3c2209f0327db34924a4a1e9db72bc4d3dddfcfc45cca0b218c9ccbf7d1b1445
+  checksum: 98d056bd83aeb2d29ec3de09cd18e67d97ea295a59d405a9ce3fe274badd2d4f18da1fe530a266b4c777650855ed75ecd3577decd607a561e938dd7a808c5839
   languageName: node
   linkType: hard
 
-"@metamask/eth-sig-util@npm:^8.2.0":
+"@metamask/eth-sig-util@npm:8.2.0, @metamask/eth-sig-util@npm:^8.2.0":
   version: 8.2.0
   resolution: "@metamask/eth-sig-util@npm:8.2.0"
   dependencies:
@@ -8384,6 +8271,19 @@ __metadata:
     ethereum-cryptography: ^2.1.2
     tweetnacl: ^1.0.3
   checksum: 273e8bd3578a2395d888e0e7a2a8310311e320dd1d77b81035b1e5b21c432296ef144abd8f2e7ee3147ff82e660941e9671c080c0a6883017e2946523a09dcf4
+  languageName: node
+  linkType: hard
+
+"@metamask/eth-sig-util@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "@metamask/eth-sig-util@npm:4.0.1"
+  dependencies:
+    ethereumjs-abi: ^0.6.8
+    ethereumjs-util: ^6.2.1
+    ethjs-util: ^0.1.6
+    tweetnacl: ^1.0.3
+    tweetnacl-util: ^0.15.1
+  checksum: 740df4c92a1282e6be4c00c86c1a8ccfb93e767596e43f6da895aa5bab4a28fc3c2209f0327db34924a4a1e9db72bc4d3dddfcfc45cca0b218c9ccbf7d1b1445
   languageName: node
   linkType: hard
 
@@ -8508,6 +8408,23 @@ __metadata:
     semver: ^7.5.4
     superstruct: ^1.0.3
   checksum: 36a714a17e4949d2040bedb28d4373a22e7e86bb797aa2d59223f9799fd76e662443bcede113719c4e200f5e9d90a9d62feafad5028fff8b9a7a85fface097ca
+  languageName: node
+  linkType: hard
+
+"@metamask/utils@npm:^9.0.0":
+  version: 9.3.0
+  resolution: "@metamask/utils@npm:9.3.0"
+  dependencies:
+    "@ethereumjs/tx": ^4.2.0
+    "@metamask/superstruct": ^3.1.0
+    "@noble/hashes": ^1.3.1
+    "@scure/base": ^1.1.3
+    "@types/debug": ^4.1.7
+    debug: ^4.3.4
+    pony-cause: ^2.1.10
+    semver: ^7.5.4
+    uuid: ^9.0.1
+  checksum: f720b0f7bdd46054aa88d15a9702e1de6d7200a1ca1d4f6bc48761b039f1bbffb46ac88bc87fe79e66128c196d424f3b9ef071b3cb4b40139223786d56da35e0
   languageName: node
   linkType: hard
 
@@ -9242,7 +9159,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-ledger@workspace:packages/eth-keyring-ledger"
   dependencies:
-    "@ethereumjs/tx": 5
+    "@ethereumjs/tx": 5.4.0
     "@ledgerhq/devices": 8.7.0
     "@ledgerhq/hw-app-eth": 6.45.0
     "@ledgerhq/hw-transport": 6.31.4
@@ -9275,7 +9192,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-onekey@workspace:packages/eth-keyring-onekey"
   dependencies:
-    "@ethereumjs/tx": ^5.3.0
+    "@ethereumjs/tx": 5.4.0
     "@metamask/auto-changelog": ^3.4.3
     "@onekeyfe/hd-core": 1.1.13
     "@rabby-wallet/base-utils": "workspace:^"
@@ -9304,7 +9221,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-trezor@workspace:packages/eth-keyring-trezor"
   dependencies:
     "@ethereumjs/tx": 5.1.0
-    "@ethereumjs/util": ^9.0.1
+    "@ethereumjs/util": 9.1.0
     "@metamask/auto-changelog": ^3.4.3
     "@metamask/eth-sig-util": ^8.2.0
     "@onekeyfe/hd-core": ^1.0.0-alpha.2
@@ -9353,12 +9270,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-simple-keyring@npm:5.0.2":
-  version: 5.0.2
-  resolution: "@rabby-wallet/eth-simple-keyring@npm:5.0.2"
+"@rabby-wallet/eth-simple-keyring@npm:5.1.0":
+  version: 5.1.0
+  resolution: "@rabby-wallet/eth-simple-keyring@npm:5.1.0"
   dependencies:
     "@ethereumjs/util": ^9.0.0
-    "@metamask/eth-sig-util": 5.1.0
+    "@metamask/eth-sig-util": 8.2.0
     "@metamask/utils": ^8.1.0
     chai: ^4.3.4
     eth-sig-util: ^3.0.1
@@ -9367,7 +9284,7 @@ __metadata:
     ethereumjs-util: ^7.0.9
     ethereumjs-wallet: ^1.0.2
     randombytes: ^2.1.0
-  checksum: 36de69e49d149aef92365237339fac38fcaf06769acc2c66afc374a5e221305fd5ac4f938a7fc823f7364d66370dec935f6dff2d23a494e569f9c36aeee686ef
+  checksum: fd73cebe79101a342aae0955f1a7f10cf55d27164313e988da8534d0cdd450e5bb64d2fadde86162dac14513a2af66de7a448723c5d602b00ab8e78f69c621a2
   languageName: node
   linkType: hard
 
@@ -20094,7 +20011,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"crc-32@npm:^1.2.0, crc-32@npm:^1.2.2":
+"crc-32@npm:^1.2.2":
   version: 1.2.2
   resolution: "crc-32@npm:1.2.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fcrc-32%2F-%2Fcrc-32-1.2.2.tgz"
   bin:
@@ -35741,14 +35658,14 @@ __metadata:
     "@debank/common": 0.3.60
     "@debank/festats": 1.0.4
     "@eth-optimism/contracts-ts": ^0.17.0
-    "@ethereumjs/common": 4.2.0
-    "@ethereumjs/tx": 5.1.0
-    "@ethereumjs/util": ^9.0.1
+    "@ethereumjs/common": 4.4.0
+    "@ethereumjs/tx": 5.4.0
+    "@ethereumjs/util": 9.1.0
     "@gorhom/bottom-sheet": 5.0.6
     "@ledgerhq/react-native-hw-transport-ble": 6.35.6
     "@metamask/abi-utils": 3.0.0
     "@metamask/browser-passworder": 6.0.0
-    "@metamask/eth-sig-util": 5.1.0
+    "@metamask/eth-sig-util": 7.0.1
     "@ngraveio/bc-ur": 1.1.6
     "@noble/hashes": ^1.4.0
     "@notifee/react-native": ^7.8.0
@@ -35762,7 +35679,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
-    "@rabby-wallet/eth-simple-keyring": 5.0.2
+    "@rabby-wallet/eth-simple-keyring": 5.1.0
     "@rabby-wallet/gnosis-sdk": 1.4.6
     "@rabby-wallet/hyperliquid-sdk": 1.1.0
     "@rabby-wallet/object-multiplex": "workspace:^"

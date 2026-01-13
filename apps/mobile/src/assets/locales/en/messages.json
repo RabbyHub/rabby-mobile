@@ -870,7 +870,13 @@
         "title": "Fail to Revoke"
       },
       "stopTheRevokeProcess": "Stop the revoke process?",
-      "leavingThisPageWillStopTheRevokeProcess": "Leaving this page will stop the revoke process."
+      "leavingThisPageWillStopTheRevokeProcess": "Leaving this page will stop the revoke process.",
+      "delegatedAddress": "Delegated Address",
+      "supportedChains": "Supported Chains",
+      "eip7702": {
+        "unsupportedTitle": "Unsupported Address Type",
+        "unsupportedDesc": "Revoking EIP-7702 delegations is only supported for private key or seed phrase addresses"
+      }
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",
