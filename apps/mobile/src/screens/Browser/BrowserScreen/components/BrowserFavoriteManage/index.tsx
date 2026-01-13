@@ -5,16 +5,39 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { atom } from 'jotai';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import {
+  FlatListProps,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { BrowserSearch } from '../BrowserSearch';
 import { BrowserFavorite } from './BrowserFavorite';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+// import { TouchableOpacity } from 'react-native-gesture-handler';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ReactIconHome } from '@/assets2024/icons/browser';
+import {
+  NativeGesture,
+  SimultaneousGesture,
+} from 'react-native-gesture-handler';
+import { pad } from 'lodash';
+import { DappInfo } from '@/core/services/dappService';
 
 export const activeTabAtom = atom('favorites');
 
-export function BrowserFavoriteManage(): JSX.Element {
+export function BrowserFavoriteManage({
+  isInBottomSheet,
+  onPressHome,
+  scrollableGesture,
+  onScroll,
+}: {
+  isInBottomSheet?: boolean;
+  onPressHome?(): void;
+  scrollableGesture?: NativeGesture;
+  onScroll?: FlatListProps<DappInfo>['onScroll'];
+}): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
@@ -34,7 +57,9 @@ export function BrowserFavoriteManage(): JSX.Element {
     <View style={styles.page}>
       <View style={styles.favoritesList}>
         <BrowserFavorite
-          isInBottomSheet
+          scrollableGesture={scrollableGesture}
+          onScroll={onScroll}
+          isInBottomSheet={isInBottomSheet}
           onPress={dapp => {
             openTab(dapp.url || dapp.origin);
             setPartialBrowserState({
@@ -44,73 +69,57 @@ export function BrowserFavoriteManage(): JSX.Element {
         />
       </View>
 
-      <TouchableOpacity
-        style={[styles.fabContainer, { paddingBottom: bottom || 12 }]}
-        onPress={() => {
-          setSearchState({
-            isShowSearch: true,
-            searchText: '',
-          });
-        }}>
-        <View style={styles.innerCircle}>
-          <RcNextSearchCC
-            width={20}
-            height={20}
-            style={styles.icon}
-            color={colors2024['neutral-secondary']}
+      <View
+        style={[
+          styles.footer,
+          {
+            paddingBottom:
+              Platform.OS === 'ios' ? bottom : Math.max(bottom, 12),
+          },
+        ]}>
+        <TouchableOpacity onPress={onPressHome}>
+          <ReactIconHome
+            width={44}
+            height={44}
+            color={colors2024['neutral-title-1']}
+            backgroundColor={colors2024['neutral-bg-5']}
           />
-          <Text style={styles.text}>
-            {t('page.browser.BrowserSearchEntry.openWebsites')}
-          </Text>
-          <View style={{ width: 20 }} />
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
 
-      {searchState.isShowSearch ? (
-        <BrowserSearch
-          style={styles.browserSearch}
-          searchText={searchState.searchText}
-          setSearchText={v => {
-            setSearchState(prev => {
-              return {
-                ...prev,
-                searchText: v,
-              };
+        <TouchableOpacity
+          style={[styles.fabContainer]}
+          onPress={() => {
+            setPartialBrowserState({
+              isShowBrowser: true,
+              isShowSearch: true,
+              searchText: '',
+              searchTabId: '',
+              trigger: 'home',
             });
-          }}
-          onClose={shouldClose => {
-            if (shouldClose) {
-              setSearchState({
-                isShowSearch: false,
-                searchText: '',
-              });
-              setPartialBrowserState({
-                isShowBrowser: false,
-                isShowManage: false,
-              });
-            } else {
-              setSearchState({
-                isShowSearch: false,
-                searchText: '',
-              });
-            }
-          }}
-          onOpenURL={url => {
-            openTab(url, {
-              isDapp: true,
-            });
-          }}
-        />
-      ) : null}
+          }}>
+          <View style={styles.innerCircle}>
+            <RcNextSearchCC
+              width={20}
+              height={20}
+              style={styles.icon}
+              color={colors2024['neutral-secondary']}
+            />
+            <Text style={styles.text}>
+              {t('page.browser.BrowserSearchEntry.searchWebsite')}
+            </Text>
+            <View style={{ width: 20 }} />
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   page: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-0']
+    //   : colors2024['neutral-bg-1'],
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
@@ -120,19 +129,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   fabContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
-    ...Platform.select({
-      ios: {
-        shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
-        shadowOffset: { width: 0, height: isLight ? -6 : -27 },
-        shadowOpacity: 1,
-        shadowRadius: isLight ? 20 : 13,
-      },
-      android: {},
-    }),
+    flex: 1,
+    // paddingHorizontal: 20,
+    // paddingTop: 8,
+    // paddingBottom: 20,
+    // backgroundColor: colors2024['neutral-bg-1'],
+    // ...Platform.select({
+    //   ios: {
+    //     shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+    //     shadowOffset: { width: 0, height: isLight ? -6 : -27 },
+    //     shadowOpacity: 1,
+    //     shadowRadius: isLight ? 20 : 13,
+    //   },
+    //   android: {},
+    // }),
   },
   gradient: {
     padding: 12,
@@ -173,5 +183,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
   browserSearch: {
     paddingTop: 18,
+  },
+
+  footer: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    // marginBottom: 30,
+    // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);
+    // backdrop-filter: blur(14.5px);
   },
 }));

@@ -1,4 +1,5 @@
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
+import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
 import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
@@ -22,7 +23,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  Animated,
   Dimensions,
   Easing,
   Platform,
@@ -37,7 +37,26 @@ import {
   TouchableWithoutFeedback,
   InteractionManager,
   Alert,
+  PanResponder,
 } from 'react-native';
+
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+  Extrapolate,
+  withSpring,
+  useDerivedValue,
+  clamp,
+} from 'react-native-reanimated';
+import {
+  Gesture,
+  GestureDetector,
+  FlatList,
+} from 'react-native-gesture-handler';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -97,7 +116,7 @@ import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { setBrowserState } from '@/hooks/browser/useBrowser';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import {
   TAB_HEADER_MIN_HEIGHT,
   TabMultiAssetsProps,
@@ -130,6 +149,10 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { perfEvents } from '@/core/utils/perf';
 import { refreshDayCurve } from '@/hooks/useMultiCurve';
+import { trigger } from 'react-native-haptic-feedback';
+import { useHomeDrawerAnimateStore } from './hooks/useHomeDrawerAnimateStore';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -152,7 +175,7 @@ const OverViewComponent = React.memo(
     });
     const { pendingTxCount, historyCount } = useHomeHistoryStore();
 
-    const { width } = useWindowDimensions();
+    const { width, height } = useWindowDimensions();
     const itemWidth =
       (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
@@ -499,72 +522,341 @@ const OverViewComponent = React.memo(
 
     const { bottom } = useSafeAreaInsets();
 
+    const tabsOpacity = useHomeDrawerAnimateStore(state => state.tabsOpacity);
+    const { safeTop } = useSafeSizes();
+    const translateY = useSharedValue(0);
+    const isExpanded = useSharedValue(false);
+    const pullPercent = useDerivedValue(() => {
+      return (translateY.value / height) * 100;
+    });
+    const scrollY = useCurrentTabScrollY();
+    const contentHeight = useSharedValue(0);
+    const layoutHeight = useSharedValue(0);
+    const isAtBottom = useDerivedValue(() => {
+      if (!contentHeight.value || !layoutHeight.value) {
+        return false;
+      }
+      const maxOffset = Math.max(0, contentHeight.value - layoutHeight.value);
+      return scrollY.value >= maxOffset;
+    }, [scrollY]);
+
+    const [bounces, setBounces] = useState(true);
+
+    const pullThreshold = 100;
+
+    const triggerImpact = useCallback(() => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+    }, []);
+
+    const collapsePanel = useCallback(() => {
+      translateY.value = withTiming(0);
+      triggerImpact();
+    }, [translateY, triggerImpact]);
+
+    const panGesture = useMemo(() => {
+      let gesture = Gesture.Pan()
+        .shouldCancelWhenOutside(false)
+        .onStart(() => {
+          translateY.value = 0;
+          isExpanded.value = false;
+        })
+        .onUpdate(event => {
+          console.log('pan onUpdate', event.translationY, isAtBottom.value);
+          if (!isAtBottom.value) {
+            return;
+          }
+          if (event.translationY > 0) {
+            return;
+          }
+
+          translateY.value = event.translationY;
+        })
+        .onEnd(() => {
+          if (!isAtBottom.value) {
+            return;
+          }
+          if (translateY.value * -1 > 80) {
+            translateY.value = withTiming(-height);
+          } else {
+            translateY.value = withTiming(0);
+          }
+        });
+
+      return gesture;
+    }, [height, isAtBottom.value, isExpanded, translateY]);
+
+    const panResponder = useRef(
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => {
+          return false;
+        },
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          return isAtBottom.value && gestureState.dy < -5;
+        },
+        onPanResponderGrant: () => {
+          translateY.value = 0;
+          isExpanded.value = false;
+        },
+        onPanResponderMove: (_, gestureState) => {
+          console.log('panResponder onPanResponderMove', gestureState.dy);
+          if (!isAtBottom.value) {
+            return;
+          }
+          if (gestureState.dy > 0) {
+            return;
+          }
+          setBounces(false);
+          translateY.value = gestureState.dy;
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (!isAtBottom.value) {
+            return;
+          }
+          if (translateY.value * -1 > pullThreshold) {
+            translateY.value = withTiming(-height);
+            runOnJS(triggerImpact)();
+          } else {
+            translateY.value = withTiming(0);
+          }
+          setBounces(true);
+        },
+        onPanResponderTerminate: () => {
+          translateY.value = withTiming(0);
+          setBounces(true);
+        },
+      }),
+    ).current;
+
+    useAnimatedReaction(
+      () => pullPercent.value,
+      value => {
+        if (value === 0) {
+          isExpanded.value = false;
+        } else if (value === -100) {
+          isExpanded.value = true;
+        }
+      },
+      [],
+    );
+
+    useAnimatedReaction(
+      () => pullPercent.value,
+      value => {
+        tabsOpacity.value = interpolate(
+          value,
+          [-100, -60],
+          [0, 1],
+          Extrapolate.CLAMP,
+        );
+      },
+      [],
+    );
+
+    const mainStyle = useAnimatedStyle(() => ({
+      transform: [
+        {
+          translateY: translateY.value,
+        },
+      ],
+    }));
+
+    const drawerScrollOffsetY = useSharedValue(0);
+
+    const drawerGesture = useMemo(
+      () =>
+        Gesture.Pan()
+          .onChange(event => {
+            console.log(
+              'drawer onChange',
+              event.translationY,
+              drawerScrollOffsetY.value,
+            );
+            if (event.translationY <= 0) {
+              return;
+            }
+            if (drawerScrollOffsetY.value > 0) {
+              return;
+            }
+            console.log('drawer translateY set', event.translationY);
+            translateY.value = (height - event.translationY) * -1;
+          })
+          .onEnd(() => {
+            if (translateY.value > (height - pullThreshold) * -1) {
+              runOnJS(collapsePanel)();
+            } else {
+              translateY.value = withTiming(-height);
+            }
+          }),
+      [collapsePanel, drawerScrollOffsetY, height, translateY],
+    );
+
+    const drawerScrollableGesture = useMemo(
+      () =>
+        Gesture.Native()
+          .simultaneousWithExternalGesture(drawerGesture)
+          .shouldCancelWhenOutside(false),
+      [drawerGesture],
+    );
+
+    const drawerTranslateYStyle = useAnimatedStyle(() => {
+      return {
+        height: height,
+        transform: [
+          {
+            translateY: interpolate(
+              pullPercent.value,
+              [-100, 0],
+              [0, height],
+              Extrapolate.CLAMP,
+            ),
+          },
+        ],
+        paddingTop: interpolate(
+          pullPercent.value,
+          [-100, 0],
+          [IS_ANDROID ? 12 : safeTop + 12, 0],
+          Extrapolate.CLAMP,
+        ),
+      };
+    }, [height, safeTop]);
+
+    const panelScaleStyle = useAnimatedStyle(() => {
+      return {
+        transformOrigin: 'top',
+        transform: [
+          {
+            scale: interpolate(
+              pullPercent.value,
+              [0, -100],
+              isExpanded.value ? [1, 1] : [0.75, 1],
+              Extrapolate.CLAMP,
+            ),
+          },
+        ],
+      };
+    }, [pullThreshold, isExpanded]);
+
+    const overlayOpacityStyle = useAnimatedStyle(() => {
+      return {
+        opacity: isExpanded.value
+          ? 0
+          : interpolate(
+              pullPercent.value,
+              [-100, -100 * 0.3, 0],
+              [0, 1, 0],
+              Extrapolate.CLAMP,
+            ),
+      };
+    }, [pullThreshold]);
+
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
 
     return (
-      <Tabs.ScrollView
-        tvParallaxProperties={undefined}
-        showsVerticalScrollIndicator={false}
-        onTouchStart={() => {
-          setBrowserState({ isEditingFavorite: false });
-        }}
-        style={[styles.scroll, { flex: undefined }]}
-        contentContainerStyle={[
-          styles.scrollContainer,
-          {
-            // paddingBottom: bottom + 82,
-            paddingBottom:
-              Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-          },
-        ]}
-        refreshControl={
-          <RefreshControl refreshing={false} onRefresh={onRefresh} />
-        }>
-        <MultiAddressHomeHeader onRefresh={onRefresh} />
+      <View style={styles.pullUpWrapper}>
+        <Animated.View style={mainStyle}>
+          <Tabs.ScrollView
+            {...panResponder.panHandlers}
+            bounces={bounces}
+            tvParallaxProperties={undefined}
+            showsVerticalScrollIndicator={false}
+            style={[styles.scroll, { flex: undefined }]}
+            contentContainerStyle={[
+              styles.scrollContainer,
+              {
+                // paddingBottom: bottom + 82,
+                paddingBottom:
+                  Platform.OS === 'android' ? Math.max(bottom, 16) : bottom,
+              },
+            ]}
+            overScrollMode={'never'}
+            scrollEventThrottle={16}
+            onContentSizeChange={(_, heightValue) => {
+              contentHeight.value = heightValue;
+            }}
+            onLayout={event => {
+              layoutHeight.value = event.nativeEvent.layout.height;
+            }}
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={onRefresh} />
+            }>
+            <MultiAddressHomeHeader onRefresh={onRefresh} />
 
-        <HomeCenterArea />
+            <HomeCenterArea />
 
-        <View style={styles.grid}>
-          <View style={styles.gridItemsWrap}>
-            {MENU_ARR.map((el, index) => {
-              return (
-                <FastTouchable
-                  style={StyleSheet.flatten([
-                    styles.gridItem,
-                    { width: itemWidth },
-                  ])}
-                  key={index}
-                  onPress={() => {
-                    console.debug('[perf] touched menu', el.key);
-                    requestAnimationFrame(() => {
-                      handleClickMenu(el.key);
-                    });
-                    matomoRequestEvent({
-                      category: 'Click_Services',
-                      action: `Click_${el.key}`,
-                    });
-                  }}>
-                  <View style={styles.badgeWrapper}>
-                    <View style={styles.iconWrapper}>
-                      <el.icon
-                        width={28}
-                        height={28}
-                        color={el.color || colors2024['brand-default-icon']}
-                      />
-                    </View>
-                    <View style={styles.rightBadgeWrapper}>
-                      {generateCustomBadgeIcon(el)}
-                    </View>
-                  </View>
-                  <Text style={styles.gridText}>{el.title}</Text>
-                </FastTouchable>
-              );
-            })}
-          </View>
-          <BrowserSearchEntry />
-          <View style={styles.searchBarPlaceholder} />
-        </View>
-      </Tabs.ScrollView>
+            <View style={styles.grid}>
+              <View style={styles.gridItemsWrap}>
+                {MENU_ARR.map((el, index) => {
+                  return (
+                    <FastTouchable
+                      style={StyleSheet.flatten([
+                        styles.gridItem,
+                        { width: itemWidth },
+                      ])}
+                      key={index}
+                      onPress={() => {
+                        console.debug('[perf] touched menu', el.key);
+                        requestAnimationFrame(() => {
+                          handleClickMenu(el.key);
+                        });
+                        matomoRequestEvent({
+                          category: 'Click_Services',
+                          action: `Click_${el.key}`,
+                        });
+                      }}>
+                      <View style={styles.badgeWrapper}>
+                        <View style={styles.iconWrapper}>
+                          <el.icon
+                            width={28}
+                            height={28}
+                            color={el.color || colors2024['brand-default-icon']}
+                          />
+                        </View>
+                        <View style={styles.rightBadgeWrapper}>
+                          {generateCustomBadgeIcon(el)}
+                        </View>
+                      </View>
+                      <Text style={styles.gridText}>{el.title}</Text>
+                    </FastTouchable>
+                  );
+                })}
+              </View>
+              <BrowserSearchEntry />
+              <GestureDetector gesture={panGesture}>
+                <View style={styles.swipeUpHint}>
+                  <RcIconDoubleArrowCC
+                    color={colors2024['neutral-secondary']}
+                  />
+                  <Text style={styles.swipeUpHintText}>
+                    Swipe up to explore more dApps
+                  </Text>
+                </View>
+              </GestureDetector>
+            </View>
+          </Tabs.ScrollView>
+        </Animated.View>
+        <GestureDetector gesture={drawerGesture}>
+          <Animated.View
+            pointerEvents="auto"
+            style={[styles.pullUpPanel, drawerTranslateYStyle]}>
+            <Animated.View style={[styles.pullOverlay, overlayOpacityStyle]} />
+            <Animated.View style={[panelScaleStyle]}>
+              <BrowserFavoriteManage
+                onPressHome={() => {
+                  collapsePanel();
+                }}
+                scrollableGesture={drawerScrollableGesture}
+                onScroll={event => {
+                  const offsetY = event.nativeEvent.contentOffset.y;
+                  drawerScrollOffsetY.value = offsetY;
+                }}
+              />
+            </Animated.View>
+          </Animated.View>
+        </GestureDetector>
+      </View>
     );
   },
 );
@@ -741,6 +1033,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   scroll: {
     flex: 1,
     marginTop: TAB_HEADER_MIN_HEIGHT,
+    marginBottom: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
   },
   scrollContainer: {
     // paddingTop: 88,
@@ -1160,6 +1453,53 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 0,
     left: 0,
     width: '100%',
+  },
+  pullUpWrapper: {
+    flex: 1,
+  },
+  pullUpPanel: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  pullOverlay: {
+    position: 'absolute',
+    top: -90,
+    transform: [{ translateX: -501 }],
+    left: '50%',
+    height: 1002,
+    width: 1002,
+    borderRadius: 10000,
+    backgroundColor: colors2024['brand-light-1'],
+    zIndex: 10,
+    pointerEvents: 'none',
+  },
+  swipeUpHint: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  swipeUpHintFixed: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  swipeUpHintText: {
+    marginTop: 4,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 
