@@ -570,6 +570,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
             CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE,
             CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE,
             CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY_WITH_COLLATERAL,
           ],
         },
       );

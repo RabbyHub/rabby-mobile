@@ -115,6 +115,8 @@ export const HistoryItem = React.memo(
             return t('page.transactions.itemTitle.LendingManageEModeDisable');
           case CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP:
             return t('page.transactions.itemTitle.LendingDebtSwap');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY_WITH_COLLATERAL:
+            return t('page.transactions.itemTitle.LendingRepayWithCollateral');
         }
       }
 

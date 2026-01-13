@@ -51,6 +51,7 @@ import { CurrencyService } from './currencyService';
 import { LendingService } from './lendingService';
 import { SAFE_API_KEY } from '@/constant/env';
 import { perfEvents } from '../utils/perf';
+import { KeyringIntf } from '@rabby-wallet/keyring-utils';
 
 migrateAppStorage(appStorage);
 
@@ -79,7 +80,6 @@ try_catch_issue_on_preference({ pos: 'before_preference' });
 
 GnosisKeyring.setApiKey(SAFE_API_KEY);
 
-// TODO: add other keyring classes
 const keyringClasses = [
   MockWalletConnectKeyring,
   WatchKeyring,
@@ -90,7 +90,7 @@ const keyringClasses = [
   SimpleKeyring,
   HDKeyring,
   TrezorKeyring,
-] as any;
+] as (typeof KeyringIntf)[];
 
 export const contactService = new ContactBookService({
   storageAdapter: appStorage,

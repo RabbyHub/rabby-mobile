@@ -17,13 +17,14 @@ import { BalanceEntity } from './entities/balance';
 import { abortAllSyncTasks } from './sync/_task';
 import { BuyItemEntity } from './entities/buyItem';
 import { CexEntity } from './entities/cex';
-import { CopyTradingBuyItemEntity } from './entities/copyTradingBuyItem';
+// import { CopyTradingBuyItemEntity } from './entities/copyTradingBuyItem';
 import {
   RabbyOrmDevConsoleLogger,
   RabbyOrmDeployedConsoleLogger,
   RnSqlExecutionTimes,
 } from './logger';
 import { reactotronEvents } from '@/core/utils/reactotron-plugins/_utils';
+import { AccountInfoEntity } from './entities/accountInfo';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -56,7 +57,8 @@ const dbOptions: DataSourceOptions = {
     ProtocolItemEntity,
     BuyItemEntity,
     CexEntity,
-    CopyTradingBuyItemEntity,
+    // CopyTradingBuyItemEntity,
+    AccountInfoEntity,
   ],
   maxQueryExecutionTime: 10 * 1e3,
   rnMaxQueryExecutionTime: RnSqlExecutionTimes.config,

@@ -1,6 +1,9 @@
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
+
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   contactService,
   dappService,
@@ -12,11 +15,12 @@ import {
   whitelistService,
 } from '../services';
 import { getKeyring } from './keyring';
-import { addressUtils } from '@rabby-wallet/base-utils';
 import { BroadcastEvent } from '@/constant/event';
 
 export async function addWatchAddress(address: string) {
-  const keyring = await getKeyring(KEYRING_TYPE.WatchAddressKeyring);
+  const keyring = await getKeyring<WatchKeyring>(
+    KEYRING_TYPE.WatchAddressKeyring,
+  );
 
   keyring.setAccountToAdd(address);
   const result = await keyringService.addNewAccount(keyring);
@@ -49,7 +53,7 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
 
   await keyringService.removeAccount(
     account.address,
-    account.type as string,
+    account.type,
     account.brandName,
     isRemoveEmptyKeyring,
   );

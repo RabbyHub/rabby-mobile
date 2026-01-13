@@ -31,11 +31,11 @@ export const timeago = (a: number, b: number) => {
   };
 };
 
-export function getTimeSpan(times: number) {
-  if (isNaN(+times)) {
-    times = 0;
+export function getTimeSpan(seconds: number) {
+  if (isNaN(+seconds)) {
+    seconds = 0;
   }
-  const int = Math.floor(times);
+  const int = Math.floor(seconds);
   const d = parseInt(int / 60 / 60 / 24 + '');
   const h = parseInt(((int / 60 / 60) % 24) + '');
   const m = parseInt(((int / 60) % 60) + '');
@@ -62,9 +62,9 @@ export function getTimeSpanByMs(ms: number) {
   };
 }
 
-export const formatTimeReadable = (timeElapse: number) => {
+export const formatTimeReadable = (seconds: number) => {
   let timeStr = '';
-  const { d, h, m, s } = getTimeSpan(timeElapse);
+  const { d, h, m, s } = getTimeSpan(seconds);
 
   if (d) timeStr = `${d}day` + (d > 1 ? 's' : '');
   if (h && !timeStr) timeStr = `${h}hr` + (h > 1 ? 's' : '');

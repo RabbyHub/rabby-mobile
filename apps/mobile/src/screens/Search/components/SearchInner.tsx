@@ -287,7 +287,7 @@ export const SearchInner = ({
 };
 
 const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, bottomSafeArea }) => ({
+  ({ colors2024, isLight, safeAreaInsets }) => ({
     container: {
       paddingHorizontal: 16,
       backgroundColor: isLight
@@ -343,7 +343,7 @@ const getStyle = createGetStyles2024(
       bottom: 0,
       paddingBottom: Platform.select({
         ios: 12,
-        android: Math.max(bottomSafeArea, 12),
+        android: Math.max(safeAreaInsets.bottom, 12),
       }),
       // marginBottom: 30,
       // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);

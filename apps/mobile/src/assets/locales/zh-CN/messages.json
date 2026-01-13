@@ -124,7 +124,14 @@
     "GotIt": "明白了",
     "copy": "复制",
     "Backup": "备份",
-    "Other": "其他"
+    "Other": "其他",
+    "toast": {
+      "clipboard": {
+        "copiedPrivateKey": "私钥已复制。剪贴板将在1分钟后清除。",
+        "copiedSeedPhrase": "种子短语已复制。剪贴板将在 1 分钟后清除。",
+        "pasted_and_cleared": "粘贴并清空剪贴板"
+      }
+    }
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -163,7 +170,8 @@
         "LendingOffCollateral": "关闭作为抵押的使用",
         "LendingManageEModeDisable": "关闭 E-Mode",
         "LendingManageEMode": "启用 E-Mode",
-        "LendingDebtSwap": "债务互换"
+        "LendingDebtSwap": "债务互换",
+        "LendingRepayWithCollateral": "用抵押品还款"
       },
       "detail": {
         "Cancel": "取消",
@@ -250,7 +258,8 @@
       "success": "{{type}} 成功！",
       "importMore": "导入更多 Wallets",
       "addressCount_other": "{{count}} 个钱包",
-      "addressCount_one": "{{count}} 钱包"
+      "addressCount_one": "{{count}} 钱包",
+      "viewAddress": "查看钱包"
     },
     "signTx": {
       "safeAdminSigned": "已签名",
@@ -1493,7 +1502,8 @@
         "description4": "您的私钥存储在您设备的本地，并使用您的密码加密。只有您可以访问它。Rabby无法检索或访问您的私钥。",
         "description3": "切勿分享您的私钥——任何拥有私钥的人都可以控制您的资金。",
         "title3": "永远不要分享它"
-      }
+      },
+      "importing": "导入中..."
     },
     "backupPrivateKey": {
       "clickToShowQr": "点击显示私钥二维码",
@@ -2792,7 +2802,12 @@
       },
       "repayDetail": {
         "actions": "还款",
-        "approveAndRepay": "批准和还款"
+        "approveAndRepay": "批准和还款",
+        "tabs": {
+          "collateral": "抵押品",
+          "wallet": "钱包余额"
+        },
+        "repayWith": "使用还款与"
       },
       "supplyDetail": {
         "actions": "供应",
@@ -2901,7 +2916,13 @@
         "openDesc": "将此资产启用为抵押品可以增加您的借款能力和健康因子。不过，如果您的健康因子降到 1 以下，可能会被清算。",
         "closeDesc": "禁用此资产作为抵押物会影响您的借贷能力和健康因子。",
         "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法将其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押。",
-        "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押品。"
+        "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押品。",
+        "toggleRiskTexts": {
+          "doNotHaveSuppliesInThisCurrency": "您在此货币中没有可用的供应。",
+          "zeroLTVWithdrawBlocked": "具有零 LTV ({{assets}}) 的资产必须被提取或禁用作为抵押才能执行此操作。",
+          "canNotSwitchUsageAsCollateralMode": "您无法将此货币的使用切换为抵押模式，因为这会导致抵押品追加保证金。",
+          "canNotUseThisCurrencyAsCollateral": "您无法将此货币用作抵押。"
+        }
       },
       "searchMarket": "搜索市场",
       "selectMarket": "选择市场",
@@ -2943,6 +2964,13 @@
             "borrow": "我的借款"
           },
           "title": "选择借入代币"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "assets": "代币",
+            "collateral": "我的抵押品"
+          },
+          "title": "选择抵押代币"
         }
       },
       "disabled": "禁用",
@@ -2978,7 +3006,33 @@
       },
       "totalBorrowed": "总借款",
       "netApy": "净年收益率",
-      "totalSupplied": "总供应量"
+      "totalSupplied": "总供应量",
+      "repayWithCollateral": {
+        "action": {
+          "title": "使用 {{collateral}} 还款"
+        },
+        "overview": {
+          "borrowValueAfter": "还款后的借款余额",
+          "collateralValueAfter": "还款后的抵押余额",
+          "title": "交易概览"
+        },
+        "button": {
+          "repay": "还款"
+        },
+        "repayWith": "抵押物以偿还",
+        "collateralNotEnough": "您的抵押余额低于所选金额。",
+        "toRepay": "预计还款金额"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "title": "导入钱包",
+          "desc": "添加一个已有资金的地址。"
+        },
+        "btnCopyAddress": "复制地址",
+        "title": "接收资产"
+      }
     }
   },
   "component": {
@@ -3040,6 +3094,10 @@
         "proceedBtn": "继续",
         "title": "风险检测到",
         "simpleExplanation": "不支持"
+      },
+      "placeholders": {
+        "noTokens": "没有代币",
+        "noLpTokens": "没有流动性提供者（LP）代币"
       }
     },
     "NoLongerSupports": {
@@ -3229,6 +3287,9 @@
     },
     "multiAddressModal": {
       "title": "钱包"
+    },
+    "lpTokenModal": {
+      "desc": "这是 {{protocolId}} 的流动性提供者（LP）代币。"
     }
   },
   "bluetooth": {

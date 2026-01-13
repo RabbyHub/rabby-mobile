@@ -108,7 +108,9 @@ export type SwappableToken = {
   variableBorrowAPY?: string;
   tokenType?: TokenType;
   logoURI?: string;
+  debtBalance?: string;
   totalBorrowsUSD?: string;
   walletBalanceUSD?: string;
   totalDebtUSD?: string;
+  underlyingUsdValue?: string;
 };

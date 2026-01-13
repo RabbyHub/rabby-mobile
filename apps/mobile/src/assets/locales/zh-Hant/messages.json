@@ -133,7 +133,14 @@
     "GotIt": "明白了",
     "copy": "複製",
     "Backup": "備份",
-    "Other": "其他"
+    "Other": "其他",
+    "toast": {
+      "clipboard": {
+        "copiedSeedPhrase": "Seed phrase 已複製。剪貼簿會在 1 分鐘內清除。",
+        "copiedPrivateKey": "私鑰已複製。剪貼簿將在 1 分鐘內清除。",
+        "pasted_and_cleared": "粘贴成功，剪贴板已清空"
+      }
+    }
   },
   "background": {
     "transactionWatcher": {
@@ -189,7 +196,8 @@
       "success": "{{type}} 成功！",
       "addressCount_one": "{{count}} 錢包",
       "importMore": "導入更多錢包",
-      "addressCount_other": "{{count}} 個錢包"
+      "addressCount_other": "{{count}} 個錢包",
+      "viewAddress": "查看錢包"
     },
     "getStart": {
       "goToHome": "前往首頁",
@@ -224,7 +232,8 @@
         "LendingOnCollateral": "開啟作為抵押品使用",
         "LendingManageEMode": "開啟 E-Mode",
         "LendingManageEModeDisable": "關閉 E-Mode",
-        "LendingDebtSwap": "債務交換"
+        "LendingDebtSwap": "債務交換",
+        "LendingRepayWithCollateral": "用抵押品偿还"
       },
       "detail": {
         "Unknown": "未知",
@@ -1633,7 +1642,8 @@
         "description2": "如果您丟失了您的私鑰，您將無法恢復您的錢包。",
         "description4": "您的私钥会本地存储在您的设备上，并使用您的密码进行加密。只有您可以访问它。Rabby 无法检索或访问您的私钥。",
         "description1": "私鑰是一串字母和數字，用於訪問和控制您的錢包。您可以使用它在任何設備上恢復您的錢包。"
-      }
+      },
+      "importing": "導入中..."
     },
     "importSafe": {
       "title": "添加 Safe 地址",
@@ -2840,7 +2850,12 @@
       },
       "repayDetail": {
         "actions": "還款",
-        "approveAndRepay": "批准和偿还"
+        "approveAndRepay": "批准和偿还",
+        "tabs": {
+          "collateral": "抵押品",
+          "wallet": "錢包餘額"
+        },
+        "repayWith": "用以下方式还款："
       },
       "supplyDetail": {
         "availableToBorrow": "可借用",
@@ -2949,7 +2964,13 @@
         "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押。",
         "closeDesc": "禁用此资产作为抵押会影响您的借款能力和健康因子。",
         "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法使用其他资产作为抵押品。全局债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押品。",
-        "openDesc": "啟用這個資產作為抵押品將增加你的借貸能力和健康因子。然而，如果你的健康因子降到 1 之下，它可能會被清算。"
+        "openDesc": "啟用這個資產作為抵押品將增加你的借貸能力和健康因子。然而，如果你的健康因子降到 1 之下，它可能會被清算。",
+        "toggleRiskTexts": {
+          "doNotHaveSuppliesInThisCurrency": "您在此货币中没有供应。",
+          "canNotSwitchUsageAsCollateralMode": "您無法將此貨幣的使用模式切換為抵押模式，因為這會導致抵押品追繳。",
+          "zeroLTVWithdrawBlocked": "具有零 LTV 的資產 ({{assets}}) 必須被提領或禁用作為抵押以執行此操作。",
+          "canNotUseThisCurrencyAsCollateral": "您不能將此貨幣用作抵押品"
+        }
       },
       "searchMarket": "搜尋市場",
       "selectMarket": "選擇市場",
@@ -2991,6 +3012,13 @@
             "borrow": "我的借款"
           },
           "title": "選擇借入代幣"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "collateral": "我的抵押品",
+            "assets": "代幣"
+          },
+          "title": "選擇抵押代幣"
         }
       },
       "disabled": "禁用",
@@ -3026,7 +3054,33 @@
       },
       "totalSupplied": "總供應量",
       "totalBorrowed": "總共借入",
-      "netApy": "淨年利率"
+      "netApy": "淨年利率",
+      "repayWithCollateral": {
+        "action": {
+          "title": "使用 {{collateral}} 進行還款"
+        },
+        "overview": {
+          "collateralValueAfter": "償還後的抵押餘額",
+          "borrowValueAfter": "還款後可借餘額",
+          "title": "交易概覽"
+        },
+        "button": {
+          "repay": "還款"
+        },
+        "repayWith": "抵押品以偿还",
+        "collateralNotEnough": "您的抵押余额低于所选金额。",
+        "toRepay": "預期償還金額"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "desc": "添加一個已存在的地址，並帶有資金。",
+          "title": "匯入錢包"
+        },
+        "title": "接收資產",
+        "btnCopyAddress": "複製地址"
+      }
     }
   },
   "component": {
@@ -3199,6 +3253,10 @@
         "proceedBtn": "繼續",
         "title": "風險檢測到",
         "simpleExplanation": "不支援"
+      },
+      "placeholders": {
+        "noTokens": "沒有代幣",
+        "noLpTokens": "沒有流動性提供者 (LP) 代幣"
       }
     },
     "externalSwapBrideDappPopup": {
@@ -3277,6 +3335,9 @@
     },
     "multiAddressModal": {
       "title": "錢包"
+    },
+    "lpTokenModal": {
+      "desc": "這是一個 {{protocolId}} 的流動性提供者 (LP) 代幣"
     }
   },
   "common": {

@@ -3,6 +3,7 @@ import { keyringService } from '../services';
 import { t } from 'i18next';
 import { _setCurrentAccountFromKeyring } from './keyring';
 import { throwErrorIfInvalidPwd } from './lock';
+import { accountEvents } from './account';
 
 export const getPrivateKey = async (
   password: string,
@@ -35,5 +36,12 @@ export const importPrivateKey = async data => {
   }
 
   const keyring = await keyringService.importPrivateKey(cleanedPrivateKey);
-  return _setCurrentAccountFromKeyring(keyring);
+  const accounts = await _setCurrentAccountFromKeyring(keyring);
+
+  // accountEvents.emit('ACCOUNT_ADDED', {
+  //   accounts,
+  //   scene: 'privateKey',
+  // });
+
+  return accounts;
 };

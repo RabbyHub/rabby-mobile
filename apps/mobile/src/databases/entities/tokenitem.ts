@@ -18,6 +18,8 @@ import {
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
+import { tokenItemEntityToTokenItem } from '@/utils/token';
+import { ITokenItem } from '@/store/tokens';
 
 @Entity('cache_tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
@@ -50,11 +52,11 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column('text', { default: '' })
   id: TokenItem['id'] = '';
   // is_core
-  @Column('boolean')
-  is_core: TokenItem['is_core'] = false;
+  @Column('boolean', { nullable: true })
+  is_core: TokenItem['is_core'] | null = null;
   // is_verified
-  @Column('boolean')
-  is_verified: TokenItem['is_verified'] = false;
+  @Column('boolean', { nullable: true })
+  is_verified: TokenItem['is_verified'] | null = null;
   // is_wallet
   @Column('boolean')
   is_wallet: TokenItem['is_wallet'] = false;
@@ -94,6 +96,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   // credit_score
   @Column('real', { default: 0 })
   credit_score: TokenItem['credit_score'] = 0;
+  // protocol_id
+  @Column('text', { default: '' })
+  protocol_id: TokenItem['protocol_id'] = '';
   // raw_amount
   @Column({
     type: 'text',
@@ -139,7 +144,10 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static fillEntity(
     e: TokenItemEntity,
     owner_addr: string,
-    input: TokenItem & { value_24h_change?: string; cex_ids?: string[] },
+    input: (TokenItem | ITokenItem) & {
+      value_24h_change?: string;
+      cex_ids?: string[];
+    },
   ) {
     e.owner_addr = owner_addr;
 
@@ -153,8 +161,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.credit_score = input.credit_score ?? 0;
     e.display_symbol = input.display_symbol ?? '';
     e.id = input.id ?? '';
-    e.is_core = input.is_core ?? false;
-    e.is_verified = input.is_verified ?? false;
+    e.is_core = input.is_core ?? null;
+    e.is_verified = input.is_verified ?? null;
     e.is_wallet = input.is_wallet ?? false;
     e.is_scam = input.is_scam ?? false;
     e.is_infinity = input.is_infinity ?? false;
@@ -173,6 +181,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.value_24h_change = input.value_24h_change ?? '1';
     e.cex_ids = columnConverter.jsonObjToString(input.cex_ids || []);
     e.fdv = input.fdv ?? 0;
+    e.protocol_id = input.protocol_id ?? '';
 
     e.makeDbId();
   }
@@ -271,6 +280,66 @@ export class TokenItemEntity extends EntityAddressAssetBase {
           cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
         }))
     );
+  }
+
+  static async getDefaultTokensByAddresses(
+    addresses: string[],
+  ): Promise<Record<string, ITokenItem[]>> {
+    await prepareAppDataSource();
+    const owner_addr_list = [
+      ...new Set(addresses.map(addr => addr.toLowerCase())),
+    ];
+    if (!owner_addr_list.length) {
+      return {};
+    }
+
+    const repo = this.getRepository();
+    const tableName = repo.metadata.tableName;
+    const subQueryColumns = repo.metadata.columns.map(col => {
+      if (['amount', 'price'].includes(col.databaseName)) {
+        return `${correctBadRealOnSql(
+          `tokenitem.${col.databaseName}` as
+            | 'tokenitem.amount'
+            | 'tokenitem.price',
+        )} AS "${col.databaseName}"`;
+      }
+      return `"${col.databaseName}"`;
+    });
+    const outerSelectColumns = repo.metadata.columns.map(
+      col => `"${col.databaseName}"`,
+    );
+    const usdValueOrderExpr = `(${correctBadRealOnSql(
+      'tokenitem.price',
+    )} * ${correctBadRealOnSql('tokenitem.amount')})`;
+
+    const placeholders = owner_addr_list.map(() => '?').join(',');
+    const params: any[] = [...owner_addr_list, EMPTY_TOKEN_ITEM_ID, 20];
+    const sql = `
+      SELECT ${outerSelectColumns.join(', ')}
+      FROM (
+        SELECT ${subQueryColumns.join(', ')},
+               ROW_NUMBER() OVER (PARTITION BY owner_addr ORDER BY ${usdValueOrderExpr} DESC) AS rn
+        FROM "${tableName}" tokenitem
+        WHERE owner_addr IN (${placeholders})
+          AND is_core = 1
+          AND id != ?
+          AND amount > 0
+      ) tokenitem
+      WHERE tokenitem.rn <= ?
+    `;
+
+    const rows = await repo.query(sql, params);
+
+    const result: Record<string, ITokenItem[]> = {};
+    rows.forEach(row => {
+      const key = row.owner_addr;
+      if (!result[key]) {
+        result[key] = [];
+      }
+      result[key].push(tokenItemEntityToTokenItem(row));
+    });
+
+    return result;
   }
 
   /**

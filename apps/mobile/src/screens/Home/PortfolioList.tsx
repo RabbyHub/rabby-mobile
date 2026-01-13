@@ -308,7 +308,7 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
         onEndReached={loadMorePortfolios}
         onEndReachedThreshold={0.5}
         windowSize={4}
-        maxToRenderPerBatch={4}
+        maxToRenderPerBatch={15}
         removeClippedSubviews
         refreshControl={
           <RefreshControl
@@ -388,9 +388,9 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   emptyAssets: {
-    backgroundColor: 'transparent',
-    height: '100%',
-    marginTop: -100,
+    //backgroundColor: 'transparent',
+    //height: '100%',
+    //marginTop: -100,
   },
   defiLoading: {
     marginTop: 16,

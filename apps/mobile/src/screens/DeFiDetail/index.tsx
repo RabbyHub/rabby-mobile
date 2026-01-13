@@ -20,11 +20,7 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { preferenceService } from '@/core/services';
-import {
-  KeyringAccountWithAlias,
-  useFallbackAccount,
-  useMyAccounts,
-} from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -155,6 +151,19 @@ export const RightMore: React.FC<{
       </CustomTouchableOpacity>
     </DropDownMenuView>
   );
+};
+
+export const useFallbackAccount = () => {
+  const accounts = useMyAccounts({
+    disableAutoFetch: true,
+  });
+  const firstAccount = accounts[0];
+  useEffect(() => {
+    if (!preferenceService.getFallbackAccount()) {
+      preferenceService.setCurrentAccount(firstAccount);
+    }
+  }, [firstAccount]);
+  return firstAccount || preferenceService.getFallbackAccount();
 };
 
 export const DeFiDetailScreen = () => {

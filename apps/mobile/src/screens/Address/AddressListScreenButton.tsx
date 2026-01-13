@@ -46,18 +46,10 @@ export const AddressListScreenButton: React.FC<Props> = ({
   type = 'address',
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  // const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const onPress = React.useCallback(() => {
     switch (type) {
       case 'address':
-        // const id = createGlobalBottomSheetModal2024({
-        //   name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-        //   onDone: () => {
-        //     removeGlobalBottomSheetModal2024(id);
-        //   },
-        //   shouldRedirectToSetPasswordBefore2024,
-        // });
         apiGlobalModal.showAddSelectMethodModal();
         break;
       case 'watch-address':

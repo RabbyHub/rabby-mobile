@@ -7,34 +7,25 @@ import {
 } from '@rabby-wallet/keyring-utils';
 
 import {
-  contactService,
   keyringService,
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
-import { removeAddress } from '@/core/apis/address';
+import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
 import { getWalletIcon } from '@/utils/walletInfo';
-import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  DisplayChainWithWhiteLogo,
-  formatChainToDisplay,
-  varyAndSortChainItems,
-} from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@/constant/chains';
-import { coerceFloat } from '@/utils/number';
-import { requestOpenApiMultipleNets } from '@/utils/openapi';
-import * as apiBalance from '@/core/apis/balance';
-import { useAtomicRequest } from './common/useAtomicAction';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
-import { isEqual, unionBy } from 'lodash';
-import { BalanceEntity } from '@/databases/entities/balance';
+import { isEqual } from 'lodash';
 import { updateHistoryTimeSingleAddress } from './historyTokenDict';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { fetchAllAccounts, KeyringAccountWithAlias } from '@/core/apis/account';
+import {
+  accountEvents,
+  fetchAllAccounts,
+  KeyringAccountWithAlias,
+} from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import {
   makeAvoidParallelAsyncFunc,
@@ -44,46 +35,115 @@ import {
 } from '@/core/utils/store';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { useBalanceAccounts } from './useAccountsBalance';
-import { sortAccountList } from '@/utils/sortAccountList';
 import { perfEvents } from '@/core/utils/perf';
+import { AccountInfoEntity } from '@/databases/entities/accountInfo';
+import { EntityAccountBase } from '@/databases/entities/base';
+import { ormEvents } from '@/databases/entities/_helpers';
+import { InteractionManager } from 'react-native';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
-// const fetchingAccountsAtom = atom(false);
-
 type Store = {
   accounts: KeyringAccountWithAlias[];
-  fetchingAccounts: boolean;
+  // fetchingAccounts: boolean;
   pinnedAddresses: IPinAddress[];
   currentAccount: KeyringAccountWithAlias | null;
+
+  newlyAddedAccounts: Record<
+    AccountInfoEntity['_db_id'],
+    Awaited<ReturnType<typeof AccountInfoEntity.getAccountsAddedIn>>[0]
+  >;
 };
 const zAccountStore = zCreate<Store>((set, get) => {
   return {
     accounts: [],
-    fetchingAccounts: false,
+    // fetchingAccounts: false,
 
     pinnedAddresses: preferenceService.getPinAddresses(),
     currentAccount: null,
+
+    newlyAddedAccounts: {},
   };
 });
 
-runIIFEFunc(() => {
-  const fetchAndSet = (options?: { confirmChanged?: boolean }) => {
-    const { confirmChanged = false } = options || {};
-    fetchAllAccounts().then(accounts => {
-      setAccounts(accounts);
+const fetchAndSet = makeAvoidParallelAsyncFunc(async () => {
+  return fetchAllAccounts().then(accounts => {
+    setAccounts(accounts);
+  });
+});
+
+async function fetchNewlyAddedAccounts() {
+  return AccountInfoEntity.getAccountsAddedIn(
+    NEWLY_ADDED_ACCOUNT_DURATION,
+  ).then(accounts => {
+    zAccountStore.setState(prev => {
+      const newVal = accounts.reduce((accu, cur) => {
+        accu[cur._db_id] = cur;
+        return accu;
+      }, {} as Store['newlyAddedAccounts']);
+
+      if (isEqual(prev.newlyAddedAccounts, newVal)) return prev;
+
+      return {
+        ...prev,
+        newlyAddedAccounts: newVal,
+      };
     });
+
+    return accounts;
+  });
+}
+
+export const NEWLY_ADDED_ACCOUNT_DURATION = 10 * 60 * 1000;
+
+export function useIsNewlyAddedAccount(account: KeyringAccount) {
+  const dbId = useMemo(() => {
+    return EntityAccountBase.buildDBId({
+      address: account.address,
+      type: account.type,
+      brandName: account.brandName,
+    });
+  }, [account.address, account.type, account.brandName]);
+  const newlyAddedAccount = zAccountStore(
+    s => s.newlyAddedAccounts[dbId] ?? null,
+  );
+
+  return {
+    newlyAddedAccount,
+    isNewlyAdded:
+      !!newlyAddedAccount &&
+      Date.now() - newlyAddedAccount.updated_at <= NEWLY_ADDED_ACCOUNT_DURATION,
   };
-  keyringService.once('unlock', () => {
+}
+
+export function useDevNewlyAddedAccounts() {
+  const newlyAddedAccounts = zAccountStore(s => s.newlyAddedAccounts);
+  return {
+    newlyAddedAccounts: useMemo(
+      () => Object.values(newlyAddedAccounts),
+      [newlyAddedAccounts],
+    ),
+  };
+}
+
+export function startManageAccountStoreLifecycle() {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', () => {
     fetchAndSet();
   });
 
-  keyringService.on('newAccount', () => {
+  keyringService.on('newAccount', (account: Account) => {
     fetchAndSet();
   });
   // removedAccount
-  keyringService.on('removedAccount', () => {
+  keyringService.on('removedAccount', async (account: Account) => {
     fetchAndSet();
+
+    accountEvents.emit('ACCOUNT_REMOVED', {
+      removedAccounts: [account],
+    });
+
+    await AccountInfoEntity.deleteByAccount(account);
+    await fetchNewlyAddedAccounts();
   });
 
   keyringService.store.subscribe(state => {
@@ -91,19 +151,46 @@ runIIFEFunc(() => {
       fetchAndSet();
     }
   });
-});
 
+  accountEvents.on('ACCOUNT_ADDED', async ({ accounts, scene }) => {
+    await AccountInfoEntity.recordNewAccount(accounts);
+    await fetchNewlyAddedAccounts();
+  });
+
+  ormEvents.on(`account_info:removed`, () => {
+    fetchNewlyAddedAccounts();
+  });
+
+  fetchNewlyAddedAccounts();
+  setInterval(() => {
+    InteractionManager.runAfterInteractions(() => {
+      fetchNewlyAddedAccounts();
+    });
+  }, 10 * 1e3);
+
+  setInterval(() => {
+    InteractionManager.runAfterInteractions(() => {
+      AccountInfoEntity.trimExpiredAccounts(NEWLY_ADDED_ACCOUNT_DURATION);
+    });
+  }, 60 * 1e3);
+}
+
+// 简单打个补丁先避免 balance 和 evmBalance 变化触发 ACCOUNTS_MAYBE_CHANGED
+// TODO: 彻底解决这个问题
+const stripAccountsForDiff = (accounts: KeyringAccountWithAlias[]) =>
+  accounts.map(account => {
+    const { balance, evmBalance, ...rest } = account;
+    return rest;
+  });
 function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
   zAccountStore.setState(prev => {
     const { newVal, changed } = resolveValFromUpdater(
       prev.accounts,
       valOrFunc,
-      { strict: true },
+      {
+        strict: true,
+      },
     );
-
-    setTimeout(() => {
-      perfEvents.emit('ACCOUNTS_MAYBE_CHANGED', { confirmed: changed });
-    }, 0);
 
     if (changed) {
       return { ...prev, accounts: newVal };
@@ -151,17 +238,28 @@ function setPinAddresses(
   });
 }
 
-const doFetchAccounts = async () => {
+const doFetchAccounts = makeAvoidParallelAsyncFunc(async () => {
   const nextAccounts = await fetchAllAccounts();
   setAccounts(nextAccounts);
 
   return nextAccounts;
-};
+});
 
-export const storeApisAccounts = {
-  fetchAccounts: doFetchAccounts,
-  setCurrentCaredAddress,
-};
+async function removeAccount(account: KeyringAccount) {
+  const accounts = await getAllAccounts();
+
+  togglePinAddressAsync({ ...account, nextPinned: false });
+  await removeAddress(account);
+  await doFetchAccounts();
+  if (
+    accounts.filter(acc => isSameAddress(acc.address, account.address))
+      .length === 1
+  ) {
+    await deleteDBResourceForAddress(account.address);
+    updateHistoryTimeSingleAddress(account.address, 0);
+    transactionHistoryService.clearSuccessAndFailList(account.address);
+  }
+}
 
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   const accounts = zAccountStore(s => s.accounts);
@@ -191,6 +289,8 @@ export const storeApiAccounts = {
   getPinAddresses() {
     return zAccountStore.getState().pinnedAddresses;
   },
+  fetchAccounts: doFetchAccounts,
+  removeAccount,
 };
 
 export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
@@ -214,6 +314,47 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
   };
 }
 
+const togglePinAddressAsync = (payload: {
+  brandName: Account['brandName'];
+  address: Account['address'];
+  nextPinned?: boolean;
+}) => {
+  const allPinAddresses = preferenceService.getPinAddresses();
+
+  const {
+    nextPinned = !allPinAddresses.some(
+      highlighted =>
+        isSameAddress(highlighted.address, payload.address) &&
+        highlighted.brandName === payload.brandName,
+    ),
+  } = payload;
+
+  const addresses = [...allPinAddresses];
+  const newItem = {
+    brandName: payload.brandName,
+    address: payload.address,
+  };
+  if (nextPinned) {
+    addresses.unshift(newItem);
+    preferenceService.updatePinAddresses(addresses);
+    matomoRequestEvent({
+      category: 'Pin Address',
+      action: 'PinAddress_Finish',
+    });
+  } else {
+    const toggleIdx = addresses.findIndex(
+      addr =>
+        addr.brandName === payload.brandName &&
+        isSameAddress(addr.address, payload.address),
+    );
+    if (toggleIdx > -1) {
+      addresses.splice(toggleIdx, 1);
+    }
+    preferenceService.updatePinAddresses(addresses);
+  }
+  setPinAddresses(addresses);
+};
+
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
   const pinAddresses = zAccountStore(s => s.pinnedAddresses);
@@ -229,50 +370,6 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const getPinAddressesAsync = useCallback(async () => {
     return getPinAddresses();
   }, [getPinAddresses]);
-
-  const togglePinAddressAsync = useCallback(
-    (payload: {
-      brandName: Account['brandName'];
-      address: Account['address'];
-      nextPinned?: boolean;
-    }) => {
-      const allPinAddresses = preferenceService.getPinAddresses();
-
-      const {
-        nextPinned = !allPinAddresses.some(
-          highlighted =>
-            isSameAddress(highlighted.address, payload.address) &&
-            highlighted.brandName === payload.brandName,
-        ),
-      } = payload;
-
-      const addresses = [...allPinAddresses];
-      const newItem = {
-        brandName: payload.brandName,
-        address: payload.address,
-      };
-      if (nextPinned) {
-        addresses.unshift(newItem);
-        preferenceService.updatePinAddresses(addresses);
-        matomoRequestEvent({
-          category: 'Pin Address',
-          action: 'PinAddress_Finish',
-        });
-      } else {
-        const toggleIdx = addresses.findIndex(
-          addr =>
-            addr.brandName === payload.brandName &&
-            isSameAddress(addr.address, payload.address),
-        );
-        if (toggleIdx > -1) {
-          addresses.splice(toggleIdx, 1);
-        }
-        preferenceService.updatePinAddresses(addresses);
-      }
-      setPinAddresses(addresses);
-    },
-    [],
-  );
 
   useEffect(() => {
     if (!disableAutoFetch) {
@@ -309,9 +406,7 @@ export const usePinnedAccountList = () => {
           KEYRING_TYPE.WalletConnectKeyring,
         ].includes(item.type)
       ) {
-        const account = balanceAccounts.find(acc =>
-          isSameAddress(acc.address, item.address),
-        );
+        const account = balanceAccounts[item.address.toLowerCase()];
         res.push({
           ...item,
           balance: account?.balance || item.balance || 0,
@@ -325,6 +420,9 @@ export const usePinnedAccountList = () => {
   return pinnedAccountList;
 };
 
+/**
+ * @deprecated use `removeAccount` directly
+ */
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const { togglePinAddressAsync } = usePinAddresses({ disableAutoFetch: true });
@@ -357,413 +455,3 @@ export function useWalletBrandLogo<T extends string>(brandName?: T) {
     RcWalletIcon,
   };
 }
-
-type MatteredChainBalances = {
-  [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
-};
-type MatteredBalancesState = {
-  matteredChainBalances: MatteredChainBalances;
-  testnetMatteredChainBalances: MatteredChainBalances;
-};
-function getDefaultMatteredBalancesState(): MatteredBalancesState {
-  return {
-    matteredChainBalances: {},
-    testnetMatteredChainBalances: {},
-  };
-}
-type MatteredBalancesStore = Record<string, MatteredBalancesState>;
-const addrMatteredBalancesStore = zCreate<{
-  currentAddress: string;
-  store: MatteredBalancesStore;
-}>(() => {
-  return {
-    currentAddress: '',
-    store: {},
-  };
-});
-
-export function setCurrentCaredAddress(
-  address: string,
-  options?: { forceFetch?: true },
-) {
-  const addr = address.toLowerCase();
-  addrMatteredBalancesStore.setState(prev => {
-    return {
-      ...prev,
-      currentAddress: address.toLowerCase(),
-    };
-  });
-  const currentAddress = addrMatteredBalancesStore.getState().currentAddress;
-  const needFetch =
-    options?.forceFetch || address.toLowerCase() !== currentAddress;
-
-  if (needFetch) {
-    fetchMatteredChainBalance({ address: addr });
-  }
-}
-
-function setMattredChainBalancesByAddr(
-  addr: string,
-  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
-) {
-  const address = addr.toLowerCase();
-  addrMatteredBalancesStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.store[address]?.matteredChainBalances || {},
-      valOrFunc,
-      { strict: false },
-    );
-
-    // if (!changed) return prev;
-
-    return {
-      ...prev,
-      store: {
-        ...prev.store,
-        [address]: {
-          ...getDefaultMatteredBalancesState(),
-          ...prev.store[address],
-          matteredChainBalances: newVal,
-        },
-      },
-    };
-  });
-}
-
-function setTestMattredChainBalances(
-  addr: string,
-  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
-) {
-  const address = addr.toLowerCase();
-  addrMatteredBalancesStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.store[address]?.testnetMatteredChainBalances || {},
-      valOrFunc,
-      { strict: false },
-    );
-
-    // if (!changed) return prev;
-
-    return {
-      ...prev,
-      store: {
-        ...prev.store,
-        [address]: {
-          ...getDefaultMatteredBalancesState(),
-          ...prev.store[address],
-          testnetMatteredChainBalances: newVal,
-        },
-      },
-    };
-  });
-}
-
-const allMatteredBalancesStore = zCreate<MatteredChainBalances>(() => {
-  return {};
-});
-function setMattredChainBalancesAll(
-  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
-) {
-  allMatteredBalancesStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev?.matteredChainBalancesAll || {},
-      valOrFunc,
-      { strict: false },
-    );
-
-    // if (!changed) return prev;
-
-    return newVal;
-  });
-}
-
-const DEFAULT_MATTERED_BALANCES_STATE = getDefaultMatteredBalancesState();
-export function useChainBalances() {
-  const matteredChainBalances = addrMatteredBalancesStore(
-    s =>
-      (s.currentAddress
-        ? s.store[s.currentAddress]?.matteredChainBalances
-        : null) || DEFAULT_MATTERED_BALANCES_STATE.matteredChainBalances,
-  );
-  const testnetMatteredChainBalances = addrMatteredBalancesStore(
-    s =>
-      (s.currentAddress
-        ? s.store[s.currentAddress]?.testnetMatteredChainBalances
-        : null) || DEFAULT_MATTERED_BALANCES_STATE.testnetMatteredChainBalances,
-  );
-
-  return {
-    matteredChainBalances,
-    testnetMatteredChainBalances,
-  };
-}
-
-const isShowTestnet = false;
-
-const fetchSingleAddressBalanceFromDb = async (
-  address: string,
-): Promise<{
-  mainnet: TotalBalanceResponse | null;
-  testnet: TotalBalanceResponse | null;
-}> => {
-  return requestOpenApiMultipleNets<
-    TotalBalanceResponse | null,
-    {
-      mainnet: TotalBalanceResponse | null;
-      testnet: TotalBalanceResponse | null;
-    }
-  >(
-    ctx => {
-      if (!isShowTestnet && ctx.isTestnetTask) {
-        return null;
-      }
-      return BalanceEntity.queryBalance(address, true);
-    },
-    {
-      needTestnetResult: isShowTestnet,
-      processResults: ({ mainnet, testnet }) => {
-        return {
-          mainnet: mainnet,
-          testnet: testnet,
-        };
-      },
-      fallbackValues: {
-        mainnet: null,
-        testnet: null,
-      },
-    },
-  );
-};
-const fetchAllAddressesChainBalance = async (): Promise<{
-  matteredChainBalances: MatteredChainBalances;
-}> => {
-  console.log('fetchAllAddressesChainBalance exe');
-  const addresses = await keyringService.getAllAddresses();
-  const filtered = addresses.filter(item =>
-    CORE_KEYRING_TYPES.includes(item.type as any),
-  );
-  const unionAddresses = unionBy(filtered, 'address').map(i =>
-    i.address.toLowerCase(),
-  );
-
-  const allResults = await Promise.all(
-    unionAddresses.map(async address => {
-      return {
-        address,
-        result: await fetchSingleAddressBalanceFromDb(address),
-      };
-    }),
-  );
-
-  const mainnetBalance: TotalBalanceResponse = {
-    chain_list: [],
-    total_usd_value: 0,
-  };
-
-  allResults.forEach(({ address, result }) => {
-    if (result.mainnet?.chain_list) {
-      result.mainnet.chain_list.forEach(chain => {
-        const existingChain = mainnetBalance.chain_list.find(
-          c => c.id === chain.id,
-        );
-        if (existingChain) {
-          existingChain.usd_value = existingChain.usd_value + chain.usd_value;
-        } else {
-          mainnetBalance.chain_list.push(chain);
-        }
-      });
-    }
-  });
-
-  const mainnetTotalUsdValue = (mainnetBalance?.chain_list || []).reduce(
-    (accu, cur) => accu + coerceFloat(cur.usd_value),
-    0,
-  );
-  const matteredChainBalances = (mainnetBalance?.chain_list || []).reduce(
-    (accu, cur) => {
-      const curUsdValue = coerceFloat(cur.usd_value);
-      if (curUsdValue > 1 && curUsdValue / mainnetTotalUsdValue > 0.01) {
-        accu[cur.id] = formatChainToDisplay(cur);
-      }
-      return accu;
-    },
-    {} as MatteredChainBalances,
-  );
-
-  setMattredChainBalancesAll(matteredChainBalances);
-  console.log('fetchAllAddressesChainBalance  done');
-  return {
-    matteredChainBalances,
-  };
-};
-
-const fetchMatteredChainBalance = async ({
-  address,
-}: {
-  address?: string;
-  // isTestnet?: boolean;
-} = {}): Promise<{
-  matteredChainBalances: MatteredChainBalances;
-  testnetMatteredChainBalances: MatteredChainBalances;
-}> => {
-  const currentAccountAddr =
-    address || addrMatteredBalancesStore.getState().currentAddress;
-
-  const result = await requestOpenApiMultipleNets<
-    TotalBalanceResponse | null,
-    {
-      mainnet: TotalBalanceResponse | null;
-      testnet: TotalBalanceResponse | null;
-    }
-  >(
-    ctx => {
-      if (!isShowTestnet && ctx.isTestnetTask) {
-        return null;
-      }
-
-      return apiBalance.getAddressCacheBalance(
-        currentAccountAddr,
-        ctx.isTestnetTask,
-      );
-    },
-    {
-      needTestnetResult: isShowTestnet,
-      processResults: ({ mainnet, testnet }) => {
-        return {
-          mainnet: mainnet,
-          testnet: testnet,
-        };
-      },
-      fallbackValues: {
-        mainnet: null,
-        testnet: null,
-      },
-    },
-  );
-
-  const mainnetTotalUsdValue = (result.mainnet?.chain_list || []).reduce(
-    (accu, cur) => accu + coerceFloat(cur.usd_value),
-    0,
-  );
-  const matteredChainBalances = (result.mainnet?.chain_list || []).reduce(
-    (accu, cur) => {
-      const curUsdValue = coerceFloat(cur.usd_value);
-      // TODO: only leave chain with blance greater than $1 and has percentage 1%
-      if (curUsdValue > 1 && curUsdValue / mainnetTotalUsdValue > 0.01) {
-        accu[cur.id] = formatChainToDisplay(cur);
-      }
-      return accu;
-    },
-    {} as MatteredChainBalances,
-  );
-
-  const testnetTotalUsdValue = (result.testnet?.chain_list || []).reduce(
-    (accu, cur) => accu + coerceFloat(cur.usd_value),
-    0,
-  );
-  const testnetMatteredChainBalances = (
-    result.testnet?.chain_list || []
-  ).reduce((accu, cur) => {
-    const curUsdValue = coerceFloat(cur.usd_value);
-
-    if (curUsdValue > 1 && curUsdValue / testnetTotalUsdValue > 0.01) {
-      accu[cur.id] = formatChainToDisplay(cur);
-    }
-    return accu;
-  }, {} as MatteredChainBalances);
-
-  if (currentAccountAddr) {
-    setMattredChainBalancesByAddr(currentAccountAddr, matteredChainBalances);
-    setTestMattredChainBalances(
-      currentAccountAddr,
-      testnetMatteredChainBalances,
-    );
-  }
-
-  return {
-    matteredChainBalances,
-    testnetMatteredChainBalances,
-  };
-};
-
-const fetchOrderedChainList = async (opts: {
-  address?: string;
-  supportChains?: CHAINS_ENUM[];
-}) => {
-  const { address, supportChains } = opts || {};
-  const { pinned, matteredChainBalances } = await Promise.allSettled([
-    preferenceService.getPreference('pinnedChain'),
-    fetchMatteredChainBalance({ address }),
-  ]).then(([pinnedChain, balance]) => {
-    return {
-      pinned: (pinnedChain.status === 'fulfilled'
-        ? pinnedChain.value
-        : []) as CHAINS_ENUM[],
-      matteredChainBalances: (balance.status === 'fulfilled'
-        ? // only SUPPORT mainnet now
-          balance.value.matteredChainBalances
-        : {}) as MatteredChainBalances,
-    };
-  });
-
-  const { matteredList, unmatteredList } = varyAndSortChainItems({
-    supportChains,
-    pinned,
-    matteredChainBalances,
-  });
-
-  return {
-    matteredList,
-    unmatteredList,
-    firstChain: matteredList[0],
-  };
-};
-
-export function useLoadMatteredChainBalances({
-  account: currentAccount,
-}: {
-  account?: Account;
-}) {
-  const currentAccountAddr = currentAccount?.address;
-
-  useEffect(() => {
-    setCurrentCaredAddress(currentAccountAddr || '');
-  }, [currentAccountAddr]);
-
-  const { matteredChainBalances, testnetMatteredChainBalances } =
-    useChainBalances();
-
-  return {
-    matteredChainBalances,
-    testnetMatteredChainBalances,
-
-    fetchAllAddressesChainBalance,
-
-    fetchMatteredChainBalance,
-    /** @deprecated */
-    getMatteredChainBalance: fetchMatteredChainBalance,
-
-    fetchOrderedChainList,
-    /** @deprecated */
-    getOrderedChainList: fetchOrderedChainList,
-  };
-}
-
-export function useMatteredChainBalancesAll() {
-  const matteredChainBalancesAll = allMatteredBalancesStore(s => s);
-
-  return { matteredChainBalancesAll };
-}
-
-export const useFallbackAccount = () => {
-  const accounts = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const firstAccount = accounts[0];
-  useEffect(() => {
-    if (!preferenceService.getFallbackAccount()) {
-      preferenceService.setCurrentAccount(firstAccount);
-    }
-  }, [firstAccount]);
-  return firstAccount || preferenceService.getFallbackAccount();
-};

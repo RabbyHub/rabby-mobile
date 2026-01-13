@@ -9,6 +9,7 @@ import {
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import * as Sentry from '@sentry/react-native';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
 import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { contactService, keyringService, preferenceService } from '../services';
@@ -20,6 +21,7 @@ import { type IPinAddress, type Account } from '../services/preference';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 import BigNumber from 'bignumber.js';
+import { makeJsEEClass } from '@/core/services/_utils';
 
 function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
   if (keyring instanceof DisplayKeyring) {
@@ -164,15 +166,43 @@ export const sortAccountsByBalance = <
   });
 };
 
+export function isMyAccount<T extends KeyringAccount | KeyringAccountWithAlias>(
+  account: T,
+) {
+  return (
+    account.type !== KEYRING_CLASS.WATCH &&
+    account.type !== KEYRING_CLASS.GNOSIS &&
+    account.type !== KEYRING_CLASS.WALLETCONNECT
+  );
+}
+
 export const filterMyAccounts = <
   T extends KeyringAccount | KeyringAccountWithAlias,
 >(
   accounts: T[],
 ) => {
-  return accounts.filter(
-    a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-  );
+  return accounts.filter(isMyAccount);
 };
+
+export function isDirectlySignableAccount(
+  account: KeyringAccount | KeyringAccountWithAlias,
+) {
+  return (
+    account.type == KEYRING_TYPE.SimpleKeyring ||
+    account.type == KEYRING_TYPE.HdKeyring
+  );
+}
+
+export function isHardwareAccount(
+  account: KeyringAccount | KeyringAccountWithAlias,
+) {
+  return (
+    account.type === KEYRING_CLASS.HARDWARE.LEDGER ||
+    account.type === KEYRING_CLASS.HARDWARE.TREZOR ||
+    account.type === KEYRING_CLASS.HARDWARE.KEYSTONE ||
+    account.type === KEYRING_CLASS.HARDWARE.ONEKEY
+  );
+}
 
 export function filterDirectlySignableAccounts<
   T extends KeyringAccount | KeyringAccountWithAlias,
@@ -219,20 +249,39 @@ export const fetchAllAccounts = makeAvoidParallelAsyncFunc(
   fetchAllAccountsProcess,
 );
 
-export async function getSortedAddressList(options?: {
-  includeOthers?: boolean;
+export async function getAccountList(options?: {
+  filter?: 'onlyMine' | 'onlyOthers' | 'all';
+  sortBy?: 'highlight'[];
 }) {
-  const { includeOthers = false } = options || {};
+  const {
+    filter = 'all',
+    sortBy = filter === 'onlyOthers' ? [] : ['highlight'],
+  } = options || {};
+
   const allAccounts = await fetchAllAccounts();
-  // const allMyAccounts = includeOthers ? [] : filterMyAccounts(allAccounts);
-  const accounts = includeOthers ? allAccounts : filterMyAccounts(allAccounts);
-  const pinAddresses = preferenceService.getPinAddresses();
+  const accounts =
+    filter === 'all'
+      ? allAccounts
+      : filter === 'onlyMine'
+      ? filterMyAccounts(allAccounts)
+      : filter === 'onlyOthers'
+      ? allAccounts.filter(a => !isMyAccount(a))
+      : allAccounts;
+
+  let sortedAccounts = accounts;
+
+  if (sortBy.includes('highlight')) {
+    const pinAddresses = preferenceService.getPinAddresses();
+    sortedAccounts = sortAccountList(accounts, {
+      highlightedAddresses: pinAddresses,
+    });
+  } else {
+    sortedAccounts = sortAccountsByBalance(accounts);
+  }
 
   return {
     accounts,
-    sortedAccounts: sortAccountList(accounts, {
-      highlightedAddresses: pinAddresses,
-    }),
+    sortedAccounts,
   };
 }
 
@@ -298,24 +347,34 @@ export function filterOutTop10Accounts<
   };
 }
 
-export const getTop10MyAddresses = makeAvoidParallelAsyncFunc(
+export const getTop10MyAccounts = makeAvoidParallelAsyncFunc(
   async ({ gatherSameAddress = false } = {}) => {
-    const { sortedAccounts } = await getSortedAddressList({
-      includeOthers: false,
+    const { sortedAccounts } = await getAccountList({
+      filter: 'onlyMine',
     });
 
-    return filterOutTop10Accounts(sortedAccounts, { gatherSameAddress })
-      .top10Addresses;
+    return filterOutTop10Accounts(sortedAccounts, { gatherSameAddress });
   },
 );
 
 export const getTop50PrivateKeyAccounts = makeAvoidParallelAsyncFunc(
   async () => {
-    const { sortedAccounts } = await getSortedAddressList({
-      includeOthers: false,
+    const { sortedAccounts } = await getAccountList({
+      filter: 'onlyMine',
     });
     const privateKeyAccounts = filterDirectlySignableAccounts(sortedAccounts);
 
     return privateKeyAccounts.slice(0, 50);
   },
 );
+
+export type PerfAccountEventBusListeners = {
+  ACCOUNT_ADDED: (ctx: {
+    accounts: KeyringEventAccount[];
+    scene?: 'privateKey' | 'memonics' | 'hardware' | 'syncExtension';
+  }) => void;
+  ACCOUNT_REMOVED: (ctx: { removedAccounts: KeyringEventAccount[] }) => void;
+};
+const { EventEmitter: AccountEE } =
+  makeJsEEClass<PerfAccountEventBusListeners>();
+export const accountEvents = new AccountEE();

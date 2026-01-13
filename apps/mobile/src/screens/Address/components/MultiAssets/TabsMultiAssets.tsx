@@ -1,10 +1,14 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { MemoizedTokenItemLoader, TokenList } from './TokenList';
 import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
-import { CollapsibleRef, Tabs } from 'react-native-collapsible-tab-view';
+import {
+  CollapsibleRef,
+  TabBarProps,
+  Tabs,
+} from 'react-native-collapsible-tab-view';
 import {
   HeaderHeight,
   TabsTopHeader,
@@ -23,6 +27,10 @@ import { runIIFEFunc } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useHomeDrawerAnimateStore } from '@/screens/Home/hooks/useHomeDrawerAnimateStore';
+import { useMyAccounts } from '@/hooks/account';
+import { filterDirectlySignableAccounts } from '@/core/apis/account';
+import { ReceiveOnNoAssets } from '@/screens/Home/components/ReceiveOnNoAssets';
+import { Account } from '@/core/services/preference';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -39,7 +47,9 @@ export const TAB_HEADER_MIN_HEIGHT = 44;
 
 export interface TabMultiAssetsProps {
   onIndexChange(index: number): void;
-  OverViewComponent: React.FC<{}>;
+  OverViewComponent: React.FC<{
+    // accountToShowReceiveTip?: Account | null;
+  }>;
 }
 
 export const enum TabName {
@@ -58,7 +68,10 @@ function TabIndexBasedFreeze({
 } & Omit<React.ComponentProps<typeof Freeze>, 'freeze'>) {
   const { tabIndex } = useHomeTabIndex();
   return (
-    <Freeze {...props} freeze={ofIndex !== tabIndex}>
+    <Freeze
+      {...props}
+      // freeze={ofIndex !== tabIndex}
+      freeze={false}>
       {children}
     </Freeze>
   );
@@ -77,12 +90,7 @@ runIIFEFunc(() => {
 });
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
-  // tabIndex,
   onIndexChange,
-  // data,
-  // loading,
-  // multi24HBalanceReturn,
-  // overViewContent,
   OverViewComponent,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -94,17 +102,9 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   }));
 
   const renderTabBar = React.useCallback(
-    (
-      _props: React.ComponentProps<
-        typeof HomeCustomMaterialTabBar
-      >['materialTabBarProps'],
-    ) => (
+    (_props: React.ComponentProps<typeof HomeCustomMaterialTabBar>) => (
       <Animated.View style={tabsStyle}>
-        <HomeCustomMaterialTabBar
-          materialTabBarProps={{
-            ..._props,
-          }}
-        />
+        <HomeCustomMaterialTabBar {..._props} />
       </Animated.View>
     ),
     [tabsStyle],
@@ -172,6 +172,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
         },
+        // scrollEnabled: !accountToShowReceiveTip,
       }}
       containerStyle={styles.container}
       headerContainerStyle={styles.headerContainer}>
@@ -186,7 +187,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         key={TabName.token}
         name={TabName.token}
         label={renderLabel('Token')}>
-        {/* <View /> */}
         <TabIndexBasedFreeze
           ofIndex={1}
           placeholder={
@@ -201,7 +201,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         key={TabName.defi}
         name={TabName.defi}
         label={renderLabel('DeFi')}>
-        {/* <View /> */}
         <TabIndexBasedFreeze
           ofIndex={2}
           placeholder={
@@ -213,7 +212,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         </TabIndexBasedFreeze>
       </Tabs.Tab>
       <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
-        {/* <View /> */}
         <TabIndexBasedFreeze
           ofIndex={3}
           placeholder={

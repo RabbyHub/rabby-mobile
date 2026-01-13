@@ -8,7 +8,9 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
+import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
 import { RootNames } from '@/constant/layout';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,18 +24,22 @@ import React, {
 } from 'react';
 import {
   Dimensions,
+  Easing,
   Platform,
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity as RNTouchableOpacity,
   View,
   AppState,
   useWindowDimensions,
-  ScrollView,
-  ScrollViewProps,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  InteractionManager,
+  Alert,
   PanResponder,
-  // FlatList,
 } from 'react-native';
+
 import Animated, {
   runOnJS,
   useAnimatedReaction,
@@ -58,7 +64,10 @@ import { apisAccount } from '@/core/apis';
 import {
   browserService,
   currencyService,
+  gasAccountService,
+  keyringService,
   preferenceService,
+  transactionHistoryService,
 } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
@@ -73,6 +82,7 @@ import {
   getReadyNavigationInstance,
   navigateDeprecated,
 } from '@/utils/navigation';
+import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -113,7 +123,7 @@ import {
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
+import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { TABITEM_H } from './components/CustomTabBar';
@@ -127,17 +137,22 @@ import {
   refresh24hAssets,
   useScene24hBalanceLightWeightData,
 } from '@/hooks/useScene24hBalance';
-import { TmpHomeRefresher } from './components/TmpHomeRefresher';
+import {
+  TmpHomeRefresher,
+  triggerFetchHomeData,
+} from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
-import { syncTop10History } from '@/databases/hooks/history';
+import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { isNonPublicProductionEnv } from '@/constant';
+import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
+import { perfEvents } from '@/core/utils/perf';
+import { refreshDayCurve } from '@/hooks/useMultiCurve';
 import { trigger } from 'react-native-haptic-feedback';
-import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
-import _, { pull } from 'lodash';
 import { useHomeDrawerAnimateStore } from './hooks/useHomeDrawerAnimateStore';
-import { IS_ANDROID } from '@/core/native/utils';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -151,691 +166,700 @@ function couldDoRefresh() {
 
 const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
 
-const OverViewComponent = React.memo(() => {
-  const navigation = useRabbyAppNavigation();
-  const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
-    getStyle,
-  });
-  const { pendingTxCount, historyCount } = useHomeHistoryStore();
+const OverViewComponent = React.memo(
+  ({}: React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
+    const navigation = useRabbyAppNavigation();
+    const { t } = useTranslation();
+    const { styles, colors2024 } = useTheme2024({
+      getStyle,
+    });
+    const { pendingTxCount, historyCount } = useHomeHistoryStore();
 
-  const { width, height } = useWindowDimensions();
-  const itemWidth =
-    (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
+    const { width, height } = useWindowDimensions();
+    const itemWidth =
+      (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
-  const {
-    alertInfo,
-    forceUpdate,
-    triggerUpdate: triggerUpdateAlert,
-  } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
+    const {
+      alertInfo,
+      forceUpdate,
+      triggerUpdate: triggerUpdateAlert,
+    } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
 
-  const { accounts } = useMyAccounts({ disableAutoFetch: true });
-  const sortedAccounts = useSortAddressList(accounts);
-  useSubscribePosition(sortedAccounts);
+    const { accounts } = useMyAccounts({ disableAutoFetch: true });
+    const sortedAccounts = useSortAddressList(accounts);
+    useSubscribePosition(sortedAccounts);
 
-  const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
+    const { isEligible, checkAddressesEligibility } =
+      useGasAccountEligibility();
 
-  useFocusEffect(
-    React.useCallback(() => {
-      if (!couldDoRefresh()) return;
-      checkAddressesEligibility();
-    }, [checkAddressesEligibility]),
-  );
+    useFocusEffect(
+      React.useCallback(() => {
+        if (!couldDoRefresh()) return;
+        checkAddressesEligibility();
+      }, [checkAddressesEligibility]),
+    );
 
-  const MENU_ARR = useMemo(
-    () =>
+    const MENU_ARR = useMemo(
+      () =>
+        [
+          {
+            key: MultiHomeFeatTitle.Swap,
+            title: t('page.home.services.swap'),
+            icon: RcIconSwapCC,
+          },
+          {
+            key: MultiHomeFeatTitle.Send,
+            title: t('page.home.services.send'),
+            icon: RcIconSendCC,
+          },
+          {
+            key: MultiHomeFeatTitle.Receive,
+            title: t('page.home.services.receive'),
+            icon: RcIconReceiveCC,
+          },
+          {
+            key: MultiHomeFeatTitle.Bridge,
+            title: t('page.home.services.bridge'),
+            icon: RcIconBridgeCC,
+          },
+          // {
+          //   key: MultiHomeFeatTitle.CopyTrading,
+          //   title: t('page.home.services.copyTrading'),
+          //   icon: RcIconCopyTrading,
+          // },
+          {
+            key: MultiHomeFeatTitle.Perps,
+            title: t('page.home.services.perps'),
+            icon: RcIconPerps,
+          },
+          {
+            key: MultiHomeFeatTitle.Lending,
+            title: t('page.home.services.lending'),
+            icon: RcIconLending,
+            color: colors2024['brand-default-icon'],
+          },
+          {
+            key: MultiHomeFeatTitle.Points,
+            title: t('page.rabbyPoints.title'),
+            icon: RcIconPointsCC,
+          },
+          {
+            key: MultiHomeFeatTitle.History,
+            title: t('page.home.services.history'),
+            icon: RcIconHistoryCC,
+            badge: historyCount?.fail || historyCount?.success,
+            isSuccess: !historyCount?.fail,
+          },
+          {
+            key: MultiHomeFeatTitle.Approvals,
+            title: t('page.home.services.approvals'),
+            icon: RcIconApprovalsCC,
+            badge: alertInfo.total,
+          },
+          {
+            key: MultiHomeFeatTitle.GasAccount,
+            title: t('page.home.services.gasAccount'),
+            icon: RcIconGasAccountCC,
+            showGiftIcon: isEligible,
+          },
+          // __DEV__ && {
+          //   title: MultiHomeFeatTitle.TEST_DAPP,
+          //   icon: RcIconDapps,
+          // },
+          {
+            key: MultiHomeFeatTitle.Watchlist,
+            title: t('page.home.services.watchlist'),
+            icon: RcIconWatchlistCC,
+          },
+          // {
+          //   title: MultiHomeFeatTitle.Ecosystem,
+          //   icon: RcIconEcosystem,
+          // },
+        ].filter(Boolean) as {
+          key: MultiHomeFeatTitle;
+          title: string;
+          icon: React.FC<import('react-native-svg').SvgProps>;
+          color?: string;
+          badge?: number;
+          isSuccess?: boolean;
+          showGiftIcon?: boolean;
+        }[],
       [
-        {
-          key: MultiHomeFeatTitle.Swap,
-          title: t('page.home.services.swap'),
-          icon: RcIconSwapCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Send,
-          title: t('page.home.services.send'),
-          icon: RcIconSendCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Receive,
-          title: t('page.home.services.receive'),
-          icon: RcIconReceiveCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Bridge,
-          title: t('page.home.services.bridge'),
-          icon: RcIconBridgeCC,
-        },
-        // {
-        //   key: MultiHomeFeatTitle.CopyTrading,
-        //   title: t('page.home.services.copyTrading'),
-        //   icon: RcIconCopyTrading,
-        // },
-        {
-          key: MultiHomeFeatTitle.Perps,
-          title: t('page.home.services.perps'),
-          icon: RcIconPerps,
-        },
-        {
-          key: MultiHomeFeatTitle.Lending,
-          title: t('page.home.services.lending'),
-          icon: RcIconLending,
-          color: colors2024['brand-default-icon'],
-        },
-        {
-          key: MultiHomeFeatTitle.Points,
-          title: t('page.rabbyPoints.title'),
-          icon: RcIconPointsCC,
-        },
-        {
-          key: MultiHomeFeatTitle.History,
-          title: t('page.home.services.history'),
-          icon: RcIconHistoryCC,
-          badge: historyCount?.fail || historyCount?.success,
-          isSuccess: !historyCount?.fail,
-        },
-        {
-          key: MultiHomeFeatTitle.Approvals,
-          title: t('page.home.services.approvals'),
-          icon: RcIconApprovalsCC,
-          badge: alertInfo.total,
-        },
-        {
-          key: MultiHomeFeatTitle.GasAccount,
-          title: t('page.home.services.gasAccount'),
-          icon: RcIconGasAccountCC,
-          showGiftIcon: isEligible,
-        },
-        // __DEV__ && {
-        //   title: MultiHomeFeatTitle.TEST_DAPP,
-        //   icon: RcIconDapps,
-        // },
-        {
-          key: MultiHomeFeatTitle.Watchlist,
-          title: t('page.home.services.watchlist'),
-          icon: RcIconWatchlistCC,
-        },
-        // {
-        //   title: MultiHomeFeatTitle.Ecosystem,
-        //   icon: RcIconEcosystem,
-        // },
-      ].filter(Boolean) as {
-        key: MultiHomeFeatTitle;
-        title: string;
-        icon: React.FC<import('react-native-svg').SvgProps>;
-        color?: string;
-        badge?: number;
-        isSuccess?: boolean;
-        showGiftIcon?: boolean;
-      }[],
-    [
-      t,
-      colors2024,
-      historyCount?.fail,
-      historyCount?.success,
-      alertInfo.total,
-      isEligible,
-    ],
-  );
+        t,
+        colors2024,
+        historyCount?.fail,
+        historyCount?.success,
+        alertInfo.total,
+        isEligible,
+      ],
+    );
 
-  useFetchCexInfo();
+    useFetchCexInfo();
 
-  const { triggerUpdate } = useAccountsBalanceTrigger();
+    const { triggerUpdate } = useAccountsBalanceTrigger();
 
-  useEffect(() => {
-    setTimeout(() => {
-      deleteLongTimeCurveCache();
-      deleteLongTime24hBalanceCache();
-    }, 0);
-  }, []);
+    useEffect(() => {
+      setTimeout(() => {
+        deleteLongTimeCurveCache();
+        deleteLongTime24hBalanceCache();
+      }, 0);
+    }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) return;
-      refreshSuccessAndFailList();
-    }, []),
-  );
+    useFocusEffect(
+      useCallback(() => {
+        if (!couldDoRefresh()) return;
+        refreshSuccessAndFailList();
+      }, []),
+    );
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) return;
-      resetFetchHistoryTxCount();
-    }, []),
-  );
+    useFocusEffect(
+      useCallback(() => {
+        if (!couldDoRefresh()) return;
+        resetFetchHistoryTxCount();
+      }, []),
+    );
 
-  const { top10Addresses } = useAccountInfo();
-  console.log('[MultiAddressHome] refresh MultiAddressHome exec');
-  useFocusEffect(
-    useCallback(() => {
-      if (!couldDoRefresh()) return;
-      requestAnimationFrame(() => {
-        triggerUpdate().then(balanceAccounts =>
-          refresh24hAssets({ balanceAccounts }),
-        );
+    const { myTop10Addresses } = useAccountInfo();
+
+    useFocusEffect(
+      useCallback(() => {
+        if (!couldDoRefresh()) return;
+        triggerUpdate().then(balanceAccounts => {
+          // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+          refresh24hAssets({ balanceAccounts });
+          refreshDayCurve({ balanceAccounts });
+        });
         triggerUpdateAlert();
         // // leave here to measure perf impact
         // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-        syncTop10History(top10Addresses, false);
+        syncTop10History(myTop10Addresses, false);
+      }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
+    );
+
+    const onRefresh = useCallback(() => {
+      if (!couldDoRefresh()) return;
+
+      perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
+      Promise.all([
+        // force update balance from server api
+        triggerUpdate(true).then(balanceAccounts => {
+          refresh24hAssets({ force: true, balanceAccounts });
+          refreshDayCurve({ force: true, balanceAccounts });
+        }),
+        checkAddressesEligibility(true),
+      ]).finally(() => {
+        // update at background
+        forceUpdate();
+        apisLending.fetchLendingData();
+        syncTop10History(myTop10Addresses, true);
+        currencyService.syncCurrencyList(true);
       });
-    }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
-  );
+    }, [
+      triggerUpdate,
+      checkAddressesEligibility,
+      forceUpdate,
+      myTop10Addresses,
+    ]);
 
-  const onRefresh = useCallback(() => {
-    if (!couldDoRefresh()) return;
-    Promise.all([
-      // force update balance from server api
-      triggerUpdate(true).then(balanceAccounts =>
-        refresh24hAssets({ force: true, balanceAccounts }),
-      ),
-      checkAddressesEligibility(true),
-    ]).finally(() => {
-      // update at background
-      forceUpdate();
-      apisLending.fetchLendingData();
-      syncTop10History(top10Addresses, true);
-      currencyService.syncCurrencyList(true);
-    });
-  }, [triggerUpdate, checkAddressesEligibility, forceUpdate, top10Addresses]);
-
-  // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-  const handlePressWatchlist = useCallback(() => {
-    navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-      screen: RootNames.Watchlist,
-      params: {},
-    });
-  }, [navigation]);
-
-  const handleClickMenu = useCallback(
-    (key: MultiHomeFeatTitle) => {
-      if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
-      if (isTabsSwiping.value) {
-        return;
-      }
-      switch (key) {
-        case MultiHomeFeatTitle.Send:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.Send,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Receive:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackAddress, {
-              screen: RootNames.ReceiveAddressList,
-              params: {},
-            }),
-          );
-
-          break;
-        case MultiHomeFeatTitle.Swap:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiSwap,
-              params: {},
-            }),
-          );
-
-          break;
-        case MultiHomeFeatTitle.Bridge:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBridge,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.History:
-          storeApiAccountsSwitcher.toggleUseAllAccountsOnScene(
-            'MultiHistory',
-            true,
-          );
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiAddressHistory,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Approvals:
-          navigateDeprecated(RootNames.StackAddress, {
-            screen: RootNames.ApprovalAddressList,
-          });
-          break;
-        case MultiHomeFeatTitle.GasAccount:
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.GasAccount,
-              params: {},
-            }),
-          );
-          break;
-        case MultiHomeFeatTitle.Watchlist: {
-          handlePressWatchlist();
-          break;
-        }
-        case MultiHomeFeatTitle.Ecosystem:
-          break;
-        case MultiHomeFeatTitle.Buy:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.MultiBuy,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.Perps:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Perps,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.Lending:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Lending,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.Points:
-          navigation.push(RootNames.StackAddress, {
-            screen: RootNames.Points,
-            params: {},
-          });
-          break;
-
-        default:
-          break;
-      }
-    },
-    [handlePressWatchlist, navigation],
-  );
-
-  const generateCustomBadgeIcon = useCallback(
-    (el: {
-      key: MultiHomeFeatTitle;
-      title: string;
-      icon: React.FC<import('react-native-svg').SvgProps>;
-      badge?: number;
-      isSuccess?: boolean;
-      showGiftIcon?: boolean;
-    }) => {
-      if (el.key === MultiHomeFeatTitle.Watchlist) {
-        return <WatchListBadge />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Perps) {
-        return <PerpsPnl />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
-        return <HomePendingBadge number={pendingTxCount} />;
-      }
-
-      // 显示gift图标
-      if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
-        return <IconGift width={24} height={24} />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Lending) {
-        return <LendingHF />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Points) {
-        return <PointsBadge />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.GasAccount) {
-        return <GasAccountBadge />;
-      }
-
-      return (
-        <>
-          {!!el.badge && el.badge > 0 ? (
-            <BadgeText
-              count={el.badge}
-              isSuccess={el.isSuccess}
-              style={[styles.badgeStyle]}
-            />
-          ) : null}
-        </>
-      );
-    },
-    [pendingTxCount, styles.badgeStyle],
-  );
-
-  const tabsOpacity = useHomeDrawerAnimateStore(state => state.tabsOpacity);
-  const { bottom } = useSafeAreaInsets();
-  const { safeTop } = useSafeSizes();
-  const translateY = useSharedValue(0);
-  const isExpanded = useSharedValue(false);
-  const pullPercent = useDerivedValue(() => {
-    return (translateY.value / height) * 100;
-  });
-  const scrollY = useCurrentTabScrollY();
-  const contentHeight = useSharedValue(0);
-  const layoutHeight = useSharedValue(0);
-  const isAtBottom = useDerivedValue(() => {
-    if (!contentHeight.value || !layoutHeight.value) {
-      return false;
-    }
-    const maxOffset = Math.max(0, contentHeight.value - layoutHeight.value);
-    return scrollY.value >= maxOffset;
-  }, [scrollY]);
-
-  const [bounces, setBounces] = useState(true);
-
-  const pullThreshold = 100;
-
-  const triggerImpact = useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-  }, []);
-
-  const collapsePanel = useCallback(() => {
-    translateY.value = withTiming(0);
-    triggerImpact();
-  }, [translateY, triggerImpact]);
-
-  const panGesture = useMemo(() => {
-    let gesture = Gesture.Pan()
-      .shouldCancelWhenOutside(false)
-      .onStart(() => {
-        translateY.value = 0;
-        isExpanded.value = false;
-      })
-      .onUpdate(event => {
-        console.log('pan onUpdate', event.translationY, isAtBottom.value);
-        if (!isAtBottom.value) {
-          return;
-        }
-        if (event.translationY > 0) {
-          return;
-        }
-
-        translateY.value = event.translationY;
-      })
-      .onEnd(() => {
-        if (!isAtBottom.value) {
-          return;
-        }
-        if (translateY.value * -1 > 80) {
-          translateY.value = withTiming(-height);
-        } else {
-          translateY.value = withTiming(0);
-        }
+    // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
+    const handlePressWatchlist = useCallback(() => {
+      navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
+        screen: RootNames.Watchlist,
+        params: {},
       });
+    }, [navigation]);
 
-    return gesture;
-  }, [height, isAtBottom.value, isExpanded, translateY]);
+    const handleClickMenu = useCallback(
+      (key: MultiHomeFeatTitle) => {
+        if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
+        if (isTabsSwiping.value) {
+          return;
+        }
+        switch (key) {
+          case MultiHomeFeatTitle.Send:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.Send,
+                params: {},
+              }),
+            );
+            break;
+          case MultiHomeFeatTitle.Receive:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackAddress, {
+                screen: RootNames.ReceiveAddressList,
+                params: {},
+              }),
+            );
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => {
+            break;
+          case MultiHomeFeatTitle.Swap:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.MultiSwap,
+                params: {},
+              }),
+            );
+
+            break;
+          case MultiHomeFeatTitle.Bridge:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.MultiBridge,
+                params: {},
+              }),
+            );
+            break;
+          case MultiHomeFeatTitle.History:
+            storeApiAccountsSwitcher.toggleUseAllAccountsOnScene(
+              'MultiHistory',
+              true,
+            );
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.MultiAddressHistory,
+                params: {},
+              }),
+            );
+            break;
+          case MultiHomeFeatTitle.Approvals:
+            navigateDeprecated(RootNames.StackAddress, {
+              screen: RootNames.ApprovalAddressList,
+            });
+            break;
+          case MultiHomeFeatTitle.GasAccount:
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.GasAccount,
+                params: {},
+              }),
+            );
+            break;
+          case MultiHomeFeatTitle.Watchlist: {
+            handlePressWatchlist();
+            break;
+          }
+          case MultiHomeFeatTitle.Ecosystem:
+            break;
+          case MultiHomeFeatTitle.Perps:
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Perps,
+              params: {},
+            });
+            break;
+          case MultiHomeFeatTitle.Lending:
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Lending,
+              params: {},
+            });
+            break;
+          case MultiHomeFeatTitle.Points:
+            navigation.push(RootNames.StackAddress, {
+              screen: RootNames.Points,
+              params: {},
+            });
+            break;
+
+          default:
+            break;
+        }
+      },
+      [handlePressWatchlist, navigation],
+    );
+
+    const generateCustomBadgeIcon = useCallback(
+      (el: {
+        key: MultiHomeFeatTitle;
+        title: string;
+        icon: React.FC<import('react-native-svg').SvgProps>;
+        badge?: number;
+        isSuccess?: boolean;
+        showGiftIcon?: boolean;
+      }) => {
+        if (el.key === MultiHomeFeatTitle.Watchlist) {
+          return <WatchListBadge />;
+        }
+
+        if (el.key === MultiHomeFeatTitle.Perps) {
+          return <PerpsPnl />;
+        }
+
+        if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
+          return <HomePendingBadge number={pendingTxCount} />;
+        }
+
+        // 显示gift图标
+        if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
+          return <IconGift width={24} height={24} />;
+        }
+
+        if (el.key === MultiHomeFeatTitle.Lending) {
+          return <LendingHF />;
+        }
+
+        if (el.key === MultiHomeFeatTitle.Points) {
+          return <PointsBadge />;
+        }
+
+        if (el.key === MultiHomeFeatTitle.GasAccount) {
+          return <GasAccountBadge />;
+        }
+
+        return (
+          <>
+            {!!el.badge && el.badge > 0 ? (
+              <BadgeText
+                count={el.badge}
+                isSuccess={el.isSuccess}
+                style={[styles.badgeStyle]}
+              />
+            ) : null}
+          </>
+        );
+      },
+      [pendingTxCount, styles.badgeStyle],
+    );
+
+    const { bottom } = useSafeAreaInsets();
+
+    const tabsOpacity = useHomeDrawerAnimateStore(state => state.tabsOpacity);
+    const { safeTop } = useSafeSizes();
+    const translateY = useSharedValue(0);
+    const isExpanded = useSharedValue(false);
+    const pullPercent = useDerivedValue(() => {
+      return (translateY.value / height) * 100;
+    });
+    const scrollY = useCurrentTabScrollY();
+    const contentHeight = useSharedValue(0);
+    const layoutHeight = useSharedValue(0);
+    const isAtBottom = useDerivedValue(() => {
+      if (!contentHeight.value || !layoutHeight.value) {
         return false;
-      },
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return isAtBottom.value && gestureState.dy < -5;
-      },
-      onPanResponderGrant: () => {
-        translateY.value = 0;
-        isExpanded.value = false;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (!isAtBottom.value) {
-          return;
-        }
-        if (gestureState.dy > 0) {
-          return;
-        }
-        setBounces(false);
-        translateY.value = gestureState.dy;
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (!isAtBottom.value) {
-          return;
-        }
-        if (translateY.value * -1 > pullThreshold) {
-          translateY.value = withTiming(-height);
-          runOnJS(triggerImpact)();
-        } else {
-          translateY.value = withTiming(0);
-        }
-        setBounces(true);
-      },
-      onPanResponderTerminate: () => {
-        translateY.value = withTiming(0);
-        setBounces(true);
-      },
-    }),
-  ).current;
-
-  useAnimatedReaction(
-    () => pullPercent.value,
-    value => {
-      if (value === 0) {
-        isExpanded.value = false;
-      } else if (value === -100) {
-        isExpanded.value = true;
       }
-    },
-    [],
-  );
+      const maxOffset = Math.max(0, contentHeight.value - layoutHeight.value);
+      return scrollY.value >= maxOffset;
+    }, [scrollY]);
 
-  useAnimatedReaction(
-    () => pullPercent.value,
-    value => {
-      tabsOpacity.value = interpolate(
-        value,
-        [-100, -60],
-        [0, 1],
-        Extrapolate.CLAMP,
-      );
-    },
-    [],
-  );
+    const [bounces, setBounces] = useState(true);
 
-  const mainStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateY: translateY.value,
-      },
-    ],
-  }));
+    const pullThreshold = 100;
 
-  const drawerScrollOffsetY = useSharedValue(0);
+    const triggerImpact = useCallback(() => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+    }, []);
 
-  const drawerGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onChange(event => {
-          console.log(
-            'drawer onChange',
-            event.translationY,
-            drawerScrollOffsetY.value,
-          );
-          if (event.translationY <= 0) {
+    const collapsePanel = useCallback(() => {
+      translateY.value = withTiming(0);
+      triggerImpact();
+    }, [translateY, triggerImpact]);
+
+    const panGesture = useMemo(() => {
+      let gesture = Gesture.Pan()
+        .shouldCancelWhenOutside(false)
+        .onStart(() => {
+          translateY.value = 0;
+          isExpanded.value = false;
+        })
+        .onUpdate(event => {
+          console.log('pan onUpdate', event.translationY, isAtBottom.value);
+          if (!isAtBottom.value) {
             return;
           }
-          if (drawerScrollOffsetY.value > 0) {
+          if (event.translationY > 0) {
             return;
           }
-          console.log('drawer translateY set', event.translationY);
-          translateY.value = (height - event.translationY) * -1;
+
+          translateY.value = event.translationY;
         })
         .onEnd(() => {
-          if (translateY.value > (height - pullThreshold) * -1) {
-            runOnJS(collapsePanel)();
-          } else {
-            translateY.value = withTiming(-height);
+          if (!isAtBottom.value) {
+            return;
           }
-        }),
-    [collapsePanel, drawerScrollOffsetY, height, translateY],
-  );
+          if (translateY.value * -1 > 80) {
+            translateY.value = withTiming(-height);
+          } else {
+            translateY.value = withTiming(0);
+          }
+        });
 
-  const drawerScrollableGesture = useMemo(
-    () =>
-      Gesture.Native()
-        .simultaneousWithExternalGesture(drawerGesture)
-        .shouldCancelWhenOutside(false),
-    [drawerGesture],
-  );
+      return gesture;
+    }, [height, isAtBottom.value, isExpanded, translateY]);
 
-  const drawerTranslateYStyle = useAnimatedStyle(() => {
-    return {
-      height: height,
+    const panResponder = useRef(
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => {
+          return false;
+        },
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          return isAtBottom.value && gestureState.dy < -5;
+        },
+        onPanResponderGrant: () => {
+          translateY.value = 0;
+          isExpanded.value = false;
+        },
+        onPanResponderMove: (_, gestureState) => {
+          console.log('panResponder onPanResponderMove', gestureState.dy);
+          if (!isAtBottom.value) {
+            return;
+          }
+          if (gestureState.dy > 0) {
+            return;
+          }
+          setBounces(false);
+          translateY.value = gestureState.dy;
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (!isAtBottom.value) {
+            return;
+          }
+          if (translateY.value * -1 > pullThreshold) {
+            translateY.value = withTiming(-height);
+            runOnJS(triggerImpact)();
+          } else {
+            translateY.value = withTiming(0);
+          }
+          setBounces(true);
+        },
+        onPanResponderTerminate: () => {
+          translateY.value = withTiming(0);
+          setBounces(true);
+        },
+      }),
+    ).current;
+
+    useAnimatedReaction(
+      () => pullPercent.value,
+      value => {
+        if (value === 0) {
+          isExpanded.value = false;
+        } else if (value === -100) {
+          isExpanded.value = true;
+        }
+      },
+      [],
+    );
+
+    useAnimatedReaction(
+      () => pullPercent.value,
+      value => {
+        tabsOpacity.value = interpolate(
+          value,
+          [-100, -60],
+          [0, 1],
+          Extrapolate.CLAMP,
+        );
+      },
+      [],
+    );
+
+    const mainStyle = useAnimatedStyle(() => ({
       transform: [
         {
-          translateY: interpolate(
-            pullPercent.value,
-            [-100, 0],
-            [0, height],
-            Extrapolate.CLAMP,
-          ),
+          translateY: translateY.value,
         },
       ],
-      paddingTop: interpolate(
-        pullPercent.value,
-        [-100, 0],
-        [IS_ANDROID ? 12 : safeTop + 12, 0],
-        Extrapolate.CLAMP,
-      ),
-    };
-  }, [height, safeTop]);
+    }));
 
-  const panelScaleStyle = useAnimatedStyle(() => {
-    return {
-      transformOrigin: 'top',
-      transform: [
-        {
-          scale: interpolate(
-            pullPercent.value,
-            [0, -100],
-            isExpanded.value ? [1, 1] : [0.75, 1],
-            Extrapolate.CLAMP,
-          ),
-        },
-      ],
-    };
-  }, [pullThreshold, isExpanded]);
+    const drawerScrollOffsetY = useSharedValue(0);
 
-  const overlayOpacityStyle = useAnimatedStyle(() => {
-    return {
-      opacity: isExpanded.value
-        ? 0
-        : interpolate(
-            pullPercent.value,
-            [-100, -100 * 0.3, 0],
-            [0, 1, 0],
-            Extrapolate.CLAMP,
-          ),
-    };
-  }, [pullThreshold]);
+    const drawerGesture = useMemo(
+      () =>
+        Gesture.Pan()
+          .onChange(event => {
+            console.log(
+              'drawer onChange',
+              event.translationY,
+              drawerScrollOffsetY.value,
+            );
+            if (event.translationY <= 0) {
+              return;
+            }
+            if (drawerScrollOffsetY.value > 0) {
+              return;
+            }
+            console.log('drawer translateY set', event.translationY);
+            translateY.value = (height - event.translationY) * -1;
+          })
+          .onEnd(() => {
+            if (translateY.value > (height - pullThreshold) * -1) {
+              runOnJS(collapsePanel)();
+            } else {
+              translateY.value = withTiming(-height);
+            }
+          }),
+      [collapsePanel, drawerScrollOffsetY, height, translateY],
+    );
 
-  useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
+    const drawerScrollableGesture = useMemo(
+      () =>
+        Gesture.Native()
+          .simultaneousWithExternalGesture(drawerGesture)
+          .shouldCancelWhenOutside(false),
+      [drawerGesture],
+    );
 
-  return (
-    <View style={styles.pullUpWrapper}>
-      <Animated.View style={mainStyle}>
-        <Tabs.ScrollView
-          {...panResponder.panHandlers}
-          bounces={bounces}
-          tvParallaxProperties={undefined}
-          showsVerticalScrollIndicator={false}
-          style={[styles.scroll, { flex: undefined }]}
-          contentContainerStyle={[
-            styles.scrollContainer,
-            {
-              // paddingBottom: bottom + 82,
-              paddingBottom:
-                Platform.OS === 'android' ? Math.max(bottom, 16) : bottom,
-            },
-          ]}
-          overScrollMode={'never'}
-          scrollEventThrottle={16}
-          onContentSizeChange={(_, heightValue) => {
-            contentHeight.value = heightValue;
-          }}
-          onLayout={event => {
-            layoutHeight.value = event.nativeEvent.layout.height;
-          }}
-          refreshControl={
-            <RefreshControl refreshing={false} onRefresh={onRefresh} />
-          }>
-          <MultiAddressHomeHeader onRefresh={onRefresh} />
-          <HomeCenterArea />
+    const drawerTranslateYStyle = useAnimatedStyle(() => {
+      return {
+        height: height,
+        transform: [
+          {
+            translateY: interpolate(
+              pullPercent.value,
+              [-100, 0],
+              [0, height],
+              Extrapolate.CLAMP,
+            ),
+          },
+        ],
+        paddingTop: interpolate(
+          pullPercent.value,
+          [-100, 0],
+          [IS_ANDROID ? 12 : safeTop + 12, 0],
+          Extrapolate.CLAMP,
+        ),
+      };
+    }, [height, safeTop]);
 
-          <View style={styles.grid}>
-            <View style={styles.gridItemsWrap}>
-              {MENU_ARR.map((el, index) => {
-                return (
-                  <FastTouchable
-                    style={StyleSheet.flatten([
-                      styles.gridItem,
-                      { width: itemWidth },
-                    ])}
-                    key={index}
-                    onPress={() => {
-                      console.debug('[perf] touched menu', el.key);
-                      requestAnimationFrame(() => {
-                        handleClickMenu(el.key);
-                      });
-                      matomoRequestEvent({
-                        category: 'Click_Services',
-                        action: `Click_${el.key}`,
-                      });
-                    }}>
-                    <View style={styles.badgeWrapper}>
-                      <View style={styles.iconWrapper}>
-                        <el.icon
-                          width={28}
-                          height={28}
-                          color={el.color || colors2024['brand-default-icon']}
-                        />
+    const panelScaleStyle = useAnimatedStyle(() => {
+      return {
+        transformOrigin: 'top',
+        transform: [
+          {
+            scale: interpolate(
+              pullPercent.value,
+              [0, -100],
+              isExpanded.value ? [1, 1] : [0.75, 1],
+              Extrapolate.CLAMP,
+            ),
+          },
+        ],
+      };
+    }, [pullThreshold, isExpanded]);
+
+    const overlayOpacityStyle = useAnimatedStyle(() => {
+      return {
+        opacity: isExpanded.value
+          ? 0
+          : interpolate(
+              pullPercent.value,
+              [-100, -100 * 0.3, 0],
+              [0, 1, 0],
+              Extrapolate.CLAMP,
+            ),
+      };
+    }, [pullThreshold]);
+
+    useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
+
+    return (
+      <View style={styles.pullUpWrapper}>
+        <Animated.View style={mainStyle}>
+          <Tabs.ScrollView
+            {...panResponder.panHandlers}
+            bounces={bounces}
+            tvParallaxProperties={undefined}
+            showsVerticalScrollIndicator={false}
+            style={[styles.scroll, { flex: undefined }]}
+            contentContainerStyle={[
+              styles.scrollContainer,
+              {
+                // paddingBottom: bottom + 82,
+                paddingBottom:
+                  Platform.OS === 'android' ? Math.max(bottom, 16) : bottom,
+              },
+            ]}
+            overScrollMode={'never'}
+            scrollEventThrottle={16}
+            onContentSizeChange={(_, heightValue) => {
+              contentHeight.value = heightValue;
+            }}
+            onLayout={event => {
+              layoutHeight.value = event.nativeEvent.layout.height;
+            }}
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={onRefresh} />
+            }>
+            <MultiAddressHomeHeader onRefresh={onRefresh} />
+
+            <HomeCenterArea />
+
+            <View style={styles.grid}>
+              <View style={styles.gridItemsWrap}>
+                {MENU_ARR.map((el, index) => {
+                  return (
+                    <FastTouchable
+                      style={StyleSheet.flatten([
+                        styles.gridItem,
+                        { width: itemWidth },
+                      ])}
+                      key={index}
+                      onPress={() => {
+                        console.debug('[perf] touched menu', el.key);
+                        requestAnimationFrame(() => {
+                          handleClickMenu(el.key);
+                        });
+                        matomoRequestEvent({
+                          category: 'Click_Services',
+                          action: `Click_${el.key}`,
+                        });
+                      }}>
+                      <View style={styles.badgeWrapper}>
+                        <View style={styles.iconWrapper}>
+                          <el.icon
+                            width={28}
+                            height={28}
+                            color={el.color || colors2024['brand-default-icon']}
+                          />
+                        </View>
+                        <View style={styles.rightBadgeWrapper}>
+                          {generateCustomBadgeIcon(el)}
+                        </View>
                       </View>
-                      <View style={styles.rightBadgeWrapper}>
-                        {generateCustomBadgeIcon(el)}
-                      </View>
-                    </View>
-                    <Text style={styles.gridText}>{el.title}</Text>
-                  </FastTouchable>
-                );
-              })}
-            </View>
-            <BrowserSearchEntry />
-
-            <GestureDetector gesture={panGesture}>
-              <View style={styles.swipeUpHint}>
-                <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
-                <Text style={styles.swipeUpHintText}>
-                  Swipe up to explore more dApps
-                </Text>
+                      <Text style={styles.gridText}>{el.title}</Text>
+                    </FastTouchable>
+                  );
+                })}
               </View>
-            </GestureDetector>
-          </View>
-        </Tabs.ScrollView>
-      </Animated.View>
-      <GestureDetector gesture={drawerGesture}>
-        <Animated.View
-          pointerEvents="auto"
-          style={[styles.pullUpPanel, drawerTranslateYStyle]}>
-          <Animated.View style={[styles.pullOverlay, overlayOpacityStyle]} />
-          <Animated.View style={[panelScaleStyle]}>
-            <BrowserFavoriteManage
-              onPressHome={() => {
-                collapsePanel();
-              }}
-              scrollableGesture={drawerScrollableGesture}
-              onScroll={event => {
-                const offsetY = event.nativeEvent.contentOffset.y;
-                drawerScrollOffsetY.value = offsetY;
-              }}
-            />
-          </Animated.View>
+              <BrowserSearchEntry />
+              <GestureDetector gesture={panGesture}>
+                <View style={styles.swipeUpHint}>
+                  <RcIconDoubleArrowCC
+                    color={colors2024['neutral-secondary']}
+                  />
+                  <Text style={styles.swipeUpHintText}>
+                    Swipe up to explore more dApps
+                  </Text>
+                </View>
+              </GestureDetector>
+            </View>
+          </Tabs.ScrollView>
         </Animated.View>
-      </GestureDetector>
-    </View>
-  );
-});
+        <GestureDetector gesture={drawerGesture}>
+          <Animated.View
+            pointerEvents="auto"
+            style={[styles.pullUpPanel, drawerTranslateYStyle]}>
+            <Animated.View style={[styles.pullOverlay, overlayOpacityStyle]} />
+            <Animated.View style={[panelScaleStyle]}>
+              <BrowserFavoriteManage
+                onPressHome={() => {
+                  collapsePanel();
+                }}
+                scrollableGesture={drawerScrollableGesture}
+                onScroll={event => {
+                  const offsetY = event.nativeEvent.contentOffset.y;
+                  drawerScrollOffsetY.value = offsetY;
+                }}
+              />
+            </Animated.View>
+          </Animated.View>
+        </GestureDetector>
+      </View>
+    );
+  },
+);
 
 const detectHasAccounts = async () => {
   const result = { redirectAction: null as Function | null };
@@ -857,6 +881,7 @@ function MultiAddressHome(): JSX.Element {
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
+
   const combinedData = useScene24hBalanceLightWeightData('Home');
   useRendererDetect({ name: 'MultiAddressHome' });
 
@@ -921,10 +946,6 @@ function MultiAddressHome(): JSX.Element {
     }
   }, []);
 
-  const setIsFoldMultiChart = useFoldMultiChartStore(
-    s => s.setIsFoldMultiChart,
-  );
-
   useEffect(() => {
     apisHomeTabIndex.setTabIndex(0);
   }, []);
@@ -958,9 +979,6 @@ function MultiAddressHome(): JSX.Element {
           onIndexChange={onIndexChange}
           OverViewComponent={OverViewComponent}
         />
-
-        {/* show search bar when Overview tab */}
-        {/* <GlobalSearchBar /> */}
       </View>
 
       <HomeGuidanceMultipleTabs />
@@ -1220,7 +1238,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colord(
       isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
     )
-      .alpha(0.89)
+      .alpha(IS_ANDROID ? 1 : 0.89)
       .toRgbString(),
   },
   pendingText: {

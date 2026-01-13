@@ -60,7 +60,7 @@ const waitQueueFinished = (q: PQueue) => {
 };
 
 function LendingHistory(): JSX.Element {
-  const { top10Addresses, list: accountList } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   // Lending history only shows all accounts, no watch/safe addresses, no token details
@@ -112,7 +112,7 @@ function LendingHistory(): JSX.Element {
     }
     dbFetchLoadingRef.current = true;
     const addresses = isSceneUsingAllAccounts
-      ? top10Addresses.map(i => i.toLowerCase())
+      ? myTop10Addresses.map(i => i.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
     const {
       items: historyList,
@@ -158,7 +158,7 @@ function LendingHistory(): JSX.Element {
   const batchFetchLocalTx = async () => {
     const list: TransactionGroup[] = [];
     const addressList = isSceneUsingAllAccounts
-      ? top10Addresses
+      ? myTop10Addresses
       : [finalSceneCurrentAccount?.address.toLowerCase()];
     for (let i = 0; i < addressList.length; i++) {
       const addr = addressList[i];

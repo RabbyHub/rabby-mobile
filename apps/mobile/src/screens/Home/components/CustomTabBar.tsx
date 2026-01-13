@@ -99,19 +99,10 @@ const Indicator = ({
     if (fadeIn) {
       opacity.value = 1;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fadeIn]);
-
-  // const measureRef = useRef(handleMeasureSecondaryIndicator);
-  // useLayoutEffect(() => {
-  //   measureRef.current = handleMeasureSecondaryIndicator;
-  // }, [handleMeasureSecondaryIndicator]);
-  // useLayoutEffect(() => {
-  //   measureRef.current?.();
-  // }, [measureRef.current]);
+  }, [fadeIn, opacity]);
 
   return (
-    <View style={styles.indicatorContainer}>
+    <View style={[styles.indicatorContainer]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
       <View
@@ -246,8 +237,16 @@ const getSideChainSelectorStyles = createGetStyles2024(() => ({
 }));
 
 type MaterialTabBarProps = React.ComponentProps<typeof MaterialTabBar>;
-export const HomeCustomMaterialTabBar = (_props: {
-  materialTabBarProps: Omit<
+const renderTabItem: MaterialTabBarProps['TabItemComponent'] & object = _p => (
+  <MaterialTabItem
+    {..._p}
+    pressOpacity={__DEV__ ? 0.5 : 1}
+    inactiveOpacity={1}
+  />
+);
+
+export const HomeCustomMaterialTabBar = (
+  props: Omit<
     MaterialTabBarProps,
     | 'scrollEnabled'
     | 'tabStyle'
@@ -255,13 +254,10 @@ export const HomeCustomMaterialTabBar = (_props: {
     | 'style'
     | 'indicatorStyle'
     | 'contentContainerStyle'
-  >;
-  indexDecimal?: Animated.SharedValue<number>;
-  // externalContent?: React.ReactNode;
-}) => {
+  >,
+) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const props = _props.materialTabBarProps;
   const indexDecimal = props.indexDecimal;
 
   const stylez = useAnimatedStyle(() => {
@@ -269,20 +265,6 @@ export const HomeCustomMaterialTabBar = (_props: {
       opacity: indexDecimal.value <= 0.5 ? 0 : 1,
     };
   });
-
-  const renderTabItem = useCallback<
-    MaterialTabBarProps['TabItemComponent'] & object
-  >(
-    _p => (
-      <MaterialTabItem
-        {..._p}
-        // onSwitchTo={name => _p.onSwitchTo?.(name)}
-        pressOpacity={__DEV__ ? 0.5 : 1}
-        inactiveOpacity={1}
-      />
-    ),
-    [],
-  );
 
   const {
     // measureTabBarWrapper,

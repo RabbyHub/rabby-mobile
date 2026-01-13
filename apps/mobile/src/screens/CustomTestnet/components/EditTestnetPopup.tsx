@@ -308,12 +308,12 @@ const SIZES = {
   containerPb: 20 + 52 + 12, // scrollViewPb + buttonHeight + footerPb + extra space
 };
 
-const getStyles = createGetStyles2024(({ colors, bottomSafeArea }) => {
+const getStyles = createGetStyles2024(({ colors, safeAreaInsets }) => {
   return {
     container: {
       height: '100%',
       flexDirection: 'column',
-      paddingBottom: SIZES.containerPb + bottomSafeArea,
+      paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
     },
     modalTitle: {
       paddingTop: ModalLayouts.titleTopOffset,
@@ -367,7 +367,7 @@ const getStyles = createGetStyles2024(({ colors, bottomSafeArea }) => {
       position: 'absolute',
       bottom: 0,
       left: 0,
-      height: SIZES.footerHeight + bottomSafeArea,
+      height: SIZES.footerHeight + safeAreaInsets.bottom,
       width: '100%',
       maxWidth: Dimensions.get('window').width,
       display: 'flex',
@@ -378,7 +378,7 @@ const getStyles = createGetStyles2024(({ colors, bottomSafeArea }) => {
       borderTopWidth: StyleSheet.hairlineWidth,
       paddingTop: SIZES.footerPt,
       paddingHorizontal: SIZES.innerPx,
-      paddingBottom: SIZES.footerPb + bottomSafeArea,
+      paddingBottom: SIZES.footerPb + safeAreaInsets.bottom,
     },
     btnContainer: {
       display: 'flex',

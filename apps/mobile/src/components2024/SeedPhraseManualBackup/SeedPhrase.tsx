@@ -45,6 +45,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
+import { onCopiedSensitiveData } from '@/utils/clipboard';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWrapper: {
@@ -825,12 +826,7 @@ const SecureBottomTips = ({
 
   const onCopy = () => {
     Clipboard.setString(copyRaw || '');
-    toast.success(t('page.nextComponent.copySeedPhraseSecureTip.copied'), {
-      position: height * 0.5,
-    });
-    setTimeout(() => {
-      Clipboard.setString('');
-    }, 1000 * 60);
+    onCopiedSensitiveData({ type: 'seedPhrase' });
 
     toggleShowSheetModal('destroy');
   };

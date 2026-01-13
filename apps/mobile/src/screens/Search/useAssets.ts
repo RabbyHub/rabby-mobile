@@ -13,14 +13,12 @@ import {
 } from '../Home/utils/token';
 import { preferenceService } from '@/core/services';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { filterDisplayToken } from '../Home/hooks/token';
 import { portfolio2Display } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { tagNfts } from '../Home/hooks/nft';
 import {
   syncNFTs,
   syncProtocols,
-  syncTokens,
   syncSpecificProtocol,
 } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
@@ -28,15 +26,12 @@ import _, { debounce } from 'lodash';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { syncRemoteTokensAmount } from '@/databases/sync/assets';
-import { fetchAllAccounts, getTop10MyAddresses } from '@/core/apis/account';
-import { sortAccountList } from '@/utils/sortAccountList';
+import { getTop10MyAccounts } from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
-import { makeChainServerIdSet } from '@/utils/chain';
 import { ITokenSetting } from '@/core/services/preference';
 
 type AssetsState = {
@@ -232,67 +227,7 @@ export const useLoadAssets = () => {
     })),
   );
 
-  const { tokensMap, portfoliosMap, nftsMap } = useAssetsMap();
-
-  const loadToken = useCallback(
-    async (address: string, force?: boolean, updateReturn?: boolean) => {
-      if (!address) {
-        return;
-      }
-      try {
-        const walletProject = new DisplayedProject({
-          id: 'Wallet',
-          name: 'Wallet',
-        });
-
-        const wP = produce(walletProject, draft => {
-          draft.netWorth = 0;
-          draft._netWorth = '$0';
-          draft._netWorthChange = '-';
-          draft.netWorthChange = 0;
-          draft._netWorthChangePercent = '';
-          draft._portfolioDict = {};
-          draft._portfolios = [];
-          draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
-        });
-
-        const tokenRes = await syncTokens(
-          address,
-          force,
-          updateReturn ? false : !force,
-          true,
-        );
-        if (!tokenRes.length) {
-          return;
-        }
-        const tokenSettings =
-          (await preferenceService.getUserTokenSettings()) || {};
-
-        const tokensDict: Record<string, TokenItem[]> = {};
-        tokenRes.forEach(token => {
-          const list = (tokensDict[token.chain] =
-            tokensDict[token.chain] || []);
-          list.push(token);
-        });
-
-        setWalletTokens(wP, tokensDict);
-
-        const sortedTokens = sortWalletTokens(wP);
-
-        const filteredTokens = tagTokenList(sortedTokens, tokenSettings, {
-          filterChainServerIds: makeChainServerIdSet(),
-        });
-
-        updateAssetListByAddress(address, {
-          type: 'tokens',
-          data: filteredTokens,
-        });
-      } catch (error) {
-        console.error('ServiceErrorType.Tokens', error);
-      }
-    },
-    [],
-  );
+  const { portfoliosMap, nftsMap } = useAssetsMap();
 
   const loadDefi = useCallback(
     async (address: string, force?: boolean, updateReturn?: boolean) => {
@@ -443,9 +378,10 @@ export const useLoadAssets = () => {
       },
     ) => {
       const addresses =
-        options?.realTimeAddresses || (await getTop10MyAddresses());
+        options?.realTimeAddresses ||
+        (await getTop10MyAccounts()).top10Addresses;
       removeUnNeedAssets(addresses);
-      const { disableToken, disableDefi, disableNFT } = options || {};
+      const { disableDefi, disableNFT } = options || {};
       if (!options?.ignoreLoading) {
         setLoading(true);
       }
@@ -453,7 +389,6 @@ export const useLoadAssets = () => {
         for (const address of addresses) {
           try {
             await Promise.all([
-              !disableToken && loadToken(address, force, options?.updateReturn),
               !disableDefi && loadDefi(address, force, options?.updateReturn),
               !disableNFT && loadNFT(address, force, options?.updateReturn),
             ]);
@@ -470,7 +405,7 @@ export const useLoadAssets = () => {
         setIsFirstFetch(false);
       }
     },
-    [removeUnNeedAssets, loadToken, loadDefi, loadNFT],
+    [removeUnNeedAssets, loadDefi, loadNFT],
   );
   const getCacheTop10Assets = useCallback(
     async (options?: {
@@ -485,7 +420,8 @@ export const useLoadAssets = () => {
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
       const addresses =
-        options?.realTimeAddresses || (await getTop10MyAddresses());
+        options?.realTimeAddresses ||
+        (await getTop10MyAccounts()).top10Addresses;
       removeUnNeedAssets(addresses);
       const isCurrentShortCacheFetch = !!(
         options?.maxTokenLength ||
@@ -547,44 +483,6 @@ export const useLoadAssets = () => {
     [removeUnNeedAssets, shortCache],
   );
 
-  const updateTokensAmount = useCallback(
-    (
-      updateTokenList: {
-        address: string;
-        token: TokenItem;
-      }[],
-    ) => {
-      syncRemoteTokensAmount(updateTokenList);
-
-      updateTokenList.forEach(({ address, token }) => {
-        const lowerAddress = address?.toLowerCase?.() || address;
-        const preTokens = tokensMap[lowerAddress] || [];
-
-        const updatedTokens = preTokens.map(t => {
-          const sameChain =
-            (t.chain || '').toLowerCase() === (token.chain || '').toLowerCase();
-          const sameTokenId =
-            (t as any)._tokenId === token.id || (t as any).id === token.id;
-          if (sameChain && sameTokenId) {
-            return {
-              ...t,
-              price: token.price,
-              price_24h_change: token.price_24h_change,
-              amount: token.amount,
-            };
-          }
-          return t;
-        });
-
-        updateAssetListByAddress(lowerAddress, {
-          type: 'tokens',
-          data: updatedTokens,
-        });
-      });
-    },
-    [tokensMap],
-  );
-
   return {
     isLoading,
     getCacheTop10Assets,
@@ -594,8 +492,6 @@ export const useLoadAssets = () => {
     batchLoadCacheNFT,
     refreshing: !!isLoading && !isFirstFetch,
     loadSpecificDefi,
-    updateTokensAmount,
-    tokensMap,
     portfoliosMap,
     nftsMap,
   };

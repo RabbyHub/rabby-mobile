@@ -22,6 +22,7 @@ import {
   requestKeyring,
 } from './keyring';
 import { throwErrorIfInvalidPwd } from './lock';
+import { accountEvents } from '@/core/apis/account';
 
 export const getMnemonics = async (password: string, address: string) => {
   await throwErrorIfInvalidPwd(password);
@@ -282,22 +283,20 @@ export const requestHDKeyringByMnemonics = (
 export const addKeyringAndactiveAndPersistAccounts = async (
   mnemonic: string,
   passphrase: string,
-  accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
+  accountsToImport: Pick<Account, 'address' | 'aliasName' | 'index'>[],
   addAlias: boolean,
 ) => {
   try {
     const Keyring = keyringService.getKeyringClassForType(
       KEYRING_CLASS.MNEMONIC,
-    ) as any;
+    );
 
     const keyring = new Keyring({ mnemonic, passphrase });
 
-    keyringService.updateHdKeyringIndex(keyring as any);
-    keyringService.addKeyring(keyring as any);
+    keyringService.updateHdKeyringIndex(keyring);
+    keyringService.addKeyring(keyring);
 
-    await keyring.activeAccounts(
-      accountsToImport.map(acc => (acc as any).index! - 1),
-    );
+    await keyring.activeAccounts?.(accountsToImport.map(acc => acc.index! - 1));
 
     const detail = keyring.getInfoByAddress(accountsToImport[0].address);
     if (detail?.basePublicKey) {
@@ -330,7 +329,7 @@ export const addKeyringAndactiveAndPersistAccounts = async (
 export const activeAndPersistAccountsByMnemonics = async (
   mnemonics: string,
   passphrase: string,
-  accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
+  accountsToImport: Required<Pick<Account, 'address'>>[],
   addDefaultAlias = false,
 ) => {
   const keyring = getKeyringByMnemonic(mnemonics, passphrase);
@@ -350,9 +349,16 @@ export const activeAndPersistAccountsByMnemonics = async (
   //   accountsToImport.map(acc => (acc as any).index! - 1),
   // );
 
-  await keyring.activeAccounts(
-    accountsToImport.map(acc => (acc as any).index! - 1),
-  );
+  keyring.activeAccounts(accountsToImport.map(acc => (acc as any).index! - 1));
+
+  // accountEvents.emit('ACCOUNT_ADDED', {
+  //   accounts: accountsToImport.map(acc => ({
+  //     address: acc.address,
+  //     type: keyring.type as KeyringTypeName,
+  //     brandName: keyring.type,
+  //   })),
+  //   scene: 'memonics',
+  // });
 
   const detail = keyring.getInfoByAddress(accountsToImport[0].address);
   if (detail?.basePublicKey) {

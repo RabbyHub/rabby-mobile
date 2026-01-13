@@ -64,6 +64,10 @@
         "proceedBtn": "ดำเนินการ",
         "title": "ตรวจพบความเสี่ยง",
         "simpleExplanation": "ไม่รองรับ"
+      },
+      "placeholders": {
+        "noLpTokens": "ไม่มีโทเค็นผู้ให้สภาพคล่อง (LP)",
+        "noTokens": "ไม่มีโทเค็น"
       }
     },
     "ModalPreviewNFTItem": {
@@ -278,6 +282,9 @@
     },
     "multiAddressModal": {
       "title": "กระเป๋าเงิน"
+    },
+    "lpTokenModal": {
+      "desc": "นี่คือโทเค็นผู้ให้ความ ликวิดิตี (LP) สำหรับ {{protocolId}}"
     }
   },
   "page": {
@@ -314,7 +321,8 @@
         "LendingOffCollateral": "ปิดการใช้งานเป็นหลักประกัน",
         "LendingManageEModeDisable": "ปิด E-Mode",
         "LendingManageEMode": "เปิดใช้งาน E-Mode",
-        "LendingDebtSwap": "การแลกเปลี่ยนหนี้"
+        "LendingDebtSwap": "การแลกเปลี่ยนหนี้",
+        "LendingRepayWithCollateral": "ชำระคืนด้วยหลักประกัน"
       },
       "detail": {
         "NoApproveNeed": "ไม่จำเป็นต้องเพิกถอน: ไม่มีค่าเผื่อที่เหลืออยู่",
@@ -524,7 +532,8 @@
       "success": "{{type}} สำเร็จ!",
       "addressCount_other": "{{count}} กระเป๋าเงิน",
       "addressCount_one": "{{count}} กระเป๋าเงิน",
-      "importMore": "นำเข้ากระเป๋าเงินเพิ่มเติม"
+      "importMore": "นำเข้ากระเป๋าเงินเพิ่มเติม",
+      "viewAddress": "ดูกระเป๋าเงิน"
     },
     "sendTokenComponents": {
       "GasReserved": "สำรอง <1>0</1> {{ tokenName }} สำหรับค่าใช้จ่าย gas"
@@ -1736,7 +1745,8 @@
         "description4": "กุญแจส่วนตัวของคุณถูกเก็บไว้ในเครื่องของคุณและเข้ารหัสด้วยรหัสผ่านของคุณ เท่านั้นที่คุณสามารถเข้าถึงได้ Rabby ไม่สามารถดึงหรือเข้าถึงกุญแจส่วนตัวของคุณได้",
         "description2": "หากคุณสูญเสีย keyring ของคุณ คุณจะไม่สามารถกู้คืนกระเป๋าเงินของคุณได้",
         "ButtonGotIt": "ฉันเข้าใจแล้ว。"
-      }
+      },
+      "importing": "นำเข้า..."
     },
     "safeQueue": {
       "unknownProtocol": "Unknown protocol",
@@ -2937,7 +2947,12 @@
       },
       "repayDetail": {
         "actions": "ชำระคืน",
-        "approveAndRepay": "อนุมัติและชำระคืน"
+        "approveAndRepay": "อนุมัติและชำระคืน",
+        "tabs": {
+          "wallet": "ยอดเงินในกระเป๋าเงิน",
+          "collateral": "หลักประกัน"
+        },
+        "repayWith": "ชำระคืนด้วย"
       },
       "supplyDetail": {
         "supplyAPY": "อัตราดอกเบี้ย APY",
@@ -3046,7 +3061,13 @@
         "riskToLiquidationText": "คุณไม่สามารถเปลี่ยนการใช้งานเป็นโหมดหลักประกันสำหรับสกุลเงินนี้ได้ เนื่องจากจะทำให้เกิดการเรียกหลักประกัน",
         "openDesc": "การเปิดใช้งานสินทรัพย์นี้เป็นหลักประกันจะเพิ่มอำนาจในการกู้ยืมและปัจจัยความมั่นคงของคุณ อย่างไรก็ตาม มันอาจถูกขายทอดตลาดหากปัจจัยความมั่นคงของคุณลดต่ำกว่าหนึ่ง",
         "enableIsolationModeDesc": "คุณกำลังเข้าร่วมโหมด Isolation ในโหมด Isolation คุณไม่สามารถให้สินทรัพย์อื่นเป็นหลักประกันได้ เพดานหนี้ทั่วโลกจะจำกัดอำนาจการกู้ยืมของสินทรัพย์ที่ถูกแยกออก หากต้องการออกจากโหมด Isolation ให้ปิดใช้งาน CRV เป็นหลักประกันก่อนที่จะกู้สินทรัพย์อื่น",
-        "exitIsolationModeDesc": "คุณจะออกจากโหมดการแยกตัวและโทเค็นอื่น ๆ สามารถใช้เป็นหลักประกันได้แล้ว。"
+        "exitIsolationModeDesc": "คุณจะออกจากโหมดการแยกตัวและโทเค็นอื่น ๆ สามารถใช้เป็นหลักประกันได้แล้ว。",
+        "toggleRiskTexts": {
+          "canNotUseThisCurrencyAsCollateral": "คุณไม่สามารถใช้สกุลเงินนี้เป็นหลักประกันได้",
+          "doNotHaveSuppliesInThisCurrency": "คุณไม่มีสินค้าที่ใช้ในสกุลเงินนี้",
+          "canNotSwitchUsageAsCollateralMode": "คุณไม่สามารถเปลี่ยนการใช้งานเป็นโหมดหลักประกันสำหรับสกุลเงินนี้ได้ เพราะจะทำให้เกิดการเรียกหลักประกัน",
+          "zeroLTVWithdrawBlocked": "สินทรัพย์ที่มี LTV เป็นศูนย์ ({{assets}}) จะต้องถอนหรือปิดใช้งานเป็นหลักประกันเพื่อดำเนินการนี้"
+        }
       },
       "searchMarket": "ค้นหาราคา",
       "selectMarket": "เลือกตลาด",
@@ -3088,6 +3109,13 @@
             "borrow": "การกู้ยืมของฉัน"
           },
           "title": "เลือกเหรียญยืม"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "assets": "โทเค็น",
+            "collateral": "สินทรัพย์ค้ำประกันของฉัน"
+          },
+          "title": "เลือกโทเค็นค้ำประกัน"
         }
       },
       "disabled": "ปิดการใช้งาน",
@@ -3123,7 +3151,33 @@
       },
       "totalSupplied": "จำนวนทั้งหมดที่จัดหา",
       "totalBorrowed": "ยอดรวมที่ยืม",
-      "netApy": "อัตราผลตอบแทนสุทธิ (Net APY)"
+      "netApy": "อัตราผลตอบแทนสุทธิ (Net APY)",
+      "repayWithCollateral": {
+        "action": {
+          "title": "ชำระคืนด้วย {{collateral}}"
+        },
+        "overview": {
+          "title": "ภาพรวมธุรกรรม",
+          "collateralValueAfter": "ยอดคงเหลือหลักประกันหลังจากชำระคืน",
+          "borrowValueAfter": "ยืมยอดคงเหลือหลังจากชำระคืน"
+        },
+        "button": {
+          "repay": "ชำระคืน"
+        },
+        "repayWith": "หลักประกันสำหรับการชำระคืนด้วย",
+        "collateralNotEnough": "ยอดเงินค้ำประกันของคุณต่ำกว่าจำนวนที่เลือก",
+        "toRepay": "จำนวนที่คาดว่าจะต้องชำระคืน"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "desc": "เพิ่มที่อยู่ที่มีอยู่พร้อมกับเงินทุน",
+          "title": "นำเข้ากระเป๋าสตางค์"
+        },
+        "btnCopyAddress": "คัดลอกที่อยู่",
+        "title": "รับสินทรัพย์"
+      }
     }
   },
   "native": {
@@ -3220,7 +3274,14 @@
     "GotIt": "เข้าใจแล้ว",
     "copy": "คัดลอก",
     "Other": "อื่น ๆ",
-    "Backup": "สำรองข้อมูล"
+    "Backup": "สำรองข้อมูล",
+    "toast": {
+      "clipboard": {
+        "copiedSeedPhrase": "คำว่า Seed phrase ได้ถูกคัดลอกแล้ว คลิปบอร์ดจะถูกล้างใน 1 นาที",
+        "copiedPrivateKey": "คีย์ส่วนตัวถูกคัดลอกแล้ว คลิปบอร์ดจะถูกล้างใน 1 นาที",
+        "pasted_and_cleared": "วางแล้วและคลิปบอร์ดถูกล้าง"
+      }
+    }
   },
   "background": {
     "transactionWatcher": {

@@ -4,6 +4,9 @@ import {
 } from './hooks/useBootstrap';
 
 import { runIIFEFunc } from './core/utils/store';
+import { startSubscribeLangChange } from './hooks/lang';
+import { startManageAccountStoreLifecycle } from './hooks/account';
+
 import {
   loadLockInfoOnBootstrap,
   startSubscribeAppStateChange,
@@ -30,7 +33,15 @@ import {
 } from './hooks/navigation';
 import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
+import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
+import { startCheckClearAction } from './utils/clipboard';
+import tokenListStore from './store/tokens';
+import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
+import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 
+startSubscribeLangChange();
+
+startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();
@@ -62,3 +73,11 @@ rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
 startComputationThread();
+startProcessScene24hBalanceEvents();
+startProcessMultiCurveEvents();
+
+trimNoLongerSupportsOnUnlock();
+
+startCheckClearAction();
+
+tokenListStore.getState().initStore();

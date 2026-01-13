@@ -11,7 +11,7 @@ import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { openExternalUrl } from '@/core/utils/linking';
 import { Skeleton } from '@rneui/themed';
@@ -19,7 +19,6 @@ import { LoadingLinear } from './TokenPriceChart/LoadingLinear';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 
 interface Props {
@@ -347,8 +346,9 @@ export const IssuerAndListSite: React.FC<Props> = ({
                     style={styles.externalLink}
                     onPress={() => {
                       naviPush(RootNames.TokenDetail, {
-                        token: ensureAbstractPortfolioToken(
+                        token: tokenItemToITokenItem(
                           tokenEntity.origin_token!,
+                          '',
                         ),
                         account: account,
                         needUseCacheToken: true,

@@ -3,11 +3,16 @@ import { Alert, StyleSheet } from 'react-native';
 import { get, merge } from 'lodash';
 
 import {
+  NativeStackHeaderLeftProps,
   NativeStackNavigationOptions,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import { apisTheme, useGetBinaryMode } from '../hooks/theme';
-import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
+import {
+  getReadyNavigationInstance,
+  navigationRef,
+  naviReplace,
+} from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
@@ -76,23 +81,43 @@ const hitSlop = {
   right: 10,
 };
 
+export function navBack() {
+  const navigation = navigationRef.current;
+  if (navigation?.canGoBack()) {
+    navigation.goBack();
+  } else {
+    navigationRef.resetRoot({
+      index: 0,
+      routes: [{ name: RootNames.Home }],
+    });
+  }
+}
+
+export function HeaderBackPressable({
+  style,
+  ...props
+}: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
+  const themeMode = useGetBinaryMode();
+  const { colors2024 } = apisTheme.getColors2024(themeMode);
+  return (
+    <CustomTouchableOpacity
+      style={[styles.backButtonStyle, style]}
+      hitSlop={hitSlop}
+      onPress={navBack}>
+      <RcIconHeaderBack
+        width={24}
+        height={24}
+        color={props.tintColor || colors2024['neutral-body']}
+      />
+    </CustomTouchableOpacity>
+  );
+}
+
 type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
   headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
 };
 export const useStackScreenConfig = () => {
   const appThemeMode = useGetBinaryMode();
-
-  const navBack = useCallback(() => {
-    const navigation = navigationRef.current;
-    if (navigation?.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigationRef.resetRoot({
-        index: 0,
-        routes: [{ name: 'Root' }],
-      });
-    }
-  }, []);
 
   /** @deprecated for new screen use mergeScreenOptions2024 instead */
   const mergeScreenOptions = useCallback(
@@ -137,7 +162,7 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [appThemeMode, navBack],
+    [appThemeMode],
   );
 
   const mergeScreenOptions2024 = useCallback(
@@ -158,16 +183,7 @@ export const useStackScreenConfig = () => {
         },
         headerTintColor: colors2024['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
-          <CustomTouchableOpacity
-            style={styles.backButtonStyle}
-            hitSlop={hitSlop}
-            onPress={navBack}>
-            <RcIconHeaderBack
-              width={24}
-              height={24}
-              color={tintColor || colors2024['neutral-body']}
-            />
-          </CustomTouchableOpacity>
+          <HeaderBackPressable tintColor={tintColor} />
         ),
       };
 
@@ -183,7 +199,7 @@ export const useStackScreenConfig = () => {
 
       return result;
     },
-    [appThemeMode, navBack],
+    [appThemeMode],
   );
 
   return { mergeScreenOptions, mergeScreenOptions2024 };
@@ -191,15 +207,6 @@ export const useStackScreenConfig = () => {
 
 export function useBottomTabScreenConfig() {
   const appThemeMode = useGetBinaryMode();
-
-  const navBack = useCallback(() => {
-    const navigation = navigationRef.current;
-    if (navigation?.canGoBack()) {
-      navigation.goBack();
-    } else if (navigation) {
-      resetNavigationTo(navigation, 'Home');
-    }
-  }, []);
 
   const mergeBottomTabOptions2024 = useCallback(
     (optsList: Partial<BottomTabNavigationOptions>[] = [], options?: any) => {
@@ -221,16 +228,7 @@ export function useBottomTabScreenConfig() {
         },
         headerTintColor: colors2024['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
-          <CustomTouchableOpacity
-            style={styles.backButtonStyle}
-            hitSlop={hitSlop}
-            onPress={navBack}>
-            <RcIconHeaderBack
-              width={24}
-              height={24}
-              color={tintColor || colors2024['neutral-body']}
-            />
-          </CustomTouchableOpacity>
+          <HeaderBackPressable tintColor={tintColor} />
         ),
       };
 
@@ -246,7 +244,7 @@ export function useBottomTabScreenConfig() {
 
       return result;
     },
-    [appThemeMode, navBack],
+    [appThemeMode],
   );
 
   return { mergeBottomTabOptions2024 };
@@ -343,6 +341,31 @@ export function resetNavigationTo(
     }
   }
 }
+
+export const resetNavigationOnTopOfHome: typeof naviReplace = (
+  stack,
+  params?,
+) => {
+  const navigation = getReadyNavigationInstance();
+  if (!navigation) return;
+
+  navigation.reset({
+    index: 0,
+    routes: [
+      {
+        name: RootNames.StackRoot,
+        params: {
+          screen: RootNames.Home,
+        },
+      },
+      {
+        name: stack,
+        params: params || {},
+      },
+    ],
+  });
+  apisHomeTabIndex.setTabIndex(0);
+};
 
 async function canLockWallet() {
   const lockInfo = await apisLock.getRabbyLockInfo();

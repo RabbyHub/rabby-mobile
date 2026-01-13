@@ -124,7 +124,14 @@
     "GotIt": "Hiểu rồi",
     "Other": "Khác",
     "Backup": "Sao lưu",
-    "copy": "Sao chép"
+    "copy": "Sao chép",
+    "toast": {
+      "clipboard": {
+        "copiedPrivateKey": "Khóa riêng đã được sao chép. Bộ nhớ tạm sẽ xóa sau 1 phút.",
+        "copiedSeedPhrase": "Câu hạt giống đã được sao chép. Bộ nhớ tạm sẽ xóa sau 1 phút.",
+        "pasted_and_cleared": "Dán vào và bộ nhớ tạm đã được xóa"
+      }
+    }
   },
   "page": {
     "transactions": {
@@ -154,7 +161,8 @@
         "LendingOnCollateral": "Bật sử dụng làm tài sản thế chấp",
         "LendingManageEMode": "Bật E-Mode",
         "LendingManageEModeDisable": "Tắt E-Mode",
-        "LendingDebtSwap": "Hoán đổi nợ"
+        "LendingDebtSwap": "Hoán đổi nợ",
+        "LendingRepayWithCollateral": "Trả nợ bằng tài sản thế chấp"
       },
       "detail": {
         "From": "Từ",
@@ -241,7 +249,8 @@
       "addressCount": "{{count}} Địa chỉ",
       "addressCount_one": "{{count}} Ví",
       "importMore": "Nhập thêm Wallets",
-      "addressCount_other": "{{count}} Ví"
+      "addressCount_other": "{{count}} Ví",
+      "viewAddress": "Xem Ví"
     },
     "signTypedData": {
       "verifyAddress": {
@@ -1517,7 +1526,8 @@
         "description3": "Không bao giờ chia sẻ khóa riêng của bạn - bất kỳ ai có quyền truy cập vào nó đều có thể kiểm soát tài sản của bạn.",
         "description1": "Một khóa riêng là một chuỗi các chữ cái và số được sử dụng để truy cập và kiểm soát ví của bạn. Bạn có thể sử dụng nó để phục hồi ví của mình trên bất kỳ thiết bị nào.",
         "description4": "Khoá riêng của bạn được lưu trữ cục bộ trên thiết bị của bạn và được mã hoá bằng mật khẩu của bạn. Chỉ có bạn mới có thể truy cập nó. Rabby không thể lấy lại hoặc truy cập khoá riêng của bạn."
-      }
+      },
+      "importing": "Đang nhập..."
     },
     "addressDetail": {
       "pin-in-list": "Ghim trong Danh sách",
@@ -2783,7 +2793,12 @@
       },
       "repayDetail": {
         "actions": "Trả nợ",
-        "approveAndRepay": "Phê duyệt và Thanh toán lại"
+        "approveAndRepay": "Phê duyệt và Thanh toán lại",
+        "tabs": {
+          "wallet": "Số dư ví",
+          "collateral": "Tài sản thế chấp"
+        },
+        "repayWith": "Trả nợ với"
       },
       "supplyDetail": {
         "actions": "Cung cấp",
@@ -2892,7 +2907,13 @@
         "openTitle": "Xem xét kích hoạt",
         "openDesc": "Bật tài sản này làm tài sản thế chấp sẽ tăng cường khả năng vay mượn và Hệ số Sức khỏe của bạn. Tuy nhiên, nó có thể bị thanh lý nếu hệ số sức khỏe của bạn giảm thấp hơn 1.",
         "enableIsolationModeDesc": "Bạn đang vào chế độ Isolate. Trong chế độ Isolate, bạn không thể cung cấp tài sản khác làm tài sản thế chấp. Một giới hạn nợ toàn cầu hạn chế khả năng vay mượn của tài sản bị cô lập. Để thoát khỏi chế độ Isolate, hãy tắt CRV làm tài sản thế chấp trước khi vay mượn tài sản khác.",
-        "riskToLiquidationText": "Bạn không thể chuyển sang chế độ sử dụng làm tài sản thế chấp cho loại tiền tệ này, vì nó sẽ gây ra cuộc gọi tài sản thế chấp."
+        "riskToLiquidationText": "Bạn không thể chuyển sang chế độ sử dụng làm tài sản thế chấp cho loại tiền tệ này, vì nó sẽ gây ra cuộc gọi tài sản thế chấp.",
+        "toggleRiskTexts": {
+          "canNotUseThisCurrencyAsCollateral": "Bạn không thể sử dụng loại tiền tệ này làm tài sản thế chấp.",
+          "doNotHaveSuppliesInThisCurrency": "Bạn không có nguồn cung trong loại tiền tệ này.",
+          "zeroLTVWithdrawBlocked": "Tài sản có LTV bằng 0 ({{assets}}) phải được rút hoặc vô hiệu hóa làm tài sản thế chấp để thực hiện hành động này.",
+          "canNotSwitchUsageAsCollateralMode": "Bạn không thể chuyển đổi sang chế độ sử dụng làm tài sản thế chấp cho loại tiền tệ này, vì điều đó sẽ gây ra cuộc gọi tài sản thế chấp."
+        }
       },
       "searchMarket": "Tìm kiếm Thị trường",
       "selectMarket": "Chọn Thị Trường",
@@ -2934,6 +2955,13 @@
             "borrow": "Các khoản vay của tôi"
           },
           "title": "Chọn Token Vay"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "collateral": "Tài sản thế chấp của tôi",
+            "assets": "Token"
+          },
+          "title": "Chọn Token Đảm Bảo"
         }
       },
       "disabled": "VÔ HIỆU HÓA",
@@ -2969,7 +2997,33 @@
       },
       "totalSupplied": "Tổng cung cấp",
       "netApy": "Net APY",
-      "totalBorrowed": "Tổng số đã mượn"
+      "totalBorrowed": "Tổng số đã mượn",
+      "repayWithCollateral": {
+        "action": {
+          "title": "Hoàn trả bằng {{collateral}}"
+        },
+        "overview": {
+          "title": "Tổng quan giao dịch",
+          "borrowValueAfter": "Vay số dư sau khi trả nợ",
+          "collateralValueAfter": "Số dư tài sản thế chấp sau khi thanh toán"
+        },
+        "button": {
+          "repay": "Thanh toán lại"
+        },
+        "toRepay": "Số tiền kỳ vọng để trả nợ",
+        "collateralNotEnough": "Số dư tài sản thế chấp của bạn thấp hơn số tiền đã chọn.",
+        "repayWith": "Tài sản thế chấp để trả lại với"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "desc": "Thêm một địa chỉ hiện có với quỹ.",
+          "title": "Nhập một ví"
+        },
+        "btnCopyAddress": "Sao chép địa chỉ",
+        "title": "Nhận tài sản"
+      }
     }
   },
   "component": {
@@ -3004,6 +3058,10 @@
         "title": "Rủi ro đã được phát hiện",
         "proceedBtn": "Tiến hành",
         "simpleExplanation": "Không được hỗ trợ"
+      },
+      "placeholders": {
+        "noTokens": "Không có token",
+        "noLpTokens": "Không có Token Nhà Cung Cấp Thanh Khoản (LP)"
       }
     },
     "PillsSwitch": {
@@ -3220,6 +3278,9 @@
     },
     "multiAddressModal": {
       "title": "Ví "
+    },
+    "lpTokenModal": {
+      "desc": "Đây là Token Cung Cấp Thanh Khoản (LP) cho {{protocolId}}"
     }
   },
   "constant": {

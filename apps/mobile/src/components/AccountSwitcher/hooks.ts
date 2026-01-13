@@ -11,6 +11,8 @@ import { isEqual } from 'lodash';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { zCreate } from '@/core/utils/reexports';
 import { keyringService } from '@/core/services';
+import { ITokenItem } from '@/store/tokens';
+import { perfEvents } from '@/core/utils/perf';
 
 type AccountSwitcherState = {
   /**
@@ -199,9 +201,9 @@ export const fetchTop5TokensForAllAccountsOnce = () => {
 export function startFetchOnceTop5TokensForAllAccounts() {
   const onUnlock = () => {
     fetchTop5TokensForAllAccountsOnce();
-    keyringService.off('unlock', onUnlock);
+    sub.remove();
   };
-  keyringService.on('unlock', onUnlock);
+  const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
 }
 
 export function useTopTokensForAddress(options?: {
@@ -233,7 +235,7 @@ export function useTopTokensForAddress(options?: {
 
 export function useTokenAmountForAddress(options?: {
   accountAddress?: string;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
 }) {
   const { accountAddress, token } = options || {};
 
@@ -248,11 +250,11 @@ export function useTokenAmountForAddress(options?: {
       return TokenItemEntity.getAddressesAmount({
         address: accountAddress,
         chain: token.chain,
-        tokenId: token._tokenId,
+        tokenId: token.id,
       });
     },
     {
-      refreshDeps: [accountAddress, token?.chain, token?._tokenId],
+      refreshDeps: [accountAddress, token?.chain, token?.id],
     },
   );
 

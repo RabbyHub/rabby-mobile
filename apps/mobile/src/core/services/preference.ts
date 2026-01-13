@@ -33,7 +33,12 @@ const { isSameAddress } = addressUtils;
 //   index?: number;
 //   balance?: number;
 // }
-export interface Account extends KeyringAccountWithAlias {}
+export interface Account extends KeyringAccountWithAlias {
+  /**
+   * @description property for HDKeyring and hardware keyring to indicate the index of the account
+   */
+  index?: number | undefined;
+}
 
 export interface ChainGas {
   gasPrice?: number | null; // custom cached gas price
@@ -495,10 +500,10 @@ export class PreferenceService {
   }
 
   setCurrentAccount = (
-    account: Account | null,
+    account?: Account | null,
     options?: SetCurrentAccountOptions,
   ) => {
-    this.store.currentAccount = account;
+    this.store.currentAccount = account ?? null;
     if (account) {
       // this._notifyAccountsChanged(account, !!options?.needSyncToSession);
       appServiceEvents.emit('currentAccountChanged', account);
@@ -629,7 +634,7 @@ export class PreferenceService {
 
   getLastTimeGasSelection = (chainId: keyof GasCache): ChainGas | null => {
     const cache = this.store.gasCache[chainId];
-    return cache;
+    return cache ?? null;
   };
 
   updateLastTimeGasSelection = (chainId: keyof GasCache, gas: ChainGas) => {
@@ -1017,10 +1022,10 @@ export class PreferenceService {
 
   getUserTokenSettingsSync = () => {
     return {
-      foldTokens: this.store.foldTokens || [],
-      unfoldTokens: this.store.unfoldTokens || [],
-      includeDefiAndTokens: this.store.includeDefiAndTokens || [],
-      excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
+      foldTokens: [],
+      unfoldTokens: [],
+      includeDefiAndTokens: [],
+      excludeDefiAndTokens: [],
       pinedQueue: this.store.pinedQueue || [],
       foldNfts: this.store.foldNfts || [],
       unfoldNfts: this.store.unFoldNfts || [],

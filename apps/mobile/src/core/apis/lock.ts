@@ -8,6 +8,8 @@ import {
   checkMultipleFailed,
   shouldRejectUnlockDueToMultipleFailed,
 } from '../utils/unlockRateLimit';
+import { runIIFEFunc } from '../utils/store';
+import { perfEvents } from '../utils/perf';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -357,3 +359,12 @@ export function subscribeAppLock(fn: () => any) {
 
   return dispose;
 }
+
+runIIFEFunc(() => {
+  keyringService.on('unlock', ctx => {
+    console.debug('[perf] keyringService unlock event ctx', ctx);
+    if (ctx.scene === 'unlock') {
+      perfEvents.emit('USER_MANUALLY_UNLOCK');
+    }
+  });
+});

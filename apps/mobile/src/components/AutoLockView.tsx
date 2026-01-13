@@ -17,6 +17,7 @@ import {
   MakePropsByAsMap,
   useComponentByAsProp,
 } from '@/hooks/common/useComponentAsProp';
+import { perfEvents } from '@/core/utils/perf';
 
 const implUiRefreshTimeout = throttle(
   () => {
@@ -107,7 +108,10 @@ function ForAppNav(props: Props<'View'>) {
   useAutoLockIfTimeout(currentRouteName ?? null);
 
   React.useEffect(() => {
-    keyringService.on('unlock', apisAutoLock.handleUnlock);
+    const subUnlock = perfEvents.subscribe(
+      'USER_MANUALLY_UNLOCK',
+      apisAutoLock.handleUnlock,
+    );
     keyringService.on('lock', apisAutoLock.handleLock);
 
     const hideEvent = Keyboard.addListener(
@@ -121,7 +125,7 @@ function ForAppNav(props: Props<'View'>) {
 
     // release event listeners on destruction
     return () => {
-      keyringService.off('unlock', apisAutoLock.handleUnlock);
+      subUnlock.remove();
       keyringService.off('lock', apisAutoLock.handleLock);
 
       hideEvent.remove();

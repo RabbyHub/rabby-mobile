@@ -96,6 +96,10 @@
         "simpleExplanation": "Não suportado",
         "title": "Risco Detectado",
         "proceedBtn": "Prosseguir"
+      },
+      "placeholders": {
+        "noTokens": "Sem tokens",
+        "noLpTokens": "Nenhum Token de Fornecedor de Liquidez (LP)"
       }
     },
     "PillsSwitch": {
@@ -293,6 +297,9 @@
     },
     "multiAddressModal": {
       "title": "Carteiras"
+    },
+    "lpTokenModal": {
+      "desc": "Este é um Token de Fornecedor de Liquidez (LP) para {{protocolId}}"
     }
   },
   "global": {
@@ -374,7 +381,14 @@
     "GotIt": "Entendi",
     "Other": "Outro",
     "Backup": "Cópia de segurança",
-    "copy": "Copiar"
+    "copy": "Copiar",
+    "toast": {
+      "clipboard": {
+        "copiedPrivateKey": "Chave privada copiada. O clipboard será limpo em 1 minuto.",
+        "copiedSeedPhrase": "Frase-semente copiada. A área de transferência será limpa em 1 minuto.",
+        "pasted_and_cleared": "Colado e área de transferência limpa"
+      }
+    }
   },
   "page": {
     "getStart": {
@@ -410,7 +424,8 @@
         "LendingOffCollateral": "Desligar uso como colateral",
         "LendingManageEMode": "Ativar o E-Mode",
         "LendingManageEModeDisable": "Desligar o E-Mode",
-        "LendingDebtSwap": "Troca de Dívida"
+        "LendingDebtSwap": "Troca de Dívida",
+        "LendingRepayWithCollateral": "Reembolsar com Colateral"
       },
       "detail": {
         "SpeedUp": "Acelerar",
@@ -491,7 +506,8 @@
       "addressCount": "{{count}} Endereços",
       "addressCount_other": "{{count}} Carteiras",
       "addressCount_one": "{{count}} Carteira",
-      "importMore": "Importar mais Wallets"
+      "importMore": "Importar mais Wallets",
+      "viewAddress": "Ver Carteira"
     },
     "receive": {
       "title": "Receber {{token}} em {{chain}}",
@@ -1680,7 +1696,8 @@
         "description1": "Uma chave privada é uma sequência de letras e números usada para acessar e controlar a sua wallet. Você pode usá-la para recuperar a sua wallet em qualquer dispositivo.",
         "description3": "Nunca partilhe a sua private key—qualquer pessoa com acesso a ela pode controlar os seus fundos.",
         "description4": "A sua chave privada é armazenada localmente no seu dispositivo e encriptada com a sua palavra-passe. Apenas você pode aceder a ela. Rabby não pode recuperar ou aceder à sua chave privada."
-      }
+      },
+      "importing": "A importar..."
     },
     "unlock": {
       "btn": {
@@ -3033,7 +3050,12 @@
       },
       "repayDetail": {
         "actions": "Reembolsar",
-        "approveAndRepay": "Aprovar e Reembolsar"
+        "approveAndRepay": "Aprovar e Reembolsar",
+        "tabs": {
+          "wallet": "Saldo da carteira",
+          "collateral": "Colateral"
+        },
+        "repayWith": "Reembolsar com"
       },
       "supplyDetail": {
         "availableToBorrow": "Disponível para emprestar",
@@ -3142,7 +3164,13 @@
         "exitIsolationModeDesc": "Você sairá do modo de Isolamento e outros tokens agora podem ser usados como colateral.",
         "riskToLiquidationText": "Não pode mudar o uso para o modo de colateral para esta moeda, porque irá causar uma chamada de colateral.",
         "openDesc": "Ativar este ativo como colateral aumenta seu poder de empréstimo e o Fator de Saúde. No entanto, ele pode ser liquidado se seu fator de saúde cair abaixo de 1.",
-        "enableIsolationModeDesc": "Está a entrar no modo de Isolamento. No modo de Isolamento, não pode fornecer outros ativos como colateral. Um teto global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o CRV como colateral antes de emprestar outro ativo."
+        "enableIsolationModeDesc": "Está a entrar no modo de Isolamento. No modo de Isolamento, não pode fornecer outros ativos como colateral. Um teto global de dívida limita o poder de empréstimo do ativo isolado. Para sair do modo de isolamento, desative o CRV como colateral antes de emprestar outro ativo.",
+        "toggleRiskTexts": {
+          "canNotUseThisCurrencyAsCollateral": "Não pode usar esta moeda como colateral.",
+          "canNotSwitchUsageAsCollateralMode": "Não é possível alternar o modo de utilização como colateral para esta moeda, pois isso causar uma chamada de colateral.",
+          "doNotHaveSuppliesInThisCurrency": "Não tem suprimentos nesta moeda.",
+          "zeroLTVWithdrawBlocked": "Ativos com LTV zero ({{assets}}) devem ser retirados ou desativados como garantia para realizar esta ação."
+        }
       },
       "searchMarket": "Pesquisar Mercado",
       "selectMarket": "Selecionar Mercado",
@@ -3184,6 +3212,13 @@
             "assets": "Token/Saldo"
           },
           "title": "Selecionar Token de Empréstimo"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "collateral": "O meu colateral",
+            "assets": "Token"
+          },
+          "title": "Selecionar Token de Colateral"
         }
       },
       "disabled": "DESABILITADO",
@@ -3219,7 +3254,33 @@
       },
       "netApy": "Net APY",
       "totalBorrowed": "Total emprestado",
-      "totalSupplied": "Total fornecido"
+      "totalSupplied": "Total fornecido",
+      "repayWithCollateral": {
+        "action": {
+          "title": "Reembolsar com {{collateral}}"
+        },
+        "overview": {
+          "title": "Visão Geral da Transação",
+          "borrowValueAfter": "Após o reembolso, saldo de empréstimo",
+          "collateralValueAfter": "Saldo de colateral após reembolso"
+        },
+        "button": {
+          "repay": "Reembolsar"
+        },
+        "collateralNotEnough": "O seu saldo de colateral é inferior ao montante selecionado.",
+        "toRepay": "Montante esperado para reembolso",
+        "repayWith": "Garantia para reembolso com"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "title": "Importar uma wallet",
+          "desc": "Adicionar um endereço existente com fundos."
+        },
+        "title": "Receber ativos",
+        "btnCopyAddress": "Copiar Endereço"
+      }
     }
   },
   "constant": {

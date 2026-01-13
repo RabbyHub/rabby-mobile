@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Dimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -7,12 +7,7 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { HomeTopArea } from './components/HomeTopArea';
-import {
-  CollapsibleProps,
-  TabBarProps,
-  Tabs,
-} from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
 import { PortfolioList } from './PortfolioList';
@@ -23,10 +18,14 @@ import CustomLabel from './components/Tabs/CustomLabel';
 import { useAddrChainLength } from './useChainInfo';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
-  useSingleHomeAddress,
+  useSingleHomeAccount,
   useSingleHomeHasNoData,
+  useSingleHomeNoAssetsValueOnChain,
 } from './hooks/singleHome';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
+import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
+import { isDirectlySignableAccount } from '@/core/apis/account';
+import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 
 const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
@@ -50,7 +49,8 @@ const renderHeader = () => null;
 export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const { currentAddress } = useSingleHomeAddress();
+  const { currentAccount } = useSingleHomeAccount();
+  const currentAddress = currentAccount?.address ?? undefined;
 
   const { isDisConnect } = useGlobalStatus();
 
@@ -82,8 +82,9 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
         <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
     [],
   );
-
-  if (!currentAddress) return null;
+  // const { noAssetsValue } = useSingleHomeNoAssetsValueOnChain();
+  const { accountToShowReceiveTip } =
+    useAccountHomeShowReceiveTip(currentAccount);
 
   if (errorNotAssets) {
     return (
@@ -92,6 +93,15 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
         onRefresh={handleRefresh}
         style={styles.netWorkError}
       />
+    );
+  }
+
+  if (!currentAccount) return null;
+  if (accountToShowReceiveTip) {
+    return (
+      <ReceiveOnNoAssets.BgWrapper isForSingle>
+        <ReceiveOnNoAssets account={accountToShowReceiveTip} isForSingle />
+      </ReceiveOnNoAssets.BgWrapper>
     );
   }
 
