@@ -31,6 +31,7 @@ import {
   useWindowDimensions,
   ScrollView,
   ScrollViewProps,
+  PanResponder,
   // FlatList,
 } from 'react-native';
 import Animated, {
@@ -526,24 +527,32 @@ const OverViewComponent = React.memo(() => {
     isExpanded.value = false;
   }, [isExpanded, translateY]);
 
-  const panGesture = useMemo(() => {
-    let gesture = Gesture.Pan()
-      .shouldCancelWhenOutside(false)
-      .onStart(() => {
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => {
+        console.log('xxxxxxxx start');
+        return false;
+      },
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        console.log('xxxx, start', gestureState, isAtBottom.value);
+        // 只在底部且向上滑动时启用手势
+        return isAtBottom.value && gestureState.dy < -5;
+      },
+      onPanResponderGrant: () => {
         translateY.value = 0;
         isExpanded.value = false;
-      })
-      .onUpdate(event => {
+      },
+      onPanResponderMove: (_, gestureState) => {
+        console.log('xxx move', gestureState, isAtBottom.value);
         if (!isAtBottom.value) {
           return;
         }
-        if (event.translationY > 0) {
+        if (gestureState.dy > 0) {
           return;
         }
-
-        translateY.value = event.translationY;
-      })
-      .onEnd(() => {
+        translateY.value = gestureState.dy;
+      },
+      onPanResponderRelease: (_, gestureState) => {
         if (!isAtBottom.value) {
           return;
         }
@@ -556,10 +565,12 @@ const OverViewComponent = React.memo(() => {
         } else {
           translateY.value = withTiming(0);
         }
-      });
-
-    return gesture;
-  }, [height, isAtBottom.value, isExpanded, translateY]);
+      },
+      onPanResponderTerminate: () => {
+        translateY.value = withTiming(0);
+      },
+    }),
+  ).current;
 
   useAnimatedReaction(
     () => pullPercent.value,
@@ -593,14 +604,6 @@ const OverViewComponent = React.memo(() => {
       },
     ],
   }));
-
-  const scrollableGesture = useMemo(
-    () =>
-      Gesture.Native()
-        .simultaneousWithExternalGesture(panGesture)
-        .shouldCancelWhenOutside(false),
-    [panGesture],
-  );
 
   const drawerGesture = useMemo(
     () =>
@@ -680,92 +683,88 @@ const OverViewComponent = React.memo(() => {
 
   return (
     <View style={styles.pullUpWrapper}>
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={mainStyle}>
-          <GestureDetector gesture={scrollableGesture}>
-            <Tabs.ScrollView
-              tvParallaxProperties={undefined}
-              showsVerticalScrollIndicator={false}
-              style={[styles.scroll, { flex: undefined }]}
-              contentContainerStyle={[
-                styles.scrollContainer,
-                {
-                  // paddingBottom: bottom + 82,
-                  paddingBottom:
-                    Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-                },
-              ]}
-              overScrollMode={'never'}
-              scrollEventThrottle={16}
-              onContentSizeChange={(_, heightValue) => {
-                contentHeight.value = heightValue;
-              }}
-              onLayout={event => {
-                layoutHeight.value = event.nativeEvent.layout.height;
-              }}
-              refreshControl={
-                Platform.OS === 'ios' ? (
-                  <RefreshControl refreshing={false} onRefresh={onRefresh} />
-                ) : undefined
-              }
-              bounces={false}>
-              <MultiAddressHomeHeader onRefresh={onRefresh} />
-              <HomeCenterArea />
+      {/* <GestureDetector gesture={panGesture}> */}
+      <Animated.View style={mainStyle}>
+        {/* <GestureDetector gesture={scrollableGesture}> */}
+        <Tabs.ScrollView
+          {...panResponder.panHandlers}
+          tvParallaxProperties={undefined}
+          showsVerticalScrollIndicator={false}
+          style={[styles.scroll, { flex: undefined }]}
+          contentContainerStyle={[
+            styles.scrollContainer,
+            {
+              // paddingBottom: bottom + 82,
+              paddingBottom:
+                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
+            },
+          ]}
+          overScrollMode={'never'}
+          scrollEventThrottle={16}
+          onContentSizeChange={(_, heightValue) => {
+            contentHeight.value = heightValue;
+          }}
+          onLayout={event => {
+            layoutHeight.value = event.nativeEvent.layout.height;
+          }}
+          refreshControl={
+            Platform.OS === 'ios' ? (
+              <RefreshControl refreshing={false} onRefresh={onRefresh} />
+            ) : undefined
+          }>
+          <MultiAddressHomeHeader onRefresh={onRefresh} />
+          <HomeCenterArea />
 
-              <View style={styles.grid}>
-                <View style={styles.gridItemsWrap}>
-                  {MENU_ARR.map((el, index) => {
-                    return (
-                      <FastTouchable
-                        style={StyleSheet.flatten([
-                          styles.gridItem,
-                          { width: itemWidth },
-                        ])}
-                        key={index}
-                        onPress={() => {
-                          console.debug('[perf] touched menu', el.key);
-                          requestAnimationFrame(() => {
-                            handleClickMenu(el.key);
-                          });
-                          matomoRequestEvent({
-                            category: 'Click_Services',
-                            action: `Click_${el.key}`,
-                          });
-                        }}>
-                        <View style={styles.badgeWrapper}>
-                          <View style={styles.iconWrapper}>
-                            <el.icon
-                              width={28}
-                              height={28}
-                              color={
-                                el.color || colors2024['brand-default-icon']
-                              }
-                            />
-                          </View>
-                          <View style={styles.rightBadgeWrapper}>
-                            {generateCustomBadgeIcon(el)}
-                          </View>
-                        </View>
-                        <Text style={styles.gridText}>{el.title}</Text>
-                      </FastTouchable>
-                    );
-                  })}
-                </View>
-                <BrowserSearchEntry />
+          <View style={styles.grid}>
+            <View style={styles.gridItemsWrap}>
+              {MENU_ARR.map((el, index) => {
+                return (
+                  <FastTouchable
+                    style={StyleSheet.flatten([
+                      styles.gridItem,
+                      { width: itemWidth },
+                    ])}
+                    key={index}
+                    onPress={() => {
+                      console.debug('[perf] touched menu', el.key);
+                      requestAnimationFrame(() => {
+                        handleClickMenu(el.key);
+                      });
+                      matomoRequestEvent({
+                        category: 'Click_Services',
+                        action: `Click_${el.key}`,
+                      });
+                    }}>
+                    <View style={styles.badgeWrapper}>
+                      <View style={styles.iconWrapper}>
+                        <el.icon
+                          width={28}
+                          height={28}
+                          color={el.color || colors2024['brand-default-icon']}
+                        />
+                      </View>
+                      <View style={styles.rightBadgeWrapper}>
+                        {generateCustomBadgeIcon(el)}
+                      </View>
+                    </View>
+                    <Text style={styles.gridText}>{el.title}</Text>
+                  </FastTouchable>
+                );
+              })}
+            </View>
+            <BrowserSearchEntry />
 
-                <View style={styles.swipeUpHint}>
-                  <RcIconDoubleArrowCC
-                    color={colors2024['neutral-secondary']}
-                  />
-                  <Text style={styles.swipeUpHintText}>
-                    Swipe up to explore more dApps
-                  </Text>
-                </View>
-              </View>
-            </Tabs.ScrollView>
-          </GestureDetector>
-        </Animated.View>
-      </GestureDetector>
+            <View style={styles.swipeUpHint}>
+              <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
+              <Text style={styles.swipeUpHintText}>
+                Swipe up to explore more dApps
+              </Text>
+            </View>
+          </View>
+        </Tabs.ScrollView>
+        {/* </GestureDetector> */}
+      </Animated.View>
+      {/* </GestureDetector> */}
       <GestureDetector gesture={drawerGesture}>
         <Animated.View
           pointerEvents="auto"
