@@ -558,11 +558,6 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     manual: true,
   });
 
-  const quoteLoading =
-    originQuoteLoading ||
-    buildingTxsLoading ||
-    (!!selectedBridgeQuote && !txs?.length && !inSufficient);
-
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -574,6 +569,13 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const runBuildBridgeTxsRef = useRef<ReturnType<typeof runBuildTxs>>();
 
   const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type);
+
+  const quoteLoading =
+    originQuoteLoading ||
+    buildingTxsLoading ||
+    (!!selectedBridgeQuote &&
+      (canUseMiniTx ? !txs?.length : false) &&
+      !inSufficient);
 
   const canShowDirectSubmit = useMemo(
     () =>
