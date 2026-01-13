@@ -27,21 +27,21 @@ interface ChildrenProps {
   WalletBalance: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletPin: typeof WalletPin;
   walletName?: string;
+  styles: ReturnType<typeof getStyle>;
 }
 
-type AddressItemProps =
+type AddressItemProps = (
   | {
       account: KeyringAccountWithAlias;
-      children?: (props: ChildrenProps) => React.ReactNode;
-      fetchAccount?: boolean;
-      style?: StyleProp<ViewStyle>;
     }
   | {
       address: string;
-      children?: (props: ChildrenProps) => React.ReactNode;
-      fetchAccount?: boolean;
-      style?: StyleProp<ViewStyle>;
-    };
+    }
+) & {
+  children?: (props: ChildrenProps) => React.ReactNode;
+  fetchAccount?: boolean;
+  style?: StyleProp<ViewStyle>;
+};
 
 export const WalletPin = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -143,6 +143,7 @@ export const AddressItem = (props: AddressItemProps) => {
           WalletBalance,
           walletName,
           WalletPin,
+          styles,
         })
       ) : (
         <View style={styles.root}>

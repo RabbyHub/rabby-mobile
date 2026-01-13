@@ -39,6 +39,9 @@ export const REPAY_AMOUNT_MULTIPLIER = 1.0025;
 
 export const APP_CODE_LENDING_DEBT_SWAP = 'rabby-mobile-lending-debt-swap';
 
+export const APP_CODE_LENDING_REPAY_WITH_COLLATERAL =
+  'rabby-mobile-lending-repay-with-collateral';
+
 export const MAX_UINT_AMOUNT =
   '115792089237316195423570985008687907853269984665640564039457584007913129639935';
 

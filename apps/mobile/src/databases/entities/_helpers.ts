@@ -2,7 +2,8 @@ import { SQLiteDriverType } from '@/core/databases/exports';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import BigNumber from 'bignumber.js';
-import { ValueTransformer } from 'typeorm/browser';
+import { DeleteResult, ValueTransformer } from 'typeorm/browser';
+import { makeJsEEClass } from '@/core/services/_utils';
 
 export const DECIMALS_INT_RATIO = 18;
 
@@ -97,3 +98,9 @@ export const bigNumberTransformer: ValueTransformer = {
 
 export const RECOMMENDED_DEFAULT_QUERY_LIMIT =
   SQLiteDriverType === 'RNSQLiteStorage' ? 200 : 500;
+
+export type OrmEventBusListeners = {
+  [`account_info:removed`]: (ctx: { deleteResult: DeleteResult }) => void;
+};
+const { EventEmitter: OrmEE } = makeJsEEClass<OrmEventBusListeners>();
+export const ormEvents = new OrmEE();

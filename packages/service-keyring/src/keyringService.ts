@@ -57,17 +57,23 @@ type OnSetAddressAlias = (
 ) => Promise<void>;
 
 type OnCreateKeyring = (
-  Keyring: KeyringClassType,
+  Keyring: typeof KeyringIntf,
 ) => KeyringInstance | KeyringIntf;
 
 export type KeyringServiceOptions = {
   encryptor?: EncryptorAdapter;
-  keyringClasses?: KeyringClassType[];
+  keyringClasses?: (typeof KeyringIntf)[];
   onSetAddressAlias?: OnSetAddressAlias;
   onCreateKeyring?: OnCreateKeyring;
 };
 
 export type PersistType = 'perps' | 'keyring';
+
+export type KeyringEventAccount = {
+  address: string;
+  type: KeyringTypeName;
+  brandName: string;
+}
 
 export class KeyringService extends RNEventEmitter {
   //
@@ -75,7 +81,7 @@ export class KeyringService extends RNEventEmitter {
   //
   keyrings: KeyringInstance[];
 
-  keyringClasses: KeyringClassType[] = [];
+  keyringClasses: (typeof KeyringIntf)[] = [];
 
   get keyringTypes() {
     return this.keyringClasses;
@@ -282,7 +288,7 @@ export class KeyringService extends RNEventEmitter {
         );
       })
       .then(this.persistAllKeyrings.bind(this))
-      .then(this.setUnlocked.bind(this))
+      .then(() => this._setUnlocked({ scene: 'finish:importPrivateKey' }))
       .then(this.fullUpdate.bind(this))
       .then(() => keyring);
   }
@@ -366,9 +372,9 @@ export class KeyringService extends RNEventEmitter {
    *
    * @fires KeyringController#unlock
    */
-  setUnlocked(): void {
+  private _setUnlocked(options: { scene: 'unlock' | 'finish:importPrivateKey' | 'finish:createKeyringWithMnemonics' }): void {
     this.memStore.updateState({ isUnlocked: true });
-    this.emit('unlock');
+    this.emit('unlock', { scene: options.scene });
   }
 
   _isSubmittingPassword = false;
@@ -399,7 +405,7 @@ export class KeyringService extends RNEventEmitter {
     } catch {
       //
     } finally {
-      this.setUnlocked();
+      this._setUnlocked({ scene: 'unlock' });
       this._isSubmittingPassword = false;
     }
 
@@ -506,11 +512,8 @@ export class KeyringService extends RNEventEmitter {
     return selectedKeyring
       .addAccounts(1)
       .then((): Promise<AccountItemWithBrandQueryResult[] | string[]> => {
-        if ((selectedKeyring as KeyringIntf).getAccountsWithBrand) {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          return (selectedKeyring as KeyringIntf).getAccountsWithBrand();
-        }
+        const func = (selectedKeyring as KeyringIntf).getAccountsWithBrand;
+        if (func) return func.call(selectedKeyring);
         return selectedKeyring.getAccounts();
       })
       .then(accounts => {
@@ -530,7 +533,7 @@ export class KeyringService extends RNEventEmitter {
 
         return Promise.all(
           allAccounts.map(async account => {
-            this.emit('newAccount', account.address);
+            this.emit('newAccount', account as KeyringEventAccount);
             return this.onSetAddressAlias?.(
               selectedKeyring,
               account,
@@ -659,7 +662,7 @@ export class KeyringService extends RNEventEmitter {
    */
   removeAccount(
     address: string,
-    type: string,
+    type: KeyringTypeName,
     brand?: string,
     removeEmptyKeyrings = true,
   ): Promise<any> {
@@ -668,7 +671,8 @@ export class KeyringService extends RNEventEmitter {
         // Not all the keyrings support this, so we have to check
         if (typeof keyring.removeAccount === 'function') {
           keyring.removeAccount(address, brand);
-          this.emit('removedAccount', address, type, brand);
+          const accountLike: KeyringEventAccount = { address, type, brandName: brand || '' };
+          this.emit('removedAccount', accountLike);
           const currentKeyring = keyring;
           return [await keyring.getAccounts(), currentKeyring];
         }
@@ -864,8 +868,7 @@ export class KeyringService extends RNEventEmitter {
    * returning it if it exists.
    * @param type
    */
-  getKeyringClassForType(type: KeyringTypeName): KeyringClassType {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  getKeyringClassForType(type: KeyringTypeName): typeof KeyringIntf {
     return this.keyringTypes.find(kr => kr.type === type)!;
   }
 
@@ -1145,7 +1148,7 @@ export class KeyringService extends RNEventEmitter {
         //   return null;
         // })
         .then(this.persistAllKeyrings.bind(this))
-        .then(this.setUnlocked.bind(this))
+        .then(() => this._setUnlocked({ scene: 'finish:createKeyringWithMnemonics' }))
         .then(this.fullUpdate.bind(this))
         .then(() => keyring)
     );

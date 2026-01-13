@@ -28,7 +28,7 @@ export const useImportKeystone = () => {
     // });
     showImportMorePopup({
       type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
-      brand: HARDWARE_KEYRING_TYPES.Keystone.brandName,
+      brandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
     });
   }, [setSetting, showImportMorePopup]);
 

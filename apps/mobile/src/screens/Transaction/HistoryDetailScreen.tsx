@@ -29,7 +29,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { formatAmount } from '@/utils/number';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
-import { getAlianName } from '@/core/apis/contact';
+import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
@@ -190,7 +190,7 @@ export const AddressItemInDetail = ({
               />
             )}
             <Text style={styles.itemContentText}>
-              {getAlianName(address) || ellipsisAddress(address)}
+              {getAliasName(address) || ellipsisAddress(address)}
             </Text>
             {!disableNavigate && (
               <RcIconRightCC

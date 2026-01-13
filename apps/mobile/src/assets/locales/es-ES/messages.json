@@ -128,6 +128,10 @@
         "simpleExplanation": "No soportado",
         "title": "Riesgo Detectado",
         "proceedBtn": "Continuar"
+      },
+      "placeholders": {
+        "noTokens": "Sin tokens",
+        "noLpTokens": "Sin Token de Proveedor de Liquidez (LP)"
       }
     },
     "NFTNumberInput": {
@@ -293,6 +297,9 @@
     },
     "multiAddressModal": {
       "title": "Carteras"
+    },
+    "lpTokenModal": {
+      "desc": "Este es un Token de Proveedor de Liquidez (LP) para {{protocolId}}"
     }
   },
   "page": {
@@ -329,7 +336,8 @@
         "LendingOnCollateral": "Activar uso como colateral",
         "LendingManageEMode": "Activa el E-Mode",
         "LendingManageEModeDisable": "Desactivar E-Mode",
-        "LendingDebtSwap": "Intercambio de Deuda"
+        "LendingDebtSwap": "Intercambio de Deuda",
+        "LendingRepayWithCollateral": "Reembolsar con Garantía"
       },
       "detail": {
         "Cancel": "Cancelar",
@@ -410,7 +418,8 @@
       "addressCount": "{{count}} Direcciones",
       "addressCount_one": "{{count}} Monedero",
       "importMore": "Importar más Wallets",
-      "addressCount_other": "{{count}} Wallets"
+      "addressCount_other": "{{count}} Wallets",
+      "viewAddress": "Ver Monedero"
     },
     "signTypedData": {
       "verifyAddress": {
@@ -1599,7 +1608,8 @@
         "description4": "Tu clave privada se almacena localmente en tu dispositivo y está encriptada con tu contraseña. Solo tú puedes acceder a ella. Rabby no puede recuperar ni acceder a tu clave privada.",
         "description1": "Una clave privada es una cadena de letras y números utilizada para acceder y controlar tu wallet. Puedes usarla para recuperar tu wallet en cualquier dispositivo.",
         "title3": "Nunca lo compartas"
-      }
+      },
+      "importing": "Importando..."
     },
     "switchChain": {
       "requestRabbyToSupport": "Solicitar a Rabby que ofrezca soporte",
@@ -2952,7 +2962,12 @@
       },
       "repayDetail": {
         "actions": "Reembolso",
-        "approveAndRepay": "Aprueba y Reembolsa"
+        "approveAndRepay": "Aprueba y Reembolsa",
+        "tabs": {
+          "collateral": "Colateral",
+          "wallet": "Saldo de la billetera"
+        },
+        "repayWith": "Reembolsar con"
       },
       "supplyDetail": {
         "actions": "Suministro",
@@ -3061,7 +3076,13 @@
         "enableIsolationModeDesc": "Estás entrando en modo Aislado. En modo Aislado, no puedes proporcionar otros activos como garantía. Un límite de deuda global restringe el poder de endeudamiento del activo aislado. Para salir del modo Aislado, desactiva CRV como garantía antes de pedir prestado otro activo.",
         "openDesc": "Activar este activo como colateral aumenta tu poder de endeudamiento y el Factor de Salud. Sin embargo, puede ser liquidado si tu factor de salud cae por debajo de 1.",
         "enableIsolationModeTitle": "Habilitar Modo de Aislamiento",
-        "openTitle": "Revisar la habilitación"
+        "openTitle": "Revisar la habilitación",
+        "toggleRiskTexts": {
+          "doNotHaveSuppliesInThisCurrency": "No tienes suministros en esta moneda",
+          "canNotSwitchUsageAsCollateralMode": "No puedes cambiar el uso a modo de colateral para esta moneda, porque causará una llamada de colateral.",
+          "canNotUseThisCurrencyAsCollateral": "No puedes usar esta moneda como colateral.",
+          "zeroLTVWithdrawBlocked": "Los activos con LTV cero ({{assets}}) deben ser retirados o deshabilitados como garantía para realizar esta acción."
+        }
       },
       "selectMarket": "Seleccionar Mercado",
       "searchMarket": "Buscar Mercado",
@@ -3103,6 +3124,13 @@
             "borrow": "Mis préstamos"
           },
           "title": "Seleccionar Token de Préstamo"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "collateral": "Mi garantía",
+            "assets": "Token"
+          },
+          "title": "Seleccionar Token de Colateral"
         }
       },
       "disabled": "DESHABILITADO",
@@ -3138,7 +3166,33 @@
       },
       "totalBorrowed": "Total prestado",
       "netApy": "Net APY",
-      "totalSupplied": "Total suministrado"
+      "totalSupplied": "Total suministrado",
+      "repayWithCollateral": {
+        "action": {
+          "title": "Reembolsa con {{collateral}}"
+        },
+        "overview": {
+          "collateralValueAfter": "Saldo de colateral después del reembolso",
+          "borrowValueAfter": "Balance de préstamo después de reembolso",
+          "title": "Resumen de Transacciones"
+        },
+        "button": {
+          "repay": "Reembolsar"
+        },
+        "collateralNotEnough": "Su saldo de colateral es menor que la cantidad seleccionada.",
+        "toRepay": "Cantidad esperada a reembolsar",
+        "repayWith": "Colateral para reembolsar con"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "title": "Importar una wallet",
+          "desc": "Añadir una dirección existente con fondos."
+        },
+        "title": "Recibir activos",
+        "btnCopyAddress": "Copiar Dirección"
+      }
     }
   },
   "global": {
@@ -3220,7 +3274,14 @@
     "GotIt": "Entendido",
     "Other": "Otro",
     "Backup": "Copia de seguridad",
-    "copy": "Copiar"
+    "copy": "Copiar",
+    "toast": {
+      "clipboard": {
+        "copiedSeedPhrase": "Frase semilla copiada. El portapapeles se borrará en 1 minuto.",
+        "pasted_and_cleared": "Pegado y portapapeles borrado",
+        "copiedPrivateKey": "Clave privada copiada. El portapapeles se borrará en 1 minuto."
+      }
+    }
   },
   "bluetooth": {
     "powered_off_alert": {

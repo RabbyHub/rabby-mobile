@@ -17,13 +17,9 @@ import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import {
-  formatNumber,
-  formatPerpsUsdValue,
-  formatUsdValue,
-} from '@/utils/number';
+import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -32,12 +28,10 @@ import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
-import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
-import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
 import { isAccountSupportDirectSign } from '@/utils/account';
-import { CHAINS_ENUM, formatTokenAmount } from '@debank/common';
+import { CHAINS_ENUM } from '@debank/common';
 import { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { abiCoder } from '@/core/apis/sendRequest';
@@ -50,6 +44,7 @@ import { apisPerps } from '@/core/apis';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useSelectedToken } from '@/screens/Perps/hooks/usePerpsPopupState';
+import { ITokenItem } from '@/store/tokens';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -112,9 +107,9 @@ export const PerpsDepositPopup: React.FC<{
       const res = await openapi.getToken(
         account.address,
         selectedToken?.chain,
-        selectedToken?._tokenId,
+        selectedToken?.id,
       );
-      return ensureAbstractPortfolioToken(res);
+      return tokenItemToITokenItem(res, '');
     },
     {
       refreshDeps: [account?.address, selectedToken],
@@ -122,11 +117,7 @@ export const PerpsDepositPopup: React.FC<{
   );
 
   const tokenInfo = useMemo(() => {
-    return (
-      _tokenInfo ||
-      selectedToken ||
-      ensureAbstractPortfolioToken(ARB_USDC_TOKEN_ITEM)
-    );
+    return _tokenInfo || selectedToken || ARB_USDC_TOKEN_ITEM;
   }, [_tokenInfo, selectedToken]);
 
   useEffect(() => {
@@ -152,10 +143,7 @@ export const PerpsDepositPopup: React.FC<{
 
   const tokenIsNativeToken = useMemo(() => {
     if (tokenInfo && tokenInfo.chain) {
-      return isSameAddress(
-        tokenInfo._tokenId,
-        chainInfo?.nativeTokenAddress || '',
-      );
+      return isSameAddress(tokenInfo.id, chainInfo?.nativeTokenAddress || '');
     }
     return false;
   }, [tokenInfo, chainInfo?.nativeTokenAddress]);
@@ -211,7 +199,7 @@ export const PerpsDepositPopup: React.FC<{
 
   const isDirectDeposit = useMemo(() => {
     return (
-      selectedToken?._tokenId === ARB_USDC_TOKEN_ID &&
+      selectedToken?.id === ARB_USDC_TOKEN_ID &&
       selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN
     );
   }, [selectedToken]);
@@ -260,7 +248,7 @@ export const PerpsDepositPopup: React.FC<{
   );
 
   const updateMiniSignTx = useMemoizedFn(
-    async (value: number, token: AbstractPortfolioToken) => {
+    async (value: number, token: ITokenItem) => {
       if (!account) {
         return;
       }
@@ -284,18 +272,18 @@ export const PerpsDepositPopup: React.FC<{
           const res = await openapi.getPerpBridgeQuote({
             user_addr: account!.address,
             from_chain_id: token.chain,
-            from_token_id: token._tokenId,
+            from_token_id: token.id,
             from_token_raw_amount: fromTokenRawAmount,
           });
           let tokenApproved = false;
           let allowance = '0';
           const fromChain = findChain({ serverId: token.chain });
-          if (token._tokenId === fromChain?.nativeTokenAddress) {
+          if (token.id === fromChain?.nativeTokenAddress) {
             tokenApproved = true;
           } else {
             allowance = await getERC20Allowance(
               token.chain,
-              token._tokenId,
+              token.id,
               res.approve_contract_id,
               account!.address,
               account!,
@@ -322,7 +310,7 @@ export const PerpsDepositPopup: React.FC<{
               if (shouldTwoStepApprove) {
                 const resp = await approveToken({
                   chainServerId: token.chain,
-                  id: token._tokenId,
+                  id: token.id,
                   spender: res.approve_contract_id,
                   amount: 0,
                   account: account,
@@ -333,7 +321,7 @@ export const PerpsDepositPopup: React.FC<{
 
               const resp = await approveToken({
                 chainServerId: token.chain,
-                id: token._tokenId,
+                id: token.id,
                 spender: res.approve_contract_id,
                 amount: fromTokenRawAmount,
                 account: account,
@@ -355,7 +343,7 @@ export const PerpsDepositPopup: React.FC<{
             setQuoteLoading(false);
             setCacheBridgeHistory({
               from_chain_id: token.chain,
-              from_token_id: token._tokenId,
+              from_token_id: token.id,
               from_token_amount: amount,
               to_token_amount: res.to_token_amount,
               tx: res.tx,

@@ -1,15 +1,24 @@
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { isNonPublicProductionEnv } from '@/constant';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
+import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { apisAutoLock } from '@/core/apis';
+import { preferenceService } from '@/core/services';
+import { useMemo } from 'react';
 
 const isIOS = DeviceUtils.isIOS();
 
 type ScreenshotSettings = {
   androidForceAllowScreenCapture: boolean;
   iosForceAllowScreenRecord: boolean;
+  timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -21,10 +30,17 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
      */
     androidForceAllowScreenCapture: false,
     iosForceAllowScreenRecord: false,
+
+    timeTipAboutSeedPhraseAndPrivateKey: 'copy',
   },
 );
 
-function setExpData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
+export const storeApiExpSettingData = {
+  set: setExpSettingData,
+  get: getExpSettingData,
+};
+
+function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
   experimentalSettingsStore.setState(prev => {
     const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
       strict: false,
@@ -32,6 +48,10 @@ function setExpData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
 
     return { ...prev, ...newVal };
   });
+}
+
+function getExpSettingData() {
+  return experimentalSettingsStore.getState();
 }
 
 const KEY = isIOS
@@ -47,7 +67,7 @@ function isAllowScreenshot(
 }
 
 const onExpScreenCaptureChange = (partials: Partial<ScreenshotSettings>) => {
-  setExpData(prev => ({
+  setExpSettingData(prev => ({
     ...prev,
     ...partials,
   }));
@@ -102,7 +122,7 @@ export function useExpScreenCapture() {
 const setAllowScreenshot = (
   valueOrFunc: boolean | ((prev: boolean) => boolean),
 ) => {
-  setExpData(prev => {
+  setExpSettingData(prev => {
     const next =
       typeof valueOrFunc === 'function' ? valueOrFunc(prev[KEY]) : valueOrFunc;
 
@@ -126,6 +146,66 @@ export function useForceAllowScreenshot() {
     iosForceAllowScreenRecord: result.iosForceAllowScreenRecord,
     forceAllowScreenshot: isAllowScreenshot(result),
     setAllowScreenshot,
+  };
+}
+
+export function useTimeTipAboutSeedPhraseAndPrivateKey() {
+  const timeTipAboutSeedPhraseAndPrivateKey = experimentalSettingsStore(
+    s => s.timeTipAboutSeedPhraseAndPrivateKey,
+  );
+
+  return {
+    timeTipAboutSeedPhraseAndPrivateKey: isNonPublicProductionEnv
+      ? timeTipAboutSeedPhraseAndPrivateKey
+      : 'none',
+  };
+}
+
+const autoLockState = zCreate<{
+  minutes: number;
+}>(() => ({
+  minutes:
+    apisAutoLock.getPersistedAutoLockTimes()?.minutes ||
+    DEFAULT_AUTO_LOCK_MINUTES,
+}));
+function setAutoLockMinutes(valOrFunc: UpdaterOrPartials<number>) {
+  autoLockState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.minutes, valOrFunc);
+
+    return { ...prev, minutes: newVal };
+  });
+}
+
+runIIFEFunc(() => {
+  const times = apisAutoLock.getPersistedAutoLockTimes();
+  setAutoLockMinutes(times.minutes);
+});
+
+export function useAutoLockTimeMinites() {
+  const autoLockMinutes = autoLockState(s => s.minutes);
+
+  return { autoLockMinutes };
+}
+
+const onAutoLockTimeMsChange = (ms: number) => {
+  const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
+  setAutoLockMinutes(minutes);
+  preferenceService.setPreference({
+    autoLockTime: minutes,
+  });
+  apisAutoLock.refreshAutolockTimeout();
+};
+export function useAutoLockTimeMs() {
+  const autoLockMinutes = autoLockState(s => s.minutes);
+
+  const autoLockMs = useMemo(
+    () => autoLockMinutes * 60 * 1000,
+    [autoLockMinutes],
+  );
+
+  return {
+    autoLockMs,
+    onAutoLockTimeMsChange,
   };
 }
 

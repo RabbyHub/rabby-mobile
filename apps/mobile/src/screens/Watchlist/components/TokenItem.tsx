@@ -12,6 +12,8 @@ import { formatUsdValueKMB } from '../../Home/utils/price';
 import { formatPrice } from '@/utils/number';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
+import { isLpToken } from '@/utils/lpToken';
+import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 
 export const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -105,9 +107,16 @@ const TokenListItemComponent = ({
           />
           <View style={styles.tokenInfo}>
             {/* symbol */}
-            <Text style={styles.tokenName}>
-              {ellipsisOverflowedText(getTokenSymbol(item), 12)}
-            </Text>
+            <View style={styles.tokenNameContainer}>
+              <Text style={styles.tokenName}>
+                {ellipsisOverflowedText(getTokenSymbol(item), 12)}
+              </Text>
+              {isLpToken(item) && (
+                <View style={styles.lpTokenIconContainer}>
+                  <LpTokenIcon protocolId={item.protocol_id || ''} />
+                </View>
+              )}
+            </View>
             {/* FDV */}
             {!!item.identity?.fdv && (
               <Text style={styles.tokenFdv}>
@@ -189,6 +198,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     marginLeft: 8,
   },
+  tokenNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   tokenFdv: {
     fontSize: 14,
     fontWeight: '500',
@@ -267,5 +281,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 30,
     marginTop: -10,
     marginBottom: 10,
+  },
+  lpTokenIconContainer: {
+    marginLeft: 0,
+    flexShrink: 0,
+    justifyContent: 'flex-start',
   },
 }));

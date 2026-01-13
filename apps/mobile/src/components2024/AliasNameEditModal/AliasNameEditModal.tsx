@@ -15,17 +15,18 @@ import {
 } from 'react-native';
 import { AliasNameEditView } from './AliasNameEditView';
 import {
-  visibleAtom,
-  accountAtom,
-  accountIconUriAtom,
+  useAliasNameEditModalState,
   confirmCallBack,
 } from './useAliasNameEditModal';
 
 export const AliasNameEditModal: React.FC = () => {
   const { styles } = useTheme2024({ getStyle });
-  const [visible, setVisible] = useAtom(visibleAtom);
-  const [account] = useAtom(accountAtom);
-  const [iconUri] = useAtom(accountIconUriAtom);
+  const {
+    visible,
+    account,
+    accountIconUri: iconUri,
+    setVisible,
+  } = useAliasNameEditModalState();
 
   const [_, updateAliasName] = useAlias(account?.address || '');
   const [input, setInput] = React.useState(account?.aliasName || '');

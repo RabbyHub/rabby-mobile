@@ -1,4 +1,4 @@
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { toastIndicator } from '@/components/Toast';
 import {
   createGlobalBottomSheetModal2024,

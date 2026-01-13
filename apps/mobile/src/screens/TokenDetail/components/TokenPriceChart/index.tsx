@@ -1,5 +1,4 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { formatPrice } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import * as d3Shape from 'd3-shape';
@@ -35,10 +34,10 @@ import {
 } from './useCurve';
 import { RelatedDeFiType, TokenFromAddressItem } from '../..';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { useTranslation } from 'react-i18next';
 import { unionBy } from 'lodash';
 import { CurvePoint } from '@/hooks/useCurve';
+import { ITokenItem } from '@/store/tokens';
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
@@ -46,7 +45,7 @@ const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
 const winInfo = Dimensions.get('window');
 
 interface Props {
-  token: AbstractPortfolioToken | CombineTokensItem;
+  token: ITokenItem;
   finalAccount?: KeyringAccountWithAlias | null;
   amountList: TokenFromAddressItem[];
   isSingleAddress?: boolean;
@@ -107,7 +106,7 @@ export const TokenPriceChart = forwardRef<TokenChartRef, Props>(
       loading: curveLoading,
       refreshAsync: refreshAsyncRealTimeData,
     } = use24hCurveData({
-      tokenId: token._tokenId,
+      tokenId: token.id,
       serverId: token.chain,
       days: activeKey === '24h' ? 1 : 7,
       amount,
@@ -117,7 +116,7 @@ export const TokenPriceChart = forwardRef<TokenChartRef, Props>(
       loading: timeMachineLoading,
       refreshAsync: refreshAsyncDateCurveData,
     } = useDateCurveData({
-      tokenId: token._tokenId,
+      tokenId: token.id,
       serverId: token.chain,
       ready: ready,
     });

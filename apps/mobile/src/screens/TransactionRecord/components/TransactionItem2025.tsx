@@ -28,7 +28,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
-import { getAlianName, getAliasName } from '@/core/apis/contact';
+import { getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
 import { transactionHistoryService } from '@/core/services';
 import {
@@ -309,6 +309,8 @@ export const TransactionItem = ({
           return t('page.transactions.itemTitle.LendingManageEModeDisable');
         case CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP:
           return t('page.transactions.itemTitle.LendingDebtSwap');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY_WITH_COLLATERAL:
+          return t('page.transactions.itemTitle.LendingRepayWithCollateral');
       }
     }
 

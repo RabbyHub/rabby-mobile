@@ -4,7 +4,6 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useMemo } from 'react';
 
 const MAKE_DEFAULT_MOCK_DATA = () => ({
-  forceShowFundWallet: false,
   forceShowOffchainNotify: false,
 });
 

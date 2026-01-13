@@ -6,14 +6,15 @@ import {
   getFontWeightType,
 } from '@/core/utils/fonts';
 import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import { EdgeInsets } from 'react-native-safe-area-context';
 type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
 
 type CreateStylesOptions = {
   isLight: boolean;
   /**
-   * @description bottom safe area inset value
+   * @description safe area inset value
    */
-  bottomSafeArea: number;
+  safeAreaInsets: EdgeInsets;
 };
 export const createGetStyles =
   <T extends NamedStyles<any>>(
@@ -37,13 +38,9 @@ type CreateStyles2024Options = {
    */
   colors2024: AppColors2024Variants;
   /**
-   * @description bottom safe area inset value
+   * @description safe area inset value
    */
-  bottomSafeArea: number;
-  // /**
-  //  * @description bottom safe area inset value
-  //  */
-  // androidOnlyBottomSafeArea: number;
+  safeAreaInsets: EdgeInsets;
 };
 export const createGetStyles2024 =
   <T extends NamedStyles<any>>(styles: (ctx: CreateStyles2024Options) => T) =>

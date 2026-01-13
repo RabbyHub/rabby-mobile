@@ -63,76 +63,78 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const menuActionDict = React.useMemo(() => {
     return keyBy(
-      [
-        {
-          title: t('page.whitelist.copyAddress'),
-          icon: isDarkTheme ? MenuIcons.copyDark : MenuIcons.copy,
-          androidIconName: 'ic_rabby_menu_copy',
-          key: 'copy',
-          action() {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-            Clipboard.setString(account.address);
-            toastCopyAddressSuccess(account.address);
+      (
+        [
+          {
+            title: t('page.whitelist.copyAddress'),
+            icon: isDarkTheme ? MenuIcons.copyDark : MenuIcons.copy,
+            androidIconName: 'ic_rabby_menu_copy',
+            key: 'copy',
+            action() {
+              trigger('impactLight', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: false,
+              });
+              Clipboard.setString(account.address);
+              toastCopyAddressSuccess(account.address);
+            },
           },
-        },
-        {
-          title: pinned
-            ? t('page.addressDetail.addressListScreen.unpin')
-            : t('page.addressDetail.addressListScreen.pin'),
-          icon: pinned
-            ? isDarkTheme
-              ? MenuIcons.unpinDark
-              : MenuIcons.unpin
-            : isDarkTheme
-            ? MenuIcons.pinDark
-            : MenuIcons.pin,
-          androidIconName: pinned
-            ? 'ic_rabby_menu_un_pin'
-            : 'ic_rabby_menu_pin',
-          key: 'pin',
-          action() {
-            handlePinned();
+          {
+            title: pinned
+              ? t('page.addressDetail.addressListScreen.unpin')
+              : t('page.addressDetail.addressListScreen.pin'),
+            icon: pinned
+              ? isDarkTheme
+                ? MenuIcons.unpinDark
+                : MenuIcons.unpin
+              : isDarkTheme
+              ? MenuIcons.pinDark
+              : MenuIcons.pin,
+            androidIconName: pinned
+              ? 'ic_rabby_menu_un_pin'
+              : 'ic_rabby_menu_pin',
+            key: 'pin',
+            action() {
+              handlePinned();
+            },
           },
-        },
-        {
-          title: t('page.addressDetail.addressListScreen.edit'),
-          icon: isDarkTheme ? MenuIcons.editDark : MenuIcons.edit,
-          androidIconName: 'ic_rabby_menu_edit',
-          key: 'edit',
-          action() {
-            editAliasName.show(account);
+          {
+            title: t('page.addressDetail.addressListScreen.edit'),
+            icon: isDarkTheme ? MenuIcons.editDark : MenuIcons.edit,
+            androidIconName: 'ic_rabby_menu_edit',
+            key: 'edit',
+            action() {
+              editAliasName.show(account);
+            },
           },
-        },
-        // {
-        //   title: t('page.addressDetail.addressListScreen.detail'),
-        //   icon: isDarkTheme
-        //     ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
-        //     : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
-        //   key: 'detail',
-        //   androidIconName: 'ic_rabby_menu_more',
-        //   action() {
-        //     showAddressDetail({ account });
-        //   },
-        // },
-        {
-          title: t('page.addressDetail.addressListScreen.delete'),
-          icon: isDarkTheme ? MenuIcons.deleteDark : MenuIcons.delete,
-          key: 'delete',
-          androidIconName: 'ic_rabby_menu_delete',
-          destructive: true,
-          action() {
-            removeAccount({
-              account,
-              onFinished: () => {
-                toast.success(t('global.Deleted'));
-              },
-            });
+          // {
+          //   title: t('page.addressDetail.addressListScreen.detail'),
+          //   icon: isDarkTheme
+          //     ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
+          //     : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
+          //   key: 'detail',
+          //   androidIconName: 'ic_rabby_menu_more',
+          //   action() {
+          //     showAddressDetail({ account });
+          //   },
+          // },
+          {
+            title: t('page.addressDetail.addressListScreen.delete'),
+            icon: isDarkTheme ? MenuIcons.deleteDark : MenuIcons.delete,
+            key: 'delete',
+            androidIconName: 'ic_rabby_menu_delete',
+            destructive: true,
+            action() {
+              removeAccount({
+                account,
+                onFinished: () => {
+                  toast.success(t('global.Deleted'));
+                },
+              });
+            },
           },
-        },
-      ] as MenuAction[],
+        ] as MenuAction[]
+      ).filter(Boolean),
       item => item.key,
     );
   }, [
@@ -150,7 +152,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
       .map(key => {
         return menuActionDict[key];
       })
-      .filter(v => v);
+      .filter(v => v) as MenuAction[];
   }, [actions, menuActionDict]);
 
   return (

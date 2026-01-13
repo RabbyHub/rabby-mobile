@@ -58,7 +58,8 @@
         "LendingOnCollateral": "담보로 사용 활성화",
         "LendingManageEModeDisable": "E-모드 끄기",
         "LendingManageEMode": "E-모드 켜기",
-        "LendingDebtSwap": "부채 교환"
+        "LendingDebtSwap": "부채 교환",
+        "LendingRepayWithCollateral": "담보로 상환하기"
       },
       "detail": {
         "ApproveToken": "토큰 승인",
@@ -145,7 +146,8 @@
       "success": "{{type}} 성공했습니다!",
       "addressCount_other": "{{count}} 지갑",
       "importMore": "더 많은 Wallets 가져오기",
-      "addressCount_one": "{{count}} 지갑"
+      "addressCount_one": "{{count}} 지갑",
+      "viewAddress": "지갑 보기"
     },
     "sendNFT": {
       "sendButton": "보내기",
@@ -1805,7 +1807,8 @@
         "description1": "개인 키는 지갑에 접근하고 제어하는 데 사용되는 문자와 숫자의 문자열입니다. 이를 사용하여 모든 장치에서 지갑을 복구할 수 있습니다.",
         "title": "프라이빗 키란 무엇인가요?",
         "description4": "당신의 개인 키는 장치에 로컬로 저장되며 비밀번호로 암호화됩니다. 오직 당신만이 접근할 수 있습니다. Rabby는 당신의 개인 키를 검색하거나 접근할 수 없습니다."
-      }
+      },
+      "importing": "가져오는 중..."
     },
     "customTestnet": {
       "id": "ID",
@@ -2687,7 +2690,12 @@
       },
       "repayDetail": {
         "actions": "상환",
-        "approveAndRepay": "승인 및 상환"
+        "approveAndRepay": "승인 및 상환",
+        "tabs": {
+          "collateral": "담보",
+          "wallet": "지갑 잔액"
+        },
+        "repayWith": "상환하기 위해"
       },
       "supplyDetail": {
         "actions": "공급",
@@ -2796,7 +2804,13 @@
         "closeDesc": "이 자산을 담보로 사용하지 않으면 귀하의 대출 능력과 건강 지수에 영향을 미칩니다.",
         "riskToLiquidationText": "이 통화의 담보 모드로 사용으로 전환할 수 없습니다. 이는 담보 호출을 유발할 수 있기 때문입니다.",
         "openDesc": "이 자산을 담보로 설정하면 대출 능력과 건강 지수가 증가합니다. 그러나 건강 지수가 1 이하로 떨어지면 강제 청산될 수 있습니다.",
-        "enableIsolationModeDesc": "당신은 격리 모드에 들어가고 있습니다. 격리 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전역 채무 한도가 격리된 자산의 차입 능력을 제한합니다. 다른 자산을 차입하기 전에 CRV를 담보로 비활성화하여 격리 모드를 종료하십시오."
+        "enableIsolationModeDesc": "당신은 격리 모드에 들어가고 있습니다. 격리 모드에서는 다른 자산을 담보로 제공할 수 없습니다. 전역 채무 한도가 격리된 자산의 차입 능력을 제한합니다. 다른 자산을 차입하기 전에 CRV를 담보로 비활성화하여 격리 모드를 종료하십시오.",
+        "toggleRiskTexts": {
+          "doNotHaveSuppliesInThisCurrency": "이 통화에 자산이 없습니다.",
+          "canNotUseThisCurrencyAsCollateral": "이 통화를 담보로 사용할 수 없습니다.",
+          "canNotSwitchUsageAsCollateralMode": "이 통화에 대해 담보 모드로 사용을 전환할 수 없습니다. 이는 담보 청구를 초래할 것입니다.",
+          "zeroLTVWithdrawBlocked": "LTV가 0인 자산 ({{assets}})은 이 작업을 수행하기 위해 인출하거나 담보로 사용 중지해야 합니다."
+        }
       },
       "searchMarket": "시장 검색",
       "selectMarket": "시장 선택",
@@ -2838,6 +2852,13 @@
             "borrow": "내 차입"
           },
           "title": "대출 토큰 선택"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "collateral": "내 담보",
+            "assets": "토큰"
+          },
+          "title": "담보 토큰 선택"
         }
       },
       "disabled": "비활성화됨",
@@ -2873,7 +2894,33 @@
       },
       "totalSupplied": "총 공급량",
       "totalBorrowed": "총 차입금",
-      "netApy": "순수 APY"
+      "netApy": "순수 APY",
+      "repayWithCollateral": {
+        "action": {
+          "title": "{{collateral}}로 상환하기"
+        },
+        "overview": {
+          "collateralValueAfter": "대출 상환 후 담보 잔고",
+          "title": "트랜잭션 개요",
+          "borrowValueAfter": "상환 후 차용 잔액"
+        },
+        "button": {
+          "repay": "상환"
+        },
+        "repayWith": "상환할 담보",
+        "collateralNotEnough": "귀하의 담보 잔액이 선택한 금액보다 낮습니다.",
+        "toRepay": "상환 예상 금액"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "desc": "기존의 자산이 있는 주소 추가.",
+          "title": "지갑 가져오기"
+        },
+        "title": "자산 받기",
+        "btnCopyAddress": "주소 복사"
+      }
     }
   },
   "global": {
@@ -2955,7 +3002,14 @@
     "GotIt": "알겠어요",
     "Backup": "백업",
     "copy": "복사",
-    "Other": "기타"
+    "Other": "기타",
+    "toast": {
+      "clipboard": {
+        "copiedPrivateKey": "비공개 키가 복사되었습니다. 클립보드는 1분 후에 지워집니다.",
+        "copiedSeedPhrase": "시드 구문이 복사되었습니다. 클립보드는 1분 후에 지워집니다.",
+        "pasted_and_cleared": "붙여넣기 완료 및 클립보드 지움"
+      }
+    }
   },
   "native": {
     "biometrics": {
@@ -3001,6 +3055,10 @@
         "proceedBtn": "진행하십시오",
         "simpleExplanation": "지원되지 않음",
         "title": "위험 감지됨"
+      },
+      "placeholders": {
+        "noTokens": "토큰이 없습니다",
+        "noLpTokens": "유동성 공급자 (LP) 토큰 없음"
       }
     },
     "NFTNumberInput": {
@@ -3220,6 +3278,9 @@
     },
     "multiAddressModal": {
       "title": "지갑"
+    },
+    "lpTokenModal": {
+      "desc": "이것은 {{protocolId}}의 유동성 공급자(LP) 토큰입니다."
     }
   },
   "constant": {

@@ -157,20 +157,6 @@ export default function BottomSheetApprovalAsset({
       onDismiss={() => {
         toggleFocusedAssetItem({ assetItemToBlur: focusedAssetApproval });
       }}
-      footerComponent={() => {
-        return (
-          <BottomSheetModalFooterButton
-            title={[
-              t('page.approvals.component.RevokeButton.btnText'),
-
-              confirmingAssetsCount && ` (${confirmingAssetsCount})`,
-            ]
-              .filter(Boolean)
-              .join('')}
-            onPress={handleRevoke}
-          />
-        );
-      }}
       snapPoints={['75%']}
       bottomInset={1}>
       {focusedAssetApproval && (
@@ -226,6 +212,16 @@ export default function BottomSheetApprovalAsset({
               onEndReachedThreshold={0.3}
             />
           </BottomSheetScrollView>
+          <BottomSheetModalFooterButton
+            title={[
+              t('page.approvals.component.RevokeButton.btnText'),
+
+              confirmingAssetsCount && ` (${confirmingAssetsCount})`,
+            ]
+              .filter(Boolean)
+              .join('')}
+            onPress={handleRevoke}
+          />
         </AutoLockView>
       )}
     </AppBottomSheetModal>

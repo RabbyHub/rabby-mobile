@@ -3,7 +3,6 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { CustomTestnetScreen } from '../CustomTestnet';
-import { CustomRPCScreen } from '../CustomRPC';
 import { registerAppScreen } from '@/perfs/apis';
 
 const SettingsScreen = registerAppScreen<
@@ -88,15 +87,6 @@ export function SettingNavigator() {
           ...headerPresets.withBgCard2,
         }}
       />
-      {/* <SettingsStack.Screen
-        name={RootNames.CustomRPC}
-        component={CustomRPCScreen}
-        options={{
-          title: 'Modify RPC URL',
-          headerTitle: 'Modify RPC URL',
-          ...headerPresets.withBgCard2,
-        }}
-      /> */}
       {__DEV__ && (
         <SettingsStack.Screen
           name={RootNames.ProviderControllerTester}

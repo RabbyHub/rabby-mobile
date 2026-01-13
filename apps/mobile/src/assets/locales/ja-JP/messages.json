@@ -116,7 +116,8 @@
         "LendingOffCollateral": "担保としての使用をオフにする",
         "LendingManageEMode": "E-Modeをオンにする",
         "LendingManageEModeDisable": "E-Modeをオフにする",
-        "LendingDebtSwap": "債務スワップ"
+        "LendingDebtSwap": "債務スワップ",
+        "LendingRepayWithCollateral": "担保を使って返済する"
       },
       "detail": {
         "SpeedUp": "速度アップ",
@@ -197,7 +198,8 @@
       "success": "{{type}}が成功しました！",
       "addressCount_other": "{{count}} ウォレット",
       "addressCount_one": "{{count}} ウォレット",
-      "importMore": "ウォレットを追加でインポート"
+      "importMore": "ウォレットを追加でインポート",
+      "viewAddress": "ウォレットを表示"
     },
     "signTx": {
       "gasLimitNotEnough": "Gas limitは21000未満です。Transactionは送信できません。",
@@ -1473,7 +1475,8 @@
         "title3": "絶対に共有しないでください",
         "description3": "自分のプライベートキーを決して共有しないでください。アクセスできる人は誰でもあなたの資金を管理できます。",
         "description4": "あなたの秘密鍵はデバイスにローカルに保存されており、パスワードで暗号化されています。あなたにしかアクセスできません。Rabbyはあなたの秘密鍵を取得したりアクセスしたりすることはできません。"
-      }
+      },
+      "importing": "インポート中..."
     },
     "sign": {
       "transactionSpeed": "トランザクションスピード"
@@ -2739,7 +2742,12 @@
       },
       "repayDetail": {
         "actions": "返済",
-        "approveAndRepay": "承認と返済"
+        "approveAndRepay": "承認と返済",
+        "tabs": {
+          "wallet": "ウォレット残高",
+          "collateral": "担保"
+        },
+        "repayWith": "返済するには"
       },
       "supplyDetail": {
         "approveAndSupply": "承認と供給",
@@ -2848,7 +2856,13 @@
         "riskToLiquidationText": "この通貨の担保モードとしての使用を切り替えることはできません。なぜなら、それが担保コールを引き起こすからです。",
         "exitIsolationModeTitle": "アイソレーションモードを終了する",
         "openDesc": "この資産を担保として有効にすることで、借入能力とヘルスファクターが増加します。ただし、ヘルスファクターが1未満になると、清算される可能性があります。",
-        "enableIsolationModeDesc": "アイソレーションモードに入っています。アイソレーションモードでは、他の資産を担保として提供することはできません。グローバルデットシーリングが隔離された資産の借入能力を制限します。アイソレーションモードから退出するには、他の資産を借りる前にCRVを担保として無効にしてください。"
+        "enableIsolationModeDesc": "アイソレーションモードに入っています。アイソレーションモードでは、他の資産を担保として提供することはできません。グローバルデットシーリングが隔離された資産の借入能力を制限します。アイソレーションモードから退出するには、他の資産を借りる前にCRVを担保として無効にしてください。",
+        "toggleRiskTexts": {
+          "doNotHaveSuppliesInThisCurrency": "この通貨に供給がありません。",
+          "canNotSwitchUsageAsCollateralMode": "この通貨の担保モードへの切り替えはできません。担保コールが発生するためです。",
+          "zeroLTVWithdrawBlocked": "ゼロLTV（{{assets}}）の資産は、このアクションを実行するために引き出すか、担保として無効にする必要があります。",
+          "canNotUseThisCurrencyAsCollateral": "この通貨を担保として使用することはできません。"
+        }
       },
       "searchMarket": "市場を検索",
       "selectMarket": "マーケットを選択",
@@ -2890,6 +2904,13 @@
             "assets": "トークン/残高"
           },
           "title": "借入トークンを選択"
+        },
+        "collateralSwapSelector": {
+          "header": {
+            "collateral": "私の担保",
+            "assets": "トークン"
+          },
+          "title": "担保トークンを選択してください"
         }
       },
       "disabled": "無効",
@@ -2925,7 +2946,33 @@
       },
       "totalSupplied": "総供給量",
       "totalBorrowed": "合計借入額",
-      "netApy": "ネットAPY"
+      "netApy": "ネットAPY",
+      "repayWithCollateral": {
+        "action": {
+          "title": "{{collateral}}で返済する"
+        },
+        "overview": {
+          "title": "取引概要",
+          "borrowValueAfter": "返済後の借入残高",
+          "collateralValueAfter": "返済後の担保残高"
+        },
+        "button": {
+          "repay": "返済"
+        },
+        "toRepay": "返済予定額",
+        "repayWith": "担保として返済するための",
+        "collateralNotEnough": "選択した金額よりも担保残高が低いです。"
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "importTip": {
+          "title": "ウォレットをインポートする",
+          "desc": "既存の資金があるアドレスを追加します。"
+        },
+        "title": "資産を受け取る",
+        "btnCopyAddress": "アドレスをコピー"
+      }
     }
   },
   "global": {
@@ -3007,7 +3054,14 @@
     "GotIt": "わかった",
     "Backup": "バックアップ",
     "copy": "コピー",
-    "Other": "他の"
+    "Other": "他の",
+    "toast": {
+      "clipboard": {
+        "copiedPrivateKey": "秘密鍵がコピーされました。クリップボードは1分後にクリアされます。",
+        "copiedSeedPhrase": "シードフレーズがコピーされました。クリップボードは1分後にクリアされます。",
+        "pasted_and_cleared": "貼り付け完了、クリップボードはクリアされました"
+      }
+    }
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -3050,6 +3104,10 @@
         "proceedBtn": "進む",
         "simpleExplanation": "サポートされていません",
         "title": "リスクが検出されました"
+      },
+      "placeholders": {
+        "noLpTokens": "流動性プロバイダー (LP) トークンは存在しません",
+        "noTokens": "トークンがありません"
       }
     },
     "accountSwitcher": {
@@ -3277,6 +3335,9 @@
     },
     "multiAddressModal": {
       "title": "ウォレット"
+    },
+    "lpTokenModal": {
+      "desc": "これは{{protocolId}}の流動性提供者（LP）トークンです。"
     }
   },
   "common": {

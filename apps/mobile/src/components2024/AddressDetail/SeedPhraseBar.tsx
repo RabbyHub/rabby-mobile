@@ -51,7 +51,7 @@ export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
             keyringId: keyringId || undefined,
             isExistedKR: result.isExistedKR,
             account,
-            brand: KEYRING_CLASS.MNEMONIC,
+            brandName: KEYRING_CLASS.MNEMONIC,
           },
           onCancel: () => {
             removeGlobalBottomSheetModal2024(id);

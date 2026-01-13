@@ -137,7 +137,7 @@ export const ConnectLedger: React.FC<{
         // });
         showImportMorePopup({
           type: KEYRING_TYPE.LedgerKeyring,
-          brand: KEYRING_CLASS.HARDWARE.LEDGER,
+          brandName: KEYRING_CLASS.HARDWARE.LEDGER,
         });
         onDone?.();
       }

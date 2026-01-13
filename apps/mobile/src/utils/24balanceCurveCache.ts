@@ -58,10 +58,7 @@ export const getNetCurve = async (
   return openapi.getNetCurve(addr, days);
 };
 
-export const get24hCurveDataWithCache = async (
-  _address: string,
-  force = false,
-) => {
+const get24hCurveDataWithCache = async (_address: string, force = false) => {
   const address = _address.toLowerCase();
   const cache = getCurveCache(address);
   if (cache && !force && !cache.isExpired) {

@@ -23,10 +23,13 @@ import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import { trigger } from 'react-native-haptic-feedback';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { findChain } from '@/utils/chain';
+import { ITokenItem } from '@/store/tokens';
+import { isLpToken } from '@/utils/lpToken';
+import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
-  token: AbstractPortfolioToken;
+  token: ITokenItem;
   style?: StyleProp<ViewStyle>;
   tokenSize?: number;
   chainSize?: number;
@@ -54,25 +57,25 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
 
   const isNativeToken = useMemo(() => {
     const chain = findChain({ serverId: token?.chain });
-    return token?._tokenId === chain?.nativeTokenAddress;
-  }, [token?._tokenId, token?.chain]);
+    return token?.id === chain?.nativeTokenAddress;
+  }, [token?.id, token?.chain]);
 
   const handleCopyAddress = useCallback<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
   >(
     evt => {
       evt.stopPropagation();
-      if (!token?._tokenId || isNativeToken) {
+      if (!token?.id || isNativeToken) {
         return;
       }
       trigger('impactLight', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
-      Clipboard.setString(token._tokenId);
-      toastCopyAddressSuccess(token._tokenId);
+      Clipboard.setString(token.id);
+      toastCopyAddressSuccess(token.id);
     },
-    [isNativeToken, token._tokenId],
+    [isNativeToken, token.id],
   );
 
   return (
@@ -93,6 +96,11 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             ellipsizeMode="tail">
             {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
+          {isLpToken(token) && (
+            <View style={styles.lpTokenIconContainer}>
+              <LpTokenIcon protocolId={token.protocol_id || ''} />
+            </View>
+          )}
           {showCopyIcon && !isNativeToken && (
             <TouchableOpacity
               style={styles.touchBox}
@@ -122,6 +130,11 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  lpTokenIconContainer: {
+    marginLeft: 0,
+    flexShrink: 0,
+    justifyContent: 'flex-start',
   },
   tokenSymbol: {
     flexShrink: 1,

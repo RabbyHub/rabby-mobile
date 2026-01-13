@@ -1,6 +1,5 @@
-import { useAccounts, useRemoveAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias, storeApiAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import React from 'react';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -8,55 +7,51 @@ import {
 import { MODAL_ID, MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { apisAccount } from '@/core/apis';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
+import { RefLikeObject } from '@/utils/type';
+import { keyringService } from '@/core/services';
 
-export const useNoLongerSupports = () => {
-  const { accounts } = useAccounts({
-    disableAutoFetch: false,
-  });
-  const modalIdRef = React.useRef<MODAL_ID>();
-  const removeAccount = useRemoveAccount();
+const modalIdRef: RefLikeObject<MODAL_ID | null> = { current: null };
 
-  const removeWalletConnect = React.useCallback(async () => {
-    await Promise.allSettled([
-      ...accounts.map(async account => {
-        if (account.type === KEYRING_TYPE.WalletConnectKeyring) {
-          await removeAccount(account);
-        }
-      }),
-    ]);
+const removeWalletConnect = async (accounts: KeyringAccountWithAlias[]) => {
+  await Promise.allSettled([
+    ...accounts.map(async account => {
+      if (account.type === KEYRING_TYPE.WalletConnectKeyring) {
+        await storeApiAccounts.removeAccount(account);
+      }
+    }),
+  ]);
 
-    const hasRestAccounts = await apisAccount.hasVisibleAccounts();
-    if (!hasRestAccounts) {
-      redirectToAddAddressEntry({ action: 'resetTo' });
+  const hasRestAccounts = await apisAccount.hasVisibleAccounts();
+  if (!hasRestAccounts) {
+    redirectToAddAddressEntry({ action: 'resetTo' });
+  }
+};
+
+export const trimNoLongerSupportsOnUnlock = () => {
+  keyringService.once('unlock', async () => {
+    if (modalIdRef.current) return;
+
+    const accounts = await storeApiAccounts.fetchAccounts();
+
+    if (
+      !accounts?.some(
+        account => account.type === KEYRING_TYPE.WalletConnectKeyring,
+      )
+    ) {
+      return;
     }
-  }, [accounts, removeAccount]);
 
-  React.useEffect(() => {
-    setTimeout(() => {
-      if (modalIdRef.current) {
-        return;
-      }
-
-      if (
-        !accounts?.some(
-          account => account.type === KEYRING_TYPE.WalletConnectKeyring,
-        )
-      ) {
-        return;
-      }
-
-      modalIdRef.current = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.NO_LONGER_SUPPORTS,
-        bottomSheetModalProps: {
-          onDismiss: () => {
-            removeWalletConnect();
-          },
+    modalIdRef.current = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.NO_LONGER_SUPPORTS,
+      bottomSheetModalProps: {
+        onDismiss: () => {
+          removeWalletConnect(accounts);
         },
-        onDone() {
-          removeWalletConnect();
-          removeGlobalBottomSheetModal2024(modalIdRef.current);
-        },
-      });
-    }, 100);
-  }, [accounts, removeWalletConnect]);
+      },
+      onDone() {
+        removeWalletConnect(accounts);
+        removeGlobalBottomSheetModal2024(modalIdRef.current);
+      },
+    });
+  });
 };

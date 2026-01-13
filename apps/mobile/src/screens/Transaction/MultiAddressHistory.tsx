@@ -27,7 +27,6 @@ import { last, unionBy, orderBy, debounce } from 'lodash';
 import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
-  BuyHistoryItem,
   TokenItem,
   TxAllHistoryResult,
   TxHistoryItem,
@@ -129,7 +128,7 @@ function History({
   isTestnet?: boolean;
   isForMultipleAddress: boolean;
 }): JSX.Element {
-  const { top10Addresses, list: accountList } = useAccountInfo();
+  const { myTop10Addresses, list: accountList } = useAccountInfo();
   const route =
     useRoute<
       GetNestedScreenRouteProp<
@@ -194,7 +193,7 @@ function History({
         filterScamAndSmallTx === undefined ? !isShowAll : filterScamAndSmallTx;
       dbFetchLoadingRef.current = true;
       const addresses = isSceneUsingAllAccounts
-        ? top10Addresses.map(i => i.toLowerCase())
+        ? myTop10Addresses.map(i => i.toLowerCase())
         : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
       const {
         items: historyList,
@@ -387,7 +386,7 @@ function History({
 
     const list: TransactionGroup[] = [];
     const addressList = isSceneUsingAllAccounts
-      ? top10Addresses
+      ? myTop10Addresses
       : [finalSceneCurrentAccount?.address.toLowerCase()];
     for (let i = 0; i < addressList.length; i++) {
       const addr = addressList[i];
@@ -458,7 +457,7 @@ function History({
     } else {
       dbLastCursorRef.current = 0;
       isSceneUsingAllAccounts
-        ? syncTop10History(top10Addresses, true)
+        ? syncTop10History(myTop10Addresses, true)
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
   });
@@ -660,7 +659,7 @@ function History({
     }
 
     const addresses = isSceneUsingAllAccounts
-      ? top10Addresses.map(a => a.toLowerCase())
+      ? myTop10Addresses.map(a => a.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     const isLoading = addresses.some(address => {
       return historyLoading[address];

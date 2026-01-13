@@ -60,6 +60,7 @@
         "LendingManageEMode": "Turn on E-Mode",
         "LendingManageEModeDisable": "Turn off E-Mode",
         "LendingDebtSwap": "Debt Swap",
+        "LendingRepayWithCollateral": "Repay with Collateral",
         "ReceivedGas": "Received Gas",
         "WithdrawnGas": "Withdrawn Gas",
         "DepositedGas": "Deposited Gas",
@@ -445,7 +446,9 @@
       "addressCount_one": "{{count}} Wallet",
       "addressCount_other": "{{count}} Wallets",
       "success": "{{type}} successfully!",
-      "importMore": "Import more Wallets"
+      "importMore": "Import more Wallets",
+      "viewAddress": "View Wallet",
+      "addressCount": "{{count}} Addresses"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Enter your seed phrase, separating each word with a space"
@@ -1449,7 +1452,8 @@
             "content": "It's not supported to import multiple {{0}} devices If you switch to a new {{0}} device, the current device's address list will be removed before starting the import process."
           }
         }
-      }
+      },
+      "importing": "Importing..."
     },
     "unlock": {
       "btn": {
@@ -2725,7 +2729,12 @@
       },
       "repayDetail": {
         "actions": "Repay",
-        "approveAndRepay": "Approve and Repay"
+        "approveAndRepay": "Approve and Repay",
+        "repayWith": "Repay with",
+        "tabs": {
+          "wallet": "Wallet balance",
+          "collateral": "Collateral"
+        }
       },
       "supplyDetail": {
         "actions": "Supply",
@@ -2758,7 +2767,13 @@
         "closeDesc": "Disabling this asset as collateral affects your borrowing power and Health Factor.",
         "enableIsolationModeDesc": "You are entering Isolation mode. In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable CRV as collateral before borrowing another asset.",
         "exitIsolationModeDesc": "You will exit Isolation mode and other tokens can now be used as collateral.",
-        "riskToLiquidationText": "You can not switch usage as collateral mode for this currency, because it will cause collateral call"
+        "riskToLiquidationText": "You can not switch usage as collateral mode for this currency, because it will cause collateral call",
+        "toggleRiskTexts": {
+          "doNotHaveSuppliesInThisCurrency": "You do not have supplies in this currency",
+          "canNotUseThisCurrencyAsCollateral": "You can not use this currency as collateral",
+          "canNotSwitchUsageAsCollateralMode": "You can not switch usage as collateral mode for this currency, because it will cause collateral call",
+          "zeroLTVWithdrawBlocked": "Assets with zero LTV ({{assets}}) must be withdrawn or disabled as collateral to perform this action"
+        }
       },
       "borrowDetail": {
         "actions": "Borrow",
@@ -2859,6 +2874,13 @@
             "borrow": "My borrows"
           }
         },
+        "collateralSwapSelector": {
+          "title": "Select Collateral Token",
+          "header": {
+            "assets": "Token",
+            "collateral": "My collateral"
+          }
+        },
         "overview": {
           "title": "Asset category",
           "row": {
@@ -2891,12 +2913,38 @@
         "lpRiskWarning": "Low health factor after swap. Your position will carry a higher risk of liquidation.",
         "lpDangerWarning": "Your health factor after this swap will be critically low and may result in liquidation. Please choose a different asset or reduce the swap amount to stay safe."
       },
+      "repayWithCollateral": {
+        "toRepay": "Expected amount to repay",
+        "repayWith": "Collateral to repay with",
+        "action": {
+          "title": "Repay with {{collateral}}"
+        },
+        "collateralNotEnough": "Your collateral balance is lower than the selected amount.",
+        "overview": {
+          "title": "Transaction Overview",
+          "borrowValueAfter": "Borrow balance after repay",
+          "collateralValueAfter": "Collateral balance after repay"
+        },
+        "button": {
+          "repay": "Repay"
+        }
+      },
       "hfTips": {
         "desc": "If it drops below 1.0, your collateral may be liquidated.",
         "more": "More"
       },
       "disableBorrowTip": {
         "desc": "No supply: To borrow you need to supply assets as collateral."
+      }
+    },
+    "address": {
+      "receiveAssets": {
+        "title": "Receive assets",
+        "btnCopyAddress": "Copy Address",
+        "importTip": {
+          "title": "Import a wallet",
+          "desc": "Add an existing address with funds."
+        }
       }
     }
   },
@@ -3035,7 +3083,14 @@
         "title": "Risk Detected",
         "proceedBtn": "Proceed",
         "simpleExplanation": "Not supported"
+      },
+      "placeholders": {
+        "noTokens": "No tokens",
+        "noLpTokens": "No Liquidity Provider (LP) Token"
       }
+    },
+    "lpTokenModal": {
+      "desc": "This is a Liquidity Provider(LP) Token for {{protocolId}} "
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {
@@ -3262,6 +3317,13 @@
     "gotIt": "Got It",
     "autolock": {
       "never": "Never"
+    },
+    "toast": {
+      "clipboard": {
+        "copiedSeedPhrase": "Seed phrase copied. The clipboard will clear in 1 minute.",
+        "copiedPrivateKey": "Private key copied. The clipboard will clear in 1 minute.",
+        "pasted_and_cleared": "Pasted and clipboard cleared"
+      }
     }
   },
   "background": {

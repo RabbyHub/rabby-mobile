@@ -1,4 +1,4 @@
-import { ellipsis } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { addressUtils } from '@rabby-wallet/base-utils';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 
@@ -83,7 +83,7 @@ export class ContactBookService extends StoreServiceBase<ContactBookStore> {
       const { keepEmptyIfNotFound = false } = options || {};
       return {
         address: address.toLowerCase(),
-        alias: keepEmptyIfNotFound ? '' : ellipsis(address, 6),
+        alias: keepEmptyIfNotFound ? '' : addressUtils.ellipsis(address, 6),
         isDefaultAlias: true,
       };
     }

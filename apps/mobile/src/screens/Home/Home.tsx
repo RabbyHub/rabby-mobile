@@ -1,35 +1,80 @@
 import React from 'react';
 import { View, Animated } from 'react-native';
-import HeaderArea from './HeaderArea';
+import HomeHeaderArea from './HeaderArea';
+import { SingleHomeRightArea } from './SingleHomeRightArea';
 import { AssetContainer } from './AssetContainer';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { RightArea } from './SingleHomeRightArea';
 import { BottomBtns } from './components/BottomBtns';
 import { TopBg } from './components/BgComponents';
 import { useBgSize } from './hooks/useBgSize';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
-import { apisSingleHome, useSingleHomeIsDecrease } from './hooks/singleHome';
+import {
+  apisSingleHome,
+  useSingleHomeAccount,
+  useSingleHomeIsDecrease,
+} from './hooks/singleHome';
 import { useUnmount } from 'ahooks';
 import { HomeTopArea } from './components/HomeTopArea';
+import { HeaderBackPressable } from '@/hooks/navigation';
+
+function HomeHeader() {
+  const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.containerLeft}>
+        <HeaderBackPressable style={{ marginRight: 8 }} />
+        <HomeHeaderArea />
+      </View>
+      <View style={styles.containerRight}>
+        <SingleHomeRightArea />
+      </View>
+    </View>
+  );
+}
+
+const getHomeHeaderStyle = createGetStyles2024(
+  ({ colors2024, safeAreaInsets }) => {
+    return {
+      container: {
+        marginTop: safeAreaInsets.top,
+        height: 52,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        backgroundColor: 'transparent',
+        width: '100%',
+        zIndex: 10,
+      },
+
+      containerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        // ...makeDebugBorder(),
+        width: '100%',
+        flexShrink: 1,
+      },
+
+      containerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        flexShrink: 0,
+        // ...makeDebugBorder('green'),
+      },
+    };
+  },
+);
 
 function SingleAddressHome(): JSX.Element {
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle: getStyles });
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
-  const { topHeight } = useBgSize();
-  const route =
-    useRoute<
-      GetNestedScreenRouteProp<
-        'SingleAddressNavigatorParamList',
-        'SingleAddressHome'
-      >
-    >();
-  const currentAccount = route?.params?.account;
+  const { safeTop, topHeight } = useBgSize();
+  const { currentAccount } = useSingleHomeAccount();
 
   const { isDecrease } = useSingleHomeIsDecrease();
 
@@ -47,12 +92,6 @@ function SingleAddressHome(): JSX.Element {
 
   useRendererDetect({ name: 'SingleAddressHome' });
 
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: () => <SingleAddressHome.HeaderArea />,
-      headerRight: () => <SingleAddressHome.RightArea />,
-    });
-  }, [setNavigationOptions]);
   const handleTouchEnd = () => {
     apisSingleHome.setFoldChart(true);
   };
@@ -72,6 +111,7 @@ function SingleAddressHome(): JSX.Element {
         },
       ]}>
       <TopBg fadeAnim={fadeAnim} isDecrease={isDecrease} />
+
       <View style={styles.safeView} onTouchStart={handleTouchEnd}>
         <HomeTopArea />
         <AssetContainer onReachTopStatusChange={handleReachTopStatusChange} />
@@ -83,8 +123,7 @@ function SingleAddressHome(): JSX.Element {
   );
 }
 
-SingleAddressHome.RightArea = RightArea;
-SingleAddressHome.HeaderArea = HeaderArea;
+SingleAddressHome.Header = HomeHeader;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   rootScreenContainer: {

@@ -104,13 +104,9 @@ import {
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { useFoldMultiChartStore } from '../Address/components/MultiAssets/RenderRow/CurveChart';
+import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
-import {
-  RNGHPressable,
-  RNGHTouchableOpacity,
-} from '@/components/customized/reexports';
 import { TABITEM_H } from './components/CustomTabBar';
 import {
   refreshSuccessAndFailList,
@@ -131,6 +127,9 @@ import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { isNonPublicProductionEnv } from '@/constant';
+import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
+import { perfEvents } from '@/core/utils/perf';
+import { refreshDayCurve } from '@/hooks/useMultiCurve';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -145,8 +144,7 @@ function couldDoRefresh() {
 const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
 
 const OverViewComponent = React.memo(
-  ({}: // multi24HBalanceReturn,
-  React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
+  ({}: React.ComponentProps<TabMultiAssetsProps['OverViewComponent']>) => {
     const navigation = useRabbyAppNavigation();
     const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({
@@ -298,39 +296,47 @@ const OverViewComponent = React.memo(
       }, []),
     );
 
-    const { top10Addresses } = useAccountInfo();
-    console.log('[MultiAddressHome] refresh MultiAddressHome exec');
+    const { myTop10Addresses } = useAccountInfo();
+
     useFocusEffect(
       useCallback(() => {
         if (!couldDoRefresh()) return;
-        requestAnimationFrame(() => {
-          triggerUpdate().then(balanceAccounts =>
-            refresh24hAssets({ balanceAccounts }),
-          );
-          triggerUpdateAlert();
-          // // leave here to measure perf impact
-          // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-          syncTop10History(top10Addresses, false);
+        triggerUpdate().then(balanceAccounts => {
+          // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+          refresh24hAssets({ balanceAccounts });
+          refreshDayCurve({ balanceAccounts });
         });
-      }, [triggerUpdate, triggerUpdateAlert, top10Addresses]),
+        triggerUpdateAlert();
+        // // leave here to measure perf impact
+        // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
+        syncTop10History(myTop10Addresses, false);
+      }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
     );
 
     const onRefresh = useCallback(() => {
       if (!couldDoRefresh()) return;
+
+      perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
       Promise.all([
         // force update balance from server api
-        triggerUpdate(true).then(balanceAccounts =>
-          refresh24hAssets({ force: true, balanceAccounts }),
-        ),
+        triggerUpdate(true).then(balanceAccounts => {
+          refresh24hAssets({ force: true, balanceAccounts });
+          refreshDayCurve({ force: true, balanceAccounts });
+        }),
         checkAddressesEligibility(true),
       ]).finally(() => {
         // update at background
         forceUpdate();
         apisLending.fetchLendingData();
-        syncTop10History(top10Addresses, true);
+        syncTop10History(myTop10Addresses, true);
         currencyService.syncCurrencyList(true);
       });
-    }, [triggerUpdate, checkAddressesEligibility, forceUpdate, top10Addresses]);
+    }, [
+      triggerUpdate,
+      checkAddressesEligibility,
+      forceUpdate,
+      myTop10Addresses,
+    ]);
 
     // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
     const handlePressWatchlist = useCallback(() => {
@@ -411,12 +417,6 @@ const OverViewComponent = React.memo(
             break;
           }
           case MultiHomeFeatTitle.Ecosystem:
-            break;
-          case MultiHomeFeatTitle.Buy:
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBuy,
-              params: {},
-            });
             break;
           case MultiHomeFeatTitle.Perps:
             navigation.push(RootNames.StackTransaction, {
@@ -521,6 +521,7 @@ const OverViewComponent = React.memo(
           <RefreshControl refreshing={false} onRefresh={onRefresh} />
         }>
         <MultiAddressHomeHeader onRefresh={onRefresh} />
+
         <HomeCenterArea />
 
         <View style={styles.grid}>
@@ -653,10 +654,6 @@ function MultiAddressHome(): JSX.Element {
     }
   }, []);
 
-  const setIsFoldMultiChart = useFoldMultiChartStore(
-    s => s.setIsFoldMultiChart,
-  );
-
   useEffect(() => {
     apisHomeTabIndex.setTabIndex(0);
   }, []);
@@ -690,9 +687,6 @@ function MultiAddressHome(): JSX.Element {
           onIndexChange={onIndexChange}
           OverViewComponent={OverViewComponent}
         />
-
-        {/* show search bar when Overview tab */}
-        {/* <GlobalSearchBar /> */}
       </View>
 
       <HomeGuidanceMultipleTabs />
@@ -702,473 +696,471 @@ function MultiAddressHome(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(
-  ({ colors2024, isLight, bottomSafeArea }) => ({
-    screenContainer: {
-      paddingTop: 0,
-    },
-    paddingContainer: {
-      paddingHorizontal: 0,
-      flex: 1,
-      flexGrow: 1,
-    },
-    container: {
-      borderWidth: 1,
-      borderColor: 'red',
-      flexGrow: 1,
-      minHeight: '100%',
-    },
-    headerContainer: {
-      backgroundColor: 'transparent',
-      paddingTop: 64,
-    },
-    bgImage: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-    },
-    redDot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: colors2024['red-default'],
-      position: 'absolute',
-      top: 0,
-      right: 13,
-    },
-    rootScreenContainer: {
-      // ...makeDebugBorder(),
-      // paddingHorizontal: 20,
-      flex: 1,
-      position: 'relative',
-      overflow: 'hidden',
-    },
-    scroll: {
-      flex: 1,
-      marginTop: TAB_HEADER_MIN_HEIGHT,
-    },
-    scrollContainer: {
-      // paddingTop: 88,
-      flexGrow: 1,
-      minHeight: '100%',
-      marginTop: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
-    },
-    menuHeader: {
-      height: 30,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-      marginHorizontal: 4,
-      margin: 12,
-      marginBottom: 16,
-      marginTop: 0,
-    },
-    pinHeader: {
-      marginTop: -8,
-    },
-    pinGridText: {
-      color: colors2024['neutral-body'],
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 20,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    gridText: {
-      color: colors2024['neutral-title-1'],
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 20,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    badgeWrapper: {
-      display: 'flex',
-      flexDirection: 'row',
-      width: '100%',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    iconWrapper: {
-      // height: 36,
-      // width: 36,
-      // backgroundColor: colors2024['brand-light-1'],
-      // borderRadius: 12,
-      // justifyContent: 'center',
-      // alignItems: 'center',
-    },
-    rightBadgeWrapper: {
-      position: 'relative',
-      right: -4,
-      alignSelf: 'flex-start',
-    },
-    badgeStyle: {},
-    headerText: {
-      color: colors2024['neutral-title-1'],
-      fontWeight: '700',
-      fontSize: 17,
-      lineHeight: 22,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    pinGrid: {
-      flexDirection: 'row',
-      flexWrap: 'nowrap',
-      borderRadius: 8,
-      gap: 10,
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-      width: '100%',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-      marginTop: 20,
-    },
-    emptyItem: {
-      backgroundColor: 'transparent',
-    },
-    pinGridItem: {
-      backgroundColor: colord(
-        isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
-      )
-        .alpha(0.6)
-        .toRgbString(),
-      borderRadius: 10,
-      flexShrink: 0,
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingHorizontal: 10,
-      height: 42,
-      gap: 10,
-      position: 'relative',
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      borderWidth: 1,
-    },
-    menuContainer: {
-      marginTop: 0,
-    },
-    grid: {
-      marginTop: 0,
-      // flexDirection: 'row',
-      // flexWrap: 'wrap',
-      // borderRadius: 8,
-      // gap: ITEM_GRID_GAP,
-      // justifyContent: 'space-between',
-      // alignItems: 'flex-start',
-      width: '100%',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-      // paddingHorizontal: 8,
-      // paddingVertical: 12,
-      // paddingTop: 16,re
-    },
-    gridGradientOutline: {
-      backgroundColor: 'transparent',
-      paddingHorizontal: 8,
-      paddingTop: 16,
-      paddingBottom: 12,
-      width: '100%',
-      gap: 16,
-    },
-    gridItemsWrap: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      borderRadius: 8,
-      rowGap: ITEM_GRID_GAP + 2,
-      columnGap: ITEM_GRID_GAP,
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      width: '100%',
-    },
-    primaryActionsContainer: {
-      flexDirection: 'row',
-      gap: 10,
-    },
-    primaryActionButton: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 4,
-      borderRadius: 10,
-      height: 52,
-      paddingHorizontal: 16,
-    },
-    primaryActionText: {
-      color: colors2024['neutral-InvertHighlight'],
-      fontWeight: '700',
-      fontSize: 18,
-      lineHeight: 22,
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
-    },
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  screenContainer: {
+    paddingTop: 0,
+  },
+  paddingContainer: {
+    paddingHorizontal: 0,
+    flex: 1,
+    flexGrow: 1,
+  },
+  container: {
+    borderWidth: 1,
+    borderColor: 'red',
+    flexGrow: 1,
+    minHeight: '100%',
+  },
+  headerContainer: {
+    backgroundColor: 'transparent',
+    paddingTop: 64,
+  },
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  redDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors2024['red-default'],
+    position: 'absolute',
+    top: 0,
+    right: 13,
+  },
+  rootScreenContainer: {
+    // ...makeDebugBorder(),
+    // paddingHorizontal: 20,
+    flex: 1,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  scroll: {
+    flex: 1,
+    marginTop: TAB_HEADER_MIN_HEIGHT,
+  },
+  scrollContainer: {
+    // paddingTop: 88,
+    flexGrow: 1,
+    minHeight: '100%',
+    marginTop: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
+  },
+  menuHeader: {
+    height: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
+    marginHorizontal: 4,
+    margin: 12,
+    marginBottom: 16,
+    marginTop: 0,
+  },
+  pinHeader: {
+    marginTop: -8,
+  },
+  pinGridText: {
+    color: colors2024['neutral-body'],
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
+  },
+  gridText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
+  },
+  badgeWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  iconWrapper: {
+    // height: 36,
+    // width: 36,
+    // backgroundColor: colors2024['brand-light-1'],
+    // borderRadius: 12,
+    // justifyContent: 'center',
+    // alignItems: 'center',
+  },
+  rightBadgeWrapper: {
+    position: 'relative',
+    right: -4,
+    alignSelf: 'flex-start',
+  },
+  badgeStyle: {},
+  headerText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
+    fontSize: 17,
+    lineHeight: 22,
+    textAlign: 'left',
+    fontFamily: 'SF Pro Rounded',
+  },
+  pinGrid: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    borderRadius: 8,
+    gap: 10,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    marginTop: 20,
+  },
+  emptyItem: {
+    backgroundColor: 'transparent',
+  },
+  pinGridItem: {
+    backgroundColor: colord(
+      isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+    )
+      .alpha(0.6)
+      .toRgbString(),
+    borderRadius: 10,
+    flexShrink: 0,
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    height: 42,
+    gap: 10,
+    position: 'relative',
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderWidth: 1,
+  },
+  menuContainer: {
+    marginTop: 0,
+  },
+  grid: {
+    marginTop: 0,
+    // flexDirection: 'row',
+    // flexWrap: 'wrap',
+    // borderRadius: 8,
+    // gap: ITEM_GRID_GAP,
+    // justifyContent: 'space-between',
+    // alignItems: 'flex-start',
+    width: '100%',
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    // paddingHorizontal: 8,
+    // paddingVertical: 12,
+    // paddingTop: 16,re
+  },
+  gridGradientOutline: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
+    paddingTop: 16,
+    paddingBottom: 12,
+    width: '100%',
+    gap: 16,
+  },
+  gridItemsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    borderRadius: 8,
+    rowGap: ITEM_GRID_GAP + 2,
+    columnGap: ITEM_GRID_GAP,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  primaryActionsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  primaryActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderRadius: 10,
+    height: 52,
+    paddingHorizontal: 16,
+  },
+  primaryActionText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+  },
 
-    gridItem: {
-      borderWidth: 2,
-      borderColor: isLight
-        ? colors2024['neutral-InvertHighlight']
-        : 'transparent',
-      backgroundColor: isLight
-        ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
-        : colors2024['neutral-bg-2'],
-      width: '48%', // default
-      minWidth: 0,
-      borderRadius: 16,
-      flexShrink: 0,
-      padding: 16,
-      display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
-      height: 96,
-      gap: 8,
-      position: 'relative',
-    },
-    pendingContainer: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    pendingBlur: {
-      paddingLeft: 20,
-      paddingRight: 18,
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 8,
-      gap: 0,
-      width: 'auto',
-      borderRadius: 20,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: colors2024['neutral-bg-1'],
-      backgroundColor: colord(
-        isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
-      )
-        .alpha(IS_ANDROID ? 1 : 0.89)
-        .toRgbString(),
-    },
-    pendingText: {
-      marginLeft: 2,
-      color: colors2024['orange-default'],
-      fontWeight: '700',
-      fontSize: 16,
-      lineHeight: 20,
-      fontFamily: 'SF Pro Rounded',
-    },
-    floatBottom: {
-      // position: 'absolute',
-      // bottom: 0,
-      // left: 0,
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: Dimensions.get('window').width,
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
+  gridItem: {
+    borderWidth: 2,
+    borderColor: isLight
+      ? colors2024['neutral-InvertHighlight']
+      : 'transparent',
+    backgroundColor: isLight
+      ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
+      : colors2024['neutral-bg-2'],
+    width: '48%', // default
+    minWidth: 0,
+    borderRadius: 16,
+    flexShrink: 0,
+    padding: 16,
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    height: 96,
+    gap: 8,
+    position: 'relative',
+  },
+  pendingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pendingBlur: {
+    paddingLeft: 20,
+    paddingRight: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    gap: 0,
+    width: 'auto',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: colors2024['neutral-bg-1'],
+    backgroundColor: colord(
+      isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2'],
+    )
+      .alpha(IS_ANDROID ? 1 : 0.89)
+      .toRgbString(),
+  },
+  pendingText: {
+    marginLeft: 2,
+    color: colors2024['orange-default'],
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+  },
+  floatBottom: {
+    // position: 'absolute',
+    // bottom: 0,
+    // left: 0,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: Dimensions.get('window').width,
+    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
 
-      // height: 128,
-    },
-    search: {
-      width: '100%',
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      height: 60,
-      borderRadius: 100,
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginVertical: 20,
-      paddingHorizontal: 28,
-      gap: 8,
-    },
-    searchText: {
-      fontSize: 22,
-      lineHeight: 28,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-    },
+    // height: 128,
+  },
+  search: {
+    width: '100%',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    height: 60,
+    borderRadius: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    paddingHorizontal: 28,
+    gap: 8,
+  },
+  searchText: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
 
-    noAssetsContainer: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-      paddingHorizontal: 16,
-      paddingBottom: 50,
-      borderRadius: 50,
-      overflow: 'hidden',
-    },
-    bgLeft: { position: 'absolute', top: 0, left: 0 },
-    bgRight: { position: 'absolute', top: 35, right: 0 },
-    bgb1: {
-      position: 'absolute',
-      top: 52,
-      left: 16,
-      transform: [{ scale: 0.5 }],
-    },
-    bgb2: {
-      position: 'absolute',
-      top: 76,
-      right: 34,
-      transform: [{ scale: 0.5 }],
-    },
-    noAssetsTitle: {
-      color: colors2024['neutral-title-1'],
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 28,
-      fontStyle: 'normal',
-      fontWeight: '700',
-      lineHeight: 36,
-      marginVertical: 42,
-    },
+  noAssetsContainer: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    paddingHorizontal: 16,
+    paddingBottom: 50,
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
+  bgLeft: { position: 'absolute', top: 0, left: 0 },
+  bgRight: { position: 'absolute', top: 35, right: 0 },
+  bgb1: {
+    position: 'absolute',
+    top: 52,
+    left: 16,
+    transform: [{ scale: 0.5 }],
+  },
+  bgb2: {
+    position: 'absolute',
+    top: 76,
+    right: 34,
+    transform: [{ scale: 0.5 }],
+  },
+  noAssetsTitle: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 28,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 36,
+    marginVertical: 42,
+  },
 
-    noAssetsItem: {
-      paddingHorizontal: 16,
-      paddingVertical: 26,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      borderRadius: 24,
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    noAssetsIconWrapper: {
-      width: 28,
-      height: 28,
-      backgroundColor: colors2024['brand-light-1'],
-      borderRadius: 9.8,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    buyIcon: {
-      alignSelf: 'flex-start',
-    },
-    noAssetsRight: {
-      gap: 4,
-      flexWrap: 'wrap',
-      flex: 1,
-    },
-    noAssetsItemName: {
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
-      fontStyle: 'normal',
-      fontWeight: '700',
-      lineHeight: 22,
-    },
-    noAssetsItemDesc: {
-      maxWidth: '100%',
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontStyle: 'normal',
-      fontWeight: '400',
-      lineHeight: 20,
-    },
-    hidden: {
-      display: 'none',
-    },
-    curveBox: {
-      paddingHorizontal: 15,
-      paddingTop: 12,
-    },
-    curveCard: {
-      borderRadius: 20,
-      paddingVertical: 24,
-      paddingHorizontal: 20,
-      borderWidth: 0,
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-line'],
-      backgroundColor: 'transparent',
-    },
-    curveCardInner: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%',
-    },
-    shadowView: {
-      ...Platform.select({
-        ios: {
-          shadowColor: colors2024['neutral-black'],
-          shadowOffset: {
-            width: 0,
-            height: 4,
-          },
-          shadowOpacity: 0.03,
-          shadowRadius: 10,
-          elevation: 8,
+  noAssetsItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 26,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  noAssetsIconWrapper: {
+    width: 28,
+    height: 28,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 9.8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buyIcon: {
+    alignSelf: 'flex-start',
+  },
+  noAssetsRight: {
+    gap: 4,
+    flexWrap: 'wrap',
+    flex: 1,
+  },
+  noAssetsItemName: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  noAssetsItemDesc: {
+    maxWidth: '100%',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  hidden: {
+    display: 'none',
+  },
+  curveBox: {
+    paddingHorizontal: 15,
+    paddingTop: 12,
+  },
+  curveCard: {
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderWidth: 0,
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-line'],
+    backgroundColor: 'transparent',
+  },
+  curveCardInner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  shadowView: {
+    ...Platform.select({
+      ios: {
+        shadowColor: colors2024['neutral-black'],
+        shadowOffset: {
+          width: 0,
+          height: 4,
         },
-      }),
-    },
-    skeleton: {
-      borderRadius: 8,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
-    },
-    curveContainer: {
-      gap: 6,
-    },
-    arrow: {
-      width: 42,
-      height: 42,
-      borderRadius: 30,
-    },
-    changePercent: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['green-default'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    netWorth: {
-      fontSize: 42,
-      lineHeight: 46,
-      fontWeight: '900',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    changeSection: {
-      flexDirection: 'row',
-      gap: 2,
-      marginTop: 4,
-      alignItems: 'center',
-    },
-    changeTime: {
-      fontSize: 16,
-      fontWeight: '400',
-      lineHeight: 20,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      marginLeft: 4,
-    },
-    globalWarning: {
-      marginHorizontal: 16,
-      marginTop: 16,
-      marginBottom: -16,
-    },
-    searchBarPlaceholder: {
-      height: 80,
-    },
-    topWrapper: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-    },
-  }),
-);
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 8,
+      },
+    }),
+  },
+  skeleton: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  curveContainer: {
+    gap: 6,
+  },
+  arrow: {
+    width: 42,
+    height: 42,
+    borderRadius: 30,
+  },
+  changePercent: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  netWorth: {
+    fontSize: 42,
+    lineHeight: 46,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changeSection: {
+    flexDirection: 'row',
+    gap: 2,
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  changeTime: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
+  },
+  globalWarning: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: -16,
+  },
+  searchBarPlaceholder: {
+    height: 80,
+  },
+  topWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+  },
+}));
 
 export default MultiAddressHome;
