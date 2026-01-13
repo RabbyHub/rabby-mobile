@@ -3315,6 +3315,9 @@
     },
     "check": "Check",
     "gotIt": "Got It",
+    "autolock": {
+      "never": "Never"
+    },
     "toast": {
       "clipboard": {
         "copiedSeedPhrase": "Seed phrase copied. The clipboard will clear in 1 minute.",
