@@ -135,8 +135,9 @@ import { FastTouchable } from '@/components/Perf/FastTouchable';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { trigger } from 'react-native-haptic-feedback';
 import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
-import _ from 'lodash';
+import _, { pull } from 'lodash';
 import { useHomeDrawerAnimateStore } from './hooks/useHomeDrawerAnimateStore';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -161,7 +162,6 @@ const OverViewComponent = React.memo(() => {
   const { width, height } = useWindowDimensions();
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
-  const pullThreshold = 50;
 
   const {
     alertInfo,
@@ -520,22 +520,60 @@ const OverViewComponent = React.memo(() => {
     return scrollY.value >= maxOffset;
   }, [scrollY]);
 
-  const collapsePanel = useCallback(() => {
-    translateY.value = withTiming(0, {
-      duration: 220,
+  const [bounces, setBounces] = useState(true);
+
+  const pullThreshold = 100;
+
+  const triggerImpact = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
     });
-    isExpanded.value = false;
-  }, [isExpanded, translateY]);
+  }, []);
+
+  const collapsePanel = useCallback(() => {
+    translateY.value = withTiming(0);
+    triggerImpact();
+  }, [translateY, triggerImpact]);
+
+  const panGesture = useMemo(() => {
+    let gesture = Gesture.Pan()
+      .shouldCancelWhenOutside(false)
+      .onStart(() => {
+        translateY.value = 0;
+        isExpanded.value = false;
+      })
+      .onUpdate(event => {
+        console.log('pan onUpdate', event.translationY, isAtBottom.value);
+        if (!isAtBottom.value) {
+          return;
+        }
+        if (event.translationY > 0) {
+          return;
+        }
+
+        translateY.value = event.translationY;
+      })
+      .onEnd(() => {
+        if (!isAtBottom.value) {
+          return;
+        }
+        if (translateY.value * -1 > 80) {
+          translateY.value = withTiming(-height);
+        } else {
+          translateY.value = withTiming(0);
+        }
+      });
+
+    return gesture;
+  }, [height, isAtBottom.value, isExpanded, translateY]);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => {
-        console.log('xxxxxxxx start');
         return false;
       },
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        console.log('xxxx, start', gestureState, isAtBottom.value);
-        // 只在底部且向上滑动时启用手势
         return isAtBottom.value && gestureState.dy < -5;
       },
       onPanResponderGrant: () => {
@@ -543,31 +581,30 @@ const OverViewComponent = React.memo(() => {
         isExpanded.value = false;
       },
       onPanResponderMove: (_, gestureState) => {
-        console.log('xxx move', gestureState, isAtBottom.value);
         if (!isAtBottom.value) {
           return;
         }
         if (gestureState.dy > 0) {
           return;
         }
+        setBounces(false);
         translateY.value = gestureState.dy;
       },
       onPanResponderRelease: (_, gestureState) => {
         if (!isAtBottom.value) {
           return;
         }
-        if (translateY.value * -1 > 80) {
+        if (translateY.value * -1 > pullThreshold) {
           translateY.value = withTiming(-height);
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
+          runOnJS(triggerImpact)();
         } else {
           translateY.value = withTiming(0);
         }
+        setBounces(true);
       },
       onPanResponderTerminate: () => {
         translateY.value = withTiming(0);
+        setBounces(true);
       },
     }),
   ).current;
@@ -605,27 +642,34 @@ const OverViewComponent = React.memo(() => {
     ],
   }));
 
+  const drawerScrollOffsetY = useSharedValue(0);
+
   const drawerGesture = useMemo(
     () =>
       Gesture.Pan()
         .onChange(event => {
+          console.log(
+            'drawer onChange',
+            event.translationY,
+            drawerScrollOffsetY.value,
+          );
           if (event.translationY <= 0) {
             return;
           }
+          if (drawerScrollOffsetY.value > 0) {
+            return;
+          }
+          console.log('drawer translateY set', event.translationY);
           translateY.value = (height - event.translationY) * -1;
         })
         .onEnd(() => {
-          if (translateY.value > height * -0.7) {
-            translateY.value = withTiming(0);
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
+          if (translateY.value > (height - pullThreshold) * -1) {
+            runOnJS(collapsePanel)();
           } else {
             translateY.value = withTiming(-height);
           }
         }),
-    [height, translateY],
+    [collapsePanel, drawerScrollOffsetY, height, translateY],
   );
 
   const drawerScrollableGesture = useMemo(
@@ -638,21 +682,29 @@ const OverViewComponent = React.memo(() => {
 
   const drawerTranslateYStyle = useAnimatedStyle(() => {
     return {
+      height: height,
       transform: [
         {
           translateY: interpolate(
             pullPercent.value,
             [-100, 0],
-            [0, height - safeTop - 20],
+            [0, height],
             Extrapolate.CLAMP,
           ),
         },
       ],
+      paddingTop: interpolate(
+        pullPercent.value,
+        [-100, 0],
+        [IS_ANDROID ? 12 : safeTop + 12, 0],
+        Extrapolate.CLAMP,
+      ),
     };
-  }, [height, pullThreshold, safeTop]);
+  }, [height, safeTop]);
 
   const panelScaleStyle = useAnimatedStyle(() => {
     return {
+      transformOrigin: 'top',
       transform: [
         {
           scale: interpolate(
@@ -683,11 +735,10 @@ const OverViewComponent = React.memo(() => {
 
   return (
     <View style={styles.pullUpWrapper}>
-      {/* <GestureDetector gesture={panGesture}> */}
       <Animated.View style={mainStyle}>
-        {/* <GestureDetector gesture={scrollableGesture}> */}
         <Tabs.ScrollView
           {...panResponder.panHandlers}
+          bounces={bounces}
           tvParallaxProperties={undefined}
           showsVerticalScrollIndicator={false}
           style={[styles.scroll, { flex: undefined }]}
@@ -696,7 +747,7 @@ const OverViewComponent = React.memo(() => {
             {
               // paddingBottom: bottom + 82,
               paddingBottom:
-                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
+                Platform.OS === 'android' ? Math.max(bottom, 16) : bottom,
             },
           ]}
           overScrollMode={'never'}
@@ -708,9 +759,7 @@ const OverViewComponent = React.memo(() => {
             layoutHeight.value = event.nativeEvent.layout.height;
           }}
           refreshControl={
-            Platform.OS === 'ios' ? (
-              <RefreshControl refreshing={false} onRefresh={onRefresh} />
-            ) : undefined
+            <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
           <MultiAddressHomeHeader onRefresh={onRefresh} />
           <HomeCenterArea />
@@ -754,51 +803,32 @@ const OverViewComponent = React.memo(() => {
             </View>
             <BrowserSearchEntry />
 
-            <View style={styles.swipeUpHint}>
-              <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
-              <Text style={styles.swipeUpHintText}>
-                Swipe up to explore more dApps
-              </Text>
-            </View>
+            <GestureDetector gesture={panGesture}>
+              <View style={styles.swipeUpHint}>
+                <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
+                <Text style={styles.swipeUpHintText}>
+                  Swipe up to explore more dApps
+                </Text>
+              </View>
+            </GestureDetector>
           </View>
         </Tabs.ScrollView>
-        {/* </GestureDetector> */}
       </Animated.View>
-      {/* </GestureDetector> */}
       <GestureDetector gesture={drawerGesture}>
         <Animated.View
           pointerEvents="auto"
-          style={[
-            styles.pullUpPanel,
-            drawerTranslateYStyle,
-            {
-              paddingTop: safeTop + 20,
-              height: height,
-            },
-          ]}>
-          <Animated.View
-            style={[
-              styles.pullOverlay,
-              {
-                top: -90 + safeTop + 20,
-              },
-              overlayOpacityStyle,
-            ]}
-          />
-          <Animated.View
-            style={[
-              {
-                transformOrigin: 'top',
-                // height: 500,
-              },
-              panelScaleStyle,
-            ]}>
+          style={[styles.pullUpPanel, drawerTranslateYStyle]}>
+          <Animated.View style={[styles.pullOverlay, overlayOpacityStyle]} />
+          <Animated.View style={[panelScaleStyle]}>
             <BrowserFavoriteManage
               onPressHome={() => {
                 collapsePanel();
               }}
-              // todo fix ts error
-              scrollableGesture={drawerScrollableGesture as any}
+              scrollableGesture={drawerScrollableGesture}
+              onScroll={event => {
+                const offsetY = event.nativeEvent.contentOffset.y;
+                drawerScrollOffsetY.value = offsetY;
+              }}
             />
           </Animated.View>
         </Animated.View>

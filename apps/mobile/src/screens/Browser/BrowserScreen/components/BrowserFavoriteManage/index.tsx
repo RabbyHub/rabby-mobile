@@ -5,14 +5,25 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { atom } from 'jotai';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import {
+  FlatListProps,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { BrowserSearch } from '../BrowserSearch';
 import { BrowserFavorite } from './BrowserFavorite';
 // import { TouchableOpacity } from 'react-native-gesture-handler';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ReactIconHome } from '@/assets2024/icons/browser';
-import { SimultaneousGesture } from 'react-native-gesture-handler';
+import {
+  NativeGesture,
+  SimultaneousGesture,
+} from 'react-native-gesture-handler';
+import { pad } from 'lodash';
+import { DappInfo } from '@/core/services/dappService';
 
 export const activeTabAtom = atom('favorites');
 
@@ -20,10 +31,12 @@ export function BrowserFavoriteManage({
   isInBottomSheet,
   onPressHome,
   scrollableGesture,
+  onScroll,
 }: {
   isInBottomSheet?: boolean;
   onPressHome?(): void;
-  scrollableGesture?: SimultaneousGesture;
+  scrollableGesture?: NativeGesture;
+  onScroll?: FlatListProps<DappInfo>['onScroll'];
 }): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
@@ -45,6 +58,7 @@ export function BrowserFavoriteManage({
       <View style={styles.favoritesList}>
         <BrowserFavorite
           scrollableGesture={scrollableGesture}
+          onScroll={onScroll}
           isInBottomSheet={isInBottomSheet}
           onPress={dapp => {
             openTab(dapp.url || dapp.origin);
@@ -59,13 +73,8 @@ export function BrowserFavoriteManage({
         style={[
           styles.footer,
           {
-            position: 'absolute',
-            right: 0,
-            bottom: 0,
-            marginTop: 'auto',
-            paddingBottom: bottom || 12,
-            // marginBottom:
-            //   Platform.OS === 'android' ? androidOnlyBottomOffset : 20,
+            paddingBottom:
+              Platform.OS === 'ios' ? bottom : Math.max(bottom, 12),
           },
         ]}>
         <TouchableOpacity onPress={onPressHome}>

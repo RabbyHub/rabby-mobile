@@ -1,11 +1,12 @@
 import React from 'react';
 import {
   GestureDetector,
+  NativeGesture,
   type SimultaneousGesture,
 } from 'react-native-gesture-handler';
 
 interface DraggableScrollableProps {
-  scrollableGesture?: SimultaneousGesture;
+  scrollableGesture?: NativeGesture;
   children: React.ReactNode;
 }
 
