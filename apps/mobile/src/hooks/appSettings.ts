@@ -38,6 +38,12 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
 export const storeApiExpSettingData = {
   set: setExpSettingData,
   get: getExpSettingData,
+  getTimeTipAboutSeedPhraseAndPrivateKey: () => {
+    if (!__DEV__) return 'pasted';
+
+    return experimentalSettingsStore.getState()
+      .timeTipAboutSeedPhraseAndPrivateKey;
+  },
 };
 
 function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
