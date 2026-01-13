@@ -175,7 +175,7 @@ export const HistoryTokenList = ({
         isApprove ? approve?.price : receives?.[0]?.price || sends?.[0]?.price
       ) as number;
       const isUnlimited =
-        singleAmount && new BigNumber(singleAmount).gte(10 ** 9);
+        isApprove && singleAmount && new BigNumber(singleAmount).gte(10 ** 9);
       const appvoveAmmountStr = singleAmount
         ? isUnlimited
           ? t('page.transactions.detail.Unlimited')
