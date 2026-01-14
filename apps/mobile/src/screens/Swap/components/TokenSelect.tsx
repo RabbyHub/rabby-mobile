@@ -77,6 +77,9 @@ type QueryConditions = {
 export type TokenSelectInst = {
   openTokenModal: (conds?: Partial<QueryConditions>) => void;
 };
+
+const SHOW_CHAIN_FILTER_SCENES = ['swapFrom', 'bridgeFrom'];
+
 const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
   (
     {
@@ -455,7 +458,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
           chainServerId={queryConds.chainServerId}
           disabledTips={'Not supported'}
           supportChains={supportChains}
-          hideChainFilter={type === 'swapFrom' ? false : true}
+          hideChainFilter={!SHOW_CHAIN_FILTER_SCENES.includes(type)}
           showTestNetSwitch={isShowTestnet}
           selectTab={selectedTab}
           onTabChange={onTabChange}
