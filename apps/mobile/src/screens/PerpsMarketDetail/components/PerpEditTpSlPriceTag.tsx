@@ -234,6 +234,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   React.useEffect(() => {
     if (!modalVisible) {
       setAutoClosePrice('');
+      setActiveOption(0);
       cancel();
     }
   }, [cancel, setAutoClosePrice, modalVisible]);
