@@ -1,5 +1,6 @@
 import { Chain, CHAINS_ENUM, getChainList } from '@/constant/chains';
 import { TestnetChain } from '@/core/services/customTestnetService';
+import { ITokenItem } from '@/store/tokens';
 import {
   ChainWithBalance,
   TokenItem,
@@ -367,4 +368,26 @@ export const getChain = (chainId?: string) => {
   return findChain({
     serverId: chainId,
   });
+};
+
+export const getTop3Chains = (tokens: ITokenItem[]): string[] => {
+  if (!tokens.length) {
+    return [];
+  }
+
+  const chainValueMap: Record<string, number> = {};
+
+  tokens.forEach(token => {
+    const chainId = token.chain;
+    if (!chainId) {
+      return;
+    }
+    const usdValue = token.is_core ? token.usd_value ?? 0 : 0;
+    chainValueMap[chainId] = (chainValueMap[chainId] || 0) + usdValue;
+  });
+
+  return Object.entries(chainValueMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([chainId]) => chainId);
 };

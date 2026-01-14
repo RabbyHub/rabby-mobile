@@ -860,7 +860,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               handleMax={handleMax}
               onSliderScrollEnabledChange={setScrollEnabled}
               onChangeToken={token => {
+                const chainItem = findChainByServerID(token.chain);
                 const normalSetChainToken = () => {
+                  if (chainItem?.enum !== fromChain) {
+                    switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH);
+                  }
                   handleAmountChange('');
                   setFromToken(token);
                 };
