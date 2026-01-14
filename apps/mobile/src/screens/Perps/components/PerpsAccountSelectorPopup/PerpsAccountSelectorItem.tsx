@@ -122,23 +122,15 @@ export const PerpsAccountSelectorItem: React.FC<{
                 {info ? (
                   <View style={styles.perpsInfo}>
                     <Text style={styles.perpsUsdValue}>
-                      {formatUsdValue(
-                        Number(info?.marginSummary.accountValue || 0),
-                      )}
+                      {formatUsdValue(Number(info?.withdrawable || 0))}
                     </Text>
-                    {positionAllPnl !== null ? (
-                      <Text
-                        style={[
-                          styles.pnl,
-                          positionAllPnl >= 0 ? styles.pnlGreen : styles.pnlRed,
-                        ]}>
-                        {positionAllPnl >= 0 ? '+' : '-'}$
-                        {splitNumberByStep(Math.abs(positionAllPnl).toFixed(2))}
+                    {info?.assetPositions?.length ? (
+                      <Text style={[styles.positionCountText]}>
+                        {info?.assetPositions?.length}{' '}
+                        {t('page.perpsDetail.PerpsPosition.title')}
                       </Text>
                     ) : (
-                      <Text style={styles.noPositionText}>
-                        {t('page.perps.PerpsAccountSelectorPopup.noPosition')}
-                      </Text>
+                      <Text style={styles.noPositionText}> </Text>
                     )}
                   </View>
                 ) : null}
@@ -304,17 +296,12 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       color: colors2024['neutral-info'],
     },
-    pnl: {
+    positionCountText: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '500',
-    },
-    pnlRed: {
-      color: colors2024['red-default'],
-    },
-    pnlGreen: {
-      color: colors2024['green-default'],
+      fontWeight: '400',
+      color: colors2024['neutral-secondary'],
     },
     perpsUsdValue: {
       fontFamily: 'SF Pro Rounded',

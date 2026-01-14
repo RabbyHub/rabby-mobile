@@ -39,6 +39,9 @@ import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsSlider } from './PerpsSlider';
 import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
+import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
+import { PerpMarginModePopup } from './PerpMarginModePopup';
+import { toast } from '@/components/Toast';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -53,15 +56,18 @@ export const PerpsOpenPositionPopup: React.FC<{
   maxNtlValue: number;
   availableBalance: number;
   setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
+  currentAccountHasPosition: boolean;
+  currentAccountMarginMode: 'cross' | 'isolated';
   onCancel: () => void;
   onConfirm: () => void;
-  marketDataItem: MarketData;
+  marketDataItem?: MarketData;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx?: MarketData | null;
   handleOpenPosition: (params: {
     coin: string;
     size: string;
     leverage: number;
+    marginMode: 'cross' | 'isolated';
     direction: 'Long' | 'Short';
     midPx: string;
     tpTriggerPx?: string;
@@ -85,6 +91,8 @@ export const PerpsOpenPositionPopup: React.FC<{
   pxDecimals,
   szDecimals,
   availableBalance,
+  currentAccountHasPosition,
+  currentAccountMarginMode,
   onCancel,
   onConfirm,
   handleOpenPosition,
@@ -114,6 +122,11 @@ export const PerpsOpenPositionPopup: React.FC<{
   const [selectedLeverage, setLeverage] = React.useState<number | undefined>(
     leverageRang[1],
   );
+  const [selectedMarginMode, setSelectedMarginMode] = React.useState<
+    'cross' | 'isolated'
+  >(currentAccountMarginMode);
+  const [isShowMarginModePopup, setIsShowMarginModePopup] =
+    React.useState(false);
   const leverage = selectedLeverage || 1;
   const [tpTriggerPx, setTpTriggerPx] = React.useState<string>('');
   const [slTriggerPx, setSlTriggerPx] = React.useState<string>('');
@@ -236,6 +249,11 @@ export const PerpsOpenPositionPopup: React.FC<{
     t,
   ]);
 
+  const handleOpenChangeMarginModePopup = useMemoizedFn(() => {
+    console.log('handleOpenChangeMarginModePopup');
+    setIsShowMarginModePopup(true);
+  });
+
   const leverageRangeValidation = React.useMemo(() => {
     if (selectedLeverage == null || Number.isNaN(+selectedLeverage)) {
       return {
@@ -292,6 +310,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       coin,
       size: tradeSize,
       leverage,
+      marginMode: selectedMarginMode,
       direction,
       midPx: markPrice.toString(),
       tpTriggerPx: tpTriggerPx ? tpTriggerPx : undefined,
@@ -328,11 +347,11 @@ export const PerpsOpenPositionPopup: React.FC<{
   }, [height]);
 
   const isUp =
-    Number(marketDataItem.markPx) - Number(marketDataItem.prevDayPx) > 0;
+    Number(marketDataItem?.markPx) - Number(marketDataItem?.prevDayPx) > 0;
   const absPnlUsd = Math.abs(
-    Number(marketDataItem.markPx) - Number(marketDataItem.prevDayPx),
+    Number(marketDataItem?.markPx) - Number(marketDataItem?.prevDayPx),
   );
-  const absPnlPct = Math.abs(absPnlUsd / Number(marketDataItem.prevDayPx));
+  const absPnlPct = Math.abs(absPnlUsd / Number(marketDataItem?.prevDayPx));
   const pnlText = `${isUp ? '+' : '-'}${formatPerpsPct(absPnlPct)}`;
 
   useEffect(() => {
@@ -370,7 +389,7 @@ export const PerpsOpenPositionPopup: React.FC<{
             <View>
               <AssetPriceInfo
                 coin={coin}
-                logoUrl={marketDataItem.logoUrl}
+                logoUrl={marketDataItem?.logoUrl || ''}
                 activeAssetCtx={activeAssetCtx}
                 currentAssetCtx={marketDataItem}
               />
@@ -429,9 +448,31 @@ export const PerpsOpenPositionPopup: React.FC<{
             </View>
             {/* Margin Section */}
             <View style={styles.marginSection}>
-              <Text style={styles.marginLabel}>
-                {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
-              </Text>
+              <View style={styles.marginLabelWrapper}>
+                <Text style={styles.marginLabel}>
+                  {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
+                </Text>
+                <TouchableOpacity
+                  style={styles.marginModeButton}
+                  onPress={() => {
+                    if (currentAccountHasPosition) {
+                      toast.error(
+                        t(
+                          'page.perpsDetail.PerpMarginModePopup.cannotChangeMarginMode',
+                        ),
+                      );
+                      return;
+                    }
+                    handleOpenChangeMarginModePopup();
+                  }}>
+                  <Text style={styles.marginModeText}>
+                    {selectedMarginMode === 'cross'
+                      ? t('page.perpsDetail.PerpsPosition.cross')
+                      : t('page.perpsDetail.PerpsPosition.isolated')}
+                  </Text>
+                  <IconPerpEdit color={colors2024['brand-default']} />
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.marginItem}>
                 <View style={styles.marginAvailableWrapper}>
@@ -555,42 +596,6 @@ export const PerpsOpenPositionPopup: React.FC<{
               />
             </View>
             <View style={styles.list}>
-              {/* <View style={[styles.listItem, styles.stepInputContainer]}>
-                <View style={styles.listItemMain}>
-                  <Text
-                    style={[
-                      styles.label,
-                      leverageRangeValidation.errorMessage
-                        ? styles.hasError
-                        : null,
-                    ]}>
-                    {t('page.perpsDetail.PerpsOpenPositionPopup.leverage')}
-                    <Text
-                      style={[
-                        styles.labelInfo,
-                        leverageRangeValidation.errorMessage
-                          ? styles.hasError
-                          : null,
-                      ]}>
-                      （{leverageRang[0]}-{leverageRang[1]}x）
-                    </Text>
-                  </Text>
-                </View>
-                <View>
-                  <StepInput
-                    suffix="x"
-                    value={selectedLeverage}
-                    onChange={setLeverage}
-                    step={1}
-                    inputStyle={
-                      leverageRangeValidation.error ? styles.hasError : null
-                    }
-                    min={leverageRang[0]}
-                    max={leverageRang[1]}
-                    as="BottomSheetTextInput"
-                  />
-                </View>
-              </View> */}
               <View style={styles.listItem}>
                 <TouchableOpacity
                   onPress={() => {
@@ -720,6 +725,17 @@ export const PerpsOpenPositionPopup: React.FC<{
           setIsReviewMode(false);
         }}
         onConfirm={openPosition}
+      />
+      <PerpMarginModePopup
+        visible={isShowMarginModePopup}
+        selectedMarginMode={selectedMarginMode}
+        onClose={() => {
+          setIsShowMarginModePopup(false);
+        }}
+        onConfirm={(mode: 'cross' | 'isolated') => {
+          setIsShowMarginModePopup(false);
+          setSelectedMarginMode(mode);
+        }}
       />
     </>
   );
@@ -1071,6 +1087,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'column',
       // alignItems: 'center',
+    },
+    marginLabelWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    marginModeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      height: 18,
+      paddingHorizontal: 4,
+      paddingLeft: 6,
+      borderRadius: 4,
+      backgroundColor: colors2024['brand-light-1'],
+    },
+    marginModeText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
     },
     marginLabel: {
       fontSize: 20,

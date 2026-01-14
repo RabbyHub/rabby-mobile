@@ -88,6 +88,7 @@ export interface PerpsState {
   wsSubscriptions: (() => void)[];
   pollingTimer: NodeJS.Timeout | null;
   fillsOrderTpOrSl: Record<string, 'tp' | 'sl'>;
+  favoriteMarkets: string[];
   homePositionPnl: {
     pnl: number;
     show: boolean;
@@ -123,6 +124,7 @@ export const initialState: PerpsState = {
   approveSignatures: [],
   wsSubscriptions: [],
   pollingTimer: null,
+  favoriteMarkets: [],
   homePositionPnl: {
     pnl: 0,
     accountValue: 0,
@@ -138,7 +140,9 @@ function setPerpsState(valOrFunc: UpdaterOrPartials<PerpsState>) {
     const { newVal, changed } = resolveValFromUpdater(prev, valOrFunc, {
       strict: true,
     });
-    if (!changed) return prev;
+    if (!changed) {
+      return prev;
+    }
 
     return newVal;
   });
@@ -280,6 +284,32 @@ const fetchMarketData = async (canUseCache = true) => {
   }
 };
 
+const fetchFavoriteMarkets = async () => {
+  const favoriteMarkets = await perpsService.getFavoriteMarkets();
+  setPerpsState(prev => ({ ...prev, favoriteMarkets }));
+};
+
+export const addFavoriteMarket = (market: string) => {
+  const normalizedMarket = market.toUpperCase();
+  if (perpsStore.getState().favoriteMarkets.includes(normalizedMarket)) {
+    return;
+  }
+  setPerpsState(prev => ({
+    ...prev,
+    favoriteMarkets: [...prev.favoriteMarkets, normalizedMarket.toUpperCase()],
+  }));
+  perpsService.addFavoriteMarket(normalizedMarket);
+};
+
+export const removeFavoriteMarket = (market: string) => {
+  const normalizedMarket = market.toUpperCase();
+  setPerpsState(prev => ({
+    ...prev,
+    favoriteMarkets: prev.favoriteMarkets.filter(m => m !== normalizedMarket),
+  }));
+  perpsService.removeFavoriteMarket(normalizedMarket);
+};
+
 const handleSelectDefaultAccount = async (accounts: Account[]) => {
   setInitialized(false);
   try {
@@ -332,20 +362,22 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
           sdk.initAccount(best.account.address);
           subscribeToUserData(best.account.address);
         } else {
-          setCurrentPerpsAccount(accounts[0]);
+          setCurrentPerpsAccount(accounts[0]!);
           const clearinghouseState =
-            perpsState.clearinghouseStateMap[accounts[0].address.toLowerCase()];
+            perpsState.clearinghouseStateMap[
+              accounts[0]!.address.toLowerCase()
+            ];
           const pnl = clearinghouseState
             ? formatPositionPnl(clearinghouseState)
             : initialState.homePositionPnl;
           setHomePositionPnl(pnl);
-          sdk.initAccount(accounts[0].address);
-          subscribeToUserData(accounts[0].address);
+          sdk.initAccount(accounts[0]!.address);
+          subscribeToUserData(accounts[0]!.address);
         }
       }
     }
   } catch (e) {
-    setCurrentPerpsAccount(accounts[0]);
+    setCurrentPerpsAccount(accounts[0]!);
     setHomePositionPnl(initialState.homePositionPnl);
     console.error('Error selecting only show account', e);
   }
@@ -813,6 +845,7 @@ export const usePerpsStore = () => {
 };
 
 runIIFEFunc(fetchMarketData);
+runIIFEFunc(fetchFavoriteMarkets);
 
 export function startSubscribePerpsOnAppState() {
   const sdk = apisPerps.getPerpsSDK();
