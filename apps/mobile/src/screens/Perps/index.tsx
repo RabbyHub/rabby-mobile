@@ -24,7 +24,7 @@ import {
   usePerpsPopupState,
   useSelectedToken,
 } from './hooks/usePerpsPopupState';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
@@ -51,6 +51,10 @@ import { calculateDistanceToLiquidation } from './components/PerpsPositionSectio
 import { PerpsRiskLevelPopup } from './components/PerpsPositionSection/PerpsRiskLevelPopup';
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
+import { PerpsInvitePopup } from './components/PerpsInvitePopup';
+import { checkPerpsReference } from '@/utils/perps';
+import { perpsService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -81,6 +85,7 @@ export const PerpsScreen = () => {
     localLoadingHistory,
 
     handleActionApproveStatus,
+    handleSafeSetReference,
     setInitialized,
 
     favoriteMarkets,
@@ -256,6 +261,26 @@ export const PerpsScreen = () => {
   const handleCloseRiskPopup = useMemoizedFn(() => {
     setSelectedCoin(null);
   });
+
+  const { data: isShowInvite, mutate: setIsShowInvite } = useRequest(
+    async () => {
+      return checkPerpsReference({
+        account: currentPerpsAccount,
+        scene: 'invite',
+      });
+    },
+    {
+      refreshDeps: [currentPerpsAccount],
+      ready: !!currentPerpsAccount?.address,
+      onSuccess: shouldShow => {
+        if (shouldShow) {
+          perpsService.setInviteConfig(currentPerpsAccount?.address || '', {
+            lastInvitedAt: Date.now(),
+          });
+        }
+      },
+    },
+  );
 
   // Calculate real-time popup data based on selectedCoin
   const riskPopupData = useMemo(() => {
@@ -630,6 +655,15 @@ export const PerpsScreen = () => {
           liquidationPrice={riskPopupData.liquidationPrice}
         />
       )}
+      <PerpsInvitePopup
+        visible={isShowInvite}
+        onClose={() => setIsShowInvite(false)}
+        onInvite={async () => {
+          await handleActionApproveStatus();
+          await handleSafeSetReference();
+          setIsShowInvite(false);
+        }}
+      />
     </>
   );
 };

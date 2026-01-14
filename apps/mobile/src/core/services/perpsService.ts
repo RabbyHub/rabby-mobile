@@ -40,6 +40,12 @@ export interface PerpsServiceStore {
   lastUsedAccount: StoreAccount | null;
   hasDoneNewUserProcess: boolean;
   favoriteMarkets: string[];
+  inviteConfig: {
+    [address: string]: {
+      lastInvitedAt?: number;
+      lastConnectedAt?: number;
+    };
+  };
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -64,6 +70,7 @@ export class PerpsService {
           agentVaults: '',
           agentPreferences: {},
           currentAccount: null,
+          inviteConfig: {},
           // no clear account , just cache for last used
           lastUsedAccount: null,
           hasDoneNewUserProcess: false,
@@ -391,6 +398,26 @@ export class PerpsService {
     }
 
     return preference;
+  };
+
+  getInviteConfig = (address: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.inviteConfig[address.toLowerCase()];
+  };
+
+  setInviteConfig = (
+    address: string,
+    config: { lastConnectedAt?: number; lastInvitedAt?: number },
+  ) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.inviteConfig[address.toLowerCase()] = {
+      ...this.store.inviteConfig[address.toLowerCase()],
+      ...config,
+    };
   };
 
   // only test use

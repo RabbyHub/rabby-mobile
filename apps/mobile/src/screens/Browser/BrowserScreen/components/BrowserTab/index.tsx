@@ -65,7 +65,7 @@ import { BrowserHeader } from './BrowserHeader';
 import { BrowserProgressBar } from './BrowserProgressBar';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { Freeze } from 'react-freeze';
-import { PerpsInvitePopup } from './PerpsInvitePopup';
+import { AsterPerpsInvitePopup } from './PerpsInvitePopup';
 import { PERPS_ASTER_INVITE_URL, PERPS_INVITE_URL } from '@/constant/perps';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
@@ -79,6 +79,7 @@ import { WebviewError } from './WebivewError';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
+import { PerpsInvitePopup } from '@/screens/Perps/components/PerpsInvitePopup';
 
 type BrowserTabProps = {
   origin: string;
@@ -596,12 +597,11 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       };
     }, [handleAction, isActive]);
 
-    const { isShowInvite, setIsShowInvite } = useHyperliquidReferral({
-      url: webviewState.resolvedUrl,
-      connectedAddress: dappInfo?.isConnected
-        ? dappInfo?.currentAccount?.address
-        : null,
-    });
+    const { isShowInvite, setIsShowInvite, handleInvite } =
+      useHyperliquidReferral({
+        url: webviewState.resolvedUrl,
+        account: dappInfo?.isConnected ? dappInfo?.currentAccount : null,
+      });
 
     const {
       isShowInvite: isShowAsterInvite,
@@ -953,7 +953,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           {safeGetOrigin(webviewState.resolvedUrl) ===
             safeGetOrigin(PERPS_INVITE_URL) && dappInfo?.isConnected ? (
             <PerpsInvitePopup
-              type="hyperliquid"
               visible={
                 isShowInvite &&
                 isActive &&
@@ -970,14 +969,19 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   },
                 });
               }}
-              onInvite={() => {
-                handleGoTo(PERPS_INVITE_URL);
+              onInvite={async () => {
+                try {
+                  await handleInvite();
+                  preferenceService.setPreference({
+                    hyperliquidInvite: {
+                      lastTime: Date.now(),
+                    },
+                  });
+                } catch (e) {
+                  console.error('Hyperliquid invite error', e);
+                  throw e;
+                }
                 setIsShowInvite(false);
-                preferenceService.setPreference({
-                  hyperliquidInvite: {
-                    lastTime: Date.now(),
-                  },
-                });
               }}
               footer={
                 <View style={styles.dappWebViewNavControl}>
@@ -1012,7 +1016,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           ) : null}
           {safeGetOrigin(webviewState.resolvedUrl) ===
             safeGetOrigin(PERPS_ASTER_INVITE_URL) && dappInfo?.isConnected ? (
-            <PerpsInvitePopup
+            <AsterPerpsInvitePopup
               type="aster"
               visible={
                 isShowAsterInvite &&

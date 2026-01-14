@@ -313,12 +313,17 @@ export const usePerpsState = () => {
         }),
       );
 
-      setTimeout(() => {
-        handleSafeSetReference();
-      }, 500);
+      if (
+        currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
+        currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC
+      ) {
+        setTimeout(() => {
+          handleSafeSetReference();
+        }, 500);
+      }
       // const [approveAgentRes, approveBuilderFeeRes] = results;
     },
-    [handleSafeSetReference],
+    [currentPerpsAccount?.type, handleSafeSetReference],
   );
 
   const ensureLoginApproveSign = useCallback(
@@ -852,5 +857,7 @@ export const usePerpsState = () => {
 
     judgeIsUserAgentIsExpired,
     handleActionApproveStatus,
+
+    handleSafeSetReference,
   };
 };
