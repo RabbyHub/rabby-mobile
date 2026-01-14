@@ -39,6 +39,7 @@ export interface PerpsServiceStore {
   currentAccount: StoreAccount | null;
   lastUsedAccount: StoreAccount | null;
   hasDoneNewUserProcess: boolean;
+  favoriteMarkets: string[];
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -66,6 +67,7 @@ export class PerpsService {
           // no clear account , just cache for last used
           lastUsedAccount: null,
           hasDoneNewUserProcess: false,
+          favoriteMarkets: [],
         },
       },
       {
@@ -74,6 +76,37 @@ export class PerpsService {
     );
     this.memoryState.agentWallets = {};
   }
+
+  getFavoriteMarkets = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.favoriteMarkets || [];
+  };
+
+  addFavoriteMarket = async (market: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    const normalizedMarket = market.toUpperCase();
+    if (this.store.favoriteMarkets.includes(normalizedMarket)) {
+      return;
+    }
+    this.store.favoriteMarkets = [
+      ...this.store.favoriteMarkets,
+      normalizedMarket,
+    ];
+  };
+
+  removeFavoriteMarket = async (market: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    const normalizedMarket = market.toUpperCase();
+    this.store.favoriteMarkets = this.store.favoriteMarkets.filter(
+      m => m !== normalizedMarket,
+    );
+  };
 
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
     if (!this.store) {

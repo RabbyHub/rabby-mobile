@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -40,6 +41,25 @@ interface Props {
   handleCancelAutoClose: () => Promise<void>;
 }
 
+const PRICE_GAIN_QUICK_OPTIONS = [
+  {
+    label: '5%',
+    value: 5,
+  },
+  {
+    label: '10%',
+    value: 10,
+  },
+  {
+    label: '25%',
+    value: 25,
+  },
+  {
+    label: '50%',
+    value: 50,
+  },
+];
+
 export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   coin,
   handleActionApproveStatus,
@@ -67,6 +87,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     onChangeText: setAutoClosePrice,
     displayedValue: displayedAutoClosePrice,
   } = useSlTpUsdInput({ szDecimals });
+
+  const [activeOption, setActiveOption] = React.useState<number>(0);
 
   const priceIsEmptyValue = useMemo(() => {
     return !autoClosePrice || !Number(autoClosePrice);
@@ -102,6 +124,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 
   // Handle price input change
   const handlePriceChange = useMemoizedFn((v: string) => {
+    setActiveOption(0);
     setAutoClosePrice(v);
   });
 
@@ -215,9 +238,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     }
   }, [cancel, setAutoClosePrice, modalVisible]);
 
-  const handleInitGainPct = useMemoizedFn(() => {
-    // console.log('szDecimals', szDecimals);
-    const pct = actionType === 'tp' ? 5.0 : 4.5;
+  const handleQuickOptionPress = useMemoizedFn((pct: number) => {
+    setActiveOption(pct);
     const pctValue = Number(pct) / 100;
     const costValue = margin;
     const pnlUsdValue = costValue * pctValue;
@@ -232,24 +254,24 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
           ? costPrice + priceDifference
           : costPrice - priceDifference;
       const newPriceStr = formatTpOrSlPrice(newPrice, szDecimals);
-      handlePriceChange(newPriceStr);
+      setAutoClosePrice(newPriceStr);
     } else {
       const newPrice =
         direction === 'Long'
           ? costPrice - priceDifference
           : costPrice + priceDifference;
       const newPriceStr = formatTpOrSlPrice(newPrice, szDecimals);
-      handlePriceChange(newPriceStr);
+      setAutoClosePrice(newPriceStr);
     }
   });
 
   React.useEffect(() => {
     if (modalVisible) {
       if (initTpOrSlPrice) {
-        handlePriceChange(initTpOrSlPrice);
+        setAutoClosePrice(initTpOrSlPrice);
       } else {
         if (type === 'openPosition') {
-          handleInitGainPct();
+          handleQuickOptionPress(PRICE_GAIN_QUICK_OPTIONS[0]!.value);
         }
       }
     }
@@ -371,6 +393,35 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                       ? t('page.perpsDetail.PerpsAutoCloseModal.takeProfitWhen')
                       : t('page.perpsDetail.PerpsAutoCloseModal.stopLossWhen')}
                   </Text>
+                  <View style={styles.formRow}>
+                    {PRICE_GAIN_QUICK_OPTIONS.map(option => (
+                      <View
+                        style={StyleSheet.flatten([
+                          styles.formItemQuickOption,
+                          activeOption === option.value
+                            ? {
+                                backgroundColor: colors2024['brand-light-1'],
+                                borderColor: colors2024['brand-default'],
+                              }
+                            : null,
+                        ])}>
+                        <TouchableOpacity
+                          key={option.value}
+                          onPress={() => {
+                            handleQuickOptionPress(option.value);
+                          }}>
+                          <Text
+                            style={StyleSheet.flatten([
+                              styles.formItemQuickTitle,
+                              activeOption === option.value &&
+                                styles.formItemQuickTitleActive,
+                            ])}>
+                            {actionType === 'tp' ? '+' : '-'} {option.label}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
                   <View style={styles.formRow}>
                     <View style={styles.formItemHalf}>
                       <Text style={styles.formItemLabel}>
@@ -592,6 +643,34 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   formRow: {
     flexDirection: 'row',
     gap: 8,
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  formItemQuickOption: {
+    flex: 1,
+    width: 0,
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    borderRadius: 6,
+    backgroundColor: colors2024['neutral-bg-5'],
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+
+  formItemQuickTitleActive: {
+    color: colors2024['brand-default'],
+  },
+
+  formItemQuickTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-body'],
   },
 
   formItemHalf: {
@@ -631,7 +710,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
-    marginTop: 12,
+    // marginTop: 12,
     gap: 16,
     padding: 16,
   },
