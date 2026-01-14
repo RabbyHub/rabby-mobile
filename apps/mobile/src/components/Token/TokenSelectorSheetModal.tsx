@@ -42,7 +42,11 @@ import {
 import { formatPrice, formatTokenAmount } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
-import { findChainByServerID } from '@/utils/chain';
+import {
+  findChainByEnum,
+  findChainByServerID,
+  getTop3Chains,
+} from '@/utils/chain';
 import ChainFilterItem, { AccountFilterItem } from './ChainFilterItem';
 import FavoriteFilterItem, { FavoriteFilterType } from './FavoriteFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
@@ -95,6 +99,7 @@ import LpTokenSwitch from '@/screens/Home/components/LpTokenSwitch';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { isLpToken } from '@/utils/lpToken';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { InnerModalChainInfo } from '@/screens/Send/components/InModalChainInfo';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -322,6 +327,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const { t } = useTranslation();
     const isBridgeTo = type === 'bridgeTo';
     const isSwapTo = type === 'swapTo';
+    const isSend = type === 'send';
 
     const onLpTokenChange = useCallback(
       (value: boolean) => {
@@ -933,6 +939,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
       }, [onCancel, visible]),
     );
 
+    const top3Chains = useMemo(() => {
+      if (!visible) {
+        return [];
+      }
+      // 只有send场景需要
+      if (type === 'send') {
+        return getTop3Chains(list);
+      }
+      return [];
+    }, [list, type, visible]);
+
     useFocusEffect(onHardwareBackHandler);
 
     return (
@@ -1043,6 +1060,23 @@ export const TokenSelectorSheetModal = React.forwardRef<
               !willShowFilterRow && { display: 'none' },
             ]}>
             <View style={styles.leftFilters}>
+              {isSend && (
+                <InnerModalChainInfo
+                  account={filterAccount}
+                  chainEnum={chainItem?.enum}
+                  top3Chains={top3Chains}
+                  onChange={chain => {
+                    onSearch({
+                      ...chainSearchCtx,
+                      chainServerId: chain
+                        ? findChainByEnum(chain)?.serverId
+                        : '',
+                      chainItem: chain ? findChainByEnum(chain) : null,
+                      keyword: query,
+                    });
+                  }}
+                />
+              )}
               {willShowAccountFilter && (
                 <AccountFilterItem
                   filterAccount={filterAccount}

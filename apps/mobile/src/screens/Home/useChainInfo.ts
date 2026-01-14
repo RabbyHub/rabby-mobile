@@ -51,7 +51,7 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
 const debounceComputeChainList = debounce<
   Parameters<typeof assetsMapStore.subscribe | typeof tokenStore.subscribe>[0]
 >(async () => {
-  const { top10Addresses } = (await getTop10MyAccounts());
+  const { top10Addresses } = await getTop10MyAccounts();
 
   setFinalInfo(computeChainsListV2(top10Addresses));
 }, 100);
