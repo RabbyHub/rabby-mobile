@@ -67,6 +67,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ampproject/remapping@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "@ampproject/remapping@npm:2.3.0"
+  dependencies:
+    "@jridgewell/gen-mapping": ^0.3.5
+    "@jridgewell/trace-mapping": ^0.3.24
+  checksum: d3ad7b89d973df059c4e8e6d7c972cbeb1bb2f18f002a3bd04ae0707da214cb06cc06929b65aa2313b9347463df2914772298bae8b1d7973f246bb3f2ab3e8f0
+  languageName: node
+  linkType: hard
+
 "@apideck/better-ajv-errors@npm:^0.3.1":
   version: 0.3.6
   resolution: "@apideck/better-ajv-errors@npm:0.3.6::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40apideck%2Fbetter-ajv-errors%2F-%2Fbetter-ajv-errors-0.3.6.tgz"
@@ -35936,6 +35946,7 @@ __metadata:
     typescript: 5.7.3
     use-count-up: ^3.0.1
     viem: ^2.17.4
+    warden.rn: 1.0.0
     web3: ^4.3.0
     web3-eth-abi: 1.7.0
     web3-utils: 1.7.0
@@ -43263,6 +43274,19 @@ __metadata:
   dependencies:
     makeerror: 1.0.12
   checksum: ad7a257ea1e662e57ef2e018f97b3c02a7240ad5093c392186ce0bcf1f1a60bbadd520d073b9beb921ed99f64f065efb63dfc8eec689a80e569f93c1c5d5e16c
+  languageName: node
+  linkType: hard
+
+"warden.rn@npm:1.0.0":
+  version: 1.0.0
+  resolution: "warden.rn@npm:1.0.0"
+  dependencies:
+    "@ampproject/remapping": ^2.3.0
+    "@babel/generator": ^7.28.5
+    "@babel/parser": ^7.28.5
+    "@babel/traverse": ^7.28.5
+    "@babel/types": ^7.28.5
+  checksum: 9145c1e68364eca4a593d50165d4aac436d9062277b4f94c34c8eda57a0fdc692c8a46d3191ef45fbd21471dd8205797c727edf7392bf128b814bc01b7cf95f5
   languageName: node
   linkType: hard
 

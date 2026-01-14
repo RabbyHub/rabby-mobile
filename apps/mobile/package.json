@@ -266,7 +266,8 @@
     "tailwindcss": "3.3.2",
     "tinycolor2": "^1.6.0",
     "ts-toolbelt": "^9.6.0",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "warden.rn": "1.0.0"
   },
   "engines": {
     "node": ">=22"

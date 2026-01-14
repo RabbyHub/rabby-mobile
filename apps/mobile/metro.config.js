@@ -7,6 +7,7 @@ const {
 const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
+const { createWardenSerializer } = require('warden.rn');
 
 const defaultConfig = getDefaultConfig(__dirname);
 const {
@@ -71,7 +72,12 @@ const config = {
     }),
   },
   serializer: {
-    customSerializer: createSentryMetroSerializer(),
+    customSerializer: createWardenSerializer(createSentryMetroSerializer(), {
+      rootDir: '../../',
+      policyDir: './Warden-RN',
+      sourceRoot: './apps/mobile/src',
+      dev: false,
+    }),
   },
   resolver: {
     assetExts: assetExts.filter(ext => ext !== 'svg'),
