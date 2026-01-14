@@ -192,23 +192,23 @@ const signTypedDataVlidation = ({
   } catch (e) {
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
   }
-  const currentChain = dappService.isInternalDapp(session.origin)
-    ? findChain({ id: jsonData.domain.chainId })?.enum
-    : dappService.getDapp(session.origin)?.chainId;
+  if (!dappService.isInternalDapp(session.origin)) {
+    const currentChain = dappService.getDapp(session.origin)?.chainId;
 
-  if (jsonData.domain.chainId) {
-    const chainItem = findChainByEnum(currentChain);
-    if (
-      !currentChain ||
-      (chainItem && Number(jsonData.domain.chainId) !== chainItem.id)
-    ) {
-      throw ethErrors.rpc.invalidParams(
-        'chainId should be same as current chainId',
-      );
+    if (jsonData.domain.chainId) {
+      const chainItem = findChainByEnum(currentChain);
+      if (
+        !currentChain ||
+        (chainItem && Number(jsonData.domain.chainId) !== chainItem.id)
+      ) {
+        throw ethErrors.rpc.invalidParams(
+          'chainId should be same as current chainId',
+        );
+      }
     }
   }
   const currentAddress = account?.address.toLowerCase();
-  if (from.toLowerCase() !== currentAddress)
+  if (from?.toLowerCase() !== currentAddress)
     throw ethErrors.rpc.invalidParams('from should be same as current address');
 };
 
