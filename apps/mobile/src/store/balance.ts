@@ -24,6 +24,7 @@ interface BalanceState {
   balanceMap: Record<string, IBalanceData>;
   chainUSDMap: Record<string, ChainWithBalance[]>;
   isLoadingByAddress: Record<string, boolean>;
+  initStore(): void;
   batchGetTotalBalance: (
     top10Addresses: string[],
     force?: boolean,

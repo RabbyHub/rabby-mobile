@@ -38,6 +38,7 @@ import { startCheckClearAction } from './utils/clipboard';
 import tokenListStore from './store/tokens';
 import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
+import balanceStore from './store/balance';
 
 startSubscribeLangChange();
 
@@ -81,3 +82,4 @@ trimNoLongerSupportsOnUnlock();
 startCheckClearAction();
 
 tokenListStore.getState().initStore();
+balanceStore.getState().initStore();

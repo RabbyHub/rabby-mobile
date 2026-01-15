@@ -71,6 +71,39 @@ runIIFEFunc(() => {
   });
 });
 
+runIIFEFunc(() => {
+  balanceStore.subscribe(state => {
+    const balanceMap = state.balanceMap;
+    const current = balanceAccountsStore.getState().balance;
+    if (!Object.keys(current).length) return;
+
+    let changed = false;
+    const next = { ...current };
+
+    Object.keys(current).forEach(address => {
+      const latest = balanceMap[address];
+      if (!latest) return;
+      const prev = current[address];
+      if (!prev) return;
+      const nextBalance = latest.totalBalance || 0;
+      const nextEvmBalance = latest.evmBalance || 0;
+
+      if (prev.balance !== nextBalance || prev.evmBalance !== nextEvmBalance) {
+        next[address] = {
+          ...prev,
+          balance: nextBalance,
+          evmBalance: nextEvmBalance,
+        };
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setAccountsBalance(next);
+    }
+  });
+});
+
 export function getBalanceCacheAccounts() {
   return balanceAccountsStore.getState().balance;
 }
