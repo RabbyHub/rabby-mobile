@@ -37,7 +37,6 @@ import {
 } from './screens/Approvals/useApprovalsPage';
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
 import { ITokenItem } from './store/tokens';
 
 /**
@@ -275,10 +274,6 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
-  [RootNames.CopyTradingTokenDetail]?: {
-    tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
-    showTabType?: TabType;
-  };
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
@@ -287,7 +282,6 @@ export type TransactionNavigatorParamList = {
     currentAddress?: string;
   };
   [RootNames.LendingHistory]?: {};
-  [RootNames.CopyTrading]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;

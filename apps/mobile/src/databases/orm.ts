@@ -17,7 +17,6 @@ import { BalanceEntity } from './entities/balance';
 import { abortAllSyncTasks } from './sync/_task';
 import { BuyItemEntity } from './entities/buyItem';
 import { CexEntity } from './entities/cex';
-// import { CopyTradingBuyItemEntity } from './entities/copyTradingBuyItem';
 import {
   RabbyOrmDevConsoleLogger,
   RabbyOrmDeployedConsoleLogger,
@@ -57,7 +56,6 @@ const dbOptions: DataSourceOptions = {
     ProtocolItemEntity,
     BuyItemEntity,
     CexEntity,
-    // CopyTradingBuyItemEntity,
     AccountInfoEntity,
   ],
   maxQueryExecutionTime: 10 * 1e3,

@@ -32,7 +32,6 @@ import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import {
   loadTxSaveFromLocalStore,
   txDonePatchTokenAmountInDb,
-  insertCopyTradingBuyItem,
 } from '@/screens/Transaction/components/utils';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
@@ -521,7 +520,7 @@ export class TransactionHistoryService {
           const isSell = history[index].copyTradingExtra?.type === 'Sell';
           if (!isSell) {
             // only buy insert buy item
-            insertCopyTradingBuyItem(history[index]);
+            // insertCopyTradingBuyItem(history[index]);
           }
           matomoRequestEvent({
             category: 'CopyTrading',
