@@ -21,7 +21,6 @@ import {
   RabbyOrmDeployedConsoleLogger,
   RnSqlExecutionTimes,
 } from './logger';
-import { reactotronEvents } from '@/core/utils/reactotron-plugins/_utils';
 import { AccountInfoEntity } from './entities/accountInfo';
 
 const dbOptions: DataSourceOptions = {

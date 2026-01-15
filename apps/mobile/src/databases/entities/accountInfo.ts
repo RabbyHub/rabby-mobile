@@ -94,6 +94,8 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
     time = 60 * 1e3 * 10,
     options?: { trimExpired?: boolean },
   ) {
+    await prepareAppDataSource();
+
     const queryBuilder = this.getRepository().createQueryBuilder(
       ORM_TABLE_NAMES.account_info,
     );
@@ -122,6 +124,8 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
   }
 
   static async isAccountAddedIn(time = 60 * 1e3 * 10) {
+    await prepareAppDataSource();
+
     const queryBuilder = this.getRepository().createQueryBuilder(
       ORM_TABLE_NAMES.account_info,
     );
