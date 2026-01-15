@@ -13,9 +13,10 @@ import { CurveDayType } from '@/utils/curveDayType';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import useAccountsBalance, {
+import {
   AccountsBalanceState,
   apisAccountsBalance,
+  balanceAccountsStore,
   fetchTotalBalance,
 } from './useAccountsBalance';
 import { debounce } from 'lodash';
@@ -296,7 +297,6 @@ export const refreshDayCurve = makeSWRKeyAsyncFunc(
     balanceAccounts?: AccountsBalanceState['balance'];
   } = {}) => {
     const { top10Addresses } = await getTop10MyAccounts();
-
     try {
       await fetchData(top10Addresses, force);
     } catch (error) {
@@ -331,9 +331,9 @@ export function startProcessMultiCurveEvents() {
     await refreshDayCurve({ balanceAccounts });
   });
 
-  perfEvents.subscribe('ACCOUNTS_BALANCE_UPDATE', async data => {
-    await refreshDayCurve({
-      balanceAccounts: data.nextState,
+  balanceAccountsStore.subscribe(state => {
+    refreshDayCurve({
+      balanceAccounts: state.balance,
     });
   });
 
@@ -341,6 +341,7 @@ export function startProcessMultiCurveEvents() {
     'ACCOUNT_ADDED',
     debounce(async ({ accounts, scene }) => {
       const balanceAccounts = await fetchTotalBalance('from_cache');
+      console.log('balanceAccountsStore ACCOUNT_ADDED', balanceAccounts);
       await refreshDayCurve({ balanceAccounts, force: true });
     }, 500),
   );
@@ -349,6 +350,7 @@ export function startProcessMultiCurveEvents() {
     'ACCOUNT_REMOVED',
     debounce(async ({ removedAccounts }) => {
       const balanceAccounts = await fetchTotalBalance('from_cache');
+      console.log('balanceAccountsStore ACCOUNT_REMOVED', balanceAccounts);
       await refreshDayCurve({ balanceAccounts, force: true });
     }, 500),
   );

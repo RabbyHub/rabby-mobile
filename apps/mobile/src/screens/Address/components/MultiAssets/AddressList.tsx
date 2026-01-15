@@ -11,9 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
-import useAccountsBalance, { fetchTotalBalance } from '@/hooks/useAccountsBalance';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useBalanceUpdate } from './hooks/balance';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
@@ -21,13 +18,14 @@ import AutoLockView from '@/components/AutoLockView';
 import { ManageSetting } from '../ManageSetting';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { RootNames } from '@/constant/layout';
-import { navigateDeprecated, naviPush } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import {
   refresh24hAssets,
   useScene24hBalanceMulti24hBalance,
 } from '@/hooks/useScene24hBalance';
-import { getChangeData } from '@/utils/24hBalanceCache';
 import { computeBalanceChange } from '@/core/apis/balance';
+import balanceStore from '@/store/balance';
+import { AccountsBalanceState } from '@/hooks/useAccountsBalance';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -47,21 +45,46 @@ const AddressList = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const { myTop10Accounts, myTop10Records, notMatteredAccounts, fetchAccounts } =
-    useAccountInfo();
+  const {
+    myTop10Accounts,
+    myTop10Addresses,
+    myTop10Records,
+    notMatteredAccounts,
+    fetchAccounts,
+  } = useAccountInfo();
 
-  const { triggerUpdate, balanceAccounts } = useAccountsBalance();
+  const balanceMap = balanceStore(s => s.balanceMap);
+  const batchGetTotalBalance = balanceStore(s => s.batchGetTotalBalance);
+  const triggerUpdate = useCallback(
+    (force?: boolean) => batchGetTotalBalance(myTop10Addresses, force),
+    [batchGetTotalBalance, myTop10Addresses],
+  );
 
   const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
 
-  useBalanceUpdate(triggerUpdate);
+  const buildBalanceAccounts = useCallback(() => {
+    return myTop10Accounts.reduce((acc, account) => {
+      const address = account.address.toLowerCase();
+      const balance = balanceMap[address];
+      acc[address] = {
+        address,
+        balance: balance?.totalBalance || 0,
+        evmBalance: balance?.evmBalance || 0,
+        type: account.type,
+        brandName: account.brandName,
+        alias: account.alias,
+        aliasName: account.aliasName,
+      };
+      return acc;
+    }, {} as AccountsBalanceState['balance']);
+  }, [balanceMap, myTop10Accounts]);
 
   const addressListData = useMemo(() => {
     return myTop10Accounts
       .map(item => {
-        const account = balanceAccounts[item.address.toLowerCase()];
+        const account = balanceMap[item.address.toLowerCase()];
 
-        const balance = account?.balance || item.balance || 0;
+        const balance = account?.totalBalance || item.balance || 0;
         const evmBalance = account?.evmBalance || item.evmBalance || 0;
 
         const changeData = multi24hBalance[item.address.toLowerCase()];
@@ -79,7 +102,7 @@ const AddressList = ({
         };
       })
       .sort((a, b) => b.balance - a.balance);
-  }, [balanceAccounts, myTop10Accounts, multi24hBalance]);
+  }, [balanceMap, myTop10Accounts, multi24hBalance]);
 
   const renderItem = useCallback(
     ({ item }) => {
@@ -252,15 +275,15 @@ const AddressList = ({
   const onRefresh = useCallback(async () => {
     try {
       await Promise.all([
-        triggerUpdate(true).then(balanceAccounts =>
-          refresh24hAssets({ balanceAccounts }),
+        triggerUpdate(true).then(() =>
+          refresh24hAssets({ balanceAccounts: buildBalanceAccounts() }),
         ),
         fetchAccounts(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [fetchAccounts, triggerUpdate]);
+  }, [fetchAccounts, triggerUpdate, buildBalanceAccounts]);
 
   // return null;
   return (
@@ -297,10 +320,6 @@ export const AddressListModal = ({
   const switchManageMode = () => {
     setIsManageMode(e => !e);
   };
-
-  useEffect(() => {
-    fetchTotalBalance('not_mattered:from_api');
-  }, []);
 
   if (moreAddressList) {
     return (

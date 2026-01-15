@@ -7,36 +7,22 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
-import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
 import { RootNames } from '@/constant/layout';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID } from '@/core/native/utils';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
-  Animated,
   Dimensions,
-  Easing,
   Platform,
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity as RNTouchableOpacity,
   View,
   AppState,
   useWindowDimensions,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  InteractionManager,
-  Alert,
 } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -45,10 +31,7 @@ import { apisAccount } from '@/core/apis';
 import {
   browserService,
   currencyService,
-  gasAccountService,
-  keyringService,
   preferenceService,
-  transactionHistoryService,
 } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
@@ -57,13 +40,15 @@ import {
   resetNavigationTo,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+import useAccountsBalance, {
+  AccountsBalanceState,
+  getBalanceCacheAccounts,
+} from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
   getReadyNavigationInstance,
   navigateDeprecated,
 } from '@/utils/navigation';
-import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
@@ -118,16 +103,11 @@ import {
   refresh24hAssets,
   useScene24hBalanceLightWeightData,
 } from '@/hooks/useScene24hBalance';
-import {
-  TmpHomeRefresher,
-  triggerFetchHomeData,
-} from './components/TmpHomeRefresher';
+import { TmpHomeRefresher } from './components/TmpHomeRefresher';
 import { HomeCenterArea } from './components/HomeCenterArea';
-import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
+import { syncTop10History } from '@/databases/hooks/history';
 import { apisLending } from '../Lending/hooks';
 import { FastTouchable } from '@/components/Perf/FastTouchable';
-import { isNonPublicProductionEnv } from '@/constant';
-import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { perfEvents } from '@/core/utils/perf';
 import { refreshDayCurve } from '@/hooks/useMultiCurve';
 
@@ -273,7 +253,7 @@ const OverViewComponent = React.memo(
 
     useFetchCexInfo();
 
-    const { triggerUpdate } = useAccountsBalanceTrigger();
+    const { triggerUpdate } = useAccountsBalance();
 
     useEffect(() => {
       setTimeout(() => {
@@ -296,13 +276,34 @@ const OverViewComponent = React.memo(
       }, []),
     );
 
-    const { myTop10Addresses } = useAccountInfo();
+    const { myTop10Addresses, myTop10Accounts } = useAccountInfo();
+
+    const buildBalanceAccounts = useCallback(
+      (balanceAccountsMap: AccountsBalanceState['balance']) => {
+        return myTop10Accounts.reduce((acc, account) => {
+          const address = account.address.toLowerCase();
+          const accountBalance = balanceAccountsMap[address];
+          acc[address] = {
+            address,
+            balance: accountBalance?.balance || 0,
+            evmBalance: accountBalance?.evmBalance || 0,
+            type: account.type,
+            brandName: account.brandName,
+            alias: '', // refresh24hAssets 和 refreshDayCurve 并不需要 alias，传空补全类型即可
+            aliasName: account.aliasName,
+          };
+          return acc;
+        }, {} as AccountsBalanceState['balance']);
+      },
+      [myTop10Accounts],
+    );
 
     useFocusEffect(
       useCallback(() => {
         if (!couldDoRefresh()) return;
         triggerUpdate().then(balanceAccounts => {
           // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+          console.log('refresh24hAssets useFocusEffect', balanceAccounts);
           refresh24hAssets({ balanceAccounts });
           refreshDayCurve({ balanceAccounts });
         });
@@ -319,7 +320,10 @@ const OverViewComponent = React.memo(
       perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
       Promise.all([
         // force update balance from server api
-        triggerUpdate(true).then(balanceAccounts => {
+        triggerUpdate(true).then(() => {
+          const balanceAccounts = buildBalanceAccounts(
+            getBalanceCacheAccounts(),
+          );
           refresh24hAssets({ force: true, balanceAccounts });
           refreshDayCurve({ force: true, balanceAccounts });
         }),
@@ -336,6 +340,7 @@ const OverViewComponent = React.memo(
       checkAddressesEligibility,
       forceUpdate,
       myTop10Addresses,
+      buildBalanceAccounts,
     ]);
 
     // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();

@@ -17,6 +17,7 @@ import {
   AccountsBalanceState,
   apisAccountsBalance,
   BalanceAccountType,
+  balanceAccountsStore,
   fetchTotalBalance,
 } from '@/hooks/useAccountsBalance';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
@@ -198,7 +199,7 @@ const sceneLastLoadingRef: Record<BalanceScene, number> = {
 export type FetchTotalBalanceOptions = {
   addresses?: string | string[];
   force?: boolean;
-  totals?: ReturnType<typeof apisAccountsBalance.getLatestTotalBalance>;
+  totals?: ReturnType<typeof apisAccountsBalance.computeTotalBalance>;
 };
 const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
   async (scene: BalanceScene, options?: FetchTotalBalanceOptions) => {
@@ -210,7 +211,11 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
     setSceneAddresses(scene, address);
 
     const totals =
-      options?.totals || apisAccountsBalance.getLatestTotalBalance(address);
+      options?.totals ||
+      apisAccountsBalance.computeTotalBalance(
+        address,
+        balanceAccountsStore.getState().balance,
+      );
     const queue = queues[scene];
 
     function beforeReturn() {
@@ -306,16 +311,17 @@ export const refresh24hAssets = async ({
   balanceAccounts?: AccountsBalanceState['balance'];
 } = {}) => {
   const { top10Addresses } = await getTop10MyAccounts();
-
+  console.log('refresh24hAssets', balanceAccounts);
   refreshCombinedDataForScene('Home', {
     addresses: top10Addresses,
     force,
-    ...(balanceAccounts?.length && {
-      totals: apisAccountsBalance.computeTotalBalance(
-        top10Addresses,
-        balanceAccounts || {},
-      ),
-    }),
+    ...(balanceAccounts &&
+      Object.keys(balanceAccounts).length > 0 && {
+        totals: apisAccountsBalance.computeTotalBalance(
+          top10Addresses,
+          balanceAccounts || {},
+        ),
+      }),
   });
 };
 
@@ -325,9 +331,10 @@ export function startProcessScene24hBalanceEvents() {
     await refresh24hAssets({ balanceAccounts });
   });
 
-  perfEvents.subscribe('ACCOUNTS_BALANCE_UPDATE', async data => {
-    await refresh24hAssets({
-      balanceAccounts: data.nextState,
+  balanceAccountsStore.subscribe(state => {
+    console.log('refresh24hAssets subscribe', state.balance);
+    refresh24hAssets({
+      balanceAccounts: state.balance,
     });
   });
 
