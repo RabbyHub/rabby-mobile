@@ -1,12 +1,11 @@
 import { DappInfo } from '@/core/services/dappService';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { FlatListProps, FlatList, StyleSheet, Text, View } from 'react-native';
-import { NativeGesture, TouchableOpacity } from 'react-native-gesture-handler';
+import { FlatListProps, StyleSheet, Text, View } from 'react-native';
+import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 import { BrowserSiteCard } from './BrowserSiteCard';
 import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import { DraggableScrollable } from '@/components2024/DragableScrollable';
 
 export const BrowserSiteCardList = ({
   data,
@@ -18,8 +17,6 @@ export const BrowserSiteCardList = ({
   style,
   isShowDelete,
   isInBottomSheet,
-  scrollableGesture,
-  onScroll,
 }: {
   data: DappInfo[];
   onPress?: (dapp: DappInfo) => void;
@@ -38,8 +35,6 @@ export const BrowserSiteCardList = ({
   style?: FlatListProps<DappInfo>['style'];
   isShowDelete?: boolean;
   isInBottomSheet?: boolean;
-  scrollableGesture?: NativeGesture;
-  onScroll?: FlatListProps<DappInfo>['onScroll'];
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -47,42 +42,39 @@ export const BrowserSiteCardList = ({
   const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
 
   return (
-    <DraggableScrollable scrollableGesture={scrollableGesture}>
-      <Component
-        data={data}
-        style={[styles.list, style]}
-        keyExtractor={item => item.url || item.origin}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          { flexGrow: 1 },
-          data.length ? null : { justifyContent: 'center' },
-        ]}
-        onScroll={onScroll}
-        renderItem={({ item }) => {
-          return (
-            <View style={styles.listItem}>
-              {isShowDelete ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    onDeletePress?.(item);
-                  }}>
-                  <RcIconDelete width={20} height={20} />
-                </TouchableOpacity>
-              ) : null}
-              <View style={styles.listItemContent}>
-                <BrowserSiteCard
-                  data={item}
-                  onPress={onPress}
-                  onFavoritePress={onFavoritePress}
-                />
-              </View>
+    <Component
+      data={data}
+      style={[styles.list, style]}
+      keyExtractor={item => item.url || item.origin}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={[
+        { flexGrow: 1 },
+        data.length ? null : { justifyContent: 'center' },
+      ]}
+      renderItem={({ item }) => {
+        return (
+          <View style={styles.listItem}>
+            {isShowDelete ? (
+              <TouchableOpacity
+                onPress={() => {
+                  onDeletePress?.(item);
+                }}>
+                <RcIconDelete width={20} height={20} />
+              </TouchableOpacity>
+            ) : null}
+            <View style={styles.listItemContent}>
+              <BrowserSiteCard
+                data={item}
+                onPress={onPress}
+                onFavoritePress={onFavoritePress}
+              />
             </View>
-          );
-        }}
-        ListHeaderComponent={ListHeaderComponent}
-        ListEmptyComponent={ListEmptyComponent}
-      />
-    </DraggableScrollable>
+          </View>
+        );
+      }}
+      ListHeaderComponent={ListHeaderComponent}
+      ListEmptyComponent={ListEmptyComponent}
+    />
   );
 };
 

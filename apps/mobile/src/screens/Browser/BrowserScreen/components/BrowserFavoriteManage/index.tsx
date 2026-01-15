@@ -1,43 +1,32 @@
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { atom } from 'jotai';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  FlatListProps,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Platform, Text, View } from 'react-native';
+import { BrowserSearch } from '../BrowserSearch';
 import { BrowserFavorite } from './BrowserFavorite';
-// import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { ReactIconHome } from '@/assets2024/icons/browser';
-import { DappInfo } from '@/core/services/dappService';
-import { NativeGesture } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const activeTabAtom = atom('favorites');
 
-export function BrowserFavoriteManage({
-  isInBottomSheet,
-  onPressHome,
-  scrollableGesture,
-  onScroll,
-}: {
-  isInBottomSheet?: boolean;
-  onPressHome?(): void;
-  scrollableGesture?: NativeGesture;
-  onScroll?: FlatListProps<DappInfo>['onScroll'];
-}): JSX.Element {
+export function BrowserFavoriteManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const { bottom } = useSafeAreaInsets();
 
-  const { openTab, setPartialBrowserState } = useBrowser();
+  const [searchState, setSearchState] = useState({
+    isShowSearch: false,
+    searchText: '',
+  });
+
+  const { openTab, setPartialBrowserState, closeAllTabs } = useBrowser();
+  const { removeAllBrowserHistory } = useBrowserHistory();
 
   const { t } = useTranslation();
 
@@ -45,9 +34,7 @@ export function BrowserFavoriteManage({
     <View style={styles.page}>
       <View style={styles.favoritesList}>
         <BrowserFavorite
-          scrollableGesture={scrollableGesture}
-          onScroll={onScroll}
-          isInBottomSheet={isInBottomSheet}
+          isInBottomSheet
           onPress={dapp => {
             openTab(dapp.url || dapp.origin);
             setPartialBrowserState({
@@ -57,54 +44,73 @@ export function BrowserFavoriteManage({
         />
       </View>
 
-      <View
-        style={[
-          styles.footer,
-          {
-            paddingBottom:
-              Platform.OS === 'ios' ? bottom : Math.max(bottom, 12),
-          },
-        ]}>
-        <TouchableOpacity onPress={onPressHome}>
-          <ReactIconHome
-            width={44}
-            height={44}
-            color={colors2024['neutral-title-1']}
-            backgroundColor={colors2024['neutral-bg-5']}
+      <TouchableOpacity
+        style={[styles.fabContainer, { paddingBottom: bottom || 12 }]}
+        onPress={() => {
+          setSearchState({
+            isShowSearch: true,
+            searchText: '',
+          });
+        }}>
+        <View style={styles.innerCircle}>
+          <RcNextSearchCC
+            width={20}
+            height={20}
+            style={styles.icon}
+            color={colors2024['neutral-secondary']}
           />
-        </TouchableOpacity>
+          <Text style={styles.text}>
+            {t('page.browser.BrowserSearchEntry.openWebsites')}
+          </Text>
+          <View style={{ width: 20 }} />
+        </View>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.fabContainer]}
-          onPress={() => {
-            setPartialBrowserState({
-              isShowBrowser: true,
-              isShowSearch: true,
-              searchText: '',
-              searchTabId: '',
-              trigger: 'home',
+      {searchState.isShowSearch ? (
+        <BrowserSearch
+          style={styles.browserSearch}
+          searchText={searchState.searchText}
+          setSearchText={v => {
+            setSearchState(prev => {
+              return {
+                ...prev,
+                searchText: v,
+              };
             });
-          }}>
-          <View style={styles.innerCircle}>
-            <RcNextSearchCC
-              width={20}
-              height={20}
-              style={styles.icon}
-              color={colors2024['neutral-secondary']}
-            />
-            <Text style={styles.text}>
-              {t('page.browser.BrowserSearchEntry.searchWebsite')}
-            </Text>
-            <View style={{ width: 20 }} />
-          </View>
-        </TouchableOpacity>
-      </View>
+          }}
+          onClose={shouldClose => {
+            if (shouldClose) {
+              setSearchState({
+                isShowSearch: false,
+                searchText: '',
+              });
+              setPartialBrowserState({
+                isShowBrowser: false,
+                isShowManage: false,
+              });
+            } else {
+              setSearchState({
+                isShowSearch: false,
+                searchText: '',
+              });
+            }
+          }}
+          onOpenURL={url => {
+            openTab(url, {
+              isDapp: true,
+            });
+          }}
+        />
+      ) : null}
     </View>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   page: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
@@ -114,7 +120,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   fabContainer: {
-    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
+    backgroundColor: colors2024['neutral-bg-1'],
+    ...Platform.select({
+      ios: {
+        shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+        shadowOffset: { width: 0, height: isLight ? -6 : -27 },
+        shadowOpacity: 1,
+        shadowRadius: isLight ? 20 : 13,
+      },
+      android: {},
+    }),
   },
   gradient: {
     padding: 12,
@@ -155,16 +173,5 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
   browserSearch: {
     paddingTop: 18,
-  },
-
-  footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    width: '100%',
   },
 }));

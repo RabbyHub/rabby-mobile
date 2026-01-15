@@ -1,25 +1,21 @@
 import React, { useMemo, useState } from 'react';
-import { FlatListProps, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 
 import { DappInfo } from '@/core/services/dappService';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
-import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { NativeGesture } from 'react-native-gesture-handler';
-import { DappFavoriteSectionEmpty } from '@/screens/Dapps/components/DappFavoriteSection/DappFavoriteSectionEmpty';
-
+import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import RcIconDelete from '@/assets2024/icons/browser/delete.svg';
+import { ScrollView } from 'react-native-gesture-handler';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
 export function BrowserFavorite({
   onPress,
-  isInBottomSheet,
-  scrollableGesture,
-  onScroll,
 }: {
   onPress?(dapp: DappInfo): void;
   isInBottomSheet?: boolean;
-  scrollableGesture?: NativeGesture;
-  onScroll?: FlatListProps<DappInfo>['onScroll'];
 }) {
   const { styles } = useTheme2024({
     getStyle,
@@ -60,33 +56,56 @@ export function BrowserFavorite({
     }
   };
 
+  if (!bookmarkList.length) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <BrowserSiteCardList
-        scrollableGesture={scrollableGesture}
         ListHeaderComponent={
-          list?.length ? (
-            <View style={styles.header}>
-              <Text style={styles.title}>
-                {t('page.browser.BrowserSearch.favorite')}
+          <View style={styles.header}>
+            <Text style={styles.title}>
+              {t('page.browser.BrowserSearch.favorite')}
+            </Text>
+            <TouchableOpacity onPress={handle}>
+              <Text style={styles.edit}>
+                {isEditing ? t('global.Done') : t('global.Edit')}
               </Text>
-              <TouchableOpacity onPress={handle}>
-                <Text style={styles.edit}>
-                  {isEditing ? t('global.Done') : t('global.Edit')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : null
+            </TouchableOpacity>
+          </View>
         }
-        isInBottomSheet={isInBottomSheet}
+        isInBottomSheet
         data={list}
         onPress={isEditing ? undefined : onPress}
         style={styles.list}
         isShowDelete={isEditing}
         onDeletePress={dapp => handleRemoveLocal(dapp.origin)}
-        onScroll={onScroll}
-        ListEmptyComponent={DappFavoriteSectionEmpty}
       />
+
+      {/* <View style={styles.grid}>
+        {bookmarkList?.map(item => {
+          if (removedItems.includes(item.origin)) {
+            return null;
+          }
+          return (
+            <View key={item.origin} style={styles.itemWrapper}>
+              {isEditing ? (
+                <TouchableOpacity
+                  onPress={() => handleRemoveLocal(item.origin)}>
+                  <RcIconDelete />
+                </TouchableOpacity>
+              ) : null}
+              <BrowserSiteCard
+                data={item}
+                onPress={isEditing ? undefined : onPress}
+                key={item.origin}
+                containerStyle={{ width: '100%' }}
+              />
+            </View>
+          );
+        })}
+      </View> */}
     </View>
   );
 }
