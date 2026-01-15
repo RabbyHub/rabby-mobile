@@ -7,7 +7,11 @@ import {
 import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column, Brackets } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
-import { columnConverter, badRealTransformer } from './_helpers';
+import {
+  columnConverter,
+  badRealTransformer,
+  jsonTransformer,
+} from './_helpers';
 import { prepareAppDataSource } from '../imports';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -24,6 +28,8 @@ import {
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
 import { CustomTxItem } from '@/core/services/transactionHistory';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
 
 export type ProjectItemType = {
   chain: string;
@@ -32,7 +38,7 @@ export type ProjectItemType = {
   name: string;
 };
 
-@Entity('cache_historyitem')
+@Entity(ORM_TABLE_NAMES.cache_historyitem)
 export class HistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
   @Column('boolean')
@@ -65,10 +71,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column({
     type: 'text',
     default: '[]',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
   receives: {
     token_id: string;
@@ -81,10 +84,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column({
     type: 'text',
     default: '[]',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
   sends: {
     token_id: string;
@@ -103,10 +103,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column({
     type: 'text',
     default: '{}',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
   token_approve_item: TokenItem = {
     amount: 0,
@@ -135,12 +132,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column({
     type: 'text',
     default: '{}',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
-  project_item?: ProjectItemType = {
+  project_item?: ProjectItemType | null = {
     chain: '',
     id: '',
     logo_url: '',
@@ -181,6 +175,104 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.txHash]
       .filter(Boolean)
       .join('-')}`);
+  }
+
+  static fillEntity(
+    e: HistoryItemEntity,
+    owner_addr: string,
+    input: TxHistoryItem,
+    tokenDict: Record<string, TokenItem>,
+    projectDict: Record<string, ProjectItemType>,
+    pinedQueue: IManageToken[],
+    customTxItem?: CustomTxItem,
+  ) {
+    e.owner_addr = owner_addr;
+    e.other_addr = input.other_addr ?? '';
+    e.is_scam = input.is_scam ?? false;
+    e.txHash = input.id ?? '';
+    e.chain = input.chain ?? 'eth';
+    e.receives = input.receives.map(item => {
+      const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
+      return {
+        ...item,
+        token,
+      };
+    });
+    e.sends = input.sends.map(item => {
+      const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
+      return {
+        ...item,
+        token,
+      };
+    });
+    e.status = input.tx?.status ?? 1;
+    e.time_at = input.time_at ?? 0;
+    e.cate_id = input.cate_id ?? '';
+    e.tx_name = input.tx?.name ?? '';
+    e.token_approve_id = input.token_approve?.token_id ?? '';
+    e.token_approve_value = input.token_approve?.value ?? 0;
+    e.token_approve_spender = input.token_approve?.spender ?? '';
+    e.token_approve_item = fetchHistoryTokenItem(
+      e.token_approve_id,
+      e.chain,
+      tokenDict,
+    );
+    e.project_id = input.project_id ?? '';
+    e.project_item = projectDict[e.project_id] || null;
+    e.tx_from_address = input.tx?.from_addr ?? '';
+    e.tx_to_address = input.tx?.to_addr ?? '';
+    e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
+    e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
+    e.is_small_tx = this.judgeIsSmallUsdTx(e, pinedQueue);
+    e.makeDbId();
+    e.history_type = this.getHistoryItemType(e);
+    if (customTxItem) {
+      e.history_custom_type = customTxItem.actionType;
+    }
+  }
+
+  static stmSql = `
+  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_historyitem}"
+  ("_db_id", "owner_addr", "is_scam", "is_small_tx", "txHash", "project_id", "chain", "status", "time_at", "cate_id", "receives", "sends", "tx_name", "token_approve_id", "token_approve_item", "token_approve_spender", "token_approve_value", "project_item", "other_addr", "tx_from_address", "tx_to_address", "tx_usd_gas_fee", "tx_eth_gas_fee", "history_type", "history_custom_type", "_local_created_at", "_local_updated_at")
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
+  `;
+
+  static getStatementSql() {
+    return this.stmSql;
+  }
+
+  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
+    stm.bindSync([
+      this._db_id,
+      this.owner_addr,
+      this.is_scam,
+      this.is_small_tx,
+      this.txHash,
+      this.project_id,
+      this.chain,
+      this.status,
+      this.time_at,
+      this.cate_id,
+      jsonTransformer.to(this.receives),
+      jsonTransformer.to(this.sends),
+      this.tx_name,
+      this.token_approve_id,
+      jsonTransformer.to(this.token_approve_item),
+      this.token_approve_spender,
+      this.token_approve_value,
+      jsonTransformer.to(this.project_item),
+      this.other_addr,
+      this.tx_from_address,
+      this.tx_to_address,
+      this.tx_usd_gas_fee,
+      this.tx_eth_gas_fee,
+      this.history_type,
+      this.history_custom_type,
+      this._local_created_at,
+      this._local_updated_at,
+    ]);
+
+    return stm;
   }
 
   static judgeIsSmallUsdTx(
@@ -283,60 +375,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     } catch (error) {
       console.error(error);
       return HistoryItemCateType.UnKnown;
-    }
-  }
-
-  static fillEntity(
-    e: HistoryItemEntity,
-    owner_addr: string,
-    input: TxHistoryItem,
-    tokenDict: Record<string, TokenItem>,
-    projectDict: Record<string, ProjectItemType>,
-    pinedQueue: IManageToken[],
-    customTxItem?: CustomTxItem,
-  ) {
-    e.owner_addr = owner_addr;
-    e.other_addr = input.other_addr ?? '';
-    e.is_scam = input.is_scam ?? false;
-    e.txHash = input.id ?? '';
-    e.chain = input.chain ?? 'eth';
-    e.receives = input.receives.map(item => {
-      const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
-      return {
-        ...item,
-        token,
-      };
-    });
-    e.sends = input.sends.map(item => {
-      const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
-      return {
-        ...item,
-        token,
-      };
-    });
-    e.status = input.tx?.status ?? 1;
-    e.time_at = input.time_at ?? 0;
-    e.cate_id = input.cate_id ?? '';
-    e.tx_name = input.tx?.name ?? '';
-    e.token_approve_id = input.token_approve?.token_id ?? '';
-    e.token_approve_value = input.token_approve?.value ?? 0;
-    e.token_approve_spender = input.token_approve?.spender ?? '';
-    e.token_approve_item = fetchHistoryTokenItem(
-      e.token_approve_id,
-      e.chain,
-      tokenDict,
-    );
-    e.project_id = input.project_id ?? '';
-    e.project_item = projectDict[e.project_id] || null;
-    e.tx_from_address = input.tx?.from_addr ?? '';
-    e.tx_to_address = input.tx?.to_addr ?? '';
-    e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
-    e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
-    e.is_small_tx = this.judgeIsSmallUsdTx(e, pinedQueue);
-    e.makeDbId();
-    e.history_type = this.getHistoryItemType(e);
-    if (customTxItem) {
-      e.history_custom_type = customTxItem.actionType;
     }
   }
 

@@ -96,7 +96,8 @@ export const fetchHistoryTokenItem = (
   tokenDict: Record<string, TokenItem>,
 ) => {
   const tokenUUID = `${chain}_token:${token_id}`;
-  return tokenDict[tokenUUID] || tokenDict[token_id] || {};
+  // TODO: {} is a temporary fix, need to make one real TokenItem object
+  return tokenDict[tokenUUID] || tokenDict[token_id] || ({} as TokenItem);
 };
 
 export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {

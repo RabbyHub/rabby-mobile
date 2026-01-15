@@ -4,8 +4,10 @@ import { EntityAddressAssetBase } from './base';
 import { CEX_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
 
-@Entity('cache_cex')
+@Entity(ORM_TABLE_NAMES.cache_cex)
 export class CexEntity extends EntityAddressAssetBase {
   // cexId
   @Column('text')
@@ -40,6 +42,31 @@ export class CexEntity extends EntityAddressAssetBase {
     e.name = name;
     e.logo_url = logo_url;
     e.makeDbId();
+  }
+
+  static stmSql = `
+  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_cex}"
+  ("_db_id", "owner_addr", "cexId", "is_deposit", "name", "logo_url", "_local_created_at", "_local_updated_at")
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
+  `;
+
+  static getStatementSql() {
+    return this.stmSql;
+  }
+
+  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
+    stm.bindSync([
+      this._db_id,
+      this.owner_addr,
+      this.cexId,
+      this.is_deposit,
+      this.name,
+      this.logo_url,
+      this._local_created_at,
+      this._local_updated_at,
+    ]);
+
+    return stm;
   }
 
   static async getCountOfAccount() {

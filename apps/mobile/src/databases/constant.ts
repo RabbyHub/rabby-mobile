@@ -5,6 +5,17 @@ export const APP_DB_PREFIX = 'rabby_';
 
 export const ORM_TABLE_NAMES = {
   account_info: 'account_info',
+
+  cache_buy_order: 'cache_buy_order',
+  cache_balance: 'cache_balance',
+  cache_cex: 'cache_cex',
+
+  cache_tokenitem: 'cache_tokenitem',
+  cache_nftitem: 'cache_nftitem',
+  cache_historyitem: 'cache_historyitem',
+  cache_localhistoryitem: 'cache_localhistoryitem',
+
+  cache_portocolitem: 'cache_portocolitem',
 } as const;
 
 // @see https://github.com/boltcode-js/react-native-sqlite-storage?tab=readme-ov-file#opening-a-database

@@ -83,8 +83,12 @@ export function correctBadRealOnSql(
  * @description should used with TEXT column type
  */
 export const jsonTransformer: ValueTransformer = {
-  to: (val: any) => JSON.stringify(val),
-  from: (val: any) => stringUtils.safeParseJSON(val),
+  to: (val: any) => {
+    // avoid duplicate stringify
+    if (typeof val === 'string') return val;
+    return columnConverter.jsonObjToString(val);
+  },
+  from: (val: any) => columnConverter.jsonStringToObj(val),
 };
 
 /**
