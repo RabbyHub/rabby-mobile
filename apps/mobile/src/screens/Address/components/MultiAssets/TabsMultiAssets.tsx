@@ -26,7 +26,7 @@ import { useHomeTabIndex } from '@/hooks/navigation';
 import { runIIFEFunc } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useHomeDrawerAnimateStore } from '@/screens/Home/hooks/useHomeDrawerAnimateStore';
+import { useHomeDrawerAnimateStore } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import { useMyAccounts } from '@/hooks/account';
 import { filterDirectlySignableAccounts } from '@/core/apis/account';
 import { ReceiveOnNoAssets } from '@/screens/Home/components/ReceiveOnNoAssets';

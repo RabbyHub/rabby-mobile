@@ -1,17 +1,16 @@
-import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
+import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
 import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
+import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
-import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
 import { RootNames } from '@/constant/layout';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
+import { IS_ANDROID } from '@/core/native/utils';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
@@ -23,40 +22,29 @@ import React, {
   useState,
 } from 'react';
 import {
+  AppState,
   Dimensions,
-  Easing,
+  PanResponder,
   Platform,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity as RNTouchableOpacity,
-  View,
-  AppState,
   useWindowDimensions,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  InteractionManager,
-  Alert,
-  PanResponder,
+  View,
 } from 'react-native';
 
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  Extrapolate,
+  interpolate,
   runOnJS,
   useAnimatedReaction,
-  useSharedValue,
   useAnimatedStyle,
-  withTiming,
-  interpolate,
-  Extrapolate,
-  withSpring,
   useDerivedValue,
-  clamp,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
-import {
-  Gesture,
-  GestureDetector,
-  FlatList,
-} from 'react-native-gesture-handler';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -64,10 +52,7 @@ import { apisAccount } from '@/core/apis';
 import {
   browserService,
   currencyService,
-  gasAccountService,
-  keyringService,
   preferenceService,
-  transactionHistoryService,
 } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
@@ -82,77 +67,73 @@ import {
   getReadyNavigationInstance,
   navigateDeprecated,
 } from '@/utils/navigation';
-import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { BadgeText } from './components/BadgeText';
 import { useApprovalAlertCounts } from './hooks/approvals';
 
-import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
+import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { FastTouchable } from '@/components/Perf/FastTouchable';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
+import { perfEvents } from '@/core/utils/perf';
+import { syncTop10History } from '@/databases/hooks/history';
+import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
+import { refreshDayCurve } from '@/hooks/useMultiCurve';
+import {
+  refresh24hAssets,
+  useScene24hBalanceLightWeightData,
+} from '@/hooks/useScene24hBalance';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
+import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { colord } from 'colord';
 import dayjs from 'dayjs';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { trigger } from 'react-native-haptic-feedback';
 import {
   isTabsSwiping,
   useAccountInfo,
 } from '../Address/components/MultiAssets/hooks';
-import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
-import { useInitDetectDBAssets } from '../Search/useAssets';
-import { HomePendingBadge } from './components/HomePending';
-import { PerpsPnl } from './components/PerpsPnl';
-import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
-import { LendingHF } from './components/LendingHF';
-import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
-import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
-import { PointsBadge } from '../Points/components/PointsBadge';
-import { setBrowserState } from '@/hooks/browser/useBrowser';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
-import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import {
   TAB_HEADER_MIN_HEIGHT,
   TabMultiAssetsProps,
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
-import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
+import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
-import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
+import { apisLending } from '../Lending/hooks';
+import { PointsBadge } from '../Points/components/PointsBadge';
+import { useInitDetectDBAssets } from '../Search/useAssets';
+import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { TABITEM_H } from './components/CustomTabBar';
+import { HomeCenterArea } from './components/HomeCenterArea';
+import { HomeDappDrawer } from './components/HomeDappDrawer';
+import { HomePendingBadge } from './components/HomePending';
+import { LendingHF } from './components/LendingHF';
+import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
+import { PerpsPnl } from './components/PerpsPnl';
+import { TmpHomeRefresher } from './components/TmpHomeRefresher';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
   useHomeHistoryStore,
 } from './hooks/history';
-import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
-  refresh24hAssets,
-  useScene24hBalanceLightWeightData,
-} from '@/hooks/useScene24hBalance';
-import {
-  TmpHomeRefresher,
-  triggerFetchHomeData,
-} from './components/TmpHomeRefresher';
-import { HomeCenterArea } from './components/HomeCenterArea';
-import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
-import { apisLending } from '../Lending/hooks';
-import { FastTouchable } from '@/components/Perf/FastTouchable';
-import { isNonPublicProductionEnv } from '@/constant';
-import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
-import { perfEvents } from '@/core/utils/perf';
-import { refreshDayCurve } from '@/hooks/useMultiCurve';
-import { trigger } from 'react-native-haptic-feedback';
-import { useHomeDrawerAnimateStore } from './hooks/useHomeDrawerAnimateStore';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BrowserFavoriteManage } from '../Browser/BrowserScreen/components/BrowserFavoriteManage';
+  useHomeAnimation,
+  useHomeDrawerAnimateStore,
+} from './hooks/useHomeDrawerAnimate';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -522,235 +503,15 @@ const OverViewComponent = React.memo(
 
     const { bottom } = useSafeAreaInsets();
 
-    const tabsOpacity = useHomeDrawerAnimateStore(state => state.tabsOpacity);
-    const { safeTop } = useSafeSizes();
-    const translateY = useSharedValue(0);
-    const isExpanded = useSharedValue(false);
-    const pullPercent = useDerivedValue(() => {
-      return (translateY.value / height) * 100;
-    });
-    const scrollY = useCurrentTabScrollY();
-    const contentHeight = useSharedValue(0);
-    const layoutHeight = useSharedValue(0);
-    const isAtBottom = useDerivedValue(() => {
-      if (!contentHeight.value || !layoutHeight.value) {
-        return false;
-      }
-      const maxOffset = Math.max(0, contentHeight.value - layoutHeight.value);
-      return scrollY.value >= maxOffset;
-    }, [scrollY]);
-
-    const [bounces, setBounces] = useState(true);
-
-    const pullThreshold = 100;
-
-    const triggerImpact = useCallback(() => {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
-    }, []);
-
-    const collapsePanel = useCallback(() => {
-      translateY.value = withTiming(0);
-      triggerImpact();
-    }, [translateY, triggerImpact]);
-
-    const panGesture = useMemo(() => {
-      let gesture = Gesture.Pan()
-        .shouldCancelWhenOutside(false)
-        .onStart(() => {
-          translateY.value = 0;
-          isExpanded.value = false;
-        })
-        .onUpdate(event => {
-          console.log('pan onUpdate', event.translationY, isAtBottom.value);
-          if (!isAtBottom.value) {
-            return;
-          }
-          if (event.translationY > 0) {
-            return;
-          }
-
-          translateY.value = event.translationY;
-        })
-        .onEnd(() => {
-          if (!isAtBottom.value) {
-            return;
-          }
-          if (translateY.value * -1 > 80) {
-            translateY.value = withTiming(-height);
-          } else {
-            translateY.value = withTiming(0);
-          }
-        });
-
-      return gesture;
-    }, [height, isAtBottom.value, isExpanded, translateY]);
-
-    const panResponder = useRef(
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => {
-          return false;
-        },
-        onMoveShouldSetPanResponder: (_, gestureState) => {
-          return isAtBottom.value && gestureState.dy < -5;
-        },
-        onPanResponderGrant: () => {
-          translateY.value = 0;
-          isExpanded.value = false;
-        },
-        onPanResponderMove: (_, gestureState) => {
-          console.log('panResponder onPanResponderMove', gestureState.dy);
-          if (!isAtBottom.value) {
-            return;
-          }
-          if (gestureState.dy > 0) {
-            return;
-          }
-          setBounces(false);
-          translateY.value = gestureState.dy;
-        },
-        onPanResponderRelease: (_, gestureState) => {
-          if (!isAtBottom.value) {
-            return;
-          }
-          if (translateY.value * -1 > pullThreshold) {
-            translateY.value = withTiming(-height);
-            runOnJS(triggerImpact)();
-          } else {
-            translateY.value = withTiming(0);
-          }
-          setBounces(true);
-        },
-        onPanResponderTerminate: () => {
-          translateY.value = withTiming(0);
-          setBounces(true);
-        },
-      }),
-    ).current;
-
-    useAnimatedReaction(
-      () => pullPercent.value,
-      value => {
-        if (value === 0) {
-          isExpanded.value = false;
-        } else if (value === -100) {
-          isExpanded.value = true;
-        }
-      },
-      [],
-    );
-
-    useAnimatedReaction(
-      () => pullPercent.value,
-      value => {
-        tabsOpacity.value = interpolate(
-          value,
-          [-100, -60],
-          [0, 1],
-          Extrapolate.CLAMP,
-        );
-      },
-      [],
-    );
-
-    const mainStyle = useAnimatedStyle(() => ({
-      transform: [
-        {
-          translateY: translateY.value,
-        },
-      ],
-    }));
-
-    const drawerScrollOffsetY = useSharedValue(0);
-
-    const drawerGesture = useMemo(
-      () =>
-        Gesture.Pan()
-          .onChange(event => {
-            console.log(
-              'drawer onChange',
-              event.translationY,
-              drawerScrollOffsetY.value,
-            );
-            if (event.translationY <= 0) {
-              return;
-            }
-            if (drawerScrollOffsetY.value > 0) {
-              return;
-            }
-            console.log('drawer translateY set', event.translationY);
-            translateY.value = (height - event.translationY) * -1;
-          })
-          .onEnd(() => {
-            if (translateY.value > (height - pullThreshold) * -1) {
-              runOnJS(collapsePanel)();
-            } else {
-              translateY.value = withTiming(-height);
-            }
-          }),
-      [collapsePanel, drawerScrollOffsetY, height, translateY],
-    );
-
-    const drawerScrollableGesture = useMemo(
-      () =>
-        Gesture.Native()
-          .simultaneousWithExternalGesture(drawerGesture)
-          .shouldCancelWhenOutside(false),
-      [drawerGesture],
-    );
-
-    const drawerTranslateYStyle = useAnimatedStyle(() => {
-      return {
-        height: height,
-        transform: [
-          {
-            translateY: interpolate(
-              pullPercent.value,
-              [-100, 0],
-              [0, height],
-              Extrapolate.CLAMP,
-            ),
-          },
-        ],
-        paddingTop: interpolate(
-          pullPercent.value,
-          [-100, 0],
-          [IS_ANDROID ? 12 : safeTop + 12, 0],
-          Extrapolate.CLAMP,
-        ),
-      };
-    }, [height, safeTop]);
-
-    const panelScaleStyle = useAnimatedStyle(() => {
-      return {
-        transformOrigin: 'top',
-        transform: [
-          {
-            scale: interpolate(
-              pullPercent.value,
-              [0, -100],
-              isExpanded.value ? [1, 1] : [0.75, 1],
-              Extrapolate.CLAMP,
-            ),
-          },
-        ],
-      };
-    }, [pullThreshold, isExpanded]);
-
-    const overlayOpacityStyle = useAnimatedStyle(() => {
-      return {
-        opacity: isExpanded.value
-          ? 0
-          : interpolate(
-              pullPercent.value,
-              [-100, -100 * 0.3, 0],
-              [0, 1, 0],
-              Extrapolate.CLAMP,
-            ),
-      };
-    }, [pullThreshold]);
+    const {
+      mainStyle,
+      scrollableRef,
+      panResponder,
+      bounces,
+      contentHeight,
+      layoutHeight,
+      panGesture,
+    } = useHomeAnimation();
 
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
 
@@ -758,7 +519,8 @@ const OverViewComponent = React.memo(
       <View style={styles.pullUpWrapper}>
         <Animated.View style={mainStyle}>
           <Tabs.ScrollView
-            {...panResponder.panHandlers}
+            ref={scrollableRef}
+            {...(IS_ANDROID ? undefined : panResponder.panHandlers)}
             bounces={bounces}
             tvParallaxProperties={undefined}
             showsVerticalScrollIndicator={false}
@@ -837,25 +599,7 @@ const OverViewComponent = React.memo(
             </View>
           </Tabs.ScrollView>
         </Animated.View>
-        <GestureDetector gesture={drawerGesture}>
-          <Animated.View
-            pointerEvents="auto"
-            style={[styles.pullUpPanel, drawerTranslateYStyle]}>
-            <Animated.View style={[styles.pullOverlay, overlayOpacityStyle]} />
-            <Animated.View style={[panelScaleStyle]}>
-              <BrowserFavoriteManage
-                onPressHome={() => {
-                  collapsePanel();
-                }}
-                scrollableGesture={drawerScrollableGesture}
-                onScroll={event => {
-                  const offsetY = event.nativeEvent.contentOffset.y;
-                  drawerScrollOffsetY.value = offsetY;
-                }}
-              />
-            </Animated.View>
-          </Animated.View>
-        </GestureDetector>
+        <HomeDappDrawer />
       </View>
     );
   },

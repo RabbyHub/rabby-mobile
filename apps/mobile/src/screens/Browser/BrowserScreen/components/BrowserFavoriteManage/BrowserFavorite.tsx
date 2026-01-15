@@ -87,30 +87,6 @@ export function BrowserFavorite({
         onScroll={onScroll}
         ListEmptyComponent={DappFavoriteSectionEmpty}
       />
-
-      {/* <View style={styles.grid}>
-        {bookmarkList?.map(item => {
-          if (removedItems.includes(item.origin)) {
-            return null;
-          }
-          return (
-            <View key={item.origin} style={styles.itemWrapper}>
-              {isEditing ? (
-                <TouchableOpacity
-                  onPress={() => handleRemoveLocal(item.origin)}>
-                  <RcIconDelete />
-                </TouchableOpacity>
-              ) : null}
-              <BrowserSiteCard
-                data={item}
-                onPress={isEditing ? undefined : onPress}
-                key={item.origin}
-                containerStyle={{ width: '100%' }}
-              />
-            </View>
-          );
-        })}
-      </View> */}
     </View>
   );
 }

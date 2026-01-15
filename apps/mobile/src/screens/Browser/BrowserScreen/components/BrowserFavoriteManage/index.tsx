@@ -1,9 +1,8 @@
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { atom } from 'jotai';
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FlatListProps,
@@ -12,18 +11,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { BrowserSearch } from '../BrowserSearch';
 import { BrowserFavorite } from './BrowserFavorite';
 // import { TouchableOpacity } from 'react-native-gesture-handler';
 import { RcNextSearchCC } from '@/assets/icons/common';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ReactIconHome } from '@/assets2024/icons/browser';
-import {
-  NativeGesture,
-  SimultaneousGesture,
-} from 'react-native-gesture-handler';
-import { pad } from 'lodash';
 import { DappInfo } from '@/core/services/dappService';
+import { NativeGesture } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const activeTabAtom = atom('favorites');
 
@@ -43,13 +37,7 @@ export function BrowserFavoriteManage({
   });
   const { bottom } = useSafeAreaInsets();
 
-  const [searchState, setSearchState] = useState({
-    isShowSearch: false,
-    searchText: '',
-  });
-
-  const { openTab, setPartialBrowserState, closeAllTabs } = useBrowser();
-  const { removeAllBrowserHistory } = useBrowserHistory();
+  const { openTab, setPartialBrowserState } = useBrowser();
 
   const { t } = useTranslation();
 
@@ -117,9 +105,6 @@ export function BrowserFavoriteManage({
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   page: {
-    // backgroundColor: isLight
-    //   ? colors2024['neutral-bg-0']
-    //   : colors2024['neutral-bg-1'],
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
@@ -130,19 +115,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
   fabContainer: {
     flex: 1,
-    // paddingHorizontal: 20,
-    // paddingTop: 8,
-    // paddingBottom: 20,
-    // backgroundColor: colors2024['neutral-bg-1'],
-    // ...Platform.select({
-    //   ios: {
-    //     shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
-    //     shadowOffset: { width: 0, height: isLight ? -6 : -27 },
-    //     shadowOpacity: 1,
-    //     shadowRadius: isLight ? 20 : 13,
-    //   },
-    //   android: {},
-    // }),
   },
   gradient: {
     padding: 12,
@@ -194,8 +166,5 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 12,
     width: '100%',
-    // marginBottom: 30,
-    // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);
-    // backdrop-filter: blur(14.5px);
   },
 }));
