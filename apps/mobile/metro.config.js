@@ -72,12 +72,7 @@ const config = {
     }),
   },
   serializer: {
-    customSerializer: createWardenSerializer(createSentryMetroSerializer(), {
-      rootDir: '../../',
-      policyDir: './Warden-RN',
-      sourceRoot: './apps/mobile/src',
-      dev: false,
-    }),
+    customSerializer: createSentryMetroSerializer(),
   },
   resolver: {
     assetExts: assetExts.filter(ext => ext !== 'svg'),
