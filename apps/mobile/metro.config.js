@@ -4,6 +4,7 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const {
   createSentryMetroSerializer,
 } = require('@sentry/react-native/dist/js/tools/sentryMetroSerializer');
+const { createWardenSerializer } = require('warden.rn');
 const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
@@ -71,7 +72,12 @@ const config = {
     }),
   },
   serializer: {
-    customSerializer: createSentryMetroSerializer(),
+    customSerializer: createWardenSerializer(createSentryMetroSerializer(), {
+      rootDir: '../../',
+      policyDir: './Warden-RN',
+      sourceRoot: './apps/mobile/src',
+      dev: false,
+    }),
   },
   resolver: {
     assetExts: assetExts.filter(ext => ext !== 'svg'),
