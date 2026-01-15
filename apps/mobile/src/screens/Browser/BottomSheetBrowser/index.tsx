@@ -326,7 +326,7 @@ export const BrowserFavoritePopup = () => {
         }
       }}>
       <AutoLockView as="View">
-        <BrowserFavoriteManage isInBottomSheet />
+        <BrowserFavoriteManage />
       </AutoLockView>
     </AppBottomSheetModal>
   );
