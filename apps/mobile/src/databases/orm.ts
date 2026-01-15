@@ -12,7 +12,6 @@ import {
   exp_dropAndResyncDataSource,
   initializeAppDataSource,
 } from './imports';
-import { SwapItemEntity } from './entities/swapitem';
 import { BalanceEntity } from './entities/balance';
 import { abortAllSyncTasks } from './sync/_task';
 import { BuyItemEntity } from './entities/buyItem';
@@ -51,7 +50,6 @@ const dbOptions: DataSourceOptions = {
     NFTItemEntity,
     HistoryItemEntity,
     LocalHistoryItemEntity,
-    SwapItemEntity,
     BalanceEntity,
     ProtocolItemEntity,
     BuyItemEntity,

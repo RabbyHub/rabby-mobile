@@ -1,7 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm/browser';
 import { APP_DB_PREFIX } from '../constant';
 
-const tokenTableName = `${APP_DB_PREFIX}copy_trading_buyitem`;
+const tablesToDrop = [
+  `${APP_DB_PREFIX}copy_trading_buyitem`,
+  `${APP_DB_PREFIX}cache_swapitem`,
+  `${APP_DB_PREFIX}cache_localhistoryitem`,
+];
 
 async function checkIfTableExists(queryRunner: QueryRunner, tableName: string) {
   const tableExists = await queryRunner.query(
@@ -14,13 +18,15 @@ async function checkIfTableExists(queryRunner: QueryRunner, tableName: string) {
   return tableExists.length > 0;
 }
 
-export class RemoveCopyTradingTable1768463711916 implements MigrationInterface {
+export class RemoveCopyTradingTable1768475805228 implements MigrationInterface {
   transaction = false;
 
   async up(queryRunner: QueryRunner): Promise<void> {
-    const tableExists = await checkIfTableExists(queryRunner, tokenTableName);
-    if (tableExists) {
-      await queryRunner.query(`DROP TABLE '${tokenTableName}'`);
+    for (const tokenTableName of tablesToDrop) {
+      const tableExists = await checkIfTableExists(queryRunner, tokenTableName);
+      if (tableExists) {
+        await queryRunner.query(`DROP TABLE '${tokenTableName}'`);
+      }
     }
   }
 

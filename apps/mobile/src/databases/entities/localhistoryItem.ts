@@ -15,7 +15,7 @@ import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 
-@Entity(ORM_TABLE_NAMES.cache_localhistoryitem)
+@Entity(ORM_TABLE_NAMES.cache_local_historyitem)
 export class LocalHistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
   @Column('boolean')
@@ -139,7 +139,7 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
   }
 
   static stmSql = `
-  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_localhistoryitem}"
+  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_local_historyitem}"
   ("_db_id", "owner_addr", "is_scam", "txHash", "project_id", "chain", "status", "time_at", "cate_id", "receives", "sends", "tx_name", "token_approve_id", "token_approve_spender", "token_approve_value", "other_addr", "tx_from_address", "tx_to_address", "tx_usd_gas_fee", "tx_eth_gas_fee", "historyItemCateType", "source_type", "_local_created_at", "_local_updated_at")
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
   `;

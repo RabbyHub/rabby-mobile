@@ -13,7 +13,7 @@ export const ORM_TABLE_NAMES = {
   cache_tokenitem: 'cache_tokenitem',
   cache_nftitem: 'cache_nftitem',
   cache_historyitem: 'cache_historyitem',
-  cache_localhistoryitem: 'cache_localhistoryitem',
+  cache_local_historyitem: 'cache_local_historyitem',
 
   cache_portocolitem: 'cache_portocolitem',
 } as const;
