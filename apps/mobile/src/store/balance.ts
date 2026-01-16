@@ -54,19 +54,17 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
   async initStore() {
     // 在 App 启动时执行，初始化冷备数据
     // 取 Top10 地址
-    const { top10Addresses } = await getTop10MyAccounts(true);
     const balanceMap: Record<string, IBalanceData> = {};
     const chainUSDMap: Record<string, ChainWithBalance[]> = {};
 
-    for (const address of top10Addresses) {
-      const res = await BalanceEntity.queryBalance(address, true);
-      const lowerAddress = address.toLowerCase();
-      balanceMap[lowerAddress] = {
-        totalBalance: res.total_usd_value,
-        evmBalance: res.evm_usd_value || 0,
+    const res = await BalanceEntity.queryAllBalance();
+    res.forEach(item => {
+      balanceMap[item.owner_addr.toLowerCase()] = {
+        totalBalance: item.balance,
+        evmBalance: item.evm_usd_value || 0,
       };
-      chainUSDMap[lowerAddress] = res.chain_list;
-    }
+      chainUSDMap[item.owner_addr.toLowerCase()] = item.chain_list;
+    });
     // 写入 Store
     set(() => ({ balanceMap, chainUSDMap }));
   },

@@ -58,20 +58,6 @@ const buildBalanceAccountsFromList = (
 };
 
 runIIFEFunc(() => {
-  perfEvents.once('USER_MANUALLY_UNLOCK', () => {
-    getTop10MyAccounts().then(async ({ top10Accounts }) => {
-      const addresses = top10Accounts.map(account =>
-        account.address.toLowerCase(),
-      );
-      await balanceStore.getState().batchGetTotalBalance(addresses, false);
-      const balanceMap = balanceStore.getState().balanceMap;
-      const result = buildBalanceAccountsFromList(top10Accounts, balanceMap);
-      setAccountsBalance(result);
-    });
-  });
-});
-
-runIIFEFunc(() => {
   balanceStore.subscribe(state => {
     const balanceMap = state.balanceMap;
     const current = balanceAccountsStore.getState().balance;
@@ -179,17 +165,16 @@ export const fetchTotalBalance = makeSWRKeyAsyncFunc(
       const addresses = uniqueList.map(account =>
         account.address.toLowerCase(),
       );
-      if (addresses.length) {
-        await balanceStore.getState().batchGetTotalBalance(addresses, false);
-      }
 
-      if (fetchType === 'from_api') {
-        const top10Accounts = uniqueList.slice(0, 10);
-        if (top10Accounts.length) {
+      const top10Accounts = uniqueList.slice(0, 10);
+      if (top10Accounts.length) {
+        if (fetchType === 'from_api') {
           await balanceStore.getState().batchGetTotalBalance(
             top10Accounts.map(account => account.address.toLowerCase()),
             true,
           );
+        } else {
+          await balanceStore.getState().batchGetTotalBalance(addresses, false);
         }
       }
 

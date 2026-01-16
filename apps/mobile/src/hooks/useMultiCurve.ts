@@ -326,34 +326,11 @@ export const refreshDayCurve = makeSWRKeyAsyncFunc(
 );
 
 export function startProcessMultiCurveEvents() {
-  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
-    const balanceAccounts = await fetchTotalBalance('from_cache');
-    await refreshDayCurve({ balanceAccounts });
-  });
-
   balanceAccountsStore.subscribe(state => {
     refreshDayCurve({
       balanceAccounts: state.balance,
     });
   });
-
-  accountEvents.on(
-    'ACCOUNT_ADDED',
-    debounce(async ({ accounts, scene }) => {
-      const balanceAccounts = await fetchTotalBalance('from_cache');
-      console.log('balanceAccountsStore ACCOUNT_ADDED', balanceAccounts);
-      await refreshDayCurve({ balanceAccounts, force: true });
-    }, 500),
-  );
-
-  accountEvents.on(
-    'ACCOUNT_REMOVED',
-    debounce(async ({ removedAccounts }) => {
-      const balanceAccounts = await fetchTotalBalance('from_cache');
-      console.log('balanceAccountsStore ACCOUNT_REMOVED', balanceAccounts);
-      await refreshDayCurve({ balanceAccounts, force: true });
-    }, 500),
-  );
 }
 
 export const useMultiDayCurve = () => {

@@ -326,33 +326,12 @@ export const refresh24hAssets = async ({
 };
 
 export function startProcessScene24hBalanceEvents() {
-  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
-    const balanceAccounts = await fetchTotalBalance('from_cache');
-    await refresh24hAssets({ balanceAccounts });
-  });
-
   balanceAccountsStore.subscribe(state => {
     console.log('refresh24hAssets subscribe', state.balance);
     refresh24hAssets({
       balanceAccounts: state.balance,
     });
   });
-
-  accountEvents.on(
-    'ACCOUNT_ADDED',
-    debounce(async ({ accounts, scene }) => {
-      const balanceAccounts = await fetchTotalBalance('from_cache');
-      await refresh24hAssets({ balanceAccounts, force: true });
-    }, 500),
-  );
-
-  accountEvents.on(
-    'ACCOUNT_REMOVED',
-    debounce(async ({ removedAccounts }) => {
-      const balanceAccounts = await fetchTotalBalance('from_cache');
-      await refresh24hAssets({ balanceAccounts, force: true });
-    }, 500),
-  );
 }
 
 export function useScene24hBalanceCombinedData(scene: BalanceScene) {
