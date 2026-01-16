@@ -39,16 +39,7 @@ function useAutoLockIfTimeout(currentRouteName: string | null) {
 
     const handler: Parameters<
       typeof autoLockEvent.addListener<'timeout'>
-    >[1] = ctx => {
-      const routeName = getLatestNavigationName();
-
-      const hasBeenUnlock = routeName === RootNames.Unlock;
-      if (!hasBeenUnlock) {
-        requestLockWalletAndBackToUnlockScreen();
-      } else {
-        ctx.delayLock();
-      }
-    };
+    >[1] = ctx => {};
     autoLockEvent.addListener('timeout', handler);
 
     return () => {
@@ -104,9 +95,6 @@ export default function AutoLockView<
 }
 
 function ForAppNav(props: Props<'View'>) {
-  const { currentRouteName } = useCurrentRouteName();
-  useAutoLockIfTimeout(currentRouteName ?? null);
-
   React.useEffect(() => {
     const subUnlock = perfEvents.subscribe(
       'USER_MANUALLY_UNLOCK',
