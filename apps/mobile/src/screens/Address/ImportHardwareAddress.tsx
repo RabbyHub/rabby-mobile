@@ -184,13 +184,14 @@ export function ImportHardwareAddressScreen(): JSX.Element {
 
   const handleTrezor = React.useCallback(async () => {
     try {
+      setSetting(pre => ({ ...pre, startNumber: 1 }));
       await importFirstAddress();
     } catch (error) {
       toast.error(`error ${(error as any)?.message || String(error)}`);
 
       console.log('error', error);
     }
-  }, [importFirstAddress]);
+  }, [importFirstAddress, setSetting]);
 
   return (
     <NormalScreenContainer2024>
