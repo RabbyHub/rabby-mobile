@@ -1,43 +1,35 @@
+import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
 import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
+import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
-import RcIconDapps from '@/assets2024/icons/home/IconDappsCC.svg';
+import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
 import { RootNames } from '@/constant/layout';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
+import { IS_ANDROID } from '@/core/native/utils';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
-  Animated,
+  AppState,
   Dimensions,
-  Easing,
   Platform,
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity as RNTouchableOpacity,
-  View,
-  AppState,
-  useWindowDimensions,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  InteractionManager,
-  Alert,
+  useWindowDimensions,
+  View,
 } from 'react-native';
+
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -45,10 +37,7 @@ import { apisAccount } from '@/core/apis';
 import {
   browserService,
   currencyService,
-  gasAccountService,
-  keyringService,
   preferenceService,
-  transactionHistoryService,
 } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
@@ -63,73 +52,69 @@ import {
   getReadyNavigationInstance,
   navigateDeprecated,
 } from '@/utils/navigation';
-import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { BadgeText } from './components/BadgeText';
 import { useApprovalAlertCounts } from './hooks/approvals';
 
-import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
+import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { FastTouchable } from '@/components/Perf/FastTouchable';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
+import { perfEvents } from '@/core/utils/perf';
+import { syncTop10History } from '@/databases/hooks/history';
+import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
+import { refreshDayCurve } from '@/hooks/useMultiCurve';
+import {
+  refresh24hAssets,
+  useScene24hBalanceLightWeightData,
+} from '@/hooks/useScene24hBalance';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
+import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { colord } from 'colord';
 import dayjs from 'dayjs';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import {
   isTabsSwiping,
   useAccountInfo,
 } from '../Address/components/MultiAssets/hooks';
-import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
-import { useInitDetectDBAssets } from '../Search/useAssets';
-import { HomePendingBadge } from './components/HomePending';
-import { PerpsPnl } from './components/PerpsPnl';
-import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
-import { LendingHF } from './components/LendingHF';
-import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
-import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
-import { PointsBadge } from '../Points/components/PointsBadge';
-import { setBrowserState } from '@/hooks/browser/useBrowser';
-import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
 import {
   TAB_HEADER_MIN_HEIGHT,
   TabMultiAssetsProps,
   TabsMultiAssets,
 } from '../Address/components/MultiAssets/TabsMultiAssets';
-import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow/CurveChart';
+import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
-import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
+import { apisLending } from '../Lending/hooks';
+import { PointsBadge } from '../Points/components/PointsBadge';
+import { useInitDetectDBAssets } from '../Search/useAssets';
+import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { TABITEM_H } from './components/CustomTabBar';
+import { HomeCenterArea } from './components/HomeCenterArea';
+import { HomeDappDrawer } from './components/HomeDappDrawer';
+import { HomePendingBadge } from './components/HomePending';
+import { LendingHF } from './components/LendingHF';
+import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
+import { PerpsPnl } from './components/PerpsPnl';
+import { TmpHomeRefresher } from './components/TmpHomeRefresher';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
   useHomeHistoryStore,
 } from './hooks/history';
-import { useRendererDetect } from '@/components/Perf/PerfDetector';
-import {
-  refresh24hAssets,
-  useScene24hBalanceLightWeightData,
-} from '@/hooks/useScene24hBalance';
-import {
-  TmpHomeRefresher,
-  triggerFetchHomeData,
-} from './components/TmpHomeRefresher';
-import { HomeCenterArea } from './components/HomeCenterArea';
-import { syncTop10History, useHistoryTime } from '@/databases/hooks/history';
-import { apisLending } from '../Lending/hooks';
-import { FastTouchable } from '@/components/Perf/FastTouchable';
-import { isNonPublicProductionEnv } from '@/constant';
-import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
-import { perfEvents } from '@/core/utils/perf';
-import { refreshDayCurve } from '@/hooks/useMultiCurve';
+import { useHomeAnimation } from './hooks/useHomeDrawerAnimate';
+import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -152,7 +137,7 @@ const OverViewComponent = React.memo(
     });
     const { pendingTxCount, historyCount } = useHomeHistoryStore();
 
-    const { width } = useWindowDimensions();
+    const { width, height } = useWindowDimensions();
     const itemWidth =
       (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
@@ -238,11 +223,19 @@ const OverViewComponent = React.memo(
           //   title: MultiHomeFeatTitle.TEST_DAPP,
           //   icon: RcIconDapps,
           // },
+
           {
             key: MultiHomeFeatTitle.Watchlist,
             title: t('page.home.services.watchlist'),
             icon: RcIconWatchlistCC,
           },
+          IS_ANDROID
+            ? {
+                key: MultiHomeFeatTitle.Dapps,
+                title: t('page.home.services.dapps'),
+                icon: RcIconDapps,
+              }
+            : null,
           // {
           //   title: MultiHomeFeatTitle.Ecosystem,
           //   icon: RcIconEcosystem,
@@ -341,6 +334,8 @@ const OverViewComponent = React.memo(
       });
     }, [navigation]);
 
+    const { setPartialBrowserState } = useBrowser();
+
     const handleClickMenu = useCallback(
       (key: MultiHomeFeatTitle) => {
         if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
@@ -432,11 +427,21 @@ const OverViewComponent = React.memo(
             });
             break;
 
+          case MultiHomeFeatTitle.Dapps:
+            setPartialBrowserState({
+              isShowBrowser: true,
+              isShowSearch: true,
+              searchText: '',
+              searchTabId: '',
+              trigger: 'home',
+            });
+            break;
+
           default:
             break;
         }
       },
-      [handlePressWatchlist, navigation],
+      [handlePressWatchlist, navigation, setPartialBrowserState],
     );
 
     const generateCustomBadgeIcon = useCallback(
@@ -494,72 +499,117 @@ const OverViewComponent = React.memo(
 
     const { bottom } = useSafeAreaInsets();
 
+    const {
+      mainStyle,
+      scrollableRef,
+      panResponder,
+      bounces,
+      contentHeight,
+      layoutHeight,
+      showDappDrawer,
+    } = useHomeAnimation();
+
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
+    const { homeDisplayedTabs: tabs } = useHomeDisplayedTabs();
+
+    const SwipeUpHint = (
+      <View style={styles.swipeUpHint}>
+        <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
+        <Text style={styles.swipeUpHintText}>
+          {IS_ANDROID
+            ? tabs?.length
+              ? t('page.home.swipeUp.descAndroidMore')
+              : t('page.home.swipeUp.descAndroid')
+            : tabs?.length
+            ? t('page.home.swipeUp.descMore')
+            : t('page.home.swipeUp.desc')}
+        </Text>
+      </View>
+    );
 
     return (
-      <Tabs.ScrollView
-        tvParallaxProperties={undefined}
-        showsVerticalScrollIndicator={false}
-        onTouchStart={() => {
-          setBrowserState({ isEditingFavorite: false });
-        }}
-        style={[styles.scroll, { flex: undefined }]}
-        contentContainerStyle={[
-          styles.scrollContainer,
-          {
-            // paddingBottom: bottom + 82,
-            paddingBottom:
-              Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
-          },
-        ]}
-        refreshControl={
-          <RefreshControl refreshing={false} onRefresh={onRefresh} />
-        }>
-        <MultiAddressHomeHeader onRefresh={onRefresh} />
+      <View style={styles.pullUpWrapper}>
+        <Animated.View style={mainStyle}>
+          <Tabs.ScrollView
+            ref={scrollableRef}
+            {...(IS_ANDROID ? undefined : panResponder.panHandlers)}
+            bounces={bounces}
+            tvParallaxProperties={undefined}
+            showsVerticalScrollIndicator={false}
+            style={[styles.scroll, { flex: undefined }]}
+            contentContainerStyle={[
+              styles.scrollContainer,
+              {
+                // paddingBottom: bottom + 82,
+                paddingBottom:
+                  Platform.OS === 'android' ? Math.max(bottom, 16) : bottom,
+              },
+            ]}
+            overScrollMode={'never'}
+            scrollEventThrottle={16}
+            onContentSizeChange={(_, heightValue) => {
+              contentHeight.value = heightValue;
+            }}
+            onLayout={event => {
+              layoutHeight.value = event.nativeEvent.layout.height;
+            }}
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={onRefresh} />
+            }>
+            <MultiAddressHomeHeader onRefresh={onRefresh} />
 
-        <HomeCenterArea />
+            <HomeCenterArea />
 
-        <View style={styles.grid}>
-          <View style={styles.gridItemsWrap}>
-            {MENU_ARR.map((el, index) => {
-              return (
-                <FastTouchable
-                  style={StyleSheet.flatten([
-                    styles.gridItem,
-                    { width: itemWidth },
-                  ])}
-                  key={index}
-                  onPress={() => {
-                    console.debug('[perf] touched menu', el.key);
-                    requestAnimationFrame(() => {
-                      handleClickMenu(el.key);
-                    });
-                    matomoRequestEvent({
-                      category: 'Click_Services',
-                      action: `Click_${el.key}`,
-                    });
-                  }}>
-                  <View style={styles.badgeWrapper}>
-                    <View style={styles.iconWrapper}>
-                      <el.icon
-                        width={28}
-                        height={28}
-                        color={el.color || colors2024['brand-default-icon']}
-                      />
-                    </View>
-                    <View style={styles.rightBadgeWrapper}>
-                      {generateCustomBadgeIcon(el)}
-                    </View>
-                  </View>
-                  <Text style={styles.gridText}>{el.title}</Text>
-                </FastTouchable>
-              );
-            })}
-          </View>
-          <BrowserSearchEntry />
-          <View style={styles.searchBarPlaceholder} />
-        </View>
-      </Tabs.ScrollView>
+            <View style={styles.grid}>
+              <View style={styles.gridItemsWrap}>
+                {MENU_ARR.map((el, index) => {
+                  return (
+                    <FastTouchable
+                      style={StyleSheet.flatten([
+                        styles.gridItem,
+                        { width: itemWidth },
+                      ])}
+                      key={index}
+                      onPress={() => {
+                        console.debug('[perf] touched menu', el.key);
+                        requestAnimationFrame(() => {
+                          handleClickMenu(el.key);
+                        });
+                        matomoRequestEvent({
+                          category: 'Click_Services',
+                          action: `Click_${el.key}`,
+                        });
+                      }}>
+                      <View style={styles.badgeWrapper}>
+                        <View style={styles.iconWrapper}>
+                          <el.icon
+                            width={28}
+                            height={28}
+                            color={el.color || colors2024['brand-default-icon']}
+                          />
+                        </View>
+                        <View style={styles.rightBadgeWrapper}>
+                          {generateCustomBadgeIcon(el)}
+                        </View>
+                      </View>
+                      <Text style={styles.gridText}>{el.title}</Text>
+                    </FastTouchable>
+                  );
+                })}
+              </View>
+              <BrowserSearchEntry />
+              {IS_ANDROID ? (
+                <TouchableOpacity onPress={showDappDrawer}>
+                  {SwipeUpHint}
+                </TouchableOpacity>
+              ) : (
+                SwipeUpHint
+              )}
+            </View>
+          </Tabs.ScrollView>
+        </Animated.View>
+        <HomeDappDrawer />
+      </View>
     );
   },
 );
@@ -736,6 +786,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   scroll: {
     flex: 1,
     marginTop: TAB_HEADER_MIN_HEIGHT,
+    marginBottom: -TABITEM_H - TAB_HEADER_MIN_HEIGHT,
   },
   scrollContainer: {
     // paddingTop: 88,
@@ -1155,6 +1206,54 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     top: 0,
     left: 0,
     width: '100%',
+  },
+  pullUpWrapper: {
+    flex: 1,
+    paddingBottom: IS_ANDROID ? 1 : 0,
+  },
+  pullUpPanel: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  pullOverlay: {
+    position: 'absolute',
+    top: -90,
+    transform: [{ translateX: -501 }],
+    left: '50%',
+    height: 1002,
+    width: 1002,
+    borderRadius: 10000,
+    backgroundColor: colors2024['brand-light-1'],
+    zIndex: 10,
+    pointerEvents: 'none',
+  },
+  swipeUpHint: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 16,
+  },
+  swipeUpHintFixed: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  swipeUpHintText: {
+    marginTop: 4,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 

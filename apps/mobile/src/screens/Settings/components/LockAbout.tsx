@@ -1,105 +1,104 @@
 import React from 'react';
 import { Text, TextStyle } from 'react-native';
 
-import { useAutoLockTime, useLastUnlockedAuth } from '@/hooks/appTimeout';
+import {
+  getAutoLockExpireTime,
+  useAutoLockTime,
+  useLastUnlockedAuth,
+} from '@/hooks/appTimeout';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import useInterval from 'react-use/lib/useInterval';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 import { usePasswordStatus } from '@/hooks/useLock';
-import {
-  useAutoLockTimeMinites,
-  useToggleShowAutoLockCountdown,
-} from '@/hooks/appSettings';
+import { useToggleShowAutoLockCountdown } from '@/hooks/appSettings';
 import { TIME_SETTINGS } from '@/constant/autoLock';
+import { apisAutoLock } from '@/core/apis';
+import {
+  makeMutable,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import AnimateableText from 'react-native-animateable-text';
 
-export function useAutoLockCountDown() {
-  const { autoLockTime } = useAutoLockTime();
-  const { colors2024 } = useTheme2024();
-  const [spinner, setSpinner] = React.useState(false);
-  useInterval(() => {
-    if (NEED_DEVSETTINGBLOCKS) {
-      // trigger countDown re-calculated
-      setSpinner(prev => !prev);
-    }
-  }, 500);
+function computeCountDown(autoLockTime: number) {
+  'worklet';
+  if (!apisAutoLock.isValidAutoLockTime(autoLockTime)) {
+    return { secs: -1, text: '∞', diffMs: -1 };
+  }
+  const diffMs = Math.max(autoLockTime - Date.now(), 0);
 
-  const { text: countDownText, secs: countDownSecs } = React.useMemo(() => {
-    spinner;
-    const diffMs = Math.max(autoLockTime - Date.now(), 0);
-
-    const timeSpans = getTimeSpanByMs(diffMs);
-
-    return {
-      secs: timeSpans.s,
-      text: [
-        timeSpans.d ? `${timeSpans.d}d` : '',
-        timeSpans.h ? `${timeSpans.h}h` : '',
-        timeSpans.m ? `${timeSpans.m}m` : '',
-        timeSpans.s ? `${timeSpans.s}s` : '',
-      ]
-        .filter(Boolean)
-        .join(' '),
-    };
-  }, [autoLockTime, spinner]);
-
-  const textColor = countDownText
-    ? colors2024['green-default']
-    : countDownSecs > 5
-    ? colors2024['orange-default']
-    : colors2024['red-default'];
+  const timeSpans = getTimeSpanByMs(diffMs);
 
   return {
-    colors: colors2024,
-    textColor,
-    autoLockTime,
-    countDownText,
-    countDownSecs,
+    diffMs,
+    secs: timeSpans.s,
+    text: [
+      timeSpans.d ? `${timeSpans.d}d` : '',
+      timeSpans.h ? `${timeSpans.h}h` : '',
+      timeSpans.m ? `${timeSpans.m}m` : '',
+      timeSpans.s ? `${timeSpans.s}s` : '',
+    ]
+      .filter(Boolean)
+      .join(' '),
   };
 }
 
-export function AutoLockCountDownLabel() {
-  const { textColor, countDownText } = useAutoLockCountDown();
-  const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
+const countdownSecs = makeMutable(0);
+const countdownText = makeMutable('');
+const svDiffMs = makeMutable(0);
+setInterval(() => {
+  if (NEED_DEVSETTINGBLOCKS) {
+    // trigger countDown re-calculated
+    const computed = computeCountDown(getAutoLockExpireTime());
+    countdownSecs.value = computed.secs;
+    countdownText.value = computed.text;
+    svDiffMs.value = computed.diffMs;
+  }
+}, 500);
 
-  return (
-    <Text>
-      {`${showAutoLockCountdown ? 'Show' : 'Hide'} Floating View`}
-      {!showAutoLockCountdown && countDownText && (
-        <>
-          {' '}
-          | Countdown:
-          <Text
-            style={{
-              color: textColor,
-            }}>
-            {countDownText}
-          </Text>
-        </>
-      )}
-    </Text>
-  );
+export function useAutoLockCountDown() {
+  const { devNeedCountdown } = useAutoLockTime();
+  const { colors2024 } = useTheme2024();
+
+  const countdownTextStyles = useAnimatedStyle(() => {
+    return {
+      fontSize: 16,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+      color:
+        svDiffMs.value > 60 * 1e3
+          ? colors2024['green-default']
+          : svDiffMs.value > 5 * 1e3
+          ? colors2024['orange-default']
+          : colors2024['red-default'],
+    };
+  });
+
+  const countdownTextProps = useAnimatedProps(() => {
+    return {
+      text: !devNeedCountdown ? '' : countdownText.value,
+    };
+  });
+
+  return {
+    devNeedCountdown,
+    countdownTextStyles,
+    countdownTextProps,
+  };
 }
+
 function useCurrentAutoLockLabel() {
-  const { autoLockMinutes } = useAutoLockTimeMinites();
+  const { timeoutMs } = useAutoLockTime();
 
   return React.useMemo(() => {
-    const minutes = autoLockMinutes;
-
     const preset = TIME_SETTINGS.find(
-      setting => setting.milliseconds === minutes * 60 * 1000,
+      setting => setting.milliseconds === timeoutMs,
     );
-    if (preset?.getLabel) return preset?.getLabel();
 
-    const timeSpans = getTimeSpan(minutes);
-
-    return [
-      timeSpans.d ? `${timeSpans.d} Day(s)` : '',
-      timeSpans.h ? `${timeSpans.h} Hour(s)` : '',
-      timeSpans.m ? `${timeSpans.m} Minute(s)` : '',
-      // timeSpans.s ? `${timeSpans.s} Sec(s)` : '',
-    ].join(' ');
-  }, [autoLockMinutes]);
+    return preset?.getLabel() || '-';
+  }, [timeoutMs]);
 }
 export function AutoLockSettingLabel({ style }: { style?: TextStyle }) {
   const settingLabel = useCurrentAutoLockLabel();

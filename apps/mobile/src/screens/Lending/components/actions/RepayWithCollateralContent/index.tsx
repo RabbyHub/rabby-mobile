@@ -604,6 +604,9 @@ export default function RepayWithCollateral({
         tx = (error as any).transaction;
       }
     }
+    if (!tx) {
+      throw new Error('tx not found');
+    }
     const populatedTx: PopulatedTransaction = {
       to: tx.to,
       from: tx.from,

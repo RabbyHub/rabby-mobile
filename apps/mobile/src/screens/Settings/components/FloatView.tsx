@@ -18,6 +18,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { RcIconLogo } from '@/assets/icons/common';
+import AnimateableText from 'react-native-animateable-text';
 
 function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max);
@@ -31,7 +32,8 @@ const INIT_LAYOUT = {
 const screenLayout = Dimensions.get('screen');
 export function FloatViewAutoLockCount() {
   const { styles } = useThemeStyles(getFloatViewAutoLockCountStyles);
-  const { countDownText, textColor } = useAutoLockCountDown();
+  const { devNeedCountdown, countdownTextStyles, countdownTextProps } =
+    useAutoLockCountDown();
   const { collapsed, toggleCollapsed, shouldShow } = useFloatingView();
 
   const [translationX, translationY, prevTranslationX, prevTranslationY] = [
@@ -113,10 +115,13 @@ export function FloatViewAutoLockCount() {
           </TouchableWithoutFeedback>
         </GestureDetector>
         <View pointerEvents="none" style={[styles.animatedView]}>
-          {countDownText && <Text style={styles.label}>Auto Lock after </Text>}
-          <Text style={{ color: textColor, fontWeight: '600' }}>
-            {countDownText || 'Time Reached'}
-          </Text>
+          {devNeedCountdown && (
+            <Text style={styles.label}>Auto Lock after </Text>
+          )}
+          <AnimateableText
+            animatedProps={countdownTextProps}
+            style={countdownTextStyles}
+          />
         </View>
       </Animated.View>
     </GestureHandlerRootView>

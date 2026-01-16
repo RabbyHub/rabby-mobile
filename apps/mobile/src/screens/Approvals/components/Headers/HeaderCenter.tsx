@@ -9,7 +9,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 interface IProps {
   isSearching?: boolean;
   textTitle?: string;
-  type: 'contract' | 'assets';
+  type: 'contract' | 'assets' | 'EIP7702';
   inputValue: string;
   inputOnChange: (s: string) => void;
   currentAccount?: KeyringAccountWithAlias | null;

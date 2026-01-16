@@ -82,6 +82,8 @@ export const PerpsScreen = () => {
 
     handleActionApproveStatus,
     setInitialized,
+
+    favoriteMarkets,
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
 
@@ -127,10 +129,35 @@ export const PerpsScreen = () => {
 
   // Prepare sorted market data with header as first item
   const listData = useMemo(() => {
-    const sorted = sortBy(marketData, item => -(item.dayNtlVlm || 0));
+    // Separate favorite and non-favorite markets
+    const favoriteItems: typeof marketData = [];
+    const nonFavoriteItems: typeof marketData = [];
+
+    marketData.forEach(item => {
+      const isFavorite = favoriteMarkets.includes(item.name.toUpperCase());
+      if (isFavorite) {
+        favoriteItems.push(item);
+      } else {
+        nonFavoriteItems.push(item);
+      }
+    });
+
+    // Sort each group by dayNtlVlm (descending)
+    const sortedFavorites = sortBy(
+      favoriteItems,
+      item => -(item.dayNtlVlm || 0),
+    );
+    const sortedNonFavorites = sortBy(
+      nonFavoriteItems,
+      item => -(item.dayNtlVlm || 0),
+    );
+
+    // Combine: favorites first, then non-favorites
+    const sorted = [...sortedFavorites, ...sortedNonFavorites];
+
     // Add a special header item as first element for sticky header
     return [{ _isStickyHeader: true }, ...sorted];
-  }, [marketData]);
+  }, [marketData, favoriteMarkets]);
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
   const positionCoinSet = useMemo(() => {
@@ -315,6 +342,7 @@ export const PerpsScreen = () => {
       return (
         <PerpsMarketItem
           item={item}
+          isFavorite={favoriteMarkets.includes(item.name.toUpperCase())}
           hasPosition={positionCoinSet.has(item.name)}
           onPress={() => {
             scrollToTop();
@@ -330,7 +358,7 @@ export const PerpsScreen = () => {
         />
       );
     },
-    [positionCoinSet, scrollToTop],
+    [positionCoinSet, scrollToTop, favoriteMarkets],
   );
 
   const keyExtractor = useCallback(

@@ -38,11 +38,13 @@ import { startCheckClearAction } from './utils/clipboard';
 import tokenListStore from './store/tokens';
 import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
+import { apisAutoLock } from './core/apis';
 
 startSubscribeLangChange();
 
 startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
+apisAutoLock.startAutoLockChecker();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();
 startSubscribeAppStateChange();

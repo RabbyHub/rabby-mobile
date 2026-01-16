@@ -7,6 +7,7 @@ import type {
   ExplainTxResponse,
   GasLevel,
   Tx,
+  TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
@@ -16,6 +17,31 @@ import { hexToString, isHex, stringToHex } from 'web3-utils';
 import { findChain, getChain } from './chain';
 import i18n from './i18n';
 import { openExternalUrl } from '@/core/utils/linking';
+import { Account } from '@/core/services/preference';
+
+export interface ApprovalRes extends Tx {
+  type?: string;
+  address?: string;
+  uiRequestComponent?: string;
+  isSend?: boolean;
+  isSpeedUp?: boolean;
+  isCancel?: boolean;
+  isSwap?: boolean;
+  isGnosis?: boolean;
+  account?: Account;
+  extra?: Record<string, any>;
+  traceId?: string;
+  $ctx?: any;
+  signingTxId?: string;
+  pushType?: TxPushType;
+  lowGasDeadline?: number;
+  reqId?: string;
+  isGasLess?: boolean;
+  isGasAccount?: boolean;
+  logId?: string;
+  sig?: string;
+  $account?: Account;
+}
 
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
@@ -26,6 +52,19 @@ export const is1559Tx = (tx: Tx) => {
     isHexString(tx.maxPriorityFeePerGas || '')
   );
 };
+export const is7702Tx = (tx: ApprovalRes) => {
+  if ('authorizationList' in tx) {
+    if (
+      Array.isArray(tx.authorizationList) &&
+      tx.authorizationList.length > 0
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 export const GASPRICE_RANGE = {
   [CHAINS_ENUM.ETH]: [0, 20000],
   [CHAINS_ENUM.BOBA]: [0, 20000],
@@ -194,7 +233,8 @@ export function getCustomTxParamsData(
     if (spender.startsWith('0x')) {
       spender = spender.substring(2);
     }
-    const [signature, tokenValue] = data.split(spender);
+    const separator = new RegExp(spender, 'i');
+    const [signature, tokenValue] = data.split(separator);
 
     if (!signature || !tokenValue) {
       throw new Error('Invalid data');

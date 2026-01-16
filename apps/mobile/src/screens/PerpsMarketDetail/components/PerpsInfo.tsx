@@ -122,9 +122,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   list: {
     borderRadius: 16,
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-1']
+    //   : colors2024['neutral-bg-2'],
     backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+      ? colors2024['neutral-bg-5']
+      : colors2024['neutral-bg-3'],
   },
   listItem: {
     display: 'flex',

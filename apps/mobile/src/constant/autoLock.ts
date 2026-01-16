@@ -1,4 +1,6 @@
 import { t } from 'i18next';
+import { isNonPublicProductionEnv } from '.';
+import { getLatestOnlineConfig } from '@/core/config/online';
 export const TIME_SETTINGS: {
   key: string;
   getLabel: () => string;
@@ -34,18 +36,32 @@ export const TIME_SETTINGS: {
     getLabel: () => t('global.time.mins', { t: 5 }),
     milliseconds: 5 * 60 * 1000,
   },
+  {
+    key: 'never',
+    getLabel: () => t('global.autolock.never'),
+    milliseconds: -1,
+  },
 ];
 
-if (__DEV__) {
+function pushShortAutoLockTimeSetting() {
+  TIME_SETTINGS.push({
+    key: '1m',
+    getLabel: () => '1 minute (DEV ONLY)',
+    milliseconds: 60 * 1000,
+  });
   TIME_SETTINGS.push({
     key: '30s',
     getLabel: () => '30 seconds (DEV ONLY)',
     milliseconds: 30 * 1000,
   });
-  TIME_SETTINGS.push({
-    key: '10s',
-    getLabel: () => '10 seconds (DEV ONLY)',
-    milliseconds: 10 * 1000,
+}
+if (__DEV__) {
+  pushShortAutoLockTimeSetting();
+} else if (isNonPublicProductionEnv) {
+  getLatestOnlineConfig().then(config => {
+    if (config.switches?.['20260116.allow_short_auto_lock_time_on_bootstrap']) {
+      pushShortAutoLockTimeSetting();
+    }
   });
 }
 

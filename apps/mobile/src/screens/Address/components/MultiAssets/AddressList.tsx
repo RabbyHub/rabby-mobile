@@ -11,7 +11,9 @@ import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
-import useAccountsBalance, { fetchTotalBalance } from '@/hooks/useAccountsBalance';
+import useAccountsBalance, {
+  fetchTotalBalance,
+} from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -47,8 +49,12 @@ const AddressList = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const { myTop10Accounts, myTop10Records, notMatteredAccounts, fetchAccounts } =
-    useAccountInfo();
+  const {
+    myTop10Accounts,
+    myTop10Records,
+    notMatteredAccounts,
+    fetchAccounts,
+  } = useAccountInfo();
 
   const { triggerUpdate, balanceAccounts } = useAccountsBalance();
 
