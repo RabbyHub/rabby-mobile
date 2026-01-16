@@ -16,6 +16,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Dimensions,
   FlatListProps,
   Platform,
   FlatList as RNFlatList,
@@ -54,7 +55,8 @@ export const HomeDappDrawer: React.FC = () => {
   });
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  // const { height } = useWindowDimensions();
+  const height = Dimensions.get('screen').height;
   const { safeTop, headerHeight } = useSafeSizes();
   const offsetTop = useMemo(() => {
     return Math.max(safeTop, headerHeight);
@@ -187,7 +189,7 @@ export const HomeDappDrawer: React.FC = () => {
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
-        [IS_ANDROID ? 0 : offsetTop, 0],
+        [offsetTop, 0],
         Extrapolate.CLAMP,
       ),
     };

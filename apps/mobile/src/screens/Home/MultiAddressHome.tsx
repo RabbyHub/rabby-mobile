@@ -1214,6 +1214,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   pullUpWrapper: {
     flex: 1,
+    paddingBottom: IS_ANDROID ? 1 : 0,
   },
   pullUpPanel: {
     position: 'absolute',

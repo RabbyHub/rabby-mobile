@@ -1047,7 +1047,7 @@
       },
       "DappDrawer": {
         "emptyAndroid": "No Dapps added to favorites",
-        "empty": " No Websites added to favorites",
+        "empty": "No Websites added to favorites",
         "favorite": "Favorite",
         "search": "Search"
       }
