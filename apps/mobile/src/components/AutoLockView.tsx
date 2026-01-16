@@ -33,30 +33,6 @@ const implUiRefreshTimeout = throttle(
 );
 autoLockEvent.addListener('triggerRefresh', implUiRefreshTimeout);
 
-function useAutoLockIfTimeout(currentRouteName: string | null) {
-  React.useEffect(() => {
-    if (currentRouteName === RootNames.Unlock) return;
-
-    const handler: Parameters<
-      typeof autoLockEvent.addListener<'timeout'>
-    >[1] = ctx => {
-      const routeName = getLatestNavigationName();
-
-      const hasBeenUnlock = routeName === RootNames.Unlock;
-      if (!hasBeenUnlock) {
-        requestLockWalletAndBackToUnlockScreen();
-      } else {
-        ctx.delayLock();
-      }
-    };
-    autoLockEvent.addListener('timeout', handler);
-
-    return () => {
-      autoLockEvent.removeListener('timeout', handler);
-    };
-  }, [currentRouteName]);
-}
-
 export function useRefreshAutoLockPanResponder() {
   return React.useMemo(() => {
     /**
@@ -104,9 +80,6 @@ export default function AutoLockView<
 }
 
 function ForAppNav(props: Props<'View'>) {
-  const { currentRouteName } = useCurrentRouteName();
-  useAutoLockIfTimeout(currentRouteName ?? null);
-
   React.useEffect(() => {
     const subUnlock = perfEvents.subscribe(
       'USER_MANUALLY_UNLOCK',

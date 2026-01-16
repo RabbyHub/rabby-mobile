@@ -130,7 +130,7 @@ function useSetupPasswordForm() {
             case 'testkits:fromSettings': {
               if (navParams.actionType === 'setBiometrics') {
                 sheetModalRefsNeedLock.switchBiometricsRef.current?.toggle();
-              } else if (navParams.actionType === 'setAutoLockTime') {
+              } else if (navParams.actionType === 'setAutoLockExpireTime') {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
               }
               navigation.canGoBack() && navigation.goBack();

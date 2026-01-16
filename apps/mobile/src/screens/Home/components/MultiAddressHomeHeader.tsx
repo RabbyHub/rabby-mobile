@@ -62,8 +62,7 @@ function MultiPinnedAddressList({
     return sortBy(
       pinnedAccountList.map(item => {
         const lcAddr = item.address.toLowerCase();
-        const address24hBalanceData =
-          multi24hBalance[lcAddr];
+        const address24hBalanceData = multi24hBalance[lcAddr];
         const balanceAccount = balanceAccounts?.[lcAddr];
         const total_usd_value = address24hBalanceData?.total_usd_value || 0;
         const assetsChange =
