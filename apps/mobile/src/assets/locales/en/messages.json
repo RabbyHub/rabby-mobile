@@ -1044,6 +1044,18 @@
         "perps": "Perps",
         "lending": "Lending",
         "perpsMarketList": "More Perps"
+      },
+      "swipeUp": {
+        "desc": "Swipe up to explore websites",
+        "descMore": "Swipe up to explore more websites",
+        "descAndroid": "Click to explore dApps",
+        "descAndroidMore": "Click to explore more dApps"
+      },
+      "DappDrawer": {
+        "emptyAndroid": "No dApp added to favorites",
+        "empty": "No website added to favorites",
+        "favorite": "Favorite",
+        "search": "Search"
       }
     },
     "copyTrading": {
@@ -2251,7 +2263,8 @@
         "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Open Websites"
+        "openWebsites": "Open Websites",
+        "searchWebsite": "Search Website"
       },
       "menu": {
         "refresh": "Refresh",
