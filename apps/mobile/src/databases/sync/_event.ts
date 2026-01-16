@@ -20,10 +20,7 @@ export type SyncTaskOptions = {
     | 'cex';
 };
 
-type RemoteDataUpsertedCtx<
-  T extends EntityAddressAssetBase = EntityAddressAssetBase,
-> = {
-  entityCls: ClassOf<EntityAddressAssetBase> & typeof BaseEntity;
+type RemoteDataUpsertedCtx = {
   taskFor: SyncTaskOptions['taskFor'] | '@unknown';
   owner_addr: string;
   syncDetails: {
@@ -37,9 +34,7 @@ type RemoteDataUpsertedCtx<
 };
 
 const { EventEmitter: AppORMEvents } = makeJsEEClass<{
-  onRemoteDataUpserted: <T extends EntityAddressAssetBase>(
-    ctx: RemoteDataUpsertedCtx<T>,
-  ) => void;
+  onRemoteDataUpserted: (ctx: RemoteDataUpsertedCtx) => void;
 }>();
 
 export const appOrmEvents = new AppORMEvents();
