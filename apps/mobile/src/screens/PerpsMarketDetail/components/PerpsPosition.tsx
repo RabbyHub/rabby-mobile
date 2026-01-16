@@ -131,6 +131,33 @@ export const PerpsPosition: React.FC<{
           <Text style={styles.title}>
             {t('page.perpsDetail.PerpsPosition.title')}
           </Text>
+          <View
+            style={[
+              styles.leverageTag,
+              {
+                backgroundColor:
+                  positionData?.direction === 'Long'
+                    ? colors2024['green-light-1']
+                    : colors2024['red-light-1'],
+              },
+            ]}>
+            <Text
+              style={[
+                styles.leverageText,
+                positionData?.direction === 'Long'
+                  ? styles.longText
+                  : styles.shortText,
+              ]}>
+              {positionData?.direction} {`${positionData?.leverage}x`}
+            </Text>
+          </View>
+          <View style={styles.crossTag}>
+            <Text style={styles.crossText}>
+              {positionData?.type === 'cross'
+                ? t('page.perpsDetail.PerpsPosition.cross')
+                : t('page.perpsDetail.PerpsPosition.isolated')}
+            </Text>
+          </View>
         </View>
         <View style={[styles.list, styles.pnlWrapper]}>
           <Text style={styles.unrealizedPnlTitle}>
@@ -564,8 +591,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   header: {
     paddingHorizontal: 4,
+    alignItems: 'center',
     // marginBottom: 12,
-    gap: 12,
+    gap: 6,
     flexDirection: 'row',
   },
   title: {
@@ -649,6 +677,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   listItemContainer: {
     padding: 16,
   },
+  crossText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+  },
+  crossTag: {
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
   listItem: {
     display: 'flex',
     flexDirection: 'row',
@@ -696,6 +739,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-foot'],
+  },
+  leverageTag: {
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 18,
+  },
+  leverageText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  longText: {
+    color: colors2024['green-default'],
+  },
+  shortText: {
+    color: colors2024['red-default'],
   },
   value: {
     fontFamily: 'SF Pro Rounded',

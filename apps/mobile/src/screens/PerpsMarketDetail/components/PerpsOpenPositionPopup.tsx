@@ -717,6 +717,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           bothFee,
           tpTriggerPx,
           slTriggerPx,
+          selectedMarginMode,
           estimatedLiquidationPrice,
           coinLogo,
         }}

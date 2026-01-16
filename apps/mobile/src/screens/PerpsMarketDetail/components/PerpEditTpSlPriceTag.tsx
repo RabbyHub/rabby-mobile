@@ -247,7 +247,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     const priceDifference = Number((pnlUsdValue / size).toFixed(pxDecimals));
 
     // make difference to mark price avoid error from hy validator
-    const costPrice = markPrice;
+    const costPrice =
+      type === 'openPosition' ? markPrice : entryPrice || markPrice;
 
     if (actionType === 'tp') {
       const newPrice =

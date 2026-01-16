@@ -35,7 +35,7 @@ export const PerpsHeaderRight: React.FC<Props> = ({ marketName }) => {
   }, [isFavorite, marketName]);
 
   return (
-    <TouchableOpacity style={{ marginRight: 18 }} onPress={handlePress}>
+    <TouchableOpacity onPress={handlePress}>
       <RcIconFavorite
         width={22}
         height={21}
