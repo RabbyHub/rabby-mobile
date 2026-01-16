@@ -302,10 +302,10 @@ export const PerpsChart: React.FC<{
   }, [isReady, chartData]);
 
   useEffect(() => {
-    if (isReady && lineTagInfo) {
+    if (isReady && chartData && lineTagInfo) {
       chartWebViewRef.current?.updateTPSLPriceLines(lineTagInfo);
     }
-  }, [isReady, lineTagInfo]);
+  }, [isReady, lineTagInfo, chartData]);
 
   // // Reset chart when market changes
   // useEffect(() => {

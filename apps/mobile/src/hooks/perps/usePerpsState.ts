@@ -838,6 +838,7 @@ export const usePerpsState = () => {
     localLoadingHistory: perpsState.localLoadingHistory,
     accountNeedApproveAgent: perpsState.accountNeedApproveAgent,
     accountNeedApproveBuilderFee: perpsState.accountNeedApproveBuilderFee,
+    favoriteMarkets: perpsState.favoriteMarkets,
     // Actions
     login,
     logout,

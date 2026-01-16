@@ -60,6 +60,7 @@ import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
+import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -359,7 +360,7 @@ export const PerpsMarketDetailScreen = () => {
   const HeaderTitle = useCallback(() => {
     return (
       <PerpsHeaderTitle
-        account={currentPerpsAccount}
+        // account={currentPerpsAccount}
         popupIsOpen={showSearchListPopup}
         market={market}
         onSelectCoin={() => {
@@ -371,14 +372,19 @@ export const PerpsMarketDetailScreen = () => {
     market,
     setShowSearchListPopup,
     showSearchListPopup,
-    currentPerpsAccount,
+    // currentPerpsAccount,
   ]);
+
+  const HeaderRight = useCallback(() => {
+    return <PerpsHeaderRight marketName={coin} />;
+  }, [coin]);
 
   useEffect(() => {
     navigation.setOptions({
       headerTitle: HeaderTitle,
+      headerRight: HeaderRight,
     });
-  }, [market, navigation, HeaderTitle]);
+  }, [market, navigation, HeaderTitle, HeaderRight]);
 
   if (!market) {
     navigation.goBack();
@@ -421,10 +427,10 @@ export const PerpsMarketDetailScreen = () => {
               showRiskPopup={showRiskPopup}
               setShowRiskPopup={setShowRiskPopup}
               activeAssetCtx={activeAssetCtx}
-              currentAssetCtx={currentAssetCtx}
+              currentAssetCtx={currentAssetCtx || null}
               positionData={positionData}
               coin={coin}
-              coinLogo={currentAssetCtx?.logoUrl}
+              coinLogo={currentAssetCtx?.logoUrl || ''}
               markPrice={markPrice}
               slPrice={
                 currentTpOrSl.slPrice
@@ -645,11 +651,12 @@ export const PerpsMarketDetailScreen = () => {
           handlePressRiskTag={() => {
             setShowRiskPopup(true);
           }}
-          coinLogo={currentAssetCtx?.logoUrl}
+          coinLogo={currentAssetCtx?.logoUrl || ''}
           activeAssetCtx={activeAssetCtx}
-          currentAssetCtx={currentAssetCtx}
+          currentAssetCtx={currentAssetCtx || null}
           availableBalance={Number(accountSummary?.withdrawable || 0)}
           coin={coin}
+          marginMode={positionData?.type as 'cross' | 'isolated'}
           marginUsed={positionData?.marginUsed || 0}
           markPrice={markPrice}
           direction={positionData?.direction as 'Long' | 'Short'}
@@ -667,6 +674,7 @@ export const PerpsMarketDetailScreen = () => {
               coin,
               size: tradeSize,
               leverage: positionData?.leverage || 1,
+              marginMode: positionData.type,
               direction: positionData?.direction as 'Long' | 'Short',
               midPx: activeAssetCtx?.markPx || '0',
             });

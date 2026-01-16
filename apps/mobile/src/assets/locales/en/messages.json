@@ -2503,6 +2503,10 @@
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
+        "unrealizedPnl": "Unrealized PNL",
+        "realizedPnl": "Realized PNL",
+        "positionValue": "Position Value",
+        "settings": "Settings",
         "cross": "Cross",
         "isolated": "Isolated",
         "size": "Size",
@@ -2511,9 +2515,12 @@
         "margin": "Margin(Isolated)",
         "autoClose": "Auto Close",
         "marginIsolated": "Margin (isolated)",
+        "marginMode": "Margin Mode",
         "marginCross": "Margin (Cross)",
         "fundingPayments": "Funding Payments",
         "fundingGains": "Funding Gains",
+        "currentPrice": "Current Price",
+        "details": "Details",
         "liquidationPrice": "Liquidation Price",
         "entryPrice": "Entry Price",
         "direction": "Direction",
@@ -2525,6 +2532,13 @@
         "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "fundingGainsTips": "This is the net funding gains since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+      },
+      "PerpMarginModePopup": {
+        "cannotChangeMarginMode": "Cannot change Margin Mode with open positions",
+        "crossTitle": "Cross Margin",
+        "isolatedTitle": "Isolated Margin",
+        "crossDesc": "All positions share the same margin. This reduces the chance of a single position being liquidated, but all cross-margin funds can be lost in extreme market moves.",
+        "isolatedDesc": "Each position uses its own margin. Losses are limited to that position, but it can be liquidated more easily."
       },
       "needDepositFirst": "You need to deposit funds first.",
       "PerpsInfo": {
@@ -2614,6 +2628,7 @@
         "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
+        "marginCross": "Margin(Cross)",
         "margin": "Margin(Isolated)"
       },
       "action": {

@@ -94,11 +94,13 @@ const AssetPositionItem = ({
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
                 <Text style={styles.coinName}>{coin}</Text>
-                {leverageType === 'cross' && (
-                  <View style={styles.crossTag}>
-                    <Text style={styles.crossText}>Cross</Text>
-                  </View>
-                )}
+                <View style={styles.crossTag}>
+                  <Text style={styles.crossText}>
+                    {leverageType === 'cross'
+                      ? t('page.perpsDetail.PerpsPosition.cross')
+                      : t('page.perpsDetail.PerpsPosition.isolated')}
+                  </Text>
+                </View>
               </View>
               {!isSingleAddress && (
                 <View style={styles.coinNameRow}>
