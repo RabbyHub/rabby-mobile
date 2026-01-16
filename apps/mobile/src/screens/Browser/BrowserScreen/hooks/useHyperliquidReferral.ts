@@ -93,7 +93,7 @@ export const useHyperliquidReferral = (options?: {
         });
         signature = result[0]?.txHash;
       } catch (e) {
-        return;
+        throw e;
       }
     } else {
       signature = await sendRequest({

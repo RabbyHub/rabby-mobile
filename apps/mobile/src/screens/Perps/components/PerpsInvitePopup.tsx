@@ -54,10 +54,17 @@ export const PerpsInvitePopup: React.FC<Props> = ({
   const { runAsync: handleInvite, loading } = useRequest(
     async () => {
       await onInvite?.();
-      toast.success(t('page.perps.invitePopup.activatedSuccess'));
     },
     {
       manual: true,
+      onSuccess() {
+        toast.success(t('page.perps.invitePopup.activatedSuccess'));
+      },
+      onError(e) {
+        toast.error(
+          (e as Error).message || t('page.perps.invitePopup.activatedFailed'),
+        );
+      },
     },
   );
 
