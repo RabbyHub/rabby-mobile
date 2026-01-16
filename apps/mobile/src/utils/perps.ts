@@ -283,12 +283,13 @@ export const checkPerpsReference = async ({
       return false;
     }
     let accountTypes = Object.values(KEYRING_CLASS.HARDWARE);
-    let lastTime = perpsService.getInviteConfig(address)?.lastInvitedAt;
+    const inviteConfig = perpsService.getInviteConfig(address) || {};
+    let lastTime = inviteConfig.lastInvitedAt || 0;
     let duration = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     if (scene === 'connect') {
       accountTypes.push(...[KEYRING_CLASS.PRIVATE_KEY, KEYRING_CLASS.MNEMONIC]);
-      lastTime = preferenceService.getPreference('hyperliquidInvite')?.lastTime;
+      lastTime = inviteConfig.lastConnectedAt || 0;
       duration = 24 * 60 * 60 * 1000; // 1 day
     }
 

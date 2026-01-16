@@ -36,6 +36,7 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import {
   browserService,
   dappService,
+  perpsService,
   preferenceService,
 } from '@/core/services';
 import { Tab } from '@/core/services/browserService';
@@ -65,7 +66,7 @@ import { BrowserHeader } from './BrowserHeader';
 import { BrowserProgressBar } from './BrowserProgressBar';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { Freeze } from 'react-freeze';
-import { AsterPerpsInvitePopup } from './PerpsInvitePopup';
+import { AsterPerpsInvitePopup } from './AsterPerpsInvitePopup';
 import { PERPS_ASTER_INVITE_URL, PERPS_INVITE_URL } from '@/constant/perps';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
@@ -963,25 +964,21 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               }
               onClose={() => {
                 setIsShowInvite(false);
-                preferenceService.setPreference({
-                  hyperliquidInvite: {
-                    lastTime: Date.now(),
-                  },
+                perpsService.setInviteConfig(account?.address || '', {
+                  lastConnectedAt: Date.now(),
                 });
               }}
               onInvite={async () => {
                 try {
                   await handleInvite();
-                  preferenceService.setPreference({
-                    hyperliquidInvite: {
-                      lastTime: Date.now(),
-                    },
+                  perpsService.setInviteConfig(account?.address || '', {
+                    lastConnectedAt: Date.now(),
                   });
+                  setIsShowInvite(false);
                 } catch (e) {
                   console.error('Hyperliquid invite error', e);
                   throw e;
                 }
-                setIsShowInvite(false);
               }}
               footer={
                 <View style={styles.dappWebViewNavControl}>

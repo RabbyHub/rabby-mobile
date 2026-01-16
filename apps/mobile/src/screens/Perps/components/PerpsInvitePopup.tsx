@@ -61,9 +61,8 @@ export const PerpsInvitePopup: React.FC<Props> = ({
         toast.success(t('page.perps.invitePopup.activatedSuccess'));
       },
       onError(e) {
-        toast.error(
-          (e as Error).message || t('page.perps.invitePopup.activatedFailed'),
-        );
+        toast.error(t('page.perps.invitePopup.activatedFailed'));
+        console.error('activate perps invite failed', e);
       },
     },
   );
