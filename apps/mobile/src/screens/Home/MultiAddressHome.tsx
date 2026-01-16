@@ -14,37 +14,20 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   AppState,
   Dimensions,
-  PanResponder,
   Platform,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native';
 
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  Extrapolate,
-  interpolate,
-  runOnJS,
-  useAnimatedReaction,
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
@@ -88,7 +71,6 @@ import { perfEvents } from '@/core/utils/perf';
 import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { refreshDayCurve } from '@/hooks/useMultiCurve';
 import {
@@ -99,8 +81,7 @@ import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { colord } from 'colord';
 import dayjs from 'dayjs';
-import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { trigger } from 'react-native-haptic-feedback';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import {
   isTabsSwiping,
   useAccountInfo,
@@ -130,10 +111,7 @@ import {
   resetFetchHistoryTxCount,
   useHomeHistoryStore,
 } from './hooks/history';
-import {
-  useHomeAnimation,
-  useHomeDrawerAnimateStore,
-} from './hooks/useHomeDrawerAnimate';
+import { useHomeAnimation } from './hooks/useHomeDrawerAnimate';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
