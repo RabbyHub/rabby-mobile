@@ -22,7 +22,6 @@ import Animated, {
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -36,6 +35,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  PULL_THRESHOLD,
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
   useHomeDrawerAnimateStore,
@@ -56,8 +56,6 @@ export const HomeDappDrawer: React.FC = () => {
   const { bottom } = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { safeTop, headerHeight } = useSafeSizes();
-
-  console.log('HomeDappDrawer render', { safeTop, headerHeight });
 
   const { openTab, setPartialBrowserState } = useBrowser();
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
@@ -122,8 +120,6 @@ export const HomeDappDrawer: React.FC = () => {
     },
   });
 
-  const pullThreshold = height * 0.3;
-
   const drawerGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -144,7 +140,7 @@ export const HomeDappDrawer: React.FC = () => {
         .onEnd(() => {
           'worklet';
 
-          if (translateY.value > (height - pullThreshold) * -1) {
+          if (translateY.value > (height - PULL_THRESHOLD) * -1) {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
             });
@@ -159,7 +155,6 @@ export const HomeDappDrawer: React.FC = () => {
       drawerScrollOffsetY,
       height,
       pullPercent.value,
-      pullThreshold,
       scrollableStatus,
       translateY,
     ],
@@ -209,7 +204,7 @@ export const HomeDappDrawer: React.FC = () => {
         },
       ],
     };
-  }, [pullThreshold, isExpanded]);
+  }, [isExpanded]);
 
   const overlayOpacityStyle = useAnimatedStyle(() => {
     return {
@@ -218,11 +213,11 @@ export const HomeDappDrawer: React.FC = () => {
         : interpolate(
             pullPercent.value,
             [-100, -100 * 0.3, 0],
-            [0, 1, 0],
+            [0, 0.75, 0],
             Extrapolate.CLAMP,
           ),
     };
-  }, [pullThreshold]);
+  }, []);
 
   return (
     <GestureDetector gesture={drawerGesture}>

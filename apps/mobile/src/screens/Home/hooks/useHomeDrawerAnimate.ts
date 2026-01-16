@@ -40,6 +40,8 @@ export const SCROLLABLE_DECELERATION_RATE_MAPPER = {
   }),
 };
 
+export const PULL_THRESHOLD = 160;
+
 export const useHomeDrawerAnimateStore = zCreate<{
   tabsOpacity: Mutable<number>;
   pullPercent: Mutable<number>;
@@ -61,7 +63,6 @@ export const useHomeAnimation = () => {
   const contentHeight = useSharedValue(0);
   const layoutHeight = useSharedValue(0);
   const [bounces, setBounces] = useState(true);
-  const pullThreshold = height * 0.3;
 
   const scrollToTop = useCallback(() => {
     scrollableRef.current?.scrollTo?.({ y: 0, animated: false });
@@ -86,7 +87,7 @@ export const useHomeAnimation = () => {
 
       tabsOpacity.value = interpolate(
         value,
-        [-80, -20],
+        [-8, 0],
         [0, 1],
         Extrapolate.CLAMP,
       );
@@ -110,9 +111,6 @@ export const useHomeAnimation = () => {
         isExpanded.value = false;
       })
       .onUpdate(event => {
-        if (!isAtBottom.value) {
-          return;
-        }
         if (event.translationY > 0) {
           return;
         }
@@ -120,18 +118,16 @@ export const useHomeAnimation = () => {
         translateY.value = event.translationY;
       })
       .onEnd(() => {
-        if (!isAtBottom.value) {
-          return;
-        }
-        if (translateY.value * -1 > 80) {
+        if (translateY.value * -1 > PULL_THRESHOLD) {
           translateY.value = withTiming(-height);
+          runOnJS(triggerImpact)();
         } else {
           translateY.value = withTiming(0);
         }
       });
 
     return gesture;
-  }, [height, isAtBottom.value, isExpanded, translateY]);
+  }, [height, isExpanded, translateY]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -157,7 +153,7 @@ export const useHomeAnimation = () => {
         translateY.value = gestureState.dy;
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (translateY.value * -1 > pullThreshold) {
+        if (translateY.value * -1 > PULL_THRESHOLD) {
           translateY.value = withTiming(-height);
           runOnJS(triggerImpact)();
         } else {
