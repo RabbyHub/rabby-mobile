@@ -1045,7 +1045,8 @@
         "lending": "Lending",
         "perpsMarketList": "More Perps"
       },
-      "swipeUpForMoreDapps": "Swipe up to explore more dApps"
+      "swipeUpForMoreDapps": "Swipe up to explore more dApps",
+      "clickForMoreDapps": "Click to explore more dApps"
     },
     "copyTrading": {
       "comingSoon": "Coming soon...",
