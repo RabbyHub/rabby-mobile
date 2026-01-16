@@ -127,7 +127,7 @@ export const useHomeAnimation = () => {
 
       tabsOpacity.value = interpolate(
         value,
-        [-80, -20],
+        [-8, 0],
         [0, 1],
         Extrapolate.CLAMP,
       );
