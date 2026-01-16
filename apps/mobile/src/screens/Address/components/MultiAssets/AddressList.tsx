@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
-import { RefreshControl } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
 import AutoLockView from '@/components/AutoLockView';
@@ -19,13 +18,9 @@ import { ManageSetting } from '../ManageSetting';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
-import {
-  refresh24hAssets,
-  useScene24hBalanceMulti24hBalance,
-} from '@/hooks/useScene24hBalance';
+import { useScene24hBalanceMulti24hBalance } from '@/hooks/useScene24hBalance';
 import { computeBalanceChange } from '@/core/apis/balance';
 import balanceStore from '@/store/balance';
-import { AccountsBalanceState } from '@/hooks/useAccountsBalance';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {
@@ -45,39 +40,12 @@ const AddressList = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const {
-    myTop10Accounts,
-    myTop10Addresses,
-    myTop10Records,
-    notMatteredAccounts,
-    fetchAccounts,
-  } = useAccountInfo();
+  const { myTop10Accounts, myTop10Records, notMatteredAccounts } =
+    useAccountInfo();
 
   const balanceMap = balanceStore(s => s.balanceMap);
-  const batchGetTotalBalance = balanceStore(s => s.batchGetTotalBalance);
-  const triggerUpdate = useCallback(
-    (force?: boolean) => batchGetTotalBalance(myTop10Addresses, force),
-    [batchGetTotalBalance, myTop10Addresses],
-  );
 
   const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
-
-  const buildBalanceAccounts = useCallback(() => {
-    return myTop10Accounts.reduce((acc, account) => {
-      const address = account.address.toLowerCase();
-      const balance = balanceMap[address];
-      acc[address] = {
-        address,
-        balance: balance?.totalBalance || 0,
-        evmBalance: balance?.evmBalance || 0,
-        type: account.type,
-        brandName: account.brandName,
-        alias: account.alias,
-        aliasName: account.aliasName,
-      };
-      return acc;
-    }, {} as AccountsBalanceState['balance']);
-  }, [balanceMap, myTop10Accounts]);
 
   const addressListData = useMemo(() => {
     return myTop10Accounts
@@ -272,19 +240,6 @@ const AddressList = ({
     ],
   );
 
-  const onRefresh = useCallback(async () => {
-    try {
-      await Promise.all([
-        triggerUpdate(true).then(() =>
-          refresh24hAssets({ balanceAccounts: buildBalanceAccounts() }),
-        ),
-        fetchAccounts(),
-      ]);
-    } catch (error) {
-      console.error('Refresh failed:', error);
-    }
-  }, [fetchAccounts, triggerUpdate, buildBalanceAccounts]);
-
   // return null;
   return (
     <BottomSheetFlatList
@@ -297,13 +252,6 @@ const AddressList = ({
       ListFooterComponent={isManageMode ? null : renderFooter}
       style={styles.listContainer}
       ListHeaderComponent={<View style={{ height: SPACING_HEIGHT }} />}
-      refreshControl={
-        <RefreshControl
-          style={styles.bgContainer}
-          onRefresh={onRefresh}
-          refreshing={false}
-        />
-      }
     />
   );
 };
