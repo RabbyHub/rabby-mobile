@@ -515,6 +515,15 @@ const OverViewComponent = React.memo(
 
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
 
+    const SwipeUpHint = (
+      <View style={styles.swipeUpHint}>
+        <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
+        <Text style={styles.swipeUpHintText}>
+          {t('page.home.swipeUpForMoreDapps')}
+        </Text>
+      </View>
+    );
+
     return (
       <View style={styles.pullUpWrapper}>
         <Animated.View style={mainStyle}>
@@ -586,16 +595,13 @@ const OverViewComponent = React.memo(
                 })}
               </View>
               <BrowserSearchEntry />
-              <GestureDetector gesture={panGesture}>
-                <View style={styles.swipeUpHint}>
-                  <RcIconDoubleArrowCC
-                    color={colors2024['neutral-secondary']}
-                  />
-                  <Text style={styles.swipeUpHintText}>
-                    Swipe up to explore more dApps
-                  </Text>
-                </View>
-              </GestureDetector>
+              {IS_ANDROID ? (
+                <GestureDetector gesture={panGesture}>
+                  {SwipeUpHint}
+                </GestureDetector>
+              ) : (
+                SwipeUpHint
+              )}
             </View>
           </Tabs.ScrollView>
         </Animated.View>
@@ -1224,7 +1230,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    paddingTop: 16,
   },
   swipeUpHintFixed: {
     position: 'absolute',

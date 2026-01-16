@@ -1,36 +1,26 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import React, { useCallback } from 'react';
 
-import { MemoizedTokenItemLoader, TokenList } from './TokenList';
-import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
-import {
-  CollapsibleRef,
-  TabBarProps,
-  Tabs,
-} from 'react-native-collapsible-tab-view';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { perfEvents } from '@/core/utils/perf';
+import { runIIFEFunc } from '@/core/utils/store';
+import { useHomeTabIndex } from '@/hooks/navigation';
+import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import {
   HeaderHeight,
   TabsTopHeader,
 } from '@/screens/Home/components/OverviewTopHeader';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
-import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
-import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { Freeze } from 'react-freeze';
+import { CollapsibleRef, Tabs } from 'react-native-collapsible-tab-view';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { isTabsSwiping } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
-import { Freeze } from 'react-freeze';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
-import { useRendererDetect } from '@/components/Perf/PerfDetector';
-import { useHomeTabIndex } from '@/hooks/navigation';
-import { runIIFEFunc } from '@/core/utils/store';
-import { perfEvents } from '@/core/utils/perf';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useHomeDrawerAnimateStore } from '@/screens/Home/hooks/useHomeDrawerAnimate';
-import { useMyAccounts } from '@/hooks/account';
-import { filterDirectlySignableAccounts } from '@/core/apis/account';
-import { ReceiveOnNoAssets } from '@/screens/Home/components/ReceiveOnNoAssets';
-import { Account } from '@/core/services/preference';
+import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
+import { MemoizedTokenItemLoader, TokenList } from './TokenList';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -95,7 +85,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const tabsOpacity = useHomeDrawerAnimateStore(state => state.tabsOpacity);
+  const tabsOpacity = homeDrawerAnimateMutable.tabsOpacity;
   const tabsStyle = useAnimatedStyle(() => ({
     opacity: tabsOpacity.value,
     pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'auto',

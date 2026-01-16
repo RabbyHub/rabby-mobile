@@ -1,5 +1,17 @@
+import { RcNextSearchCC } from '@/assets/icons/common';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
+import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
+import { ReactIconHome } from '@/assets2024/icons/browser';
+import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
+import { Button } from '@/components2024/Button';
+import { IS_ANDROID } from '@/core/native/utils';
+import { DappInfo } from '@/core/services/dappService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
+import { triggerImpact } from '@/utils/common';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,8 +21,8 @@ import {
   FlatList as RNFlatList,
   Text,
   TouchableOpacity,
-  View,
   useWindowDimensions,
+  View,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -25,25 +37,13 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { RcNextSearchCC } from '@/assets/icons/common';
-import { ReactIconHome } from '@/assets2024/icons/browser';
-import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
-import { IS_ANDROID } from '@/core/native/utils';
-import { DappInfo } from '@/core/services/dappService';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  homeDrawerAnimateMutable,
   PULL_THRESHOLD,
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
-  useHomeDrawerAnimateStore,
 } from '../hooks/useHomeDrawerAnimate';
-import { triggerImpact } from '@/utils/common';
-import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
-import { Button } from '@/components2024/Button';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -54,8 +54,11 @@ export const HomeDappDrawer: React.FC = () => {
   });
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const { safeTop, headerHeight } = useSafeSizes();
+  const offsetTop = useMemo(() => {
+    return Math.max(safeTop, headerHeight);
+  }, [headerHeight, safeTop]);
 
   const { openTab, setPartialBrowserState } = useBrowser();
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
@@ -94,7 +97,7 @@ export const HomeDappDrawer: React.FC = () => {
     triggerImpact();
   };
 
-  const { pullPercent, isExpanded, translateY } = useHomeDrawerAnimateStore();
+  const { pullPercent, isExpanded, translateY } = homeDrawerAnimateMutable;
   const drawerScrollOffsetY = useSharedValue(0);
   const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
@@ -184,11 +187,11 @@ export const HomeDappDrawer: React.FC = () => {
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
-        [IS_ANDROID ? 0 : safeTop, 0],
+        [IS_ANDROID ? 0 : offsetTop, 0],
         Extrapolate.CLAMP,
       ),
     };
-  }, [height, safeTop]);
+  }, [height, offsetTop]);
 
   const panelScaleStyle = useAnimatedStyle(() => {
     return {

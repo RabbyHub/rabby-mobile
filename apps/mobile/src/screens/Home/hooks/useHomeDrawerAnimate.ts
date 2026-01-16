@@ -42,21 +42,16 @@ export const SCROLLABLE_DECELERATION_RATE_MAPPER = {
 
 export const PULL_THRESHOLD = 160;
 
-export const useHomeDrawerAnimateStore = zCreate<{
-  tabsOpacity: Mutable<number>;
-  pullPercent: Mutable<number>;
-  isExpanded: Mutable<boolean>;
-  translateY: Mutable<number>;
-}>(() => ({
+export const homeDrawerAnimateMutable = {
   tabsOpacity: makeMutable(0),
   pullPercent: makeMutable(0),
   isExpanded: makeMutable(false),
   translateY: makeMutable(0),
-}));
+};
 
 export const useHomeAnimation = () => {
   const { isExpanded, translateY, pullPercent, tabsOpacity } =
-    useHomeDrawerAnimateStore();
+    homeDrawerAnimateMutable;
   const { height } = useWindowDimensions();
   const scrollableRef = useRef<ScrollView>(null);
   const scrollY = useCurrentTabScrollY();
