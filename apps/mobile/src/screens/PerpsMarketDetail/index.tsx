@@ -88,7 +88,7 @@ export const PerpsMarketDetailScreen = () => {
     marketDataMap,
     perpFee,
     marketData,
-    hasPermission,
+    // hasPermission,
     currentPerpsAccount,
     isLogin,
     userFills,
@@ -98,7 +98,7 @@ export const PerpsMarketDetailScreen = () => {
 
     handleDeleteAgent,
   } = usePerpsState();
-  // const hasPermission = true;
+  const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
@@ -386,18 +386,6 @@ export const PerpsMarketDetailScreen = () => {
     });
   }, [market, navigation, HeaderTitle, HeaderRight]);
 
-  const currentAccountHasPosition = useMemo(() => {
-    return positionAndOpenOrders.length > 0;
-  }, [positionAndOpenOrders]);
-
-  const currentAccountMarginMode = useMemo(() => {
-    return positionAndOpenOrders.some(
-      item => item.position.leverage.type === 'cross',
-    )
-      ? 'cross'
-      : 'isolated';
-  }, [positionAndOpenOrders]);
-
   if (!market) {
     navigation.goBack();
     toast.error('Market not found');
@@ -606,8 +594,6 @@ export const PerpsMarketDetailScreen = () => {
         szDecimals={currentAssetCtx?.szDecimals || 0}
         leverageRang={[1, currentAssetCtx?.maxLeverage || 5]}
         markPrice={markPrice}
-        currentAccountHasPosition={currentAccountHasPosition}
-        currentAccountMarginMode={currentAccountMarginMode}
         availableBalance={Number(accountSummary?.withdrawable || 0)}
         onCancel={() => setOpenPositionVisible(false)}
         setCurrentTpOrSl={setCurrentTpOrSl}
@@ -670,6 +656,7 @@ export const PerpsMarketDetailScreen = () => {
           currentAssetCtx={currentAssetCtx || null}
           availableBalance={Number(accountSummary?.withdrawable || 0)}
           coin={coin}
+          marginMode={positionData?.type as 'cross' | 'isolated'}
           marginUsed={positionData?.marginUsed || 0}
           markPrice={markPrice}
           direction={positionData?.direction as 'Long' | 'Short'}

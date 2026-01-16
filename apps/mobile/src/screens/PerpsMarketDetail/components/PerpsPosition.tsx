@@ -543,6 +543,7 @@ export const PerpsPosition: React.FC<{
         positionSize={positionData?.size}
         direction={positionData?.direction as 'Long' | 'Short'}
         coin={coin}
+        marginMode={positionData?.type as 'cross' | 'isolated'}
         coinLogo={coinLogo}
         markPrice={markPrice}
         entryPrice={positionData?.entryPrice}
