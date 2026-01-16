@@ -7,7 +7,8 @@ import { UpdateBalanceAddEvmUsdValue1751964116411 } from './20250708';
 import { UpdateHistoryTableRestart1753686720048 } from './20250731';
 import { UpdateTokenItemAddFdv1754616616128 } from './20250808';
 import { UpdateHistoryTableAddCustomType1761706571381 } from './20251029';
-import { UpdateTokenItemAddProtocolId1767166930239 } from './202501231';
+import { UpdateTokenItemAddProtocolId1767166930239 } from './20251231';
+import { RemoveCopyTradingTable1768475805228 } from './20260115';
 
 export function getMigrations() {
   return [
@@ -21,5 +22,6 @@ export function getMigrations() {
     UpdateTokenItemAddFdv1754616616128,
     UpdateHistoryTableAddCustomType1761706571381,
     UpdateTokenItemAddProtocolId1767166930239,
+    RemoveCopyTradingTable1768475805228,
   ];
 }

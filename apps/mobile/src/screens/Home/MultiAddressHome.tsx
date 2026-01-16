@@ -201,11 +201,6 @@ const OverViewComponent = React.memo(
             title: t('page.home.services.bridge'),
             icon: RcIconBridgeCC,
           },
-          // {
-          //   key: MultiHomeFeatTitle.CopyTrading,
-          //   title: t('page.home.services.copyTrading'),
-          //   icon: RcIconCopyTrading,
-          // },
           {
             key: MultiHomeFeatTitle.Perps,
             title: t('page.home.services.perps'),

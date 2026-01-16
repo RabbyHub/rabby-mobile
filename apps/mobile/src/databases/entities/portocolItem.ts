@@ -6,8 +6,10 @@ import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
 
-@Entity('cache_portocolitem')
+@Entity(ORM_TABLE_NAMES.cache_portocolitem)
 export class ProtocolItemEntity extends EntityAddressAssetBase {
   // id
   @Column('text', { default: '' })
@@ -62,6 +64,35 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
     );
 
     e.makeDbId();
+  }
+
+  static stmSql = `
+  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_portocolitem}"
+  ("_db_id", "owner_addr", "id", "chain", "name", "site_url", "logo_url", "has_supported_portfolio", "tvl", "portfolio_item_list", "_local_created_at", "_local_updated_at")
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
+  `;
+
+  static getStatementSql() {
+    return this.stmSql;
+  }
+
+  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
+    stm.bindSync([
+      this._db_id,
+      this.owner_addr,
+      this.id,
+      this.chain,
+      this.name,
+      this.site_url,
+      this.logo_url,
+      this.has_supported_portfolio,
+      this.tvl,
+      this.portfolio_item_list,
+      this._local_created_at,
+      this._local_updated_at,
+    ]);
+
+    return stm;
   }
 
   static async getCountOfAccount() {
