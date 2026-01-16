@@ -13,7 +13,11 @@ import { useTranslation } from 'react-i18next';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { RcIconPartChecked } from '../icons';
 import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
-import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
+import {
+  FILTER_TYPES,
+  useApprovalsPage,
+  useRevokeApprovals,
+} from '../useApprovalsPage';
 import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
@@ -21,6 +25,7 @@ import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 import { Account } from '@/core/services/preference';
+import { useEIP7702Approvals } from '../useEIP7702Approvals';
 
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
@@ -85,8 +90,11 @@ export function ApprovalsBottomArea({ account }: { account: Account }) {
 
   const { filterType } = useApprovalsPage();
   const { contractRevokeMap, assetRevokeMap } = useRevokeApprovals();
+  const { selectedRows, handleEIP7702Revoke, refresh, isSupportedAccount } =
+    useEIP7702Approvals();
 
   const { displaySortedAssetsList } = useApprovalsPage();
+  const isEIP7702 = filterType === FILTER_TYPES.EIP7702;
 
   const { currentRevokeList, revokeSummary } = React.useMemo(() => {
     const list =
@@ -102,10 +110,15 @@ export function ApprovalsBottomArea({ account }: { account: Account }) {
   }, [filterType, contractRevokeMap, assetRevokeMap]);
 
   const { couldSubmit, buttonTitle } = useMemo(() => {
-    const revokeCount = revokeSummary.statics.txCount;
+    const revokeCount = isEIP7702
+      ? selectedRows.length
+      : revokeSummary.statics.txCount;
+    const displayCount = isEIP7702
+      ? selectedRows.length
+      : currentRevokeList.length;
     const _buttonTitle = [
       t('page.approvals.component.RevokeButton.btnText'),
-      revokeCount && ` (${currentRevokeList.length})`,
+      revokeCount && ` (${displayCount})`,
     ]
       .filter(Boolean)
       .join('');
@@ -114,7 +127,13 @@ export function ApprovalsBottomArea({ account }: { account: Account }) {
       couldSubmit: !!revokeCount,
       buttonTitle: _buttonTitle,
     };
-  }, [revokeSummary.statics.txCount, t, currentRevokeList.length]);
+  }, [
+    isEIP7702,
+    selectedRows.length,
+    revokeSummary.statics.txCount,
+    t,
+    currentRevokeList.length,
+  ]);
 
   const { safeOffBottom } = useSafeSizes();
 
@@ -126,9 +145,17 @@ export function ApprovalsBottomArea({ account }: { account: Account }) {
     batchRevoke(currentRevokeList, displaySortedAssetsList);
   }, [batchRevoke, currentRevokeList, displaySortedAssetsList]);
 
-  const onRevoke = () => {
+  const onRevoke = async () => {
+    if (isEIP7702) {
+      await handleEIP7702Revoke();
+      refresh();
+      return;
+    }
     return handleRevoke();
   };
+
+  const isEip7702Unsupported = isEIP7702 && !isSupportedAccount;
+  const isButtonDisabled = isEip7702Unsupported || !couldSubmit;
 
   return (
     <View
@@ -137,10 +164,13 @@ export function ApprovalsBottomArea({ account }: { account: Account }) {
         isAndroid && { paddingBottom: safeOffBottom },
       ]}>
       <Button
-        disabled={!couldSubmit}
+        disabled={isButtonDisabled}
         title={buttonTitle}
         onPress={onRevoke}
-        buttonStyle={styles.buttonContainer}
+        buttonStyle={[
+          styles.buttonContainer,
+          isEip7702Unsupported && styles.disabledButton,
+        ]}
       />
     </View>
   );
@@ -159,6 +189,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   buttonContainer: {
     borderRadius: 16,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 
   buttonText: {

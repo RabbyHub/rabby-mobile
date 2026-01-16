@@ -1,4 +1,8 @@
-import { calcMaxPriorityFee, checkGasAndNonce } from '@/utils/transaction';
+import {
+  calcMaxPriorityFee,
+  checkGasAndNonce,
+  is7702Tx,
+} from '@/utils/transaction';
 
 import {
   ExplainTxResponse,
@@ -399,7 +403,8 @@ export const sendTransaction = async ({
         nonce: recommendNonce || '0x1',
         value: tx.value || '0x0',
         to: tx.to || '',
-      },
+        type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
+      } as any,
       origin: INTERNAL_REQUEST_SESSION.origin || '',
       addr: address,
     }));
@@ -680,7 +685,8 @@ export const sendTransactionByMiniSignV2 = async ({
       nonce: tx.nonce || '0x1',
       value: tx.value || '0x0',
       to: tx.to || '',
-    },
+      type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
+    } as any,
     origin: INTERNAL_REQUEST_SESSION.origin || '',
     addr: currentAccount.address,
   });
