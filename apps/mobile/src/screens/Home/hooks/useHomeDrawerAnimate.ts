@@ -65,6 +65,8 @@ const OFFSETS = {
   homeSwipeThreadhold: 20,
 };
 
+export const PULL_THRESHOLD = 160;
+
 function getIsOverBottom(
   scrollY: number,
   scrollViewContentHeight: number,
