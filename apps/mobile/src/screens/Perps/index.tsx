@@ -659,7 +659,9 @@ export const PerpsScreen = () => {
         visible={isShowInvite}
         onClose={() => setIsShowInvite(false)}
         onInvite={async () => {
-          await handleActionApproveStatus();
+          await handleActionApproveStatus({
+            isHideToast: true,
+          });
           await handleSafeSetReference();
           setIsShowInvite(false);
         }}
