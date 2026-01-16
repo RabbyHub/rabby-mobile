@@ -40,6 +40,7 @@ import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
 import { useShallow } from 'zustand/react/shallow';
 import { CollapsibleRef } from 'react-native-collapsible-tab-view';
+import { autoLockEvent } from '@/core/apis/autoLock';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -67,6 +68,17 @@ function setCurrentRouteName(
 }
 perfEvents.addListener('EVENT_ROUTE_CHANGE', ({ currentRouteName }) => {
   setCurrentRouteName(currentRouteName as AppRootName | string | undefined);
+});
+
+autoLockEvent.addListener('timeout', ctx => {
+  const routeName = navigationRouteStore.getState().currentRouteName;
+
+  const atUnlock = routeName === RootNames.Unlock;
+  if (!atUnlock) {
+    requestLockWalletAndBackToUnlockScreen();
+  } else {
+    ctx.delayLock();
+  }
 });
 
 export function useCurrentRouteName() {

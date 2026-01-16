@@ -45,14 +45,14 @@ export const TIME_SETTINGS: {
 
 function pushShortAutoLockTimeSetting() {
   TIME_SETTINGS.push({
+    key: '1m',
+    getLabel: () => '1 minute (DEV ONLY)',
+    milliseconds: 60 * 1000,
+  });
+  TIME_SETTINGS.push({
     key: '30s',
     getLabel: () => '30 seconds (DEV ONLY)',
     milliseconds: 30 * 1000,
-  });
-  TIME_SETTINGS.push({
-    key: '10s',
-    getLabel: () => '10 seconds (DEV ONLY)',
-    milliseconds: 10 * 1000,
   });
 }
 if (__DEV__) {

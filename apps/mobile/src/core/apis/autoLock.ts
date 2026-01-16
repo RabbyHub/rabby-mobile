@@ -6,7 +6,7 @@ const MILLISECS_PER_MIN = 60 * 1e3;
 const MILLISECS_PER_SEC = 1e3;
 
 /** @warning never set the duration two short to avoid re-lock on unlocking */
-const CHECK_DURATION = __DEV__ ? 5 * MILLISECS_PER_SEC : 10 * MILLISECS_PER_SEC;
+const CHECK_DURATION = __DEV__ ? 1 * MILLISECS_PER_SEC : 3 * MILLISECS_PER_SEC;
 const AUTO_LOCK_SECS = {
   ERROR_DELTA: __DEV__ ? 3 * MILLISECS_PER_SEC : 5 * MILLISECS_PER_SEC,
   TIMEOUT_MILLISECS: Math.floor(
@@ -101,24 +101,8 @@ export function refreshAutolockTimeout(type?: 'clear') {
   if (type === 'clear') {
     setAutoLockExpireTime(-1);
   } else {
-    const { minutes, timeoutMs, expireTime } = getPersistedAutoLockTimes();
+    const { expireTime } = getPersistedAutoLockTimes();
     setAutoLockExpireTime(expireTime);
-    autoLockTimeRef.timer = !isValidAutoLockTime(timeoutMs)
-      ? null
-      : setTimeout(() => {
-          const unlockExpire = getAutoLockTime();
-          const diff = Date.now() - unlockExpire;
-
-          console.debug(
-            'refreshAutolockTimeout:: unlockExpire: %s; diff: %s',
-            unlockExpire,
-            diff,
-          );
-          if (unlockExpire && diff > -AUTO_LOCK_SECS.ERROR_DELTA) {
-            const delayLock = () => refreshAutolockTimeout();
-            autoLockEvent.emit('timeout', { unlockExpire, diff, delayLock });
-          }
-        }, timeoutMs);
   }
 
   return { dispose };
@@ -135,4 +119,22 @@ export function handleUnlock() {
 
 export function handleLock() {
   refreshAutolockTimeout('clear');
+}
+
+export function startAutoLockChecker() {
+  setInterval(() => {
+    const unlockExpire = getAutoLockTime();
+    const diff = Date.now() - unlockExpire;
+
+    console.debug(
+      'check auto lock:: unlockExpire: %s; diff: %s',
+      unlockExpire,
+      diff,
+    );
+    if (unlockExpire && diff > -AUTO_LOCK_SECS.ERROR_DELTA) {
+      console.debug('check auto lock:: timeout');
+      const delayLock = () => refreshAutolockTimeout();
+      autoLockEvent.emit('timeout', { unlockExpire, diff, delayLock });
+    }
+  }, CHECK_DURATION);
 }
