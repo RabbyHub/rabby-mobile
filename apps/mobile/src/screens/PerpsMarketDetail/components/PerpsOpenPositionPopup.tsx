@@ -648,6 +648,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                   coin={coin}
                   actionType="tp"
                   type="openPosition"
+                  leverage={leverage}
                   markPrice={markPrice}
                   initTpOrSlPrice={tpTriggerPx}
                   direction={direction}
@@ -678,6 +679,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                   coin={coin}
                   actionType="sl"
                   type="openPosition"
+                  leverage={leverage}
                   markPrice={markPrice}
                   initTpOrSlPrice={slTriggerPx}
                   direction={direction}

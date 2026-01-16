@@ -32,6 +32,7 @@ interface Props {
   direction: 'Long' | 'Short';
   size: number;
   margin: number;
+  leverage: number;
   liqPrice: number;
   pxDecimals: number;
   szDecimals: number;
@@ -69,6 +70,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   direction,
   size,
   margin,
+  leverage,
   liqPrice,
   pxDecimals,
   szDecimals,
@@ -242,13 +244,11 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   const handleQuickOptionPress = useMemoizedFn((pct: number) => {
     setActiveOption(pct);
     const pctValue = Number(pct) / 100;
-    const costValue = margin;
-    const pnlUsdValue = costValue * pctValue;
-    const priceDifference = Number((pnlUsdValue / size).toFixed(pxDecimals));
-
-    // make difference to mark price avoid error from hy validator
     const costPrice =
       type === 'openPosition' ? markPrice : entryPrice || markPrice;
+    const costValue = (costPrice * size) / Number(leverage);
+    const pnlUsdValue = costValue * pctValue;
+    const priceDifference = Number((pnlUsdValue / size).toFixed(pxDecimals));
 
     if (actionType === 'tp') {
       const newPrice =
@@ -344,188 +344,211 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
           style={styles.keyboardAvoidView}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           enabled={Platform.OS === 'ios'}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.container}>
-              <View style={styles.inner}>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => {
-                    setModalVisible(false);
-                  }}>
-                  <RcIconCloseCC
-                    width={20}
-                    height={20}
-                    color={colors2024['neutral-secondary']}
-                  />
-                </TouchableOpacity>
-                <View style={styles.header}>
-                  <Text style={styles.title}>
-                    {direction} {coin}-USD
-                  </Text>
-                  {type === 'openPosition' ? (
-                    <Text style={styles.subTitle}>
-                      {t('page.perpsDetail.PerpsAutoCloseModal.currentPrice', {
-                        price: `$${splitNumberByStep(markPrice)}`,
-                      })}
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            onPress={() => {
+              if (loading) {
+                return;
+              }
+              setModalVisible(false);
+            }}>
+            <TouchableOpacity
+              activeOpacity={1}
+              style={styles.modal}
+              onPress={evt => {
+                evt.stopPropagation();
+              }}>
+              <View style={styles.container}>
+                <View style={styles.inner}>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => {
+                      setModalVisible(false);
+                    }}>
+                    <RcIconCloseCC
+                      width={20}
+                      height={20}
+                      color={colors2024['neutral-secondary']}
+                    />
+                  </TouchableOpacity>
+                  <View style={styles.header}>
+                    <Text style={styles.title}>
+                      {direction} {coin}-USD
                     </Text>
-                  ) : (
-                    <Text style={styles.subTitle}>
-                      {t(
-                        'page.perpsDetail.PerpsAutoCloseModal.EntryAndCurrentPrice',
-                        {
-                          entryPrice: `$${splitNumberByStep(
-                            entryPrice || markPrice,
-                          )}`,
-                          price: `$${splitNumberByStep(markPrice)}`,
-                        },
-                      )}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.body}>
-                  <Text style={styles.bodyTitle}>
-                    {actionType === 'tp'
-                      ? t('page.perpsDetail.PerpsAutoCloseModal.takeProfitWhen')
-                      : t('page.perpsDetail.PerpsAutoCloseModal.stopLossWhen')}
-                  </Text>
-                  <View style={styles.formRow}>
-                    {PRICE_GAIN_QUICK_OPTIONS.map(option => (
-                      <View
-                        style={StyleSheet.flatten([
-                          styles.formItemQuickOption,
-                          activeOption === option.value
-                            ? {
-                                backgroundColor: colors2024['brand-light-1'],
-                                borderColor: colors2024['brand-default'],
-                              }
-                            : null,
-                        ])}>
-                        <TouchableOpacity
-                          key={option.value}
-                          onPress={() => {
-                            handleQuickOptionPress(option.value);
-                          }}>
-                          <Text
-                            style={StyleSheet.flatten([
-                              styles.formItemQuickTitle,
-                              activeOption === option.value &&
-                                styles.formItemQuickTitleActive,
-                            ])}>
-                            {actionType === 'tp' ? '+' : '-'} {option.label}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
+                    {type === 'openPosition' ? (
+                      <Text style={styles.subTitle}>
+                        {t(
+                          'page.perpsDetail.PerpsAutoCloseModal.currentPrice',
+                          {
+                            price: `$${splitNumberByStep(markPrice)}`,
+                          },
+                        )}
+                      </Text>
+                    ) : (
+                      <Text style={styles.subTitle}>
+                        {t(
+                          'page.perpsDetail.PerpsAutoCloseModal.EntryAndCurrentPrice',
+                          {
+                            entryPrice: `$${splitNumberByStep(
+                              entryPrice || markPrice,
+                            )}`,
+                            price: `$${splitNumberByStep(markPrice)}`,
+                          },
+                        )}
+                      </Text>
+                    )}
                   </View>
-                  <View style={styles.formRow}>
-                    <View style={styles.formItemHalf}>
-                      <Text style={styles.formItemLabel}>
-                        {direction === 'Long'
-                          ? actionType === 'tp'
+                  <View style={styles.body}>
+                    <Text style={styles.bodyTitle}>
+                      {actionType === 'tp'
+                        ? t(
+                            'page.perpsDetail.PerpsAutoCloseModal.takeProfitWhen',
+                          )
+                        : t(
+                            'page.perpsDetail.PerpsAutoCloseModal.stopLossWhen',
+                          )}
+                    </Text>
+                    <View style={styles.formRow}>
+                      {PRICE_GAIN_QUICK_OPTIONS.map(option => (
+                        <View
+                          style={StyleSheet.flatten([
+                            styles.formItemQuickOption,
+                            activeOption === option.value
+                              ? {
+                                  backgroundColor: colors2024['brand-light-1'],
+                                  borderColor: colors2024['brand-default'],
+                                }
+                              : null,
+                          ])}>
+                          <TouchableOpacity
+                            key={option.value}
+                            onPress={() => {
+                              handleQuickOptionPress(option.value);
+                            }}>
+                            <Text
+                              style={StyleSheet.flatten([
+                                styles.formItemQuickTitle,
+                                activeOption === option.value &&
+                                  styles.formItemQuickTitleActive,
+                              ])}>
+                              {actionType === 'tp' ? '+' : '-'} {option.label}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                    <View style={styles.formRow}>
+                      <View style={styles.formItemHalf}>
+                        <Text style={styles.formItemLabel}>
+                          {direction === 'Long'
+                            ? actionType === 'tp'
+                              ? t(
+                                  'page.perpsDetail.PerpsAutoCloseModal.priceAbove',
+                                )
+                              : t(
+                                  'page.perpsDetail.PerpsAutoCloseModal.priceBelow',
+                                )
+                            : actionType === 'tp'
                             ? t(
-                                'page.perpsDetail.PerpsAutoCloseModal.priceAbove',
-                              )
-                            : t(
                                 'page.perpsDetail.PerpsAutoCloseModal.priceBelow',
                               )
-                          : actionType === 'tp'
-                          ? t('page.perpsDetail.PerpsAutoCloseModal.priceBelow')
-                          : t(
-                              'page.perpsDetail.PerpsAutoCloseModal.priceAbove',
-                            )}
-                      </Text>
-                      <TextInput
-                        keyboardType="numeric"
-                        style={[
-                          styles.input,
-                          priceValidation.error ? styles.inputError : null,
-                        ]}
-                        placeholder="$0"
-                        value={displayedAutoClosePrice}
-                        onChangeText={handlePriceChange}
-                        ref={autoCloseInputRef}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.pnlTextWrapper}>
-                    {priceValidation.error ? (
-                      <Text style={styles.errorMsg}>
-                        {priceValidation.errorMessage}
-                      </Text>
-                    ) : null}
-                  </View>
-
-                  <View style={styles.pnlCardWrapper}>
-                    <View style={styles.pnlCardWrapperItem}>
-                      <Text style={[styles.pnlText]}>
-                        {gainOrLoss === 'gain'
-                          ? t('page.perpsDetail.PerpsAutoCloseModal.youGain')
-                          : t('page.perpsDetail.PerpsAutoCloseModal.youLoss')}
-                        :
-                      </Text>
-                      {priceValidation.error || priceIsEmptyValue ? (
-                        <Text style={styles.infoText}>-</Text>
-                      ) : (
-                        <Text
-                          style={[
-                            styles.infoText,
-                            {
-                              color:
-                                gainOrLoss === 'gain'
-                                  ? colors2024['green-default']
-                                  : colors2024['red-default'],
-                            },
-                          ]}>
-                          {gainOrLoss === 'gain' ? '+' : '-'}
-                          {formatPerpsPct(Math.abs(Number(gainPct)))}
+                            : t(
+                                'page.perpsDetail.PerpsAutoCloseModal.priceAbove',
+                              )}
                         </Text>
-                      )}
-                    </View>
-                    <View style={styles.pnlCardWrapperItem}>
-                      <Text style={[styles.pnlText]}>
-                        {actionType === 'tp'
-                          ? t(
-                              'page.perpsDetail.PerpsAutoCloseModal.takeProfitExpectedPNL',
-                            )
-                          : t(
-                              'page.perpsDetail.PerpsAutoCloseModal.stopLossExpectedPNL',
-                            )}
-                        :
-                      </Text>
-                      {priceValidation.error || priceIsEmptyValue ? (
-                        <Text style={styles.infoText}>-</Text>
-                      ) : (
-                        <Text
+                        <TextInput
+                          keyboardType="numeric"
                           style={[
-                            styles.infoText,
-                            {
-                              color:
-                                gainOrLoss === 'gain'
-                                  ? colors2024['green-default']
-                                  : colors2024['red-default'],
-                            },
-                          ]}>
-                          {gainOrLoss === 'gain' ? '+' : '-'}
-                          {formatUsdValue(Math.abs(Number(calculatedPnl)))}
+                            styles.input,
+                            priceValidation.error ? styles.inputError : null,
+                          ]}
+                          placeholder="$0"
+                          value={displayedAutoClosePrice}
+                          onChangeText={handlePriceChange}
+                          ref={autoCloseInputRef}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.pnlTextWrapper}>
+                      {priceValidation.error ? (
+                        <Text style={styles.errorMsg}>
+                          {priceValidation.errorMessage}
                         </Text>
-                      )}
+                      ) : null}
+                    </View>
+
+                    <View style={styles.pnlCardWrapper}>
+                      <View style={styles.pnlCardWrapperItem}>
+                        <Text style={[styles.pnlText]}>
+                          {gainOrLoss === 'gain'
+                            ? t('page.perpsDetail.PerpsAutoCloseModal.youGain')
+                            : t('page.perpsDetail.PerpsAutoCloseModal.youLoss')}
+                          :
+                        </Text>
+                        {priceValidation.error || priceIsEmptyValue ? (
+                          <Text style={styles.infoText}>-</Text>
+                        ) : (
+                          <Text
+                            style={[
+                              styles.infoText,
+                              {
+                                color:
+                                  gainOrLoss === 'gain'
+                                    ? colors2024['green-default']
+                                    : colors2024['red-default'],
+                              },
+                            ]}>
+                            {gainOrLoss === 'gain' ? '+' : '-'}
+                            {formatPerpsPct(Math.abs(Number(gainPct)))}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={styles.pnlCardWrapperItem}>
+                        <Text style={[styles.pnlText]}>
+                          {actionType === 'tp'
+                            ? t(
+                                'page.perpsDetail.PerpsAutoCloseModal.takeProfitExpectedPNL',
+                              )
+                            : t(
+                                'page.perpsDetail.PerpsAutoCloseModal.stopLossExpectedPNL',
+                              )}
+                          :
+                        </Text>
+                        {priceValidation.error || priceIsEmptyValue ? (
+                          <Text style={styles.infoText}>-</Text>
+                        ) : (
+                          <Text
+                            style={[
+                              styles.infoText,
+                              {
+                                color:
+                                  gainOrLoss === 'gain'
+                                    ? colors2024['green-default']
+                                    : colors2024['red-default'],
+                              },
+                            ]}>
+                            {gainOrLoss === 'gain' ? '+' : '-'}
+                            {formatUsdValue(Math.abs(Number(calculatedPnl)))}
+                          </Text>
+                        )}
+                      </View>
                     </View>
                   </View>
-                </View>
-                <View style={styles.footer}>
-                  <Button
-                    type="primary"
-                    loading={loading}
-                    title={t('global.confirm')}
-                    disabled={!isValidPrice}
-                    onPress={handleConfirm}
-                    containerStyle={styles.containerStyle}
-                  />
+                  <View style={styles.footer}>
+                    <Button
+                      type="primary"
+                      loading={loading}
+                      title={t('global.confirm')}
+                      disabled={!isValidPrice}
+                      onPress={handleConfirm}
+                      containerStyle={styles.containerStyle}
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </KeyboardAvoidingView>
       </Modal>
     </>
@@ -695,6 +718,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+
+  modal: {
+    width: '100%',
+    position: 'relative',
   },
 
   pnlCardWrapper: {
