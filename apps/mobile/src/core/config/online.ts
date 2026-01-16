@@ -19,6 +19,7 @@ type OnlineConfig = {
     ['20250820.reportSentry_slowQuery']?: boolean;
     ['20250924.android_webview_always_treat_as_reload']?: boolean;
     ['20251226.enable_worker_thread']?: boolean;
+    ['20260116.allow_short_auto_lock_time_on_bootstrap']?: boolean;
   };
 };
 
@@ -28,6 +29,7 @@ function getDefaultOnlineConfig(): OnlineConfig {
       '20250820.reportSentry_slowQuery': false,
       '20250924.android_webview_always_treat_as_reload': true,
       '20251226.enable_worker_thread': false,
+      '20260116.allow_short_auto_lock_time_on_bootstrap': false,
     },
   };
 }
