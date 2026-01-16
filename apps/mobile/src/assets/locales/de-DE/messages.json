@@ -131,6 +131,9 @@
         "copiedPrivateKey": "Privater Schlüssel kopiert. Die Zwischenablage wird in 1 Minute gelöscht.",
         "pasted_and_cleared": "In die Zwischenablage kopiert und diese geleert"
       }
+    },
+    "autolock": {
+      "never": "Nie"
     }
   },
   "component": {
@@ -1174,7 +1177,13 @@
       "revokeCompleted": "Fertig",
       "stopTheRevokeProcess": "Prozess der Widerrufung stoppen?",
       "leavingThisPageWillStopTheRevokeProcess": "Das Verlassen dieser Seite stoppt den Widerrufsprozess.",
-      "allApprovals": "Alle Genehmigungen"
+      "allApprovals": "Alle Genehmigungen",
+      "eip7702": {
+        "unsupportedTitle": "Nicht unterstützter Adresstyp",
+        "unsupportedDesc": "Das Widerrufen von EIP-7702-Delegationen wird nur für Adressen mit privatem Schlüssel oder Seed-Phrase unterstützt."
+      },
+      "supportedChains": "Unterstützte Chains",
+      "delegatedAddress": "Delegierte Adresse"
     },
     "home": {
       "services": {
@@ -1195,6 +1204,18 @@
         "perps": "Perps",
         "perpsMarketList": "Mehr Perps",
         "lending": "Kredite"
+      },
+      "swipeUp": {
+        "descAndroidMore": "Klicken Sie, um weitere dApps zu erkunden",
+        "descMore": "Wischen Sie nach oben, um weitere Webseiten zu erkunden.",
+        "desc": "Wischen Sie nach oben, um Websites zu erkunden",
+        "descAndroid": "Klicken Sie, um dApps zu erkunden"
+      },
+      "DappDrawer": {
+        "favorite": "Favorit",
+        "search": "Suche",
+        "empty": "Keine Website zu den Favoriten hinzugefügt",
+        "emptyAndroid": "Keine dApp zu den Favoriten hinzugefügt"
       }
     },
     "manageAddress": {
@@ -2534,7 +2555,8 @@
         "hot10": "Heiße 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Websites öffnen"
+        "openWebsites": "Websites öffnen",
+        "searchWebsite": "Website durchsuchen"
       },
       "menu": {
         "contentModeDesktop": "Anforderung der Desktop-Website",
@@ -2850,6 +2872,15 @@
       "closeAllConfirmMessage": "Alle Ihre offenen Positionen werden zum Marktpreis geschlossen.",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Position"
+      },
+      "invitePopup": {
+        "activateNow": "Jetzt aktivieren",
+        "activatedFailed": "Aktivierung fehlgeschlagen",
+        "activateFailed": "Fehlgeschlagen",
+        "hyperliquidFee": "Hyperliquid Handelsgebühren.",
+        "description": "Verwenden Sie den Code von Rabby, um zu aktivieren.",
+        "activatedSuccess": "4% Hyperliquid-Gebühreneinsparungen aktiviert",
+        "title": "Auf Hyperliquid Gebühren sparen"
       }
     },
     "perpsDetail": {
@@ -2877,7 +2908,14 @@
         "closePosition": "Schließe {{direction}}",
         "autoClose": "Automatisches Schließen",
         "fundingGains": "Finanzierungsgewinne",
-        "fundingGainsTips": "Dies sind die Nettogewinne aus der Finanzierung, seit die Position eröffnet wurde. Funding ist eine stündliche Gebühr, die Händler zahlen oder erhalten, um den Preis des Perpetual Contracts nahe dem tatsächlichen Preis des Tokens zu halten."
+        "fundingGainsTips": "Dies sind die Nettogewinne aus der Finanzierung, seit die Position eröffnet wurde. Funding ist eine stündliche Gebühr, die Händler zahlen oder erhalten, um den Preis des Perpetual Contracts nahe dem tatsächlichen Preis des Tokens zu halten.",
+        "positionValue": "Positionswert",
+        "marginMode": "Margin-Modus",
+        "settings": "Einstellungen",
+        "currentPrice": "Aktueller Preis",
+        "unrealizedPnl": "Unrealisierter PNL",
+        "details": "Details",
+        "realizedPnl": "Realisiertes PNL"
       },
       "PerpsInfo": {
         "funding": "Finanzierung",
@@ -2949,7 +2987,8 @@
         "direction": "Richtung",
         "rabbyFee": "Rabby Gebühr",
         "providerFee": "Hyperliquid-Gebühr",
-        "free": "Kostenlos"
+        "free": "Kostenlos",
+        "marginCross": "Margin(Cross)"
       },
       "action": {
         "short": "Short",
@@ -2998,7 +3037,14 @@
         "addToShort": "Zu Kurz hinzufügen",
         "addSize": "Größe hinzufügen"
       },
-      "needDepositFirst": "Sie müssen zuerst Geld einzahlen."
+      "needDepositFirst": "Sie müssen zuerst Geld einzahlen.",
+      "PerpMarginModePopup": {
+        "isolatedTitle": "Isolierte Margin",
+        "crossTitle": "Kreuzmarge",
+        "cannotChangeMarginMode": "Kann den Margin-Modus mit offenen Positionen nicht ändern",
+        "isolatedDesc": "Jede Position verwendet ihren eigenen Margin. Verluste sind auf diese Position begrenzt, aber sie kann leichter liquidiert werden.",
+        "crossDesc": "Alle Positionen teilen sich die gleiche Marge. Dies verringert die Wahrscheinlichkeit, dass eine einzelne Position liquidiert wird, aber alle Cross-Margin-Fonds können in extremen Marktbewegungen verloren gehen."
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Integrierte Seite"

@@ -870,7 +870,13 @@
       "unselectAll": "Tüm Seçimleri Kaldır",
       "revokeCompleted": "Tamamlandı",
       "stopTheRevokeProcess": "İptal sürecini durdurmak mı?",
-      "leavingThisPageWillStopTheRevokeProcess": "Bu sayfadan ayrılmak, yetkiyi iptal etme işlemini durduracaktır."
+      "leavingThisPageWillStopTheRevokeProcess": "Bu sayfadan ayrılmak, yetkiyi iptal etme işlemini durduracaktır.",
+      "eip7702": {
+        "unsupportedTitle": "Desteklenmeyen Adres Türü",
+        "unsupportedDesc": "EIP-7702 delegasyonlarını iptal etmek yalnızca özel anahtar veya seed phrase adresleri için desteklenir."
+      },
+      "delegatedAddress": "Yetkilendirilmiş Adres",
+      "supportedChains": "Desteklenen Zincirler"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "Yetersiz bakiye",
@@ -1038,6 +1044,18 @@
         "perps": "Perps",
         "perpsMarketList": "Daha Fazla Perps",
         "lending": "Kredi verme"
+      },
+      "swipeUp": {
+        "descAndroid": "dApp'leri keşfetmek için tıklayın",
+        "descMore": "Daha fazla web sitesini keşfetmek için yukarı kaydırın.",
+        "descAndroidMore": "DApp'leri keşfetmek için tıklayın",
+        "desc": "Web siteleri keşfetmek için yukarı kaydırın"
+      },
+      "DappDrawer": {
+        "search": "Arama",
+        "favorite": "Favori",
+        "emptyAndroid": "Favorilere eklenmiş dApp yok.",
+        "empty": "Favorilere eklenmiş hiçbir web sitesi yok."
       }
     },
     "dashboard": {
@@ -2173,7 +2191,8 @@
         "hot10": "Sıcak 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Web Sitelerini Aç"
+        "openWebsites": "Web Sitelerini Aç",
+        "searchWebsite": "Web Sitesini Ara"
       },
       "menu": {
         "favorite": "Favori",
@@ -2489,6 +2508,15 @@
       "closeAllConfirmTitle": "Tüm Pozisyonları Kapatmayı Onayla",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Pozisyon"
+      },
+      "invitePopup": {
+        "title": "Hyperliquid Ücretlerinden Tasarruf Edin",
+        "activateFailed": "Başarısız",
+        "activatedFailed": "Aktivasyon başarısız oldu",
+        "hyperliquidFee": "Hyperliquid işlem ücretleri.",
+        "activatedSuccess": "%4 Hyperliquid ücret tasarrufu etkinleştirildi",
+        "description": "Rabby’nin kodunu etkinleştirmek için kullanın",
+        "activateNow": "Şimdi Etkinleştir"
       }
     },
     "perpsDetail": {
@@ -2516,7 +2544,14 @@
         "autoClose": "Otomatik Kapat",
         "fundingPaymentsTips": "Bu, pozisyonun açıldığı günden bu yana net finansman ödemeleridir. Finansman, tüccarların, perp sözleşmesinin fiyatını jetonun gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir.",
         "fundingGains": "Finansman Kazançları",
-        "fundingGainsTips": "Bu, pozisyon açıldığından bu yana net finansman kazançlarıdır. Finansman, tüccarların, perpe sözleşmesinin fiyatını token'ın gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir."
+        "fundingGainsTips": "Bu, pozisyon açıldığından bu yana net finansman kazançlarıdır. Finansman, tüccarların, perpe sözleşmesinin fiyatını token'ın gerçek fiyatına yakın tutmak için ödediği veya aldığı saatlik bir ücrettir.",
+        "settings": "Ayarlar",
+        "positionValue": "Pozisyon Değeri",
+        "marginMode": "Marjin Modu",
+        "currentPrice": "Güncel Fiyat",
+        "unrealizedPnl": "Gerçekleşmemiş PNL",
+        "details": "Ayrıntılar",
+        "realizedPnl": "Gerçekleşen PNL"
       },
       "PerpsInfo": {
         "24Vol": "24s Hacim",
@@ -2588,7 +2623,8 @@
         "liquidationPriceTips": "Pozisyonunuzun, marjınız bakım marjı seviyesinin altına düştüğünde daha fazla kaybı önlemek için borsa tarafından otomatik olarak kapatıldığı fiyat.",
         "free": "Ücretsiz",
         "providerFee": "Hyperliquid ücreti",
-        "rabbyFee": "Rabby ücreti"
+        "rabbyFee": "Rabby ücreti",
+        "marginCross": "Marjin (Çapraz)"
       },
       "action": {
         "long": "Uzun",
@@ -2637,7 +2673,14 @@
         "addToLong": "Uzunluğa Ekle",
         "addToShort": "Kısaya Ekle"
       },
-      "needDepositFirst": "Öncelikle fonları yatırmanız gerekiyor."
+      "needDepositFirst": "Öncelikle fonları yatırmanız gerekiyor.",
+      "PerpMarginModePopup": {
+        "isolatedTitle": "Izole Marjin",
+        "crossTitle": "Çapraz Marj",
+        "cannotChangeMarginMode": "Açık pozisyonlar varken Margin Modu değiştirilemez.",
+        "isolatedDesc": "Her pozisyon kendi marjını kullanır. Kayıplar o pozisyonla sınırlıdır, ancak tasfiye edilmesi daha kolaydır.",
+        "crossDesc": "Tüm pozisyonlar aynı marjı paylaşır. Bu, tek bir pozisyonun likide olma şansını azaltır, ancak aşırı piyasa hareketlerinde tüm çapraz marj fonları kaybedilebilir."
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Yerleşik Sayfa"
@@ -3280,6 +3323,9 @@
         "pasted_and_cleared": "Yapıştırıldı ve panoya temizlendi",
         "copiedSeedPhrase": "Seed ifadesi kopyalandı. Panoya 1 dakika içinde sıfırlanacak."
       }
+    },
+    "autolock": {
+      "never": "Asla"
     }
   },
   "background": {
