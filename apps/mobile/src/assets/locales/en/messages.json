@@ -2513,7 +2513,7 @@
         "description": "Use Rabby’s code to enable",
         "hyperliquidFee": "Hyperliquid trading fees.",
         "activateNow": "Activate Now",
-        "activatedFailed": "Activate failed, Please try Again"
+        "activatedFailed": "Activate failed"
       }
     },
     "perpsDetail": {
