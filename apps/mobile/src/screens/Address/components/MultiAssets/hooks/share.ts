@@ -11,6 +11,7 @@ import {
 } from '@/hooks/useAccountsBalance';
 import { TabName } from '../TabsMultiAssets';
 import { useMyAccounts } from '@/hooks/account';
+import { findAccountByPriority } from '@/utils/account';
 
 export const useIsFocusedCurrentTab = (tabName: TabName) => {
   const hasBeenFocusedRef = useRef(false);
@@ -36,7 +37,10 @@ export const useFindAccountByAddress = () => {
 
   const getAccountByAddress = useCallback(
     (address: string) => {
-      return accounts.find(account => isSameAddress(account?.address, address));
+      const _accounts = accounts.filter(account =>
+        isSameAddress(account?.address, address),
+      );
+      return findAccountByPriority(_accounts);
     },
     [accounts],
   );
