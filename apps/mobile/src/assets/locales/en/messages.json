@@ -1039,8 +1039,18 @@
         "lending": "Lending",
         "perpsMarketList": "More Perps"
       },
-      "swipeUpForMoreDapps": "Swipe up to explore more dApps",
-      "clickForMoreDapps": "Click to explore more dApps"
+      "swipeUp": {
+        "desc": "Swipe up to explore Websites",
+        "descMore": "Swipe up to explore more Websites",
+        "descAndroid": "Click to explore Dapps",
+        "descAndroidMore": "Click to explore more Dapps"
+      },
+      "DappDrawer": {
+        "emptyAndroid": "No Dapps added to favorites",
+        "empty": " No Websites added to favorites",
+        "favorite": "Favorite",
+        "search": "Search"
+      }
     },
     "copyTrading": {
       "comingSoon": "Coming soon...",
