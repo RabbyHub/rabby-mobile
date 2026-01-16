@@ -213,7 +213,9 @@ export const HomeDappDrawer: React.FC = () => {
 
   const overlayOpacityStyle = useAnimatedStyle(() => {
     return IS_ANDROID
-      ? {}
+      ? {
+          opacity: 0,
+        }
       : {
           opacity: isExpanded.value
             ? 0
