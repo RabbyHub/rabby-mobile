@@ -39,6 +39,7 @@ import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
 import { useShallow } from 'zustand/react/shallow';
+import { CollapsibleRef } from 'react-native-collapsible-tab-view';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -276,17 +277,25 @@ export function useHomeTabIndex() {
     setTabIndex: apisHomeTabIndex.setTabIndex,
   };
 }
+const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
 const tabIndexRef: RefLikeObject<number> = { current: 0 };
 export const apisHomeTabIndex = {
+  get homeTabScrollerRef() {
+    return homeTabScrollerRef;
+  },
   get tabIndex() {
     return tabIndexRef.current;
   },
   isHomeAtFirstTab() {
     return tabIndexRef.current === 0;
   },
-  setTabIndex(val: number) {
+  setTabIndex(val: number, processJump = false) {
     tabIndexRef.current = val;
     tabIndexStore.setState({ tabIndex: val });
+
+    if (processJump) {
+      homeTabScrollerRef.current?.setIndex(val);
+    }
   },
 };
 

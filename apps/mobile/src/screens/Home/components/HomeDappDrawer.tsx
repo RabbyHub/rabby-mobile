@@ -1,9 +1,10 @@
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Dimensions,
   FlatListProps,
   Platform,
   FlatList as RNFlatList,
@@ -38,12 +39,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
-  useHomeDrawerAnimateStore,
+  homeDrawerAnimateMutables,
 } from '../hooks/useHomeDrawerAnimate';
 import { triggerImpact } from '@/utils/common';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 import { Button } from '@/components2024/Button';
+import { TAB_HEADER_MT } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -54,7 +56,7 @@ export const HomeDappDrawer: React.FC = () => {
   });
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const { safeTop, headerHeight } = useSafeSizes();
 
   console.log('HomeDappDrawer render', { safeTop, headerHeight });
@@ -96,7 +98,7 @@ export const HomeDappDrawer: React.FC = () => {
     triggerImpact();
   };
 
-  const { pullPercent, isExpanded, translateY } = useHomeDrawerAnimateStore();
+  const { pullPercent, isExpanded, translateY } = homeDrawerAnimateMutables;
   const drawerScrollOffsetY = useSharedValue(0);
   const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
@@ -363,173 +365,183 @@ export const HomeDappDrawer: React.FC = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  pullUpPanel: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  pullOverlay: {
-    position: 'absolute',
-    top: -90,
-    transform: [{ translateX: -501 }],
-    left: '50%',
-    height: 1002,
-    width: 1002,
-    borderRadius: 10000,
-    backgroundColor: colors2024['brand-light-1'],
-    zIndex: 10,
-    pointerEvents: 'none',
-  },
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    pullUpPanel: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: '100%',
+    },
+    pullOverlay: {
+      position: 'absolute',
+      top: -90,
+      transform: [{ translateX: -501 }],
+      left: '50%',
+      height: 1002,
+      width: 1002,
+      borderRadius: 10000,
+      backgroundColor: colors2024['brand-light-1'],
+      zIndex: 10,
+      pointerEvents: 'none',
+    },
 
-  page: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  favoritesList: {
-    flex: 1,
-  },
+    page: {
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      ...(IS_ANDROID && {
+        maxHeight:
+          Dimensions.get('window').height - TAB_HEADER_MT - safeAreaInsets.top,
+        marginTop: TAB_HEADER_MT,
+        zIndex: 20,
+      }),
+      // ...makeDebugBorder('green'),
+    },
+    favoritesList: {
+      flex: 1,
+    },
 
-  fabContainer: {
-    flex: 1,
-  },
-  gradient: {
-    padding: 12,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-5'],
-  },
-  innerCircle: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 4,
-    height: 46,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
-    position: 'relative',
-    paddingLeft: 12,
-    paddingRight: 12,
-  },
-  icon: {},
-  text: {
-    fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    flex: 1,
-    textAlign: 'center',
-    color: colors2024['neutral-foot'],
-  },
-  navControlItem: {
-    flexShrink: 0,
-  },
+    fabContainer: {
+      flex: 1,
+    },
+    gradient: {
+      padding: 12,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-5'],
+    },
+    innerCircle: {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 4,
+      height: 46,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors2024['neutral-bg-5'],
+      position: 'relative',
+      paddingLeft: 12,
+      paddingRight: 12,
+    },
+    icon: {},
+    text: {
+      fontSize: 16,
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+      flex: 1,
+      textAlign: 'center',
+      color: colors2024['neutral-foot'],
+    },
+    navControlItem: {
+      flexShrink: 0,
+    },
 
-  browserSearch: {
-    paddingTop: 18,
-  },
+    browserSearch: {
+      paddingTop: 18,
+    },
 
-  footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    width: '100%',
-  },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      width: '100%',
+    },
 
-  container: {
-    flex: 1,
-  },
-  list: {
-    paddingHorizontal: 20,
-  },
-  header: {
-    paddingHorizontal: 8 + 20,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 20,
-    fontWeight: '800',
-  },
-  edit: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 18,
-  },
+    container: {
+      flex: 1,
+    },
+    list: {
+      paddingHorizontal: 20,
+    },
+    header: {
+      paddingHorizontal: 8 + 20,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    title: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      lineHeight: 20,
+      fontWeight: '800',
+    },
+    edit: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 18,
+    },
 
-  grid: {
-    gap: 8,
-  },
+    grid: {
+      gap: 8,
+    },
 
-  itemWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
+    itemWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+    },
 
-  listItem: {
-    marginBottom: 12,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  listItemContent: {
-    width: '100%',
-  },
+    listItem: {
+      marginBottom: 12,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+    },
+    listItemContent: {
+      width: '100%',
+    },
 
-  empty: {
-    paddingVertical: 20,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 6,
+    empty: {
+      paddingVertical: 20,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 6,
 
-    marginHorizontal: 4,
+      marginHorizontal: 4,
 
-    marginTop: -100,
-  },
-  emptyIcon: {
-    width: 163,
-    height: 126,
-  },
-  emptyText: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
-    textAlign: 'center',
-  },
-  searchButton: {
-    marginTop: 16,
-    height: 42,
-    width: 143,
-    borderRadius: 6,
-  },
-  searchButtonText: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-}));
+      marginTop: -100,
+    },
+    emptyIcon: {
+      width: 163,
+      height: 126,
+    },
+    emptyText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-secondary'],
+      textAlign: 'center',
+    },
+    searchButton: {
+      marginTop: 16,
+      height: 42,
+      width: 143,
+      borderRadius: 6,
+    },
+    searchButtonText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+  }),
+);

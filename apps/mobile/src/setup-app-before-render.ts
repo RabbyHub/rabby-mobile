@@ -39,6 +39,11 @@ import tokenListStore from './store/tokens';
 import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 
+if (__DEV__) {
+  // @ts-expect-error
+  console.disableYellowBox = true;
+}
+
 startSubscribeLangChange();
 
 startManageAccountStoreLifecycle();
