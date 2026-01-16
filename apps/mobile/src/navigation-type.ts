@@ -384,7 +384,7 @@ export type TransactionNavigatorParamList = {
 
 export type SettingNavigatorParamList = {
   [RootNames.Settings]?: {
-    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+    // enterActionType?: 'setBiometrics' | 'setAutoLockExpireTime';
   };
   [RootNames.ProviderControllerTester]?: {};
   [RootNames.SetPassword]?:
@@ -403,7 +403,7 @@ export type SettingNavigatorParamList = {
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockTime';
+        actionType: 'setBiometrics' | 'setAutoLockExpireTime';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

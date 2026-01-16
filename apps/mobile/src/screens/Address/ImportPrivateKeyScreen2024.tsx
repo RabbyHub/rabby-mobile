@@ -33,7 +33,10 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { onPastedSensitiveData } from '@/utils/clipboard';
+import {
+  isNewlyInputTextSameWithContentFromClipboard,
+  onPastedSensitiveData,
+} from '@/utils/clipboard';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -167,7 +170,16 @@ export const ImportPrivateKeyScreen2024 = () => {
                   textContentType: 'none',
                   blurOnSubmit: true,
                   returnKeyType: 'done',
-                  onChangeText: setPrivateKey,
+                  onChangeText: (text: string) => {
+                    setPrivateKey(text);
+                    isNewlyInputTextSameWithContentFromClipboard(text).then(
+                      isSame => {
+                        if (isSame) {
+                          onPastedSensitiveData({ type: 'seedPhrase' });
+                        }
+                      },
+                    );
+                  },
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components
                 customIcon={ctx => (

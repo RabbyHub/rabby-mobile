@@ -53,10 +53,7 @@ import {
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
 import { TouchableOpacity } from 'react-native';
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
-import {
-  AutoLockCountDownLabel,
-  useAutoLockCountDown,
-} from '../Settings/components/LockAbout';
+import { useAutoLockCountDown } from '../Settings/components/LockAbout';
 import { SwitchShowFloatingAutoLockCountdown } from '../Settings/components/SwitchFloatingView';
 import { useGoogleSign } from '@/hooks/cloudStorage';
 import {
@@ -80,10 +77,8 @@ import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mo
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDappsViewConfig } from '../Dapps/hooks/useDappView';
 import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { formatTimeReadable } from '@/utils/time';
 import { getScreenshotFeedbackExtra } from '@/components/Screenshot/utils';
-import { Radio } from '@/components2024/Radio';
-import { ButtonGroup } from '@rneui/themed';
+import AnimateableText from 'react-native-animateable-text';
 
 export const makeNoop = () => () => {};
 
@@ -243,7 +238,9 @@ function DevSwitchAboutAutoLock() {
 
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
-  const { textColor, countDownText } = useAutoLockCountDown();
+  const { devNeedCountdown, countdownTextStyles, countdownTextProps } =
+    useAutoLockCountDown();
+
   const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
 
   return (
@@ -274,27 +271,18 @@ function DevSwitchAboutAutoLock() {
           </Text>
         </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>
-          {!showAutoLockCountdown && countDownText && (
-            <>
-              <RcCountdown
-                width={18}
-                height={18}
-                color={styles.switchLabel.color}
-              />
-              <Text style={styles.label}>
-                <>
-                  {' '}
-                  Countdown:
-                  <Text
-                    style={{
-                      color: textColor,
-                    }}>
-                    {countDownText}
-                  </Text>
-                </>
-              </Text>
-            </>
-          )}
+          <RcCountdown
+            width={18}
+            height={18}
+            color={styles.switchLabel.color}
+          />
+          <Text style={styles.label}>
+            {devNeedCountdown && <> Countdown </>}
+          </Text>
+          <AnimateableText
+            animatedProps={countdownTextProps}
+            style={countdownTextStyles}
+          />
         </View>
       </View>
     </View>

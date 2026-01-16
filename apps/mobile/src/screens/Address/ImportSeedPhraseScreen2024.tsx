@@ -36,12 +36,13 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
-import { KeyringAccountWithAlias } from '@/hooks/account';
-import { useMemoizedFn } from 'ahooks';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { onPastedSensitiveData } from '@/utils/clipboard';
+import {
+  isNewlyInputTextSameWithContentFromClipboard,
+  onPastedSensitiveData,
+} from '@/utils/clipboard';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -356,6 +357,13 @@ export const ImportSeedPhraseScreen2024 = () => {
                       return;
                     }
                     setMnemonics(text);
+                    isNewlyInputTextSameWithContentFromClipboard(text).then(
+                      isSame => {
+                        if (isSame) {
+                          onPastedSensitiveData({ type: 'seedPhrase' });
+                        }
+                      },
+                    );
                   },
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components

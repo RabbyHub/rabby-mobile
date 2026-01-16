@@ -8,6 +8,7 @@ import {
   calcMaxPriorityFee,
   validateGasPriceRange,
   convertLegacyTo1559,
+  is7702Tx,
 } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
 import {
@@ -92,7 +93,7 @@ import { stats } from '@/utils/stats';
 import Safe from '@rabby-wallet/gnosis-sdk';
 import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { apisSafe } from '@/core/apis/safe';
-import { maxBy } from 'lodash';
+import { maxBy, omit } from 'lodash';
 import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
 import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -121,6 +122,7 @@ import { getCexInfo } from '@/hooks/useCexSupportList';
 import { MultiActionProps } from '../TypedDataActions';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { calcGasLimit } from '@/core/apis/transactions';
+import { getEIP7702MiniGasLimit } from '@/utils/7702';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -345,6 +347,18 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     return normalizeTxParams(params.data[0]);
   }, [params.data]);
 
+  const is7702 = is7702Tx({ authorizationList } as any);
+
+  const enable7702 = (is7702 && isSpeedUp) || params?.$ctx?.eip7702Revoke;
+
+  const show7702warning = is7702 && !(isSpeedUp || params?.$ctx?.eip7702Revoke);
+
+  console.log('show7702warning', {
+    params,
+    is7702,
+    enable7702,
+  });
+
   const [pushInfo, setPushInfo] = useState<{
     type: TxPushType;
     lowGasDeadline?: number;
@@ -371,15 +385,16 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     }
     return result;
   };
-  const [tx, setTx] = useState<Tx>({
+  const [tx, setTx] = useState<Tx & { authorizationList?: any }>({
     chainId,
     data: data || '0x', // can not execute with empty string, use 0x instead
     from,
-    gas: gas || params.data[0].gasLimit,
-    gasPrice: getGasPrice(),
+    gas: enable7702 ? getEIP7702MiniGasLimit(getGasPrice()) : getGasPrice(),
     nonce,
     to,
     value,
+    authorizationList:
+      params?.$ctx?.eip7702RevokeAuthorization || authorizationList,
   });
   const [realNonce, setRealNonce] = useState('');
   const [gasLimit, setGasLimit] = useState<string | undefined>(undefined);
@@ -575,14 +590,25 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       : false;
     const parseTxPromise = openapi.parseTx({
       chainId: chain.serverId,
-      tx: {
-        ...tx,
-        gas: '0x0',
-        nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
-        value: tx.value || '0x0',
-        // todo
-        to: tx.to || '',
-      },
+      tx: omit(
+        {
+          ...tx,
+          gas: '0x0',
+          nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
+          value: tx.value || '0x0',
+          // todo
+          to: tx.to || '',
+          type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
+          authorizationList:
+            params?.$ctx?.eip7702RevokeAuthorization ||
+            authorizationList?.map(e => [
+              new BigNumber(e.chainId).toNumber(),
+              e.address,
+              new BigNumber(e.nonce).toNumber(),
+            ]),
+        },
+        !enable7702 ? ['authorizationList'] : [],
+      ),
       origin: origin || '',
       addr: address,
     });
@@ -1117,11 +1143,14 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     }
     const beforeNonce = realNonce || tx.nonce;
     const afterNonce = intToHex(gas.nonce);
+    const gasLimitHex = enable7702
+      ? getEIP7702MiniGasLimit(intToHex(gas.gasLimit))
+      : intToHex(gas.gasLimit);
     if (support1559) {
       setTx({
         ...tx,
         maxFeePerGas: intToHex(Math.round(gas.price)),
-        gas: intToHex(gas.gasLimit),
+        gas: gasLimitHex,
         nonce: afterNonce,
       });
       setMaxPriorityFee(Math.round(gas.maxPriorityFee));
@@ -1129,12 +1158,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       setTx({
         ...tx,
         gasPrice: intToHex(Math.round(gas.price)),
-        gas: intToHex(gas.gasLimit),
+        gas: gasLimitHex,
         nonce: afterNonce,
       });
     }
-    setGasLimit(intToHex(gas.gasLimit));
-    if (Number(gasLimit) !== gas.gasLimit) {
+    setGasLimit(gasLimitHex);
+    if (Number(gasLimit) !== new BigNumber(gasLimitHex).toNumber()) {
       setManuallyChangeGasLimit(true);
     }
   };
@@ -1142,21 +1171,24 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const handleAdvancedSettingsChange = (gas: GasSelectorResponse) => {
     const beforeNonce = realNonce || tx.nonce;
     const afterNonce = intToHex(gas.nonce);
+    const gasLimitHex = enable7702
+      ? getEIP7702MiniGasLimit(intToHex(gas.gasLimit))
+      : intToHex(gas.gasLimit);
     if (support1559) {
       setTx({
         ...tx,
-        gas: intToHex(gas.gasLimit),
+        gas: gasLimitHex,
         nonce: afterNonce,
       });
     } else {
       setTx({
         ...tx,
-        gas: intToHex(gas.gasLimit),
+        gas: gasLimitHex,
         nonce: afterNonce,
       });
     }
-    setGasLimit(intToHex(gas.gasLimit));
-    if (Number(gasLimit) !== gas.gasLimit) {
+    setGasLimit(gasLimitHex);
+    if (Number(gasLimit) !== new BigNumber(gasLimitHex).toNumber()) {
       setManuallyChangeGasLimit(true);
     }
     if (!isGnosisAccount) {
@@ -1488,7 +1520,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
         source: params?.$ctx?.ga?.source || '',
         trigger: params?.$ctx?.ga?.trigger || '',
-        swapUseSlider: params?.$ctx?.ga.swapUseSlider ?? '',
+        swapUseSlider: params?.$ctx?.ga?.swapUseSlider ?? '',
         gasLevel: gas?.level || 'normal',
       });
 
@@ -1503,11 +1535,18 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       setSelectedGas(gas);
       setSupport1559(is1559);
       if (is1559) {
+        const is7702 = is7702Tx(tx);
         setTx(
-          convertLegacyTo1559({
-            ...tx,
-            gasPrice: intToHex(gas.price),
-          }),
+          omit(
+            {
+              ...convertLegacyTo1559({
+                ...tx,
+                gasPrice: intToHex(gas.price),
+              }),
+              authorizationList: (tx as any).authorizationList,
+            },
+            is7702 ? [] : ['authorizationList'],
+          ) as any,
         );
       } else {
         setTx({
@@ -1667,7 +1706,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const { setRPCEnable } = useCustomRPC();
 
   // is eip7702
-  if (authorizationList) {
+  if (show7702warning) {
     return <EIP7702Warning />;
   }
 

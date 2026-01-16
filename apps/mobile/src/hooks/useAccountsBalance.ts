@@ -105,7 +105,7 @@ function setAccountsBalance(
         }, 0);
       }
 
-      if (changed) return prev;
+      if (!changed) return prev;
 
       prev.balance = newVal;
     });

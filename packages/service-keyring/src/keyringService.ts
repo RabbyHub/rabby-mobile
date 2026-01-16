@@ -587,6 +587,29 @@ export class KeyringService extends RNEventEmitter {
     return keyring.signTransaction(fromAddress, ethTx, opts);
   }
 
+  signEip7702Authorization(
+    keyring: any,
+    authParams: {
+      from: string;
+      authorization: [chainId: number, contractAddress: string, nonce: number];
+    },
+    opts = {},
+  ) {
+    const address = normalizeAddress(authParams.from);
+    if (!keyring.signEip7702Authorization) {
+      return Promise.reject(
+        new Error(
+          `Keyring ${keyring.type} doesn't support signEip7702Authorization operation`,
+        ),
+      );
+    }
+    return keyring.signEip7702Authorization(
+      address,
+      authParams.authorization,
+      opts,
+    );
+  }
+
   /**
    * Sign Message
    *

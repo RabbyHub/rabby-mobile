@@ -180,9 +180,8 @@ export const useRisks = (options: {
 
   const fetchRisks = useCallback(async () => {
     if (!toAddress) return;
-    const top10Addresses = (
-      await getAccountList({ filter: 'onlyMine' })
-    ).sortedAccounts;
+    const top10Addresses = (await getAccountList({ filter: 'onlyMine' }))
+      .sortedAccounts;
 
     if (!top10Addresses.length) return;
     if (riskGetRef.current) return;

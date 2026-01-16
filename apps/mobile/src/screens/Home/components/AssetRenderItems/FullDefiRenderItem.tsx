@@ -75,6 +75,7 @@ export const FullDefiRenderItem = ({
         [origin]: {
           currentAccount: account,
           chainId: isFromAppChain ? undefined : chain?.enum || CHAINS_ENUM.ETH,
+          isDapp: true,
         },
       });
       if (origin) {

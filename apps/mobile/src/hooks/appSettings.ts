@@ -1,10 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
-import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { apisAutoLock } from '@/core/apis';
-import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
-import { preferenceService } from '@/core/services';
 import { isNonPublicProductionEnv } from '@/constant';
 import {
   resolveValFromUpdater,
@@ -13,6 +8,10 @@ import {
 } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
+import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { apisAutoLock } from '@/core/apis';
+import { preferenceService } from '@/core/services';
+import { useMemo } from 'react';
 
 const isIOS = DeviceUtils.isIOS();
 
@@ -39,6 +38,12 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
 export const storeApiExpSettingData = {
   set: setExpSettingData,
   get: getExpSettingData,
+  getTimeTipAboutSeedPhraseAndPrivateKey: () => {
+    if (!__DEV__) return 'pasted';
+
+    return experimentalSettingsStore.getState()
+      .timeTipAboutSeedPhraseAndPrivateKey;
+  },
 };
 
 function setExpSettingData(valOrFunc: UpdaterOrPartials<ScreenshotSettings>) {
