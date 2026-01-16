@@ -70,6 +70,7 @@ export interface AccountHistoryItem {
 export interface PerpsState {
   positionAndOpenOrders: PositionAndOpenOrder[];
   accountSummary: AccountSummary | null;
+  currentClearinghouseState: ClearinghouseState | null;
   currentPerpsAccount: Account | null;
   clearinghouseStateMap: Record<string, ClearinghouseState | null>;
   isFetchAllDone: boolean; // init clearinghouseStateMap has done
@@ -107,6 +108,7 @@ const buildMarketDataMap = (list: MarketData[]): MarketDataMap => {
 export const initialState: PerpsState = {
   positionAndOpenOrders: [],
   accountSummary: null,
+  currentClearinghouseState: null,
   isFetchAllDone: false,
   hasPermission: true,
   perpFee: 0.00045,
@@ -440,6 +442,7 @@ const setPositionAndOpenOrders = (
       ...clearinghouseState.marginSummary,
       withdrawable: clearinghouseState.withdrawable,
     },
+    currentClearinghouseState: clearinghouseState,
     positionAndOpenOrders: clearinghouseState.assetPositions.map(position => ({
       ...position,
       openOrders: openOrders.filter(
@@ -566,6 +569,7 @@ export const usePerpsStore = () => {
             ...payload.marginSummary,
             withdrawable: payload.withdrawable,
           },
+          currentClearinghouseState: payload,
           positionAndOpenOrders,
           homePositionPnl: formatPositionPnl(payload),
         };
@@ -634,6 +638,12 @@ export const usePerpsStore = () => {
     setPerpsState(prev => ({ ...prev, accountSummary: payload }));
   });
 
+  const setCurrentClearinghouseState = useMemoizedFn(
+    (payload: ClearinghouseState) => {
+      setPerpsState(prev => ({ ...prev, currentClearinghouseState: payload }));
+    },
+  );
+
   const setApproveSignatures = useMemoizedFn((payload: ApproveSignatures) => {
     setPerpsState(prev => ({ ...prev, approveSignatures: payload }));
   });
@@ -665,6 +675,7 @@ export const usePerpsStore = () => {
         ...clearinghouseState.marginSummary,
         withdrawable: clearinghouseState.withdrawable,
       });
+      setCurrentClearinghouseState(clearinghouseState);
     } catch (error: any) {
       console.error('Failed to fetch clearinghouse state:', error);
     }

@@ -247,7 +247,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
     const priceDifference = Number((pnlUsdValue / size).toFixed(pxDecimals));
 
     // make difference to mark price avoid error from hy validator
-    const costPrice = markPrice;
+    const costPrice =
+      type === 'openPosition' ? markPrice : entryPrice || markPrice;
 
     if (actionType === 'tp') {
       const newPrice =
@@ -280,7 +281,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   }, [modalVisible]);
 
   useEffect(() => {
-    if (modalVisible) {
+    if (modalVisible && type === 'hasPosition') {
       // Increase delay to wait for modal animation to complete
       const timer = setTimeout(() => {
         autoCloseInputRef.current?.focus();
@@ -288,6 +289,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalVisible]);
 
   return (
@@ -342,15 +344,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
           style={styles.keyboardAvoidView}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           enabled={Platform.OS === 'ios'}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.modalOverlay}
-            onPress={() => {
-              if (loading) {
-                return;
-              }
-              setModalVisible(false);
-            }}>
+          <View style={styles.modalOverlay}>
             <View style={styles.container}>
               <View style={styles.inner}>
                 <TouchableOpacity
@@ -531,7 +525,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                 </View>
               </View>
             </View>
-          </TouchableOpacity>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </>

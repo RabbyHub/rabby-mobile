@@ -28,20 +28,18 @@ import {
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 
 const isAndroid = Platform.OS === 'android';
-import { StepInput } from '@/components2024/StepInput';
 import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { formatUsdValueKMB } from '@/screens/Home/utils/price';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsSlider } from './PerpsSlider';
 import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { PerpMarginModePopup } from './PerpMarginModePopup';
-import { toast } from '@/components/Toast';
+import { useShallow } from 'zustand/shallow';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -56,8 +54,6 @@ export const PerpsOpenPositionPopup: React.FC<{
   maxNtlValue: number;
   availableBalance: number;
   setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
-  currentAccountHasPosition: boolean;
-  currentAccountMarginMode: 'cross' | 'isolated';
   onCancel: () => void;
   onConfirm: () => void;
   marketDataItem?: MarketData;
@@ -91,8 +87,6 @@ export const PerpsOpenPositionPopup: React.FC<{
   pxDecimals,
   szDecimals,
   availableBalance,
-  currentAccountHasPosition,
-  currentAccountMarginMode,
   onCancel,
   onConfirm,
   handleOpenPosition,
@@ -107,6 +101,22 @@ export const PerpsOpenPositionPopup: React.FC<{
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
   });
+
+  const { currentClearinghouseState } = perpsStore(
+    useShallow(s => ({
+      currentClearinghouseState: s.currentClearinghouseState,
+    })),
+  );
+
+  const crossMargin = React.useMemo(() => {
+    return (
+      Number(currentClearinghouseState?.crossMarginSummary?.accountValue || 0) -
+      Number(currentClearinghouseState?.crossMaintenanceMarginUsed || 0)
+    );
+  }, [
+    currentClearinghouseState?.crossMarginSummary?.accountValue,
+    currentClearinghouseState?.crossMaintenanceMarginUsed,
+  ]);
 
   const { t } = useTranslation();
   const [isReviewMode, setIsReviewMode] = React.useState(false);
@@ -124,7 +134,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   );
   const [selectedMarginMode, setSelectedMarginMode] = React.useState<
     'cross' | 'isolated'
-  >(currentAccountMarginMode);
+  >('isolated');
   const [isShowMarginModePopup, setIsShowMarginModePopup] =
     React.useState(false);
   const leverage = selectedLeverage || 1;
@@ -160,10 +170,13 @@ export const PerpsOpenPositionPopup: React.FC<{
     if (!markPrice || !leverage) {
       return 0;
     }
+
+    const realMargin = selectedMarginMode === 'cross' ? crossMargin : margin;
+
     const maxLeverage = leverageRang[1];
     return calLiquidationPrice(
       markPrice,
-      Number(margin),
+      Number(realMargin),
       direction,
       Number(tradeSize),
       Number(tradeSize) * markPrice,
@@ -171,6 +184,8 @@ export const PerpsOpenPositionPopup: React.FC<{
     ).toFixed(pxDecimals);
   }, [
     markPrice,
+    crossMargin,
+    selectedMarginMode,
     leverage,
     leverageRang,
     margin,
@@ -455,14 +470,6 @@ export const PerpsOpenPositionPopup: React.FC<{
                 <TouchableOpacity
                   style={styles.marginModeButton}
                   onPress={() => {
-                    if (currentAccountHasPosition) {
-                      toast.error(
-                        t(
-                          'page.perpsDetail.PerpMarginModePopup.cannotChangeMarginMode',
-                        ),
-                      );
-                      return;
-                    }
                     handleOpenChangeMarginModePopup();
                   }}>
                   <Text style={styles.marginModeText}>
@@ -717,6 +724,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           bothFee,
           tpTriggerPx,
           slTriggerPx,
+          selectedMarginMode,
           estimatedLiquidationPrice,
           coinLogo,
         }}
