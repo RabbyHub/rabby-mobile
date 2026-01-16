@@ -313,12 +313,17 @@ export const usePerpsState = () => {
         }),
       );
 
-      setTimeout(() => {
-        handleSafeSetReference();
-      }, 500);
+      if (
+        currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
+        currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC
+      ) {
+        setTimeout(() => {
+          handleSafeSetReference();
+        }, 500);
+      }
       // const [approveAgentRes, approveBuilderFeeRes] = results;
     },
-    [handleSafeSetReference],
+    [currentPerpsAccount?.type, handleSafeSetReference],
   );
 
   const ensureLoginApproveSign = useCallback(
@@ -415,73 +420,78 @@ export const usePerpsState = () => {
 
   const isHandlingApproveStatus = useRef(false);
 
-  const handleActionApproveStatus = useCallback(async () => {
-    try {
-      if (isHandlingApproveStatus.current) {
-        return;
-      }
-      isHandlingApproveStatus.current = true;
+  const handleActionApproveStatus = useCallback(
+    async (options?: { isHideToast?: boolean }) => {
+      try {
+        if (isHandlingApproveStatus.current) {
+          return;
+        }
+        isHandlingApproveStatus.current = true;
 
-      if (!currentPerpsAccount) {
-        throw new Error('No currentPerpsAccount');
-      }
+        if (!currentPerpsAccount) {
+          throw new Error('No currentPerpsAccount');
+        }
 
-      const signActions: SignAction[] = [];
-      const sdk = apisPerps.getPerpsSDK();
-      if (accountNeedApproveAgent) {
-        signActions.push({
-          action: sdk.exchange?.prepareApproveAgent(),
-          type: 'approveAgent',
-          signature: '',
-        });
-      }
+        const signActions: SignAction[] = [];
+        const sdk = apisPerps.getPerpsSDK();
+        if (accountNeedApproveAgent) {
+          signActions.push({
+            action: sdk.exchange?.prepareApproveAgent(),
+            type: 'approveAgent',
+            signature: '',
+          });
+        }
 
-      if (accountNeedApproveBuilderFee) {
-        await sleep(10);
-        signActions.push({
-          action: sdk.exchange?.prepareApproveBuilderFee({
-            builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
-          }),
-          type: 'approveBuilderFee',
-          signature: '',
-        });
-      }
+        if (accountNeedApproveBuilderFee) {
+          await sleep(10);
+          signActions.push({
+            action: sdk.exchange?.prepareApproveBuilderFee({
+              builder: PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+            }),
+            type: 'approveBuilderFee',
+            signature: '',
+          });
+        }
 
-      if (signActions.length === 0) {
+        if (signActions.length === 0) {
+          isHandlingApproveStatus.current = false;
+          return;
+        }
+
+        console.log('handleActionApproveStatus signActions', signActions);
+        await executeSignatures(signActions, currentPerpsAccount);
+
+        // try {
+        await handleDirectApprove(signActions);
+        // } catch (error) {}
+        setAccountNeedApproveAgent(false);
+        setAccountNeedApproveBuilderFee(false);
         isHandlingApproveStatus.current = false;
-        return;
+      } catch (error) {
+        isHandlingApproveStatus.current = false;
+        console.error('Failed to handle action approve status:', error);
+        // todo fixme maybe no need show toast in prod
+        if (!options?.isHideToast) {
+          showToast(String(error), 'error');
+        }
+        Sentry.captureException(
+          new Error(
+            `Failed to handle action approve status, address: ${currentPerpsAccount?.address} , account type: ${currentPerpsAccount?.type} , error: ${error}`,
+          ),
+        );
+        throw error;
       }
-
-      console.log('handleActionApproveStatus signActions', signActions);
-      await executeSignatures(signActions, currentPerpsAccount);
-
-      // try {
-      await handleDirectApprove(signActions);
-      // } catch (error) {}
-      setAccountNeedApproveAgent(false);
-      setAccountNeedApproveBuilderFee(false);
-      isHandlingApproveStatus.current = false;
-    } catch (error) {
-      isHandlingApproveStatus.current = false;
-      console.error('Failed to handle action approve status:', error);
-      // todo fixme maybe no need show toast in prod
-      showToast(String(error), 'error');
-      Sentry.captureException(
-        new Error(
-          `Failed to handle action approve status, address: ${currentPerpsAccount?.address} , account type: ${currentPerpsAccount?.type} , error: ${error}`,
-        ),
-      );
-      throw error;
-    }
-  }, [
-    accountNeedApproveAgent,
-    accountNeedApproveBuilderFee,
-    currentPerpsAccount,
-    executeSignatures,
-    handleDirectApprove,
-    setAccountNeedApproveAgent,
-    setAccountNeedApproveBuilderFee,
-  ]);
+    },
+    [
+      accountNeedApproveAgent,
+      accountNeedApproveBuilderFee,
+      currentPerpsAccount,
+      executeSignatures,
+      handleDirectApprove,
+      setAccountNeedApproveAgent,
+      setAccountNeedApproveBuilderFee,
+    ],
+  );
 
   useEffect(() => {
     if (isInitialized) {
@@ -852,5 +862,7 @@ export const usePerpsState = () => {
 
     judgeIsUserAgentIsExpired,
     handleActionApproveStatus,
+
+    handleSafeSetReference,
   };
 };

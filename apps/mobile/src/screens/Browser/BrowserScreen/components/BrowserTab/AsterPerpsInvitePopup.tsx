@@ -28,13 +28,13 @@ interface Props {
   type?: 'hyperliquid' | 'aster';
 }
 
-export const PerpsInvitePopup: React.FC<Props> = ({
+export const AsterPerpsInvitePopup: React.FC<Props> = ({
   visible,
   onClose,
   onInvite,
   onUnmount,
   footer,
-  type = 'hyperliquid',
+  type = 'aster',
 }) => {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,

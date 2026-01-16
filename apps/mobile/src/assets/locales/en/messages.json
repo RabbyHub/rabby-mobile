@@ -2516,6 +2516,15 @@
         "hyperliquidBalance": "Perps Balance",
         "notActivatedAddress": "Not Activated",
         "noPosition": "No Position"
+      },
+      "invitePopup": {
+        "title": "Save on Hyperliquid Fees",
+        "activatedSuccess": "4% Hyperliquid fee savings activated",
+        "activateFailed": "Failed",
+        "description": "Use Rabby’s code to enable",
+        "hyperliquidFee": "Hyperliquid trading fees.",
+        "activateNow": "Activate Now",
+        "activatedFailed": "Activate failed"
       }
     },
     "perpsDetail": {

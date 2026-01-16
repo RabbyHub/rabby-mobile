@@ -8,6 +8,9 @@ import {
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import { Account } from '@/core/services/preference';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { apisPerps } from '@/core/apis';
+import { perpsService, preferenceService } from '@/core/services';
 
 export const formatMarkData = (
   marketData: [Meta, AssetCtx[]],
@@ -258,4 +261,60 @@ export const findDefaultAccount = (
         item.type === currentAccount.type,
     );
   return selectedItem;
+};
+
+export const checkPerpsReference = async ({
+  account,
+  scene = 'invite',
+}: {
+  account?: Account | null;
+  scene?: 'invite' | 'connect';
+}) => {
+  try {
+    const address = account?.address;
+    if (!address) {
+      return false;
+    }
+    let accountTypes = Object.values(KEYRING_CLASS.HARDWARE);
+    const inviteConfig = perpsService.getInviteConfig(address) || {};
+    let lastTime = inviteConfig.lastInvitedAt || 0;
+    let duration = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    if (scene === 'connect') {
+      accountTypes.push(...[KEYRING_CLASS.PRIVATE_KEY, KEYRING_CLASS.MNEMONIC]);
+      lastTime = inviteConfig.lastConnectedAt || 0;
+      duration = 24 * 60 * 60 * 1000; // 1 day
+    }
+
+    if (!accountTypes.includes(account.type)) {
+      return false;
+    }
+
+    if (lastTime) {
+      const now = Date.now();
+      const diff = now - lastTime;
+      if (diff < duration) {
+        return false;
+      }
+    }
+    const sdk = apisPerps.getPerpsSDK();
+    const info = await sdk.info.getClearingHouseState(address);
+    const needDepositFirst =
+      Number(info?.marginSummary?.accountValue || 0) === 0 &&
+      Number(info?.withdrawable || 0) === 0;
+    if (needDepositFirst) {
+      return false;
+    }
+
+    const data = await sdk.info.getReferral(account?.address || '');
+
+    if (data?.referredBy) {
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    console.error('checkPerpsReference error', e);
+    return false;
+  }
 };
