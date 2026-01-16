@@ -114,7 +114,7 @@ import {
   useHomeHistoryStore,
 } from './hooks/history';
 import { useHomeAnimation } from './hooks/useHomeDrawerAnimate';
-import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -515,14 +515,19 @@ const OverViewComponent = React.memo(
     } = useHomeAnimation();
 
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
+    const { homeDisplayedTabs: tabs } = useHomeDisplayedTabs();
 
     const SwipeUpHint = (
       <View style={styles.swipeUpHint}>
         <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
         <Text style={styles.swipeUpHintText}>
           {IS_ANDROID
-            ? t('page.home.clickForMoreDapps')
-            : t('page.home.swipeUpForMoreDapps')}
+            ? tabs?.length
+              ? t('page.home.swipeUp.descAndroidMore')
+              : t('page.home.swipeUp.descAndroid')
+            : tabs?.length
+            ? t('page.home.swipeUp.descMore')
+            : t('page.home.swipeUp.desc')}
         </Text>
       </View>
     );
@@ -1209,6 +1214,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   pullUpWrapper: {
     flex: 1,
+    paddingBottom: IS_ANDROID ? 1 : 0,
   },
   pullUpPanel: {
     position: 'absolute',
