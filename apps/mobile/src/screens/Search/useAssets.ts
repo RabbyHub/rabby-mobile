@@ -5,14 +5,7 @@ import {
 } from '@/screens/Home/hooks/store';
 import { produce } from '@/core/utils/produce';
 import { DisplayedProject } from '../Home/utils/project';
-import { AbstractPortfolioToken } from '../Home/types';
-import {
-  setWalletTokens,
-  sortWalletTokens,
-  tagTokenList,
-} from '../Home/utils/token';
 import { preferenceService } from '@/core/services';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { portfolio2Display } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { tagNfts } from '../Home/hooks/nft';
@@ -21,7 +14,6 @@ import {
   syncProtocols,
   syncSpecificProtocol,
 } from '@/databases/hooks/assets';
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _, { debounce } from 'lodash';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
@@ -78,73 +70,6 @@ function setShortCache(
     return { ...prev, shortCache: newVal };
   });
 }
-
-const batchLoadCacheTokens = async (
-  addresses: string[],
-  setting: ITokenSetting,
-  options?: {
-    core?: boolean;
-    maxLength?: number;
-  },
-) => {
-  if (!addresses.length) {
-    return;
-  }
-  setLoading(true);
-  const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
-    addresses,
-    options?.core,
-    options?.maxLength,
-  );
-  if (!cachedTokens.length) {
-    setLoading(false);
-    return;
-  }
-  const assetGroup = _.groupBy(cachedTokens, 'owner_addr');
-  const formatAssetMap = _.mapValues(assetGroup, group => {
-    const walletProject = new DisplayedProject({
-      id: 'Wallet',
-      name: 'Wallet',
-    });
-
-    let _data = produce(walletProject, draft => {
-      draft.netWorth = 0;
-      draft._netWorth = '$0';
-      draft._netWorthChange = '-';
-      draft.netWorthChange = 0;
-      draft._netWorthChangePercent = '';
-      draft._portfolioDict = {};
-      draft._portfolios = [];
-      draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
-    });
-
-    const chainTokens = group.reduce((m, n) => {
-      const list = (m[n.chain] = m[n.chain] || []);
-      list.push(n);
-
-      return m;
-    }, {} as Record<string, TokenItem[]>);
-    _data = produce(_data, draft => {
-      setWalletTokens(draft, chainTokens);
-    });
-
-    const sortedTokens: AbstractPortfolioToken[] = tagTokenList(
-      sortWalletTokens(_data),
-      setting,
-      { filterChainServerIds: true },
-    );
-    return sortedTokens;
-  });
-
-  Object.keys(formatAssetMap).forEach(address => {
-    updateAssetListByAddress(address, {
-      type: 'tokens',
-      data: formatAssetMap[address] || [],
-    });
-  });
-
-  setLoading(false);
-};
 
 const batchLoadCacheDefi = async (
   addresses: string[],
@@ -378,7 +303,8 @@ export const useLoadAssets = () => {
       },
     ) => {
       const addresses =
-        options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses;
+        options?.realTimeAddresses ||
+        (await getTop10MyAccounts()).top10Addresses;
       removeUnNeedAssets(addresses);
       const { disableDefi, disableNFT } = options || {};
       if (!options?.ignoreLoading) {
@@ -419,7 +345,8 @@ export const useLoadAssets = () => {
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
       const addresses =
-        options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses;
+        options?.realTimeAddresses ||
+        (await getTop10MyAccounts()).top10Addresses;
       removeUnNeedAssets(addresses);
       const isCurrentShortCacheFetch = !!(
         options?.maxTokenLength ||
@@ -459,11 +386,6 @@ export const useLoadAssets = () => {
       );
 
       const tokenSetting = await preferenceService.getUserTokenSettings();
-      !disableToken &&
-        (await batchLoadCacheTokens(addresses, tokenSetting, {
-          core: options?.core,
-          maxLength: options?.maxTokenLength,
-        }));
       setTimeout(() => {
         Promise.all([
           !disableDefi &&
@@ -485,8 +407,6 @@ export const useLoadAssets = () => {
     isLoading,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
-    batchLoadCacheTokens,
-    batchLoadCacheDefi,
     batchLoadCacheNFT,
     refreshing: !!isLoading && !isFirstFetch,
     loadSpecificDefi,
@@ -506,8 +426,6 @@ export const useAssetsRefreshing = () => {
   };
 };
 
-const debounceReloadTokenList = debounce(batchLoadCacheTokens, 2000);
-const debounceReloadDefiList = debounce(batchLoadCacheDefi, 2000);
 const debounceReloadNftList = debounce(batchLoadCacheNFT, 2000);
 export const useInitDetectDBAssets = () => {
   useAppOrmSyncEvents({
@@ -532,22 +450,7 @@ export const useInitDetectDBAssets = () => {
         currentAssetCount =
           getAssetsMapDirectly('nfts')[ctx.owner_addr]?.length || 0;
       }
-
-      if (taskFor === 'token') {
-        if (currentUpdateCount > currentAssetCount) {
-          debounceReloadTokenList(
-            [ctx.owner_addr],
-            preferenceService.getUserTokenSettingsSync(),
-          );
-        }
-      } else if (taskFor === 'protocols') {
-        if (currentUpdateCount > currentAssetCount) {
-          debounceReloadDefiList(
-            [ctx.owner_addr],
-            preferenceService.getUserTokenSettingsSync(),
-          );
-        }
-      } else if (taskFor === 'nfts') {
+      if (taskFor === 'nfts') {
         if (currentUpdateCount > currentAssetCount) {
           debounceReloadNftList(
             [ctx.owner_addr],

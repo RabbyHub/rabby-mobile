@@ -4,6 +4,7 @@ import { SMALL_TOKEN_ID } from '@/utils/token';
 import { formatNetworth } from '@/utils/math';
 import { DisplayedProject } from './project';
 import { ITokenItem } from '@/store/tokens';
+import { IProtocolItem } from '@/store/protocols';
 
 const SMALL_TOKEN = {
   id: SMALL_TOKEN_ID,
@@ -40,27 +41,25 @@ export const getTotalFoldToken = (
 };
 
 export const getAllDefiCount = (
-  portfolios: DisplayedProject[],
+  portfolios: IProtocolItem[],
   usdRate = 1,
   symbol = '$',
 ) => {
   let tokensTotalValue = 0;
   portfolios?.forEach(portfolio => {
     // portfolio._isExcludeBalance
-    tokensTotalValue += portfolio._isExcludeBalance
-      ? 0
-      : portfolio._portfolios
-          ?.reduce(
-            (acc, item) =>
-              acc.plus(
-                item._sumTokenRealUsdValue < 0
-                  ? 0
-                  : item._sumTokenRealUsdValue || 0,
-              ),
-            new BigNumber(0),
-          )
-          ?.times(usdRate)
-          .toNumber();
+    tokensTotalValue += portfolio._portfolios
+      ?.reduce(
+        (acc, item) =>
+          acc.plus(
+            item._sumTokenRealUsdValue < 0
+              ? 0
+              : item._sumTokenRealUsdValue || 0,
+          ),
+        new BigNumber(0),
+      )
+      ?.times(usdRate)
+      .toNumber();
   });
   return formatNetworth(tokensTotalValue, false, symbol);
 };

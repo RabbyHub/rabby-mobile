@@ -6,6 +6,8 @@ import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
+import { IProtocolItem } from '@/store/protocols';
+import { protocolEntityToIProtocolItem } from '@/utils/protocol';
 
 @Entity('cache_portocolitem')
 export class ProtocolItemEntity extends EntityAddressAssetBase {
@@ -96,6 +98,14 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
       }));
   }
 
+  static async batchQueryProtocols(owner_addr: string) {
+    await prepareAppDataSource();
+
+    return (await this.getRepository().findBy({ owner_addr })).filter(
+      i => i.id !== EMPTY_PROTOCOL_ITEM_ID,
+    );
+  }
+
   static async batchMultAddressPortocols(
     addresses: string[],
     maxLength?: number,
@@ -120,6 +130,57 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
           i.portfolio_item_list,
         ),
       }));
+  }
+
+  static async batchMultiAddressProtocols(
+    addresses: string[],
+    maxLength?: number,
+  ) {
+    await prepareAppDataSource();
+
+    const queryBuilder =
+      this.getRepository().createQueryBuilder('portocolitem');
+
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
+    if (maxLength) {
+      queryBuilder.take(maxLength);
+    }
+
+    const protocols = await queryBuilder.getMany();
+
+    return protocols.filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID);
+  }
+
+  static async getDefaultProtocolsByAddresses(
+    addresses: string[],
+    maxLength?: number,
+  ) {
+    await prepareAppDataSource();
+
+    const queryBuilder =
+      this.getRepository().createQueryBuilder('portocolitem');
+
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
+    if (maxLength) {
+      queryBuilder.take(maxLength);
+    }
+
+    const protocols = await queryBuilder.getMany();
+
+    const results: Record<string, IProtocolItem[]> = {};
+
+    protocols.forEach(i => {
+      if (i.id !== EMPTY_PROTOCOL_ITEM_ID) {
+        return;
+      }
+      const key = i.owner_addr;
+      if (!results[key]) {
+        results[key] = [];
+      }
+      results[key].push(protocolEntityToIProtocolItem(i));
+    });
+
+    return results;
   }
 
   static async isExpired(owner_addr: string) {

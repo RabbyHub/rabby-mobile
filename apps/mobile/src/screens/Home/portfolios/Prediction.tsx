@@ -3,13 +3,12 @@ import { Text, View, ViewStyle } from 'react-native';
 
 import { Card } from '@/components';
 
-import { AbstractPortfolio } from '../types';
 import { PortfolioHeader } from '../components/PortfolioDetail';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatAmount, formatPrice } from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
-import { useTranslation } from 'react-i18next';
+import { IProtocolPortfolio } from '@/store/protocols';
 
 export default React.memo(
   ({
@@ -18,12 +17,11 @@ export default React.memo(
     style,
   }: {
     name: string;
-    data: AbstractPortfolio;
+    data: IProtocolPortfolio;
     style?: ViewStyle;
   }) => {
     const portfolio = data._originPortfolio;
     const { styles } = useTheme2024({ getStyle: getStyles });
-    const { t } = useTranslation();
 
     return (
       <Card style={style}>

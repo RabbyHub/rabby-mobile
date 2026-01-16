@@ -10,7 +10,7 @@ import { ListRenderItem, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
-import { AbstractProject, ActionItem } from './types';
+import { ActionItem } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
@@ -22,7 +22,6 @@ import {
   TokenRowSectionHeader,
 } from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
-import { DisplayedProject } from './utils/project';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from './components/Skeleton';
 import {
@@ -32,13 +31,23 @@ import {
 } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
-import { Account } from '@/core/services/preference';
 import { getItemId } from './utils/listRenderId';
-import { usePortfolios } from './hooks/usePortfolio';
 import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
 import { PerpsSingleAssetPosition } from '../Perps/components/PerpsMultiAssetPosition';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { getAllDefiCount } from './utils/converAssets';
+import useProtocols, {
+  getSingleProtocolsCacheKey,
+  ICacheProtocolItem,
+  IProtocolItem,
+  useProtocolListComputedStore,
+} from '@/store/protocols';
+import { useShallow } from 'zustand/react/shallow';
+
+const emptyCacheProtocolItem: ICacheProtocolItem = {
+  fold: [],
+  unFold: [],
+};
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -67,6 +76,11 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const { currentAccount } = useSingleHomeAccount();
   const { selectedChain } = useSingleHomeChain();
 
+  const lowerAddress = useMemo(
+    () => currentAccount?.address?.toLowerCase(),
+    [currentAccount?.address],
+  );
+
   const focusedTab = useFocusedTab();
   const hasBeenFocusedRef = useRef(false);
 
@@ -81,41 +95,52 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [foldDefi, setFoldDefi] = useState(true);
 
-  const {
-    data: _rawPortfolios,
-    updateData: updatePortfolio,
-    isLoading: loadingPortfolio,
-    refreshing,
-  } = usePortfolios(currentAccount?.address?.toLowerCase(), false);
+  //const {
+  //  data: _rawPortfolios,
+  //  updateData: updatePortfolio,
+  //  isLoading: loadingPortfolio,
+  //  refreshing,
+  //} = usePortfolios(currentAccount?.address?.toLowerCase(), false);
 
-  const _portfolios = useMemo(
-    () =>
-      _rawPortfolios.filter(item =>
-        selectedChain && item?.chain ? item.chain === selectedChain : true,
-      ),
-    [_rawPortfolios, selectedChain],
+  const loadingPortfolio = useProtocols(state => {
+    if (!lowerAddress) {
+      return false;
+    }
+    return !!state.isLoadingByAddress[lowerAddress];
+  });
+
+  const updatePortfolio = useProtocols(state => state.getProtocols);
+
+  const singleProtocolsKey = useMemo(() => {
+    if (!lowerAddress) {
+      return null;
+    }
+    return getSingleProtocolsCacheKey(lowerAddress, selectedChain);
+  }, [lowerAddress, selectedChain]);
+
+  const registerSingleProtocols = useProtocolListComputedStore(
+    state => state.registerSingleProtocols,
+  );
+
+  const _portfolios = useProtocolListComputedStore(
+    useShallow(state =>
+      singleProtocolsKey
+        ? state.singleProtocolsCache[singleProtocolsKey] ||
+          emptyCacheProtocolItem
+        : emptyCacheProtocolItem,
+    ),
   );
 
   const filteredPortfolios = useMemo(() => {
-    const list = _portfolios.filter(item =>
-      selectedChain && item?.chain ? item.chain === selectedChain : true,
-    );
-    const foldList: DisplayedProject[] = [];
-    const unFoldList: DisplayedProject[] = [];
-    list.forEach(item => {
-      if (item._isFold) {
-        foldList.push(item);
-      } else {
-        unFoldList.push(item);
-      }
-    });
+    const foldList = _portfolios?.fold || [];
+    const unFoldList = _portfolios?.unFold || [];
     const foldDeFiValue = getAllDefiCount(foldList);
     return {
       unFoldList,
       foldList,
       foldDeFiValue,
     };
-  }, [_portfolios, selectedChain]);
+  }, [_portfolios]);
 
   const {
     data: portfolios,
@@ -131,13 +156,13 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const dataList = useMemo(() => {
     const unFoldDefiList: ActionItem[] = portfolios.map(item => ({
       type: 'unfold_defi',
-      data: item as unknown as DisplayedProject,
+      data: item,
     }));
 
     const foldDeFiList: ActionItem[] = filteredPortfolios.foldList.map(
       item => ({
         type: 'fold_defi',
-        data: item as unknown as DisplayedProject,
+        data: item,
       }),
     );
 
@@ -196,11 +221,17 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   ]);
 
   useEffect(() => {
-    if (isFocused) {
-      updatePortfolio();
+    if (isFocused && lowerAddress) {
+      updatePortfolio(lowerAddress);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, currentAccount?.address]);
+  }, [isFocused, lowerAddress, updatePortfolio]);
+
+  useEffect(() => {
+    if (!lowerAddress) {
+      return;
+    }
+    registerSingleProtocols(lowerAddress, selectedChain);
+  }, [lowerAddress, selectedChain, registerSingleProtocols]);
 
   const renderItem = useCallback<ListRenderItem<ActionItem>>(
     props => {
@@ -210,9 +241,9 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
         case 'unfold_defi':
           return (
             <MemoFullDefiRenderItem
-              data={data as unknown as AbstractProject}
+              data={data}
               showAccount={false}
-              disableAction={refreshing}
+              disableAction={loadingPortfolio}
               defaultExpand={shouldDefaultExpand}
               account={currentAccount}
             />
@@ -229,9 +260,9 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
         case 'fold_defi':
           return (
             <MemoFullDefiRenderItem
-              data={data as unknown as AbstractProject}
+              data={data}
               showAccount={false}
-              disableAction={refreshing}
+              disableAction={loadingPortfolio}
               defaultExpand={false}
               account={currentAccount}
             />
@@ -253,7 +284,7 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     [
       currentAccount,
       foldDefi,
-      refreshing,
+      loadingPortfolio,
       shouldDefaultExpand,
       styles.emptyAssets,
       styles.tokenSectionHeader,
@@ -314,7 +345,10 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={() => {
-              updatePortfolio?.(true);
+              if (!lowerAddress) {
+                return;
+              }
+              updatePortfolio?.(lowerAddress, true);
               onRefresh?.();
             }}
             refreshing={false}

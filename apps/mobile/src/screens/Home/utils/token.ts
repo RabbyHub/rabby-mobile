@@ -160,12 +160,6 @@ export const setWalletTokens = (
   });
 };
 
-export const sortWalletTokens = (wallet: DisplayedProject) => {
-  return wallet._portfolios
-    .flatMap(x => x._tokenList)
-    .sort((m, n) => (n._usdValue || 0) - (m._usdValue || 0));
-};
-
 export type TaggedPortfolioToken<
   T extends AbstractPortfolioToken = AbstractPortfolioToken,
 > = T & {

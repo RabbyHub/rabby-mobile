@@ -8,7 +8,7 @@ import {
   TokenList,
   Supplements,
 } from '../components/PortfolioDetail';
-import { AbstractPortfolio } from '../types';
+import { IProtocolPortfolio } from '@/store/protocols';
 import { formatNetworth } from '@/utils/math';
 import { getTokenSymbol } from '@/utils/token';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -21,7 +21,7 @@ export default React.memo(
     style,
   }: {
     name: string;
-    data: AbstractPortfolio;
+    data: IProtocolPortfolio;
     style?: ViewStyle;
   }) => {
     const portfolio = data._originPortfolio;

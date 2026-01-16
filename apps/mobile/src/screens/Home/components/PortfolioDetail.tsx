@@ -13,39 +13,19 @@ import {
   PortfolioItemNft,
   NftCollection,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolio } from '../types';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useRoute } from '@react-navigation/native';
-import { GetRootScreenNavigationProps } from '@/navigation-type';
-import { useTranslation } from 'react-i18next';
+import { IProtocolPortfolio } from '@/store/protocols';
 
 export const PortfolioHeader = ({
   data,
   name,
-  showHistory,
 }: {
-  data: AbstractPortfolio;
+  data: IProtocolPortfolio;
   name: string;
   showDescription?: boolean;
-  showHistory?: boolean;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-
-  const usdChangeStyle = useMemo(
-    () =>
-      StyleSheet.flatten([
-        styles.tokenRowChange,
-        {
-          color: data.netWorthChange
-            ? data.netWorthChange < 0
-              ? colors2024['red-default']
-              : colors2024['green-default']
-            : colors2024['blue-default'],
-        },
-      ]),
-    [styles.tokenRowChange, data.netWorthChange, colors2024],
-  );
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <View style={styles.portfolioHeader}>
@@ -56,13 +36,6 @@ export const PortfolioHeader = ({
       </View>
       <View>
         <Text style={styles.portfolioNetWorth}>{data._netWorth}</Text>
-        {showHistory ? (
-          <Text style={usdChangeStyle}>
-            {data._netWorthChange !== '-'
-              ? `${data._changePercentStr} (${data._netWorthChange})`
-              : '-'}
-          </Text>
-        ) : null}
       </View>
     </View>
   );
@@ -100,10 +73,7 @@ export const TokenList = ({
   };
   headerStyle?: StyleProp<ViewStyle>;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
-  const { relateTokenId } = route.params || {};
-  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const headers = [name, 'Amount'];
 
@@ -129,16 +99,16 @@ export const TokenList = ({
 
   const _nfts: TokenItem[] = useMemo(() => {
     return polyNfts(nfts ?? []).map(n => {
-      const floorToken = n.collection.floor_price_token;
+      const floorToken = n.collection?.floor_price_token;
       const _netWorth = floorToken
         ? floorToken.amount * floorToken.price * n.amount
         : 0;
       const _symbol = getCollectionDisplayName(n.collection);
 
       return {
-        id: n.id,
-        chain: n.collection.chain_id,
-        _logo: n.collection.logo_url,
+        id: n.id || '',
+        chain: n.collection?.chain_id || '',
+        _logo: n.collection?.logo_url || '',
         _symbol,
         amount: n.amount,
         _amount: `${_symbol} x${n.amount}`,
@@ -218,12 +188,7 @@ export const TokenList = ({
                   logoStyle={l.isToken ? undefined : styles.nftIcon}
                   size={24}
                 />
-                <Text
-                  style={[
-                    styles.tokenListSymbolText,
-                    relateTokenId === l.id && styles.tokenTextHightlight,
-                  ]}
-                  numberOfLines={1}>
+                <Text style={styles.tokenListSymbolText} numberOfLines={1}>
                   {l._symbol}
                 </Text>
               </View>

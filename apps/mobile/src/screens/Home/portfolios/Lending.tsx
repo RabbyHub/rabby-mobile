@@ -3,7 +3,7 @@ import { ViewStyle } from 'react-native';
 
 import { Card } from '@/components';
 
-import { AbstractPortfolio } from '../types';
+import { IProtocolPortfolio } from '@/store/protocols';
 import {
   PortfolioHeader,
   Supplements,
@@ -17,7 +17,7 @@ export default React.memo(
     style,
   }: {
     name: string;
-    data: AbstractPortfolio;
+    data: IProtocolPortfolio;
     style?: ViewStyle;
   }) => {
     const portfolio = data._originPortfolio;

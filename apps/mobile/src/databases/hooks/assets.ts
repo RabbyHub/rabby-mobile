@@ -77,7 +77,7 @@ export const syncProtocols = async (
   const isExpired = await ProtocolItemEntity.isExpired(address);
 
   if (!isExpired && !force) {
-    return onlySync ? [] : ProtocolItemEntity.batchQueryPortocols(address);
+    return onlySync ? [] : ProtocolItemEntity.batchQueryProtocols(address);
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
   const { list } = snapshot2Display(snapshotRes || []);

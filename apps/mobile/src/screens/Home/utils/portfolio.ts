@@ -44,23 +44,6 @@ export const portfolio2Display = (
   dict[p.id] = new DisplayedProject(p, p.portfolio_item_list);
 };
 
-export const patchPortfolioHistory = (
-  portfolio: PortfolioProject,
-  dict: Record<string, DisplayedProject>,
-) => {
-  // fetched failed
-  if (!portfolio) {
-    return;
-  }
-
-  const projectId = portfolio.id;
-
-  // history empty, 100% increse
-  if (dict[projectId]) {
-    dict[projectId].patchHistory(portfolio.portfolio_item_list, true);
-  }
-};
-
 export const loadPortfolioSnapshot = (userAddr: string) => {
   return pQueue.add(() => {
     return openapi.getComplexProtocolList(userAddr);

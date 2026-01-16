@@ -3,7 +3,6 @@ import { View, Text, ViewStyle, StyleProp, Pressable } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { WrapperDappActionsMemoItem } from '../../components/ProtocolMoreItem';
-import { AbstractPortfolio, AbstractProject } from '../../types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import BigNumber from 'bignumber.js';
@@ -25,23 +24,19 @@ import { dappService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
 import { findChain } from '@/utils/chain';
 import RcExpandCC from '@/assets/icons/home/defi-expand.svg';
-import {
-  isBlacklistMethod,
-  isWhitelistAddress,
-  isWhitelistSpender,
-} from '../DappActions/hook';
-import { ActionType } from '../DappActions';
+import { isBlacklistMethod, isWhitelistSpender } from '../DappActions/hook';
+import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 
 type SectionListItem = {
-  data: AbstractPortfolio[];
-  project: AbstractProject;
+  data: IProtocolPortfolio[];
+  project: IProtocolItem;
   address: string;
   type: KEYRING_TYPE;
   aliasName: string;
   totalUsdValue: BigNumber;
 };
 interface Props {
-  data: AbstractProject;
+  data: IProtocolItem;
   account?: KeyringAccountWithAlias | null;
   showAccount?: boolean;
   style?: StyleProp<ViewStyle>;
