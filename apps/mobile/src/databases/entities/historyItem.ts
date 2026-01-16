@@ -267,7 +267,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       this.tx_usd_gas_fee,
       this.tx_eth_gas_fee,
       this.history_type,
-      this.history_custom_type,
+      this.history_custom_type || '',
       this._local_created_at,
       this._local_updated_at,
     ]);
