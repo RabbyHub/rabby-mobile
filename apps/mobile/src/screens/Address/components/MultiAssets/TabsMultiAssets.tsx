@@ -15,22 +15,16 @@ import {
 } from '@/screens/Home/components/OverviewTopHeader';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
-import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import { isTabsSwiping } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { Freeze } from 'react-freeze';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
-import { useHomeTabIndex } from '@/hooks/navigation';
+import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import { runIIFEFunc } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useHomeDrawerAnimateStore } from '@/screens/Home/hooks/useHomeDrawerAnimate';
-import { useMyAccounts } from '@/hooks/account';
-import { filterDirectlySignableAccounts } from '@/core/apis/account';
-import { ReceiveOnNoAssets } from '@/screens/Home/components/ReceiveOnNoAssets';
-import { Account } from '@/core/services/preference';
+import { homeDrawerAnimateMutables } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -44,6 +38,7 @@ export const icons = {
 };
 export const TAB_HEADER_FULL_HEIGHT = 94;
 export const TAB_HEADER_MIN_HEIGHT = 44;
+export const TAB_HEADER_MT = 64;
 
 export interface TabMultiAssetsProps {
   onIndexChange(index: number): void;
@@ -77,7 +72,7 @@ function TabIndexBasedFreeze({
   );
 }
 
-const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
+const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
 
 runIIFEFunc(() => {
   perfEvents.subscribe('NAV_BACK_ON_HOME', () => {
@@ -95,7 +90,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const tabsOpacity = useHomeDrawerAnimateStore(state => state.tabsOpacity);
+  const tabsOpacity = homeDrawerAnimateMutables.tabsOpacity;
   const tabsStyle = useAnimatedStyle(() => ({
     opacity: tabsOpacity.value,
     pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'auto',
@@ -118,20 +113,13 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
     [],
   );
 
-  // const {tabIndex} = useHomeTabIndex();
-
   const renderHeader = useCallback<
     React.ComponentProps<typeof Tabs.Container>['renderHeader'] & object
   >(
     props => {
       return (
         <Animated.View style={tabsStyle}>
-          <TabsTopHeader
-            // data={data}
-            // loading={loading}
-            // showNetWorth={tabIndex !== 0}
-            indexValue={props.index}
-          />
+          <TabsTopHeader indexValue={props.index} />
         </Animated.View>
       );
     },
@@ -229,7 +217,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: 64,
+    marginTop: TAB_HEADER_MT,
   },
   headerContainer: {
     backgroundColor: 'transparent',
