@@ -161,7 +161,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
         if (currentAccount?.address) {
           loadToken(currentAccount.address);
         } else {
-          checkIsExpireAndUpdate();
+          // TODO: 移除，这里应该是失效了，要走新的的store更新逻辑
+          //checkIsExpireAndUpdate();
         }
       })();
     }, [

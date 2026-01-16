@@ -1,7 +1,7 @@
 import { PortfolioItem } from '@rabby-wallet/rabby-api/dist/types';
 import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
-import { syncProtocols } from '@/databases/hooks/assets';
+import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { protocolEntityToIProtocolItem } from '@/utils/protocol';
 
@@ -14,7 +14,6 @@ export interface IProtocolItem {
   logo?: string;
   chain?: string;
   netWorth: number;
-  _netWorth: string;
   site_url?: string;
   owner_addr: string;
 
@@ -31,7 +30,6 @@ export interface IProtocolPortfolio {
 
   // 仓位summary信息
   netWorth: number;
-  _netWorth: string;
 
   // 原始仓位详情
   _originPortfolio: PortfolioItem;
@@ -46,6 +44,11 @@ interface ProtocolListState {
   initStore(): void;
   batchGetProtocols(addresses: string[], force?: boolean): Promise<void>;
   getProtocols(address: string, force?: boolean): Promise<void>;
+  updateSpecificProtocol(
+    address: string,
+    protocolId: string,
+    chain: string,
+  ): void;
 }
 
 export type ICacheProtocolItem = {
@@ -316,7 +319,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     if (!address) {
       return;
     }
-    console.log('CUSTOM_LOGGER:=>: getProtocols');
 
     const normalizedAddress = address.toLowerCase();
 
@@ -333,13 +335,11 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
           address,
         );
         const isExpired = await isDataExpired(normalizedAddress);
-        console.log('CUSTOM_LOGGER:=>: isExpired', isExpired);
         if (!isExpired) {
           if (cacheProtocols.length) {
             const projects: IProtocolItem[] = cacheProtocols.map(
               protocolEntityToIProtocolItem,
             );
-            console.log('CUSTOM_LOGGER:=>: projects', projects.length);
 
             set(state => ({
               protocolMap: {
@@ -354,7 +354,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
 
       // 内部通过给db的非阻塞action，所以下面的同步store是先行的
       const protocols = await syncProtocols(address, force);
-      console.log('CUSTOM_LOGGER:=>: protocols', protocols.length);
       if (protocols.length) {
         const projects: IProtocolItem[] = protocols.map(p =>
           protocolEntityToIProtocolItem({
@@ -377,6 +376,56 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
           [normalizedAddress]: false,
         },
       }));
+    }
+  },
+  //dapp 操作之后，更新特定的仓位，类似之前的updateSpecificProtocol
+  async updateSpecificProtocol(address, protocolId, chain) {
+    const normalizedAddress = address.toLowerCase();
+    if (!normalizedAddress || !protocolId || !chain) {
+      return;
+    }
+
+    try {
+      const protocols = await syncSpecificProtocol(address, protocolId, chain);
+      const targetProtocol = protocols[0];
+      if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
+        // 仓位没了，要删除
+        set(state => ({
+          protocolMap: {
+            ...state.protocolMap,
+            [normalizedAddress]:
+              state.protocolMap?.[normalizedAddress]?.filter(
+                item => item.id !== protocolId,
+              ) || [],
+          },
+        }));
+        return;
+      }
+      const protocolDisplayData = protocolEntityToIProtocolItem({
+        ...targetProtocol,
+        owner_addr: address,
+      });
+
+      // 仓位还在，要更新
+      set(state => {
+        const preData = [...(state.protocolMap?.[normalizedAddress] || [])];
+        const currentProtocolIndex = preData.findIndex(
+          item => item.id === protocolId,
+        );
+        if (currentProtocolIndex > -1) {
+          preData[currentProtocolIndex] = protocolDisplayData;
+        } else {
+          preData.push(protocolDisplayData);
+        }
+        return {
+          protocolMap: {
+            ...state.protocolMap,
+            [normalizedAddress]: preData,
+          },
+        };
+      });
+    } catch (error) {
+      console.error('Failed to update specific protocol:', error);
     }
   },
 }));

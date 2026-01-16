@@ -12,7 +12,6 @@ import {
   batchLoadProjects,
   loadAppChainList,
   loadPortfolioSnapshot,
-  snapshot2Display,
 } from '@/screens/Home/utils/portfolio';
 
 import { TokenItemEntity } from '../entities/tokenitem';
@@ -80,13 +79,8 @@ export const syncProtocols = async (
     return onlySync ? [] : ProtocolItemEntity.batchQueryProtocols(address);
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
-  const { list } = snapshot2Display(snapshotRes || []);
-  const snapshotData = Object.values(list)?.sort(
-    (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-  );
-
   const chunkIds = chunk(
-    snapshotData.map(i => i.id),
+    snapshotRes.map(i => i.id),
     5,
   );
   const protocols: ComplexProtocol[] = [];

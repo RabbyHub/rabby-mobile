@@ -17,8 +17,6 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { AccountOverview } from '../AccountOverview';
 import { useProtocolConfig } from '../../utils/protocolConfig';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
-import { usePortfolios } from '../../hooks/usePortfolio';
-import { useLoadAssets } from '@/screens/Search/useAssets';
 import { setRefreshHistoryId } from '../../SingleHomeRightArea';
 import { dappService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
@@ -26,6 +24,8 @@ import { findChain } from '@/utils/chain';
 import RcExpandCC from '@/assets/icons/home/defi-expand.svg';
 import { isBlacklistMethod, isWhitelistSpender } from '../DappActions/hook';
 import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
+import { formatUsdValue } from '@/utils/number';
+import useProtocols from '@/store/protocols';
 
 type SectionListItem = {
   data: IProtocolPortfolio[];
@@ -57,8 +57,10 @@ export const FullDefiRenderItem = ({
     return isAppChain(data?.chain || '');
   }, [data?.chain]);
 
-  const { updateSpecificProtocol } = usePortfolios(account?.address, false);
-  const { loadSpecificDefi } = useLoadAssets();
+  const updateSpecificProtocol = useProtocols(
+    state => state.updateSpecificProtocol,
+  );
+
   const { openTab } = useBrowser();
 
   const handleOpenSite = useCallback(() => {
@@ -109,8 +111,10 @@ export const FullDefiRenderItem = ({
     const res = Array.from(addressMap.values()).reduce((pre, cur) => {
       return pre.plus(cur.totalUsdValue);
     }, new BigNumber(0));
-    return res ? formatNetworth(res.toNumber()) : data?._netWorth || 0;
-  }, [data?._netWorth, sectionsMultiProject]);
+    return res
+      ? formatNetworth(res.toNumber())
+      : formatUsdValue(data?.netWorth) || 0;
+  }, [data?.netWorth, sectionsMultiProject]);
 
   const { config } = useProtocolConfig();
   const isInnerProtocol = useMemo(() => !!config[data.id], [data.id, config]);
@@ -123,21 +127,13 @@ export const FullDefiRenderItem = ({
       if (!account) {
         return;
       }
-      if (showAccount) {
-        loadSpecificDefi(account.address, data?.id, data?.chain || '');
-      } else {
+      if (!showAccount) {
+        // 单地址有历史记录入口要刷新，多地址没有历史记录入口，不需要刷新
         setRefreshHistoryId(e => e + 1);
-        updateSpecificProtocol(data?.id, data?.chain || '');
       }
+      updateSpecificProtocol(account.address, data?.id, data?.chain || '');
     }, 200);
-  }, [
-    account,
-    showAccount,
-    loadSpecificDefi,
-    data?.id,
-    data?.chain,
-    updateSpecificProtocol,
-  ]);
+  }, [account, data?.chain, data?.id, showAccount, updateSpecificProtocol]);
 
   const protocolActionList = useMemo(() => {
     // 协议中是否存在可以 Manage 的仓位

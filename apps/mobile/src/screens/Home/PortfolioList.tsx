@@ -39,7 +39,6 @@ import { getAllDefiCount } from './utils/converAssets';
 import useProtocols, {
   getSingleProtocolsCacheKey,
   ICacheProtocolItem,
-  IProtocolItem,
   useProtocolListComputedStore,
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
@@ -94,13 +93,6 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [foldDefi, setFoldDefi] = useState(true);
-
-  //const {
-  //  data: _rawPortfolios,
-  //  updateData: updatePortfolio,
-  //  isLoading: loadingPortfolio,
-  //  refreshing,
-  //} = usePortfolios(currentAccount?.address?.toLowerCase(), false);
 
   const loadingPortfolio = useProtocols(state => {
     if (!lowerAddress) {

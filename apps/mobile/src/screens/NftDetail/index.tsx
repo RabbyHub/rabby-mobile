@@ -336,10 +336,7 @@ export const NFTDetailScreen = () => {
 
   useEffect(() => {
     const id = setTimeout(() => {
-      getCacheTop10Assets({
-        disableToken: true,
-        disableDefi: true,
-      });
+      getCacheTop10Assets({});
     }, 200);
     return () => {
       clearTimeout(id);

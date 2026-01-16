@@ -13,7 +13,7 @@ import {
   PortfolioItemNft,
   NftCollection,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { formatAmount } from '@/utils/number';
+import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IProtocolPortfolio } from '@/store/protocols';
 
@@ -35,7 +35,9 @@ export const PortfolioHeader = ({
         </View>
       </View>
       <View>
-        <Text style={styles.portfolioNetWorth}>{data._netWorth}</Text>
+        <Text style={styles.portfolioNetWorth}>
+          {formatUsdValue(data.netWorth)}
+        </Text>
       </View>
     </View>
   );

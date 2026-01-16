@@ -9,7 +9,6 @@ import { debounce, isEqual } from 'lodash';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
-import { DisplayedProject } from './utils/project';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -51,7 +50,7 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
 const debounceComputeChainList = debounce<
   Parameters<typeof assetsMapStore.subscribe | typeof tokenStore.subscribe>[0]
 >(async () => {
-  const { top10Addresses } = (await getTop10MyAccounts());
+  const { top10Addresses } = await getTop10MyAccounts();
 
   setFinalInfo(computeChainsListV2(top10Addresses));
 }, 100);
@@ -212,31 +211,6 @@ export const apisAddrChainStatics = {
 
     return chainUnit;
   },
-  updatePortfolio: debounce((addr: string, _portfolios: DisplayedProject[]) => {
-    addr = addr.toLowerCase();
-    const prevFinalInfo =
-      addrChainStaticsStore.getState()[addr] ||
-      apisAddrChainStatics.makeFinalInfo();
-    const combinedPortfolios = computeAssetsApis.memoPortfolios([addr], {
-      [addr]: _portfolios,
-    });
-
-    const portfolio =
-      apisAddrChainStatics.computeChainAssetsPortfolio(combinedPortfolios);
-    // if (isEqual(prevFinalInfo.portfolio, portfolio)) return ;
-
-    prevFinalInfo.portfolio = portfolio;
-    const computed =
-      apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo);
-    if (isEqual(prevFinalInfo.computedResult, computed)) return;
-
-    setAddressChainInfo(prev => {
-      return {
-        ...prev,
-        [addr]: { ...prevFinalInfo, computedResult: computed },
-      };
-    });
-  }, 300),
   computeChainAssetsNft: (nftList: DisplayNftItem[]) => {
     const chainUnit: ChainAssetsUnit = {};
     nftList?.forEach(nft => {
@@ -350,6 +324,7 @@ function computeChainsListV2(caredAddresses: string[]) {
     chainUnit[chainId] = chainUnit[chainId].plus(token.usd_value || 0);
   });
 
+  // TODO: 更新chain信息
   const portfolios = computeAssetsApis.memoPortfolios(
     caredAddresses,
     assetsMap.portfoliosMap,

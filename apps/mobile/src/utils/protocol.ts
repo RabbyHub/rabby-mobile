@@ -1,6 +1,5 @@
 import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 import { PortfolioItem } from '@rabby-wallet/rabby-api/dist/types';
-import { formatUsdValue } from './number';
 import { columnConverter } from '@/databases/entities/_helpers';
 
 export const portfolioToIProtocolPortfolio = (
@@ -17,7 +16,7 @@ export const portfolioToIProtocolPortfolio = (
   });
 
   const netWorth = p.stats ? p.stats.net_usd_value : tokenNetWorth;
-  const _netWorth = formatUsdValue(netWorth);
+
   return {
     id: `${p?.pool?.id}${p.position_index || ''}`,
     name: p.name,
@@ -25,7 +24,6 @@ export const portfolioToIProtocolPortfolio = (
     _sumTokenRealUsdValue: sumTokenRealUsdValue,
 
     netWorth,
-    _netWorth,
 
     _originPortfolio: p,
   };
@@ -62,7 +60,6 @@ export const protocolEntityToIProtocolItem = (item: {
     site_url: item.site_url,
     owner_addr: item.owner_addr,
     netWorth: totalNetWorth,
-    _netWorth: formatUsdValue(totalNetWorth),
     _portfolios: formatPortfolio,
   };
 };

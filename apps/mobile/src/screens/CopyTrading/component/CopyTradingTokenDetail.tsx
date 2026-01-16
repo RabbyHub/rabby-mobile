@@ -23,7 +23,6 @@ import {
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import ImgTwitter from '@/assets2024/icons/copyTrading/ImgTwitter.png';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import {
   CopyTradeTokenItem,
   CopyTradeTokenItemV2,

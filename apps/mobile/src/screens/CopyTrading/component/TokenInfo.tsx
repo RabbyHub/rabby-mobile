@@ -7,10 +7,6 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenPriceChart } from '@/screens/TokenDetail/components/TokenPriceChart';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { useMemoizedFn } from 'ahooks';
-import { openapi } from '@/core/request';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { ellipsisAddress } from '@/utils/address';

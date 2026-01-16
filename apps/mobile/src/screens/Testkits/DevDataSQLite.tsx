@@ -217,17 +217,6 @@ function DevDataAccount() {
         </View>
       </View>
       <Button
-        title={'Sync Tokens'}
-        height={48}
-        containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
-        onPress={() => {
-          currentAccount?.address &&
-            batchQueryTokensWithLocalCache({
-              user_id: currentAccount?.address,
-            });
-        }}
-      />
-      <Button
         title={'Fetch Assets Info'}
         height={48}
         containerStyle={[styles.rowWrapper, { marginTop: 12 }]}

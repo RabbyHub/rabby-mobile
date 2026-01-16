@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -51,7 +51,7 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
-import { isTabsSwiping, useAccountInfo } from './hooks';
+import { isTabsSwiping } from './hooks';
 import { useAssetsNFTs, useOnNftRefresh } from '@/screens/Home/hooks/store';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 
@@ -64,9 +64,6 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   );
 });
 
-interface Props {
-  chain?: string;
-}
 export const NFTList = () => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -84,8 +81,6 @@ export const NFTList = () => {
   const { triggerUpdate } = useCheckIsExpireAndUpdate({
     isFocused,
     isFocusing,
-    disableToken: true,
-    disableDefi: true,
   });
 
   const { checkIsExpireAndUpdate, isLoading } = useLoadAssets();
@@ -327,7 +322,7 @@ export const NFTList = () => {
     try {
       await Promise.all([
         triggerUpdate(true),
-        checkIsExpireAndUpdate(true, { disableToken: true, disableDefi: true }),
+        checkIsExpireAndUpdate(true, {}),
         nftRefresh(),
       ]);
     } catch (error) {

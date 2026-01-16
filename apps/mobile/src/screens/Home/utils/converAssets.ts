@@ -2,7 +2,6 @@ import BigNumber from 'bignumber.js';
 import { AbstractPortfolioToken, DisplayNftItem } from '../types';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { formatNetworth } from '@/utils/math';
-import { DisplayedProject } from './project';
 import { ITokenItem } from '@/store/tokens';
 import { IProtocolItem } from '@/store/protocols';
 
@@ -62,18 +61,6 @@ export const getAllDefiCount = (
       .toNumber();
   });
   return formatNetworth(tokensTotalValue, false, symbol);
-};
-
-export const getDisplayedPortfolioUsdValue = (
-  portfolios: DisplayedProject['_portfolios'],
-) => {
-  return portfolios?.reduce(
-    (acc, item) =>
-      acc.plus(
-        item._sumTokenRealUsdValue < 0 ? 0 : item._sumTokenRealUsdValue || 0,
-      ),
-    new BigNumber(0),
-  );
 };
 
 export const getAllNftCount = (nfts: DisplayNftItem[]) => {
