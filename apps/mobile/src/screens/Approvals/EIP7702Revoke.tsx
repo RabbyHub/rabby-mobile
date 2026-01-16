@@ -173,7 +173,7 @@ function EIP7702Row({ item }: { item: EIP7702Delegated }) {
           {chainInfo ? (
             <ChainIconImage
               chainEnum={chainInfo.enum}
-              size={24}
+              size={46}
               containerStyle={styles.chainIcon}
             />
           ) : (
@@ -488,11 +488,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       minWidth: 0,
     },
     chainIcon: {
-      borderRadius: 12,
+      borderRadius: 46,
       backgroundColor: colors2024['neutral-bg-1'],
-      borderWidth: 1,
-      borderColor: colors2024['neutral-bg-1'],
-      overflow: 'hidden',
     },
     chainIconFallback: {
       width: 24,

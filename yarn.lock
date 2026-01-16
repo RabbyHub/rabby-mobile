@@ -9288,24 +9288,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/eth-simple-keyring@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "@rabby-wallet/eth-simple-keyring@npm:5.0.1"
-  dependencies:
-    "@ethereumjs/util": ^9.0.0
-    "@metamask/eth-sig-util": 5.1.0
-    "@metamask/utils": ^8.1.0
-    chai: ^4.3.4
-    eth-sig-util: ^3.0.1
-    ethereum-cryptography: ^2.1.2
-    ethereumjs-tx: ^2.1.2
-    ethereumjs-util: ^7.0.9
-    ethereumjs-wallet: ^1.0.2
-    randombytes: ^2.1.0
-  checksum: 8bbba6cab1ed6ddf0ba1bb46430a48a49222cb51a2c7fe81a41a3d3404d61107952c17799f6b40030678144509ee74fdf17f7945b006df244e4c0b4fa9656ff6
-  languageName: node
-  linkType: hard
-
 "@rabby-wallet/gnosis-sdk@npm:1.4.6":
   version: 1.4.6
   resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.6"
