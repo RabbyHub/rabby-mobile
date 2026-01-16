@@ -22,6 +22,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -488,7 +489,7 @@ const OverViewComponent = React.memo(
       bounces,
       contentHeight,
       layoutHeight,
-      panGesture,
+      showDappDrawer,
     } = useHomeAnimation();
 
     useRendererDetect({ name: 'MultiAddressHome::OverViewComponent' });
@@ -497,7 +498,9 @@ const OverViewComponent = React.memo(
       <View style={styles.swipeUpHint}>
         <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
         <Text style={styles.swipeUpHintText}>
-          {t('page.home.swipeUpForMoreDapps')}
+          {IS_ANDROID
+            ? t('page.home.clickForMoreDapps')
+            : t('page.home.swipeUpForMoreDapps')}
         </Text>
       </View>
     );
@@ -574,9 +577,9 @@ const OverViewComponent = React.memo(
               </View>
               <BrowserSearchEntry />
               {IS_ANDROID ? (
-                <GestureDetector gesture={panGesture}>
+                <TouchableOpacity onPress={showDappDrawer}>
                   {SwipeUpHint}
-                </GestureDetector>
+                </TouchableOpacity>
               ) : (
                 SwipeUpHint
               )}

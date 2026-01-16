@@ -194,32 +194,36 @@ export const HomeDappDrawer: React.FC = () => {
   }, [height, offsetTop]);
 
   const panelScaleStyle = useAnimatedStyle(() => {
-    return {
-      transformOrigin: 'top',
-      transform: [
-        {
-          scale: interpolate(
-            pullPercent.value,
-            [0, -100],
-            isExpanded.value ? [1, 1] : [0.75, 1],
-            Extrapolate.CLAMP,
-          ),
-        },
-      ],
-    };
+    return IS_ANDROID
+      ? {}
+      : {
+          transformOrigin: 'top',
+          transform: [
+            {
+              scale: interpolate(
+                pullPercent.value,
+                [0, -100],
+                isExpanded.value ? [1, 1] : [0.75, 1],
+                Extrapolate.CLAMP,
+              ),
+            },
+          ],
+        };
   }, [isExpanded]);
 
   const overlayOpacityStyle = useAnimatedStyle(() => {
-    return {
-      opacity: isExpanded.value
-        ? 0
-        : interpolate(
-            pullPercent.value,
-            [-100, -100 * 0.3, 0],
-            [0, 0.75, 0],
-            Extrapolate.CLAMP,
-          ),
-    };
+    return IS_ANDROID
+      ? {}
+      : {
+          opacity: isExpanded.value
+            ? 0
+            : interpolate(
+                pullPercent.value,
+                [-100, -100 * 0.3, 0],
+                [0, 0.75, 0],
+                Extrapolate.CLAMP,
+              ),
+        };
   }, []);
 
   return (

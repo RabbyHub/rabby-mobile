@@ -63,6 +63,11 @@ export const useHomeAnimation = () => {
     scrollableRef.current?.scrollTo?.({ y: 0, animated: false });
   }, []);
 
+  const showDappDrawer = useCallback(() => {
+    translateY.value = withTiming(-height);
+    runOnJS(triggerImpact)();
+  }, [height, translateY]);
+
   useAnimatedReaction(
     () => translateY.value,
     value => {
@@ -98,31 +103,31 @@ export const useHomeAnimation = () => {
     return scrollY.value >= maxOffset;
   }, [scrollY]);
 
-  const panGesture = useMemo(() => {
-    let gesture = Gesture.Pan()
-      .shouldCancelWhenOutside(false)
-      .onStart(() => {
-        translateY.value = 0;
-        isExpanded.value = false;
-      })
-      .onUpdate(event => {
-        if (event.translationY > 0) {
-          return;
-        }
+  // const panGesture = useMemo(() => {
+  //   let gesture = Gesture.Pan()
+  //     .shouldCancelWhenOutside(false)
+  //     .onStart(() => {
+  //       translateY.value = 0;
+  //       isExpanded.value = false;
+  //     })
+  //     .onUpdate(event => {
+  //       if (event.translationY > 0) {
+  //         return;
+  //       }
 
-        translateY.value = event.translationY;
-      })
-      .onEnd(() => {
-        if (translateY.value * -1 > PULL_THRESHOLD) {
-          translateY.value = withTiming(-height);
-          runOnJS(triggerImpact)();
-        } else {
-          translateY.value = withTiming(0);
-        }
-      });
+  //       translateY.value = event.translationY;
+  //     })
+  //     .onEnd(() => {
+  //       if (translateY.value * -1 > PULL_THRESHOLD) {
+  //         translateY.value = withTiming(-height);
+  //         runOnJS(triggerImpact)();
+  //       } else {
+  //         translateY.value = withTiming(0);
+  //       }
+  //     });
 
-    return gesture;
-  }, [height, isExpanded, translateY]);
+  //   return gesture;
+  // }, [height, isExpanded, translateY]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -173,12 +178,13 @@ export const useHomeAnimation = () => {
   }));
 
   return {
-    panGesture,
+    // panGesture,
     panResponder,
     scrollableRef,
     bounces,
     contentHeight,
     layoutHeight,
     mainStyle,
+    showDappDrawer,
   };
 };
