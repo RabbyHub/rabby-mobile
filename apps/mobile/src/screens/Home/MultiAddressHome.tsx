@@ -9,6 +9,7 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
+import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
 import { RootNames } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
@@ -113,6 +114,7 @@ import {
   useHomeHistoryStore,
 } from './hooks/history';
 import { useHomeAnimation } from './hooks/useHomeDrawerAnimate';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -226,11 +228,19 @@ const OverViewComponent = React.memo(
           //   title: MultiHomeFeatTitle.TEST_DAPP,
           //   icon: RcIconDapps,
           // },
+
           {
             key: MultiHomeFeatTitle.Watchlist,
             title: t('page.home.services.watchlist'),
             icon: RcIconWatchlistCC,
           },
+          IS_ANDROID
+            ? {
+                key: MultiHomeFeatTitle.Dapps,
+                title: t('page.home.services.dapps'),
+                icon: RcIconDapps,
+              }
+            : null,
           // {
           //   title: MultiHomeFeatTitle.Ecosystem,
           //   icon: RcIconEcosystem,
@@ -329,6 +339,8 @@ const OverViewComponent = React.memo(
       });
     }, [navigation]);
 
+    const { setPartialBrowserState } = useBrowser();
+
     const handleClickMenu = useCallback(
       (key: MultiHomeFeatTitle) => {
         if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
@@ -420,11 +432,21 @@ const OverViewComponent = React.memo(
             });
             break;
 
+          case MultiHomeFeatTitle.Dapps:
+            setPartialBrowserState({
+              isShowBrowser: true,
+              isShowSearch: true,
+              searchText: '',
+              searchTabId: '',
+              trigger: 'home',
+            });
+            break;
+
           default:
             break;
         }
       },
-      [handlePressWatchlist, navigation],
+      [handlePressWatchlist, navigation, setPartialBrowserState],
     );
 
     const generateCustomBadgeIcon = useCallback(
