@@ -140,7 +140,7 @@ export const useHomeAnimation = () => {
 
     let gesture = Gesture.Pan()
       .shouldCancelWhenOutside(false)
-      .activeOffsetY(IS_IOS ? -activeY : [-activeY, activeY])
+      .activeOffsetY(-activeY)
       .maxPointers(1)
       .onStart(() => {
         translateY.value = 0;
