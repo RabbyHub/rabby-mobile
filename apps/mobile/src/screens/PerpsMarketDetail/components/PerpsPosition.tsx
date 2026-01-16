@@ -295,6 +295,7 @@ export const PerpsPosition: React.FC<{
                   initTpOrSlPrice={tpPrice || ''}
                   direction={positionData?.direction as 'Long' | 'Short'}
                   size={positionData?.size}
+                  leverage={positionData?.leverage}
                   margin={positionData?.marginUsed}
                   liqPrice={Number(positionData?.liquidationPrice || 0)}
                   pxDecimals={pxDecimals}
@@ -354,6 +355,7 @@ export const PerpsPosition: React.FC<{
               </View>
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
+                  leverage={positionData?.leverage}
                   coin={coin}
                   actionType="sl"
                   handleActionApproveStatus={handleActionApproveStatus}
