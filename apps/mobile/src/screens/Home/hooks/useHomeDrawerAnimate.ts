@@ -1,5 +1,5 @@
 import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { zCreate } from '@/core/utils/reexports';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -140,7 +140,7 @@ export const useHomeAnimation = () => {
 
     let gesture = Gesture.Pan()
       .shouldCancelWhenOutside(false)
-      .activeOffsetY([-activeY, activeY])
+      .activeOffsetY(-activeY)
       .maxPointers(1)
       .onStart(() => {
         translateY.value = 0;
