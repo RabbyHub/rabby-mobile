@@ -18,7 +18,7 @@ async function checkIfTableExists(queryRunner: QueryRunner, tableName: string) {
   return tableExists.length > 0;
 }
 
-export class RemoveCopyTradingTable1768475805228 implements MigrationInterface {
+export class CleanupTables1768475805228 implements MigrationInterface {
   transaction = false;
 
   async up(queryRunner: QueryRunner): Promise<void> {
