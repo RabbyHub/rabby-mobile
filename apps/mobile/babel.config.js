@@ -6,7 +6,7 @@ const { version } = pkg;
 const buildGitInfo = (function getBuildEnvVars() {
   const BUILD_GIT_HASH_RAW = child_process
     .execSync(
-      '[[ -z $(git diff) ]] && (git log --format="%H" -n1) || (git log --format="%H-dirty" -n 1)',
+      '[[ -z $(git diff) || ! -z $CI ]] && (git log --format="%H" -n1) || (git log --format="%H-dirty" -n 1)',
     )
     .toString()
     .trim();
