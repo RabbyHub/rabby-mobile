@@ -1002,7 +1002,13 @@
       "revokeCompleted": "Hecho",
       "leavingThisPageWillStopTheRevokeProcess": "Salir de esta página detendrá el proceso de revocación.",
       "stopTheRevokeProcess": "¿Detener el proceso de revocación?",
-      "approvedAssets": "Contratos Aprobados y Monto"
+      "approvedAssets": "Contratos Aprobados y Monto",
+      "eip7702": {
+        "unsupportedTitle": "Tipo de dirección no soportado",
+        "unsupportedDesc": "La revocación de delegaciones EIP-7702 solo es compatible con direcciones de clave privada o frase semilla."
+      },
+      "delegatedAddress": "Dirección Delegada",
+      "supportedChains": "Cadenas compatibles"
     },
     "sendToken": {
       "whitelistAlert__temporaryGranted": "Permiso temporal concedido",
@@ -1107,6 +1113,18 @@
         "perpsMarketList": "Más Perps",
         "perps": "Perps",
         "lending": "Préstamo"
+      },
+      "swipeUp": {
+        "descAndroidMore": "Haz clic para explorar más dApps",
+        "desc": "Desliza hacia arriba para explorar sitios web",
+        "descAndroid": "Haz clic para explorar dApps",
+        "descMore": "Desliza hacia arriba para explorar más sitios web."
+      },
+      "DappDrawer": {
+        "favorite": "Favorito",
+        "emptyAndroid": "No hay dApp añadida a favoritos",
+        "search": "Buscar",
+        "empty": "Ningún sitio web añadido a favoritos"
       }
     },
     "dashboard": {
@@ -2446,7 +2464,8 @@
         "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Abrir sitios web"
+        "openWebsites": "Abrir sitios web",
+        "searchWebsite": "Buscar Sitio Web"
       },
       "menu": {
         "disconnect": "Desconectar",
@@ -2762,6 +2781,15 @@
       "closeAllConfirmMessage": "Todas tus posiciones abiertas se cerrarán al precio de mercado.",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Posición"
+      },
+      "invitePopup": {
+        "title": "Ahorra en las tarifas de Hyperliquid",
+        "activateNow": "Activa ahora",
+        "description": "Usa el código de Rabby para habilitar",
+        "activatedFailed": "Activación fallida",
+        "activatedSuccess": "Ahorros de tarifas Hyperliquid del 4% activados",
+        "hyperliquidFee": "Comisiones de trading de Hyperliquid.",
+        "activateFailed": "Fallido"
       }
     },
     "perpsDetail": {
@@ -2789,7 +2817,14 @@
         "slPrice": "Precio de Stop-Loss",
         "autoClose": "Cierre automático",
         "fundingGains": "Ganancias de Financiamiento",
-        "fundingGainsTips": "Esto son las ganancias netas de financiamiento desde que se abrió la posición. El financiamiento es una tarifa por hora que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio real del token."
+        "fundingGainsTips": "Esto son las ganancias netas de financiamiento desde que se abrió la posición. El financiamiento es una tarifa por hora que los traders pagan o reciben para mantener el precio del contrato perp cerca del precio real del token.",
+        "details": "Detalles",
+        "currentPrice": "Precio actual",
+        "positionValue": "Valor de la posición",
+        "settings": "Configuraciones",
+        "unrealizedPnl": "PNL no realizado",
+        "marginMode": "Modo Margen",
+        "realizedPnl": "PNL realizado"
       },
       "PerpsInfo": {
         "openInterestTips": "El total de posiciones pendientes de todos los usuarios en este contrato.",
@@ -2861,7 +2896,8 @@
         "rabbyFeeTips": "Tarifa de Rabby: 0%",
         "free": "Libre",
         "rabbyFee": "Tarifa de Rabby",
-        "providerFee": "Tarifa de Hyperliquid"
+        "providerFee": "Tarifa de Hyperliquid",
+        "marginCross": "Margen (Crucero)"
       },
       "action": {
         "closePosition": "Cerrar posición {{direction}}",
@@ -2910,7 +2946,14 @@
         "totalSize": "Tamaño Total",
         "addToShort": "Agregar a Short"
       },
-      "needDepositFirst": "Primero necesitas depositar fondos."
+      "needDepositFirst": "Primero necesitas depositar fondos.",
+      "PerpMarginModePopup": {
+        "crossTitle": "Margen Cruzado",
+        "isolatedTitle": "Margen Aislada",
+        "cannotChangeMarginMode": "No se puede cambiar el modo de margen con posiciones abiertas.",
+        "isolatedDesc": "Cada posición utiliza su propio margen. Las pérdidas están limitadas a esa posición, pero se puede liquidar más fácilmente.",
+        "crossDesc": "Todas las posiciones comparten el mismo margen. Esto reduce la posibilidad de que una sola posición sea liquidada, pero todos los fondos de margen cruzado pueden perderse en movimientos extremos del mercado."
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Página Integrada"
@@ -3281,6 +3324,9 @@
         "pasted_and_cleared": "Pegado y portapapeles borrado",
         "copiedPrivateKey": "Clave privada copiada. El portapapeles se borrará en 1 minuto."
       }
+    },
+    "autolock": {
+      "never": "Nunca"
     }
   },
   "bluetooth": {

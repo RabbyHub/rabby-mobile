@@ -752,7 +752,13 @@
       "unselectAll": "すべて選択解除",
       "revokeCompleted": "完了",
       "leavingThisPageWillStopTheRevokeProcess": "このページを離れると、取り消しプロセスが停止します。",
-      "stopTheRevokeProcess": " revokeプロセスを停止しますか？"
+      "stopTheRevokeProcess": " revokeプロセスを停止しますか？",
+      "eip7702": {
+        "unsupportedTitle": "サポートされていないアドレスタイプ",
+        "unsupportedDesc": "EIP-7702 の委任を取り消すことは、プライベートキーまたはシードフレーズアドレスのみサポートされています。"
+      },
+      "supportedChains": "サポートされているチェーン",
+      "delegatedAddress": "委任されたアドレス"
     },
     "sendToken": {
       "sectionBalance": {
@@ -950,6 +956,18 @@
         "perps": "パープス",
         "perpsMarketList": "より多くのPerps",
         "lending": "貸し出し"
+      },
+      "swipeUp": {
+        "descAndroidMore": "クリックしてさらに多くのdAppsを探索する",
+        "descAndroid": "dAppsを探索するにはクリックしてください",
+        "descMore": "上にスワイプして、さらに多くのウェブサイトを探索してください。",
+        "desc": "ウェブサイトを探索するには上にスワイプしてください"
+      },
+      "DappDrawer": {
+        "favorite": "お気に入り",
+        "search": "検索",
+        "emptyAndroid": "お気に入りに追加されたdAppはありません",
+        "empty": "お気に入りに追加されたウェブサイトはありません。"
       }
     },
     "nextComponent": {
@@ -2226,7 +2244,8 @@
         "hot10": "ホット10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "ウェブサイトを開く"
+        "openWebsites": "ウェブサイトを開く",
+        "searchWebsite": "ウェブサイトを検索"
       },
       "menu": {
         "refresh": "更新",
@@ -2542,6 +2561,15 @@
       "closeAllConfirmMessage": "すべてのオープンポジションは、市場価格でクローズされます。",
       "assetPage": {
         "hyperliquidPosition": "ハイパーリキッドポジション"
+      },
+      "invitePopup": {
+        "activateNow": "今すぐアクティブ化",
+        "title": "Hyperliquidの手数料を節約する",
+        "hyperliquidFee": "ハイパーリキッド取引手数料。",
+        "activateFailed": "失敗しました",
+        "description": "Rabbyのコードを使用して有効にします",
+        "activatedSuccess": "4%のHyperliquid手数料節約が有効化されました",
+        "activatedFailed": "アクティブ化に失敗しました"
       }
     },
     "perpsDetail": {
@@ -2569,7 +2597,14 @@
         "fundingPaymentsTips": "これはポジションがオープンされて以来のネットファンディングペイメントです。ファンディングは、トレーダーが永続契約の価格をトークンの実際の価格に近づけるために支払うか受け取る毎時の手数料です。",
         "liquidationPriceTips": "あなたのマージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によって自動的にポジションが閉じられる価格。",
         "fundingGains": "資金利益",
-        "fundingGainsTips": "これはポジションがオープンされて以来のネットファンディング利益です。ファンディングは、トレーダーがパーペチュアル契約の価格をトークンの実際の価格に近づけるために支払ったり受け取ったりする毎時の手数料です。"
+        "fundingGainsTips": "これはポジションがオープンされて以来のネットファンディング利益です。ファンディングは、トレーダーがパーペチュアル契約の価格をトークンの実際の価格に近づけるために支払ったり受け取ったりする毎時の手数料です。",
+        "currentPrice": "現在の価格",
+        "marginMode": "マージンモード",
+        "realizedPnl": "実現PNL",
+        "positionValue": "ポジションの価値",
+        "details": "詳細情報",
+        "settings": "設定",
+        "unrealizedPnl": "未実現PNL"
       },
       "PerpsInfo": {
         "funding": "資金調達",
@@ -2641,7 +2676,8 @@
         "liquidationPriceTips": "マージンが維持マージンレベルを下回ったときに、さらなる損失を防ぐために取引所によってあなたのポジションが自動的にクローズされる価格です。",
         "free": "無料",
         "rabbyFee": "Rabby手数料",
-        "providerFee": "ハイパーリキッド手数料"
+        "providerFee": "ハイパーリキッド手数料",
+        "marginCross": "マージン（クロス）"
       },
       "action": {
         "short": "ショート",
@@ -2690,7 +2726,14 @@
         "totalSize": "合計サイズ",
         "addToShort": "ショートに追加"
       },
-      "needDepositFirst": "最初に資金を入金する必要があります。"
+      "needDepositFirst": "最初に資金を入金する必要があります。",
+      "PerpMarginModePopup": {
+        "cannotChangeMarginMode": "オープンポジションではマージンモードを変更できません",
+        "crossTitle": "クロスマージン",
+        "isolatedTitle": "アイソレーテッドマージン",
+        "isolatedDesc": "各ポジションはそれぞれ独自のマージンを使用します。損失はそのポジションに限定されますが、より簡単に清算される可能性があります。",
+        "crossDesc": "すべてのポジションは同じマージンを共有しています。これにより、単一のポジションが清算される可能性が低くなりますが、極端な市場の動きではすべてのクロスマージン資金を失う可能性があります。"
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "ビルトインページ"
@@ -3061,6 +3104,9 @@
         "copiedSeedPhrase": "シードフレーズがコピーされました。クリップボードは1分後にクリアされます。",
         "pasted_and_cleared": "貼り付け完了、クリップボードはクリアされました"
       }
+    },
+    "autolock": {
+      "never": "決して"
     }
   },
   "bluetooth": {
