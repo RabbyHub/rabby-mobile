@@ -146,7 +146,7 @@ const flowContext = flow
         connectOrigins.add(origin);
         try {
           let defaultChain: CHAINS_ENUM | null = null;
-          let defaultAccount: Account | null = null;
+          let defaultAccount: Account | undefined = undefined;
           const collectList = (
             await openapi
               .getOriginThirdPartyCollectList(origin)
@@ -158,7 +158,7 @@ const flowContext = flow
             defaultAccount = getDappAccount({
               dappInfo: site,
               accounts,
-            });
+            })!;
             defaultChain =
               site?.chainId && findChain({ enum: site.chainId })
                 ? site.chainId
@@ -173,7 +173,7 @@ const flowContext = flow
                 for (let i = 0; i < recommendChains.length; i++) {
                   targetChain =
                     findChain({
-                      serverId: recommendChains[i].id,
+                      serverId: recommendChains[i]?.id,
                     }) || undefined;
                   if (targetChain) {
                     break;
@@ -208,7 +208,7 @@ const flowContext = flow
             },
           });
           ctx.request.account =
-            defaultAccount || preferenceService.getFallbackAccount();
+            defaultAccount || preferenceService.getFallbackAccount()!;
         } catch (e) {
           connectOrigins.delete(origin);
           throw e;
