@@ -283,6 +283,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         set(() => ({
           protocolMap: res,
         }));
+        // cache击中，不用走下面流程了
         return;
       }
     }
@@ -290,7 +291,6 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     set(() => ({ isLoading: true }));
     try {
       const results = await Promise.all(
-        // TODO: 可能要拆分请求，或许没必要单个请求仓位
         addresses.map(address => syncProtocols(address, force)),
       );
       const realTimeResult: Record<string, IProtocolItem[]> = {};
@@ -300,15 +300,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
           return;
         }
         const lower = address.toLowerCase();
-        if (!realTimeResult[lower]) {
-          realTimeResult[lower] = [];
-        }
-        realTimeResult[lower] = protocols.map(p =>
-          protocolEntityToIProtocolItem({
-            ...p,
-            owner_addr: address,
-          }),
-        );
+        realTimeResult[lower] = protocols;
       });
       set(() => ({ protocolMap: realTimeResult }));
     } finally {
@@ -331,44 +323,31 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
 
     try {
       if (!force) {
-        const cacheProtocols = await ProtocolItemEntity.batchQueryProtocols(
-          address,
-        );
         const isExpired = await isDataExpired(normalizedAddress);
         if (!isExpired) {
-          if (cacheProtocols.length) {
-            const projects: IProtocolItem[] = cacheProtocols.map(
-              protocolEntityToIProtocolItem,
-            );
+          const cacheProtocols = await ProtocolItemEntity.batchQueryProtocols(
+            address,
+          );
+          const protocols = cacheProtocols.map(protocolEntityToIProtocolItem);
 
-            set(state => ({
-              protocolMap: {
-                ...state.protocolMap,
-                [normalizedAddress]: projects,
-              },
-            }));
-          }
+          set(state => ({
+            protocolMap: {
+              ...state.protocolMap,
+              [normalizedAddress]: protocols,
+            },
+          }));
           return;
         }
       }
 
       // 内部通过给db的非阻塞action，所以下面的同步store是先行的
       const protocols = await syncProtocols(address, force);
-      if (protocols.length) {
-        const projects: IProtocolItem[] = protocols.map(p =>
-          protocolEntityToIProtocolItem({
-            ...p,
-            owner_addr: address,
-          }),
-        );
-
-        set(state => ({
-          protocolMap: {
-            ...state.protocolMap,
-            [normalizedAddress]: projects,
-          },
-        }));
-      }
+      set(state => ({
+        protocolMap: {
+          ...state.protocolMap,
+          [normalizedAddress]: protocols,
+        },
+      }));
     } finally {
       set(state => ({
         isLoadingByAddress: {
@@ -378,7 +357,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
       }));
     }
   },
-  //dapp 操作之后，更新特定的仓位，类似之前的updateSpecificProtocol
+  //更新特定的仓位，类似之前的updateSpecificProtocol
   async updateSpecificProtocol(address, protocolId, chain) {
     const normalizedAddress = address.toLowerCase();
     if (!normalizedAddress || !protocolId || !chain) {
@@ -386,9 +365,12 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     }
 
     try {
-      const protocols = await syncSpecificProtocol(address, protocolId, chain);
-      const targetProtocol = protocols[0];
-      if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
+      const targetProtocol = await syncSpecificProtocol(
+        address,
+        protocolId,
+        chain,
+      );
+      if (!targetProtocol || !targetProtocol?._portfolios?.length) {
         // 仓位没了，要删除
         set(state => ({
           protocolMap: {
@@ -401,21 +383,17 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         }));
         return;
       }
-      const protocolDisplayData = protocolEntityToIProtocolItem({
-        ...targetProtocol,
-        owner_addr: address,
-      });
 
-      // 仓位还在，要更新
+      // 仓位还在，要更新、或者插入
       set(state => {
         const preData = [...(state.protocolMap?.[normalizedAddress] || [])];
         const currentProtocolIndex = preData.findIndex(
           item => item.id === protocolId,
         );
         if (currentProtocolIndex > -1) {
-          preData[currentProtocolIndex] = protocolDisplayData;
+          preData[currentProtocolIndex] = targetProtocol;
         } else {
-          preData.push(protocolDisplayData);
+          preData.push(targetProtocol);
         }
         return {
           protocolMap: {

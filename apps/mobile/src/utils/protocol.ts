@@ -1,6 +1,10 @@
 import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
-import { PortfolioItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  ComplexProtocol,
+  PortfolioItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { columnConverter } from '@/databases/entities/_helpers';
+import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 
 export const portfolioToIProtocolPortfolio = (
   p: PortfolioItem,
@@ -29,23 +33,13 @@ export const portfolioToIProtocolPortfolio = (
   };
 };
 
-export const protocolEntityToIProtocolItem = (item: {
-  id: string;
-  chain: string;
-  name: string;
-  site_url: string;
-  logo_url: string;
-  has_supported_portfolio: boolean;
-  tvl: number;
-  portfolio_item_list: PortfolioItem[] | string;
-  owner_addr: string;
-}): IProtocolItem => {
-  const portfolios =
-    typeof item.portfolio_item_list === 'string'
-      ? (columnConverter.jsonStringToObj(
-          item.portfolio_item_list,
-        ) as unknown as PortfolioItem[])
-      : item.portfolio_item_list;
+// 来自数据库的协议数据，转换为前端协议数据
+export const protocolEntityToIProtocolItem = (
+  item: ProtocolItemEntity,
+): IProtocolItem => {
+  const portfolios = columnConverter.jsonStringToObj(
+    item.portfolio_item_list,
+  ) as unknown as PortfolioItem[];
   const formatPortfolio = portfolios.map(portfolioToIProtocolPortfolio);
   const totalNetWorth = formatPortfolio.reduce(
     (acc, curr) => acc + curr.netWorth,
@@ -61,5 +55,29 @@ export const protocolEntityToIProtocolItem = (item: {
     owner_addr: item.owner_addr,
     netWorth: totalNetWorth,
     _portfolios: formatPortfolio,
+  };
+};
+
+// 来自backend的协议数据，转换为前端协议数据
+export const complexProtocol2ProtocolItem = (
+  complexProtocol: ComplexProtocol,
+  owner_addr: string,
+): IProtocolItem => {
+  const formatPortfolio = complexProtocol.portfolio_item_list.map(
+    portfolioToIProtocolPortfolio,
+  );
+  const totalNetWorth = formatPortfolio.reduce(
+    (acc, curr) => acc + curr.netWorth,
+    0,
+  );
+  return {
+    id: complexProtocol.id,
+    name: complexProtocol.name,
+    logo: complexProtocol.logo_url,
+    chain: complexProtocol.chain,
+    site_url: complexProtocol.site_url,
+    netWorth: totalNetWorth,
+    _portfolios: formatPortfolio,
+    owner_addr,
   };
 };

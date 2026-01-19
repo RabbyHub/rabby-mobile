@@ -8,7 +8,6 @@ import {
 } from '../types';
 import { DisplayedProject } from '../utils/project';
 import { useCallback, useEffect, useMemo } from 'react';
-import { preferenceService } from '@/core/services';
 import { tagNfts } from './nft';
 // import { tokenNonceAtom, deFiNonceAtom, nftNonceAtom } from './refresh';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
