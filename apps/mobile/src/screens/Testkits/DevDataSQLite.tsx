@@ -17,7 +17,6 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { useSQLiteInfo } from '@/core/databases/hooks';
 import { Button } from '@/components2024/Button';
 import { useAssetsBasicInfo } from '@/databases/hooks/assets';
-import { batchQueryTokensWithLocalCache } from '../Home/utils/token';
 import { preferenceService } from '@/core/services';
 import { makeNoop } from '../Settings/sheetModals/testDevUtils';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
@@ -36,7 +35,6 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useRestCountDownLabel } from '@/hooks/system/time';
 import { accountEvents } from '@/core/apis/account';
 import { AddressItemContextMenuDev } from '../Address/components/AddressItemContextMenuDev';
-import { AddressItemShadowView } from '../Address/components/AddressItemShadowView';
 import { touchedFeedback } from '@/utils/touch';
 
 function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {

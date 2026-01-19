@@ -3,7 +3,6 @@ import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 import { getTop10MyAccounts } from '@/core/apis/account';
-import { protocolEntity2IProtocolItem } from '@/utils/protocol';
 
 /**
  * interface for all DeFi data
@@ -83,6 +82,34 @@ export const getSingleProtocolsCacheKey = (
   chainServerId?: string,
 ) => `${address.toLowerCase()}::${chainServerId ?? ''}`;
 
+const splitFoldAndUnfold = (list: IProtocolItem[]): ICacheProtocolItem => {
+  const sortedList = list.sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
+
+  const totalNetWorth = sortedList.reduce(
+    (acc, curr) => acc + (Number(curr?.netWorth) || 0),
+    0,
+  );
+  const threshold = Math.min((totalNetWorth || 0) / 1000, 1000);
+  const thresholdIndex = sortedList
+    ? sortedList.findIndex(m => (Number(m?.netWorth) || 0) < threshold)
+    : -1;
+  const hasExpandSwitch =
+    sortedList.length >= 15 &&
+    thresholdIndex > -1 &&
+    thresholdIndex <= sortedList.length - 4;
+
+  const isFold = (p: IProtocolItem) => {
+    if (hasExpandSwitch && (p?.netWorth || 0) < threshold) {
+      return true;
+    }
+    return false;
+  };
+  return {
+    fold: sortedList.filter(isFold),
+    unFold: sortedList.filter(p => !isFold(p)),
+  };
+};
+
 const computeSingleProtocols = (
   protocolMap: ProtocolListMap,
   address: string,
@@ -102,31 +129,7 @@ const computeSingleProtocols = (
     ? projects.filter(p => p.chain === chainServerId)
     : projects;
 
-  const list = filtered.sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
-
-  const totalNetWorth = list.reduce(
-    (acc, curr) => acc + (Number(curr?.netWorth) || 0),
-    0,
-  );
-  const threshold = Math.min((totalNetWorth || 0) / 1000, 1000);
-  const thresholdIndex = list
-    ? list.findIndex(m => (Number(m?.netWorth) || 0) < threshold)
-    : -1;
-  const hasExpandSwitch =
-    list.length >= 15 &&
-    thresholdIndex > -1 &&
-    thresholdIndex <= list.length - 4;
-
-  const isFold = (p: IProtocolItem) => {
-    if (hasExpandSwitch && (p?.netWorth || 0) < threshold) {
-      return true;
-    }
-    return false;
-  };
-  return {
-    fold: list.filter(isFold),
-    unFold: list.filter(p => !isFold(p)),
-  };
+  return splitFoldAndUnfold(filtered);
 };
 
 const computeMultiProtocols = (
@@ -150,31 +153,7 @@ const computeMultiProtocols = (
     ? projects.filter(p => p.chain === chainServerId)
     : projects;
 
-  const list = filtered.sort((a, b) => (b.netWorth || 0) - (a.netWorth || 0));
-
-  const totalNetWorth = list.reduce(
-    (acc, curr) => acc + (Number(curr?.netWorth) || 0),
-    0,
-  );
-  const threshold = Math.min((totalNetWorth || 0) / 1000, 1000);
-  const thresholdIndex = list
-    ? list.findIndex(m => (Number(m?.netWorth) || 0) < threshold)
-    : -1;
-  const hasExpandSwitch =
-    list.length >= 15 &&
-    thresholdIndex > -1 &&
-    thresholdIndex <= list.length - 4;
-
-  const isFold = (p: IProtocolItem) => {
-    if (hasExpandSwitch && (p?.netWorth || 0) < threshold) {
-      return true;
-    }
-    return false;
-  };
-  return {
-    fold: list.filter(isFold),
-    unFold: list.filter(p => !isFold(p)),
-  };
+  return splitFoldAndUnfold(filtered);
 };
 
 const multiProtocolsCacheParams = new Map<
@@ -268,19 +247,10 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     if (!force) {
       const isExpired = await isDataExpiredBatch(addresses);
       if (!isExpired) {
-        const cached = await ProtocolItemEntity.batchMultiAddressProtocols(
-          addresses,
-        );
-        const res: Record<string, IProtocolItem[]> = {};
-        cached?.forEach(item => {
-          const owner = item.owner_addr.toLowerCase();
-          if (!res[owner]) {
-            res[owner] = [];
-          }
-          res[owner].push(item);
-        });
+        const protocolMap =
+          await ProtocolItemEntity.getDefaultProtocolsByAddresses(addresses);
         set(() => ({
-          protocolMap: res,
+          protocolMap,
         }));
         // cache击中，不用走下面流程了
         return;
@@ -292,16 +262,16 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
       const results = await Promise.all(
         addresses.map(address => syncProtocols(address, force)),
       );
-      const realTimeResult: Record<string, IProtocolItem[]> = {};
+      const resultMap: Record<string, IProtocolItem[]> = {};
       results.forEach((protocols, index) => {
         const address = addresses[index];
         if (!address) {
           return;
         }
         const lower = address.toLowerCase();
-        realTimeResult[lower] = protocols;
+        resultMap[lower] = protocols;
       });
-      set(() => ({ protocolMap: realTimeResult }));
+      set(() => ({ protocolMap: resultMap }));
     } finally {
       set(() => ({ isLoading: false }));
     }

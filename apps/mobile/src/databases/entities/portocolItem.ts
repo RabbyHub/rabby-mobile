@@ -95,27 +95,6 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
       .map(i => protocolEntity2IProtocolItem(i));
   }
 
-  static async batchMultiAddressProtocols(
-    addresses: string[],
-    maxLength?: number,
-  ): Promise<IProtocolItem[]> {
-    await prepareAppDataSource();
-
-    const queryBuilder =
-      this.getRepository().createQueryBuilder('portocolitem');
-
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
-    if (maxLength) {
-      queryBuilder.take(maxLength);
-    }
-
-    const protocols = await queryBuilder.getMany();
-
-    return protocols
-      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
-      .map(i => protocolEntity2IProtocolItem(i));
-  }
-
   static async getDefaultProtocolsByAddresses(
     addresses: string[],
     maxLength?: number,
@@ -138,7 +117,10 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
       if (i.id !== EMPTY_PROTOCOL_ITEM_ID) {
         return;
       }
-      const key = i.owner_addr;
+      const key = i.owner_addr.toLowerCase();
+      if (!key) {
+        return;
+      }
       if (!results[key]) {
         results[key] = [];
       }
