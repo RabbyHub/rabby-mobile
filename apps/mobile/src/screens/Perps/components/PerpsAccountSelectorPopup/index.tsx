@@ -96,20 +96,21 @@ export const PerpsAccountSelectorPopup: React.FC<{
             +item.info.marginSummary > 0 ||
             +item.info.withdrawable > 0)
         ) {
-          dict.active.push({
+          dict.active?.push({
             info: {
               ...item.info,
             },
             account: account,
           });
         } else {
-          dict.inactive.push({ account: account });
+          dict.inactive?.push({ account: account });
         }
       });
 
       dict.active = sortBy(
         dict.active,
-        item => -(item.info?.marginSummary.accountValue || 0),
+        item => -(item.info?.assetPositions?.length || 0),
+        item => -Number(item.info?.withdrawable || 0),
       );
 
       return dict;
@@ -193,14 +194,14 @@ export const PerpsAccountSelectorPopup: React.FC<{
           </View>
           {data?.active.length ? (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
+              {/* <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>
                   {t('page.perps.PerpsAccountSelectorPopup.activatedAddress')}
                 </Text>
                 <Text style={styles.sectionTitle}>
                   {t('page.perps.PerpsAccountSelectorPopup.hyperliquidBalance')}
                 </Text>
-              </View>
+              </View> */}
               {data?.active?.map(item => {
                 return (
                   <PerpsAccountSelectorItem
@@ -225,7 +226,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
           ) : null}
           {data?.inactive.length ? (
             <View style={styles.section}>
-              {data.active.length ? (
+              {/* {data.active.length ? (
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>
                     {t(
@@ -233,7 +234,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
                     )}
                   </Text>
                 </View>
-              ) : null}
+              ) : null} */}
               {data?.inactive?.map(item => {
                 return (
                   <PerpsAccountSelectorItem
@@ -363,7 +364,7 @@ const getModalStyle = createGetStyles2024(ctx => {
       textAlign: 'center',
     },
     section: {
-      marginBottom: 12,
+      // marginBottom: 12,
     },
     sectionHeader: {
       display: 'flex',

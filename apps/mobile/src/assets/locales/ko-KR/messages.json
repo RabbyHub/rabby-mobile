@@ -807,6 +807,18 @@
         "perps": "펍스",
         "perpsMarketList": "더 많은 Perps",
         "lending": "대출"
+      },
+      "swipeUp": {
+        "desc": "위로 스와이프하여 웹사이트 탐색하기",
+        "descAndroidMore": "dApp을 더 탐색하려면 클릭하세요",
+        "descAndroid": "dApp을 탐색하려면 클릭하세요.",
+        "descMore": "더 많은 웹사이트를 탐색하려면 위로 스 와이프 하세요."
+      },
+      "DappDrawer": {
+        "search": "검색",
+        "favorite": "즐겨찾기",
+        "emptyAndroid": "즐겨찾기에 추가된 dApp이 없습니다.",
+        "empty": "즐겨찾기에 추가된 웹사이트가 없습니다."
       }
     },
     "bridge": {
@@ -1023,7 +1035,13 @@
       "revokeCompleted": "완료",
       "stopTheRevokeProcess": "취소 프로세스를 중단하시겠습니까?",
       "leavingThisPageWillStopTheRevokeProcess": "이 페이지를 떠나면 권한 철회 과정이 중단됩니다.",
-      "approvedContracts": "승인된 자산 금액 및 잔액"
+      "approvedContracts": "승인된 자산 금액 및 잔액",
+      "eip7702": {
+        "unsupportedDesc": "EIP-7702 위임 취소는 개인 키 또는 시드 구문 주소에 대해서만 지원됩니다.",
+        "unsupportedTitle": "지원되지 않는 주소 유형"
+      },
+      "supportedChains": "지원하는 체인",
+      "delegatedAddress": "위임 주소"
     },
     "nextComponent": {
       "addAddress": {
@@ -2174,7 +2192,8 @@
         "hot10": "핫 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "웹사이트 열기"
+        "openWebsites": "웹사이트 열기",
+        "searchWebsite": "웹사이트 검색"
       },
       "menu": {
         "refresh": "새로 고침",
@@ -2490,6 +2509,15 @@
       "closeAllConfirmTitle": "모든 포지션 닫기 확인",
       "assetPage": {
         "hyperliquidPosition": "하이퍼리퀴드 포지션"
+      },
+      "invitePopup": {
+        "activateFailed": "실패했습니다",
+        "title": "Hyperliquid 수수료 절약하기",
+        "description": "Rabby의 코드를 사용하여 활성화하십시오.",
+        "activatedSuccess": "4% 하이퍼리퀴드 수수료 절약이 활성화되었습니다",
+        "hyperliquidFee": "하이퍼리퀴드 거래 수수료.",
+        "activatedFailed": "활성화 실패",
+        "activateNow": "지금 활성화하세요"
       }
     },
     "perpsDetail": {
@@ -2517,7 +2545,14 @@
         "fundingPaymentsTips": "포지션이 열린 이후 순 자금 지급액입니다. 자금은 트레이더가 perp 계약의 가격을 실제 토큰 가격에 가깝게 유지하기 위해 지불하거나 받는 시간당 수수료입니다.",
         "liquidationPriceTips": "교환이 유지 마진 수준 아래로 마진이 떨어졌을 때 추가 손실을 방지하기 위해 귀하의 포지션이 자동으로 청산되는 가격입니다.",
         "fundingGainsTips": "이것은 포지션이 열릴 때 이후의 순 자금 이익입니다. 펀딩은 거래자들이 영구 계약의 가격을 실제 토큰 가격에 가깝게 유지하기 위해 지불하거나 받는 시간당 수수료입니다.",
-        "fundingGains": "자금 수익"
+        "fundingGains": "자금 수익",
+        "details": "세부사항",
+        "unrealizedPnl": "미실현 PNL",
+        "realizedPnl": "실현된 PNL",
+        "marginMode": "마진 모드",
+        "positionValue": "포지션 가치",
+        "currentPrice": "현재 가격",
+        "settings": "설정"
       },
       "PerpsInfo": {
         "title": "정보",
@@ -2589,7 +2624,8 @@
         "liquidationPriceTips": "관계 유지 마진 수준 이하로 마진이 떨어졌을 때, 추가 손실을 방지하기 위해 거래소에서 귀하의 포지션이 자동으로 청산되는 가격입니다.",
         "free": "무료",
         "rabbyFee": "Rabby 수수료",
-        "providerFee": "하이퍼리퀴드 수수료"
+        "providerFee": "하이퍼리퀴드 수수료",
+        "marginCross": "마진(크로스)"
       },
       "action": {
         "long": "롱",
@@ -2638,7 +2674,14 @@
         "totalSize": "총 크기",
         "addToShort": "짧게 추가"
       },
-      "needDepositFirst": "먼저 자금을 입금해야 합니다."
+      "needDepositFirst": "먼저 자금을 입금해야 합니다.",
+      "PerpMarginModePopup": {
+        "crossTitle": "교차 마진",
+        "cannotChangeMarginMode": "열려 있는 포지션이 있는 상태에서 마진 모드를 변경할 수 없습니다.",
+        "isolatedTitle": "격리 마진",
+        "crossDesc": "모든 포지션은 동일한 마진을 공유합니다. 이렇게 하면 단일 포지션이 청산될 가능성이 줄어들지만 극단적인 시장 움직임에서 모든 크로스 마진 자금이 손실될 수 있습니다.",
+        "isolatedDesc": "각 포지션은 자체 마진을 사용합니다. 손실은 해당 포지션에 한정되지만 더 쉽게 청산될 수 있습니다."
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "빌트인 페이지"
@@ -3009,6 +3052,9 @@
         "copiedSeedPhrase": "시드 구문이 복사되었습니다. 클립보드는 1분 후에 지워집니다.",
         "pasted_and_cleared": "붙여넣기 완료 및 클립보드 지움"
       }
+    },
+    "autolock": {
+      "never": "절대"
     }
   },
   "native": {

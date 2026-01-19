@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 export const PerpsPositionItem: React.FC<{
   item: PositionAndOpenOrder['position'];
-  marketData: MarketData;
+  marketData?: MarketData;
   onPress(): void;
   openOrders: OpenOrder[];
   onShowRiskPopup: (coin: string) => void;
@@ -87,11 +87,13 @@ export const PerpsPositionItem: React.FC<{
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
                 <Text style={styles.coinName}>{coin}</Text>
-                {leverageType === 'cross' && (
-                  <View style={styles.crossTag}>
-                    <Text style={styles.crossText}>Cross</Text>
-                  </View>
-                )}
+                <View style={styles.crossTag}>
+                  <Text style={styles.crossText}>
+                    {leverageType === 'cross'
+                      ? t('page.perpsDetail.PerpsPosition.cross')
+                      : t('page.perpsDetail.PerpsPosition.isolated')}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -114,11 +116,13 @@ export const PerpsPositionItem: React.FC<{
                 {side} {leverageText}
               </Text>
             </View>
-            <DistanceToLiquidationTag
-              liquidationPrice={liquidationPx}
-              markPrice={marketData?.markPx}
-              onPress={handleDistanceTagPress}
-            />
+            {!hasStopLoss && (
+              <DistanceToLiquidationTag
+                liquidationPrice={liquidationPx}
+                markPrice={marketData?.markPx}
+                onPress={handleDistanceTagPress}
+              />
+            )}
           </View>
         </View>
 

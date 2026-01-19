@@ -57,6 +57,7 @@ import { Account } from '@/core/services/preference';
 export const FILTER_TYPES = {
   contract: 'contract',
   assets: 'assets',
+  EIP7702: 'EIP7702',
 } as const;
 
 const SAFE_LEVEL: Record<string, string> = {

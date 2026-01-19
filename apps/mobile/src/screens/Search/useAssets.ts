@@ -378,7 +378,8 @@ export const useLoadAssets = () => {
       },
     ) => {
       const addresses =
-        options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses;
+        options?.realTimeAddresses ||
+        (await getTop10MyAccounts()).top10Addresses;
       removeUnNeedAssets(addresses);
       const { disableDefi, disableNFT } = options || {};
       if (!options?.ignoreLoading) {
@@ -419,7 +420,8 @@ export const useLoadAssets = () => {
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
       const addresses =
-        options?.realTimeAddresses || (await getTop10MyAccounts()).top10Addresses;
+        options?.realTimeAddresses ||
+        (await getTop10MyAccounts()).top10Addresses;
       removeUnNeedAssets(addresses);
       const isCurrentShortCacheFetch = !!(
         options?.maxTokenLength ||

@@ -39,7 +39,7 @@
     "ethereumjs-util": "^7.1.2"
   },
   "devDependencies": {
-    "@ethereumjs/tx": "5",
+    "@ethereumjs/tx": "5.4.0",
     "@ledgerhq/devices": "8.7.0",
     "@ledgerhq/types-cryptoassets": "7.21.0",
     "@ledgerhq/types-devices": "6.25.3",

@@ -739,7 +739,13 @@
       "allApprovals": "Toutes les approbations",
       "leavingThisPageWillStopTheRevokeProcess": "Quitter cette page mettra fin au processus de révocation.",
       "stopTheRevokeProcess": "Arrêter le processus de révocation ?",
-      "revokeCompleted": "Fait"
+      "revokeCompleted": "Fait",
+      "eip7702": {
+        "unsupportedTitle": "Type d'adresse non pris en charge",
+        "unsupportedDesc": "La révocation des délégations EIP-7702 n'est prise en charge que pour les adresses de clés privées ou de phrases de récupération."
+      },
+      "delegatedAddress": "Adresse déléguée",
+      "supportedChains": "Chaînes prises en charge"
     },
     "sendToken": {
       "Amount": "Montant :",
@@ -922,6 +928,18 @@
         "perps": "Perps",
         "perpsMarketList": "Plus de Perps",
         "lending": "Prêt"
+      },
+      "swipeUp": {
+        "descAndroid": "Cliquez pour explorer les dApps",
+        "descMore": "Faites glisser vers le haut pour explorer plus de sites web",
+        "descAndroidMore": "Cliquez pour explorer plus de dApps",
+        "desc": "Faites glisser vers le haut pour explorer des sites web"
+      },
+      "DappDrawer": {
+        "favorite": "Favori",
+        "search": "Recherche",
+        "empty": "Aucun site web ajouté aux favoris",
+        "emptyAndroid": "Aucun dApp ajouté aux favoris"
       }
     },
     "bridge": {
@@ -2183,7 +2201,8 @@
         "hot10": "Chauds 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Ouvrir des sites Web"
+        "openWebsites": "Ouvrir des sites Web",
+        "searchWebsite": "Rechercher sur le site web"
       },
       "menu": {
         "favorite": "Favori",
@@ -2499,6 +2518,15 @@
       "closeAllConfirmMessage": "Toutes vos positions ouvertes seront clôturées au prix du marché.",
       "assetPage": {
         "hyperliquidPosition": "Position Hyperliquid"
+      },
+      "invitePopup": {
+        "activateNow": "Activez maintenant",
+        "activateFailed": "Échoué",
+        "title": "Économisez sur les frais de Hyperliquid",
+        "activatedFailed": "Activation échouée",
+        "hyperliquidFee": "Frais de trading Hyperliquid.",
+        "activatedSuccess": "4 % d'économies sur les frais Hyperliquid activées",
+        "description": "Utilisez le code de Rabby pour activer"
       }
     },
     "perpsDetail": {
@@ -2526,7 +2554,14 @@
         "entryPrice": "Prix d'entrée",
         "marginCross": "Marge (Croisée)",
         "fundingGains": "Gains de financement",
-        "fundingGainsTips": "Il s'agit des gains nets de financement depuis l'ouverture de la position. Le financement est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp proche du prix actuel du token."
+        "fundingGainsTips": "Il s'agit des gains nets de financement depuis l'ouverture de la position. Le financement est un frais horaire que les traders paient ou reçoivent pour maintenir le prix du contrat perp proche du prix actuel du token.",
+        "realizedPnl": "PNL réalisé",
+        "unrealizedPnl": "PNL non réalisé",
+        "settings": "Paramètres",
+        "details": "Détails",
+        "currentPrice": "Prix actuel",
+        "positionValue": "Valeur de la position",
+        "marginMode": "Mode de marge"
       },
       "PerpsInfo": {
         "openInterest": "Intérêt Ouvert",
@@ -2598,7 +2633,8 @@
         "liquidationPriceTips": "Le prix auquel votre position est automatiquement clôturée par l'échange pour éviter d'autres pertes lorsque votre marge tombe en dessous du niveau de marge d'entretien.",
         "free": "Gratuit",
         "providerFee": "Frais Hyperliquid",
-        "rabbyFee": "Frais Rabby"
+        "rabbyFee": "Frais Rabby",
+        "marginCross": "Marge (Croisée)"
       },
       "action": {
         "short": "Vendre à découvert",
@@ -2647,7 +2683,14 @@
         "addSize": "Ajouter la taille",
         "addToShort": "Ajouter à Short"
       },
-      "needDepositFirst": "Vous devez d'abord déposer des fonds."
+      "needDepositFirst": "Vous devez d'abord déposer des fonds.",
+      "PerpMarginModePopup": {
+        "isolatedTitle": "Margin isolé",
+        "cannotChangeMarginMode": "Impossible de changer le mode de marge avec des positions ouvertes",
+        "crossTitle": "Marge Croisée",
+        "crossDesc": "Toutes les positions partagent la même marge. Cela réduit la probabilité qu'une seule position soit liquidée, mais tous les fonds de marge croisée peuvent être perdus lors de mouvements extrêmes du marché.",
+        "isolatedDesc": "Chaque position utilise sa propre marge. Les pertes sont limitées à cette position, mais elle peut être liquidée plus facilement."
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Page intégrée"
@@ -2915,7 +2958,10 @@
         },
         "repayWith": "Garanties à rembourser avec",
         "toRepay": "Montant attendu à rembourser",
-        "collateralNotEnough": "Votre solde de collatéral est inférieur au montant sélectionné."
+        "collateralNotEnough": "Votre solde de collatéral est inférieur au montant sélectionné.",
+        "action": {
+          "title": "Remboursez avec {{collateral}}"
+        }
       }
     },
     "address": {
@@ -3307,6 +3353,9 @@
         "copiedPrivateKey": "Clé privée copiée. Le presse-papiers se videra dans 1 minute.",
         "pasted_and_cleared": "Collé et presse-papiers vidé"
       }
+    },
+    "autolock": {
+      "never": "Jamais"
     }
   },
   "background": {

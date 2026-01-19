@@ -31,7 +31,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@ethereumjs/util": "^9.0.1",
+    "@ethereumjs/tx": "5.4.0",
+    "@ethereumjs/util": "9.1.0",
     "@metamask/eth-sig-util": "^8.2.0",
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/keyring-utils": "workspace:^",

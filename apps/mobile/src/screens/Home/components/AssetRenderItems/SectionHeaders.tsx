@@ -116,30 +116,31 @@ export const ChainSelector = ({
   top3Chains,
   onChainClick,
   chainServerId,
+  style,
 }: {
   chainServerId?: string;
   top3Chains?: string[];
   onChainClick?: (clear: boolean) => void;
+  style?: StyleProp<ViewStyle>;
 }) => {
   const chainInfo = useFindChain({
     serverId: chainServerId || null,
   });
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  return (
-    !!top3Chains?.length &&
-    (chainInfo?.id ? (
-      <View style={styles.chainContainer}>
-        <ChainFilterItem
-          style={styles.chainFilterItem}
-          chainItem={chainInfo}
-          onPress={() => onChainClick?.(false)}
-          onRemoveFilter={() => onChainClick?.(true)}
-        />
-      </View>
-    ) : (
+  return chainInfo?.id ? (
+    <View style={StyleSheet.flatten([styles.chainContainer, style])}>
+      <ChainFilterItem
+        style={styles.chainFilterItem}
+        chainItem={chainInfo}
+        onPress={() => onChainClick?.(false)}
+        onRemoveFilter={() => onChainClick?.(true)}
+      />
+    </View>
+  ) : (
+    !!top3Chains?.length && (
       <Pressable
-        style={styles.chainContainer}
+        style={StyleSheet.flatten([styles.chainContainer, style])}
         onPress={() => onChainClick?.(false)}>
         <View style={styles.chainIconsContainer}>
           {top3Chains.map((chainId, index) => (
@@ -165,7 +166,7 @@ export const ChainSelector = ({
           color={colors2024['neutral-secondary']}
         />
       </Pressable>
-    ))
+    )
   );
 };
 

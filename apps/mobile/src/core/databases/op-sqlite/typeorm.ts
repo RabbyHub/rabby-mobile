@@ -16,6 +16,7 @@ import {
   DataSource,
   EntityTarget,
   ObjectLiteral,
+  Repository,
 } from 'typeorm/browser';
 import { ReactNativeDriver } from '@/core/utils/reexports';
 
@@ -155,7 +156,7 @@ export const opSqliteTypeORMDriver = {
   },
 };
 
-type OPSQliteConnectionType = Awaited<
+export type OPSQliteConnectionType = Awaited<
   ReturnType<typeof opSqliteTypeORMDriver.openDatabase>
 >;
 
@@ -163,6 +164,17 @@ export function resolveDriverAndConnectionFromEntity<
   Entity extends ObjectLiteral,
 >(ds: DataSource, entityCls: EntityTarget<Entity>) {
   const repo = ds.getRepository(entityCls);
+  const driver = repo.manager.connection.driver as ReactNativeDriver;
+
+  return {
+    driver,
+    connection: driver.databaseConnection as OPSQliteConnectionType,
+  };
+}
+
+export function resolveDriverAndConnectionFromRepo<T extends BaseEntity>(
+  repo: Repository<T>,
+) {
   const driver = repo.manager.connection.driver as ReactNativeDriver;
 
   return {

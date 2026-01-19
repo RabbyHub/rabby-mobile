@@ -195,7 +195,9 @@ function SettingsBlocks() {
   // const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
   const startSelectAutolockTime = useCallback(() => {
     if (
-      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setAutoLockTime' })
+      shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'setAutoLockExpireTime',
+      })
     ) {
       return;
     }

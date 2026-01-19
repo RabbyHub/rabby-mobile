@@ -870,7 +870,13 @@
       "selectAll": "Pilih Semua",
       "revokeCompleted": "Selesai",
       "stopTheRevokeProcess": "Hentikan proses pembatalan?",
-      "leavingThisPageWillStopTheRevokeProcess": "Meninggalkan halaman ini akan menghentikan proses pencabutan."
+      "leavingThisPageWillStopTheRevokeProcess": "Meninggalkan halaman ini akan menghentikan proses pencabutan.",
+      "eip7702": {
+        "unsupportedDesc": "Mencabut delegasi EIP-7702 hanya didukung untuk alamat kunci pribadi atau frasa benih.",
+        "unsupportedTitle": "Alamat Tipe Tidak Didukung"
+      },
+      "delegatedAddress": "Alamat Delegasi",
+      "supportedChains": "Rantai yang Didukung"
     },
     "gasTopUp": {
       "Token": "Token",
@@ -1038,6 +1044,18 @@
         "perps": "Perps",
         "perpsMarketList": "Lebih Banyak Perp",
         "lending": "Peminjaman"
+      },
+      "swipeUp": {
+        "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",
+        "descAndroidMore": "Klik untuk menjelajahi lebih banyak dApps",
+        "desc": "Geser ke atas untuk menjelajahi situs web",
+        "descAndroid": "Klik untuk menjelajahi dApps"
+      },
+      "DappDrawer": {
+        "empty": "Tidak ada situs web yang ditambahkan ke favorit",
+        "emptyAndroid": "Tidak ada dApp yang ditambahkan ke favorit",
+        "search": "Cari",
+        "favorite": "Favorit"
       }
     },
     "dashboard": {
@@ -2173,7 +2191,8 @@
         "hot10": "Hot 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Buka Situs Web"
+        "openWebsites": "Buka Situs Web",
+        "searchWebsite": "Cari Situs Web"
       },
       "menu": {
         "contentModeDesktop": "Permintaan Situs Desktop",
@@ -2489,6 +2508,15 @@
       "closeAll": "Tutup Semua",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Position"
+      },
+      "invitePopup": {
+        "title": "Hemat Biaya Hyperliquid",
+        "activatedFailed": "Aktivasi gagal",
+        "activateFailed": "Gagal",
+        "activateNow": "Aktifkan Sekarang",
+        "hyperliquidFee": "Biaya trading Hyperliquid.",
+        "activatedSuccess": "4% penghematan biaya Hyperliquid diaktifkan",
+        "description": "Gunakan kode Rabby untuk mengaktifkan"
       }
     },
     "perpsDetail": {
@@ -2516,7 +2544,14 @@
         "slPrice": "Harga Henti-Rugi",
         "closePosition": "Tutup {{direction}}",
         "fundingGains": "Pendanaan Keuntungan",
-        "fundingGainsTips": "Ini adalah keuntungan dana bersih sejak posisi dibuka. Pendanaan adalah biaya per jam yang dibayar atau diterima trader untuk menjaga harga kontrak perp tetap dekat dengan harga token yang sebenarnya."
+        "fundingGainsTips": "Ini adalah keuntungan dana bersih sejak posisi dibuka. Pendanaan adalah biaya per jam yang dibayar atau diterima trader untuk menjaga harga kontrak perp tetap dekat dengan harga token yang sebenarnya.",
+        "unrealizedPnl": "Unrealized PNL",
+        "currentPrice": "Harga Saat Ini",
+        "details": "Rincian",
+        "realizedPnl": "PNL yang Direalisasikan",
+        "positionValue": "Nilai Posisi",
+        "settings": "Pengaturan",
+        "marginMode": "Mode Margin"
       },
       "PerpsInfo": {
         "openInterestTips": "Total posisi terbuka dari semua pengguna pada kontrak ini.",
@@ -2588,7 +2623,8 @@
         "liquidationPriceTips": "Harga di mana posisi Anda secara otomatis ditutup oleh bursa untuk mencegah kerugian lebih lanjut ketika margin Anda jatuh di bawah tingkat margin pemeliharaan.",
         "rabbyFee": "Biaya Rabby",
         "providerFee": "Biaya Hyperliquid",
-        "free": "Gratis"
+        "free": "Gratis",
+        "marginCross": "Margin(Cross)"
       },
       "action": {
         "closePosition": "Tutup Posisi {{direction}}",
@@ -2637,7 +2673,14 @@
         "addToLong": "Tambahkan ke Long",
         "addToShort": "Tambahkan ke Pendek"
       },
-      "needDepositFirst": "Anda perlu menyetor dana terlebih dahulu."
+      "needDepositFirst": "Anda perlu menyetor dana terlebih dahulu.",
+      "PerpMarginModePopup": {
+        "isolatedTitle": "Margin Terisolasi",
+        "cannotChangeMarginMode": "Tidak dapat mengubah Mode Margin dengan posisi terbuka",
+        "isolatedDesc": "Setiap posisi menggunakan margin-nya sendiri. Kerugian dibatasi pada posisi tersebut, tetapi dapat dilikuidasi dengan lebih mudah.",
+        "crossDesc": "Semua posisi berbagi margin yang sama. Hal ini mengurangi kemungkinan satu posisi dilikuidasi, tetapi semua dana cross-margin dapat hilang dalam pergerakan pasar yang ekstrem.",
+        "crossTitle": "Margin Silang"
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Halaman Bawaan"
@@ -3280,6 +3323,9 @@
         "pasted_and_cleared": "Ditempel dan clipboard dibersihkan",
         "copiedSeedPhrase": "Frasa biji telah disalin. Papan klip akan dibersihkan dalam 1 menit."
       }
+    },
+    "autolock": {
+      "never": "Tidak pernah"
     }
   },
   "background": {

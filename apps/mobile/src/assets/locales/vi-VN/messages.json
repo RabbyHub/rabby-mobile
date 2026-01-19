@@ -131,6 +131,9 @@
         "copiedSeedPhrase": "Câu hạt giống đã được sao chép. Bộ nhớ tạm sẽ xóa sau 1 phút.",
         "pasted_and_cleared": "Dán vào và bộ nhớ tạm đã được xóa"
       }
+    },
+    "autolock": {
+      "never": "Không bao giờ"
     }
   },
   "page": {
@@ -904,7 +907,13 @@
       "revokeCompleted": "Hoàn tất",
       "approvedContracts": "Số lượng tài sản đã phê duyệt & Số dư",
       "stopTheRevokeProcess": "Dừng quá trình thu hồi?",
-      "leavingThisPageWillStopTheRevokeProcess": "Rời khỏi trang này sẽ dừng quá trình thu hồi."
+      "leavingThisPageWillStopTheRevokeProcess": "Rời khỏi trang này sẽ dừng quá trình thu hồi.",
+      "eip7702": {
+        "unsupportedTitle": "Địa chỉ loại không hỗ trợ",
+        "unsupportedDesc": "Chỉ hỗ trợ thu hồi các ủy quyền EIP-7702 cho các địa chỉ khóa cá nhân hoặc cụm từ hạt giống."
+      },
+      "supportedChains": "Chuỗi hỗ trợ",
+      "delegatedAddress": "Địa chỉ ủy quyền"
     },
     "gasTopUp": {
       "Loading_Tokens": "Đang tải Tokens...",
@@ -1271,6 +1280,18 @@
         "perps": "Perps",
         "perpsMarketList": "Thêm Perps",
         "lending": "Cho vay"
+      },
+      "swipeUp": {
+        "descMore": "Kéo lên để khám phá thêm nhiều trang web",
+        "desc": "Kéo lên để khám phá trang web",
+        "descAndroidMore": "Nhấn để khám phá thêm dApps",
+        "descAndroid": "Nhấn để khám phá dApps"
+      },
+      "DappDrawer": {
+        "search": "Tìm kiếm",
+        "favorite": "Yêu thích",
+        "emptyAndroid": "Không có dApp nào được thêm vào danh sách yêu thích",
+        "empty": "Chưa có trang web nào được thêm vào danh sách yêu thích."
       }
     },
     "securityEngine": {
@@ -2277,7 +2298,8 @@
         "hot10": "Nóng 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Mở Trang Web"
+        "openWebsites": "Mở Trang Web",
+        "searchWebsite": "Tìm kiếm Trang web"
       },
       "menu": {
         "contentModeMobile": "Yêu cầu Trang Di Động",
@@ -2593,6 +2615,15 @@
       "closeAllConfirmMessage": "Tất cả các vị trí mở của bạn sẽ được đóng ở giá thị trường.",
       "assetPage": {
         "hyperliquidPosition": "Vị trí Hyperliquid"
+      },
+      "invitePopup": {
+        "activateNow": "Kích hoạt ngay",
+        "activateFailed": "Thất bại",
+        "activatedFailed": "Kích hoạt không thành công",
+        "description": "Sử dụng mã của Rabby để kích hoạt",
+        "title": "Tiết kiệm phí trên Hyperliquid",
+        "hyperliquidFee": "Phí giao dịch Hyperliquid.",
+        "activatedSuccess": "4% phí tiết kiệm Hyperliquid đã được kích hoạt"
       }
     },
     "perpsDetail": {
@@ -2620,7 +2651,14 @@
         "liquidationPriceTips": "Giá mà vị thế của bạn bị tự động đóng bởi sàn giao dịch để ngăn chặn tổn thất thêm khi ký quỹ của bạn giảm xuống dưới mức ký quỹ duy trì.",
         "fundingPaymentsTips": "Đây là khoản thanh toán vốn ròng kể từ khi vị thế được mở. Funding là một khoản phí theo giờ mà các trader phải trả hoặc nhận để giữ cho giá của hợp đồng perp gần với giá thực tế của token.",
         "fundingGains": "Lợi nhuận Tài trợ",
-        "fundingGainsTips": "Đây là lợi nhuận từ việc tài trợ ròng kể từ khi vị thế được mở. Funding là một khoản phí hàng giờ mà các trader trả hoặc nhận để giữ giá của hợp đồng perp gần với giá thực tế của token."
+        "fundingGainsTips": "Đây là lợi nhuận từ việc tài trợ ròng kể từ khi vị thế được mở. Funding là một khoản phí hàng giờ mà các trader trả hoặc nhận để giữ giá của hợp đồng perp gần với giá thực tế của token.",
+        "realizedPnl": "PNL thực hiện",
+        "currentPrice": "Giá hiện tại",
+        "positionValue": "Giá trị vị trí",
+        "details": "Chi tiết",
+        "settings": "Cài đặt",
+        "unrealizedPnl": "Lợi nhuận chưa thực hiện",
+        "marginMode": "Chế độ ký quỹ"
       },
       "PerpsInfo": {
         "title": "Thông tin",
@@ -2692,7 +2730,8 @@
         "liquidationPriceTips": "Giá mà vị thế của bạn bị sàn giao dịch tự động đóng để ngăn chặn tổn thất thêm khi ký quỹ của bạn giảm xuống dưới mức ký quỹ duy trì.",
         "free": "Miễn phí",
         "rabbyFee": "Phí Rabby",
-        "providerFee": "Phí Hyperliquid"
+        "providerFee": "Phí Hyperliquid",
+        "marginCross": "Margin(Cross)"
       },
       "action": {
         "short": "Ngắn",
@@ -2741,7 +2780,14 @@
         "totalSize": "Kích thước tổng cộng",
         "addToShort": "Thêm vào Short"
       },
-      "needDepositFirst": "Bạn cần phải nạp tiền trước."
+      "needDepositFirst": "Bạn cần phải nạp tiền trước.",
+      "PerpMarginModePopup": {
+        "crossTitle": "Đòn bẩy chéo",
+        "isolatedTitle": "Marghìn Isolated",
+        "cannotChangeMarginMode": "Không thể thay đổi Chế độ Margin khi có các vị thế mở.",
+        "isolatedDesc": "Mỗi vị trí sử dụng margin riêng của nó. Lỗ được giới hạn trong vị trí đó, nhưng nó có thể bị thanh lý dễ dàng hơn.",
+        "crossDesc": "Tất cả các vị trí đều chia sẻ cùng một ký quỹ. Điều này giảm thiểu khả năng một vị trí duy nhất bị thanh lý, nhưng tất cả các quỹ ký quỹ chéo có thể bị mất trong những biến động thị trường cực đoan."
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Trang xây dựng sẵn"
