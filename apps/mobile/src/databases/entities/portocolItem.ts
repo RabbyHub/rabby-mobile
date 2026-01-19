@@ -98,7 +98,7 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
   static async batchMultiAddressProtocols(
     addresses: string[],
     maxLength?: number,
-  ) {
+  ): Promise<IProtocolItem[]> {
     await prepareAppDataSource();
 
     const queryBuilder =
@@ -111,7 +111,9 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
 
     const protocols = await queryBuilder.getMany();
 
-    return protocols.filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID);
+    return protocols
+      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
+      .map(i => protocolEntity2IProtocolItem(i));
   }
 
   static async getDefaultProtocolsByAddresses(

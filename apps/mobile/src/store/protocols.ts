@@ -274,11 +274,10 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         const res: Record<string, IProtocolItem[]> = {};
         cached?.forEach(item => {
           const owner = item.owner_addr.toLowerCase();
-          const project = protocolEntity2IProtocolItem(item);
           if (!res[owner]) {
             res[owner] = [];
           }
-          res[owner].push(project);
+          res[owner].push(item);
         });
         set(() => ({
           protocolMap: res,
