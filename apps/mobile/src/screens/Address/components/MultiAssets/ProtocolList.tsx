@@ -70,38 +70,28 @@ export const ProtocolList = () => {
         state.multiProtocolsCache[multiProtocolsKey] || emptyCacheProtocolItem,
     ),
   );
-  console.log('CUSTOM_LOGGER:=>: multiProtocols', multiProtocols.unFold.length);
   const updateMultiProtocols = useProtocols(state => state.batchGetProtocols);
 
   const isLoading = useProtocols(state => state.isLoading);
-
-  const portfolios = useMemo(() => {
-    const foldList = multiProtocols.fold;
-    const unFoldList = multiProtocols.unFold;
-    return {
-      unFoldList,
-      foldList,
-    };
-  }, [multiProtocols.fold, multiProtocols.unFold]);
 
   const {
     data: portfoliosData,
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
-  } = useLoadMoreData(portfolios.unFoldList);
+  } = useLoadMoreData(multiProtocols.unFold);
 
   const shouldDefaultExpand = useMemo(
-    () => portfolios.unFoldList.length <= 5,
-    [portfolios.unFoldList.length],
+    () => multiProtocols.unFold.length <= 5,
+    [multiProtocols.unFold.length],
   );
 
   const portfolioListData = useMemo(() => {
-    const foldDeFiList: ActionItem[] = portfolios.foldList.map(item => ({
+    const foldDeFiList: ActionItem[] = multiProtocols.fold.map(item => ({
       type: 'fold_defi',
       data: item,
     }));
 
-    const foldDeFiValue = getAllDefiCount(portfolios.foldList);
+    const foldDeFiValue = getAllDefiCount(multiProtocols.fold);
 
     const itemData: Array<{
       show: boolean;
@@ -129,8 +119,8 @@ export const ProtocolList = () => {
       {
         show:
           !!isLoading &&
-          !portfolios.unFoldList.length &&
-          !portfolios.foldList.length,
+          !multiProtocols.unFold.length &&
+          !multiProtocols.fold.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: index.toString(),
@@ -139,8 +129,8 @@ export const ProtocolList = () => {
       {
         show:
           !isLoading &&
-          portfolios.unFoldList.length === 0 &&
-          portfolios.foldList.length === 0,
+          multiProtocols.unFold.length === 0 &&
+          multiProtocols.fold.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -159,21 +149,21 @@ export const ProtocolList = () => {
     foldDefi,
     isLoading,
     t,
-    portfolios.foldList,
-    portfolios.unFoldList.length,
+    multiProtocols.fold,
+    multiProtocols.unFold.length,
     portfoliosData,
   ]);
 
   const hasNotAssets = useMemo(() => {
     return (
-      portfolios.unFoldList.length === 0 &&
-      portfolios.foldList.length === 0 &&
+      multiProtocols.unFold.length === 0 &&
+      multiProtocols.fold.length === 0 &&
       !isLoading &&
       isFocused
     );
   }, [
-    portfolios.foldList.length,
-    portfolios.unFoldList.length,
+    multiProtocols.fold.length,
+    multiProtocols.unFold.length,
     isLoading,
     isFocused,
   ]);
