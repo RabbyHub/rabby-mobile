@@ -257,13 +257,7 @@ export const useInitDetectDBAssets = () => {
         ctx.syncDetails.count;
 
       let currentAssetCount = 0;
-      if (taskFor === 'token') {
-        currentAssetCount =
-          getAssetsMapDirectly('tokens')[ctx.owner_addr]?.length || 0;
-      } else if (taskFor === 'protocols') {
-        currentAssetCount =
-          getAssetsMapDirectly('portfolios')[ctx.owner_addr]?.length || 0;
-      } else if (taskFor === 'nfts') {
+      if (taskFor === 'nfts') {
         currentAssetCount =
           getAssetsMapDirectly('nfts')[ctx.owner_addr]?.length || 0;
       }

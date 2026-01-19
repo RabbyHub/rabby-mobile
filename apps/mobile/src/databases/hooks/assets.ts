@@ -16,10 +16,7 @@ import {
 import { TokenItemEntity } from '../entities/tokenitem';
 import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
 import { IProtocolItem } from '@/store/protocols';
-import {
-  complexProtocol2ProtocolItem,
-  protocolEntity2IProtocolItem,
-} from '@/utils/protocol';
+import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
