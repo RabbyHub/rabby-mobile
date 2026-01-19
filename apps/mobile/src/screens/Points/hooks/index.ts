@@ -1,31 +1,133 @@
 import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
+import { zCreate } from '@/core/utils/reexports';
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { atom, useAtom, useAtomValue } from 'jotai';
 import PQueue from 'p-queue';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
-type PointInfo = Awaited<ReturnType<typeof openapi.getRabbyPoints>>;
+type PointInfo = Awaited<ReturnType<typeof openapi.getRabbyPoints>> & {
+  pointLoading?: boolean;
+};
 export type AccountPoints = Account & Partial<PointInfo>;
 
-const pointsBadgeAtom = atom(0);
+type PointsStore = {
+  points: Record<string, PointInfo>;
+  badge: number;
+};
 
 const AddrPointsQueue = new PQueue({
-  interval: 1000,
-  intervalCap: 10,
+  interval: 60 * 1000,
+  intervalCap: 100,
   concurrency: 10,
 });
 
 export const FILTER_ACCOUNT_TYPES = [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS];
 
+const pointsStore = zCreate<PointsStore>(() => ({
+  points: {},
+  badge: 0,
+}));
+
+function updatePoint(id: string, data: PointInfo) {
+  pointsStore.setState(prev => {
+    const prevPoint = prev.points[id];
+    const prevClaimed = prevPoint?.claimed_points ?? 0;
+    const nextClaimed = data?.claimed_points ?? 0;
+
+    if (prevPoint === data && prevClaimed === nextClaimed) {
+      return prev;
+    }
+
+    return {
+      ...prev,
+      points: {
+        ...prev.points,
+        [id]: { ...data, pointLoading: false },
+      },
+      badge: prev.badge - prevClaimed + nextClaimed,
+    };
+  });
+}
+
+const pointsFetchState = {
+  inFlightPromise: null as Promise<void> | null,
+  activeKey: '',
+  pendingKey: '',
+};
+
+async function fetchPointsByKey(key: string) {
+  const ids = key.split(';').filter(Boolean);
+
+  if (!ids.length) {
+    return;
+  }
+
+  ids.forEach(id => {
+    AddrPointsQueue.add(async () => {
+      try {
+        const data = await openapi.getRabbyPointsV2({ id });
+        updatePoint(id, data);
+      } catch (error) {
+        console.log('getPoints error', error);
+      }
+    });
+  });
+
+  await AddrPointsQueue.onIdle();
+}
+
+function schedulePointsFetch() {
+  if (pointsFetchState.inFlightPromise) {
+    return pointsFetchState.inFlightPromise;
+  }
+
+  pointsStore.setState(prev => {
+    const prevPoints = { ...(prev?.points || {}) };
+    Object.keys(prevPoints).forEach(key => {
+      if (prevPoints[key]) {
+        prevPoints[key] = { ...prevPoints[key], pointLoading: true };
+      }
+    });
+    return { ...prev, points: {} };
+  });
+
+  const run = (async () => {
+    while (pointsFetchState.pendingKey) {
+      const key = pointsFetchState.pendingKey;
+      pointsFetchState.pendingKey = '';
+      pointsFetchState.activeKey = key;
+
+      await fetchPointsByKey(key);
+
+      pointsFetchState.activeKey = '';
+    }
+  })().finally(() => {
+    pointsFetchState.inFlightPromise = null;
+    if (pointsFetchState.pendingKey) {
+      schedulePointsFetch();
+    }
+  });
+
+  pointsFetchState.inFlightPromise = run;
+  return run;
+}
+
+function requestPointsFetch(key: string) {
+  if (!key) return;
+  if (pointsFetchState.activeKey === key) {
+    return pointsFetchState.inFlightPromise;
+  }
+
+  pointsFetchState.pendingKey = key;
+  return schedulePointsFetch();
+}
+
 export const useGetRabbyPoints = () => {
-  const [, setPointsBadgeAtom] = useAtom(pointsBadgeAtom);
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,
   });
-
-  const [points, setPoints] = useState<Record<string, PointInfo>>({});
+  const points = pointsStore(s => s.points);
 
   const allAddrString = useMemo(
     () =>
@@ -39,37 +141,21 @@ export const useGetRabbyPoints = () => {
     [accounts],
   );
 
-  const getPoints = useCallback(() => {
-    const arr = allAddrString.split(';').filter(e => !!e);
-    if (!arr.length) {
-      return;
-    }
-    arr.forEach(id => {
-      AddrPointsQueue.add(async () => {
-        try {
-          const data = await openapi.getRabbyPointsV2({ id });
-          setPoints(pre => ({ ...pre, [id]: data }));
-        } catch (error) {
-          console.log('getPoints error', error);
-        }
-      });
-    });
-  }, [allAddrString]);
-
   useEffect(() => {
     fetchAccounts();
   }, [fetchAccounts]);
 
   useEffect(() => {
-    getPoints();
-  }, [getPoints]);
+    requestPointsFetch(allAddrString);
+  }, [allAddrString]);
 
   const accountsWithPoints: AccountPoints[] = useMemo(() => {
     return accounts
       .filter(e => !FILTER_ACCOUNT_TYPES.includes(e.type))
       .map(e => {
-        const addrPointInfo = points[e.address.toLowerCase()];
-        if (points[e.address.toLowerCase()]) {
+        const address = e.address.toLowerCase();
+        const addrPointInfo = points[address];
+        if (addrPointInfo) {
           return { ...e, ...addrPointInfo };
         }
         return e;
@@ -80,17 +166,10 @@ export const useGetRabbyPoints = () => {
       );
   }, [points, accounts]);
 
-  useEffect(() => {
-    const totalPoints = Object.values(points).reduce((acc, curr) => {
-      return acc + (curr.claimed_points || 0);
-    }, 0);
-    setPointsBadgeAtom(totalPoints);
-  }, [points, setPointsBadgeAtom]);
-
   return accountsWithPoints;
 };
 
 export const usePointsBadge = () => {
   useGetRabbyPoints();
-  return useAtomValue(pointsBadgeAtom);
+  return pointsStore(s => s.badge);
 };
