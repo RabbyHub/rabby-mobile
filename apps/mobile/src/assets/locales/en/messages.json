@@ -870,7 +870,13 @@
         "title": "Fail to Revoke"
       },
       "stopTheRevokeProcess": "Stop the revoke process?",
-      "leavingThisPageWillStopTheRevokeProcess": "Leaving this page will stop the revoke process."
+      "leavingThisPageWillStopTheRevokeProcess": "Leaving this page will stop the revoke process.",
+      "delegatedAddress": "Delegated Address",
+      "supportedChains": "Supported Chains",
+      "eip7702": {
+        "unsupportedTitle": "Unsupported Address Type",
+        "unsupportedDesc": "Revoking EIP-7702 delegations is only supported for private key or seed phrase addresses"
+      }
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",
@@ -1039,7 +1045,18 @@
         "lending": "Lending",
         "perpsMarketList": "More Perps"
       },
-      "swipeUpForMoreDapps": "Swipe up to explore more dApps"
+      "swipeUp": {
+        "desc": "Swipe up to explore websites",
+        "descMore": "Swipe up to explore more websites",
+        "descAndroid": "Click to explore dApps",
+        "descAndroidMore": "Click to explore more dApps"
+      },
+      "DappDrawer": {
+        "emptyAndroid": "No dApp added to favorites",
+        "empty": "No website added to favorites",
+        "favorite": "Favorite",
+        "search": "Search"
+      }
     },
     "copyTrading": {
       "comingSoon": "Coming soon...",
@@ -2499,12 +2516,25 @@
         "hyperliquidBalance": "Perps Balance",
         "notActivatedAddress": "Not Activated",
         "noPosition": "No Position"
+      },
+      "invitePopup": {
+        "title": "Save on Hyperliquid Fees",
+        "activatedSuccess": "4% Hyperliquid fee savings activated",
+        "activateFailed": "Failed",
+        "description": "Use Rabby’s code to enable",
+        "hyperliquidFee": "Hyperliquid trading fees.",
+        "activateNow": "Activate Now",
+        "activatedFailed": "Activate failed"
       }
     },
     "perpsDetail": {
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
+        "unrealizedPnl": "Unrealized PNL",
+        "realizedPnl": "Realized PNL",
+        "positionValue": "Position Value",
+        "settings": "Settings",
         "cross": "Cross",
         "isolated": "Isolated",
         "size": "Size",
@@ -2513,9 +2543,12 @@
         "margin": "Margin(Isolated)",
         "autoClose": "Auto Close",
         "marginIsolated": "Margin (isolated)",
+        "marginMode": "Margin Mode",
         "marginCross": "Margin (Cross)",
         "fundingPayments": "Funding Payments",
         "fundingGains": "Funding Gains",
+        "currentPrice": "Current Price",
+        "details": "Details",
         "liquidationPrice": "Liquidation Price",
         "entryPrice": "Entry Price",
         "direction": "Direction",
@@ -2527,6 +2560,13 @@
         "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "fundingGainsTips": "This is the net funding gains since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+      },
+      "PerpMarginModePopup": {
+        "cannotChangeMarginMode": "Cannot change Margin Mode with open positions",
+        "crossTitle": "Cross Margin",
+        "isolatedTitle": "Isolated Margin",
+        "crossDesc": "All positions share the same margin. This reduces the chance of a single position being liquidated, but all cross-margin funds can be lost in extreme market moves.",
+        "isolatedDesc": "Each position uses its own margin. Losses are limited to that position, but it can be liquidated more easily."
       },
       "needDepositFirst": "You need to deposit funds first.",
       "PerpsInfo": {
@@ -2616,6 +2656,7 @@
         "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
+        "marginCross": "Margin(Cross)",
         "margin": "Margin(Isolated)"
       },
       "action": {
@@ -3317,6 +3358,9 @@
     },
     "check": "Check",
     "gotIt": "Got It",
+    "autolock": {
+      "never": "Never"
+    },
     "toast": {
       "clipboard": {
         "copiedSeedPhrase": "Seed phrase copied. The clipboard will clear in 1 minute.",

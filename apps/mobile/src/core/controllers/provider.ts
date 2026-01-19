@@ -1,5 +1,11 @@
-import { Common, Hardfork } from '@ethereumjs/common';
-import { TransactionFactory } from '@ethereumjs/tx';
+import {
+  AuthorizationList,
+  AuthorizationListBytes,
+  AuthorizationListItem,
+  Common,
+  Hardfork,
+} from '@ethereumjs/common';
+import { FeeMarketEIP1559TxData, TransactionFactory } from '@ethereumjs/tx';
 import {
   bufferToHex,
   isHexString,
@@ -52,7 +58,7 @@ import { Account } from '../services/preference';
 import BigNumber from 'bignumber.js';
 // import { formatTxMetaForRpcResult } from 'background/utils/tx';
 import { findChain, findChainByEnum } from '@/utils/chain';
-import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
+import { is1559Tx, is7702Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
 import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
@@ -71,7 +77,9 @@ import { isString } from 'lodash';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
 import { ProviderRequest } from './type';
-import { isAddress } from 'viem';
+import { hexToNumber, isAddress, toHex } from 'viem';
+import { add0x } from '@/utils/address';
+import { removeLeadingZeroes } from '@/utils/7702';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -140,6 +148,7 @@ interface ApprovalRes extends Tx {
   logId?: string;
   sig?: string;
   $account?: Account;
+  authorizationList?: AuthorizationListBytes | AuthorizationList | never;
 }
 
 interface Web3WalletPermission {
@@ -192,23 +201,23 @@ const signTypedDataVlidation = ({
   } catch (e) {
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
   }
-  const currentChain = dappService.isInternalDapp(session.origin)
-    ? findChain({ id: jsonData.domain.chainId })?.enum
-    : dappService.getDapp(session.origin)?.chainId;
+  if (!dappService.isInternalDapp(session.origin)) {
+    const currentChain = dappService.getDapp(session.origin)?.chainId;
 
-  if (jsonData.domain.chainId) {
-    const chainItem = findChainByEnum(currentChain);
-    if (
-      !currentChain ||
-      (chainItem && Number(jsonData.domain.chainId) !== chainItem.id)
-    ) {
-      throw ethErrors.rpc.invalidParams(
-        'chainId should be same as current chainId',
-      );
+    if (jsonData.domain.chainId) {
+      const chainItem = findChainByEnum(currentChain);
+      if (
+        !currentChain ||
+        (chainItem && Number(jsonData.domain.chainId) !== chainItem.id)
+      ) {
+        throw ethErrors.rpc.invalidParams(
+          'chainId should be same as current chainId',
+        );
+      }
     }
   }
   const currentAddress = account?.address.toLowerCase();
-  if (from.toLowerCase() !== currentAddress)
+  if (from?.toLowerCase() !== currentAddress)
     throw ethErrors.rpc.invalidParams('from should be same as current address');
 };
 
@@ -472,6 +481,10 @@ class ProviderController extends BaseController {
     const logId = approvalRes?.logId || '';
     const isGasAccount = approvalRes.isGasAccount || false;
 
+    const eip7702Revoke = options?.data?.$ctx?.eip7702Revoke || false;
+    const eip7702RevokeAuthorization =
+      options?.data?.$ctx?.eip7702RevokeAuthorization || [];
+
     let signedTransactionSuccess = false;
     delete txParams.isSend;
     delete approvalRes.isSend;
@@ -493,9 +506,17 @@ class ProviderController extends BaseController {
     delete approvalRes.$account;
 
     let is1559 = is1559Tx(approvalRes);
+    const is7702 = is7702Tx(approvalRes);
+
+    if (is7702 && !(eip7702Revoke || isSpeedUp)) {
+      throw new Error('not support 7702');
+    }
+
     if (
       is1559 &&
-      approvalRes.maxFeePerGas === approvalRes.maxPriorityFeePerGas
+      approvalRes.maxFeePerGas === approvalRes.maxPriorityFeePerGas &&
+      !eip7702Revoke &&
+      !is7702
     ) {
       // fallback to legacy transaction if maxFeePerGas is equal to maxPriorityFeePerGas
       approvalRes.gasPrice = approvalRes.maxFeePerGas;
@@ -505,13 +526,61 @@ class ProviderController extends BaseController {
     }
     const common = Common.custom(
       { chainId: approvalRes.chainId },
-      { hardfork: Hardfork.London },
+      { hardfork: Hardfork.Prague, eips: [7702] },
     );
     const txData = { ...approvalRes, gasLimit: approvalRes.gas };
     if (is1559) {
       txData.type = '0x2';
     }
-    const tx = TransactionFactory.fromTxData(txData, {
+    if (
+      (is7702 && isSpeedUp) ||
+      (eip7702Revoke && eip7702RevokeAuthorization?.length)
+    ) {
+      txData.type = '0x4';
+
+      if (!isSpeedUp) {
+        const authorizationList = [] as AuthorizationListItem[];
+
+        for (const authorization of eip7702RevokeAuthorization) {
+          const signature: string =
+            await keyringService.signEip7702Authorization(keyring, {
+              from: txParams.from,
+              authorization: authorization,
+            });
+          const r = signature.slice(0, 66) as `0x${string}`;
+          const s = add0x(signature.slice(66, 130));
+          const v = parseInt(signature.slice(130, 132), 16);
+          const yParity = toHex(v - 27 === 0 ? 0 : 1);
+          authorizationList.push({
+            chainId: toHex(authorization[0]),
+            address: authorization[1],
+            nonce: toHex(authorization[2]),
+            r: removeLeadingZeroes(r),
+            s: removeLeadingZeroes(s),
+            yParity: removeLeadingZeroes(yParity),
+          } as any);
+        }
+        txData.authorizationList = authorizationList;
+        approvalRes.authorizationList = authorizationList;
+      }
+
+      // bsc use gasPrice
+      if (!txData.maxFeePerGas || !txData.maxPriorityFeePerGas) {
+        txData.maxFeePerGas = txData.maxFeePerGas || txData.gasPrice;
+        txData.maxPriorityFeePerGas =
+          txData.maxPriorityFeePerGas || txData.gasPrice;
+        delete txData.gasPrice;
+      }
+
+      if (!approvalRes.maxFeePerGas || !approvalRes.maxPriorityFeePerGas) {
+        approvalRes.maxFeePerGas =
+          approvalRes.maxFeePerGas || approvalRes.gasPrice;
+        approvalRes.maxPriorityFeePerGas =
+          approvalRes.maxPriorityFeePerGas || approvalRes.gasPrice;
+        delete approvalRes.gasPrice;
+      }
+    }
+    const tx = TransactionFactory.fromTxData(txData as FeeMarketEIP1559TxData, {
       common,
     });
     let opts;
@@ -588,6 +657,13 @@ class ProviderController extends BaseController {
 
       throw errObj;
     }
+
+    const txDataWithRSV: any = {
+      ...txData,
+      r: addHexPrefix(signedTx.r),
+      s: addHexPrefix(signedTx.s),
+      v: addHexPrefix(signedTx.v),
+    };
 
     try {
       if (
@@ -753,13 +829,13 @@ class ProviderController extends BaseController {
         return signedTx;
       }
 
-      const buildTx = TransactionFactory.fromTxData({
-        ...approvalRes,
-        r: addHexPrefix(signedTx.r),
-        s: addHexPrefix(signedTx.s),
-        v: addHexPrefix(signedTx.v),
-        type: is1559 ? '0x2' : '0x0',
-      });
+      // const buildTx = TransactionFactory.fromTxData({
+      //   ...approvalRes,
+      //   r: addHexPrefix(signedTx.r),
+      //   s: addHexPrefix(signedTx.s),
+      //   v: addHexPrefix(signedTx.v),
+      //   type: is1559 ? '0x2' : '0x0',
+      // });
 
       // Report address type(not sensitive information) to sentry when tx signature is invalid
       // TODO: FIXME
@@ -786,17 +862,8 @@ class ProviderController extends BaseController {
         let reqId: string | undefined = undefined;
         if (!findChain({ enum: chain })?.isTestnet) {
           if (customRPCService.hasCustomRPC(chain)) {
-            const txData: any = {
-              ...approvalRes,
-              gasLimit: approvalRes.gas,
-              r: addHexPrefix(signedTx.r),
-              s: addHexPrefix(signedTx.s),
-              v: addHexPrefix(signedTx.v),
-            };
-            if (is1559) {
-              txData.type = '0x2';
-            }
-            const tx = TransactionFactory.fromTxData(txData);
+            const tx = TransactionFactory.fromTxData(txDataWithRSV, { common });
+
             const rawTx = bytesToHex(tx.serialize());
             hash = await customRPCService.requestCustomRPC(
               chain,
@@ -829,29 +896,31 @@ class ProviderController extends BaseController {
               mev_share_model: pushType === 'mev' ? 'user' : 'rabby',
             };
 
+            const adoptBE7702Params = () => {
+              if (
+                approvalRes.authorizationList &&
+                approvalRes.authorizationList?.some(e => e.yParity)
+              ) {
+                params.context.tx = {
+                  ...params.context.tx,
+                  authorizationList: approvalRes.authorizationList.map(e => ({
+                    chainId: hexToNumber(e.chainId),
+                    address: e.address,
+                    nonce: e.nonce,
+                    r: e.r,
+                    s: e.s,
+                    v: e.yParity,
+                  })),
+                } as any;
+              }
+            };
+
             const defaultRPC = customRPCService.getDefaultRPC(chainServerId);
-            console.log(
-              'defaultRPC',
-              chainServerId,
-              defaultRPC,
-              defaultRPC?.txPushToRPC && !isGasLess && !isGasAccount,
-              isGasLess,
-              isGasAccount,
-            );
+
             if (defaultRPC?.txPushToRPC && !isGasLess && !isGasAccount) {
               let fePushedFailed = false;
-              const txData = {
-                ...approvalRes,
-                gasLimit: approvalRes.gas,
-                r: addHexPrefix(signedTx.r),
-                s: addHexPrefix(signedTx.s),
-                v: addHexPrefix(signedTx.v),
-              };
-              if (is1559) {
-                txData.type = '0x2';
-              }
 
-              const tx = TransactionFactory.fromTxData(txData);
+              const tx = TransactionFactory.fromTxData(txDataWithRSV);
               const rawTx = bytesToHex(tx.serialize());
 
               try {
@@ -892,10 +961,12 @@ class ProviderController extends BaseController {
                 };
               }
               if (fePushedFailed) {
+                adoptBE7702Params();
                 const res = await openapi.submitTxV2(params);
                 hash = res?.tx_id;
               }
             } else {
+              adoptBE7702Params();
               const res = await openapi.submitTxV2(params);
               if (res.access_token) {
                 gasAccountService.setGasAccountSig(
@@ -925,21 +996,11 @@ class ProviderController extends BaseController {
           const chainData = findChain({
             enum: chain,
           })!;
-          const txData: any = {
-            ...approvalRes,
-            gasLimit: approvalRes.gas,
-            r: addHexPrefix(signedTx.r),
-            s: addHexPrefix(signedTx.s),
-            v: addHexPrefix(signedTx.v),
-          };
-          if (is1559) {
-            txData.type = '0x2';
-          }
-          const tx = TransactionFactory.fromTxData(txData);
+          const tx = TransactionFactory.fromTxData(txDataWithRSV, { common });
           const rawTx = bytesToHex(tx.serialize());
           const client = customTestnetService.getClient(chainData.id);
 
-          hash = await client.request({
+          hash = await client?.request({
             method: 'eth_sendRawTransaction',
             params: [rawTx as any],
           });

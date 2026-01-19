@@ -238,7 +238,7 @@ export const HomeDappDrawer: React.FC = () => {
               <View style={styles.container}>
                 <View style={styles.header}>
                   <Text style={styles.title}>
-                    {t('page.browser.BrowserSearch.favorite')}
+                    {t('page.home.DappDrawer.favorite')}
                   </Text>
                   <TouchableOpacity onPress={handle}>
                     <Text style={styles.edit}>
@@ -293,10 +293,12 @@ export const HomeDappDrawer: React.FC = () => {
                           <RcIconEmptyDark style={styles.emptyIcon} />
                         )}
                         <Text style={styles.emptyText}>
-                          No Dapps added to favorites
+                          {IS_ANDROID
+                            ? t('page.home.DappDrawer.emptyAndroid')
+                            : t('page.home.DappDrawer.empty')}
                         </Text>
                         <Button
-                          title={'Search'}
+                          title={t('page.home.DappDrawer.search')}
                           buttonStyle={styles.searchButton}
                           titleStyle={styles.searchButtonText}
                           onPress={() => {

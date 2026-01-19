@@ -17,7 +17,6 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { SwapItemEntity } from '@/databases/entities/swapitem';
 import {
   dropAppDataSourceAndQuitApp,
   prepareAppDataSource,

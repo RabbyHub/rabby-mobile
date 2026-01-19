@@ -14,13 +14,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   AppState,
   Dimensions,
@@ -131,7 +125,7 @@ import {
   useHomeHistoryStore,
 } from './hooks/history';
 import { useHomeAnimation } from './hooks/useHomeDrawerAnimate';
-import { TabsScrollView } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
+// import { TabsScrollView } from '@/components/customized/react-native-collapsible-tab-view/ScrollView';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -201,11 +195,6 @@ const OverViewComponent = React.memo(
             title: t('page.home.services.bridge'),
             icon: RcIconBridgeCC,
           },
-          // {
-          //   key: MultiHomeFeatTitle.CopyTrading,
-          //   title: t('page.home.services.copyTrading'),
-          //   icon: RcIconCopyTrading,
-          // },
           {
             key: MultiHomeFeatTitle.Perps,
             title: t('page.home.services.perps'),
@@ -245,6 +234,7 @@ const OverViewComponent = React.memo(
           //   title: MultiHomeFeatTitle.TEST_DAPP,
           //   icon: RcIconDapps,
           // },
+
           {
             key: MultiHomeFeatTitle.Watchlist,
             title: t('page.home.services.watchlist'),
@@ -584,7 +574,7 @@ const OverViewComponent = React.memo(
                       color={colors2024['neutral-secondary']}
                     />
                     <Text style={styles.swipeUpHintText}>
-                      {t('page.home.swipeUpForMoreDapps')}
+                      {t('page.home.swipeUp.desc')}
                     </Text>
                   </View>
                 </View>

@@ -1,4 +1,4 @@
-import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
+// import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { zCreate } from '@/core/utils/reexports';
 import { apisHomeTabIndex } from '@/hooks/navigation';
@@ -13,12 +13,12 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import { useTabsContext } from 'react-native-collapsible-tab-view/src/hooks';
+// import { useTabsContext } from 'react-native-collapsible-tab-view/src/hooks';
 import { Gesture } from 'react-native-gesture-handler';
-import {
-  GestureStateManager,
-  GestureStateManagerType,
-} from 'react-native-gesture-handler/src/handlers/gestures/gestureStateManager';
+// import {
+//   GestureStateManager,
+//   GestureStateManagerType,
+// } from 'react-native-gesture-handler/src/handlers/gestures/gestureStateManager';
 import {
   clamp,
   Extrapolate,
