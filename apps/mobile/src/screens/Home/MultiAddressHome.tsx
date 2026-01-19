@@ -23,12 +23,11 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity,
   useWindowDimensions,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
-import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -46,7 +45,10 @@ import {
   resetNavigationTo,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+import useAccountsBalance, {
+  AccountsBalanceState,
+  getBalanceCacheAccounts,
+} from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
   getReadyNavigationInstance,
@@ -61,24 +63,15 @@ import { useApprovalAlertCounts } from './hooks/approvals';
 import RcIconLending from '@/assets2024/icons/home/IconLending.svg';
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
-import { FastTouchable } from '@/components/Perf/FastTouchable';
-import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
-import { perfEvents } from '@/core/utils/perf';
-import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { refreshDayCurve } from '@/hooks/useMultiCurve';
-import {
-  refresh24hAssets,
-  useScene24hBalanceLightWeightData,
-} from '@/hooks/useScene24hBalance';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { colord } from 'colord';
@@ -96,23 +89,32 @@ import {
 } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import { GasAccountBadge } from '../GasAccount/components/GasAccountBadge';
-import { apisLending } from '../Lending/hooks';
 import { PointsBadge } from '../Points/components/PointsBadge';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { WatchListBadge } from '../Watchlist/components/WatchListBadge';
 import { TABITEM_H } from './components/CustomTabBar';
-import { HomeCenterArea } from './components/HomeCenterArea';
 import { HomeDappDrawer } from './components/HomeDappDrawer';
 import { HomePendingBadge } from './components/HomePending';
 import { LendingHF } from './components/LendingHF';
 import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 import { PerpsPnl } from './components/PerpsPnl';
-import { TmpHomeRefresher } from './components/TmpHomeRefresher';
 import {
   refreshSuccessAndFailList,
   resetFetchHistoryTxCount,
   useHomeHistoryStore,
 } from './hooks/history';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import {
+  refresh24hAssets,
+  useScene24hBalanceLightWeightData,
+} from '@/hooks/useScene24hBalance';
+import { TmpHomeRefresher } from './components/TmpHomeRefresher';
+import { HomeCenterArea } from './components/HomeCenterArea';
+import { syncTop10History } from '@/databases/hooks/history';
+import { apisLending } from '../Lending/hooks';
+import { FastTouchable } from '@/components/Perf/FastTouchable';
+import { perfEvents } from '@/core/utils/perf';
+import { refreshDayCurve } from '@/hooks/useMultiCurve';
 import { useHomeAnimation } from './hooks/useHomeDrawerAnimate';
 import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 
@@ -261,7 +263,7 @@ const OverViewComponent = React.memo(
 
     useFetchCexInfo();
 
-    const { triggerUpdate } = useAccountsBalanceTrigger();
+    const { triggerUpdate } = useAccountsBalance();
 
     useEffect(() => {
       setTimeout(() => {
@@ -284,13 +286,34 @@ const OverViewComponent = React.memo(
       }, []),
     );
 
-    const { myTop10Addresses } = useAccountInfo();
+    const { myTop10Addresses, myTop10Accounts } = useAccountInfo();
+
+    const buildBalanceAccounts = useCallback(
+      (balanceAccountsMap: AccountsBalanceState['balance']) => {
+        return myTop10Accounts.reduce((acc, account) => {
+          const address = account.address.toLowerCase();
+          const accountBalance = balanceAccountsMap[address];
+          acc[address] = {
+            address,
+            balance: accountBalance?.balance || 0,
+            evmBalance: accountBalance?.evmBalance || 0,
+            type: account.type,
+            brandName: account.brandName,
+            alias: '', // refresh24hAssets 和 refreshDayCurve 并不需要 alias，传空补全类型即可
+            aliasName: account.aliasName,
+          };
+          return acc;
+        }, {} as AccountsBalanceState['balance']);
+      },
+      [myTop10Accounts],
+    );
 
     useFocusEffect(
       useCallback(() => {
         if (!couldDoRefresh()) return;
         triggerUpdate().then(balanceAccounts => {
           // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+          console.log('refresh24hAssets useFocusEffect', balanceAccounts);
           refresh24hAssets({ balanceAccounts });
           refreshDayCurve({ balanceAccounts });
         });
@@ -307,7 +330,10 @@ const OverViewComponent = React.memo(
       perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
       Promise.all([
         // force update balance from server api
-        triggerUpdate(true).then(balanceAccounts => {
+        triggerUpdate(true).then(() => {
+          const balanceAccounts = buildBalanceAccounts(
+            getBalanceCacheAccounts(),
+          );
           refresh24hAssets({ force: true, balanceAccounts });
           refreshDayCurve({ force: true, balanceAccounts });
         }),
@@ -324,6 +350,7 @@ const OverViewComponent = React.memo(
       checkAddressesEligibility,
       forceUpdate,
       myTop10Addresses,
+      buildBalanceAccounts,
     ]);
 
     // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();

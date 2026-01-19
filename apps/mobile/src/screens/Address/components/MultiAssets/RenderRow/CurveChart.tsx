@@ -32,9 +32,9 @@ import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { create } from 'zustand';
+import balanceStore from '@/store/balance';
 import {
   useMultiHome24hBalanceCurveChart,
-  useScene24hBalanceCombinedData,
   useSceneIsLoadingNew,
 } from '@/hooks/useScene24hBalance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
@@ -157,7 +157,17 @@ export const MultiChart = memo(function MultiChart({
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const { matteredAccountCount } = useAccountInfo();
+  const { matteredAccountCount, myTop10Addresses } = useAccountInfo();
+  const balanceMap = balanceStore(s => s.balanceMap);
+  const totalBalance = useMemo(() => {
+    if (!myTop10Addresses.length) {
+      return 0;
+    }
+    return myTop10Addresses.reduce((acc, address) => {
+      const balance = balanceMap[address.toLowerCase()];
+      return acc + (balance?.totalBalance || 0);
+    }, 0);
+  }, [balanceMap, myTop10Addresses]);
 
   const { dayCurveData: dayCurveData } = useMultiDayCurve();
 
@@ -183,7 +193,7 @@ export const MultiChart = memo(function MultiChart({
         ]}>
         <LineChart.Provider data={chartsData}>
           <ChartHeader
-            rawNetWorth={data.rawNetWorth}
+            rawNetWorth={totalBalance}
             rawChange={data.rawChange}
             changePercent={data.changePercent}
             isLoss={data.isLoss}
