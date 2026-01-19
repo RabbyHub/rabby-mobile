@@ -64,6 +64,7 @@ export const PerpsEditMarginPopup: React.FC<{
   marginUsed: number;
   pnlPercent: number;
   pnl: number;
+  marginMode: 'cross' | 'isolated';
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx: MarketData | null;
   handlePressRiskTag: () => void;
@@ -86,6 +87,7 @@ export const PerpsEditMarginPopup: React.FC<{
   liquidationPx,
   positionSize,
   marginUsed,
+  marginMode,
   activeAssetCtx,
   currentAssetCtx,
   pnlPercent,
@@ -362,6 +364,13 @@ export const PerpsEditMarginPopup: React.FC<{
                 <View style={styles.coinInfoRow}>
                   <AssetAvatar logo={coinLogo} size={28} />
                   <Text style={styles.coinName}>{coin}</Text>
+                  <View style={styles.crossTag}>
+                    <Text style={styles.crossText}>
+                      {marginMode === 'cross'
+                        ? t('page.perpsDetail.PerpsPosition.cross')
+                        : t('page.perpsDetail.PerpsPosition.isolated')}
+                    </Text>
+                  </View>
                 </View>
                 <View style={styles.tagRow}>
                   <View
@@ -889,6 +898,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
+    },
+    crossText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['neutral-foot'],
+    },
+    crossTag: {
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      height: 18,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors2024['neutral-bg-5'],
     },
     coinDetail: {
       fontSize: 14,

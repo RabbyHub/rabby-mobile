@@ -25,21 +25,21 @@ export class AccountInfoEntity extends EntityAccountBase {
     account: KeyringEventAccount | KeyringEventAccount[],
   ) {
     const ds = await prepareAppDataSource();
-    const { driver, connection } = resolveDriverAndConnectionFromEntity(
+    const { connection } = resolveDriverAndConnectionFromEntity(
       ds,
       AccountInfoEntity,
     );
 
     const accounts = Array.isArray(account) ? account : [account];
 
-    const sqlStm = `
+    const stmSql = `
 INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.account_info}"
 ("_db_id", "created_at", "updated_at", "address", "type", "brandName")
 VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = EXCLUDED."updated_at"
     `;
 
     const db = connection.getDb();
-    const stm = db.prepareStatement(sqlStm);
+    const stm = db.prepareStatement(stmSql);
 
     let entity = new AccountInfoEntity();
     const insertedIds: any[] = [];
@@ -94,6 +94,8 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
     time = 60 * 1e3 * 10,
     options?: { trimExpired?: boolean },
   ) {
+    await prepareAppDataSource();
+
     const queryBuilder = this.getRepository().createQueryBuilder(
       ORM_TABLE_NAMES.account_info,
     );
@@ -122,6 +124,8 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = 
   }
 
   static async isAccountAddedIn(time = 60 * 1e3 * 10) {
+    await prepareAppDataSource();
+
     const queryBuilder = this.getRepository().createQueryBuilder(
       ORM_TABLE_NAMES.account_info,
     );

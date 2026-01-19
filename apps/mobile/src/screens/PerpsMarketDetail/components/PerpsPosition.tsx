@@ -8,13 +8,14 @@ import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import { formatUsdValue } from '@/utils/number';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
+import { formatPerpsPct } from '@/utils/perps';
 
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
@@ -88,6 +89,7 @@ export const PerpsPosition: React.FC<{
     markPrice,
   );
 
+  const hasStopLoss = !!slPrice;
   const { showTipsPopup } = useTipsPopup();
 
   // Calculate expected PNL for take profit
@@ -129,56 +131,108 @@ export const PerpsPosition: React.FC<{
           <Text style={styles.title}>
             {t('page.perpsDetail.PerpsPosition.title')}
           </Text>
+          <View
+            style={[
+              styles.leverageTag,
+              {
+                backgroundColor:
+                  positionData?.direction === 'Long'
+                    ? colors2024['green-light-1']
+                    : colors2024['red-light-1'],
+              },
+            ]}>
+            <Text
+              style={[
+                styles.leverageText,
+                positionData?.direction === 'Long'
+                  ? styles.longText
+                  : styles.shortText,
+              ]}>
+              {positionData?.direction} {`${positionData?.leverage}x`}
+            </Text>
+          </View>
+          <View style={styles.crossTag}>
+            <Text style={styles.crossText}>
+              {positionData?.type === 'cross'
+                ? t('page.perpsDetail.PerpsPosition.cross')
+                : t('page.perpsDetail.PerpsPosition.isolated')}
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.list, styles.pnlWrapper]}>
+          <Text style={styles.unrealizedPnlTitle}>
+            {t('page.perpsDetail.PerpsPosition.unrealizedPnl')}
+          </Text>
+          <Text
+            style={[
+              styles.unrealizedPnl,
+              positionData?.pnl >= 0 ? styles.green : styles.red,
+            ]}>
+            {positionData && positionData.pnl >= 0 ? '+' : '-'}$
+            {Math.abs(positionData?.pnl || 0).toFixed(2)}
+          </Text>
+          <Text style={styles.positionValueTitle}>
+            {t('page.perpsDetail.PerpsPosition.positionValue')}{' '}
+            <Text style={styles.positionValue}>
+              {formatUsdValue(Number(positionData?.positionValue || 0))}
+            </Text>
+          </Text>
         </View>
         <View style={styles.list}>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.pnl')}
+                {t('page.perpsDetail.PerpsPosition.currentPrice')}
               </Text>
             </View>
             <View>
-              <Text
-                style={[
-                  styles.value,
-                  positionData && positionData.pnl >= 0
-                    ? styles.green
-                    : styles.red,
-                ]}>
-                {positionData && positionData.pnl >= 0 ? '+' : '-'}$
-                {Math.abs(positionData?.pnl || 0).toFixed(2)}
+              <Text style={styles.value}>
+                ${splitNumberByStep(currentAssetCtx?.markPx || 0)}
               </Text>
             </View>
           </View>
           <View style={styles.listItem}>
-            <TouchableOpacity
-              onPress={() => {
-                showTipsPopup({
-                  title: t('page.perpsDetail.PerpsPosition.size'),
-                  desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
-                });
-              }}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsPosition.size')}
-                </Text>
-                <RcIconInfoCC
-                  width={18}
-                  height={18}
-                  color={colors2024['neutral-info']}
-                />
-              </View>
-            </TouchableOpacity>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.liquidationPrice')}
+              </Text>
+            </View>
             <View>
               <Text style={styles.value}>
-                $
-                {splitNumberByStep(
-                  Number(positionData?.positionValue || 0).toFixed(2),
-                )}{' '}
-                = {positionData?.size} {coin}
+                ${splitNumberByStep(positionData?.liquidationPrice || 0)}
               </Text>
             </View>
           </View>
+          {!hasStopLoss && (
+            <View style={styles.distanceCardWrapper}>
+              <View style={styles.distanceCard}>
+                <Text style={styles.desc}>
+                  <Trans
+                    t={t}
+                    i18nKey={
+                      positionData?.direction === 'Long'
+                        ? t('page.perps.PerpsRiskPopup.liqDistanceTipsLong', {
+                            distance: formatPerpsPct(distanceLiquidation),
+                          })
+                        : t('page.perps.PerpsRiskPopup.liqDistanceTipsShort', {
+                            distance: formatPerpsPct(distanceLiquidation),
+                          })
+                    }
+                    components={{
+                      1: <Text style={styles.strong} />,
+                    }}
+                  />
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+        <View style={[styles.header, styles.paddingTopHeader]}>
+          <Text style={styles.title}>
+            {t('page.perpsDetail.PerpsPosition.settings')}
+          </Text>
+        </View>
+        <View style={styles.list}>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -241,6 +295,7 @@ export const PerpsPosition: React.FC<{
                   initTpOrSlPrice={tpPrice || ''}
                   direction={positionData?.direction as 'Long' | 'Short'}
                   size={positionData?.size}
+                  leverage={positionData?.leverage}
                   margin={positionData?.marginUsed}
                   liqPrice={Number(positionData?.liquidationPrice || 0)}
                   pxDecimals={pxDecimals}
@@ -300,6 +355,7 @@ export const PerpsPosition: React.FC<{
               </View>
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
+                  leverage={positionData?.leverage}
                   coin={coin}
                   actionType="sl"
                   handleActionApproveStatus={handleActionApproveStatus}
@@ -353,6 +409,54 @@ export const PerpsPosition: React.FC<{
               </View>
             )}
           </View>
+        </View>
+        <View style={[styles.header, styles.paddingTopHeader]}>
+          <Text style={styles.title}>
+            {t('page.perpsDetail.PerpsPosition.details')}
+          </Text>
+        </View>
+        <View style={styles.list}>
+          <View style={styles.listItem}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.entryPrice')}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.value}>
+                ${splitNumberByStep(positionData?.entryPrice || 0)}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.listItem}>
+            <TouchableOpacity
+              onPress={() => {
+                showTipsPopup({
+                  title: t('page.perpsDetail.PerpsPosition.size'),
+                  desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
+                });
+              }}>
+              <View style={styles.listItemMain}>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsPosition.size')}
+                </Text>
+                <RcIconInfoCC
+                  width={18}
+                  height={18}
+                  color={colors2024['neutral-info']}
+                />
+              </View>
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.value}>
+                $
+                {splitNumberByStep(
+                  Number(positionData?.positionValue || 0).toFixed(2),
+                )}{' '}
+                = {positionData?.size} {coin}
+              </Text>
+            </View>
+          </View>
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
@@ -368,29 +472,14 @@ export const PerpsPosition: React.FC<{
           <View style={styles.listItem}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.entryPrice')}
+                {t('page.perpsDetail.PerpsPosition.marginMode')}
               </Text>
             </View>
             <View>
               <Text style={styles.value}>
-                ${splitNumberByStep(positionData?.entryPrice || 0)}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.listItem}>
-            <View style={styles.listItemMain}>
-              <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsPosition.liquidationPrice')}
-              </Text>
-              <DistanceToLiquidationTag
-                liquidationPrice={positionData?.liquidationPrice}
-                markPrice={markPrice}
-                onPress={() => setShowRiskPopup(true)}
-              />
-            </View>
-            <View>
-              <Text style={styles.value}>
-                ${splitNumberByStep(positionData?.liquidationPrice || 0)}
+                {positionData?.type === 'cross'
+                  ? t('page.perpsDetail.PerpsPosition.cross')
+                  : t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
             </View>
           </View>
@@ -456,6 +545,7 @@ export const PerpsPosition: React.FC<{
         positionSize={positionData?.size}
         direction={positionData?.direction as 'Long' | 'Short'}
         coin={coin}
+        marginMode={positionData?.type as 'cross' | 'isolated'}
         coinLogo={coinLogo}
         markPrice={markPrice}
         entryPrice={positionData?.entryPrice}
@@ -483,6 +573,7 @@ export const PerpsPosition: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   section: {
     marginBottom: 24,
+    gap: 12,
   },
   tagContainer: {
     borderRadius: 100,
@@ -503,8 +594,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   header: {
     paddingHorizontal: 4,
-    marginBottom: 12,
-    gap: 12,
+    alignItems: 'center',
+    // marginBottom: 12,
+    gap: 6,
     flexDirection: 'row',
   },
   title: {
@@ -514,6 +606,71 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
+  unrealizedPnlTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+    textAlign: 'center',
+  },
+  distanceCardWrapper: {
+    paddingHorizontal: 8,
+    paddingBottom: 16,
+  },
+  distanceCard: {
+    borderRadius: 6,
+    paddingTop: 10,
+    paddingBottom: 10,
+    flex: 1,
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  desc: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['brand-default'],
+    textAlign: 'center',
+  },
+  strong: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '800',
+    color: colors2024['brand-default'],
+  },
+  paddingTopHeader: {
+    marginTop: 12,
+  },
+  unrealizedPnl: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 36,
+    lineHeight: 42,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  positionValueTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  positionValue: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['neutral-foot'],
+    textAlign: 'center',
+  },
+  pnlWrapper: {
+    paddingVertical: 16,
+    gap: 8,
+  },
   list: {
     borderRadius: 16,
     backgroundColor: isLight
@@ -522,6 +679,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   listItemContainer: {
     padding: 16,
+  },
+  crossText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+  },
+  crossTag: {
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-5'],
   },
   listItem: {
     display: 'flex',
@@ -570,6 +742,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-foot'],
+  },
+  leverageTag: {
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 18,
+  },
+  leverageText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  longText: {
+    color: colors2024['green-default'],
+  },
+  shortText: {
+    color: colors2024['red-default'],
   },
   value: {
     fontFamily: 'SF Pro Rounded',

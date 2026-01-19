@@ -6,9 +6,12 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
+import { useMyAccounts } from '@/hooks/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { findAccountByPriority } from '@/utils/account';
 
 export type TokenItemMaybeWithOwner = TokenItem & {
-  // ownerAddress?: string;
+  owner_addr?: string;
   ownerAccount?: Account | null;
 };
 
@@ -45,6 +48,7 @@ export function useSwitchSceneAccountOnSelectedTokenWithOwner(
   forScene: AccountSwitcherScene,
 ) {
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
 
   const switchAccountOnSelectedToken = useCallback(
     (input: {
@@ -52,7 +56,10 @@ export function useSwitchSceneAccountOnSelectedTokenWithOwner(
       currentAccount: Account | null;
     }) => {
       const result = { accountSwitchTo: null as Account | null };
-      const maybeOwnerAccount = extractOwnerAccountFromTokenItem(input.token);
+      const _accounts = accounts.filter(account =>
+        isSameAddress(account?.address, input.token.owner_addr || ''),
+      );
+      const maybeOwnerAccount = findAccountByPriority(_accounts);
       if (
         maybeOwnerAccount &&
         !isSameAccount(maybeOwnerAccount, input.currentAccount)
@@ -64,7 +71,7 @@ export function useSwitchSceneAccountOnSelectedTokenWithOwner(
 
       return result;
     },
-    [forScene, switchSceneCurrentAccount],
+    [accounts, forScene, switchSceneCurrentAccount],
   );
 
   return { switchAccountOnSelectedToken };

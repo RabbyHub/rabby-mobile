@@ -140,6 +140,9 @@
         "copiedPrivateKey": "私鑰已複製。剪貼簿將在 1 分鐘內清除。",
         "pasted_and_cleared": "粘贴成功，剪贴板已清空"
       }
+    },
+    "autolock": {
+      "never": "從不"
     }
   },
   "background": {
@@ -909,7 +912,13 @@
       "continueRevoke": "繼續",
       "revokeCompleted": "完成",
       "stopTheRevokeProcess": "停止撤销流程？",
-      "leavingThisPageWillStopTheRevokeProcess": "離開此頁面將停止撤回過程。"
+      "leavingThisPageWillStopTheRevokeProcess": "離開此頁面將停止撤回過程。",
+      "eip7702": {
+        "unsupportedDesc": "撤销 EIP-7702 委托仅支持私钥或助记词地址",
+        "unsupportedTitle": "不支持的地址類型"
+      },
+      "supportedChains": "支援的鏈",
+      "delegatedAddress": "委派地址"
     },
     "manageAddress": {
       "confirm": "確認",
@@ -945,6 +954,18 @@
         "perpsMarketList": "更多 Perps",
         "perps": "永续合约",
         "lending": "借貸"
+      },
+      "swipeUp": {
+        "descAndroidMore": "點擊探索更多 dApps",
+        "descAndroid": "點擊以探索 dApps",
+        "descMore": "向上滑動以探索更多網站",
+        "desc": "向上滑動以探索網站"
+      },
+      "DappDrawer": {
+        "emptyAndroid": "未將 dApp 加入收藏",
+        "search": "搜尋",
+        "empty": "尚未將網站加入收藏夾",
+        "favorite": "最愛"
       }
     },
     "dashboard": {
@@ -2334,7 +2355,8 @@
         "hot10": "熱門 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "打開網站"
+        "openWebsites": "打開網站",
+        "searchWebsite": "搜尋網站"
       },
       "menu": {
         "contentModeMobile": "請求行動網站",
@@ -2650,6 +2672,15 @@
       "closeAllConfirmMessage": "所有您的未平仓头寸将以市场价格平仓。",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid 位置"
+      },
+      "invitePopup": {
+        "activateFailed": "失敗",
+        "hyperliquidFee": "Hyperliquid 交易費用。",
+        "title": "在 Hyperliquid 費用上節省",
+        "description": "使用 Rabby 的代碼來啟用",
+        "activatedFailed": "啟用失敗",
+        "activatedSuccess": "4% Hyperliquid 手續費節省已啟用",
+        "activateNow": "立即啟用"
       }
     },
     "perpsDetail": {
@@ -2677,7 +2708,14 @@
         "marginCross": "保證金（交叉）",
         "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。",
         "fundingGains": "資金收益",
-        "fundingGainsTips": "這是自開倉以來的淨資金收益。資金是一種每小時收取或支付的費用，交易者支付或收到這筆費用以保持期貨合約的價格接近代幣的實際價格。"
+        "fundingGainsTips": "這是自開倉以來的淨資金收益。資金是一種每小時收取或支付的費用，交易者支付或收到這筆費用以保持期貨合約的價格接近代幣的實際價格。",
+        "settings": "設置",
+        "currentPrice": "目前價格",
+        "unrealizedPnl": "未实现PNL",
+        "marginMode": "保證金模式",
+        "positionValue": "持倉價值",
+        "realizedPnl": "已实现盈虧",
+        "details": "詳情"
       },
       "PerpsInfo": {
         "funding": "資金負擔",
@@ -2749,7 +2787,8 @@
         "liquidationPriceTips": "當您的保證金降至維持保證金水平以下時，交易所自動關閉您的持倉以防止進一步損失的價格。",
         "free": "免費",
         "providerFee": "Hyperliquid 手續費",
-        "rabbyFee": "Rabby 費用"
+        "rabbyFee": "Rabby 費用",
+        "marginCross": "保證金(跨)"
       },
       "action": {
         "long": "做多",
@@ -2798,7 +2837,14 @@
         "totalSize": "總大小",
         "addSize": "添加大小"
       },
-      "needDepositFirst": "您需要先存入資金。"
+      "needDepositFirst": "您需要先存入資金。",
+      "PerpMarginModePopup": {
+        "crossTitle": "交叉保证金",
+        "isolatedTitle": "隔离保证金",
+        "cannotChangeMarginMode": "無法在有未平倉位的情況下更改保證金模式",
+        "isolatedDesc": "每个头寸使用自己的保证金。损失仅限于该头寸，但可以更容易地被平仓。",
+        "crossDesc": "所有头寸共享相同的保证金。这降低了单一头寸被强制平仓的几率，但在极端市场波动中，所有的交叉保证金资金都有可能损失。"
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "內建頁面"

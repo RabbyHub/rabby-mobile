@@ -388,6 +388,9 @@
         "copiedSeedPhrase": "Frase-semente copiada. A área de transferência será limpa em 1 minuto.",
         "pasted_and_cleared": "Colado e área de transferência limpa"
       }
+    },
+    "autolock": {
+      "never": "Nunca"
     }
   },
   "page": {
@@ -1104,6 +1107,18 @@
         "perpsMarketList": "Mais Perps",
         "perps": "Perps",
         "lending": "Empréstimo"
+      },
+      "swipeUp": {
+        "desc": "Deslize para cima para explorar websites",
+        "descAndroid": "Clique para explorar dApps",
+        "descAndroidMore": "Clique para explorar mais dApps",
+        "descMore": "Deslize para cima para explorar mais websites"
+      },
+      "DappDrawer": {
+        "favorite": "Favorito",
+        "search": "Pesquisar",
+        "emptyAndroid": "Nenhum dApp adicionado a favoritos",
+        "empty": "Nenhum site adicionado aos favoritos"
       }
     },
     "manageAddress": {
@@ -1383,7 +1398,13 @@
       "pauseRevoke": "Pausar",
       "leavingThisPageWillStopTheRevokeProcess": "Sair desta página irá interromper o processo de revogação.",
       "revokeCompleted": "Concluído",
-      "stopTheRevokeProcess": "Parar o processo de revogação?"
+      "stopTheRevokeProcess": "Parar o processo de revogação?",
+      "eip7702": {
+        "unsupportedTitle": "Endereço de tipo não suportado",
+        "unsupportedDesc": "Revogar delegações EIP-7702 é suportado apenas para endereços de chave privada ou frase-semente."
+      },
+      "delegatedAddress": "Endereço Delegado",
+      "supportedChains": "Cadeias Suportadas"
     },
     "nextComponent": {
       "addAddress": {
@@ -2534,7 +2555,8 @@
         "hot10": "Quente 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "Abrir Websites"
+        "openWebsites": "Abrir Websites",
+        "searchWebsite": "Pesquisar Website"
       },
       "menu": {
         "disconnect": "Desconectar",
@@ -2850,6 +2872,15 @@
       "closeAllConfirmTitle": "Confirmar Fechar Todas as Posições",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid Position"
+      },
+      "invitePopup": {
+        "activateFailed": "Falhou",
+        "activateNow": "Ativar Agora",
+        "title": "Poupe nas Taxas do Hyperliquid",
+        "description": "Utilize o código do Rabby para ativar",
+        "activatedFailed": "Ativação falhou",
+        "activatedSuccess": "4% de poupança em taxas Hyperliquid ativada",
+        "hyperliquidFee": "Taxas de negociação Hyperliquid."
       }
     },
     "perpsDetail": {
@@ -2877,7 +2908,14 @@
         "marginCross": "Margem (Cross)",
         "isolated": "Isolado",
         "fundingGainsTips": "Este é o ganho líquido de financiamento desde que a posição foi aberta. O financiamento é uma taxa horária que os comerciantes pagam ou recebem para manter o preço do contrato perp próximo ao preço real do token.",
-        "fundingGains": "Financiamento de Ganhos"
+        "fundingGains": "Financiamento de Ganhos",
+        "positionValue": "Valor da Posição",
+        "currentPrice": "Preço Atual",
+        "details": "Detalhes",
+        "unrealizedPnl": "PNL Não Realizado",
+        "realizedPnl": "Lucro e Prejuízo Realizado",
+        "settings": "Configurações",
+        "marginMode": "Modo de Margem"
       },
       "PerpsInfo": {
         "funding": "Financiamento",
@@ -2949,7 +2987,8 @@
         "sizeTips": "O valor total ou a quantidade da sua negociação, definido pela margem e pela alavancagem.",
         "rabbyFee": "Taxa Rabby",
         "free": "Grátis",
-        "providerFee": "Taxa Hyperliquid"
+        "providerFee": "Taxa Hyperliquid",
+        "marginCross": "Margem (Cross)"
       },
       "action": {
         "long": "Long: Comprar",
@@ -2998,7 +3037,14 @@
         "totalSize": "Tamanho Total",
         "addToShort": "Adicionar ao Short"
       },
-      "needDepositFirst": "Você precisa depositar fundos primeiro."
+      "needDepositFirst": "Você precisa depositar fundos primeiro.",
+      "PerpMarginModePopup": {
+        "cannotChangeMarginMode": "Não é possível alterar o Modo de Margem com posições abertas.",
+        "crossTitle": "Margem Cruzada",
+        "isolatedTitle": "Margem Isolada",
+        "isolatedDesc": "Cada posição utiliza a sua própria margem. As perdas estão limitadas a essa posição, mas pode ser liquidada mais facilmente.",
+        "crossDesc": "Todas as posições partilham a mesma margem. Isto reduz a probabilidade de uma única posição ser liquidada, mas todos os fundos de margem cruzada podem ser perdidos em movimentos de mercado extremos."
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Página Integrada"

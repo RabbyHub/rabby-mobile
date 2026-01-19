@@ -39,11 +39,13 @@ import tokenListStore from './store/tokens';
 import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 import balanceStore from './store/balance';
+import { apisAutoLock } from './core/apis';
 
 startSubscribeLangChange();
 
 startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
+apisAutoLock.setupAutoLockChecker();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();
 startSubscribeAppStateChange();

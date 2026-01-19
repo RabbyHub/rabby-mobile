@@ -12,18 +12,15 @@ import {
   exp_dropAndResyncDataSource,
   initializeAppDataSource,
 } from './imports';
-import { SwapItemEntity } from './entities/swapitem';
 import { BalanceEntity } from './entities/balance';
 import { abortAllSyncTasks } from './sync/_task';
 import { BuyItemEntity } from './entities/buyItem';
 import { CexEntity } from './entities/cex';
-// import { CopyTradingBuyItemEntity } from './entities/copyTradingBuyItem';
 import {
   RabbyOrmDevConsoleLogger,
   RabbyOrmDeployedConsoleLogger,
   RnSqlExecutionTimes,
 } from './logger';
-import { reactotronEvents } from '@/core/utils/reactotron-plugins/_utils';
 import { AccountInfoEntity } from './entities/accountInfo';
 
 const dbOptions: DataSourceOptions = {
@@ -52,12 +49,10 @@ const dbOptions: DataSourceOptions = {
     NFTItemEntity,
     HistoryItemEntity,
     LocalHistoryItemEntity,
-    SwapItemEntity,
     BalanceEntity,
     ProtocolItemEntity,
     BuyItemEntity,
     CexEntity,
-    // CopyTradingBuyItemEntity,
     AccountInfoEntity,
   ],
   maxQueryExecutionTime: 10 * 1e3,

@@ -19,7 +19,15 @@ function clearClipboard() {
 }
 
 export function startCheckClearAction() {
+  if (
+    storeApiExpSettingData.getTimeTipAboutSeedPhraseAndPrivateKey() !== 'copy'
+  )
+    return;
   setInterval(() => {
+    if (
+      storeApiExpSettingData.getTimeTipAboutSeedPhraseAndPrivateKey() !== 'copy'
+    )
+      return;
     if (setTimerForClearClipboardRef.timeRef > 0) {
       clearClipboard();
       setTimerForClearClipboardRef.timeRef = 0;
@@ -37,6 +45,11 @@ export function onCopiedSensitiveData({
   const winLayout = Dimensions.get('window');
   switch (type) {
     case 'seedPhrase': {
+      if (
+        storeApiExpSettingData.getTimeTipAboutSeedPhraseAndPrivateKey() !==
+        'copy'
+      )
+        return;
       toast.success(i18next.t('global.toast.clipboard.copiedSeedPhrase'), {
         position: winLayout.height * 0.5,
       });
@@ -45,7 +58,7 @@ export function onCopiedSensitiveData({
     }
     case 'privateKey': {
       if (
-        storeApiExpSettingData.get().timeTipAboutSeedPhraseAndPrivateKey !==
+        storeApiExpSettingData.getTimeTipAboutSeedPhraseAndPrivateKey() !==
         'copy'
       )
         return;
@@ -68,8 +81,7 @@ export function onPastedSensitiveData({
   toastOptions?: Partial<ToastOptions>;
 }) {
   if (
-    storeApiExpSettingData.get().timeTipAboutSeedPhraseAndPrivateKey !==
-    'pasted'
+    storeApiExpSettingData.getTimeTipAboutSeedPhraseAndPrivateKey() !== 'pasted'
   )
     return;
 
@@ -85,4 +97,12 @@ export function onPastedSensitiveData({
       break;
     }
   }
+}
+
+export async function isNewlyInputTextSameWithContentFromClipboard(
+  text: string,
+) {
+  return Clipboard.getString().then(clipboardContent => {
+    return clipboardContent === text;
+  });
 }

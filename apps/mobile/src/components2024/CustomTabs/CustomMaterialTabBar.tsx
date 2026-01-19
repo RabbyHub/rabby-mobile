@@ -14,11 +14,11 @@ export const CustomMaterialTabBar = (props: any) => {
         itemsLayout={[
           {
             width: screenWidth / 4,
-            x: screenWidth / 8,
+            x: screenWidth / 20,
           },
           {
             width: screenWidth / 4,
-            x: screenWidth / 2 + screenWidth / 8,
+            x: screenWidth / 3 + screenWidth / 20,
           },
         ]}
         fadeIn

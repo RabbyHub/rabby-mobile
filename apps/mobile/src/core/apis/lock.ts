@@ -270,6 +270,13 @@ export function isUnlocked() {
   return keyringService.isUnlocked();
 }
 
+export async function isLockedWithCustomPassword() {
+  if (keyringService.isUnlocked()) return false;
+
+  const lockInfo = await getRabbyLockInfo();
+  return lockInfo.isUseCustomPwd;
+}
+
 export type UnlockResultErrors = {
   error: string;
   formFieldError?: string;

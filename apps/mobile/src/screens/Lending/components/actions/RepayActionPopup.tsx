@@ -50,7 +50,7 @@ import {
   REPAY_AMOUNT_MULTIPLIER,
 } from '../../utils/constant';
 import RepayWithCollateral from './RepayWithCollateralContent';
-import { getFromToken } from '../../utils/swap';
+import { getCollateralToken, getFromToken } from '../../utils/swap';
 import { isSupportRepayWithCollateral } from './RepayWithCollateralContent/utils';
 import wrapperToken from '../../config/wrapperToken';
 
@@ -655,7 +655,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     if (!r || !chainInfo?.id) {
       return undefined;
     }
-    return getFromToken(
+    return getCollateralToken(
       r,
       chainInfo?.id,
       displayReserve?.underlyingBalance || '0',

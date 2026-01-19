@@ -226,8 +226,8 @@ const Swap = ({
                   {t('page.signTx.swap.valueDiff')}
                 </Text>
               </SubRow>
-              <SubRow>
-                <Text style={commonStyle.subRowText}>
+              <SubRow style={{ flex: 2 }}>
+                <Text style={[commonStyle.subRowText, { textAlign: 'right' }]}>
                   {t('page.signTx.swap.simulationNotSupport')}
                 </Text>
               </SubRow>

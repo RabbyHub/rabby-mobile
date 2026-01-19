@@ -39,6 +39,13 @@ export interface PerpsServiceStore {
   currentAccount: StoreAccount | null;
   lastUsedAccount: StoreAccount | null;
   hasDoneNewUserProcess: boolean;
+  inviteConfig: {
+    [address: string]: {
+      lastInvitedAt?: number;
+      lastConnectedAt?: number;
+    };
+  };
+  favoriteMarkets: string[];
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -63,9 +70,11 @@ export class PerpsService {
           agentVaults: '',
           agentPreferences: {},
           currentAccount: null,
+          inviteConfig: {},
           // no clear account , just cache for last used
           lastUsedAccount: null,
           hasDoneNewUserProcess: false,
+          favoriteMarkets: [],
         },
       },
       {
@@ -74,6 +83,37 @@ export class PerpsService {
     );
     this.memoryState.agentWallets = {};
   }
+
+  getFavoriteMarkets = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.favoriteMarkets || [];
+  };
+
+  addFavoriteMarket = async (market: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    const normalizedMarket = market.toUpperCase();
+    if (this.store.favoriteMarkets.includes(normalizedMarket)) {
+      return;
+    }
+    this.store.favoriteMarkets = [
+      ...this.store.favoriteMarkets,
+      normalizedMarket,
+    ];
+  };
+
+  removeFavoriteMarket = async (market: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    const normalizedMarket = market.toUpperCase();
+    this.store.favoriteMarkets = this.store.favoriteMarkets.filter(
+      m => m !== normalizedMarket,
+    );
+  };
 
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
     if (!this.store) {
@@ -358,6 +398,26 @@ export class PerpsService {
     }
 
     return preference;
+  };
+
+  getInviteConfig = (address: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.inviteConfig[address.toLowerCase()];
+  };
+
+  setInviteConfig = (
+    address: string,
+    config: { lastConnectedAt?: number; lastInvitedAt?: number },
+  ) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.inviteConfig[address.toLowerCase()] = {
+      ...this.store.inviteConfig[address.toLowerCase()],
+      ...config,
+    };
   };
 
   // only test use

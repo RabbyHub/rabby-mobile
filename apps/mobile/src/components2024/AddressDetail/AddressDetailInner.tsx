@@ -16,6 +16,7 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
 import { useQrCodeModal } from '../QrCodeModal/useQrCodeModal';
 import { useTranslation } from 'react-i18next';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -67,6 +68,10 @@ export const AddressDetailInner: React.FC<
   const qrCodeModal = useQrCodeModal();
   const { t } = useTranslation();
 
+  const showBackUp =
+    account.type === KEYRING_TYPE.HdKeyring ||
+    account.type === KEYRING_TYPE.SimpleKeyring;
+
   return (
     <View style={styles.root}>
       {__IN_SHEET_MODAL__ ? (
@@ -93,10 +98,12 @@ export const AddressDetailInner: React.FC<
           </Text>
           <AddressAssetsItem onCancel={onCancel} account={account} />
         </View>
-        <View style={styles.group}>
-          <Text style={styles.subTitle}>{t('global.Backup')}</Text>
-          <AddressBackupItem onCancel={onCancel} account={account} />
-        </View>
+        {showBackUp ? (
+          <View style={styles.group}>
+            <Text style={styles.subTitle}>{t('global.Backup')}</Text>
+            <AddressBackupItem onCancel={onCancel} account={account} />
+          </View>
+        ) : null}
         <View style={styles.group}>
           <Text style={styles.subTitle}>{t('global.Other')}</Text>
           <Card style={styles.card}>

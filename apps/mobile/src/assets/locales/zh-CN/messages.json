@@ -131,6 +131,9 @@
         "copiedSeedPhrase": "种子短语已复制。剪贴板将在 1 分钟后清除。",
         "pasted_and_cleared": "粘贴并清空剪贴板"
       }
+    },
+    "autolock": {
+      "never": "从不"
     }
   },
   "constant": {
@@ -856,6 +859,18 @@
         "perpsMarketList": "更多 Perps",
         "perps": "合约",
         "lending": "借贷"
+      },
+      "swipeUp": {
+        "descAndroid": "点击探索 dApps",
+        "descAndroidMore": "点击探索更多 dApps",
+        "desc": "向上滑动以探索网站",
+        "descMore": "向上滑动以探索更多网站"
+      },
+      "DappDrawer": {
+        "favorite": "最爱",
+        "empty": "没有网站被添加到收藏夹",
+        "search": "搜索",
+        "emptyAndroid": "没有dApp添加到收藏夹"
       }
     },
     "manageAddress": {
@@ -1021,7 +1036,13 @@
       "revokeCompleted": "完成",
       "stopTheRevokeProcess": "停止撤回过程？",
       "leavingThisPageWillStopTheRevokeProcess": "离开此页面将停止撤销过程。",
-      "allApprovals": "所有授权"
+      "allApprovals": "所有授权",
+      "eip7702": {
+        "unsupportedTitle": "不支持的地址类型",
+        "unsupportedDesc": "撤销 EIP-7702 委托仅支持私钥或种子短语地址。"
+      },
+      "supportedChains": "支持的链",
+      "delegatedAddress": "委托地址"
     },
     "swap": {
       "unable-to-fetch-the-price": "无法获取价格",
@@ -2286,7 +2307,8 @@
         "hot10": "热榜 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "打开网站"
+        "openWebsites": "打开网站",
+        "searchWebsite": "搜索网站"
       },
       "menu": {
         "contentModeDesktop": "请求桌面网站",
@@ -2605,6 +2627,15 @@
       "closeAllConfirmTitle": "确认平掉所有仓位",
       "assetPage": {
         "hyperliquidPosition": "Hyperliquid 头寸"
+      },
+      "invitePopup": {
+        "hyperliquidFee": "Hyperliquid 交易手续费。",
+        "title": "在 Hyperliquid 上节省费用",
+        "activatedFailed": "激活失败",
+        "activateFailed": "失败",
+        "description": "使用 Rabby 的代码以启用",
+        "activateNow": "立即激活",
+        "activatedSuccess": "4% Hyperliquid费用节省已激活"
       }
     },
     "perpsDetail": {
@@ -2632,7 +2663,14 @@
         "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所自动关闭您的仓位以防止进一步亏损的价格。",
         "fundingPaymentsTips": "这是自开仓以来的净资金支付。资金费用是交易者支付或收取的每小时费用，以保持永续合约的价格接近代币的实际价格。",
         "fundingGains": "资金收益",
-        "fundingGainsTips": "这是自头寸开启以来的净资金收益。资金是交易者每小时支付或接收的费用，用于保持永久合约的价格接近代币的实际价格。"
+        "fundingGainsTips": "这是自头寸开启以来的净资金收益。资金是交易者每小时支付或接收的费用，用于保持永久合约的价格接近代币的实际价格。",
+        "details": "详情",
+        "currentPrice": "当前价格",
+        "unrealizedPnl": "未实现的PNL",
+        "marginMode": "保证金模式",
+        "positionValue": "头寸价值",
+        "settings": "设置",
+        "realizedPnl": "实现的PNL"
       },
       "PerpsInfo": {
         "title": "信息",
@@ -2704,7 +2742,8 @@
         "margin": "保证金（孤立）",
         "free": "免费",
         "rabbyFee": "Rabby费用",
-        "providerFee": "Hyperliquid手续费"
+        "providerFee": "Hyperliquid手续费",
+        "marginCross": "保证金（交叉）"
       },
       "action": {
         "long": "做多",
@@ -2753,7 +2792,14 @@
         "addToShort": "添加到短期",
         "addToLong": "添加到 Long"
       },
-      "needDepositFirst": "您需要先存入资金。"
+      "needDepositFirst": "您需要先存入资金。",
+      "PerpMarginModePopup": {
+        "isolatedTitle": "隔离保证金",
+        "cannotChangeMarginMode": "无法在持有头寸的情况下更改保证金模式",
+        "crossTitle": "交叉保证金",
+        "isolatedDesc": "每个头寸使用自己的保证金。损失仅限于该头寸，但它更容易被清算。",
+        "crossDesc": "所有头寸共享相同的保证金。这降低了单个头寸被清算的机会，但在极端市场波动中，所有交叉保证金资金可能会全部亏损。"
+      }
     },
     "selectAccountSheetModal": {
       "title": {
