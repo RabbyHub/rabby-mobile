@@ -34,7 +34,7 @@ export const portfolioToIProtocolPortfolio = (
 };
 
 // 来自数据库的协议数据，转换为前端协议数据
-export const protocolEntityToIProtocolItem = (
+export const protocolEntity2IProtocolItem = (
   item: ProtocolItemEntity,
 ): IProtocolItem => {
   const portfolios = columnConverter.jsonStringToObj(

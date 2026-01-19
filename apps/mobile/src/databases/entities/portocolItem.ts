@@ -7,7 +7,7 @@ import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 import { IProtocolItem } from '@/store/protocols';
-import { protocolEntityToIProtocolItem } from '@/utils/protocol';
+import { protocolEntity2IProtocolItem } from '@/utils/protocol';
 
 @Entity('cache_portocolitem')
 export class ProtocolItemEntity extends EntityAddressAssetBase {
@@ -177,7 +177,7 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
       if (!results[key]) {
         results[key] = [];
       }
-      results[key].push(protocolEntityToIProtocolItem(i));
+      results[key].push(protocolEntity2IProtocolItem(i));
     });
 
     return results;

@@ -12,19 +12,11 @@ import {
   NftRow,
   TokenRowSectionHeader,
 } from '@/screens/Home/components/AssetRenderItems';
-import {
-  AbstractProject,
-  ActionItem,
-  DisplayNftItem,
-} from '@/screens/Home/types';
+import { ActionItem, DisplayNftItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
-import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
-import { icons } from '@/screens/Home/AssetContainer';
-import { preferenceService } from '@/core/services';
-import { toast } from '@/components2024/Toast';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
@@ -32,7 +24,6 @@ import {
   NftItemWithCollection,
   varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
-import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
 import {
@@ -152,71 +143,6 @@ export const NFTList = () => {
     return nftList.length === 0 && !isLoading && isFocused;
   }, [nftList.length, isLoading, isFocused]);
 
-  const getNftMenuAction = useCallback(
-    (data: NftItemWithCollection): MenuAction[] => {
-      const isFold = (data as CollectionList)?.nft_list?.every(
-        i => (i as unknown as AbstractProject)._isFold,
-      );
-      return [
-        {
-          title: isFold
-            ? t('page.tokenDetail.action.unfold')
-            : t('page.tokenDetail.action.fold'),
-          icon: isFold
-            ? isLight
-              ? icons.unfoldLight
-              : icons.unfoldDark
-            : isLight
-            ? icons.foldLight
-            : icons.foldDark,
-          androidIconName: isFold
-            ? 'ic_rabby_menu_unfold'
-            : 'ic_rabby_menu_fold',
-          key: 'fold',
-          action() {
-            if (isFold) {
-              if (data.chain) {
-                if ('nft_list' in data && data.nft_list.length) {
-                  data.nft_list.forEach(i => {
-                    preferenceService.manualUnFoldNft({
-                      chain: i.chain,
-                      id: i.id,
-                    });
-                  });
-                } else {
-                  preferenceService.manualUnFoldNft({
-                    chain: data.chain,
-                    id: data.id,
-                  });
-                }
-                toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-              }
-            } else {
-              if (data.chain) {
-                if ('nft_list' in data && data.nft_list.length) {
-                  data.nft_list.forEach(i => {
-                    preferenceService.manualFoldNft({
-                      chain: i.chain,
-                      id: i.id,
-                    });
-                  });
-                } else {
-                  preferenceService.manualFoldNft({
-                    chain: data.chain,
-                    id: data.id,
-                  });
-                }
-                toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-              }
-            }
-            nftRefresh();
-          },
-        },
-      ];
-    },
-    [isLight, nftRefresh, t],
-  );
-
   const handlePressNft = useCallback(
     (item: NftItemWithCollection) => {
       if (!item.address) {
@@ -275,9 +201,9 @@ export const NFTList = () => {
                   styles.renderItemWrapper,
                   !isLight && styles.bg2,
                 ])}
-                menuActions={getNftMenuAction(data)}
                 logoSize={40}
                 chainLogoSize={16}
+                disableMenu
                 item={data}
                 account={getAccountByAddress(data.address)}
                 onPress={() => handlePressNft(data)}
@@ -311,7 +237,6 @@ export const NFTList = () => {
       foldNft,
       foldNftList.length,
       getAccountByAddress,
-      getNftMenuAction,
       handlePressNft,
       isLight,
       styles,

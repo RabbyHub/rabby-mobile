@@ -18,7 +18,7 @@ import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
 import { IProtocolItem } from '@/store/protocols';
 import {
   complexProtocol2ProtocolItem,
-  protocolEntityToIProtocolItem,
+  protocolEntity2IProtocolItem,
 } from '@/utils/protocol';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
@@ -80,7 +80,7 @@ export const syncProtocols = async (
 
   if (!isExpired && !force) {
     const protocols = await ProtocolItemEntity.batchQueryProtocols(address);
-    return protocols.map(protocolEntityToIProtocolItem);
+    return protocols.map(protocolEntity2IProtocolItem);
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
   const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(

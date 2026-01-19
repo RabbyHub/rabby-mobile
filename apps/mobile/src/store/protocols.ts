@@ -3,7 +3,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 import { getTop10MyAccounts } from '@/core/apis/account';
-import { protocolEntityToIProtocolItem } from '@/utils/protocol';
+import { protocolEntity2IProtocolItem } from '@/utils/protocol';
 
 /**
  * interface for all DeFi data
@@ -274,7 +274,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         const res: Record<string, IProtocolItem[]> = {};
         cached?.forEach(item => {
           const owner = item.owner_addr.toLowerCase();
-          const project = protocolEntityToIProtocolItem(item);
+          const project = protocolEntity2IProtocolItem(item);
           if (!res[owner]) {
             res[owner] = [];
           }
@@ -328,7 +328,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
           const cacheProtocols = await ProtocolItemEntity.batchQueryProtocols(
             address,
           );
-          const protocols = cacheProtocols.map(protocolEntityToIProtocolItem);
+          const protocols = cacheProtocols.map(protocolEntity2IProtocolItem);
 
           set(state => ({
             protocolMap: {
