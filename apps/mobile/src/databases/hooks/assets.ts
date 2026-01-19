@@ -80,7 +80,7 @@ export const syncProtocols = async (
 
   if (!isExpired && !force) {
     const protocols = await ProtocolItemEntity.batchQueryProtocols(address);
-    return protocols.map(protocolEntity2IProtocolItem);
+    return protocols;
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
   const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(

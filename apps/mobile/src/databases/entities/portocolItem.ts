@@ -98,12 +98,14 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
       }));
   }
 
-  static async batchQueryProtocols(owner_addr: string) {
+  static async batchQueryProtocols(
+    owner_addr: string,
+  ): Promise<IProtocolItem[]> {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ owner_addr })).filter(
-      i => i.id !== EMPTY_PROTOCOL_ITEM_ID,
-    );
+    return (await this.getRepository().findBy({ owner_addr }))
+      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
+      .map(i => protocolEntity2IProtocolItem(i));
   }
 
   static async batchMultAddressPortocols(

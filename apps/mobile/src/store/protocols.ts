@@ -328,12 +328,10 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
           const cacheProtocols = await ProtocolItemEntity.batchQueryProtocols(
             address,
           );
-          const protocols = cacheProtocols.map(protocolEntity2IProtocolItem);
-
           set(state => ({
             protocolMap: {
               ...state.protocolMap,
-              [normalizedAddress]: protocols,
+              [normalizedAddress]: cacheProtocols,
             },
           }));
           return;
