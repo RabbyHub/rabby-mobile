@@ -85,19 +85,6 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async batchQueryPortocols(owner_addr: string) {
-    await prepareAppDataSource();
-
-    return (await this.getRepository().findBy({ owner_addr }))
-      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
-      .map(i => ({
-        ...i,
-        portfolio_item_list: columnConverter.jsonStringToObj(
-          i.portfolio_item_list,
-        ),
-      }));
-  }
-
   static async batchQueryProtocols(
     owner_addr: string,
   ): Promise<IProtocolItem[]> {
@@ -106,32 +93,6 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
     return (await this.getRepository().findBy({ owner_addr }))
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => protocolEntity2IProtocolItem(i));
-  }
-
-  static async batchMultAddressPortocols(
-    addresses: string[],
-    maxLength?: number,
-  ) {
-    await prepareAppDataSource();
-
-    const queryBuilder =
-      this.getRepository().createQueryBuilder('portocolitem');
-
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
-    if (maxLength) {
-      queryBuilder.take(maxLength);
-    }
-
-    const portocols = await queryBuilder.getMany();
-
-    return portocols
-      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
-      .map(i => ({
-        ...i,
-        portfolio_item_list: columnConverter.jsonStringToObj(
-          i.portfolio_item_list,
-        ),
-      }));
   }
 
   static async batchMultiAddressProtocols(
