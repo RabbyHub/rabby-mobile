@@ -45,6 +45,7 @@ import {
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
 } from '../hooks/useHomeDrawerAnimate';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -67,7 +68,12 @@ export const HomeDappDrawer: React.FC = () => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [removedItems, setRemovedItems] = useState<string[]>([]);
   const list = useMemo(() => {
-    return bookmarkList.filter(item => !removedItems.includes(item.origin));
+    return bookmarkList.filter(
+      item =>
+        !removedItems.find(
+          url => safeGetOrigin(url) === safeGetOrigin(item.origin),
+        ),
+    );
   }, [bookmarkList, removedItems]);
 
   const startEditing = () => {
@@ -80,6 +86,7 @@ export const HomeDappDrawer: React.FC = () => {
     removedItems.forEach(url => {
       removeBookmark(url);
     });
+    setRemovedItems([]);
   };
 
   const handleRemoveLocal = (url: string) => {
