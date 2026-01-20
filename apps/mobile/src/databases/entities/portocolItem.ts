@@ -145,7 +145,7 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
     const results: Record<string, IProtocolItem[]> = {};
 
     protocols.forEach(i => {
-      if (i.id !== EMPTY_PROTOCOL_ITEM_ID) {
+      if (i.id === EMPTY_PROTOCOL_ITEM_ID) {
         return;
       }
       const key = i.owner_addr.toLowerCase();

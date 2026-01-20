@@ -6,12 +6,10 @@ const getSingleTokenTags = (type: string, item: AbstractPortfolioToken) => {
   return [
     `type: ${type}`,
     `addr: ${'address' in item ? item.address : ''}`,
+    `owner_addr: ${'owner_addr' in item ? item.owner_addr : ''}`,
     `chain: ${item.chain}`,
-    `symbol: ${item.symbol}`,
     `tokenId: ${item._tokenId}`,
     `id: ${item.id}`,
-    `price_24h_change: ${item.price_24h_change}`,
-    `price: ${item.price}`,
   ];
 };
 
@@ -19,9 +17,8 @@ const getSingleDefiTags = (type: string, item: IProtocolItem) => {
   return [
     `type: ${type}`,
     `id: ${item.id}`,
-    `addr: ${'address' in item ? item.address : ''}`,
+    `addr: ${item.owner_addr}`,
     `chain: ${item.chain}`,
-    `price: ${item.netWorth}`,
   ];
 };
 const getSingleNftTags = (type: string, item: NFTItem) => {

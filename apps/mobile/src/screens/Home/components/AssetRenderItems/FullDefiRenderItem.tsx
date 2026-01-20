@@ -182,30 +182,21 @@ export const FullDefiRenderItem = ({
   }, [defaultExpand]);
 
   const handleToggleExpand = useCallback(() => {
+    if (!isExpand && account?.address && data?.id && data?.chain) {
+      updateSpecificProtocol(account.address, data?.id, data?.chain);
+    }
     setIsExpand(pre => !pre);
-  }, []);
+  }, [
+    account?.address,
+    data?.chain,
+    data?.id,
+    isExpand,
+    updateSpecificProtocol,
+  ]);
 
   const portfolios = useMemo(() => {
     return data._portfolios || [];
   }, [data]);
-
-  useEffect(() => {
-    if (isExpand && account?.address && data?.id && data?.chain) {
-      console.log(
-        'CUSTOM_LOGGER:=>: updateSpecificProtocol',
-        account.address,
-        data?.id,
-        data?.chain,
-      );
-      updateSpecificProtocol(account.address, data?.id, data?.chain);
-    }
-  }, [
-    isExpand,
-    account?.address,
-    data?.id,
-    data?.chain,
-    updateSpecificProtocol,
-  ]);
 
   if (!data || !account) {
     return null;
