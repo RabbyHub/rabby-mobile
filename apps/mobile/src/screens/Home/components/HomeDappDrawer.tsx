@@ -333,8 +333,7 @@ export const HomeDappDrawer: React.FC = () => {
               style={[
                 styles.footer,
                 {
-                  paddingBottom:
-                    Platform.OS === 'ios' ? bottom : Math.max(bottom, 12),
+                  paddingBottom: Math.max(bottom, 12),
                 },
               ]}>
               <TouchableOpacity onPress={onPressHome}>
