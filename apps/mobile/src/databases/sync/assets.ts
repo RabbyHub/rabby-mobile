@@ -18,7 +18,6 @@ import {
   EMPTY_PROTOCOL_ITEM,
   EMPTY_TOKEN_ITEM,
 } from '@/constant/assets';
-import { SwapItemEntity } from '../entities/swapitem';
 import { BalanceEntity } from '../entities/balance';
 import { batchSaveWithPQueueAndTransaction, BeforeEmitFn } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
@@ -391,7 +390,6 @@ export const deleteDBResourceForAddress = async (_address: string) => {
       NFTItemEntity.deleteForAddress(address),
       ProtocolItemEntity.deleteForAddress(address),
       HistoryItemEntity.deleteForAddress(address),
-      SwapItemEntity.deleteForAddress(address),
       BalanceEntity.deleteForAddress(address),
       CexEntity.deleteForAddress(address),
       deleteCurveCache(address),

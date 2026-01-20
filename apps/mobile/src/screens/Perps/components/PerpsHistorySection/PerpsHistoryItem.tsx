@@ -20,7 +20,7 @@ export const PerpsHistoryItem: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const { coin, closedPnl: _closedPnl, dir, fee } = fill as WsFill;
+  const { coin, closedPnl: _closedPnl, dir, fee, px } = fill as WsFill;
 
   const titleString = useMemo(() => {
     const isLiquidation = Boolean(fill?.liquidation);
@@ -89,7 +89,9 @@ export const PerpsHistoryItem: React.FC<{
             <Text style={styles.name}>{titleString}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.coin}>{coin}-USD</Text>
+            <Text style={styles.coin}>
+              {coin}-USD @${Number(px)}
+            </Text>
           </View>
         </View>
         <View style={styles.extra}>
@@ -146,7 +148,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
   },
   name: {
     fontFamily: 'SF Pro Rounded',
@@ -156,6 +158,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
   },
   extra: {
+    flexShrink: 0,
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
@@ -178,6 +181,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
+    whiteSpace: 'nowrap',
   },
   time: {
     fontFamily: 'SF Pro Rounded',

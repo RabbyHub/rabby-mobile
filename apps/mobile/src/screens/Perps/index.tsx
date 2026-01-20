@@ -24,7 +24,7 @@ import {
   usePerpsPopupState,
   useSelectedToken,
 } from './hooks/usePerpsPopupState';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
@@ -51,6 +51,10 @@ import { calculateDistanceToLiquidation } from './components/PerpsPositionSectio
 import { PerpsRiskLevelPopup } from './components/PerpsPositionSection/PerpsRiskLevelPopup';
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
+import { PerpsInvitePopup } from './components/PerpsInvitePopup';
+import { checkPerpsReference } from '@/utils/perps';
+import { perpsService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -81,7 +85,10 @@ export const PerpsScreen = () => {
     localLoadingHistory,
 
     handleActionApproveStatus,
+    handleSafeSetReference,
     setInitialized,
+
+    favoriteMarkets,
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
 
@@ -127,10 +134,35 @@ export const PerpsScreen = () => {
 
   // Prepare sorted market data with header as first item
   const listData = useMemo(() => {
-    const sorted = sortBy(marketData, item => -(item.dayNtlVlm || 0));
+    // Separate favorite and non-favorite markets
+    const favoriteItems: typeof marketData = [];
+    const nonFavoriteItems: typeof marketData = [];
+
+    marketData.forEach(item => {
+      const isFavorite = favoriteMarkets.includes(item.name.toUpperCase());
+      if (isFavorite) {
+        favoriteItems.push(item);
+      } else {
+        nonFavoriteItems.push(item);
+      }
+    });
+
+    // Sort each group by dayNtlVlm (descending)
+    const sortedFavorites = sortBy(
+      favoriteItems,
+      item => -(item.dayNtlVlm || 0),
+    );
+    const sortedNonFavorites = sortBy(
+      nonFavoriteItems,
+      item => -(item.dayNtlVlm || 0),
+    );
+
+    // Combine: favorites first, then non-favorites
+    const sorted = [...sortedFavorites, ...sortedNonFavorites];
+
     // Add a special header item as first element for sticky header
     return [{ _isStickyHeader: true }, ...sorted];
-  }, [marketData]);
+  }, [marketData, favoriteMarkets]);
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
   const positionCoinSet = useMemo(() => {
@@ -230,6 +262,26 @@ export const PerpsScreen = () => {
     setSelectedCoin(null);
   });
 
+  const { data: isShowInvite, mutate: setIsShowInvite } = useRequest(
+    async () => {
+      return checkPerpsReference({
+        account: currentPerpsAccount,
+        scene: 'invite',
+      });
+    },
+    {
+      refreshDeps: [currentPerpsAccount],
+      ready: !!currentPerpsAccount?.address,
+      onSuccess: shouldShow => {
+        if (shouldShow) {
+          perpsService.setInviteConfig(currentPerpsAccount?.address || '', {
+            lastInvitedAt: Date.now(),
+          });
+        }
+      },
+    },
+  );
+
   // Calculate real-time popup data based on selectedCoin
   const riskPopupData = useMemo(() => {
     if (!selectedCoin) {
@@ -315,6 +367,7 @@ export const PerpsScreen = () => {
       return (
         <PerpsMarketItem
           item={item}
+          isFavorite={favoriteMarkets.includes(item.name.toUpperCase())}
           hasPosition={positionCoinSet.has(item.name)}
           onPress={() => {
             scrollToTop();
@@ -330,7 +383,7 @@ export const PerpsScreen = () => {
         />
       );
     },
-    [positionCoinSet, scrollToTop],
+    [positionCoinSet, scrollToTop, favoriteMarkets],
   );
 
   const keyExtractor = useCallback(
@@ -602,6 +655,17 @@ export const PerpsScreen = () => {
           liquidationPrice={riskPopupData.liquidationPrice}
         />
       )}
+      <PerpsInvitePopup
+        visible={isShowInvite}
+        onClose={() => setIsShowInvite(false)}
+        onInvite={async () => {
+          await handleActionApproveStatus({
+            isHideToast: true,
+          });
+          await handleSafeSetReference();
+          setIsShowInvite(false);
+        }}
+      />
     </>
   );
 };

@@ -627,7 +627,13 @@
       "asset": "สินทรัพย์",
       "revokeCompleted": "เสร็จสิ้น",
       "stopTheRevokeProcess": "หยุดกระบวนการยกเลิก?",
-      "leavingThisPageWillStopTheRevokeProcess": "การออกจากหน้านี้จะหยุดกระบวนการยกเลิก"
+      "leavingThisPageWillStopTheRevokeProcess": "การออกจากหน้านี้จะหยุดกระบวนการยกเลิก",
+      "eip7702": {
+        "unsupportedTitle": "ประเภทที่อยู่ไม่รองรับ",
+        "unsupportedDesc": "การเพิกถอนการมอบหมาย EIP-7702 รองรับเฉพาะที่อยู่ที่ใช้คีย์ส่วนตัวหรือวลีพันธุ์เท่านั้น"
+      },
+      "supportedChains": "เครือข่ายที่รองรับ",
+      "delegatedAddress": "ที่อยู่ที่ได้รับมอบหมาย"
     },
     "signTx": {
       "chain": "Chain",
@@ -1017,6 +1023,18 @@
         "perps": "Perps",
         "perpsMarketList": "มากขึ้น Perps",
         "lending": "การให้กู้ยืม"
+      },
+      "swipeUp": {
+        "descAndroid": "คลิกเพื่อสำรวจ dApps",
+        "descAndroidMore": "คลิกเพื่สำรวจ dApps เพิ่มเติม",
+        "desc": "เลื่อนขึ้นเพื่อสำรวจเว็บไซต์",
+        "descMore": "เลื่อนขึ้นเพื่อสำรวจเว็บไซต์เพิ่มเติม"
+      },
+      "DappDrawer": {
+        "favorite": "โปรดปราน",
+        "search": "ค้นหา",
+        "emptyAndroid": "ยังไม่มี dApp ที่เพิ่มลงในรายการที่ชื่นชอบ",
+        "empty": "ไม่มีเว็บไซต์ที่เพิ่มเข้าสู่รายการโปรด"
       }
     },
     "gasTopUp": {
@@ -2431,7 +2449,8 @@
         "hot10": "ร้อนแรง 10"
       },
       "BrowserSearchEntry": {
-        "openWebsites": "เปิดเว็บไซต์"
+        "openWebsites": "เปิดเว็บไซต์",
+        "searchWebsite": "ค้นหาเว็บไซต์"
       },
       "menu": {
         "contentModeMobile": "ขอเว็บไซต์มือถือ",
@@ -2747,6 +2766,15 @@
       "closeAllConfirmMessage": "ตำแหน่งที่เปิดของคุณทั้งหมดจะถูกปิดที่ราคาตลาด",
       "assetPage": {
         "hyperliquidPosition": "ตำแหน่ง Hyperliquid"
+      },
+      "invitePopup": {
+        "activateFailed": "ล้มเหลว",
+        "description": "ใช้รหัสของ Rabby เพื่อเปิดใช้งาน",
+        "title": "ประหยัดค่าธรรมเนียม Hyperliquid",
+        "hyperliquidFee": "ค่าธรรมเนียมการซื้อขาย Hyperliquid。",
+        "activatedFailed": "การเปิดใช้งานล้มเหลว",
+        "activatedSuccess": "เปิดใช้งานการประหยัดค่าธรรมเนียม Hyperliquid 4%",
+        "activateNow": "เปิดใช้งานเดี๋ยวนี้"
       }
     },
     "perpsDetail": {
@@ -2774,7 +2802,14 @@
         "isolated": "แยกออก",
         "direction": "ทิศทาง",
         "fundingGains": "การเพิ่มทุน",
-        "fundingGainsTips": "นี่คือกำไรจากการระดมทุนสุทธิ ตั้งแต่เปิดสถานะ ค่าธรรมเนียมการระดมทุนเป็นค่าธรรมเนียมรายชั่วโมงที่ผู้ค้าใช้จ่ายหรือรับ เพื่อให้ราคาในสัญญา perp ใกล้เคียงกับราคาที่แท้จริงของโทเค็น"
+        "fundingGainsTips": "นี่คือกำไรจากการระดมทุนสุทธิ ตั้งแต่เปิดสถานะ ค่าธรรมเนียมการระดมทุนเป็นค่าธรรมเนียมรายชั่วโมงที่ผู้ค้าใช้จ่ายหรือรับ เพื่อให้ราคาในสัญญา perp ใกล้เคียงกับราคาที่แท้จริงของโทเค็น",
+        "details": "รายละเอียด",
+        "positionValue": "มูลค่าตำแหน่ง",
+        "currentPrice": "ราคา ณ ปัจจุบัน",
+        "settings": "การตั้งค่า",
+        "marginMode": "โหมดมาร์จิ้น",
+        "realizedPnl": "Realized PNL",
+        "unrealizedPnl": "未实现的 PNL"
       },
       "PerpsInfo": {
         "title": "ข้อมูล",
@@ -2846,7 +2881,8 @@
         "perps": "Perps",
         "free": "ฟรี",
         "rabbyFee": "ค่าธรรมเนียม Rabby",
-        "providerFee": "ค่าธรรมเนียม Hyperliquid"
+        "providerFee": "ค่าธรรมเนียม Hyperliquid",
+        "marginCross": "Margin(Cross)"
       },
       "action": {
         "short": "ขายทำกำไร",
@@ -2895,7 +2931,14 @@
         "addSize": "เพิ่มขนาด",
         "addToShort": "เพิ่มลงใน Short"
       },
-      "needDepositFirst": "คุณต้องฝากเงินก่อน"
+      "needDepositFirst": "คุณต้องฝากเงินก่อน",
+      "PerpMarginModePopup": {
+        "crossTitle": "ข้ามมาร์จิ้น",
+        "cannotChangeMarginMode": "ไม่สามารถเปลี่ยนโหมดมาร์จินได้เมื่อมีตำแหน่งเปิด",
+        "isolatedTitle": "Isolated Margin",
+        "isolatedDesc": "แต่ละตำแหน่งใช้มาร์จินของตนเอง การขาดทุนจะจำกัดอยู่ที่ตำแหน่งนั้น แต่สามารถถูกบังคับขายได้ง่ายขึ้น",
+        "crossDesc": "ตำแหน่งทั้งหมดใช้หลักประกันเดียวกัน ซึ่งช่วยลดความเสี่ยงในการถูกบังคับขายตำแหน่งเดียว แต่เงินทุนทั้งหมดที่ใช้ในกรอบการข้ามหลักประกันอาจสูญหายในกรณีที่ตลาดมีการเคลื่อนไหวอย่างรุนแรง"
+      }
     },
     "devUIBuiltInPages": {
       "builtInPageTitle": "Build-In Page"
@@ -3281,6 +3324,9 @@
         "copiedPrivateKey": "คีย์ส่วนตัวถูกคัดลอกแล้ว คลิปบอร์ดจะถูกล้างใน 1 นาที",
         "pasted_and_cleared": "วางแล้วและคลิปบอร์ดถูกล้าง"
       }
+    },
+    "autolock": {
+      "never": "ไม่เคย"
     }
   },
   "background": {

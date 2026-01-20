@@ -5,6 +5,11 @@ import { ClassOf } from '@rabby-wallet/base-utils';
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
 import { runSqliteSyncWorklet } from '@/core/databases/perf';
+import {
+  resolveDriverAndConnectionFromEntity,
+  resolveDriverAndConnectionFromRepo,
+} from '@/core/databases/op-sqlite/typeorm';
+import { getOnlineConfig } from '@/core/config/online';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -41,10 +46,10 @@ export type BeforeEmitFn = (
  * @warning the `data` list would be mutated internally for performance consideration
  */
 export async function batchSaveWithPQueueAndTransaction<
-  T extends EntityAddressAssetBase,
+  T extends typeof EntityAddressAssetBase,
 >(
-  entityCls: ClassOf<T> & typeof BaseEntity,
-  data: T[],
+  entityCls: T & typeof BaseEntity,
+  data: InstanceType<T>[],
   options: SyncTaskOptions & {
     batchSize?: number;
     concurrency?: number;
@@ -161,86 +166,52 @@ export async function batchSaveWithPQueueAndTransaction<
         };
 
         try {
-          // await runSqliteSyncWorklet(
-          //   async (entityCls: any, batch: any) => {
-          //     'worklet';
-          //     console.debug('_task::runSqliteSyncWorklet::prepare transaction upsert:: [0]');
-          //     const repo = entityCls.getRepository();
-          //     console.debug('_task::runSqliteSyncWorklet::prepare transaction upsert::', entityCls, batch);
-          //     await repo.manager.transaction(async entityManager => {
-          //       console.debug('_task::runSqliteSyncWorklet::transaction::upsert::', entityCls, batch);
-          //       const tRepo = entityManager.getRepository(entityCls);
-          //       await tRepo
-          //         .upsert(
-          //           batch,
-          //           { conflictPaths: ['_db_id'] },
-          //         )
-          //         .then(() => {
-          //           printLog &&
-          //             console.debug(
-          //               `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
-          //             );
-          //         })
-          //         .catch(error => {
-          //           printLog &&
-          //             console.error(
-          //               `${loggerPrefix}Batch ${roundPercent} upsertion failed.`,
-          //             );
-          //           throw error;
-          //         });
-          //     });
-          //   },
-          // )(entityCls, JSON.parse(JSON.stringify(batch)));
+          const disablePreparedUpsert =
+            !__DEV__ &&
+            getOnlineConfig().switches?.['20260105.disable_db_prepared_upsert'];
+          const supportedPreparedStatement =
+            !disablePreparedUpsert &&
+            'getStatementSql' in entityCls &&
+            typeof entityCls.getStatementSql === 'function';
+          const stmSql = !supportedPreparedStatement
+            ? ''
+            : entityCls.getStatementSql?.('upsert') ?? '';
 
-          await repo.manager.upsert(
-            entityCls,
-            // @ts-expect-error
-            curBatch,
-            // bar
-            { conflictPaths: ['_db_id'] },
-          );
-          // await runSqliteSyncWorklet(
-          //   async (entityCls: any, curBatch: any, options: any) => {
-          //     'worklet';
-          //     console.debug('_task::runSqliteSyncWorklet upsert::', entityCls, curBatch);
-          //     return repo.manager.upsert(entityCls, curBatch, options);
-          //   },
-          // )(entityCls, JSON.parse(JSON.stringify(curBatch)), { conflictPaths: ['_db_id'] });
+          if (supportedPreparedStatement && stmSql) {
+            const { connection } = resolveDriverAndConnectionFromRepo(repo);
+            const db = connection.getDb();
+            const stm = db.prepareStatement(stmSql);
+
+            for (const item of curBatch) {
+              item.bindUpsertParams!(stm);
+              try {
+                const result = await stm.execute();
+                // console.debug(`${loggerPrefix}[perf] upserted row:`, result);
+              } catch (error) {
+                console.error(
+                  `${loggerPrefix}Error upserting row:`,
+                  error,
+                  item,
+                );
+              }
+            }
+
+            console.debug(
+              `${loggerPrefix}[perf] upserted rows`,
+              curBatch,
+              stmSql,
+            );
+          } else {
+            await repo.manager.upsert(entityCls, curBatch, {
+              conflictPaths: ['_db_id'],
+            });
+          }
+
           printLog &&
             console.debug(
               `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
             );
 
-          // const repo = entityCls.getRepository();
-          // await repo.manager.transaction(async entityManager => {
-          //   console.debug('_task::transaction::upsert::', entityCls, curBatch);
-          //   const tRepo = entityManager.getRepository(entityCls);
-          //   // await Promise.all(curBatch.map(item => {
-          //   //   return tRepo.upsert(
-          //   //     // @ts-expect-error
-          //   //     item,
-          //   //     { conflictPaths: ['_db_id'] },
-          //   //   )
-          //   // }))
-          //   await tRepo.upsert(
-          //       // @ts-expect-error
-          //       curBatch,
-          //       { conflictPaths: ['_db_id'] },
-          //     )
-          //     .then(() => {
-          //       printLog &&
-          //         console.debug(
-          //           `${loggerPrefix}Batch ${roundPercent} upsertion successfully.`,
-          //         );
-          //     })
-          //     .catch(error => {
-          //       printLog &&
-          //         console.error(
-          //           `${loggerPrefix}Batch ${roundPercent} upsertion failed.`,
-          //         );
-          //       throw error;
-          //     });
-          // });
           makeEmit(true);
         } catch (error) {
           makeEmit(false);

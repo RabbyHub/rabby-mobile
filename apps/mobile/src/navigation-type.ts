@@ -32,7 +32,6 @@ import {
 } from './screens/Approvals/useApprovalsPage';
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
 import { ITokenItem } from './store/tokens';
 
 /**
@@ -261,10 +260,6 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
-  [RootNames.CopyTradingTokenDetail]?: {
-    tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
-    showTabType?: TabType;
-  };
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
@@ -273,7 +268,6 @@ export type TransactionNavigatorParamList = {
     currentAddress?: string;
   };
   [RootNames.LendingHistory]?: {};
-  [RootNames.CopyTrading]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;
@@ -370,7 +364,7 @@ export type TransactionNavigatorParamList = {
 
 export type SettingNavigatorParamList = {
   [RootNames.Settings]?: {
-    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+    // enterActionType?: 'setBiometrics' | 'setAutoLockExpireTime';
   };
   [RootNames.ProviderControllerTester]?: {};
   [RootNames.SetPassword]?:
@@ -389,7 +383,7 @@ export type SettingNavigatorParamList = {
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockTime';
+        actionType: 'setBiometrics' | 'setAutoLockExpireTime';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

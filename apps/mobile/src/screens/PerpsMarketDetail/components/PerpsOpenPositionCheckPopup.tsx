@@ -40,6 +40,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     bothFee: number;
     tpTriggerPx: string;
     slTriggerPx: string;
+    selectedMarginMode: 'cross' | 'isolated';
     estimatedLiquidationPrice: string | number;
   };
 }> = ({ visible, onClose, info, onConfirm }) => {
@@ -65,6 +66,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     estimatedLiquidationPrice,
     tpTriggerPx,
     slTriggerPx,
+    selectedMarginMode,
   } = info;
 
   const { t } = useTranslation();
@@ -116,7 +118,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.margin')}
+                  {t(
+                    selectedMarginMode === 'cross'
+                      ? 'page.perpsDetail.PerpsOpenPositionCheckPopup.marginCross'
+                      : 'page.perpsDetail.PerpsOpenPositionCheckPopup.margin',
+                  )}
                 </Text>
               </View>
               <View>

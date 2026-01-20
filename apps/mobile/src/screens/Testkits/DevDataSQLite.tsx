@@ -25,7 +25,6 @@ import {
   prepareAppDataSource,
 } from '@/databases/imports';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import {
   NEWLY_ADDED_ACCOUNT_DURATION,
@@ -315,7 +314,6 @@ function DevDataSQLite() {
               await prepareAppDataSource();
               await Promise.all([
                 HistoryItemEntity.clear(),
-                SwapItemEntity.clear(),
                 BuyItemEntity.clear(),
               ]);
             }}

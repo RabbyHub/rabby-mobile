@@ -142,7 +142,6 @@ export const RootNames = {
   Approvals: 'Approvals',
   BatchRevoke: 'BatchRevoke',
   History: 'History',
-  CopyTradingTokenDetail: 'CopyTradingTokenDetail',
   HistoryDetail: 'HistoryDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',
@@ -150,10 +149,6 @@ export const RootNames = {
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',
-  /**
-   * @deprecated
-   */
-  CopyTrading: 'CopyTrading',
   Perps: 'Perps',
   PerpsMarketList: 'PerpsMarketList',
   PerpsMarketDetail: 'PerpsMarketDetail',
@@ -390,7 +385,6 @@ function makeScreenSpecConfig() {
       [RootNames.Approvals]: bg1Default2024Conf,
       [RootNames.BatchRevoke]: transparentDefault2024Conf,
       [RootNames.History]: historyPageConf,
-      [RootNames.CopyTradingTokenDetail]: bg1Default2024Conf,
       [RootNames.HistoryDetail]: historyPageConf,
       [RootNames.HistoryLocalDetail]: historyPageConf,
       [RootNames.MultiAddressHistory]: historyPageConf,
@@ -398,7 +392,6 @@ function makeScreenSpecConfig() {
       [RootNames.Bridge]: bg1Default2024Conf,
       [RootNames.MultiBridge]: bg1Default2024Conf,
       [RootNames.GasAccount]: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      [RootNames.CopyTrading]: bg1Default2024Conf,
       [RootNames.Perps]: bg1Default2024Conf,
       [RootNames.PerpsMarketList]: bg1Default2024Conf,
       [RootNames.PerpsMarketDetail]: bg1Default2024Conf,

@@ -8,13 +8,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import { FavoriteTag } from '@/components2024/Favorite';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
 export const PerpsMarketItem: React.FC<{
   item: MarketData;
+  isFavorite?: boolean;
   hasPosition?: boolean;
   onPress?(): void;
-}> = ({ item, onPress, hasPosition }) => {
+}> = ({ item, onPress, hasPosition, isFavorite }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -38,7 +40,6 @@ export const PerpsMarketItem: React.FC<{
               )}
             </View>
             <Text style={styles.price}>
-              {' '}
               {`$${splitNumberByStep(item.markPx)}`}
             </Text>
           </View>
@@ -60,6 +61,7 @@ export const PerpsMarketItem: React.FC<{
             </Text>
           </View>
         </View>
+        {isFavorite && <FavoriteTag style={styles.favoriteTag} />}
       </View>
     </TouchableOpacity>
   );
@@ -165,5 +167,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   priceChangeDown: {
     color: colors2024['red-default'],
+  },
+  favoriteTag: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 }));
