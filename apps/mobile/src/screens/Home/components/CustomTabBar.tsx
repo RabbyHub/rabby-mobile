@@ -245,17 +245,19 @@ const renderTabItem: MaterialTabBarProps['TabItemComponent'] & object = _p => (
   />
 );
 
-export const HomeCustomMaterialTabBar = (
-  props: Omit<
-    MaterialTabBarProps,
-    | 'scrollEnabled'
-    | 'tabStyle'
-    | 'TabItemComponent'
-    | 'style'
-    | 'indicatorStyle'
-    | 'contentContainerStyle'
-  >,
-) => {
+export const HomeCustomMaterialTabBar = ({
+  style,
+  ...props
+}: Omit<
+  MaterialTabBarProps,
+  | 'scrollEnabled'
+  | 'tabStyle'
+  | 'TabItemComponent'
+  | 'style'
+  | 'indicatorStyle'
+  | 'contentContainerStyle'
+> &
+  RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const indexDecimal = props.indexDecimal;
@@ -279,8 +281,8 @@ export const HomeCustomMaterialTabBar = (
   }, [measureSecondaryIndicator]);
 
   return (
-    <View
-      style={styles.container}
+    <Animated.View
+      style={[styles.container, style]}
       // ref={homeGuidanceMultipleTabsTargetViewRef}
       // onLayout={() => {
       //   measureTabBarWrapper();
@@ -325,7 +327,7 @@ export const HomeCustomMaterialTabBar = (
         <SideChainSelector />
         {/* {_props.externalContent} */}
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 };
 
