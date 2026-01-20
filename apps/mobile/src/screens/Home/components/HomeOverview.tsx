@@ -281,7 +281,7 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
       .shouldCancelWhenOutside(false)
       .activeOffsetY(-activeY)
       .maxPointers(1)
-      .onStart(event => {
+      .onStart(() => {
         // translateY.value = 0;
         // isExpanded.value = false;
         startValues.value.restScrollOffset = getIsAtBottom(
@@ -289,10 +289,7 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
         ).restScrollOffset;
       })
       .onUpdate(event => {
-        const { isAtBottom, scrollOffset, absScrollY } = getIsAtBottom(
-          scrollY.value,
-          translateY.value,
-        );
+        const { isAtBottom } = getIsAtBottom(scrollY.value, translateY.value);
 
         translateY.value =
           event.translationY + startValues.value.restScrollOffset;
