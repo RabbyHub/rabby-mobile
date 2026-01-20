@@ -58,7 +58,7 @@ export const SCROLLABLE_DECELERATION_RATE_MAPPER = {
   }),
 };
 
-const PULL_THRESHOLD = 160;
+const PULL_THRESHOLD = 100;
 const scrWinHeight = Dimensions.get('screen').height;
 
 // export const THRESHOLD_PERCENT = (PULL_THRESHOLD / scrWinHeight) * 100;
@@ -66,8 +66,8 @@ export const THRESHOLD_PERCENT = 8;
 
 export function getPullThreshold(height: number = scrWinHeight) {
   'worklet';
-  return Math.min(height * 0.3, PULL_THRESHOLD);
-  // return Math.min(height * THRESHOLD_PERCENT * 0.01, PULL_THRESHOLD);
+  // return Math.min(height * 0.3, PULL_THRESHOLD);
+  return Math.min(height * THRESHOLD_PERCENT * 0.01 + 16, PULL_THRESHOLD);
 }
 
 export const homeDrawerAnimateMutable = {
