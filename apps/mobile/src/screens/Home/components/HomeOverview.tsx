@@ -51,7 +51,10 @@ import { currencyService } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+import useAccountsBalance, {
+  AccountsBalanceState,
+  getBalanceCacheAccounts,
+} from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
@@ -636,7 +639,7 @@ export const HomeOverview = React.memo(() => {
 
   useFetchCexInfo();
 
-  const { triggerUpdate } = useAccountsBalanceTrigger();
+  const { triggerUpdate } = useAccountsBalance();
 
   useEffect(() => {
     setTimeout(() => {
@@ -659,13 +662,34 @@ export const HomeOverview = React.memo(() => {
     }, []),
   );
 
-  const { myTop10Addresses } = useAccountInfo();
+  const { myTop10Addresses, myTop10Accounts } = useAccountInfo();
+
+  const buildBalanceAccounts = useCallback(
+    (balanceAccountsMap: AccountsBalanceState['balance']) => {
+      return myTop10Accounts.reduce((acc, account) => {
+        const address = account.address.toLowerCase();
+        const accountBalance = balanceAccountsMap[address];
+        acc[address] = {
+          address,
+          balance: accountBalance?.balance || 0,
+          evmBalance: accountBalance?.evmBalance || 0,
+          type: account.type,
+          brandName: account.brandName,
+          alias: '', // refresh24hAssets 和 refreshDayCurve 并不需要 alias，传空补全类型即可
+          aliasName: account.aliasName,
+        };
+        return acc;
+      }, {} as AccountsBalanceState['balance']);
+    },
+    [myTop10Accounts],
+  );
 
   useFocusEffect(
     useCallback(() => {
       if (!couldDoRefresh()) return;
-      triggerUpdate().then(balanceAccounts => {
+      triggerUpdate().then(() => {
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+        const balanceAccounts = buildBalanceAccounts(getBalanceCacheAccounts());
         refresh24hAssets({ balanceAccounts });
         refreshDayCurve({ balanceAccounts });
       });
@@ -673,7 +697,12 @@ export const HomeOverview = React.memo(() => {
       // // leave here to measure perf impact
       // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
       syncTop10History(myTop10Addresses, false);
-    }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
+    }, [
+      triggerUpdate,
+      triggerUpdateAlert,
+      myTop10Addresses,
+      buildBalanceAccounts,
+    ]),
   );
 
   const onRefresh = useCallback(() => {
