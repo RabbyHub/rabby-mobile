@@ -1,10 +1,17 @@
-// import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
+import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
+import { RNGHScrollView } from '@/components/customized/reexports';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { zCreate } from '@/core/utils/reexports';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { triggerImpact } from '@/utils/common';
-import { useMemo, useRef, useState, useCallback } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+} from 'react';
 import {
   Dimensions,
   PanResponder,
@@ -33,7 +40,6 @@ import {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Mutable } from 'react-native-reanimated/lib/typescript/commonTypes';
 
 export const SCROLLABLE_STATUS = {
   LOCKED: 'LOCKED',
@@ -52,168 +58,30 @@ export const SCROLLABLE_DECELERATION_RATE_MAPPER = {
   }),
 };
 
-export const homeDrawerAnimateMutables = {
+const PULL_THRESHOLD = 160;
+const scrWinHeight = Dimensions.get('screen').height;
+
+// export const THRESHOLD_PERCENT = (PULL_THRESHOLD / scrWinHeight) * 100;
+export const THRESHOLD_PERCENT = 8;
+
+export function getPullThreshold(height: number = scrWinHeight) {
+  'worklet';
+  return Math.min(height * 0.3, PULL_THRESHOLD);
+  // return Math.min(height * THRESHOLD_PERCENT * 0.01, PULL_THRESHOLD);
+}
+
+export const homeDrawerAnimateMutable = {
   tabsOpacity: makeMutable(0),
   pullPercent: makeMutable(0),
   isExpanded: makeMutable(false),
   translateY: makeMutable(0),
+
+  scrollViewContentHeight: makeMutable(0),
+  scrollViewLayoutHeight: makeMutable(0),
+  swipeUpHintHeight: makeMutable(0),
 };
 
-const OFFSETS = {
-  atBottomThreshold: IS_IOS ? 0 : -10,
-
-  homeSwipeThreadhold: 20,
-};
-
-function getIsOverBottom(
-  scrollY: number,
-  scrollViewContentHeight: number,
-  scrollViewLayoutHeight: number,
-) {
+export function getScrollContainerPb(bottomInset: number) {
   'worklet';
-  const ret = {
-    isOverBottom: false,
-    isOverHalftonent: false,
-  };
-  if (!scrollViewContentHeight || !scrollViewLayoutHeight) ret;
-
-  const maxOffset = Math.max(
-    0,
-    scrollViewContentHeight - scrollViewLayoutHeight,
-  );
-  ret.isOverBottom = scrollY - maxOffset >= OFFSETS.atBottomThreshold;
-
-  return {
-    ...ret,
-    isOverHalftonent: scrollY * 2 >= maxOffset,
-  };
+  return IS_ANDROID ? Math.max(bottomInset, 16) : bottomInset;
 }
-
-export const useHomeAnimation = () => {
-  const { isExpanded, translateY, pullPercent, tabsOpacity } =
-    homeDrawerAnimateMutables;
-  const { height: winHeight, width: winWidth } = useWindowDimensions();
-  const scrollableRef = useAnimatedRef<ScrollView>();
-  const scrollY = useCurrentTabScrollY();
-
-  const scrollViewContentHeight = useSharedValue(0);
-  const scrollViewLayoutHeight = useSharedValue(0);
-
-  const context = useSharedValue({
-    currentY: 0,
-  });
-  const scrollToTop = useCallback(() => {
-    'worklet';
-    scrollTo(scrollableRef, 0, 0, false);
-    context.value.currentY = 0;
-  }, [context.value, scrollableRef]);
-
-  useAnimatedReaction(
-    () => translateY.value,
-    value => {
-      pullPercent.value = (value / winHeight) * 100;
-    },
-  );
-
-  useAnimatedReaction(
-    () => pullPercent.value,
-    value => {
-      if (value === 0) {
-        isExpanded.value = false;
-      } else if (value === -100) {
-        isExpanded.value = true;
-        scrollToTop();
-      }
-
-      tabsOpacity.value = interpolate(
-        value,
-        [-80, -20],
-        [0, 1],
-        Extrapolate.CLAMP,
-      );
-    },
-  );
-
-  const panGesture = useMemo(() => {
-    const pullThreshold = winHeight * 0.3;
-    const activeY = Math.min(8, Math.round(Math.floor(pullThreshold * 0.1)));
-
-    let gesture = Gesture.Pan()
-      .shouldCancelWhenOutside(false)
-      .activeOffsetY(-activeY)
-      .maxPointers(1)
-      .onStart(() => {
-        translateY.value = 0;
-        isExpanded.value = false;
-      })
-      .onUpdate(event => {
-        const maxOffset = Math.max(
-          0,
-          scrollViewContentHeight.value - scrollViewLayoutHeight.value,
-        );
-        const offsetY = context.value.currentY - event.translationY;
-        const clampedOffsetY = clamp(offsetY, 0, maxOffset);
-
-        scrollTo(scrollableRef, 0, clampedOffsetY, false);
-
-        if (event.translationY > 0 || !event.translationY) return;
-        const { isOverBottom } = getIsOverBottom(
-          scrollY.value,
-          scrollViewContentHeight.value,
-          scrollViewLayoutHeight.value,
-        );
-        if (!isOverBottom) return;
-
-        translateY.value = event.translationY;
-      })
-      .onEnd(event => {
-        context.value.currentY = scrollY.value;
-
-        if (translateY.value * -1 > pullThreshold) {
-          translateY.value = withTiming(-winHeight);
-          runOnJS(triggerImpact)();
-        } else {
-          translateY.value = withTiming(0);
-        }
-      });
-
-    return gesture;
-  }, [
-    winHeight,
-    isExpanded,
-    translateY,
-    context,
-    scrollY,
-    scrollViewContentHeight,
-    scrollViewLayoutHeight,
-    scrollableRef,
-  ]);
-
-  const scrollableGesture = useMemo(() => {
-    const sGesture = Gesture.Native().shouldCancelWhenOutside(false);
-
-    sGesture.simultaneousWithExternalGesture(panGesture);
-
-    return sGesture;
-  }, [panGesture]);
-
-  const mainStyle = useAnimatedStyle(() => ({
-    overflow: 'hidden',
-    transform: [
-      {
-        translateY: translateY.value,
-      },
-    ],
-  }));
-
-  return {
-    scrollableGesture,
-
-    panGesture,
-
-    scrollableRef,
-    scrollViewContentHeight,
-    scrollViewLayoutHeight,
-    mainStyle,
-  };
-};

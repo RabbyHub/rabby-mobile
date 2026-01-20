@@ -36344,9 +36344,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-collapsible-tab-view@npm:^6.2.1":
+"react-native-collapsible-tab-view@npm:6.2.1":
   version: 6.2.1
-  resolution: "react-native-collapsible-tab-view@npm:6.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-collapsible-tab-view%2F-%2Freact-native-collapsible-tab-view-6.2.1.tgz"
+  resolution: "react-native-collapsible-tab-view@npm:6.2.1"
   dependencies:
     use-deep-compare: ^1.1.0
   peerDependencies:
@@ -36359,6 +36359,24 @@ __metadata:
     "@shopify/flash-list":
       optional: true
   checksum: 759a4af59bf70c28c0a5e3a25e4eaf864a510757dd4affc0071f141e77f73cb19ea35c450a5090858e4bfa7ebcd77d5ce4982feadcd9ab75dde2e34ead23c451
+  languageName: node
+  linkType: hard
+
+"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 6.2.1
+  resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::version=6.2.1&hash=26d463&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    use-deep-compare: ^1.1.0
+  peerDependencies:
+    "@shopify/flash-list": ">=1.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-pager-view: "*"
+    react-native-reanimated: ">=2.15.0"
+  peerDependenciesMeta:
+    "@shopify/flash-list":
+      optional: true
+  checksum: ea4a01c03d912480618ca695dbf9ac5d2e6994a519fcb76a3a35c6b25124b04774849f0dd1e4affc2a7923700cea1c742858c82a8c38a775e703ddf1697a7b8b
   languageName: node
   linkType: hard
 

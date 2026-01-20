@@ -14,15 +14,16 @@ import {
   TabsTopHeader,
 } from '@/screens/Home/components/OverviewTopHeader';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
-import { Freeze } from 'react-freeze';
-import { CollapsibleRef, Tabs } from 'react-native-collapsible-tab-view';
+import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { homeDrawerAnimateMutables } from '@/screens/Home/hooks/useHomeDrawerAnimate';
-
+import { Freeze } from 'react-freeze';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
-import { MemoizedTokenItemLoader, TokenList } from './TokenList';
-import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
+import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
+import { MemoizedTokenItemLoader, TokenList } from './TokenList';
+import { IS_IOS } from '@/core/native/utils';
+import { HomeOverview } from '@/screens/Home/components/HomeOverview';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -35,14 +36,13 @@ export const icons = {
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
 export const TAB_HEADER_FULL_HEIGHT = 94;
-export const TAB_HEADER_MIN_HEIGHT = 44;
 export const TAB_HEADER_MT = 64;
 
 export interface TabMultiAssetsProps {
-  onIndexChange(index: number): void;
-  OverViewComponent: React.FC<{
-    // accountToShowReceiveTip?: Account | null;
-  }>;
+  // onIndexChange(index: number): void;
+  // HomeOverview: React.FC<{
+  //   // accountToShowReceiveTip?: Account | null;
+  // }>;
 }
 
 export const enum TabName {
@@ -82,23 +82,25 @@ runIIFEFunc(() => {
   });
 });
 
-export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
-  onIndexChange,
-  OverViewComponent,
-}) => {
+const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
+
+export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = (
+  {
+    // onIndexChange,
+    // HomeOverview,
+  },
+) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const tabsOpacity = homeDrawerAnimateMutables.tabsOpacity;
+  const tabsOpacity = homeDrawerAnimateMutable.tabsOpacity;
   const tabsStyle = useAnimatedStyle(() => ({
     opacity: tabsOpacity.value,
     pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'auto',
   }));
 
   const renderTabBar = React.useCallback(
-    (_props: React.ComponentProps<typeof HomeCustomMaterialTabBar>) => (
-      <Animated.View style={tabsStyle}>
-        <HomeCustomMaterialTabBar {..._props} />
-      </Animated.View>
+    (props: React.ComponentProps<typeof HomeCustomMaterialTabBar>) => (
+      <HomeCustomMaterialTabBar {...props} style={[tabsStyle, props.style]} />
     ),
     [tabsStyle],
   );
@@ -115,11 +117,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
     React.ComponentProps<typeof Tabs.Container>['renderHeader'] & object
   >(
     props => {
-      return (
-        <Animated.View style={tabsStyle}>
-          <TabsTopHeader indexValue={props.index} />
-        </Animated.View>
-      );
+      return <TabsTopHeader style={tabsStyle} />;
     },
     [tabsStyle],
   );
@@ -151,7 +149,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
       headerHeight={HeaderHeight}
       minHeaderHeight={HeaderHeight}
       tabBarHeight={74}
-      allowHeaderOverscroll
+      allowHeaderOverscroll={IS_IOS}
       lazy={false}
       cancelLazyFadeIn
       pagerProps={{
@@ -166,7 +164,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         key={TabName.overview}
         name={TabName.overview}
         label={() => null}>
-        <OverViewComponent />
+        <HomeOverview />
       </Tabs.Tab>
 
       <Tabs.Tab
@@ -212,10 +210,11 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   );
 };
 
-const getStyles = createGetStyles2024(() => ({
+const getStyles = createGetStyles2024(({ safeAreaInsets }) => ({
   container: {
     flex: 1,
-    marginTop: TAB_HEADER_MT,
+    // marginTop: TAB_HEADER_MT,
+    marginTop: Math.max(safeAreaInsets.top, TAB_HEADER_MT),
   },
   headerContainer: {
     backgroundColor: 'transparent',

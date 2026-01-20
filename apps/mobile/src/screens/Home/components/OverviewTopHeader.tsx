@@ -33,7 +33,7 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import {
+import Animated, {
   runOnJS,
   SharedValue,
   useAnimatedReaction,
@@ -47,14 +47,11 @@ import {
 
 export const HeaderHeight = 24;
 
-export function TabsTopHeader(
-  props: {
-    indexValue?: SharedValue<number>;
-  } & RNViewProps,
-): JSX.Element {
-  const {
-    /* loading, data,  showNetWorth = false*/
-  } = props;
+export function TabsTopHeader({
+  style,
+}: {
+  // indexValue?: SharedValue<number>;
+} & RNViewProps): JSX.Element {
   const { tabIndex } = useHomeTabIndex();
   const showNetWorth = tabIndex !== 0;
 
@@ -125,7 +122,7 @@ export function TabsTopHeader(
   }, [data.isLoss, loading, previousLoading]);
 
   return (
-    <View style={styles.headerBox}>
+    <Animated.View style={[styles.headerBox, style]}>
       {showNetWorth ? (
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>{netWorth}</Text>
@@ -202,7 +199,7 @@ export function TabsTopHeader(
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

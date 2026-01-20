@@ -1,7 +1,11 @@
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import React, { useMemo, useState } from 'react';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
@@ -18,6 +22,7 @@ import Animated, {
   Extrapolate,
   interpolate,
   runOnJS,
+  runOnUI,
   scrollTo,
   useAnimatedProps,
   useAnimatedRef,
@@ -37,39 +42,53 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  getPullThreshold,
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
-  homeDrawerAnimateMutables,
+  homeDrawerAnimateMutable,
+  getScrollContainerPb,
 } from '../hooks/useHomeDrawerAnimate';
 import { triggerImpact } from '@/utils/common';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 import { Button } from '@/components2024/Button';
 import { TAB_HEADER_MT } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
 
-export const HomeDappDrawer: React.FC = () => {
+const { pullPercent, isExpanded, translateY, swipeUpHintHeight } =
+  homeDrawerAnimateMutable;
+
+export const HomeDappDrawer: React.FC<{
+  onScrollBack?: WorkletFunction;
+}> = ({ onScrollBack }) => {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const height = Dimensions.get('screen').height;
   const { safeTop, headerHeight } = useSafeSizes();
+  const offsetTop = useMemo(() => {
+    return Math.max(safeTop, headerHeight);
+  }, [headerHeight, safeTop]);
 
   console.log('HomeDappDrawer render', { safeTop, headerHeight });
 
   const { openTab, setPartialBrowserState } = useBrowser();
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [_isEditing, setIsEditing] = React.useState(false);
   const [removedItems, setRemovedItems] = useState<string[]>([]);
   const list = useMemo(() => {
     return bookmarkList.filter(item => !removedItems.includes(item.origin));
   }, [bookmarkList, removedItems]);
 
+  const hasData = list.length > 0;
+  const isEditing = _isEditing && hasData;
+
   const startEditing = () => {
+    if (!hasData) return;
     setIsEditing(true);
     setRemovedItems([]);
   };
@@ -93,12 +112,23 @@ export const HomeDappDrawer: React.FC = () => {
     }
   };
 
+  const handleScrollBack = useCallback(() => {
+    'worklet';
+    if (onScrollBack) {
+      onScrollBack();
+    }
+  }, [onScrollBack]);
+
   const onPressHome = () => {
-    translateY.value = withTiming(0);
+    translateY.value = withTiming(0, undefined, () => {
+      scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+      !IS_ANDROID && handleScrollBack();
+    });
+    IS_ANDROID && runOnUI(handleScrollBack)();
+
     triggerImpact();
   };
 
-  const { pullPercent, isExpanded, translateY } = homeDrawerAnimateMutables;
   const drawerScrollOffsetY = useSharedValue(0);
   const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
@@ -124,8 +154,6 @@ export const HomeDappDrawer: React.FC = () => {
     },
   });
 
-  const pullThreshold = height * 0.3;
-
   const drawerGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -146,10 +174,12 @@ export const HomeDappDrawer: React.FC = () => {
         .onEnd(() => {
           'worklet';
 
-          if (translateY.value > (height - pullThreshold) * -1) {
+          if (translateY.value > (height - getPullThreshold(height)) * -1) {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
             });
+            handleScrollBack();
+
             runOnJS(triggerImpact)();
           } else {
             translateY.value = withTiming(-height, undefined, () => {
@@ -160,10 +190,10 @@ export const HomeDappDrawer: React.FC = () => {
     [
       drawerScrollOffsetY,
       height,
-      pullPercent.value,
-      pullThreshold,
+      // pullPercent.value,
       scrollableStatus,
-      translateY,
+      // translateY,
+      handleScrollBack,
     ],
   );
 
@@ -176,7 +206,7 @@ export const HomeDappDrawer: React.FC = () => {
   );
 
   const drawerTranslateYStyle = useAnimatedStyle(() => {
-    return {
+    const result = {
       height: height,
       transform: [
         {
@@ -191,11 +221,13 @@ export const HomeDappDrawer: React.FC = () => {
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
-        [IS_ANDROID ? 0 : safeTop, 0],
+        // [offsetTop, 0],
+        [0, 0],
         Extrapolate.CLAMP,
       ),
     };
-  }, [height, safeTop]);
+    return result;
+  }, [height, offsetTop]);
 
   const panelScaleStyle = useAnimatedStyle(() => {
     return {
@@ -210,21 +242,33 @@ export const HomeDappDrawer: React.FC = () => {
           ),
         },
       ],
+      paddingTop: interpolate(
+        pullPercent.value,
+        [-100, 0],
+        [TAB_HEADER_MT, 0],
+        Extrapolate.CLAMP,
+      ),
     };
-  }, [pullThreshold, isExpanded]);
+  }, [isExpanded]);
 
+  const safeInsets = useSafeAreaInsets();
   const overlayOpacityStyle = useAnimatedStyle(() => {
+    const topValue = -(
+      swipeUpHintHeight.value + getScrollContainerPb(safeInsets.bottom)
+    );
+
     return {
+      top: IS_ANDROID ? topValue : topValue,
       opacity: isExpanded.value
         ? 0
         : interpolate(
             pullPercent.value,
             [-100, -100 * 0.3, 0],
-            [0, 1, 0],
+            [0, 0.75, 0],
             Extrapolate.CLAMP,
           ),
     };
-  }, [pullThreshold]);
+  });
 
   return (
     <GestureDetector gesture={drawerGesture}>
@@ -232,7 +276,7 @@ export const HomeDappDrawer: React.FC = () => {
         pointerEvents="auto"
         style={[styles.pullUpPanel, drawerTranslateYStyle]}>
         <Animated.View style={[styles.pullOverlay, overlayOpacityStyle]} />
-        <Animated.View style={[panelScaleStyle]}>
+        <Animated.View style={[styles.panel, panelScaleStyle]}>
           <View style={styles.page}>
             <View style={styles.favoritesList}>
               <View style={styles.container}>
@@ -240,7 +284,10 @@ export const HomeDappDrawer: React.FC = () => {
                   <Text style={styles.title}>
                     {t('page.home.DappDrawer.favorite')}
                   </Text>
-                  <TouchableOpacity onPress={handle}>
+                  <TouchableOpacity
+                    disabled={!hasData}
+                    onPress={handle}
+                    style={[!hasData && { opacity: 0.5 }]}>
                     <Text style={styles.edit}>
                       {isEditing ? t('global.Done') : t('global.Edit')}
                     </Text>
@@ -318,14 +365,7 @@ export const HomeDappDrawer: React.FC = () => {
               </View>
             </View>
 
-            <View
-              style={[
-                styles.footer,
-                {
-                  paddingBottom:
-                    Platform.OS === 'ios' ? bottom : Math.max(bottom, 12),
-                },
-              ]}>
+            <View style={[styles.footer]}>
               <TouchableOpacity onPress={onPressHome}>
                 <ReactIconHome
                   width={44}
@@ -367,18 +407,24 @@ export const HomeDappDrawer: React.FC = () => {
   );
 };
 
+// const DRAWER_MAGIC_OFFSET = TAB_HEADER_FULL_HEIGHT - 44;
+
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     pullUpPanel: {
       position: 'absolute',
+      top: !IS_ANDROID ? 'auto' : 'auto',
+      // top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      height: '100%',
+      // height: '100%',
+      // ...makeDebugBorder(),
     },
     pullOverlay: {
       position: 'absolute',
-      top: -90,
+      // top: IS_ANDROID ? -70 : -90,
+      top: 0,
       transform: [{ translateX: -501 }],
       left: '50%',
       height: 1002,
@@ -387,19 +433,25 @@ const getStyle = createGetStyles2024(
       backgroundColor: colors2024['brand-light-1'],
       zIndex: 10,
       pointerEvents: 'none',
+      // ...makeDebugBorder('yellow'),
+    },
+
+    panel: {
+      // paddingTop: !IS_ANDROID ? TAB_HEADER_MT : TAB_HEADER_MT,
+      paddingTop: 0,
+      display: 'flex',
+      flexDirection: 'column',
     },
 
     page: {
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: 'gray'
+      // }),
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      ...(IS_ANDROID && {
-        maxHeight:
-          Dimensions.get('window').height - TAB_HEADER_MT - safeAreaInsets.top,
-        marginTop: TAB_HEADER_MT,
-        zIndex: 20,
-      }),
-      // ...makeDebugBorder('green'),
+      // maxHeight: Dimensions.get('screen').height - TAB_HEADER_MT/*  - safeAreaInsets.bottom */,
+      maxHeight: Dimensions.get('window').height - TAB_HEADER_MT,
     },
     favoritesList: {
       flex: 1,
@@ -458,6 +510,10 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       gap: 12,
       width: '100%',
+      // paddingBottom: IS_ANDROID ? Math.max(safeAreaInsets.bottom, 12) : safeAreaInsets.bottom,
+      paddingBottom: IS_ANDROID
+        ? safeAreaInsets.bottom + 12
+        : safeAreaInsets.bottom,
     },
 
     container: {

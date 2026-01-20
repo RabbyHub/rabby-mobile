@@ -17,7 +17,6 @@ import {
   LinearGradientContainerProps,
 } from './LinearGradientContainer';
 import { LinearGradientProps } from 'react-native-linear-gradient';
-import { IS_ANDROID } from '@/core/native/utils';
 
 export default function NormalScreenContainer2024<
   T extends ReactNativeViewAs = 'View',
