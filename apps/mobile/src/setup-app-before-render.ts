@@ -39,6 +39,7 @@ import tokenListStore from './store/tokens';
 import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 import balanceStore from './store/balance';
+import useProtocolListStore from './store/protocols';
 import { apisAutoLock } from './core/apis';
 
 startSubscribeLangChange();
@@ -85,3 +86,5 @@ startCheckClearAction();
 
 tokenListStore.getState().initStore();
 balanceStore.getState().initStore();
+
+useProtocolListStore.getState().initStore();

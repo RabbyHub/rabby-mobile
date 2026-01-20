@@ -7,12 +7,10 @@ import {
   FullDefiRenderItem,
   TokenRowSectionHeader,
 } from '@/screens/Home/components/AssetRenderItems';
-import { AbstractProject, ActionItem } from '@/screens/Home/types';
+import { ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useLoadAssets } from '@/screens/Search/useAssets';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
-import { DisplayedProject } from '@/screens/Home/utils/project';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -22,94 +20,78 @@ import {
   ListRenderFooter as ListRenderFooterComponent,
   ListRenderSeparator,
 } from './RenderRow/Common';
-import {
-  useCheckIsExpireAndUpdate,
-  useFindAccountByAddress,
-  useIsFocusedCurrentTab,
-} from './hooks/share';
-import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
+import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { getAllDefiCount } from '@/screens/Home/utils/converAssets';
-import {
-  CombineDefiItem,
-  useAssetsPortfolios,
-  useOnDeFiRefresh,
-} from '@/screens/Home/hooks/store';
 import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
+import useProtocols, {
+  getMultiProtocolsCacheKey,
+  ICacheProtocolItem,
+  useProtocolListComputedStore,
+} from '@/store/protocols';
+import { useShallow } from 'zustand/react/shallow';
+import { useAccountInfo } from './hooks';
+import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+
+const emptyCacheProtocolItem: ICacheProtocolItem = {
+  fold: [],
+  unFold: [],
+};
 
 const MemoizedFullDefiRenderItem = React.memo(FullDefiRenderItem);
 const MemoizedEmptyAssets = React.memo(EmptyAssets);
 
 export const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
 
-interface Props {
-  chain?: string;
-}
 export const ProtocolList = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
+  const { myTop10Addresses } = useAccountInfo();
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
   const [foldDefi, setFoldDefi] = useState(true);
 
-  const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.defi);
-  const { deFiRefresh } = useTriggerTagAssets();
-  useOnDeFiRefresh();
-
+  const { isFocused } = useIsFocusedCurrentTab(TabName.defi);
   const getAccountByAddress = useFindAccountByAddress();
-  const { triggerUpdate } = useCheckIsExpireAndUpdate({
-    isFocused,
-    isFocusing,
-    disableToken: true,
-    disableNFT: true,
-  });
+  const { triggerUpdate } = useAccountsBalanceTrigger();
 
-  const { checkIsExpireAndUpdate, isLoading } = useLoadAssets();
+  const multiProtocolsKey = useMemo(() => {
+    return getMultiProtocolsCacheKey(myTop10Addresses, chain);
+  }, [chain, myTop10Addresses]);
 
-  const { portfolios: _rawPortfolios } = useAssetsPortfolios({
-    hideCombined: false,
-  });
+  const registerMultiAssets = useProtocolListComputedStore(
+    s => s.registerMultiProtocols,
+  );
 
-  const portfolios = useMemo(() => {
-    const list = _rawPortfolios.filter(item =>
-      chain && item?.chain ? item.chain === chain : true,
-    );
-    const foldList: CombineDefiItem[] = [];
-    const unFoldList: CombineDefiItem[] = [];
-    list.forEach(item => {
-      if (item._isFold) {
-        foldList.push(item);
-      } else {
-        unFoldList.push(item);
-      }
-    });
-    return {
-      unFoldList,
-      foldList,
-    };
-  }, [_rawPortfolios, chain]);
+  const multiProtocols = useProtocolListComputedStore(
+    useShallow(
+      state =>
+        state.multiProtocolsCache[multiProtocolsKey] || emptyCacheProtocolItem,
+    ),
+  );
+  const updateMultiProtocols = useProtocols(state => state.batchGetProtocols);
+
+  const isLoading = useProtocols(state => state.isLoading);
 
   const {
     data: portfoliosData,
     loadMore: loadMorePortfolios,
     hasMore: hasMorePortfolios,
-  } = useLoadMoreData(portfolios.unFoldList);
+  } = useLoadMoreData(multiProtocols.unFold);
 
   const shouldDefaultExpand = useMemo(
-    () => portfolios.unFoldList.length <= 5,
-    [portfolios.unFoldList.length],
+    () => multiProtocols.unFold.length <= 5,
+    [multiProtocols.unFold.length],
   );
 
   const portfolioListData = useMemo(() => {
-    const foldDeFiList: ActionItem[] = portfolios.foldList.map(item => ({
+    const foldDeFiList: ActionItem[] = multiProtocols.fold.map(item => ({
       type: 'fold_defi',
-      data: item as unknown as DisplayedProject,
+      data: item,
     }));
 
-    const foldDeFiValue = getAllDefiCount(
-      portfolios.foldList as unknown as DisplayedProject[],
-    );
+    const foldDeFiValue = getAllDefiCount(multiProtocols.fold);
 
     const itemData: Array<{
       show: boolean;
@@ -120,7 +102,7 @@ export const ProtocolList = () => {
         data: [
           ...portfoliosData.map(item => ({
             type: 'unfold_defi' as const,
-            data: item as unknown as DisplayedProject,
+            data: item,
           })),
         ],
       },
@@ -137,8 +119,8 @@ export const ProtocolList = () => {
       {
         show:
           !!isLoading &&
-          !portfolios.unFoldList.length &&
-          !portfolios.foldList.length,
+          !multiProtocols.unFold.length &&
+          !multiProtocols.fold.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: index.toString(),
@@ -147,8 +129,8 @@ export const ProtocolList = () => {
       {
         show:
           !isLoading &&
-          portfolios.unFoldList.length === 0 &&
-          portfolios.foldList.length === 0,
+          multiProtocols.unFold.length === 0 &&
+          multiProtocols.fold.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -167,41 +149,49 @@ export const ProtocolList = () => {
     foldDefi,
     isLoading,
     t,
-    portfolios.foldList,
-    portfolios.unFoldList.length,
+    multiProtocols.fold,
+    multiProtocols.unFold.length,
     portfoliosData,
   ]);
 
   const hasNotAssets = useMemo(() => {
     return (
-      portfolios.unFoldList.length === 0 &&
-      portfolios.foldList.length === 0 &&
+      multiProtocols.unFold.length === 0 &&
+      multiProtocols.fold.length === 0 &&
       !isLoading &&
       isFocused
     );
   }, [
-    portfolios.foldList.length,
-    portfolios.unFoldList.length,
+    multiProtocols.fold.length,
+    multiProtocols.unFold.length,
     isLoading,
     isFocused,
   ]);
 
+  useEffect(() => {
+    registerMultiAssets(myTop10Addresses, chain);
+  }, [myTop10Addresses, chain, registerMultiAssets]);
+
+  useEffect(() => {
+    updateMultiProtocols(myTop10Addresses);
+  }, [myTop10Addresses, updateMultiProtocols]);
+
   const renderItem = useCallback(
     ({ item }) => {
-      const { type, data } = item;
+      const { type, data } = item as ActionItem;
       switch (type) {
         case 'unfold_defi':
         case 'fold_defi':
           return (
             <MemoizedFullDefiRenderItem
-              data={data as unknown as AbstractProject}
+              data={data}
               showAccount
               style={styles.fullDefi}
               disableAction={isLoading}
               defaultExpand={type === 'fold_defi' ? false : shouldDefaultExpand}
               account={
                 getAccountByAddress(
-                  data?.address,
+                  data?.owner_addr,
                 ) as unknown as KeyringAccountWithAlias
               }
             />
@@ -253,13 +243,12 @@ export const ProtocolList = () => {
     try {
       await Promise.all([
         triggerUpdate(true),
-        checkIsExpireAndUpdate(true, { disableToken: true, disableNFT: true }),
-        deFiRefresh(),
+        updateMultiProtocols(myTop10Addresses, true),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate, deFiRefresh]);
+  }, [triggerUpdate, updateMultiProtocols, myTop10Addresses]);
 
   // if (!isFocusing) {
   //   return null;

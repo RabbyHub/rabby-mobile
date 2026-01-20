@@ -4,7 +4,7 @@ import { StyleSheet, Text, ViewStyle } from 'react-native';
 import { Card } from '@/components';
 
 import { PortfolioHeader } from '../components/PortfolioDetail';
-import { AbstractPortfolio } from '../types';
+import { IProtocolPortfolio } from '@/store/protocols';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 
@@ -15,7 +15,7 @@ export default React.memo(
     style,
   }: {
     name: string;
-    data: AbstractPortfolio;
+    data: IProtocolPortfolio;
     style?: ViewStyle;
   }) => {
     const colors = useThemeColors();
