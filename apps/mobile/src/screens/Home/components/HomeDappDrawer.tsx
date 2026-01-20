@@ -407,7 +407,7 @@ export const HomeDappDrawer: React.FC<{
   );
 };
 
-// const DRAWER_MAGIC_OFFSET = TAB_HEADER_FULL_HEIGHT - 44;
+const FOOTER_PB = 24;
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
@@ -450,7 +450,6 @@ const getStyle = createGetStyles2024(
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      // maxHeight: Dimensions.get('screen').height - TAB_HEADER_MT/*  - safeAreaInsets.bottom */,
       maxHeight: Dimensions.get('window').height - TAB_HEADER_MT,
     },
     favoritesList: {
@@ -510,10 +509,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       gap: 12,
       width: '100%',
-      // paddingBottom: IS_ANDROID ? Math.max(safeAreaInsets.bottom, 12) : safeAreaInsets.bottom,
-      paddingBottom: IS_ANDROID
-        ? safeAreaInsets.bottom + 12
-        : safeAreaInsets.bottom,
+      paddingBottom: Math.max(safeAreaInsets.bottom, FOOTER_PB),
     },
 
     container: {
