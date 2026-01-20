@@ -17,7 +17,13 @@ import {
   makeDevOnlyStyle,
 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   AppState,
   Dimensions,
@@ -130,7 +136,7 @@ import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from './OverviewTopHeader';
 
 const isInActiveRef = {
@@ -234,10 +240,12 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     [scrollableRef, scrollableStatus],
   );
 
+  const [iosBounces, setIosBounces] = useState(false);
+
   useAnimatedReaction(
     () => translateY.value,
-    value => {
-      pullPercent.value = (value / scrHeight) * 100;
+    translateYValue => {
+      pullPercent.value = (translateYValue / scrHeight) * 100;
       const percentValue = pullPercent.value;
       if (percentValue === -100) {
         isExpanded.value = true;
@@ -252,6 +260,10 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
         [0, 1],
         Extrapolate.CLAMP,
       );
+
+      if (IS_IOS) {
+        runOnJS(setIosBounces)(translateYValue >= 0);
+      }
     },
   );
 
@@ -335,7 +347,10 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     };
   });
 
+  const tabScrollViewBounces = IS_IOS && iosBounces;
+
   return {
+    tabScrollViewBounces,
     panGestureRef,
 
     onScrollHandlers,
@@ -853,6 +868,7 @@ export const HomeOverview = React.memo(() => {
   );
 
   const {
+    tabScrollViewBounces,
     mainStyle,
     onScrollHandlers,
     uiOnScrollBack,
@@ -872,7 +888,7 @@ export const HomeOverview = React.memo(() => {
             showsVerticalScrollIndicator={false}
             style={[styles.scroll, { flex: undefined }]}
             contentContainerStyle={[styles.scrollContainer]}
-            bounces={false}
+            bounces={tabScrollViewBounces}
             overScrollMode={'never'}
             scrollEventThrottle={16}
             onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
