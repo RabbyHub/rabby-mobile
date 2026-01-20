@@ -2883,6 +2883,13 @@
         "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode.",
         "maxLTV": "The Maximum LTV ratio represents the maximum borrowing power of a specific collateral. For example, if a collateral has an LTV of 75%, the user can borrow up to 0.75 worth of ETH in the principal currency for every 1 ETH worth of collateral."
       },
+      "repayWithAToken": {
+        "title": "Select Repay Token",
+        "header": {
+          "assets": "Token",
+          "balance": "Balance"
+        }
+      },
       "manageEmode": {
         "__skip_translation": ["emode"],
         "emode": "E-Mode",
