@@ -23,7 +23,10 @@ import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import RepayActionOverView from './RepayActionOverView';
 import { parseUnits } from 'viem';
-import { calculateHFAfterRepay } from '../../utils/hfUtils';
+import {
+  calculateHFAfterRepay,
+  calculateHFAfterRepayWithAToken,
+} from '../../utils/hfUtils';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
@@ -172,12 +175,19 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     if (!amount || amount === '0') {
       return undefined;
     }
-    // TODO: token repay with aToken
     const targetPool = formattedPoolReservesAndIncentives.find(item =>
       isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
     );
     if (!targetPool) {
       return undefined;
+    }
+    if (isAtTokenRepay) {
+      return calculateHFAfterRepayWithAToken({
+        user: userSummary,
+        amount,
+        debt: reserve.variableBorrows,
+        usdPrice: reserve.reserve.formattedPriceInMarketReferenceCurrency,
+      }).toString();
     }
     return calculateHFAfterRepay({
       user: userSummary,
@@ -185,7 +195,13 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       debt: reserve.variableBorrows,
       usdPrice: reserve.reserve.formattedPriceInMarketReferenceCurrency,
     }).toString();
-  }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
+  }, [
+    amount,
+    formattedPoolReservesAndIncentives,
+    isAtTokenRepay,
+    reserve,
+    userSummary,
+  ]);
 
   const checkApproveStatus = useCallback(async () => {
     if (!amount || amount === '0' || !currentAccount || isAtTokenRepay) {
@@ -351,7 +367,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       if (!targetPool?.aTokenAddress) {
         return;
       }
-      // TODO: token repay with aToken
       const repayResult = await buildRepayTx({
         poolBundle: pools.poolBundle,
         amount:
@@ -361,6 +376,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
         useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
+        repayWithATokens: isAtTokenRepay,
       });
       delete repayResult.gasLimit;
 
@@ -613,7 +629,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           )}
           style={styles.amountInput}
           onClickToken={
-            availableRepayTokens.length > 1
+            availableRepayTokens.length > 1 && !!reserve.underlyingBalance
               ? () => {
                   handleClickToken();
                 }

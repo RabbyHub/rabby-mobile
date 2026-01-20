@@ -113,13 +113,27 @@ export const buildRepayTx = async ({
   address,
   reserve,
   useOptimizedPath,
+  repayWithATokens,
+  encodedTxData,
 }: {
   poolBundle: PoolBundle;
   amount: string;
   address: string;
   reserve: string;
   useOptimizedPath?: boolean;
+  repayWithATokens?: boolean;
+  encodedTxData?: string;
 }) => {
+  if (repayWithATokens) {
+    return poolBundle.repayWithATokensTxBuilder.generateTxData({
+      user: address,
+      reserve,
+      amount,
+      rateMode: InterestRate.Variable,
+      useOptimizedPath: !!useOptimizedPath,
+      encodedTxData,
+    });
+  }
   return poolBundle.repayTxBuilder.generateTxData({
     user: address,
     reserve,
