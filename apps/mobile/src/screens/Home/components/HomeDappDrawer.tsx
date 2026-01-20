@@ -54,6 +54,7 @@ import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 import { Button } from '@/components2024/Button';
 import { TAB_HEADER_MT } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -81,7 +82,12 @@ export const HomeDappDrawer: React.FC<{
   const [_isEditing, setIsEditing] = React.useState(false);
   const [removedItems, setRemovedItems] = useState<string[]>([]);
   const list = useMemo(() => {
-    return bookmarkList.filter(item => !removedItems.includes(item.origin));
+    return bookmarkList.filter(
+      item =>
+        !removedItems.find(
+          url => safeGetOrigin(url) === safeGetOrigin(item.origin),
+        ),
+    );
   }, [bookmarkList, removedItems]);
 
   const hasData = list.length > 0;
@@ -98,6 +104,7 @@ export const HomeDappDrawer: React.FC<{
     removedItems.forEach(url => {
       removeBookmark(url);
     });
+    setRemovedItems([]);
   };
 
   const handleRemoveLocal = (url: string) => {
@@ -511,9 +518,7 @@ const getStyle = createGetStyles2024(
       gap: 12,
       width: '100%',
       // paddingBottom: IS_ANDROID ? Math.max(safeAreaInsets.bottom, 12) : safeAreaInsets.bottom,
-      paddingBottom: IS_ANDROID
-        ? safeAreaInsets.bottom + 12
-        : safeAreaInsets.bottom,
+      paddingBottom: Math.max(safeAreaInsets.bottom, 12),
     },
 
     container: {
