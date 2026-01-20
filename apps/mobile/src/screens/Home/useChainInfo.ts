@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { isAppChain } from '@/screens/Home/utils/appchain';
-import { AbstractProject, DisplayNftItem } from './types';
+import { DisplayNftItem } from './types';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { assetsMapStore, computeAssetsApis } from './hooks/store';
@@ -11,6 +11,8 @@ import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { IProtocolItem } from '@/store/protocols';
+import useProtocolListStore from '@/store/protocols';
 
 type ChainAssetsUnit = Record<string, BigNumber>;
 interface BaseInfo {
@@ -48,7 +50,11 @@ function setFinalInfo(valOrFunc: UpdaterOrPartials<FinalInfo>) {
 }
 
 const debounceComputeChainList = debounce<
-  Parameters<typeof assetsMapStore.subscribe | typeof tokenStore.subscribe>[0]
+  Parameters<
+    | typeof assetsMapStore.subscribe
+    | typeof tokenStore.subscribe
+    | typeof useProtocolListStore.subscribe
+  >[0]
 >(async () => {
   const { top10Addresses } = await getTop10MyAccounts();
 
@@ -57,6 +63,7 @@ const debounceComputeChainList = debounce<
 
 assetsMapStore.subscribe(debounceComputeChainList);
 tokenStore.subscribe(debounceComputeChainList);
+useProtocolListStore.subscribe(debounceComputeChainList);
 
 export function getComputedChainInfo() {
   const baseInfo = chainStaticsStore.getState();
@@ -68,15 +75,6 @@ export function useTop3Chains() {
 
   return useCreationWithShallowCompare(() => top3Chains, [top3Chains]);
 }
-
-export const useChainInfo = () => {
-  const chainsInfo = chainStaticsStore(s => s.computedResult);
-
-  return {
-    chainAssets: chainsInfo.chainAssets,
-    chainLength: chainsInfo.chainLength,
-  };
-};
 
 export const otherStore = zCreate(() => {
   return {
@@ -192,7 +190,7 @@ export const apisAddrChainStatics = {
       };
     });
   },
-  computeChainAssetsPortfolio: (portfolios: AbstractProject[]) => {
+  computeChainAssetsPortfolio: (portfolios: IProtocolItem[]) => {
     const chainUnit: ChainAssetsUnit = {};
     portfolios?.forEach(portfolio => {
       const chainId = portfolio.chain;
@@ -203,14 +201,35 @@ export const apisAddrChainStatics = {
       if (!chainUnit[chainId]) {
         chainUnit[chainId] = new BigNumber(0);
       }
-      if (portfolio._isExcludeBalance) {
-        return;
-      }
       chainUnit[chainId] = chainUnit[chainId].plus(portfolio.netWorth || 0);
     });
 
     return chainUnit;
   },
+  updatePortfolio: debounce((addr: string, _portfolios: IProtocolItem[]) => {
+    addr = addr.toLowerCase();
+    const prevFinalInfo =
+      addrChainStaticsStore.getState()[addr] ||
+      apisAddrChainStatics.makeFinalInfo();
+
+    const portfolio =
+      apisAddrChainStatics.computeChainAssetsPortfolio(_portfolios);
+    // if (isEqual(prevFinalInfo.portfolio, portfolio)) return ;
+
+    prevFinalInfo.portfolio = portfolio;
+    const computed =
+      apisAddrChainStatics.recomputeFinalInfoFromChainUnits(prevFinalInfo);
+    if (isEqual(prevFinalInfo.computedResult, computed)) {
+      return;
+    }
+
+    setAddressChainInfo(prev => {
+      return {
+        ...prev,
+        [addr]: { ...prevFinalInfo, computedResult: computed },
+      };
+    });
+  }, 300),
   computeChainAssetsNft: (nftList: DisplayNftItem[]) => {
     const chainUnit: ChainAssetsUnit = {};
     nftList?.forEach(nft => {
@@ -324,11 +343,16 @@ function computeChainsListV2(caredAddresses: string[]) {
     chainUnit[chainId] = chainUnit[chainId].plus(token.usd_value || 0);
   });
 
-  // TODO: 更新chain信息
-  const portfolios = computeAssetsApis.memoPortfolios(
-    caredAddresses,
-    assetsMap.portfoliosMap,
-  );
+  const protocolList = useProtocolListStore.getState().protocolMap;
+  const protocolAddrInStore = Object.keys(protocolList);
+  protocolAddrInStore.forEach(addr => {
+    apisAddrChainStatics.updatePortfolio(addr, protocolList[addr] || []);
+  });
+  const portfolios = protocolAddrInStore
+    .filter(key => caredAddresses.includes(key))
+    .map(key => protocolList[key] || [])
+    .flat();
+
   portfolios?.forEach(portfolio => {
     const chainId = portfolio.chain;
     // ignore app chain percent
@@ -337,9 +361,6 @@ function computeChainsListV2(caredAddresses: string[]) {
     }
     if (!finalInfo.portfolio[chainId]) {
       finalInfo.portfolio[chainId] = new BigNumber(0);
-    }
-    if (portfolio._isExcludeBalance) {
-      return;
     }
     finalInfo.portfolio[chainId] = finalInfo.portfolio[chainId].plus(
       portfolio.netWorth || 0,

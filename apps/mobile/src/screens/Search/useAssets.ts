@@ -99,7 +99,7 @@ export const useLoadAssets = () => {
     })),
   );
 
-  const { portfoliosMap, nftsMap } = useAssetsMap();
+  const { nftsMap } = useAssetsMap();
 
   const loadNFT = useCallback(
     async (address: string, force?: boolean, updateReturn?: boolean) => {
@@ -128,8 +128,6 @@ export const useLoadAssets = () => {
 
   const removeUnNeedAssets = useCallback((addresses: string[]) => {
     const allAddresses = new Set([
-      ...Object.keys(getAssetsMapDirectly('tokens')),
-      ...Object.keys(getAssetsMapDirectly('portfolios')),
       ...Object.keys(getAssetsMapDirectly('nfts')),
     ]);
 
@@ -227,7 +225,6 @@ export const useLoadAssets = () => {
     checkIsExpireAndUpdate,
     batchLoadCacheNFT,
     refreshing: !!isLoading && !isFirstFetch,
-    portfoliosMap,
     nftsMap,
   };
 };

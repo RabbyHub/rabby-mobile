@@ -43,7 +43,6 @@ interface Props {
   disableAction?: boolean;
   defaultExpand?: boolean;
 }
-// TODO: 由于列表传入的都是缓存数据，如果展开就请求下实时数据
 export const FullDefiRenderItem = ({
   data,
   account,
@@ -188,6 +187,24 @@ export const FullDefiRenderItem = ({
   const portfolios = useMemo(() => {
     return data._portfolios || [];
   }, [data]);
+
+  useEffect(() => {
+    if (isExpand && account?.address && data?.id && data?.chain) {
+      console.log(
+        'CUSTOM_LOGGER:=>: updateSpecificProtocol',
+        account.address,
+        data?.id,
+        data?.chain,
+      );
+      updateSpecificProtocol(account.address, data?.id, data?.chain);
+    }
+  }, [
+    isExpand,
+    account?.address,
+    data?.id,
+    data?.chain,
+    updateSpecificProtocol,
+  ]);
 
   if (!data || !account) {
     return null;

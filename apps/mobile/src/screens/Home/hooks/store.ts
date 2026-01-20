@@ -1,6 +1,5 @@
 import BigNumber from 'bignumber.js';
 
-import { formatNetworth } from '@/utils/math';
 import {
   AbstractPortfolioToken,
   AbstractProject,
@@ -30,7 +29,6 @@ export type CombineTokensItem = Omit<
 
 type OriginalCombineDefiItem = AbstractProject & {
   totalUsdValue: BigNumber;
-  filterTokenDesc?: string;
   address: string;
 };
 export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'>;
@@ -49,67 +47,6 @@ export interface IAssets {
 // function encodePortfolioKey(chain: string, id: string) {
 //   return `${chain.toLowerCase()}-${id.toLowerCase()}`;
 // }
-
-export const combinedProtocols = (
-  portfoliosMap: { [address: string]: DisplayedProject[] },
-  caredAddresses: string[],
-): CombineDefiItem[] => {
-  const portfolios: OriginalCombineDefiItem[] = [];
-  const lowerAddresses = new Set(
-    Object.keys(portfoliosMap).map(i => i.toLowerCase()) || [],
-  );
-  const caredAddressesSet = new Set(caredAddresses.map(i => i.toLowerCase()));
-  Object.entries(portfoliosMap).forEach(([address, portfolioList]) => {
-    if (
-      !lowerAddresses.has(address.toLowerCase()) ||
-      !caredAddressesSet.has(address.toLowerCase())
-    ) {
-      return;
-    }
-    lowerAddresses.delete(address.toLowerCase());
-    portfolioList?.forEach(defi => {
-      const key = defi.id;
-      if (!key) {
-        return;
-      }
-      portfolios.push({
-        ...defi,
-        address,
-        totalUsdValue: new BigNumber(defi.netWorth),
-      });
-    });
-  });
-
-  const listLength = portfolios.length || 0;
-  const totalValue = portfolios.reduce((acc, curr) => {
-    return acc + (curr.totalUsdValue.toNumber() || 0);
-  }, 0);
-  const threshold = Math.min((totalValue || 0) / 100, 1000);
-  const thresholdIndex = portfolios
-    ? portfolios.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
-    : -1;
-
-  const hasExpandSwitch =
-    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
-
-  return portfolios
-    .sort((a, b) =>
-      a.totalUsdValue.gt(b.totalUsdValue)
-        ? -1
-        : a.totalUsdValue.lt(b.totalUsdValue)
-        ? 1
-        : 0,
-    )
-    .map(p => ({
-      ...p,
-      totalUsdValue: p.totalUsdValue.toNumber(),
-      _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
-      _isFold: hasExpandSwitch ? p.totalUsdValue.toNumber() < threshold : false,
-      _isMiniFold: hasExpandSwitch
-        ? p.totalUsdValue.toNumber() < threshold
-        : false,
-    }));
-};
 
 // function encodeNftKey(chain: string, id: string) {
 //   return `${chain.toLowerCase()}-${id.toLowerCase()}`;
@@ -148,13 +85,9 @@ export const combinedNfts = (
 };
 
 export type AssetsMapState = {
-  tokensMap: { [address: string]: AbstractPortfolioToken[] };
-  portfoliosMap: { [address: string]: DisplayedProject[] };
   nftsMap: { [address: string]: DisplayNftItem[] };
 };
 export const assetsMapStore = zCreate<AssetsMapState>(() => ({
-  tokensMap: {},
-  portfoliosMap: {},
   nftsMap: {},
 }));
 
@@ -177,14 +110,6 @@ type GetAssetsFunc = <T extends 'tokens' | 'portfolios' | 'nfts'>(
   : { [address: string]: DisplayNftItem[] };
 export const getAssetsMapDirectly = (type => {
   switch (type) {
-    case 'tokens': {
-      const tokensMap = assetsMapStore.getState().tokensMap;
-      return tokensMap;
-    }
-    case 'portfolios': {
-      const portfoliosMap = assetsMapStore.getState().portfoliosMap;
-      return portfoliosMap;
-    }
     case 'nfts': {
       const nftsMap = assetsMapStore.getState().nftsMap;
       return nftsMap;
@@ -220,13 +145,9 @@ export function updateAssetListByAddress(
 }
 
 export const useAssetsMap = () => {
-  const tokensMap = assetsMapStore(s => s.tokensMap);
-  const portfoliosMap = assetsMapStore(s => s.portfoliosMap);
   const nftsMap = assetsMapStore(s => s.nftsMap);
 
   return {
-    tokensMap,
-    portfoliosMap,
     nftsMap,
     getAssetsMapDirectly,
   };
@@ -260,16 +181,6 @@ export function useOnNftRefresh() {
 }
 
 export const computeAssetsApis = {
-  memoPortfolios: (
-    caredAddresses: string[],
-    portfoliosMap?: AssetsMapState['portfoliosMap'],
-  ) => {
-    const globalPortfoliosMap =
-      portfoliosMap || assetsMapStore.getState().portfoliosMap;
-    const portfolios = combinedProtocols(globalPortfoliosMap, caredAddresses);
-
-    return portfolios;
-  },
   memoNfts: (caredAddresses: string[], nftsMap?: AssetsMapState['nftsMap']) => {
     const globalNftsMap = nftsMap || assetsMapStore.getState().nftsMap;
     const nfts = combinedNfts(globalNftsMap, caredAddresses);
