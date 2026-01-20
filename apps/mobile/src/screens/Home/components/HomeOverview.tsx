@@ -131,7 +131,7 @@ import { ScrollHandlerProps } from '@/components/customized/react-native-collaps
 import { triggerImpact } from '@/utils/common';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID } from '@/core/native/utils';
-import { HeaderHeight } from './OverviewTopHeader';
+import { HOME_TOP_HEADER_SIZES } from './OverviewTopHeader';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -348,7 +348,7 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
   };
 };
 
-const HEADER_MT_OFFSET = HeaderHeight + 32;
+const HEADER_MT_OFFSET = HOME_TOP_HEADER_SIZES.headerHeight;
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({

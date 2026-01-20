@@ -229,6 +229,7 @@ export const HomeDappDrawer: React.FC<{
     return result;
   }, [height, offsetTop]);
 
+  const safeAreaInsets = useSafeAreaInsets();
   const panelScaleStyle = useAnimatedStyle(() => {
     return {
       transformOrigin: 'top',
@@ -245,16 +246,15 @@ export const HomeDappDrawer: React.FC<{
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
-        [TAB_HEADER_MT, 0],
+        [safeAreaInsets.top, 0],
         Extrapolate.CLAMP,
       ),
     };
   }, [isExpanded]);
 
-  const safeInsets = useSafeAreaInsets();
   const overlayOpacityStyle = useAnimatedStyle(() => {
     const topValue = -(
-      swipeUpHintHeight.value + getScrollContainerPb(safeInsets.bottom)
+      swipeUpHintHeight.value + getScrollContainerPb(safeAreaInsets.bottom)
     );
 
     return {
@@ -450,7 +450,7 @@ const getStyle = createGetStyles2024(
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      maxHeight: Dimensions.get('window').height - TAB_HEADER_MT,
+      maxHeight: Dimensions.get('window').height - safeAreaInsets.top,
     },
     favoritesList: {
       flex: 1,

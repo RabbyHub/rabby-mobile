@@ -14,7 +14,7 @@ import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { useUpgradeInfo } from '@/hooks/version';
@@ -34,24 +34,29 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import Animated, {
+  Easing,
   runOnJS,
   SharedValue,
   useAnimatedReaction,
+  useAnimatedStyle,
   useDerivedValue,
+  useSharedValue,
+  withRepeat,
+  withTiming,
 } from 'react-native-reanimated';
 import { useHomeTabIndex } from '@/hooks/navigation';
 import {
   useScene24hBalanceCombinedData,
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
+import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 
-export const HeaderHeight = 24;
+export const HOME_TOP_HEADER_SIZES = {
+  headerHeight: 52,
+  headerPaddingY: 14,
+};
 
-export function TabsTopHeader({
-  style,
-}: {
-  // indexValue?: SharedValue<number>;
-} & RNViewProps): JSX.Element {
+export function TabsTopHeader(): JSX.Element {
   const { tabIndex } = useHomeTabIndex();
   const showNetWorth = tabIndex !== 0;
 
@@ -84,25 +89,25 @@ export function TabsTopHeader({
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
 
-  const spinValue = useRef(new RNAnimated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+  const spin = useSharedValue(0);
+  spin.value = withRepeat(
+    withTiming(360, {
+      duration: 1600,
+      easing: Easing.linear,
+    }),
+    -1,
+    false,
+  );
+
+  const animatedSpinStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          rotate: `${spin.value}deg`,
+        },
+      ],
+    };
   });
-  useEffect(() => {
-    if (loading) {
-      RNAnimated.loop(
-        RNAnimated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: RNEasing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      spinValue.resetAnimation();
-    }
-  }, [loading, spinValue]);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -121,8 +126,10 @@ export function TabsTopHeader({
     }
   }, [data.isLoss, loading, previousLoading]);
 
+  const { opacityStyle } = useHomeDrawerOpacityStyle();
+
   return (
-    <Animated.View style={[styles.headerBox, style]}>
+    <Animated.View style={[styles.headerBox, opacityStyle]}>
       {showNetWorth ? (
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>{netWorth}</Text>
@@ -165,12 +172,9 @@ export function TabsTopHeader({
               />
             )}
           </TouchableOpacity>
-          <RNAnimated.View
-            style={{
-              transform: [{ rotate: spin }],
-            }}>
+          <Animated.View style={animatedSpinStyle}>
             {loading && <RcIconLoading />}
-          </RNAnimated.View>
+          </Animated.View>
         </View>
       )}
 
@@ -215,27 +219,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   headerBox: {
-    height: HeaderHeight,
-    // paddingLeft: 8,
-    // paddingRight: 38,
-    paddingTop: 8,
+    // ...makeDebugBorder(),
+    height: HOME_TOP_HEADER_SIZES.headerHeight,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 0,
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     position: 'relative',
-    // flex: 1,
-    // backgroundColor: colors2024['neutral-title-1'],
   },
   leftBox: {
-    height: HeaderHeight,
+    // ...makeDebugBorder('yellow'),
+    height: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 4,
   },
   balanceTextBox: {
-    // marginRight: 12,
     color: colors2024['neutral-title-1'],
     fontWeight: '900',
     fontSize: 20,

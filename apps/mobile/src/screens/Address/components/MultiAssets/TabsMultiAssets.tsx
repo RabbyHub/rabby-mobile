@@ -8,16 +8,20 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { perfEvents } from '@/core/utils/perf';
 import { runIIFEFunc } from '@/core/utils/store';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
-import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import {
-  HeaderHeight,
+  HOME_INDICATOR_HEIGHT,
+  HomeCustomMaterialTabBar,
+  TABITEM_H,
+} from '@/screens/Home/components/CustomTabBar';
+import {
+  HOME_TOP_HEADER_SIZES,
   TabsTopHeader,
 } from '@/screens/Home/components/OverviewTopHeader';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Freeze } from 'react-freeze';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Container, Tabs } from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
@@ -59,7 +63,7 @@ function TabIndexBasedFreeze({
 }: {
   ofIndex: number;
 } & Omit<React.ComponentProps<typeof Freeze>, 'freeze'>) {
-  const { tabIndex } = useHomeTabIndex();
+  // const { tabIndex } = useHomeTabIndex();
   return (
     <Freeze
       {...props}
@@ -84,26 +88,13 @@ runIIFEFunc(() => {
 
 const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
 
-export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = (
-  {
-    // onIndexChange,
-    // HomeOverview,
-  },
-) => {
+const renderTabHeader: React.ComponentProps<typeof Container>['renderHeader'] &
+  object = props => <TabsTopHeader />;
+const renderTabBar: React.ComponentProps<typeof Container>['renderTabBar'] &
+  object = props => <HomeCustomMaterialTabBar {...props} />;
+
+export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const tabsOpacity = homeDrawerAnimateMutable.tabsOpacity;
-  const tabsStyle = useAnimatedStyle(() => ({
-    opacity: tabsOpacity.value,
-    pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'auto',
-  }));
-
-  const renderTabBar = React.useCallback(
-    (props: React.ComponentProps<typeof HomeCustomMaterialTabBar>) => (
-      <HomeCustomMaterialTabBar {...props} style={[tabsStyle, props.style]} />
-    ),
-    [tabsStyle],
-  );
 
   const renderLabel = useCallback(
     (name: string) =>
@@ -111,15 +102,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = (
       ({ index, indexDecimal }) =>
         <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
     [],
-  );
-
-  const renderHeader = useCallback<
-    React.ComponentProps<typeof Tabs.Container>['renderHeader'] & object
-  >(
-    props => {
-      return <TabsTopHeader style={tabsStyle} />;
-    },
-    [tabsStyle],
   );
 
   const handleTabChange = useCallback(
@@ -143,12 +125,12 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = (
     <Tabs.Container
       ref={homeTabScrollerRef}
       onIndexChange={onIndexChange}
-      renderHeader={renderHeader}
+      renderHeader={renderTabHeader}
       onTabChange={handleTabChange}
       renderTabBar={renderTabBar}
-      headerHeight={HeaderHeight}
-      minHeaderHeight={HeaderHeight}
-      tabBarHeight={74}
+      headerHeight={HOME_TOP_HEADER_SIZES.headerHeight}
+      minHeaderHeight={HOME_TOP_HEADER_SIZES.headerHeight}
+      tabBarHeight={TABITEM_H + HOME_INDICATOR_HEIGHT}
       allowHeaderOverscroll={IS_IOS}
       lazy={false}
       cancelLazyFadeIn
@@ -213,8 +195,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = (
 const getStyles = createGetStyles2024(({ safeAreaInsets }) => ({
   container: {
     flex: 1,
-    // marginTop: TAB_HEADER_MT,
-    marginTop: Math.max(safeAreaInsets.top, TAB_HEADER_MT),
+    marginTop: safeAreaInsets.top,
   },
   headerContainer: {
     backgroundColor: 'transparent',
