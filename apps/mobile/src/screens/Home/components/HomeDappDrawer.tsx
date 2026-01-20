@@ -236,6 +236,7 @@ export const HomeDappDrawer: React.FC<{
     return result;
   }, [height, offsetTop]);
 
+  const safeAreaInsets = useSafeAreaInsets();
   const panelScaleStyle = useAnimatedStyle(() => {
     return {
       transformOrigin: 'top',
@@ -252,16 +253,15 @@ export const HomeDappDrawer: React.FC<{
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
-        [TAB_HEADER_MT, 0],
+        [safeAreaInsets.top, 0],
         Extrapolate.CLAMP,
       ),
     };
   }, [isExpanded]);
 
-  const safeInsets = useSafeAreaInsets();
   const overlayOpacityStyle = useAnimatedStyle(() => {
     const topValue = -(
-      swipeUpHintHeight.value + getScrollContainerPb(safeInsets.bottom)
+      swipeUpHintHeight.value + getScrollContainerPb(safeAreaInsets.bottom)
     );
 
     return {
@@ -414,7 +414,7 @@ export const HomeDappDrawer: React.FC<{
   );
 };
 
-// const DRAWER_MAGIC_OFFSET = TAB_HEADER_FULL_HEIGHT - 44;
+const FOOTER_PB = 24;
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
@@ -457,8 +457,7 @@ const getStyle = createGetStyles2024(
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      // maxHeight: Dimensions.get('screen').height - TAB_HEADER_MT/*  - safeAreaInsets.bottom */,
-      maxHeight: Dimensions.get('window').height - TAB_HEADER_MT,
+      maxHeight: Dimensions.get('window').height - safeAreaInsets.top,
     },
     favoritesList: {
       flex: 1,
@@ -517,8 +516,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
       gap: 12,
       width: '100%',
-      // paddingBottom: IS_ANDROID ? Math.max(safeAreaInsets.bottom, 12) : safeAreaInsets.bottom,
-      paddingBottom: Math.max(safeAreaInsets.bottom, 12),
+      paddingBottom: Math.max(safeAreaInsets.bottom, FOOTER_PB),
     },
 
     container: {

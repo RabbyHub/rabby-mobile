@@ -85,3 +85,13 @@ export function getScrollContainerPb(bottomInset: number) {
   'worklet';
   return IS_ANDROID ? Math.max(bottomInset, 16) : bottomInset;
 }
+
+export function useHomeDrawerOpacityStyle() {
+  const tabsOpacity = homeDrawerAnimateMutable.tabsOpacity;
+  const opacityStyle = useAnimatedStyle(() => ({
+    opacity: tabsOpacity.value,
+    pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'auto',
+  }));
+
+  return { opacityStyle };
+}
