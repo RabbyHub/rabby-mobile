@@ -301,12 +301,14 @@ export const TokenRowV2 = memo(
     onTokenPress,
     account,
     scene = 'default',
+    hideChainLogo = false,
   }: {
     data: ITokenItem;
     style?: ViewStyle;
     logoStyle?: ViewStyle;
     logoSize?: number;
     chainLogoSize?: number;
+    hideChainLogo?: boolean;
     getMenuActions?: (token: ITokenItem) => MenuAction[];
     hideFoldTag?: boolean;
     disableMenu?: boolean;
@@ -383,7 +385,7 @@ export const TokenRowV2 = memo(
           <View>
             <AssetAvatar
               logo={data?.logo_url}
-              chain={data?.chain}
+              chain={hideChainLogo ? false : data?.chain}
               style={mediaStyle}
               size={logoSize}
               chainSize={chainLogoSize}
