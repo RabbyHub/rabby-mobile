@@ -159,6 +159,7 @@ export const PerpsMarketDetailScreen = () => {
       order =>
         order.orderType === 'Take Profit Market' &&
         order.isTrigger &&
+        order.isPositionTpsl &&
         order.reduceOnly,
     );
 
@@ -166,6 +167,7 @@ export const PerpsMarketDetailScreen = () => {
       order =>
         order.orderType === 'Stop Market' &&
         order.isTrigger &&
+        order.isPositionTpsl &&
         order.reduceOnly,
     );
 
@@ -694,12 +696,14 @@ export const PerpsMarketDetailScreen = () => {
             order =>
               order.orderType === 'Take Profit Market' &&
               order.isTrigger &&
+              order.isPositionTpsl &&
               order.reduceOnly,
           );
           const slItem = positionItem?.openOrders?.find(
             order =>
               order.orderType === 'Stop Market' &&
               order.isTrigger &&
+              order.isPositionTpsl &&
               order.reduceOnly,
           );
           setCoin(item);
