@@ -389,7 +389,10 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     chainId,
     data: data || '0x', // can not execute with empty string, use 0x instead
     from,
-    gas: enable7702 ? getEIP7702MiniGasLimit(getGasPrice()) : getGasPrice(),
+    gas: enable7702
+      ? getEIP7702MiniGasLimit(gas || params.data[0].gasLimit)
+      : gas || params.data[0].gasLimit,
+    gasPrice: getGasPrice(),
     nonce,
     to,
     value,
