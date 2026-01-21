@@ -2809,8 +2809,7 @@
         "needSupply": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
         "canBorrow": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp, lên đến giới hạn vay.",
         "isolated": "Quyền vay và tài sản bị giới hạn do chế độ Isolation.",
-        "emodeNoAssets": "Chúng tôi không thể tìm thấy bất kỳ tài sản nào liên quan đến tìm kiếm của bạn. Hãy thử lại với một danh mục khác.",
-        "emode": "Trong E-Mode, một số tài sản không thể vay. Thoát khỏi E-Mode để có quyền truy cập vào tất cả các tài sản."
+        "emodeNoAssets": "Chúng tôi không thể tìm thấy bất kỳ tài sản nào liên quan đến tìm kiếm của bạn. Hãy thử lại với một danh mục khác."
       },
       "list": {
         "headers": {

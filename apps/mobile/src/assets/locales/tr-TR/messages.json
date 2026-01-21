@@ -2702,8 +2702,7 @@
         "needSupply": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
         "canBorrow": "Teminat olarak sağladığınız teminatınıza göre, borç limitine kadar borç alabilirsiniz.",
         "isolated": "İzolasyon modu nedeniyle borçlanma gücü ve varlıklar sınırlıdır.",
-        "emodeNoAssets": "Aramanıza bağlı herhangi bir varlık bulamadık. Farklı bir kategori ile tekrar deneyin.",
-        "emode": "E-Mode'da bazı varlıklar borç alınamaz. Tüm varlıklara erişim sağlamak için E-Mode'dan çıkın."
+        "emodeNoAssets": "Aramanıza bağlı herhangi bir varlık bulamadık. Farklı bir kategori ile tekrar deneyin."
       },
       "list": {
         "headers": {
