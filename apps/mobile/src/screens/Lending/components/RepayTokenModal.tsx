@@ -20,7 +20,7 @@ export interface IAvailableRepayToken {
   decimals: number;
 }
 
-interface IProps {
+export interface RepayTokenSelectModalProps {
   availableRepayTokens: IAvailableRepayToken[];
   onChange: (v: IAvailableRepayToken) => void;
 }
@@ -56,7 +56,7 @@ const AssetItem = ({
 export default function RepayTokenSelectModal({
   availableRepayTokens,
   onChange,
-}: IProps) {
+}: RepayTokenSelectModalProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -104,7 +104,7 @@ export default function RepayTokenSelectModal({
             <View style={{ height: FOOTER_COMPONENT_HEIGHT }} />
           }
           ListHeaderComponent={ListHeaderComponent}
-          keyExtractor={item => item.address.toString()}
+          keyExtractor={item => item.address}
           renderItem={({ item, index }) => {
             const isSectionFirst = index === 0;
             const isSectionLast =
@@ -256,10 +256,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   assetsHeaderText: {
     flex: 1,
   },
-  apyHeaderText: {
-    width: 60,
-    flex: 0,
-  },
   borrowHeaderText: {
     flex: 0,
     marginLeft: 10,
@@ -284,15 +280,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 8,
   },
-  apy: {
-    flex: 0,
-    width: 60,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
   right: {
     flex: 0,
     marginLeft: 10,
@@ -311,17 +298,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-  },
-  yourBalanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  walletIcon: {
-    width: 16,
-    height: 16,
-    color: colors2024['neutral-secondary'],
-    marginTop: -2,
   },
   yourBalance: {
     fontSize: 14,
