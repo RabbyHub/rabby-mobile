@@ -2975,8 +2975,7 @@
         "needSupply": "Para pedir prestado, necesitas aportar activos como garantía.",
         "canBorrow": "Puedes pedir prestado basado en tu colateral proporcionado, hasta el límite de préstamo.",
         "isolated": "El poder de préstamo y los activos están limitados debido al modo de Aislamiento.",
-        "emodeNoAssets": "No pudimos encontrar ningún activo relacionado con tu búsqueda. Intenta de nuevo con una categoría diferente.",
-        "emode": "En E-Mode, algunos activos no son tomables en préstamo. Sal de E-Mode para acceder a todos los activos."
+        "emodeNoAssets": "No pudimos encontrar ningún activo relacionado con tu búsqueda. Intenta de nuevo con una categoría diferente."
       },
       "list": {
         "headers": {

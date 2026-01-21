@@ -183,6 +183,35 @@ export const calculateHFAfterRepay = ({
   return hfAfterRepay.isLessThan(0) && !hfAfterRepay.eq(-1) ? 0 : hfAfterRepay;
 };
 
+export const calculateHFAfterRepayWithAToken = ({
+  user,
+  amount,
+  usdPrice,
+  debt,
+}: CalculateHFAfterSwapRepayProps) => {
+  const collateralBalanceMarketReferenceCurrency = valueToBigNumber(
+    user?.totalCollateralUSD || '0',
+  ).minus(valueToBigNumber(usdPrice || '1').multipliedBy(amount));
+  const repayAmountInUsd = valueToBigNumber(
+    BigNumber.min(amount || '0', debt || '0'),
+  )
+    .multipliedBy(usdPrice || '1')
+    .toString(10);
+
+  let debtLeftInUsd = valueToBigNumber(user.totalBorrowsUSD).minus(
+    repayAmountInUsd,
+  );
+  debtLeftInUsd = BigNumber.max(debtLeftInUsd, valueToBigNumber('0'));
+
+  const hfAfterRepay = calculateHealthFactorFromBalancesBigUnits({
+    collateralBalanceMarketReferenceCurrency,
+    borrowBalanceMarketReferenceCurrency: debtLeftInUsd.toString(10),
+    currentLiquidationThreshold: user.currentLiquidationThreshold,
+  });
+
+  return hfAfterRepay.isLessThan(0) && !hfAfterRepay.eq(-1) ? 0 : hfAfterRepay;
+};
+
 export const calculateHFAfterToggleCollateral = (
   user: FormatUserSummaryAndIncentivesResponse<
     ReserveDataHumanized & FormatReserveUSDResponse
