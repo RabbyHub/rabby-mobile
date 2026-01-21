@@ -131,8 +131,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     return availableRepayTokens[0];
   }, [availableRepayTokens, isAtTokenRepay]);
 
-  console.log('CUSTOM_LOGGER:=>: selectedRepayToken', selectedRepayToken);
-
   const repayAmount = useMemo(() => {
     const miniAmount = BigNumber(selectedRepayToken?.balance || '0').gt(
       reserve.variableBorrows,
@@ -500,6 +498,10 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         setAmount(undefined);
         onClose?.();
       } catch (error) {
+        console.error('Handle repay error:', error);
+        toast.error('something error');
+        setAmount(undefined);
+        onClose?.();
       } finally {
         setIsLoading(false);
       }
@@ -552,7 +554,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.REPAY_TOKEN_SELECT,
       availableRepayTokens: availableRepayTokens,
-      onChange: (v: IAvailableRepayToken) => {
+      onChange: v => {
         setIsAtTokenRepay(v.aToken);
         removeGlobalBottomSheetModal2024(modalId);
       },
@@ -629,6 +631,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           )}
           style={styles.amountInput}
           onClickToken={
+            // 有aToken选项，并且有质押余额
             availableRepayTokens.length > 1 && !!reserve.underlyingBalance
               ? () => {
                   handleClickToken();
