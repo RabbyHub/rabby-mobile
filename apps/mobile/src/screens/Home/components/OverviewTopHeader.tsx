@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated as RNAnimated,
   Easing as RNEasing,
@@ -33,19 +33,17 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import {
-  runOnJS,
-  SharedValue,
-  useAnimatedReaction,
-  useDerivedValue,
-} from 'react-native-reanimated';
+import { SharedValue } from 'react-native-reanimated';
+import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { useHomeTabIndex } from '@/hooks/navigation';
 import {
   useScene24hBalanceCombinedData,
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
+import useTokenList from '@/store/tokens';
+import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 
-export const HeaderHeight = 24;
+export const HeaderHeight = 30;
 
 export function TabsTopHeader(
   props: {
@@ -65,6 +63,7 @@ export function TabsTopHeader(
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { remoteVersion } = useUpgradeInfo();
+  const focusedTab = useFocusedTab();
 
   const [hideType, setHideType] = useHideBalance();
   const handleHideTypeChange = useMemoizedFn(() => {
@@ -79,6 +78,30 @@ export function TabsTopHeader(
   const { currency } = useCurrency();
 
   const { refreshing } = useLoadAssets();
+  const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
+  const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
+
+  const showRightArea = useMemo(() => {
+    return focusedTab === 'overview';
+  }, [focusedTab]);
+  const tokenDisplayModeLabel = useMemo(() => {
+    if (tokenDisplayMode === 'bySymbol') {
+      return 'By Symbol';
+    }
+    if (tokenDisplayMode === 'byAsset') {
+      return 'By Asset';
+    }
+    return 'By Address';
+  }, [tokenDisplayMode]);
+  const handleToggleTokenDisplayMode = useCallback(() => {
+    if (tokenDisplayMode === 'byAddress') {
+      setTokenDisplayMode('byAsset');
+    } else if (tokenDisplayMode === 'byAsset') {
+      setTokenDisplayMode('bySymbol');
+    } else {
+      setTokenDisplayMode('byAddress');
+    }
+  }, [setTokenDisplayMode, tokenDisplayMode]);
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(data.rawNetWorth, { currency });
@@ -178,29 +201,42 @@ export function TabsTopHeader(
       )}
 
       <View style={styles.rightArea}>
-        <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+        {showRightArea ? (
+          <>
+            <FeedbackEntryOnHeader style={styles.feedbackEntry} />
 
-        <AddressListScreenButton type="address" />
-        <TouchableWithoutFeedback
-          style={styles.settingEntry}
-          onPress={() => {
-            navigation.navigateDeprecated(RootNames.StackSettings, {
-              screen: RootNames.Settings,
-              params: {},
-            });
+            <AddressListScreenButton type="address" />
+            <TouchableWithoutFeedback
+              style={styles.settingEntry}
+              onPress={() => {
+                navigation.navigateDeprecated(RootNames.StackSettings, {
+                  screen: RootNames.Settings,
+                  params: {},
+                });
 
-            matomoRequestEvent({
-              category: 'Click_Header',
-              action: 'Click_Setting',
-            });
-          }}>
-          <RcIconSetting
-            width={20}
-            height={20}
-            color={colors2024['neutral-title-1']}
-          />
-          {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-        </TouchableWithoutFeedback>
+                matomoRequestEvent({
+                  category: 'Click_Header',
+                  action: 'Click_Setting',
+                });
+              }}>
+              <RcIconSetting
+                width={20}
+                height={20}
+                color={colors2024['neutral-title-1']}
+              />
+              {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+            </TouchableWithoutFeedback>
+          </>
+        ) : (
+          <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
+            <View style={styles.displayModeButton}>
+              <Text style={styles.displayModeText}>
+                {tokenDisplayModeLabel}
+              </Text>
+              <IconPerpEdit color={colors2024['neutral-body']} />
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -259,6 +295,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     // position: 'relative',
     // ...makeDebugBorder(),
+  },
+  displayModeButton: {
+    height: HeaderHeight,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: colors2024['neutral-bg-5'],
+    // justifyContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 4,
+  },
+  displayModeText: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-body'],
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
   feedbackEntry: {
     height: '100%',

@@ -93,6 +93,8 @@ export type ITokenSetting = {
   unFoldDefis?: string[];
 };
 
+export type TokenDisplayMode = 'byAddress' | 'byAsset' | 'bySymbol';
+
 export interface ITokenManageSettingMap {
   [address: string]: {
     /** @deprecated will be migrated to store.pinedQueue */
@@ -182,6 +184,7 @@ export interface PreferenceStore {
   balanceHideType?: BALANCE_HIDE_TYPE;
 
   currency?: string;
+  tokenDisplayMode?: TokenDisplayMode;
 
   hasShowAsterPopup: boolean;
   hasShowAsterReferralMap: Record<string, boolean>;
@@ -268,6 +271,7 @@ export class PreferenceService {
           watchlistSkip: false,
           balanceHideType: BALANCE_HIDE_TYPE.SHOW,
           currency: 'USD',
+          tokenDisplayMode: 'byAddress',
           hasShowAsterReferralMap: {},
           hasShowAsterPopup: false,
           hyperliquidInvite: {
@@ -301,6 +305,14 @@ export class PreferenceService {
 
   getHasOpenCopyTrading = () => {
     return this.store.hasOpenCopyTrading;
+  };
+
+  getTokenDisplayMode = (): TokenDisplayMode => {
+    return this.store.tokenDisplayMode || 'byAddress';
+  };
+
+  setTokenDisplayMode = (mode: TokenDisplayMode) => {
+    this.store.tokenDisplayMode = mode;
   };
 
   addAddressAvatar = (address: string, avatar: string) => {
@@ -519,7 +531,7 @@ export class PreferenceService {
     // return the first account in the account list
     const [first] = await this.keyringService.getAllVisibleAccountsArray();
 
-    return first;
+    return first!;
   };
 
   setLastUsedAccount = (account: Account) => {

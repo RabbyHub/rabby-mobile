@@ -6,6 +6,8 @@ import { syncRemoteTokens } from '@/databases/sync/assets';
 import { queryTokensCache } from '@/screens/Home/utils/token';
 import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
+import { preferenceService } from '@/core/services/shared';
+import { TokenDisplayMode } from '@/core/services/preference';
 import {
   tokenItemEntityToTokenItem,
   tokenItemToITokenItem,
@@ -65,6 +67,7 @@ type TokenAssetsResult = {
 interface TokenListState {
   tokenListMap: Record<string, ITokenItem[]>;
   isLoading: boolean;
+  tokenDisplayMode: TokenDisplayMode;
   isLoadingByAddress: Record<
     string,
     {
@@ -75,6 +78,7 @@ interface TokenListState {
   initStore(): void;
   batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
   getTokenList(address: string, force?: boolean): Promise<void>;
+  setTokenDisplayMode(mode: TokenDisplayMode): void;
 }
 
 function getMultiAssetsFoldResultFromParts({
@@ -172,10 +176,11 @@ export const getMultiAssetsCacheKey = (
   addresses: string[],
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
+  tokenDisplayMode?: TokenDisplayMode,
 ) =>
   `${getAddressesKey(addresses)}::${chainServerId ?? ''}::${
     isLpTokenEnabled ? '1' : '0'
-  }`;
+  }::${tokenDisplayMode ?? 'byAddress'}`;
 
 export const getSingleAssetsCacheKey = (
   address: string,
@@ -202,11 +207,67 @@ export const getPerpsTokenSelectCacheKey = (address: string) =>
 export const getChainSelectorCacheKey = (addresses: string[]) =>
   getAddressesKey(addresses);
 
+type AggregatedTokenItem = ITokenItem & {
+  groupKey: string;
+  groupItems: ITokenItem[];
+};
+
+const getTokenGroupKey = (token: ITokenItem, mode: TokenDisplayMode) => {
+  if (mode === 'bySymbol') {
+    const symbolKey = token.symbol?.trim().toLowerCase();
+    return symbolKey || `${token.chain}::${token.id}`;
+  }
+  return `${token.chain}::${token.id}`;
+};
+
+const aggregateTokens = (
+  tokens: ITokenItem[],
+  mode: TokenDisplayMode,
+): AggregatedTokenItem[] => {
+  const grouped = new Map<string, ITokenItem[]>();
+  tokens.forEach(token => {
+    const key = getTokenGroupKey(token, mode);
+    const list = grouped.get(key);
+    if (list) {
+      list.push(token);
+    } else {
+      grouped.set(key, [token]);
+    }
+  });
+
+  return Array.from(grouped.entries()).map(([groupKey, groupItems]) => {
+    const primary = groupItems.reduce((best, item) => {
+      const bestValue = best?.usd_value || 0;
+      const nextValue = item.usd_value || 0;
+      return nextValue > bestValue ? item : best;
+    }, groupItems[0])!;
+
+    const totalAmount = groupItems.reduce(
+      (sum, item) => sum + (item.amount || 0),
+      0,
+    );
+    const totalUsdValue = groupItems.reduce(
+      (sum, item) => sum + (item.usd_value || 0),
+      0,
+    );
+
+    return {
+      ...primary,
+      amount: totalAmount,
+      usd_value: totalUsdValue,
+      is_core: groupItems.some(item => item.is_core),
+      groupKey,
+      groupItems,
+    };
+  });
+};
+
 const computeMultiAssets = (
   tokenListMap: TokenListState['tokenListMap'],
   addresses: string[],
   chainServerId?: string,
   isLpTokenEnabled?: boolean,
+  tokenDisplayMode?: TokenDisplayMode,
 ): TokenAssetsResult => {
   if (!addresses.length) {
     return createEmptyAssetsResult();
@@ -217,8 +278,6 @@ const computeMultiAssets = (
   );
   const scamTokens: ITokenItem[] = [];
   const nonScamTokens: ITokenItem[] = [];
-  const coreTokens: ITokenItem[] = [];
-  let totalValue = 0;
   tokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
@@ -231,13 +290,25 @@ const computeMultiAssets = (
     } else {
       nonScamTokens.push(token);
     }
-    if (!isScam && token.is_core) {
-      coreTokens.push(token);
-      totalValue += usdValue;
-    }
   });
+
+  const displayMode = tokenDisplayMode || 'byAddress';
+  const aggregatedNonScamTokens =
+    displayMode === 'byAddress'
+      ? nonScamTokens
+      : aggregateTokens(nonScamTokens, displayMode);
+  const aggregatedScamTokens =
+    displayMode === 'byAddress'
+      ? scamTokens
+      : aggregateTokens(scamTokens, displayMode);
+  const coreTokens = aggregatedNonScamTokens.filter(token => token.is_core);
+  const totalValue = coreTokens.reduce(
+    (sum, token) => sum + (token.usd_value || 0),
+    0,
+  );
+
   const { foldedTokens, unfoldedTokens } = getMultiAssetsFoldResultFromParts({
-    nonScamTokens,
+    nonScamTokens: aggregatedNonScamTokens,
     coreTokens,
     totalValue,
   });
@@ -249,7 +320,7 @@ const computeMultiAssets = (
         foldTokens: foldedTokens
           .filter(item => item.chain === chainServerId)
           .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-        scamTokens: scamTokens
+        scamTokens: aggregatedScamTokens
           .filter(item => item.chain === chainServerId)
           .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
       }
@@ -258,7 +329,9 @@ const computeMultiAssets = (
         foldTokens: foldedTokens.filter(i =>
           lpTokenFilter(i, isLpTokenEnabled),
         ),
-        scamTokens: scamTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+        scamTokens: aggregatedScamTokens.filter(i =>
+          lpTokenFilter(i, isLpTokenEnabled),
+        ),
       };
 };
 
@@ -455,8 +528,13 @@ const computeChainSelector = (
 const tokenListStore = zCreate<TokenListState>(set => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
+  tokenDisplayMode: preferenceService.getTokenDisplayMode(),
   // 单个地址的 loading 状态：cache token拿到loading设置false，等所有token都拿到allLoading才设置false
   isLoadingByAddress: {},
+  setTokenDisplayMode(mode) {
+    set(() => ({ tokenDisplayMode: mode }));
+    preferenceService.setTokenDisplayMode(mode);
+  },
   async initStore() {
     // 在 App 启动时执行，初始化冷备数据
     // 取 Top10 地址
@@ -638,6 +716,7 @@ type TokenListComputedState = {
     addresses: string[],
     chainServerId?: string,
     isLpTokenEnabled?: boolean,
+    tokenDisplayMode?: TokenDisplayMode,
   ) => string;
   registerSingleAssets: (
     address: string,
@@ -660,6 +739,7 @@ const multiAssetsCacheParams = new Map<
     addresses: string[];
     chainServerId?: string;
     isLpTokenEnabled?: boolean;
+    tokenDisplayMode?: TokenDisplayMode;
   }
 >();
 const singleAssetsCacheParams = new Map<
@@ -737,11 +817,17 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
     tokenSelectCache: {},
     perpsTokenSelectCache: {},
     chainSelectorCache: {},
-    registerMultiAssets(addresses, chainServerId, isLpTokenEnabled) {
+    registerMultiAssets(
+      addresses,
+      chainServerId,
+      isLpTokenEnabled,
+      tokenDisplayMode,
+    ) {
       const key = getMultiAssetsCacheKey(
         addresses,
         chainServerId,
         isLpTokenEnabled,
+        tokenDisplayMode,
       );
       const removedKeys = touchCacheParams(
         multiAssetsCacheParams,
@@ -751,6 +837,7 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
           addresses,
           chainServerId,
           isLpTokenEnabled,
+          tokenDisplayMode,
         },
       );
       const tokenListMap = tokenListStore.getState().tokenListMap;
@@ -763,6 +850,7 @@ export const useTokenListComputedStore = zCreate<TokenListComputedState>(
               addresses,
               chainServerId,
               isLpTokenEnabled,
+              tokenDisplayMode,
             ),
           },
           removedKeys,
@@ -899,6 +987,7 @@ const rebuildComputedCaches = (
       params.addresses,
       params.chainServerId,
       params.isLpTokenEnabled,
+      params.tokenDisplayMode,
     );
   });
 

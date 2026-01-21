@@ -1,4 +1,4 @@
-import { Dimensions, View } from 'react-native';
+import { Dimensions, Pressable, View } from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabItem,
@@ -48,6 +48,8 @@ type IndicatorProps = {
   style?: AnimatedStyle;
   fadeIn?: boolean;
   secondaryIndicatorViewRef?: React.RefObject<View>;
+  onLeftPress?: () => void;
+  onRightPress?: () => void;
   // handleMeasureSecondaryIndicator?: ViewProps['onLayout'];
   handleMeasureSecondaryIndicator?: () => void;
 };
@@ -58,10 +60,25 @@ const Indicator = ({
   style,
   fadeIn = false,
   secondaryIndicatorViewRef,
+  onLeftPress,
+  onRightPress,
   handleMeasureSecondaryIndicator,
 }: IndicatorProps) => {
   const { styles } = useTheme2024({ getStyle: indicatorStyles });
   const opacity = useSharedValue(fadeIn ? 0 : 1);
+  const leftHitSlop = {
+    top: leftHitSlopTop,
+    bottom: leftHitSlopBottom,
+    left: 0,
+    right: 0,
+  };
+  const rightHitSlop = {
+    top: rightHitSlopTop,
+    bottom: rightHitSlopBottom,
+    left: 0,
+    right: 0,
+  };
+  const showHitAreaDebug = __DEV__;
 
   const stylez = useAnimatedStyle(() => {
     const firstItemX = itemsLayout[0]?.x ?? 0;
@@ -105,19 +122,40 @@ const Indicator = ({
     <View style={[styles.indicatorContainer]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
-      <View
+      <Pressable
+        onPress={onLeftPress}
+        style={styles.leftPressable}
+        hitSlop={leftHitSlop}
+      />
+      {showHitAreaDebug && (
+        <View pointerEvents="none" style={styles.leftHitAreaDebug} />
+      )}
+      <View style={styles.rightBackground} />
+      <Pressable
         ref={secondaryIndicatorViewRef}
-        style={styles.rightBackground}
+        style={styles.rightPressable}
+        onPress={onRightPress}
+        hitSlop={rightHitSlop}
         onLayout={() => {
           handleMeasureSecondaryIndicator?.();
         }}
       />
+      {showHitAreaDebug && (
+        <View pointerEvents="none" style={styles.rightHitAreaDebug} />
+      )}
     </View>
   );
 };
 
 const indicatorMarginTop = 14;
 const indicatorHeight = 6;
+const leftHitSlopTop = 50;
+const leftHitSlopBottom = 4;
+const rightHitSlopTop = 50;
+const rightHitSlopBottom = 4;
+const indicatorWidth = (screenWidth - 52) / 2;
+const rightPressableWidth = indicatorWidth * 0.5;
+const rightPressableOffset = indicatorWidth - rightPressableWidth;
 const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   indicator: {
     height: 6,
@@ -139,7 +177,7 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     position: 'absolute',
     top: indicatorMarginTop,
     left: 20,
-    width: (screenWidth - 52) / 2,
+    width: indicatorWidth,
     height: 6,
     borderRadius: 12,
     backgroundColor: colors2024['neutral-line'],
@@ -149,11 +187,51 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     position: 'absolute',
     right: 20,
     top: indicatorMarginTop,
-    width: (screenWidth - 52) / 2,
+    width: indicatorWidth,
     height: 6,
     borderRadius: 12,
     backgroundColor: colors2024['neutral-line'],
     zIndex: 98,
+  },
+  leftPressable: {
+    position: 'absolute',
+    top: indicatorMarginTop,
+    left: 20,
+    width: indicatorWidth,
+    height: indicatorHeight,
+    zIndex: 99,
+  },
+  rightPressable: {
+    position: 'absolute',
+    right: 20 + rightPressableOffset,
+    top: indicatorMarginTop,
+    width: rightPressableWidth,
+    height: indicatorHeight,
+    zIndex: 99,
+  },
+  leftHitAreaDebug: {
+    position: 'absolute',
+    top: indicatorMarginTop - leftHitSlopTop,
+    left: 20,
+    width: indicatorWidth,
+    height: indicatorHeight + leftHitSlopTop + leftHitSlopBottom,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 0, 0, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 0, 0, 0.4)',
+    zIndex: 97,
+  },
+  rightHitAreaDebug: {
+    position: 'absolute',
+    top: indicatorMarginTop - rightHitSlopTop,
+    right: 20 + rightPressableOffset,
+    width: rightPressableWidth,
+    height: indicatorHeight + rightHitSlopTop + rightHitSlopBottom,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 0, 0, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 0, 0, 0.4)',
+    zIndex: 97,
   },
 }));
 
@@ -277,6 +355,15 @@ export const HomeCustomMaterialTabBar = (
   const handleMeasureSecondaryIndicator = useCallback(() => {
     measureSecondaryIndicator();
   }, [measureSecondaryIndicator]);
+  const handleSwitchTab = useCallback(
+    (name: TabName) => {
+      if (!props.tabNames.includes(name)) {
+        return;
+      }
+      props.onTabPress(name);
+    },
+    [props],
+  );
 
   return (
     <View
@@ -309,6 +396,12 @@ export const HomeCustomMaterialTabBar = (
         fadeIn
         secondaryIndicatorViewRef={secondaryIndicatorViewRef}
         handleMeasureSecondaryIndicator={handleMeasureSecondaryIndicator}
+        onLeftPress={() => {
+          handleSwitchTab(TabName.overview);
+        }}
+        onRightPress={() => {
+          handleSwitchTab(TabName.token);
+        }}
       />
       <Animated.View
         pointerEvents={focusedTab === TabName.overview ? 'none' : 'auto'}
