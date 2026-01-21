@@ -89,7 +89,7 @@ function schedulePointsFetch() {
         prevPoints[key] = { ...prevPoints[key], pointLoading: true };
       }
     });
-    return { ...prev, points: {} };
+    return { ...prev, points: prevPoints };
   });
 
   const run = (async () => {
