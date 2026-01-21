@@ -276,6 +276,7 @@ export const NFTList = () => {
       renderItem={renderItem}
       initialNumToRender={15}
       windowSize={15}
+      key={isFocused ? 'nft-focused' : 'nft-unfocused'}
       maxToRenderPerBatch={15}
       removeClippedSubviews
       ItemSeparatorComponent={ListRenderSeparator}
