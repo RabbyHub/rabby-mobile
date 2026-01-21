@@ -268,7 +268,7 @@ export const ProtocolList = () => {
             ]
           : portfolioListData
       }
-      key={isFocused ? 'focused' : 'unfocused'}
+      key={isFocused ? 'defi-focused' : 'defi-unfocused'}
       renderItem={renderItem}
       initialNumToRender={15}
       windowSize={5}
