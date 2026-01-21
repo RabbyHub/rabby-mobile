@@ -268,6 +268,7 @@ export const ProtocolList = () => {
             ]
           : portfolioListData
       }
+      key={isFocused ? 'focused' : 'unfocused'}
       renderItem={renderItem}
       initialNumToRender={15}
       windowSize={5}
