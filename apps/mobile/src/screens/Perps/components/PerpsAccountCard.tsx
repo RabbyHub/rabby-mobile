@@ -2,6 +2,7 @@ import { RcTradPerps } from '@/assets2024/icons/perps';
 import RcIconPerps from '@/assets2024/icons/perps/IconPerps.svg';
 import { Button } from '@/components2024/Button';
 import {
+  AccountHistoryItem,
   AccountSummary,
   PositionAndOpenOrder,
 } from '@/hooks/perps/usePerpsStore';
@@ -14,13 +15,19 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
-import { Account } from '@/core/services/preference';
+import { PerpHeader } from './PerpHeader';
 
 export const PerpsAccountCard: React.FC<{
   isLogin: boolean;
   accountSummary?: AccountSummary | null;
   positionAndOpenOrders?: PositionAndOpenOrder[] | null;
-}> = ({ isLogin, accountSummary, positionAndOpenOrders }) => {
+  localLoadingHistory: AccountHistoryItem[];
+}> = ({
+  isLogin,
+  accountSummary,
+  positionAndOpenOrders,
+  localLoadingHistory,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [popupState, setPopupState] = usePerpsPopupState();
@@ -93,12 +100,15 @@ export const PerpsAccountCard: React.FC<{
                     isShowDepositTokenPopup: true,
                   }));
                 }}
-                titleStyle={styles.smBtnTitle}
+                titleStyle={[styles.smBtnTitle, styles.depositBtnTitle]}
                 title={t('page.perps.PerpsCard.depositBtn')}
-                buttonStyle={[styles.btnHeight]}
+                buttonStyle={[styles.btnHeight, styles.depositBtn]}
               />
             </View>
           </View>
+        </View>
+        <View style={styles.history}>
+          <PerpHeader localLoadingHistory={localLoadingHistory} />
         </View>
       </LinearGradient>
     );
@@ -194,12 +204,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 22,
     color: '#F7FAFC',
   },
+  depositBtnTitle: {
+    color: '#19294',
+  },
   withdrawBtn: {
     backgroundColor: '#2F3135',
     borderColor: 'transparent',
   },
   btnHeight: {
     height: 52,
+  },
+  depositBtn: {
+    backgroundColor: '#50D2C1',
   },
   loginCardContent: {
     display: 'flex',
@@ -290,5 +306,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   btnItem: {
     flex: 1,
     width: '50%',
+  },
+  history: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
   },
 }));

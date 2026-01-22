@@ -30,10 +30,11 @@ import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
-import { openapi } from '../request';
-import { Account } from '../services/preference';
-import { getDappAccount } from '@/hooks/useDapps';
 import { getAccountList } from '../apis/account';
+import { getDappAccount } from '@/hooks/useDapps';
+import { Account } from '../services/preference';
+import { openapi } from '../request';
+import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -93,6 +94,7 @@ const flowContext = flow
         session: { origin },
       },
     } = ctx;
+
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check lock');
 
@@ -133,6 +135,8 @@ const flowContext = flow
       },
       mapMethod,
     } = ctx;
+
+    const { isFromMobileInnerDapp } = $mobileCtx || {};
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check connect');
     if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
@@ -144,15 +148,14 @@ const flowContext = flow
         }
         ctx.request.requestedApproval = true;
         connectOrigins.add(origin);
+
+        let defaultChain: CHAINS_ENUM | null = null;
+        let defaultAccount: Account | undefined = undefined;
         try {
-          let defaultChain: CHAINS_ENUM | null = null;
-          let defaultAccount: Account | undefined = undefined;
-          const collectList = (
-            await openapi
-              .getOriginThirdPartyCollectList(origin)
-              .catch(() => null)
-          )?.collect_list;
-          if (collectList && collectList.length >= 2) {
+          if (
+            isFromMobileInnerDapp &&
+            shouldAutoConnect(origin, ctx.request.data.method)
+          ) {
             const site = dappService.getDapp(origin);
             const { accounts } = await getAccountList();
             defaultAccount = getDappAccount({
@@ -183,16 +186,54 @@ const flowContext = flow
               defaultChain = targetChain ? targetChain.enum : CHAINS_ENUM.ETH;
             }
           } else {
-            const res = await notificationService.requestApproval(
-              {
-                params: { origin, name, icon, $mobileCtx },
-                account: ctx.request.account,
-                approvalComponent: 'Connect',
-              },
-              { height: 800 },
-            );
-            defaultChain = res.defaultChain;
-            defaultAccount = res.defaultAccount;
+            const collectList = (
+              await openapi
+                .getOriginThirdPartyCollectList(origin)
+                .catch(() => null)
+            )?.collect_list;
+
+            if (collectList && collectList.length >= 2) {
+              const site = dappService.getDapp(origin);
+              const { accounts } = await getAccountList();
+              defaultAccount = getDappAccount({
+                dappInfo: site,
+                accounts,
+              })!;
+              defaultChain =
+                site?.chainId && findChain({ enum: site.chainId })
+                  ? site.chainId
+                  : null;
+              if (defaultAccount && !defaultChain) {
+                const recommendChains = await openapi.getRecommendChains(
+                  defaultAccount.address,
+                  origin,
+                );
+                let targetChain: Chain | undefined;
+                if (recommendChains) {
+                  for (let i = 0; i < recommendChains.length; i++) {
+                    targetChain =
+                      findChain({
+                        serverId: recommendChains[i]?.id,
+                      }) || undefined;
+                    if (targetChain) {
+                      break;
+                    }
+                  }
+                }
+                defaultChain = targetChain ? targetChain.enum : CHAINS_ENUM.ETH;
+              } else {
+                const res = await notificationService.requestApproval(
+                  {
+                    params: { origin, name, icon, $mobileCtx },
+                    account: ctx.request.account,
+                    approvalComponent: 'Connect',
+                  },
+                  { height: 800 },
+                );
+                defaultChain = res.defaultChain;
+                defaultAccount = res.defaultAccount;
+              }
+            }
           }
           connectOrigins.delete(origin);
           await apisDapp.connect({
@@ -229,6 +270,7 @@ const flowContext = flow
       mapMethod,
     } = ctx;
     const $mobileCtx = _$mobileCtx || params.$mobileCtx;
+    const isFromMobileInnerDapp = $mobileCtx.isFromMobileInnerDapp;
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check need approval');
     const [approvalType, condition, options = {}] =
@@ -277,21 +319,32 @@ const flowContext = flow
           }
         }
       }
-      ctx.approvalRes = await notificationService.requestApproval(
-        {
-          approvalComponent: approvalType,
-          params: {
-            $ctx: ctx?.request?.data?.$ctx,
-            $mobileCtx,
-            method,
-            data: ctx.request.data.params,
-            session: { origin, name, icon, $mobileCtx },
-          },
-          account: ctx.request.account,
+      if (
+        !isFromMobileInnerDapp ||
+        !shouldAutoPersonalSign({
           origin,
-        },
-        { height: windowHeight },
-      );
+          method: ctx.request.data.method,
+          account: ctx.request.account,
+          msgParams: ctx.request.data.params,
+        })
+      ) {
+        ctx.approvalRes = await notificationService.requestApproval(
+          {
+            approvalComponent: approvalType,
+            params: {
+              $ctx: ctx?.request?.data?.$ctx,
+              $mobileCtx,
+              method,
+              data: ctx.request.data.params,
+              session: { origin, name, icon, $mobileCtx },
+            },
+            account: ctx.request.account,
+            origin,
+          },
+          { height: windowHeight },
+        );
+      }
+
       if (isSignApproval(approvalType)) {
         const dapp = dappService.getDapp(origin);
         if (dapp) {
@@ -317,12 +370,27 @@ const flowContext = flow
       session: { origin, $mobileCtx },
     } = request;
 
+    const isFromMobileInnerDapp = $mobileCtx?.isFromMobileInnerDapp;
+
+    const isAutoPersonalSign =
+      isFromMobileInnerDapp &&
+      shouldAutoPersonalSign({
+        origin,
+        method: ctx.request.data.method,
+        account: ctx.request.account,
+        msgParams: ctx.request.data.params,
+      });
+
     const createRequestDeferFn =
       (originApprovalRes: typeof approvalRes) =>
       async (isRetry = false) =>
         new Promise(async resolve => {
           let waitSignComponentPromise = Promise.resolve();
-          if (isSignApproval(approvalType) && uiRequestComponent) {
+          if (
+            !isAutoPersonalSign &&
+            isSignApproval(approvalType) &&
+            uiRequestComponent
+          ) {
             waitSignComponentPromise = waitSignComponentAmounted();
           }
 
@@ -337,8 +405,6 @@ const flowContext = flow
               switch (retryType) {
                 case 'nonce':
                   const recommendNonce = getRetryTxRecommendNonce();
-                  console.log('current nonce', _approvalRes.nonce);
-                  console.log('recommendNonce nonce', recommendNonce);
                   _approvalRes.nonce = intToHex(
                     hexToNumber(recommendNonce as '0x${string}'),
                   );
@@ -441,7 +507,7 @@ const flowContext = flow
         throw e;
       }
     }
-    if (uiRequestComponent) {
+    if (!isAutoPersonalSign && uiRequestComponent) {
       ctx.request.requestedApproval = true;
       const result = await requestApprovalLoop({ uiRequestComponent, ...rest });
       reportStatsData();
