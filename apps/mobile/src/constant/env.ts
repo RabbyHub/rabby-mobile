@@ -22,10 +22,12 @@ export const BUILD_GIT_INFO: {
   BUILD_GIT_HASH: string;
   BUILD_GIT_HASH_TIME?: string;
   BUILD_GIT_COMMITOR?: string;
+  BUILD_TIME?: string;
 } = {
   BUILD_GIT_HASH: 'unknown',
   BUILD_GIT_HASH_TIME: undefined,
   BUILD_GIT_COMMITOR: undefined,
+  BUILD_TIME: undefined,
   ...INPUT_BUILD_GIT_INFO,
 };
 
