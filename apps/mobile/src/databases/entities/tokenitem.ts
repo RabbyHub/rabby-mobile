@@ -149,8 +149,38 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_tokenitem}"
 ("_db_id", "owner_addr", "amount", "chain", "decimals", "display_symbol", "id", "is_core", "is_verified", "is_wallet", "is_scam", "is_infinity", "is_suspicious", "logo_url", "name", "optimized_symbol", "price", "symbol", "time_at", "usd_value", "credit_score", "protocol_id", "raw_amount", "raw_amount_hex_str", "price_24h_change", "low_credit_score", "fdv", "content_type", "content", "inner_id", "value_24h_change", "cex_ids", "_local_created_at", "_local_updated_at")
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT ( "_db_id" )
-DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
+ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at",
+"owner_addr" = EXCLUDED."owner_addr",
+"amount" = EXCLUDED."amount",
+"chain" = EXCLUDED."chain",
+"decimals" = EXCLUDED."decimals",
+"display_symbol" = EXCLUDED."display_symbol",
+"id" = EXCLUDED."id",
+"is_core" = EXCLUDED."is_core",
+"is_verified" = EXCLUDED."is_verified",
+"is_wallet" = EXCLUDED."is_wallet",
+"is_scam" = EXCLUDED."is_scam",
+"is_infinity" = EXCLUDED."is_infinity",
+"is_suspicious" = EXCLUDED."is_suspicious",
+"logo_url" = EXCLUDED."logo_url",
+"name" = EXCLUDED."name",
+"optimized_symbol" = EXCLUDED."optimized_symbol",
+"price" = EXCLUDED."price",
+"symbol" = EXCLUDED."symbol",
+"time_at" = EXCLUDED."time_at",
+"usd_value" = EXCLUDED."usd_value",
+"credit_score" = EXCLUDED."credit_score",
+"protocol_id" = EXCLUDED."protocol_id",
+"raw_amount" = EXCLUDED."raw_amount",
+"raw_amount_hex_str" = EXCLUDED."raw_amount_hex_str",
+"price_24h_change" = EXCLUDED."price_24h_change",
+"low_credit_score" = EXCLUDED."low_credit_score",
+"fdv" = EXCLUDED."fdv",
+"content_type" = EXCLUDED."content_type",
+"content" = EXCLUDED."content",
+"inner_id" = EXCLUDED."inner_id",
+"value_24h_change" = EXCLUDED."value_24h_change",
+"cex_ids" = EXCLUDED."cex_ids"
   `;
 
   static getStatementSql() {

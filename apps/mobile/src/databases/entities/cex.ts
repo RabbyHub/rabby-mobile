@@ -47,7 +47,12 @@ export class CexEntity extends EntityAddressAssetBase {
   static stmSql = `
   INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_cex}"
   ("_db_id", "owner_addr", "cexId", "is_deposit", "name", "logo_url", "_local_created_at", "_local_updated_at")
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at",
+  "ower_addr" = EXCLUDED."owner_addr",
+  "cexId" = EXCLUDED."cexId",
+  "is_deposit" = EXCLUDED."is_deposit",
+  "name" = EXCLUDED."name",
+  "logo_url" = EXCLUDED."logo_url"
   `;
 
   static getStatementSql() {
