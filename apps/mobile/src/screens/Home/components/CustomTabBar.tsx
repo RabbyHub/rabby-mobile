@@ -158,7 +158,7 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => {
   const rightPressableOffset = indicatorWidth - rightPressableWidth;
   return {
     indicator: {
-      height: 6,
+      height: indicatorHeight,
       backgroundColor: isLight
         ? 'rgba(0, 0, 0, 1)'
         : colors2024['brand-default'],
@@ -180,7 +180,7 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => {
       top: indicatorMarginTop,
       left: 20,
       width: indicatorWidth,
-      height: 6,
+      height: indicatorHeight,
       borderRadius: 12,
       backgroundColor: colors2024['neutral-line'],
       zIndex: 98,

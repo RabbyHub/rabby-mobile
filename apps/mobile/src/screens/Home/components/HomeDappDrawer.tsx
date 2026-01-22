@@ -1,19 +1,6 @@
-import { RcNextSearchCC } from '@/assets/icons/common';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
-import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
-import { ReactIconHome } from '@/assets2024/icons/browser';
-import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
-import { Button } from '@/components2024/Button';
-import { IS_ANDROID } from '@/core/native/utils';
-import { DappInfo } from '@/core/services/dappService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
-import { triggerImpact } from '@/utils/common';
 import { createGetStyles2024 } from '@/utils/styles';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -35,18 +23,32 @@ import Animated, {
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { RcNextSearchCC } from '@/assets/icons/common';
+import { ReactIconHome } from '@/assets2024/icons/browser';
+import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
+import { IS_ANDROID } from '@/core/native/utils';
+import { DappInfo } from '@/core/services/dappService';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  getPullThreshold,
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
-  getPullThreshold,
-  getScrollContainerPb,
   homeDrawerAnimateMutable,
+  getScrollContainerPb,
 } from '../hooks/useHomeDrawerAnimate';
+import { triggerImpact } from '@/utils/common';
+import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
+import { Button } from '@/components2024/Button';
+import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -66,6 +68,8 @@ export const HomeDappDrawer: React.FC<{
   const offsetTop = useMemo(() => {
     return Math.max(safeTop, headerHeight);
   }, [headerHeight, safeTop]);
+
+  console.log('HomeDappDrawer render', { safeTop, headerHeight });
 
   const { openTab, setPartialBrowserState } = useBrowser();
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
