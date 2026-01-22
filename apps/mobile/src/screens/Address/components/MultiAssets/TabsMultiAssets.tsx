@@ -36,16 +36,10 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
-/** @description pratical value, maybe we can compute it by other layout sizes */
 export const TAB_HEADER_FULL_HEIGHT =
   HOME_TOP_HEADER_SIZES.headerHeight + HOME_TOP_HEADER_SIZES.tabItemHeight;
 
-export interface TabMultiAssetsProps {
-  // onIndexChange(index: number): void;
-  // HomeOverview: React.FC<{
-  //   // accountToShowReceiveTip?: Account | null;
-  // }>;
-}
+interface TabMultiAssetsProps {}
 
 export const enum TabName {
   overview = 'overview',
