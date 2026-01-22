@@ -1,19 +1,7 @@
-import { RcNextSearchCC } from '@/assets/icons/common';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
-import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
-import { ReactIconHome } from '@/assets2024/icons/browser';
-import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
-import { Button } from '@/components2024/Button';
-import { IS_ANDROID } from '@/core/native/utils';
-import { DappInfo } from '@/core/services/dappService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
-import { triggerImpact } from '@/utils/common';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
@@ -22,89 +10,136 @@ import {
   FlatList as RNFlatList,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolate,
   interpolate,
   runOnJS,
+  runOnUI,
   scrollTo,
   useAnimatedProps,
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { RcNextSearchCC } from '@/assets/icons/common';
+import { ReactIconHome } from '@/assets2024/icons/browser';
+import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
+import { IS_ANDROID } from '@/core/native/utils';
+import { DappInfo } from '@/core/services/dappService';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  homeDrawerAnimateMutable,
-  PULL_THRESHOLD,
+  getPullThreshold,
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
+  homeDrawerAnimateMutable,
+  getScrollContainerPb,
 } from '../hooks/useHomeDrawerAnimate';
+import { triggerImpact } from '@/utils/common';
+import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
+import { Button } from '@/components2024/Button';
+import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
 
-export const HomeDappDrawer: React.FC = () => {
+const { pullPercent, isExpanded, translateY, swipeUpHintHeight } =
+  homeDrawerAnimateMutable;
+
+export const HomeDappDrawer: React.FC<{
+  onScrollBack?: WorkletFunction;
+}> = ({ onScrollBack }) => {
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
-  const { bottom } = useSafeAreaInsets();
-  // const { height } = useWindowDimensions();
   const height = Dimensions.get('screen').height;
   const { safeTop, headerHeight } = useSafeSizes();
   const offsetTop = useMemo(() => {
     return Math.max(safeTop, headerHeight);
   }, [headerHeight, safeTop]);
 
+  console.log('HomeDappDrawer render', { safeTop, headerHeight });
+
   const { openTab, setPartialBrowserState } = useBrowser();
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [_isEditing, setIsEditing] = React.useState(false);
   const [removedItems, setRemovedItems] = useState<string[]>([]);
   const list = useMemo(() => {
-    return bookmarkList.filter(item => !removedItems.includes(item.origin));
+    return bookmarkList.filter(
+      item =>
+        !removedItems.find(
+          url => safeGetOrigin(url) === safeGetOrigin(item.origin),
+        ),
+    );
   }, [bookmarkList, removedItems]);
 
-  const startEditing = () => {
+  const hasData = list.length > 0;
+  const isEditing = _isEditing && hasData;
+
+  const startEditing = useCallback(() => {
+    if (!hasData) return;
     setIsEditing(true);
     setRemovedItems([]);
-  };
+  }, [hasData]);
 
-  const completeEditing = () => {
+  const resetEditing = useCallback(() => {
+    setIsEditing(false);
+    setRemovedItems([]);
+  }, []);
+
+  const completeEditing = useCallback(() => {
     setIsEditing(false);
     removedItems.forEach(url => {
       removeBookmark(url);
     });
-  };
+    setRemovedItems([]);
+  }, [removedItems, removeBookmark]);
 
-  const handleRemoveLocal = (url: string) => {
+  const handleRemoveLocal = useCallback((url: string) => {
     setRemovedItems(prev => [...prev, url]);
-  };
+  }, []);
 
-  const handle = () => {
+  const handle = useCallback(() => {
     if (isEditing) {
       completeEditing();
     } else {
       startEditing();
     }
-  };
+  }, [completeEditing, isEditing, startEditing]);
 
-  const onPressHome = () => {
-    translateY.value = withTiming(0);
-    triggerImpact();
-  };
+  const handleScrollBack = useCallback(() => {
+    'worklet';
+    if (onScrollBack) {
+      onScrollBack();
+    }
+  }, [onScrollBack]);
 
-  const { pullPercent, isExpanded, translateY } = homeDrawerAnimateMutable;
-  const drawerScrollOffsetY = useSharedValue(0);
-  const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
     SCROLLABLE_STATUS.UNLOCKED,
   );
+  const onPressHome = useCallback(() => {
+    translateY.value = withTiming(0, undefined, () => {
+      scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+      !IS_ANDROID && handleScrollBack();
+    });
+    IS_ANDROID && runOnUI(handleScrollBack)();
+
+    triggerImpact();
+  }, [scrollableStatus, handleScrollBack]);
+  const drawerScrollOffsetY = useSharedValue(0);
+  const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
 
   const animatedProps = useAnimatedProps(() => ({
     decelerationRate:
@@ -145,10 +180,13 @@ export const HomeDappDrawer: React.FC = () => {
         .onEnd(() => {
           'worklet';
 
-          if (translateY.value > (height - PULL_THRESHOLD) * -1) {
+          if (translateY.value > (height - getPullThreshold(height)) * -1) {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+              runOnJS(resetEditing)();
             });
+            handleScrollBack();
+
             runOnJS(triggerImpact)();
           } else {
             translateY.value = withTiming(-height, undefined, () => {
@@ -157,11 +195,11 @@ export const HomeDappDrawer: React.FC = () => {
           }
         }),
     [
-      drawerScrollOffsetY,
+      drawerScrollOffsetY.value,
       height,
-      pullPercent.value,
+      resetEditing,
       scrollableStatus,
-      translateY,
+      handleScrollBack,
     ],
   );
 
@@ -174,7 +212,7 @@ export const HomeDappDrawer: React.FC = () => {
   );
 
   const drawerTranslateYStyle = useAnimatedStyle(() => {
-    return {
+    const result = {
       height: height,
       transform: [
         {
@@ -189,46 +227,54 @@ export const HomeDappDrawer: React.FC = () => {
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
-        [offsetTop, 0],
+        // [offsetTop, 0],
+        [0, 0],
         Extrapolate.CLAMP,
       ),
     };
+    return result;
   }, [height, offsetTop]);
 
+  const safeAreaInsets = useSafeAreaInsets();
   const panelScaleStyle = useAnimatedStyle(() => {
-    return IS_ANDROID
-      ? {}
-      : {
-          transformOrigin: 'top',
-          transform: [
-            {
-              scale: interpolate(
-                pullPercent.value,
-                [0, -100],
-                isExpanded.value ? [1, 1] : [0.75, 1],
-                Extrapolate.CLAMP,
-              ),
-            },
-          ],
-        };
+    return {
+      transformOrigin: 'top',
+      transform: [
+        {
+          scale: interpolate(
+            pullPercent.value,
+            [0, -100],
+            isExpanded.value ? [1, 1] : [0.75, 1],
+            Extrapolate.CLAMP,
+          ),
+        },
+      ],
+      paddingTop: interpolate(
+        pullPercent.value,
+        [-100, 0],
+        [safeAreaInsets.top, 0],
+        Extrapolate.CLAMP,
+      ),
+    };
   }, [isExpanded]);
 
   const overlayOpacityStyle = useAnimatedStyle(() => {
-    return IS_ANDROID
-      ? {
-          opacity: 0,
-        }
-      : {
-          opacity: isExpanded.value
-            ? 0
-            : interpolate(
-                pullPercent.value,
-                [-100, -100 * 0.3, 0],
-                [0, 0.75, 0],
-                Extrapolate.CLAMP,
-              ),
-        };
-  }, []);
+    const topValue = -(
+      swipeUpHintHeight.value + getScrollContainerPb(safeAreaInsets.bottom)
+    );
+
+    return {
+      top: IS_ANDROID ? topValue : topValue,
+      opacity: isExpanded.value
+        ? 0
+        : interpolate(
+            pullPercent.value,
+            [-100, -100 * 0.3, 0],
+            [0, 0.75, 0],
+            Extrapolate.CLAMP,
+          ),
+    };
+  });
 
   return (
     <GestureDetector gesture={drawerGesture}>
@@ -236,7 +282,7 @@ export const HomeDappDrawer: React.FC = () => {
         pointerEvents="auto"
         style={[styles.pullUpPanel, drawerTranslateYStyle]}>
         <Animated.View style={[styles.pullOverlay, overlayOpacityStyle]} />
-        <Animated.View style={[panelScaleStyle]}>
+        <Animated.View style={[styles.panel, panelScaleStyle]}>
           <View style={styles.page}>
             <View style={styles.favoritesList}>
               <View style={styles.container}>
@@ -244,7 +290,10 @@ export const HomeDappDrawer: React.FC = () => {
                   <Text style={styles.title}>
                     {t('page.home.DappDrawer.favorite')}
                   </Text>
-                  <TouchableOpacity onPress={handle}>
+                  <TouchableOpacity
+                    disabled={!hasData}
+                    onPress={handle}
+                    style={[!hasData && { opacity: 0.5 }]}>
                     <Text style={styles.edit}>
                       {isEditing ? t('global.Done') : t('global.Edit')}
                     </Text>
@@ -322,14 +371,7 @@ export const HomeDappDrawer: React.FC = () => {
               </View>
             </View>
 
-            <View
-              style={[
-                styles.footer,
-                {
-                  paddingBottom:
-                    Platform.OS === 'ios' ? bottom : Math.max(bottom, 12),
-                },
-              ]}>
+            <View style={[styles.footer]}>
               <TouchableOpacity onPress={onPressHome}>
                 <ReactIconHome
                   width={44}
@@ -371,173 +413,194 @@ export const HomeDappDrawer: React.FC = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  pullUpPanel: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  pullOverlay: {
-    position: 'absolute',
-    top: -90,
-    transform: [{ translateX: -501 }],
-    left: '50%',
-    height: 1002,
-    width: 1002,
-    borderRadius: 10000,
-    backgroundColor: colors2024['brand-light-1'],
-    zIndex: 10,
-    pointerEvents: 'none',
-  },
+const FOOTER_PB = 24;
 
-  page: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  favoritesList: {
-    flex: 1,
-  },
+const getStyle = createGetStyles2024(
+  ({ colors2024, isLight, safeAreaInsets }) => ({
+    pullUpPanel: {
+      position: 'absolute',
+      top: !IS_ANDROID ? 'auto' : 'auto',
+      // top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      // height: '100%',
+      // ...makeDebugBorder(),
+    },
+    pullOverlay: {
+      position: 'absolute',
+      // top: IS_ANDROID ? -70 : -90,
+      top: 0,
+      transform: [{ translateX: -501 }],
+      left: '50%',
+      height: 1002,
+      width: 1002,
+      borderRadius: 10000,
+      backgroundColor: colors2024['brand-light-1'],
+      zIndex: 10,
+      pointerEvents: 'none',
+      // ...makeDebugBorder('yellow'),
+    },
 
-  fabContainer: {
-    flex: 1,
-  },
-  gradient: {
-    padding: 12,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-5'],
-  },
-  innerCircle: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 4,
-    height: 46,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
-    position: 'relative',
-    paddingLeft: 12,
-    paddingRight: 12,
-  },
-  icon: {},
-  text: {
-    fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-    flex: 1,
-    textAlign: 'center',
-    color: colors2024['neutral-foot'],
-  },
-  navControlItem: {
-    flexShrink: 0,
-  },
+    panel: {
+      paddingTop: 0,
+      display: 'flex',
+      flexDirection: 'column',
+    },
 
-  browserSearch: {
-    paddingTop: 18,
-  },
+    page: {
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: 'gray'
+      // }),
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      maxHeight: Dimensions.get('window').height - safeAreaInsets.top,
+    },
+    favoritesList: {
+      flex: 1,
+    },
 
-  footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    width: '100%',
-  },
+    fabContainer: {
+      flex: 1,
+    },
+    gradient: {
+      padding: 12,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-5'],
+    },
+    innerCircle: {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 4,
+      height: 46,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors2024['neutral-bg-5'],
+      position: 'relative',
+      paddingLeft: 12,
+      paddingRight: 12,
+    },
+    icon: {},
+    text: {
+      fontSize: 16,
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+      flex: 1,
+      textAlign: 'center',
+      color: colors2024['neutral-foot'],
+    },
+    navControlItem: {
+      flexShrink: 0,
+    },
 
-  container: {
-    flex: 1,
-  },
-  list: {
-    paddingHorizontal: 20,
-  },
-  header: {
-    paddingHorizontal: 8 + 20,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 20,
-    fontWeight: '800',
-  },
-  edit: {
-    color: colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 18,
-  },
+    browserSearch: {
+      paddingTop: 18,
+    },
 
-  grid: {
-    gap: 8,
-  },
+    footer: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      width: '100%',
+      paddingBottom: Math.max(safeAreaInsets.bottom, FOOTER_PB),
+    },
 
-  itemWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
+    container: {
+      flex: 1,
+    },
+    list: {
+      paddingHorizontal: 20,
+    },
+    header: {
+      paddingHorizontal: 8 + 20,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    title: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      lineHeight: 20,
+      fontWeight: '800',
+    },
+    edit: {
+      color: colors2024['neutral-body'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 18,
+    },
 
-  listItem: {
-    marginBottom: 12,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  listItemContent: {
-    width: '100%',
-  },
+    grid: {
+      gap: 8,
+    },
 
-  empty: {
-    paddingVertical: 20,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 6,
+    itemWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+    },
 
-    marginHorizontal: 4,
+    listItem: {
+      marginBottom: 12,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+    },
+    listItemContent: {
+      width: '100%',
+    },
 
-    marginTop: -100,
-  },
-  emptyIcon: {
-    width: 163,
-    height: 126,
-  },
-  emptyText: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
-    textAlign: 'center',
-  },
-  searchButton: {
-    marginTop: 16,
-    height: 42,
-    width: 143,
-    borderRadius: 6,
-  },
-  searchButtonText: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-}));
+    empty: {
+      paddingVertical: 20,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 6,
+
+      marginHorizontal: 4,
+
+      marginTop: -100,
+    },
+    emptyIcon: {
+      width: 163,
+      height: 126,
+    },
+    emptyText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-secondary'],
+      textAlign: 'center',
+    },
+    searchButton: {
+      marginTop: 16,
+      height: 42,
+      width: 143,
+      borderRadius: 6,
+    },
+    searchButtonText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+  }),
+);
