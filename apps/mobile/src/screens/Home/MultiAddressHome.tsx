@@ -15,7 +15,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   AppState,
   Dimensions,
@@ -264,6 +264,7 @@ const OverViewComponent = React.memo(
     useFetchCexInfo();
 
     const { triggerUpdate } = useAccountsBalance();
+    const isFirstTriggerRef = useRef(true);
 
     useEffect(() => {
       setTimeout(() => {
@@ -311,9 +312,11 @@ const OverViewComponent = React.memo(
     useFocusEffect(
       useCallback(() => {
         if (!couldDoRefresh()) return;
-        triggerUpdate().then(balanceAccounts => {
-          // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
-          console.log('refresh24hAssets useFocusEffect', balanceAccounts);
+        const forceUpdate = isFirstTriggerRef.current;
+        if (isFirstTriggerRef.current) {
+          isFirstTriggerRef.current = false;
+        }
+        triggerUpdate(forceUpdate).then(balanceAccounts => {
           refresh24hAssets({ balanceAccounts });
           refreshDayCurve({ balanceAccounts });
         });
