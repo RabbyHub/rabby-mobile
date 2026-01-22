@@ -172,7 +172,9 @@ export async function batchSaveWithPQueueAndTransaction<
           const supportedPreparedStatement =
             !disablePreparedUpsert &&
             'getStatementSql' in entityCls &&
-            typeof entityCls.getStatementSql === 'function';
+            typeof entityCls.getStatementSql === 'function' &&
+            'bindUpsertParams' in entityCls.prototype &&
+            typeof entityCls.prototype.bindUpsertParams === 'function';
           const stmSql = !supportedPreparedStatement
             ? ''
             : entityCls.getStatementSql?.('upsert') ?? '';

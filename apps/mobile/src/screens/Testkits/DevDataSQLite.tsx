@@ -35,6 +35,9 @@ import { useRestCountDownLabel } from '@/hooks/system/time';
 import { accountEvents } from '@/core/apis/account';
 import { AddressItemContextMenuDev } from '../Address/components/AddressItemContextMenuDev';
 import { touchedFeedback } from '@/utils/touch';
+import { ALL_ORM_ENTITIES } from '@/databases/entities';
+import { Divider } from '@rneui/base';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {
   const { countdownTextStyles, countdownTextProps } = useRestCountDownLabel({
@@ -108,6 +111,62 @@ function NewlyAddedAccountItem({
         );
       }}
     </AddressItem>
+  );
+}
+
+function DevORMEntities() {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <Text style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+        ORM Entities information
+      </Text>
+      <View
+        style={[styles.propertyDesc, { marginVertical: 12, flexWrap: 'wrap' }]}>
+        {Object.entries(ALL_ORM_ENTITIES).map(([entityName, entityCls]) => {
+          if ('stmSql' in entityCls === false) return null;
+
+          const stmSql = (entityCls as any).stmSql;
+          if (!stmSql) return null;
+
+          return (
+            <View
+              key={entityName}
+              style={[
+                styles.propertyView,
+                { width: '100%', flexWrap: 'nowrap', marginBottom: 8 },
+              ]}>
+              <Text style={{ width: '100%' }}>{entityName} stmSql: </Text>
+              <Text numberOfLines={3} style={{ fontWeight: '500' }}>
+                {stmSql}
+              </Text>
+              <Button
+                title="View SQL"
+                type="primary"
+                height={36}
+                containerStyle={[{ marginTop: 12 }]}
+                onPress={() => {
+                  Alert.alert(`stmSql for ${entityName}`, stmSql, [
+                    { text: 'Cancel', onPress: makeNoop },
+                    {
+                      text: 'Copy',
+                      style: 'destructive',
+                      onPress: async () => {
+                        Clipboard.setString(stmSql);
+                      },
+                    },
+                  ]);
+                }}
+              />
+            </View>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
@@ -319,6 +378,8 @@ function DevDataSQLite() {
             }}
           />
         </View>
+
+        <DevORMEntities />
       </ScrollView>
     </NormalScreenContainer>
   );
