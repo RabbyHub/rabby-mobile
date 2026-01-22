@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -15,6 +21,7 @@ import { Input } from '@rneui/base';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { useDebounceFn } from 'ahooks';
 import { WarningText } from './WarningText';
 
 export const BRIDGE_SLIPPAGE = ['0.5', '1'];
@@ -79,7 +86,7 @@ export const BridgeSlippage = (props: SlippageProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const {
-    value,
+    value: valueProp,
     displaySlippage,
     onChange,
     recommendValue,
@@ -93,6 +100,14 @@ export const BridgeSlippage = (props: SlippageProps) => {
     loading,
   } = props;
   const [slippageOpen, setSlippageOpen] = useState(false);
+  const [value, setValue] = useState('');
+
+  const { run: onChangeDebounce } = useDebounceFn(
+    (input: string) => {
+      onChange(input);
+    },
+    { wait: 300 },
+  );
 
   const [minimumSlippage, maximumSlippage] = useMemo(() => {
     if (type === 'swap') {
@@ -120,6 +135,10 @@ export const BridgeSlippage = (props: SlippageProps) => {
       value?.trim() !== '' && Number(value || 0) > maximumSlippage,
     ];
   }, [maximumSlippage, minimumSlippage, value]);
+
+  useEffect(() => {
+    setValue(valueProp);
+  }, [valueProp]);
 
   useEffect(() => {
     if (
@@ -180,10 +199,12 @@ export const BridgeSlippage = (props: SlippageProps) => {
       setIsCustomSlippage(true);
       const v = formatSpeicalAmount(text);
       if (/^\d*(\.\d*)?$/.test(v)) {
-        onChange(Number(text) > MAX_SLIPPAGE ? `${MAX_SLIPPAGE}` : text);
+        const textSet = Number(text) > MAX_SLIPPAGE ? `${MAX_SLIPPAGE}` : text;
+        setValue(textSet);
+        onChangeDebounce(textSet);
       }
     },
-    [MAX_SLIPPAGE, onChange, setAutoSlippage, setIsCustomSlippage],
+    [MAX_SLIPPAGE, setAutoSlippage, setIsCustomSlippage, onChangeDebounce],
   );
 
   useEffect(() => {
