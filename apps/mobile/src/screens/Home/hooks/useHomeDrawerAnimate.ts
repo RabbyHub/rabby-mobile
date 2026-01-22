@@ -1,27 +1,45 @@
+import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
+import { RNGHScrollView } from '@/components/customized/reexports';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { zCreate } from '@/core/utils/reexports';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { triggerImpact } from '@/utils/common';
-import { useMemo, useRef, useState, useCallback } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+} from 'react';
 import {
+  Dimensions,
   PanResponder,
   Platform,
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+// import { useTabsContext } from 'react-native-collapsible-tab-view/src/hooks';
 import { Gesture } from 'react-native-gesture-handler';
+// import {
+//   GestureStateManager,
+//   GestureStateManagerType,
+// } from 'react-native-gesture-handler/src/handlers/gestures/gestureStateManager';
 import {
+  clamp,
   Extrapolate,
   interpolate,
   makeMutable,
   runOnJS,
+  scrollTo,
   useAnimatedReaction,
+  useAnimatedRef,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Mutable } from 'react-native-reanimated/lib/typescript/commonTypes';
 
 export const SCROLLABLE_STATUS = {
   LOCKED: 'LOCKED',
@@ -40,151 +58,40 @@ export const SCROLLABLE_DECELERATION_RATE_MAPPER = {
   }),
 };
 
-export const PULL_THRESHOLD = 160;
+const PULL_THRESHOLD = 100;
+const scrWinHeight = Dimensions.get('screen').height;
+
+// export const THRESHOLD_PERCENT = (PULL_THRESHOLD / scrWinHeight) * 100;
+export const THRESHOLD_PERCENT = 8;
+
+export function getPullThreshold(height: number = scrWinHeight) {
+  'worklet';
+  // return Math.min(height * 0.3, PULL_THRESHOLD);
+  return Math.min(height * THRESHOLD_PERCENT * 0.01 + 16, PULL_THRESHOLD);
+}
 
 export const homeDrawerAnimateMutable = {
   tabsOpacity: makeMutable(0),
   pullPercent: makeMutable(0),
   isExpanded: makeMutable(false),
   translateY: makeMutable(0),
+
+  scrollViewContentHeight: makeMutable(0),
+  scrollViewLayoutHeight: makeMutable(0),
+  swipeUpHintHeight: makeMutable(0),
 };
 
-export const useHomeAnimation = () => {
-  const { isExpanded, translateY, pullPercent, tabsOpacity } =
-    homeDrawerAnimateMutable;
-  const { height } = useWindowDimensions();
-  const scrollableRef = useRef<ScrollView>(null);
-  const scrollY = useCurrentTabScrollY();
-  const contentHeight = useSharedValue(0);
-  const layoutHeight = useSharedValue(0);
-  const [bounces, setBounces] = useState(true);
+export function getScrollContainerPb(bottomInset: number) {
+  'worklet';
+  return IS_ANDROID ? Math.max(bottomInset, 16) : bottomInset;
+}
 
-  const scrollToTop = useCallback(() => {
-    scrollableRef.current?.scrollTo?.({ y: 0, animated: false });
-  }, []);
-
-  const showDappDrawer = useCallback(() => {
-    translateY.value = withTiming(-height);
-    runOnJS(triggerImpact)();
-  }, [height, translateY]);
-
-  useAnimatedReaction(
-    () => translateY.value,
-    value => {
-      pullPercent.value = (value / height) * 100;
-    },
-  );
-
-  useAnimatedReaction(
-    () => pullPercent.value,
-    value => {
-      if (value === 0) {
-        isExpanded.value = false;
-      } else if (value === -100) {
-        isExpanded.value = true;
-        runOnJS(scrollToTop)();
-      }
-
-      tabsOpacity.value = interpolate(
-        value,
-        [-8, 0],
-        [0, 1],
-        Extrapolate.CLAMP,
-      );
-    },
-    [],
-  );
-
-  const isAtBottom = useDerivedValue(() => {
-    if (!contentHeight.value || !layoutHeight.value) {
-      return false;
-    }
-    const maxOffset = Math.max(0, contentHeight.value - layoutHeight.value);
-    return scrollY.value >= maxOffset;
-  }, [scrollY]);
-
-  // const panGesture = useMemo(() => {
-  //   let gesture = Gesture.Pan()
-  //     .shouldCancelWhenOutside(false)
-  //     .onStart(() => {
-  //       translateY.value = 0;
-  //       isExpanded.value = false;
-  //     })
-  //     .onUpdate(event => {
-  //       if (event.translationY > 0) {
-  //         return;
-  //       }
-
-  //       translateY.value = event.translationY;
-  //     })
-  //     .onEnd(() => {
-  //       if (translateY.value * -1 > PULL_THRESHOLD) {
-  //         translateY.value = withTiming(-height);
-  //         runOnJS(triggerImpact)();
-  //       } else {
-  //         translateY.value = withTiming(0);
-  //       }
-  //     });
-
-  //   return gesture;
-  // }, [height, isExpanded, translateY]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => {
-        return false;
-      },
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return isAtBottom.value && gestureState.dy < -5;
-      },
-      onPanResponderGrant: () => {
-        translateY.value = 0;
-        isExpanded.value = false;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        console.log('gestureState.dy', gestureState.dy);
-        if (!isAtBottom.value) {
-          return;
-        }
-        // if (gestureState.dy > 0) {
-        //   return;
-        // }
-        setBounces(false);
-        translateY.value = gestureState.dy;
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (translateY.value * -1 > PULL_THRESHOLD) {
-          translateY.value = withTiming(-height);
-          runOnJS(triggerImpact)();
-        } else {
-          translateY.value = withTiming(0);
-        }
-        setBounces(true);
-      },
-      onPanResponderTerminate: () => {
-        translateY.value = withTiming(0);
-        setBounces(true);
-      },
-    }),
-  ).current;
-
-  const mainStyle = useAnimatedStyle(() => ({
-    overflow: 'hidden',
-    transform: [
-      {
-        translateY: translateY.value,
-      },
-    ],
+export function useHomeDrawerOpacityStyle() {
+  const tabsOpacity = homeDrawerAnimateMutable.tabsOpacity;
+  const opacityStyle = useAnimatedStyle(() => ({
+    opacity: tabsOpacity.value,
+    pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'auto',
   }));
 
-  return {
-    // panGesture,
-    panResponder,
-    scrollableRef,
-    bounces,
-    contentHeight,
-    layoutHeight,
-    mainStyle,
-    showDappDrawer,
-  };
-};
+  return { opacityStyle };
+}

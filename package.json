@@ -99,7 +99,8 @@
     "@ethereumjs/tx@^4.2.0": "patch:@ethereumjs/tx@npm%3A5.4.0#./.yarn/patches/@ethereumjs-tx-npm-5.4.0-0c4a0f973e.patch",
     "@ethereumjs/tx@^4.1.2": "patch:@ethereumjs/tx@npm%3A5.4.0#./.yarn/patches/@ethereumjs-tx-npm-5.4.0-0c4a0f973e.patch",
     "@ethereumjs/tx@^10.0.0": "patch:@ethereumjs/tx@npm%3A5.4.0#./.yarn/patches/@ethereumjs-tx-npm-5.4.0-0c4a0f973e.patch",
-    "@rabby-wallet/eth-simple-keyring": "5.1.0"
+    "@rabby-wallet/eth-simple-keyring": "5.1.0",
+    "react-native-collapsible-tab-view@^6.2.1": "patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
