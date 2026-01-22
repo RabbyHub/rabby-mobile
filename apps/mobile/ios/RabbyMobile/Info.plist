@@ -89,6 +89,8 @@
 	<string>Rabby requires location access to enable secure Bluetooth communication with hardware wallets.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Rabby needs microphone access to record audio</string>
+  <key>NSUserNotificationsUsageDescription</key>
+  <string>Rabby requires notification access to send you important messages.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>SF-Pro-Rounded-Bold.otf</string>

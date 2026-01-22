@@ -9,7 +9,7 @@ import {
 } from '@/hooks/useCurrentBalance';
 import { Multi24hBalanceState } from '@/hooks/useScene24hBalance';
 import { ContactBookStore } from '@rabby-wallet/service-address';
-import { Account } from '../services/preference';
+import { Account, PreferenceStore } from '../services/preference';
 
 export type PerfEventBusListeners = {
   EVENT_ROUTE_CHANGE: (ctx: {
@@ -27,6 +27,11 @@ export type PerfEventBusListeners = {
 
   CONTACTS_ALIASES_UPDATE: (ctx: {
     nextState: ContactBookStore['aliases'];
+  }) => void;
+
+  PREFERENCE_UPDATED: <T extends keyof PreferenceStore>(ctx: {
+    key: T;
+    value: PreferenceStore[T];
   }) => void;
 
   NAV_BACK_ON_HOME: () => void;

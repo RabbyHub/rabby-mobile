@@ -8658,12 +8658,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@notifee/react-native@npm:^7.8.0":
-  version: 7.8.2
-  resolution: "@notifee/react-native@npm:7.8.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40notifee%2Freact-native%2F-%2Freact-native-7.8.2.tgz"
+"@notifee/react-native@npm:^9.1.8":
+  version: 9.1.8
+  resolution: "@notifee/react-native@npm:9.1.8"
   peerDependencies:
     react-native: "*"
-  checksum: f3b3ea116653d4dc7b50f8124898f9e22567ae30306225841d2057bc9ce40d451b15436dff3e60e0e042ffd7f34338054b202cd2dc61c5dc5eab7676b625b9f9
+  checksum: a144f7c5aa54a7e774c95b3a91341653865dfa4c8540b34ead3f281edd733830975c4f86bdfe422467d18ae97879b75be09ca25bb1818ba2ecfc56808cb570b1
   languageName: node
   linkType: hard
 
@@ -10461,6 +10461,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/push-notification-ios@npm:^1.12.0":
+  version: 1.12.0
+  resolution: "@react-native-community/push-notification-ios@npm:1.12.0"
+  dependencies:
+    invariant: ^2.2.4
+  peerDependencies:
+    react: ">=16.6.3"
+    react-native: ">=0.58.4"
+  checksum: 650b9022efffb1eea0e6c34ea71e210b486d16dfbd0a75a907fd747c8c22dd633c55a54533f135381f603cacc09d10d38780f0ab03d680eb7a51810d5db1bdb7
+  languageName: node
+  linkType: hard
+
 "@react-native-firebase/analytics@npm:18.8.0":
   version: 18.8.0
   resolution: "@react-native-firebase/analytics@npm:18.8.0"
@@ -10484,6 +10496,19 @@ __metadata:
     expo:
       optional: true
   checksum: 10b4e5aec0dd18a690bc2ba07fe95f0d414f2904574dda930efd050b113629469d2c01e1d849b129ce575e84bbf89b53ffbeee55c51716c4a78e36be463c1fff
+  languageName: node
+  linkType: hard
+
+"@react-native-firebase/messaging@npm:18.8.0":
+  version: 18.8.0
+  resolution: "@react-native-firebase/messaging@npm:18.8.0"
+  peerDependencies:
+    "@react-native-firebase/app": 18.8.0
+    expo: ">=47.0.0"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 4a6e744579954310557a56c843049283e8478185609d78409ad3949dbfe0e01007b6fb724496308dec9131266a55d068a0828587476df54ddfc3adc8a1013d29
   languageName: node
   linkType: hard
 
@@ -35650,7 +35675,7 @@ __metadata:
     "@metamask/eth-sig-util": 7.0.1
     "@ngraveio/bc-ur": 1.1.6
     "@noble/hashes": ^1.4.0
-    "@notifee/react-native": ^7.8.0
+    "@notifee/react-native": ^9.1.8
     "@onekeyfe/hd-ble-sdk": 1.1.13
     "@onekeyfe/react-native-ble-utils": 0.1.4
     "@op-engineering/op-sqlite": ^15.1.1
@@ -35681,8 +35706,10 @@ __metadata:
     "@react-native-community/eslint-config": ^3.2.0
     "@react-native-community/hooks": 100.1.0
     "@react-native-community/netinfo": 11.4.1
+    "@react-native-community/push-notification-ios": ^1.12.0
     "@react-native-firebase/analytics": 18.8.0
     "@react-native-firebase/app": 18.8.0
+    "@react-native-firebase/messaging": 18.8.0
     "@react-native-google-signin/google-signin": 13.2.0
     "@react-native-masked-view/masked-view": ^0.3.1
     "@react-native-menu/menu": 1.2.3
