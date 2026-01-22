@@ -8,7 +8,9 @@ import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_nftitem)
 export class NFTItemEntity extends EntityAddressAssetBase {
   // chain

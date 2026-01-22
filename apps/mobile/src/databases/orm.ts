@@ -1,10 +1,5 @@
 import { DataSourceOptions } from 'typeorm/browser';
 
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { NFTItemEntity } from '@/databases/entities/nftItem';
-import { HistoryItemEntity } from './entities/historyItem';
-import { LocalHistoryItemEntity } from './entities/localhistoryItem';
-import { ProtocolItemEntity } from './entities/portocolItem';
 import { SQLite } from '@/core/databases/exports';
 import { getMigrations } from './migrations';
 import { APP_DB_PREFIX, getRabbyAppDbName } from './constant';
@@ -12,16 +7,13 @@ import {
   exp_dropAndResyncDataSource,
   initializeAppDataSource,
 } from './imports';
-import { BalanceEntity } from './entities/balance';
 import { abortAllSyncTasks } from './sync/_task';
-import { BuyItemEntity } from './entities/buyItem';
-import { CexEntity } from './entities/cex';
 import {
   RabbyOrmDevConsoleLogger,
   RabbyOrmDeployedConsoleLogger,
   RnSqlExecutionTimes,
 } from './logger';
-import { AccountInfoEntity } from './entities/accountInfo';
+import { ALL_ORM_ENTITIES } from './entities';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -44,17 +36,7 @@ const dbOptions: DataSourceOptions = {
   synchronize: false,
   driver: SQLite,
   entityPrefix: APP_DB_PREFIX,
-  entities: [
-    TokenItemEntity,
-    NFTItemEntity,
-    HistoryItemEntity,
-    LocalHistoryItemEntity,
-    BalanceEntity,
-    ProtocolItemEntity,
-    BuyItemEntity,
-    CexEntity,
-    AccountInfoEntity,
-  ],
+  entities: Object.values(ALL_ORM_ENTITIES),
   maxQueryExecutionTime: 10 * 1e3,
   rnMaxQueryExecutionTime: RnSqlExecutionTimes.config,
   // only enable file logger in non-public production env, avoid leaking user's sensitive info

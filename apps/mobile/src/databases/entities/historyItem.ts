@@ -30,6 +30,7 @@ import {
 import { CustomTxItem } from '@/core/services/transactionHistory';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
 export type ProjectItemType = {
   chain: string;
@@ -38,6 +39,7 @@ export type ProjectItemType = {
   name: string;
 };
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_historyitem)
 export class HistoryItemEntity extends EntityAddressAssetBase {
   // is_scam

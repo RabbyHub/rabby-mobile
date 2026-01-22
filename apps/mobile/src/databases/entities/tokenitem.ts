@@ -22,12 +22,14 @@ import { tokenItemEntityToTokenItem } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
 const RawAmountTransformer = {
   to: (val: any) => columnConverter.numberToString(val),
   from: (val: any) => columnConverter.stringToNumber(val, false),
 };
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_tokenitem)
 export class TokenItemEntity extends EntityAddressAssetBase {
   // content_type

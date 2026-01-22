@@ -7,7 +7,9 @@ import { columnConverter } from './_helpers';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_balance)
 export class BalanceEntity extends EntityAddressAssetBase {
   // balance
@@ -56,7 +58,6 @@ DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at",
 "chain_list" = EXCLUDED."chain_list",
 "isCore" = EXCLUDED."isCore"
 `;
-
   static getStatementSql() {
     return this.stmSql;
   }

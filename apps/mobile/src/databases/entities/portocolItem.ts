@@ -8,7 +8,9 @@ import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_portocolitem)
 export class ProtocolItemEntity extends EntityAddressAssetBase {
   // id
