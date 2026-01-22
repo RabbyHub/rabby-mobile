@@ -2,17 +2,13 @@ import { useCallback, useRef } from 'react';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { unionBy } from 'lodash';
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
-import { perfEvents } from '@/core/utils/perf';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import { getAccountList, getTop10MyAccounts } from '@/core/apis/account';
+import { getAccountList } from '@/core/apis/account';
 import { Account } from '@/core/services/preference';
 import balanceStore, { IBalanceData } from '@/store/balance';
+import { perfEvents } from '@/core/utils/perf';
 
 export interface BalanceAccountType {
   address: string;
@@ -57,7 +53,41 @@ const buildBalanceAccountsFromList = (
   }, {} as AccountsBalanceState['balance']);
 };
 
-runIIFEFunc(() => {
+export const syncBalanceAccountStore = () => {
+  const balanceMap = balanceStore.getState();
+  const current = balanceAccountsStore.getState().balance;
+  if (!Object.keys(current).length) return;
+  let changed = false;
+  const next = { ...current };
+
+  Object.keys(current).forEach(address => {
+    const latest = balanceMap[address];
+    if (!latest) return;
+    const prev = current[address];
+    if (!prev) return;
+    const nextBalance = latest.totalBalance || 0;
+    const nextEvmBalance = latest.evmBalance || 0;
+
+    if (prev.balance !== nextBalance || prev.evmBalance !== nextEvmBalance) {
+      next[address] = {
+        ...prev,
+        balance: nextBalance,
+        evmBalance: nextEvmBalance,
+      };
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    setAccountsBalance(next);
+  }
+};
+
+export function startProcessAccountBalanceEvents() {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
+    syncBalanceAccountStore();
+  });
+
   balanceStore.subscribe(state => {
     const balanceMap = state.balanceMap;
     const current = balanceAccountsStore.getState().balance;
@@ -88,7 +118,7 @@ runIIFEFunc(() => {
       setAccountsBalance(next);
     }
   });
-});
+}
 
 export function getBalanceCacheAccounts() {
   return balanceAccountsStore.getState().balance;

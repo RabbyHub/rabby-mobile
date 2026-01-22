@@ -124,9 +124,6 @@ export function MultiAddressHomeHeader(
 
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
-  useEffect(() => {
-    console.log('combinedData', data);
-  }, [data]);
   const { isLoading: loading } = useSceneIsLoading('Home');
 
   const { t } = useTranslation();

@@ -311,7 +311,6 @@ export const refresh24hAssets = async ({
   balanceAccounts?: AccountsBalanceState['balance'];
 } = {}) => {
   const { top10Addresses } = await getTop10MyAccounts();
-  console.log('refresh24hAssets', balanceAccounts);
   refreshCombinedDataForScene('Home', {
     addresses: top10Addresses,
     force,
@@ -327,7 +326,6 @@ export const refresh24hAssets = async ({
 
 export function startProcessScene24hBalanceEvents() {
   balanceAccountsStore.subscribe(state => {
-    console.log('refresh24hAssets subscribe', state.balance);
     refresh24hAssets({
       balanceAccounts: state.balance,
     });
