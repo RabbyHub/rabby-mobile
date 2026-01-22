@@ -9,6 +9,7 @@ import {
 } from '@/screens/Home/components/AssetRenderItems';
 import { ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useLoadAssets } from '@/screens/Search/useAssets';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -298,6 +299,7 @@ const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
     marginTop: TAB_HEADER_FULL_HEIGHT,
+    // ...makeDebugBorder('orange'),
   },
   list: {
     paddingHorizontal: 16,

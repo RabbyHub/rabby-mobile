@@ -440,7 +440,6 @@ const getStyle = createGetStyles2024(
     },
 
     panel: {
-      // paddingTop: !IS_ANDROID ? TAB_HEADER_MT : TAB_HEADER_MT,
       paddingTop: 0,
       display: 'flex',
       flexDirection: 'column',
