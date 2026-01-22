@@ -97,6 +97,7 @@ RPCMethodsMiddleParameters) =>
       icon: iconRef.current || '',
       $mobileCtx: {
         fromTabId: bridge.webviewId,
+        isFromMobileInnerDapp: bridge.isFromMobileInnerDapp,
       },
     };
 

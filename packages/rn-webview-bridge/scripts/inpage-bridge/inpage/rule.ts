@@ -119,6 +119,13 @@ const rules: Rule[] = [
       }, 500);
     },
   },
+  {
+    matches: ['https://app.lighter.xyz'],
+    hiddenSelectors: [
+      '.smartbanner',
+      '#root > div:nth-child(2) > div.flex.size-full.min-h-screen.flex-col.items-center.p-1.pb-2 > div.flex.h-auto.items-center.justify-between.self-stretch.rounded.px-3.py-1.max-mobile\\:py-2.mobile\\:mx-1.bg-banner.max-mobile\\:mb-1',
+    ],
+  },
 ];
 
 const injectStyle = (styleContent: string) => {

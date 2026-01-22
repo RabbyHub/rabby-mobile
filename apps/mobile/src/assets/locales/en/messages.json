@@ -1043,6 +1043,7 @@
         "watchlist": "Token Watchlist",
         "perps": "Perps",
         "lending": "Lending",
+        "predict": "Predict",
         "perpsMarketList": "More Perps"
       },
       "swipeUp": {
@@ -2592,6 +2593,7 @@
         "confirm": "Confirm",
         "fee": "Fee",
         "rabbyFeeTips": "Rabby fee: 0.04%",
+        "rabbyFeeTipsV2": "Rabby fee: 0.02%",
         "providerFeeTips": "Hyperliquid fee: {{fee}}"
       },
       "PerpsEditMarginPopup": {

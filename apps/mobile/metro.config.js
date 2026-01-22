@@ -60,9 +60,11 @@ const createModuleIdFactory = () => {
 const config = {
   projectRoot,
   transformer: {
-    babelTransformerPath: require.resolve(
-      'react-native-svg-transformer/react-native',
-    ),
+    babelTransformerPath: require.resolve('./webview-raw-transformer'),
+
+    // babelTransformerPath: require.resolve(
+    //   'react-native-svg-transformer/react-native',
+    // ),
     getTransformOptions: async () => ({
       transform: {
         experimentalImportSupport: false,
@@ -75,7 +77,13 @@ const config = {
   },
   resolver: {
     assetExts: assetExts.filter(ext => ext !== 'svg'),
-    sourceExts: [...sourceExts, 'svg'],
+    sourceExts: [
+      ...sourceExts,
+      'svg',
+      'webview.injected.js',
+      'webview.injected.ts',
+      'webview.injected.tsx',
+    ],
     enableGlobalPackages: true,
     extraNodeModules: {
       ...require('node-libs-react-native'),
