@@ -168,7 +168,7 @@ export async function batchSaveWithPQueueAndTransaction<
         try {
           const disablePreparedUpsert =
             !__DEV__ &&
-            getOnlineConfig().switches?.['20260105.disable_db_prepared_upsert'];
+            !getOnlineConfig().switches?.['20260122.enable_db_prepared_upsert'];
           const supportedPreparedStatement =
             !disablePreparedUpsert &&
             'getStatementSql' in entityCls &&

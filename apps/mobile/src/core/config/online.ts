@@ -19,8 +19,10 @@ type OnlineConfig = {
     ['20250820.reportSentry_slowQuery']?: boolean;
     ['20250924.android_webview_always_treat_as_reload']?: boolean;
     ['20251226.enable_worker_thread']?: boolean;
+    /** @deprecated keep it disabled online, or the insertions will be error on old version */
     ['20260105.disable_db_prepared_upsert']?: boolean;
     ['20260116.allow_short_auto_lock_time_on_bootstrap']?: boolean;
+    ['20260122.enable_db_prepared_upsert']?: boolean;
   };
 };
 
@@ -32,6 +34,7 @@ function getDefaultOnlineConfig(): OnlineConfig {
       '20251226.enable_worker_thread': false,
       '20260105.disable_db_prepared_upsert': false,
       '20260116.allow_short_auto_lock_time_on_bootstrap': false,
+      '20260122.enable_db_prepared_upsert': false,
     },
   };
 }

@@ -7,7 +7,7 @@ import {
 } from 'typeorm/browser';
 import { ColumnMetadataArgs } from 'typeorm/browser/metadata-args/ColumnMetadataArgs';
 
-type Columns = {
+type ColumnInfo = {
   $col: ColumnMetadataArgs;
   propertyName: string;
   databaseName: string;
@@ -24,7 +24,7 @@ type ParseEntityOpts = {
 type ParsedEntityInfo = {
   tableName: string;
   columns: Function[];
-  propMapToColums: Columns[];
+  propMapToColumn: Record<string, ColumnInfo>;
   orderedPropertyNames: string[];
   upsertSql: string;
 };
@@ -57,7 +57,7 @@ export function parseEntityColumns<T extends EntityConstructor>(
     tableName,
     ancestors: [] as Function[],
     columns: [] as ParsedEntityInfo['columns'],
-    propMapToColums: {} as ParsedEntityInfo['propMapToColums'],
+    propMapToColumn: {} as ParsedEntityInfo['propMapToColumn'],
     orderedPropertyNames: [] as ParsedEntityInfo['orderedPropertyNames'],
     upsertSql: '' as ParsedEntityInfo['upsertSql'],
   };
@@ -74,8 +74,8 @@ export function parseEntityColumns<T extends EntityConstructor>(
   // console.debug('[parseEntityColumns] parseEntityColumns:: allColumns', allColumns);
 
   const insertGenerator = {
-    maybeConflictColumns: [] as Columns[],
-    updateSetColumns: [] as Columns[],
+    maybeConflictColumns: [] as ColumnInfo[],
+    updateSetColumns: [] as ColumnInfo[],
     columnNames: [] as string[],
     placeholders: '',
   };
@@ -101,7 +101,7 @@ export function parseEntityColumns<T extends EntityConstructor>(
     }
     parseResult.orderedPropertyNames.push(col.propertyName);
     insertGenerator.columnNames.push(`"${col.databaseName}"`);
-    parseResult.propMapToColums[col.propertyName] = col.databaseName;
+    parseResult.propMapToColumn[col.propertyName] = col;
   });
 
   const updateSet = insertGenerator.updateSetColumns
@@ -162,9 +162,41 @@ export function ParseEntity() {
 
     Object.defineProperty(constructor.prototype, 'bindUpsertParams', {
       value: function (stm: any) {
-        const params = parseResult.orderedPropertyNames.map(
-          propName => (this as any)[propName],
-        );
+        const params = parseResult.orderedPropertyNames.map(propName => {
+          let value = (this as any)[propName];
+          const column = parseResult.propMapToColumn[propName];
+
+          const colOptions = column?.$col.options;
+          if (!colOptions) return value;
+
+          const optTransformers = colOptions.transformer;
+          const transformers = !optTransformers
+            ? []
+            : Array.isArray(optTransformers)
+            ? optTransformers
+            : [optTransformers].filter(Boolean);
+
+          let transformedValue = value;
+          if (transformers.length) {
+            transformedValue = transformers.reduce(
+              (val, transformer) =>
+                typeof transformer.to === 'function'
+                  ? transformer.to(val)
+                  : val,
+              value,
+            );
+          }
+          const optDefaultValue = colOptions.default;
+          if (transformedValue === undefined && optDefaultValue !== undefined) {
+            transformedValue =
+              typeof optDefaultValue === 'function'
+                ? optDefaultValue()
+                : optDefaultValue;
+          }
+
+          return transformedValue;
+        });
+
         stm.bindSync(params);
         return stm;
       },
