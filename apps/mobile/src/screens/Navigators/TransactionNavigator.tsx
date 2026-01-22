@@ -27,11 +27,12 @@ import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
-import { PerpsScreen } from '../Perps';
+import { PerpsScreen } from '../Perps/Entry';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import LendingHistory from '../Lending/components/LendingHistory';
-import AAVEScreen from '../Lending';
+import AAVEScreen from '../Lending/Entry';
+import PredictionScreen from '../Prediction';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -407,6 +408,14 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.Prediction}
+        component={PredictionScreen}
+        options={mergeScreenOptions({
+          // headerShown: false,
+          gestureEnabled: true,
         })}
       />
     </TransactionStack.Navigator>
