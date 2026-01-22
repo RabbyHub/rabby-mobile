@@ -92,6 +92,7 @@ export const RootNames = {
   StackBottom: 'StackBottom',
   Home: 'Home',
   Points: 'Points',
+  Prediction: 'Prediction',
 
   StackDapps: 'StackDapps',
   Dapps: 'Dapps',
@@ -341,6 +342,7 @@ function makeScreenSpecConfig() {
       // StackBottom
       [RootNames.Home]: bg1Default2024Conf,
       [RootNames.Points]: bg1Default2024Conf,
+      [RootNames.Prediction]: bg1Default2024Conf,
 
       // StackDapps
       [RootNames.Dapps]: bg1Default2024Conf,

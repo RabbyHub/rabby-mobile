@@ -374,6 +374,7 @@ export type TransactionNavigatorParamList = {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';
   };
+  [RootNames.Prediction]?: {};
 };
 
 export type SettingNavigatorParamList = {

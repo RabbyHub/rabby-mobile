@@ -9,6 +9,7 @@ export enum MultiHomeFeatTitle {
   Dapps = 'Dapps',
   Ecosystem = 'Ecosystem',
   Points = 'Rabby Points',
+  Predict = 'Predict',
   Buy = 'Buy',
   Search = 'Search',
   Watchlist = 'Watchlist',

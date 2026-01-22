@@ -214,10 +214,10 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.buttonPrimary}
+            style={styles.aaveButtonPrimary}
             activeOpacity={0.8}
             onPress={handleOpenWithdrawDetail}>
-            <Text style={styles.buttonPrimaryText}>
+            <Text style={styles.aaveButtonPrimaryText}>
               {t('page.Lending.withdrawDetail.actions')}
             </Text>
           </TouchableOpacity>
@@ -388,6 +388,21 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-5'],
   },
   buttonSecondaryText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  aaveButtonPrimary: {
+    flex: 1,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors2024['neutral-line'],
+  },
+  aaveButtonPrimaryText: {
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',

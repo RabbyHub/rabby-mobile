@@ -40,6 +40,7 @@ export function useSetupWebview({
   siteInfoRefs: { urlRef, titleRef, iconRef },
   webviewRef,
   webviewIdRef,
+  isFromMobileInnerDapp,
 }: {
   /** @deprecated */
   dappOrigin?: string;
@@ -50,6 +51,7 @@ export function useSetupWebview({
   };
   webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
+  isFromMobileInnerDapp?: boolean;
 }) {
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
@@ -72,6 +74,7 @@ export function useSetupWebview({
         titleRef,
         iconRef,
         isMainFrame,
+        isFromMobileInnerDapp,
       });
 
       const session = sessionService.getOrCreateSession(newBridge);
@@ -87,7 +90,15 @@ export function useSetupWebview({
 
       putBackgroundBridge(newBridge, true);
     },
-    [urlRef, webviewRef, webviewIdRef, titleRef, iconRef, putBackgroundBridge],
+    [
+      isFromMobileInnerDapp,
+      urlRef,
+      webviewRef,
+      webviewIdRef,
+      titleRef,
+      iconRef,
+      putBackgroundBridge,
+    ],
   );
 
   const onRabbyDeclaredMessage = useCallback(
@@ -144,7 +155,7 @@ export function useSetupWebview({
         console.error(e, `Browser::onMessage on ${urlRef.current}`);
       }
     },
-    [currentBridgeRef, urlRef, onRabbyDeclaredMessage],
+    [currentBridgeRef, onRabbyDeclaredMessage, urlRef],
   );
 
   const changeUrl = useCallback(

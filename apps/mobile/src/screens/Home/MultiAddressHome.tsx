@@ -5,6 +5,11 @@ import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
+import RcIconPredictCC from '@/assets2024/icons/home/IconPredictCC.svg';
+import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
+import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
+import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
+import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
@@ -115,6 +120,7 @@ import {
 } from './hooks/history';
 import { useHomeAnimation } from './hooks/useHomeDrawerAnimate';
 import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
+import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -150,6 +156,30 @@ const OverViewComponent = React.memo(
     const { accounts } = useMyAccounts({ disableAutoFetch: true });
     const sortedAccounts = useSortAddressList(accounts);
     useSubscribePosition(sortedAccounts);
+
+    const { lending: lendingDappId, perps: perpsDappId } =
+      useInnerDappSelection();
+
+    const PrepsIsHyperliquid = perpsDappId === 'hyperliquid';
+    const lendingIsAave = perpsDappId === 'aave';
+
+    const perpsIcon =
+      (
+        {
+          aster: RcIconAsterCC,
+          lighter: RcIconLighterCC,
+          hyperliquid: RcIconPerps,
+        } as const
+      )[perpsDappId] ?? RcIconPerps;
+
+    const lendingIcon =
+      (
+        {
+          spark: RcIconSparkCC,
+          venus: RcIconVenusCC,
+          aave: RcIconLending,
+        } as const
+      )[lendingDappId] ?? RcIconLending;
 
     const { isEligible, checkAddressesEligibility } =
       useGasAccountEligibility();
@@ -187,13 +217,18 @@ const OverViewComponent = React.memo(
           {
             key: MultiHomeFeatTitle.Perps,
             title: t('page.home.services.perps'),
-            icon: RcIconPerps,
+            icon: perpsIcon,
           },
           {
             key: MultiHomeFeatTitle.Lending,
             title: t('page.home.services.lending'),
-            icon: RcIconLending,
+            icon: lendingIcon,
             color: colors2024['brand-default-icon'],
+          },
+          {
+            key: MultiHomeFeatTitle.Predict,
+            title: t('page.home.services.predict'),
+            icon: RcIconPredictCC,
           },
           {
             key: MultiHomeFeatTitle.Points,
@@ -256,6 +291,8 @@ const OverViewComponent = React.memo(
         historyCount?.success,
         alertInfo.total,
         isEligible,
+        lendingIcon,
+        perpsIcon,
       ],
     );
 
@@ -426,6 +463,12 @@ const OverViewComponent = React.memo(
               params: {},
             });
             break;
+          case MultiHomeFeatTitle.Predict:
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Prediction,
+              params: {},
+            });
+            break;
 
           case MultiHomeFeatTitle.Dapps:
             setPartialBrowserState({
@@ -457,7 +500,7 @@ const OverViewComponent = React.memo(
           return <WatchListBadge />;
         }
 
-        if (el.key === MultiHomeFeatTitle.Perps) {
+        if (el.key === MultiHomeFeatTitle.Perps && PrepsIsHyperliquid) {
           return <PerpsPnl />;
         }
 
@@ -470,7 +513,7 @@ const OverViewComponent = React.memo(
           return <IconGift width={24} height={24} />;
         }
 
-        if (el.key === MultiHomeFeatTitle.Lending) {
+        if (el.key === MultiHomeFeatTitle.Lending && lendingIsAave) {
           return <LendingHF />;
         }
 
@@ -494,7 +537,7 @@ const OverViewComponent = React.memo(
           </>
         );
       },
-      [pendingTxCount, styles.badgeStyle],
+      [PrepsIsHyperliquid, lendingIsAave, pendingTxCount, styles.badgeStyle],
     );
 
     const { bottom } = useSafeAreaInsets();

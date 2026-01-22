@@ -32,6 +32,7 @@ import {
 import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
 import { DisableBorrowTip } from './components/DisableBorrowTip';
+import { LendingHeader } from './components/Header';
 
 type MyAssetItem =
   | {
@@ -193,13 +194,26 @@ const MyAssetHome: React.FC = () => {
     [styles.item],
   );
 
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handlePendingClear = useCallback(() => {
+    setTimeout(() => {
+      fetchData(true);
+    }, 200);
+  }, [fetchData]);
+
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        <ChainSelector />
+        <View style={styles.headerLeft}>
+          <ChainSelector />
+        </View>
+        <LendingHeader onPendingClear={handlePendingClear} />
       </View>
     );
-  }, [styles.headerContainer]);
+  }, [styles.headerContainer, styles.headerLeft, handlePendingClear]);
 
   const renderEmpty = useCallback(() => {
     if (loading) {
@@ -264,6 +278,7 @@ const MyAssetHome: React.FC = () => {
             <Button
               containerStyle={styles.actionButton}
               titleStyle={styles.actionPrimaryTitle}
+              buttonStyle={styles.aaveButton}
               title={t('page.Lending.borrowDetail.actions')}
               disabled={loading || disableBorrowButton}
               onPress={handleOpenBorrowList}
@@ -285,7 +300,11 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
       : colors2024['neutral-bg-1'],
   },
   headerContainer: {
-    //marginBottom: 24,
+    flexDirection: 'row',
+    gap: 16,
+  },
+  headerLeft: {
+    flex: 1,
   },
   listContentContainer: {
     paddingVertical: 8,
@@ -318,6 +337,9 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   normalButton: {
     backgroundColor: colors2024['neutral-line'],
+  },
+  aaveButton: {
+    backgroundColor: isLight ? '#131416' : '#fff',
   },
   actionGhostTitle: {
     fontSize: 17,
