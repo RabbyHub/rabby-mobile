@@ -1,21 +1,28 @@
+import { RcNextSearchCC } from '@/assets/icons/common';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
+import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
+import { ReactIconHome } from '@/assets2024/icons/browser';
+import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
+import { Button } from '@/components2024/Button';
+import { IS_ANDROID } from '@/core/native/utils';
+import { DappInfo } from '@/core/services/dappService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
+import { triggerImpact } from '@/utils/common';
+import { createGetStyles2024 } from '@/utils/styles';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
   FlatListProps,
-  Platform,
   FlatList as RNFlatList,
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -28,33 +35,18 @@ import Animated, {
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { RcNextSearchCC } from '@/assets/icons/common';
-import { ReactIconHome } from '@/assets2024/icons/browser';
-import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
-import { IS_ANDROID } from '@/core/native/utils';
-import { DappInfo } from '@/core/services/dappService';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
+import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  getPullThreshold,
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
-  homeDrawerAnimateMutable,
+  getPullThreshold,
   getScrollContainerPb,
+  homeDrawerAnimateMutable,
 } from '../hooks/useHomeDrawerAnimate';
-import { triggerImpact } from '@/utils/common';
-import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
-import { Button } from '@/components2024/Button';
-import { TAB_HEADER_MT } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
-import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -75,8 +67,6 @@ export const HomeDappDrawer: React.FC<{
     return Math.max(safeTop, headerHeight);
   }, [headerHeight, safeTop]);
 
-  console.log('HomeDappDrawer render', { safeTop, headerHeight });
-
   const { openTab, setPartialBrowserState } = useBrowser();
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
   const [_isEditing, setIsEditing] = React.useState(false);
@@ -93,31 +83,36 @@ export const HomeDappDrawer: React.FC<{
   const hasData = list.length > 0;
   const isEditing = _isEditing && hasData;
 
-  const startEditing = () => {
+  const startEditing = useCallback(() => {
     if (!hasData) return;
     setIsEditing(true);
     setRemovedItems([]);
-  };
+  }, [hasData]);
 
-  const completeEditing = () => {
+  const resetEditing = useCallback(() => {
+    setIsEditing(false);
+    setRemovedItems([]);
+  }, []);
+
+  const completeEditing = useCallback(() => {
     setIsEditing(false);
     removedItems.forEach(url => {
       removeBookmark(url);
     });
     setRemovedItems([]);
-  };
+  }, [removedItems, removeBookmark]);
 
-  const handleRemoveLocal = (url: string) => {
+  const handleRemoveLocal = useCallback((url: string) => {
     setRemovedItems(prev => [...prev, url]);
-  };
+  }, []);
 
-  const handle = () => {
+  const handle = useCallback(() => {
     if (isEditing) {
       completeEditing();
     } else {
       startEditing();
     }
-  };
+  }, [completeEditing, isEditing, startEditing]);
 
   const handleScrollBack = useCallback(() => {
     'worklet';
@@ -126,21 +121,22 @@ export const HomeDappDrawer: React.FC<{
     }
   }, [onScrollBack]);
 
-  const onPressHome = () => {
-    translateY.value = withTiming(0, undefined, () => {
-      scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-      !IS_ANDROID && handleScrollBack();
-    });
-    IS_ANDROID && runOnUI(handleScrollBack)();
-
-    triggerImpact();
-  };
-
   const drawerScrollOffsetY = useSharedValue(0);
   const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
     SCROLLABLE_STATUS.UNLOCKED,
   );
+
+  const onPressHome = useCallback(() => {
+    translateY.value = withTiming(0, undefined, () => {
+      scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+      !IS_ANDROID && handleScrollBack();
+      runOnJS(resetEditing)();
+    });
+    IS_ANDROID && runOnUI(handleScrollBack)();
+
+    triggerImpact();
+  }, [handleScrollBack, resetEditing, scrollableStatus]);
 
   const animatedProps = useAnimatedProps(() => ({
     decelerationRate:
@@ -184,6 +180,7 @@ export const HomeDappDrawer: React.FC<{
           if (translateY.value > (height - getPullThreshold(height)) * -1) {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+              runOnJS(resetEditing)();
             });
             handleScrollBack();
 
@@ -195,11 +192,10 @@ export const HomeDappDrawer: React.FC<{
           }
         }),
     [
-      drawerScrollOffsetY,
+      drawerScrollOffsetY.value,
       height,
-      // pullPercent.value,
+      resetEditing,
       scrollableStatus,
-      // translateY,
       handleScrollBack,
     ],
   );
