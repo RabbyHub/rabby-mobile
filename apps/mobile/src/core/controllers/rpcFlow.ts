@@ -5,6 +5,7 @@ import { ethErrors } from 'eth-rpc-errors';
 //   permissionService,
 // } from 'background/service';
 import {
+  autoConnectService,
   dappService,
   keyringService,
   notificationService,
@@ -146,42 +147,11 @@ const flowContext = flow
         connectOrigins.add(origin);
         try {
           let defaultChain: CHAINS_ENUM | null = null;
-          let defaultAccount: Account | undefined = undefined;
-          const collectList = (
-            await openapi
-              .getOriginThirdPartyCollectList(origin)
-              .catch(() => null)
-          )?.collect_list;
-          if (collectList && collectList.length >= 2) {
-            const site = dappService.getDapp(origin);
-            const { accounts } = await getAccountList();
-            defaultAccount = getDappAccount({
-              dappInfo: site,
-              accounts,
-            })!;
-            defaultChain =
-              site?.chainId && findChain({ enum: site.chainId })
-                ? site.chainId
-                : null;
-            if (defaultAccount && !defaultChain) {
-              const recommendChains = await openapi.getRecommendChains(
-                defaultAccount.address,
-                origin,
-              );
-              let targetChain: Chain | undefined;
-              if (recommendChains) {
-                for (let i = 0; i < recommendChains.length; i++) {
-                  targetChain =
-                    findChain({
-                      serverId: recommendChains[i]?.id,
-                    }) || undefined;
-                  if (targetChain) {
-                    break;
-                  }
-                }
-              }
-              defaultChain = targetChain ? targetChain.enum : CHAINS_ENUM.ETH;
-            }
+          let defaultAccount: Account | undefined;
+          const autoConnectInfo = await autoConnectService.autoConnect(origin);
+          if (autoConnectInfo) {
+            defaultAccount = autoConnectInfo.defaultAccount;
+            defaultChain = autoConnectInfo.defaultChain || CHAINS_ENUM.ETH;
           } else {
             const res = await notificationService.requestApproval(
               {
