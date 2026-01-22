@@ -1,5 +1,5 @@
 import { openapi } from '@/core/request';
-import { offlineChainService, preferenceService } from '@/core/services';
+import { offlineChainService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import balanceStore from '@/store/balance';
 import { findChainByServerID } from '@/utils/chain';
@@ -73,10 +73,11 @@ export const useOfflineChain = () => {
   }, [mockData.forceShowOffchainNotify]);
 
   const balanceMap = balanceStore(s => s.balanceMap);
+  const chainUSDMap = balanceStore(s => s.chainUSDMap);
 
   const list = useMemo(() => {
     const accountChainBalanceList = Object.keys(balanceMap).map(
-      addr => preferenceService.getAddressBalance(addr)?.chain_list,
+      addr => chainUSDMap[addr],
     );
 
     return offlineList
@@ -95,7 +96,7 @@ export const useOfflineChain = () => {
         );
       })
       .sort((a, b) => a.offline_at - b.offline_at);
-  }, [balanceMap, offlineList, mockData.forceShowOffchainNotify]);
+  }, [balanceMap, chainUSDMap, offlineList, mockData.forceShowOffchainNotify]);
 
   const displayWillClosedChain = useMemo(
     () => list?.filter(e => !closedTipsChains?.includes(e.id))?.[0],
