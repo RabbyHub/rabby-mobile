@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
+  GestureResponderEvent,
+  Pressable,
   Animated as RNAnimated,
   Easing as RNEasing,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -53,7 +54,7 @@ export function TabsTopHeader(
   const {
     /* loading, data,  showNetWorth = false*/
   } = props;
-  const { tabIndex } = useHomeTabIndex();
+  const { tabIndex, setTabIndex } = useHomeTabIndex();
   const showNetWorth = tabIndex !== 0;
 
   const { isLoading: loading } = useSceneIsLoading('Home');
@@ -66,7 +67,8 @@ export function TabsTopHeader(
   const focusedTab = useFocusedTab();
 
   const [hideType, setHideType] = useHideBalance();
-  const handleHideTypeChange = useMemoizedFn(() => {
+  const handleHideTypeChange = useMemoizedFn((event: GestureResponderEvent) => {
+    event.stopPropagation();
     if (hideType === 'HALF_HIDE') {
       setHideType('HIDE');
     } else if (hideType === 'HIDE') {
@@ -102,6 +104,12 @@ export function TabsTopHeader(
       setTokenDisplayMode('byAddress');
     }
   }, [setTokenDisplayMode, tokenDisplayMode]);
+  const handleSwitchToTokenTab = useCallback(
+    (index: number) => {
+      setTabIndex(index);
+    },
+    [setTabIndex],
+  );
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(data.rawNetWorth, { currency });
@@ -150,7 +158,9 @@ export function TabsTopHeader(
   return (
     <View style={styles.headerBox}>
       {showNetWorth ? (
-        <View style={styles.leftBox}>
+        <Pressable
+          style={styles.leftBox}
+          onPress={() => handleSwitchToTokenTab(0)}>
           <Text style={styles.balanceTextBox}>{netWorth}</Text>
           <Text
             style={[
@@ -164,7 +174,7 @@ export function TabsTopHeader(
             {changePercent}
           </Text>
           {refreshing ? <LoadingCircle /> : null}
-        </View>
+        </Pressable>
       ) : (
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>
@@ -200,15 +210,18 @@ export function TabsTopHeader(
         </View>
       )}
 
-      <View style={styles.rightArea}>
+      <Pressable
+        style={styles.rightArea}
+        onPress={() => handleSwitchToTokenTab(1)}>
         {showRightArea ? (
           <>
             <FeedbackEntryOnHeader style={styles.feedbackEntry} />
 
             <AddressListScreenButton type="address" />
-            <TouchableWithoutFeedback
+            <Pressable
               style={styles.settingEntry}
-              onPress={() => {
+              onPress={event => {
+                event?.stopPropagation?.();
                 navigation.navigateDeprecated(RootNames.StackSettings, {
                   screen: RootNames.Settings,
                   params: {},
@@ -225,7 +238,7 @@ export function TabsTopHeader(
                 color={colors2024['neutral-title-1']}
               />
               {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-            </TouchableWithoutFeedback>
+            </Pressable>
           </>
         ) : (
           <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
@@ -237,7 +250,7 @@ export function TabsTopHeader(
             </View>
           </TouchableOpacity>
         )}
-      </View>
+      </Pressable>
     </View>
   );
 }
@@ -269,9 +282,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   leftBox: {
     height: HeaderHeight,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
+    display: 'flex',
   },
   balanceTextBox: {
     // marginRight: 12,
@@ -291,8 +306,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rightArea: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    flex: 1,
     // position: 'relative',
     // ...makeDebugBorder(),
   },

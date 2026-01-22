@@ -187,8 +187,8 @@ export const TokenList = () => {
       }
       if (groupItems.length === 1) {
         handleOpenTokenDetail(
-          groupItems[0],
-          getAccountByAddress(groupItems[0].owner_addr),
+          groupItems[0]!,
+          getAccountByAddress(groupItems[0]!.owner_addr),
         );
         return;
       }

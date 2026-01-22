@@ -84,6 +84,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   OverViewComponent,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { tabIndex } = useHomeTabIndex();
 
   const tabsOpacity = homeDrawerAnimateMutable.tabsOpacity;
   const tabsStyle = useAnimatedStyle(() => ({
@@ -142,6 +143,14 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
     },
     [],
   );
+
+  React.useEffect(() => {
+    const currentIndex = homeTabScrollerRef.current?.getCurrentIndex?.();
+    if (typeof currentIndex !== 'number' || currentIndex === tabIndex) {
+      return;
+    }
+    homeTabScrollerRef.current?.setIndex(tabIndex);
+  }, [tabIndex]);
 
   useRendererDetect({ name: 'TabsMultiAssets' });
 
