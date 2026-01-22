@@ -121,8 +121,11 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
   }, [calculatedPnl]);
 
   const gainPct = useMemo(() => {
-    return Number(calculatedPnl) / margin;
-  }, [calculatedPnl, margin]);
+    const costPrice =
+      type === 'openPosition' ? markPrice : entryPrice || markPrice;
+    const costMargin = (costPrice * size) / leverage;
+    return Number(calculatedPnl) / costMargin;
+  }, [calculatedPnl, size, leverage, type, entryPrice, markPrice]);
 
   // Handle price input change
   const handlePriceChange = useMemoizedFn((v: string) => {
