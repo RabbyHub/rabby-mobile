@@ -86,7 +86,19 @@ export class BuyItemEntity extends EntityAddressAssetBase {
   static stmSql = `
   INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_buy_order}"
   ("_db_id", "owner_addr", "id", "user_addr", "status", "create_at", "service_provider", "service_provider_url", "pay_usd_amount", "pay_currency_code", "payment_type", "receive_chain_id", "receive_tx_id", "receive_amount", "receive_token", "_local_created_at", "_local_updated_at")
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at",
+  "create_at" = EXCLUDED."create_at",
+  "id" = EXCLUDED."id",
+  "user_addr" = EXCLUDED."user_addr",
+  "status" = EXCLUDED."status",
+  "service_provider" = EXCLUDED."service_provider",
+  "service_provider_url" = EXCLUDED."service_provider_url",
+  "pay_usd_amount" = EXCLUDED."pay_usd_amount",
+  "pay_currency_code" = EXCLUDED."pay_currency_code",
+  "payment_type" = EXCLUDED."payment_type",
+  "receive_tx_id" = EXCLUDED."receive_tx_id",
+  "receive_amount" = EXCLUDED."receive_amount",
+  "receive_token" = EXCLUDED."receive_token"
   `;
 
   static getStatementSql() {

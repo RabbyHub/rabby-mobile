@@ -186,7 +186,7 @@ export async function batchSaveWithPQueueAndTransaction<
               item.bindUpsertParams!(stm);
               try {
                 const result = await stm.execute();
-                // console.debug(`${loggerPrefix}[perf] upserted row:`, result);
+                // console.debug(`${loggerPrefix}[perf] upserted row:`, item, result);
               } catch (error) {
                 console.error(
                   `${loggerPrefix}Error upserting row:`,
