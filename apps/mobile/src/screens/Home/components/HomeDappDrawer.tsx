@@ -13,7 +13,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { triggerImpact } from '@/utils/common';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
@@ -45,6 +45,7 @@ import {
   SCROLLABLE_DECELERATION_RATE_MAPPER,
   SCROLLABLE_STATUS,
 } from '../hooks/useHomeDrawerAnimate';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -67,37 +68,43 @@ export const HomeDappDrawer: React.FC = () => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [removedItems, setRemovedItems] = useState<string[]>([]);
   const list = useMemo(() => {
-    return bookmarkList.filter(item => !removedItems.includes(item.origin));
+    return bookmarkList.filter(
+      item =>
+        !removedItems.find(
+          url => safeGetOrigin(url) === safeGetOrigin(item.origin),
+        ),
+    );
   }, [bookmarkList, removedItems]);
 
-  const startEditing = () => {
+  const startEditing = useCallback(() => {
     setIsEditing(true);
     setRemovedItems([]);
-  };
+  }, []);
 
-  const completeEditing = () => {
+  const resetEditing = useCallback(() => {
+    setIsEditing(false);
+    setRemovedItems([]);
+  }, []);
+
+  const completeEditing = useCallback(() => {
     setIsEditing(false);
     removedItems.forEach(url => {
       removeBookmark(url);
     });
-  };
+    setRemovedItems([]);
+  }, [removedItems, removeBookmark]);
 
-  const handleRemoveLocal = (url: string) => {
+  const handleRemoveLocal = useCallback((url: string) => {
     setRemovedItems(prev => [...prev, url]);
-  };
+  }, []);
 
-  const handle = () => {
+  const handle = useCallback(() => {
     if (isEditing) {
       completeEditing();
     } else {
       startEditing();
     }
-  };
-
-  const onPressHome = () => {
-    translateY.value = withTiming(0);
-    triggerImpact();
-  };
+  }, [isEditing, completeEditing, startEditing]);
 
   const { pullPercent, isExpanded, translateY } = homeDrawerAnimateMutable;
   const drawerScrollOffsetY = useSharedValue(0);
@@ -105,6 +112,13 @@ export const HomeDappDrawer: React.FC = () => {
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
     SCROLLABLE_STATUS.UNLOCKED,
   );
+  const onPressHome = useCallback(() => {
+    translateY.value = withTiming(0, undefined, () => {
+      scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+      runOnJS(resetEditing)();
+    });
+    triggerImpact();
+  }, [resetEditing, scrollableStatus, translateY]);
 
   const animatedProps = useAnimatedProps(() => ({
     decelerationRate:
@@ -148,6 +162,7 @@ export const HomeDappDrawer: React.FC = () => {
           if (translateY.value > (height - PULL_THRESHOLD) * -1) {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+              runOnJS(resetEditing)();
             });
             runOnJS(triggerImpact)();
           } else {
@@ -157,9 +172,10 @@ export const HomeDappDrawer: React.FC = () => {
           }
         }),
     [
-      drawerScrollOffsetY,
+      drawerScrollOffsetY.value,
       height,
       pullPercent.value,
+      resetEditing,
       scrollableStatus,
       translateY,
     ],
@@ -326,8 +342,7 @@ export const HomeDappDrawer: React.FC = () => {
               style={[
                 styles.footer,
                 {
-                  paddingBottom:
-                    Platform.OS === 'ios' ? bottom : Math.max(bottom, 12),
+                  paddingBottom: Math.max(bottom, 12),
                 },
               ]}>
               <TouchableOpacity onPress={onPressHome}>
