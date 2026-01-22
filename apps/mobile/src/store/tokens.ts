@@ -273,9 +273,12 @@ const computeMultiAssets = (
     return createEmptyAssetsResult();
   }
   const normalizedAddresses = normalizeAddresses(addresses);
-  const tokens = normalizedAddresses.flatMap(
+  const allTokens = normalizedAddresses.flatMap(
     address => tokenListMap[address] || [],
   );
+  const tokens = chainServerId
+    ? allTokens.filter(item => item.chain === chainServerId)
+    : allTokens;
   const scamTokens: ITokenItem[] = [];
   const nonScamTokens: ITokenItem[] = [];
   tokens.forEach(token => {
@@ -312,27 +315,13 @@ const computeMultiAssets = (
     coreTokens,
     totalValue,
   });
-  return chainServerId
-    ? {
-        unFoldTokens: unfoldedTokens.filter(
-          item => item.chain === chainServerId,
-        ),
-        foldTokens: foldedTokens
-          .filter(item => item.chain === chainServerId)
-          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-        scamTokens: aggregatedScamTokens
-          .filter(item => item.chain === chainServerId)
-          .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-      }
-    : {
-        unFoldTokens: unfoldedTokens,
-        foldTokens: foldedTokens.filter(i =>
-          lpTokenFilter(i, isLpTokenEnabled),
-        ),
-        scamTokens: aggregatedScamTokens.filter(i =>
-          lpTokenFilter(i, isLpTokenEnabled),
-        ),
-      };
+  return {
+    unFoldTokens: unfoldedTokens,
+    foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+    scamTokens: aggregatedScamTokens.filter(i =>
+      lpTokenFilter(i, isLpTokenEnabled),
+    ),
+  };
 };
 
 const computeSingleAssets = (

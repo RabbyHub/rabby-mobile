@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
+  GestureResponderEvent,
+  Pressable,
   Animated as RNAnimated,
   Easing as RNEasing,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -60,7 +61,7 @@ import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 export const HeaderHeight = 30;
 
 export function TabsTopHeader(): JSX.Element {
-  const { tabIndex } = useHomeTabIndex();
+  const { tabIndex, setTabIndex } = useHomeTabIndex();
   const showNetWorth = tabIndex !== 0;
 
   const { isLoading: loading } = useSceneIsLoading('Home');
@@ -73,7 +74,8 @@ export function TabsTopHeader(): JSX.Element {
   const focusedTab = useFocusedTab();
 
   const [hideType, setHideType] = useHideBalance();
-  const handleHideTypeChange = useMemoizedFn(() => {
+  const handleHideTypeChange = useMemoizedFn((event: GestureResponderEvent) => {
+    event.stopPropagation();
     if (hideType === 'HALF_HIDE') {
       setHideType('HIDE');
     } else if (hideType === 'HIDE') {
@@ -120,6 +122,12 @@ export function TabsTopHeader(): JSX.Element {
       setTokenDisplayMode('byAddress');
     }
   }, [setTokenDisplayMode, tokenDisplayMode]);
+  const handleSwitchToTokenTab = useCallback(
+    (index: number) => {
+      setTabIndex(index);
+    },
+    [setTabIndex],
+  );
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(totalBalance, { currency });
@@ -170,7 +178,9 @@ export function TabsTopHeader(): JSX.Element {
   return (
     <Animated.View style={[styles.headerBox, opacityStyle]}>
       {showNetWorth ? (
-        <View style={styles.leftBox}>
+        <Pressable
+          style={styles.leftBox}
+          onPress={() => handleSwitchToTokenTab(0)}>
           <Text style={styles.balanceTextBox}>{netWorth}</Text>
           <Text
             style={[
@@ -184,7 +194,7 @@ export function TabsTopHeader(): JSX.Element {
             {changePercent}
           </Text>
           {refreshing ? <LoadingCircle /> : null}
-        </View>
+        </Pressable>
       ) : (
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>
@@ -217,15 +227,18 @@ export function TabsTopHeader(): JSX.Element {
         </View>
       )}
 
-      <View style={styles.rightArea}>
+      <Pressable
+        style={styles.rightArea}
+        onPress={() => handleSwitchToTokenTab(1)}>
         {showRightArea ? (
           <>
             <FeedbackEntryOnHeader style={styles.feedbackEntry} />
 
             <AddressListScreenButton type="address" />
-            <TouchableWithoutFeedback
+            <Pressable
               style={styles.settingEntry}
-              onPress={() => {
+              onPress={event => {
+                event?.stopPropagation?.();
                 navigation.navigateDeprecated(RootNames.StackSettings, {
                   screen: RootNames.Settings,
                   params: {},
@@ -242,7 +255,7 @@ export function TabsTopHeader(): JSX.Element {
                 color={colors2024['neutral-title-1']}
               />
               {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-            </TouchableWithoutFeedback>
+            </Pressable>
           </>
         ) : (
           <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
@@ -254,7 +267,7 @@ export function TabsTopHeader(): JSX.Element {
             </View>
           </TouchableOpacity>
         )}
-      </View>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -284,9 +297,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // ...makeDebugBorder('yellow'),
     height: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
+    display: 'flex',
   },
   balanceTextBox: {
     color: colors2024['neutral-title-1'],
@@ -305,8 +320,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rightArea: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    flex: 1,
     // position: 'relative',
     // ...makeDebugBorder(),
   },

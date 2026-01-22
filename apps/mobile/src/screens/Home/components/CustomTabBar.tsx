@@ -148,6 +148,7 @@ const Indicator = ({
 
 const indicatorMarginTop = 0;
 const indicatorHeight = 6;
+export const HOME_INDICATOR_HEIGHT = indicatorHeight;
 const leftHitSlopTop = 50;
 const leftHitSlopBottom = 4;
 const rightHitSlopTop = 50;

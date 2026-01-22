@@ -95,6 +95,7 @@ const renderTabBar: React.ComponentProps<typeof Container>['renderTabBar'] &
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { tabIndex } = useHomeTabIndex();
 
   const renderLabel = useCallback(
     (name: string) =>
@@ -118,6 +119,14 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
     },
     [],
   );
+
+  React.useEffect(() => {
+    const currentIndex = homeTabScrollerRef.current?.getCurrentIndex?.();
+    if (typeof currentIndex !== 'number' || currentIndex === tabIndex) {
+      return;
+    }
+    homeTabScrollerRef.current?.setIndex(tabIndex);
+  }, [tabIndex]);
 
   useRendererDetect({ name: 'TabsMultiAssets' });
 
