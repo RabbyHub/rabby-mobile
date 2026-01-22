@@ -40,6 +40,7 @@ import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { PerpMarginModePopup } from './PerpMarginModePopup';
 import { useShallow } from 'zustand/shallow';
+import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -195,7 +196,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   ]);
 
   const bothFee = React.useMemo(() => {
-    return providerFee;
+    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
   }, [providerFee]);
 
   // 验证 margin 输入
