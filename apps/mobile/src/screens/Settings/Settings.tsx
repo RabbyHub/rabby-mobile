@@ -337,7 +337,7 @@ function SettingsBlocks() {
           {
             label: t('page.setting.screenshotReportSwitch'),
             icon: RcScreenshotReport,
-            rightNode: <SwitchScreenshotToReport ref={switchBiometricsRef} />,
+            rightNode: <SwitchScreenshotToReport />,
             onPress: () => {
               toggleScreenshotToReport();
             },
