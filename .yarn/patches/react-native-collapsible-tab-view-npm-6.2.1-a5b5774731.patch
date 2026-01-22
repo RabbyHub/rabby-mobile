@@ -1,0 +1,23 @@
+diff --git a/src/helpers.tsx b/src/helpers.tsx
+index 4a6b572f2bbdc7e26e12d21c08194e159c3e4307..66efb2346466c49589cccdc9b60a9869f7a9498f 100644
+--- a/src/helpers.tsx
++++ b/src/helpers.tsx
+@@ -26,5 +26,6 @@ export function scrollToImpl<T extends RefComponent>(
+   // ensure we don't scroll on NaN
+   if (!Number.isFinite(x) || !Number.isFinite(y)) return
+ 
++  // @ts-expect-error
+   scrollTo(ref, x, y, animated)
+ }
+diff --git a/src/hooks.tsx b/src/hooks.tsx
+index 75e9c9f557a094db8b658f62203f3fef51a2ae80..e422665fdac801db096e84c4abd1fc66abd0e3c9 100644
+--- a/src/hooks.tsx
++++ b/src/hooks.tsx
+@@ -671,6 +671,7 @@ export const usePageScrollHandler = (
+   },
+   dependencies?: DependencyList
+ ) => {
++  // @ts-expect-error
+   const { context, doDependenciesDiffer } = useHandler(handlers, dependencies)
+   const subscribeForEvents = ['onPageScroll']
+ 

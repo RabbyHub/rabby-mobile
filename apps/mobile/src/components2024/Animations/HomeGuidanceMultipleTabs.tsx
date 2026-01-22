@@ -55,6 +55,7 @@ import { isEqual } from 'lodash';
 import AnimSwipeRightToViewAllAssets from './animations/swipe-right-to-view-all-assets.json';
 import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials } from '@/core/utils/store';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
   AnimSwipeRightToViewAllAssets,
   {},
@@ -569,10 +570,6 @@ function DefaultBeforeNode({
   );
 }
 
-export const HOME_TABBAR_SIZES = {
-  portfolioContainerPx: 16,
-};
-
 const getDefaultBeforeNodeStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     height: 6,
@@ -580,7 +577,7 @@ const getDefaultBeforeNodeStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: HOME_TABBAR_SIZES.portfolioContainerPx,
+    paddingHorizontal: HOME_TOP_HEADER_SIZES.portfolioContainerPx,
     // ...makeDebugBorder(),
   },
   containerInner: {
