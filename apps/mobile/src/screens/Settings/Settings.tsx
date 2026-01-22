@@ -139,15 +139,24 @@ const LAYOUTS = {
 const isIOS = Platform.OS === 'ios';
 
 function AlertBuildInfo() {
+  const commonInfos = [
+    `Build Channel: ${BUILD_CHANNEL}`,
+    `Runtime Env: ${APP_RUNTIME_ENV}`,
+    !!BUILD_GIT_INFO.BUILD_TIME &&
+      `Build Time: ${dayjs(BUILD_GIT_INFO.BUILD_TIME).format(
+        'YYYY-MM-DD HH:mm:ss',
+      )}`,
+    `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+    '   ',
+    `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
+    `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
+  ];
+
   if (isNonPublicProductionEnv) {
     Alert.alert(
       'Build Info',
       [
-        `Build Channel: ${BUILD_CHANNEL}`,
-        `Runtime Env: ${APP_RUNTIME_ENV}`,
-        `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
-        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
-        `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
+        ...commonInfos,
         '   ',
         !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
           `Lastest Commit: ${dayjs(BUILD_GIT_INFO.BUILD_GIT_HASH_TIME).format(
@@ -165,23 +174,11 @@ function AlertBuildInfo() {
       ],
     );
   } else {
-    Alert.alert(
-      'Build Info',
-      [
-        `Build Channel: ${BUILD_CHANNEL}`,
-        `Runtime Env: ${APP_RUNTIME_ENV}`,
-        `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
-        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
-        `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
-      ]
-        .filter(Boolean)
-        .join('\n'),
-      [
-        {
-          text: 'OK',
-        },
-      ],
-    );
+    Alert.alert('Build Info', [...commonInfos].filter(Boolean).join('\n'), [
+      {
+        text: 'OK',
+      },
+    ]);
   }
 }
 

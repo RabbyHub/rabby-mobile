@@ -1,10 +1,6 @@
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -53,6 +49,7 @@ import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 import { Button } from '@/components2024/Button';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -80,36 +77,47 @@ export const HomeDappDrawer: React.FC<{
   const [_isEditing, setIsEditing] = React.useState(false);
   const [removedItems, setRemovedItems] = useState<string[]>([]);
   const list = useMemo(() => {
-    return bookmarkList.filter(item => !removedItems.includes(item.origin));
+    return bookmarkList.filter(
+      item =>
+        !removedItems.find(
+          url => safeGetOrigin(url) === safeGetOrigin(item.origin),
+        ),
+    );
   }, [bookmarkList, removedItems]);
 
   const hasData = list.length > 0;
   const isEditing = _isEditing && hasData;
 
-  const startEditing = () => {
+  const startEditing = useCallback(() => {
     if (!hasData) return;
     setIsEditing(true);
     setRemovedItems([]);
-  };
+  }, [hasData]);
 
-  const completeEditing = () => {
+  const resetEditing = useCallback(() => {
+    setIsEditing(false);
+    setRemovedItems([]);
+  }, []);
+
+  const completeEditing = useCallback(() => {
     setIsEditing(false);
     removedItems.forEach(url => {
       removeBookmark(url);
     });
-  };
+    setRemovedItems([]);
+  }, [removedItems, removeBookmark]);
 
-  const handleRemoveLocal = (url: string) => {
+  const handleRemoveLocal = useCallback((url: string) => {
     setRemovedItems(prev => [...prev, url]);
-  };
+  }, []);
 
-  const handle = () => {
+  const handle = useCallback(() => {
     if (isEditing) {
       completeEditing();
     } else {
       startEditing();
     }
-  };
+  }, [completeEditing, isEditing, startEditing]);
 
   const handleScrollBack = useCallback(() => {
     'worklet';
@@ -118,7 +126,10 @@ export const HomeDappDrawer: React.FC<{
     }
   }, [onScrollBack]);
 
-  const onPressHome = () => {
+  const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
+    SCROLLABLE_STATUS.UNLOCKED,
+  );
+  const onPressHome = useCallback(() => {
     translateY.value = withTiming(0, undefined, () => {
       scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
       !IS_ANDROID && handleScrollBack();
@@ -126,13 +137,9 @@ export const HomeDappDrawer: React.FC<{
     IS_ANDROID && runOnUI(handleScrollBack)();
 
     triggerImpact();
-  };
-
+  }, [scrollableStatus, handleScrollBack]);
   const drawerScrollOffsetY = useSharedValue(0);
   const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
-  const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
-    SCROLLABLE_STATUS.UNLOCKED,
-  );
 
   const animatedProps = useAnimatedProps(() => ({
     decelerationRate:
@@ -176,6 +183,7 @@ export const HomeDappDrawer: React.FC<{
           if (translateY.value > (height - getPullThreshold(height)) * -1) {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+              runOnJS(resetEditing)();
             });
             handleScrollBack();
 
@@ -187,11 +195,10 @@ export const HomeDappDrawer: React.FC<{
           }
         }),
     [
-      drawerScrollOffsetY,
+      drawerScrollOffsetY.value,
       height,
-      // pullPercent.value,
+      resetEditing,
       scrollableStatus,
-      // translateY,
       handleScrollBack,
     ],
   );
