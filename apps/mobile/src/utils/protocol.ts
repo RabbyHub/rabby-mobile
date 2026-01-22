@@ -40,7 +40,9 @@ export const protocolEntity2IProtocolItem = (
   const portfolios = columnConverter.jsonStringToObj(
     item.portfolio_item_list,
   ) as unknown as PortfolioItem[];
-  const formatPortfolio = portfolios.map(portfolioToIProtocolPortfolio);
+  const formatPortfolio = portfolios
+    .map(portfolioToIProtocolPortfolio)
+    .sort((a, b) => b.netWorth - a.netWorth);
   const totalNetWorth = formatPortfolio.reduce(
     (acc, curr) => acc + curr.netWorth,
     0,
@@ -63,9 +65,9 @@ export const complexProtocol2ProtocolItem = (
   complexProtocol: ComplexProtocol,
   owner_addr: string,
 ): IProtocolItem => {
-  const formatPortfolio = complexProtocol.portfolio_item_list.map(
-    portfolioToIProtocolPortfolio,
-  );
+  const formatPortfolio = complexProtocol.portfolio_item_list
+    .map(portfolioToIProtocolPortfolio)
+    .sort((a, b) => b.netWorth - a.netWorth);
   const totalNetWorth = formatPortfolio.reduce(
     (acc, curr) => acc + curr.netWorth,
     0,

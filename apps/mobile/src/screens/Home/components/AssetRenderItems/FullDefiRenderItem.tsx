@@ -195,7 +195,7 @@ export const FullDefiRenderItem = ({
   ]);
 
   const portfolios = useMemo(() => {
-    return data._portfolios || [];
+    return data._portfolios.sort((a, b) => b.netWorth - a.netWorth) || [];
   }, [data]);
 
   if (!data || !account) {
@@ -295,7 +295,7 @@ export const FullDefiRenderItem = ({
                   ? config[data.id]?.onManage
                   : undefined
               }
-              key={`${item.id}-${account.address}-${data.netWorth}`}
+              key={`${item.id}-${account.address}`}
               session={
                 data?.site_url && data?.logo
                   ? {
