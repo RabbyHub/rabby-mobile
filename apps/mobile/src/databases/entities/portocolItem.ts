@@ -6,6 +6,8 @@ import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
+import { IProtocolItem } from '@/store/protocols';
+import { protocolEntity2IProtocolItem } from '@/utils/protocol';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';
@@ -125,20 +127,17 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
-  static async batchQueryPortocols(owner_addr: string) {
+  static async batchQueryProtocols(
+    owner_addr: string,
+  ): Promise<IProtocolItem[]> {
     await prepareAppDataSource();
 
     return (await this.getRepository().findBy({ owner_addr }))
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
-      .map(i => ({
-        ...i,
-        portfolio_item_list: columnConverter.jsonStringToObj(
-          i.portfolio_item_list,
-        ),
-      }));
+      .map(i => protocolEntity2IProtocolItem(i));
   }
 
-  static async batchMultAddressPortocols(
+  static async getDefaultProtocolsByAddresses(
     addresses: string[],
     maxLength?: number,
   ) {
@@ -152,16 +151,25 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
       queryBuilder.take(maxLength);
     }
 
-    const portocols = await queryBuilder.getMany();
+    const protocols = await queryBuilder.getMany();
 
-    return portocols
-      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
-      .map(i => ({
-        ...i,
-        portfolio_item_list: columnConverter.jsonStringToObj(
-          i.portfolio_item_list,
-        ),
-      }));
+    const results: Record<string, IProtocolItem[]> = {};
+
+    protocols.forEach(i => {
+      if (i.id === EMPTY_PROTOCOL_ITEM_ID) {
+        return;
+      }
+      const key = i.owner_addr.toLowerCase();
+      if (!key) {
+        return;
+      }
+      if (!results[key]) {
+        results[key] = [];
+      }
+      results[key].push(protocolEntity2IProtocolItem(i));
+    });
+
+    return results;
   }
 
   static async isExpired(owner_addr: string) {

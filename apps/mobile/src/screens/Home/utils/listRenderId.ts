@@ -1,37 +1,24 @@
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken, ActionItem } from '../types';
-import { DisplayedProject } from './project';
+import { IProtocolItem } from '@/store/protocols';
 
 const getSingleTokenTags = (type: string, item: AbstractPortfolioToken) => {
   return [
     `type: ${type}`,
     `addr: ${'address' in item ? item.address : ''}`,
+    `owner_addr: ${'owner_addr' in item ? item.owner_addr : ''}`,
     `chain: ${item.chain}`,
-    `symbol: ${item.symbol}`,
     `tokenId: ${item._tokenId}`,
     `id: ${item.id}`,
-    `price_24h_change: ${item.price_24h_change}`,
-    `price: ${item.price}`,
-    `time_at: ${item.time_at}`,
-
-    item?._isPined ? 'pin' : 'unpin',
-    item?._isFold ? 'fold' : 'unfold',
-    item?._isExcludeBalance ? 'exclude' : 'include',
-    item?._isManualFold ? 'manual_fold' : 'auto_fold',
   ];
 };
 
-const getSingleDefiTags = (type: string, item: DisplayedProject) => {
+const getSingleDefiTags = (type: string, item: IProtocolItem) => {
   return [
     `type: ${type}`,
     `id: ${item.id}`,
-    `addr: ${'address' in item ? item.address : ''}`,
+    `addr: ${item.owner_addr}`,
     `chain: ${item.chain}`,
-    `price_24h_change: ${item.netWorthChange}`,
-    `price: ${item.netWorth}`,
-    item?._isFold ? 'fold' : 'unfold',
-    item?._isExcludeBalance ? 'exclude' : 'include',
-    item?._isManualFold ? 'manual_fold' : 'auto_fold',
   ];
 };
 const getSingleNftTags = (type: string, item: NFTItem) => {
@@ -44,10 +31,6 @@ const getSingleNftTags = (type: string, item: NFTItem) => {
     `price: ${item.usd_price}`,
     `amount: ${item.amount}`,
     `collection_id: ${item.collection_id}`,
-    (item as unknown as DisplayedProject)?._isFold ? 'fold' : 'unfold',
-    (item as unknown as DisplayedProject)?._isManualFold
-      ? 'manual_fold'
-      : 'auto_fold',
   ];
 };
 const getCollectionTags = (type: string, item: CollectionList) => {
@@ -61,10 +44,6 @@ const getCollectionTags = (type: string, item: CollectionList) => {
     `nft_list: ${item.nft_list
       ?.map(nft => getSingleNftTags(type, nft))
       .join(',')}`,
-    (item as unknown as DisplayedProject)?._isFold ? 'fold' : 'unfold',
-    (item as unknown as DisplayedProject)?._isManualFold
-      ? 'manual_fold'
-      : 'auto_fold',
   ];
 };
 
@@ -77,7 +56,7 @@ export const getItemId = (item: ActionItem) => {
     return getSingleTokenTags(item.type, item.data).join('/');
   }
   if (item.type === 'unfold_defi' || item.type === 'fold_defi') {
-    const defi = item.data as DisplayedProject;
+    const defi = item.data;
     return getSingleDefiTags(item.type, defi).join('/');
   }
   if (item.type === 'unfold_nft' || item.type === 'fold_nft') {

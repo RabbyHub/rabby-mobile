@@ -9,11 +9,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
-import type {
-  DisplayedKeyring,
-  DisplayKeyring,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type { Chain, CHAINS_ENUM } from './constant/chains';
 import type {
   CopyTradeTokenItemV2,
@@ -23,7 +19,6 @@ import type {
   TransferingNFTItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import type {
-  AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
 } from './screens/Home/types';
@@ -61,15 +56,6 @@ export type RootStackParamsList = {
     token: NFTItem | TransferingNFTItem | TokenItem | TokenItem[];
     account?: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
-  };
-  [RootNames.DeFiDetail]?: {
-    data: AbstractProject;
-    portfolioList: AbstractPortfolio[];
-    rawPortfolios?: AbstractProject[];
-    isSingleAddress?: boolean;
-    account?: KeyringAccountWithAlias | null;
-    cache: boolean;
-    relateTokenId?: string;
   };
   [RootNames.Scanner]?: {
     syncExtension?: boolean;

@@ -17,7 +17,6 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { useSQLiteInfo } from '@/core/databases/hooks';
 import { Button } from '@/components2024/Button';
 import { useAssetsBasicInfo } from '@/databases/hooks/assets';
-import { batchQueryTokensWithLocalCache } from '../Home/utils/token';
 import { preferenceService } from '@/core/services';
 import { makeNoop } from '../Settings/sheetModals/testDevUtils';
 import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
@@ -35,7 +34,6 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useRestCountDownLabel } from '@/hooks/system/time';
 import { accountEvents } from '@/core/apis/account';
 import { AddressItemContextMenuDev } from '../Address/components/AddressItemContextMenuDev';
-import { AddressItemShadowView } from '../Address/components/AddressItemShadowView';
 import { touchedFeedback } from '@/utils/touch';
 
 function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {
@@ -215,17 +213,6 @@ function DevDataAccount() {
           </Text>
         </View>
       </View>
-      <Button
-        title={'Sync Tokens'}
-        height={48}
-        containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
-        onPress={() => {
-          currentAccount?.address &&
-            batchQueryTokensWithLocalCache({
-              user_id: currentAccount?.address,
-            });
-        }}
-      />
       <Button
         title={'Fetch Assets Info'}
         height={48}

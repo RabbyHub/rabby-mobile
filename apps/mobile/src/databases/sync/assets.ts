@@ -260,21 +260,21 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
     });
 }
 
-export async function syncRemotePortocols(
+export async function syncRemoteProtocols(
   address: string,
-  protocals: ComplexProtocol[],
+  protocols: ComplexProtocol[],
 ) {
-  const data = [...protocals];
+  const data = [...protocols];
   if (data.length === 0) {
     data.push(EMPTY_PROTOCOL_ITEM);
   }
   const syncTimestamp = Date.now();
   const items = data.map(raw => {
-    const protocalItem = new ProtocolItemEntity();
-    ProtocolItemEntity.fillEntity(protocalItem, address, raw);
-    protocalItem._local_updated_at = syncTimestamp;
+    const protocolItem = new ProtocolItemEntity();
+    ProtocolItemEntity.fillEntity(protocolItem, address, raw);
+    protocolItem._local_updated_at = syncTimestamp;
 
-    return protocalItem;
+    return protocolItem;
   });
 
   await prepareAppDataSource();
@@ -299,7 +299,7 @@ export async function syncRemotePortocols(
     });
 }
 
-export async function syncRemotePortocol(
+export async function syncRemoteProtocol(
   address: string,
   protocol: ComplexProtocol | null | undefined,
   opts?: { deleteId?: string },

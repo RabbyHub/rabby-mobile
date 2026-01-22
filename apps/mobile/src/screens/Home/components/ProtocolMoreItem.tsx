@@ -1,18 +1,16 @@
 import React, { useMemo, memo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { colord } from 'colord';
 
-import { AbstractPortfolio } from '../types';
 import PortfolioTemplate from '../portfolios';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DappActions } from './DappActions';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useTranslation } from 'react-i18next';
 import { TonManageAction } from '../utils/protocolConfig';
+import { IProtocolPortfolio } from '@/store/protocols';
 
 // 已支持的模板
 const TemplateDict = {
@@ -38,7 +36,7 @@ const TemplateDict = {
 };
 
 export const MemoItem = memo(
-  ({ item }: { item: AbstractPortfolio }) => {
+  ({ item }: { item: IProtocolPortfolio }) => {
     const { styles } = useTheme2024({ getStyle: getStyles });
 
     const types = item._originPortfolio.detail_types?.reverse();
@@ -51,7 +49,7 @@ export const MemoItem = memo(
 
     return (
       <PortfolioDetail
-        name={item._originPortfolio.name}
+        name={item.name || ''}
         data={item}
         style={styles.detail}
       />
@@ -72,7 +70,7 @@ export const WrapperDappActionsMemoItem = ({
   disableAction,
   isLast,
 }: {
-  item: AbstractPortfolio;
+  item: IProtocolPortfolio;
   chain?: string;
   protocolLogo?: string;
   address?: string;
@@ -84,7 +82,6 @@ export const WrapperDappActionsMemoItem = ({
   isLast?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { colors2024 } = useTheme2024();
   const { t } = useTranslation();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
