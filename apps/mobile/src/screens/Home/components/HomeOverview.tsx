@@ -640,6 +640,7 @@ export const HomeOverview = React.memo(() => {
   useFetchCexInfo();
 
   const { triggerUpdate } = useAccountsBalanceTrigger();
+  const isFirstTriggerRef = useRef(true);
 
   useEffect(() => {
     setTimeout(() => {
@@ -667,7 +668,11 @@ export const HomeOverview = React.memo(() => {
   useFocusEffect(
     useCallback(() => {
       if (!couldDoRefresh()) return;
-      triggerUpdate().then(balanceAccounts => {
+      const forceFirstTime = isFirstTriggerRef.current;
+      if (isFirstTriggerRef.current) {
+        isFirstTriggerRef.current = false;
+      }
+      triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
         refresh24hAssets({ balanceAccounts });
         refreshDayCurve({ balanceAccounts });

@@ -114,6 +114,20 @@ DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at",
     };
   }
 
+  static async queryAllBalance() {
+    await prepareAppDataSource();
+    const result = await this.getRepository().find();
+    return result.map(item => ({
+      ...item,
+      chain_list:
+        columnConverter.jsonStringToObj(item.chain_list || '[]') || [],
+    })) as Array<
+      Omit<BalanceEntity, 'chain_list'> & {
+        chain_list: EvmTotalBalanceResponse['chain_list'];
+      }
+    >;
+  }
+
   static async queryChainList(
     address: string,
   ): Promise<EvmTotalBalanceResponse['chain_list']> {

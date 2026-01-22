@@ -1,22 +1,14 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { apiBalance } from '@/core/apis';
-import { keyringService, preferenceService } from '@/core/services';
-import { KEYRING_CLASS, KeyringTypeName } from '@rabby-wallet/keyring-utils';
-import PQueue from 'p-queue';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useCallback, useRef } from 'react';
+import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { unionBy } from 'lodash';
 import { zCreate, zMutative } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
-import { perfEvents } from '@/core/utils/perf';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import { getAccountList, getTop10MyAccounts } from '@/core/apis/account';
+import { getAccountList } from '@/core/apis/account';
 import { Account } from '@/core/services/preference';
-import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
+import balanceStore, { IBalanceData } from '@/store/balance';
+import { perfEvents } from '@/core/utils/perf';
 
 export interface BalanceAccountType {
   address: string;
@@ -28,135 +20,153 @@ export interface BalanceAccountType {
   aliasName?: string;
 }
 
-const waitQueueFinished = (q: PQueue) => {
-  return new Promise(resolve => {
-    q.on('idle', () => {
-      resolve(null);
-    });
-  });
-};
-
 export type AccountsBalanceState = {
   balance: Record<string, BalanceAccountType>;
-  notMatteredBalance: Record<string, BalanceAccountType>;
   /** @deprecated */
   // balanceCache: Record<string, BalanceAccountType>;
   matteredAccountLength: number;
 };
-const balanceStore = zCreate(
+export const balanceAccountsStore = zCreate(
   zMutative<AccountsBalanceState>(() => ({
     balance: {},
-    notMatteredBalance: {},
     matteredAccountLength: 0,
   })),
 );
 
-runIIFEFunc(() => {
-  perfEvents.once('USER_MANUALLY_UNLOCK', () => {
-    getTop10MyAccounts().then(({ top10Accounts }) => {
-      const result = top10Accounts.reduce((acc, account) => {
-        const lcAddr = account.address.toLowerCase();
-        const cacheData = preferenceService.getAddressBalance(lcAddr);
-        acc[lcAddr] = makeAccountBalanceFromCache(account, {
-          res: cacheData,
-          notMattered: false,
-        });
+const buildBalanceAccountsFromList = (
+  accounts: Account[],
+  balanceMap: Record<string, IBalanceData>,
+) => {
+  return accounts.reduce((acc, account) => {
+    const lcAddr = account.address.toLowerCase();
+    const balance = balanceMap[lcAddr];
+    acc[lcAddr] = {
+      address: lcAddr,
+      balance: balance?.totalBalance || 0,
+      evmBalance: balance?.evmBalance || 0,
+      type: account.type,
+      brandName: account.brandName,
+      aliasName: account.aliasName,
+    };
 
-        return acc;
-      }, {} as Record<string, BalanceAccountType>);
+    return acc;
+  }, {} as AccountsBalanceState['balance']);
+};
 
-      setAccountsBalance(result);
-    });
+export const syncBalanceAccountStore = () => {
+  const balanceMap = balanceStore.getState();
+  const current = balanceAccountsStore.getState().balance;
+  if (!Object.keys(current).length) return;
+  let changed = false;
+  const next = { ...current };
+
+  Object.keys(current).forEach(address => {
+    const latest = balanceMap[address];
+    if (!latest) return;
+    const prev = current[address];
+    if (!prev) return;
+    const nextBalance = latest.totalBalance || 0;
+    const nextEvmBalance = latest.evmBalance || 0;
+
+    if (prev.balance !== nextBalance || prev.evmBalance !== nextEvmBalance) {
+      next[address] = {
+        ...prev,
+        balance: nextBalance,
+        evmBalance: nextEvmBalance,
+      };
+      changed = true;
+    }
   });
-});
+
+  if (changed) {
+    setAccountsBalance(next);
+  }
+};
+
+export function startProcessAccountBalanceEvents() {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
+    syncBalanceAccountStore();
+  });
+
+  balanceStore.subscribe(state => {
+    const balanceMap = state.balanceMap;
+    const current = balanceAccountsStore.getState().balance;
+    if (!Object.keys(current).length) return;
+
+    let changed = false;
+    const next = { ...current };
+
+    Object.keys(current).forEach(address => {
+      const latest = balanceMap[address];
+      if (!latest) return;
+      const prev = current[address];
+      if (!prev) return;
+      const nextBalance = latest.totalBalance || 0;
+      const nextEvmBalance = latest.evmBalance || 0;
+
+      if (prev.balance !== nextBalance || prev.evmBalance !== nextEvmBalance) {
+        next[address] = {
+          ...prev,
+          balance: nextBalance,
+          evmBalance: nextEvmBalance,
+        };
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setAccountsBalance(next);
+    }
+  });
+}
 
 export function getBalanceCacheAccounts() {
-  return balanceStore.getState().balance;
+  return balanceAccountsStore.getState().balance;
 }
 
 export function useBalanceAccounts() {
   return {
-    balanceAccounts: balanceStore(s => s.balance),
+    balanceAccounts: balanceAccountsStore(s => s.balance),
   };
 }
 
 function setAccountsBalance(
   valOrFunc: UpdaterOrPartials<AccountsBalanceState['balance']>,
-  options?: { notMattered?: boolean; setFromRemoteApi?: boolean },
 ) {
-  const { notMattered = false, setFromRemoteApi } = options || {};
-  if (!notMattered) {
-    balanceStore.setState(prev => {
-      const { newVal, changed, isChangedObjectInput } = resolveValFromUpdater(
-        prev.balance,
-        valOrFunc,
-        {
-          strict: true,
-        },
-      );
+  balanceAccountsStore.setState(prev => {
+    const { newVal, changed, isChangedObjectInput } = resolveValFromUpdater(
+      prev.balance,
+      valOrFunc,
+      {
+        strict: true,
+      },
+    );
+    if (!changed) return prev;
 
-      if (changed || isChangedObjectInput) {
-        setTimeout(() => {
-          perfEvents.emit('ACCOUNTS_BALANCE_UPDATE', {
-            prevState: prev.balance,
-            nextState: newVal,
-            setFromRemoteApi: setFromRemoteApi,
-          });
-        }, 0);
-      }
-
-      if (!changed) return prev;
-
-      prev.balance = newVal;
-    });
-  } else {
-    balanceStore.setState(prev => {
-      const { newVal, changed } = resolveValFromUpdater(
-        prev.notMatteredBalance,
-        valOrFunc,
-        {
-          strict: true,
-        },
-      );
-      if (!changed) return prev;
-
-      prev.notMatteredBalance = newVal;
-    });
-  }
-}
-
-type BalanceLoadingState = {
-  balanceLoading: boolean;
-  loadBalanceFromApiStage: LoadBalanceStage;
-};
-const balanceLoadingStore = zCreate<BalanceLoadingState>(() => ({
-  balanceLoading: false,
-  loadBalanceFromApiStage: 'idle',
-}));
-function setLoading(valOrFunc: UpdaterOrPartials<BalanceLoadingState>) {
-  balanceLoadingStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
-
-    return { ...prev, ...newVal };
+    prev.balance = newVal;
   });
 }
 
 export function useLoadBalanceFromApiStage() {
-  const loadBalanceFromApiStage = balanceLoadingStore(
-    s => s.loadBalanceFromApiStage,
+  const isLoading = balanceStore(s =>
+    Object.values(s.isLoadingByAddress).some(Boolean),
   );
+  const loadBalanceFromApiStage: LoadBalanceStage = isLoading
+    ? 'loading'
+    : 'finished';
 
   return { loadBalanceFromApiStage };
 }
 
 function computeTotalBalance(
   addresses: string[],
-  balanceAccounts: AccountsBalanceState['balance'] = balanceStore.getState()
-    .balance,
+  balanceAccounts?: AccountsBalanceState['balance'],
 ) {
   let total = 0;
   let totalEvm = 0;
-
+  if (!balanceAccounts) {
+    balanceAccounts = balanceAccountsStore.getState().balance;
+  }
   addresses.forEach(address => {
     const account = balanceAccounts[address.toLowerCase()];
     total += Number(account?.balance) || 0;
@@ -166,156 +176,46 @@ function computeTotalBalance(
   return { total, totalEvm };
 }
 
-function getLatestTotalBalance(addresses: string[]) {
-  const balanceAccounts = balanceStore.getState().balance;
-
-  return computeTotalBalance(addresses, balanceAccounts);
-}
-
 export const apisAccountsBalance = {
   computeTotalBalance,
-  getLatestTotalBalance,
-  getBalanceByAddress: (address: string) => {
-    const balanceAccounts = balanceStore.getState().balance;
-
-    return balanceAccounts[address.toLowerCase()];
-  },
 };
 
-function makeAccountBalanceFromCache(
-  account: Account,
-  options?: {
-    res?: EvmTotalBalanceResponse | null;
-    notMattered: boolean;
-  },
-) {
-  const { res = null, notMattered = false } = options || {};
-  const lcAddr = account.address.toLowerCase();
-  const cacheData = res || preferenceService.getAddressBalance(lcAddr);
-
-  const accountBalance = {
-    address: lcAddr,
-    balance: cacheData?.total_usd_value || 0,
-    evmBalance: cacheData?.evm_usd_value || 0,
-    type: account.type,
-    brandName: account.brandName,
-  };
-
-  balanceStore.setState(prev => {
-    if (!notMattered) {
-      prev.balance[lcAddr] = accountBalance;
-    } else {
-      prev.notMatteredBalance[lcAddr] = accountBalance;
-    }
-  });
-
-  return accountBalance;
-}
-
-async function fetchAccountsBalanceFromApi(
-  accounts: Account[],
-  options?: {
-    retBalance?: Record<string, BalanceAccountType>;
-    notMattered?: boolean;
-  },
-) {
-  const { retBalance = {}, notMattered = false } = options || {};
-  // get from server api by queue
-  const queue = new PQueue({ interval: 2000, intervalCap: 10 });
-  for (let i = 0; i < accounts.length; i++) {
-    if (!accounts[i]) continue;
-    const account = accounts[i]!;
-    const { type, address, brandName } = account;
-    const lcAddr = address.toLowerCase();
-    // batch fetch by queue
-    queue.add(async () => {
-      try {
-        const resData = await apiBalance.getAddressBalance(lcAddr, {
-          force: true,
-        });
-        retBalance[lcAddr] = makeAccountBalanceFromCache(account, {
-          res: resData,
-          notMattered,
-        });
-      } catch (e) {
-        console.error('fetchTotalBalance error', e);
-        // api fetch error fallback get from cache store
-        retBalance[lcAddr] = makeAccountBalanceFromCache(account, {
-          notMattered,
-        });
-      }
-    });
-  }
-  await waitQueueFinished(queue);
-
-  return { retBalance };
-}
-
 export const fetchTotalBalance = makeSWRKeyAsyncFunc(
-  async (fetchType: 'from_cache' | 'from_api' | 'not_mattered:from_api') => {
+  async (fetchType: 'from_cache' | 'from_api') => {
     const retBalances = {} as Record<string, BalanceAccountType>;
     try {
-      setLoading(prev => ({ ...prev, balanceLoading: true }));
       console.debug('[perf] fetchTotalBalance:: fetchType', fetchType);
 
       let caredAccounts = [] as Account[];
-      if (fetchType === 'from_api' || fetchType === 'from_cache') {
-        const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
-        caredAccounts = sortedAccounts;
-      } else if (fetchType === 'not_mattered:from_api') {
-        const { accounts } = await getAccountList({ filter: 'onlyOthers' });
-        caredAccounts = accounts;
-      }
+      const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
+      caredAccounts = sortedAccounts;
       const uniqueList = unionBy(caredAccounts, account =>
         account.address.toLowerCase(),
       );
-      const notMattered = fetchType === 'not_mattered:from_api';
-      // first get from cache store
-      uniqueList.map(account => {
-        const lcAddr = account.address.toLowerCase();
-        const cacheData = preferenceService.getAddressBalance(lcAddr);
-        retBalances[lcAddr] = makeAccountBalanceFromCache(account, {
-          res: cacheData,
-          notMattered,
-        });
-      });
-      setAccountsBalance(retBalances, { notMattered });
+      const addresses = uniqueList.map(account =>
+        account.address.toLowerCase(),
+      );
 
-      switch (fetchType) {
-        case 'from_api': {
-          const top10Accounts = uniqueList.slice(0, 10);
-          setLoading(prev => ({ ...prev, loadBalanceFromApiStage: 'loading' }));
-          const { retBalance } = await fetchAccountsBalanceFromApi(
-            top10Accounts,
-            { notMattered: false },
+      const top10Accounts = uniqueList.slice(0, 10);
+      if (top10Accounts.length) {
+        if (fetchType === 'from_api') {
+          await balanceStore.getState().batchGetTotalBalance(
+            top10Accounts.map(account => account.address.toLowerCase()),
+            true,
           );
-          setAccountsBalance(retBalance, {
-            notMattered: false,
-            setFromRemoteApi: true,
-          });
-          setLoading(prev => ({
-            ...prev,
-            loadBalanceFromApiStage: 'finished',
-          }));
-        }
-        case 'not_mattered:from_api': {
-          const top10Accounts = uniqueList.slice(0, 10);
-          const { retBalance } = await fetchAccountsBalanceFromApi(
-            top10Accounts,
-            { notMattered: true },
-          );
-          setAccountsBalance(retBalance, { notMattered: true });
-          break;
+        } else {
+          await balanceStore.getState().batchGetTotalBalance(addresses, false);
         }
       }
+
+      const balanceMap = balanceStore.getState().balanceMap;
+      Object.assign(
+        retBalances,
+        buildBalanceAccountsFromList(uniqueList, balanceMap),
+      );
+      setAccountsBalance(retBalances);
     } catch (e) {
       console.error('fetchTotalBalance  error', e);
-    } finally {
-      setLoading(prev => ({
-        ...prev,
-        balanceLoading: false,
-        loadBalanceFromApiStage: 'idle',
-      }));
     }
 
     return retBalances;
@@ -361,8 +261,7 @@ export function useAccountsBalanceTrigger() {
 }
 
 export default function useAccountsBalance() {
-  const balanceAccounts = balanceStore(s => s.balance);
-
+  const balanceAccounts = balanceAccountsStore(s => s.balance);
   const { triggerUpdate } = useAccountsBalanceTrigger();
 
   const getTotalBalance = useCallback(
