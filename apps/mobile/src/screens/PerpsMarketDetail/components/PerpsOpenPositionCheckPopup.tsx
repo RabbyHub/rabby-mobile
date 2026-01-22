@@ -246,39 +246,37 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 </Text>
               </View>
             </View>
-
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.rabbyFee')}
-                </Text>
-              </View>
-              <View style={styles.listTagRow}>
-                <View style={styles.tagContainer}>
-                  <Text style={styles.tagText}>
-                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.free')}
-                  </Text>
-                </View>
-                <Text style={styles.value}>0%</Text>
-              </View>
-            </View>
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t(
-                    'page.perpsDetail.PerpsOpenPositionCheckPopup.providerFee',
-                  )}
-                </Text>
-              </View>
-              <View>
-                <Text style={styles.value}>
-                  {formatPercent(providerFee, 4)}
-                </Text>
-              </View>
-            </View>
           </View>
         </BottomSheetScrollView>
         <View style={styles.footer}>
+          <TouchableOpacity
+            onPress={() => {
+              showTipsPopup({
+                title: t('page.perpsDetail.PerpsClosePositionPopup.fee'),
+                desc:
+                  t('page.perpsDetail.PerpsClosePositionPopup.rabbyFeeTipsV2') +
+                  '\n' +
+                  t(
+                    'page.perpsDetail.PerpsClosePositionPopup.providerFeeTips',
+                    {
+                      fee: formatPercent(providerFee, 4),
+                    },
+                  ),
+              });
+            }}>
+            <View style={styles.feeContainer}>
+              <Text style={styles.fee}>
+                {t('page.perpsDetail.PerpsClosePositionPopup.fee')}:{' '}
+                {formatPercent(bothFee, 4)}
+              </Text>
+              <RcIconInfoCC
+                color={colors2024['neutral-info']}
+                width={18}
+                height={18}
+              />
+            </View>
+          </TouchableOpacity>
+
           <Button
             type="primary"
             title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
@@ -299,6 +297,20 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
+    feeContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      marginBottom: 20,
+    },
+    fee: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-foot'],
+    },
     container: {
       height: '100%',
       // paddingBottom: 56,

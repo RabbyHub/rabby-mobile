@@ -53,6 +53,7 @@ export const PerpsPositionItem: React.FC<{
       order =>
         order.orderType === 'Take Profit Market' &&
         order.isTrigger &&
+        order.isPositionTpsl &&
         order.reduceOnly,
     );
 
@@ -60,6 +61,7 @@ export const PerpsPositionItem: React.FC<{
       order =>
         order.orderType === 'Stop Market' &&
         order.isTrigger &&
+        order.isPositionTpsl &&
         order.reduceOnly,
     );
 
