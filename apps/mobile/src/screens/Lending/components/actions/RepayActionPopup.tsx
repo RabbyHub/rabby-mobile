@@ -165,6 +165,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   const { pools } = usePoolDataProviderContract();
   const canShowDirectSubmit = useMemo(
+    //() => false,
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
@@ -302,8 +303,8 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         const approveAmount = new BigNumber(amount)
           .multipliedBy(_amount === '-1' ? REPAY_AMOUNT_MULTIPLIER : 1)
           .multipliedBy(10 ** reserve.reserve.decimals)
-          .toFixed(0)
-          .toString();
+          .integerValue(BigNumber.ROUND_UP)
+          .toFixed(0);
 
         const requiredAmount = new BigNumber(amount)
           .multipliedBy(10 ** reserve.reserve.decimals)
