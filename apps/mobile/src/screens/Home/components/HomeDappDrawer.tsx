@@ -52,7 +52,6 @@ import { triggerImpact } from '@/utils/common';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 import { Button } from '@/components2024/Button';
-import { TAB_HEADER_MT } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 
 const AnimatedFlatList =
@@ -437,7 +436,6 @@ const getStyle = createGetStyles2024(
     },
 
     panel: {
-      // paddingTop: !IS_ANDROID ? TAB_HEADER_MT : TAB_HEADER_MT,
       paddingTop: 0,
       display: 'flex',
       flexDirection: 'column',

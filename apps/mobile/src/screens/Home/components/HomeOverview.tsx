@@ -87,25 +87,16 @@ import {
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { colord } from 'colord';
-import dayjs from 'dayjs';
 import {
   isTabsSwiping,
   useAccountInfo,
 } from '../../Address/components/MultiAssets/hooks';
-import { setIsFoldMultiChart } from '../../Address/components/MultiAssets/RenderRow/CurveChart';
-import {
-  TAB_HEADER_FULL_HEIGHT,
-  TAB_HEADER_MT,
-  TabMultiAssetsProps,
-  TabsMultiAssets,
-} from '../../Address/components/MultiAssets/TabsMultiAssets';
 import { BrowserSearchEntry } from '../../Browser/components/BrowserSearchEntry';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
 import { PointsBadge } from '../../Points/components/PointsBadge';
 import { useInitDetectDBAssets } from '../../Search/useAssets';
 import { WatchListBadge } from '../../Watchlist/components/WatchListBadge';
-import { TABITEM_H } from '../components/CustomTabBar';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
 import { HomePendingBadge } from '../components/HomePending';
@@ -137,7 +128,7 @@ import { ScrollHandlerProps } from '@/components/customized/react-native-collaps
 import { triggerImpact } from '@/utils/common';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { HOME_TOP_HEADER_SIZES } from './OverviewTopHeader';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -376,9 +367,9 @@ const getStyle = createGetStyles2024(
     },
     scroll: {
       flex: 1,
-      // marginBottom: -TABITEM_H,
+      // marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight,
       marginTop: HEADER_MT_OFFSET,
-      marginBottom: -TABITEM_H - HEADER_MT_OFFSET,
+      marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
       // marginBottom: -TAB_HEADER_FULL_HEIGHT,
       // ...makeDebugBorder('yellow'),
       // ...makeDevOnlyStyle({
@@ -388,8 +379,8 @@ const getStyle = createGetStyles2024(
     scrollContainer: {
       flexGrow: 1,
       minHeight: '100%',
-      // marginTop: -TABITEM_H,
-      marginTop: -TABITEM_H - HEADER_MT_OFFSET,
+      // marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight,
+      marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
       // paddingBottom:
       //   IS_ANDROID ? Math.max(safeAreaInsets.bottom, 16)
       //     : safeAreaInsets.bottom,

@@ -11,12 +11,9 @@ import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import {
   HOME_INDICATOR_HEIGHT,
   HomeCustomMaterialTabBar,
-  TABITEM_H,
 } from '@/screens/Home/components/CustomTabBar';
-import {
-  HOME_TOP_HEADER_SIZES,
-  TabsTopHeader,
-} from '@/screens/Home/components/OverviewTopHeader';
+import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -39,8 +36,9 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
-export const TAB_HEADER_FULL_HEIGHT = 94;
-export const TAB_HEADER_MT = 64;
+/** @description pratical value, maybe we can compute it by other layout sizes */
+export const TAB_HEADER_FULL_HEIGHT =
+  HOME_TOP_HEADER_SIZES.headerHeight + HOME_TOP_HEADER_SIZES.tabItemHeight;
 
 export interface TabMultiAssetsProps {
   // onIndexChange(index: number): void;
@@ -130,7 +128,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
       renderTabBar={renderTabBar}
       headerHeight={HOME_TOP_HEADER_SIZES.headerHeight}
       minHeaderHeight={HOME_TOP_HEADER_SIZES.headerHeight}
-      tabBarHeight={TABITEM_H + HOME_INDICATOR_HEIGHT}
+      tabBarHeight={HOME_TOP_HEADER_SIZES.tabItemHeight + HOME_INDICATOR_HEIGHT}
       allowHeaderOverscroll={IS_IOS}
       lazy={false}
       cancelLazyFadeIn
@@ -171,7 +169,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
           ofIndex={2}
           placeholder={
             <MemoizedDefiItemLoader
-              style={{ marginTop: TAB_HEADER_FULL_HEIGHT + 16 }}
+              style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
             />
           }>
           <ProtocolList />

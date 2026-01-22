@@ -15,10 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  HOME_TABBAR_SIZES,
-  useMeasureLayoutForHomeGuidanceMultipleTabs,
-} from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import {
@@ -36,6 +33,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useTranslation } from 'react-i18next';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 
 type ItemLayout = {
   width: number;
@@ -341,11 +339,11 @@ export const HomeCustomMaterialTabBar = ({
   );
 };
 
-export const TABITEM_H = 54;
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
     // ...makeDebugBorder('green'),
+    // backgroundColor: colors2024['neutral-bg-1'],
   },
   hideInnerIndicator: {
     height: 0,
@@ -365,15 +363,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     // justifyContent: 'flex-end',
   },
   portfolioContainer: {
-    paddingHorizontal: HOME_TABBAR_SIZES.portfolioContainerPx,
+    paddingHorizontal: HOME_TOP_HEADER_SIZES.portfolioContainerPx,
     paddingTop: 2,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: TABITEM_H,
-  },
-  portfolioContainerBgBox: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    height: HOME_TOP_HEADER_SIZES.tabItemHeight,
   },
 }));

@@ -24,7 +24,10 @@ import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
 import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
 import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
-import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
+import {
+  HOME_TOP_HEADER_SIZES,
+  ITEM_LAYOUT_PADDING_HORIZONTAL,
+} from '@/constant/home';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
@@ -50,11 +53,6 @@ import {
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
-
-export const HOME_TOP_HEADER_SIZES = {
-  headerHeight: 52,
-  headerPaddingY: 14,
-};
 
 export function TabsTopHeader(): JSX.Element {
   const { tabIndex } = useHomeTabIndex();
@@ -195,12 +193,14 @@ export function TabsTopHeader(): JSX.Element {
               action: 'Click_Setting',
             });
           }}>
-          <RcIconSetting
-            width={20}
-            height={20}
-            color={colors2024['neutral-title-1']}
-          />
-          {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+          <View style={styles.headerTouchableIcon}>
+            <RcIconSetting
+              width={20}
+              height={20}
+              color={colors2024['neutral-title-1']}
+            />
+            {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+          </View>
         </TouchableWithoutFeedback>
       </View>
     </Animated.View>
@@ -208,16 +208,6 @@ export function TabsTopHeader(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  redDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors2024['red-default'],
-    position: 'absolute',
-    top: 0,
-    right: 13,
-  },
-
   headerBox: {
     // ...makeDebugBorder(),
     height: HOME_TOP_HEADER_SIZES.headerHeight,
@@ -255,16 +245,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
     // position: 'relative',
     // ...makeDebugBorder(),
+  },
+  headerTouchableIcon: {
+    width: 20,
+    height: 20,
+    position: 'relative',
   },
   feedbackEntry: {
     height: '100%',
     paddingRight: 6,
-    // ...makeDebugBorder(),
+    // ...makeDebugBorder('yellow'),
   },
   settingEntry: {
-    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
+    // marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
     flexDirection: 'row',
     height: '100%',
     alignItems: 'center',
@@ -272,5 +268,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 12,
     paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
     position: 'relative',
+    // ...makeDebugBorder(),
+  },
+  redDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors2024['red-default'],
+    position: 'absolute',
+    top: 0,
+    right: -3,
   },
 }));
