@@ -19,6 +19,8 @@ import IconError from '@/assets2024/icons/common/cancel.svg';
 import React from 'react';
 import { ThemeColors2024 } from '@/constant/theme';
 import { Dots } from '@/components/Approval/components/Popup/Dots';
+// import { makeDebugBorder } from '@/utils/styles';
+import { IS_IOS } from '@/core/native/utils';
 
 const config: ToastOptions = {
   position: Toast.positions.TOP + 80,
@@ -31,8 +33,8 @@ const config: ToastOptions = {
   },
   containerStyle: {
     borderRadius: 100,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    // paddingHorizontal: 16,
+    // paddingVertical: 12,
   },
   backgroundColor: ThemeColors2024.light['neutral-black'],
 };
@@ -73,7 +75,7 @@ export const toastWithIcon =
 
     const _toast = Toast.show(
       (
-        <View style={styles.container}>
+        <View style={styles.containerInner}>
           <Icon width={16} height={16} style={styles.icon} />
           {msgNode}
         </View>
@@ -87,7 +89,7 @@ export const toastWithIcon =
               containerStyle: {
                 ...(config.containerStyle as any),
                 ...(_config?.containerStyle as any),
-                paddingBottom: 5,
+                // paddingBottom: 5,
               },
             }
           : {},
@@ -214,7 +216,7 @@ export const toastWithDotAnimation = (
 
   const _toast = Toast.show(
     (
-      <View style={styles.container}>
+      <View style={styles.containerInner}>
         {msgNode}
         <Dots style={styles.content} />
       </View>
@@ -228,7 +230,7 @@ export const toastWithDotAnimation = (
             containerStyle: {
               ...(config.containerStyle as any),
               ...(_config?.containerStyle as any),
-              paddingBottom: 5,
+              // paddingBottom: 5,
             },
           }
         : {},
@@ -238,16 +240,20 @@ export const toastWithDotAnimation = (
 };
 
 const styles = StyleSheet.create({
-  container: {
+  containerInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    ...(IS_IOS && {
+      paddingHorizontal: 8,
+    }),
   },
   icon: {
     marginRight: 6,
     color: ThemeColors2024.light['neutral-title-2'],
   },
   content: {
+    // ...makeDebugBorder(),
     color: ThemeColors2024.light['neutral-title-2'],
     fontSize: 15,
     fontWeight: '700',
