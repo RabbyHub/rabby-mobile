@@ -323,7 +323,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-body'],
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
+    // marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
     // position: 'relative',
     // ...makeDebugBorder(),
   },
