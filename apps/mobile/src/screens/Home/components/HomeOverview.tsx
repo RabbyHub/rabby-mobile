@@ -465,7 +465,7 @@ const getStyle = createGetStyles2024(
       flexWrap: 'wrap',
       borderRadius: 8,
       rowGap: ITEM_GRID_GAP,
-      columnGap: ITEM_GRID_GAP + 2,
+      columnGap: ITEM_GRID_GAP,
       justifyContent: 'space-between',
       alignItems: 'flex-start',
       width: '100%',
