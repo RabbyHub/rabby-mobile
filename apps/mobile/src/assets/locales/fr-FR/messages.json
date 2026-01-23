@@ -2712,7 +2712,6 @@
         "needSupply": "Pour emprunter, vous devez fournir des actifs en tant que garantie.",
         "canBorrow": "Vous pouvez emprunter en fonction de votre garantie fournie, jusqu'à la limite d'emprunt.",
         "isolated": "Le pouvoir d'emprunt et les actifs sont limités en raison du mode d'isolement.",
-        "emode": "En mode E, certains actifs ne peuvent pas être empruntés. Quittez le mode E pour accéder à tous les actifs.",
         "emodeNoAssets": "Nous n'avons trouvé aucun actif lié à votre recherche. Essayez à nouveau avec une catégorie différente."
       },
       "list": {
