@@ -705,7 +705,7 @@ function History({
 
   return (
     // eslint-disable-next-line react-native/no-inline-styles
-    <View style={{ paddingTop: 0, position: 'relative' }}>
+    <View style={{ paddingTop: 0, position: 'relative', height: '100%' }}>
       <>
         <TransactionAlert pendingTxs={groups?.filter(item => item.isPending)} />
         <HistoryList

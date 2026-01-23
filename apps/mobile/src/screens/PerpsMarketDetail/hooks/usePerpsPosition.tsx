@@ -276,6 +276,7 @@ export const usePerpsPosition = () => {
             isBuy: direction === 'Long',
             size,
             midPx,
+            builder: PERPS_BUILDER_INFO,
           }),
         ];
 
