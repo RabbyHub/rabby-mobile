@@ -129,6 +129,7 @@ import { triggerImpact } from '@/utils/common';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { debugLogService } from '@/core/services';
 
 const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
@@ -667,8 +668,10 @@ export const HomeOverview = React.memo(() => {
 
   useFocusEffect(
     useCallback(() => {
+      debugLogService.info('useFocusEffect triggered');
       if (!couldDoRefresh()) return;
       const forceFirstTime = isFirstTriggerRef.current;
+      debugLogService.info('couldDoRefresh true', forceFirstTime);
       if (isFirstTriggerRef.current) {
         isFirstTriggerRef.current = false;
       }

@@ -9,6 +9,7 @@ import { getAccountList } from '@/core/apis/account';
 import { Account } from '@/core/services/preference';
 import balanceStore, { IBalanceData } from '@/store/balance';
 import { perfEvents } from '@/core/utils/perf';
+import { debugLogService } from '@/core/services';
 
 export interface BalanceAccountType {
   address: string;
@@ -197,6 +198,7 @@ export const fetchTotalBalance = makeSWRKeyAsyncFunc(
       );
 
       const top10Accounts = uniqueList.slice(0, 10);
+      debugLogService.info('fetchTotalBalance top10Accounts', top10Accounts);
       if (top10Accounts.length) {
         if (fetchType === 'from_api') {
           await balanceStore.getState().batchGetTotalBalance(
@@ -243,6 +245,8 @@ export function useAccountsBalanceTrigger() {
   const triggerUpdate = useCallback(
     async (forceFromApi?: boolean) => {
       const isForceFetchFromApi = isNeedFetchData() || forceFromApi;
+      debugLogService.info('isForceFetchFromApi', isForceFetchFromApi);
+      debugLogService.info('lastTimeStamps.current', lastTimeStamps.current);
       console.debug(
         '[perf] triggerUpdate fetchTotalBalance',
         isForceFetchFromApi ? 'from_api' : 'from_cache',
