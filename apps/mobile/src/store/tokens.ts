@@ -8,6 +8,7 @@ import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { preferenceService } from '@/core/services/shared';
 import { TokenDisplayMode } from '@/core/services/preference';
+import { getTokenSymbol } from '@/utils/token';
 import {
   tokenItemEntityToTokenItem,
   tokenItemToITokenItem,
@@ -214,7 +215,7 @@ type AggregatedTokenItem = ITokenItem & {
 
 const getTokenGroupKey = (token: ITokenItem, mode: TokenDisplayMode) => {
   if (mode === 'bySymbol') {
-    const symbolKey = token.symbol?.trim().toLowerCase();
+    const symbolKey = getTokenSymbol(token)?.trim().toLowerCase();
     return symbolKey || `${token.chain}::${token.id}`;
   }
   return `${token.chain}::${token.id}`;
