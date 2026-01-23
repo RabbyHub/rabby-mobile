@@ -8,6 +8,7 @@ import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { preferenceService } from '@/core/services/shared';
 import { TokenDisplayMode } from '@/core/services/preference';
+import { getTokenSymbol } from '@/utils/token';
 import {
   tokenItemEntityToTokenItem,
   tokenItemToITokenItem,
@@ -214,7 +215,7 @@ type AggregatedTokenItem = ITokenItem & {
 
 const getTokenGroupKey = (token: ITokenItem, mode: TokenDisplayMode) => {
   if (mode === 'bySymbol') {
-    const symbolKey = token.symbol?.trim().toLowerCase();
+    const symbolKey = getTokenSymbol(token)?.trim().toLowerCase();
     return symbolKey || `${token.chain}::${token.id}`;
   }
   return `${token.chain}::${token.id}`;
@@ -279,9 +280,12 @@ const computeMultiAssets = (
   const tokens = chainServerId
     ? allTokens.filter(item => item.chain === chainServerId)
     : allTokens;
+  const visibleTokens = tokens.filter(item =>
+    lpTokenFilter(item, isLpTokenEnabled),
+  );
   const scamTokens: ITokenItem[] = [];
   const nonScamTokens: ITokenItem[] = [];
-  tokens.forEach(token => {
+  visibleTokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
     const isScam =
@@ -294,7 +298,6 @@ const computeMultiAssets = (
       nonScamTokens.push(token);
     }
   });
-
   const displayMode = tokenDisplayMode || 'byAddress';
   const aggregatedNonScamTokens =
     displayMode === 'byAddress'
@@ -317,10 +320,8 @@ const computeMultiAssets = (
   });
   return {
     unFoldTokens: unfoldedTokens,
-    foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
-    scamTokens: aggregatedScamTokens.filter(i =>
-      lpTokenFilter(i, isLpTokenEnabled),
-    ),
+    foldTokens: foldedTokens,
+    scamTokens: aggregatedScamTokens,
   };
 };
 

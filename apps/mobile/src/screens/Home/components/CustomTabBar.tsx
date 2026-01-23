@@ -75,7 +75,6 @@ const Indicator = ({
     left: 0,
     right: 0,
   };
-  const showHitAreaDebug = __DEV__;
 
   const stylez = useAnimatedStyle(() => {
     const firstItemX = itemsLayout[0]?.x ?? 0;
@@ -124,9 +123,6 @@ const Indicator = ({
         style={styles.leftPressable}
         hitSlop={leftHitSlop}
       />
-      {showHitAreaDebug && (
-        <View pointerEvents="none" style={styles.leftHitAreaDebug} />
-      )}
       <View style={styles.rightBackground} />
       <Pressable
         ref={secondaryIndicatorViewRef}
@@ -137,9 +133,6 @@ const Indicator = ({
           handleMeasureSecondaryIndicator?.();
         }}
       />
-      {showHitAreaDebug && (
-        <View pointerEvents="none" style={styles.rightHitAreaDebug} />
-      )}
     </View>
   );
 };
