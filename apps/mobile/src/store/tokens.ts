@@ -97,7 +97,7 @@ function getMultiAssetsFoldResultFromParts({
     ? coreTokens.findIndex(token => (token.usd_value || 0) < threshold)
     : -1;
   const hasExpandSwitch =
-    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
+    listLength > 3 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
 
   const sortedTokens = nonScamTokens
     .slice()

@@ -168,11 +168,13 @@ export async function batchSaveWithPQueueAndTransaction<
         try {
           const disablePreparedUpsert =
             !__DEV__ &&
-            getOnlineConfig().switches?.['20260105.disable_db_prepared_upsert'];
+            !getOnlineConfig().switches?.['20260122.enable_db_prepared_upsert'];
           const supportedPreparedStatement =
             !disablePreparedUpsert &&
             'getStatementSql' in entityCls &&
-            typeof entityCls.getStatementSql === 'function';
+            typeof entityCls.getStatementSql === 'function' &&
+            'bindUpsertParams' in entityCls.prototype &&
+            typeof entityCls.prototype.bindUpsertParams === 'function';
           const stmSql = !supportedPreparedStatement
             ? ''
             : entityCls.getStatementSql?.('upsert') ?? '';
@@ -186,7 +188,7 @@ export async function batchSaveWithPQueueAndTransaction<
               item.bindUpsertParams!(stm);
               try {
                 const result = await stm.execute();
-                // console.debug(`${loggerPrefix}[perf] upserted row:`, result);
+                // console.debug(`${loggerPrefix}[perf] upserted row:`, item, result);
               } catch (error) {
                 console.error(
                   `${loggerPrefix}Error upserting row:`,

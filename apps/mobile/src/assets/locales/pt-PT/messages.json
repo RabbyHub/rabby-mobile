@@ -3066,7 +3066,6 @@
         "needSupply": "Para pedir emprestado, precisa fornecer ativos como colateral.",
         "canBorrow": "Você pode tomar emprestado com base na sua garantia fornecida, até o limite de empréstimo.",
         "isolated": "O poder de empréstimo e os ativos estão limitados devido ao modo de Isolamento.",
-        "emode": "No E-Mode, alguns ativos não são passíveis de empréstimo. Saia do E-Mode para ter acesso a todos os ativos.",
         "emodeNoAssets": "Não conseguimos encontrar ativos relacionados à sua pesquisa. Tente novamente com uma categoria diferente."
       },
       "list": {

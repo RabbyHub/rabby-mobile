@@ -7,7 +7,9 @@ import { columnConverter } from './_helpers';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_balance)
 export class BalanceEntity extends EntityAddressAssetBase {
   // balance
@@ -44,31 +46,6 @@ export class BalanceEntity extends EntityAddressAssetBase {
     e.chain_list = columnConverter.jsonObjToString(input.chain_list || []);
     e.isCore = !!isCore;
     e.makeDbId();
-  }
-
-  static stmSql = `
-INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_balance}"
-("_db_id", "owner_addr", "balance", "evm_usd_value", "chain_list", "isCore", "_local_created_at", "_local_updated_at")
-VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
-`;
-
-  static getStatementSql() {
-    return this.stmSql;
-  }
-
-  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
-    stm.bindSync([
-      this._db_id,
-      this.owner_addr,
-      this.balance,
-      this.evm_usd_value,
-      this.chain_list,
-      this.isCore,
-      this._local_created_at,
-      this._local_updated_at,
-    ]);
-
-    return stm;
   }
 
   static async getCountOfAccount() {

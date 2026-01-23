@@ -22,12 +22,14 @@ import { tokenItemEntityToTokenItem } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
 const RawAmountTransformer = {
   to: (val: any) => columnConverter.numberToString(val),
   from: (val: any) => columnConverter.stringToNumber(val, false),
 };
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_tokenitem)
 export class TokenItemEntity extends EntityAddressAssetBase {
   // content_type
@@ -143,59 +145,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     ]
       .filter(Boolean)
       .join('-')}`);
-  }
-
-  static stmSql = `
-INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_tokenitem}"
-("_db_id", "owner_addr", "amount", "chain", "decimals", "display_symbol", "id", "is_core", "is_verified", "is_wallet", "is_scam", "is_infinity", "is_suspicious", "logo_url", "name", "optimized_symbol", "price", "symbol", "time_at", "usd_value", "credit_score", "protocol_id", "raw_amount", "raw_amount_hex_str", "price_24h_change", "low_credit_score", "fdv", "content_type", "content", "inner_id", "value_24h_change", "cex_ids", "_local_created_at", "_local_updated_at")
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT ( "_db_id" )
-DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
-  `;
-
-  static getStatementSql() {
-    return this.stmSql;
-  }
-
-  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
-    stm.bindSync([
-      this._db_id,
-      this.owner_addr,
-      badRealTransformer.to(this.amount),
-      this.chain,
-      this.decimals,
-      this.display_symbol,
-      this.id,
-      this.is_core,
-      this.is_verified,
-      this.is_wallet,
-      this.is_scam,
-      this.is_infinity,
-      this.is_suspicious,
-      this.logo_url,
-      this.name,
-      this.optimized_symbol,
-      badRealTransformer.to(this.price),
-      this.symbol,
-      this.time_at,
-      this.usd_value,
-      this.credit_score,
-      this.protocol_id,
-      RawAmountTransformer.to(this.raw_amount),
-      this.raw_amount_hex_str,
-      this.price_24h_change,
-      this.low_credit_score,
-      this.fdv,
-      this.content_type || '',
-      this.content,
-      this.inner_id,
-      this.value_24h_change,
-      this.cex_ids,
-      this._local_created_at,
-      this._local_updated_at,
-    ]);
-
-    return stm;
   }
 
   static fillEntity(

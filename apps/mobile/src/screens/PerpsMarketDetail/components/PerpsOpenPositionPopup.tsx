@@ -24,6 +24,7 @@ import {
   useWindowDimensions,
   View,
   TextInput,
+  StyleSheet,
 } from 'react-native';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 
@@ -40,6 +41,7 @@ import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { PerpMarginModePopup } from './PerpMarginModePopup';
 import { useShallow } from 'zustand/shallow';
+import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -195,7 +197,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   ]);
 
   const bothFee = React.useMemo(() => {
-    return providerFee;
+    return providerFee + PERPS_EXCHANGE_FEE_NUMBER;
   }, [providerFee]);
 
   // 验证 margin 输入
@@ -482,7 +484,14 @@ export const PerpsOpenPositionPopup: React.FC<{
               </View>
 
               <View style={styles.marginItem}>
-                <View style={styles.marginAvailableWrapper}>
+                <View
+                  style={StyleSheet.flatten([
+                    styles.marginAvailableWrapper,
+                    {
+                      flexDirection: 'column',
+                      gap: 0,
+                    },
+                  ])}>
                   <Text style={styles.marginTitle}>
                     {formatPerpsUsdValue(
                       availableBalance,
@@ -1142,9 +1151,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
     },
     marginAvailable: {
-      marginLeft: 4,
-      fontSize: 18,
-      lineHeight: 22,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-info'],
       fontFamily: 'SF Pro Rounded',

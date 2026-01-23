@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -10,6 +10,7 @@ import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
 import TokenIcon from '../TokenIcon';
 import { CHAINS_ENUM } from '@debank/common';
+import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 
 interface TokenAmountInputProps {
   symbol: string;
@@ -23,6 +24,7 @@ interface TokenAmountInputProps {
   className?: string;
   placeholder?: string;
   isEstimatingGas?: boolean;
+  onClickToken?: () => void;
 }
 
 export const TokenAmountInput = ({
@@ -36,6 +38,7 @@ export const TokenAmountInput = ({
   style,
   handleClickMaxButton,
   isEstimatingGas,
+  onClickToken,
 }: React.PropsWithChildren<RNViewProps & TokenAmountInputProps>) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -77,6 +80,10 @@ export const TokenAmountInput = ({
       handleChangeText.cancel();
     };
   }, [handleChangeText]);
+
+  const showTokenSelect = useMemo(() => {
+    return !!onClickToken;
+  }, [onClickToken]);
 
   return (
     <>
@@ -132,15 +139,28 @@ export const TokenAmountInput = ({
             </TouchableOpacity>
           ))}
         <View style={styles.placeholder} />
-        <View style={styles.tokenInfoContainer}>
-          <TokenIcon
-            size={26}
-            chainSize={12}
-            tokenSymbol={symbol}
-            chain={chain}
-          />
-          <Text style={styles.tokenSymbol}>{symbol}</Text>
-        </View>
+        {showTokenSelect ? (
+          <Pressable onPress={onClickToken} style={styles.tokenInfoContainer}>
+            <TokenIcon
+              size={26}
+              chainSize={12}
+              tokenSymbol={symbol}
+              chain={chain}
+            />
+            <Text style={styles.tokenSymbol}>{symbol}</Text>
+            <RcIconSwapBottomArrow />
+          </Pressable>
+        ) : (
+          <View style={styles.tokenInfoContainerHidden}>
+            <TokenIcon
+              size={26}
+              chainSize={12}
+              tokenSymbol={symbol}
+              chain={chain}
+            />
+            <Text style={styles.tokenSymbol}>{symbol}</Text>
+          </View>
+        )}
       </View>
     </>
   );
@@ -247,6 +267,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 100,
     },
     tokenInfoContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      borderRadius: 12,
+      backgroundColor: colors2024['neutral-line'],
+      padding: 4,
+      justifyContent: 'space-between',
+    },
+    tokenInfoContainerHidden: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,

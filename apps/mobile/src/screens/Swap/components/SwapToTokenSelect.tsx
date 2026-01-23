@@ -18,7 +18,11 @@ import {
   useTokenSelectorModalVisible,
 } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
-import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
+import {
+  getTokenSymbol,
+  scamTokenFilter,
+  tokenItemToITokenItem,
+} from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
@@ -40,6 +44,7 @@ import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { ITokenItem } from '@/store/tokens';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
+import { isAddress } from 'viem';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -131,10 +136,13 @@ const SwapToTokenSelect = forwardRef<
           return [];
         }
         if (queryConds.keyword) {
-          const list = await openapi.searchTokensV2({
+          const _list = await openapi.searchTokensV2({
             q: queryConds.keyword,
             chain_id: queryConds.chainServerId || '',
           });
+          const list = isAddress(queryConds.keyword, { strict: false })
+            ? _list
+            : _list.filter(scamTokenFilter);
           let localAmounts: Array<{
             chain: string;
             tokenId: string;

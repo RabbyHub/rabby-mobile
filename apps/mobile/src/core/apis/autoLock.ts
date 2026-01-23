@@ -124,11 +124,11 @@ export function setupAutoLockChecker() {
 
     const fromExpireDiff = nowTime - unlockExpire;
 
-    console.debug(
-      'check auto lock:: unlockExpire: %s; fromExpireDiff: %s',
-      unlockExpire,
-      fromExpireDiff,
-    );
+    // console.debug(
+    //   'check auto lock:: unlockExpire: %s; fromExpireDiff: %s',
+    //   unlockExpire,
+    //   fromExpireDiff,
+    // );
     if (fromExpireDiff > -AUTO_LOCK_SECS.ERROR_DELTA) {
       console.debug('check auto lock:: timeout');
       const delayLock = () => refreshAutolockTimeout();
