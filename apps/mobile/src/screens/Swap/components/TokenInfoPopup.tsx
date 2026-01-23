@@ -15,7 +15,6 @@ import { formatAmount } from '@/utils/math';
 import { formatUsdValue } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { RootNames } from '@/constant/layout';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 

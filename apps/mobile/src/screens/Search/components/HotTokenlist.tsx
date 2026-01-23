@@ -1,6 +1,5 @@
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import {
   TokenListItem,
   TokenItemSkeleton,
