@@ -280,33 +280,22 @@ const computeMultiAssets = (
   const tokens = chainServerId
     ? allTokens.filter(item => item.chain === chainServerId)
     : allTokens;
-  const visibleTokens = tokens.filter(item =>
-    lpTokenFilter(item, isLpTokenEnabled),
-  );
-  const scamTokens: ITokenItem[] = [];
-  const nonScamTokens: ITokenItem[] = [];
-  visibleTokens.forEach(token => {
+  const displayMode = tokenDisplayMode || 'byAddress';
+  const aggregatedTokens =
+    displayMode === 'byAddress' ? tokens : aggregateTokens(tokens, displayMode);
+  const aggregatedScamTokens: ITokenItem[] = [];
+  const aggregatedNonScamTokens: ITokenItem[] = [];
+  aggregatedTokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
-    const isScam =
-      token.is_verified === false ||
-      (usdValue === 0 && !isZeroCore) ||
-      token.is_suspicious;
+    const isScam = usdValue === 0 && !isZeroCore;
     if (isScam) {
-      scamTokens.push(token);
+      aggregatedScamTokens.push(token);
     } else {
-      nonScamTokens.push(token);
+      aggregatedNonScamTokens.push(token);
     }
   });
-  const displayMode = tokenDisplayMode || 'byAddress';
-  const aggregatedNonScamTokens =
-    displayMode === 'byAddress'
-      ? nonScamTokens
-      : aggregateTokens(nonScamTokens, displayMode);
-  const aggregatedScamTokens =
-    displayMode === 'byAddress'
-      ? scamTokens
-      : aggregateTokens(scamTokens, displayMode);
+  console.log('aggregatedScamTokens', aggregatedScamTokens);
   const coreTokens = aggregatedNonScamTokens.filter(token => token.is_core);
   const totalValue = coreTokens.reduce(
     (sum, token) => sum + (token.usd_value || 0),
@@ -318,10 +307,13 @@ const computeMultiAssets = (
     coreTokens,
     totalValue,
   });
+  console.log('foldedTokens in', foldedTokens);
   return {
     unFoldTokens: unfoldedTokens,
-    foldTokens: foldedTokens,
-    scamTokens: aggregatedScamTokens,
+    foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+    scamTokens: aggregatedScamTokens.filter(i =>
+      lpTokenFilter(i, isLpTokenEnabled),
+    ),
   };
 };
 
