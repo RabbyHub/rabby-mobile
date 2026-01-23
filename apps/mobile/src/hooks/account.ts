@@ -34,7 +34,7 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
-import { useBalanceAccounts } from './useAccountsBalance';
+import balanceStore from '@/store/balance';
 import { perfEvents } from '@/core/utils/perf';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';
@@ -387,7 +387,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 export const usePinnedAccountList = () => {
   const pinAddresses = zAccountStore(s => s.pinnedAddresses);
   const accounts = zAccountStore(s => s.accounts);
-  const { balanceAccounts } = useBalanceAccounts();
+  const balanceMap = balanceStore(s => s.balanceMap);
 
   const pinnedAccountList = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
@@ -406,16 +406,16 @@ export const usePinnedAccountList = () => {
           KEYRING_TYPE.WalletConnectKeyring,
         ].includes(item.type)
       ) {
-        const account = balanceAccounts[item.address.toLowerCase()];
+        const balance = balanceMap[item.address.toLowerCase()];
         res.push({
           ...item,
-          balance: account?.balance || item.balance || 0,
-          evmBalance: account?.evmBalance || item.evmBalance || 0,
+          balance: balance?.totalBalance || item.balance || 0,
+          evmBalance: balance?.evmBalance || item.evmBalance || 0,
         });
       }
     });
     return res;
-  }, [accounts, balanceAccounts, pinAddresses]);
+  }, [accounts, balanceMap, pinAddresses]);
 
   return pinnedAccountList;
 };

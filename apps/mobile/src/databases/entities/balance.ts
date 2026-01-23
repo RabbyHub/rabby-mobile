@@ -108,6 +108,20 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_u
     };
   }
 
+  static async queryAllBalance() {
+    await prepareAppDataSource();
+    const result = await this.getRepository().find();
+    return result.map(item => ({
+      ...item,
+      chain_list:
+        columnConverter.jsonStringToObj(item.chain_list || '[]') || [],
+    })) as Array<
+      Omit<BalanceEntity, 'chain_list'> & {
+        chain_list: EvmTotalBalanceResponse['chain_list'];
+      }
+    >;
+  }
+
   static async queryChainList(
     address: string,
   ): Promise<EvmTotalBalanceResponse['chain_list']> {

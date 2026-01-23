@@ -255,6 +255,8 @@ export const currencyService = new CurrencyService({
   storageAdapter: appStorage,
 });
 
+export { default as debugLogService } from './debugLogService';
+
 migrateServices({
   contactBook: contactService,
   dapps: dappService,

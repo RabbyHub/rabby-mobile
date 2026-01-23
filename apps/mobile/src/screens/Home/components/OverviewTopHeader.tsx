@@ -40,11 +40,7 @@ import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import Animated, {
   Easing,
-  runOnJS,
-  SharedValue,
-  useAnimatedReaction,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
   withRepeat,
   withTiming,
@@ -56,6 +52,8 @@ import {
 } from '@/hooks/useScene24hBalance';
 import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import balanceStore from '@/store/balance';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 
 export const HeaderHeight = 30;
@@ -85,6 +83,17 @@ export function TabsTopHeader(): JSX.Element {
     }
   });
   const { currency } = useCurrency();
+  const { myTop10Addresses } = useAccountInfo();
+  const balanceMap = balanceStore(s => s.balanceMap);
+  const totalBalance = useMemo(() => {
+    if (!myTop10Addresses.length) {
+      return 0;
+    }
+    return myTop10Addresses.reduce((acc, address) => {
+      const balance = balanceMap[address.toLowerCase()];
+      return acc + (balance?.totalBalance || 0);
+    }, 0);
+  }, [balanceMap, myTop10Addresses]);
 
   const { refreshing } = useLoadAssets();
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
@@ -119,8 +128,8 @@ export function TabsTopHeader(): JSX.Element {
   );
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValue(data.rawNetWorth, { currency });
-  }, [data.rawNetWorth, currency]);
+    return formatSmallCurrencyValue(totalBalance, { currency });
+  }, [currency, totalBalance]);
   const changePercent = useMemo(() => {
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);

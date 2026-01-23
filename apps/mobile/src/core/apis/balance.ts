@@ -8,6 +8,7 @@ import {
   batchBalanceWithLocalCache,
   EvmTotalBalanceResponse,
 } from '@/databases/hooks/balance';
+import balanceStore from '@/store/balance';
 
 const getTotalBalanceCached = async (address: string, force?: boolean) => {
   const addresses = await keyringService.getAllAddresses();
@@ -74,7 +75,18 @@ export const getAddressCacheBalanceSync = (
   if (isTestnet) {
     return preferenceService.getTestnetAddressBalance(address);
   }
-  return preferenceService.getAddressBalance(address);
+  const lowerAddress = address.toLowerCase();
+  const state = balanceStore.getState();
+  const balance = state.balanceMap[lowerAddress];
+  const chainList = state.chainUSDMap[lowerAddress];
+  if (!balance) {
+    return null;
+  }
+  return {
+    total_usd_value: balance.totalBalance,
+    evm_usd_value: balance.evmBalance,
+    chain_list: chainList || [],
+  };
 };
 
 export const getAddressCacheBalance = async (
