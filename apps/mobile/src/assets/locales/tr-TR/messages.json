@@ -2579,7 +2579,8 @@
         "minimumWarning": "Minimum miktar {{percent}}% olacaktır.",
         "closedPnl": "Kapalı PNL",
         "total": "Toplam",
-        "receive": "Alım"
+        "receive": "Alım",
+        "rabbyFeeTipsV2": "Rabby ücreti: 0.02%"
       },
       "PerpsOpenPositionPopup": {
         "maximumOrderSize": "Maksimum emir büyüklüğü {{amount}}'dir.",
@@ -2702,7 +2703,8 @@
         "needSupply": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
         "canBorrow": "Teminat olarak sağladığınız teminatınıza göre, borç limitine kadar borç alabilirsiniz.",
         "isolated": "İzolasyon modu nedeniyle borçlanma gücü ve varlıklar sınırlıdır.",
-        "emodeNoAssets": "Aramanıza bağlı herhangi bir varlık bulamadık. Farklı bir kategori ile tekrar deneyin."
+        "emodeNoAssets": "Aramanıza bağlı herhangi bir varlık bulamadık. Farklı bir kategori ile tekrar deneyin.",
+        "emode": "E-Mode'da bazı varlıklar borç alınamıyor. Tüm varlıklara erişmek için E-Mode'dan çıkın."
       },
       "list": {
         "headers": {
@@ -2951,6 +2953,13 @@
         "repayWith": "Teminat ile geri ödemek için",
         "collateralNotEnough": "Teminat bakiyeniz seçilen tutardan daha düşük.",
         "toRepay": "Beklenen geri ödeme tutarı"
+      },
+      "repayWithAToken": {
+        "header": {
+          "balance": "Bakiye",
+          "assets": "Jeton"
+        },
+        "title": "Geri Ödeme Token'i Seçin"
       }
     },
     "address": {

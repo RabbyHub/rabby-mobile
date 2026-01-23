@@ -2686,7 +2686,8 @@
         "closedPnl": "Lợi nhuận và lỗ đã đóng",
         "amount": "Số lượng",
         "confirm": "Xác nhận",
-        "minimumWarning": "Số tiền tối thiểu là {{percent}}%"
+        "minimumWarning": "Số tiền tối thiểu là {{percent}}%",
+        "rabbyFeeTipsV2": "Phí Rabby: 0.02%"
       },
       "PerpsOpenPositionPopup": {
         "leverage": "Đòn bẩy",
@@ -2809,7 +2810,8 @@
         "needSupply": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
         "canBorrow": "Bạn có thể vay dựa trên tài sản thế chấp mà bạn cung cấp, lên đến giới hạn vay.",
         "isolated": "Quyền vay và tài sản bị giới hạn do chế độ Isolation.",
-        "emodeNoAssets": "Chúng tôi không thể tìm thấy bất kỳ tài sản nào liên quan đến tìm kiếm của bạn. Hãy thử lại với một danh mục khác."
+        "emodeNoAssets": "Chúng tôi không thể tìm thấy bất kỳ tài sản nào liên quan đến tìm kiếm của bạn. Hãy thử lại với một danh mục khác.",
+        "emode": "Một số tài sản không khả dụng để vay trong E-Mode. Thoát E-Mode để truy cập tất cả tài sản."
       },
       "list": {
         "headers": {
@@ -3058,6 +3060,13 @@
         "toRepay": "Số tiền kỳ vọng để trả nợ",
         "collateralNotEnough": "Số dư tài sản thế chấp của bạn thấp hơn số tiền đã chọn.",
         "repayWith": "Tài sản thế chấp để trả lại với"
+      },
+      "repayWithAToken": {
+        "header": {
+          "assets": "Mã thông báo",
+          "balance": "Số dư"
+        },
+        "title": "Chọn Token Hoàn trả"
       }
     },
     "address": {

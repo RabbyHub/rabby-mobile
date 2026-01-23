@@ -2943,7 +2943,8 @@
         "confirm": "Confirmar",
         "closedPnl": "PNL Fechado",
         "amount": "Montante",
-        "minimumWarning": "O valor mínimo é {{percent}}%"
+        "minimumWarning": "O valor mínimo é {{percent}}%",
+        "rabbyFeeTipsV2": "Taxa Rabby: 0,02%"
       },
       "PerpsOpenPositionPopup": {
         "sizeTips": "O valor total ou a quantidade da sua negociação, definido pela margem e pela alavancagem.",
@@ -3066,7 +3067,8 @@
         "needSupply": "Para pedir emprestado, precisa fornecer ativos como colateral.",
         "canBorrow": "Você pode tomar emprestado com base na sua garantia fornecida, até o limite de empréstimo.",
         "isolated": "O poder de empréstimo e os ativos estão limitados devido ao modo de Isolamento.",
-        "emodeNoAssets": "Não conseguimos encontrar ativos relacionados à sua pesquisa. Tente novamente com uma categoria diferente."
+        "emodeNoAssets": "Não conseguimos encontrar ativos relacionados à sua pesquisa. Tente novamente com uma categoria diferente.",
+        "emode": "Alguns ativos não estão disponíveis para emprestar em E-Mode. Saia do E-Mode para acessar todos os ativos."
       },
       "list": {
         "headers": {
@@ -3315,6 +3317,13 @@
         "collateralNotEnough": "O seu saldo de colateral é inferior ao montante selecionado.",
         "toRepay": "Montante esperado para reembolso",
         "repayWith": "Garantia para reembolso com"
+      },
+      "repayWithAToken": {
+        "header": {
+          "balance": "Saldo",
+          "assets": "Token"
+        },
+        "title": "Selecionar Token de Reembolso"
       }
     },
     "address": {
