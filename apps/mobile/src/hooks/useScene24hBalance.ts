@@ -26,6 +26,7 @@ import { perfEvents } from '@/core/utils/perf';
 import { accountEvents, getTop10MyAccounts } from '@/core/apis/account';
 import { keyringService } from '@/core/services';
 import { debounce } from 'lodash';
+import { debugLogService } from '@/core/services';
 
 const queues: Record<BalanceScene, PQueue> = {
   Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
@@ -224,6 +225,12 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
         totalBalance: totals.total,
       });
     }
+    debugLogService.info('refreshCombinedDataForScene address', addresses);
+    debugLogService.info('refreshCombinedDataForScene force', force);
+    debugLogService.info(
+      'refreshCombinedDataForScene sceneLastLoadingRef',
+      sceneLastLoadingRef[scene],
+    );
 
     try {
       if (!address.length) {
@@ -232,6 +239,10 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
       }
       if (!force) {
         const now = Date.now();
+        debugLogService.info(
+          'now - sceneLastLoadingRef[scene] < TEN_MINUTES',
+          now - sceneLastLoadingRef[scene] < TEN_MINUTES,
+        );
         if (now - sceneLastLoadingRef[scene] < TEN_MINUTES) {
           beforeReturn();
           return;
@@ -270,6 +281,7 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
         queue.add(async () => {
           setSceneAddrLoading(scene, addr, true);
           try {
+            debugLogService.info('get24hBalance', addr);
             const address24hBalance = await get24hBalance(addr, force);
             setMulti24hBalance(addr, {
               ...address24hBalance.data,
@@ -311,6 +323,7 @@ export const refresh24hAssets = async ({
   balanceAccounts?: AccountsBalanceState['balance'];
 } = {}) => {
   const { top10Addresses } = await getTop10MyAccounts();
+  debugLogService.info('refresh24hAssets', top10Addresses);
   refreshCombinedDataForScene('Home', {
     addresses: top10Addresses,
     force,

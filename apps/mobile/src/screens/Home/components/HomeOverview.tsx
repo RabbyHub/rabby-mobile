@@ -676,6 +676,7 @@ export const HomeOverview = React.memo(() => {
         isFirstTriggerRef.current = false;
       }
       triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
+        debugLogService.info('triggerUpdate then', balanceAccounts);
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
         refresh24hAssets({ balanceAccounts });
         refreshDayCurve({ balanceAccounts });
