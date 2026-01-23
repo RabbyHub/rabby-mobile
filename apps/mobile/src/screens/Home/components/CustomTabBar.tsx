@@ -1,4 +1,4 @@
-import { Dimensions, View } from 'react-native';
+import { Dimensions, useWindowDimensions, View } from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabItem,
@@ -13,12 +13,9 @@ import Animated, {
   interpolate,
   AnimatedStyle,
 } from 'react-native-reanimated';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  HOME_TABBAR_SIZES,
-  useMeasureLayoutForHomeGuidanceMultipleTabs,
-} from '@/components2024/Animations/HomeGuidanceMultipleTabs';
+import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import {
@@ -35,8 +32,8 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useTranslation } from 'react-i18next';
-
-const screenWidth = Dimensions.get('window').width;
+import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 
 type ItemLayout = {
   width: number;
@@ -116,46 +113,53 @@ const Indicator = ({
   );
 };
 
-const indicatorMarginTop = 14;
+const indicatorMarginTop = 0;
 const indicatorHeight = 6;
-const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
-  indicator: {
-    height: 6,
-    backgroundColor: isLight ? 'rgba(0, 0, 0, 1)' : colors2024['brand-default'],
-    position: 'absolute',
-    borderRadius: 12,
-    top: indicatorMarginTop,
-    zIndex: 99,
-  },
-  indicatorContainer: {
-    position: 'relative',
-    paddingTop: indicatorMarginTop,
-    height: indicatorMarginTop + indicatorHeight,
-  },
-  indicatorBgBox: {
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  leftBackground: {
-    position: 'absolute',
-    top: indicatorMarginTop,
-    left: 20,
-    width: (screenWidth - 52) / 2,
-    height: 6,
-    borderRadius: 12,
-    backgroundColor: colors2024['neutral-line'],
-    zIndex: 98,
-  },
-  rightBackground: {
-    position: 'absolute',
-    right: 20,
-    top: indicatorMarginTop,
-    width: (screenWidth - 52) / 2,
-    height: 6,
-    borderRadius: 12,
-    backgroundColor: colors2024['neutral-line'],
-    zIndex: 98,
-  },
-}));
+export const HOME_INDICATOR_HEIGHT = indicatorHeight;
+const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => {
+  const winWidth = Dimensions.get('window').width;
+
+  return {
+    indicator: {
+      height: indicatorHeight,
+      backgroundColor: isLight
+        ? 'rgba(0, 0, 0, 1)'
+        : colors2024['brand-default'],
+      position: 'absolute',
+      borderRadius: 12,
+      top: indicatorMarginTop,
+      zIndex: 99,
+    },
+    indicatorContainer: {
+      position: 'relative',
+      paddingTop: indicatorMarginTop,
+      height: indicatorMarginTop + indicatorHeight,
+    },
+    indicatorBgBox: {
+      backgroundColor: colors2024['neutral-bg-1'],
+    },
+    leftBackground: {
+      position: 'absolute',
+      top: indicatorMarginTop,
+      left: 20,
+      width: (winWidth - 52) / 2,
+      height: indicatorHeight,
+      borderRadius: 12,
+      backgroundColor: colors2024['neutral-line'],
+      zIndex: 98,
+    },
+    rightBackground: {
+      position: 'absolute',
+      right: 20,
+      top: indicatorMarginTop,
+      width: (winWidth - 52) / 2,
+      height: 6,
+      borderRadius: 12,
+      backgroundColor: colors2024['neutral-line'],
+      zIndex: 98,
+    },
+  };
+});
 
 function SideChainSelector() {
   const { styles, isLight, colors2024 } = useTheme2024({
@@ -245,17 +249,19 @@ const renderTabItem: MaterialTabBarProps['TabItemComponent'] & object = _p => (
   />
 );
 
-export const HomeCustomMaterialTabBar = (
-  props: Omit<
-    MaterialTabBarProps,
-    | 'scrollEnabled'
-    | 'tabStyle'
-    | 'TabItemComponent'
-    | 'style'
-    | 'indicatorStyle'
-    | 'contentContainerStyle'
-  >,
-) => {
+export const HomeCustomMaterialTabBar = ({
+  style,
+  ...props
+}: Omit<
+  MaterialTabBarProps,
+  | 'scrollEnabled'
+  | 'tabStyle'
+  | 'TabItemComponent'
+  | 'style'
+  | 'indicatorStyle'
+  | 'contentContainerStyle'
+> &
+  RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const indexDecimal = props.indexDecimal;
@@ -278,9 +284,13 @@ export const HomeCustomMaterialTabBar = (
     measureSecondaryIndicator();
   }, [measureSecondaryIndicator]);
 
+  const { opacityStyle } = useHomeDrawerOpacityStyle();
+  // const winWidth = Dimensions.get('window').width;
+  const { width: winWidth } = useWindowDimensions();
+
   return (
-    <View
-      style={styles.container}
+    <Animated.View
+      style={[styles.container, style, opacityStyle]}
       // ref={homeGuidanceMultipleTabsTargetViewRef}
       // onLayout={() => {
       //   measureTabBarWrapper();
@@ -290,20 +300,20 @@ export const HomeCustomMaterialTabBar = (
         indexDecimal={props.indexDecimal}
         itemsLayout={[
           {
-            width: (screenWidth - 52) / 2,
+            width: (winWidth - 52) / 2,
             x: 20,
           },
           {
-            width: (screenWidth - 52) / 2,
-            x: 20 + (screenWidth - 52) / 2 + 12,
+            width: (winWidth - 52) / 2,
+            x: 20 + (winWidth - 52) / 2 + 12,
           },
           {
-            width: (screenWidth - 52) / 2,
-            x: 20 + (screenWidth - 52) / 2 + 12,
+            width: (winWidth - 52) / 2,
+            x: 20 + (winWidth - 52) / 2 + 12,
           },
           {
-            width: (screenWidth - 52) / 2,
-            x: 20 + (screenWidth - 52) / 2 + 12,
+            width: (winWidth - 52) / 2,
+            x: 20 + (winWidth - 52) / 2 + 12,
           },
         ]}
         fadeIn
@@ -325,14 +335,15 @@ export const HomeCustomMaterialTabBar = (
         <SideChainSelector />
         {/* {_props.externalContent} */}
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 };
 
-export const TABITEM_H = 54;
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
+    // ...makeDebugBorder('green'),
+    // backgroundColor: colors2024['neutral-bg-1'],
   },
   hideInnerIndicator: {
     height: 0,
@@ -352,15 +363,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     // justifyContent: 'flex-end',
   },
   portfolioContainer: {
-    paddingHorizontal: HOME_TABBAR_SIZES.portfolioContainerPx,
+    paddingHorizontal: HOME_TOP_HEADER_SIZES.portfolioContainerPx,
     paddingTop: 2,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: TABITEM_H,
-  },
-  portfolioContainerBgBox: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    height: HOME_TOP_HEADER_SIZES.tabItemHeight,
   },
 }));

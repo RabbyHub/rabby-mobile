@@ -31,6 +31,7 @@ import {
   RcFingerprint,
   RcScreenshotReport,
   RcIconCurrency,
+  RcNotification,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -72,7 +73,11 @@ import {
   ResetPasswordAndKeyringsSheetModal,
 } from '../ManagePassword/components/ManagePasswordSheetModal';
 
-import { useBiometrics, useBiometricsComputed } from '@/hooks/biometrics';
+import {
+  storeApisBiometrics,
+  useBiometrics,
+  useBiometricsComputed,
+} from '@/hooks/biometrics';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import { AutoLockSettingLabel } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
@@ -131,6 +136,11 @@ import {
   useCurrentCurrencyVisible,
 } from './sheetModals/CurrencySelectorPopup';
 import { isWorkerThreadRunning } from '@/perfs/thread';
+import {
+  setEnableTransactionNofification,
+  useAppNotificationEnabled,
+} from '@/hooks/appNotification';
+import { SwitchSettingCommon } from './components/SwitchSettingCommon';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -268,6 +278,16 @@ function SettingsBlocks() {
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
           {
+            label: t('page.setting.transactionNotification'),
+            icon: RcNotification,
+            rightNode: (
+              <SwitchSettingCommon useValueHook={useAppNotificationEnabled} />
+            ),
+            onPress: () => {
+              setEnableTransactionNofification(prev => !prev);
+            },
+          },
+          {
             label: t('page.setting.autoLockTime'),
             icon: RcAutoLockTime,
             onPress: () => {
@@ -337,7 +357,7 @@ function SettingsBlocks() {
           {
             label: t('page.setting.screenshotReportSwitch'),
             icon: RcScreenshotReport,
-            rightNode: <SwitchScreenshotToReport ref={switchBiometricsRef} />,
+            rightNode: <SwitchScreenshotToReport />,
             onPress: () => {
               toggleScreenshotToReport();
             },
@@ -633,6 +653,13 @@ function DevSettingsBlocks() {
               },
             },
             {
+              label: 'LAN Dev Server Settings',
+              icon: RcCode,
+              onPress: async () => {
+                setDevServerSettingsModalVisible(true);
+              },
+            },
+            {
               label: 'UI Playground',
               icon: RcCode,
               onPress: () => {
@@ -654,13 +681,6 @@ function DevSettingsBlocks() {
           label: 'Dev Lab',
           icon: RcEarth,
           items: [
-            {
-              label: 'LAN Server Settings',
-              icon: RcCode,
-              onPress: async () => {
-                setDevServerSettingsModalVisible(true);
-              },
-            },
             // {
             //   label: 'WebView Test',
             //   icon: RcEarth,
@@ -812,15 +832,10 @@ function DevSettingsBlocks() {
 export default function SettingsScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const {
-    computed: { couldSetupBiometrics },
-    fetchBiometrics,
-  } = useBiometrics({ autoFetch: true });
-
   useFocusEffect(
     useCallback(() => {
-      fetchBiometrics();
-    }, [fetchBiometrics]),
+      storeApisBiometrics.fetchBiometrics();
+    }, []),
   );
 
   const { safeSizes } = useSafeAndroidBottomSizes({

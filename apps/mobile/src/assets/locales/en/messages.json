@@ -2151,7 +2151,8 @@
       "clearBrowserData": "Clear Browser Data",
       "screenshotReportSwitch": "Screenshot to report bug",
       "currency": "Currency",
-      "searchCurrency": "Search Currency"
+      "searchCurrency": "Search Currency",
+      "transactionNotification": "Transaction notifications"
     },
     "settingModal": {
       "themeMode": {
@@ -3329,7 +3330,8 @@
     "Other": "Other",
     "permissionRequest": {
       "common": {
-        "askMeLater": "askMeLater"
+        "askMeLater": "askMeLater",
+        "goToSettings": "Go setting"
       },
       "mediaLibrary": {
         "title": "Media Library Permission",
@@ -3354,6 +3356,11 @@
       "location": {
         "title": "Location Permission",
         "message": "This app needs access to your location to provide location-based features."
+      },
+      "postNotification": {
+        "title": "Notification Permission",
+        "message": "This app needs access to send you notifications.",
+        "pleaseEnableInSettings": "Please enable notification permission in settings"
       }
     },
     "check": "Check",

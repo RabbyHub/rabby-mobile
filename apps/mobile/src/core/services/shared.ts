@@ -147,6 +147,13 @@ export const preferenceService = new PreferenceService({
   sessionService,
 });
 
+preferenceService.setBeforeSetKV((k, v) => {
+  perfEvents.emit('PREFERENCE_UPDATED', {
+    key: k,
+    value: v,
+  });
+});
+
 try_catch_issue_on_preference({ pos: 'after_preference' });
 
 export const whitelistService = new WhitelistService({

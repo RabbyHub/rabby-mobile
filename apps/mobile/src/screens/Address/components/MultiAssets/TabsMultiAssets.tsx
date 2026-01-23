@@ -1,26 +1,30 @@
+import React, { useCallback } from 'react';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback } from 'react';
 
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { perfEvents } from '@/core/utils/perf';
 import { runIIFEFunc } from '@/core/utils/store';
-import { useHomeTabIndex } from '@/hooks/navigation';
-import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
+import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import {
-  HeaderHeight,
-  TabsTopHeader,
-} from '@/screens/Home/components/OverviewTopHeader';
+  HOME_INDICATOR_HEIGHT,
+  HomeCustomMaterialTabBar,
+} from '@/screens/Home/components/CustomTabBar';
+import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Freeze } from 'react-freeze';
-import { CollapsibleRef, Tabs } from 'react-native-collapsible-tab-view';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { Container, Tabs } from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
 import { MemoizedNFTItemLoader, NFTList } from './NFTList';
 import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
 import { MemoizedTokenItemLoader, TokenList } from './TokenList';
+import { IS_IOS } from '@/core/native/utils';
+import { HomeOverview } from '@/screens/Home/components/HomeOverview';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -32,15 +36,10 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
-export const TAB_HEADER_FULL_HEIGHT = 94;
-export const TAB_HEADER_MIN_HEIGHT = 44;
+export const TAB_HEADER_FULL_HEIGHT =
+  HOME_TOP_HEADER_SIZES.headerHeight + HOME_TOP_HEADER_SIZES.tabItemHeight;
 
-export interface TabMultiAssetsProps {
-  onIndexChange(index: number): void;
-  OverViewComponent: React.FC<{
-    // accountToShowReceiveTip?: Account | null;
-  }>;
-}
+interface TabMultiAssetsProps {}
 
 export const enum TabName {
   overview = 'overview',
@@ -56,7 +55,7 @@ function TabIndexBasedFreeze({
 }: {
   ofIndex: number;
 } & Omit<React.ComponentProps<typeof Freeze>, 'freeze'>) {
-  const { tabIndex } = useHomeTabIndex();
+  // const { tabIndex } = useHomeTabIndex();
   return (
     <Freeze
       {...props}
@@ -67,7 +66,7 @@ function TabIndexBasedFreeze({
   );
 }
 
-const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
+const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
 
 runIIFEFunc(() => {
   perfEvents.subscribe('NAV_BACK_ON_HOME', () => {
@@ -79,26 +78,15 @@ runIIFEFunc(() => {
   });
 });
 
-export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
-  onIndexChange,
-  OverViewComponent,
-}) => {
+const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
+
+const renderTabHeader: React.ComponentProps<typeof Container>['renderHeader'] &
+  object = props => <TabsTopHeader />;
+const renderTabBar: React.ComponentProps<typeof Container>['renderTabBar'] &
+  object = props => <HomeCustomMaterialTabBar {...props} />;
+
+export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const tabsOpacity = homeDrawerAnimateMutable.tabsOpacity;
-  const tabsStyle = useAnimatedStyle(() => ({
-    opacity: tabsOpacity.value,
-    pointerEvents: tabsOpacity.value < 0.1 ? 'none' : 'auto',
-  }));
-
-  const renderTabBar = React.useCallback(
-    (_props: React.ComponentProps<typeof HomeCustomMaterialTabBar>) => (
-      <Animated.View style={tabsStyle}>
-        <HomeCustomMaterialTabBar {..._props} />
-      </Animated.View>
-    ),
-    [tabsStyle],
-  );
 
   const renderLabel = useCallback(
     (name: string) =>
@@ -106,26 +94,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
       ({ index, indexDecimal }) =>
         <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
     [],
-  );
-
-  // const {tabIndex} = useHomeTabIndex();
-
-  const renderHeader = useCallback<
-    React.ComponentProps<typeof Tabs.Container>['renderHeader'] & object
-  >(
-    props => {
-      return (
-        <Animated.View style={tabsStyle}>
-          <TabsTopHeader
-            // data={data}
-            // loading={loading}
-            // showNetWorth={tabIndex !== 0}
-            indexValue={props.index}
-          />
-        </Animated.View>
-      );
-    },
-    [tabsStyle],
   );
 
   const handleTabChange = useCallback(
@@ -149,13 +117,13 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
     <Tabs.Container
       ref={homeTabScrollerRef}
       onIndexChange={onIndexChange}
-      renderHeader={renderHeader}
+      renderHeader={renderTabHeader}
       onTabChange={handleTabChange}
       renderTabBar={renderTabBar}
-      headerHeight={HeaderHeight}
-      minHeaderHeight={HeaderHeight}
-      tabBarHeight={74}
-      allowHeaderOverscroll
+      headerHeight={HOME_TOP_HEADER_SIZES.headerHeight}
+      minHeaderHeight={HOME_TOP_HEADER_SIZES.headerHeight}
+      tabBarHeight={HOME_TOP_HEADER_SIZES.tabItemHeight + HOME_INDICATOR_HEIGHT}
+      allowHeaderOverscroll={IS_IOS}
       lazy={false}
       cancelLazyFadeIn
       pagerProps={{
@@ -170,7 +138,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
         key={TabName.overview}
         name={TabName.overview}
         label={() => null}>
-        <OverViewComponent />
+        <HomeOverview />
       </Tabs.Tab>
 
       <Tabs.Tab
@@ -195,7 +163,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
           ofIndex={2}
           placeholder={
             <MemoizedDefiItemLoader
-              style={{ marginTop: TAB_HEADER_FULL_HEIGHT + 16 }}
+              style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
             />
           }>
           <ProtocolList />
@@ -216,10 +184,10 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = ({
   );
 };
 
-const getStyles = createGetStyles2024(() => ({
+const getStyles = createGetStyles2024(({ safeAreaInsets }) => ({
   container: {
     flex: 1,
-    marginTop: 64,
+    marginTop: safeAreaInsets.top,
   },
   headerContainer: {
     backgroundColor: 'transparent',

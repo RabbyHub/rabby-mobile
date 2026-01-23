@@ -5,6 +5,8 @@ import {
 
 import { runIIFEFunc } from './core/utils/store';
 import { startSubscribeLangChange } from './hooks/lang';
+import { connectPushServerOnBootstrap } from './core/notifications';
+
 import { startManageAccountStoreLifecycle } from './hooks/account';
 
 import {
@@ -41,6 +43,8 @@ import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 import { apisAutoLock } from './core/apis';
 
 startSubscribeLangChange();
+
+connectPushServerOnBootstrap();
 
 startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();

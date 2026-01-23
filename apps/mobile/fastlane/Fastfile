@@ -24,11 +24,21 @@ platform :ios do
       verbose: false,
       force_for_new_devices: true,
       clone_branch_directly: true)
+
+    # match(
+    #   type: opts[:type],
+    #   app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression.RabbyMobileNotification' : 'com.debank.rabby-mobile.RabbyMobileNotification',
+    #   profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileWildcardAppStore',
+    #   readonly: true,
+    #   shallow_clone: true,
+    #   verbose: false,
+    #   force_for_new_devices: true,
+    #   clone_branch_directly: true)
   end
 
   desc "Release for the iOS adhoc"
   lane :adhoc do
-    prepare_apple_sign(type: 'adhoc', profile_name: "RabbyMobileAdHocRegression")
+    prepare_apple_sign(type: 'adhoc')
 
     gym(
       scheme: 'RabbyMobileRegression',
@@ -89,7 +99,7 @@ platform :ios do
 
   desc "Release for the iOS production"
   lane :appstore do
-      prepare_apple_sign(type: 'appstore', profile_name: "RabbyMobileAppStore")
+      prepare_apple_sign(type: 'appstore')
       gym(
         scheme: 'RabbyMobile',
         workspace: './ios/RabbyMobile.xcworkspace',
