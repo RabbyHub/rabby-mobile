@@ -5,6 +5,7 @@ import { ethErrors } from 'eth-rpc-errors';
 //   permissionService,
 // } from 'background/service';
 import {
+  autoConnectService,
   dappService,
   keyringService,
   notificationService,
@@ -18,18 +19,22 @@ import * as Sentry from '@sentry/react-native';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
-import { CHAINS_ENUM } from '@/constant/chains';
+import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
 import { stats } from '@/utils/stats';
 import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
-import { reject } from 'lodash';
+import { find, reject } from 'lodash';
 import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
+import { openapi } from '../request';
+import { Account } from '../services/preference';
+import { getDappAccount } from '@/hooks/useDapps';
+import { getAccountList } from '../apis/account';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -141,8 +146,14 @@ const flowContext = flow
         ctx.request.requestedApproval = true;
         connectOrigins.add(origin);
         try {
-          const { defaultChain, defaultAccount } =
-            await notificationService.requestApproval(
+          let defaultChain: CHAINS_ENUM | null = null;
+          let defaultAccount: Account | undefined;
+          const autoConnectInfo = await autoConnectService.autoConnect(origin);
+          if (autoConnectInfo) {
+            defaultAccount = autoConnectInfo.defaultAccount;
+            defaultChain = autoConnectInfo.defaultChain || CHAINS_ENUM.ETH;
+          } else {
+            const res = await notificationService.requestApproval(
               {
                 params: { origin, name, icon, $mobileCtx },
                 account: ctx.request.account,
@@ -150,6 +161,9 @@ const flowContext = flow
               },
               { height: 800 },
             );
+            defaultChain = res.defaultChain;
+            defaultAccount = res.defaultAccount;
+          }
           connectOrigins.delete(origin);
           await apisDapp.connect({
             origin,
@@ -164,7 +178,7 @@ const flowContext = flow
             },
           });
           ctx.request.account =
-            defaultAccount || preferenceService.getFallbackAccount();
+            defaultAccount || preferenceService.getFallbackAccount()!;
         } catch (e) {
           connectOrigins.delete(origin);
           throw e;
