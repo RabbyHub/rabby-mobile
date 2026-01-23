@@ -89,7 +89,7 @@ function CreateSelectMethod(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   titleContainer: {
     display: 'flex',
     flexWrap: 'nowrap',
@@ -99,7 +99,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     padding: 16,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   marginTop: {
     marginTop: 28,
@@ -180,7 +182,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   group: {
     width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderRadius: 16,
   },
 }));
