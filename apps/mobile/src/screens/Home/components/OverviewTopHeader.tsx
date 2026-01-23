@@ -15,7 +15,7 @@ import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { useUpgradeInfo } from '@/hooks/version';
@@ -25,7 +25,10 @@ import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
 import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
 import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
-import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
+import {
+  HOME_TOP_HEADER_SIZES,
+  ITEM_LAYOUT_PADDING_HORIZONTAL,
+} from '@/constant/home';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
@@ -34,8 +37,18 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { SharedValue } from 'react-native-reanimated';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
+import Animated, {
+  Easing,
+  runOnJS,
+  SharedValue,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useHomeTabIndex } from '@/hooks/navigation';
 import {
   useScene24hBalanceCombinedData,
@@ -43,17 +56,11 @@ import {
 } from '@/hooks/useScene24hBalance';
 import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
+import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 
 export const HeaderHeight = 30;
 
-export function TabsTopHeader(
-  props: {
-    indexValue?: SharedValue<number>;
-  } & RNViewProps,
-): JSX.Element {
-  const {
-    /* loading, data,  showNetWorth = false*/
-  } = props;
+export function TabsTopHeader(): JSX.Element {
   const { tabIndex, setTabIndex } = useHomeTabIndex();
   const showNetWorth = tabIndex !== 0;
 
@@ -118,25 +125,25 @@ export function TabsTopHeader(
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
 
-  const spinValue = useRef(new RNAnimated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+  const spin = useSharedValue(0);
+  spin.value = withRepeat(
+    withTiming(360, {
+      duration: 1600,
+      easing: Easing.linear,
+    }),
+    -1,
+    false,
+  );
+
+  const animatedSpinStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          rotate: `${spin.value}deg`,
+        },
+      ],
+    };
   });
-  useEffect(() => {
-    if (loading) {
-      RNAnimated.loop(
-        RNAnimated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: RNEasing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      spinValue.resetAnimation();
-    }
-  }, [loading, spinValue]);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -155,8 +162,10 @@ export function TabsTopHeader(
     }
   }, [data.isLoss, loading, previousLoading]);
 
+  const { opacityStyle } = useHomeDrawerOpacityStyle();
+
   return (
-    <View style={styles.headerBox}>
+    <Animated.View style={[styles.headerBox, opacityStyle]}>
       {showNetWorth ? (
         <Pressable
           style={styles.leftBox}
@@ -201,12 +210,9 @@ export function TabsTopHeader(
               />
             )}
           </TouchableOpacity>
-          <RNAnimated.View
-            style={{
-              transform: [{ rotate: spin }],
-            }}>
+          <Animated.View style={animatedSpinStyle}>
             {loading && <RcIconLoading />}
-          </RNAnimated.View>
+          </Animated.View>
         </View>
       )}
 
@@ -251,36 +257,24 @@ export function TabsTopHeader(
           </TouchableOpacity>
         )}
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  redDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors2024['red-default'],
-    position: 'absolute',
-    top: 0,
-    right: 13,
-  },
-
   headerBox: {
-    height: HeaderHeight,
-    // paddingLeft: 8,
-    // paddingRight: 38,
-    paddingTop: 8,
+    // ...makeDebugBorder(),
+    height: HOME_TOP_HEADER_SIZES.headerHeight,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 0,
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
     position: 'relative',
-    // flex: 1,
-    // backgroundColor: colors2024['neutral-title-1'],
   },
   leftBox: {
-    height: HeaderHeight,
+    // ...makeDebugBorder('yellow'),
+    height: '100%',
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -289,7 +283,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
   },
   balanceTextBox: {
-    // marginRight: 12,
     color: colors2024['neutral-title-1'],
     fontWeight: '900',
     fontSize: 20,
@@ -330,14 +323,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-body'],
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
+    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
+    // position: 'relative',
+    // ...makeDebugBorder(),
+  },
+  headerTouchableIcon: {
+    width: 20,
+    height: 20,
+    position: 'relative',
   },
   feedbackEntry: {
     height: '100%',
     paddingRight: 6,
-    // ...makeDebugBorder(),
+    // ...makeDebugBorder('yellow'),
   },
   settingEntry: {
-    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
+    // marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
     flexDirection: 'row',
     height: '100%',
     alignItems: 'center',
@@ -345,5 +346,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 12,
     paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
     position: 'relative',
+    // ...makeDebugBorder(),
+  },
+  redDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors2024['red-default'],
+    position: 'absolute',
+    top: 0,
+    right: -3,
   },
 }));
