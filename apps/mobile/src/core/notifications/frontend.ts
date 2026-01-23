@@ -140,6 +140,25 @@ export const connectPushTestServer = async (data: { pushToken: string }) => {
 
 export const startSubscribePushNotifications = async () => {
   if (IS_IOS) {
+    PushNotificationIOS.setNotificationCategories([
+      {
+        id: 'tx_changed',
+        actions: [
+          // {id: 'open', title: 'Open', options: {foreground: true}},
+          // {
+          //   id: 'ignore',
+          //   title: 'Desruptive',
+          //   options: {foreground: true, destructive: true},
+          // },
+          // {
+          //   id: 'text',
+          //   title: 'Text Input',
+          //   options: {foreground: true},
+          //   textInput: {buttonTitle: 'Send'},
+          // },
+        ],
+      },
+    ]);
     PushNotificationIOS.addEventListener('notification', notification => {
       console.log(
         '[notifications] Received foreground APNs notification:',

@@ -8,17 +8,19 @@
 		<dict>
 			<key>UNNotificationExtensionCategory</key>
 			<string>tx_changed</string>
-			<key>UNNotificationExtensionDefaultContentHidden</key>
-			<true/>
 			<key>UNNotificationExtensionInitialContentSizeRatio</key>
 			<real>1</real>
-			<key>UNNotificationExtensionUserInteractionEnabled</key>
-			<true/>
 		</dict>
 		<key>NSExtensionMainStoryboard</key>
 		<string>MainInterface</string>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.usernotifications.content-extension</string>
+    <key>UNNotificationExtensionOverridesDefaultTitle</key>
+    <true/>
+    <key>UNNotificationExtensionDefaultContentHidden</key>
+    <true/>
+    <key>UNNotificationExtensionUserInteractionEnabled</key>
+    <true/>
 	</dict>
 </dict>
 </plist>

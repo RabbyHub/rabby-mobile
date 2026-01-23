@@ -23,10 +23,12 @@
 		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */; };
 		01DBDDA02E86FFF70060C03B /* builtin-pages in Resources */ = {isa = PBXBuildFile; fileRef = 01DBDD9F2E86FFF70060C03B /* builtin-pages */; };
-		01E0CA732F22C4AC0050B84A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01E0CA722F22C4AC0050B84A /* UserNotifications.framework */; };
-		01E0CA752F22C4AC0050B84A /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01E0CA742F22C4AC0050B84A /* UserNotificationsUI.framework */; };
-		01E0CA7F2F22C4AC0050B84A /* UIRabbyMobileNotification.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 01E0CA712F22C4AC0050B84A /* UIRabbyMobileNotification.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		01E0CA8B2F22E00C0050B84A /* RabbyMobileNotification.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		01E0CAD32F22F9DB0050B84A /* UIRabbyMobileNotification.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 01E0CAC72F22F9DA0050B84A /* UIRabbyMobileNotification.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		01E0CADE2F22FB090050B84A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01E0CA722F22C4AC0050B84A /* UserNotifications.framework */; };
+		01E0CADF2F22FB090050B84A /* UserNotifications.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 01E0CA722F22C4AC0050B84A /* UserNotifications.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		01E0CAE12F22FB0B0050B84A /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01E0CA742F22C4AC0050B84A /* UserNotificationsUI.framework */; };
+		01E0CAE22F22FB0B0050B84A /* UserNotificationsUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 01E0CA742F22C4AC0050B84A /* UserNotificationsUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 01E584B52C370990007F3280 /* LaunchScreen.xib */; };
 		01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */; };
 		0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */; };
@@ -54,19 +56,19 @@
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
 			remoteInfo = RabbyMobile;
 		};
-		01E0CA7D2F22C4AC0050B84A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 01E0CA702F22C4AC0050B84A;
-			remoteInfo = UIRabbyMobileNotification;
-		};
 		01E0CA8C2F22E0120050B84A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 01E0CA5F2F22C39D0050B84A;
 			remoteInfo = RabbyMobileNotification;
+		};
+		01E0CAD12F22F9DB0050B84A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 01E0CAC62F22F9DA0050B84A;
+			remoteInfo = UIRabbyMobileNotification;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -77,10 +79,22 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				01E0CAD32F22F9DB0050B84A /* UIRabbyMobileNotification.appex in Embed Foundation Extensions */,
 				01E0CA8B2F22E00C0050B84A /* RabbyMobileNotification.appex in Embed Foundation Extensions */,
-				01E0CA7F2F22C4AC0050B84A /* UIRabbyMobileNotification.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		01E0CAE02F22FB090050B84A /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				01E0CAE22F22FB0B0050B84A /* UserNotificationsUI.framework in Embed Frameworks */,
+				01E0CADF2F22FB090050B84A /* UserNotifications.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -112,9 +126,9 @@
 		01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = RNTimeChanged.mm; path = RabbyMobile/RNTimeChanged.mm; sourceTree = "<group>"; };
 		01DBDD9F2E86FFF70060C03B /* builtin-pages */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "builtin-pages"; path = "../assets/ios/builtin-pages"; sourceTree = "<group>"; };
 		01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RabbyMobileNotification.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		01E0CA712F22C4AC0050B84A /* UIRabbyMobileNotification.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = UIRabbyMobileNotification.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		01E0CA722F22C4AC0050B84A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		01E0CA742F22C4AC0050B84A /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
+		01E0CAC72F22F9DA0050B84A /* UIRabbyMobileNotification.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = UIRabbyMobileNotification.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		01E584B52C370990007F3280 /* LaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LaunchScreen.xib; path = RabbyMobile/LaunchScreen.xib; sourceTree = "<group>"; };
 		01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReactNativeSecurity.h; path = RabbyMobile/ReactNativeSecurity.h; sourceTree = "<group>"; };
 		01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ReactNativeSecurity.mm; path = RabbyMobile/ReactNativeSecurity.mm; sourceTree = "<group>"; };
@@ -153,18 +167,18 @@
 			);
 			target = 01E0CA5F2F22C39D0050B84A /* RabbyMobileNotification */;
 		};
-		01E0CA802F22C4AC0050B84A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		01E0CAD42F22F9DB0050B84A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 01E0CA702F22C4AC0050B84A /* UIRabbyMobileNotification */;
+			target = 01E0CAC62F22F9DA0050B84A /* UIRabbyMobileNotification */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		01E0CA612F22C39D0050B84A /* RabbyMobileNotification */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (01E0CA682F22C39D0050B84A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = RabbyMobileNotification; sourceTree = "<group>"; };
-		01E0CA762F22C4AC0050B84A /* UIRabbyMobileNotification */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (01E0CA802F22C4AC0050B84A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = UIRabbyMobileNotification; sourceTree = "<group>"; };
+		01E0CACA2F22F9DB0050B84A /* UIRabbyMobileNotification */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (01E0CAD42F22F9DB0050B84A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = UIRabbyMobileNotification; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -183,12 +197,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		01E0CA6E2F22C4AC0050B84A /* Frameworks */ = {
+		01E0CAC42F22F9DA0050B84A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				01E0CA752F22C4AC0050B84A /* UserNotificationsUI.framework in Frameworks */,
-				01E0CA732F22C4AC0050B84A /* UserNotifications.framework in Frameworks */,
+				01E0CAE12F22FB0B0050B84A /* UserNotificationsUI.framework in Frameworks */,
+				01E0CADE2F22FB090050B84A /* UserNotifications.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,7 +318,7 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* RabbyMobileTests */,
 				01E0CA612F22C39D0050B84A /* RabbyMobileNotification */,
-				01E0CA762F22C4AC0050B84A /* UIRabbyMobileNotification */,
+				01E0CACA2F22F9DB0050B84A /* UIRabbyMobileNotification */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -321,7 +335,7 @@
 				13B07F961A680F5B00A75B9A /* RabbyMobile.app */,
 				00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */,
 				01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */,
-				01E0CA712F22C4AC0050B84A /* UIRabbyMobileNotification.appex */,
+				01E0CAC72F22F9DA0050B84A /* UIRabbyMobileNotification.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -400,26 +414,27 @@
 			productReference = 01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		01E0CA702F22C4AC0050B84A /* UIRabbyMobileNotification */ = {
+		01E0CAC62F22F9DA0050B84A /* UIRabbyMobileNotification */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 01E0CA812F22C4AC0050B84A /* Build configuration list for PBXNativeTarget "UIRabbyMobileNotification" */;
+			buildConfigurationList = 01E0CAD52F22F9DB0050B84A /* Build configuration list for PBXNativeTarget "UIRabbyMobileNotification" */;
 			buildPhases = (
-				01E0CA6D2F22C4AC0050B84A /* Sources */,
-				01E0CA6E2F22C4AC0050B84A /* Frameworks */,
-				01E0CA6F2F22C4AC0050B84A /* Resources */,
+				01E0CAC32F22F9DA0050B84A /* Sources */,
+				01E0CAC42F22F9DA0050B84A /* Frameworks */,
+				01E0CAC52F22F9DA0050B84A /* Resources */,
+				01E0CAE02F22FB090050B84A /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				01E0CA762F22C4AC0050B84A /* UIRabbyMobileNotification */,
+				01E0CACA2F22F9DB0050B84A /* UIRabbyMobileNotification */,
 			);
 			name = UIRabbyMobileNotification;
 			packageProductDependencies = (
 			);
 			productName = UIRabbyMobileNotification;
-			productReference = 01E0CA712F22C4AC0050B84A /* UIRabbyMobileNotification.appex */;
+			productReference = 01E0CAC72F22F9DA0050B84A /* UIRabbyMobileNotification.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		13B07F861A680F5B00A75B9A /* RabbyMobile */ = {
@@ -442,7 +457,7 @@
 			);
 			dependencies = (
 				01E0CA8D2F22E0120050B84A /* PBXTargetDependency */,
-				01E0CA7E2F22C4AC0050B84A /* PBXTargetDependency */,
+				01E0CAD22F22F9DB0050B84A /* PBXTargetDependency */,
 			);
 			name = RabbyMobile;
 			productName = RabbyMobile;
@@ -465,7 +480,7 @@
 					01E0CA5F2F22C39D0050B84A = {
 						CreatedOnToolsVersion = 16.2;
 					};
-					01E0CA702F22C4AC0050B84A = {
+					01E0CAC62F22F9DA0050B84A = {
 						CreatedOnToolsVersion = 16.2;
 					};
 					13B07F861A680F5B00A75B9A = {
@@ -489,7 +504,7 @@
 				13B07F861A680F5B00A75B9A /* RabbyMobile */,
 				00E356ED1AD99517003FC87E /* RabbyMobileTests */,
 				01E0CA5F2F22C39D0050B84A /* RabbyMobileNotification */,
-				01E0CA702F22C4AC0050B84A /* UIRabbyMobileNotification */,
+				01E0CAC62F22F9DA0050B84A /* UIRabbyMobileNotification */,
 			);
 		};
 /* End PBXProject section */
@@ -510,7 +525,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		01E0CA6F2F22C4AC0050B84A /* Resources */ = {
+		01E0CAC52F22F9DA0050B84A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -736,7 +751,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		01E0CA6D2F22C4AC0050B84A /* Sources */ = {
+		01E0CAC32F22F9DA0050B84A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -769,15 +784,15 @@
 			target = 13B07F861A680F5B00A75B9A /* RabbyMobile */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
 		};
-		01E0CA7E2F22C4AC0050B84A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 01E0CA702F22C4AC0050B84A /* UIRabbyMobileNotification */;
-			targetProxy = 01E0CA7D2F22C4AC0050B84A /* PBXContainerItemProxy */;
-		};
 		01E0CA8D2F22E0120050B84A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 01E0CA5F2F22C39D0050B84A /* RabbyMobileNotification */;
 			targetProxy = 01E0CA8C2F22E0120050B84A /* PBXContainerItemProxy */;
+		};
+		01E0CAD22F22F9DB0050B84A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 01E0CAC62F22F9DA0050B84A /* UIRabbyMobileNotification */;
+			targetProxy = 01E0CAD12F22F9DB0050B84A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -990,7 +1005,7 @@
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1067,7 +1082,7 @@
 				INFOPLIST_FILE = RabbyMobileNotification/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RabbyMobileNotification;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1114,7 +1129,7 @@
 				INFOPLIST_FILE = RabbyMobileNotification/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RabbyMobileNotification;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1159,7 +1174,7 @@
 				INFOPLIST_FILE = RabbyMobileNotification/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RabbyMobileNotification;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1180,7 +1195,7 @@
 			};
 			name = Regression;
 		};
-		01E0CA822F22C4AC0050B84A /* Debug */ = {
+		01E0CAD62F22F9DB0050B84A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -1205,7 +1220,7 @@
 				INFOPLIST_FILE = UIRabbyMobileNotification/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = UIRabbyMobileNotification;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1228,7 +1243,7 @@
 			};
 			name = Debug;
 		};
-		01E0CA832F22C4AC0050B84A /* Release */ = {
+		01E0CAD72F22F9DB0050B84A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -1252,7 +1267,7 @@
 				INFOPLIST_FILE = UIRabbyMobileNotification/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = UIRabbyMobileNotification;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1273,7 +1288,7 @@
 			};
 			name = Release;
 		};
-		01E0CA842F22C4AC0050B84A /* Regression */ = {
+		01E0CAD82F22F9DB0050B84A /* Regression */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -1297,7 +1312,7 @@
 				INFOPLIST_FILE = UIRabbyMobileNotification/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = UIRabbyMobileNotification;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1334,7 +1349,7 @@
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1376,7 +1391,7 @@
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1665,12 +1680,12 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		01E0CA812F22C4AC0050B84A /* Build configuration list for PBXNativeTarget "UIRabbyMobileNotification" */ = {
+		01E0CAD52F22F9DB0050B84A /* Build configuration list for PBXNativeTarget "UIRabbyMobileNotification" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				01E0CA822F22C4AC0050B84A /* Debug */,
-				01E0CA832F22C4AC0050B84A /* Release */,
-				01E0CA842F22C4AC0050B84A /* Regression */,
+				01E0CAD62F22F9DB0050B84A /* Debug */,
+				01E0CAD72F22F9DB0050B84A /* Release */,
+				01E0CAD82F22F9DB0050B84A /* Regression */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
