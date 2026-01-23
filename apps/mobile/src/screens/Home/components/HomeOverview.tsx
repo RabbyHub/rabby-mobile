@@ -138,7 +138,7 @@ const isInActiveRef = {
 };
 AppState.addEventListener('change', state => {
   debugLogService.info('AppState change', state);
-  isInActiveRef.current = state !== 'active';
+  isInActiveRef.current = state === 'background';
 });
 
 function couldDoRefresh() {
