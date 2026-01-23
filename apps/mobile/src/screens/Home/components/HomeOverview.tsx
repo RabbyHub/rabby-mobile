@@ -136,17 +136,8 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 
-const isInActiveRef = {
-  current: AppState.isAvailable
-    ? AppState.currentState === 'background'
-    : false,
-};
-AppState.addEventListener('change', state => {
-  isInActiveRef.current = state === 'background';
-});
-
 function couldDoRefresh() {
-  return !isInActiveRef.current && apisHomeTabIndex.isHomeAtFirstTab();
+  return apisHomeTabIndex.isHomeAtFirstTab();
 }
 
 const OFFSETS = {
