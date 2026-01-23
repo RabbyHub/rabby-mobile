@@ -58,6 +58,7 @@ import balanceStore from '@/store/balance';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
+import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 
 export const HeaderHeight = 30;
 
@@ -109,7 +110,7 @@ export function TabsTopHeader({
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
 
   const showRightArea = useMemo(() => {
-    return focusedTab === 'overview';
+    return focusedTab !== TabName.token;
   }, [focusedTab]);
   const tokenDisplayModeLabel = useMemo(() => {
     if (tokenDisplayMode === 'bySymbol') {
@@ -131,7 +132,7 @@ export function TabsTopHeader({
   }, [setTokenDisplayMode, tokenDisplayMode]);
   const handleSwitchToTokenTab = useCallback(
     (index: number) => {
-      setTabIndex(index);
+      setTabIndex(index, true);
     },
     [setTabIndex],
   );
