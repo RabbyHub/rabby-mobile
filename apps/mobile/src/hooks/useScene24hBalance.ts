@@ -260,12 +260,17 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
           setSceneAddrLoading(scene, addr, true);
           const cacheData = getBalance24hCache(addr);
           const existedData = !!getMulti24hBalanceBy(addr);
+          debugLogService.info('existedData', existedData);
+          debugLogService.info('cacheData', cacheData);
           if (!existedData && cacheData?.data)
             setMulti24hBalance(addr, {
               ...cacheData.data,
               updateTime: cacheData.updateTime,
             });
           if (!cacheData?.data || cacheData?.isExpired) {
+            debugLogService.info(
+              '!cacheData?.data || cacheData?.isExpired return',
+            );
             return;
           }
           nextCheckAddress.delete(addr);
@@ -275,8 +280,10 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
           });
         });
       beforeReturn();
+      debugLogService.info('queue count', queue.pending);
       queue.clear();
       Array.from(nextCheckAddress).forEach(_addr => {
+        debugLogService.info('nextCheckAddress', _addr);
         const addr = _addr.toLowerCase();
         queue.add(async () => {
           setSceneAddrLoading(scene, addr, true);
@@ -296,6 +303,7 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
         });
       });
       await waitQueueFinished(queue);
+      beforeReturn();
       setSceneLoading(scene, false);
     } catch (error) {
       console.error('Fetch curve error', error);
