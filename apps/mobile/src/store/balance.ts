@@ -1,6 +1,6 @@
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { openapi } from '@/core/request';
-import { debugLogService, keyringService } from '@/core/services';
+import { keyringService } from '@/core/services';
 import { zCreate } from '@/core/utils/reexports';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
@@ -96,7 +96,7 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
       const isCore = coreAddressSet.has(lowerAddress);
       if (!force) {
         const isExpired = await BalanceEntity.isExpired(lowerAddress, isCore);
-        debugLogService.info(`isExpired ${lowerAddress}`, isExpired);
+
         if (!isExpired) {
           const res = await BalanceEntity.queryBalance(lowerAddress, isCore);
           cacheBalanceMap[lowerAddress] = {
@@ -126,7 +126,7 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
         ...nextLoadingMap,
       },
     }));
-    debugLogService.info('fetchList length', fetchList.length);
+
     if (!fetchList.length) {
       return;
     }
@@ -138,7 +138,6 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
           isCore: boolean;
           formatBalance: EvmTotalBalanceResponse;
         }>(async () => {
-          debugLogService.info('before getTotalBalanceV2', address);
           const balance = await openapi.getTotalBalanceV2({
             address,
             isCore,
@@ -147,10 +146,7 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
             excluded_protocol_ids: [],
             excluded_chain_ids: [], // TODO: 移除 include 和 exclude 参数
           });
-          debugLogService.info(
-            `after getTotalBalanceV2 ${address}`,
-            balance.total_usd_value,
-          );
+
           const formatBalance: EvmTotalBalanceResponse = {
             ...balance,
             evm_usd_value: balance.total_usd_value,
