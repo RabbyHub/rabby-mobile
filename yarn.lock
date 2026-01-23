@@ -8658,7 +8658,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@notifee/react-native@npm:^9.1.8":
+"@notifee/react-native@npm:9.1.8":
   version: 9.1.8
   resolution: "@notifee/react-native@npm:9.1.8"
   peerDependencies:
@@ -35675,7 +35675,7 @@ __metadata:
     "@metamask/eth-sig-util": 7.0.1
     "@ngraveio/bc-ur": 1.1.6
     "@noble/hashes": ^1.4.0
-    "@notifee/react-native": ^9.1.8
+    "@notifee/react-native": 9.1.8
     "@onekeyfe/hd-ble-sdk": 1.1.13
     "@onekeyfe/react-native-ble-utils": 0.1.4
     "@op-engineering/op-sqlite": ^15.1.1

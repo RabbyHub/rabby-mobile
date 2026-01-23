@@ -13,10 +13,29 @@
 # CONFIGURATION=release [TYPE=adhoc] bundle exec fastlane match --readonly
 # CONFIGURATION=release TYPE=appstore bundle exec fastlane match --readonly
 
-## Create, update certificates
+# Create, update certificates
 # [CONFIGURATION=development] bundle exec fastlane match --readonly
 # CONFIGURATION=release [TYPE=adhoc] bundle exec fastlane match --readonly
 # CONFIGURATION=release TYPE=appstore bundle exec fastlane match --readonly
+
+# available: TARGET=RabbyMobile|RabbyMobileNotification
+# Also Manage wildcard provisioning profiles, which were used for app extensions
+# - RabbyMobile is the main app target
+# - RabbyMobileNotification is the notification service extension target
+# e.g.
+# CONFIGURATION=release TYPE=adhoc [TARGET=RabbyMobile] bundle exec fastlane match --readonly
+# CONFIGURATION=release TYPE=adhoc TARGET=RabbyMobileNotification bundle exec fastlane match --readonly
+
+IS_WILDCARD = false
+EXTENSION_SUFFIX = ""
+case ENV["TARGET"]
+  when "RabbyMobileNotification"
+    IS_WILDCARD = true
+    EXTENSION_SUFFIX = ".RabbyMobileNotification"
+  else
+    EXTENSION_SUFFIX = ""
+    IS_WILDCARD = false
+end
 
 ## self-hosted certificates' storage repo for debank frontend group
 ## use https:// if basic MATCH_GIT_BASIC_AUTHORIZATION environment variable setup
@@ -36,42 +55,49 @@ biz_data = {
   :git_user_email => "richardo2016x@gmail.com",
 }
 
+input_envtype = ENV["TYPE"]
 run_type = "development"
+configuration = ENV["CONFIGURATION"]
 
-case ENV["CONFIGURATION"]
+case configuration
   when "release"
-    ENV["CONFIGURATION"] = "release"
+    configuration = "release"
   when "debug", "dev", "development"
-    ENV["CONFIGURATION"] = "debug"
+    configuration = "debug"
   when "reg", "regression"
-    ENV["CONFIGURATION"] = "regression"
+    configuration = "regression"
   else
-    ENV["CONFIGURATION"] = "debug"
+    configuration = "debug"
 end
 
-if ENV["CONFIGURATION"] == "debug"
-    profile_name = "RabbyMobileDevelopment"
+if configuration == "debug"
+    profile_name = !IS_WILDCARD ? "RabbyMobileDevelopment" : "RabbyMobileWildcardDevelopment"
     run_type = "development"
-    app_identifiers = ["com.debank.rabby-mobile-debug"]
+    app_identifiers = [
+      "com.debank.rabby-mobile-debug" + EXTENSION_SUFFIX
+    ]
 else
-  if ENV["TYPE"] == nil
-    ENV["TYPE"] = "adhoc"
+  if input_envtype == nil
+    input_envtype = "adhoc"
   end
 
-  case ENV["TYPE"]
+  case input_envtype
     when "adhoc"
       run_type = "adhoc"
-      profile_name = "RabbyMobileAdHocRegression"
-      app_identifiers = ["com.debank.rabby-mobile-regression"]
+      profile_name = !IS_WILDCARD ? "RabbyMobileAdHocRegression" : "RabbyMobileWildcardAdHocRegression"
+      app_identifiers = [
+        "com.debank.rabby-mobile-regression" + EXTENSION_SUFFIX
+      ]
     when "appstore"
       run_type = "appstore"
-      profile_name = "RabbyMobileAppStore"
-      app_identifiers = ["com.debank.rabby-mobile"]
+      profile_name = !IS_WILDCARD ? "RabbyMobileAppStore" : "RabbyMobileWildcardAppStore"
+      app_identifiers = [
+        "com.debank.rabby-mobile" + EXTENSION_SUFFIX
+      ]
     else
-      print("Invalid ENV[\"TYPE\"] value" + ENV["TYPE"])
+      print("Invalid ENV[\"TYPE\"] value" + input_envtype)
   end
 end
-
 
 # more parameters, see https://docs.fastlane.tools/actions/match/#parameters
 
