@@ -132,7 +132,9 @@ import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { debugLogService } from '@/core/services';
 
 const isInActiveRef = {
-  current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
+  current: AppState.isAvailable
+    ? AppState.currentState === 'background'
+    : false,
 };
 AppState.addEventListener('change', state => {
   debugLogService.info('AppState change', state);
