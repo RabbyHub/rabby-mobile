@@ -135,10 +135,18 @@ const isInActiveRef = {
   current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
 };
 AppState.addEventListener('change', state => {
+  debugLogService.info('AppState change', state);
   isInActiveRef.current = state !== 'active';
 });
 
 function couldDoRefresh() {
+  debugLogService.info('AppState.currentState', AppState.currentState);
+  debugLogService.info('AppState.isAvailable', AppState.isAvailable);
+  debugLogService.info('isInActiveRef', isInActiveRef.current);
+  debugLogService.info(
+    'couldDoRefresh',
+    !isInActiveRef.current && apisHomeTabIndex.isHomeAtFirstTab(),
+  );
   return !isInActiveRef.current && apisHomeTabIndex.isHomeAtFirstTab();
 }
 
