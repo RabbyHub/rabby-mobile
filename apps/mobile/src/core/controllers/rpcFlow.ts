@@ -241,8 +241,8 @@ const flowContext = flow
       },
       mapMethod,
     } = ctx;
-    const $mobileCtx = _$mobileCtx || params.$mobileCtx;
-    const isFromMobileInnerDapp = $mobileCtx.isFromMobileInnerDapp;
+    const $mobileCtx = _$mobileCtx || params?.$mobileCtx;
+    const isFromMobileInnerDapp = $mobileCtx?.isFromMobileInnerDapp;
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check need approval');
     const [approvalType, condition, options = {}] =
