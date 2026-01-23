@@ -69,6 +69,7 @@ import DebtSwapModal from '@/screens/Lending/modals/DebtSwapModal';
 import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
 import { LpTokenDescription } from '../LpTokenDescription';
 import CollateralTokenSelectModal from '@/screens/Lending/components/CollateralTokenSelect';
+import TokenGroupDetailSheet from '@/screens/Address/components/MultiAssets/TokenGroupDetailSheet';
 import RepayTokenSelectModal from '@/screens/Lending/components/RepayTokenModal';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
@@ -369,6 +370,11 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.COLLATERAL_TOKEN_SELECT]: {
     snapPoints: ['85%'],
     Component: CollateralTokenSelectModal,
+  },
+  [MODAL_NAMES.TOKEN_GROUP_DETAIL]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: TokenGroupDetailSheet,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.REPAY_TOKEN_SELECT]: {
     snapPoints: [360],

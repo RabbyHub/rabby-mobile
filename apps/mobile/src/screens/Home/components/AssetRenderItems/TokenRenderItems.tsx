@@ -147,7 +147,9 @@ export const TokenRow = memo(
         <Text
           numberOfLines={1}
           ellipsizeMode="tail"
-          style={styles.amountStr}>{`${data._amountStr} ${data.symbol}`}</Text>
+          style={styles.amountStr}>{`${data._amountStr} ${getTokenSymbol(
+          data,
+        )}`}</Text>
       ) : null;
 
       return (
@@ -181,7 +183,7 @@ export const TokenRow = memo(
                   numberOfLines={1}
                   ellipsizeMode="tail"
                   style={styles.tokenSymbol}>
-                  {data.symbol}
+                  {getTokenSymbol(data)}
                 </Text>
                 {!hideFoldTag && data._isManualFold && (
                   <TextBadge type="folded" />
@@ -248,16 +250,19 @@ export const TokenRow = memo(
         </TouchableOpacity>
       );
     }, [
-      data._priceStr,
-      data._amountStr,
-      data.symbol,
-      data?.logo_url,
-      data?.chain,
-      data._isManualFold,
-      data._isExcludeBalance,
-      data._usdValue,
-      data.price_24h_change,
-      styles,
+      data,
+      styles.amountStr,
+      styles.tokenRowWrap,
+      styles.tokenRowTokenWrap,
+      styles.tokenRowTokenInner,
+      styles.tokenHeader,
+      styles.tokenSymbol,
+      styles.tokenRowUsdValueWrap,
+      styles.tokenRowAmount,
+      styles.tokenRowUsdValue,
+      styles.exclude,
+      styles.percent,
+      styles.tips,
       style,
       onPressToken,
       mediaStyle,
@@ -268,9 +273,9 @@ export const TokenRow = memo(
       account,
       currency.usd_rate,
       currency.symbol,
+      percentColor,
       handleShowExcludeTips,
       colors2024,
-      percentColor,
       disableMenu,
     ]);
     if (disableMenu) {
@@ -301,12 +306,14 @@ export const TokenRowV2 = memo(
     onTokenPress,
     account,
     scene = 'default',
+    hideChainLogo = false,
   }: {
     data: ITokenItem;
     style?: ViewStyle;
     logoStyle?: ViewStyle;
     logoSize?: number;
     chainLogoSize?: number;
+    hideChainLogo?: boolean;
     getMenuActions?: (token: ITokenItem) => MenuAction[];
     hideFoldTag?: boolean;
     disableMenu?: boolean;
@@ -369,9 +376,9 @@ export const TokenRowV2 = memo(
       <Text
         numberOfLines={1}
         ellipsizeMode="tail"
-        style={styles.amountStr}>{`${formatAmount(data.amount)} ${
-        data.symbol
-      }`}</Text>
+        style={styles.amountStr}>{`${formatAmount(
+        data.amount,
+      )} ${getTokenSymbol(data)}`}</Text>
     );
 
     return (
@@ -383,7 +390,7 @@ export const TokenRowV2 = memo(
           <View>
             <AssetAvatar
               logo={data?.logo_url}
-              chain={data?.chain}
+              chain={hideChainLogo ? false : data?.chain}
               style={mediaStyle}
               size={logoSize}
               chainSize={chainLogoSize}
@@ -395,7 +402,7 @@ export const TokenRowV2 = memo(
                 numberOfLines={1}
                 ellipsizeMode="tail"
                 style={styles.tokenSymbol}>
-                {data.symbol}
+                {getTokenSymbol(data)}
               </Text>
               {isLpToken(data) && (
                 <LpTokenIcon protocolId={data.protocol_id || ''} />
@@ -686,7 +693,7 @@ export const ExternalTokenRow = memo(
                     styles.tokenHeaderAmount,
                     // isExcludeBalanceShowTips && styles.textSecondary,
                   ]}>
-                  {formatTokenAmount(data.amount)} {data.symbol}
+                  {formatTokenAmount(data.amount)} {getTokenSymbol(data)}
                 </Text>
               </View>
               <View style={styles.colContent}>
