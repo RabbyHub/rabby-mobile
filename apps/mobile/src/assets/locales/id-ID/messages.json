@@ -2702,7 +2702,6 @@
         "canBorrow": "Anda dapat meminjam berdasarkan jaminan yang Anda suplai, hingga batas pinjaman.",
         "needSupply": "Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan.",
         "isolated": "Daya pinjaman dan aset terbatas karena mode Isolasi.",
-        "emode": "Di E-Mode, beberapa aset tidak dapat dipinjam. Keluar dari E-Mode untuk mendapatkan akses ke semua aset.",
         "emodeNoAssets": "Kami tidak dapat menemukan aset yang terkait dengan pencarian Anda. Coba lagi dengan kategori yang berbeda."
       },
       "list": {

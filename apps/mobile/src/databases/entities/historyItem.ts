@@ -30,6 +30,7 @@ import {
 import { CustomTxItem } from '@/core/services/transactionHistory';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
 export type ProjectItemType = {
   chain: string;
@@ -38,6 +39,7 @@ export type ProjectItemType = {
   name: string;
 };
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_historyitem)
 export class HistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
@@ -229,50 +231,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     if (customTxItem) {
       e.history_custom_type = customTxItem.actionType;
     }
-  }
-
-  static stmSql = `
-  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_historyitem}"
-  ("_db_id", "owner_addr", "is_scam", "is_small_tx", "txHash", "project_id", "chain", "status", "time_at", "cate_id", "receives", "sends", "tx_name", "token_approve_id", "token_approve_item", "token_approve_spender", "token_approve_value", "project_item", "other_addr", "tx_from_address", "tx_to_address", "tx_usd_gas_fee", "tx_eth_gas_fee", "history_type", "history_custom_type", "_local_created_at", "_local_updated_at")
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
-  `;
-
-  static getStatementSql() {
-    return this.stmSql;
-  }
-
-  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
-    stm.bindSync([
-      this._db_id,
-      this.owner_addr,
-      this.is_scam,
-      this.is_small_tx,
-      this.txHash,
-      this.project_id,
-      this.chain,
-      this.status,
-      this.time_at,
-      this.cate_id,
-      jsonTransformer.to(this.receives),
-      jsonTransformer.to(this.sends),
-      this.tx_name,
-      this.token_approve_id,
-      jsonTransformer.to(this.token_approve_item),
-      this.token_approve_spender,
-      this.token_approve_value,
-      jsonTransformer.to(this.project_item),
-      this.other_addr,
-      this.tx_from_address,
-      this.tx_to_address,
-      this.tx_usd_gas_fee,
-      this.tx_eth_gas_fee,
-      this.history_type,
-      this.history_custom_type || '',
-      this._local_created_at,
-      this._local_updated_at,
-    ]);
-
-    return stm;
   }
 
   static judgeIsSmallUsdTx(

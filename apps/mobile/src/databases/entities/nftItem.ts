@@ -8,7 +8,9 @@ import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_nftitem)
 export class NFTItemEntity extends EntityAddressAssetBase {
   // chain
@@ -123,49 +125,6 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     e.collection_name = input.collection_name ?? '';
     e.is_core = input.is_core ?? false;
     e.makeDbId();
-  }
-
-  static stmSql = `
-  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_nftitem}"
-  ("_db_id", "owner_addr", "chain", "id", "contract_id", "inner_id", "token_id", "name", "contract_name", "collection_name", "description", "usd_price", "amount", "collection_id", "content_type", "content", "detail_url", "total_supply", "is_erc1155", "is_erc721", "is_core", "thumbnail_url", "pay_token", "collection", "_local_created_at", "_local_updated_at")
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
-  `;
-
-  static getStatementSql() {
-    return this.stmSql;
-  }
-
-  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
-    stm.bindSync([
-      this._db_id,
-      this.owner_addr,
-      this.chain,
-      this.id,
-      this.contract_id,
-      this.inner_id,
-      this.token_id,
-      this.name,
-      this.contract_name,
-      this.collection_name,
-      this.description,
-      this.usd_price,
-      badRealTransformer.to(this.amount),
-      this.collection_id,
-      this.content_type,
-      this.content,
-      this.detail_url,
-      this.total_supply,
-      this.is_erc1155,
-      this.is_erc721,
-      this.is_core,
-      this.thumbnail_url,
-      this.pay_token,
-      this.collection,
-      this._local_created_at,
-      this._local_updated_at,
-    ]);
-
-    return stm;
   }
 
   static async getCountOfAccount() {

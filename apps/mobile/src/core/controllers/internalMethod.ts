@@ -1,7 +1,11 @@
 import { keyBy } from 'lodash';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { keyringService } from '../services';
-import { dappService, metamaskModeService } from '@/core/services/shared';
+import {
+  autoConnectService,
+  dappService,
+  metamaskModeService,
+} from '@/core/services/shared';
 import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { ProviderRequest } from './type';
@@ -42,6 +46,7 @@ const tabCheckin = ({
       icon: icon,
     });
   }
+  autoConnectService.prepare(origin);
 
   return null;
 };

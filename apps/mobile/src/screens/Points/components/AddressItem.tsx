@@ -133,7 +133,8 @@ export const AddressPointItem = (props: AddressItemProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const isLoading = account.claimed_points === undefined;
+  const isLoading =
+    account.claimed_points === undefined || !!account.pointLoading;
 
   return (
     <Card style={StyleSheet.flatten([styles.card])}>

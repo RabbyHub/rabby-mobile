@@ -78,10 +78,12 @@ runIIFEFunc(() => {
   });
 });
 
-const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
+const onIndexChange = (idx: number) => {
+  apisHomeTabIndex.setTabIndex(idx);
+};
 
 const renderTabHeader: React.ComponentProps<typeof Container>['renderHeader'] &
-  object = props => <TabsTopHeader />;
+  object = props => <TabsTopHeader indexDecimalValue={props.indexDecimal} />;
 const renderTabBar: React.ComponentProps<typeof Container>['renderTabBar'] &
   object = props => <HomeCustomMaterialTabBar {...props} />;
 

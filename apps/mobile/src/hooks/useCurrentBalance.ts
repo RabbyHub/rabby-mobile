@@ -1,13 +1,7 @@
 import { useCallback, useEffect } from 'react';
-import { apiBalance } from '@/core/apis';
-import { BalanceEntity } from '@/databases/entities/balance';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { keyringService } from '@/core/services';
-import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
-import { zCreate, zMutative } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { perfEvents } from '@/core/utils/perf';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import balanceStore, { IBalanceData } from '@/store/balance';
 
 export type BalanceState = {
   balance: number | null;
@@ -15,58 +9,12 @@ export type BalanceState = {
   testnetBalance: string | null;
 };
 
-type AddressBalanceState = {
-  [address: string]: BalanceState | null;
-};
-
-type CurrentBalanceStore = {
-  addressBalances: AddressBalanceState;
-};
-
-const currentBalanceStore = zCreate(
-  zMutative<CurrentBalanceStore>(() => ({
-    addressBalances: {},
-  })),
-);
-
 export type AddressBalanceUpdaterSource =
   | 'Unknown'
   | 'SingleAddressHome'
   | 'TokenDetail'
   | 'DefiDetail'
   | 'LendingDetail';
-function setAddrBalanceStore(
-  address: string,
-  valOrFunc: UpdaterOrPartials<AddressBalanceState[string]>,
-  options: {
-    force?: boolean;
-    /** @description The source or scene from which the balance update is triggered */
-    fromScene: AddressBalanceUpdaterSource;
-  },
-) {
-  if (!address) return;
-
-  currentBalanceStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.addressBalances[address] || null,
-      valOrFunc,
-      {
-        strict: true,
-      },
-    );
-    if (!changed) return;
-
-    perfEvents.emit('TMP_UPDATED:SINGLE_HOME_BALANCE', {
-      address,
-      newBalance: newVal,
-      prevBalance: prev[address],
-      force: !!options.force,
-      fromScene: options.fromScene,
-    });
-
-    prev.addressBalances[address] = newVal;
-  });
-}
 
 const triggerUpdate = ({
   ...params
@@ -80,19 +28,11 @@ const triggerUpdate = ({
 export const apisAddressBalance = {
   triggerUpdate,
   getBalanceState(address: string) {
-    return currentBalanceStore.getState()?.addressBalances?.[address] || null;
+    return mapBalanceState(
+      balanceStore.getState()?.balanceMap?.[address.toLowerCase()],
+    );
   },
 };
-
-const addrLoadingBalanceState = zCreate<Record<string, boolean>>(() => ({}));
-
-function setBalanceLoading(address: string, val: boolean) {
-  if (address) {
-    addrLoadingBalanceState.setState(prev => {
-      return { ...prev, [address]: val };
-    });
-  }
-}
 
 type GetAddressBalanceOptions = {
   force?: boolean;
@@ -102,65 +42,27 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
   async (address: string, options: GetAddressBalanceOptions) => {
     const { force } = options || {};
     try {
-      // TODO: improve it, fetch addresses from cache first
-      const addresses = await keyringService.getAllAddresses();
-      const filtered = addresses.filter(item =>
-        isSameAddress(item.address, address),
+      const lowerAddress = address.toLowerCase();
+      const prevBalanceState = mapBalanceState(
+        balanceStore.getState().balanceMap[lowerAddress],
       );
-      let core = false;
-      if (
-        filtered.some(item => CORE_KEYRING_TYPES.includes(item.type as any))
-      ) {
-        core = true;
+      await balanceStore.getState().getTotalBalance(address, force);
+      const nextBalanceState = mapBalanceState(
+        balanceStore.getState().balanceMap[lowerAddress],
+      );
+
+      if (!isBalanceStateEqual(prevBalanceState, nextBalanceState)) {
+        perfEvents.emit('TMP_UPDATED:SINGLE_HOME_BALANCE', {
+          address,
+          newBalance: nextBalanceState,
+          prevBalance: prevBalanceState,
+          force: !!force,
+          fromScene: options.fromScene,
+        });
       }
-      setBalanceLoading(address, true);
-
-      const remotedGotRef = { current: false };
-      await Promise.race([
-        BalanceEntity.queryBalance(address, core).then(cachedBalance => {
-          if (remotedGotRef.current) return;
-          if (cachedBalance) {
-            setAddrBalanceStore(
-              address,
-              {
-                balance: cachedBalance.total_usd_value,
-                evmBalance: cachedBalance.evm_usd_value || 0,
-              },
-              {
-                force: !!force,
-                fromScene: options?.fromScene,
-              },
-            );
-          }
-        }),
-        apiBalance
-          .getAddressBalance(address, { force })
-          .then(async remoteBalance => {
-            const {
-              total_usd_value: totalUsdValue,
-              chain_list: chainList,
-              evm_usd_value: evmUsdValue,
-            } = remoteBalance;
-
-            remotedGotRef.current = true;
-            setAddrBalanceStore(
-              address,
-              {
-                balance: totalUsdValue,
-                evmBalance: evmUsdValue || 0,
-              },
-              {
-                force: !!force,
-                fromScene: options?.fromScene,
-              },
-            );
-            setBalanceLoading(address, false);
-          }),
-      ]);
     } catch (e) {
-      setBalanceLoading(address, false);
       try {
-        const { error_code, err_chain_ids } = JSON.parse((e as Error).message);
+        const { error_code } = JSON.parse((e as Error).message);
         if (error_code === 2) {
           // const missingChains = err_chain_ids.map((serverId: string) => {
           //   const chain = findChainByServerID(serverId);
@@ -184,22 +86,46 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
 );
 
 export function useIsLoadingBalance(address?: string) {
-  const balanceLoading = addrLoadingBalanceState(s =>
-    address ? s[address] || false : false,
-  );
+  const balanceLoading = balanceStore(s => {
+    if (!address) return false;
+    return s.isLoadingByAddress[address.toLowerCase()] || false;
+  });
 
   return { balanceLoading };
 }
 
 export function useAddressBalance(address?: string) {
-  const balance = currentBalanceStore(s =>
-    address ? s.addressBalances[address]?.balance ?? null : null,
+  const balance = balanceStore(s =>
+    address ? s.balanceMap[address.toLowerCase()]?.totalBalance ?? null : null,
   );
-  const evmBalance = currentBalanceStore(s =>
-    address ? s.addressBalances[address]?.evmBalance ?? null : null,
+  const evmBalance = balanceStore(s =>
+    address ? s.balanceMap[address.toLowerCase()]?.evmBalance ?? null : null,
   );
 
   return { balance, evmBalance };
+}
+
+function mapBalanceState(
+  balanceData?: IBalanceData | null,
+): BalanceState | null {
+  if (!balanceData) return null;
+  return {
+    balance: balanceData.totalBalance,
+    evmBalance: balanceData.evmBalance,
+    testnetBalance: null,
+  };
+}
+
+function isBalanceStateEqual(
+  prevBalance: BalanceState | null,
+  nextBalance: BalanceState | null,
+) {
+  if (!prevBalance && !nextBalance) return true;
+  if (!prevBalance || !nextBalance) return false;
+  return (
+    prevBalance.balance === nextBalance.balance &&
+    prevBalance.evmBalance === nextBalance.evmBalance
+  );
 }
 
 export default function useCurrentBalance(options: {

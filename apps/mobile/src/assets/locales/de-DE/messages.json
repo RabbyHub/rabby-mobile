@@ -3066,8 +3066,7 @@
         "canBorrow": "Sie können basierend auf Ihrem bereitgestellten Sicherheiten bis zur Kreditobergrenze leihen.",
         "needSupply": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen.",
         "isolated": "Die Kredit- und Vermögenswerte sind aufgrund des Isolationsmodus begrenzt.",
-        "emodeNoAssets": "Wir konnten keine Vermögenswerte zu Ihrer Suche finden. Versuchen Sie es erneut mit einer anderen Kategorie.",
-        "emode": "Im E-Modus sind einige Vermögenswerte nicht ausleihbar. Verlassen Sie den E-Modus, um Zugang zu allen Vermögenswerten zu erhalten."
+        "emodeNoAssets": "Wir konnten keine Vermögenswerte zu Ihrer Suche finden. Versuchen Sie es erneut mit einer anderen Kategorie."
       },
       "list": {
         "headers": {

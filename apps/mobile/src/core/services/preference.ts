@@ -584,11 +584,6 @@ export class PreferenceService {
     }
   };
 
-  getAddressBalance = (address: string): EvmTotalBalanceResponse | null => {
-    const balanceMap = this.store.balanceMap || {};
-    return balanceMap[address.toLowerCase()] || null;
-  };
-
   getTestnetAddressBalance = (
     address: string,
   ): EvmTotalBalanceResponse | null => {

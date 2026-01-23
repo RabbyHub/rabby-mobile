@@ -337,7 +337,7 @@ function SettingsBlocks() {
           {
             label: t('page.setting.screenshotReportSwitch'),
             icon: RcScreenshotReport,
-            rightNode: <SwitchScreenshotToReport ref={switchBiometricsRef} />,
+            rightNode: <SwitchScreenshotToReport />,
             onPress: () => {
               toggleScreenshotToReport();
             },
@@ -644,6 +644,17 @@ function DevSettingsBlocks() {
               icon: RcCode,
               onPress: () => {
                 setDataPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: 'Debug Logs Viewer',
+              icon: RcCode,
+              onPress: () => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DebugLogViewer,
+                  }),
+                );
               },
             },
           ],

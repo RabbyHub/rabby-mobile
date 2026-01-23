@@ -185,7 +185,6 @@ const PointsScreen = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const accountPoints = useGetRabbyPoints();
-  console.log('accountPoints', accountPoints);
 
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.screen} fitStatuBar>

@@ -15,7 +15,7 @@ import { useRoute } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useSpecifyAccountsBalance } from './hooks/balance';
+import balanceStore from '@/store/balance';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
@@ -52,12 +52,26 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     [list, navState?.newAccounts],
   );
 
-  const { balanceAccounts, balanceLoading, fetchTotalBalance } =
-    useSpecifyAccountsBalance(accounts);
+  const balanceMap = balanceStore(s => s.balanceMap);
+  const batchGetTotalBalance = balanceStore(s => s.batchGetTotalBalance);
+
+  const balanceAccounts = useMemo(() => {
+    return accounts.map(account => {
+      const balance = balanceMap[account.address.toLowerCase()];
+      return {
+        ...account,
+        balance: balance?.totalBalance ?? account.balance ?? 0,
+        evmBalance: balance?.evmBalance ?? account.evmBalance ?? 0,
+      };
+    });
+  }, [accounts, balanceMap]);
 
   useEffect(() => {
     if (accounts.length) {
-      fetchTotalBalance();
+      batchGetTotalBalance(
+        accounts.map(account => account.address),
+        true,
+      );
       syncMultiAddressesHistory(accounts.slice(0, 5).map(e => e.address));
 
       accountEvents.emit('ACCOUNT_ADDED', {
@@ -65,7 +79,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
         scene: 'syncExtension',
       });
     }
-  }, [accounts, fetchTotalBalance]);
+  }, [accounts, batchGetTotalBalance]);
 
   const sortedList = useSortAddressList(
     balanceAccounts?.length ? balanceAccounts : accounts,

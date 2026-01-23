@@ -1,10 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import { CORE_KEYRING_TYPES, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-
-import { keyringService, preferenceService } from '@/core/services';
+import { preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
-import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
+import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import {
   DisplayChainWithWhiteLogo,
   formatChainToDisplay,
@@ -12,37 +10,17 @@ import {
 } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
-import { requestOpenApiMultipleNets } from '@/utils/openapi';
-import * as apiBalance from '@/core/apis/balance';
-import { unionBy } from 'lodash';
-import { BalanceEntity } from '@/databases/entities/balance';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { useMyAccounts } from './account';
+import balanceStore from '@/store/balance';
 
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
 };
-type MatteredBalancesState = {
-  matteredChainBalances: MatteredChainBalances;
-  testnetMatteredChainBalances: MatteredChainBalances;
-};
-function getDefaultMatteredBalancesState(): MatteredBalancesState {
-  return {
-    matteredChainBalances: {},
-    testnetMatteredChainBalances: {},
-  };
-}
-type MatteredBalancesStore = Record<string, MatteredBalancesState>;
 const addrMatteredBalancesStore = zCreate<{
   currentAddress: string;
-  store: MatteredBalancesStore;
-}>(() => {
-  return {
-    currentAddress: '',
-    store: {},
-  };
-});
+}>(() => ({
+  currentAddress: '',
+}));
 
 export function setCurrentCaredAddress(
   address: string,
@@ -64,95 +42,62 @@ export function setCurrentCaredAddress(
   }
 }
 
-function setMattredChainBalancesByAddr(
-  addr: string,
-  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
-) {
-  const address = addr.toLowerCase();
-  addrMatteredBalancesStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.store[address]?.matteredChainBalances || {},
-      valOrFunc,
-      { strict: false },
-    );
+const DEFAULT_TESTNET_MATTERED_BALANCES: MatteredChainBalances = {};
 
-    // if (!changed) return prev;
+function buildMatteredChainBalances(
+  chainList: ChainWithBalance[] = [],
+): MatteredChainBalances {
+  if (!chainList.length) return {};
+  const totalUsdValue = chainList.reduce(
+    (accu, cur) => accu + coerceFloat(cur.usd_value),
+    0,
+  );
+  if (totalUsdValue <= 0) return {};
 
-    return {
-      ...prev,
-      store: {
-        ...prev.store,
-        [address]: {
-          ...getDefaultMatteredBalancesState(),
-          ...prev.store[address],
-          matteredChainBalances: newVal,
-        },
-      },
-    };
-  });
+  return chainList.reduce((accu, cur) => {
+    const curUsdValue = coerceFloat(cur.usd_value);
+    if (curUsdValue > 1 && curUsdValue / totalUsdValue > 0.01) {
+      accu[cur.id] = formatChainToDisplay(cur);
+    }
+    return accu;
+  }, {} as MatteredChainBalances);
 }
 
-function setTestMattredChainBalances(
-  addr: string,
-  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
-) {
-  const address = addr.toLowerCase();
-  addrMatteredBalancesStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.store[address]?.testnetMatteredChainBalances || {},
-      valOrFunc,
-      { strict: false },
-    );
-
-    // if (!changed) return prev;
-
-    return {
-      ...prev,
-      store: {
-        ...prev.store,
-        [address]: {
-          ...getDefaultMatteredBalancesState(),
-          ...prev.store[address],
-          testnetMatteredChainBalances: newVal,
-        },
-      },
-    };
+function mergeChainListsById(
+  chainUSDMap: Record<string, ChainWithBalance[]>,
+): ChainWithBalance[] {
+  const merged: Record<string, ChainWithBalance> = {};
+  Object.values(chainUSDMap).forEach(list => {
+    list?.forEach(chain => {
+      const existing = merged[chain.id];
+      if (existing) {
+        existing.usd_value += chain.usd_value;
+      } else {
+        merged[chain.id] = { ...chain };
+      }
+    });
   });
+  return Object.values(merged);
 }
 
-const allMatteredBalancesStore = zCreate<MatteredChainBalances>(() => {
-  return {};
-});
-function setMattredChainBalancesAll(
-  valOrFunc: UpdaterOrPartials<MatteredChainBalances>,
-) {
-  allMatteredBalancesStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev?.matteredChainBalancesAll || {},
-      valOrFunc,
-      { strict: false },
-    );
-
-    // if (!changed) return prev;
-
-    return newVal;
-  });
+function getChainListByAddress(address?: string) {
+  const addr =
+    address?.toLowerCase() ||
+    addrMatteredBalancesStore.getState().currentAddress;
+  if (!addr) return [];
+  return balanceStore.getState().chainUSDMap[addr] || [];
 }
 
-const DEFAULT_MATTERED_BALANCES_STATE = getDefaultMatteredBalancesState();
 export function useChainBalances() {
-  const matteredChainBalances = addrMatteredBalancesStore(
-    s =>
-      (s.currentAddress
-        ? s.store[s.currentAddress]?.matteredChainBalances
-        : null) || DEFAULT_MATTERED_BALANCES_STATE.matteredChainBalances,
+  const currentAddress = addrMatteredBalancesStore(s => s.currentAddress);
+  const chainList = balanceStore(s =>
+    currentAddress ? s.chainUSDMap[currentAddress] : undefined,
   );
-  const testnetMatteredChainBalances = addrMatteredBalancesStore(
-    s =>
-      (s.currentAddress
-        ? s.store[s.currentAddress]?.testnetMatteredChainBalances
-        : null) || DEFAULT_MATTERED_BALANCES_STATE.testnetMatteredChainBalances,
+  const matteredChainBalances = useMemo(
+    () => buildMatteredChainBalances(chainList || []),
+    [chainList],
   );
+  const testnetMatteredChainBalances = DEFAULT_TESTNET_MATTERED_BALANCES;
 
   return {
     matteredChainBalances,
@@ -160,100 +105,11 @@ export function useChainBalances() {
   };
 }
 
-const isShowTestnet = false;
-
-const fetchSingleAddressBalanceFromDb = async (
-  address: string,
-): Promise<{
-  mainnet: TotalBalanceResponse | null;
-  testnet: TotalBalanceResponse | null;
-}> => {
-  return requestOpenApiMultipleNets<
-    TotalBalanceResponse | null,
-    {
-      mainnet: TotalBalanceResponse | null;
-      testnet: TotalBalanceResponse | null;
-    }
-  >(
-    ctx => {
-      if (!isShowTestnet && ctx.isTestnetTask) {
-        return null;
-      }
-      return BalanceEntity.queryBalance(address, true);
-    },
-    {
-      needTestnetResult: isShowTestnet,
-      processResults: ({ mainnet, testnet }) => {
-        return {
-          mainnet: mainnet,
-          testnet: testnet,
-        };
-      },
-      fallbackValues: {
-        mainnet: null,
-        testnet: null,
-      },
-    },
-  );
-};
 const fetchAllAddressesChainBalance = async (): Promise<{
   matteredChainBalances: MatteredChainBalances;
 }> => {
-  console.log('fetchAllAddressesChainBalance exe');
-  const addresses = await keyringService.getAllAddresses();
-  const filtered = addresses.filter(item =>
-    CORE_KEYRING_TYPES.includes(item.type as any),
-  );
-  const unionAddresses = unionBy(filtered, 'address').map(i =>
-    i.address.toLowerCase(),
-  );
-
-  const allResults = await Promise.all(
-    unionAddresses.map(async address => {
-      return {
-        address,
-        result: await fetchSingleAddressBalanceFromDb(address),
-      };
-    }),
-  );
-
-  const mainnetBalance: TotalBalanceResponse = {
-    chain_list: [],
-    total_usd_value: 0,
-  };
-
-  allResults.forEach(({ address, result }) => {
-    if (result.mainnet?.chain_list) {
-      result.mainnet.chain_list.forEach(chain => {
-        const existingChain = mainnetBalance.chain_list.find(
-          c => c.id === chain.id,
-        );
-        if (existingChain) {
-          existingChain.usd_value = existingChain.usd_value + chain.usd_value;
-        } else {
-          mainnetBalance.chain_list.push(chain);
-        }
-      });
-    }
-  });
-
-  const mainnetTotalUsdValue = (mainnetBalance?.chain_list || []).reduce(
-    (accu, cur) => accu + coerceFloat(cur.usd_value),
-    0,
-  );
-  const matteredChainBalances = (mainnetBalance?.chain_list || []).reduce(
-    (accu, cur) => {
-      const curUsdValue = coerceFloat(cur.usd_value);
-      if (curUsdValue > 1 && curUsdValue / mainnetTotalUsdValue > 0.01) {
-        accu[cur.id] = formatChainToDisplay(cur);
-      }
-      return accu;
-    },
-    {} as MatteredChainBalances,
-  );
-
-  setMattredChainBalancesAll(matteredChainBalances);
-  console.log('fetchAllAddressesChainBalance  done');
+  const chainList = mergeChainListsById(balanceStore.getState().chainUSDMap);
+  const matteredChainBalances = buildMatteredChainBalances(chainList);
   return {
     matteredChainBalances,
   };
@@ -268,79 +124,9 @@ const fetchMatteredChainBalance = async ({
   matteredChainBalances: MatteredChainBalances;
   testnetMatteredChainBalances: MatteredChainBalances;
 }> => {
-  const currentAccountAddr =
-    address || addrMatteredBalancesStore.getState().currentAddress;
-
-  const result = await requestOpenApiMultipleNets<
-    TotalBalanceResponse | null,
-    {
-      mainnet: TotalBalanceResponse | null;
-      testnet: TotalBalanceResponse | null;
-    }
-  >(
-    ctx => {
-      if (!isShowTestnet && ctx.isTestnetTask) {
-        return null;
-      }
-
-      return apiBalance.getAddressCacheBalance(
-        currentAccountAddr,
-        ctx.isTestnetTask,
-      );
-    },
-    {
-      needTestnetResult: isShowTestnet,
-      processResults: ({ mainnet, testnet }) => {
-        return {
-          mainnet: mainnet,
-          testnet: testnet,
-        };
-      },
-      fallbackValues: {
-        mainnet: null,
-        testnet: null,
-      },
-    },
-  );
-
-  const mainnetTotalUsdValue = (result.mainnet?.chain_list || []).reduce(
-    (accu, cur) => accu + coerceFloat(cur.usd_value),
-    0,
-  );
-  const matteredChainBalances = (result.mainnet?.chain_list || []).reduce(
-    (accu, cur) => {
-      const curUsdValue = coerceFloat(cur.usd_value);
-      // TODO: only leave chain with blance greater than $1 and has percentage 1%
-      if (curUsdValue > 1 && curUsdValue / mainnetTotalUsdValue > 0.01) {
-        accu[cur.id] = formatChainToDisplay(cur);
-      }
-      return accu;
-    },
-    {} as MatteredChainBalances,
-  );
-
-  const testnetTotalUsdValue = (result.testnet?.chain_list || []).reduce(
-    (accu, cur) => accu + coerceFloat(cur.usd_value),
-    0,
-  );
-  const testnetMatteredChainBalances = (
-    result.testnet?.chain_list || []
-  ).reduce((accu, cur) => {
-    const curUsdValue = coerceFloat(cur.usd_value);
-
-    if (curUsdValue > 1 && curUsdValue / testnetTotalUsdValue > 0.01) {
-      accu[cur.id] = formatChainToDisplay(cur);
-    }
-    return accu;
-  }, {} as MatteredChainBalances);
-
-  if (currentAccountAddr) {
-    setMattredChainBalancesByAddr(currentAccountAddr, matteredChainBalances);
-    setTestMattredChainBalances(
-      currentAccountAddr,
-      testnetMatteredChainBalances,
-    );
-  }
+  const chainList = getChainListByAddress(address);
+  const matteredChainBalances = buildMatteredChainBalances(chainList);
+  const testnetMatteredChainBalances = DEFAULT_TESTNET_MATTERED_BALANCES;
 
   return {
     matteredChainBalances,
@@ -412,7 +198,11 @@ export function useLoadMatteredChainBalances({
 }
 
 export function useMatteredChainBalancesAll() {
-  const matteredChainBalancesAll = allMatteredBalancesStore(s => s);
+  const chainUSDMap = balanceStore(s => s.chainUSDMap);
+  const matteredChainBalancesAll = useMemo(
+    () => buildMatteredChainBalances(mergeChainListsById(chainUSDMap)),
+    [chainUSDMap],
+  );
 
   return { matteredChainBalancesAll };
 }

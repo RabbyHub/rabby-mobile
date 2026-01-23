@@ -39,7 +39,9 @@ import tokenListStore from './store/tokens';
 import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 import useProtocolListStore from './store/protocols';
+import balanceStore from './store/balance';
 import { apisAutoLock } from './core/apis';
+import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
 
 startSubscribeLangChange();
 
@@ -76,6 +78,7 @@ rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
 startComputationThread();
+startProcessAccountBalanceEvents();
 startProcessScene24hBalanceEvents();
 startProcessMultiCurveEvents();
 
@@ -86,3 +89,4 @@ startCheckClearAction();
 tokenListStore.getState().initStore();
 
 useProtocolListStore.getState().initStore();
+balanceStore.getState().initStore();

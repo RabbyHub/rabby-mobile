@@ -193,7 +193,7 @@ export const PerpsClosePositionPopup: React.FC<{
               showTipsPopup({
                 title: t('page.perpsDetail.PerpsClosePositionPopup.fee'),
                 desc:
-                  t('page.perpsDetail.PerpsClosePositionPopup.rabbyFeeTips') +
+                  t('page.perpsDetail.PerpsClosePositionPopup.rabbyFeeTipsV2') +
                   '\n' +
                   t(
                     'page.perpsDetail.PerpsClosePositionPopup.providerFeeTips',
