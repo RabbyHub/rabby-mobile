@@ -32,10 +32,11 @@ import BigNumber from 'bignumber.js';
 import { calLiquidationPrice } from '@/utils/perps';
 import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { AssetAvatar } from '@/components';
 import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
+import { useShallow } from 'zustand/react/shallow';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -214,6 +215,22 @@ export const PerpsAddPositionPopup: React.FC<{
     }
   }, [visible, setMargin]);
 
+  const { currentClearinghouseState } = perpsStore(
+    useShallow(s => ({
+      currentClearinghouseState: s.currentClearinghouseState,
+    })),
+  );
+
+  const crossMargin = React.useMemo(() => {
+    return (
+      Number(currentClearinghouseState?.crossMarginSummary?.accountValue || 0) -
+      Number(currentClearinghouseState?.crossMaintenanceMarginUsed || 0)
+    );
+  }, [
+    currentClearinghouseState?.crossMarginSummary?.accountValue,
+    currentClearinghouseState?.crossMaintenanceMarginUsed,
+  ]);
+
   // 计算预估清算价格
   const estimatedLiquidationPrice = React.useMemo(() => {
     if (!markPrice || !leverage) {
@@ -222,13 +239,17 @@ export const PerpsAddPositionPopup: React.FC<{
     const maxLeverage = leverageRang[1];
     return calLiquidationPrice(
       markPrice,
-      Number(addMargin + marginUsed),
+      marginMode === 'cross' ? crossMargin : Number(addMargin + marginUsed),
       direction,
       Number(tradeSize) + Number(positionSize),
-      Number(tradeAmount) + Number(positionSize) * Number(markPrice),
+      marginMode === 'cross'
+        ? Number(tradeAmount)
+        : Number(tradeAmount) + Number(positionSize) * Number(markPrice),
       maxLeverage,
     ).toFixed(pxDecimals);
   }, [
+    crossMargin,
+    marginMode,
     markPrice,
     leverage,
     leverageRang,
@@ -633,9 +654,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['red-default'],
     },
     amountValueContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      // gap: 4,
     },
     amountValueRow: {
       flexDirection: 'row',
@@ -652,8 +673,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     totalLabel: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
-      lineHeight: 22,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '700',
       color: colors2024['neutral-info'],
     },
