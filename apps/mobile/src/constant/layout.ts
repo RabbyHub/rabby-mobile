@@ -127,6 +127,7 @@ export const RootNames = {
   DevUIPermissions: 'DevUIPermissions',
   DevSwitches: 'DevSwitches',
   DevPerf: 'DevPerf',
+  DebugLogViewer: 'DebugLogViewer',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
@@ -373,6 +374,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIPermissions]: bg1Default2024Conf,
       [RootNames.DevSwitches]: bg1Default2024Conf,
       [RootNames.DevPerf]: bg1Default2024Conf,
+      [RootNames.DebugLogViewer]: bg1Default2024Conf,
 
       // StackTransaction
       [RootNames.Send]: bg1Default2024Conf,

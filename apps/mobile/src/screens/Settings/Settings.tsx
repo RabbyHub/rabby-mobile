@@ -646,6 +646,17 @@ function DevSettingsBlocks() {
                 setDataPlaygroundModalVisible(true);
               },
             },
+            {
+              label: 'Debug Logs Viewer',
+              icon: RcCode,
+              onPress: () => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DebugLogViewer,
+                  }),
+                );
+              },
+            },
           ],
         },
       }),
