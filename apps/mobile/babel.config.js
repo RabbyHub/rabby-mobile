@@ -7,7 +7,7 @@ const buildGitInfo = (function getBuildEnvVars() {
   const NORMAL_GET_GIT_HASH = `git log --format="%H" -n1`;
   const BUILD_GIT_HASH_RAW = child_process
     .execSync(
-      process.env.CI
+      !process.env.LOCAL_PACK
         ? NORMAL_GET_GIT_HASH
         : `[[ -z $(git diff) || ! -z $CI ]] && (${NORMAL_GET_GIT_HASH}) || (git log --format="%H-dirty" -n 1)`,
     )
