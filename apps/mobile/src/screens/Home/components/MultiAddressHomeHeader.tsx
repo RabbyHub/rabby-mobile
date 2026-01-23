@@ -221,7 +221,7 @@ export function MultiAddressHomeHeader(
         isLight={isLight}
         viewTypeOnNoShadow="view"
         viewProps={{
-          style: [styles.curveBoxWrapper, { minHeight: 100 }],
+          style: [styles.curveBoxWrapper, { minHeight: 132 }],
         }}>
         <View
           pointerEvents="none"
