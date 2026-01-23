@@ -316,6 +316,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: 4,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
   },
   displayModeText: {
     fontSize: 14,
@@ -323,7 +325,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-body'],
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
     // position: 'relative',
     // ...makeDebugBorder(),
   },
