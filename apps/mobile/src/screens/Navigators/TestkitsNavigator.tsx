@@ -84,6 +84,14 @@ const DevPerf = !isNonPublicProductionEnv
       name: TESTKITS_PRELOAD_SCREENS.DevPerf,
     })
   : require('@/screens/Testkits/DevPerf').default;
+const DebugLogViewer = !isNonPublicProductionEnv
+  ? registerAppScreen<
+      typeof import('@/screens/Testkits/DebugLogViewer').default
+    >({
+      loader: () => import('@/screens/Testkits/DebugLogViewer'),
+      name: TESTKITS_PRELOAD_SCREENS.DebugLogViewer,
+    })
+  : require('@/screens/Testkits/DebugLogViewer').default;
 
 const Stack = createNativeStackNavigator();
 
@@ -164,6 +172,13 @@ export function TestkitsNavigator() {
         options={{
           headerShown: true,
           // presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.DebugLogViewer}
+        component={DebugLogViewer}
+        options={{
+          headerShown: true,
         }}
       />
     </Stack.Navigator>

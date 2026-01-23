@@ -12,22 +12,18 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 
-import useAccountsBalance, {
-  useLoadBalanceFromApiStage,
-} from '@/hooks/useAccountsBalance';
+import { useLoadBalanceFromApiStage } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';
 import { Card } from '@/components2024/Card';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
-import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { usePinnedAccountList } from '@/hooks/account';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { sortBy } from 'lodash';
 import RNLinearGradient from 'react-native-linear-gradient';
 import { BALANCE_HIDE_TYPE, useHideBalance } from '../hooks/useHideBalance';
 import { HomeAddressItem } from './HomeAddressItem';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { IS_IOS } from '@/core/native/utils';
 import {
@@ -45,6 +41,7 @@ import {
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
+import balanceStore from '@/store/balance';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -55,7 +52,7 @@ function MultiPinnedAddressList({
 }) {
   const { styles } = useTheme2024({ getStyle });
 
-  const { balanceAccounts } = useAccountsBalance();
+  const balanceMap = balanceStore(s => s.balanceMap);
   const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
 
   const addressListData = useMemo(() => {
@@ -63,7 +60,7 @@ function MultiPinnedAddressList({
       pinnedAccountList.map(item => {
         const lcAddr = item.address.toLowerCase();
         const address24hBalanceData = multi24hBalance[lcAddr];
-        const balanceAccount = balanceAccounts?.[lcAddr];
+        const balanceAccount = balanceMap?.[lcAddr];
         const total_usd_value = address24hBalanceData?.total_usd_value || 0;
         const assetsChange =
           (balanceAccount?.evmBalance || 0) - total_usd_value;
@@ -75,7 +72,7 @@ function MultiPinnedAddressList({
         return {
           ...item,
           updateTime: address24hBalanceData?.updateTime,
-          balance: balanceAccount?.balance || item.balance || 0,
+          balance: balanceAccount?.totalBalance || item.balance || 0,
           evmBalance: balanceAccount?.evmBalance || item.evmBalance || 0,
           changePercent: address24hBalanceData ? changePercent : undefined,
           isLoss: address24hBalanceData ? assetsChange < 0 : undefined,
@@ -83,7 +80,7 @@ function MultiPinnedAddressList({
       }),
       item => -(item.balance || 0),
     ).slice(0, 3);
-  }, [pinnedAccountList, multi24hBalance, balanceAccounts]);
+  }, [pinnedAccountList, multi24hBalance, balanceMap]);
 
   useEffect(() => {
     if (!addressListData?.length) {
@@ -126,6 +123,7 @@ export function MultiAddressHomeHeader(
   const { style, onRefresh } = props;
 
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+
   const { isLoading: loading } = useSceneIsLoading('Home');
 
   const { t } = useTranslation();

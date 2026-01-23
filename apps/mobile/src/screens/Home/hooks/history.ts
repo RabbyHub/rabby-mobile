@@ -98,7 +98,7 @@ const timeRef: RefLikeObject<ReturnType<typeof setInterval> | null> = {
 };
 export const resetFetchHistoryTxCount = makeAvoidParallelAsyncFunc(async () => {
   timeRef.current && clearInterval(timeRef.current);
-
+  // TODO: 这里只需要 accounts，不需要 balance 相关信息
   const balanceAccounts = getBalanceCacheAccounts();
   const addresses = Object.keys(balanceAccounts);
   if (!addresses.length) {
