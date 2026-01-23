@@ -957,7 +957,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression";
 				PRODUCT_NAME = RabbyMobile;
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegression;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegressionOpcode;
 				RABBY_MOBILE_DISPLAY_NAME = "Reg Wallet";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -974,8 +974,10 @@
 			baseConfigurationReference = 6B576D0FC998649BFE6FCB60 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
 				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -990,7 +992,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegression;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile";
 			};
 			name = Regression;
@@ -1031,10 +1033,10 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-debug.RabbyMobileNotification";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-debug";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileWildcardDevelopment;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileDevelopment;
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1078,10 +1080,10 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile.RabbyMobileNotification";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileWildcardAppStore;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAppStoreOpcode;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1124,10 +1126,10 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression.RabbyMobileNotification";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileWildcardAdHocRegression;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegressionOpcode;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1185,8 +1187,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = RabbyMobile/RabbyMobileRelease.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ZPNP2SF27Q;
@@ -1207,7 +1209,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile";
 				PRODUCT_NAME = RabbyMobile;
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAppStore;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAppStoreOpcode;
 				RABBY_MOBILE_DISPLAY_NAME = "Rabby Wallet";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;

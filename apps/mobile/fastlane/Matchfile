@@ -40,9 +40,9 @@ end
 ## self-hosted certificates' storage repo for debank frontend group
 ## use https:// if basic MATCH_GIT_BASIC_AUTHORIZATION environment variable setup
 if ENV['MATCH_GIT_BASIC_AUTHORIZATION']
-  git_url = "https://github.com/RabbyHub/apple-auto-certificates.git"
+  git_url = "https://github.com/RabbyHub/opcode-apple-auto-certificates.git"
 else
-  git_url = "git@github.com:RabbyHub/apple-auto-certificates.git"
+  git_url = "git@github.com:RabbyHub/opcode-apple-auto-certificates.git"
 end
 
 biz_data = {

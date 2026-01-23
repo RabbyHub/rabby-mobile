@@ -9,7 +9,7 @@ platform :ios do
       use_automatic_signing: false,
       sdk: "iphoneos*",
       path: './ios/RabbyMobile.xcodeproj',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegression' : 'RabbyMobileAppStore',
+      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
       bundle_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
     )
 
@@ -19,23 +19,23 @@ platform :ios do
     match(
       type: opts[:type],
       app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegression' : 'RabbyMobileAppStore',
+      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
       readonly: true,
       shallow_clone: true,
       verbose: false,
       force_for_new_devices: true,
       clone_branch_directly: true)
 
-    # App Extension: RabbyMobileNotification
-    match(
-      type: opts[:type],
-      app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile*' : 'com.debank.rabby-mobile*',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileWildcardAppStore',
-      readonly: true,
-      shallow_clone: true,
-      verbose: false,
-      force_for_new_devices: true,
-      clone_branch_directly: true)
+    # # App Extension: RabbyMobileNotification
+    # match(
+    #   type: opts[:type],
+    #   app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile*' : 'com.debank.rabby-mobile*',
+    #   profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileWildcardAppStore',
+    #   readonly: true,
+    #   shallow_clone: true,
+    #   verbose: false,
+    #   force_for_new_devices: true,
+    #   clone_branch_directly: true)
   end
 
   desc "Release for the iOS adhoc"
