@@ -94,7 +94,7 @@ const splitFoldAndUnfold = (list: IProtocolItem[]): ICacheProtocolItem => {
     ? sortedList.findIndex(m => (Number(m?.netWorth) || 0) < threshold)
     : -1;
   const hasExpandSwitch =
-    sortedList.length >= 15 &&
+    sortedList.length > 3 &&
     thresholdIndex > -1 &&
     thresholdIndex <= sortedList.length - 4;
 
