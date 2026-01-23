@@ -2698,7 +2698,8 @@
         "confirm": "确认",
         "receive": "接收",
         "minimumWarning": "最低金额为 {{percent}}%",
-        "total": "总计"
+        "total": "总计",
+        "rabbyFeeTipsV2": "Rabby 费用：0.02%"
       },
       "PerpsOpenPositionPopup": {
         "leverage": "杠杆",
@@ -2818,7 +2819,8 @@
         "needSupply": "要借款，您需要提供资产作为抵押。",
         "canBorrow": "您可以根据提供的抵押品借款，最高可达借款上限。",
         "isolated": "由于隔离模式，借贷能力和资产受到限制。",
-        "emodeNoAssets": "我们无法找到与您的搜索相关的任何资产。请尝试使用不同的类别。"
+        "emodeNoAssets": "我们无法找到与您的搜索相关的任何资产。请尝试使用不同的类别。",
+        "emode": "某些资产在 E-Mode 中无法借用。退出 E-Mode 以访问所有资产。"
       },
       "list": {
         "headers": {
@@ -3067,6 +3069,13 @@
         "repayWith": "抵押物以偿还",
         "collateralNotEnough": "您的抵押余额低于所选金额。",
         "toRepay": "预计还款金额"
+      },
+      "repayWithAToken": {
+        "header": {
+          "assets": "代币",
+          "balance": "余额"
+        },
+        "title": "选择还款代币"
       }
     },
     "address": {
