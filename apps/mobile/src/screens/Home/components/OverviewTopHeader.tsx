@@ -51,10 +51,18 @@ import {
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import balanceStore from '@/store/balance';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { IS_ANDROID } from '@/core/native/utils';
 
-export function TabsTopHeader(): JSX.Element {
-  const { tabIndex } = useHomeTabIndex();
-  const showNetWorth = tabIndex !== 0;
+export function TabsTopHeader({
+  indexDecimalValue,
+}: // indexValue,
+{
+  indexDecimalValue: SharedValue<number>;
+  // indexValue: SharedValue<number>;
+}): JSX.Element {
+  const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
+  const showNetWorth = tabIndexFromSv > 0.7;
 
   const { isLoading: loading } = useSceneIsLoading('Home');
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
@@ -95,26 +103,6 @@ export function TabsTopHeader(): JSX.Element {
   const changePercent = useMemo(() => {
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
-
-  const spin = useSharedValue(0);
-  spin.value = withRepeat(
-    withTiming(360, {
-      duration: 1600,
-      easing: Easing.linear,
-    }),
-    -1,
-    false,
-  );
-
-  const animatedSpinStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          rotate: `${spin.value}deg`,
-        },
-      ],
-    };
-  });
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -158,7 +146,9 @@ export function TabsTopHeader(): JSX.Element {
           <Text style={styles.balanceTextBox}>
             {t('page.nextComponent.multiAddressHome.totalBalance')}
           </Text>
-          <TouchableOpacity onPress={handleHideTypeChange}>
+          <TouchableOpacity
+            style={[IS_ANDROID && { top: 2 }]}
+            onPress={handleHideTypeChange}>
             {hideType === 'HALF_HIDE' ? (
               <RcIconEyeHalfCloseCC
                 color={colors2024['neutral-title-1']}
@@ -179,9 +169,7 @@ export function TabsTopHeader(): JSX.Element {
               />
             )}
           </TouchableOpacity>
-          <Animated.View style={animatedSpinStyle}>
-            {loading && <RcIconLoading />}
-          </Animated.View>
+          {loading ? <LoadingCircle /> : null}
         </View>
       )}
 
@@ -242,6 +230,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
+    // ...makeDebugBorder('green'),
   },
   changePercentText: {
     fontSize: 16,

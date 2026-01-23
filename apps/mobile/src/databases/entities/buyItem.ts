@@ -6,7 +6,9 @@ import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_buy_order)
 export class BuyItemEntity extends EntityAddressAssetBase {
   @Column('text', { default: '' })
@@ -81,40 +83,6 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     e.pay_currency_code = input.pay_currency_code;
 
     e.makeDbId();
-  }
-
-  static stmSql = `
-  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_buy_order}"
-  ("_db_id", "owner_addr", "id", "user_addr", "status", "create_at", "service_provider", "service_provider_url", "pay_usd_amount", "pay_currency_code", "payment_type", "receive_chain_id", "receive_tx_id", "receive_amount", "receive_token", "_local_created_at", "_local_updated_at")
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
-  `;
-
-  static getStatementSql() {
-    return this.stmSql;
-  }
-
-  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
-    stm.bindSync([
-      this._db_id,
-      this.owner_addr,
-      this.id,
-      this.user_addr,
-      this.status,
-      this.create_at,
-      this.service_provider,
-      this.service_provider_url,
-      this.pay_usd_amount,
-      this.pay_currency_code,
-      this.payment_type,
-      this.receive_chain_id,
-      this.receive_tx_id,
-      this.receive_amount,
-      this.receive_token,
-      this._local_created_at,
-      this._local_updated_at,
-    ]);
-
-    return stm;
   }
 
   static async getAllHistoryItem(owner_addrs: string[], count?: number) {
