@@ -248,7 +248,7 @@ export function useTokenAmountForAddress(options?: {
         });
       }
       return TokenItemEntity.getAddressesAmount({
-        address: accountAddress,
+        address: accountAddress.toLowerCase(),
         chain: token.chain,
         tokenId: token.id,
       });
