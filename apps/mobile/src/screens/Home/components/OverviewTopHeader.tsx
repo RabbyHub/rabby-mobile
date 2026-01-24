@@ -40,6 +40,8 @@ import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import Animated, {
   Easing,
+  Extrapolation,
+  interpolate,
   SharedValue,
   useAnimatedStyle,
   useSharedValue,
@@ -55,7 +57,10 @@ import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import balanceStore from '@/store/balance';
-import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
+import {
+  THRESHOLD_PERCENT,
+  useHomeDrawerOpacityStyle,
+} from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
@@ -161,7 +166,20 @@ export function TabsTopHeader({
     }
   }, [data.isLoss, loading, previousLoading]);
 
-  const { opacityStyle } = useHomeDrawerOpacityStyle();
+  const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
+
+  // const headerStyle = useAnimatedStyle(() => ({
+  //   transform: [
+  //     {
+  //     translateY: interpolate(
+  //       pullPercent.value,
+  //       [-THRESHOLD_PERCENT, 0],
+  //       [-HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 1],
+  //       Extrapolation.CLAMP,
+  //     ),
+  //     },
+  //   ]
+  // }));
 
   return (
     <Animated.View style={[styles.headerBox, opacityStyle]}>

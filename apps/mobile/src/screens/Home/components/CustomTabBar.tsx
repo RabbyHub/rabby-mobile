@@ -1,4 +1,10 @@
-import { Dimensions, useWindowDimensions, View, Pressable } from 'react-native';
+import {
+  Dimensions,
+  useWindowDimensions,
+  View,
+  Pressable,
+  ViewStyle,
+} from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabItem,
@@ -12,6 +18,7 @@ import Animated, {
   withTiming,
   interpolate,
   AnimatedStyle,
+  Extrapolation,
 } from 'react-native-reanimated';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -44,6 +51,7 @@ type IndicatorProps = {
   itemsLayout: ItemLayout[];
   style?: AnimatedStyle;
   fadeIn?: boolean;
+  animatedStyle?: AnimatedStyle<ViewStyle>;
   secondaryIndicatorViewRef?: React.RefObject<View>;
   onLeftPress?: () => void;
   onRightPress?: () => void;
@@ -56,6 +64,7 @@ const Indicator = ({
   itemsLayout,
   style,
   fadeIn = false,
+  animatedStyle,
   secondaryIndicatorViewRef,
   onLeftPress,
   onRightPress,
@@ -115,7 +124,7 @@ const Indicator = ({
   }, [fadeIn, opacity]);
 
   return (
-    <View style={[styles.indicatorContainer]}>
+    <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
       <View style={styles.leftBackground} />
       <Pressable
@@ -133,13 +142,12 @@ const Indicator = ({
           handleMeasureSecondaryIndicator?.();
         }}
       />
-    </View>
+    </Animated.View>
   );
 };
 
 const indicatorMarginTop = 0;
-const indicatorHeight = 6;
-export const HOME_INDICATOR_HEIGHT = indicatorHeight;
+const indicatorHeight = HOME_TOP_HEADER_SIZES.headerIndicatorHeight;
 const leftHitSlopTop = 50;
 const leftHitSlopBottom = 4;
 const rightHitSlopTop = 50;
@@ -233,9 +241,7 @@ const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => {
 });
 
 function SideChainSelector() {
-  const { styles, isLight, colors2024 } = useTheme2024({
-    getStyle: getSideChainSelectorStyles,
-  });
+  const { isLight, colors2024 } = useTheme2024();
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
@@ -298,19 +304,6 @@ function SideChainSelector() {
   );
 }
 
-const getSideChainSelectorStyles = createGetStyles2024(() => ({
-  container: {
-    flex: 1,
-    marginTop: 64,
-  },
-  headerContainer: {
-    backgroundColor: 'transparent',
-    shadowColor: 'transparent',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-}));
-
 type MaterialTabBarProps = React.ComponentProps<typeof MaterialTabBar>;
 const renderTabItem: MaterialTabBarProps['TabItemComponent'] & object = _p => (
   <MaterialTabItem
@@ -339,7 +332,32 @@ export const HomeCustomMaterialTabBar = ({
 
   const stylez = useAnimatedStyle(() => {
     return {
-      opacity: indexDecimal.value <= 0.5 ? 0 : 1,
+      opacity: interpolate(
+        indexDecimal.value,
+        [0, 0.9, 0.99, 1],
+        [0, 0.1, 0.5, 1],
+        Extrapolation.CLAMP,
+      ),
+      translateY: interpolate(
+        indexDecimal.value,
+        [0, 0.5, 1],
+        [
+          -HOME_TOP_HEADER_SIZES.tabItemHeight,
+          -HOME_TOP_HEADER_SIZES.tabItemHeight / 2,
+          0,
+        ],
+        Extrapolation.CLAMP,
+      ),
+      // translateX: interpolate(
+      //   indexDecimal.value,
+      //   [0, 0.5, 1],
+      //   [
+      //     -(Dimensions.get('screen').width - HOME_TOP_HEADER_SIZES.portfolioContainerPx * 2),
+      //     -(Dimensions.get('screen').width - HOME_TOP_HEADER_SIZES.portfolioContainerPx * 2 / 2),
+      //     0,
+      //   ],
+      //   Extrapolation.CLAMP,
+      // ),
     };
   });
 
@@ -419,7 +437,6 @@ export const HomeCustomMaterialTabBar = ({
           contentContainerStyle={styles.contentContainerStyle}
         />
         <SideChainSelector />
-        {/* {_props.externalContent} */}
       </Animated.View>
     </Animated.View>
   );
