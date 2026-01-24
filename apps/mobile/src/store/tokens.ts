@@ -280,22 +280,30 @@ const computeMultiAssets = (
   const tokens = chainServerId
     ? allTokens.filter(item => item.chain === chainServerId)
     : allTokens;
-  const displayMode = tokenDisplayMode || 'byAddress';
-  const aggregatedTokens =
-    displayMode === 'byAddress' ? tokens : aggregateTokens(tokens, displayMode);
-  const aggregatedScamTokens: ITokenItem[] = [];
-  const aggregatedNonScamTokens: ITokenItem[] = [];
-  aggregatedTokens.forEach(token => {
+  const scamTokens: ITokenItem[] = [];
+  const nonScamTokens: ITokenItem[] = [];
+  tokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
-    const isScam = usdValue === 0 && !isZeroCore;
+    const isScam =
+      token.is_verified === false ||
+      (usdValue === 0 && !isZeroCore) ||
+      token.is_suspicious;
     if (isScam) {
-      aggregatedScamTokens.push(token);
+      scamTokens.push(token);
     } else {
-      aggregatedNonScamTokens.push(token);
+      nonScamTokens.push(token);
     }
   });
-  console.log('aggregatedScamTokens', aggregatedScamTokens);
+  const displayMode = tokenDisplayMode || 'byAddress';
+  const aggregatedNonScamTokens =
+    displayMode === 'byAddress'
+      ? nonScamTokens
+      : aggregateTokens(nonScamTokens, displayMode);
+  const aggregatedScamTokens =
+    displayMode === 'byAddress'
+      ? scamTokens
+      : aggregateTokens(scamTokens, displayMode);
   const coreTokens = aggregatedNonScamTokens.filter(token => token.is_core);
   const totalValue = coreTokens.reduce(
     (sum, token) => sum + (token.usd_value || 0),
@@ -307,9 +315,10 @@ const computeMultiAssets = (
     coreTokens,
     totalValue,
   });
-  console.log('foldedTokens in', foldedTokens);
   return {
-    unFoldTokens: unfoldedTokens,
+    unFoldTokens: unfoldedTokens.filter(i =>
+      lpTokenFilter(i, isLpTokenEnabled),
+    ),
     foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
     scamTokens: aggregatedScamTokens.filter(i =>
       lpTokenFilter(i, isLpTokenEnabled),
