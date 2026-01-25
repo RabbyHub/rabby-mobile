@@ -174,7 +174,6 @@ function getIsAtBottom(scrollY: number, translateY = 0) {
 }
 
 const scrHeight = Dimensions.get('screen').height;
-const winHeight = Dimensions.get('window').height;
 function hasOverThreshold() {
   'worklet';
   return translateY.value < getPullThreshold(scrHeight) * -1;
@@ -261,6 +260,15 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
   );
 
   const onScrollHandlers = {
+    onAnimatedScrollBeginDrag: useCallback<
+      ScrollHandlerProps['onAnimatedScrollBeginDrag'] & object
+    >((event, ctx) => {
+      // // leave here for debug on some android devices
+      // console.debug(
+      //   '[onScrollHandlers] onAnimatedScrollBeginDrag:: event.nativeEvent',
+      //   event.nativeEvent,
+      // );
+    }, []),
     onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(event => {},
     []),
   };
@@ -276,6 +284,7 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
       .activeOffsetY(-activeY)
+      // .enabled(false)
       .maxPointers(1)
       .onStart(() => {
         // translateY.value = 0;
@@ -341,8 +350,6 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     uiOnScrollBack,
     scrollableRef,
     scrollableEnabled,
-    scrollViewContentHeight,
-    scrollViewLayoutHeight,
     mainStyle,
   };
 };
@@ -354,17 +361,23 @@ const getStyle = createGetStyles2024(
     main: {
       height: '100%',
       overflow: 'hidden',
+      // flex: 1,
       // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['orange-light-2'],
+      //   backgroundColor: colors2024['red-light-2'],
       // }),
     },
     scroll: {
       flex: 1,
-      // marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight,
-      marginTop: HEADER_MT_OFFSET,
-      marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
-      // marginBottom: -TAB_HEADER_FULL_HEIGHT,
+      paddingTop: 0,
+      marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+      // marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
       // ...makeDebugBorder('yellow'),
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: colors2024['green-light-2'],
+      // }),
+    },
+    scrollTopPlaceholder: {
+      height: 0,
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['green-light-2'],
       // }),
@@ -372,13 +385,20 @@ const getStyle = createGetStyles2024(
     scrollContainer: {
       flexGrow: 1,
       minHeight: '100%',
-      // marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight,
-      marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
+      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+      // marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
       // paddingBottom:
       //   IS_ANDROID ? Math.max(safeAreaInsets.bottom, 16)
       //     : safeAreaInsets.bottom,
       paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
       // ...makeDebugBorder('orange'),
+    },
+    scrollViewInner: {
+      marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2,
+      // ...makeDebugBorder('orange'),
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: colors2024['orange-light-2'],
+      // }),
     },
     menuHeader: {
       height: 30,
@@ -882,61 +902,70 @@ export const HomeOverview = React.memo(() => {
             scrollEventThrottle={16}
             onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
             onLayout={tabsScrollHandlers.onLayout}
+            onAnimatedScrollBeginDrag={
+              onScrollHandlers.onAnimatedScrollBeginDrag
+            }
             onScroll={onScrollHandlers.onScroll}
             scrollableEnabled={scrollableEnabled}
             simultaneousHandlers={[panGestureRef]}
             refreshControl={
               <RNGHRefreshControl refreshing={false} onRefresh={onRefresh} />
             }>
-            <MultiAddressHomeHeader onRefresh={onRefresh} />
+            <View style={styles.scrollTopPlaceholder} />
+            <View style={styles.scrollViewInner}>
+              <MultiAddressHomeHeader onRefresh={onRefresh} />
 
-            <HomeCenterArea />
-
-            <View style={styles.grid}>
-              <View style={styles.gridItemsWrap}>
-                {MENU_ARR.map((el, index) => {
-                  return (
-                    <FastTouchable
-                      style={StyleSheet.flatten([
-                        styles.gridItem,
-                        { width: itemWidth },
-                      ])}
-                      key={index}
-                      onPress={() => {
-                        console.debug('[perf] touched menu', el.key);
-                        requestAnimationFrame(() => {
-                          handleClickMenu(el.key);
-                        });
-                        matomoRequestEvent({
-                          category: 'Click_Services',
-                          action: `Click_${el.key}`,
-                        });
-                      }}>
-                      <View style={styles.badgeWrapper}>
-                        <View style={styles.iconWrapper}>
-                          <el.icon
-                            width={28}
-                            height={28}
-                            color={el.color || colors2024['brand-default-icon']}
-                          />
+              <HomeCenterArea />
+              <View style={styles.grid}>
+                <View style={styles.gridItemsWrap}>
+                  {MENU_ARR.map((el, index) => {
+                    return (
+                      <FastTouchable
+                        style={StyleSheet.flatten([
+                          styles.gridItem,
+                          { width: itemWidth },
+                        ])}
+                        key={index}
+                        onPress={() => {
+                          console.debug('[perf] touched menu', el.key);
+                          requestAnimationFrame(() => {
+                            handleClickMenu(el.key);
+                          });
+                          matomoRequestEvent({
+                            category: 'Click_Services',
+                            action: `Click_${el.key}`,
+                          });
+                        }}>
+                        <View style={styles.badgeWrapper}>
+                          <View style={styles.iconWrapper}>
+                            <el.icon
+                              width={28}
+                              height={28}
+                              color={
+                                el.color || colors2024['brand-default-icon']
+                              }
+                            />
+                          </View>
+                          <View style={styles.rightBadgeWrapper}>
+                            {generateCustomBadgeIcon(el)}
+                          </View>
                         </View>
-                        <View style={styles.rightBadgeWrapper}>
-                          {generateCustomBadgeIcon(el)}
-                        </View>
-                      </View>
-                      <Text style={styles.gridText}>{el.title}</Text>
-                    </FastTouchable>
-                  );
-                })}
-              </View>
-              <BrowserSearchEntry />
-              <View
-                style={styles.swipeUpHint}
-                onLayout={swipeUpViewHandlers.onLayout}>
-                <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
-                <Text style={styles.swipeUpHintText}>
-                  {t('page.home.swipeUp.desc')}
-                </Text>
+                        <Text style={styles.gridText}>{el.title}</Text>
+                      </FastTouchable>
+                    );
+                  })}
+                </View>
+                <BrowserSearchEntry />
+                <View
+                  style={styles.swipeUpHint}
+                  onLayout={swipeUpViewHandlers.onLayout}>
+                  <RcIconDoubleArrowCC
+                    color={colors2024['neutral-secondary']}
+                  />
+                  <Text style={styles.swipeUpHintText}>
+                    {t('page.home.swipeUp.desc')}
+                  </Text>
+                </View>
               </View>
             </View>
           </TabsScrollView>

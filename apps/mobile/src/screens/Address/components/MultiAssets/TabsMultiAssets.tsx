@@ -8,10 +8,7 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { perfEvents } from '@/core/utils/perf';
 import { runIIFEFunc } from '@/core/utils/store';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
-import {
-  HOME_INDICATOR_HEIGHT,
-  HomeCustomMaterialTabBar,
-} from '@/screens/Home/components/CustomTabBar';
+import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
@@ -37,7 +34,8 @@ export const icons = {
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
 export const TAB_HEADER_FULL_HEIGHT =
-  HOME_TOP_HEADER_SIZES.headerHeight + HOME_TOP_HEADER_SIZES.tabItemHeight;
+  HOME_TOP_HEADER_SIZES.headerHeight +
+  HOME_TOP_HEADER_SIZES.scrollableListTopOffset;
 
 interface TabMultiAssetsProps {}
 
@@ -113,15 +111,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
     },
     [],
   );
-
-  React.useEffect(() => {
-    const currentIndex = homeTabScrollerRef.current?.getCurrentIndex?.();
-    if (typeof currentIndex !== 'number' || currentIndex === tabIndex) {
-      return;
-    }
-    homeTabScrollerRef.current?.setIndex(tabIndex);
-  }, [tabIndex]);
-
   useRendererDetect({ name: 'TabsMultiAssets' });
 
   return (
@@ -133,7 +122,7 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
       renderTabBar={renderTabBar}
       headerHeight={HOME_TOP_HEADER_SIZES.headerHeight}
       minHeaderHeight={HOME_TOP_HEADER_SIZES.headerHeight}
-      tabBarHeight={HOME_TOP_HEADER_SIZES.tabItemHeight + HOME_INDICATOR_HEIGHT}
+      tabBarHeight={HOME_TOP_HEADER_SIZES.scrollableListTopOffset}
       allowHeaderOverscroll={IS_IOS}
       lazy={false}
       cancelLazyFadeIn
