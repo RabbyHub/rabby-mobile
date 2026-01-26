@@ -9,7 +9,7 @@ import {
   TokenList,
   Supplements,
 } from '../components/PortfolioDetail';
-import { AbstractPortfolio } from '../types';
+import { IProtocolPortfolio } from '@/store/protocols';
 import { formatAmount } from '@/utils/math';
 
 export default React.memo(
@@ -19,7 +19,7 @@ export default React.memo(
     style,
   }: {
     name: string;
-    data: AbstractPortfolio;
+    data: IProtocolPortfolio;
     style?: ViewStyle;
   }) => {
     const portfolio = data._originPortfolio;

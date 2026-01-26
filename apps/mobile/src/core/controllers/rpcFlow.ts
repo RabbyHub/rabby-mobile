@@ -5,6 +5,7 @@ import { ethErrors } from 'eth-rpc-errors';
 //   permissionService,
 // } from 'background/service';
 import {
+  autoConnectService,
   dappService,
   keyringService,
   notificationService,
@@ -25,16 +26,16 @@ import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
-import { reject } from 'lodash';
+import { find, reject } from 'lodash';
 import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { getAccountList } from '../apis/account';
 import { getDappAccount } from '@/hooks/useDapps';
-import { Account } from '../services/preference';
-import { openapi } from '../request';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
+import { openapi } from '../request';
+import { Account } from '../services/preference';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -149,10 +150,14 @@ const flowContext = flow
         ctx.request.requestedApproval = true;
         connectOrigins.add(origin);
 
-        let defaultChain: CHAINS_ENUM | null = null;
-        let defaultAccount: Account | undefined = undefined;
         try {
-          if (
+          let defaultChain: CHAINS_ENUM | null = null;
+          let defaultAccount: Account | undefined = undefined;
+          const autoConnectInfo = await autoConnectService.autoConnect(origin);
+          if (autoConnectInfo) {
+            defaultAccount = autoConnectInfo.defaultAccount;
+            defaultChain = autoConnectInfo.defaultChain || CHAINS_ENUM.ETH;
+          } else if (
             isFromMobileInnerDapp &&
             shouldAutoConnect(origin, ctx.request.data.method)
           ) {

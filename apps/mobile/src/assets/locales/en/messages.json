@@ -2593,6 +2593,7 @@
         "confirm": "Confirm",
         "fee": "Fee",
         "rabbyFeeTips": "Rabby fee: 0.04%",
+        "rabbyFeeTipsV2": "Rabby fee: 0.02%",
         "providerFeeTips": "Hyperliquid fee: {{fee}}"
       },
       "PerpsEditMarginPopup": {
@@ -2742,7 +2743,7 @@
         "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
         "needSupply": "To borrow, you need to supply assets as collateral.",
         "isolated": "Borrowing power and assets are limited due to Isolation mode.",
-        "emode": "In E-Mode some assets are not borrowable.Exit E-Mode to get access to all assets",
+        "emode": "Some assets are unavailable to borrow in E-Mode. Exit E-Mode to access all assets.",
         "emodeNoAssets": "We couldn't find any assets related to your search. Try again with a different category."
       },
       "list": {
@@ -2883,6 +2884,13 @@
         "globalIsolatedDesc": "In Isolation mode, you cannot supply other assets as collateral. A global debt ceiling limits the borrowing power of the isolated asset. To exit isolation mode disable UNI as collateral before borrowing another asset. ",
         "isolatedSupplyDesc": "Collateral usage is limited because of isolation mode.",
         "maxLTV": "The Maximum LTV ratio represents the maximum borrowing power of a specific collateral. For example, if a collateral has an LTV of 75%, the user can borrow up to 0.75 worth of ETH in the principal currency for every 1 ETH worth of collateral."
+      },
+      "repayWithAToken": {
+        "title": "Select Repay Token",
+        "header": {
+          "assets": "Token",
+          "balance": "Balance"
+        }
       },
       "manageEmode": {
         "__skip_translation": ["emode"],

@@ -8,11 +8,11 @@ import {
   isSameAccount,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { AbstractPortfolio } from '../types';
 import { CustomMarket } from '@/screens/Lending/config/market';
 import { SvgProps } from 'react-native-svg';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
+import { IProtocolPortfolio } from '@/store/protocols';
 
 const keyToMarketKey: Record<string, CustomMarket> = {
   aave3: CustomMarket.proto_mainnet_v3,
@@ -40,7 +40,7 @@ export type TonTokenManageAction = (
 
 export type TonManageAction = (
   account?: KeyringAccountWithAlias,
-  item?: AbstractPortfolio,
+  item?: IProtocolPortfolio,
 ) => Promise<void>;
 
 interface ProtocolConfigItemType {
@@ -48,7 +48,7 @@ interface ProtocolConfigItemType {
   bgColor1: string;
   bgColor2: string;
   showManage?: (
-    item: AbstractPortfolio,
+    item: IProtocolPortfolio,
     account?: KeyringAccountWithAlias | null,
   ) => boolean;
   onManage?: TonManageAction;
@@ -100,7 +100,7 @@ export const useProtocolConfig = () => {
         bgColor1: 'rgba(187, 235, 221, 0.2)',
         bgColor2: 'rgba(187, 235, 221, 0)',
         showManage: (
-          item: AbstractPortfolio,
+          item: IProtocolPortfolio,
           account?: KeyringAccountWithAlias | null,
         ) => {
           if (!account?.address) {
@@ -124,7 +124,7 @@ export const useProtocolConfig = () => {
         },
         onManage: async (
           account?: KeyringAccountWithAlias,
-          item?: AbstractPortfolio,
+          item?: IProtocolPortfolio,
         ) => {
           if (!account) {
             return;

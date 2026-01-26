@@ -2589,7 +2589,8 @@
         "receive": "Recevoir ",
         "closedPnl": "PNL clôturé ",
         "minimumWarning": "Le montant minimum est de {{percent}}%",
-        "total": "Total"
+        "total": "Total",
+        "rabbyFeeTipsV2": "Frais Rabby : 0,02 %"
       },
       "PerpsOpenPositionPopup": {
         "margin": "Marge",
@@ -2712,8 +2713,8 @@
         "needSupply": "Pour emprunter, vous devez fournir des actifs en tant que garantie.",
         "canBorrow": "Vous pouvez emprunter en fonction de votre garantie fournie, jusqu'à la limite d'emprunt.",
         "isolated": "Le pouvoir d'emprunt et les actifs sont limités en raison du mode d'isolement.",
-        "emode": "En mode E, certains actifs ne peuvent pas être empruntés. Quittez le mode E pour accéder à tous les actifs.",
-        "emodeNoAssets": "Nous n'avons trouvé aucun actif lié à votre recherche. Essayez à nouveau avec une catégorie différente."
+        "emodeNoAssets": "Nous n'avons trouvé aucun actif lié à votre recherche. Essayez à nouveau avec une catégorie différente.",
+        "emode": "Certains actifs ne sont pas disponibles pour emprunter en E-Mode. Quittez le E-Mode pour accéder à tous les actifs."
       },
       "list": {
         "headers": {
@@ -2962,6 +2963,13 @@
         "action": {
           "title": "Remboursez avec {{collateral}}"
         }
+      },
+      "repayWithAToken": {
+        "header": {
+          "assets": "Jeton",
+          "balance": "Solde"
+        },
+        "title": "Sélectionner le jeton de remboursement"
       }
     },
     "address": {

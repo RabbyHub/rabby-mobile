@@ -136,15 +136,8 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 
-const isInActiveRef = {
-  current: AppState.isAvailable ? AppState.currentState !== 'active' : false,
-};
-AppState.addEventListener('change', state => {
-  isInActiveRef.current = state !== 'active';
-});
-
 function couldDoRefresh() {
-  return !isInActiveRef.current && apisHomeTabIndex.isHomeAtFirstTab();
+  return apisHomeTabIndex.isHomeAtFirstTab();
 }
 
 const OFFSETS = {
@@ -470,7 +463,7 @@ const getStyle = createGetStyles2024(
       flexDirection: 'row',
       flexWrap: 'wrap',
       borderRadius: 8,
-      rowGap: ITEM_GRID_GAP + 2,
+      rowGap: ITEM_GRID_GAP,
       columnGap: ITEM_GRID_GAP,
       justifyContent: 'space-between',
       alignItems: 'flex-start',
@@ -493,7 +486,7 @@ const getStyle = createGetStyles2024(
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
-      height: 96,
+      height: 86,
       gap: 8,
       position: 'relative',
     },
@@ -672,6 +665,7 @@ export const HomeOverview = React.memo(() => {
   useFetchCexInfo();
 
   const { triggerUpdate } = useAccountsBalanceTrigger();
+  const isFirstTriggerRef = useRef(true);
 
   useEffect(() => {
     setTimeout(() => {
@@ -699,7 +693,11 @@ export const HomeOverview = React.memo(() => {
   useFocusEffect(
     useCallback(() => {
       if (!couldDoRefresh()) return;
-      triggerUpdate().then(balanceAccounts => {
+      const forceFirstTime = isFirstTriggerRef.current;
+      if (isFirstTriggerRef.current) {
+        isFirstTriggerRef.current = false;
+      }
+      triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
         refresh24hAssets({ balanceAccounts });
         refreshDayCurve({ balanceAccounts });

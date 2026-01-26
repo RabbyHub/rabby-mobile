@@ -455,7 +455,7 @@ const getStyle = createGetStyles2024(
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      maxHeight: Dimensions.get('window').height - safeAreaInsets.top,
+      maxHeight: Dimensions.get('screen').height - safeAreaInsets.top,
     },
     favoritesList: {
       flex: 1,

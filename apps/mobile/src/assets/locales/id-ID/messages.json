@@ -2579,7 +2579,8 @@
         "closedPnl": "Closed PNL",
         "receive": "Terima",
         "confirm": "Konfirmasi",
-        "minimumWarning": "Jumlah minimum adalah {{percent}}%"
+        "minimumWarning": "Jumlah minimum adalah {{percent}}%",
+        "rabbyFeeTipsV2": "Biaya Rabby: 0,02%"
       },
       "PerpsOpenPositionPopup": {
         "minimumOrderSize": "Ukuran pesanan minimum adalah $10",
@@ -2702,8 +2703,8 @@
         "canBorrow": "Anda dapat meminjam berdasarkan jaminan yang Anda suplai, hingga batas pinjaman.",
         "needSupply": "Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan.",
         "isolated": "Daya pinjaman dan aset terbatas karena mode Isolasi.",
-        "emode": "Di E-Mode, beberapa aset tidak dapat dipinjam. Keluar dari E-Mode untuk mendapatkan akses ke semua aset.",
-        "emodeNoAssets": "Kami tidak dapat menemukan aset yang terkait dengan pencarian Anda. Coba lagi dengan kategori yang berbeda."
+        "emodeNoAssets": "Kami tidak dapat menemukan aset yang terkait dengan pencarian Anda. Coba lagi dengan kategori yang berbeda.",
+        "emode": "Beberapa aset tidak tersedia untuk dipinjam dalam E-Mode. Keluar dari E-Mode untuk mengakses semua aset."
       },
       "list": {
         "headers": {
@@ -2952,6 +2953,13 @@
         "toRepay": "Jumlah yang diharapkan untuk dilunasi",
         "collateralNotEnough": "Saldo jaminan Anda lebih rendah dari jumlah yang dipilih.",
         "repayWith": "Jaminan untuk dibayar kembali dengan"
+      },
+      "repayWithAToken": {
+        "header": {
+          "balance": "Saldo",
+          "assets": "Token"
+        },
+        "title": "Pilih Token Pembayaran Kembali"
       }
     },
     "address": {

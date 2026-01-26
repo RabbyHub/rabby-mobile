@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DisplayNftItem } from '../types';
-import { ITokenSetting } from '@/core/services/preference';
-import { preferenceService } from '@/core/services';
 import { useSafeState } from 'ahooks';
 import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { syncNFTs } from '@/databases/hooks/assets';
 import { useSingleNftRefresh } from './refresh';
-import { useAtom } from 'jotai';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -15,48 +12,9 @@ import { CombineNFTItem } from './store';
 import { apisAddrChainStatics } from '../useChainInfo';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
-function encodeChainTokenId(chain: string, token_id: string) {
-  return `${chain}::${token_id}`.toLowerCase();
-}
-type INftSettingsSet = {
-  foldNfts: Set<string>;
-  unfoldNfts: Set<string>;
-};
-export function makeNftSettingSets(
-  tokenSetting: ITokenSetting,
-): INftSettingsSet {
-  const tokenSettingSets: Required<INftSettingsSet> = {
-    foldNfts: new Set<string>(
-      [...(tokenSetting.foldNfts || [])].map(i =>
-        encodeChainTokenId(i.chain, i.id),
-      ),
-    ),
-    unfoldNfts: new Set<string>(
-      [...(tokenSetting.unfoldNfts || [])].map(i =>
-        encodeChainTokenId(i.chain, i.id),
-      ),
-    ),
-  };
-
-  return tokenSettingSets;
-}
-
-export const tagNfts = (
-  nfts: NFTItem[],
-  tokenSetting: ITokenSetting,
-): DisplayNftItem[] => {
-  const { foldNfts, unfoldNfts } = makeNftSettingSets(tokenSetting);
-
+export const tagNfts = (nfts: NFTItem[]): DisplayNftItem[] => {
   return nfts.map(i => {
-    const isManualFold = foldNfts?.has(encodeChainTokenId(i.chain, i.id));
-
     const isFold = (() => {
-      if (isManualFold) {
-        return true;
-      }
-      if (unfoldNfts?.has(encodeChainTokenId(i.chain, i.id))) {
-        return false;
-      }
       if (!i.is_core) {
         return true;
       }
@@ -65,7 +23,7 @@ export const tagNfts = (
 
     return Object.assign(i, {
       _isFold: isFold,
-      _isManualFold: isManualFold,
+      _isManualFold: false,
     });
   });
 };
@@ -86,10 +44,9 @@ export const useQueryNft = (addr?: string, visible = true) => {
       }
       try {
         const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
-        const tokenSetting = await preferenceService.getUserTokenSettings();
-        setList(tagNfts(cacheNfts, tokenSetting));
+        setList(tagNfts(cacheNfts));
         const nfts = await syncNFTs(addr, force);
-        setList(tagNfts(nfts, tokenSetting));
+        setList(tagNfts(nfts));
       } catch (e) {
         console.error('ServiceErrorType.NFT', e);
       } finally {
@@ -105,17 +62,14 @@ export const useQueryNft = (addr?: string, visible = true) => {
     }
     try {
       const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
-      const tokenSetting = await preferenceService.getUserTokenSettings();
-      setList(tagNfts(cacheNfts, tokenSetting));
+      setList(tagNfts(cacheNfts));
     } catch (e) {
       console.error('nft batchLocalData error', e);
     }
   }, [addr, setList]);
 
   const refreshTagNft = useCallback(async () => {
-    const tokenSettings =
-      (await preferenceService.getUserTokenSettings()) || {};
-    setList(pre => tagNfts(pre || [], tokenSettings));
+    setList(pre => tagNfts(pre || []));
   }, [setList]);
 
   const debounceReloadNftList = useMemo(

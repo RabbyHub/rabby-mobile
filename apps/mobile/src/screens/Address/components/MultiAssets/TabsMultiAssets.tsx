@@ -78,15 +78,18 @@ runIIFEFunc(() => {
   });
 });
 
-const onIndexChange = (idx: number) => apisHomeTabIndex.setTabIndex(idx);
+const onIndexChange = (idx: number) => {
+  apisHomeTabIndex.setTabIndex(idx);
+};
 
 const renderTabHeader: React.ComponentProps<typeof Container>['renderHeader'] &
-  object = props => <TabsTopHeader />;
+  object = props => <TabsTopHeader indexDecimalValue={props.indexDecimal} />;
 const renderTabBar: React.ComponentProps<typeof Container>['renderTabBar'] &
   object = props => <HomeCustomMaterialTabBar {...props} />;
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { tabIndex } = useHomeTabIndex();
 
   const renderLabel = useCallback(
     (name: string) =>
@@ -110,6 +113,14 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
     },
     [],
   );
+
+  React.useEffect(() => {
+    const currentIndex = homeTabScrollerRef.current?.getCurrentIndex?.();
+    if (typeof currentIndex !== 'number' || currentIndex === tabIndex) {
+      return;
+    }
+    homeTabScrollerRef.current?.setIndex(tabIndex);
+  }, [tabIndex]);
 
   useRendererDetect({ name: 'TabsMultiAssets' });
 

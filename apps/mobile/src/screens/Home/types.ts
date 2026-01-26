@@ -5,9 +5,9 @@ import {
   CollectionList,
   WithdrawAction,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { DisplayedProject } from './utils/project';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { NftItemWithCollection } from './hooks/nft';
+import { IProtocolItem } from '@/store/protocols';
 // curve
 export type ChartLine = {
   value: number;
@@ -48,8 +48,6 @@ export interface AbstractPortfolio {
   _netWorth: string;
   // _project?: AbstractProject;
   _originPortfolio: PortfolioItem;
-  _tokenDict: Record<string, AbstractPortfolioToken>;
-  _tokenList: AbstractPortfolioToken[];
   _historyPatched?: boolean;
   netWorthChange: number;
   _netWorthChange: string;
@@ -98,7 +96,7 @@ export type CombineToken = {
 
 export type CombineDefi = {
   type: 'unfold_defi' | 'fold_defi';
-  data: DisplayedProject;
+  data: IProtocolItem;
 };
 
 export type CombineCollection = CollectionList & {

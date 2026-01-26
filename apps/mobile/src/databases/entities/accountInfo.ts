@@ -35,7 +35,10 @@ export class AccountInfoEntity extends EntityAccountBase {
     const stmSql = `
 INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.account_info}"
 ("_db_id", "created_at", "updated_at", "address", "type", "brandName")
-VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "updated_at" = EXCLUDED."updated_at"
+VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" )DO UPDATE SET "updated_at" = EXCLUDED."updated_at",
+"address" = EXCLUDED."address",
+"type" = EXCLUDED."type",
+"brandName" = EXCLUDED."brandName"
     `;
 
     const db = connection.getDb();

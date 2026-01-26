@@ -169,10 +169,13 @@ const MyAssetHome: React.FC = () => {
     });
   }, [colors2024, isLight]);
 
-  const keyExtractor = useCallback((item: MyAssetItem) => {
-    const { underlyingAsset } = item;
-    return `${item.type}-${underlyingAsset}-${item.usdValue}`;
-  }, []);
+  const keyExtractor = useCallback(
+    (item: MyAssetItem) => {
+      const { underlyingAsset } = item;
+      return `${marketKey}-${item.type}-${underlyingAsset}-${item.usdValue}`;
+    },
+    [marketKey],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: MyAssetItem }) => {
@@ -232,6 +235,7 @@ const MyAssetHome: React.FC = () => {
   return (
     <View style={styles.container}>
       <FlatList
+        key={marketKey}
         data={loading ? [] : myAssetList}
         showsVerticalScrollIndicator={false}
         keyExtractor={keyExtractor}

@@ -2943,7 +2943,8 @@
         "minimumWarning": "Der Mindestbetrag beträgt {{percent}}%.",
         "closedPnl": "Geschlossener PNL",
         "amount": "Betrag",
-        "confirm": "Bestätigen"
+        "confirm": "Bestätigen",
+        "rabbyFeeTipsV2": "Rabby Gebühr: 0,02%"
       },
       "PerpsOpenPositionPopup": {
         "insufficientBalance": "Unzureichendes Guthaben",
@@ -3067,7 +3068,7 @@
         "needSupply": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen.",
         "isolated": "Die Kredit- und Vermögenswerte sind aufgrund des Isolationsmodus begrenzt.",
         "emodeNoAssets": "Wir konnten keine Vermögenswerte zu Ihrer Suche finden. Versuchen Sie es erneut mit einer anderen Kategorie.",
-        "emode": "Im E-Modus sind einige Vermögenswerte nicht ausleihbar. Verlassen Sie den E-Modus, um Zugang zu allen Vermögenswerten zu erhalten."
+        "emode": "Einige Vermögenswerte können im E-Mode nicht geborgt werden. Verlassen Sie den E-Mode, um auf alle Vermögenswerte zuzugreifen."
       },
       "list": {
         "headers": {
@@ -3316,6 +3317,13 @@
         "repayWith": "Sicherheiten zur Rückzahlung mit",
         "toRepay": "Erwarteter Rückzahlungsbetrag",
         "collateralNotEnough": "Ihr Sicherheitensaldo ist niedriger als der ausgewählte Betrag."
+      },
+      "repayWithAToken": {
+        "header": {
+          "balance": "Saldo",
+          "assets": "Token"
+        },
+        "title": "Wählen Sie Rückzahlungs-Token"
       }
     },
     "address": {
