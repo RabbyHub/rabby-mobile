@@ -11,6 +11,7 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import DappWebViewCore from './DappWebViewCore';
 import { useNavigation } from '@react-navigation/native';
 import { useAppUnlocked } from '@/hooks/useLock';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type SceneKey = 'Lending' | 'Perps' | 'Prediction';
 
@@ -25,7 +26,8 @@ const DEFAULT_PERPS_ID = INNER_DAPP_LIST.PERPS[0]?.id ?? 'hyperliquid';
 const DEFAULT_PREDICTION_ID = INNER_DAPP_LIST.PREDICTION[0]?.id ?? 'polymarket';
 
 export default function InnerDappWebViewPreloadLayer() {
-  const { safeOffHeader, safeOffBottom } = useSafeSizes();
+  // const { safeOffHeader, safeOffBottom } = useSafeSizes();
+  const { top } = useSafeAreaInsets();
   const { currentRouteName } = useCurrentRouteName();
   const { lending, perps } = useInnerDappSelection();
   const [readyRouteName, setReadyRouteName] = useState<string | null>(null);
@@ -114,7 +116,7 @@ export default function InnerDappWebViewPreloadLayer() {
   }
 
   return (
-    <View pointerEvents="box-none" style={styles.overlay}>
+    <View pointerEvents="box-none" style={[styles.overlay, { top: top + 36 }]}>
       {preloadItems.map(item => {
         if (!item.url) {
           return null;
@@ -130,7 +132,7 @@ export default function InnerDappWebViewPreloadLayer() {
             pointerEvents={isActive ? 'auto' : 'none'}
             style={[
               styles.webviewContainer,
-              { top: safeOffHeader - 20 },
+              // { top: top + 44 },
               isActive ? styles.webviewVisible : styles.webviewHidden,
             ]}>
             <DappWebViewCore
@@ -149,6 +151,7 @@ export default function InnerDappWebViewPreloadLayer() {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
+
     zIndex: 20,
   },
   webviewContainer: {

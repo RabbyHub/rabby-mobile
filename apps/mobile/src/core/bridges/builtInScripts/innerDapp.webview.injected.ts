@@ -1076,15 +1076,19 @@ runFlow({
         });
 
       if (origin === 'https://app.venus.io') {
-        try {
-          const store = JSON.parse(window.localStorage.getItem('wagmi.store'));
-          console.log('store.state.current', store.state.current);
-          if (!store.state.current) {
+        setTimeout(() => {
+          try {
+            const store = JSON.parse(
+              window.localStorage.getItem('wagmi.store'),
+            );
+            console.log('store.state.current', store.state.current);
+            if (!store.state.current) {
+              autoRunner();
+            }
+          } catch (error) {
             autoRunner();
           }
-        } catch (error) {
-          autoRunner();
-        }
+        }, 1000 * 2);
       } else {
         autoRunner();
       }
