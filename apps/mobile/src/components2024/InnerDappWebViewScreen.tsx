@@ -40,13 +40,6 @@ export const InnerDappWebViewScreen = ({
     disableAutoFetch: true,
   });
 
-  useEffect(() => {
-    console.log('mount');
-    return () => {
-      console.log('unmount');
-    };
-  }, []);
-
   const activeItem = useMemo(() => {
     if (!list.length) {
       return undefined;

@@ -770,7 +770,11 @@
     for (let i = 0; i < config.steps.length; i++) {
       const step = config.steps[i];
       if (debug)
-        console.log(`▶ [Flow] Step ${i + 1}/${config.steps.length}`, step);
+        console.log(
+          `▶ [Flow] Step ${i + 1}/${config.steps.length}`,
+          Date.now(),
+          step,
+        );
 
       if (step.beforeMs) await sleep(step.beforeMs);
 
@@ -917,7 +921,7 @@ runFlow({
             { css: 'wui-flex > w3m-connector-list' },
             { shadow: true },
 
-            { css: 'wui-flex' }, // ✅ 注意：这里原链式没有 .shadowRoot，所以不写 shadow
+            { css: 'wui-flex' },
 
             { css: "w3m-list-wallet[name^='Rabby']" },
             { enabled: true },
@@ -935,23 +939,17 @@ runFlow({
             },
           ],
         },
-        action: { type: 'wait', ms: 2000 },
-      },
-      {
-        wait: {
-          path: [{ css: 'a[href^=\\#\\/account]' }],
-        },
-        action: { type: 'click' },
+        action: { type: 'wait', ms: 4000 },
       },
       {
         wait: {
           path: [
             {
-              css: '#page-container > header > div > div.md\\:hidden > div.flex.h-14.items-center.pr-4.md\\:h-auto.relative > div > button> span:only-of-type',
+              css: '#page-container > header > div > div.md\\:hidden > div.flex.h-14.items-center.pr-4.md\\:h-auto.relative > div > button',
             },
             // { within: true },
             // { text: 'Log In', selector: 'button' },
-            // { enabled: true },
+            { enabled: true },
           ],
         },
         action: { type: 'click' },
@@ -1070,14 +1068,31 @@ runFlow({
     console.log('start running flow', origin);
     const rule = rules[origin];
     if (rule) {
-      runFlow({
-        debug: true,
-        timeouts: 20 * 1000,
-        steps: rule,
-      });
+      const autoRunner = () =>
+        runFlow({
+          debug: true,
+          timeouts: 20 * 1000,
+          steps: rule,
+        });
+
+      if (origin === 'https://app.venus.io') {
+        try {
+          const store = JSON.parse(window.localStorage.getItem('wagmi.store'));
+          console.log('store.state.current', store.state.current);
+          if (!store.state.current) {
+            autoRunner();
+          }
+        } catch (error) {
+          autoRunner();
+        }
+      } else {
+        autoRunner();
+      }
     }
   };
   domReadyCall(() => {
-    start();
+    setTimeout(() => {
+      start();
+    }, 500);
   });
 })();
