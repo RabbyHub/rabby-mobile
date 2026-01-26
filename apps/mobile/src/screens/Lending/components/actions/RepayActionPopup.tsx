@@ -667,6 +667,10 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       <View style={styles.buttonContainer}>
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             loading={isLoading}
             loadingType="circle"
             key={`${amount}-${needApprove}`}
@@ -685,13 +689,14 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
               !currentAccount ||
               !!ctx?.disabledProcess
             }
-            type="primary"
+            // type="primary"
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}

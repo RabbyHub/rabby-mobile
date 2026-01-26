@@ -93,7 +93,7 @@ export const PerpsAccountCard: React.FC<{
             </View>
             <View style={styles.btnItem}>
               <Button
-                type="primary"
+                type="hyperliquid"
                 onPress={() => {
                   setPopupState(prev => ({
                     ...prev,

@@ -1137,13 +1137,17 @@ export default function RepayWithCollateral({
             title={t('page.Lending.repayWithCollateral.button.repay')}
             onFinished={() => handleRepay()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
-            type="primary"
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            tpye="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}

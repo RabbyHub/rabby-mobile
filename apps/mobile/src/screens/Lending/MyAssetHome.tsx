@@ -280,9 +280,9 @@ const MyAssetHome: React.FC = () => {
         <View style={styles.actionBtnContainer}>
           <DisableBorrowTip showTip={disableBorrowButton}>
             <Button
+              type="aave"
               containerStyle={styles.actionButton}
               titleStyle={styles.actionPrimaryTitle}
-              buttonStyle={styles.aaveButton}
               title={t('page.Lending.borrowDetail.actions')}
               disabled={loading || disableBorrowButton}
               onPress={handleOpenBorrowList}
@@ -341,9 +341,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   normalButton: {
     backgroundColor: colors2024['neutral-line'],
-  },
-  aaveButton: {
-    backgroundColor: isLight ? '#131416' : '#fff',
   },
   actionGhostTitle: {
     fontSize: 17,

@@ -455,7 +455,7 @@ export const PerpsOriginScreen = ({
             {hasPermission && isLogin && (
               <View style={styles.footer}>
                 <Button
-                  type="primary"
+                  type="hyperliquid"
                   title={t('page.perps.searchPerpsPopup.openPosition')}
                   onPress={() => {
                     setPopupState(prev => ({
