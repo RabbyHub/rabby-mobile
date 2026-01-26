@@ -11,7 +11,7 @@ import { SvgProps } from 'react-native-svg';
 
 import { Text } from '@/components';
 import {
-  IconCommonInfo,
+  RcIconInfoCC,
   IconTick,
   IconToastSuccess,
 } from '@/assets/icons/common';
@@ -25,6 +25,7 @@ import {
   makeDevOnlyStyle,
 } from '@/utils/styles';
 import { getTheme2024 } from '@/hooks/theme';
+import { makeThemeIcon2024FromCC } from '@/hooks/makeThemeIcon';
 
 const config: ToastOptions = {
   position: Toast.positions.TOP + 80,
@@ -138,7 +139,12 @@ export const toastWithIcon =
     return () => Toast.hide(toastInst);
   };
 
-const info = toastWithIcon(IconCommonInfo);
+const IconInfo = makeThemeIcon2024FromCC(RcIconInfoCC, ctx => ({
+  onLight: ctx.colors2024['neutral-info'],
+  onDark: ctx.colors2024['neutral-info'],
+}));
+
+const info = toastWithIcon(IconInfo);
 
 const success = toastWithIcon(IconTick);
 const error = toastWithIcon(IconError);
