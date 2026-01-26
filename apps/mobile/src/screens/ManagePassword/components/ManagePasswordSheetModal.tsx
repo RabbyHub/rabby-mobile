@@ -136,7 +136,11 @@ function useClearPasswordForm() {
           values.currentPassword,
         );
         if (result.clearCustomPasswordError) {
-          toast.show(result.clearCustomPasswordError);
+          const errString =
+            typeof result.clearCustomPasswordError === 'string'
+              ? result.clearCustomPasswordError
+              : result.clearCustomPasswordError?.message;
+          toast.show(errString);
         } else {
           toast.success('Clear Password Successfully');
           resetHasTipedUserEnableBiometrics();
