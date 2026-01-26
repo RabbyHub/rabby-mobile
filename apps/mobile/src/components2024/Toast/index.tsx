@@ -19,8 +19,6 @@ import IconError from '@/assets2024/icons/common/cancel.svg';
 import React from 'react';
 import { ThemeColors2024 } from '@/constant/theme';
 import { Dots } from '@/components/Approval/components/Popup/Dots';
-// import { makeDebugBorder } from '@/utils/styles';
-import { IS_IOS } from '@/core/native/utils';
 import {
   createGetStyles2024,
   makeDebugBorder,
@@ -59,35 +57,39 @@ const show = (message: any, extraConfig?: ToastOptions) => {
   return () => Toast.hide(_toast);
 };
 
-type ToastRenderCtx = {
-  textStyle: StyleProp<TextStyle>;
+type ToastRenderCtxBase = {
+  styles: ReturnType<typeof getStyle>;
   config?: Partial<ToastOptions>;
+};
+type ToastRenderCtxWithIcon = ToastRenderCtxBase & {
+  iconNode: React.ReactNode;
+  Icon: React.FC<SvgProps>;
 };
 export const toastWithIcon =
   (Icon: React.FC<SvgProps>) =>
   (
-    message?: string | ((ctx: ToastRenderCtx) => React.ReactNode),
+    message?: string | ((ctx: ToastRenderCtxWithIcon) => React.ReactNode),
     _config?: Partial<ToastOptions>,
   ) => {
     const styles = getTheme2024({ getStyle });
+    const iconNode = <Icon width={16} height={16} style={styles.icon} />;
     const msgNode =
       typeof message === 'function' ? (
         message({
-          textStyle: StyleSheet.flatten([
-            styles.content,
-            styles.selfDefinedContent,
-          ]),
+          iconNode,
+          Icon,
+          styles,
           config: _config,
         }) || null
       ) : (
-        <Text style={styles.content}>{message || ' '}</Text>
+        <>
+          {iconNode}
+          <Text style={styles.text}>{message || ' '}</Text>
+        </>
       );
 
     const _toast = Toast.show(
-      <View style={styles.containerInner}>
-        <Icon width={16} height={16} style={styles.icon} />
-        {msgNode}
-      </View>,
+      <View style={styles.containerInner}>{msgNode}</View>,
       Object.assign({}, config, _config, {
         containerStyle: StyleSheet.flatten([
           config.containerStyle,
@@ -198,27 +200,24 @@ export const toastLoadingSuccess = (msg?: string, options?: ToastOptions) => {
 };
 
 export const toastWithDotAnimation = (
-  message?: string | ((ctx: ToastRenderCtx) => React.ReactNode),
+  message?: string | ((ctx: ToastRenderCtxBase) => React.ReactNode),
   _config?: Partial<ToastOptions>,
 ) => {
   const styles = getTheme2024({ getStyle });
   const msgNode =
     typeof message === 'function' ? (
       message({
-        textStyle: StyleSheet.flatten([
-          styles.content,
-          styles.selfDefinedContent,
-        ]),
+        styles,
         config: _config,
       }) || null
     ) : (
-      <Text style={styles.content}>{message || ' '}</Text>
+      <Text style={styles.text}>{message || ' '}</Text>
     );
 
   const _toast = Toast.show(
     <View style={styles.containerInner}>
       {msgNode}
-      <Dots style={styles.content} />
+      <Dots style={styles.text} />
     </View>,
     Object.assign({}, config, _config, {
       containerStyle: StyleSheet.flatten([
@@ -245,7 +244,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginRight: 6,
       color: ThemeColors2024.light['neutral-title-2'],
     },
-    content: {
+    text: {
       // ...makeDebugBorder(),
       color: ThemeColors2024.light['neutral-title-2'],
       fontSize: 15,
