@@ -1147,7 +1147,7 @@ export default function RepayWithCollateral({
           />
         ) : (
           <Button
-            tpye="aave"
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
