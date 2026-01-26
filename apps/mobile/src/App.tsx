@@ -14,7 +14,10 @@ import React, { Suspense, useEffect } from 'react';
 import { withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import BigNumber from 'bignumber.js';
 import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
@@ -37,6 +40,8 @@ import {
   RerenderDetector,
   useRendererDetect,
 } from './components/Perf/PerfDetector';
+import { storeApiAppLayout } from './hooks/useAppLayout';
+import { isEqual } from 'lodash';
 
 BigNumber.config({ EXPONENTIAL_AT: [-20, 100] });
 
@@ -67,6 +72,8 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
 
   const { couldRender } = useAppCouldRender();
 
+  const safeAreaInsets = useSafeAreaInsets();
+
   return (
     <AppProvider
       value={{ rabbitCode, securityChain: loadSecurityChain({ rabbitCode }) }}>
@@ -80,6 +87,18 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   );
 });
 
+function InsetsWatcher() {
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    const prevInsets = storeApiAppLayout.getSafeAreaInsets();
+    if (isEqual(prevInsets, insets)) return;
+    storeApiAppLayout.setSafeAreaMetrics({ insets });
+  }, [insets]);
+
+  return null;
+}
+
 function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
   useBootstrapApp({ rabbitCode });
@@ -89,6 +108,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
       <ThemeProvider theme={rneuiTheme}>
         <RootSiblingParent>
           <SafeAreaProvider>
+            <InsetsWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>

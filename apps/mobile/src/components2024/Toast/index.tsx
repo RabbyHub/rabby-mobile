@@ -19,8 +19,12 @@ import IconError from '@/assets2024/icons/common/cancel.svg';
 import React from 'react';
 import { ThemeColors2024 } from '@/constant/theme';
 import { Dots } from '@/components/Approval/components/Popup/Dots';
-// import { makeDebugBorder } from '@/utils/styles';
-import { IS_IOS } from '@/core/native/utils';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
+import { getTheme2024 } from '@/hooks/theme';
 
 const config: ToastOptions = {
   position: Toast.positions.TOP + 80,
@@ -32,7 +36,10 @@ const config: ToastOptions = {
     fontSize: 15,
   },
   containerStyle: {
-    borderRadius: 100,
+    borderRadius: 12,
+    padding: 0,
+    overflow: 'visible',
+    // ...makeDebugBorder(),
     // paddingHorizontal: 16,
     // paddingVertical: 12,
   },
@@ -50,50 +57,45 @@ const show = (message: any, extraConfig?: ToastOptions) => {
   return () => Toast.hide(_toast);
 };
 
-type ToastRenderCtx = {
-  textStyle: StyleProp<TextStyle>;
+type ToastRenderCtxBase = {
+  styles: ReturnType<typeof getStyle>;
   config?: Partial<ToastOptions>;
+};
+type ToastRenderCtxWithIcon = ToastRenderCtxBase & {
+  iconNode: React.ReactNode;
+  Icon: React.FC<SvgProps>;
 };
 export const toastWithIcon =
   (Icon: React.FC<SvgProps>) =>
   (
-    message?: string | ((ctx: ToastRenderCtx) => React.ReactNode),
+    message?: string | ((ctx: ToastRenderCtxWithIcon) => React.ReactNode),
     _config?: Partial<ToastOptions>,
   ) => {
+    const styles = getTheme2024({ getStyle });
+    const iconNode = <Icon width={16} height={16} style={styles.icon} />;
     const msgNode =
       typeof message === 'function' ? (
         message({
-          textStyle: StyleSheet.flatten([
-            styles.content,
-            styles.selfDefinedContent,
-          ]),
+          iconNode,
+          Icon,
+          styles,
           config: _config,
         }) || null
       ) : (
-        <Text style={styles.content}>{message || ' '}</Text>
+        <>
+          {iconNode}
+          <Text style={styles.text}>{message || ' '}</Text>
+        </>
       );
 
     const _toast = Toast.show(
-      (
-        <View style={styles.containerInner}>
-          <Icon width={16} height={16} style={styles.icon} />
-          {msgNode}
-        </View>
-      ) as any,
-      Object.assign(
-        {},
-        config,
-        _config,
-        Platform.OS === 'ios'
-          ? {
-              containerStyle: {
-                ...(config.containerStyle as any),
-                ...(_config?.containerStyle as any),
-                // paddingBottom: 5,
-              },
-            }
-          : {},
-      ),
+      <View style={styles.containerInner}>{msgNode}</View>,
+      Object.assign({}, config, _config, {
+        containerStyle: StyleSheet.flatten([
+          config.containerStyle,
+          _config?.containerStyle,
+        ]),
+      }),
     );
     return () => Toast.hide(_toast);
   };
@@ -198,68 +200,59 @@ export const toastLoadingSuccess = (msg?: string, options?: ToastOptions) => {
 };
 
 export const toastWithDotAnimation = (
-  message?: string | ((ctx: ToastRenderCtx) => React.ReactNode),
+  message?: string | ((ctx: ToastRenderCtxBase) => React.ReactNode),
   _config?: Partial<ToastOptions>,
 ) => {
+  const styles = getTheme2024({ getStyle });
   const msgNode =
     typeof message === 'function' ? (
       message({
-        textStyle: StyleSheet.flatten([
-          styles.content,
-          styles.selfDefinedContent,
-        ]),
+        styles,
         config: _config,
       }) || null
     ) : (
-      <Text style={styles.content}>{message || ' '}</Text>
+      <Text style={styles.text}>{message || ' '}</Text>
     );
 
   const _toast = Toast.show(
-    (
-      <View style={styles.containerInner}>
-        {msgNode}
-        <Dots style={styles.content} />
-      </View>
-    ) as any,
-    Object.assign(
-      {},
-      config,
-      _config,
-      Platform.OS === 'ios'
-        ? {
-            containerStyle: {
-              ...(config.containerStyle as any),
-              ...(_config?.containerStyle as any),
-              // paddingBottom: 5,
-            },
-          }
-        : {},
-    ),
+    <View style={styles.containerInner}>
+      {msgNode}
+      <Dots style={styles.text} />
+    </View>,
+    Object.assign({}, config, _config, {
+      containerStyle: StyleSheet.flatten([
+        config.containerStyle,
+        _config?.containerStyle,
+      ]),
+    }),
   );
   return () => Toast.hide(_toast);
 };
 
-const styles = StyleSheet.create({
-  containerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(IS_IOS && {
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  return {
+    containerInner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
       paddingHorizontal: 8,
-    }),
-  },
-  icon: {
-    marginRight: 6,
-    color: ThemeColors2024.light['neutral-title-2'],
-  },
-  content: {
-    // ...makeDebugBorder(),
-    color: ThemeColors2024.light['neutral-title-2'],
-    fontSize: 15,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-  },
-  selfDefinedContent: {
-    maxWidth: 250,
-  },
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: 'white',
+      // }),
+    },
+    icon: {
+      marginRight: 6,
+      color: ThemeColors2024.light['neutral-title-2'],
+    },
+    text: {
+      // ...makeDebugBorder(),
+      color: ThemeColors2024.light['neutral-title-2'],
+      fontSize: 15,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+    selfDefinedContent: {
+      maxWidth: 250,
+    },
+  };
 });

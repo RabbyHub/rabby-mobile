@@ -1,5 +1,5 @@
 import { AppBottomSheetModal } from '@/components';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Chain } from '@/constant/chains';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';

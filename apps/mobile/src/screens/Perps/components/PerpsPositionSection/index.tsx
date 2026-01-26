@@ -22,7 +22,7 @@ import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn } from 'ahooks';
 import { sleep } from '@/utils/async';
 import Toast from 'react-native-root-toast';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
   marketDataMap: MarketDataMap;

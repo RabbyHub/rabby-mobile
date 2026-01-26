@@ -7,7 +7,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGasAccountMethods } from '../hooks';
 import { useGasAccountSign } from '../hooks/atom';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Button } from '@/components2024/Button';

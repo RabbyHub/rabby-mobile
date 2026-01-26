@@ -14,7 +14,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { debugLogService } from '@/core/services';
 import type { DebugLogEntry } from '@/core/services/debugLogService';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import dayjs from 'dayjs';
 
 const LOG_LEVEL_COLORS = {
