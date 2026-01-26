@@ -11,7 +11,7 @@ import { SvgProps } from 'react-native-svg';
 
 import { Text } from '@/components';
 import {
-  IconCommonInfo,
+  RcIconInfoCC,
   IconTick,
   IconToastSuccess,
 } from '@/assets/icons/common';
@@ -25,6 +25,7 @@ import {
   makeDevOnlyStyle,
 } from '@/utils/styles';
 import { getTheme2024 } from '@/hooks/theme';
+import { makeThemeIcon2024FromCC } from '@/hooks/makeThemeIcon';
 
 const config: ToastOptions = {
   position: Toast.positions.TOP + 80,
@@ -46,30 +47,67 @@ const config: ToastOptions = {
   backgroundColor: ThemeColors2024.light['neutral-black'],
 };
 
-const show = (message: any, extraConfig?: ToastOptions) => {
-  let msg = message;
-  if (typeof message !== 'string') {
-    // avoid crash
-    msg = ' ';
-  }
-
-  const _toast = Toast.show(msg, { ...config, ...extraConfig });
-  return () => Toast.hide(_toast);
-};
-
 type ToastRenderCtxBase = {
   styles: ReturnType<typeof getStyle>;
-  config?: Partial<ToastOptions>;
+  config?: Partial<ManagedOptions>;
 };
 type ToastRenderCtxWithIcon = ToastRenderCtxBase & {
   iconNode: React.ReactNode;
   Icon: React.FC<SvgProps>;
 };
+
+type ManagedOptions = ToastOptions & {
+  /**
+   * @description if true, the toast will not be auto removed when next managed toast is shown
+   */
+  standalone?: boolean;
+};
+const managedToasts = new Set<any>();
+type ShowParamas = Parameters<typeof Toast.show>;
+function showManagedToast(
+  msgNode: ShowParamas[0],
+  options?: Partial<ManagedOptions>,
+) {
+  clearManagedToasts();
+  const toastInst = Toast.show(msgNode, options);
+  !options?.standalone && managedToasts.add(toastInst);
+
+  return toastInst;
+}
+function clearManagedToasts() {
+  [...managedToasts].forEach(toast => {
+    Toast.hide(toast);
+    managedToasts.delete(toast);
+  });
+}
+
+const show = (
+  message: React.ReactNode | ((ctx: ToastRenderCtxBase) => React.ReactNode),
+  { standalone = false, ...extraConfig }: Partial<ManagedOptions> = {},
+) => {
+  const styles = getTheme2024({ getStyle });
+  const msgNode =
+    typeof message === 'function' ? (
+      message({
+        styles,
+        config: extraConfig,
+      }) || null
+    ) : (
+      <>
+        <Text style={styles.text}>{message || ' '}</Text>
+      </>
+    );
+
+  const toastInst = showManagedToast(msgNode, { ...config, ...extraConfig });
+
+  return () => Toast.hide(toastInst);
+};
+
 export const toastWithIcon =
   (Icon: React.FC<SvgProps>) =>
   (
     message?: string | ((ctx: ToastRenderCtxWithIcon) => React.ReactNode),
-    _config?: Partial<ToastOptions>,
+    _config?: Partial<ManagedOptions>,
   ) => {
     const styles = getTheme2024({ getStyle });
     const iconNode = <Icon width={16} height={16} style={styles.icon} />;
@@ -88,7 +126,7 @@ export const toastWithIcon =
         </>
       );
 
-    const _toast = Toast.show(
+    const toastInst = showManagedToast(
       <View style={styles.containerInner}>{msgNode}</View>,
       Object.assign({}, config, _config, {
         containerStyle: StyleSheet.flatten([
@@ -97,10 +135,16 @@ export const toastWithIcon =
         ]),
       }),
     );
-    return () => Toast.hide(_toast);
+
+    return () => Toast.hide(toastInst);
   };
 
-const info = toastWithIcon(IconCommonInfo);
+const IconInfo = makeThemeIcon2024FromCC(RcIconInfoCC, ctx => ({
+  onLight: ctx.colors2024['neutral-info'],
+  onDark: ctx.colors2024['neutral-info'],
+}));
+
+const info = toastWithIcon(IconInfo);
 
 const success = toastWithIcon(IconTick);
 const error = toastWithIcon(IconError);
@@ -113,11 +157,13 @@ export const toast = {
   positions: Toast.positions,
 };
 
-export const toastLoading = (msg?: string) => {
-  const _toast = Toast.show(
-    // @ts-ignore
+export const toastLoading = (
+  msg?: string,
+  options?: Pick<Partial<ManagedOptions>, 'standalone'>,
+) => {
+  clearManagedToasts();
+  const toastInst = showManagedToast(
     <View
-      // eslint-disable-next-line react-native/no-inline-styles
       style={{
         width: 126,
         height: 126,
@@ -133,6 +179,7 @@ export const toastLoading = (msg?: string) => {
       ) : null}
     </View>,
     {
+      ...options,
       duration: 300000000,
       animation: true,
       hideOnPress: false,
@@ -141,12 +188,13 @@ export const toastLoading = (msg?: string) => {
       position: 0,
     },
   );
-  return () => Toast.hide(_toast);
+
+  return () => Toast.hide(toastInst);
 };
 
 export const toastIndicator = (
   msg: string,
-  options?: ToastOptions & {
+  options?: ManagedOptions & {
     isTop?: boolean;
   },
 ) => {
@@ -168,11 +216,12 @@ export const toastIndicator = (
   });
 };
 
-export const toastLoadingSuccess = (msg?: string, options?: ToastOptions) => {
-  const _toast = Toast.show(
-    // @ts-ignore
+export const toastLoadingSuccess = (
+  msg?: string,
+  options?: Partial<ManagedOptions>,
+) => {
+  const toastInst = showManagedToast(
     <View
-      // eslint-disable-next-line react-native/no-inline-styles
       style={{
         width: 126,
         height: 126,
@@ -196,12 +245,12 @@ export const toastLoadingSuccess = (msg?: string, options?: ToastOptions) => {
       ...options,
     },
   );
-  return () => Toast.hide(_toast);
+  return () => Toast.hide(toastInst);
 };
 
 export const toastWithDotAnimation = (
   message?: string | ((ctx: ToastRenderCtxBase) => React.ReactNode),
-  _config?: Partial<ToastOptions>,
+  _config?: Partial<ManagedOptions>,
 ) => {
   const styles = getTheme2024({ getStyle });
   const msgNode =
@@ -214,7 +263,7 @@ export const toastWithDotAnimation = (
       <Text style={styles.text}>{message || ' '}</Text>
     );
 
-  const _toast = Toast.show(
+  const toastInst = showManagedToast(
     <View style={styles.containerInner}>
       {msgNode}
       <Dots style={styles.text} />
@@ -226,7 +275,7 @@ export const toastWithDotAnimation = (
       ]),
     }),
   );
-  return () => Toast.hide(_toast);
+  return () => Toast.hide(toastInst);
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {

@@ -20,7 +20,7 @@ import { RcIconCorrectCC } from '@/assets/icons/common';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { Button } from '@/components2024/Button';
-import { toast } from '@/components2024/Toast';
+import { toast, toastLoadingSuccess } from '@/components2024/Toast';
 
 function DevUIToastAndNotifications(): JSX.Element {
   const { styles, colors2024, colors } = useTheme2024({
@@ -193,6 +193,35 @@ function DevUIToastAndNotifications(): JSX.Element {
                         );
                       },
                       { duration: 4000 },
+                    );
+                  }}
+                />
+              </View>
+            </View>
+
+            {/* special api toastLoadingSuccess */}
+            <View style={{ width: '100%', marginBottom: 24 }}>
+              <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+                <Text style={styles.propertyType}>
+                  toastLoading with success indication{' '.repeat(100)}
+                </Text>
+                <Text style={{ marginBottom: 12 }}>
+                  You can use `toastLoadingSuccess` to show a loading toast, and
+                  then call the returned function to hide it. You can also show
+                  a success toast after hiding the loading toast.
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['neutral-title-2'] }}
+                  type={'primary'}
+                  title={'Loading then Success'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    const hideLoading = toastLoadingSuccess(
+                      'Loaded Successfully!',
                     );
                   }}
                 />
