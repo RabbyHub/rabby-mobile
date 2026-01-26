@@ -84,13 +84,13 @@ else
   case input_envtype
     when "adhoc"
       run_type = "adhoc"
-      profile_name = !IS_WILDCARD ? "RabbyMobileAdHocRegression" : "RabbyMobileWildcardAdHocRegression"
+      profile_name = !IS_WILDCARD ? "RabbyMobileAdHocRegressionOpcode" : "RabbyMobileWildcardAdHocRegression"
       app_identifiers = [
         "com.debank.rabby-mobile-regression" + EXTENSION_SUFFIX
       ]
     when "appstore"
       run_type = "appstore"
-      profile_name = !IS_WILDCARD ? "RabbyMobileAppStore" : "RabbyMobileWildcardAppStore"
+      profile_name = !IS_WILDCARD ? "RabbyMobileAppStoreOpcode" : "RabbyMobileWildcardAppStore"
       app_identifiers = [
         "com.debank.rabby-mobile" + EXTENSION_SUFFIX
       ]

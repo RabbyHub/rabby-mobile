@@ -60,7 +60,7 @@ platform :ios do
         method: 'ad-hoc',
         signingStyle: 'manual',
         provisioningProfiles: {
-          "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegression"
+          "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode"
         },
         manifest: {
           appURL: "https://download.rabby.io/downloads/wallet-mobile/ios/rabbymobile.ipa",
@@ -121,8 +121,8 @@ platform :ios do
           method: "app-store",
           signingStyle: 'manual',
           provisioningProfiles: {
-            "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegression",
-            "com.debank.rabby-mobile": "RabbyMobileAppStore"
+            "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode",
+            "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode"
           }
         })
       pilot(
