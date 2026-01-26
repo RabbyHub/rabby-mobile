@@ -55,6 +55,7 @@ export function LendingEntryScreen() {
         list={LENDING_LIST}
         activeId={activeId}
         onSelectDapp={handleSelectDapp}
+        renderWebView={false}
       />
     );
   }

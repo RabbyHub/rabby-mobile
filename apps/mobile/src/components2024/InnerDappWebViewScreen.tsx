@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,6 +22,7 @@ type InnerDappWebViewScreenProps = {
   onSelectDapp: (item: DappSelectItem) => void;
   dappSelectTitle?: string;
   rightAddon?: React.ReactNode;
+  renderWebView?: boolean;
 };
 
 export const InnerDappWebViewScreen = ({
@@ -30,6 +31,7 @@ export const InnerDappWebViewScreen = ({
   onSelectDapp,
   dappSelectTitle,
   rightAddon,
+  renderWebView = true,
 }: InnerDappWebViewScreenProps) => {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
@@ -37,6 +39,13 @@ export const InnerDappWebViewScreen = ({
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+
+  useEffect(() => {
+    console.log('mount');
+    return () => {
+      console.log('unmount');
+    };
+  }, []);
 
   const activeItem = useMemo(() => {
     if (!list.length) {
@@ -85,13 +94,15 @@ export const InnerDappWebViewScreen = ({
         dappSelectTitle={dappSelectTitle}
         rightAddon={rightAddon}
       />
-      <View style={[styles.webviewWrapper, { paddingBottom: bottom }]}>
-        <DappWebViewCore
-          dappOrigin={dappOrigin}
-          url={activeItem.url}
-          webviewKey={activeItem.id}
-        />
-      </View>
+      {renderWebView ? (
+        <View style={[styles.webviewWrapper]}>
+          <DappWebViewCore
+            dappOrigin={dappOrigin}
+            url={activeItem.url}
+            webviewKey={activeItem.id}
+          />
+        </View>
+      ) : null}
     </NormalScreenContainer2024>
   );
 };

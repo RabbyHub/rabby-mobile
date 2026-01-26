@@ -46,6 +46,7 @@ export function PerpsScreen() {
         list={PERPS_LIST}
         activeId={activeId}
         onSelectDapp={handleSelectDapp}
+        renderWebView={false}
       />
     );
   }

@@ -29,10 +29,12 @@ import {
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { getDappAccount, useDapps } from '@/hooks/useDapps';
 import { useAccounts } from '@/hooks/account';
-//@ts-expect-error 11
+//@ts-expect-error as string
 import injectedAutoRunnerSource from '@/core/bridges/builtInScripts/innerDapp.webview.injected';
 
-const injected = `${injectedAutoRunnerSource}\ntrue;`;
+const autoRunnerInjected = `${
+  IS_ANDROID ? PATCH_ANCHOR_TARGET : ''
+}\ntrue;${injectedAutoRunnerSource}\ntrue;`;
 
 type OnLoadStartEvent = Parameters<NonNullable<WebViewProps['onLoadStart']>>[0];
 
@@ -52,6 +54,7 @@ export type DappWebViewCoreProps = {
   contentMode?: WebViewProps['contentMode'];
   userAgent?: string;
   webviewKey?: string | number;
+  webviewActive?: boolean;
   progressBar?: (state: DappWebViewProgressState) => React.ReactNode;
   onProgressStateChange?: (state: DappWebViewProgressState) => void;
   onLoadStart?: (event: OnLoadStartEvent, treatAsReload: boolean) => void;
@@ -93,6 +96,7 @@ export default function DappWebViewCore({
   contentMode,
   userAgent,
   webviewKey,
+  webviewActive = true,
   progressBar,
   onProgressStateChange,
   onLoadStart,
@@ -135,17 +139,50 @@ export default function DappWebViewCore({
     return getDappAccount({ dappInfo, accounts });
   }, [accounts, dappInfo]);
 
+  // const isLoadedRef = useRef(false);
+  // const wasActiveRef = useRef(false);
+
+  const injectedRef = useRef(false);
+
+  const runActiveHook = useCallback(() => {
+    if (!injectedRef.current) {
+      injectedRef.current = true;
+      webviewRef.current?.injectJavaScript(autoRunnerInjected);
+    }
+  }, [webviewRef]);
+
+  // useEffect(() => {
+  //   if (webviewActive && isLoadedRef.current && !wasActiveRef.current) {
+  //     runActiveHook();
+  //   }
+  //   wasActiveRef.current = webviewActive;
+  // }, [webviewActive, runActiveHook]);
+
   useEffect(() => {
+    const tabId = internalController.webviewIdRef.current;
+    const nextOrigin = safeGetOrigin(dappOrigin) || dappOrigin;
+
+    // if (!webviewActive) {
+    //   const activeState = getActiveDappState();
+    //   if (activeState.tabId === tabId && !activeState.isScreenHide) {
+    //     globalSetActiveDappState({ isScreenHide: true });
+    //   }
+    //   return;
+    // }
+
+    const activeState = getActiveDappState();
     if (
-      internalController.webviewIdRef.current !== getActiveDappState().tabId
+      activeState.tabId !== tabId ||
+      activeState.isScreenHide ||
+      activeState.dappOrigin !== nextOrigin
     ) {
       globalSetActiveDappState({
-        dappOrigin: safeGetOrigin(dappOrigin),
-        tabId: internalController.webviewIdRef.current,
-        isScreenHide: false,
+        dappOrigin: nextOrigin,
+        tabId: 'innerGlobalTabId',
+        isScreenHide: !webviewActive,
       });
     }
-  }, [dappOrigin, internalController]);
+  }, [dappOrigin, internalController, webviewActive]);
 
   const { entryScriptWeb3Loaded, fullScript } =
     useJavaScriptBeforeContentLoaded();
@@ -302,6 +339,7 @@ export default function DappWebViewCore({
           isLoading: false,
         });
       }
+
       setWebViewState(prev => ({
         ...prev,
         resolvedUrl: event?.nativeEvent?.url,
@@ -309,7 +347,14 @@ export default function DappWebViewCore({
       onLoadEnd?.(event);
       webviewOnLoadEnd?.(event);
     },
-    [onLoadEnd, updateProgressState, webviewOnLoadEnd, setWebViewState],
+    [
+      // webviewActive,
+      setWebViewState,
+      onLoadEnd,
+      webviewOnLoadEnd,
+      // runActiveHook,
+      updateProgressState,
+    ],
   );
 
   const handleMessage = useCallback(
@@ -463,7 +508,7 @@ export default function DappWebViewCore({
         // {...(IS_ANDROID && {
         //   injectedJavaScript: PATCH_ANCHOR_TARGET,
         // })}
-        injectedJavaScript={injected}
+        injectedJavaScript={autoRunnerInjected}
         webviewDebuggingEnabled={webviewDebuggingEnabled}
         onNavigationStateChange={handleNavigationStateChange}
         onLoadStart={handleLoadStart}

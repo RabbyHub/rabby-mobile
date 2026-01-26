@@ -1000,6 +1000,16 @@ runFlow({
         },
         action: { type: 'click' },
       },
+      {
+        wait: {
+          path: [
+            {
+              css: 'div[role=dialog]>div>div>button.button',
+            },
+          ],
+        },
+        action: { type: 'click' },
+      },
     ],
     'https://app.lighter.xyz': [
       {

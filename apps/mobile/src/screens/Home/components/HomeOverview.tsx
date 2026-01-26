@@ -604,6 +604,11 @@ export const HomeOverview = React.memo(() => {
           color: colors2024['brand-default-icon'],
         },
         {
+          key: MultiHomeFeatTitle.Predict,
+          title: t('page.home.services.predict'),
+          icon: RcIconPredictCC,
+        },
+        {
           key: MultiHomeFeatTitle.Points,
           title: t('page.rabbyPoints.title'),
           icon: RcIconPointsCC,
