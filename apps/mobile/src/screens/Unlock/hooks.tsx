@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { apisLock } from '@/core/apis';
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { useBiometrics } from '@/hooks/biometrics';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { Alert } from 'react-native';
 import { UnlockResultErrors } from '@/core/apis/lock';
 import { t } from 'i18next';

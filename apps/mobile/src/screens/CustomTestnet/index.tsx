@@ -2,7 +2,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React, { useCallback } from 'react';
 
 import { FooterButton } from '@/components/FooterButton/FooterButton';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { AppColorsVariants } from '@/constant/theme';
 import { apiCustomTestnet } from '@/core/apis';
 import {

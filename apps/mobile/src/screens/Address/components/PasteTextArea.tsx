@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import IconPaste from '@/assets/icons/common/paste-cc.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';

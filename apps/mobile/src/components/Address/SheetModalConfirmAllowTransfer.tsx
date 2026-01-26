@@ -18,7 +18,7 @@ import { FormInput } from '@/components/Form/Input';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { apisLock } from '@/core/apis';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { BiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
 import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';

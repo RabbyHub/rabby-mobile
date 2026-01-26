@@ -29,7 +29,7 @@ import { intToHex } from '@/utils/number';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { CancelTxPopup } from './CancelTxPopup';
 import { Button } from '@/components2024/Button';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 
 export const TransactionPendingDetail = ({
   data,

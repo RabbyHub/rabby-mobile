@@ -5,7 +5,7 @@ import { keyringService } from '@/core/services';
 import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 import { browserApis, useBrowser } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
-import { toastIndicator, toastWithIcon } from '@/components/Toast';
+import { toastIndicator, toastWithIcon } from '@/components2024/Toast';
 import { RcIconInfoForToast } from '@/screens/Unlock/icons';
 import { getRabbyLockInfo, PasswordStatus } from '@/core/apis/lock';
 import { getPwdStatus, usePasswordStatus } from './useLock';

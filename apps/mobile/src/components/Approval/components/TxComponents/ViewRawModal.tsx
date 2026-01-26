@@ -10,7 +10,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 
 interface ContentProps {
   abi?: ExplainTxResponse['abi_str'];

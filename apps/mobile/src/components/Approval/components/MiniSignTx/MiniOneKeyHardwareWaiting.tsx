@@ -1,5 +1,5 @@
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { createGetStyles2024 } from '@/utils/styles';

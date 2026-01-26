@@ -10,7 +10,7 @@ import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Device } from 'react-native-ble-plx';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
-import { toast, toastIndicator } from '../Toast';
+import { toast, toastIndicator } from '@/components2024/Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { OpenEthAppScreen } from './OpenEthAppScreen';
