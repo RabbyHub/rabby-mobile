@@ -84,11 +84,11 @@ export const Approval = () => {
   const { approvalComponent, params, origin, account } = data;
 
   const fromTabId =
-    params.$mobileCtx?.fromTabId ||
-    data.$mobileCtx?.fromTabId ||
+    params?.$mobileCtx?.fromTabId ||
+    data?.$mobileCtx?.fromTabId ||
     params?.session?.$mobileCtx?.fromTabId;
 
-  const fromOrigin = origin || params.origin;
+  const fromOrigin = origin || params?.origin;
   const shouldDisallow =
     !isInternalSession(fromOrigin) &&
     !shouldAllowApprovePopupByTabId({

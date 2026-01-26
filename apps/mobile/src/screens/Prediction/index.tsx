@@ -12,6 +12,7 @@ export default function PredictionScreen() {
       list={PREDICTION_LIST}
       activeId={DEFAULT_PREDICTION_ID}
       onSelectDapp={() => {}}
+      renderWebView={false}
     />
   );
 }

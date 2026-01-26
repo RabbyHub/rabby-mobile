@@ -93,6 +93,7 @@ import { useRendererDetect } from './components/Perf/PerfDetector';
 import DeviceInfo from 'react-native-device-info';
 import { coerceNumber } from './utils/coerce';
 import { useAppCouldRender } from './hooks/useBootstrap';
+import InnerDappWebViewPreloadLayer from './components/WebView/InnerDappWebViewPreloadLayer';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -478,6 +479,7 @@ export default function AppNavigation() {
               />
             </RootStack.Group>
           </RootStack.Navigator>
+          <InnerDappWebViewPreloadLayer />
           <BiometricsStubModal />
           <ApprovalTokenDetailSheetModalStub />
           <GlobalSearchBottomSheet />

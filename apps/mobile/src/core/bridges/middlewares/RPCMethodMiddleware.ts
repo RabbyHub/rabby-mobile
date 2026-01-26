@@ -86,6 +86,10 @@ RPCMethodsMiddleParameters) =>
 
       const webviewId = bridge.webviewId;
 
+      if (activeDappState.tabId === 'innerGlobalTabId') {
+        return true;
+      }
+
       return (
         !activeDappState.isScreenHide && activeDappState.tabId === webviewId
       );
@@ -148,7 +152,7 @@ RPCMethodsMiddleParameters) =>
             `[getRpcMethodMiddleware::pre-hook] req.method: '${req.method}'(req.id: ${req.id}) use customized route`,
           );
         }
-        await rpcMethods[req.method]();
+        await rpcMethods[req.method]?.();
       } else {
         if (__DEV__) {
           console.debug(

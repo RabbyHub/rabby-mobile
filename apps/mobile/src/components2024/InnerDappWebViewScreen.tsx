@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,6 +15,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { Account } from '@/core/services/preference';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 type InnerDappWebViewScreenProps = {
   list: DappSelectItem[];
@@ -22,6 +23,7 @@ type InnerDappWebViewScreenProps = {
   onSelectDapp: (item: DappSelectItem) => void;
   dappSelectTitle?: string;
   rightAddon?: React.ReactNode;
+  renderWebView?: boolean;
 };
 
 export const InnerDappWebViewScreen = ({
@@ -30,6 +32,7 @@ export const InnerDappWebViewScreen = ({
   onSelectDapp,
   dappSelectTitle,
   rightAddon,
+  renderWebView = true,
 }: InnerDappWebViewScreenProps) => {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
@@ -37,6 +40,7 @@ export const InnerDappWebViewScreen = ({
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const { safeOffHeader, safeTop } = useSafeSizes();
 
   const activeItem = useMemo(() => {
     if (!list.length) {
@@ -75,7 +79,7 @@ export const InnerDappWebViewScreen = ({
   }
 
   return (
-    <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+    <NormalScreenContainer2024 type={'bg1'}>
       <DappFrameAccountHeader
         account={account || undefined}
         onSelectAccount={handleSelectAccount}
@@ -85,13 +89,15 @@ export const InnerDappWebViewScreen = ({
         dappSelectTitle={dappSelectTitle}
         rightAddon={rightAddon}
       />
-      <View style={[styles.webviewWrapper, { paddingBottom: bottom }]}>
-        <DappWebViewCore
-          dappOrigin={dappOrigin}
-          url={activeItem.url}
-          webviewKey={activeItem.id}
-        />
-      </View>
+      {renderWebView ? (
+        <View style={[styles.webviewWrapper]}>
+          <DappWebViewCore
+            dappOrigin={dappOrigin}
+            url={activeItem.url}
+            webviewKey={activeItem.id}
+          />
+        </View>
+      ) : null}
     </NormalScreenContainer2024>
   );
 };

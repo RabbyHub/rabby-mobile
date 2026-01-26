@@ -346,6 +346,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Perps]?: {
     account?: KeyringAccountWithAlias;
     fromName?: string;
+    dappId?: string;
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {
@@ -359,6 +360,8 @@ export type TransactionNavigatorParamList = {
   [RootNames.Lending]?: {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';
+    account?: KeyringAccountWithAlias;
+    dappId?: string;
   };
   [RootNames.Prediction]?: {};
 };
