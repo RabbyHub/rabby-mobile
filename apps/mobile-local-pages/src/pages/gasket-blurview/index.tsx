@@ -27,6 +27,13 @@ window.addEventListener('messageFromRN', function (event) {
         const durationMs = parseInt(
           `${message.animationDurationMs || ''}` || '2500',
         );
+        const borderRadius = parseInt(
+          `${message.animationGradientBorderRadius || ''}` || '20',
+        );
+        rootElement.style.setProperty(
+          '--app-border-radius',
+          `${borderRadius}px`,
+        );
 
         rootElement.style.setProperty('--app-animation-ms', `${durationMs}`);
         rootElement.style.setProperty(

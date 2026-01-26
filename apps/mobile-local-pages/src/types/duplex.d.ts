@@ -39,6 +39,7 @@ type DuplexDefs = {
         isPositive: boolean;
       };
       animationDurationMs: number;
+      animationGradientBorderRadius: number;
     };
     post: never;
   };
