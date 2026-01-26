@@ -255,12 +255,14 @@ export function TabsTopHeader({
                   action: 'Click_Setting',
                 });
               }}>
-              <RcIconSetting
-                width={20}
-                height={20}
-                color={colors2024['neutral-title-1']}
-              />
-              {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+              <View style={styles.headerTouchableIcon}>
+                <RcIconSetting
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-title-1']}
+                />
+                {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+              </View>
             </Pressable>
           </>
         ) : (
@@ -363,7 +365,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: 12,
-    paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    paddingRight: 0,
     position: 'relative',
     // ...makeDebugBorder(),
   },
