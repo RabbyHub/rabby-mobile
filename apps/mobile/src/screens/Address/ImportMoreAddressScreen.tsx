@@ -23,7 +23,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { useAtom } from 'jotai';
 import { settingAtom } from '@/components/HDSetting/MainContainer';

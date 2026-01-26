@@ -71,7 +71,6 @@ import {
   ScannerScreen,
   TokenDetailScreen,
   NFTDetailScreen,
-  DeFiDetailScreen,
 } from '@/screens/index.eager';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
@@ -409,19 +408,6 @@ export default function AppNavigation() {
                   headerTitle: '',
                   headerStyle: {
                     // backgroundColor: colors['neutral-bg-2'],
-                    backgroundColor: 'transparent',
-                  },
-                })}
-              />
-              <RootStack.Screen
-                name={RootNames.DeFiDetail}
-                component={DeFiDetailScreen}
-                options={mergeScreenOptions({
-                  headerShown: true,
-                  headerTitleAlign: 'center',
-                  headerTitle: '',
-                  headerLeft: () => null,
-                  headerStyle: {
                     backgroundColor: 'transparent',
                   },
                 })}

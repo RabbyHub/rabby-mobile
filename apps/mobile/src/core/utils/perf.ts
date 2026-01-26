@@ -1,9 +1,5 @@
 import { makeJsEEClass } from '@/core/services/_utils';
 import {
-  AccountsBalanceState,
-  BalanceAccountType,
-} from '@/hooks/useAccountsBalance';
-import {
   AddressBalanceUpdaterSource,
   BalanceState,
 } from '@/hooks/useCurrentBalance';
@@ -18,12 +14,6 @@ export type PerfEventBusListeners = {
   }) => void;
 
   APP_NAVIGATION_READY: (ctx: { readyRootName: string }) => void;
-
-  ACCOUNTS_BALANCE_UPDATE: (ctx: {
-    prevState: AccountsBalanceState['balance'];
-    nextState: AccountsBalanceState['balance'];
-    setFromRemoteApi?: boolean;
-  }) => void;
 
   CONTACTS_ALIASES_UPDATE: (ctx: {
     nextState: ContactBookStore['aliases'];

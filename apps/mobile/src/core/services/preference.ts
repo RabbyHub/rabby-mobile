@@ -94,6 +94,8 @@ export type ITokenSetting = {
   unFoldDefis?: string[];
 };
 
+export type TokenDisplayMode = 'byAddress' | 'byAsset' | 'bySymbol';
+
 export interface ITokenManageSettingMap {
   [address: string]: {
     /** @deprecated will be migrated to store.pinedQueue */
@@ -183,6 +185,7 @@ export interface PreferenceStore {
   balanceHideType?: BALANCE_HIDE_TYPE;
 
   currency?: string;
+  tokenDisplayMode?: TokenDisplayMode;
 
   hasShowAsterPopup: boolean;
   hasShowAsterReferralMap: Record<string, boolean>;
@@ -271,6 +274,7 @@ export class PreferenceService extends StoreServiceBase<
         watchlistSkip: false,
         balanceHideType: BALANCE_HIDE_TYPE.SHOW,
         currency: 'USD',
+        tokenDisplayMode: 'byAddress',
         hasShowAsterReferralMap: {},
         hasShowAsterPopup: false,
         hyperliquidInvite: {
@@ -320,6 +324,14 @@ export class PreferenceService extends StoreServiceBase<
 
   getHasOpenCopyTrading = () => {
     return this.store.hasOpenCopyTrading;
+  };
+
+  getTokenDisplayMode = (): TokenDisplayMode => {
+    return this.store.tokenDisplayMode || 'byAddress';
+  };
+
+  setTokenDisplayMode = (mode: TokenDisplayMode) => {
+    this.store.tokenDisplayMode = mode;
   };
 
   addAddressAvatar = (address: string, avatar: string) => {
@@ -538,7 +550,7 @@ export class PreferenceService extends StoreServiceBase<
     // return the first account in the account list
     const [first] = await this.keyringService.getAllVisibleAccountsArray();
 
-    return first;
+    return first!;
   };
 
   setLastUsedAccount = (account: Account) => {
@@ -601,11 +613,6 @@ export class PreferenceService extends StoreServiceBase<
       delete map[key];
       this.store.balanceMap = map;
     }
-  };
-
-  getAddressBalance = (address: string): EvmTotalBalanceResponse | null => {
-    const balanceMap = this.store.balanceMap || {};
-    return balanceMap[address.toLowerCase()] || null;
   };
 
   getTestnetAddressBalance = (
@@ -1046,8 +1053,8 @@ export class PreferenceService extends StoreServiceBase<
       includeDefiAndTokens: [],
       excludeDefiAndTokens: [],
       pinedQueue: this.store.pinedQueue || [],
-      foldNfts: this.store.foldNfts || [],
-      unfoldNfts: this.store.unFoldNfts || [],
+      foldNfts: [],
+      unfoldNfts: [],
       foldDefis: [],
       // foldDefis: this.store.foldDefis || [],
       unFoldDefis: [],

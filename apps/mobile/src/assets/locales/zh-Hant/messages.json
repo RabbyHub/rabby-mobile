@@ -2743,7 +2743,8 @@
         "receive": "接收",
         "closedPnl": "已平仓盈亏",
         "minimumWarning": "最小金额为 {{percent}}%",
-        "total": "總計"
+        "total": "總計",
+        "rabbyFeeTipsV2": "Rabby 手续費：0.02%"
       },
       "PerpsOpenPositionPopup": {
         "leverage": "杠杆",
@@ -2867,7 +2868,7 @@
         "canBorrow": "您可以根据您提供的抵押品借款，最高可达借款上限。",
         "isolated": "由於隔離模式，借貸能力和資產受到限制。",
         "emodeNoAssets": "我們找不到任何與您的搜索相關的資產。請嘗試使用不同的類別。",
-        "emode": "在 E-Mode 中，某些資產無法借用。退出 E-Mode 以獲取所有資產的訪問權限。"
+        "emode": "某些資產在 E-Mode 中無法借用。退出 E-Mode 以訪問所有資產。"
       },
       "list": {
         "headers": {
@@ -3116,6 +3117,13 @@
         "repayWith": "抵押品以偿还",
         "collateralNotEnough": "您的抵押余额低于所选金额。",
         "toRepay": "預期償還金額"
+      },
+      "repayWithAToken": {
+        "header": {
+          "assets": "代幣",
+          "balance": "餘額"
+        },
+        "title": "選擇還款代幣"
       }
     },
     "address": {

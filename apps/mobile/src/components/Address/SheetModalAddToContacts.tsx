@@ -13,7 +13,7 @@ import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { useFormik } from 'formik';
 import { apisAddress } from '@/core/apis';
 import { useAlias } from '@/hooks/alias';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 

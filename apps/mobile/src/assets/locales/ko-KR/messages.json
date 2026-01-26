@@ -2580,7 +2580,8 @@
         "amount": "금액",
         "confirm": "확인",
         "minimumWarning": "최소 금액은 {{percent}}%입니다.",
-        "total": "총계"
+        "total": "총계",
+        "rabbyFeeTipsV2": "Rabby 수수료: 0.02%"
       },
       "PerpsOpenPositionPopup": {
         "minimumOrderSize": "최소 주문 크기는 $10입니다.",
@@ -2704,7 +2705,7 @@
         "canBorrow": "담보를 제공한 만큼 최대 차입 한도까지 빌릴 수 있습니다.",
         "isolated": "대규모 모드로 인해 빌리기 힘이 제한되고 자산이 한정됩니다.",
         "emodeNoAssets": "검색과 관련된 자산을 찾을 수 없습니다. 다른 카테고리로 다시 시도해 보세요.",
-        "emode": "E-모드에서는 일부 자산을 빌릴 수 없습니다. 모든 자산에 접근하려면 E-모드를 종료하세요."
+        "emode": "E-모드에서 빌릴 수 없는 자산이 있습니다. 모든 자산에 접근하려면 E-모드에서 나가십시오."
       },
       "list": {
         "headers": {
@@ -2953,6 +2954,13 @@
         "repayWith": "상환할 담보",
         "collateralNotEnough": "귀하의 담보 잔액이 선택한 금액보다 낮습니다.",
         "toRepay": "상환 예상 금액"
+      },
+      "repayWithAToken": {
+        "header": {
+          "balance": "잔고",
+          "assets": "토큰"
+        },
+        "title": "상환 토큰 선택"
       }
     },
     "address": {

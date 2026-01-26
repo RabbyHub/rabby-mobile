@@ -52,6 +52,7 @@ import { LendingService } from './lendingService';
 import { SAFE_API_KEY } from '@/constant/env';
 import { perfEvents } from '../utils/perf';
 import { KeyringIntf } from '@rabby-wallet/keyring-utils';
+import { AutoConnectService } from './autoConnect';
 
 migrateAppStorage(appStorage);
 
@@ -186,6 +187,10 @@ export const securityEngineService = new SecurityEngineService({
   storageAdapter: appStorage,
 });
 
+export const autoConnectService = new AutoConnectService({
+  dappService,
+});
+
 transactionWatcherService.roll();
 
 const syncPendingTxs = () => {
@@ -261,6 +266,8 @@ export const lendingService = new LendingService({
 export const currencyService = new CurrencyService({
   storageAdapter: appStorage,
 });
+
+export { default as debugLogService } from './debugLogService';
 
 migrateServices({
   contactBook: contactService,

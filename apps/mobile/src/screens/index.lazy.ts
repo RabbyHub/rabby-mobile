@@ -36,12 +36,6 @@ export const NFTDetailScreen = registerAppScreen<
   loader: () => import('@/screens/NftDetail').then(m => m.NFTDetailScreen),
   name: RootNames.NftDetail,
 });
-export const DeFiDetailScreen = registerAppScreen<
-  typeof import('@/screens/DeFiDetail').DeFiDetailScreen
->({
-  loader: () => import('@/screens/DeFiDetail').then(m => m.DeFiDetailScreen),
-  name: RootNames.DeFiDetail,
-});
 export const NotFoundScreen = registerAppScreen<
   typeof import('@/screens/NotFound').default
 >({

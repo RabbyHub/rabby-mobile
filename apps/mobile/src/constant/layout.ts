@@ -120,12 +120,14 @@ export const RootNames = {
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
+  DevUIToastAndNotifications: 'DevUIToastAndNotifications',
   DevUIDapps: 'DevUIDapps',
   DevDataSQLite: 'DevDataSQLite',
   DevUIBuiltInPages: 'DevUIBuiltInPages',
   DevUIPermissions: 'DevUIPermissions',
   DevSwitches: 'DevSwitches',
   DevPerf: 'DevPerf',
+  DebugLogViewer: 'DebugLogViewer',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
@@ -173,7 +175,6 @@ export const RootNames = {
   ImportSafeAddress2024: 'ImportSafeAddress2024',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
-  DeFiDetail: 'DeFiDetail',
   CreateNewAddress: 'CreateNewAddress',
   SetPassword2024: 'SetPassword2024',
   CreateChooseBackup: 'CreateChooseBackup',
@@ -365,6 +366,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIAnimatedTextAndView]: bg1Default2024Conf,
       [RootNames.DevUIFormShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAccountShowCase]: bg1Default2024Conf,
+      [RootNames.DevUIToastAndNotifications]: bg1Default2024Conf,
       [RootNames.DevUIScreenContainerShowCase]: bg1Default2024Conf,
       [RootNames.DevUIDapps]: bg1Default2024Conf,
       [RootNames.DevDataSQLite]: bg1Default2024Conf,
@@ -372,6 +374,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIPermissions]: bg1Default2024Conf,
       [RootNames.DevSwitches]: bg1Default2024Conf,
       [RootNames.DevPerf]: bg1Default2024Conf,
+      [RootNames.DebugLogViewer]: bg1Default2024Conf,
 
       // StackTransaction
       [RootNames.Send]: bg1Default2024Conf,
@@ -414,7 +417,6 @@ function makeScreenSpecConfig() {
       [RootNames.ImportSafeAddress2024]: bg1Default2024Conf,
       [RootNames.AddressDetail]: bg1Default2024Conf,
       [RootNames.NftDetail]: bg1Default2024Conf,
-      [RootNames.DeFiDetail]: bg1Default2024Conf,
       [RootNames.CreateNewAddress]: bg1Default2024Conf,
       [RootNames.SetPassword2024]: bg1Default2024Conf,
       [RootNames.CreateChooseBackup]: bg1Default2024Conf,

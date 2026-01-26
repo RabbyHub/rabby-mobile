@@ -1,7 +1,7 @@
 import { RcIconBridge } from '@/assets2024/singleHome';
 import { BSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';

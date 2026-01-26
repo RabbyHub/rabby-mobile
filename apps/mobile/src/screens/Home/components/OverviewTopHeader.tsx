@@ -1,12 +1,13 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
+  GestureResponderEvent,
+  Pressable,
   Animated as RNAnimated,
   Easing as RNEasing,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -36,13 +37,11 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
+import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import Animated, {
   Easing,
-  runOnJS,
   SharedValue,
-  useAnimatedReaction,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
   withRepeat,
   withTiming,
@@ -52,12 +51,27 @@ import {
   useScene24hBalanceCombinedData,
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
+import useTokenList from '@/store/tokens';
+import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import balanceStore from '@/store/balance';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { IS_ANDROID } from '@/core/native/utils';
+import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 
-export function TabsTopHeader(): JSX.Element {
-  const { tabIndex } = useHomeTabIndex();
-  const showNetWorth = tabIndex !== 0;
+export const HeaderHeight = 30;
 
+export function TabsTopHeader({
+  indexDecimalValue,
+}: // indexValue,
+{
+  indexDecimalValue: SharedValue<number>;
+  // indexValue: SharedValue<number>;
+}): JSX.Element {
+  const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
+  const showNetWorth = tabIndexFromSv > 0.7;
+  const { tabIndex, setTabIndex } = useHomeTabIndex();
   const { isLoading: loading } = useSceneIsLoading('Home');
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
@@ -65,9 +79,11 @@ export function TabsTopHeader(): JSX.Element {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { remoteVersion } = useUpgradeInfo();
+  const focusedTab = useFocusedTab();
 
   const [hideType, setHideType] = useHideBalance();
-  const handleHideTypeChange = useMemoizedFn(() => {
+  const handleHideTypeChange = useMemoizedFn((event: GestureResponderEvent) => {
+    event.stopPropagation();
     if (hideType === 'HALF_HIDE') {
       setHideType('HIDE');
     } else if (hideType === 'HIDE') {
@@ -77,35 +93,56 @@ export function TabsTopHeader(): JSX.Element {
     }
   });
   const { currency } = useCurrency();
+  const { myTop10Addresses } = useAccountInfo();
+  const balanceMap = balanceStore(s => s.balanceMap);
+  const totalBalance = useMemo(() => {
+    if (!myTop10Addresses.length) {
+      return 0;
+    }
+    return myTop10Addresses.reduce((acc, address) => {
+      const balance = balanceMap[address.toLowerCase()];
+      return acc + (balance?.totalBalance || 0);
+    }, 0);
+  }, [balanceMap, myTop10Addresses]);
 
   const { refreshing } = useLoadAssets();
+  const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
+  const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
+
+  const showRightArea = useMemo(() => {
+    return focusedTab !== TabName.token;
+  }, [focusedTab]);
+  const tokenDisplayModeLabel = useMemo(() => {
+    if (tokenDisplayMode === 'bySymbol') {
+      return 'By Symbol';
+    }
+    if (tokenDisplayMode === 'byAsset') {
+      return 'By Asset';
+    }
+    return 'By Address';
+  }, [tokenDisplayMode]);
+  const handleToggleTokenDisplayMode = useCallback(() => {
+    if (tokenDisplayMode === 'byAddress') {
+      setTokenDisplayMode('byAsset');
+    } else if (tokenDisplayMode === 'byAsset') {
+      setTokenDisplayMode('bySymbol');
+    } else {
+      setTokenDisplayMode('byAddress');
+    }
+  }, [setTokenDisplayMode, tokenDisplayMode]);
+  const handleSwitchToTokenTab = useCallback(
+    (index: number) => {
+      setTabIndex(index, true);
+    },
+    [setTabIndex],
+  );
 
   const netWorth = useMemo(() => {
-    return formatSmallCurrencyValue(data.rawNetWorth, { currency });
-  }, [data.rawNetWorth, currency]);
+    return formatSmallCurrencyValue(totalBalance, { currency });
+  }, [currency, totalBalance]);
   const changePercent = useMemo(() => {
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
-
-  const spin = useSharedValue(0);
-  spin.value = withRepeat(
-    withTiming(360, {
-      duration: 1600,
-      easing: Easing.linear,
-    }),
-    -1,
-    false,
-  );
-
-  const animatedSpinStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          rotate: `${spin.value}deg`,
-        },
-      ],
-    };
-  });
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -129,7 +166,9 @@ export function TabsTopHeader(): JSX.Element {
   return (
     <Animated.View style={[styles.headerBox, opacityStyle]}>
       {showNetWorth ? (
-        <View style={styles.leftBox}>
+        <Pressable
+          style={styles.leftBox}
+          onPress={() => handleSwitchToTokenTab(0)}>
           <Text style={styles.balanceTextBox}>{netWorth}</Text>
           <Text
             style={[
@@ -143,13 +182,15 @@ export function TabsTopHeader(): JSX.Element {
             {changePercent}
           </Text>
           {refreshing ? <LoadingCircle /> : null}
-        </View>
+        </Pressable>
       ) : (
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>
             {t('page.nextComponent.multiAddressHome.totalBalance')}
           </Text>
-          <TouchableOpacity onPress={handleHideTypeChange}>
+          <TouchableOpacity
+            style={[IS_ANDROID && { top: 2 }]}
+            onPress={handleHideTypeChange}>
             {hideType === 'HALF_HIDE' ? (
               <RcIconEyeHalfCloseCC
                 color={colors2024['neutral-title-1']}
@@ -170,39 +211,51 @@ export function TabsTopHeader(): JSX.Element {
               />
             )}
           </TouchableOpacity>
-          <Animated.View style={animatedSpinStyle}>
-            {loading && <RcIconLoading />}
-          </Animated.View>
+          {loading ? <LoadingCircle /> : null}
         </View>
       )}
 
-      <View style={styles.rightArea}>
-        <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+      <Pressable
+        style={styles.rightArea}
+        onPress={() => handleSwitchToTokenTab(1)}>
+        {showRightArea ? (
+          <>
+            <FeedbackEntryOnHeader style={styles.feedbackEntry} />
 
-        <AddressListScreenButton type="address" />
-        <TouchableWithoutFeedback
-          style={styles.settingEntry}
-          onPress={() => {
-            navigation.navigateDeprecated(RootNames.StackSettings, {
-              screen: RootNames.Settings,
-              params: {},
-            });
+            <AddressListScreenButton type="address" />
+            <Pressable
+              style={styles.settingEntry}
+              onPress={event => {
+                event?.stopPropagation?.();
+                navigation.navigateDeprecated(RootNames.StackSettings, {
+                  screen: RootNames.Settings,
+                  params: {},
+                });
 
-            matomoRequestEvent({
-              category: 'Click_Header',
-              action: 'Click_Setting',
-            });
-          }}>
-          <View style={styles.headerTouchableIcon}>
-            <RcIconSetting
-              width={20}
-              height={20}
-              color={colors2024['neutral-title-1']}
-            />
-            {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
+                matomoRequestEvent({
+                  category: 'Click_Header',
+                  action: 'Click_Setting',
+                });
+              }}>
+              <RcIconSetting
+                width={20}
+                height={20}
+                color={colors2024['neutral-title-1']}
+              />
+              {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+            </Pressable>
+          </>
+        ) : (
+          <TouchableOpacity onPress={handleToggleTokenDisplayMode}>
+            <View style={styles.displayModeButton}>
+              <Text style={styles.displayModeText}>
+                {tokenDisplayModeLabel}
+              </Text>
+              <IconPerpEdit color={colors2024['neutral-body']} />
+            </View>
+          </TouchableOpacity>
+        )}
+      </Pressable>
     </Animated.View>
   );
 }
@@ -222,9 +275,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // ...makeDebugBorder('yellow'),
     height: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
+    display: 'flex',
   },
   balanceTextBox: {
     color: colors2024['neutral-title-1'],
@@ -233,6 +288,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
+    // ...makeDebugBorder('green'),
   },
   changePercentText: {
     fontSize: 16,
@@ -243,9 +299,32 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   rightArea: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
+    flex: 1,
+    // position: 'relative',
+    // ...makeDebugBorder(),
+  },
+  displayModeButton: {
+    height: HeaderHeight,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: colors2024['neutral-bg-5'],
+    // justifyContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+  },
+  displayModeText: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors2024['neutral-body'],
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
     // position: 'relative',
     // ...makeDebugBorder(),
   },

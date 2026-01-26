@@ -19,7 +19,7 @@ import { FormInput } from '@/components/Form/Input';
 import { default as RcPasswordLockCC } from './icons/password-lock-cc.svg';
 import { CheckBoxCircled } from '@/components/Icons/Checkbox';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { apisLock } from '@/core/apis';
 import TouchableView, {
   SilentTouchableView,

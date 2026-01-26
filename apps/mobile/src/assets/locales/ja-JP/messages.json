@@ -2632,7 +2632,8 @@
         "total": "合計",
         "closedPnl": "クローズドPNL",
         "minimumWarning": "最小額は {{percent}}% です",
-        "receive": "受け取る"
+        "receive": "受け取る",
+        "rabbyFeeTipsV2": "Rabby手数料: 0.02%"
       },
       "PerpsOpenPositionPopup": {
         "minimumOrderSize": "最小注文サイズは$10です。",
@@ -2756,7 +2757,7 @@
         "canBorrow": "提供した担保に基づいて、借入上限まで借りることができます。",
         "isolated": "アイソレーションモードにより、借入可能額と資産は制限されています。",
         "emodeNoAssets": "あなたの検索に関連する資産は見つかりませんでした。別のカテゴリで再度試してください。",
-        "emode": "E-モードでは、一部の資産は借りることができません。すべての資産にアクセスするには、E-モードを終了してください。"
+        "emode": "一部の資産はE-Modeで借りることができません。すべての資産にアクセスするにはE-Modeを終了してください。"
       },
       "list": {
         "headers": {
@@ -3005,6 +3006,13 @@
         "toRepay": "返済予定額",
         "repayWith": "担保として返済するための",
         "collateralNotEnough": "選択した金額よりも担保残高が低いです。"
+      },
+      "repayWithAToken": {
+        "header": {
+          "assets": "トークン",
+          "balance": "残高"
+        },
+        "title": "リペイトークンを選択してください"
       }
     },
     "address": {

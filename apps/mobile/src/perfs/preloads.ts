@@ -19,12 +19,14 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevUIFormShowCase]: 'DevUIFormShowCase',
   [RootNames.DevUIAccountShowCase]: 'DevUIAccountShowCase',
   [RootNames.DevUIScreenContainerShowCase]: 'DevUIScreenContainerShowCase',
+  [RootNames.DevUIToastAndNotifications]: 'DevUIToastAndNotifications',
   [RootNames.DevUIDapps]: 'DevUIDapps',
   [RootNames.DevUIPermissions]: 'DevUIPermissions',
   [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
   [RootNames.DevSwitches]: 'DevSwitches',
   [RootNames.DevPerf]: 'DevPerf',
+  [RootNames.DebugLogViewer]: 'DebugLogViewer',
 };
 
 export async function preloadNonProductionScreens() {

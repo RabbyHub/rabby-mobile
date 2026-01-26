@@ -2852,7 +2852,8 @@
         "total": "Total",
         "confirm": "Confirmar",
         "amount": "Cantidad",
-        "minimumWarning": "La cantidad mínima es del {{percent}}%"
+        "minimumWarning": "La cantidad mínima es del {{percent}}%",
+        "rabbyFeeTipsV2": "Rabby tarifa: 0.02%"
       },
       "PerpsOpenPositionPopup": {
         "maximumOrderSize": "El tamaño máximo del pedido es {{amount}}",
@@ -2976,7 +2977,7 @@
         "canBorrow": "Puedes pedir prestado basado en tu colateral proporcionado, hasta el límite de préstamo.",
         "isolated": "El poder de préstamo y los activos están limitados debido al modo de Aislamiento.",
         "emodeNoAssets": "No pudimos encontrar ningún activo relacionado con tu búsqueda. Intenta de nuevo con una categoría diferente.",
-        "emode": "En E-Mode, algunos activos no son tomables en préstamo. Sal de E-Mode para acceder a todos los activos."
+        "emode": "Algunos activos no están disponibles para tomar prestados en E-Mode. Salga de E-Mode para acceder a todos los activos."
       },
       "list": {
         "headers": {
@@ -3225,6 +3226,13 @@
         "collateralNotEnough": "Su saldo de colateral es menor que la cantidad seleccionada.",
         "toRepay": "Cantidad esperada a reembolsar",
         "repayWith": "Colateral para reembolsar con"
+      },
+      "repayWithAToken": {
+        "header": {
+          "assets": "Token",
+          "balance": "Saldo"
+        },
+        "title": "Seleccionar Token de Reembolso"
       }
     },
     "address": {

@@ -27,6 +27,7 @@ import { TFunction } from 'i18next';
 import { useMemoizedFn } from 'ahooks';
 import { runDevIIFEFunc } from '@/core/utils/store';
 import { useCreationWithShallowCompare } from './common/useMemozied';
+import { storeApiAppLayout } from './useAppLayout';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -252,7 +253,7 @@ export function getColors2024(
   };
 }
 
-function useStyleSafeAreaInsets() {
+export function useStyleSafeAreaInsets() {
   const safeAreaInsetsOrig = useSafeAreaInsets();
   const safeAreaInsets = useMemo(() => {
     return {
@@ -300,6 +301,39 @@ export function useTheme2024<
 
   return {
     ...cs,
+    colors: classicalColors,
+    classicalColors,
+    colors2024,
+    appThemeMode,
+    isLight,
+  };
+}
+
+export function getTheme2024<
+  T extends ReturnType<typeof createGetStyles2024>,
+>(opts?: { getStyle?: T; isLight?: boolean }) {
+  const appThemeMode = getBinaryMode();
+  const safeAreaInsets = storeApiAppLayout.getSafeAreaInsets();
+  const getStyle = opts?.getStyle || makeNoop();
+
+  const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
+  const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
+
+  const isLight =
+    typeof opts?.isLight === 'boolean'
+      ? opts?.isLight
+      : appThemeMode === 'light';
+
+  const styles = getStyle?.({
+    colors: classicalColors,
+    colors2024,
+    classicalColors,
+    isLight,
+    safeAreaInsets,
+  }) as T extends void ? void : ReturnType<T>;
+
+  return {
+    ...styles,
     colors: classicalColors,
     classicalColors,
     colors2024,

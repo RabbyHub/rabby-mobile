@@ -29,7 +29,7 @@ import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { useIsFocused } from '@react-navigation/native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';

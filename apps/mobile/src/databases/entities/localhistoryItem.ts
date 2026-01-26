@@ -14,7 +14,9 @@ import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
+@ParseEntity()
 @Entity(ORM_TABLE_NAMES.cache_local_historyitem)
 export class LocalHistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
@@ -136,47 +138,6 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
     e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
 
     e.makeDbId();
-  }
-
-  static stmSql = `
-  INSERT INTO "${APP_DB_PREFIX}${ORM_TABLE_NAMES.cache_local_historyitem}"
-  ("_db_id", "owner_addr", "is_scam", "txHash", "project_id", "chain", "status", "time_at", "cate_id", "receives", "sends", "tx_name", "token_approve_id", "token_approve_spender", "token_approve_value", "other_addr", "tx_from_address", "tx_to_address", "tx_usd_gas_fee", "tx_eth_gas_fee", "historyItemCateType", "source_type", "_local_created_at", "_local_updated_at")
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" ) DO UPDATE SET "_local_updated_at" = EXCLUDED."_local_updated_at"
-  `;
-
-  static getStatementSql() {
-    return this.stmSql;
-  }
-
-  bindUpsertParams(stm: PreparedStatement): PreparedStatement {
-    stm.bindSync([
-      this._db_id,
-      this.owner_addr,
-      this.is_scam,
-      this.txHash,
-      this.project_id,
-      this.chain,
-      this.status,
-      this.time_at,
-      this.cate_id,
-      this.receives,
-      this.sends,
-      this.tx_name,
-      this.token_approve_id,
-      this.token_approve_spender,
-      badRealTransformer.to(this.token_approve_value),
-      this.other_addr,
-      this.tx_from_address,
-      this.tx_to_address,
-      badRealTransformer.to(this.tx_usd_gas_fee),
-      badRealTransformer.to(this.tx_eth_gas_fee),
-      this.historyItemCateType,
-      this.source_type,
-      this._local_created_at,
-      this._local_updated_at,
-    ]);
-
-    return stm;
   }
 
   static fillEntityFromLocalSend(

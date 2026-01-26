@@ -56,7 +56,7 @@ import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import {
   APP_FEATURE_SWITCH,
   APP_URLS,
@@ -671,6 +671,17 @@ function DevSettingsBlocks() {
               icon: RcCode,
               onPress: () => {
                 setDataPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: 'Debug Logs Viewer',
+              icon: RcCode,
+              onPress: () => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DebugLogViewer,
+                  }),
+                );
               },
             },
           ],

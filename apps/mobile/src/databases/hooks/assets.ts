@@ -1,22 +1,22 @@
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
-import { chunk } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import {
-  syncRemotePortocols,
-  syncRemotePortocol,
+  syncRemoteProtocols,
+  syncRemoteProtocol,
 } from '@/databases/sync/assets';
 import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
 import {
   batchLoadProjects,
   loadAppChainList,
   loadPortfolioSnapshot,
-  snapshot2Display,
 } from '@/screens/Home/utils/portfolio';
 
 import { TokenItemEntity } from '../entities/tokenitem';
 import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
+import { IProtocolItem } from '@/store/protocols';
+import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -69,51 +69,32 @@ export const loadAppChainComplexProtocols = async (userAddr: string) => {
 export const syncProtocols = async (
   address: string,
   force?: boolean,
-  onlySync?: boolean,
-) => {
+): Promise<IProtocolItem[]> => {
   if (!address) {
     return [];
   }
   const isExpired = await ProtocolItemEntity.isExpired(address);
 
   if (!isExpired && !force) {
-    return onlySync ? [] : ProtocolItemEntity.batchQueryPortocols(address);
+    const protocols = await ProtocolItemEntity.batchQueryProtocols(address);
+    return protocols;
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
-  const { list } = snapshot2Display(snapshotRes || []);
-  const snapshotData = Object.values(list)?.sort(
-    (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-  );
-
-  const chunkIds = chunk(
-    snapshotData.map(i => i.id),
-    5,
-  );
-  const protocols: ComplexProtocol[] = [];
-  await Promise.all(
-    chunkIds.map(async ids => {
-      const projects = await batchLoadProjects(address, ids, false, true);
-      if (!projects?.length) {
-        return;
-      }
-      protocols.push(...projects.filter(i => !!i));
-    }),
-  );
   const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
     address,
   );
-  protocols.push(...appChainProtocols);
-  syncRemotePortocols(address, [...protocols]);
-  return protocols;
+  const protocols = [...snapshotRes, ...appChainProtocols];
+  syncRemoteProtocols(address, protocols);
+  return protocols.map(p => complexProtocol2ProtocolItem(p, address));
 };
 
 export const syncSpecificProtocol = async (
   address: string,
   protocolId: string,
   chain: string,
-) => {
+): Promise<IProtocolItem | undefined> => {
   if (!address || !protocolId || !chain) {
-    return [];
+    return undefined;
   }
 
   const isAppChainProtocol = isAppChain(chain);
@@ -135,12 +116,12 @@ export const syncSpecificProtocol = async (
     !projects[0] ||
     !projects[0].portfolio_item_list?.length
   ) {
-    syncRemotePortocol(address, null, { deleteId: protocolId });
-    return [];
+    syncRemoteProtocol(address, null, { deleteId: protocolId });
+    return undefined;
   }
 
-  syncRemotePortocol(address, projects[0]);
-  return projects;
+  syncRemoteProtocol(address, projects[0]);
+  return complexProtocol2ProtocolItem(projects[0], address);
 };
 
 export const syncNFTs = async (

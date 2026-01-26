@@ -1,5 +1,4 @@
 import { Text } from '@/components';
-import { RootNames } from '@/constant/layout';
 import { contactService, preferenceService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -8,7 +7,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
@@ -44,13 +43,13 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { apiBalance, apiMnemonic } from '@/core/apis';
+import { apiBalance } from '@/core/apis';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { syncProtocols } from '@/databases/hooks/assets';
 import useTokenList from '@/store/tokens';
+import usePortfolioList from '@/store/protocols';
 import { eventBus } from '@/utils/events';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { apisSingleHome } from '../Home/hooks/singleHome';
@@ -92,7 +91,9 @@ export const ImportSuccessScreen2024 = () => {
       Array.isArray(state.address) ? state.address : [state.address]
     ).filter(Boolean);
 
-    if (addressList.length === 0) return;
+    if (addressList.length === 0) {
+      return;
+    }
     const record = (
       scene: Parameters<
         PerfAccountEventBusListeners['ACCOUNT_ADDED']
@@ -252,7 +253,7 @@ export const ImportSuccessScreen2024 = () => {
         addresses.length > 10 ? addresses.slice(0, 10) : addresses;
       syncAddresses.forEach(address => {
         useTokenList.getState().getTokenList(address);
-        syncProtocols(address);
+        usePortfolioList.getState().getProtocols(address);
       });
       syncMultiAddressesHistory(syncAddresses);
       eventBus.emit('PERPS_ADD_ADDRESSES', syncAddresses);
