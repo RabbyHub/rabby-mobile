@@ -21,115 +21,137 @@ import { RcIconScannerCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { Button } from '@/components2024/Button';
 import { toast, toastLoadingSuccess } from '@/components2024/Toast';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
-function DevUIToastAndNotifications(): JSX.Element {
+function DevToast() {
   const { styles, colors2024, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
-
-  const navigation = useNavigation();
-
   return (
-    <NormalScreenContainer
-      style={styles.screen}
-      noHeader
-      overwriteStyle={{ backgroundColor: colors['neutral-card-1'] }}>
-      <ScrollView
-        nestedScrollEnabled={false}
-        contentContainerStyle={styles.screenScrollableView}
-        horizontal={false}>
-        <Text style={styles.areaTitle}>Toast & Notifications</Text>
-
-        <View style={styles.showCaseRowsContainer}>
-          <Text
-            style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
-            Toast
+    <View style={styles.showCaseRowsContainer}>
+      <Text style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+        Toast
+      </Text>
+      <View style={{ width: '100%', flexDirection: 'column' }}>
+        <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
+          <Text style={[{ fontSize: 18, fontWeight: '700' }]}>
+            Summary{' '.repeat(100)}
           </Text>
-          <View style={{ width: '100%', flexDirection: 'column' }}>
-            <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
-              <Text style={[{ fontSize: 18, fontWeight: '700' }]}>
-                Summary{' '.repeat(100)}
-              </Text>
-              <Text style={{ marginBottom: 12 }}>
-                `toast` is a series of functions to show toast notifications.
-                <Text>{'\n'}</Text>
-                Currently supported types are: `success`, `error`, `info`,
-                `loading`, and normal.
-              </Text>
+          <Text style={{ marginBottom: 12 }}>
+            `toast` is a series of functions to show toast notifications.
+            <Text>{'\n'}</Text>
+            Currently supported types are: `success`, `error`, `info`,
+            `loading`, and normal.
+          </Text>
+        </Text>
+
+        {/* toast string */}
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              toast string as content{' '.repeat(100)}
             </Text>
+            <Text style={{ marginBottom: 12 }}>
+              You can simply call `toast.success('Your message here')` to show a
+              success toast with the provided string as content.
+            </Text>
+          </View>
 
-            {/* toast string */}
-            <View style={{ width: '100%', marginBottom: 24 }}>
-              <View style={[styles.propertyDesc, { marginTop: 12 }]}>
-                <Text style={styles.propertyType}>
-                  toast string as content{' '.repeat(100)}
-                </Text>
-                <Text style={{ marginBottom: 12 }}>
-                  You can simply call `toast.success('Your message here')` to
-                  show a success toast with the provided string as content.
-                </Text>
-              </View>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Success'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.success('This is a success toast!');
+              }}
+            />
 
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
-                <Button
-                  height={48}
-                  titleStyle={{ color: colors2024['neutral-title-2'] }}
-                  type={'primary'}
-                  title={'Success'}
-                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
-                  onPress={() => {
-                    toast.success('This is a success toast!');
-                  }}
-                />
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'danger'}
+              title={'Error'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.error('This is an error toast!');
+              }}
+            />
 
-                <Button
-                  height={48}
-                  titleStyle={{ color: colors2024['neutral-title-2'] }}
-                  type={'danger'}
-                  title={'Error'}
-                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
-                  onPress={() => {
-                    toast.error('This is an error toast!');
-                  }}
-                />
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Info'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.info('This is an info toast with 5s duration!', {
+                  duration: 5000,
+                });
+              }}
+            />
+          </View>
+        </View>
 
-                <Button
-                  height={48}
-                  titleStyle={{ color: colors2024['blue-default'] }}
-                  type={'ghost'}
-                  title={'Info'}
-                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
-                  onPress={() => {
-                    toast.info('This is an info toast with 5s duration!', {
-                      duration: 5000,
-                    });
-                  }}
-                />
-              </View>
-            </View>
+        {/* toast custom node */}
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              toast with custom React Node as content{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              You can also pass a custom React Node to `toast` functions to
+              create more complex toast notifications.
+            </Text>
+          </View>
 
-            {/* toast custom node */}
-            <View style={{ width: '100%', marginBottom: 24 }}>
-              <View style={[styles.propertyDesc, { marginTop: 12 }]}>
-                <Text style={styles.propertyType}>
-                  toast with custom React Node as content{' '.repeat(100)}
-                </Text>
-                <Text style={{ marginBottom: 12 }}>
-                  You can also pass a custom React Node to `toast` functions to
-                  create more complex toast notifications.
-                </Text>
-              </View>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Custom Success'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.success(ctx => (
+                  <View
+                    style={[
+                      ctx.styles.containerInner,
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      },
+                    ]}>
+                    <ctx.Icon style={[ctx.styles.icon, { marginRight: 0 }]} />
+                    <Text
+                      style={[
+                        ctx.styles.text,
+                        {
+                          color: colors2024['neutral-title-2'],
+                          fontSize: 16,
+                        },
+                      ]}>
+                      This is a custom success toast!
+                    </Text>
+                  </View>
+                ));
+              }}
+            />
 
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
-                <Button
-                  height={48}
-                  titleStyle={{ color: colors2024['neutral-title-2'] }}
-                  type={'primary'}
-                  title={'Custom Success'}
-                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
-                  onPress={() => {
-                    toast.success(ctx => (
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Custom Info'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.info(
+                  ctx => {
+                    return (
                       <View
                         style={[
                           ctx.styles.containerInner,
@@ -150,86 +172,279 @@ function DevUIToastAndNotifications(): JSX.Element {
                               fontSize: 16,
                             },
                           ]}>
-                          This is a custom success toast!
+                          This is a custom info toast!
                         </Text>
                       </View>
-                    ));
-                  }}
-                />
-
-                <Button
-                  height={48}
-                  titleStyle={{ color: colors2024['blue-default'] }}
-                  type={'ghost'}
-                  title={'Custom Info'}
-                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
-                  onPress={() => {
-                    toast.info(
-                      ctx => {
-                        return (
-                          <View
-                            style={[
-                              ctx.styles.containerInner,
-                              {
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 8,
-                              },
-                            ]}>
-                            <ctx.Icon
-                              style={[ctx.styles.icon, { marginRight: 0 }]}
-                            />
-                            <Text
-                              style={[
-                                ctx.styles.text,
-                                {
-                                  color: colors2024['neutral-title-2'],
-                                  fontSize: 16,
-                                },
-                              ]}>
-                              This is a custom info toast!
-                            </Text>
-                          </View>
-                        );
-                      },
-                      { duration: 4000 },
                     );
-                  }}
-                />
-              </View>
-            </View>
-
-            {/* special api toastLoadingSuccess */}
-            <View style={{ width: '100%', marginBottom: 24 }}>
-              <View style={[styles.propertyDesc, { marginTop: 12 }]}>
-                <Text style={styles.propertyType}>
-                  toastLoading with success indication{' '.repeat(100)}
-                </Text>
-                <Text style={{ marginBottom: 12 }}>
-                  You can use `toastLoadingSuccess` to show a loading toast, and
-                  then call the returned function to hide it. You can also show
-                  a success toast after hiding the loading toast.
-                </Text>
-              </View>
-
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
-                <Button
-                  height={48}
-                  titleStyle={{ color: colors2024['neutral-title-2'] }}
-                  type={'primary'}
-                  title={'Loading then Success'}
-                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
-                  onPress={() => {
-                    const hideLoading = toastLoadingSuccess(
-                      'Loaded Successfully!',
-                    );
-                  }}
-                />
-              </View>
-            </View>
+                  },
+                  { duration: 4000 },
+                );
+              }}
+            />
           </View>
         </View>
-      </ScrollView>
+
+        {/* special api toastLoadingSuccess */}
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              toastLoading with success indication{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              You can use `toastLoadingSuccess` to show a loading toast, and
+              then call the returned function to hide it. You can also show a
+              success toast after hiding the loading toast.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Loading then Success'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                const hideLoading = toastLoadingSuccess('Loaded Successfully!');
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function DevNotifications() {
+  const { styles, colors2024, colors } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <Text style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+        Notifications
+      </Text>
+      <View style={{ width: '100%', flexDirection: 'column' }}>
+        <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
+          <Text style={[{ fontSize: 18, fontWeight: '700' }]}>
+            Summary{' '.repeat(100)}
+          </Text>
+          <Text style={{ marginBottom: 12 }}>
+            `toast` is a series of functions to show toast notifications.
+            <Text>{'\n'}</Text>
+            Currently supported types are: `success`, `error`, `info`,
+            `loading`, and normal.
+          </Text>
+        </Text>
+
+        {/* toast string */}
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              toast string as content{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              You can simply call `toast.success('Your message here')` to show a
+              success toast with the provided string as content.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Success'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.success('This is a success toast!');
+              }}
+            />
+
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'danger'}
+              title={'Error'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.error('This is an error toast!');
+              }}
+            />
+
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Info'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.info('This is an info toast with 5s duration!', {
+                  duration: 5000,
+                });
+              }}
+            />
+          </View>
+        </View>
+
+        {/* toast custom node */}
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              toast with custom React Node as content{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              You can also pass a custom React Node to `toast` functions to
+              create more complex toast notifications.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Custom Success'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.success(ctx => (
+                  <View
+                    style={[
+                      ctx.styles.containerInner,
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      },
+                    ]}>
+                    <ctx.Icon style={[ctx.styles.icon, { marginRight: 0 }]} />
+                    <Text
+                      style={[
+                        ctx.styles.text,
+                        {
+                          color: colors2024['neutral-title-2'],
+                          fontSize: 16,
+                        },
+                      ]}>
+                      This is a custom success toast!
+                    </Text>
+                  </View>
+                ));
+              }}
+            />
+
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['blue-default'] }}
+              type={'ghost'}
+              title={'Custom Info'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                toast.info(
+                  ctx => {
+                    return (
+                      <View
+                        style={[
+                          ctx.styles.containerInner,
+                          {
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 8,
+                          },
+                        ]}>
+                        <ctx.Icon
+                          style={[ctx.styles.icon, { marginRight: 0 }]}
+                        />
+                        <Text
+                          style={[
+                            ctx.styles.text,
+                            {
+                              color: colors2024['neutral-title-2'],
+                              fontSize: 16,
+                            },
+                          ]}>
+                          This is a custom info toast!
+                        </Text>
+                      </View>
+                    );
+                  },
+                  { duration: 4000 },
+                );
+              }}
+            />
+          </View>
+        </View>
+
+        {/* special api toastLoadingSuccess */}
+        <View style={{ width: '100%', marginBottom: 24 }}>
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <Text style={styles.propertyType}>
+              toastLoading with success indication{' '.repeat(100)}
+            </Text>
+            <Text style={{ marginBottom: 12 }}>
+              You can use `toastLoadingSuccess` to show a loading toast, and
+              then call the returned function to hide it. You can also show a
+              success toast after hiding the loading toast.
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Loading then Success'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                const hideLoading = toastLoadingSuccess('Loaded Successfully!');
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function DevUIToastAndNotifications(): JSX.Element {
+  const { styles, colors2024, colors } = useTheme2024({
+    getStyle: getStyles,
+    isLight: true,
+  });
+
+  const [tabKey, setTabKey] = useState<string>('notifications');
+
+  return (
+    <NormalScreenContainer
+      style={styles.screen}
+      noHeader
+      overwriteStyle={{ backgroundColor: colors['neutral-card-1'] }}>
+      <Text style={styles.areaTitle}>Toast & Notifications</Text>
+      <Tabs.Container
+        key={tabKey}
+        onTabChange={event => {
+          setTabKey(event.tabName);
+        }}>
+        <Tabs.Tab name="toast" label={'Toast'}>
+          <Tabs.ScrollView
+            tvParallaxProperties={undefined}
+            nestedScrollEnabled={false}
+            contentContainerStyle={styles.screenScrollableView}
+            horizontal={false}>
+            <DevToast />
+          </Tabs.ScrollView>
+        </Tabs.Tab>
+        <Tabs.Tab name="notifications" label={'Notifications'}>
+          <Tabs.ScrollView
+            tvParallaxProperties={undefined}
+            nestedScrollEnabled={false}
+            contentContainerStyle={styles.screenScrollableView}
+            horizontal={false}>
+            <DevNotifications />
+          </Tabs.ScrollView>
+        </Tabs.Tab>
+      </Tabs.Container>
     </NormalScreenContainer>
   );
 }

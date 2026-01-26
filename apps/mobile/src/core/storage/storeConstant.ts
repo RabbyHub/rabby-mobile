@@ -26,6 +26,7 @@ export const enum APP_STORE_NAMES {
   'browser' = 'browser',
   'syncChain' = 'syncChain',
   'openapi' = 'openapi',
+  'notificationOpenapi' = 'notificationOpenapi',
 
   'metamaskMode' = 'metamaskMode',
 

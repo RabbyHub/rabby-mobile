@@ -18,9 +18,10 @@ import DeviceUtils from '@/core/utils/device';
 import { goToSystemSettingsFor, PerAndroid } from '@/core/utils/permissions';
 import { IS_ANDROID } from '@/core/native/utils';
 import i18next from 'i18next';
-import PushNotificationIOS, {
-  PushNotificationPermissions,
-} from '@react-native-community/push-notification-ios';
+import {
+  checkNotificationPermission,
+  requestUngrantedNotificationPermission,
+} from '@/core/notifications/switch';
 
 const appNotificationStore = zCreate<{
   /**
@@ -37,57 +38,14 @@ const appNotificationStore = zCreate<{
   };
 });
 
-function iosCheckPermission(): Promise<PushNotificationPermissions> {
-  return new Promise(resolve => {
-    PushNotificationIOS.checkPermissions(permissions => {
-      resolve(permissions);
-    });
-  });
-}
-
-const checkNotificationPermission = async (): Promise<boolean> => {
-  if (Platform.OS === 'ios') {
-    const settings = await iosCheckPermission();
-
-    return settings.alert === true;
-  }
-
-  if (DeviceUtils.isGteAndroid(13)) {
-    const status = await PermissionsAndroid.check(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-    );
-    return status;
-  }
-
-  return true;
-};
-
-const requestUngrantedNotificationPermission = async () => {
-  if (IS_ANDROID) {
-    if (DeviceUtils.isGteAndroid(13)) {
-      return PerAndroid.applyAndroidPermission(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-      );
-    } else {
-      return 'granted';
-    }
-  } else {
-    return 'denied';
-  }
-};
-
-async function fetchHasSystemPermission() {
+export async function fetchHasSystemPermission() {
   const hasSystemPermission = await checkNotificationPermission();
   appNotificationStore.setState({ hasSystemPermission });
 
   return hasSystemPermission;
 }
 
-export function useAppHasSystemNotificationPermission(): boolean | null {
-  return appNotificationStore(s => s.hasSystemPermission);
-}
-
-runIIFEFunc(async () => {
+async function startSubscribeAppStateChange() {
   const hasPermission = await fetchHasSystemPermission();
 
   if (!hasPermission) {
@@ -100,6 +58,10 @@ runIIFEFunc(async () => {
       fetchHasSystemPermission();
     }
   });
+}
+
+runIIFEFunc(() => {
+  startSubscribeAppStateChange();
 });
 
 export async function setEnableTransactionNofification(
@@ -152,16 +114,15 @@ export async function setEnableTransactionNofification(
   });
 }
 
+export function useAppHasSystemNotificationPermission(): boolean | null {
+  return appNotificationStore(s => s.hasSystemPermission);
+}
+
 export const useAppNotificationEnabled: UseValueHook = () => {
   const enabledTransactionNofification = appNotificationStore(
     s => s.enabledTransactionNofification,
   );
   const hasSystemPermission = appNotificationStore(s => s.hasSystemPermission);
-  // console.debug(
-  //   '[feat] useAppNotificationEnabled:: enabledTransactionNofification, hasSystemPermission',
-  //   enabledTransactionNofification,
-  //   hasSystemPermission,
-  // );
 
   return {
     value: hasSystemPermission === true && enabledTransactionNofification,

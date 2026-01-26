@@ -1,18 +1,35 @@
 import messaging from '@react-native-firebase/messaging';
-import PushNotificationIOS from '@react-native-community//push-notification-ios';
+import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import { Platform } from 'react-native';
-import { getDevServerHost } from '../utils/devServerSettings';
-import { makeMobileClientPushInfo } from '../apis/device';
 import { sleep } from '@/utils/async';
-import { RABBY_MOBILE_PUSH_TEST_SERVER_URL } from '@/constant/env';
 import { IS_IOS } from '../native/utils';
-import { isNonPublicProductionEnv } from '@/constant';
+import { zMutativeByMMKV } from '../storage/mmkv';
+import { notificationOpenapi } from './openapi';
 import { preferenceService } from '../services';
+import { perfEvents } from '../utils/perf';
+import { storeApiAccounts } from '@/hooks/account';
+import { accountEvents, getTop10MyAccounts } from '../apis/account';
+import { checkIfEnabledNotificationWithPermission } from './switch';
 
 const iosPush = {
   token: '',
   error: null as null | { message: string; code: number; details: any },
 };
+
+// const notificationMemStore = zCreate(
+//   zMutative<{
+//     pushToken: string;
+//   }>(() => {
+//     return {
+//       pushToken: '',
+//     }
+//   })
+// )
+
+export const notificationStore = zMutativeByMMKV('notification', {
+  pushToken: '',
+  // deviceId: ensureDeviceUUID(),
+});
 
 const iosTokenReady = new Promise<string>((resolve, reject) => {
   if (IS_IOS) {
@@ -67,75 +84,13 @@ export const registerForPushNotifications = async () => {
     ]);
   }
 
+  notificationStore.setState(prev => {
+    prev.pushToken = pushToken;
+  });
+
   return {
     pushToken: pushToken || '',
   };
-};
-
-function getTestPushServerURL() {
-  if (!isNonPublicProductionEnv) return null;
-
-  const localHost = getDevServerHost();
-  let connectURL = `http://${localHost}:3000`;
-  if (!localHost) {
-    connectURL = RABBY_MOBILE_PUSH_TEST_SERVER_URL || '';
-  }
-
-  return connectURL;
-}
-
-export const connectPushTestServer = async (data: { pushToken: string }) => {
-  const pushToken = data.pushToken;
-  if (!pushToken) {
-    throw new Error(
-      '[connectPushTestServer] Empty push token, cannot connect to push server',
-    );
-  }
-
-  const connectURL = getTestPushServerURL();
-  if (!connectURL) {
-    console.error('[connectPushTestServer] No push server URL configured');
-    return;
-  }
-
-  try {
-    console.debug('[connectPushTestServer] connectURL', connectURL);
-
-    const response = await fetch(
-      `${connectURL}/v1/api/rabby-mobile-push/connect`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...makeMobileClientPushInfo(
-            pushToken,
-            preferenceService.getPreferenceByKey(
-              'enabledTransactionNofification',
-            ) ?? false,
-          ),
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      console.error(
-        '[connectPushTestServer] HTTP error:',
-        response.status,
-        response.statusText,
-      );
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.debug('[connectPushTestServer] Token registered:', result);
-    return result;
-  } catch (err) {
-    console.error(
-      '[connectPushTestServer] Failed to register push token:',
-      err,
-    );
-    throw err;
-  }
 };
 
 export const startSubscribePushNotifications = async () => {
@@ -152,3 +107,41 @@ export const startSubscribePushNotifications = async () => {
     });
   }
 };
+
+const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
+export async function startConnectPushServerInterval() {
+  const requstConnect = async (appEnabled?: boolean) => {
+    return notificationOpenapi.setDeviceActiveStatus({
+      isActive:
+        (await checkIfEnabledNotificationWithPermission(appEnabled)) ?? true,
+    });
+  };
+
+  requstConnect();
+  perfEvents.subscribe('PREFERENCE_UPDATED', ctx => {
+    switch (ctx.key) {
+      case 'enabledTransactionNofification': {
+        requstConnect(ctx.value as boolean);
+        break;
+      }
+    }
+  });
+
+  notificationOpenapi.heartbeat();
+  setInterval(async () => {
+    await notificationOpenapi.heartbeat();
+  }, CONNECT_DURATION_MS);
+}
+
+export async function bindPushServer(pushToken: string) {
+  const requestBind = async () => {
+    return notificationOpenapi.bindDevice({
+      platform: Platform.OS === 'ios' ? 'ios' : 'android',
+      pushToken,
+      userAddrs: await getTop10MyAccounts().then(acc => acc.top10Addresses),
+    });
+  };
+
+  accountEvents.addListener('ACCOUNT_ADDED', requestBind);
+  accountEvents.addListener('ACCOUNT_REMOVED', requestBind);
+}

@@ -21,10 +21,13 @@ type MobileClientInfo = {
   enabledNotifications: boolean;
 };
 
-let devUUID = appJsonStore.getItem('rabbymobile_uuid', null);
-if (!devUUID) {
-  devUUID = uuidv4();
-  appJsonStore.setItem('rabbymobile_uuid', devUUID);
+export function ensureDeviceUUID(): string {
+  let devUUID = appJsonStore.getItem('rabbymobile_uuid', null);
+  if (!devUUID) {
+    devUUID = uuidv4();
+    appJsonStore.setItem('rabbymobile_uuid', devUUID);
+  }
+  return devUUID;
 }
 
 type MobileClientPushInfo = MobileClientInfo & {
@@ -40,7 +43,7 @@ export function makeMobileClientPushInfo(
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
   const uniqId = DeviceInfo.getUniqueIdSync();
-  const deviceUUID = `${devUUID}-${Platform.OS}-${uniqId}`;
+  const deviceUUID = `${ensureDeviceUUID()}-${Platform.OS}-${uniqId}`;
 
   return {
     // TODO: generate uuid and persisted

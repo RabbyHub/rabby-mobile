@@ -1,15 +1,15 @@
 import {
-  connectPushTestServer,
+  bindPushServer,
   registerForPushNotifications,
+  startConnectPushServerInterval,
   startSubscribePushNotifications,
-} from './frontend';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import { IS_IOS } from '../native/utils';
+} from './register';
 
-const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
+import { startConnectPushTestServerInterval } from './test-server';
 
 export async function connectPushServerOnBootstrap() {
   startSubscribePushNotifications();
+  startConnectPushServerInterval();
 
   let pushToken = '';
   try {
@@ -20,9 +20,6 @@ export async function connectPushServerOnBootstrap() {
   }
   console.debug('[connectPushTestServer] pushToken', pushToken);
 
-  connectPushTestServer({ pushToken });
-
-  setInterval(async () => {
-    await connectPushTestServer({ pushToken });
-  }, CONNECT_DURATION_MS);
+  bindPushServer(pushToken);
+  startConnectPushTestServerInterval(pushToken);
 }
