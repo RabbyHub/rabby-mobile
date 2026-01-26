@@ -280,12 +280,9 @@ const computeMultiAssets = (
   const tokens = chainServerId
     ? allTokens.filter(item => item.chain === chainServerId)
     : allTokens;
-  const visibleTokens = tokens.filter(item =>
-    lpTokenFilter(item, isLpTokenEnabled),
-  );
   const scamTokens: ITokenItem[] = [];
   const nonScamTokens: ITokenItem[] = [];
-  visibleTokens.forEach(token => {
+  tokens.forEach(token => {
     const usdValue = token.usd_value || 0;
     const isZeroCore = token.is_core && usdValue === 0;
     const isScam =
@@ -319,9 +316,13 @@ const computeMultiAssets = (
     totalValue,
   });
   return {
-    unFoldTokens: unfoldedTokens,
-    foldTokens: foldedTokens,
-    scamTokens: aggregatedScamTokens,
+    unFoldTokens: unfoldedTokens.filter(i =>
+      lpTokenFilter(i, isLpTokenEnabled),
+    ),
+    foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
+    scamTokens: aggregatedScamTokens.filter(i =>
+      lpTokenFilter(i, isLpTokenEnabled),
+    ),
   };
 };
 

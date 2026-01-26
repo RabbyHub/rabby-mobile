@@ -88,7 +88,19 @@ export class BalanceEntity extends EntityAddressAssetBase {
   static async queryAllBalance() {
     await prepareAppDataSource();
     const result = await this.getRepository().find();
-    return result.map(item => ({
+
+    // 数据订正：如果有多个 owner_addr 相同（大小写不敏感）的条目，只保留 update_at 最新的那个
+    const deduplicatedResult = Object.values(
+      result.reduce((acc, item) => {
+        const key = item.owner_addr.toLowerCase();
+        if (!acc[key] || item._local_updated_at > acc[key]._local_updated_at) {
+          acc[key] = item;
+        }
+        return acc;
+      }, {} as Record<string, (typeof result)[number]>),
+    );
+
+    return deduplicatedResult.map(item => ({
       ...item,
       chain_list:
         columnConverter.jsonStringToObj(item.chain_list || '[]') || [],

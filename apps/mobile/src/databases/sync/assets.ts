@@ -429,7 +429,7 @@ export async function syncBalance(
   balance: EvmTotalBalanceResponse,
 ) {
   const balanceItem = new BalanceEntity();
-  BalanceEntity.fillEntity(balanceItem, address, isCore, balance);
+  BalanceEntity.fillEntity(balanceItem, address.toLowerCase(), isCore, balance);
 
   await prepareAppDataSource();
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
