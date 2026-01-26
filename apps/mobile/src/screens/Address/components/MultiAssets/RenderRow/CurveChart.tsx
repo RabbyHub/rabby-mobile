@@ -7,10 +7,10 @@ import { Dimensions, Pressable, Text, View } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import Animated, {
   Easing,
+  makeMutable,
   useAnimatedProps,
   useAnimatedStyle,
   useDerivedValue,
-  useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import AnimateableText from 'react-native-animateable-text';
@@ -39,31 +39,25 @@ import {
 } from '@/hooks/useScene24hBalance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { RNGHPressable } from '@/components/customized/reexports';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedSVG = Animated.createAnimatedComponent(Svg);
 const ScreenWidth = Dimensions.get('screen').width;
 
+const svIsFoldMultiChart = makeMutable(true);
+
 export function setIsFoldMultiChart(valOrFunc: UpdaterOrPartials<boolean>) {
-  foldMultiChartStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.isFoldMultiChart, valOrFunc, {
+  'worklet';
+  const { newVal } = resolveValFromUpdater(
+    svIsFoldMultiChart.value,
+    valOrFunc,
+    {
       strict: false,
-    });
-
-    return { ...prev, isFoldMultiChart: newVal };
-  });
-}
-const foldMultiChartStore = create<{
-  isFoldMultiChart: boolean;
-}>(set => ({
-  isFoldMultiChart: true,
-}));
-
-function useFoldMultiChartStore() {
-  const isFoldMultiChart = foldMultiChartStore(state => state.isFoldMultiChart);
-
-  return {
-    isFoldMultiChart,
-  };
+    },
+  );
+  svIsFoldMultiChart.value = newVal;
 }
 
 const ChartContent = memo(function ChartContent({
@@ -83,42 +77,25 @@ const ChartContent = memo(function ChartContent({
     [colors2024, isLoss],
   );
 
-  const { isFoldMultiChart } = useFoldMultiChartStore();
-
-  const heightAnim = useSharedValue(0);
-  const opacityAnim = useSharedValue(0);
-
   const CHART_HEIGHT = 114;
-  useEffect(() => {
-    const DURATION = 200;
-    if (isFoldMultiChart) {
-      heightAnim.value = withTiming(0, {
-        easing: Easing.inOut(Easing.ease),
-        duration: DURATION,
-      });
-      opacityAnim.value = withTiming(0, { duration: DURATION });
-    } else {
-      heightAnim.value = withTiming(CHART_HEIGHT, {
-        easing: Easing.inOut(Easing.ease),
-        duration: DURATION,
-      });
-      opacityAnim.value = withTiming(1, { duration: DURATION });
-    }
-  }, [isFoldMultiChart, heightAnim, opacityAnim]);
 
-  const animatedHeightStyle = useAnimatedStyle(() => {
+  const animatedContainerStyle = useAnimatedStyle(() => {
     return {
-      height: heightAnim.value,
+      height: withTiming(svIsFoldMultiChart.value ? 0 : CHART_HEIGHT, {
+        easing: svIsFoldMultiChart.value
+          ? Easing.inOut(Easing.ease)
+          : Easing.inOut(Easing.cubic),
+        duration: svIsFoldMultiChart.value ? 200 : 300,
+      }),
+      opacity: withTiming(svIsFoldMultiChart.value ? 0 : 1, {
+        easing: Easing.inOut(Easing.ease),
+        duration: 200,
+      }),
     };
   });
 
-  const animOpacityStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacityAnim.value,
-    };
-  });
   return (
-    <Animated.View style={[animatedHeightStyle, animOpacityStyle]}>
+    <Animated.View style={[animatedContainerStyle]}>
       {!chartsData.length ? null : !isAnyAddrLoading ? (
         <LineChart
           height={CHART_HEIGHT}
@@ -173,13 +150,6 @@ export const MultiChart = memo(function MultiChart({
 
   const chartsData = dayCurveData.list;
 
-  const toggleFoldMultiChart = useCallback(() => {
-    if (foldMultiChartStore.getState().isFoldMultiChart) {
-      refreshDayCurve({ force: false });
-    }
-    setIsFoldMultiChart(prev => !prev);
-  }, []);
-
   return (
     <View
       style={[styles.container]}
@@ -200,7 +170,6 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountCount}
-            toggleFoldMultiChart={toggleFoldMultiChart}
           />
           <ChartContent
             data={chartsData}
@@ -221,7 +190,6 @@ interface IHeaderProps {
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
-  toggleFoldMultiChart: () => void;
 }
 const ChartHeader = React.memo(
   ({
@@ -232,7 +200,6 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
-    toggleFoldMultiChart,
   }: IHeaderProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle });
     const { currentIndex } = LineChart.useChart();
@@ -241,7 +208,6 @@ const ChartHeader = React.memo(
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
 
     const { isLoadingNew: loading } = useSceneIsLoadingNew('Home');
-    const { isFoldMultiChart } = useFoldMultiChartStore();
 
     const netWorth = useMemo(() => {
       return formatSmallCurrencyValue(debouncedRawNetWorth, { currency });
@@ -294,10 +260,10 @@ const ChartHeader = React.memo(
     const formatNetWorth = useDerivedValue(() => {
       return hideType === 'HIDE'
         ? '******'
-        : isFoldMultiChart
+        : svIsFoldMultiChart.value
         ? netWorth
         : data?.[currentIndex?.value]?.netWorth || netWorth;
-    }, [data, currentIndex, netWorth, isFoldMultiChart, hideType]);
+    }, [data, currentIndex, netWorth, hideType]);
 
     const lossStyleProps = useAnimatedStyle(() => {
       if (hideType === 'HIDE') {
@@ -346,6 +312,18 @@ const ChartHeader = React.memo(
         stroke: colors2024['neutral-secondary'],
       };
     }, [isLoss, data, currentIndex, colors2024, hideType]);
+
+    const arrowRotation = useDerivedValue(() => {
+      return withTiming(svIsFoldMultiChart.value ? 90 : -90, {
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+      });
+    });
+    const animatedSvgStyle = useAnimatedStyle(() => {
+      return {
+        transform: [{ rotate: `${arrowRotation.value}deg` }],
+      };
+    });
 
     const isHidden = useMemo(() => {
       return hideType === 'HIDE';
@@ -396,7 +374,11 @@ const ChartHeader = React.memo(
           <Pressable
             onPress={e => {
               e.stopPropagation();
-              toggleFoldMultiChart();
+              const nextValue = !svIsFoldMultiChart.value;
+              svIsFoldMultiChart.value = nextValue;
+              if (!nextValue) {
+                refreshDayCurve({ force: false });
+              }
             }}
             hitSlop={10}
             pressRetentionOffset={10}
@@ -417,12 +399,8 @@ const ChartHeader = React.memo(
                   animatedProps={dateTimeAnimatedProps}
                 />
                 <View style={styles.percentChangeContainer}>
-                  <Svg
-                    style={{
-                      transform: isFoldMultiChart
-                        ? [{ rotate: '90deg' }]
-                        : [{ rotate: '270deg' }],
-                    }}
+                  <AnimatedSVG
+                    style={animatedSvgStyle}
                     width={16}
                     height={16}
                     viewBox="0 0 24 24"
@@ -434,7 +412,7 @@ const ChartHeader = React.memo(
                       strokeLinejoin="round"
                       animatedProps={arrowStrokeProps}
                     />
-                  </Svg>
+                  </AnimatedSVG>
                 </View>
               </>
             )}
