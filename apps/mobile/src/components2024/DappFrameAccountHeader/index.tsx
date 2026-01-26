@@ -29,6 +29,12 @@ import RcCaretDownSmallCC from '@/assets2024/icons/common/caret-down-small-cc.sv
 import { HeaderBackPressable, useRabbyAppNavigation } from '@/hooks/navigation';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { KeyringAccountWithAlias } from '@/core/apis/account';
+import useProtocolListStore from '@/store/protocols';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { formatNetworth } from '@/utils/math';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { formatUsdValue } from '@/utils/number';
+import { useShallow } from 'zustand/shallow';
 
 export type DappSelectItem = {
   id: string;
@@ -39,6 +45,8 @@ export type DappSelectItem = {
   rightText?: string;
   onPress?: (item: DappSelectItem) => void;
   themeColor: string;
+  TVL: string;
+  value?: string;
 };
 
 const PREDICTION: DappSelectItem[] = [
@@ -48,6 +56,7 @@ const PREDICTION: DappSelectItem[] = [
     icon: PngPolymarket,
     url: 'https://polymarket.com/',
     themeColor: 'rgba(22, 82, 240, 0.06)',
+    TVL: '$156.396b',
   },
 ];
 
@@ -58,20 +67,23 @@ const LENDING: DappSelectItem[] = [
     icon: PngAave,
     url: 'https://app.aave.com',
     themeColor: 'rgba(147, 145, 247, 0.10)',
-  },
-  {
-    id: 'venus',
-    name: 'Venus',
-    icon: PngVenus,
-    url: 'https://app.venus.io',
-    themeColor: 'rgba(58, 121, 253, 0.08)',
+    TVL: '$33.803b',
   },
   {
     id: 'spark',
     name: 'Spark',
     icon: PngSpark,
-    url: 'https://app.spark.fi/',
+    url: 'https://app.spark.fi/my-portfolio',
     themeColor: 'rgba(252, 105, 137, 0.08)',
+    TVL: '$5.977b',
+  },
+  {
+    id: 'venus',
+    name: 'Venus',
+    icon: PngVenus,
+    url: 'https://app.venus.io/#/account',
+    themeColor: 'rgba(58, 121, 253, 0.08)',
+    TVL: '$1.635b',
   },
 ];
 
@@ -82,6 +94,7 @@ const PERPS: DappSelectItem[] = [
     icon: PngHyperliquid,
     url: 'https://app.hyperliquid.xyz/',
     themeColor: 'rgba(175, 249, 229, 0.15)',
+    TVL: '$156.396b',
   },
   {
     id: 'aster',
@@ -89,6 +102,7 @@ const PERPS: DappSelectItem[] = [
     icon: PngAster,
     url: 'https://www.asterdex.com/trade/pro/futures/BTCUSDT',
     themeColor: 'rgba(247, 212, 172, 0.16)',
+    TVL: '$124.388b',
   },
   {
     id: 'lighter',
@@ -96,6 +110,7 @@ const PERPS: DappSelectItem[] = [
     icon: PngLighter,
     url: 'https://app.lighter.xyz/trade/LIT_USDC',
     themeColor: 'rgba(11, 11, 11, 0.06)',
+    TVL: '$116.548b',
   },
 ];
 
@@ -104,6 +119,14 @@ export const INNER_DAPP_LIST = {
   LENDING,
   PERPS,
 } as const;
+
+const getOriginKey = (url?: string) => {
+  if (!url) {
+    return undefined;
+  }
+  const origin = safeGetOrigin(url) || safeGetOrigin(`https://${url}`) || url;
+  return origin ? origin.toLowerCase() : undefined;
+};
 
 const AccountItem = ({
   account,
@@ -264,35 +287,53 @@ const DappSelect = (props: {
               <Text style={styles.sheetTitle}>{sheetTitle}</Text>
             ) : null}
             <View style={styles.sheetList}>
-              {list.map(item => (
-                <TouchableOpacity
-                  key={item.id}
-                  activeOpacity={0.7}
-                  onPress={() => handleSelect(item)}>
-                  <View style={styles.sheetItem}>
-                    <View style={styles.sheetItemLeft}>
-                      <Image style={styles.sheetItemIcon} source={item.icon} />
-                      <View style={styles.sheetItemTextGroup}>
-                        <Text style={styles.sheetItemTitle} numberOfLines={1}>
-                          {item.name}
-                        </Text>
-                        {item.description ? (
-                          <Text
-                            style={styles.sheetItemSubtitle}
-                            numberOfLines={1}>
-                            {item.description}
+              {list.map(item => {
+                const rightText = item.rightText ?? item.value;
+
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    activeOpacity={0.7}
+                    onPress={() => handleSelect(item)}>
+                    <View
+                      style={[
+                        styles.sheetItem,
+                        item.id === activeId && styles.sheetItemActive,
+                      ]}>
+                      <View style={styles.sheetItemLeft}>
+                        <Image
+                          style={styles.sheetItemIcon}
+                          source={item.icon}
+                        />
+                        <View style={styles.sheetItemTextGroup}>
+                          <Text style={styles.sheetItemTitle} numberOfLines={1}>
+                            {item.name}
                           </Text>
-                        ) : null}
+                          {item.description ? (
+                            <Text
+                              style={styles.sheetItemSubtitle}
+                              numberOfLines={1}>
+                              {item.description}
+                            </Text>
+                          ) : null}
+                          {item.TVL ? (
+                            <Text
+                              style={styles.sheetItemMeta}
+                              numberOfLines={1}>
+                              {`TVL:${item.TVL}`}
+                            </Text>
+                          ) : null}
+                        </View>
                       </View>
+                      {rightText ? (
+                        <Text style={styles.sheetItemRight} numberOfLines={1}>
+                          {rightText}
+                        </Text>
+                      ) : null}
                     </View>
-                    {item.rightText ? (
-                      <Text style={styles.sheetItemRight} numberOfLines={1}>
-                        {item.rightText}
-                      </Text>
-                    ) : null}
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </AutoLockView>
         </BottomSheetScrollView>
@@ -336,6 +377,58 @@ export const DappFrameAccountHeader = (props: {
   const accountSelectorVisible = isAccountSelectorControlled
     ? !!isShowAccountList
     : isAccountSelectorOpen;
+  const protocolMap = useProtocolListStore(state => state.protocolMap);
+
+  const defiValueByOrigin = React.useMemo(() => {
+    const address = account?.address?.toLowerCase();
+    if (!address) {
+      return new Map<string, number>();
+    }
+    const protocols = protocolMap[address] || [];
+    if (!protocols.length) {
+      return new Map<string, number>();
+    }
+    const map = new Map<string, number>();
+    protocols.forEach(protocol => {
+      const originKey = getOriginKey(protocol.site_url);
+      if (!originKey) {
+        return;
+      }
+      const netWorth = Number(protocol.netWorth || 0);
+      if (Number.isNaN(netWorth)) {
+        return;
+      }
+      map.set(originKey, (map.get(originKey) || 0) + netWorth);
+    });
+    return map;
+  }, [account?.address, protocolMap]);
+
+  const hyperliquidAccountValue = perpsStore(
+    useShallow(s => s.accountSummary?.accountValue),
+  );
+
+  const dappListWithValue = React.useMemo(() => {
+    if (!dAppList.length) {
+      return dAppList;
+    }
+    return dAppList.map(item => {
+      if (item.id === 'hyperliquid') {
+        return {
+          ...item,
+          value: formatUsdValue(hyperliquidAccountValue || 0),
+        };
+      }
+      const originKey = getOriginKey(item.url);
+      if (!originKey || !defiValueByOrigin.has(originKey)) {
+        return { ...item, value: undefined };
+      }
+      const netWorth = defiValueByOrigin.get(originKey) ?? 0;
+      return {
+        ...item,
+        value: formatNetworth(netWorth),
+      };
+    });
+  }, [dAppList, defiValueByOrigin, hyperliquidAccountValue]);
 
   const headerLeft = React.useCallback(() => {
     return (
@@ -347,13 +440,13 @@ export const DappFrameAccountHeader = (props: {
         <HeaderBackPressable />
         <DappSelect
           activeId={activeId}
-          list={dAppList}
+          list={dappListWithValue}
           title={dappSelectTitle}
           onSelect={onSelectDapp}
         />
       </View>
     );
-  }, [activeId, dappSelectTitle, dAppList, onSelectDapp]);
+  }, [activeId, dappSelectTitle, dappListWithValue, onSelectDapp]);
 
   const handleOpenAccountSelector = React.useCallback(() => {
     if (!isAccountSelectorControlled) {
@@ -494,6 +587,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketCaret: {
     width: 10,
     height: 8,
+    transform: [
+      {
+        rotate: '-90deg',
+      },
+    ],
   },
   headerRight: {
     flexDirection: 'row',
@@ -523,7 +621,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     padding: 14,
     borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'transparent',
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  sheetItemActive: {
+    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['brand-light-2'],
   },
   sheetItemLeft: {
     flexDirection: 'row',
@@ -549,6 +653,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
   },
   sheetItemSubtitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+  },
+  sheetItemMeta: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     fontSize: 16,

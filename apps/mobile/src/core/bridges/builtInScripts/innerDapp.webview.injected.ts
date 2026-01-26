@@ -849,7 +849,7 @@ runFlow({
 
 */
 
-  const rules = {
+  const rules: Record<string, StepConfig[]> = {
     'https://polymarket.com': [
       {
         wait: {
@@ -939,9 +939,15 @@ runFlow({
       },
       {
         wait: {
+          path: [{ css: 'a[href^=\\#\\/account]' }],
+        },
+        action: { type: 'click' },
+      },
+      {
+        wait: {
           path: [
             {
-              css: '#page-container > header > div > div.md\\:hidden > div.flex.h-14.items-center.pr-4.md\\:h-auto.relative > div > button',
+              css: '#page-container > header > div > div.md\\:hidden > div.flex.h-14.items-center.pr-4.md\\:h-auto.relative > div > button> span:only-of-type',
             },
             // { within: true },
             // { text: 'Log In', selector: 'button' },
@@ -957,6 +963,12 @@ runFlow({
               css: '#__CONNECTKIT__ div button img[alt^=Rabby]',
             },
           ],
+        },
+        action: { type: 'click' },
+      },
+      {
+        wait: {
+          path: [{ css: 'a[href^=\\#\\/account]' }],
         },
         action: { type: 'click' },
       },
