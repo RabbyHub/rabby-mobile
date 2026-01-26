@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
-import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
 import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
 import { PerpsGuidePopup } from './components/PerpsGuidePopup';
 import { PerpsDepositPopup } from './components/PerpsDepositPopup';
@@ -55,8 +54,22 @@ import { PerpsInvitePopup } from './components/PerpsInvitePopup';
 import { checkPerpsReference } from '@/utils/perps';
 import { perpsService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
+import {
+  DappFrameAccountHeader,
+  DappSelectItem,
+} from '@/components2024/DappFrameAccountHeader';
 
-export const PerpsScreen = () => {
+type PerpsNativeScreenProps = {
+  activeId: string;
+  dappList: DappSelectItem[];
+  onSelectDapp: (item: DappSelectItem) => void;
+};
+
+export const PerpsOriginScreen = ({
+  activeId,
+  dappList,
+  onSelectDapp,
+}: PerpsNativeScreenProps) => {
   const { t } = useTranslation();
 
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -200,24 +213,12 @@ export const PerpsScreen = () => {
     currentPerpsAccount,
   });
 
-  const Header = useCallback(
-    () =>
-      isLogin ? (
-        <PerpHeader localLoadingHistory={localLoadingHistory} />
-      ) : undefined,
-    [isLogin, localLoadingHistory],
-  );
-  const Title = useCallback(
-    () => <PerpsHeaderTitle account={currentPerpsAccount} />,
-    [currentPerpsAccount],
-  );
-
-  useEffect(() => {
-    navigation.setOptions({
-      headerTitle: Title,
-      headerRight: Header,
-    });
-  }, [currentPerpsAccount, navigation, Header, Title]);
+  const handlePressAccountList = useCallback(() => {
+    setPopupState(prev => ({
+      ...prev,
+      isShowLoginPopup: !prev.isShowLoginPopup,
+    }));
+  }, [setPopupState]);
 
   useEffect(() => {
     apisPerps.getHasDoneNewUserProcess().then(hasDoneNewUserProcess => {
@@ -322,6 +323,7 @@ export const PerpsScreen = () => {
     return (
       <>
         <PerpsAccountCard
+          localLoadingHistory={localLoadingHistory}
           isLogin={isLogin}
           accountSummary={accountSummary}
           positionAndOpenOrders={positionAndOpenOrders}
@@ -345,6 +347,7 @@ export const PerpsScreen = () => {
       </>
     );
   }, [
+    localLoadingHistory,
     isLogin,
     accountSummary,
     positionAndOpenOrders,
@@ -405,6 +408,15 @@ export const PerpsScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+        <DappFrameAccountHeader
+          account={currentPerpsAccount || undefined}
+          activeId={activeId}
+          dAppList={dappList}
+          onSelectDapp={onSelectDapp}
+          onPressAccountList={handlePressAccountList}
+          isShowAccountList={popupState.isShowLoginPopup}
+          disableAccountPopup
+        />
         {!hasPermission ? <PerpsRegionAlert /> : null}
         {!isInitialized ? (
           <PerpsSkeletonLoader />
@@ -443,7 +455,7 @@ export const PerpsScreen = () => {
             {hasPermission && isLogin && (
               <View style={styles.footer}>
                 <Button
-                  type="primary"
+                  type="hyperliquid"
                   title={t('page.perps.searchPerpsPopup.openPosition')}
                   onPress={() => {
                     setPopupState(prev => ({
@@ -680,6 +692,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'relative',
     flex: 1,
     height: '100%',
+  },
+  webviewWrapper: {
+    flex: 1,
   },
   scrollContent: {
     // paddingBottom: 10,

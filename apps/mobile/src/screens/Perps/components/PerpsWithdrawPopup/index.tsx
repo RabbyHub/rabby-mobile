@@ -202,7 +202,7 @@ export const PerpsWithdrawPopup: React.FC<{
             </TouchableOpacity>
           </View>
           <Button
-            type="primary"
+            type="hyperliquid"
             disabled={!amountValidation.isValid}
             title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
             loading={loading}

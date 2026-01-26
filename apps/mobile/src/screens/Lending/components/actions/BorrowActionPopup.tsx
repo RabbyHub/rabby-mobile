@@ -60,7 +60,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   userSummary,
   onClose,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const { refresh } = useRefreshHistoryId();
   const [isLoading, setIsLoading] = useState(false);
@@ -443,13 +443,17 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               !!ctx?.disabledProcess ||
               (isRisky && !isChecked)
             }
-            type="primary"
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
