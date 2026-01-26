@@ -151,10 +151,14 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const { currency, formatCurrentCurrency } = useCurrency();
 
-  const { balanceLoadingWithoutLocal: loading, selectData } =
-    useSingleHomeHomeTopChart();
+  const {
+    balanceLoadingWithoutLocal: loading,
+    selectData,
+    balance,
+    evmBalance,
+  } = useSingleHomeHomeTopChart();
 
-  const rawNetWorth = selectData.rawNetWorth;
+  const rawNetWorth = balance || 0;
   const changePercent = selectData.changePercent;
   const isLoss = selectData.isLoss;
   const _data = selectData.list;
