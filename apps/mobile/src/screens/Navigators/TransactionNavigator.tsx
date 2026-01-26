@@ -403,7 +403,7 @@ export default function TransactionNavigator() {
               : colors2024['neutral-bg-1'],
           },
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: 12,
             fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
@@ -414,8 +414,11 @@ export default function TransactionNavigator() {
         name={RootNames.Prediction}
         component={PredictionScreen}
         options={mergeScreenOptions({
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
           // headerShown: false,
-          gestureEnabled: true,
+          // gestureEnabled: true,
         })}
       />
     </TransactionStack.Navigator>

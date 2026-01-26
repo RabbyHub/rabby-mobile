@@ -25,7 +25,7 @@ const DEFAULT_PERPS_ID = INNER_DAPP_LIST.PERPS[0]?.id ?? 'hyperliquid';
 const DEFAULT_PREDICTION_ID = INNER_DAPP_LIST.PREDICTION[0]?.id ?? 'polymarket';
 
 export default function InnerDappWebViewPreloadLayer() {
-  const { safeOffHeader } = useSafeSizes();
+  const { safeOffHeader, safeOffBottom } = useSafeSizes();
   const { currentRouteName } = useCurrentRouteName();
   const { lending, perps } = useInnerDappSelection();
   const [readyRouteName, setReadyRouteName] = useState<string | null>(null);
@@ -130,7 +130,7 @@ export default function InnerDappWebViewPreloadLayer() {
             pointerEvents={isActive ? 'auto' : 'none'}
             style={[
               styles.webviewContainer,
-              { top: safeOffHeader },
+              { top: safeOffHeader - 20 },
               isActive ? styles.webviewVisible : styles.webviewHidden,
             ]}>
             <DappWebViewCore
@@ -153,6 +153,7 @@ const styles = StyleSheet.create({
   },
   webviewContainer: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
     bottom: 0,

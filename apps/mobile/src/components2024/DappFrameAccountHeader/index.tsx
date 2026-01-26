@@ -1,10 +1,3 @@
-import PngPolymarket from '@/assets2024/icons/prediction/polymarket.png';
-import PngHyperliquid from '@/assets2024/icons/perps/hyperliquid.png';
-import PngAster from '@/assets2024/icons/perps/aster.png';
-import PngLighter from '@/assets2024/icons/perps/lighter.png';
-import PngAave from '@/assets2024/icons/lending/aave.png';
-import PngSpark from '@/assets2024/icons/lending/spark.png';
-import PngVenus from '@/assets2024/icons/lending/venus.png';
 import { Account } from '@/core/services/preference';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -32,14 +25,25 @@ import { KeyringAccountWithAlias } from '@/core/apis/account';
 import useProtocolListStore from '@/store/protocols';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { formatNetworth } from '@/utils/math';
-import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore as usePerpsStore } from '@/hooks/perps/usePerpsStore';
+
 import { formatUsdValue } from '@/utils/number';
 import { useShallow } from 'zustand/shallow';
+import { dappService } from '@/core/services';
+import FastImage, { FastImageProps } from 'react-native-fast-image';
+
+const PngPolymarket = require('@/assets2024/icons/prediction/polymarket.png');
+const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.png');
+const PngAster = require('@/assets2024/icons/perps/aster.png');
+const PngLighter = require('@/assets2024/icons/perps/lighter.png');
+const PngAave = require('@/assets2024/icons/lending/aave.png');
+const PngSpark = require('@/assets2024/icons/lending/spark.png');
+const PngVenus = require('@/assets2024/icons/lending/venus.png');
 
 export type DappSelectItem = {
   id: string;
   name: string;
-  icon: ImageSourcePropType;
+  icon: number;
   url?: string;
   description?: string;
   rightText?: string;
@@ -47,6 +51,7 @@ export type DappSelectItem = {
   themeColor: string;
   TVL: string;
   value?: string;
+  remoteUrl?: string;
 };
 
 const PREDICTION: DappSelectItem[] = [
@@ -261,7 +266,13 @@ const DappSelect = (props: {
             styles.marketPill,
             { backgroundColor: activeItem.themeColor },
           ]}>
-          <Image style={styles.marketIcon} source={activeItem.icon} />
+          <FastImage
+            style={styles.marketIcon}
+            defaultSource={activeItem.icon}
+            source={
+              activeItem?.remoteUrl ? { uri: activeItem?.remoteUrl } : undefined
+            }
+          />
           <View style={styles.marketTextGroup}>
             <Text style={styles.marketText}>{activeItem.name}</Text>
             <RcCaretDownSmallCC
@@ -275,7 +286,7 @@ const DappSelect = (props: {
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: isLight ? 'bg0' : 'bg1',
+          linearGradientType: 'bg0', //isLight ? 'bg0' : 'bg1',
         })}
         onDismiss={handleDismiss}
         enableDynamicSizing
@@ -301,9 +312,14 @@ const DappSelect = (props: {
                         item.id === activeId && styles.sheetItemActive,
                       ]}>
                       <View style={styles.sheetItemLeft}>
-                        <Image
+                        <FastImage
                           style={styles.sheetItemIcon}
-                          source={item.icon}
+                          defaultSource={activeItem.icon}
+                          source={
+                            item?.remoteUrl
+                              ? { uri: item?.remoteUrl }
+                              : undefined
+                          }
                         />
                         <View style={styles.sheetItemTextGroup}>
                           <Text style={styles.sheetItemTitle} numberOfLines={1}>
@@ -377,7 +393,9 @@ export const DappFrameAccountHeader = (props: {
   const accountSelectorVisible = isAccountSelectorControlled
     ? !!isShowAccountList
     : isAccountSelectorOpen;
-  const protocolMap = useProtocolListStore(state => state.protocolMap);
+  const protocolMap = useProtocolListStore(
+    useShallow(state => state.protocolMap),
+  );
 
   const defiValueByOrigin = React.useMemo(() => {
     const address = account?.address?.toLowerCase();
@@ -403,7 +421,7 @@ export const DappFrameAccountHeader = (props: {
     return map;
   }, [account?.address, protocolMap]);
 
-  const hyperliquidAccountValue = perpsStore(
+  const hyperliquidAccountValue = usePerpsStore(
     useShallow(s => s.accountSummary?.accountValue),
   );
 
@@ -420,12 +438,22 @@ export const DappFrameAccountHeader = (props: {
       }
       const originKey = getOriginKey(item.url);
       if (!originKey || !defiValueByOrigin.has(originKey)) {
-        return { ...item, value: undefined };
+        return {
+          ...item,
+          value: undefined,
+          remoteUrl:
+            dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
+            undefined,
+        };
       }
       const netWorth = defiValueByOrigin.get(originKey) ?? 0;
+
       return {
         ...item,
         value: formatNetworth(netWorth),
+        remoteUrl:
+          dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
+          undefined,
       };
     });
   }, [dAppList, defiValueByOrigin, hyperliquidAccountValue]);
@@ -515,7 +543,7 @@ export const DappFrameAccountHeader = (props: {
   return null;
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     display: 'flex',
     flexDirection: 'column',
@@ -533,9 +561,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   walletIcon: {},
   address: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
-    lineHeight: 20,
+    lineHeight: 18,
     color: colors2024['neutral-foot'],
   },
   reverseCaret: {
@@ -571,6 +599,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   marketIcon: {
     width: 20,
     height: 20,
+    borderRadius: 20,
   },
   marketTextGroup: {
     flexDirection: 'row',
@@ -623,7 +652,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 15,
     borderWidth: 1,
     borderColor: 'transparent',
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   sheetItemActive: {
     backgroundColor: colors2024['brand-light-1'],
@@ -638,6 +669,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sheetItemIcon: {
     width: 46,
     height: 46,
+    borderRadius: 16,
   },
   sheetItemTextGroup: {
     flexDirection: 'column',

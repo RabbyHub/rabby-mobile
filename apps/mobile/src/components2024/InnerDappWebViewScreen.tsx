@@ -15,6 +15,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { Account } from '@/core/services/preference';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 type InnerDappWebViewScreenProps = {
   list: DappSelectItem[];
@@ -39,6 +40,7 @@ export const InnerDappWebViewScreen = ({
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const { safeOffHeader, safeTop } = useSafeSizes();
 
   const activeItem = useMemo(() => {
     if (!list.length) {
@@ -77,7 +79,7 @@ export const InnerDappWebViewScreen = ({
   }
 
   return (
-    <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+    <NormalScreenContainer2024 type={'bg1'}>
       <DappFrameAccountHeader
         account={account || undefined}
         onSelectAccount={handleSelectAccount}

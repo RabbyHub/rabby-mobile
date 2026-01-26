@@ -31,6 +31,7 @@ import { getDappAccount, useDapps } from '@/hooks/useDapps';
 import { useAccounts } from '@/hooks/account';
 //@ts-expect-error as string
 import injectedAutoRunnerSource from '@/core/bridges/builtInScripts/innerDapp.webview.injected';
+import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/BrowserTab/BrowserProgressBar';
 
 const autoRunnerInjected = `${
   IS_ANDROID ? PATCH_ANCHOR_TARGET : ''
@@ -460,7 +461,9 @@ export default function DappWebViewCore({
 
   const progressBarNode = useMemo(() => {
     if (!progressBar) {
-      return null;
+      return isLoading ? (
+        <BrowserProgressBar progress={progress} style={styles.progressBar} />
+      ) : null;
     }
     return progressBar({ progress, isLoading });
   }, [progressBar, progress, isLoading]);
@@ -537,5 +540,11 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+  },
+  progressBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
 });
