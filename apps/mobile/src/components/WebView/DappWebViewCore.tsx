@@ -5,7 +5,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Linking, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import WebView, { WebViewProps } from 'react-native-webview';
 
 import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
@@ -32,6 +32,8 @@ import { useAccounts } from '@/hooks/account';
 //@ts-expect-error as string
 import injectedAutoRunnerSource from '@/core/bridges/builtInScripts/innerDapp.webview.injected';
 import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/BrowserTab/BrowserProgressBar';
+import { useMemoizedFn } from 'ahooks';
+import { WebviewError } from '@/screens/Browser/BrowserScreen/components/BrowserTab/WebivewError';
 
 const autoRunnerInjected = `${
   IS_ANDROID ? PATCH_ANCHOR_TARGET : ''
@@ -459,6 +461,40 @@ export default function DappWebViewCore({
     [onFileDownload, webviewOnFileDownload],
   );
 
+  const handleGoTo = useMemoizedFn(async (urlToGo: string) => {
+    if (!urlToGo || !/^https?:\/\//.test(urlToGo)) {
+      return;
+    }
+    webviewRef.current?.stopLoading();
+    setWebViewState(prev => ({ ...prev, resolvedUrl: urlToGo }));
+    webviewRef?.current?.injectJavaScript(
+      `window.location.href = '${urlUtils.sanitizeUrlInput(urlToGo)}';
+            true; // Required for iOS
+          `,
+    );
+    setIsLoading(true);
+    setProgress(0.1);
+  });
+
+  const handleOpenInBrowser = useMemoizedFn(() => {
+    Linking.openURL(webviewState.resolvedUrl);
+  });
+
+  const defaultRenderError = useMemoizedFn(
+    (errorDomain: string | undefined, errorCode: number, errorDesc: string) => {
+      return (
+        <WebviewError
+          code={errorCode}
+          message={errorDesc}
+          onRefresh={() => {
+            handleGoTo(webviewState.resolvedUrl || url || dappOrigin);
+          }}
+          onOpenInBrowser={handleOpenInBrowser}
+        />
+      );
+    },
+  );
+
   const progressBarNode = useMemo(() => {
     if (!progressBar) {
       return isLoading ? (
@@ -519,7 +555,7 @@ export default function DappWebViewCore({
         onLoad={handleLoad}
         onLoadEnd={handleLoadEnd}
         onError={handleError}
-        renderError={renderError ?? webviewRenderError}
+        renderError={renderError ?? (webviewRenderError || defaultRenderError)}
         onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onMessage={handleMessage}
         onOpenWindow={handleOpenWindow}
