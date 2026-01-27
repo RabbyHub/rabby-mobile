@@ -12,6 +12,7 @@ import { accountEvents, getTop10MyAccounts } from '../apis/account';
 import { checkIfEnabledNotificationWithPermission } from './switch';
 import { useShallow } from 'zustand/shallow';
 import { zCreate, zMutative } from '../utils/reexports';
+import { parseRemoteData } from './data';
 
 const iosPush = {
   token: '',
@@ -108,14 +109,16 @@ export const registerForPushNotifications = async () => {
 export const startSubscribePushNotifications = async () => {
   if (IS_IOS) {
     PushNotificationIOS.addEventListener('notification', notification => {
-      console.log(
+      console.debug(
         '[notifications] Received foreground APNs notification:',
         notification,
       );
+      const parsed = parseRemoteData(notification.getData());
+      console.debug('[notifications] parsed:', parsed);
     });
   } else {
     messaging().onMessage(async remoteMessage => {
-      console.log('[notifications] Received foreground FCM:', remoteMessage);
+      console.debug('[notifications] Received foreground FCM:', remoteMessage);
     });
   }
 };

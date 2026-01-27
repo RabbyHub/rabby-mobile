@@ -18,24 +18,60 @@ class NotificationService: UNNotificationServiceExtension {
         self.contentHandler = contentHandler
         bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
 
-        // if let bestAttemptContent = bestAttemptContent {
-        //     // Read image URL from custom field (field name can be customized, here we use "imageUrl")
-        //     if let urlString = request.content.userInfo["imageUrl"] as? String,
-        //        let url = URL(`string`: urlString),
-        //        url.scheme == "https" { // Strongly recommend only allowing HTTPS
+        // delete notifee_options in request.content.userInfo
+        if var userInfo = bestAttemptContent?.userInfo {
+            userInfo.removeValue(forKey: "notifee_options")
+            bestAttemptContent?.userInfo = userInfo
+        }
 
-        //         downloadAttachment(from: url) { attachment in
-        //             if let attachment = attachment {
-        //                 bestAttemptContent.attachments = [attachment]
-        //             }
-        //             contentHandler(bestAttemptContent)
-        //         }
-        //     } else {
-        //         // No image or invalid URL, directly show the original notification
-        //         contentHandler(bestAttemptContent)
-        //     }
-        // }
-        NotifeeExtensionHelper.populateNotificationContent(request, with: self.bestAttemptContent!, withContentHandler: contentHandler)
+        // process bizVersion: "v20260122"
+        if var userInfo = bestAttemptContent?.userInfo,
+           let bizVersion = userInfo["bizVersion"] as? String,
+           bizVersion == "v20260122" {
+          // manually set notifee options to userInfo
+
+          // if userInfo["imageUrl"] not null, set communication to notifee_options
+          if let imageUrl = userInfo["imageUrl"] as? String, !imageUrl.isEmpty {
+            let notifeeOptions: [NSString: Any] = [
+              "attachments": [] as [Any],
+              "ios": [
+                "communicationInfo": [
+                  "sender": [
+                    "displayName": "Rabby",
+                    "avatar": imageUrl,
+                    "body": userInfo["body"] ?? "",
+                    "un_groupName": "Rabby Wallet",
+                    "un_groupAvatar": imageUrl
+                  ] as [String : Any]
+                ] as [String : Any]
+              ] as [String : Any]
+            ]
+
+            let nsNotifeeOptions = NSDictionary(dictionary: notifeeOptions)
+            userInfo["notifee_options"] = nsNotifeeOptions
+
+            bestAttemptContent?.userInfo = userInfo
+          }
+          NotifeeExtensionHelper.populateNotificationContent(request, with: self.bestAttemptContent!, withContentHandler: contentHandler)
+        } else {
+          // Fallback to original notifee processing
+          if let bestAttemptContent = bestAttemptContent {
+              // Read image URL from custom field (field name can be customized, here we use "imageUrl")
+              if let urlString = request.content.userInfo["imageUrl"] as? String,
+                let url = URL(`string`: urlString),
+                url.scheme == "https" { // Strongly recommend only allowing HTTPS
+                downloadAttachment(from: url) { attachment in
+                    if let attachment = attachment {
+                        bestAttemptContent.attachments = [attachment]
+                    }
+                    contentHandler(bestAttemptContent)
+                }
+              } else {
+                  // No image or invalid URL, directly show the original notification
+                  contentHandler(bestAttemptContent)
+              }
+          }
+        }
     }
 
     override func serviceExtensionTimeWillExpire() {
