@@ -30,6 +30,7 @@ import {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 const LENDING_LIST = INNER_DAPP_LIST.LENDING;
 const DEFAULT_LENDING_ID = LENDING_LIST[0]?.id ?? 'aave';
@@ -66,6 +67,7 @@ type LendingRouteProps = CompositeScreenProps<
 >;
 
 export function LendingEntryScreen() {
+  const { t } = useTranslation();
   const { lending, setLending } = useInnerDappSelection();
   const route = useRoute<LendingRouteProps['route']>();
 
@@ -158,6 +160,7 @@ export function LendingEntryScreen() {
         activeId={activeId}
         onSelectDapp={handleSelectDapp}
         renderWebView={false}
+        dappSelectTitle={t('page.Lending.dappSelect.title')}
       />
     );
   }
@@ -167,6 +170,7 @@ export function LendingEntryScreen() {
       activeId={activeId}
       dappList={LENDING_LIST}
       onSelectDapp={handleSelectDapp}
+      dappSelectTitle={t('page.Lending.dappSelect.title')}
     />
   );
 }

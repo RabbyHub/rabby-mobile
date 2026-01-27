@@ -24,6 +24,7 @@ import {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 const PERPS_LIST = INNER_DAPP_LIST.PERPS;
 const DEFAULT_PERPS_ID = PERPS_LIST[0]?.id ?? 'hyperliquid';
@@ -60,6 +61,7 @@ type PerpsRouteProps = CompositeScreenProps<
 >;
 
 export function PerpsScreen() {
+  const { t } = useTranslation();
   const { perps, setPerps } = useInnerDappSelection();
   const route = useRoute<PerpsRouteProps['route']>();
 
@@ -142,6 +144,7 @@ export function PerpsScreen() {
         activeId={activeId}
         onSelectDapp={handleSelectDapp}
         renderWebView={false}
+        dappSelectTitle={t('page.Lending.dappSelect.title')}
       />
     );
   }
@@ -151,6 +154,7 @@ export function PerpsScreen() {
       activeId={activeId}
       dappList={PERPS_LIST}
       onSelectDapp={handleSelectDapp}
+      dappSelectTitle={t('page.Lending.dappSelect.title')}
     />
   );
 }
