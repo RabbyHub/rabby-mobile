@@ -87,7 +87,7 @@ export const syncProtocols = async (
     address,
   );
   const protocols = [...snapshotRes, ...appChainProtocols];
-  syncRemoteProtocols(address, protocols);
+  syncRemoteProtocols(address, snapshotRes);
   return protocols.map(p => complexProtocol2ProtocolItem(p, address));
 };
 
