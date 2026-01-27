@@ -6,6 +6,11 @@ import React, {
   useState,
 } from 'react';
 import { Image, InteractionManager, StyleSheet, View } from 'react-native';
+import {
+  PanGestureHandler,
+  PanGestureHandlerStateChangeEvent,
+  State,
+} from 'react-native-gesture-handler';
 
 import { INNER_DAPP_LIST } from '@/components2024/DappFrameAccountHeader';
 import { RootNames } from '@/constant/layout';
@@ -20,6 +25,7 @@ import { useAppUnlocked } from '@/hooks/useLock';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useInnerDappLastUrl } from '@/hooks/useInnerDappLastUrl';
 import { useInnerDappSnapshot } from '@/hooks/useInnerDappSnapshot';
+import { navBack } from '@/hooks/navigation';
 import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/BrowserTab/BrowserProgressBar';
 import { getViewShotFilePath } from '@/utils/browser';
 
@@ -401,6 +407,28 @@ export default function InnerDappWebViewPreloadLayer({
     [captureSnapshot],
   );
 
+  const handleEdgeBackSwipe = useCallback(
+    (event: PanGestureHandlerStateChangeEvent) => {
+      const { nativeEvent } = event;
+      if (nativeEvent.state !== State.END) {
+        return;
+      }
+      const swipeDistance = nativeEvent.translationX;
+      const verticalDrift = Math.abs(nativeEvent.translationY);
+      // const swipeVelocity = nativeEvent.velocityX;
+      // console.log('handleEdgeBackSwipe', {
+      //   swipeDistance,
+      //   verticalDrift,
+      //   swipeVelocity,
+      // });
+
+      if (swipeDistance > 60 && verticalDrift < 30) {
+        navBack();
+      }
+    },
+    [],
+  );
+
   if (!getIsAppUnlocked()) {
     return null;
   }
@@ -436,6 +464,15 @@ export default function InnerDappWebViewPreloadLayer({
               isActive ? styles.webviewVisible : styles.webviewHidden,
             ]}>
             <View style={styles.webviewWrapper}>
+              {isActive ? (
+                <PanGestureHandler
+                  enabled={isActive}
+                  activeOffsetX={10}
+                  failOffsetY={[-10, 10]}
+                  onHandlerStateChange={handleEdgeBackSwipe}>
+                  <View style={styles.edgeBackSwipeArea} />
+                </PanGestureHandler>
+              ) : null}
               <ViewShot
                 ref={ref => {
                   if (ref) {
@@ -464,12 +501,15 @@ export default function InnerDappWebViewPreloadLayer({
                 />
               </ViewShot>
               {shouldShowSnapshot ? (
-                <Image
-                  // pointerEvents="none"
-                  source={{ uri: getViewShotFilePath(snapshotUri) }}
-                  style={styles.snapshotOverlay}
-                  resizeMode="cover"
-                />
+                <View
+                  pointerEvents="none"
+                  style={styles.snapshotOverlayContainer}>
+                  <Image
+                    source={{ uri: getViewShotFilePath(snapshotUri) }}
+                    style={styles.snapshotOverlayImage}
+                    resizeMode="cover"
+                  />
+                </View>
               ) : null}
               {shouldShowProgress ? (
                 <BrowserProgressBar
@@ -509,9 +549,12 @@ const styles = StyleSheet.create({
     opacity: 1,
     zIndex: 1,
   },
-  snapshotOverlay: {
+  snapshotOverlayContainer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 2,
+  },
+  snapshotOverlayImage: {
+    flex: 1,
   },
   progressOverlay: {
     position: 'absolute',
@@ -519,5 +562,13 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     zIndex: 3,
+  },
+  edgeBackSwipeArea: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 20,
+    zIndex: 5,
   },
 });
