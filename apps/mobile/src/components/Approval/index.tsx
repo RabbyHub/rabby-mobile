@@ -88,6 +88,11 @@ export const Approval = () => {
     data?.$mobileCtx?.fromTabId ||
     params?.session?.$mobileCtx?.fromTabId;
 
+  const isFromMobileInnerDapp =
+    params?.$mobileCtx?.isFromMobileInnerDapp ||
+    data?.$mobileCtx?.isFromMobileInnerDapp ||
+    params?.session?.$mobileCtx?.isFromMobileInnerDapp;
+
   const fromOrigin = origin || params?.origin;
   const shouldDisallow =
     !isInternalSession(fromOrigin) &&
@@ -102,7 +107,7 @@ export const Approval = () => {
       { allowSecondaryDomainMatch: false },
     );
 
-  if (shouldDisallow && !shouldAllowForLegacy) {
+  if (shouldDisallow && !shouldAllowForLegacy && !isFromMobileInnerDapp) {
     return <ShouldntRenderApproveDueToDappDisappeared />;
   }
 
