@@ -116,7 +116,7 @@ export default function InnerDappWebViewPreloadLayer() {
   }
 
   return (
-    <View pointerEvents="box-none" style={[styles.overlay, { top: top + 36 }]}>
+    <View pointerEvents="box-none" style={[styles.overlay, { top: top + 44 }]}>
       {preloadItems.map(item => {
         if (!item.url) {
           return null;
