@@ -7,7 +7,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
@@ -43,7 +43,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { apiBalance } from '@/core/apis';
+import useBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
@@ -137,10 +137,7 @@ export const ImportSuccessScreen2024 = () => {
     }
   });
 
-  const [loadingBalance, setLoadingBalance] = useState(true);
-  const [addressBalances, setAddressBalances] = useState<
-    Record<string, number>
-  >({});
+  const { balanceMap, isLoadingByAddress } = useBalanceStore();
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
@@ -218,33 +215,7 @@ export const ImportSuccessScreen2024 = () => {
       label: state?.brandName,
     });
 
-    setLoadingBalance(true);
-    Promise.allSettled(
-      addresses.map(async address => {
-        const res = await apiBalance.getAddressBalance(address, {
-          force: true,
-        });
-        return {
-          address,
-          balance: res.total_usd_value || 0,
-        };
-      }),
-    )
-      .then(results => {
-        results.forEach(result => {
-          if (result.status === 'fulfilled') {
-            setAddressBalances(pre => {
-              return {
-                ...pre,
-                [result.value.address]: result.value.balance,
-              };
-            });
-          }
-        });
-      })
-      .finally(() => {
-        setLoadingBalance(false);
-      });
+    useBalanceStore.getState().batchGetTotalBalance(addresses, true);
     if (
       state.type !== KEYRING_TYPE.WatchAddressKeyring &&
       state.type !== KEYRING_TYPE.GnosisKeyring
@@ -391,7 +362,7 @@ export const ImportSuccessScreen2024 = () => {
                     />
                     <View>
                       <Text style={styles.listInput}>{item.aliasName}</Text>
-                      {loadingBalance ? (
+                      {isLoadingByAddress[item.address.toLowerCase()] ? (
                         <Skeleton
                           circle
                           width={102}
@@ -402,7 +373,9 @@ export const ImportSuccessScreen2024 = () => {
                       ) : (
                         <Text style={styles.balance}>
                           {`$${splitNumberByStep(
-                            addressBalances[item.address]?.toFixed(2) || 0,
+                            balanceMap[
+                              item.address.toLowerCase()
+                            ]?.totalBalance?.toFixed(2) || 0,
                           )}`}
                         </Text>
                       )}

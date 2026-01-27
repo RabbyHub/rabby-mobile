@@ -27,8 +27,6 @@ const getTotalBalanceCached = async (address: string, force?: boolean) => {
       ...tokenSetting,
     },
     force,
-    false,
-    true,
   );
   preferenceService.updateAddressBalance(address, data);
   return data;
