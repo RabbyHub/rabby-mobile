@@ -308,12 +308,16 @@ const SIZES = {
   cardLayoutPaddingHorizontal: 16,
   cardContentRadius: 20,
   curveBoxWrapperPy: 0,
-  curveBoxPy: 20,
-  curveCardMinHeight: 0,
+  curveBoxPy: 16,
+  curveCardMinHeight: 100,
   get curveBoxMinHeight() {
     return SIZES.curveCardMinHeight;
   },
-  curveCardPy: 0,
+  get homecardMinHeight() {
+    return SIZES.curveBoxMinHeight + SIZES.curveBoxWrapperPy * 2;
+  },
+  // pratical value, to keep padding inside curve box
+  curveCardPy: 14,
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
@@ -322,7 +326,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
   return {
     container: {
-      marginTop: 24,
+      marginTop: 12 + 4,
       paddingVertical: 0,
       // ...makeDebugBorder('orange'),
     },
@@ -333,6 +337,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // ...makeDebugBorder('green'),
       paddingVertical: 0,
       paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
+      minHeight: SIZES.homecardMinHeight,
       borderRadius: SIZES.cardContentRadius,
       alignItems: 'center',
       justifyContent: 'center',
