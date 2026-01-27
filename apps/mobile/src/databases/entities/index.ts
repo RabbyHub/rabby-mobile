@@ -1,4 +1,5 @@
 import { AccountInfoEntity } from './accountInfo';
+import { AppChainEntity } from './appchain';
 import { BalanceEntity } from './balance';
 import { BuyItemEntity } from './buyItem';
 import { CexEntity } from './cex';
@@ -18,4 +19,5 @@ export const ALL_ORM_ENTITIES = {
   BuyItemEntity,
   CexEntity,
   AccountInfoEntity,
+  AppChainEntity,
 };
