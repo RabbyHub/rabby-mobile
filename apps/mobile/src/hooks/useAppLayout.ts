@@ -1,10 +1,36 @@
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Metrics, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenLayouts } from '@/constant/layout';
 import { Dimensions, Platform, StatusBar } from 'react-native';
 import { useMemo } from 'react';
+import { makeMutable } from 'react-native-reanimated';
+import { isEqual } from 'lodash';
 
 const isAndroid = Platform.OS === 'android';
+
+export const svsLayout = {
+  insets: makeMutable<Metrics['insets']>({
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  }),
+  winLayout: makeMutable(Dimensions.get('window')),
+  screenLayout: makeMutable(Dimensions.get('screen')),
+};
+
+export function startWatchLayoutChange() {
+  Dimensions.addEventListener('change', ({ window, screen }) => {
+    console.debug('[feat] svsLayout:: Dimensions changed:', { window, screen });
+    if (!isEqual(svsLayout.winLayout.value, window)) {
+      svsLayout.winLayout.value = window;
+    }
+
+    if (!isEqual(svsLayout.screenLayout.value, screen)) {
+      svsLayout.screenLayout.value = screen;
+    }
+  });
+}
 
 export function getVerticalLayoutHeights() {
   const screenHeight = Dimensions.get('screen').height;

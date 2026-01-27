@@ -14,9 +14,11 @@ import React, { Suspense, useEffect } from 'react';
 import { withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import BigNumber from 'bignumber.js';
-import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
 import {
@@ -37,6 +39,8 @@ import {
   RerenderDetector,
   useRendererDetect,
 } from './components/Perf/PerfDetector';
+import { isEqual } from 'lodash';
+import { svsLayout } from './hooks/useAppLayout';
 
 BigNumber.config({ EXPONENTIAL_AT: [-20, 100] });
 
@@ -80,6 +84,18 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   );
 });
 
+function SizeWatcher() {
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    const prevInsets = svsLayout.insets.value;
+    if (isEqual(prevInsets, insets)) return;
+    svsLayout.insets.value = insets;
+  }, [insets]);
+
+  return null;
+}
+
 function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
   useBootstrapApp({ rabbitCode });
@@ -89,6 +105,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
       <ThemeProvider theme={rneuiTheme}>
         <RootSiblingParent>
           <SafeAreaProvider>
+            <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
