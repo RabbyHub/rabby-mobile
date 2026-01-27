@@ -74,6 +74,7 @@ export type DappWebViewCoreProps = {
   onRenderProcessGone?: WebViewProps['onRenderProcessGone'];
   onFileDownload?: WebViewProps['onFileDownload'];
   style?: StyleProp<ViewStyle>;
+  offscreenPreload?: boolean;
 };
 
 function convertToWebviewUrl(dappOrigin: string) {
@@ -116,6 +117,7 @@ export default function DappWebViewCore({
   onRenderProcessGone,
   onFileDownload,
   style,
+  offscreenPreload,
 }: DappWebViewCoreProps) {
   const internalController = useWebViewControl({});
   const {
@@ -181,11 +183,13 @@ export default function DappWebViewCore({
     ) {
       globalSetActiveDappState({
         dappOrigin: nextOrigin,
-        tabId: 'innerGlobalTabId',
+        tabId: offscreenPreload
+          ? 'innerGlobalTabId'
+          : internalController.webviewIdRef.current,
         isScreenHide: !webviewActive,
       });
     }
-  }, [dappOrigin, internalController, webviewActive]);
+  }, [dappOrigin, internalController, offscreenPreload, webviewActive]);
 
   const { entryScriptWeb3Loaded, fullScript } =
     useJavaScriptBeforeContentLoaded();
@@ -216,7 +220,7 @@ export default function DappWebViewCore({
     allowsFullscreenVideo = false,
     allowsInlineMediaPlayback = false,
     originWhitelist = ['*'],
-    pullToRefreshEnabled = false,
+    pullToRefreshEnabled = true,
     webviewDebuggingEnabled = isNonPublicProductionEnv,
     style: webviewStyle,
     source: _source,
@@ -516,6 +520,7 @@ export default function DappWebViewCore({
     <View style={[styles.container, style]}>
       {progressBarNode}
       <WebView
+        allowsBackForwardNavigationGestures={true}
         key={webviewKey}
         cacheEnabled={cacheEnabled}
         startInLoadingState={startInLoadingState}

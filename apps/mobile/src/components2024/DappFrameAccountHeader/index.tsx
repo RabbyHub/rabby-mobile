@@ -430,12 +430,12 @@ export const DappFrameAccountHeader = (props: {
         };
       }
       const originKey = getOriginKey(item.url);
-      const originPngIds = ['aave', 'hyperliquid'];
+      const originPngIds = ['venus', 'hyperliquid'];
       if (!originKey || !defiValueByOrigin.has(originKey)) {
         return {
           ...item,
           value: undefined,
-          remoteUrl: originPngIds.includes(originKey || '')
+          remoteUrl: originPngIds.includes(item.id)
             ? undefined
             : dappService.getDapp(originKey || item.url || '')?.info
                 ?.logo_url || undefined,
@@ -446,7 +446,7 @@ export const DappFrameAccountHeader = (props: {
       return {
         ...item,
         value: formatNetworth(netWorth),
-        remoteUrl: originPngIds.includes(originKey || '')
+        remoteUrl: originPngIds.includes(item.id || '')
           ? undefined
           : dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
             undefined,
