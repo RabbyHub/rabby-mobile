@@ -19,6 +19,7 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevUIFormShowCase]: 'DevUIFormShowCase',
   [RootNames.DevUIAccountShowCase]: 'DevUIAccountShowCase',
   [RootNames.DevUIScreenContainerShowCase]: 'DevUIScreenContainerShowCase',
+  [RootNames.DevUIToastAndNotifications]: 'DevUIToastAndNotifications',
   [RootNames.DevUIDapps]: 'DevUIDapps',
   [RootNames.DevUIPermissions]: 'DevUIPermissions',
   [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',

@@ -15,7 +15,7 @@ import { useEffect } from 'react';
 import { TestnetChainBase } from '@/core/services/customTestnetService';
 import { apiCustomTestnet } from '@/core/apis';
 import { dappService } from '@/core/services';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { ModalLayouts } from '@/constant/layout';
 

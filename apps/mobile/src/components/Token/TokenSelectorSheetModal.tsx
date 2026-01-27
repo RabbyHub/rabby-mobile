@@ -50,7 +50,7 @@ import {
 import ChainFilterItem, { AccountFilterItem } from './ChainFilterItem';
 import FavoriteFilterItem, { FavoriteFilterType } from './FavoriteFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
-import { toast } from '../Toast';
+import { toast } from '@/components2024/Toast';
 import { ModalLayouts, RootNames } from '@/constant/layout';
 import { Skeleton } from '@rneui/themed';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';

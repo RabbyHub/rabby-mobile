@@ -71,6 +71,8 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
 
   const { couldRender } = useAppCouldRender();
 
+  const safeAreaInsets = useSafeAreaInsets();
+
   return (
     <AppProvider
       value={{ rabbitCode, securityChain: loadSecurityChain({ rabbitCode }) }}>
@@ -103,8 +105,8 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>
-        <RootSiblingParent>
-          <SafeAreaProvider>
+        <SafeAreaProvider>
+          <RootSiblingParent>
             <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
@@ -113,8 +115,8 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
                 <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>
             </Suspense>
-          </SafeAreaProvider>
-        </RootSiblingParent>
+          </RootSiblingParent>
+        </SafeAreaProvider>
       </ThemeProvider>
     </AppErrorBoundary>
   );

@@ -5,6 +5,7 @@ import { Dimensions, Platform, StatusBar } from 'react-native';
 import { useMemo } from 'react';
 import { makeMutable } from 'react-native-reanimated';
 import { isEqual } from 'lodash';
+import { zCreate } from '@/core/utils/reexports';
 
 const isAndroid = Platform.OS === 'android';
 

@@ -14,6 +14,7 @@ import RcIconCopyCC from '@/assets2024/icons/address/mcopy.svg';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { toast } from '@/components2024/Toast';
+import i18next from 'i18next';
 
 type ContainerOnPressProp = React.ComponentProps<
   typeof TouchableOpacity
@@ -117,7 +118,7 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
 
 export function toastCopyAddressSuccess(address?: string) {
   if (!address) {
-    toast.success('Copied');
+    toast.success(i18next.t('global.copied'));
     return;
   }
 
@@ -128,8 +129,15 @@ export function toastCopyAddressSuccess(address?: string) {
           flexDirection: 'column',
           justifyContent: 'flex-start',
         }}>
-        <Text style={tctx.textStyle}>Copied</Text>
-        <Text style={tctx.textStyle}>{address}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {tctx.iconNode}
+          <Text style={[tctx.styles.text, tctx.styles.selfDefinedContent]}>
+            {i18next.t('global.copied')}
+          </Text>
+        </View>
+        <Text style={[tctx.styles.text, tctx.styles.selfDefinedContent]}>
+          {address}
+        </Text>
       </View>
     );
   });

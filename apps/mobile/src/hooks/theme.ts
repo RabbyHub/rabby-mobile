@@ -254,7 +254,7 @@ export function getColors2024(
   };
 }
 
-function useStyleSafeAreaInsets() {
+export function useStyleSafeAreaInsets() {
   const safeAreaInsetsOrig = useSafeAreaInsets();
   const safeAreaInsets = useMemo(() => {
     return {
@@ -336,6 +336,40 @@ export function useTheme2024<
   return {
     ...cs,
     reanimatedStyles,
+    colors: classicalColors,
+    classicalColors,
+    colors2024,
+    appThemeMode,
+    isLight,
+  };
+}
+
+export function getTheme2024<
+  T extends ReturnType<typeof createGetStyles2024>,
+>(opts?: { getStyle?: T; isLight?: boolean }) {
+  const appThemeMode = getBinaryMode();
+  const safeAreaInsets = svsLayout.insets.value;
+  const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
+  const getStyles = makeStyles.getStyles || DefaultMakeStyles2024.getStyles;
+
+  const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
+  const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
+
+  const isLight =
+    typeof opts?.isLight === 'boolean'
+      ? opts?.isLight
+      : appThemeMode === 'light';
+
+  const styles = getStyles?.({
+    colors: classicalColors,
+    colors2024,
+    classicalColors,
+    isLight,
+    safeAreaInsets,
+  }) as T extends void ? void : ReturnType<T['getStyles']>;
+
+  return {
+    ...styles,
     colors: classicalColors,
     classicalColors,
     colors2024,

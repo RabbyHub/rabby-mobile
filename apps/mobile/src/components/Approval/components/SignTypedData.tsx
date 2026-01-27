@@ -39,7 +39,7 @@ import { getStyles } from './SignTx/style';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { stats } from '@/utils/stats';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { adjustV } from '@/utils/gnosis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { TestnetTag } from './TestnetTag';

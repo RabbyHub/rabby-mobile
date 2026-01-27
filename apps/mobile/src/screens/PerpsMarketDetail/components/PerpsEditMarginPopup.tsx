@@ -39,7 +39,7 @@ import { useUsdInput } from '@/hooks/useUsdInput';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { PerpsSlider } from './PerpsSlider';
 import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { IS_IOS } from '@/core/native/utils';
 import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';

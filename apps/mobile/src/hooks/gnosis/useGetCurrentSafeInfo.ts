@@ -1,4 +1,4 @@
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { apisSafe } from '@/core/apis/safe';
 import { Account } from '@/core/services/preference';
 import { findChain } from '@/utils/chain';

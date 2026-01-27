@@ -55,7 +55,7 @@ import { globalSetActiveDappState } from '@/core/bridges/state';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNavControl2 } from '@/components/WebView/DappWebViewControl2/Widgets';
 import { IS_ANDROID } from '@/core/native/utils';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { WebViewHeaderRight } from '@/components/WebView/DappWebViewControl2/WebViewHeaderRight';
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
