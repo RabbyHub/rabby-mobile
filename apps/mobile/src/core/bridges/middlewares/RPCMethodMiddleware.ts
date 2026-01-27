@@ -86,10 +86,6 @@ RPCMethodsMiddleParameters) =>
 
       const webviewId = bridge.webviewId;
 
-      if (activeDappState.tabId === 'innerGlobalTabId') {
-        return true;
-      }
-
       return (
         !activeDappState.isScreenHide && activeDappState.tabId === webviewId
       );
@@ -110,7 +106,8 @@ RPCMethodsMiddleParameters) =>
       req.method === SELF_CHECK_RPC_METHOD ||
       SAFE_RPC_METHODS.includes(req.method) ||
       req.method === 'eth_accounts' ||
-      checkTabActive();
+      checkTabActive() ||
+      bridge?.isFromMobileInnerDapp;
 
     // const methodAllowed =
     //   req.method === SELF_CHECK_RPC_METHOD ||

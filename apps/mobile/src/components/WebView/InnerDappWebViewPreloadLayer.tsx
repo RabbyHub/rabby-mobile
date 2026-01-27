@@ -28,6 +28,11 @@ import { useInnerDappSnapshot } from '@/hooks/useInnerDappSnapshot';
 import { navBack } from '@/hooks/navigation';
 import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/BrowserTab/BrowserProgressBar';
 import { getViewShotFilePath } from '@/utils/browser';
+import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
+import {
+  normalizeMaxRetainedWebviews,
+  useInnerDappPreloadRetention,
+} from '@/config/innerDappPreloadRetention';
 
 type SceneKey = 'Lending' | 'Perps' | 'Prediction';
 
@@ -43,6 +48,7 @@ type NavigationEvent = Parameters<
 
 type InnerDappWebViewPreloadLayerProps = {
   maxRetainedWebviews?: number;
+  offscreenPreload?: boolean;
 };
 
 const DEFAULT_LENDING_ID = INNER_DAPP_LIST.LENDING[0]?.id ?? 'aave';
@@ -50,11 +56,13 @@ const DEFAULT_PERPS_ID = INNER_DAPP_LIST.PERPS[0]?.id ?? 'hyperliquid';
 const DEFAULT_PREDICTION_ID = INNER_DAPP_LIST.PREDICTION[0]?.id ?? 'polymarket';
 
 export default function InnerDappWebViewPreloadLayer({
-  maxRetainedWebviews = 1,
+  offscreenPreload = false,
 }: InnerDappWebViewPreloadLayerProps) {
   // const { safeOffHeader, safeOffBottom } = useSafeSizes();
   const { top } = useSafeAreaInsets();
   const { currentRouteName } = useCurrentRouteName();
+  const preloadStrategy = useInnerDappPreloadStrategy();
+  const configuredMaxRetained = useInnerDappPreloadRetention();
   const { lending, perps } = useInnerDappSelection();
   const [readyRouteName, setReadyRouteName] = useState<string | null>(null);
   const [retainedKeys, setRetainedKeys] = useState<string[]>([]);
@@ -171,9 +179,9 @@ export default function InnerDappWebViewPreloadLayer({
     Record<string, string>
   >({});
 
-  const resolvedMaxRetained = Math.max(
-    1,
-    Number.isFinite(maxRetainedWebviews) ? Math.floor(maxRetainedWebviews) : 2,
+  const candidateMaxRetained = configuredMaxRetained;
+  const resolvedMaxRetained = normalizeMaxRetainedWebviews(
+    preloadStrategy === 'screen' ? 1 : candidateMaxRetained,
   );
 
   useEffect(() => {
@@ -464,7 +472,7 @@ export default function InnerDappWebViewPreloadLayer({
               isActive ? styles.webviewVisible : styles.webviewHidden,
             ]}>
             <View style={styles.webviewWrapper}>
-              {isActive ? (
+              {isActive && offscreenPreload ? (
                 <PanGestureHandler
                   enabled={isActive}
                   activeOffsetX={10}
@@ -498,6 +506,7 @@ export default function InnerDappWebViewPreloadLayer({
                     key,
                     item.url,
                   )}
+                  offscreenPreload={offscreenPreload}
                 />
               </ViewShot>
               {shouldShowSnapshot ? (

@@ -88,6 +88,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
 } from './sheetModals/DevForceLocalVersionSelector';
+import InnerDappPreloadStrategySelector, {
+  useInnerDappPreloadStrategySelectorModalVisible,
+} from './sheetModals/InnerDappPreloadStrategySelector';
+import { useInnerDappPreloadRetention } from '@/config/innerDappPreloadRetention';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 import WalletLockTestItemModal, {
   useWalletLockTestItemModalVisible,
@@ -137,6 +141,17 @@ const LAYOUTS = {
 };
 
 const isIOS = Platform.OS === 'ios';
+
+function getInnerDappPreloadStrategyLabel(strategy: string) {
+  switch (strategy) {
+    case 'legacy':
+      return 'Legacy';
+    case 'screen':
+      return 'Screen';
+    default:
+      return strategy;
+  }
+}
 
 function AlertBuildInfo() {
   const commonInfos = [
@@ -564,6 +579,16 @@ function DevSettingsBlocks() {
 
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
     useLocalVersionSelectorModalVisible();
+  const {
+    currentStrategy: innerDappPreloadStrategy,
+    setVisible: setInnerDappPreloadStrategySelectorVisible,
+  } = useInnerDappPreloadStrategySelectorModalVisible();
+  const innerDappPreloadRetention = useInnerDappPreloadRetention();
+  const innerDappRetentionLabel =
+    innerDappPreloadStrategy === 'screen' ? 1 : innerDappPreloadRetention;
+  const innerDappPreloadLabel = `${getInnerDappPreloadStrategyLabel(
+    innerDappPreloadStrategy,
+  )} · ${innerDappRetentionLabel}`;
 
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
@@ -605,6 +630,19 @@ function DevSettingsBlocks() {
                 </Text>
               ),
               // TODO: only show in non-production mode
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'Inner Dapp Preload',
+              icon: RcCode,
+              onPress: () => {
+                setInnerDappPreloadStrategySelectorVisible(true);
+              },
+              rightTextNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  {innerDappPreloadLabel}
+                </Text>
+              ),
               visible: NEED_DEVSETTINGBLOCKS,
             },
             {
@@ -671,6 +709,18 @@ function DevSettingsBlocks() {
               onPress: async () => {
                 setDevServerSettingsModalVisible(true);
               },
+            },
+            {
+              label: 'Inner Dapp Preload',
+              icon: RcCode,
+              onPress: () => {
+                setInnerDappPreloadStrategySelectorVisible(true);
+              },
+              rightTextNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  {innerDappPreloadLabel}
+                </Text>
+              ),
             },
             // {
             //   label: 'WebView Test',
@@ -805,6 +855,7 @@ function DevSettingsBlocks() {
       })}
 
       <DevForceLocalVersionSelector />
+      <InnerDappPreloadStrategySelector />
 
       <WalletLockTestItemModal />
       <DevUIPlaygroundModal />
