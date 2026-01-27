@@ -122,8 +122,9 @@ export const syncSpecificProtocol = async (
     syncRemoteProtocol(address, null, { deleteId: protocolId });
     return undefined;
   }
-
-  syncRemoteProtocol(address, projects[0]);
+  if (!isAppChainProtocol) {
+    syncRemoteProtocol(address, projects[0]);
+  }
   return complexProtocol2ProtocolItem(projects[0], address);
 };
 
