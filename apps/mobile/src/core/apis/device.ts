@@ -34,6 +34,15 @@ type MobileClientPushInfo = MobileClientInfo & {
   pushToken: string;
 };
 
+export function makeDeviceUUID() {
+  const uniqId = DeviceInfo.getUniqueIdSync();
+  const deviceUUID = `${ensureDeviceUUID()}-${Platform.OS}-${uniqId}`;
+  return {
+    uniqId,
+    deviceUUID,
+  };
+}
+
 export function makeMobileClientPushInfo(
   pushToken: string,
   enabledNotifications: boolean,
@@ -42,8 +51,7 @@ export function makeMobileClientPushInfo(
   const appBuildNumber = APP_VERSIONS.buildNumber;
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
-  const uniqId = DeviceInfo.getUniqueIdSync();
-  const deviceUUID = `${ensureDeviceUUID()}-${Platform.OS}-${uniqId}`;
+  const { deviceUUID } = makeDeviceUUID();
 
   return {
     // TODO: generate uuid and persisted

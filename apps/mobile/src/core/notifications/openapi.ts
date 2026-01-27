@@ -7,7 +7,7 @@ import {
   isNonPublicProductionEnv,
 } from '@/constant';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
-import { ensureDeviceUUID } from '../apis/device';
+import { ensureDeviceUUID, makeDeviceUUID } from '../apis/device';
 
 export type DeviceActiveStatusResponse = {
   success: boolean;
@@ -31,7 +31,7 @@ export type BindDeviceResponse = {
 
 class NotificationsOpenApiService extends OpenApiService {
   #getDeviceUUID() {
-    return ensureDeviceUUID();
+    return makeDeviceUUID().deviceUUID;
   }
   async setDeviceActiveStatus(params: {
     // deviceId: string;

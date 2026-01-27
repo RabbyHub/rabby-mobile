@@ -4,12 +4,14 @@ import { Platform } from 'react-native';
 import { sleep } from '@/utils/async';
 import { IS_IOS } from '../native/utils';
 import { zMutativeByMMKV } from '../storage/mmkv';
-import { notificationOpenapi } from './openapi';
+import { HeartbeatResponse, notificationOpenapi } from './openapi';
 import { preferenceService } from '../services';
 import { perfEvents } from '../utils/perf';
 import { storeApiAccounts } from '@/hooks/account';
 import { accountEvents, getTop10MyAccounts } from '../apis/account';
 import { checkIfEnabledNotificationWithPermission } from './switch';
+import { useShallow } from 'zustand/shallow';
+import { zCreate, zMutative } from '../utils/reexports';
 
 const iosPush = {
   token: '',
@@ -26,10 +28,20 @@ const iosPush = {
 //   })
 // )
 
-export const notificationStore = zMutativeByMMKV('notification', {
+const notificationStore = zMutativeByMMKV('notification', {
   pushToken: '',
   // deviceId: ensureDeviceUUID(),
 });
+
+export function useNotificationStore() {
+  const { pushToken } = notificationStore(
+    useShallow(s => ({
+      pushToken: s.pushToken,
+    })),
+  );
+
+  return { pushToken };
+}
 
 const iosTokenReady = new Promise<string>((resolve, reject) => {
   if (IS_IOS) {
@@ -108,6 +120,37 @@ export const startSubscribePushNotifications = async () => {
   }
 };
 
+type HeartbeatLogItem = HeartbeatResponse & {
+  expireTime: number;
+};
+const devLogsStore = zCreate(
+  zMutative(() => {
+    return {
+      heartbeatResps: [] as HeartbeatLogItem[],
+    };
+  }),
+);
+export function useNotificationDevLogsStore() {
+  const heartbeatResps = devLogsStore(s => s.heartbeatResps);
+
+  return { heartbeatResps };
+}
+
+function onHeartbeatResponse(resp: HeartbeatResponse) {
+  // limit recent 20 records
+  devLogsStore.setState(prev => {
+    const heartbeatList = prev.heartbeatResps;
+    const item = {
+      ...resp,
+      expireTime: Date.now() + resp.ttl * 1000,
+    };
+
+    heartbeatList.unshift(item);
+
+    prev.heartbeatResps = heartbeatList.slice(0, 20);
+  });
+}
+
 const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
 export async function startConnectPushServerInterval() {
   const requstConnect = async (appEnabled?: boolean) => {
@@ -127,21 +170,29 @@ export async function startConnectPushServerInterval() {
     }
   });
 
-  notificationOpenapi.heartbeat();
+  notificationOpenapi.heartbeat().then(onHeartbeatResponse);
   setInterval(async () => {
-    await notificationOpenapi.heartbeat();
+    await notificationOpenapi.heartbeat().then(onHeartbeatResponse);
   }, CONNECT_DURATION_MS);
 }
 
-export async function bindPushServer(pushToken: string) {
-  const requestBind = async () => {
-    return notificationOpenapi.bindDevice({
-      platform: Platform.OS === 'ios' ? 'ios' : 'android',
-      pushToken,
-      userAddrs: await getTop10MyAccounts().then(acc => acc.top10Addresses),
-    });
-  };
+export const requestBindDevice = async (pushToken: string) => {
+  return notificationOpenapi.bindDevice({
+    platform: Platform.OS === 'ios' ? 'ios' : 'android',
+    pushToken,
+    userAddrs: await getTop10MyAccounts().then(acc => acc.top10Addresses),
+  });
+};
 
-  accountEvents.addListener('ACCOUNT_ADDED', requestBind);
-  accountEvents.addListener('ACCOUNT_REMOVED', requestBind);
+export async function startBindPushServerOnDeman(pushToken: string) {
+  perfEvents.on('USER_MANUALLY_UNLOCK', () => {
+    requestBindDevice(pushToken);
+  });
+
+  accountEvents.addListener('ACCOUNT_ADDED', () =>
+    requestBindDevice(pushToken),
+  );
+  accountEvents.addListener('ACCOUNT_REMOVED', () =>
+    requestBindDevice(pushToken),
+  );
 }

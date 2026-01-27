@@ -118,13 +118,15 @@ export function useAppHasSystemNotificationPermission(): boolean | null {
   return appNotificationStore(s => s.hasSystemPermission);
 }
 
-export const useAppNotificationEnabled: UseValueHook = () => {
+export const useAppNotificationEnabled = () => {
   const enabledTransactionNofification = appNotificationStore(
     s => s.enabledTransactionNofification,
   );
   const hasSystemPermission = appNotificationStore(s => s.hasSystemPermission);
 
   return {
+    enabledTransactionNofification,
+    hasSystemPermission,
     value: hasSystemPermission === true && enabledTransactionNofification,
     setValue: setEnableTransactionNofification,
   };
