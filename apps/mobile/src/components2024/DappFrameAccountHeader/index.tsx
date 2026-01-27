@@ -314,7 +314,7 @@ const DappSelect = (props: {
                       <View style={styles.sheetItemLeft}>
                         <FastImage
                           style={styles.sheetItemIcon}
-                          defaultSource={activeItem.icon}
+                          defaultSource={item.icon}
                           source={
                             item?.remoteUrl
                               ? { uri: item?.remoteUrl }
@@ -437,13 +437,15 @@ export const DappFrameAccountHeader = (props: {
         };
       }
       const originKey = getOriginKey(item.url);
+      const originPngIds = ['aave', 'hyperliquid'];
       if (!originKey || !defiValueByOrigin.has(originKey)) {
         return {
           ...item,
           value: undefined,
-          remoteUrl:
-            dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
-            undefined,
+          remoteUrl: originPngIds.includes(originKey || '')
+            ? undefined
+            : dappService.getDapp(originKey || item.url || '')?.info
+                ?.logo_url || undefined,
         };
       }
       const netWorth = defiValueByOrigin.get(originKey) ?? 0;
@@ -451,9 +453,10 @@ export const DappFrameAccountHeader = (props: {
       return {
         ...item,
         value: formatNetworth(netWorth),
-        remoteUrl:
-          dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
-          undefined,
+        remoteUrl: originPngIds.includes(originKey || '')
+          ? undefined
+          : dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
+            undefined,
       };
     });
   }, [dAppList, defiValueByOrigin, hyperliquidAccountValue]);
