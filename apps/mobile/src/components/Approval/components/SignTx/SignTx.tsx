@@ -71,7 +71,7 @@ import {
   transactionHistoryService,
   whitelistService,
 } from '@/core/services';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { toast as toast2024 } from '@/components2024/Toast';
 
 import RuleDrawer from '../SecurityEngine/RuleDrawer';

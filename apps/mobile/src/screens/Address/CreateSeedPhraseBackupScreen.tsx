@@ -4,7 +4,7 @@ import {
   CopyAddressIconType,
 } from '@/components/AddressViewer/CopyAddress';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { WordsMatrix } from '@/components/WordsMatrix';
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';

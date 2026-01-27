@@ -1,5 +1,5 @@
 import { Button, Tip } from '@/components';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apisSafe } from '@/core/apis/safe';
 import { sendRequest } from '@/core/apis/sendRequest';

@@ -13,7 +13,6 @@ export { default as RcIconInfoFill1CC } from './icon-info-fill-cc.svg';
 export { default as RcIconInfo2CC } from './info2-cc.svg';
 export { default as RcIconCopyCC } from './copy-cc.svg';
 export { default as RcIconCopyRegularCC } from './copy-regular-cc.svg';
-export { default as IconCommonInfo } from './info.svg';
 export { default as IconTick } from './tick.svg';
 export { default as IconToastSuccess } from './toast-success.svg';
 export { default as RcIconLogo } from './logo.svg';

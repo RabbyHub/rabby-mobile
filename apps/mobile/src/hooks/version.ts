@@ -18,7 +18,7 @@ import {
 } from '@/utils/version';
 import { BUILD_CHANNEL } from '@/constant/env';
 import { APP_URLS, isNonPublicProductionEnv } from '@/constant';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useUnmountedRef } from './common/useMount';
 import { zCreate } from '@/core/utils/reexports';
 import { RefLikeObject } from '@/utils/type';

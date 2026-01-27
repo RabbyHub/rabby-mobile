@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { BIOMETRY_TYPE } from 'react-native-keychain';
-import { toast, toastLoading } from '@/components/Toast';
+import { toast, toastLoading } from '@/components2024/Toast';
 import { apisKeychain } from '@/core/apis';
 import {
   KEYCHAIN_AUTH_TYPES,
