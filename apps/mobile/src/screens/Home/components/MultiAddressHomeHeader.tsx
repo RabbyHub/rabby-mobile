@@ -308,16 +308,17 @@ const SIZES = {
   cardLayoutPaddingHorizontal: 16,
   cardContentRadius: 20,
   curveBoxWrapperPy: 0,
-  curveBoxPy: 16,
-  curveCardMinHeight: 100,
+  curveBoxPx: 24,
+  curveBoxPy: 24,
+  curveCardMinHeight: 62,
   get curveBoxMinHeight() {
     return SIZES.curveCardMinHeight;
   },
   get homecardMinHeight() {
-    return SIZES.curveBoxMinHeight + SIZES.curveBoxWrapperPy * 2;
+    return SIZES.curveCardMinHeight + SIZES.curveBoxWrapperPy * 2;
   },
   // pratical value, to keep padding inside curve box
-  curveCardPy: 14,
+  curveCardPy: 0,
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
@@ -370,7 +371,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       minHeight: SIZES.curveBoxMinHeight,
     },
     curveBox: {
-      paddingHorizontal: 0,
+      paddingHorizontal: SIZES.curveBoxPx,
       paddingVertical: SIZES.curveBoxPy,
       borderWidth: isLight ? curveCardBorderWidth : 0,
       borderColor: 'transparent',
@@ -385,14 +386,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     curveBoxLoading: {},
     curveCard: {
-      overflow: 'hidden',
+      overflow: 'visible',
       borderStyle: 'solid',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
       maxWidth: '100%',
-      borderRadius: SIZES.cardContentRadius,
+      borderRadius: 0,
       minHeight: SIZES.curveCardMinHeight,
       paddingVertical: SIZES.curveCardPy,
       paddingHorizontal: 0,
@@ -449,7 +450,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 8,
       width: '100%',
       marginTop: 28,
-      paddingHorizontal: 8,
+      paddingHorizontal: 0,
     },
     addressOpacity: {
       opacity: 0.3,

@@ -503,6 +503,7 @@ const getStyle = createGetStyles2024(
       height: 86,
       gap: 8,
       position: 'relative',
+      // ...makeDebugBorder(),
     },
     pullUpWrapper: {
       flex: 1,

@@ -3,7 +3,13 @@ import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
 import React, { memo, useCallback, useEffect, useMemo } from 'react';
-import { Dimensions, Pressable, Text, View } from 'react-native';
+import {
+  Dimensions,
+  Pressable,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import Animated, {
   Easing,
@@ -71,6 +77,7 @@ const ChartContent = memo(function ChartContent({
 }) {
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
   const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading();
+  const { width: winWidth } = useWindowDimensions();
 
   const pathColor = useMemo(
     () => (!isLoss ? colors2024['green-default'] : colors2024['red-default']),
@@ -99,7 +106,7 @@ const ChartContent = memo(function ChartContent({
       {!chartsData.length ? null : !isAnyAddrLoading ? (
         <LineChart
           height={CHART_HEIGHT}
-          width={ScreenWidth - 72}
+          width={winWidth - 72}
           shape={d3Shape.curveCatmullRom}
           style={[
             styles.relative,
@@ -201,7 +208,10 @@ const ChartHeader = React.memo(
     data: _data,
     matteredAccountCount,
   }: IHeaderProps) => {
-    const { styles, colors2024 } = useTheme2024({ getStyle });
+    const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
+    const rStyles = {
+      charHeader: useAnimatedStyle(reanimatedStyles.charHeader),
+    };
     const { currentIndex } = LineChart.useChart();
     const { currency, formatCurrentCurrency } = useCurrency();
     const debouncedRawNetWorth = useDebouncedValue(rawNetWorth, 300);
@@ -330,7 +340,7 @@ const ChartHeader = React.memo(
     }, [hideType]);
 
     return (
-      <View style={styles.charHeader}>
+      <Animated.View style={rStyles.charHeader}>
         <View style={styles.netWorthContainer}>
           <AnimateableText
             style={[
@@ -350,17 +360,13 @@ const ChartHeader = React.memo(
           />
 
           <View style={[styles.accountBg]}>
-            <RcIconSmallWalletCC
-              color={ThemeColors2024.dark['neutral-title-1']}
-            />
+            <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
             <Text style={styles.accountText}>
               {matteredAccountCount && matteredAccountCount >= 10
                 ? '10'
                 : matteredAccountCount}
             </Text>
-            <RcIconSmallArrowCC
-              color={ThemeColors2024.dark['neutral-title-1']}
-            />
+            <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
           </View>
         </View>
         {loading ? (
@@ -418,140 +424,151 @@ const ChartHeader = React.memo(
             )}
           </Pressable>
         )}
-      </View>
+      </Animated.View>
     );
   },
 );
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    marginLeft: -16,
+const winWidth = Dimensions.get('window').width;
+const getStyle = createGetStyles2024(
+  {
+    reanimatedStyles: {
+      charHeader: ({ colors2024, winLayout }) => {
+        'worklet';
+        return {
+          alignContent: 'flex-start',
+          justifyContent: 'flex-start',
+          flexDirection: 'column',
+          maxWidth: Math.max(winWidth, winLayout.value.width) - 72,
+          gap: 6,
+          // ...makeDebugBorder('blue'),
+        };
+      },
+    },
   },
-  skeleton: {
-    marginTop: 20,
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
-  skeletonNetWorth: {
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
-  charHeader: {
-    alignContent: 'flex-start',
-    justifyContent: 'flex-start',
-    flexDirection: 'column',
-    width: ScreenWidth - 72,
-    gap: 6,
-  },
-  netWorth: {
-    fontSize: 42,
-    lineHeight: 46,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changeSection: {
-    flexDirection: 'row',
-    gap: 2,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  changeValue: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    marginLeft: 4,
-  },
-  container: {
-    // height: HEADER_CHART_HEIGHT,
-    paddingHorizontal: 20,
-    // backgroundColor: isLight
-    //   ? colors2024['neutral-bg-0']
-    //   : colors2024['neutral-bg-1'],
-    overflow: 'hidden',
-  },
-  chartContainer: {},
-  globalWarning: {
-    marginHorizontal: 16,
-    marginBottom: 13,
-  },
-  loading: {
-    width: ScreenWidth - 72,
-    height: 114,
-    paddingHorizontal: 0,
-  },
-  relative: { position: 'relative' },
-  bg: {
-    position: 'absolute',
-    left: 0,
-    width: ScreenWidth,
-    height: 32,
-    zIndex: -100,
-  },
-  balanceOpacity: {
-    opacity: 0.2,
-  },
-  netWorthContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  hidden: {
-    display: 'none',
-  },
-  accountBg: {
-    minWidth: 74,
-    padding: 8,
-    paddingLeft: 11,
-    borderRadius: 10,
-    backgroundColor: isLight ? '#000000' : colors2024['brand-default'],
-    shadowColor: colors2024['brand-light-1'],
-    shadowOffset: { width: 0, height: 9.411 },
-    shadowOpacity: 0.1,
-    shadowRadius: 22.587,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 30,
-    // position: 'absolute',
-    // top: 28,
-    // right: 20,
-    // elevation: 500,
-  },
-  accountText: {
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'left',
-    color: ThemeColors2024.dark['neutral-title-1'],
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-    paddingLeft: 6,
-  },
-  percentChangeContainer: {
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    // justifyContent: 'flex-end',
-  },
-}));
+  ({ colors2024, isLight }) => ({
+    skeleton: {
+      marginTop: 20,
+      borderRadius: 8,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
+    skeletonNetWorth: {
+      borderRadius: 8,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
+    netWorth: {
+      fontSize: 42,
+      lineHeight: 46,
+      fontWeight: '900',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    changeSection: {
+      flexDirection: 'row',
+      gap: 2,
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    changeValue: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    changePercent: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    changeTime: {
+      fontSize: 16,
+      fontWeight: '400',
+      lineHeight: 20,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      marginLeft: 4,
+    },
+    container: {
+      maxWidth: '100%',
+      // height: HEADER_CHART_HEIGHT,
+      paddingHorizontal: 0,
+      // backgroundColor: isLight
+      //   ? colors2024['neutral-bg-0']
+      //   : colors2024['neutral-bg-1'],
+      overflow: 'hidden',
+      // ...makeDebugBorder('red'),
+    },
+    chartContainer: {},
+    globalWarning: {
+      marginHorizontal: 16,
+      marginBottom: 13,
+    },
+    loading: {
+      width: ScreenWidth - 72,
+      height: 114,
+      paddingHorizontal: 0,
+    },
+    relative: { position: 'relative' },
+    bg: {
+      position: 'absolute',
+      left: 0,
+      width: ScreenWidth,
+      height: 32,
+      zIndex: -100,
+    },
+    balanceOpacity: {
+      opacity: 0.2,
+    },
+    netWorthContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      // ...makeDebugBorder('orange'),
+      lineHeight: 46,
+    },
+    hidden: {
+      display: 'none',
+    },
+    accountBg: {
+      minWidth: 74,
+      padding: 8,
+      paddingLeft: 11,
+      borderRadius: 10,
+      backgroundColor: isLight
+        ? colors2024['neutral-line']
+        : colors2024['brand-default'],
+      shadowColor: colors2024['brand-light-1'],
+      shadowOffset: { width: 0, height: 9.411 },
+      shadowOpacity: 0.1,
+      shadowRadius: 22.587,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 30,
+      // position: 'absolute',
+      // top: 28,
+      // right: 20,
+      // elevation: 500,
+    },
+    accountText: {
+      fontSize: 16,
+      fontWeight: '700',
+      textAlign: 'left',
+      color: colors2024['neutral-title-1'],
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      paddingLeft: 6,
+    },
+    percentChangeContainer: {
+      // flexDirection: 'row',
+      // alignItems: 'center',
+      // justifyContent: 'flex-end',
+    },
+  }),
+);

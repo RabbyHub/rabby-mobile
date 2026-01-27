@@ -22,7 +22,6 @@ export const svsLayout = {
 
 export function startWatchLayoutChange() {
   Dimensions.addEventListener('change', ({ window, screen }) => {
-    console.debug('[feat] svsLayout:: Dimensions changed:', { window, screen });
     if (!isEqual(svsLayout.winLayout.value, window)) {
       svsLayout.winLayout.value = window;
     }
