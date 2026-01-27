@@ -27,6 +27,8 @@ import {
 import { getTheme2024 } from '@/hooks/theme';
 import { makeThemeIcon2024FromCC } from '@/hooks/makeThemeIcon';
 
+const TOAST_MIN_H = 44;
+
 const config: ToastOptions = {
   position: Toast.positions.TOP + 80,
   shadow: false,
@@ -36,13 +38,13 @@ const config: ToastOptions = {
   textStyle: {
     fontSize: 15,
   },
+  opacity: 1,
   containerStyle: {
     borderRadius: 12,
+    minHeight: TOAST_MIN_H,
     padding: 0,
     overflow: 'visible',
     // ...makeDebugBorder(),
-    // paddingHorizontal: 16,
-    // paddingVertical: 12,
   },
   backgroundColor: ThemeColors2024.light['neutral-black'],
 };
@@ -284,18 +286,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 8,
+      paddingHorizontal: 12,
+      height: '100%',
+      // paddingVertical: 16,
+      // minHeight: TOAST_MIN_H,
       // ...makeDevOnlyStyle({
       //   backgroundColor: 'white',
       // }),
     },
     icon: {
       marginRight: 6,
-      color: ThemeColors2024.light['neutral-title-2'],
+      color: ThemeColors2024.light['neutral-InvertHighlight'],
     },
     text: {
       // ...makeDebugBorder(),
-      color: ThemeColors2024.light['neutral-title-2'],
+      color: ThemeColors2024.light['neutral-InvertHighlight'],
       fontSize: 15,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
