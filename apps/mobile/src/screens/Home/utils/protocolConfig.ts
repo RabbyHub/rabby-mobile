@@ -13,7 +13,6 @@ import { SvgProps } from 'react-native-svg';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { IProtocolPortfolio } from '@/store/protocols';
-import { setInnerDappRouteParams } from '@/hooks/useInnerDappRouteParams';
 
 const keyToMarketKey: Record<string, CustomMarket> = {
   aave3: CustomMarket.proto_mainnet_v3,
@@ -76,10 +75,7 @@ export const useProtocolConfig = () => {
             await switchSceneCurrentAccount('Lending', account);
             setMarketKey(marketKey);
           }
-          setInnerDappRouteParams('Lending', {
-            dappId: 'aave',
-            account: account || null,
-          });
+
           navigation.navigate(RootNames.StackTransaction, {
             screen: RootNames.Lending,
             params: {
@@ -151,10 +147,6 @@ export const useProtocolConfig = () => {
               },
             });
           } else {
-            setInnerDappRouteParams('Perps', {
-              dappId: 'hyperliquid',
-              account,
-            });
             return navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Perps,
               params: {
