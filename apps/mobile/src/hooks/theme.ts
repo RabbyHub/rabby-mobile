@@ -305,7 +305,7 @@ export function useTheme2024<
         classicalColors,
         isLight,
         safeAreaInsets,
-      }),
+      }) as T extends void ? void : ReturnType<T['getStyles']>,
     };
   }, [colors2024, classicalColors, getStyles, isLight, safeAreaInsets]);
 

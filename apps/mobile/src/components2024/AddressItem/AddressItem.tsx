@@ -27,7 +27,7 @@ interface ChildrenProps {
   WalletBalance: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletPin: typeof WalletPin;
   walletName?: string;
-  styles: ReturnType<typeof getStyle>;
+  styles: ReturnType<(typeof getStyle)['getStyles']>;
 }
 
 type AddressItemProps = (
