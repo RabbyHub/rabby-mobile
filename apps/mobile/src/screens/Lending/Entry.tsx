@@ -6,7 +6,6 @@ import {
 } from '@/components2024/DappFrameAccountHeader';
 import { InnerDappWebViewScreen } from '@/components2024/InnerDappWebViewScreen';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
-import { useInnerDappRouteParams } from '@/hooks/useInnerDappRouteParams';
 import { Account } from '@/core/services/preference';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { apisDapp } from '@/core/apis';
@@ -21,6 +20,17 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { noop } from 'lodash';
+import {
+  CompositeScreenProps,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
+import {
+  RootStackParamsList,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 const LENDING_LIST = INNER_DAPP_LIST.LENDING;
 const DEFAULT_LENDING_ID = LENDING_LIST[0]?.id ?? 'aave';
@@ -51,12 +61,20 @@ const ensureDappAccount = (origin: string, name: string, account: Account) => {
   apisDapp.setCurrentAccountForDapp(origin, account);
 };
 
-export function LendingEntryScreen() {
-  const { lending, setLending } = useInnerDappSelection();
-  const { params, clear } = useInnerDappRouteParams('Lending');
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+type LendingRouteProps = CompositeScreenProps<
+  NativeStackScreenProps<TransactionNavigatorParamList, 'Lending'>,
+  NativeStackScreenProps<RootStackParamsList>
+>;
 
-  const resetRef = useRef(true);
+export function LendingEntryScreen() {
+  const { t } = useTranslation();
+  const { lending, setLending } = useInnerDappSelection();
+  const route = useRoute<LendingRouteProps['route']>();
+
+  const navigation = useNavigation<LendingRouteProps['navigation']>();
+  const navState = route.params;
+
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const activeId = useMemo(
     () => resolveActiveId(LENDING_LIST, lending),
@@ -76,27 +94,29 @@ export function LendingEntryScreen() {
     },
     [setLending],
   );
+  const resetRef = useRef(true);
+  const resumeRef = useRef(noop);
 
   useEffect(() => {
-    if (!params) {
+    if (!navState?.dappId) {
       return;
     }
 
     resetRef.current = false;
 
-    const { dappId, account } = params;
+    const { dappId, account } = navState;
     const nextId =
       dappId && LENDING_LIST.some(item => item.id === dappId)
         ? dappId
         : undefined;
 
-    let resume = () => {};
-
     if (nextId && nextId !== lending) {
       setLending(nextId);
-      resume = () => {
+
+      resumeRef.current = () => {
+        let originLending = lending;
         if (!resetRef.current) {
-          setLending(lending);
+          setLending(originLending);
         }
       };
     }
@@ -117,12 +137,17 @@ export function LendingEntryScreen() {
         }
       }
     }
+    navigation.setParams({
+      account: undefined,
+      dappId: undefined,
+    });
+  }, [lending, setLending, navState, navigation]);
 
+  useEffect(() => {
     return () => {
-      clear();
-      resume();
+      resumeRef.current?.();
     };
-  }, [params, lending, setLending, switchSceneCurrentAccount, clear]);
+  }, []);
 
   if (!activeId) {
     return null;
@@ -135,6 +160,7 @@ export function LendingEntryScreen() {
         activeId={activeId}
         onSelectDapp={handleSelectDapp}
         renderWebView={false}
+        dappSelectTitle={t('page.Lending.dappSelect.title')}
       />
     );
   }
@@ -144,6 +170,7 @@ export function LendingEntryScreen() {
       activeId={activeId}
       dappList={LENDING_LIST}
       onSelectDapp={handleSelectDapp}
+      dappSelectTitle={t('page.Lending.dappSelect.title')}
     />
   );
 }

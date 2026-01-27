@@ -7,7 +7,6 @@ import {
 import { InnerDappWebViewScreen } from '@/components2024/InnerDappWebViewScreen';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { PerpsOriginScreen } from './index';
-import { useInnerDappRouteParams } from '@/hooks/useInnerDappRouteParams';
 import { Account } from '@/core/services/preference';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { apisDapp } from '@/core/apis';
@@ -15,6 +14,17 @@ import { createDappBySession } from '@/core/apis/dapp';
 import { dappService } from '@/core/services';
 import { noop } from 'lodash';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import {
+  CompositeScreenProps,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
+import {
+  RootStackParamsList,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 const PERPS_LIST = INNER_DAPP_LIST.PERPS;
 const DEFAULT_PERPS_ID = PERPS_LIST[0]?.id ?? 'hyperliquid';
@@ -45,11 +55,18 @@ const ensureDappAccount = (origin: string, name: string, account: Account) => {
   apisDapp.setCurrentAccountForDapp(origin, account);
 };
 
-export function PerpsScreen() {
-  const { perps, setPerps } = useInnerDappSelection();
-  const { params, clear } = useInnerDappRouteParams('Perps');
+type PerpsRouteProps = CompositeScreenProps<
+  NativeStackScreenProps<TransactionNavigatorParamList, 'Perps'>,
+  NativeStackScreenProps<RootStackParamsList>
+>;
 
-  const resetRef = useRef(true);
+export function PerpsScreen() {
+  const { t } = useTranslation();
+  const { perps, setPerps } = useInnerDappSelection();
+  const route = useRoute<PerpsRouteProps['route']>();
+
+  const navigation = useNavigation<PerpsRouteProps['navigation']>();
+  const navState = route.params;
 
   const activeId = useMemo(() => resolveActiveId(PERPS_LIST, perps), [perps]);
   const activeItem = useMemo(
@@ -57,25 +74,25 @@ export function PerpsScreen() {
     [activeId],
   );
 
+  const resetRef = useRef(true);
+  const resumeRef = useRef(noop);
+
   useEffect(() => {
-    if (!params) {
+    if (!navState?.dappId) {
       return;
     }
     resetRef.current = false;
-
-    const { dappId, account } = params;
+    const { dappId, account } = navState;
     const nextId =
       dappId && PERPS_LIST.some(item => item.id === dappId)
         ? dappId
         : undefined;
-
-    let resume = () => {};
-
     if (nextId && nextId !== perps) {
       setPerps(nextId);
-      resume = () => {
+      resumeRef.current = () => {
+        let originPerps = perps;
         if (!resetRef.current) {
-          setPerps(perps);
+          setPerps(originPerps);
         }
       };
     }
@@ -90,9 +107,6 @@ export function PerpsScreen() {
         const item = PERPS_LIST.find(i => i.id === resolvedId);
         if (item?.url) {
           const origin = safeGetOrigin(item.url) || item.url;
-          resume = () => {
-            // ensureDappAccount(origin, item.name, originAccount);
-          };
           if (origin) {
             ensureDappAccount(origin, item.name, account);
           }
@@ -100,18 +114,23 @@ export function PerpsScreen() {
       }
     }
 
+    navigation.setParams({
+      account: undefined,
+      dappId: undefined,
+    });
+  }, [navState, perps, setPerps, navigation]);
+
+  useEffect(() => {
     return () => {
-      clear();
-      resume();
+      resumeRef.current?.();
     };
-  }, [params, perps, setPerps, clear]);
+  }, []);
 
   const handleSelectDapp = useCallback(
     (item: DappSelectItem) => {
       setPerps(item.id);
-      clear();
     },
-    [clear, setPerps],
+    [setPerps],
   );
 
   if (!activeId) {
@@ -125,6 +144,7 @@ export function PerpsScreen() {
         activeId={activeId}
         onSelectDapp={handleSelectDapp}
         renderWebView={false}
+        dappSelectTitle={t('page.Lending.dappSelect.title')}
       />
     );
   }
@@ -134,6 +154,7 @@ export function PerpsScreen() {
       activeId={activeId}
       dappList={PERPS_LIST}
       onSelectDapp={handleSelectDapp}
+      dappSelectTitle={t('page.Lending.dappSelect.title')}
     />
   );
 }

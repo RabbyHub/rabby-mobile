@@ -4,8 +4,6 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import {
-  Image,
-  ImageSourcePropType,
   Text,
   TouchableOpacity,
   View,
@@ -30,7 +28,7 @@ import { perpsStore as usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { formatUsdValue } from '@/utils/number';
 import { useShallow } from 'zustand/shallow';
 import { dappService } from '@/core/services';
-import FastImage, { FastImageProps } from 'react-native-fast-image';
+import FastImage from 'react-native-fast-image';
 
 const PngPolymarket = require('@/assets2024/icons/prediction/polymarket.png');
 const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.png');
@@ -233,10 +231,8 @@ const DappSelect = (props: {
   }, [visible]);
 
   const handleOpen = React.useCallback(() => {
-    if (list.length > 1) {
-      setVisible(true);
-    }
-  }, [list.length]);
+    setVisible(true);
+  }, []);
 
   const handleDismiss = React.useCallback(() => {
     setVisible(false);
@@ -257,10 +253,7 @@ const DappSelect = (props: {
 
   return (
     <>
-      <TouchableOpacity
-        style={styles.leftGroup}
-        onPress={handleOpen}
-        disabled={list?.length < 2}>
+      <TouchableOpacity style={styles.leftGroup} onPress={handleOpen}>
         <View
           style={[
             styles.marketPill,

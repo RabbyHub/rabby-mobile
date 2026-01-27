@@ -24,12 +24,14 @@ type LendingNativeScreenProps = {
   activeId: string;
   dappList: DappSelectItem[];
   onSelectDapp: (item: DappSelectItem) => void;
+  dappSelectTitle?: string;
 };
 
 export function LendingNativeScreen({
   activeId,
   dappList,
   onSelectDapp,
+  dappSelectTitle,
 }: LendingNativeScreenProps): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
   useInitOpenDetail();
@@ -50,6 +52,7 @@ export function LendingNativeScreen({
       type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={styles.overwriteStyle}>
       <DappFrameAccountHeader
+        dappSelectTitle={dappSelectTitle}
         account={finalSceneCurrentAccount || undefined}
         onSelectAccount={handleSelectAccount}
         activeId={activeId}

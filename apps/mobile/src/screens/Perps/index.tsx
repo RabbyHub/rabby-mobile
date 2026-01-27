@@ -63,12 +63,14 @@ type PerpsNativeScreenProps = {
   activeId: string;
   dappList: DappSelectItem[];
   onSelectDapp: (item: DappSelectItem) => void;
+  dappSelectTitle?: string;
 };
 
 export const PerpsOriginScreen = ({
   activeId,
   dappList,
   onSelectDapp,
+  dappSelectTitle,
 }: PerpsNativeScreenProps) => {
   const { t } = useTranslation();
 
@@ -409,6 +411,7 @@ export const PerpsOriginScreen = ({
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         <DappFrameAccountHeader
+          dappSelectTitle={dappSelectTitle}
           account={currentPerpsAccount || undefined}
           activeId={activeId}
           dAppList={dappList}

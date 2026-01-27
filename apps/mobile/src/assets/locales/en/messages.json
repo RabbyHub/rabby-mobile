@@ -31,6 +31,11 @@
     }
   },
   "page": {
+    "predict": {
+      "dappSelect": {
+        "title": "Select Predict Provider"
+      }
+    },
     "getStart": {
       "createNewAddress": "Create New Wallet",
       "alreadyHaveAddress": "I already have a wallet",
@@ -2349,6 +2354,9 @@
     },
     "perps": {
       "title": "Perps",
+      "dappSelect": {
+        "title": "Select Perps Provider"
+      },
       "searchPerpsPopup": {
         "searchPlaceholder": "Search Perps",
         "searchPosition": "Search Position",
@@ -2739,6 +2747,9 @@
       "hfTitle": "Health Factor",
       "enterAmount": "Enter Amount",
       "disabled": "DISABLED",
+      "dappSelect": {
+        "title": "Select Lending Provider"
+      },
       "availableCard": {
         "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
         "needSupply": "To borrow, you need to supply assets as collateral.",
