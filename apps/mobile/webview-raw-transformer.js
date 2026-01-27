@@ -13,7 +13,7 @@ function escapeForTemplateLiteral(str) {
 }
 
 module.exports.transform = function ({ src, filename, options }) {
-  // 只处理你约定的后缀：.webview.ts / .webview.tsx / .webview.js
+  // 只处理约定的后缀：.webview.injected.ts / .webview.injected.tsx / .webview.injected.js
   if (
     filename.endsWith('.webview.injected.ts') ||
     filename.endsWith('.webview.injected.tsx')
@@ -32,7 +32,7 @@ module.exports.transform = function ({ src, filename, options }) {
     return upstream.transform({ src: wrapped, filename, options });
   }
 
-  if (filename.endsWith('.webview.js')) {
+  if (filename.endsWith('.webview.injected.js')) {
     const wrapped = `export default \`${escapeForTemplateLiteral(src)}\`;`;
     return upstream.transform({ src: wrapped, filename, options });
   }

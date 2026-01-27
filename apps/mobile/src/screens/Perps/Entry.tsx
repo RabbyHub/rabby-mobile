@@ -144,7 +144,7 @@ export function PerpsScreen() {
         activeId={activeId}
         onSelectDapp={handleSelectDapp}
         renderWebView={false}
-        dappSelectTitle={t('page.Lending.dappSelect.title')}
+        dappSelectTitle={t('page.perps.dappSelect.title')}
       />
     );
   }
@@ -154,7 +154,7 @@ export function PerpsScreen() {
       activeId={activeId}
       dappList={PERPS_LIST}
       onSelectDapp={handleSelectDapp}
-      dappSelectTitle={t('page.Lending.dappSelect.title')}
+      dappSelectTitle={t('page.perps.dappSelect.title')}
     />
   );
 }
