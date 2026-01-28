@@ -1,6 +1,8 @@
 import messaging from '@react-native-firebase/messaging';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
+import notifee, { EventType } from '@notifee/react-native';
+
 import { sleep } from '@/utils/async';
 import { IS_IOS } from '../native/utils';
 import { zMutativeByMMKV } from '../storage/mmkv';
@@ -12,7 +14,7 @@ import { accountEvents, getTop10MyAccounts } from '../apis/account';
 import { checkIfEnabledNotificationWithPermission } from './switch';
 import { useShallow } from 'zustand/shallow';
 import { zCreate, zMutative } from '../utils/reexports';
-import { parseRemoteData } from './data';
+import { notificationEvents, parseRemoteData } from './data';
 
 const iosPush = {
   token: '',
@@ -108,13 +110,36 @@ export const registerForPushNotifications = async () => {
 
 export const startSubscribePushNotifications = async () => {
   if (IS_IOS) {
-    PushNotificationIOS.addEventListener('notification', notification => {
+    const intialNotificationPromise =
+      PushNotificationIOS.getInitialNotification();
+    let intialNotificationConsumed = false;
+    PushNotificationIOS.addEventListener('notification', async notification => {
+      // const intialNotification = await PushNotificationIOS.getInitialNotification();
+      const intialNotification = await intialNotificationPromise;
+      const iosFromLaunch = !intialNotification
+        ? false
+        : intialNotification?.getData().userInteraction === 1;
       console.debug(
         '[notifications] Received foreground APNs notification:',
         notification,
+        intialNotification,
       );
+      const isBackground =
+        AppState.isAvailable && AppState.currentState === 'background';
+      const canProcess =
+        (iosFromLaunch && !intialNotificationConsumed) || isBackground;
+      if (!canProcess) return;
+      if (iosFromLaunch && !intialNotificationConsumed) {
+        intialNotificationConsumed = true;
+      }
+
       const parsed = parseRemoteData(notification.getData());
+      notificationEvents.emit('onParsedReceivedData', {
+        parsedData: parsed,
+        iosFromLaunch,
+      });
       console.debug('[notifications] parsed:', parsed);
+      // notification.finish(PushNotificationIOS.FetchResult.NoData);
     });
   } else {
     messaging().onMessage(async remoteMessage => {

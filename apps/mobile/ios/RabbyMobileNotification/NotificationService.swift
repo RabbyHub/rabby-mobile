@@ -30,28 +30,40 @@ class NotificationService: UNNotificationServiceExtension {
            bizVersion == "v20260122" {
           // manually set notifee options to userInfo
 
+          var notifeeOptions: [NSString: Any] = [
+            "attachments": [] as [Any],
+            // "ios": [] as [String : Any]
+          ]
+
           // if userInfo["imageUrl"] not null, set communication to notifee_options
           if let imageUrl = userInfo["imageUrl"] as? String, !imageUrl.isEmpty {
-            let notifeeOptions: [NSString: Any] = [
-              "attachments": [] as [Any],
-              "ios": [
-                "communicationInfo": [
-                  "sender": [
-                    "displayName": "Rabby",
-                    "avatar": imageUrl,
-                    "body": userInfo["body"] ?? "",
-                    "un_groupName": "Rabby Wallet",
-                    "un_groupAvatar": imageUrl
-                  ] as [String : Any]
-                ] as [String : Any]
-              ] as [String : Any]
+            notifeeOptions["attachments"] = [
+              [
+                "url": imageUrl,
+                "type": self.mimeType(for: URL(string: imageUrl)!) ?? "image/jpeg"
+              ]
             ]
-
-            let nsNotifeeOptions = NSDictionary(dictionary: notifeeOptions)
-            userInfo["notifee_options"] = nsNotifeeOptions
-
-            bestAttemptContent?.userInfo = userInfo
           }
+
+          if let avatarUrl = userInfo["avatarUrl"] as? String, !avatarUrl.isEmpty {
+            notifeeOptions["ios"] = [
+              "communicationInfo": [
+                "sender": [
+                  "displayName": "Rabby",
+                  "avatar": avatarUrl,
+                  "body": userInfo["body"] ?? "",
+                  "un_groupName": "Rabby Wallet",
+                  "un_groupAvatar": avatarUrl
+                ] as [NSString : Any]
+              ] as [NSString : Any]
+            ]
+          }
+
+          let nsNotifeeOptions = NSDictionary(dictionary: notifeeOptions)
+          userInfo["notifee_options"] = nsNotifeeOptions
+
+          bestAttemptContent?.userInfo = userInfo
+
           NotifeeExtensionHelper.populateNotificationContent(request, with: self.bestAttemptContent!, withContentHandler: contentHandler)
         } else {
           // Fallback to original notifee processing

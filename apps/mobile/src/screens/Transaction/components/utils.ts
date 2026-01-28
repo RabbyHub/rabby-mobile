@@ -100,7 +100,9 @@ export const fetchHistoryTokenItem = (
   return tokenDict[tokenUUID] || tokenDict[token_id] || ({} as TokenItem);
 };
 
-export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
+export const ensureHistoryListItemFromDb = (
+  item: HistoryItemEntity,
+): HistoryDisplayItem => {
   return {
     ...item,
     historyCustomType: item.history_custom_type,

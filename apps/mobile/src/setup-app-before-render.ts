@@ -32,6 +32,7 @@ import {
   startSubscribeAtSensitiveScene,
   startSubscribeIOSJustScreenshotted,
   startSubscribeIOSScreenRecording,
+  startSubscribeRemoteNotification,
 } from './hooks/navigation';
 import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
@@ -45,6 +46,7 @@ import balanceStore from './store/balance';
 import { apisAutoLock } from './core/apis';
 import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
 
+startComputationThread();
 startSubscribeLangChange();
 
 connectPushServerOnBootstrap();
@@ -81,7 +83,6 @@ startSubscribeIOSScreenRecording();
 rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
-startComputationThread();
 startProcessAccountBalanceEvents();
 startProcessScene24hBalanceEvents();
 startProcessMultiCurveEvents();
@@ -94,3 +95,5 @@ tokenListStore.getState().initStore();
 
 useProtocolListStore.getState().initStore();
 balanceStore.getState().initStore();
+
+startSubscribeRemoteNotification();

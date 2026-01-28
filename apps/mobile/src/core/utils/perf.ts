@@ -43,7 +43,9 @@ export type PerfEventBusListeners = {
     fromScene: AddressBalanceUpdaterSource;
   }) => void;
 
-  USER_MANUALLY_UNLOCK: () => void;
+  USER_MANUALLY_UNLOCK: (ctx: { isFirstTimeAfterLaunch: boolean }) => void;
+
+  GLOBAL_CLEAR_ALL_COVERED_COMPONENTS: () => void;
 };
 type PerfListeners = {
   [P: string]: (data: any) => void;
@@ -51,3 +53,4 @@ type PerfListeners = {
 const { EventEmitter: PerfEE } =
   makeJsEEClass<PerfEventBusListeners /*  & PerfListeners */>();
 export const perfEvents = new PerfEE();
+perfEvents.setMaxListeners(1000);

@@ -21,7 +21,12 @@ import {
 
 import { useDappsValue } from '../useDapps';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { perfEvents } from '@/core/utils/perf';
 
 type TabsState = {
   tabs: Tab[];
@@ -397,6 +402,14 @@ export const browserApis = {
     });
   },
 
+  hideBrowser: () => {
+    browserApis.setPartialBrowserState({
+      isShowBrowser: false,
+      isShowSearch: false,
+      isShowManage: false,
+    });
+  },
+
   onHideBrowser: () => {
     setTabsStore(pre => {
       const tabs = pre.tabs.filter(tab => tab.isDapp);
@@ -446,3 +459,9 @@ export function useBrowser() {
     terminateTabs: browserApis.terminateTabs,
   };
 }
+
+runIIFEFunc(() => {
+  perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
+    browserApis.hideBrowser();
+  });
+});

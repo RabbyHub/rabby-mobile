@@ -70,23 +70,26 @@ import {
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
 
-export interface HistoryDisplayItem extends TxHistoryItem {
+export interface HistoryDisplayItem extends Omit<TxHistoryItem, 'tx'> {
   // projectDict: TxHistoryResult['project_dict'];
   // cateDict: TxHistoryResult['cate_dict'];
   // tokenDict: TxHistoryResult['token_dict'];
+  tx: TxHistoryItem['tx'] & {
+    id: string;
+  };
   receives: {
     amount: number;
     from_addr: string;
     token_id: string;
     price?: number;
-    token: TokenItem;
+    token?: TokenItem;
   }[];
   sends: {
     amount: number;
     to_addr: string;
     token_id: string;
     price?: number;
-    token: TokenItem;
+    token?: TokenItem;
   }[];
   time_at: number;
   token_approve: {
@@ -97,9 +100,10 @@ export interface HistoryDisplayItem extends TxHistoryItem {
     token?: TokenItem;
   } | null;
   address: string;
-  project_item: ProjectItemType;
+  project_item?: ProjectItemType | null;
   key: string;
   isSmallUsdTx?: boolean; // is will be filtered small tx
+  cateDict?: Record<string, string>;
   account?: KeyringAccountWithAlias;
   isShowSuccess?: boolean;
   historyType: HistoryItemCateType;
