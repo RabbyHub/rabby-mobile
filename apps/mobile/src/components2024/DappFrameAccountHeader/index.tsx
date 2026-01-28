@@ -314,7 +314,7 @@ const DappSelect = (props: {
                           source={
                             item?.remoteUrl
                               ? { uri: item?.remoteUrl }
-                              : activeItem.icon
+                              : item.icon
                           }
                         />
                         <View style={styles.sheetItemTextGroup}>
