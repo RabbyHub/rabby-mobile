@@ -12,8 +12,11 @@ import {
   State,
 } from 'react-native-gesture-handler';
 
-import { INNER_DAPP_LIST } from '@/components2024/DappFrameAccountHeader';
-import { RootNames } from '@/constant/layout';
+import {
+  DappFrameAccountHeader_LAYOUT,
+  INNER_DAPP_LIST,
+} from '@/components2024/DappFrameAccountHeader';
+import { RootNames, ScreenLayouts } from '@/constant/layout';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -33,6 +36,7 @@ import {
   normalizeMaxRetainedWebviews,
   useInnerDappPreloadRetention,
 } from '@/config/innerDappPreloadRetention';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 type SceneKey = 'Lending' | 'Perps' | 'Prediction';
 
@@ -58,7 +62,7 @@ const DEFAULT_PREDICTION_ID = INNER_DAPP_LIST.PREDICTION[0]?.id ?? 'polymarket';
 export default function InnerDappWebViewPreloadLayer({
   offscreenPreload = false,
 }: InnerDappWebViewPreloadLayerProps) {
-  // const { safeOffHeader, safeOffBottom } = useSafeSizes();
+  const { safeOffHeader, safeOffBottom } = useSafeSizes();
   const { top } = useSafeAreaInsets();
   const { currentRouteName } = useCurrentRouteName();
   const preloadStrategy = useInnerDappPreloadStrategy();
@@ -442,7 +446,14 @@ export default function InnerDappWebViewPreloadLayer({
   }
 
   return (
-    <View pointerEvents="box-none" style={[styles.overlay, { top: top + 44 }]}>
+    <View
+      pointerEvents="box-none"
+      style={[
+        styles.overlay,
+        {
+          top: top + DappFrameAccountHeader_LAYOUT.height,
+        },
+      ]}>
       {preloadItems.map(item => {
         if (!item.url) {
           return null;
