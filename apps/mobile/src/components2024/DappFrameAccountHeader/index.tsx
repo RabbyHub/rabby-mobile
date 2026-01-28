@@ -30,6 +30,7 @@ import { useShallow } from 'zustand/shallow';
 import { dappService } from '@/core/services';
 import FastImage from 'react-native-fast-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLendingHF } from '@/screens/Lending/hooks';
 
 const PngPolymarket = require('@/assets2024/icons/prediction/polymarket.png');
 const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.png');
@@ -423,6 +424,8 @@ export const DappFrameAccountHeader = (props: {
     useShallow(s => s.accountSummary?.accountValue),
   );
 
+  const { lendingHf } = useLendingHF();
+
   const dappListWithValue = React.useMemo(() => {
     if (!dAppList.length) {
       return dAppList;
@@ -434,7 +437,19 @@ export const DappFrameAccountHeader = (props: {
           value: formatUsdValue(hyperliquidAccountValue || 0),
         };
       }
+
       const originKey = getOriginKey(item.url);
+
+      if (item.id === 'aave') {
+        return {
+          ...item,
+          value: formatUsdValue(lendingHf?.netWorthUSD || 0),
+          remoteUrl:
+            dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
+            undefined,
+        };
+      }
+
       const originPngIds = ['venus', 'hyperliquid'];
       if (!originKey || !defiValueByOrigin.has(originKey)) {
         return {
@@ -457,7 +472,12 @@ export const DappFrameAccountHeader = (props: {
             undefined,
       };
     });
-  }, [dAppList, defiValueByOrigin, hyperliquidAccountValue]);
+  }, [
+    dAppList,
+    defiValueByOrigin,
+    hyperliquidAccountValue,
+    lendingHf?.netWorthUSD,
+  ]);
 
   const headerLeft = React.useCallback(() => {
     return (

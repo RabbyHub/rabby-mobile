@@ -2326,6 +2326,10 @@
         "title": "Select Chain"
       }
     },
+    "dappPermission": {
+      "serviceUnavailableTitle": "Service Unavailable",
+      "serviceUnavailableDesc": "The service is not supported in your current region."
+    },
     "watchlist": {
       "empty": {
         "title": "No tokens in your watchlist yet"
