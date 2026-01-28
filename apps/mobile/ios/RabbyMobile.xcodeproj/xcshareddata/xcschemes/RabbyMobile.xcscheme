@@ -20,20 +20,6 @@
                ReferencedContainer = "container:RabbyMobile.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "01E0CA5F2F22C39D0050B84A"
-               BuildableName = "RabbyMobileNotification.appex"
-               BlueprintName = "RabbyMobileNotification"
-               ReferencedContainer = "container:RabbyMobile.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
