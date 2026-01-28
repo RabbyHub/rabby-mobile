@@ -80,7 +80,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     amount: number;
     from_addr: string;
     price?: number;
-    token?: TokenItem;
+    token: TokenItem;
   }[] = [];
   // sends
   @Column({
@@ -93,7 +93,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     amount: number;
     to_addr: string;
     price?: number;
-    token?: TokenItem;
+    token: TokenItem;
   }[] = [];
   // tx_name
   @Column('text', { default: '' })

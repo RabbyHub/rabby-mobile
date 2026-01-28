@@ -129,7 +129,7 @@ export const ensureHistoryListItemFromDb = (
       value: item.token_approve_value,
       token: item.token_approve_item,
     },
-    project_item: item.project_item,
+    project_item: item.project_item ?? null,
     key: item._db_id,
     address: item.owner_addr,
     isSmallUsdTx: item.is_small_tx,

@@ -74,22 +74,24 @@ export interface HistoryDisplayItem extends Omit<TxHistoryItem, 'tx'> {
   // projectDict: TxHistoryResult['project_dict'];
   // cateDict: TxHistoryResult['cate_dict'];
   // tokenDict: TxHistoryResult['token_dict'];
-  tx: TxHistoryItem['tx'] & {
-    id: string;
-  };
+  tx:
+    | (TxHistoryItem['tx'] & {
+        id?: string;
+      })
+    | null;
   receives: {
     amount: number;
     from_addr: string;
     token_id: string;
     price?: number;
-    token?: TokenItem;
+    token: TokenItem;
   }[];
   sends: {
     amount: number;
     to_addr: string;
     token_id: string;
     price?: number;
-    token?: TokenItem;
+    token: TokenItem;
   }[];
   time_at: number;
   token_approve: {
@@ -100,7 +102,7 @@ export interface HistoryDisplayItem extends Omit<TxHistoryItem, 'tx'> {
     token?: TokenItem;
   } | null;
   address: string;
-  project_item?: ProjectItemType | null;
+  project_item: ProjectItemType | null;
   key: string;
   isSmallUsdTx?: boolean; // is will be filtered small tx
   cateDict?: Record<string, string>;
