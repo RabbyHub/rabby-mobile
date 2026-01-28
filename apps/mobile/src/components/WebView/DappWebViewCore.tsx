@@ -34,6 +34,7 @@ import injectedAutoRunnerSource from '@/core/bridges/builtInScripts/innerDapp.we
 import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/BrowserTab/BrowserProgressBar';
 import { useMemoizedFn } from 'ahooks';
 import { WebviewError } from '@/screens/Browser/BrowserScreen/components/BrowserTab/WebivewError';
+import { openExternalUrl } from '@/core/utils/linking';
 
 const autoRunnerInjected = `${
   IS_ANDROID ? PATCH_ANCHOR_TARGET : ''
@@ -410,12 +411,11 @@ export default function DappWebViewCore({
         typeof extraResult === 'boolean' ? extraResult : true;
       const shouldStartWithProps =
         typeof propsResult === 'boolean' ? propsResult : true;
-
-      console.log(
-        'handleShouldStartLoadWithRequest',
-        shouldStart && shouldStartWithExtra && shouldStartWithProps,
-      );
-
+      const targetHost = safeGetOrigin(event.url);
+      if (shouldStart && event.isTopFrame && targetHost.includes('scan')) {
+        openExternalUrl(event.url);
+        return false;
+      }
       return shouldStart && shouldStartWithExtra && shouldStartWithProps;
     },
     [onShouldStartLoadWithRequest, webviewOnShouldStartLoadWithRequest],
