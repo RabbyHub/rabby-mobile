@@ -86,7 +86,8 @@ manifest_plist_url="itms-services://?action=download-manifest&url=$deployment_cd
 cp $ouput_dir/RabbyMobile.ipa $deployment_local_dir/rabbymobile.ipa
 cp $ouput_dir/manifest.plist $deployment_local_dir/manifest.plist
 
-/usr/libexec/PlistBuddy -c "Set:items:0:metadata:title Rabby Wallet" $deployment_local_dir/manifest.plist
+/usr/libexec/PlistBuddy -c "Set:items:0:metadata:title Reg Rabby Wallet" $deployment_local_dir/manifest.plist
+/usr/libexec/PlistBuddy -c "Set:items:0:metadata:bundle-identifier com.debank.rabby-mobile-regression" $deployment_local_dir/manifest.plist
 /usr/libexec/PlistBuddy -c "Set:items:0:assets:0:url $deployment_cdn_baseurl/rabbymobile.ipa" $deployment_local_dir/manifest.plist # appURL
 /usr/libexec/PlistBuddy -c "Set:items:0:assets:1:url $deployment_cdn_baseurl/icon_57x57@57w.png" $deployment_local_dir/manifest.plist # displayImageURL
 /usr/libexec/PlistBuddy -c "Set:items:0:assets:2:url $deployment_cdn_baseurl/icon_512x512@512w.png" $deployment_local_dir/manifest.plist # fullSizeImageURL
