@@ -7,6 +7,7 @@ platform :ios do
     # enforce configuration
     update_code_signing_settings(
       use_automatic_signing: false,
+      targets: ['RabbyMobile'],
       sdk: "iphoneos*",
       path: './ios/RabbyMobile.xcodeproj',
       profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
