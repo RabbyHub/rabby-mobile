@@ -264,7 +264,9 @@ const DappSelect = (props: {
             style={styles.marketIcon}
             defaultSource={activeItem.icon}
             source={
-              activeItem?.remoteUrl ? { uri: activeItem?.remoteUrl } : undefined
+              activeItem?.remoteUrl
+                ? { uri: activeItem?.remoteUrl }
+                : activeItem.icon
             }
           />
           <View style={styles.marketTextGroup}>
@@ -312,7 +314,7 @@ const DappSelect = (props: {
                           source={
                             item?.remoteUrl
                               ? { uri: item?.remoteUrl }
-                              : undefined
+                              : activeItem.icon
                           }
                         />
                         <View style={styles.sheetItemTextGroup}>
