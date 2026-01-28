@@ -31,6 +31,7 @@ import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/B
 import { useMemoizedFn } from 'ahooks';
 import { WebviewError } from '@/screens/Browser/BrowserScreen/components/BrowserTab/WebivewError';
 import { openExternalUrl } from '@/core/utils/linking';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const autoRunnerInjected = `${
   IS_ANDROID ? PATCH_ANCHOR_TARGET : ''
@@ -463,6 +464,8 @@ export default function DappWebViewCore({
     return progressBar({ progress, isLoading });
   }, [progressBar, progress, isLoading]);
 
+  const { bottom } = useSafeAreaInsets();
+
   if (!entryScriptWeb3Loaded) {
     return <View style={[styles.placeholder, style]} />;
   }
@@ -475,7 +478,7 @@ export default function DappWebViewCore({
     <View style={[styles.container, style]}>
       {progressBarNode}
       <WebView
-        allowsBackForwardNavigationGestures={true}
+        // allowsBackForwardNavigationGestures={true}
         key={webviewKey}
         cacheEnabled={cacheEnabled}
         startInLoadingState={startInLoadingState}
@@ -483,6 +486,7 @@ export default function DappWebViewCore({
         allowsInlineMediaPlayback={allowsInlineMediaPlayback}
         originWhitelist={originWhitelist}
         pullToRefreshEnabled={pullToRefreshEnabled}
+        contentInset={{ top: 0, left: 0, right: 0, bottom: bottom }}
         {...restWebviewProps}
         style={[styles.webview, webviewStyle]}
         ref={webviewRef}
