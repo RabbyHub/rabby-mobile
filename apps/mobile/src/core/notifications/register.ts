@@ -134,16 +134,50 @@ export const startSubscribePushNotifications = async () => {
       }
 
       const parsed = parseRemoteData(notification.getData());
-      notificationEvents.emit('onParsedReceivedData', {
-        parsedData: parsed,
-        iosFromLaunch,
-      });
+      parsed._parseSuccess &&
+        notificationEvents.emit('onParsedReceivedData', {
+          parsedData: parsed,
+          iosFromLaunch,
+        });
       console.debug('[notifications] parsed:', parsed);
       // notification.finish(PushNotificationIOS.FetchResult.NoData);
     });
   } else {
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        console.debug(
+          '[notifications] messaging().getInitialNotification():: remoteMessage:',
+          remoteMessage,
+        );
+        if (!remoteMessage) return;
+
+        // TODO: need test on real device? or maybe simulator also works
+        const parsed = parseRemoteData(remoteMessage.data);
+        parsed._parseSuccess &&
+          notificationEvents.emit('onParsedReceivedData', {
+            parsedData: parsed,
+          });
+        console.debug('[notifications] parsed:', parsed);
+      });
     messaging().onMessage(async remoteMessage => {
       console.debug('[notifications] Received foreground FCM:', remoteMessage);
+
+      // const parsed = parseRemoteData(remoteMessage.data);
+      // parsed._parseSuccess && notificationEvents.emit('onParsedReceivedData', {
+      //   parsedData: parsed,
+      // });
+      // console.debug('[notifications] parsed:', parsed);
+    });
+    messaging().onNotificationOpenedApp(async remoteMessage => {
+      console.debug('[notifications] Received background FCM:', remoteMessage);
+
+      const parsed = parseRemoteData(remoteMessage.data);
+      parsed._parseSuccess &&
+        notificationEvents.emit('onParsedReceivedData', {
+          parsedData: parsed,
+        });
+      console.debug('[notifications] parsed:', parsed);
     });
   }
 };
