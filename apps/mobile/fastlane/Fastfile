@@ -31,7 +31,7 @@ platform :ios do
     match(
       type: opts[:type],
       app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile*' : 'com.debank.rabby-mobile.RabbyMobileNotification',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileWildcardAppStore',
+      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileNotificationAppStore',
       readonly: true,
       shallow_clone: true,
       verbose: false,
@@ -124,7 +124,7 @@ platform :ios do
           signingStyle: 'manual',
           provisioningProfiles: {
             "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode",
-            "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileWildcardAppStore"
+            "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
           }
         })
       pilot(

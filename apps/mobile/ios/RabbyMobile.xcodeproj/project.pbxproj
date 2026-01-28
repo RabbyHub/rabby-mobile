@@ -82,6 +82,7 @@
 		00E356F21AD99517003FC87E /* RabbyMobileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RabbyMobileTests.m; sourceTree = "<group>"; };
 		0120B20E2D082C0000FCB1B1 /* RNHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNHelpers.h; path = RabbyMobile/RNHelpers.h; sourceTree = "<group>"; };
 		0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RNHelpers.mm; path = RabbyMobile/RNHelpers.mm; sourceTree = "<group>"; };
+		0125AF792F2A3CFE0016DDB5 /* RabbyMobileNotificationRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RabbyMobileNotificationRelease.entitlements; sourceTree = "<group>"; };
 		01390F572E40CD3C0058B77C /* RabbyMobileRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileRelease.entitlements; path = RabbyMobile/RabbyMobileRelease.entitlements; sourceTree = "<group>"; };
 		014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		018EF4192EFBCDE8001A2361 /* RNThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNThread.h; sourceTree = "<group>"; };
@@ -215,6 +216,7 @@
 		01E0CB3C2F238DA40050B84A /* RabbyMobileNotification */ = {
 			isa = PBXGroup;
 			children = (
+				0125AF792F2A3CFE0016DDB5 /* RabbyMobileNotificationRelease.entitlements */,
 				01E0CB3A2F238DA40050B84A /* Info.plist */,
 				01E0CB3B2F238DA40050B84A /* NotificationService.swift */,
 			);
@@ -1057,6 +1059,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RabbyMobileNotification/RabbyMobileNotificationRelease.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
 				CODE_SIGN_STYLE = Manual;
@@ -1083,7 +1086,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile.RabbyMobileNotification";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileWildcardAppStore;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileNotificationAppStore;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
