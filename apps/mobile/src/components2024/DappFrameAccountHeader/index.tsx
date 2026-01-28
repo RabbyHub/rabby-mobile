@@ -13,7 +13,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { apiContact } from '@/core/apis';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ellipsisAddress } from '@/utils/address';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import RcCaretDownSmallCC from '@/assets2024/icons/common/caret-down-small-cc.svg';
@@ -29,6 +29,7 @@ import { formatUsdValue } from '@/utils/number';
 import { useShallow } from 'zustand/shallow';
 import { dappService } from '@/core/services';
 import FastImage from 'react-native-fast-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PngPolymarket = require('@/assets2024/icons/prediction/polymarket.png');
 const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.png');
@@ -350,7 +351,9 @@ const DappSelect = (props: {
     </>
   );
 };
-
+export const DappFrameAccountHeader_LAYOUT = {
+  height: 38,
+};
 export const DappFrameAccountHeader = (props: {
   account?: Account | KeyringAccountWithAlias;
   onPressAccountList?: () => void;
@@ -461,6 +464,7 @@ export const DappFrameAccountHeader = (props: {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 8,
+          padding: 0,
         }}>
         <HeaderBackPressable />
         <DappSelect
@@ -529,13 +533,37 @@ export const DappFrameAccountHeader = (props: {
     styles.headerRight,
   ]);
 
+  const { top } = useSafeAreaInsets();
+
+  const header = React.useCallback(() => {
+    return (
+      <View
+        style={{
+          marginTop: top,
+          height: DappFrameAccountHeader_LAYOUT.height,
+          paddingHorizontal: 12,
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+          {headerLeft()}
+          {headerRight()}
+        </View>
+      </View>
+    );
+  }, [headerLeft, headerRight, top]);
+
   React.useEffect(() => {
     navigation.setOptions({
-      headerLeft,
-      headerTitle: () => title || <>{null}</>,
-      headerRight,
+      header,
+      // headerLeft,
+      // headerTitle: () => title || <>{null}</>,
+      // headerRight,
     });
-  }, [headerLeft, headerRight, navigation, title]);
+  }, [header, headerLeft, headerRight, navigation, title]);
 
   return null;
 };
