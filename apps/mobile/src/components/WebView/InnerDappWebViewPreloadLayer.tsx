@@ -5,7 +5,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Image, InteractionManager, StyleSheet, View } from 'react-native';
+import {
+  Image,
+  InteractionManager,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {
   PanGestureHandler,
   PanGestureHandlerStateChangeEvent,
@@ -22,6 +28,7 @@ import { useCurrentRouteName } from '@/hooks/navigation';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { WebViewProps } from 'react-native-webview';
 import ViewShot from 'react-native-view-shot';
+import { useTranslation } from 'react-i18next';
 
 import DappWebViewCore, { DappWebViewProgressState } from './DappWebViewCore';
 import { useAppUnlocked } from '@/hooks/useLock';
@@ -36,7 +43,11 @@ import {
   normalizeMaxRetainedWebviews,
   useInnerDappPreloadRetention,
 } from '@/config/innerDappPreloadRetention';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { openapi } from '@/core/request';
+import RcIconGlobeCC from '@/assets2024/icons/common/globe-cc.svg';
+import { useTheme2024 } from '@/hooks/theme';
+import { dappService } from '@/core/services';
+import { createGetStyles2024 } from '@/utils/styles';
 
 type SceneKey = 'Lending' | 'Perps' | 'Prediction';
 
@@ -62,9 +73,10 @@ const DEFAULT_PREDICTION_ID = INNER_DAPP_LIST.PREDICTION[0]?.id ?? 'polymarket';
 export default function InnerDappWebViewPreloadLayer({
   offscreenPreload = false,
 }: InnerDappWebViewPreloadLayerProps) {
-  const { safeOffHeader, safeOffBottom } = useSafeSizes();
   const { top } = useSafeAreaInsets();
   const { currentRouteName } = useCurrentRouteName();
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
   const preloadStrategy = useInnerDappPreloadStrategy();
   const configuredMaxRetained = useInnerDappPreloadRetention();
   const { lending, perps } = useInnerDappSelection();
@@ -77,12 +89,11 @@ export default function InnerDappWebViewPreloadLayer({
   const viewShotRefs = useRef<Record<string, ViewShot | null>>({});
   const lastCaptureAtRef = useRef<Record<string, number>>({});
   const captureInFlightRef = useRef<Record<string, boolean>>({});
-  const navCaptureTimersRef = useRef<
-    Record<string, ReturnType<typeof setTimeout>>
-  >({});
   const [progressByKey, setProgressByKey] = useState<
     Record<string, DappWebViewProgressState>
   >({});
+  const [dappPermission, setDappPermission] = useState(true);
+  const permissionRequestIdRef = useRef(0);
 
   const isTargetRoute =
     currentRouteName === RootNames.Lending ||
@@ -202,6 +213,48 @@ export default function InnerDappWebViewPreloadLayer({
     setRetainedKeys(prev => prev.slice(0, resolvedMaxRetained));
   }, [resolvedMaxRetained]);
 
+  useEffect(() => {
+    if (!activeKey) {
+      setDappPermission(true);
+      return;
+    }
+    if (!getIsAppUnlocked()) {
+      setDappPermission(true);
+      return;
+    }
+
+    const activeItem = preloadItemsByKey[activeKey];
+    if (!activeItem?.url || ['aave', 'hyperliquid'].includes(activeItem.id)) {
+      setDappPermission(true);
+      return;
+    }
+    const dappOrigin = safeGetOrigin(activeItem.url);
+    const requestId = ++permissionRequestIdRef.current;
+    const dappInfo = dappService.getDapp(dappOrigin);
+    let cancelled = false;
+    setDappPermission(true);
+
+    openapi
+      .getDappPermission({
+        dapp: activeItem.id,
+        id: dappInfo?.currentAccount?.address,
+      })
+      .then(result => {
+        if (cancelled || requestId !== permissionRequestIdRef.current) {
+          return;
+        }
+
+        setDappPermission(result.has_permission);
+      })
+      .catch(error => {
+        console.error('getDappPermission', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeKey, getIsAppUnlocked, preloadItemsByKey]);
+
   const keysToRender = useMemo(() => {
     const limit = resolvedMaxRetained;
     const next: string[] = [];
@@ -273,33 +326,6 @@ export default function InnerDappWebViewPreloadLayer({
     [saveSnapshot],
   );
 
-  const scheduleNavCapture = useCallback(
-    (key: string) => {
-      if (!key) {
-        return;
-      }
-      const timers = navCaptureTimersRef.current;
-      if (timers[key]) {
-        clearTimeout(timers[key]);
-      }
-      timers[key] = setTimeout(() => {
-        delete timers[key];
-        captureSnapshot(key, false);
-      }, 400);
-    },
-    [captureSnapshot],
-  );
-
-  useEffect(() => {
-    return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      const timers = navCaptureTimersRef.current;
-      Object.keys(timers).forEach(key => {
-        clearTimeout(timers[key]);
-      });
-    };
-  }, []);
-
   const resolveRestoredUrl = useCallback(
     (baseUrl?: string, storedUrl?: string) => {
       if (!baseUrl) {
@@ -370,10 +396,9 @@ export default function InnerDappWebViewPreloadLayer({
           return;
         }
         setLastUrl(key, event.url);
-        scheduleNavCapture(key);
       };
     },
-    [scheduleNavCapture, setLastUrl],
+    [setLastUrl],
   );
 
   const handleProgressStateChange = useCallback((key: string) => {
@@ -398,9 +423,9 @@ export default function InnerDappWebViewPreloadLayer({
   const handleLoadEnd = useCallback(
     (key: string) => {
       return (event: Parameters<NonNullable<WebViewProps['onLoadEnd']>>[0]) => {
-        setTimeout(() => {
+        if (!event.nativeEvent.loading) {
           captureSnapshot(key, true);
-        }, 500);
+        }
       };
     },
     [captureSnapshot],
@@ -459,7 +484,7 @@ export default function InnerDappWebViewPreloadLayer({
         const shouldShowSnapshot =
           isActive && !!snapshotUri && isLoading !== false;
         const shouldShowProgress = isActive && !!progressState?.isLoading;
-
+        const shouldShowPermissionUnavailable = isActive && !dappPermission;
         return (
           <View
             key={key}
@@ -524,6 +549,22 @@ export default function InnerDappWebViewPreloadLayer({
                   style={styles.progressOverlay}
                 />
               ) : null}
+              {shouldShowPermissionUnavailable ? (
+                <View pointerEvents="auto" style={styles.permissionOverlay}>
+                  <View style={styles.permissionCard}>
+                    <View style={styles.permissionTextGroup}>
+                      <RcIconGlobeCC color={'white'} width={24} height={24} />
+
+                      <Text style={[styles.permissionTitle]}>
+                        {t('page.dappPermission.serviceUnavailableTitle')}
+                      </Text>
+                    </View>
+                    <Text style={[styles.permissionDesc]}>
+                      {t('page.dappPermission.serviceUnavailableDesc')}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
             </View>
           </View>
         );
@@ -532,7 +573,7 @@ export default function InnerDappWebViewPreloadLayer({
   );
 }
 
-const styles = StyleSheet.create({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   overlay: {
     ...StyleSheet.absoluteFillObject,
 
@@ -578,4 +619,42 @@ const styles = StyleSheet.create({
     width: 20,
     zIndex: 5,
   },
-});
+  permissionOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    zIndex: 6,
+  },
+  permissionCard: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    alignItems: 'center',
+    backgroundColor: colors2024['brand-default'],
+    gap: 4,
+  },
+  permissionTextGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  permissionTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  permissionDesc: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+}));

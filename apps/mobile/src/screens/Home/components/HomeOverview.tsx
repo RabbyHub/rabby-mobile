@@ -135,6 +135,7 @@ import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTy
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
+import { PredictBadge } from './PredicBadge';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -559,9 +560,6 @@ export const HomeOverview = React.memo(() => {
   const { lending: lendingDappId, perps: perpsDappId } =
     useInnerDappSelection();
 
-  const PrepsIsHyperliquid = perpsDappId === 'hyperliquid';
-  const lendingIsAave = perpsDappId === 'aave';
-
   const perpsIcon =
     (
       {
@@ -879,8 +877,12 @@ export const HomeOverview = React.memo(() => {
         return <WatchListBadge />;
       }
 
-      if (el.key === MultiHomeFeatTitle.Perps && PrepsIsHyperliquid) {
+      if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
+      }
+
+      if (el.key === MultiHomeFeatTitle.Predict) {
+        return <PredictBadge />;
       }
 
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
@@ -892,7 +894,7 @@ export const HomeOverview = React.memo(() => {
         return <IconGift width={24} height={24} />;
       }
 
-      if (el.key === MultiHomeFeatTitle.Lending && lendingIsAave) {
+      if (el.key === MultiHomeFeatTitle.Lending) {
         return <LendingHF />;
       }
 
@@ -916,7 +918,7 @@ export const HomeOverview = React.memo(() => {
         </>
       );
     },
-    [PrepsIsHyperliquid, lendingIsAave, pendingTxCount, styles.badgeStyle],
+    [pendingTxCount, styles.badgeStyle],
   );
 
   const {
