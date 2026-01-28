@@ -121,6 +121,7 @@ jobs:
           elif [ "$OS_TYPE" == "Darwin" ]; then
             if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
               export SENTRY_DISABLE_AUTO_UPLOAD=true
+              export NODE_OPTIONS="--max_old_space_size=20480"
             else
               RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
             fi
