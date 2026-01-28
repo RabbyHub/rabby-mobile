@@ -256,24 +256,9 @@ export default function DappWebViewCore({
 
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(startInLoadingState);
-  const progressRef = useRef(0);
-  const loadingRef = useRef(startInLoadingState);
-
-  useEffect(() => {
-    progressRef.current = progress;
-    loadingRef.current = isLoading;
-  }, [progress, isLoading]);
 
   const updateProgressState = useCallback(
     (next: DappWebViewProgressState) => {
-      if (
-        progressRef.current === next.progress &&
-        loadingRef.current === next.isLoading
-      ) {
-        return;
-      }
-      progressRef.current = next.progress;
-      loadingRef.current = next.isLoading;
       setProgress(next.progress);
       setIsLoading(next.isLoading);
       onProgressStateChange?.(next);
@@ -330,8 +315,12 @@ export default function DappWebViewCore({
   const handleLoadProgress = useCallback(
     (event: Parameters<NonNullable<WebViewProps['onLoadProgress']>>[0]) => {
       const nextProgress = event.nativeEvent.progress;
-      const nextIsLoading = nextProgress >= 1 ? false : loadingRef.current;
-      updateProgressState({ progress: nextProgress, isLoading: nextIsLoading });
+      updateProgressState(
+        event.nativeEvent.progress === 1
+          ? { isLoading: false, progress: 1 }
+          : { isLoading: true, progress: nextProgress },
+      );
+
       onLoadProgress?.(event);
       webviewOnLoadProgress?.(event);
     },
@@ -342,7 +331,7 @@ export default function DappWebViewCore({
     (event: Parameters<NonNullable<WebViewProps['onLoadEnd']>>[0]) => {
       if (!event.nativeEvent.loading) {
         updateProgressState({
-          progress: progressRef.current,
+          progress: 1,
           isLoading: false,
         });
       }
@@ -422,6 +411,11 @@ export default function DappWebViewCore({
       const shouldStartWithProps =
         typeof propsResult === 'boolean' ? propsResult : true;
 
+      console.log(
+        'handleShouldStartLoadWithRequest',
+        shouldStart && shouldStartWithExtra && shouldStartWithProps,
+      );
+
       return shouldStart && shouldStartWithExtra && shouldStartWithProps;
     },
     [onShouldStartLoadWithRequest, webviewOnShouldStartLoadWithRequest],
@@ -429,6 +423,7 @@ export default function DappWebViewCore({
 
   const handleOpenWindow = useCallback(
     (event: Parameters<NonNullable<WebViewProps['onOpenWindow']>>[0]) => {
+      console.log('handleOpenWindow', event);
       onOpenWindow?.(event);
       webviewOnOpenWindow?.(event);
     },
@@ -476,8 +471,10 @@ export default function DappWebViewCore({
             true; // Required for iOS
           `,
     );
-    setIsLoading(true);
-    setProgress(0.1);
+    updateProgressState({
+      isLoading: true,
+      progress: 0.1,
+    });
   });
 
   const handleOpenInBrowser = useMemoizedFn(() => {
@@ -563,7 +560,7 @@ export default function DappWebViewCore({
         renderError={renderError ?? (webviewRenderError || defaultRenderError)}
         onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onMessage={handleMessage}
-        onOpenWindow={handleOpenWindow}
+        // onOpenWindow={handleOpenWindow}
         onContentProcessDidTerminate={handleContentProcessDidTerminate}
         onRenderProcessGone={handleRenderProcessGone}
         onFileDownload={handleFileDownload}

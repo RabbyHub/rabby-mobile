@@ -394,19 +394,6 @@ export default function InnerDappWebViewPreloadLayer({
   const handleLoadEnd = useCallback(
     (key: string) => {
       return (event: Parameters<NonNullable<WebViewProps['onLoadEnd']>>[0]) => {
-        setProgressByKey(prev => {
-          const prevState = prev[key];
-          if (prevState && prevState.isLoading === false) {
-            return prev;
-          }
-          return {
-            ...prev,
-            [key]: {
-              progress: prevState?.progress ?? 1,
-              isLoading: false,
-            },
-          };
-        });
         setTimeout(() => {
           captureSnapshot(key, true);
         }, 500);
