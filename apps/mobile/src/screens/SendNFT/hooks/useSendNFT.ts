@@ -36,7 +36,7 @@ import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';

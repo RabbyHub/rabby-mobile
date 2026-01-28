@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dimensions, Platform, Text } from 'react-native';
-import { toast } from '@/components2024/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import Toast from 'react-native-root-toast';
 
 export const showToast = (
@@ -8,18 +8,22 @@ export const showToast = (
   type: 'success' | 'error' = 'success',
 ) => {
   const msgText = String(msg);
-  const content =
+  const content: Parameters<ReturnType<typeof toastWithIcon>>[0] =
     Platform.OS === 'android'
-      ? ({ textStyle }: { textStyle: any }) => (
-          <Text
-            style={[
-              textStyle,
-              {
-                maxWidth: Dimensions.get('window').width - 100,
-              },
-            ]}>
-            {msgText}
-          </Text>
+      ? ({ iconNode, styles }) => (
+          <>
+            {iconNode}
+            <Text
+              style={[
+                styles.text,
+                styles.selfDefinedContent,
+                {
+                  maxWidth: Dimensions.get('window').width - 100,
+                },
+              ]}>
+              {msgText}
+            </Text>
+          </>
         )
       : msgText;
 

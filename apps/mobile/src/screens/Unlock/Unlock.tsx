@@ -20,7 +20,7 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { apisAccount, apisKeychain, apisLock } from '@/core/apis';
 import {
   resetNavigationTo,

@@ -215,14 +215,15 @@ export function useSingleHomeHomeTopChart() {
   const { balanceLoading, isLoadingCurve } = useSingleHomeLoading();
   const { evmBalance, balance } = useAddressBalance(lcAddress);
 
-  const balanceLoadingWithoutLocal =
-    balanceLoading && (!evmBalance || !selectData.rawNetWorth);
+  const balanceLoadingWithoutLocal = balanceLoading && !balance;
   const isLoadingChartData = isLoadingCurve || balanceLoadingWithoutLocal;
 
   return {
     balanceLoadingWithoutLocal,
     isLoadingChartData,
     selectData,
+    balance,
+    evmBalance,
   };
 }
 

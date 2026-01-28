@@ -33,7 +33,7 @@ import { numberToHex, toChecksumAddress } from 'web3-utils';
 import { GnosisTransactionItem } from './GnosisTransactionItem';
 import { AccountSelectPopup } from '@/components/AccountSelectPopup';
 import { intToHex } from '@/utils/number';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { Account } from '@/core/services/preference';

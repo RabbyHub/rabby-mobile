@@ -113,15 +113,6 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
     },
     [],
   );
-
-  React.useEffect(() => {
-    const currentIndex = homeTabScrollerRef.current?.getCurrentIndex?.();
-    if (typeof currentIndex !== 'number' || currentIndex === tabIndex) {
-      return;
-    }
-    homeTabScrollerRef.current?.setIndex(tabIndex);
-  }, [tabIndex]);
-
   useRendererDetect({ name: 'TabsMultiAssets' });
 
   return (

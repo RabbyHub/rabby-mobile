@@ -50,7 +50,7 @@ import { BalanceSection } from './Section';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { toastLoading } from '@/components/Toast';
+import { toastLoading } from '@/components2024/Toast';
 import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';

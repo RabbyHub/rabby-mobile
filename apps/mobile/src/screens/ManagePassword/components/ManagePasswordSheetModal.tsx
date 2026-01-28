@@ -24,7 +24,7 @@ import { FormInput } from '@/components/Form/Input';
 import { useTranslation } from 'react-i18next';
 import { useFormik } from 'formik';
 import { getFormikErrorsCount } from '@/utils/patch';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { useBiometrics } from '@/hooks/biometrics';
@@ -136,7 +136,11 @@ function useClearPasswordForm() {
           values.currentPassword,
         );
         if (result.clearCustomPasswordError) {
-          toast.show(result.clearCustomPasswordError);
+          const errString =
+            typeof result.clearCustomPasswordError === 'string'
+              ? result.clearCustomPasswordError
+              : result.clearCustomPasswordError?.message;
+          toast.show(errString);
         } else {
           toast.success('Clear Password Successfully');
           resetHasTipedUserEnableBiometrics();
