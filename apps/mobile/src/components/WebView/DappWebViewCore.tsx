@@ -21,15 +21,11 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { checkShouldStartLoadingWithRequestForDappWebView } from './utils';
 import { getOnlineConfig } from '@/core/config/online';
-import { useBrowser } from '@/hooks/browser/useBrowser';
 import {
   getActiveDappState,
   globalSetActiveDappState,
 } from '@/core/bridges/state';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { getDappAccount, useDapps } from '@/hooks/useDapps';
-import { useAccounts } from '@/hooks/account';
-//@ts-expect-error as string
 import injectedAutoRunnerSource from '@/core/bridges/builtInScripts/innerDapp.webview.injected';
 import { BrowserProgressBar } from '@/screens/Browser/BrowserScreen/components/BrowserTab/BrowserProgressBar';
 import { useMemoizedFn } from 'ahooks';
@@ -132,22 +128,6 @@ export default function DappWebViewCore({
     webviewActions,
   } = controller ?? internalController;
 
-  const { dapps, disconnectDapp, setDapp, removeDapp } = useDapps();
-
-  const dappInfo = useMemo(() => {
-    return dapps[dappOrigin];
-  }, [dapps, dappOrigin]);
-
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
-  const account = useMemo(() => {
-    return getDappAccount({ dappInfo, accounts });
-  }, [accounts, dappInfo]);
-
-  // const isLoadedRef = useRef(false);
-  // const wasActiveRef = useRef(false);
-
   const injectedRef = useRef(false);
 
   const runActiveHook = useCallback(() => {
@@ -157,24 +137,9 @@ export default function DappWebViewCore({
     }
   }, [webviewRef]);
 
-  // useEffect(() => {
-  //   if (webviewActive && isLoadedRef.current && !wasActiveRef.current) {
-  //     runActiveHook();
-  //   }
-  //   wasActiveRef.current = webviewActive;
-  // }, [webviewActive, runActiveHook]);
-
   useEffect(() => {
     const tabId = internalController.webviewIdRef.current;
     const nextOrigin = safeGetOrigin(dappOrigin) || dappOrigin;
-
-    // if (!webviewActive) {
-    //   const activeState = getActiveDappState();
-    //   if (activeState.tabId === tabId && !activeState.isScreenHide) {
-    //     globalSetActiveDappState({ isScreenHide: true });
-    //   }
-    //   return;
-    // }
 
     const activeState = getActiveDappState();
     if (
@@ -318,7 +283,7 @@ export default function DappWebViewCore({
       const nextProgress = event.nativeEvent.progress;
       updateProgressState(
         event.nativeEvent.progress === 1
-          ? { isLoading: false, progress: 1 }
+          ? { isLoading: true, progress: 1 }
           : { isLoading: true, progress: nextProgress },
       );
 
@@ -344,14 +309,7 @@ export default function DappWebViewCore({
       onLoadEnd?.(event);
       webviewOnLoadEnd?.(event);
     },
-    [
-      // webviewActive,
-      setWebViewState,
-      onLoadEnd,
-      webviewOnLoadEnd,
-      // runActiveHook,
-      updateProgressState,
-    ],
+    [setWebViewState, onLoadEnd, webviewOnLoadEnd, updateProgressState],
   );
 
   const handleMessage = useCallback(

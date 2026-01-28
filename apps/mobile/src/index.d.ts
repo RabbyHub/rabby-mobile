@@ -37,6 +37,12 @@ declare module '*.webview.injected.ts' {
   const content: string;
   export default content;
 }
+
+// Explicit path alias declaration for innerDapp (TS doesn't match wildcards via aliases)
+declare module '@/core/bridges/builtInScripts/innerDapp.webview.injected' {
+  const content: string;
+  export default content;
+}
 declare module '*.webview.injected.tsx' {
   const content: string;
   export default content;

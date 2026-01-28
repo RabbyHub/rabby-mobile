@@ -36,7 +36,6 @@ import {
   normalizeMaxRetainedWebviews,
   useInnerDappPreloadRetention,
 } from '@/config/innerDappPreloadRetention';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 
 type SceneKey = 'Lending' | 'Perps' | 'Prediction';
 
@@ -62,7 +61,6 @@ const DEFAULT_PREDICTION_ID = INNER_DAPP_LIST.PREDICTION[0]?.id ?? 'polymarket';
 export default function InnerDappWebViewPreloadLayer({
   offscreenPreload = false,
 }: InnerDappWebViewPreloadLayerProps) {
-  const { safeOffHeader, safeOffBottom } = useSafeSizes();
   const { top } = useSafeAreaInsets();
   const { currentRouteName } = useCurrentRouteName();
   const preloadStrategy = useInnerDappPreloadStrategy();
@@ -77,9 +75,6 @@ export default function InnerDappWebViewPreloadLayer({
   const viewShotRefs = useRef<Record<string, ViewShot | null>>({});
   const lastCaptureAtRef = useRef<Record<string, number>>({});
   const captureInFlightRef = useRef<Record<string, boolean>>({});
-  const navCaptureTimersRef = useRef<
-    Record<string, ReturnType<typeof setTimeout>>
-  >({});
   const [progressByKey, setProgressByKey] = useState<
     Record<string, DappWebViewProgressState>
   >({});
@@ -236,6 +231,17 @@ export default function InnerDappWebViewPreloadLayer({
     });
   }, [keysToRender]);
 
+  console.log('keysToRenderSet', {
+    arr: [...keysToRenderSet],
+    snapshotByKey,
+  });
+
+  useEffect(() => {
+    return () => {
+      console.log('keysToRenderSet unmount');
+    };
+  }, []);
+
   const captureSnapshot = useCallback(
     async (key: string, force = false) => {
       if (!key) {
@@ -272,33 +278,6 @@ export default function InnerDappWebViewPreloadLayer({
     },
     [saveSnapshot],
   );
-
-  const scheduleNavCapture = useCallback(
-    (key: string) => {
-      if (!key) {
-        return;
-      }
-      const timers = navCaptureTimersRef.current;
-      if (timers[key]) {
-        clearTimeout(timers[key]);
-      }
-      timers[key] = setTimeout(() => {
-        delete timers[key];
-        captureSnapshot(key, false);
-      }, 400);
-    },
-    [captureSnapshot],
-  );
-
-  useEffect(() => {
-    return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      const timers = navCaptureTimersRef.current;
-      Object.keys(timers).forEach(key => {
-        clearTimeout(timers[key]);
-      });
-    };
-  }, []);
 
   const resolveRestoredUrl = useCallback(
     (baseUrl?: string, storedUrl?: string) => {
@@ -370,10 +349,9 @@ export default function InnerDappWebViewPreloadLayer({
           return;
         }
         setLastUrl(key, event.url);
-        scheduleNavCapture(key);
       };
     },
-    [scheduleNavCapture, setLastUrl],
+    [setLastUrl],
   );
 
   const handleProgressStateChange = useCallback((key: string) => {
@@ -398,9 +376,9 @@ export default function InnerDappWebViewPreloadLayer({
   const handleLoadEnd = useCallback(
     (key: string) => {
       return (event: Parameters<NonNullable<WebViewProps['onLoadEnd']>>[0]) => {
-        setTimeout(() => {
+        if (!event.nativeEvent.loading) {
           captureSnapshot(key, true);
-        }, 500);
+        }
       };
     },
     [captureSnapshot],
