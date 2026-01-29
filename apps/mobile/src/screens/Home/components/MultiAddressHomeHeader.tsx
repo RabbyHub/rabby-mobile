@@ -134,7 +134,7 @@ export function MultiAddressHomeHeader(
 
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
-  const { isLoading: loading } = useSceneIsLoading('Home');
+  // const { isLoading: loading } = useSceneIsLoading('Home');
 
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -401,6 +401,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
+      width: '100%',
       maxWidth: '100%',
       borderRadius: 0,
       minHeight: SIZES.curveCardMinHeight,
@@ -456,6 +457,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     multiChart: {
       paddingTop: 24,
       paddingHorizontal: 20,
+      width: '100%',
+      // ...makeDebugBorder(),
     },
 
     multiChartNoAccountsFollow: {
