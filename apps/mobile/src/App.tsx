@@ -19,7 +19,6 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import BigNumber from 'bignumber.js';
-import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
 import {
@@ -40,8 +39,8 @@ import {
   RerenderDetector,
   useRendererDetect,
 } from './components/Perf/PerfDetector';
-import { storeApiAppLayout } from './hooks/useAppLayout';
 import { isEqual } from 'lodash';
+import { svsLayout } from './hooks/useAppLayout';
 
 BigNumber.config({ EXPONENTIAL_AT: [-20, 100] });
 
@@ -87,13 +86,13 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   );
 });
 
-function InsetsWatcher() {
+function SizeWatcher() {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    const prevInsets = storeApiAppLayout.getSafeAreaInsets();
+    const prevInsets = svsLayout.insets.value;
     if (isEqual(prevInsets, insets)) return;
-    storeApiAppLayout.setSafeAreaMetrics({ insets });
+    svsLayout.insets.value = insets;
   }, [insets]);
 
   return null;
@@ -108,7 +107,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
       <ThemeProvider theme={rneuiTheme}>
         <SafeAreaProvider>
           <RootSiblingParent>
-            <InsetsWatcher />
+            <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>

@@ -42,6 +42,7 @@ import useProtocolListStore from './store/protocols';
 import balanceStore from './store/balance';
 import { apisAutoLock } from './core/apis';
 import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
+import { startWatchLayoutChange } from './hooks/useAppLayout';
 
 startSubscribeLangChange();
 
@@ -67,6 +68,7 @@ runIIFEFunc(() => {
   storeApiGasAccount.fetchGasAccountInfo();
 });
 startSubscribePerpsOnAppState();
+startWatchLayoutChange();
 
 startSubscribeUserDidTakeScreenshot();
 startSubscribeAtSensitiveScene();

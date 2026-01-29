@@ -19,6 +19,7 @@ import Animated, {
   interpolate,
   AnimatedStyle,
   Extrapolation,
+  isWorkletFunction,
 } from 'react-native-reanimated';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -70,7 +71,13 @@ const Indicator = ({
   onRightPress,
   handleMeasureSecondaryIndicator,
 }: IndicatorProps) => {
-  const { styles } = useTheme2024({ getStyle: indicatorStyles });
+  const { styles, reanimatedStyles } = useTheme2024({
+    getStyle: indicatorStyles,
+  });
+  const rStyles = {
+    leftBackground: useAnimatedStyle(reanimatedStyles.leftBackground),
+    rightBackground: useAnimatedStyle(reanimatedStyles.rightBackground),
+  };
   const opacity = useSharedValue(fadeIn ? 0 : 1);
   const leftHitSlop = {
     top: leftHitSlopTop,
@@ -126,13 +133,17 @@ const Indicator = ({
   return (
     <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
-      <View style={styles.leftBackground} />
+      <Animated.View
+        style={[rStyles.leftBackground /* , styles.leftBackground */]}
+      />
       <Pressable
         onPress={onLeftPress}
         style={styles.leftPressable}
         hitSlop={leftHitSlop}
       />
-      <View style={styles.rightBackground} />
+      <Animated.View
+        style={[rStyles.rightBackground /* , styles.rightBackground */]}
+      />
       <Pressable
         ref={secondaryIndicatorViewRef}
         style={styles.rightPressable}
@@ -153,92 +164,110 @@ const leftHitSlopBottom = 4;
 const rightHitSlopTop = 50;
 const rightHitSlopBottom = 4;
 
-const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => {
-  const winWidth = Dimensions.get('window').width;
-  const indicatorWidth = (winWidth - 52) / 2;
-  const rightPressableWidth = indicatorWidth * 0.5;
-  const rightPressableOffset = indicatorWidth - rightPressableWidth;
-  return {
-    indicator: {
-      height: 6,
-      backgroundColor: isLight
-        ? 'rgba(0, 0, 0, 1)'
-        : colors2024['brand-default'],
-      position: 'absolute',
-      borderRadius: 12,
-      top: indicatorMarginTop,
-      zIndex: 99,
+const indicatorStyles = createGetStyles2024(
+  {
+    reanimatedStyles: {
+      leftBackground: ({ colors2024, winLayout }) => {
+        'worklet';
+        const winWidth = Math.floor(winLayout.value.width);
+        const indicatorWidth = (winWidth - 52) / 2;
+
+        return {
+          position: 'absolute',
+          top: indicatorMarginTop,
+          left: 20,
+          width: indicatorWidth,
+          height: indicatorHeight,
+          borderRadius: 12,
+          backgroundColor: colors2024['neutral-line'],
+          zIndex: 98,
+        };
+      },
+      rightBackground: ({ colors2024, winLayout }) => {
+        'worklet';
+        const winWidth = Math.floor(winLayout.value.width);
+        const indicatorWidth = (winWidth - 52) / 2;
+
+        return {
+          position: 'absolute',
+          top: indicatorMarginTop,
+          right: 20,
+          width: indicatorWidth,
+          height: indicatorHeight,
+          borderRadius: 12,
+          backgroundColor: colors2024['neutral-line'],
+          zIndex: 98,
+        };
+      },
     },
-    indicatorContainer: {
-      position: 'relative',
-      paddingTop: indicatorMarginTop,
-      height: indicatorMarginTop + indicatorHeight,
-    },
-    indicatorBgBox: {
-      backgroundColor: colors2024['neutral-bg-1'],
-    },
-    leftBackground: {
-      position: 'absolute',
-      top: indicatorMarginTop,
-      left: 20,
-      width: indicatorWidth,
-      height: 6,
-      borderRadius: 12,
-      backgroundColor: colors2024['neutral-line'],
-      zIndex: 98,
-    },
-    rightBackground: {
-      position: 'absolute',
-      right: 20,
-      top: indicatorMarginTop,
-      width: indicatorWidth,
-      height: 6,
-      borderRadius: 12,
-      backgroundColor: colors2024['neutral-line'],
-      zIndex: 98,
-    },
-    leftPressable: {
-      position: 'absolute',
-      top: indicatorMarginTop,
-      left: 20,
-      width: indicatorWidth,
-      height: indicatorHeight,
-      zIndex: 99,
-    },
-    rightPressable: {
-      position: 'absolute',
-      right: 20 + rightPressableOffset,
-      top: indicatorMarginTop,
-      width: rightPressableWidth,
-      height: indicatorHeight,
-      zIndex: 99,
-    },
-    leftHitAreaDebug: {
-      position: 'absolute',
-      top: indicatorMarginTop - leftHitSlopTop,
-      left: 20,
-      width: indicatorWidth,
-      height: indicatorHeight + leftHitSlopTop + leftHitSlopBottom,
-      borderRadius: 12,
-      backgroundColor: 'rgba(255, 0, 0, 0.12)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 0, 0, 0.4)',
-      zIndex: 97,
-    },
-    rightHitAreaDebug: {
-      position: 'absolute',
-      top: indicatorMarginTop - rightHitSlopTop,
-      right: 20 + rightPressableOffset,
-      width: rightPressableWidth,
-      height: indicatorHeight + rightHitSlopTop + rightHitSlopBottom,
-      borderRadius: 12,
-      backgroundColor: 'rgba(255, 0, 0, 0.12)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 0, 0, 0.4)',
-      zIndex: 97,
-    },
-  };
-});
+  },
+  ({ isLight, colors2024 }) => {
+    const winWidth = Dimensions.get('window').width;
+    const indicatorWidth = (winWidth - 52) / 2;
+    const rightPressableWidth = indicatorWidth * 0.5;
+    const rightPressableOffset = indicatorWidth - rightPressableWidth;
+    return {
+      indicator: {
+        height: 6,
+        backgroundColor: isLight
+          ? 'rgba(0, 0, 0, 1)'
+          : colors2024['brand-default'],
+        position: 'absolute',
+        borderRadius: 12,
+        top: indicatorMarginTop,
+        zIndex: 99,
+      },
+      indicatorContainer: {
+        position: 'relative',
+        paddingTop: indicatorMarginTop,
+        height: indicatorMarginTop + indicatorHeight,
+      },
+      indicatorBgBox: {
+        backgroundColor: colors2024['neutral-bg-1'],
+      },
+      leftPressable: {
+        position: 'absolute',
+        top: indicatorMarginTop,
+        left: 20,
+        width: indicatorWidth,
+        height: indicatorHeight,
+        zIndex: 99,
+      },
+      rightPressable: {
+        position: 'absolute',
+        right: 20 + rightPressableOffset,
+        top: indicatorMarginTop,
+        width: rightPressableWidth,
+        height: indicatorHeight,
+        zIndex: 99,
+      },
+      leftHitAreaDebug: {
+        position: 'absolute',
+        top: indicatorMarginTop - leftHitSlopTop,
+        left: 20,
+        width: indicatorWidth,
+        height: indicatorHeight + leftHitSlopTop + leftHitSlopBottom,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255, 0, 0, 0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 0, 0, 0.4)',
+        zIndex: 97,
+      },
+      rightHitAreaDebug: {
+        position: 'absolute',
+        top: indicatorMarginTop - rightHitSlopTop,
+        right: 20 + rightPressableOffset,
+        width: rightPressableWidth,
+        height: indicatorHeight + rightHitSlopTop + rightHitSlopBottom,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255, 0, 0, 0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 0, 0, 0.4)',
+        zIndex: 97,
+      },
+    };
+  },
+);
 
 function SideChainSelector() {
   const { isLight, colors2024 } = useTheme2024();

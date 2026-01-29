@@ -290,7 +290,13 @@ export function MultiAddressHomeHeader(
             onPress={() => {
               handleWalletsListPress();
             }}>
-            <MultiChart hideType={hideType} />
+            <MultiChart
+              hideType={hideType}
+              style={[
+                styles.multiChart,
+                !pinnedAccountList?.length && styles.multiChartNoAccountsFollow,
+              ]}
+            />
             {pinnedAccountList?.length ? (
               <MultiPinnedAddressList
                 hideType={hideType}
@@ -308,11 +314,16 @@ const SIZES = {
   cardLayoutPaddingHorizontal: 16,
   cardContentRadius: 20,
   curveBoxWrapperPy: 0,
-  curveBoxPy: 20,
-  curveCardMinHeight: 0,
+  curveBoxPx: 0,
+  curveBoxPy: 0,
+  curveCardMinHeight: 62,
   get curveBoxMinHeight() {
     return SIZES.curveCardMinHeight;
   },
+  get homecardMinHeight() {
+    return SIZES.curveCardMinHeight + SIZES.curveBoxWrapperPy * 2;
+  },
+  // pratical value, to keep padding inside curve box
   curveCardPy: 0,
 };
 
@@ -322,7 +333,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
   return {
     container: {
-      marginTop: 24,
+      marginTop: 12 + 4,
       paddingVertical: 0,
       // ...makeDebugBorder('orange'),
     },
@@ -330,9 +341,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'relative',
       paddingTop: 0,
       backgroundColor: 'transparent',
-      // ...makeDebugBorder('green'),
+      // ...makeDebugBorder('yellow'),
       paddingVertical: 0,
       paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
+      minHeight: SIZES.homecardMinHeight,
       borderRadius: SIZES.cardContentRadius,
       alignItems: 'center',
       justifyContent: 'center',
@@ -349,7 +361,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
       borderRadius: SIZES.cardContentRadius,
       display: 'none',
-      // ...makeDebugBorder('yellow'),
+      // it helps to check the position of webview wrapper
+      // if you see .localWebViewWrapper not filled by content in .curveBox, the sizes are wrong
+      // uncomment below line to see the border
+      // ...makeDebugBorder('green'),
     },
     localWebView: {
       minWidth:
@@ -365,7 +380,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       minHeight: SIZES.curveBoxMinHeight,
     },
     curveBox: {
-      paddingHorizontal: 0,
+      paddingHorizontal: SIZES.curveBoxPx,
       paddingVertical: SIZES.curveBoxPy,
       borderWidth: isLight ? curveCardBorderWidth : 0,
       borderColor: 'transparent',
@@ -380,14 +395,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     curveBoxLoading: {},
     curveCard: {
-      overflow: 'hidden',
+      overflow: 'visible',
       borderStyle: 'solid',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
       maxWidth: '100%',
-      borderRadius: SIZES.cardContentRadius,
+      borderRadius: 0,
       minHeight: SIZES.curveCardMinHeight,
       paddingVertical: SIZES.curveCardPy,
       paddingHorizontal: 0,
@@ -438,13 +453,23 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // marginBottom: -16,
     },
 
+    multiChart: {
+      paddingTop: 24,
+      paddingHorizontal: 20,
+    },
+
+    multiChartNoAccountsFollow: {
+      marginBottom: 24,
+    },
+
     accountList: {
       display: 'flex',
       flexDirection: 'column',
       gap: 8,
       width: '100%',
-      marginTop: 28,
+      marginTop: 20,
       paddingHorizontal: 8,
+      marginBottom: 12,
     },
     addressOpacity: {
       opacity: 0.3,
