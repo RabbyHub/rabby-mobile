@@ -48,7 +48,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { useHomeTabIndex } from '@/hooks/navigation';
+import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import {
   useScene24hBalanceCombinedData,
   useSceneIsLoading,
@@ -66,6 +66,9 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 
 export const HeaderHeight = 30;
+const handleSwitchToTokenTab = (index: number) => {
+  apisHomeTabIndex.setTabIndex(index, true);
+};
 
 export function TabsTopHeader({
   indexDecimalValue,
@@ -76,7 +79,7 @@ export function TabsTopHeader({
 }): JSX.Element {
   const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
   const showNetWorth = tabIndexFromSv > 0.7;
-  const { tabIndex, setTabIndex } = useHomeTabIndex();
+  // const { tabIndex, setTabIndex } = useHomeTabIndex();
   const { isLoading: loading } = useSceneIsLoading('Home');
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
@@ -135,12 +138,6 @@ export function TabsTopHeader({
       setTokenDisplayMode('byAddress');
     }
   }, [setTokenDisplayMode, tokenDisplayMode]);
-  const handleSwitchToTokenTab = useCallback(
-    (index: number) => {
-      setTabIndex(index, true);
-    },
-    [setTabIndex],
-  );
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(totalBalance, { currency });

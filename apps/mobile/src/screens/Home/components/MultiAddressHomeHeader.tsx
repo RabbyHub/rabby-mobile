@@ -330,11 +330,14 @@ const SIZES = {
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const curveBoxBorderWidth = 1;
   const curveCardBorderWidth = !isLight ? 2 : 1;
+  const cardMinW =
+    Dimensions.get('window').width - SIZES.cardLayoutPaddingHorizontal * 2;
 
   return {
     container: {
       marginTop: 12 + 4,
       paddingVertical: 0,
+      width: '100%',
       // ...makeDebugBorder('orange'),
     },
     homecardWrapper: {
@@ -348,6 +351,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: SIZES.cardContentRadius,
       alignItems: 'center',
       justifyContent: 'center',
+      width: '100%',
+      // ...makeDebugBorder('blue'),
     },
     localWebViewWrapper: {
       position: 'absolute',
@@ -367,8 +372,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // ...makeDebugBorder('green'),
     },
     localWebView: {
-      minWidth:
-        Dimensions.get('window').width - SIZES.cardLayoutPaddingHorizontal * 2,
+      minWidth: cardMinW,
       marginHorizontal: 'auto',
       backgroundColor: 'transparent',
     },
@@ -388,7 +392,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // ...makeDevOnlyStyle({
       //   opacity: 0,
       // }),
-      // ...makeDebugBorder(),
+      minWidth: cardMinW,
+      // ...makeDebugBorder('yellow'),
       width: '100%',
       alignItems: 'center',
       position: 'relative',
@@ -458,7 +463,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingTop: 24,
       paddingHorizontal: 20,
       width: '100%',
-      // ...makeDebugBorder(),
+      minWidth: cardMinW,
+      // ...makeDebugBorder('purple'),
     },
 
     multiChartNoAccountsFollow: {

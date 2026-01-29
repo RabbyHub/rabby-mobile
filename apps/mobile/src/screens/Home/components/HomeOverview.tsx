@@ -407,20 +407,6 @@ const getStyle = createGetStyles2024(
       //   backgroundColor: colors2024['orange-light-2'],
       // }),
     },
-    menuHeader: {
-      height: 30,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-      marginHorizontal: 4,
-      margin: 12,
-      marginBottom: 16,
-      marginTop: 0,
-    },
-    pinHeader: {
-      marginTop: -8,
-    },
     grid: {
       marginTop: 0,
       width: '100%',
