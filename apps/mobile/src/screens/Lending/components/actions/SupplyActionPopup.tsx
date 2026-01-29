@@ -38,6 +38,7 @@ import { useTranslation } from 'react-i18next';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import { transactionHistoryService } from '@/core/services';
 import { useRefreshHistoryId } from '../../hooks';
@@ -52,6 +53,7 @@ import {
 import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
 import { CHAINS_ENUM } from '@debank/common';
 import { ReserveErrorTip } from '../ErrorTip';
+import { stats } from '@/utils/stats';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -448,6 +450,25 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY },
           );
         }
+
+        const usdValue = new BigNumber(amount || '0')
+          .multipliedBy(
+            BigNumber(
+              reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+            ),
+          )
+          .toString();
+
+        stats.report('aaveInternalTx', {
+          tx_type: LendingReportType.Supply,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+        });
+
         refresh();
         toast.success(
           `${t('page.Lending.supplyDetail.actions')} ${t(
@@ -467,6 +488,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       amount,
       txsForMiniApproval,
       canShowDirectSubmit,
+      reserve.reserve.formattedPriceInMarketReferenceCurrency,
+      chainInfo?.serverId,
       refresh,
       t,
       onClose,

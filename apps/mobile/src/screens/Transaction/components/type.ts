@@ -30,3 +30,11 @@ export enum CUSTOM_HISTORY_TITLE_TYPE {
   LENDING_DEBT_SWAP = 'LENDING_DEBT_SWAP', // debt swap
   LENDING_REPAY_WITH_COLLATERAL = 'LENDING_REPAY_WITH_COLLATERAL', // repay with collateral
 }
+
+export const LendingReportType = {
+  Supply: 'Supply',
+  Withdraw: 'Withdraw',
+  Borrow: 'Borrow',
+  Repay: 'Repay',
+  RepayWithAToken: 'RepayWithAToken',
+};
