@@ -120,6 +120,7 @@ export const WrapperDappActionsMemoItem = ({
             data={item._originPortfolio.withdraw_actions}
             chain={chain}
             protocolLogo={protocolLogo}
+            protocolName={item.name}
             currentAccount={currentAccount}
             onRefresh={onRefresh}
             session={session}
