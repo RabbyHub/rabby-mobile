@@ -87,7 +87,7 @@ const renderTabBar: React.ComponentProps<typeof Container>['renderTabBar'] &
 
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { tabIndex } = useHomeTabIndex();
+  // const { tabIndex } = useHomeTabIndex();
 
   const renderLabel = useCallback(
     (name: string) =>
