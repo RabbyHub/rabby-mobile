@@ -935,20 +935,8 @@ runFlow({
         wait: {
           path: [
             {
-              css: 'main > div > div button',
+              css: 'nav button>span:only-child:not(:has(*)',
             },
-          ],
-        },
-        action: { type: 'wait', ms: 4000 },
-      },
-      {
-        wait: {
-          path: [
-            {
-              css: '#page-container > header > div > div.md\\:hidden > div.flex.h-14.items-center.pr-4.md\\:h-auto.relative > div > button',
-            },
-            // { within: true },
-            // { text: 'Log In', selector: 'button' },
             { enabled: true },
           ],
         },
@@ -966,7 +954,7 @@ runFlow({
       },
       {
         wait: {
-          path: [{ css: 'a[href^=\\#\\/account]' }],
+          path: [{ css: 'a[href^=\\#\\/dashboard]' }],
         },
         action: { type: 'click' },
       },
