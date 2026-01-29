@@ -132,9 +132,10 @@ const ChartContent = memo(function ChartContent({
 
 export const MultiChart = memo(function MultiChart({
   hideType,
+  style,
 }: {
   hideType: BALANCE_HIDE_TYPE;
-}) {
+} & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
 
   const { combinedData: data } = useMultiHome24hBalanceCurveChart();
@@ -159,7 +160,7 @@ export const MultiChart = memo(function MultiChart({
 
   return (
     <View
-      style={[styles.container]}
+      style={[styles.container, style]}
       onTouchStart={e => {
         e.stopPropagation();
       }}>
