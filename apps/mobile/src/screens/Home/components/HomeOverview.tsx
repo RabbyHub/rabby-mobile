@@ -461,8 +461,8 @@ const getStyle = createGetStyles2024(
     gridText: {
       color: colors2024['neutral-title-1'],
       fontWeight: '500',
-      fontSize: 14,
-      lineHeight: 18,
+      fontSize: 16,
+      lineHeight: 20,
       textAlign: 'left',
       fontFamily: 'SF Pro Rounded',
     },
