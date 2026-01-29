@@ -12,8 +12,8 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { apiContact } from '@/core/apis';
-import React, { useCallback } from 'react';
+import { apiContact, apisPerps } from '@/core/apis';
+import React, { useEffect, useMemo } from 'react';
 import { ellipsisAddress } from '@/utils/address';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import RcCaretDownSmallCC from '@/assets2024/icons/common/caret-down-small-cc.svg';
@@ -23,14 +23,14 @@ import { KeyringAccountWithAlias } from '@/core/apis/account';
 import useProtocolListStore from '@/store/protocols';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { formatNetworth } from '@/utils/math';
-import { perpsStore as usePerpsStore } from '@/hooks/perps/usePerpsStore';
 
 import { formatUsdValue } from '@/utils/number';
 import { useShallow } from 'zustand/shallow';
 import { dappService } from '@/core/services';
 import FastImage from 'react-native-fast-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLendingHF } from '@/screens/Lending/hooks';
+import useAppChainStore from '@/store/appchain';
+import useAsync from 'react-use/lib/useAsync';
 
 const PngPolymarket = require('@/assets2024/icons/prediction/polymarket.png');
 const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.png');
@@ -86,7 +86,7 @@ const LENDING: DappSelectItem[] = [
     id: 'venus',
     name: 'Venus',
     icon: PngVenus,
-    url: 'https://app.venus.io/#/account',
+    url: 'https://app.venus.io',
     themeColor: 'rgba(58, 121, 253, 0.08)',
     TVL: '$1.635b',
   },
@@ -402,6 +402,7 @@ export const DappFrameAccountHeader = (props: {
       return new Map<string, number>();
     }
     const protocols = protocolMap[address] || [];
+
     if (!protocols.length) {
       return new Map<string, number>();
     }
@@ -420,11 +421,40 @@ export const DappFrameAccountHeader = (props: {
     return map;
   }, [account?.address, protocolMap]);
 
-  const hyperliquidAccountValue = usePerpsStore(
-    useShallow(s => s.accountSummary?.accountValue),
-  );
+  // const hyperliquidAccountValue = usePerpsStore(
+  //   useShallow(s => s.accountSummary?.accountValue),
+  // );
 
-  const { lendingHf } = useLendingHF();
+  const appChainMap = useAppChainStore(useShallow(s => s.appChainMap));
+  const currentAddressAppChainMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (account?.address) {
+      const appChainList = appChainMap[account?.address.toLowerCase()] || [];
+      appChainList.forEach(appChain => {
+        const originKey = getOriginKey(appChain.site_url);
+        if (!originKey) {
+          return;
+        }
+        const netWorth = Number(appChain.netWorth || 0);
+        map.set(originKey, (map.get(originKey) || 0) + netWorth);
+      });
+    }
+    return map;
+  }, [account?.address, appChainMap]);
+
+  const { value: hyperliquidAccountValue } = useAsync(async () => {
+    if (account?.address) {
+      const sdk = apisPerps.getPerpsSDK();
+      const info = await sdk.info.getClearingHouseState(account?.address);
+      return info?.marginSummary?.accountValue;
+    }
+  }, [account?.address]);
+
+  useEffect(() => {
+    if (account?.address) {
+      useAppChainStore.getState().getAppChains(account?.address);
+    }
+  }, [account?.address]);
 
   const dappListWithValue = React.useMemo(() => {
     if (!dAppList.length) {
@@ -440,18 +470,13 @@ export const DappFrameAccountHeader = (props: {
 
       const originKey = getOriginKey(item.url);
 
-      if (item.id === 'aave') {
-        return {
-          ...item,
-          value: formatUsdValue(lendingHf?.netWorthUSD || 0),
-          remoteUrl:
-            dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
-            undefined,
-        };
-      }
-
       const originPngIds = ['venus', 'hyperliquid'];
-      if (!originKey || !defiValueByOrigin.has(originKey)) {
+      const hasValue = originKey
+        ? defiValueByOrigin.has(originKey) ||
+          currentAddressAppChainMap.has(originKey)
+        : false;
+
+      if (!originKey || !hasValue) {
         return {
           ...item,
           value: undefined,
@@ -461,7 +486,10 @@ export const DappFrameAccountHeader = (props: {
                 ?.logo_url || undefined,
         };
       }
-      const netWorth = defiValueByOrigin.get(originKey) ?? 0;
+      const netWorth =
+        defiValueByOrigin.get(originKey) ||
+        currentAddressAppChainMap.get(originKey) ||
+        0;
 
       return {
         ...item,
@@ -476,7 +504,7 @@ export const DappFrameAccountHeader = (props: {
     dAppList,
     defiValueByOrigin,
     hyperliquidAccountValue,
-    lendingHf?.netWorthUSD,
+    currentAddressAppChainMap,
   ]);
 
   const headerLeft = React.useCallback(() => {

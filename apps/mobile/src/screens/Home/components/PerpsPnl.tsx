@@ -38,11 +38,7 @@ const PerpsPnlByDapp: React.FC<{}> = () => {
     return null;
   }
 
-  return (
-    <Text style={[styles.text, value > 0 ? styles.green : styles.red]}>
-      {formatUsdValue(value)}
-    </Text>
-  );
+  return <Text style={[styles.textValue]}>{formatUsdValue(value)}</Text>;
 };
 
 export const PerpsPnl = () => {
@@ -71,5 +67,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   red: {
     color: colors2024['red-default'],
+  },
+  textValue: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
   },
 }));
