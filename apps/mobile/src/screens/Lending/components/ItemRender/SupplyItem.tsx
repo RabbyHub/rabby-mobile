@@ -206,7 +206,10 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
             />
           </View>
           <TouchableOpacity
-            style={styles.buttonSecondary}
+            style={[
+              styles.buttonSecondary,
+              isWrapperToken && styles.wrapperTokenButton,
+            ]}
             activeOpacity={0.8}
             onPress={handleOpenSupplyDetail}>
             <Text style={styles.buttonSecondaryText}>
@@ -386,6 +389,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
+  },
+  wrapperTokenButton: {
+    backgroundColor: colors2024['neutral-line'],
   },
   buttonSecondaryText: {
     fontSize: 14,

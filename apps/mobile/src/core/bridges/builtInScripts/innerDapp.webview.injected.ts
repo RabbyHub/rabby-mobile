@@ -1053,13 +1053,12 @@ runFlow({
 
   const start = () => {
     const { origin } = window.location;
-    console.log('start running flow', origin);
     const rule = rules[origin];
     if (rule) {
       const autoRunner = () =>
         runFlow({
           debug: true,
-          timeouts: 20 * 1000,
+          timeoutMs: 20 * 1000,
           steps: rule,
         });
 
@@ -1069,7 +1068,6 @@ runFlow({
             const store = JSON.parse(
               window.localStorage.getItem('wagmi.store'),
             );
-            console.log('store.state.current', store.state.current);
             if (!store.state.current) {
               autoRunner();
             }
