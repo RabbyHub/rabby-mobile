@@ -420,7 +420,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                             styles.formItemQuickOption,
                             activeOption === option.value
                               ? {
-                                  backgroundColor: colors2024['brand-light-1'],
+                                  backgroundColor: 'rgba(80, 210, 193, 0.12)',
                                   borderColor: '#50D2C1',
                                 }
                               : null,
@@ -563,7 +563,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tagContainer: {
     borderRadius: 100,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.12)',
     paddingVertical: 4,
     paddingLeft: 12,
     flexDirection: 'row',
@@ -685,7 +685,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   formItemQuickTitleActive: {
-    color: '#50D2C1',
+    fontWeight: 700,
+    color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
 
   formItemQuickTitle: {

@@ -319,7 +319,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     maxButtonWrapper: {
       padding: 4,
-      backgroundColor: ctx.colors2024['brand-light-1'],
+      backgroundColor: 'rgba(80, 210, 193, 0.12)',
       borderRadius: 8,
     },
     maxButtonText: {
