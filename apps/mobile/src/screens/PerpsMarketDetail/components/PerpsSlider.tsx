@@ -113,7 +113,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           maximumValue={maxValue || 100}
           step={step}
           trackStyle={styles.sliderTrack}
-          minimumTrackTintColor={colors2024['brand-default']}
+          minimumTrackTintColor="#50D2C1"
           maximumTrackTintColor={colors2024['neutral-line']}
           thumbStyle={styles.thumbStyle}
           thumbProps={thumbComponent}
@@ -173,13 +173,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 10,
     height: 10,
     borderRadius: 10,
-    backgroundColor: colors2024['brand-default'],
-  },
-  // For simple slider
-  simpleThumbStyle: {
-    width: 24,
-    height: 24,
-    backgroundColor: colors2024['brand-default'],
-    borderRadius: 12,
+    backgroundColor: '#50D2C1',
   },
 }));

@@ -81,7 +81,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
 }) => {
   const [modalVisible, setModalVisible] = React.useState(false);
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const {
@@ -328,7 +328,9 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
             color={
               disableEdit
                 ? colors2024['brand-disable']
-                : colors2024['brand-default']
+                : isLight
+                ? colors2024['neutral-title-1']
+                : '#50D2C1'
             }
           />
         )}
@@ -419,7 +421,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                             activeOption === option.value
                               ? {
                                   backgroundColor: colors2024['brand-light-1'],
-                                  borderColor: colors2024['brand-default'],
+                                  borderColor: '#50D2C1',
                                 }
                               : null,
                           ])}>
@@ -540,7 +542,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                   </View>
                   <View style={styles.footer}>
                     <Button
-                      type="primary"
+                      type="hyperliquid"
                       loading={loading}
                       title={t('global.confirm')}
                       disabled={!isValidPrice}
@@ -573,7 +575,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
-    color: colors2024['brand-default'],
+    color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
     fontFamily: 'SF Pro Rounded',
   },
   tagTextDisabled: {
@@ -683,7 +685,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   formItemQuickTitleActive: {
-    color: colors2024['brand-default'],
+    color: '#50D2C1',
   },
 
   formItemQuickTitle: {

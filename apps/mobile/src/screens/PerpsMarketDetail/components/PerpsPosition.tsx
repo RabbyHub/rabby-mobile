@@ -80,7 +80,7 @@ export const PerpsPosition: React.FC<{
   handleCancelAutoClose,
   handleUpdateMargin,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [editMarginVisible, setEditMarginVisible] = useState(false);
 
@@ -258,7 +258,7 @@ export const PerpsPosition: React.FC<{
                   <IconPerpEdit
                     width={16}
                     height={16}
-                    color={colors2024['brand-default']}
+                    color={isLight ? colors2024['neutral-title-1'] : '#50D2C1'}
                   />
                 </TouchableOpacity>
               ) : (
@@ -577,7 +577,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tagContainer: {
     borderRadius: 100,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.16)',
     paddingVertical: 4,
     paddingLeft: 12,
     flexDirection: 'row',
@@ -589,7 +589,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
-    color: colors2024['brand-default'],
+    color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
     fontFamily: 'SF Pro Rounded',
   },
   header: {
@@ -623,14 +623,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 10,
     paddingBottom: 10,
     flex: 1,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.16)',
   },
   desc: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-    color: colors2024['brand-default'],
+    color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
     textAlign: 'center',
   },
   strong: {
@@ -638,7 +638,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '800',
-    color: colors2024['brand-default'],
+    color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
   paddingTopHeader: {
     marginTop: 12,

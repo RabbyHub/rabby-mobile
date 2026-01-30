@@ -224,7 +224,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 16,
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
+    color: '#50D2C1',
   },
 
   flatList: {

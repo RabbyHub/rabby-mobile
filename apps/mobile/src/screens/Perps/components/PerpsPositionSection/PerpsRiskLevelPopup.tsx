@@ -5,18 +5,11 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
-import RcImgSafe from '@/assets2024/icons/perps/ImgSafe.svg';
 import RcImgTipsLightCC from '@/assets2024/icons/perps/ImgTipsLightCC.svg';
-import RcImgWarning from '@/assets2024/icons/perps/ImgWarning.svg';
-import RcImgDanger from '@/assets2024/icons/perps/ImgDanger.svg';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import AutoLockView from '@/components/AutoLockView';
 import { Button } from '@/components2024/Button';
-import { PERPS_POSITION_RISK_LEVEL } from '@/constant/perps';
 import { splitNumberByStep } from '@/utils/number';
-import { useTipsPopup } from '@/hooks/useTipsPopup';
-import { getRiskLevel } from './utils';
 
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
@@ -116,7 +109,11 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
           </View>
         </AutoLockView>
         <View style={styles.footer}>
-          <Button type="primary" title={t('global.gotIt')} onPress={onClose} />
+          <Button
+            type="hyperliquid"
+            title={t('global.gotIt')}
+            onPress={onClose}
+          />
         </View>
       </BottomSheetView>
     </AppBottomSheetModal>
