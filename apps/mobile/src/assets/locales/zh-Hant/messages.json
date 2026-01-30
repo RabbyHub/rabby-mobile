@@ -953,7 +953,8 @@
         "watchlist": "代幣觀察列表",
         "perpsMarketList": "更多 Perps",
         "perps": "永续合约",
-        "lending": "借貸"
+        "lending": "借貸",
+        "predict": "預測"
       },
       "swipeUp": {
         "descAndroidMore": "點擊探索更多 dApps",
@@ -1249,7 +1250,11 @@
       "copySeedPhrase": "複製助記詞",
       "showQrCode": "顯示二維碼",
       "qrCodePopupTips": "切勿與他人分享種子短語的二維碼。請在安全的環境中查看並妥善保管。",
-      "alert": "此助記詞是您資產的憑證。不要丟失或透露給他人，否則您可能會永遠失去資產。請在安全的環境下查看並妥善保管。"
+      "alert": "此助記詞是您資產的憑證。不要丟失或透露給他人，否則您可能會永遠失去資產。請在安全的環境下查看並妥善保管。",
+      "tapToReveal": {
+        "line1": "點擊以顯示你的 seed phrase",
+        "line2": "確保沒有人在觀看你的螢幕。"
+      }
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -2681,6 +2686,9 @@
         "activatedFailed": "啟用失敗",
         "activatedSuccess": "4% Hyperliquid 手續費節省已啟用",
         "activateNow": "立即啟用"
+      },
+      "dappSelect": {
+        "title": "選擇 Perps 提供者"
       }
     },
     "perpsDetail": {
@@ -3124,6 +3132,9 @@
           "balance": "餘額"
         },
         "title": "選擇還款代幣"
+      },
+      "dappSelect": {
+        "title": "選擇借貸提供者"
       }
     },
     "address": {
@@ -3135,6 +3146,20 @@
         "title": "接收資產",
         "btnCopyAddress": "複製地址"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "選擇預測提供者"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableDesc": "此服務在您當前的地區不受支持。",
+      "serviceUnavailableTitle": "服務不可用"
+    },
+    "DAppFrame": {
+      "netWorth": "淨資產",
+      "selectAWallet": "選擇一個錢包",
+      "walletBalance": "錢包/餘額"
     }
   },
   "component": {

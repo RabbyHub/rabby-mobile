@@ -447,8 +447,8 @@ export const HomeCustomMaterialTabBar = ({
             x: 20 + getHomeTabIndicatorWidth(winWidth) + 12,
           },
           {
-            width: getHomeTabIndicatorWidth(winWidth) / 2,
-            x: 20 + getHomeTabIndicatorWidth(winWidth) / 2 + 12,
+            width: getHomeTabIndicatorWidth(winWidth),
+            x: 20 + getHomeTabIndicatorWidth(winWidth) + 12,
           },
         ]}
         fadeIn

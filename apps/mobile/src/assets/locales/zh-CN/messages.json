@@ -858,7 +858,8 @@
         "watchlist": "代币关注列表",
         "perpsMarketList": "更多 Perps",
         "perps": "合约",
-        "lending": "借贷"
+        "lending": "借贷",
+        "predict": "预测"
       },
       "swipeUp": {
         "descAndroid": "点击探索 dApps",
@@ -1277,7 +1278,11 @@
       "copySeedPhrase": "复制助记词",
       "qrCodePopupTips": "切勿与他人分享种子短语的二维码。请在安全的环境中查看并妥善保管。",
       "showQrCode": "显示二维码",
-      "alert": "此助记词是您资产的凭证。不要丢失或透露给他人，否则您可能会永远失去资产。请在安全的环境下查看并妥善保管。"
+      "alert": "此助记词是您资产的凭证。不要丢失或透露给他人，否则您可能会永远失去资产。请在安全的环境下查看并妥善保管。",
+      "tapToReveal": {
+        "line1": "点击以显示您的种子短语",
+        "line2": "确保没有人监视你的屏幕。"
+      }
     },
     "unlock": {
       "btn": {
@@ -2636,6 +2641,9 @@
         "description": "使用 Rabby 的代码以启用",
         "activateNow": "立即激活",
         "activatedSuccess": "4% Hyperliquid费用节省已激活"
+      },
+      "dappSelect": {
+        "title": "选择 Perps 提供者"
       }
     },
     "perpsDetail": {
@@ -3076,6 +3084,9 @@
           "balance": "余额"
         },
         "title": "选择还款代币"
+      },
+      "dappSelect": {
+        "title": "选择借贷服务提供商"
       }
     },
     "address": {
@@ -3087,6 +3098,20 @@
         "btnCopyAddress": "复制地址",
         "title": "接收资产"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "选择预测提供商"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableDesc": "该服务在您当前的地区不受支持。",
+      "serviceUnavailableTitle": "服务不可用"
+    },
+    "DAppFrame": {
+      "walletBalance": "钱包/余额",
+      "selectAWallet": "选择一个钱包",
+      "netWorth": "净资产"
     }
   },
   "component": {
