@@ -79,5 +79,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   container: {
     flex: 1,
+    paddingTop: 6,
   },
 }));

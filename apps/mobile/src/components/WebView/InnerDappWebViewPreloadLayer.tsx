@@ -482,9 +482,14 @@ export default function InnerDappWebViewPreloadLayer({
         const progressState = progressByKey[key];
         const isLoading = progressState?.isLoading;
         const shouldShowSnapshot =
-          isActive && !!snapshotUri && isLoading !== false;
+          isActive &&
+          !!snapshotUri &&
+          isLoading !== false &&
+          !progressState?.isError;
         const shouldShowPermissionUnavailable = isActive && !dappPermission;
-        const shouldShowProgress = isActive && !!progressState?.isLoading;
+        const shouldShowProgress =
+          isActive && !!progressState?.isLoading && !progressState?.isError;
+
         return (
           <View
             key={key}

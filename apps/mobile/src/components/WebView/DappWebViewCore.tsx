@@ -44,6 +44,7 @@ export type DappWebViewController = ReturnType<typeof useWebViewControl>;
 export type DappWebViewProgressState = {
   progress: number;
   isLoading: boolean;
+  isError?: boolean;
 };
 
 export type DappWebViewCoreProps = {
@@ -262,7 +263,7 @@ export default function DappWebViewCore({
       }
 
       if (treatAsReload) {
-        updateProgressState({ progress: 0, isLoading: true });
+        updateProgressState({ progress: 0, isLoading: true, isError: false });
       }
 
       webviewOnLoadStart?.(event);
@@ -284,8 +285,12 @@ export default function DappWebViewCore({
       const nextProgress = event.nativeEvent.progress;
       updateProgressState(
         event.nativeEvent.progress === 1
-          ? { isLoading: true, progress: 1 }
-          : { isLoading: true, progress: nextProgress },
+          ? { isLoading: true, progress: 1, isError: !event.nativeEvent.url }
+          : {
+              isLoading: true,
+              progress: nextProgress,
+              isError: !event.nativeEvent.url,
+            },
       );
 
       onLoadProgress?.(event);
@@ -298,6 +303,7 @@ export default function DappWebViewCore({
     (event: Parameters<NonNullable<WebViewProps['onLoadEnd']>>[0]) => {
       if (!event.nativeEvent.loading) {
         updateProgressState({
+          isError: !event.nativeEvent.url,
           progress: 1,
           isLoading: false,
         });
@@ -331,8 +337,13 @@ export default function DappWebViewCore({
       }));
       onError?.(event);
       webviewOnError?.(event);
+      updateProgressState({
+        isLoading: false,
+        progress: 0,
+        isError: true,
+      });
     },
-    [onError, setWebViewState, webviewOnError],
+    [onError, setWebViewState, updateProgressState, webviewOnError],
   );
 
   const handleLoad = useCallback(
@@ -433,6 +444,7 @@ export default function DappWebViewCore({
     updateProgressState({
       isLoading: true,
       progress: 0.1,
+      isError: false,
     });
   });
 
