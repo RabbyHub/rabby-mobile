@@ -48,10 +48,14 @@ export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   return { assetsInfo, fetchAssetsInfo };
 }
 
-export const loadAppChainComplexProtocols = async (userAddr: string) => {
+export const loadAppChainComplexProtocols = async (
+  userAddr: string,
+  force = false,
+) => {
   try {
     // 从 appchain store 读取数据
     const lowerAddr = userAddr.toLowerCase();
+    await useAppChainStore.getState().getAppChains(lowerAddr, force);
     const appChainMap = useAppChainStore.getState().appChainMap;
     const appChains = appChainMap[lowerAddr] || [];
 
@@ -85,6 +89,7 @@ export const syncProtocols = async (
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
   const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
     address,
+    force,
   );
   const protocols = [...snapshotRes, ...appChainProtocols];
   syncRemoteProtocols(address, snapshotRes);

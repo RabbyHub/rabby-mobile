@@ -83,6 +83,16 @@ export class AppChainEntity extends EntityAddressAssetBase {
     return this.getRepository().count();
   }
 
+  /**
+   * 查询所有 AppChain（用于初始化缓存）
+   */
+  static async queryAll(): Promise<AppChainEntity[]> {
+    await prepareAppDataSource();
+    return this.getRepository().find({
+      order: { usd_value: 'DESC' },
+    });
+  }
+
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
