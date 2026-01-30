@@ -186,7 +186,9 @@ const getStyle = createGetStyles2024(ctx => {
       width: '100%',
     },
     addressItemView: {
-      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
       padding: 16,
       marginBottom: 12,
       borderRadius: 20,
