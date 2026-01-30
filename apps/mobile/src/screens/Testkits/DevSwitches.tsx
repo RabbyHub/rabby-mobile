@@ -67,7 +67,10 @@ import {
 } from '@/components/RateModal/hooks';
 import { useMakeMockDataForHomeCenterArea } from '@/screens/Home/hooks/homeCenterArea';
 import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
-import { useGuidanceShown } from '@/components2024/Animations/hooks';
+import {
+  toggleViewedGuidance,
+  useGuidanceShown,
+} from '@/components2024/Animations/hooks';
 import { Button } from '@/components2024/Button';
 import RNHelpers from '@/core/native/RNHelpers';
 import { keyringService, preferenceService } from '@/core/services';
@@ -392,7 +395,7 @@ function DevTestHomeCenterArea() {
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
   const { viewedHomeTip, mockResetViewedHomeTip } = useViewedHomeTip();
-  const { multiTabs20251205Viewed, toggleViewedGuidance } = useGuidanceShown();
+  const { multiTabs20251205Viewed } = useGuidanceShown();
 
   useEffect(() => {
     if (mockData.forceShowOffchainNotify) {
