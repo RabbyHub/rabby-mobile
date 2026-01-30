@@ -164,13 +164,21 @@ const leftHitSlopBottom = 4;
 const rightHitSlopTop = 50;
 const rightHitSlopBottom = 4;
 
+export function getHomeTabIndicatorWidth(winWidth: number) {
+  'worklet';
+  // const winWidth = Dimensions.get('window').width;
+  const indicatorWidth = (winWidth - 52) / 2;
+
+  return indicatorWidth;
+}
+
 const indicatorStyles = createGetStyles2024(
   {
     reanimatedStyles: {
       leftBackground: ({ colors2024, winLayout }) => {
         'worklet';
         const winWidth = Math.floor(winLayout.value.width);
-        const indicatorWidth = (winWidth - 52) / 2;
+        const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
 
         return {
           position: 'absolute',
@@ -186,7 +194,7 @@ const indicatorStyles = createGetStyles2024(
       rightBackground: ({ colors2024, winLayout }) => {
         'worklet';
         const winWidth = Math.floor(winLayout.value.width);
-        const indicatorWidth = (winWidth - 52) / 2;
+        const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
 
         return {
           position: 'absolute',
@@ -203,7 +211,7 @@ const indicatorStyles = createGetStyles2024(
   },
   ({ isLight, colors2024 }) => {
     const winWidth = Dimensions.get('window').width;
-    const indicatorWidth = (winWidth - 52) / 2;
+    const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
     const rightPressableWidth = indicatorWidth * 0.5;
     const rightPressableOffset = indicatorWidth - rightPressableWidth;
     return {
@@ -427,20 +435,20 @@ export const HomeCustomMaterialTabBar = ({
         indexDecimal={props.indexDecimal}
         itemsLayout={[
           {
-            width: (winWidth - 52) / 2,
+            width: getHomeTabIndicatorWidth(winWidth),
             x: 20,
           },
           {
-            width: (winWidth - 52) / 2,
-            x: 20 + (winWidth - 52) / 2 + 12,
+            width: getHomeTabIndicatorWidth(winWidth),
+            x: 20 + getHomeTabIndicatorWidth(winWidth) + 12,
           },
           {
-            width: (winWidth - 52) / 2,
-            x: 20 + (winWidth - 52) / 2 + 12,
+            width: getHomeTabIndicatorWidth(winWidth),
+            x: 20 + getHomeTabIndicatorWidth(winWidth) + 12,
           },
           {
-            width: (winWidth - 52) / 2,
-            x: 20 + (winWidth - 52) / 2 + 12,
+            width: getHomeTabIndicatorWidth(winWidth) / 2,
+            x: 20 + getHomeTabIndicatorWidth(winWidth) / 2 + 12,
           },
         ]}
         fadeIn
