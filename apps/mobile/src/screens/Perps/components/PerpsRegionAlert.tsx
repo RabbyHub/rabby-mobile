@@ -20,6 +20,7 @@ export const PerpsRegionAlert: React.FC<{}> = ({}) => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
+    marginTop: 10,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -28,7 +29,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['orange-light-1'],
     borderRadius: 8,
     justifyContent: 'center',
-    marginBottom: 12,
     marginHorizontal: 16,
   },
   text: {

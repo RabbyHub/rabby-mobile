@@ -15,7 +15,7 @@ export { INNER_DAPP_LIST } from './constants';
 export type { DappSelectItem } from './constants';
 
 export const DappFrameAccountHeader_LAYOUT = {
-  height: 38,
+  height: 58,
 };
 
 export const DappFrameAccountHeader = (props: {
@@ -46,7 +46,7 @@ export const DappFrameAccountHeader = (props: {
   } = props;
 
   const navigation = useRabbyAppNavigation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isAccountSelectorOpen, setIsAccountSelectorOpen] =
     React.useState(false);
   const isAccountSelectorControlled = isShowAccountList !== undefined;
@@ -143,6 +143,7 @@ export const DappFrameAccountHeader = (props: {
           marginTop: top,
           height: DappFrameAccountHeader_LAYOUT.height,
           paddingHorizontal: 12,
+          paddingVertical: 10,
         }}>
         <View
           style={{
@@ -159,9 +160,22 @@ export const DappFrameAccountHeader = (props: {
 
   React.useEffect(() => {
     navigation.setOptions({
+      headerStyle: {
+        backgroundColor: colors2024['neutral-bg-1'],
+      },
       header,
+      headerBackground() {
+        return (
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors2024['neutral-bg-1'],
+            }}
+          />
+        );
+      },
     });
-  }, [header, navigation, title]);
+  }, [colors2024, header, navigation, title]);
 
   return null;
 };

@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
-import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Pressable,
+  StyleProp,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -25,6 +32,7 @@ interface TokenAmountInputProps {
   placeholder?: string;
   isEstimatingGas?: boolean;
   onClickToken?: () => void;
+  maxButtonStyleProps?: StyleProp<ViewStyle>;
 }
 
 export const TokenAmountInput = ({
@@ -39,6 +47,7 @@ export const TokenAmountInput = ({
   handleClickMaxButton,
   isEstimatingGas,
   onClickToken,
+  maxButtonStyleProps,
 }: React.PropsWithChildren<RNViewProps & TokenAmountInputProps>) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -133,7 +142,7 @@ export const TokenAmountInput = ({
           (isEstimatingGas ? null : (
             <TouchableOpacity
               disabled={isEstimatingGas}
-              style={styles.maxButtonWrapper}
+              style={[styles.maxButtonWrapper, maxButtonStyleProps]}
               onPress={handleClickMaxButton}>
               <Text style={styles.maxButtonText}>MAX</Text>
             </TouchableOpacity>

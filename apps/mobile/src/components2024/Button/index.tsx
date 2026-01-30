@@ -38,6 +38,7 @@ export type ButtonProps = Omit<
         | 'danger'
         | 'warning'
         | 'hyperliquid'
+        | 'hyperliquid-light'
         | 'aave';
       loading?: boolean;
       loadingStyle?: StyleProp<ViewStyle>;
@@ -107,6 +108,10 @@ export const Button = ({
       hyperliquid: {
         bg: '#50D2C1',
         currentColor: 'rgba(25, 41, 69, 1)',
+      },
+      'hyperliquid-light': {
+        bg: 'rgba(80, 210, 193, 0.12)',
+        currentColor: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
       },
       aave: {
         bg: isLight ? '#131416' : '#fff',

@@ -395,6 +395,9 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
         })}
       />
 
@@ -414,9 +417,7 @@ export default function TransactionNavigator() {
           },
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
+            backgroundColor: colors2024['neutral-bg-1'],
           },
           headerTitleStyle: {
             fontSize: 12,

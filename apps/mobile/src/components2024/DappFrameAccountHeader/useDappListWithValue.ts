@@ -7,11 +7,11 @@ import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/shallow';
 import useProtocolListStore from '@/store/protocols';
 import useAppChainStore from '@/store/appchain';
-import { KeyringAccountWithAlias } from '@/core/apis/account';
 import { DappSelectItem } from './constants';
 import { getDappAccount, useDapps } from '@/hooks/useDapps';
 import { useAccounts } from '@/hooks/account';
 import { perpsStore as usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const ORIGIN_PNG_IDS = new Set(['venus', 'hyperliquid']);
 
@@ -63,6 +63,9 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const { finalSceneCurrentAccount: aaveLendingAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
 
   const appChainMap = useAppChainStore(useShallow(s => s.appChainMap));
   const currentAddressAppChainMap = useCallback(
@@ -106,8 +109,11 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
       const dappOrigin = safeGetOrigin(item.url);
 
       const dappInfo = dapps[dappOrigin];
-
-      const dappAccount = getDappAccount({ dappInfo, accounts });
+      let dappAccount: Account | null;
+      dappAccount = getDappAccount({ dappInfo, accounts });
+      if (item.id === 'aave') {
+        dappAccount = aaveLendingAccount;
+      }
 
       if (!dappAccount) {
         return item;
@@ -150,6 +156,7 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
     defiValueByOrigin,
     currentAddressAppChainMap,
     hyperliquidAccountValue,
+    aaveLendingAccount,
   ]);
 
   return dappListWithValue;

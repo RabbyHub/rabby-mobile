@@ -242,7 +242,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
   },
   balanceCard: {
-    marginTop: 12,
+    marginTop: 10,
     borderRadius: 16,
     padding: 2, // gradient border width
   },
