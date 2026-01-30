@@ -75,7 +75,7 @@ function DevUIToastAndNotifications(): JSX.Element {
                 <Button
                   height={48}
                   titleStyle={{ color: colors2024['neutral-title-2'] }}
-                  type={'primary'}
+                  type={'success'}
                   title={'Success'}
                   containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
                   onPress={() => {
@@ -93,7 +93,21 @@ function DevUIToastAndNotifications(): JSX.Element {
                     toast.error('This is an error toast!');
                   }}
                 />
+              </View>
 
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['blue-default'] }}
+                  type={'ghost'}
+                  title={'Show'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    toast.show('Importing', {
+                      duration: 5000,
+                    });
+                  }}
+                />
                 <Button
                   height={48}
                   titleStyle={{ color: colors2024['blue-default'] }}
