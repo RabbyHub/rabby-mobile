@@ -321,8 +321,7 @@ export default function DappWebViewCore({
 
   const handleMessage = useCallback(
     (event: Parameters<NonNullable<WebViewProps['onMessage']>>[0]) => {
-      //@ts-expect-error 123123
-      onBridgeMessage(event, true);
+      onBridgeMessage(event);
       onMessage?.(event);
       webviewOnMessage?.(event);
     },
@@ -393,7 +392,6 @@ export default function DappWebViewCore({
 
   const handleOpenWindow = useCallback(
     (event: Parameters<NonNullable<WebViewProps['onOpenWindow']>>[0]) => {
-      console.log('handleOpenWindow', event);
       onOpenWindow?.(event);
       webviewOnOpenWindow?.(event);
     },
