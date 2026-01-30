@@ -151,6 +151,7 @@ function DevUIToastAndNotifications(): JSX.Element {
                             flexDirection: 'row',
                             alignItems: 'center',
                             gap: 8,
+                            paddingHorizontal: 0,
                           },
                         ]}>
                         <ctx.Icon
@@ -208,6 +209,60 @@ function DevUIToastAndNotifications(): JSX.Element {
                       },
                       { duration: 4000 },
                     );
+                  }}
+                />
+              </View>
+            </View>
+
+            {/* toast position */}
+            <View style={{ width: '100%', marginBottom: 24 }}>
+              <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+                <Text style={styles.propertyType}>
+                  toast position{' '.repeat(100)}
+                </Text>
+                <Text style={{ marginBottom: 12 }}>
+                  You can specify the position of the toast on the screen using
+                  the `position` option.
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['blue-default'] }}
+                  type={'ghost'}
+                  title={'Top'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    toast.info('This is a top positioned toast!', {
+                      position: toast.positions.TOP,
+                    });
+                  }}
+                />
+
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['blue-default'] }}
+                  type={'ghost'}
+                  title={'Center'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    toast.info('This is a center positioned toast!', {
+                      position: toast.positions.CENTER,
+                    });
+                  }}
+                />
+
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['blue-default'] }}
+                  type={'ghost'}
+                  title={'Bottom'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    toast.info('This is a bottom positioned toast!', {
+                      position: toast.positions.BOTTOM,
+                    });
                   }}
                 />
               </View>

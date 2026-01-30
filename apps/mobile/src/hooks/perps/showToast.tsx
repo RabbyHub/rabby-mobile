@@ -1,7 +1,6 @@
 import React from 'react';
 import { Dimensions, Platform, Text } from 'react-native';
 import { toast, toastWithIcon } from '@/components2024/Toast';
-import Toast from 'react-native-root-toast';
 
 export const showToast = (
   msg: string,
@@ -28,7 +27,7 @@ export const showToast = (
       : msgText;
 
   const options = {
-    position: Toast.positions.CENTER,
+    position: toast.positions.CENTER,
   };
 
   if (type === 'success') {
