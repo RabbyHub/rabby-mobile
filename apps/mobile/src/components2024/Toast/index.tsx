@@ -295,9 +295,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 12,
-      height: '100%',
+      maxHeight: '100%',
       // paddingVertical: 16,
-      // minHeight: TOAST_MIN_H,
+      minHeight: TOAST_MIN_H,
       // ...makeDevOnlyStyle({
       //   backgroundColor: 'white',
       // }),
