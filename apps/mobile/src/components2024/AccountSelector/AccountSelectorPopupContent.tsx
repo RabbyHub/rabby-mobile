@@ -75,6 +75,20 @@ export const AccountSelectorPopupContent: React.FC<{
   isShowSafeAddressSection?: boolean;
   isShowWatchAddressSection?: boolean;
   title?: React.ReactNode;
+  renderRight?: (ctx: {
+    account: Account;
+    isCurrent?: boolean;
+  }) => React.ReactNode;
+  renderNameAddon?: (ctx: {
+    account: Account;
+    isCurrent?: boolean;
+  }) => React.ReactNode;
+  sortAccounts?: (
+    accounts: Account[],
+    ctx: { type: 'my' | 'safe' | 'watch' },
+  ) => Account[];
+  checkIconPosition?: 'name' | 'right';
+  renderRowTitle?: () => React.ReactNode;
 }> = ({
   containerStyle,
   value: selectedAccount,
@@ -84,12 +98,15 @@ export const AccountSelectorPopupContent: React.FC<{
   isShowSafeAddressSection = true,
   isShowWatchAddressSection = true,
   title,
+  renderRight,
+  renderNameAddon,
+  sortAccounts,
+  checkIconPosition,
+  renderRowTitle,
 }) => {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
   const {
-    isPinnedAccount,
-
     myAddresses,
     safeAddresses,
     shouldSafeAddressesExpanded,
@@ -133,6 +150,30 @@ export const AccountSelectorPopupContent: React.FC<{
 
   const { t } = useTranslation();
 
+  const sortedMyAddresses = useMemo(() => {
+    if (!sortAccounts) {
+      return myAddresses;
+    }
+    const next = sortAccounts([...myAddresses], { type: 'my' });
+    return next?.length ? next : myAddresses;
+  }, [myAddresses, sortAccounts]);
+
+  const sortedSafeAddresses = useMemo(() => {
+    if (!sortAccounts) {
+      return safeAddresses;
+    }
+    const next = sortAccounts([...safeAddresses], { type: 'safe' });
+    return next?.length ? next : safeAddresses;
+  }, [safeAddresses, sortAccounts]);
+
+  const sortedWatchAddresses = useMemo(() => {
+    if (!sortAccounts) {
+      return watchAddresses;
+    }
+    const next = sortAccounts([...watchAddresses], { type: 'watch' });
+    return next?.length ? next : watchAddresses;
+  }, [watchAddresses, sortAccounts]);
+
   return (
     <View style={[styles.panel, containerStyle]}>
       <View style={styles.header}>
@@ -148,6 +189,7 @@ export const AccountSelectorPopupContent: React.FC<{
           </Text>
         )}
       </View>
+      {renderRowTitle?.()}
       <View style={styles.scrollViewContainer}>
         <View
           // ref={scrollViewRef}
@@ -167,7 +209,7 @@ export const AccountSelectorPopupContent: React.FC<{
                   isSelected={isSceneUsingAllAccounts}
                 />
               )} */}
-              {myAddresses.map((account, index) => {
+              {sortedMyAddresses.map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
                 const isCurrent = isSameAccount(account, selectedAccount);
 
@@ -177,6 +219,9 @@ export const AccountSelectorPopupContent: React.FC<{
                     addressItemProps={{ account }}
                     isCurrent={isCurrent}
                     isHideToken={isHideToken}
+                    renderRight={renderRight}
+                    renderNameAddon={renderNameAddon}
+                    checkIconPosition={checkIconPosition}
                     onPressAddress={handlePressAccount}
                     style={[
                       styles.addressItem,
@@ -200,7 +245,7 @@ export const AccountSelectorPopupContent: React.FC<{
               />
               {!navsCollapsed.safe && (
                 <View style={styles.addressListContainer}>
-                  {safeAddresses.map((account, index) => {
+                  {sortedSafeAddresses.map((account, index) => {
                     const key = `account-${account.address}-${account.brandName}-${index}`;
                     const isCurrent = isSameAccount(account, selectedAccount);
 
@@ -210,6 +255,9 @@ export const AccountSelectorPopupContent: React.FC<{
                         addressItemProps={{ account }}
                         isCurrent={isCurrent}
                         onPressAddress={handlePressAccount}
+                        renderRight={renderRight}
+                        renderNameAddon={renderNameAddon}
+                        checkIconPosition={checkIconPosition}
                         style={[
                           styles.addressItem,
                           index > 0 && styles.addressItemTopGap,
@@ -234,7 +282,7 @@ export const AccountSelectorPopupContent: React.FC<{
               />
               {!navsCollapsed.watch && (
                 <View style={styles.addressListContainer}>
-                  {watchAddresses.map((account, index) => {
+                  {sortedWatchAddresses.map((account, index) => {
                     const key = `account-${account.address}-${account.brandName}-${index}`;
                     const isCurrent = isSameAccount(account, selectedAccount);
 
@@ -244,6 +292,9 @@ export const AccountSelectorPopupContent: React.FC<{
                         addressItemProps={{ account }}
                         isCurrent={isCurrent}
                         onPressAddress={handlePressAccount}
+                        renderRight={renderRight}
+                        renderNameAddon={renderNameAddon}
+                        checkIconPosition={checkIconPosition}
                         style={[
                           styles.addressItem,
                           index > 0 && styles.addressItemTopGap,

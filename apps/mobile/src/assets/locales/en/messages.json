@@ -3013,6 +3013,11 @@
           "desc": "Add an existing address with funds."
         }
       }
+    },
+    "DAppFrame": {
+      "walletBalance": "Wallet/Balance",
+      "netWorth": "Net worth",
+      "selectAWallet": "Select a Wallet"
     }
   },
   "component": {

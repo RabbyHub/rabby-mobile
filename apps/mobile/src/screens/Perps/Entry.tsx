@@ -13,7 +13,6 @@ import { apisDapp } from '@/core/apis';
 import { createDappBySession } from '@/core/apis/dapp';
 import { dappService } from '@/core/services';
 import { noop } from 'lodash';
-import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import {
   CompositeScreenProps,
   useNavigation,
