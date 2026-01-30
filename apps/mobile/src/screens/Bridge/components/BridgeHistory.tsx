@@ -18,6 +18,8 @@ import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -173,6 +175,16 @@ export const BridgeTxHistory = ({
   }, [visible]);
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      bottomRef.current?.dismiss();
+      return !visible;
+    }, [visible]),
+    { autoEffectEnabled: false },
+  );
+
+  useFocusEffect(onHardwareBackHandler);
 
   return (
     <AppBottomSheetModal
