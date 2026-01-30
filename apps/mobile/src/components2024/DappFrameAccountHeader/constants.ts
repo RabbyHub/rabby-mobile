@@ -1,10 +1,10 @@
-const PngPolymarket = require('@/assets2024/icons/prediction/polymarket.png');
-const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.png');
-const PngAster = require('@/assets2024/icons/perps/aster.png');
+const PngPolymarket = require('@/assets2024/icons/prediction/polymarket.jpg');
+const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.jpg');
+const PngAster = require('@/assets2024/icons/perps/aster.jpg');
 const PngLighter = require('@/assets2024/icons/perps/lighter.png');
-const PngAave = require('@/assets2024/icons/lending/aave.png');
-const PngSpark = require('@/assets2024/icons/lending/spark.png');
-const PngVenus = require('@/assets2024/icons/lending/venus.png');
+const PngAave = require('@/assets2024/icons/lending/aave.jpg');
+const PngSpark = require('@/assets2024/icons/lending/spark.jpg');
+const PngVenus = require('@/assets2024/icons/lending/venus.jpg');
 
 export type DappSelectItem = {
   id: string;

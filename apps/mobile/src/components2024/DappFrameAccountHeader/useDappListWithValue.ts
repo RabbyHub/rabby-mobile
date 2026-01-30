@@ -129,10 +129,10 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
         return {
           ...item,
           value: undefined,
-          remoteUrl: ORIGIN_PNG_IDS.has(item.id)
-            ? undefined
-            : dappService.getDapp(originKey || item.url || '')?.info
-                ?.logo_url || undefined,
+          // remoteUrl: ORIGIN_PNG_IDS.has(item.id)
+          //   ? undefined
+          //   : dappService.getDapp(originKey || item.url || '')?.info
+          //       ?.logo_url || undefined,
         };
       }
       const netWorth =
@@ -143,10 +143,10 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
       return {
         ...item,
         value: formatNetworth(netWorth),
-        remoteUrl: ORIGIN_PNG_IDS.has(item.id)
-          ? undefined
-          : dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
-            undefined,
+        // remoteUrl: ORIGIN_PNG_IDS.has(item.id)
+        //   ? undefined
+        //   : dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
+        //     undefined,
       };
     });
   }, [
