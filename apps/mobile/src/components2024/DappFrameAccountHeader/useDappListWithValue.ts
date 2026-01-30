@@ -37,7 +37,7 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
       if (!address) {
         return new Map<string, number>();
       }
-      const protocols = protocolMap[address] || [];
+      const protocols = protocolMap[address.toLowerCase()] || [];
 
       if (!protocols.length) {
         return new Map<string, number>();
