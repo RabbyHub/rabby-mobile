@@ -662,20 +662,21 @@ export const SeedPhrase: React.FC<Props> = ({
               style={styles.mask}
               blurType={appThemeMode ?? 'light'}
               blurAmount={3}>
-              <View style={styles.maskWraper}>
-                <TouchableWithoutFeedback
-                  onPress={() => {
-                    setIsHidden(false);
-                  }}>
-                  <RcIconEye />
-                </TouchableWithoutFeedback>
+              <TouchableWithoutFeedback
+                style={styles.maskWraper}
+                onPress={() => {
+                  setIsHidden(false);
+                }}>
+                <RcIconEye />
                 <Text style={styles.tapText}>
-                  Tap to reveal your seed phrase
+                  {/* Tap to reveal your seed phrase */}
+                  {t('page.backupSeedPhrase.tapToReveal.line1')}
                 </Text>
                 <Text style={styles.tapDesc}>
-                  Make sure no one is watching your screen.
+                  {/* Make sure no one is watching your screen. */}
+                  {t('page.backupSeedPhrase.tapToReveal.line2')}
                 </Text>
-              </View>
+              </TouchableWithoutFeedback>
             </BlurView>
           )}
 
