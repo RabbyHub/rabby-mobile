@@ -484,10 +484,7 @@ export default function InnerDappWebViewPreloadLayer({
         const shouldShowSnapshot =
           isActive && !!snapshotUri && isLoading !== false;
         const shouldShowPermissionUnavailable = isActive && !dappPermission;
-        const shouldShowProgress =
-          isActive &&
-          !!progressState?.isLoading &&
-          !shouldShowPermissionUnavailable;
+        const shouldShowProgress = isActive && !!progressState?.isLoading;
         return (
           <View
             key={key}
@@ -546,12 +543,7 @@ export default function InnerDappWebViewPreloadLayer({
                   />
                 </View>
               ) : null}
-              {shouldShowProgress ? (
-                <BrowserProgressBar
-                  progress={progressState?.progress ?? 0}
-                  style={styles.progressOverlay}
-                />
-              ) : null}
+
               {shouldShowPermissionUnavailable ? (
                 <View pointerEvents="auto" style={styles.permissionOverlay}>
                   <View style={styles.permissionCard}>
@@ -567,6 +559,13 @@ export default function InnerDappWebViewPreloadLayer({
                     </Text>
                   </View>
                 </View>
+              ) : null}
+
+              {shouldShowProgress ? (
+                <BrowserProgressBar
+                  progress={progressState?.progress ?? 0}
+                  style={styles.progressOverlay}
+                />
               ) : null}
             </View>
           </View>

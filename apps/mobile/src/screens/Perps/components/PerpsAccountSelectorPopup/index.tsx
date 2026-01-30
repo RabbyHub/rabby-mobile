@@ -8,11 +8,9 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { keyBy, sortBy, uniqBy } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
 import { getClearinghouseStateByMap } from '@/hooks/perps/usePerpsStore';
@@ -23,9 +21,16 @@ export const PerpsAccountSelectorPopup: React.FC<{
   value?: Account | null;
   onChange?: (a: Account) => void;
   title?: React.ReactNode;
-}> = ({ visible, onClose, value, onChange, title }) => {
+  checkIconPosition?: 'name' | 'right';
+}> = ({
+  visible,
+  onClose,
+  value,
+  onChange,
+  title,
+  checkIconPosition = 'name',
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { t } = useTranslation();
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getModalStyle,
@@ -57,8 +62,6 @@ export const PerpsAccountSelectorPopup: React.FC<{
     selectedAccount: value,
   });
 
-  const sdk = apisPerps.getPerpsSDK();
-
   const { data: _data, runAsync: runFetchPerpsInfo } = useRequest(
     async () => {
       const list = uniqBy(myAddresses, i => i.address.toLowerCase());
@@ -81,39 +84,19 @@ export const PerpsAccountSelectorPopup: React.FC<{
 
       const resDict = keyBy(res, item => item.address.toLowerCase());
 
-      const dict = {
-        active: [],
-        inactive: [],
-      } as Record<
-        string,
-        { info?: ClearinghouseState; account: KeyringAccountWithAlias }[]
-      >;
-      myAddresses.forEach((account, index) => {
+      const listWithInfo = myAddresses.map(account => {
         const item = resDict[account.address.toLowerCase()];
-        if (
-          item?.info &&
-          (item.info.assetPositions.length ||
-            +item.info.marginSummary > 0 ||
-            +item.info.withdrawable > 0)
-        ) {
-          dict.active?.push({
-            info: {
-              ...item.info,
-            },
-            account: account,
-          });
-        } else {
-          dict.inactive?.push({ account: account });
-        }
+        return {
+          account,
+          info: item?.info ? { ...item.info } : null,
+        };
       });
 
-      dict.active = sortBy(
-        dict.active,
+      return sortBy(
+        listWithInfo,
         item => -(item.info?.assetPositions?.length || 0),
         item => -Number(item.info?.withdrawable || 0),
       );
-
-      return dict;
     },
     {
       manual: true,
@@ -126,13 +109,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
   );
 
   const data = useMemo(() => {
-    if (!_data) {
-      return {
-        active: [],
-        inactive: myAddresses.map(item => ({ account: item })),
-      };
-    }
-    return _data;
+    return _data ?? myAddresses.map(account => ({ account }));
   }, [_data, myAddresses]);
 
   const [tmpSelectAccount, setTmpSelectAccount] = useState<Account | null>(
@@ -192,17 +169,9 @@ export const PerpsAccountSelectorPopup: React.FC<{
           <View>
             <Text style={styles.title}>{title || 'Select Account'}</Text>
           </View>
-          {data?.active.length ? (
+          {data.length ? (
             <View style={styles.section}>
-              {/* <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                  {t('page.perps.PerpsAccountSelectorPopup.activatedAddress')}
-                </Text>
-                <Text style={styles.sectionTitle}>
-                  {t('page.perps.PerpsAccountSelectorPopup.hyperliquidBalance')}
-                </Text>
-              </View> */}
-              {data?.active?.map(item => {
+              {data.map(item => {
                 return (
                   <PerpsAccountSelectorItem
                     key={
@@ -219,39 +188,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
                     loading={loading}
                     onPress={handleSelect}
                     currentAccount={value as KeyringAccountWithAlias}
-                  />
-                );
-              })}
-            </View>
-          ) : null}
-          {data?.inactive.length ? (
-            <View style={styles.section}>
-              {/* {data.active.length ? (
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>
-                    {t(
-                      'page.perps.PerpsAccountSelectorPopup.notActivatedAddress',
-                    )}
-                  </Text>
-                </View>
-              ) : null} */}
-              {data?.inactive?.map(item => {
-                return (
-                  <PerpsAccountSelectorItem
-                    key={
-                      item.account.address +
-                      item.account.type +
-                      item.account.brandName
-                    }
-                    account={item.account}
-                    tmpSelectAccount={
-                      tmpSelectAccount as KeyringAccountWithAlias
-                    }
-                    info={item.info}
-                    lastUsedAccount={lastUsedAccount as KeyringAccountWithAlias}
-                    loading={loading}
-                    onPress={handleSelect}
-                    currentAccount={value as KeyringAccountWithAlias}
+                    checkIconPosition={checkIconPosition}
                   />
                 );
               })}

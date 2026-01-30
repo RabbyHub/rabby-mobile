@@ -21,6 +21,7 @@ export const PerpsAccountSelectorItem: React.FC<{
   tmpSelectAccount?: KeyringAccountWithAlias | null;
   lastUsedAccount?: KeyringAccountWithAlias | null;
   currentAccount?: KeyringAccountWithAlias | null;
+  checkIconPosition?: 'name' | 'right';
 }> = ({
   account,
   info,
@@ -29,10 +30,11 @@ export const PerpsAccountSelectorItem: React.FC<{
   tmpSelectAccount,
   lastUsedAccount,
   currentAccount,
+  checkIconPosition = 'name',
 }) => {
   const { t } = useTranslation();
 
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
   });
   const usdValue = useMemo(() => {
@@ -40,13 +42,17 @@ export const PerpsAccountSelectorItem: React.FC<{
     return `$${splitNumberByStep(b > 10 ? Math.floor(b) : b.toFixed(2))}`;
   }, [account.balance]);
 
-  const positionAllPnl = useMemo(() => {
-    return info?.assetPositions?.length
-      ? info?.assetPositions?.reduce((acc, asset) => {
-          return acc + Number(asset.position.unrealizedPnl || 0);
-        }, 0) || 0
-      : null;
+  const positionCount = useMemo(() => {
+    return info?.assetPositions?.length || 0;
   }, [info?.assetPositions]);
+
+  const withdrawable = useMemo(() => {
+    return Number(info?.withdrawable || 0);
+  }, [info?.withdrawable]);
+
+  const shouldShowPerpsInfo = useMemo(() => {
+    return positionCount > 0 || withdrawable > 0;
+  }, [positionCount, withdrawable]);
 
   const isCurrent = useMemo(() => {
     return isSameAccount(account, currentAccount);
@@ -65,6 +71,28 @@ export const PerpsAccountSelectorItem: React.FC<{
     lastUsedAccount?.type,
     tmpSelectAccount,
   ]);
+
+  const statusNode = useMemo(() => {
+    if (isCurrent) {
+      return (
+        <RcIconCorrectCC
+          color={colors2024['green-default']}
+          width={16}
+          height={16}
+        />
+      );
+    }
+    if (isLastUsed) {
+      return (
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>
+            {t('page.perps.PerpsAccountSelectorPopup.lastUsed')}
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  }, [colors2024, isCurrent, isLastUsed, styles.tag, styles.tagText, t]);
 
   return (
     <TouchableOpacity
@@ -96,19 +124,7 @@ export const PerpsAccountSelectorItem: React.FC<{
                 ellipsizeMode="tail">
                 {account.aliasName || ellipsisAddress(account.address)}
               </Text>
-              {isCurrent ? (
-                <RcIconCorrectCC
-                  color={colors2024['green-default']}
-                  width={16}
-                  height={16}
-                />
-              ) : isLastUsed ? (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>
-                    {t('page.perps.PerpsAccountSelectorPopup.lastUsed')}
-                  </Text>
-                </View>
-              ) : null}
+              {checkIconPosition === 'name' ? statusNode : null}
             </View>
             <View style={styles.bottomArea}>
               <Text style={styles.balanceText}>{usdValue}</Text>
@@ -118,23 +134,24 @@ export const PerpsAccountSelectorItem: React.FC<{
             {loading && isSameAccount(account, tmpSelectAccount) ? (
               <ActivityIndicator />
             ) : (
-              <>
-                {info ? (
+              <View style={styles.rightContent}>
+                {checkIconPosition === 'right' ? statusNode : null}
+                {shouldShowPerpsInfo ? (
                   <View style={styles.perpsInfo}>
-                    <Text style={styles.perpsUsdValue}>
-                      {formatUsdValue(Number(info?.withdrawable || 0))}
-                    </Text>
-                    {info?.assetPositions?.length ? (
-                      <Text style={[styles.positionCountText]}>
-                        {info?.assetPositions?.length}{' '}
+                    {withdrawable > 0 ? (
+                      <Text style={styles.perpsUsdValue}>
+                        {formatUsdValue(withdrawable)}
+                      </Text>
+                    ) : null}
+                    {positionCount > 0 ? (
+                      <Text style={styles.positionCountText}>
+                        {positionCount}{' '}
                         {t('page.perpsDetail.PerpsPosition.title')}
                       </Text>
-                    ) : (
-                      <Text style={styles.noPositionText}> </Text>
-                    )}
+                    ) : null}
                   </View>
                 ) : null}
-              </>
+              </View>
             )}
           </View>
         </View>
@@ -265,9 +282,13 @@ const getStyle = createGetStyles2024(ctx => {
     },
     rightArea: {
       justifyContent: 'center',
-      alignItems: 'center',
+      alignItems: 'flex-end',
       flexShrink: 0,
       // height: '100%',
+    },
+    rightContent: {
+      alignItems: 'flex-end',
+      gap: 4,
     },
     tag: {
       paddingVertical: 1,
@@ -288,13 +309,6 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'column',
       alignItems: 'flex-end',
       marginLeft: 'auto',
-    },
-    noPositionText: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors2024['neutral-info'],
     },
     positionCountText: {
       fontFamily: 'SF Pro Rounded',

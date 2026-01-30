@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
@@ -15,7 +14,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { Account } from '@/core/services/preference';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 
 type InnerDappWebViewScreenProps = {
   list: DappSelectItem[];
@@ -34,13 +32,11 @@ export const InnerDappWebViewScreen = ({
   rightAddon,
   renderWebView = true,
 }: InnerDappWebViewScreenProps) => {
-  const { styles, isLight } = useTheme2024({ getStyle });
-  const { bottom } = useSafeAreaInsets();
+  const { styles } = useTheme2024({ getStyle });
   const { dapps } = useDappsValue();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
-  const { safeOffHeader, safeTop } = useSafeSizes();
 
   const activeItem = useMemo(() => {
     if (!list.length) {

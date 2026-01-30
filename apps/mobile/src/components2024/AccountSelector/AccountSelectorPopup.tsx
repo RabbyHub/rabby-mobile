@@ -5,7 +5,13 @@ import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  ComponentProps,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { AccountSelectorPopupContent } from './AccountSelectorPopupContent';
 
@@ -17,6 +23,19 @@ export const AccountSelectorPopup: React.FC<{
   isShowSafeAddressSection?: boolean;
   isShowWatchAddressSection?: boolean;
   title?: React.ReactNode;
+  renderRight?: ComponentProps<
+    typeof AccountSelectorPopupContent
+  >['renderRight'];
+  renderNameAddon?: ComponentProps<
+    typeof AccountSelectorPopupContent
+  >['renderNameAddon'];
+  sortAccounts?: ComponentProps<
+    typeof AccountSelectorPopupContent
+  >['sortAccounts'];
+  checkIconPosition?: ComponentProps<
+    typeof AccountSelectorPopupContent
+  >['checkIconPosition'];
+  renderRowTitle?: () => React.ReactNode;
 }> = ({
   visible,
   onClose,
@@ -25,6 +44,11 @@ export const AccountSelectorPopup: React.FC<{
   isShowSafeAddressSection = true,
   isShowWatchAddressSection = true,
   title,
+  renderRight,
+  renderNameAddon,
+  sortAccounts,
+  checkIconPosition,
+  renderRowTitle,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -72,6 +96,11 @@ export const AccountSelectorPopup: React.FC<{
               isShowSafeAddressSection={isShowSafeAddressSection}
               isShowWatchAddressSection={isShowWatchAddressSection}
               title={title}
+              renderRight={renderRight}
+              renderNameAddon={renderNameAddon}
+              sortAccounts={sortAccounts}
+              checkIconPosition={checkIconPosition}
+              renderRowTitle={renderRowTitle}
             />
           </View>
         </AutoLockView>
