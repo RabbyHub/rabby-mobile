@@ -418,17 +418,28 @@ const resetAccountState = () => {
   }));
 };
 
+const fetchUserFillHistory = async () => {
+  const sdk = apisPerps.getPerpsSDK();
+  const res = await sdk.info.getUserFills();
+  setPerpsState(prev => ({
+    ...prev,
+    userFills: (res as unknown as WsFill[]).slice(0, 2000),
+  }));
+};
+
 const addUserFills = (payload: {
   fills: WsFill[];
   isSnapshot?: boolean;
   user: string;
 }) => {
   const { fills, isSnapshot } = payload;
+  if (isSnapshot) {
+    fetchUserFillHistory();
+  }
+
   setPerpsState(prev => ({
     ...prev,
-    userFills: isSnapshot
-      ? fills.slice(0, 2000)
-      : [...fills, ...prev.userFills],
+    userFills: isSnapshot ? fills : [...fills, ...prev.userFills],
   }));
 };
 
@@ -790,21 +801,11 @@ export const usePerpsStore = () => {
     }
   });
 
-  const fetchUserFillHistory = useMemoizedFn(async () => {
-    const sdk = apisPerps.getPerpsSDK();
-    const res = await sdk.info.getUserFills();
-    setPerpsState(prev => ({
-      ...prev,
-      userFills: (res as unknown as WsFill[]).slice(0, 2000),
-    }));
-  });
-
   const refreshData = useMemoizedFn(async () => {
     await fetchPositionAndOpenOrders();
     // await is login is too low
     fetchUserNonFundingLedgerUpdates();
     fetchUserHistoricalOrders();
-    fetchUserFillHistory();
   });
 
   const fetchPerpFee = useMemoizedFn(async () => {
