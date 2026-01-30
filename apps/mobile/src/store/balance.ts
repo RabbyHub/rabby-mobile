@@ -2,7 +2,6 @@ import { openapi } from '@/core/request';
 import { keyringService } from '@/core/services';
 import { zCreate } from '@/core/utils/reexports';
 import { BalanceEntity } from '@/databases/entities/balance';
-import { AppChainEntity } from '@/databases/entities/appchain';
 import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { syncBalance } from '@/databases/sync/assets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -58,11 +57,14 @@ const balanceStore = zCreate<BalanceState>(set => ({
     const chainUSDMap: Record<string, ChainWithBalance[]> = {};
 
     const res = await BalanceEntity.queryAllBalance();
+    const appChainMap = useAppChainStore.getState().appChainMap;
     for (const item of res) {
       const lowerAddr = item.owner_addr.toLowerCase();
       const evmBalance = item.evm_usd_value || 0;
-      const appChainUsdValue = await AppChainEntity.queryTotalUsdValue(
-        lowerAddr,
+      const appChains = appChainMap[lowerAddr] ?? [];
+      const appChainUsdValue = appChains.reduce(
+        (acc, appChain) => acc + (appChain.netWorth || 0),
+        0,
       );
       balanceMap[lowerAddr] = {
         evmBalance,
@@ -105,9 +107,9 @@ const balanceStore = zCreate<BalanceState>(set => ({
         if (!isExpired) {
           const res = await BalanceEntity.queryBalance(lowerAddress, isCore);
           const evmBalance = res.evm_usd_value || 0;
-          const appChainUsdValue = await AppChainEntity.queryTotalUsdValue(
-            lowerAddress,
-          );
+          const appChainUsdValue = useAppChainStore
+            .getState()
+            .getAppChainTotalUsdValue(lowerAddress);
           cacheBalanceMap[lowerAddress] = {
             evmBalance,
             totalBalance: evmBalance + appChainUsdValue,
@@ -238,9 +240,9 @@ const balanceStore = zCreate<BalanceState>(set => ({
       if (!force && !isExpired) {
         const res = await BalanceEntity.queryBalance(address, core);
         const evmBalance = res.evm_usd_value || 0;
-        const appChainUsdValue = await AppChainEntity.queryTotalUsdValue(
-          lowerAddress,
-        );
+        const appChainUsdValue = useAppChainStore
+          .getState()
+          .getAppChainTotalUsdValue(lowerAddress);
         set(state => ({
           balanceMap: {
             ...state.balanceMap,
