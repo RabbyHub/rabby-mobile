@@ -43,7 +43,7 @@ import {
 import { transactionHistoryService } from '@/core/services';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import {
@@ -467,6 +467,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           address_type: currentAccount.type || '',
           usd_value: usdValue,
           create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
         });
 
         refresh();

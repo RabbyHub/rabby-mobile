@@ -284,6 +284,7 @@ export const FullDefiRenderItem = ({
               item={item}
               chain={data?.chain}
               protocolLogo={data?.logo}
+              protocolName={data?.name}
               onRefresh={handleRefresh}
               address={account.address}
               addressType={account.type}
