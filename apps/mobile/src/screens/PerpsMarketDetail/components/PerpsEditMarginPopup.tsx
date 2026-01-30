@@ -925,7 +925,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '700',
-      color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
+      color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',
     },
     marginLabel: {
