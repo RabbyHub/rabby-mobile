@@ -109,7 +109,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
   );
 
   const data = useMemo(() => {
-    return _data ?? myAddresses.map(account => ({ account }));
+    return _data ?? myAddresses.map(account => ({ account, info: null }));
   }, [_data, myAddresses]);
 
   const [tmpSelectAccount, setTmpSelectAccount] = useState<Account | null>(
@@ -183,7 +183,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
                     tmpSelectAccount={
                       tmpSelectAccount as KeyringAccountWithAlias
                     }
-                    info={item.info}
+                    info={item?.info}
                     lastUsedAccount={lastUsedAccount as KeyringAccountWithAlias}
                     loading={loading}
                     onPress={handleSelect}

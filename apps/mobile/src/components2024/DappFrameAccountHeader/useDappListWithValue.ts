@@ -109,8 +109,8 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
       const dappOrigin = safeGetOrigin(item.url);
 
       const dappInfo = dapps[dappOrigin];
-
-      let dappAccount = getDappAccount({ dappInfo, accounts });
+      let dappAccount: Account | null;
+      dappAccount = getDappAccount({ dappInfo, accounts });
       if (item.id === 'aave') {
         dappAccount = aaveLendingAccount;
       }
