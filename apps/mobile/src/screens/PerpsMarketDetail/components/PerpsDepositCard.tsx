@@ -53,14 +53,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.12)',
   },
   btnText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#50D2C1',
+    color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
   balance: {
     fontWeight: '700',
