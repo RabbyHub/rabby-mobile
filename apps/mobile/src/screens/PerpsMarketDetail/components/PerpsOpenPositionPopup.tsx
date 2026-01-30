@@ -100,7 +100,7 @@ export const PerpsOpenPositionPopup: React.FC<{
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
 
@@ -267,7 +267,6 @@ export const PerpsOpenPositionPopup: React.FC<{
   ]);
 
   const handleOpenChangeMarginModePopup = useMemoizedFn(() => {
-    console.log('handleOpenChangeMarginModePopup');
     setIsShowMarginModePopup(true);
   });
 
@@ -479,7 +478,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                       ? t('page.perpsDetail.PerpsPosition.cross')
                       : t('page.perpsDetail.PerpsPosition.isolated')}
                   </Text>
-                  <IconPerpEdit color={colors2024['brand-default']} />
+                  <IconPerpEdit color="#50D2C1" />
                 </TouchableOpacity>
               </View>
 
@@ -709,7 +708,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           </BottomSheetScrollView>
           <View style={styles.footer}>
             <Button
-              type="primary"
+              type="hyperliquid"
               title={t('global.check')}
               disabled={
                 !marginValidation.isValid || leverageRangeValidation.error
@@ -1120,13 +1119,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 4,
       paddingLeft: 6,
       borderRadius: 4,
-      backgroundColor: colors2024['brand-light-1'],
+      backgroundColor: 'rgba(80, 210, 193, 0.12)',
     },
     marginModeText: {
       fontSize: 12,
       lineHeight: 16,
       fontWeight: '500',
-      color: colors2024['brand-default'],
+      color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',
     },
     marginLabel: {
@@ -1134,7 +1133,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 24,
       fontWeight: '800',
       // marginBottom: 4,
-      color: colors2024['brand-default'],
+      color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',
     },
     marginAvailableWrapper: {

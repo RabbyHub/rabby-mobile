@@ -544,7 +544,7 @@ function ToggleCollateralContent({}: {}) {
                   isRiskToLiquidation ||
                   isError
                 }
-                type="primary"
+                type="aave"
                 syncUnlockTime
                 account={currentAccount}
                 showHardWalletProcess

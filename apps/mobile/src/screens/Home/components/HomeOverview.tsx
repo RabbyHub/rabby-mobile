@@ -9,6 +9,11 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
+import RcIconPredictCC from '@/assets2024/icons/home/IconPredictCC.svg';
+import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
+import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
+import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
+import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import {
@@ -129,6 +134,8 @@ import { triggerImpact } from '@/utils/common';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
+import { PredictBadge } from './PredicBadge';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -513,6 +520,27 @@ export const HomeOverview = React.memo(() => {
   const sortedAccounts = useSortAddressList(accounts);
   useSubscribePosition(sortedAccounts);
 
+  const { lending: lendingDappId, perps: perpsDappId } =
+    useInnerDappSelection();
+
+  const perpsIcon =
+    (
+      {
+        aster: RcIconAsterCC,
+        lighter: RcIconLighterCC,
+        hyperliquid: RcIconPerps,
+      } as const
+    )[perpsDappId] ?? RcIconPerps;
+
+  const lendingIcon =
+    (
+      {
+        spark: RcIconSparkCC,
+        venus: RcIconVenusCC,
+        aave: RcIconLending,
+      } as const
+    )[lendingDappId] ?? RcIconLending;
+
   const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
 
   useFocusEffect(
@@ -548,13 +576,18 @@ export const HomeOverview = React.memo(() => {
         {
           key: MultiHomeFeatTitle.Perps,
           title: t('page.home.services.perps'),
-          icon: RcIconPerps,
+          icon: perpsIcon,
         },
         {
           key: MultiHomeFeatTitle.Lending,
           title: t('page.home.services.lending'),
-          icon: RcIconLending,
+          icon: lendingIcon,
           color: colors2024['brand-default-icon'],
+        },
+        {
+          key: MultiHomeFeatTitle.Predict,
+          title: t('page.home.services.predict'),
+          icon: RcIconPredictCC,
         },
         {
           key: MultiHomeFeatTitle.Points,
@@ -605,6 +638,8 @@ export const HomeOverview = React.memo(() => {
       }[],
     [
       t,
+      perpsIcon,
+      lendingIcon,
       colors2024,
       historyCount?.fail,
       historyCount?.success,
@@ -778,6 +813,12 @@ export const HomeOverview = React.memo(() => {
             params: {},
           });
           break;
+        case MultiHomeFeatTitle.Predict:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.Prediction,
+            params: {},
+          });
+          break;
 
         default:
           break;
@@ -801,6 +842,10 @@ export const HomeOverview = React.memo(() => {
 
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
+      }
+
+      if (el.key === MultiHomeFeatTitle.Predict) {
+        return <PredictBadge />;
       }
 
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {

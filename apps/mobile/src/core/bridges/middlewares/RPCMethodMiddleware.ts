@@ -97,6 +97,7 @@ RPCMethodsMiddleParameters) =>
       icon: iconRef.current || '',
       $mobileCtx: {
         fromTabId: bridge.webviewId,
+        isFromMobileInnerDapp: bridge.isFromMobileInnerDapp,
       },
     };
 
@@ -105,7 +106,8 @@ RPCMethodsMiddleParameters) =>
       req.method === SELF_CHECK_RPC_METHOD ||
       SAFE_RPC_METHODS.includes(req.method) ||
       req.method === 'eth_accounts' ||
-      checkTabActive();
+      checkTabActive() ||
+      bridge?.isFromMobileInnerDapp;
 
     // const methodAllowed =
     //   req.method === SELF_CHECK_RPC_METHOD ||
@@ -147,7 +149,7 @@ RPCMethodsMiddleParameters) =>
             `[getRpcMethodMiddleware::pre-hook] req.method: '${req.method}'(req.id: ${req.id}) use customized route`,
           );
         }
-        await rpcMethods[req.method]();
+        await rpcMethods[req.method]?.();
       } else {
         if (__DEV__) {
           console.debug(

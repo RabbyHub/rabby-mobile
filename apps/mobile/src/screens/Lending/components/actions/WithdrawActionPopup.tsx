@@ -59,7 +59,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   userSummary,
   onClose,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [withdrawTxs, setWithdrawTxs] = useState<Tx[]>([]);
@@ -443,6 +443,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               loading={false}
               openShowMore={noop}
               chainServeId={chainInfo?.serverId || ''}
+              textColor={colors2024['neutral-title-1']}
             />
           </View>
         )}
@@ -494,13 +495,17 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               !!ctx?.disabledProcess ||
               (isRisky && !isChecked)
             }
-            type="primary"
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}

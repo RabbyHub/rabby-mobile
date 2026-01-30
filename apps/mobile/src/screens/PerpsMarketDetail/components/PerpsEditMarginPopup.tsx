@@ -15,7 +15,6 @@ import {
   calLiquidationPrice,
   calTransferMarginRequired,
   formatPerpsPct,
-  MAX_SIGNIFICANT_FIGURES,
 } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -36,16 +35,13 @@ import {
 const isAndroid = Platform.OS === 'android';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
-import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { PerpsSlider } from './PerpsSlider';
-import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
 import { toast } from '@/components2024/Toast';
 import { IS_IOS } from '@/core/native/utils';
 import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
-import { showToast } from '@/hooks/perps/showToast';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;
@@ -307,58 +303,6 @@ export const PerpsEditMarginPopup: React.FC<{
                 currentAssetCtx={currentAssetCtx}
               />
             </View>
-            {/* <View style={styles.directionToggle}>
-              <TouchableOpacity
-                style={[
-                  styles.directionButton,
-                  styles.directionButtonLeft,
-                  action === 'add' && {
-                    backgroundColor: colors2024['brand-light-1'],
-                    borderRadius: 8,
-                  },
-                ]}
-                onPress={() => {
-                  setAction('add');
-                  setMargin('');
-                }}>
-                <Text
-                  style={[
-                    styles.directionButtonText,
-                    action === 'add' && {
-                      color: colors2024['brand-default'],
-                      fontWeight: '700',
-                    },
-                  ]}>
-                  {t('page.perpsDetail.PerpsEditMarginPopup.addMargin')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.directionButton,
-                  styles.directionButtonRight,
-                  action === 'reduce' && {
-                    backgroundColor: colors2024['brand-light-1'],
-                    borderRadius: 8,
-                  },
-                ]}
-                onPress={() => {
-                  setAction('reduce');
-                  setMargin('');
-                }}>
-                <Text
-                  style={[
-                    styles.directionButtonText,
-                    action === 'reduce' && {
-                      color: colors2024['brand-default'],
-                      fontWeight: '700',
-                    },
-                  ]}>
-                  {t('page.perpsDetail.PerpsEditMarginPopup.reduceMargin')}
-                </Text>
-              </TouchableOpacity>
-            </View> */}
-
-            {/* Coin Info */}
             <View style={styles.card}>
               <View style={styles.leftSection}>
                 <View style={styles.coinInfoRow}>
@@ -564,7 +508,7 @@ export const PerpsEditMarginPopup: React.FC<{
           </BottomSheetScrollView>
           <View style={styles.footer}>
             <Button
-              type="primary"
+              type="hyperliquid"
               title={t('global.confirm')}
               loading={loading}
               disabled={!marginValidation.isValid || noChangeMargin}
@@ -974,14 +918,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     marginBtn: {
       padding: 4,
-      backgroundColor: colors2024['brand-light-1'],
+      backgroundColor: 'rgba(80, 210, 193, 0.16)',
       borderRadius: 8,
     },
     marginBtnText: {
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '700',
-      color: colors2024['brand-default'],
+      color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
       fontFamily: 'SF Pro Rounded',
     },
     marginLabel: {
@@ -989,7 +933,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 24,
       fontWeight: '800',
       // marginBottom: 4,
-      color: colors2024['brand-default'],
+      color: '#50D2C1',
       fontFamily: 'SF Pro Rounded',
     },
     marginAvailableWrapper: {

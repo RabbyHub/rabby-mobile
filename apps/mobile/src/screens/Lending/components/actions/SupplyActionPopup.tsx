@@ -60,7 +60,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   userSummary,
   onClose,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [needApprove, setNeedApprove] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -574,6 +574,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
               loading={false}
               openShowMore={noop}
               chainServeId={chainInfo?.serverId || ''}
+              textColor={colors2024['neutral-title-1']}
             />
           </View>
         )}
@@ -602,13 +603,17 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
               !currentAccount ||
               !!ctx?.disabledProcess
             }
-            type="primary"
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
