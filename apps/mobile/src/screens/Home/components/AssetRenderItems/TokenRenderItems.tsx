@@ -491,7 +491,7 @@ export const ExternalTokenRow = memo(
     touchable = true,
     decimalPrecision = false,
     rightSlot,
-    onPressRightIcon,
+    onPressBottomRow,
     afterNode,
   }: {
     data: ITokenItem | TokenItem | TokenItemWithEntity;
@@ -504,7 +504,7 @@ export const ExternalTokenRow = memo(
     touchable?: boolean;
     decimalPrecision?: boolean;
     rightSlot?: ReactNode;
-    onPressRightIcon?(): void;
+    onPressBottomRow?(): void;
     afterNode?: ReactNode;
   }) => {
     const { t } = useTranslation();
@@ -536,9 +536,9 @@ export const ExternalTokenRow = memo(
       return (
         <Pressable
           onPress={e => {
-            if (onPressRightIcon) {
+            if (onPressBottomRow) {
               e.stopPropagation();
-              onPressRightIcon?.();
+              onPressBottomRow?.();
             } else {
               onPressToken?.();
             }
@@ -632,7 +632,7 @@ export const ExternalTokenRow = memo(
       isGasToken,
       fdv,
       colors2024,
-      onPressRightIcon,
+      onPressBottomRow,
       onPressToken,
     ]);
     const isPositive = useMemo(

@@ -609,10 +609,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           (disabled || lightDisable) &&
                             styles.tokenItemDisabled,
                         ]}
-                        onPressRightIcon={() => {
-                          setTimeout(() => {
-                            toggleShowSheetModal('destroy');
-                          }, 100);
+                        onPressBottomRow={() => {
+                          // setTimeout(() => {
+                          //   toggleShowSheetModal('destroy');
+                          // }, 100);
                           navigateDeprecated(
                             needToTokenMarketInfo
                               ? RootNames.TokenMarketInfo
