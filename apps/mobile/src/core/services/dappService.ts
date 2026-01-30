@@ -118,6 +118,9 @@ export class DappService extends StoreServiceBase<
   }
 
   updateFavorite(origin: string, isFavorite: boolean) {
+    if (!this.store.dapps[origin]) {
+      return;
+    }
     this.store.dapps[origin] = {
       ...this.store.dapps[origin],
       isFavorite,
@@ -127,19 +130,14 @@ export class DappService extends StoreServiceBase<
     this.store.dapps = { ...this.store.dapps };
   }
 
-  updateConnected(origin: string, isConnected: boolean) {
-    this.store.dapps[origin].isConnected = isConnected;
-    this.store.dapps = { ...this.store.dapps };
-  }
-
   disconnect(origin: string) {
-    this.store.dapps[origin].isConnected = false;
-    this.store.dapps = { ...this.store.dapps };
-  }
-
-  setChainId(origin: string, chainId: CHAINS_ENUM) {
-    this.store.dapps[origin].chainId = chainId;
-    this.store.dapps = { ...this.store.dapps };
+    if (!this.store.dapps[origin]) {
+      return;
+    }
+    this.store.dapps = {
+      ...this.store.dapps,
+      [origin]: { ...this.store.dapps[origin], isConnected: false },
+    };
   }
 
   hasPermission(origin: string) {
