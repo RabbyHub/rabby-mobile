@@ -115,6 +115,7 @@ const BridgeShowMore = ({
   supportDirectSign: boolean;
   autoSuggestSlippage?: string;
   sourceAlwaysShow?: boolean;
+  textColor?: string;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -409,6 +410,7 @@ export const DirectSignGasInfo = ({
   style,
   gasFeeListItemStyle,
   gasFeeListItemInnerStyle,
+  textColor,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
@@ -417,6 +419,7 @@ export const DirectSignGasInfo = ({
   chainServeId: string;
   gasFeeListItemStyle?: RNViewProps['style'];
   gasFeeListItemInnerStyle?: RNViewProps['style'];
+  textColor?: string;
 } & RNViewProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -722,7 +725,7 @@ export const DirectSignGasInfo = ({
                 }}>
                 <Text
                   style={{
-                    color: colors2024['brand-default'],
+                    color: textColor || colors2024['brand-default'],
                     fontFamily: 'SF Pro Rounded',
                     fontSize: 14,
                     fontStyle: 'normal',
@@ -742,7 +745,7 @@ export const DirectSignGasInfo = ({
                 <Text
                   style={[
                     {
-                      color: colors2024['brand-default'],
+                      color: textColor || colors2024['brand-default'],
                       fontFamily: 'SF Pro Rounded',
                       fontSize: 16,
                       fontStyle: 'normal',
@@ -771,7 +774,7 @@ export const DirectSignGasInfo = ({
                         ? colors2024['red-default']
                         : showGasFeeTooHighTips
                         ? colors2024['orange-default']
-                        : colors2024['brand-default']
+                        : textColor || colors2024['brand-default']
                     }
                   />
                 </Animated.View>

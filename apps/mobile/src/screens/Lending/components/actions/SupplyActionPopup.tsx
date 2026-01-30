@@ -550,6 +550,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
               loading={false}
               openShowMore={noop}
               chainServeId={chainInfo?.serverId || ''}
+              textColor={colors2024['neutral-title-1']}
             />
           </View>
         )}
