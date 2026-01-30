@@ -37,7 +37,7 @@ const LENDING: DappSelectItem[] = [
     name: 'Aave',
     icon: PngAave,
     url: 'https://app.aave.com',
-    themeColor: 'rgba(147, 145, 247, 0.10)',
+    themeColor: 'rgba(11, 11, 11, 0.06)',
     TVL: '$33.803b',
   },
   {
