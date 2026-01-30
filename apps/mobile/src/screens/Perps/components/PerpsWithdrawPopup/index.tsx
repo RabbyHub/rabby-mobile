@@ -323,7 +323,7 @@ const getStyle = createGetStyles2024(ctx => {
       borderRadius: 8,
     },
     maxButtonText: {
-      color: ctx.colors2024['brand-default'],
+      color: '#50D2C1',
       fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,

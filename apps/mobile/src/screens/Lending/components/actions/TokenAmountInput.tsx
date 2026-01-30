@@ -1,13 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
-import {
-  Pressable,
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -32,7 +25,6 @@ interface TokenAmountInputProps {
   placeholder?: string;
   isEstimatingGas?: boolean;
   onClickToken?: () => void;
-  maxButtonStyleProps?: StyleProp<ViewStyle>;
 }
 
 export const TokenAmountInput = ({
@@ -47,7 +39,6 @@ export const TokenAmountInput = ({
   handleClickMaxButton,
   isEstimatingGas,
   onClickToken,
-  maxButtonStyleProps,
 }: React.PropsWithChildren<RNViewProps & TokenAmountInputProps>) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -142,7 +133,7 @@ export const TokenAmountInput = ({
           (isEstimatingGas ? null : (
             <TouchableOpacity
               disabled={isEstimatingGas}
-              style={[styles.maxButtonWrapper, maxButtonStyleProps]}
+              style={styles.maxButtonWrapper}
               onPress={handleClickMaxButton}>
               <Text style={styles.maxButtonText}>MAX</Text>
             </TouchableOpacity>
@@ -256,11 +247,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     maxButtonWrapper: {
       marginLeft: 12,
       padding: 4,
-      backgroundColor: colors2024['brand-light-1'],
+      backgroundColor: colors2024['neutral-line'],
       borderRadius: 8,
     },
     maxButtonText: {
-      color: colors2024['brand-default'],
+      color: colors2024['neutral-title-1'],
       fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,

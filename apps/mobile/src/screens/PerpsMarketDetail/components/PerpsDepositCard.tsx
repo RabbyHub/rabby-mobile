@@ -60,7 +60,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: colors2024['brand-default'],
+    color: '#50D2C1',
   },
   balance: {
     fontWeight: '700',
