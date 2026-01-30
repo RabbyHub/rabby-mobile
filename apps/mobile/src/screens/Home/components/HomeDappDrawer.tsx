@@ -1,6 +1,6 @@
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -50,6 +50,7 @@ import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 import { Button } from '@/components2024/Button';
 import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
@@ -65,12 +66,6 @@ export const HomeDappDrawer: React.FC<{
   });
   const { t } = useTranslation();
   const height = Dimensions.get('screen').height;
-  const { safeTop, headerHeight } = useSafeSizes();
-  const offsetTop = useMemo(() => {
-    return Math.max(safeTop, headerHeight);
-  }, [headerHeight, safeTop]);
-
-  console.log('HomeDappDrawer render', { safeTop, headerHeight });
 
   const { openTab, setPartialBrowserState } = useBrowser();
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
@@ -227,13 +222,12 @@ export const HomeDappDrawer: React.FC<{
       paddingTop: interpolate(
         pullPercent.value,
         [-100, 0],
-        // [offsetTop, 0],
         [0, 0],
         Extrapolate.CLAMP,
       ),
     };
     return result;
-  }, [height, offsetTop]);
+  });
 
   const safeAreaInsets = useSafeAreaInsets();
   const panelScaleStyle = useAnimatedStyle(() => {
@@ -256,11 +250,12 @@ export const HomeDappDrawer: React.FC<{
         Extrapolate.CLAMP,
       ),
     };
-  }, [isExpanded]);
+  });
 
   const overlayOpacityStyle = useAnimatedStyle(() => {
     const topValue = -(
-      swipeUpHintHeight.value + getScrollContainerPb(safeAreaInsets.bottom)
+      // HOME_TOP_HEADER_SIZES.scrollableListTopOffset +
+      (swipeUpHintHeight.value + getScrollContainerPb(safeAreaInsets.bottom))
     );
 
     return {

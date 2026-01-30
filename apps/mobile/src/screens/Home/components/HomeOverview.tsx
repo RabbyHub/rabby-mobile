@@ -174,7 +174,6 @@ function getIsAtBottom(scrollY: number, translateY = 0) {
 }
 
 const scrHeight = Dimensions.get('screen').height;
-const winHeight = Dimensions.get('window').height;
 function hasOverThreshold() {
   'worklet';
   return translateY.value < getPullThreshold(scrHeight) * -1;
@@ -261,6 +260,15 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
   );
 
   const onScrollHandlers = {
+    onAnimatedScrollBeginDrag: useCallback<
+      ScrollHandlerProps['onAnimatedScrollBeginDrag'] & object
+    >((event, ctx) => {
+      // // leave here for debug on some android devices
+      // console.debug(
+      //   '[onScrollHandlers] onAnimatedScrollBeginDrag:: event.nativeEvent',
+      //   event.nativeEvent,
+      // );
+    }, []),
     onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(event => {},
     []),
   };
@@ -276,6 +284,7 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
       .activeOffsetY(-activeY)
+      // .enabled(false)
       .maxPointers(1)
       .onStart(() => {
         // translateY.value = 0;
@@ -341,8 +350,6 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     uiOnScrollBack,
     scrollableRef,
     scrollableEnabled,
-    scrollViewContentHeight,
-    scrollViewLayoutHeight,
     mainStyle,
   };
 };
@@ -354,17 +361,23 @@ const getStyle = createGetStyles2024(
     main: {
       height: '100%',
       overflow: 'hidden',
+      // flex: 1,
       // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['orange-light-2'],
+      //   backgroundColor: colors2024['red-light-2'],
       // }),
     },
     scroll: {
       flex: 1,
-      // marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight,
-      marginTop: HEADER_MT_OFFSET,
-      marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
-      // marginBottom: -TAB_HEADER_FULL_HEIGHT,
+      paddingTop: 0,
+      marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+      // marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
       // ...makeDebugBorder('yellow'),
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: colors2024['green-light-2'],
+      // }),
+    },
+    scrollTopPlaceholder: {
+      height: 0,
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['green-light-2'],
       // }),
@@ -372,86 +385,25 @@ const getStyle = createGetStyles2024(
     scrollContainer: {
       flexGrow: 1,
       minHeight: '100%',
-      // marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight,
-      marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
+      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+      // marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
       // paddingBottom:
       //   IS_ANDROID ? Math.max(safeAreaInsets.bottom, 16)
       //     : safeAreaInsets.bottom,
       paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
       // ...makeDebugBorder('orange'),
     },
-    menuHeader: {
-      height: 30,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-      marginHorizontal: 4,
-      margin: 12,
-      marginBottom: 16,
-      marginTop: 0,
+    scrollViewInner: {
+      marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2,
+      // ...makeDebugBorder('orange'),
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: colors2024['orange-light-2'],
+      // }),
     },
-    pinHeader: {
-      marginTop: -8,
-    },
-    pinGridText: {
-      color: colors2024['neutral-body'],
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 20,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    gridText: {
-      color: colors2024['neutral-title-1'],
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 20,
-      textAlign: 'left',
-      fontFamily: 'SF Pro Rounded',
-    },
-    badgeWrapper: {
-      display: 'flex',
-      flexDirection: 'row',
-      width: '100%',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    iconWrapper: {
-      // height: 36,
-      // width: 36,
-      // backgroundColor: colors2024['brand-light-1'],
-      // borderRadius: 12,
-      // justifyContent: 'center',
-      // alignItems: 'center',
-    },
-    rightBadgeWrapper: {
-      position: 'relative',
-      right: -4,
-      alignSelf: 'flex-start',
-    },
-    badgeStyle: {},
     grid: {
       marginTop: 0,
-      // flexDirection: 'row',
-      // flexWrap: 'wrap',
-      // borderRadius: 8,
-      // gap: ITEM_GRID_GAP,
-      // justifyContent: 'space-between',
-      // alignItems: 'flex-start',
       width: '100%',
       paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
-      // paddingHorizontal: 8,
-      // paddingVertical: 12,
-      // paddingTop: 16,re
-    },
-    gridGradientOutline: {
-      backgroundColor: 'transparent',
-      paddingHorizontal: 8,
-      paddingTop: 16,
-      paddingBottom: 12,
-      width: '100%',
-      gap: 16,
     },
     gridItemsWrap: {
       flexDirection: 'row',
@@ -480,10 +432,41 @@ const getStyle = createGetStyles2024(
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
-      height: 86,
+      // height: 86,
       gap: 8,
       position: 'relative',
+      // ...makeDebugBorder(),
     },
+    gridText: {
+      color: colors2024['neutral-title-1'],
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 20,
+      textAlign: 'left',
+      fontFamily: 'SF Pro Rounded',
+    },
+    badgeWrapper: {
+      display: 'flex',
+      flexDirection: 'row',
+      width: '100%',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      // ...makeDebugBorder('purple'),
+    },
+    iconWrapper: {
+      height: 28,
+      width: 28,
+      // backgroundColor: colors2024['brand-light-1'],
+      // borderRadius: 12,
+      // justifyContent: 'center',
+      // alignItems: 'center',
+    },
+    rightBadgeWrapper: {
+      position: 'relative',
+      right: -4,
+      alignSelf: 'flex-start',
+    },
+    badgeStyle: {},
     pullUpWrapper: {
       flex: 1,
       position: 'relative',
@@ -882,61 +865,70 @@ export const HomeOverview = React.memo(() => {
             scrollEventThrottle={16}
             onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
             onLayout={tabsScrollHandlers.onLayout}
+            onAnimatedScrollBeginDrag={
+              onScrollHandlers.onAnimatedScrollBeginDrag
+            }
             onScroll={onScrollHandlers.onScroll}
             scrollableEnabled={scrollableEnabled}
             simultaneousHandlers={[panGestureRef]}
             refreshControl={
               <RNGHRefreshControl refreshing={false} onRefresh={onRefresh} />
             }>
-            <MultiAddressHomeHeader onRefresh={onRefresh} />
+            <View style={styles.scrollTopPlaceholder} />
+            <View style={styles.scrollViewInner}>
+              <MultiAddressHomeHeader onRefresh={onRefresh} />
 
-            <HomeCenterArea />
-
-            <View style={styles.grid}>
-              <View style={styles.gridItemsWrap}>
-                {MENU_ARR.map((el, index) => {
-                  return (
-                    <FastTouchable
-                      style={StyleSheet.flatten([
-                        styles.gridItem,
-                        { width: itemWidth },
-                      ])}
-                      key={index}
-                      onPress={() => {
-                        console.debug('[perf] touched menu', el.key);
-                        requestAnimationFrame(() => {
-                          handleClickMenu(el.key);
-                        });
-                        matomoRequestEvent({
-                          category: 'Click_Services',
-                          action: `Click_${el.key}`,
-                        });
-                      }}>
-                      <View style={styles.badgeWrapper}>
-                        <View style={styles.iconWrapper}>
-                          <el.icon
-                            width={28}
-                            height={28}
-                            color={el.color || colors2024['brand-default-icon']}
-                          />
+              <HomeCenterArea />
+              <View style={styles.grid}>
+                <View style={styles.gridItemsWrap}>
+                  {MENU_ARR.map((el, index) => {
+                    return (
+                      <FastTouchable
+                        style={StyleSheet.flatten([
+                          styles.gridItem,
+                          { width: itemWidth },
+                        ])}
+                        key={index}
+                        onPress={() => {
+                          console.debug('[perf] touched menu', el.key);
+                          requestAnimationFrame(() => {
+                            handleClickMenu(el.key);
+                          });
+                          matomoRequestEvent({
+                            category: 'Click_Services',
+                            action: `Click_${el.key}`,
+                          });
+                        }}>
+                        <View style={styles.badgeWrapper}>
+                          <View style={styles.iconWrapper}>
+                            <el.icon
+                              width={28}
+                              height={28}
+                              color={
+                                el.color || colors2024['brand-default-icon']
+                              }
+                            />
+                          </View>
+                          <View style={styles.rightBadgeWrapper}>
+                            {generateCustomBadgeIcon(el)}
+                          </View>
                         </View>
-                        <View style={styles.rightBadgeWrapper}>
-                          {generateCustomBadgeIcon(el)}
-                        </View>
-                      </View>
-                      <Text style={styles.gridText}>{el.title}</Text>
-                    </FastTouchable>
-                  );
-                })}
-              </View>
-              <BrowserSearchEntry />
-              <View
-                style={styles.swipeUpHint}
-                onLayout={swipeUpViewHandlers.onLayout}>
-                <RcIconDoubleArrowCC color={colors2024['neutral-secondary']} />
-                <Text style={styles.swipeUpHintText}>
-                  {t('page.home.swipeUp.desc')}
-                </Text>
+                        <Text style={styles.gridText}>{el.title}</Text>
+                      </FastTouchable>
+                    );
+                  })}
+                </View>
+                <BrowserSearchEntry />
+                <View
+                  style={styles.swipeUpHint}
+                  onLayout={swipeUpViewHandlers.onLayout}>
+                  <RcIconDoubleArrowCC
+                    color={colors2024['neutral-secondary']}
+                  />
+                  <Text style={styles.swipeUpHintText}>
+                    {t('page.home.swipeUp.desc')}
+                  </Text>
+                </View>
               </View>
             </View>
           </TabsScrollView>

@@ -5,18 +5,27 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Dimensions, Platform, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 
 import { useLoadBalanceFromApiStage } from '@/hooks/useAccountsBalance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';
-import { Card } from '@/components2024/Card';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { usePinnedAccountList } from '@/hooks/account';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
@@ -42,6 +51,7 @@ import {
 } from '@/hooks/useScene24hBalance';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import balanceStore from '@/store/balance';
+import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -124,7 +134,7 @@ export function MultiAddressHomeHeader(
 
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
-  const { isLoading: loading } = useSceneIsLoading('Home');
+  // const { isLoading: loading } = useSceneIsLoading('Home');
 
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -159,6 +169,7 @@ export function MultiAddressHomeHeader(
           isPositive: !data.isLoss,
         },
         animationDurationMs: durationMs,
+        animationGradientBorderRadius: SIZES.cardContentRadius,
       });
     }
 
@@ -206,7 +217,7 @@ export function MultiAddressHomeHeader(
   }, [colors2024, isLight]);
 
   return (
-    <View style={style}>
+    <View style={[styles.container, style]}>
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
@@ -219,7 +230,7 @@ export function MultiAddressHomeHeader(
         isLight={isLight}
         viewTypeOnNoShadow="view"
         viewProps={{
-          style: [styles.curveBoxWrapper, { minHeight: 132 }],
+          style: [styles.homecardWrapper],
         }}>
         <View
           pointerEvents="none"
@@ -229,16 +240,11 @@ export function MultiAddressHomeHeader(
           ]}>
           <LocalWebView
             ref={gasketWebViewRef}
-            style={{
-              minWidth: Dimensions.get('window').width - 15 * 2,
-              minHeight: 100,
-              marginHorizontal: 'auto',
-              backgroundColor: 'transparent',
-            }}
+            style={[styles.curveBoxChildMH, styles.localWebView]}
             entryPath={'/pages/gasket-blurview.html'}
             // forceUseLocalResource
             webviewSize={{
-              width: Dimensions.get('window').width - 15 * 2,
+              width: styles.localWebView.minWidth,
             }}
           />
         </View>
@@ -249,64 +255,55 @@ export function MultiAddressHomeHeader(
               : ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']
           }
           style={[
+            styles.curveBoxChildMH,
             styles.curveBox,
-            loading && styles.curveBoxLoading,
-            {
-              position: 'relative',
-            },
-            !isLight && { borderWidth: 0 },
+            // loading && styles.curveBoxLoading,
             {},
           ]}
-          onLayout={() => {
+          onLayout={event => {
             if (IS_IOS) {
               setTimeout(() => setCouldRenderLocalWebView(true), 500);
             } else {
               setCouldRenderLocalWebView(true);
             }
           }}>
-          <Card
+          <RNLinearGradient
+            pointerEvents="none"
+            colors={
+              isLight
+                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
+                : ['rgba(0, 0, 0, 0.40)', 'rgba(0, 0, 0, 0.10)']
+            }
+            start={isLight ? { x: 0.25, y: 0.5 } : { x: 0.02, y: 1.04 }}
+            end={isLight ? { x: 0.75, y: 0.5 } : { x: 1, y: 0.1 }}
+            style={[
+              styles.curveCardGradientBg,
+              isAnimRunning && styles.curveCardGradientBgWithAnim,
+            ]}
+          />
+          <TouchableOpacity
             style={[
               styles.curveCard,
               styles.shadowView,
-              !pinnedAccountList.length && styles.noAddressCard,
+              // !pinnedAccountList.length && styles.noAddressCard,
             ]}
             onPress={() => {
               handleWalletsListPress();
             }}>
-            <RNLinearGradient
-              colors={
-                isLight
-                  ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-                  : ['rgba(0, 0, 0, 0.40)', 'rgba(0, 0, 0, 0.10)']
-              }
-              start={isLight ? { x: 0.25, y: 0.5 } : { x: 0.02, y: 1.04 }}
-              end={isLight ? { x: 0.75, y: 0.5 } : { x: 1, y: 0.1 }}
+            <MultiChart
+              hideType={hideType}
               style={[
-                StyleSheet.absoluteFill,
-                styles.curveCardGradientBg,
-                isAnimRunning && styles.curveCardGradientBgWithAnim,
+                styles.multiChart,
+                !pinnedAccountList?.length && styles.multiChartNoAccountsFollow,
               ]}
             />
-            <MultiChart hideType={hideType} />
             {pinnedAccountList?.length ? (
               <MultiPinnedAddressList
                 hideType={hideType}
                 pinnedAccountList={pinnedAccountList}
               />
             ) : null}
-            {hideType === 'HALF_HIDE' ? (
-              <View style={styles.accountCardMask}>
-                {/* {Platform.OS === 'ios' ? (
-                    <BlurView
-                      style={styles.accountCardMaskBlur}
-                      blurAmount={1.5}
-                      blurType={isLight ? 'light' : 'dark'}
-                      reducedTransparencyFallbackColor="white"
-                    />
-                  ) : null} */}
-              </View>
-            ) : null}
-          </Card>
+          </TouchableOpacity>
         </RNLinearGradient>
       </BlurShadowView>
     </View>
@@ -314,65 +311,48 @@ export function MultiAddressHomeHeader(
 }
 
 const SIZES = {
-  cardLayoutPaddingHorizontal: 16 /* ITEM_LAYOUT_PADDING_HORIZONTAL */,
+  cardLayoutPaddingHorizontal: 16,
   cardContentRadius: 20,
+  curveBoxWrapperPy: 0,
+  curveBoxPx: 0,
+  curveBoxPy: 0,
+  curveCardMinHeight: 62,
+  get curveBoxMinHeight() {
+    return SIZES.curveCardMinHeight;
+  },
+  get homecardMinHeight() {
+    return SIZES.curveCardMinHeight + SIZES.curveBoxWrapperPy * 2;
+  },
+  // pratical value, to keep padding inside curve box
+  curveCardPy: 0,
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const curveBoxBorderWidth = 1;
   const curveCardBorderWidth = !isLight ? 2 : 1;
+  const cardMinW =
+    Dimensions.get('window').width - SIZES.cardLayoutPaddingHorizontal * 2;
 
   return {
-    screenContainer: {
-      paddingTop: 64,
-    },
-    paddingContainer: {
-      paddingHorizontal: 0,
-      flex: 1,
-      flexGrow: 1,
-    },
-    bgImage: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
+    container: {
+      marginTop: 12 + 4,
+      paddingVertical: 0,
       width: '100%',
-      height: '100%',
+      // ...makeDebugBorder('orange'),
     },
-    usdText: {
-      fontSize: 36,
-      fontWeight: '900',
-      textAlign: 'left',
-      color: colors2024['neutral-title-1'],
-      lineHeight: 42,
-      fontFamily: 'SF Pro Rounded',
-    },
-
-    accountCardMask: {
-      position: 'absolute',
-      left: 1,
-      right: 1,
-      bottom: 1,
-      top: 1,
-      zIndex: 10,
-      pointerEvents: 'none',
-      backgroundColor: isLight
-        ? 'rgba(255, 255, 255, 0.1)'
-        : 'rgba(0, 0, 0, 0.02)',
-    },
-    accountCardMaskBlur: {
-      height: '100%',
-      borderRadius: 20,
-    },
-    curveBoxWrapper: {
+    homecardWrapper: {
       position: 'relative',
-      marginTop: 12,
       paddingTop: 0,
       backgroundColor: 'transparent',
-      // ...makeDebugBorder('red'),
+      // ...makeDebugBorder('yellow'),
+      paddingVertical: 0,
       paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
+      minHeight: SIZES.homecardMinHeight,
       borderRadius: SIZES.cardContentRadius,
       alignItems: 'center',
       justifyContent: 'center',
+      width: '100%',
+      // ...makeDebugBorder('blue'),
     },
     localWebViewWrapper: {
       position: 'absolute',
@@ -381,57 +361,77 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       zIndex: IS_IOS ? 1 : -1,
+      // paddingVertical: 0,
       marginHorizontal:
         isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
       borderRadius: SIZES.cardContentRadius,
       display: 'none',
-      // ...makeDebugBorder('yellow'),
+      // it helps to check the position of webview wrapper
+      // if you see .localWebViewWrapper not filled by content in .curveBox, the sizes are wrong
+      // uncomment below line to see the border
+      // ...makeDebugBorder('green'),
+    },
+    localWebView: {
+      minWidth: cardMinW,
+      marginHorizontal: 'auto',
+      backgroundColor: 'transparent',
     },
     localWebViewWrapperShow: {
       display: 'flex',
     },
     curveBoxWrapperLoading: {},
+    curveBoxChildMH: {
+      minHeight: SIZES.curveBoxMinHeight,
+    },
     curveBox: {
+      paddingHorizontal: SIZES.curveBoxPx,
+      paddingVertical: SIZES.curveBoxPy,
+      borderWidth: isLight ? curveCardBorderWidth : 0,
+      borderColor: 'transparent',
+      borderRadius: SIZES.cardContentRadius,
       // ...makeDevOnlyStyle({
       //   opacity: 0,
       // }),
-      paddingHorizontal: 0,
-      paddingTop: 0,
-      paddingVertical: 0,
-      padding: 0,
-      borderWidth: curveBoxBorderWidth,
-      borderColor: 'transparent',
-      borderRadius: 20,
-      // ...makeDebugBorder(),
+      minWidth: cardMinW,
+      // ...makeDebugBorder('yellow'),
       width: '100%',
       alignItems: 'center',
+      position: 'relative',
     },
     curveBoxLoading: {},
     curveCard: {
+      overflow: 'visible',
+      borderStyle: 'solid',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      width: '100%',
       maxWidth: '100%',
-      // flexDirection: 'row',
-      // alignItems: 'center',
-      // justifyContent: 'space-between',
-
-      borderRadius: 20,
-      paddingVertical: 24,
+      borderRadius: 0,
+      minHeight: SIZES.curveCardMinHeight,
+      paddingVertical: SIZES.curveCardPy,
       paddingHorizontal: 0,
       borderWidth: 0,
       borderColor: isLight
         ? colors2024['neutral-bg-1']
         : colors2024['neutral-line'],
       backgroundColor: 'transparent',
-
-      position: 'relative',
+      // ...makeDebugBorder('purple'),
     },
     noAddressCard: {
       paddingBottom: 20,
     },
     curveCardGradientBg: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      borderRadius: SIZES.cardContentRadius,
       ...(!isLight && {
         borderWidth: 2,
         borderColor: 'rgba(37, 38, 40, 1)',
-        borderRadius: 20,
       }),
     },
     curveCardGradientBgWithAnim: {
@@ -459,13 +459,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // marginBottom: -16,
     },
 
+    multiChart: {
+      paddingTop: 24,
+      paddingHorizontal: 20,
+      width: '100%',
+      minWidth: cardMinW,
+      // ...makeDebugBorder('purple'),
+    },
+
+    multiChartNoAccountsFollow: {
+      marginBottom: 24,
+    },
+
     accountList: {
       display: 'flex',
       flexDirection: 'column',
       gap: 8,
       width: '100%',
-      marginTop: 28,
+      marginTop: 20,
       paddingHorizontal: 8,
+      marginBottom: 12,
     },
     addressOpacity: {
       opacity: 0.3,

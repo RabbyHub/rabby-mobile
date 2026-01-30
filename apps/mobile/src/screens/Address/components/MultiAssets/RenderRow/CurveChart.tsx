@@ -3,14 +3,20 @@ import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
 import React, { memo, useCallback, useEffect, useMemo } from 'react';
-import { Dimensions, Pressable, Text, View } from 'react-native';
+import {
+  Dimensions,
+  Pressable,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import Animated, {
   Easing,
+  makeMutable,
   useAnimatedProps,
   useAnimatedStyle,
   useDerivedValue,
-  useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import AnimateableText from 'react-native-animateable-text';
@@ -39,31 +45,25 @@ import {
 } from '@/hooks/useScene24hBalance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { RNGHPressable } from '@/components/customized/reexports';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedSVG = Animated.createAnimatedComponent(Svg);
 const ScreenWidth = Dimensions.get('screen').width;
 
+const svIsFoldMultiChart = makeMutable(true);
+
 export function setIsFoldMultiChart(valOrFunc: UpdaterOrPartials<boolean>) {
-  foldMultiChartStore.setState(prev => {
-    const { newVal } = resolveValFromUpdater(prev.isFoldMultiChart, valOrFunc, {
+  'worklet';
+  const { newVal } = resolveValFromUpdater(
+    svIsFoldMultiChart.value,
+    valOrFunc,
+    {
       strict: false,
-    });
-
-    return { ...prev, isFoldMultiChart: newVal };
-  });
-}
-const foldMultiChartStore = create<{
-  isFoldMultiChart: boolean;
-}>(set => ({
-  isFoldMultiChart: true,
-}));
-
-function useFoldMultiChartStore() {
-  const isFoldMultiChart = foldMultiChartStore(state => state.isFoldMultiChart);
-
-  return {
-    isFoldMultiChart,
-  };
+    },
+  );
+  svIsFoldMultiChart.value = newVal;
 }
 
 const ChartContent = memo(function ChartContent({
@@ -77,52 +77,36 @@ const ChartContent = memo(function ChartContent({
 }) {
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
   const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading();
+  const { width: winWidth } = useWindowDimensions();
 
   const pathColor = useMemo(
     () => (!isLoss ? colors2024['green-default'] : colors2024['red-default']),
     [colors2024, isLoss],
   );
 
-  const { isFoldMultiChart } = useFoldMultiChartStore();
-
-  const heightAnim = useSharedValue(0);
-  const opacityAnim = useSharedValue(0);
-
   const CHART_HEIGHT = 114;
-  useEffect(() => {
-    const DURATION = 200;
-    if (isFoldMultiChart) {
-      heightAnim.value = withTiming(0, {
-        easing: Easing.inOut(Easing.ease),
-        duration: DURATION,
-      });
-      opacityAnim.value = withTiming(0, { duration: DURATION });
-    } else {
-      heightAnim.value = withTiming(CHART_HEIGHT, {
-        easing: Easing.inOut(Easing.ease),
-        duration: DURATION,
-      });
-      opacityAnim.value = withTiming(1, { duration: DURATION });
-    }
-  }, [isFoldMultiChart, heightAnim, opacityAnim]);
 
-  const animatedHeightStyle = useAnimatedStyle(() => {
+  const animatedContainerStyle = useAnimatedStyle(() => {
     return {
-      height: heightAnim.value,
+      height: withTiming(svIsFoldMultiChart.value ? 0 : CHART_HEIGHT, {
+        easing: svIsFoldMultiChart.value
+          ? Easing.inOut(Easing.ease)
+          : Easing.inOut(Easing.cubic),
+        duration: svIsFoldMultiChart.value ? 200 : 300,
+      }),
+      opacity: withTiming(svIsFoldMultiChart.value ? 0 : 1, {
+        easing: Easing.inOut(Easing.ease),
+        duration: 200,
+      }),
     };
   });
 
-  const animOpacityStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacityAnim.value,
-    };
-  });
   return (
-    <Animated.View style={[animatedHeightStyle, animOpacityStyle]}>
+    <Animated.View style={[animatedContainerStyle]}>
       {!chartsData.length ? null : !isAnyAddrLoading ? (
         <LineChart
           height={CHART_HEIGHT}
-          width={ScreenWidth - 72}
+          width={winWidth - 72}
           shape={d3Shape.curveCatmullRom}
           style={[
             styles.relative,
@@ -148,9 +132,10 @@ const ChartContent = memo(function ChartContent({
 
 export const MultiChart = memo(function MultiChart({
   hideType,
+  style,
 }: {
   hideType: BALANCE_HIDE_TYPE;
-}) {
+} & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
 
   const { combinedData: data } = useMultiHome24hBalanceCurveChart();
@@ -173,16 +158,9 @@ export const MultiChart = memo(function MultiChart({
 
   const chartsData = dayCurveData.list;
 
-  const toggleFoldMultiChart = useCallback(() => {
-    if (foldMultiChartStore.getState().isFoldMultiChart) {
-      refreshDayCurve({ force: false });
-    }
-    setIsFoldMultiChart(prev => !prev);
-  }, []);
-
   return (
     <View
-      style={[styles.container]}
+      style={[styles.container, style]}
       onTouchStart={e => {
         e.stopPropagation();
       }}>
@@ -200,7 +178,6 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountCount}
-            toggleFoldMultiChart={toggleFoldMultiChart}
           />
           <ChartContent
             data={chartsData}
@@ -221,7 +198,6 @@ interface IHeaderProps {
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
-  toggleFoldMultiChart: () => void;
 }
 const ChartHeader = React.memo(
   ({
@@ -232,16 +208,17 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
-    toggleFoldMultiChart,
   }: IHeaderProps) => {
-    const { styles, colors2024 } = useTheme2024({ getStyle });
+    const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
+    const rStyles = {
+      charHeader: useAnimatedStyle(reanimatedStyles.charHeader),
+    };
     const { currentIndex } = LineChart.useChart();
     const { currency, formatCurrentCurrency } = useCurrency();
     const debouncedRawNetWorth = useDebouncedValue(rawNetWorth, 300);
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
 
     const { isLoadingNew: loading } = useSceneIsLoadingNew('Home');
-    const { isFoldMultiChart } = useFoldMultiChartStore();
 
     const netWorth = useMemo(() => {
       return formatSmallCurrencyValue(debouncedRawNetWorth, { currency });
@@ -294,10 +271,10 @@ const ChartHeader = React.memo(
     const formatNetWorth = useDerivedValue(() => {
       return hideType === 'HIDE'
         ? '******'
-        : isFoldMultiChart
+        : svIsFoldMultiChart.value
         ? netWorth
         : data?.[currentIndex?.value]?.netWorth || netWorth;
-    }, [data, currentIndex, netWorth, isFoldMultiChart, hideType]);
+    }, [data, currentIndex, netWorth, hideType]);
 
     const lossStyleProps = useAnimatedStyle(() => {
       if (hideType === 'HIDE') {
@@ -347,12 +324,24 @@ const ChartHeader = React.memo(
       };
     }, [isLoss, data, currentIndex, colors2024, hideType]);
 
+    const arrowRotation = useDerivedValue(() => {
+      return withTiming(svIsFoldMultiChart.value ? 90 : -90, {
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+      });
+    });
+    const animatedSvgStyle = useAnimatedStyle(() => {
+      return {
+        transform: [{ rotate: `${arrowRotation.value}deg` }],
+      };
+    });
+
     const isHidden = useMemo(() => {
       return hideType === 'HIDE';
     }, [hideType]);
 
     return (
-      <View style={styles.charHeader}>
+      <Animated.View style={rStyles.charHeader}>
         <View style={styles.netWorthContainer}>
           <AnimateableText
             style={[
@@ -372,17 +361,13 @@ const ChartHeader = React.memo(
           />
 
           <View style={[styles.accountBg]}>
-            <RcIconSmallWalletCC
-              color={ThemeColors2024.dark['neutral-title-1']}
-            />
+            <RcIconSmallWalletCC color={colors2024['neutral-title-1']} />
             <Text style={styles.accountText}>
               {matteredAccountCount && matteredAccountCount >= 10
                 ? '10'
                 : matteredAccountCount}
             </Text>
-            <RcIconSmallArrowCC
-              color={ThemeColors2024.dark['neutral-title-1']}
-            />
+            <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
           </View>
         </View>
         {loading ? (
@@ -396,7 +381,11 @@ const ChartHeader = React.memo(
           <Pressable
             onPress={e => {
               e.stopPropagation();
-              toggleFoldMultiChart();
+              const nextValue = !svIsFoldMultiChart.value;
+              svIsFoldMultiChart.value = nextValue;
+              if (!nextValue) {
+                refreshDayCurve({ force: false });
+              }
             }}
             hitSlop={10}
             pressRetentionOffset={10}
@@ -417,12 +406,8 @@ const ChartHeader = React.memo(
                   animatedProps={dateTimeAnimatedProps}
                 />
                 <View style={styles.percentChangeContainer}>
-                  <Svg
-                    style={{
-                      transform: isFoldMultiChart
-                        ? [{ rotate: '90deg' }]
-                        : [{ rotate: '270deg' }],
-                    }}
+                  <AnimatedSVG
+                    style={animatedSvgStyle}
                     width={16}
                     height={16}
                     viewBox="0 0 24 24"
@@ -434,146 +419,157 @@ const ChartHeader = React.memo(
                       strokeLinejoin="round"
                       animatedProps={arrowStrokeProps}
                     />
-                  </Svg>
+                  </AnimatedSVG>
                 </View>
               </>
             )}
           </Pressable>
         )}
-      </View>
+      </Animated.View>
     );
   },
 );
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    marginLeft: -16,
+const winWidth = Dimensions.get('window').width;
+const getStyle = createGetStyles2024(
+  {
+    reanimatedStyles: {
+      charHeader: ({ colors2024, winLayout }) => {
+        'worklet';
+        return {
+          alignContent: 'flex-start',
+          justifyContent: 'flex-start',
+          flexDirection: 'column',
+          maxWidth: Math.max(winWidth, winLayout.value.width) - 72,
+          gap: 6,
+          // ...makeDebugBorder('blue'),
+        };
+      },
+    },
   },
-  skeleton: {
-    marginTop: 20,
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
-  skeletonNetWorth: {
-    borderRadius: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
-  charHeader: {
-    alignContent: 'flex-start',
-    justifyContent: 'flex-start',
-    flexDirection: 'column',
-    width: ScreenWidth - 72,
-    gap: 6,
-  },
-  netWorth: {
-    fontSize: 42,
-    lineHeight: 46,
-    fontWeight: '900',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changeSection: {
-    flexDirection: 'row',
-    gap: 2,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  changeValue: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changePercent: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  changeTime: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 20,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    marginLeft: 4,
-  },
-  container: {
-    // height: HEADER_CHART_HEIGHT,
-    paddingHorizontal: 20,
-    // backgroundColor: isLight
-    //   ? colors2024['neutral-bg-0']
-    //   : colors2024['neutral-bg-1'],
-    overflow: 'hidden',
-  },
-  chartContainer: {},
-  globalWarning: {
-    marginHorizontal: 16,
-    marginBottom: 13,
-  },
-  loading: {
-    width: ScreenWidth - 72,
-    height: 114,
-    paddingHorizontal: 0,
-  },
-  relative: { position: 'relative' },
-  bg: {
-    position: 'absolute',
-    left: 0,
-    width: ScreenWidth,
-    height: 32,
-    zIndex: -100,
-  },
-  balanceOpacity: {
-    opacity: 0.2,
-  },
-  netWorthContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  hidden: {
-    display: 'none',
-  },
-  accountBg: {
-    minWidth: 74,
-    padding: 8,
-    paddingLeft: 11,
-    borderRadius: 10,
-    backgroundColor: isLight ? '#000000' : colors2024['brand-default'],
-    shadowColor: colors2024['brand-light-1'],
-    shadowOffset: { width: 0, height: 9.411 },
-    shadowOpacity: 0.1,
-    shadowRadius: 22.587,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 30,
-    // position: 'absolute',
-    // top: 28,
-    // right: 20,
-    // elevation: 500,
-  },
-  accountText: {
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'left',
-    color: ThemeColors2024.dark['neutral-title-1'],
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-    paddingLeft: 6,
-  },
-  percentChangeContainer: {
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    // justifyContent: 'flex-end',
-  },
-}));
+  ({ colors2024, isLight }) => ({
+    skeleton: {
+      marginTop: 20,
+      borderRadius: 8,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
+    skeletonNetWorth: {
+      borderRadius: 8,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
+    netWorth: {
+      fontSize: 42,
+      lineHeight: 46,
+      fontWeight: '900',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    changeSection: {
+      flexDirection: 'row',
+      gap: 2,
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    changeValue: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    changePercent: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    changeTime: {
+      fontSize: 16,
+      fontWeight: '400',
+      lineHeight: 20,
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      marginLeft: 4,
+    },
+    container: {
+      maxWidth: '100%',
+      // height: HEADER_CHART_HEIGHT,
+      paddingHorizontal: 0,
+      // backgroundColor: isLight
+      //   ? colors2024['neutral-bg-0']
+      //   : colors2024['neutral-bg-1'],
+      overflow: 'hidden',
+      // ...makeDebugBorder('red'),
+    },
+    chartContainer: {},
+    globalWarning: {
+      marginHorizontal: 16,
+      marginBottom: 13,
+    },
+    loading: {
+      width: ScreenWidth - 72,
+      height: 114,
+      paddingHorizontal: 0,
+    },
+    relative: { position: 'relative' },
+    bg: {
+      position: 'absolute',
+      left: 0,
+      width: ScreenWidth,
+      height: 32,
+      zIndex: -100,
+    },
+    balanceOpacity: {
+      opacity: 0.2,
+    },
+    netWorthContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      // ...makeDebugBorder('orange'),
+      lineHeight: 46,
+    },
+    hidden: {
+      display: 'none',
+    },
+    accountBg: {
+      minWidth: 74,
+      padding: 8,
+      paddingLeft: 11,
+      borderRadius: 10,
+      backgroundColor: isLight
+        ? colors2024['neutral-line']
+        : colors2024['brand-default'],
+      shadowColor: colors2024['brand-light-1'],
+      shadowOffset: { width: 0, height: 9.411 },
+      shadowOpacity: 0.1,
+      shadowRadius: 22.587,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 30,
+      // position: 'absolute',
+      // top: 28,
+      // right: 20,
+      // elevation: 500,
+    },
+    accountText: {
+      fontSize: 16,
+      fontWeight: '700',
+      textAlign: 'left',
+      color: colors2024['neutral-title-1'],
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      paddingLeft: 6,
+    },
+    percentChangeContainer: {
+      // flexDirection: 'row',
+      // alignItems: 'center',
+      // justifyContent: 'flex-end',
+    },
+  }),
+);

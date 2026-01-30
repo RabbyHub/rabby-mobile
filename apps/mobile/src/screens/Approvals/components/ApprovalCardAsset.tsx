@@ -124,7 +124,7 @@ function ApprovalCardAssetsProto({
 }
 
 export const getAssetItemStyles = createGetStyles2024(ctx => {
-  const selectableStyles = getSelectableContainerStyle(ctx);
+  const selectableStyles = getSelectableContainerStyle.getStyles(ctx);
   const { colors2024, isLight } = ctx;
 
   return {

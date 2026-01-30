@@ -50,7 +50,7 @@ const config: ToastOptions = {
 };
 
 type ToastRenderCtxBase = {
-  styles: ReturnType<typeof getStyle>;
+  styles: ReturnType<(typeof getStyle)['getStyles']>;
   config?: Partial<ManagedOptions>;
 };
 type ToastRenderCtxWithIcon = ToastRenderCtxBase & {
