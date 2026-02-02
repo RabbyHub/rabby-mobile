@@ -35,6 +35,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import dayjs from 'dayjs';
 import { RABBY_MOBILE_PUSH_TEST_SERVER_URL } from '@/constant/env';
 import { useAppNotificationEnabled } from '@/hooks/appNotification';
+import { getTestPushServerURL } from '@/core/notifications/test-server';
 
 function DevToast() {
   const { styles, colors2024, colors } = useTheme2024({
@@ -410,9 +411,7 @@ function DevNotifications() {
               </Text>
               {/* <RcIconCopyCC style={[{ marginLeft: 2 }]} /> */}
             </View>
-            <Text style={{ marginBottom: 12 }}>
-              {RABBY_MOBILE_PUSH_TEST_SERVER_URL}
-            </Text>
+            <Text style={{ marginBottom: 12 }}>{getTestPushServerURL()}</Text>
           </View>
         </View>
       </View>

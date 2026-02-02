@@ -4,7 +4,7 @@ import { RABBY_MOBILE_PUSH_TEST_SERVER_URL } from '@/constant/env';
 import { isNonPublicProductionEnv } from '@/constant';
 import { preferenceService } from '../services';
 
-function getTestPushServerURL() {
+export function getTestPushServerURL() {
   if (!isNonPublicProductionEnv) return null;
 
   const localHost = getDevServerHost();

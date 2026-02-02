@@ -47,9 +47,10 @@ import {
   prepareTxHistoryDisplayUIData,
   txResultToToHistoryDisplayItem,
 } from '@/utils/transaction';
-import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
+// import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { browserApis } from './browser/useBrowser';
+import { notificationOpenapi } from '@/core/notifications/openapi';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -719,20 +720,41 @@ export function startSubscribeRemoteNotification() {
         // TODO: check if my own address
         // if (isMyAddress(ownerAddress)) return ;
 
+        console.debug(
+          '[notifications] onParsedReceivedData:: parsedData',
+          parsedData,
+        );
+        const txDetail = await notificationOpenapi.getUserTxDetail({
+          chainId: parsedData.txInfo?.chainServerId || '',
+          txId: parsedData.txInfo?.txHash || '',
+        });
+
+        console.debug('[notifications] txDetail', txDetail);
+
+        if (!txDetail) {
+          const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
+          if (__DEV__) {
+            Alert.alert('Warning', warnMsg);
+          } else {
+            console.warn(warnMsg);
+          }
+          return;
+        }
+
         // mock, for test
         const pinedQueue = preferenceService.getPinToken();
         const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
-        const sampleTx = txResultToToHistoryDisplayItem({
+        const historyDisplayItem = txResultToToHistoryDisplayItem({
           address: parsedData.txInfo?.ownerAddress || '',
-          res: SampleNotifiedTxResult,
+          res: txDetail,
           pinedQueue,
           customTxItemsMap,
         })[0];
         console.debug(
           '[notifications] [startSubscribeRemoteNotification] received parsedData',
-          sampleTx,
+          historyDisplayItem,
         );
-        if (!sampleTx) return;
+        if (!historyDisplayItem) return;
 
         const currentRouteName =
           navigationRouteStore.getState().currentRouteName;
@@ -747,8 +769,9 @@ export function startSubscribeRemoteNotification() {
           screen: RootNames.HistoryDetail,
           params: {
             isForMultipleAddress: false,
-            data: sampleTx,
-            title: prepareTxHistoryDisplayUIData(sampleTx).formatTitle,
+            data: historyDisplayItem,
+            title:
+              prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
           },
         });
 

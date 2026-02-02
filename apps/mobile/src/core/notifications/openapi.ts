@@ -8,6 +8,10 @@ import {
 } from '@/constant';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { ensureDeviceUUID, makeDeviceUUID } from '../apis/device';
+import {
+  TxAllHistoryResult,
+  TxHistoryResult,
+} from '@rabby-wallet/rabby-api/dist/types';
 
 export type DeviceActiveStatusResponse = {
   success: boolean;
@@ -66,6 +70,20 @@ class NotificationsOpenApiService extends OpenApiService {
       push_token: params.pushToken,
       user_addrs: params.userAddrs,
     });
+    return response.data;
+  }
+
+  async getUserTxDetail(params: {
+    chainId: string;
+    txId: string;
+  }): Promise<TxHistoryResult | null> {
+    const response = await this.request.get('/v1/user/tx', {
+      params: {
+        chain_id: params.chainId,
+        tx_id: params.txId,
+      },
+    });
+
     return response.data;
   }
 }

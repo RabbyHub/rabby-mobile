@@ -1,5 +1,5 @@
 import {
-  startBindPushServerOnDeman,
+  startBindPushServerOnDemand,
   registerForPushNotifications,
   startConnectPushServerInterval,
   startSubscribePushNotifications,
@@ -20,6 +20,6 @@ export async function connectPushServerOnBootstrap() {
   }
   console.debug('[connectPushTestServer] pushToken', pushToken);
 
-  startBindPushServerOnDeman(pushToken);
+  startBindPushServerOnDemand(pushToken);
   startConnectPushTestServerInterval(pushToken);
 }

@@ -246,7 +246,7 @@ export const requestBindDevice = async (pushToken: string) => {
   });
 };
 
-export async function startBindPushServerOnDeman(pushToken: string) {
+export async function startBindPushServerOnDemand(pushToken: string) {
   perfEvents.on('USER_MANUALLY_UNLOCK', () => {
     requestBindDevice(pushToken);
   });
