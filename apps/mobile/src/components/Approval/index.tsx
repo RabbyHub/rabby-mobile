@@ -84,11 +84,16 @@ export const Approval = () => {
   const { approvalComponent, params, origin, account } = data;
 
   const fromTabId =
-    params.$mobileCtx?.fromTabId ||
-    data.$mobileCtx?.fromTabId ||
+    params?.$mobileCtx?.fromTabId ||
+    data?.$mobileCtx?.fromTabId ||
     params?.session?.$mobileCtx?.fromTabId;
 
-  const fromOrigin = origin || params.origin;
+  const isFromMobileInnerDapp =
+    params?.$mobileCtx?.isFromMobileInnerDapp ||
+    data?.$mobileCtx?.isFromMobileInnerDapp ||
+    params?.session?.$mobileCtx?.isFromMobileInnerDapp;
+
+  const fromOrigin = origin || params?.origin;
   const shouldDisallow =
     !isInternalSession(fromOrigin) &&
     !shouldAllowApprovePopupByTabId({
@@ -102,7 +107,7 @@ export const Approval = () => {
       { allowSecondaryDomainMatch: false },
     );
 
-  if (shouldDisallow && !shouldAllowForLegacy) {
+  if (shouldDisallow && !shouldAllowForLegacy && !isFromMobileInnerDapp) {
     return <ShouldntRenderApproveDueToDappDisappeared />;
   }
 

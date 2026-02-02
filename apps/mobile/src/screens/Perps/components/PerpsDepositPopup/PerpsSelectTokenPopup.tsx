@@ -213,7 +213,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
 
   depositTag: {
     borderRadius: 4,
-    backgroundColor: colors2024['brand-light-1'],
+    // backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.12)',
     paddingHorizontal: 4,
     paddingVertical: 1,
 
@@ -224,7 +225,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 16,
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
+    color: '#50D2C1',
   },
 
   flatList: {

@@ -38,11 +38,12 @@ import { transactionHistoryService } from '@/core/services/shared';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
 import { calculateMaxWithdrawAmount } from '../../utils/calculateMaxWithdrawAmount';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import {
@@ -51,13 +52,14 @@ import {
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { CHAINS_ENUM } from '@debank/common';
 import { ReserveDataHumanized } from '@aave/contract-helpers';
+import { stats } from '@/utils/stats';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [withdrawTxs, setWithdrawTxs] = useState<Tx[]>([]);
@@ -293,6 +295,36 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW },
           );
         }
+
+        const targetPool = formattedPoolReservesAndIncentives.find(item => {
+          return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
+            ? isSameAddress(
+                item.underlyingAsset,
+                wrapperToken?.[reserve.chain]?.address,
+              )
+            : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
+        });
+        const usdValue = targetPool
+          ? new BigNumber(amount || '0')
+              .multipliedBy(
+                BigNumber(
+                  targetPool.formattedPriceInMarketReferenceCurrency || '0',
+                ),
+              )
+              .toString()
+          : '0';
+
+        stats.report('aaveInternalTx', {
+          tx_type: LendingReportType.Withdraw,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
+        });
+
         refresh();
         toast.success(
           `${t('page.Lending.withdrawDetail.actions')} ${t(
@@ -311,10 +343,14 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       withdrawTxs,
       amount,
       canShowDirectSubmit,
+      formattedPoolReservesAndIncentives,
+      chainInfo?.serverId,
       refresh,
       t,
       onClose,
       openDirect,
+      reserve.underlyingAsset,
+      reserve.chain,
     ],
   );
 
@@ -407,6 +443,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               loading={false}
               openShowMore={noop}
               chainServeId={chainInfo?.serverId || ''}
+              textColor={colors2024['neutral-title-1']}
             />
           </View>
         )}
@@ -458,13 +495,17 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               !!ctx?.disabledProcess ||
               (isRisky && !isChecked)
             }
-            type="primary"
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}

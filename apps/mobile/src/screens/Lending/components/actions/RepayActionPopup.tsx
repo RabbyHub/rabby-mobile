@@ -38,9 +38,10 @@ import { transactionHistoryService } from '@/core/services/shared';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../../hooks';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import {
@@ -63,6 +64,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IAvailableRepayToken } from '../RepayTokenModal';
+import { stats } from '@/utils/stats';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -490,6 +492,33 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY },
           );
         }
+
+        const poolReserve = formattedPoolReservesAndIncentives.find(item =>
+          isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+        );
+        const usdValue = poolReserve
+          ? new BigNumber(amount || '0')
+              .multipliedBy(
+                BigNumber(
+                  poolReserve.formattedPriceInMarketReferenceCurrency || '0',
+                ),
+              )
+              .toString()
+          : '0';
+
+        stats.report('aaveInternalTx', {
+          tx_type: isAtTokenRepay
+            ? LendingReportType.RepayWithAToken
+            : LendingReportType.Repay,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
+        });
+
         refresh();
         toast.success(
           `${t('page.Lending.repayDetail.actions')} ${t(
@@ -512,10 +541,14 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       txsForMiniApproval,
       amount,
       canShowDirectSubmit,
+      formattedPoolReservesAndIncentives,
+      isAtTokenRepay,
+      chainInfo?.serverId,
       refresh,
       t,
       onClose,
       openDirect,
+      reserve.underlyingAsset,
     ],
   );
 
@@ -667,6 +700,10 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       <View style={styles.buttonContainer}>
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             loading={isLoading}
             loadingType="circle"
             key={`${amount}-${needApprove}`}
@@ -685,13 +722,14 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
               !currentAccount ||
               !!ctx?.disabledProcess
             }
-            type="primary"
+            // type="primary"
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}

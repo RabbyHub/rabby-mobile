@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   ColorSchemeName,
   Appearance,
@@ -27,7 +27,8 @@ import { TFunction } from 'i18next';
 import { useMemoizedFn } from 'ahooks';
 import { runDevIIFEFunc } from '@/core/utils/store';
 import { useCreationWithShallowCompare } from './common/useMemozied';
-import { storeApiAppLayout } from './useAppLayout';
+import { isWorkletFunction, useAnimatedStyle } from 'react-native-reanimated';
+import { svsLayout } from './useAppLayout';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -272,12 +273,21 @@ export function useStyleSafeAreaInsets() {
   return { safeAreaInsets };
 }
 
+function emptyGetStyles2024() {
+  return createGetStyles2024();
+}
+const DefaultMakeStyles2024 = emptyGetStyles2024();
 export function useTheme2024<
   T extends ReturnType<typeof createGetStyles2024>,
 >(opts?: { getStyle?: T; isLight?: boolean }) {
   const appThemeMode = useGetBinaryMode();
   const { safeAreaInsets } = useStyleSafeAreaInsets();
-  const getStyle = useMemoizedFn(opts?.getStyle || makeNoop());
+  const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
+  const getStyles = useMemoizedFn(
+    makeStyles.getStyles || DefaultMakeStyles2024.getStyles,
+  );
+  const getReanimatedStyles =
+    makeStyles.getReanimatedStyles || DefaultMakeStyles2024.getReanimatedStyles;
 
   const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
   const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
@@ -289,18 +299,43 @@ export function useTheme2024<
 
   const cs = React.useMemo(() => {
     return {
-      styles: getStyle?.({
+      styles: getStyles?.({
         colors: classicalColors,
         colors2024,
         classicalColors,
         isLight,
         safeAreaInsets,
-      }) as T extends void ? void : ReturnType<T>,
+      }) as T extends void ? void : ReturnType<T['getStyles']>,
     };
-  }, [colors2024, classicalColors, getStyle, isLight, safeAreaInsets]);
+  }, [colors2024, classicalColors, getStyles, isLight, safeAreaInsets]);
+
+  const reanimatedStyles = React.useMemo(() => {
+    type Fns = T['getReanimatedStyles'] & object;
+    return Object.entries(getReanimatedStyles || {}).reduce(
+      (acc, [key, workletFn]) => {
+        if (!isWorkletFunction(workletFn)) {
+          throw new Error(`reanimatedStyles.${key} is not a worklet function`);
+        }
+        // @ts-expect-error
+        acc[key] = () => {
+          'worklet';
+          return workletFn({
+            colors2024,
+            isLight,
+            safeAreaInsets: svsLayout.insets,
+            winLayout: svsLayout.winLayout,
+            scrLayout: svsLayout.screenLayout,
+          });
+        };
+        return acc;
+      },
+      {} as { [P in keyof Fns]: () => ReturnType<Fns[P] & object> },
+    );
+  }, [colors2024, isLight, getReanimatedStyles]);
 
   return {
     ...cs,
+    reanimatedStyles,
     colors: classicalColors,
     classicalColors,
     colors2024,
@@ -313,8 +348,9 @@ export function getTheme2024<
   T extends ReturnType<typeof createGetStyles2024>,
 >(opts?: { getStyle?: T; isLight?: boolean }) {
   const appThemeMode = getBinaryMode();
-  const safeAreaInsets = storeApiAppLayout.getSafeAreaInsets();
-  const getStyle = opts?.getStyle || makeNoop();
+  const safeAreaInsets = svsLayout.insets.value;
+  const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
+  const getStyles = makeStyles.getStyles || DefaultMakeStyles2024.getStyles;
 
   const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
   const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
@@ -324,13 +360,13 @@ export function getTheme2024<
       ? opts?.isLight
       : appThemeMode === 'light';
 
-  const styles = getStyle?.({
+  const styles = getStyles?.({
     colors: classicalColors,
     colors2024,
     classicalColors,
     isLight,
     safeAreaInsets,
-  }) as T extends void ? void : ReturnType<T>;
+  }) as T extends void ? void : ReturnType<T['getStyles']>;
 
   return {
     ...styles,

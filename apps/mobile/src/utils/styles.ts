@@ -5,9 +5,17 @@ import {
   FontWeightEnum,
   getFontWeightType,
 } from '@/core/utils/fonts';
-import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import {
+  ImageStyle,
+  ScaledSize,
+  StyleSheet,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
+import { SharedValue } from 'react-native-reanimated';
 import { EdgeInsets } from 'react-native-safe-area-context';
-type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
+type StyleType = ViewStyle | TextStyle | ImageStyle;
+type NamedStyles<T> = { [P in keyof T]: StyleType };
 
 type CreateStylesOptions = {
   isLight: boolean;
@@ -42,10 +50,79 @@ type CreateStyles2024Options = {
    */
   safeAreaInsets: EdgeInsets;
 };
-export const createGetStyles2024 =
-  <T extends NamedStyles<any>>(styles: (ctx: CreateStyles2024Options) => T) =>
-  (ctx: CreateStyles2024Options) =>
-    StyleSheet.create(mutateStyles(styles(ctx)));
+type CreateStyles2024WithReanimatedOptions = Pick<
+  CreateStyles2024Options,
+  'isLight' | 'colors2024'
+> & {
+  safeAreaInsets: SharedValue<EdgeInsets>;
+  winLayout: SharedValue<ScaledSize>;
+  scrLayout: SharedValue<ScaledSize>;
+};
+
+function emptyGetStyles2024() {
+  return {
+    getStyles: (_ctx: CreateStyles2024Options) => StyleSheet.create({}),
+    getReanimatedStyles: {} as Record<
+      string,
+      (ctx: CreateStyles2024WithReanimatedOptions) => StyleType
+    >,
+  };
+}
+
+const DefaultGetStyles = emptyGetStyles2024().getStyles;
+
+export function createGetStyles2024<T extends NamedStyles<any>>(
+  styles?: (ctx: CreateStyles2024Options) => T,
+): {
+  getStyles: (ctx: CreateStyles2024Options) => T;
+  getReanimatedStyles: Record<
+    string,
+    (ctx: CreateStyles2024WithReanimatedOptions) => StyleType
+  >;
+};
+export function createGetStyles2024<
+  R extends NamedStyles<any>,
+  T extends NamedStyles<any>,
+>(
+  input: {
+    reanimatedStyles?: {
+      [P in keyof R]: (ctx: CreateStyles2024WithReanimatedOptions) => R[P];
+    };
+    styles?: T;
+  },
+  styles: (ctx: CreateStyles2024Options) => T,
+): {
+  getStyles: (ctx: CreateStyles2024Options) => T;
+  getReanimatedStyles: {
+    [P in keyof R]: (ctx: CreateStyles2024WithReanimatedOptions) => R[P];
+  };
+};
+export function createGetStyles2024(...args: any[]) {
+  let styles: (ctx: CreateStyles2024Options) => NamedStyles<any> = args[0];
+  let input:
+    | {
+        reanimatedStyles?: {
+          [P in keyof any]: (ctx: CreateStyles2024WithReanimatedOptions) => any;
+        };
+        styles?: (ctx: CreateStyles2024Options) => NamedStyles<any>;
+      }
+    | undefined;
+  if (args.length === 2) {
+    input = args[0];
+    styles = args[1];
+  }
+
+  const stylesFn = input?.styles || styles || DefaultGetStyles;
+
+  const getStyles = (ctx: CreateStyles2024Options) =>
+    StyleSheet.create(mutateStyles(stylesFn(ctx)));
+  const reanimatedStyles = input?.reanimatedStyles || {};
+
+  return {
+    getStyles,
+    getReanimatedStyles: reanimatedStyles,
+  };
+}
 
 type TriAngleConf = {
   dir?: 'up' | 'down' | 'left' | 'right';

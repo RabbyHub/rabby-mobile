@@ -159,7 +159,7 @@ function CardProto({
 
 export const getCardStyles = createGetStyles2024(ctx => {
   const { colors2024, isLight } = ctx;
-  const selectableStyles = getSelectableContainerStyle(ctx);
+  const selectableStyles = getSelectableContainerStyle.getStyles(ctx);
 
   return {
     container: {

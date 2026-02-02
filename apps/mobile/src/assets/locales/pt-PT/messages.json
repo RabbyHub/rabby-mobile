@@ -1106,7 +1106,8 @@
         "watchlist": "Lista de Observação",
         "perpsMarketList": "Mais Perps",
         "perps": "Perps",
-        "lending": "Empréstimo"
+        "lending": "Empréstimo",
+        "predict": "Prever"
       },
       "swipeUp": {
         "desc": "Deslize para cima para explorar websites",
@@ -1917,7 +1918,11 @@
       "clickToShow": "Clique para mostrar a Seed Phrase",
       "showQrCode": "Mostrar Código QR",
       "qrCodePopupTips": "Nunca partilhe o código QR da seed phrase com mais ninguém. Por favor, visualize-o num ambiente seguro e guarde-o com cuidado.",
-      "alert": "Esta seed phrase é a credencial para os seus ativos. NÃO a perca ou revele a terceiros, caso contrário, poderá perder os seus ativos para sempre. Visualize-a num ambiente seguro e guarde-a cuidadosamente."
+      "alert": "Esta seed phrase é a credencial para os seus ativos. NÃO a perca ou revele a terceiros, caso contrário, poderá perder os seus ativos para sempre. Visualize-a num ambiente seguro e guarde-a cuidadosamente.",
+      "tapToReveal": {
+        "line2": "Certifique-se de que ninguém está a ver o seu ecrã.",
+        "line1": "Toque para revelar a sua frase-semente"
+      }
     },
     "rabbyPoints": {
       "claimItem": {
@@ -2881,6 +2886,9 @@
         "activatedFailed": "Ativação falhou",
         "activatedSuccess": "4% de poupança em taxas Hyperliquid ativada",
         "hyperliquidFee": "Taxas de negociação Hyperliquid."
+      },
+      "dappSelect": {
+        "title": "Selecionar Provedor de Perps"
       }
     },
     "perpsDetail": {
@@ -3324,6 +3332,9 @@
           "assets": "Token"
         },
         "title": "Selecionar Token de Reembolso"
+      },
+      "dappSelect": {
+        "title": "Selecionar Fornecedor de Empréstimo"
       }
     },
     "address": {
@@ -3335,6 +3346,20 @@
         "title": "Receber ativos",
         "btnCopyAddress": "Copiar Endereço"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "Selecionar Provedor de Previsões"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableDesc": "O serviço não é suportado na sua região atual.",
+      "serviceUnavailableTitle": "Serviço Indisponível"
+    },
+    "DAppFrame": {
+      "netWorth": "Valor líquido",
+      "selectAWallet": "Selecione uma Carteira",
+      "walletBalance": "Carteira/Saldo"
     }
   },
   "constant": {

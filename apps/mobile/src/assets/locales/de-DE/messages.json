@@ -1203,7 +1203,8 @@
         "watchlist": "Token-Watchlist",
         "perps": "Perps",
         "perpsMarketList": "Mehr Perps",
-        "lending": "Kredite"
+        "lending": "Kredite",
+        "predict": "Vorhersagen"
       },
       "swipeUp": {
         "descAndroidMore": "Klicken Sie, um weitere dApps zu erkunden",
@@ -1885,7 +1886,11 @@
       "copySeedPhrase": "Seed-Phrase kopieren",
       "clickToShow": "Klicken Sie hier, um die Seed Phrase anzuzeigen",
       "alert": "Diese Seed-Phrase ist die Berechtigung zu Ihren Vermögenswerten. VERLIEREN Sie sie NICHT und geben Sie sie NIEMANDEM preis, sonst könnten Sie Ihre Vermögenswerte für immer verlieren. Bitte betrachten Sie sie in einer sicheren Umgebung und bewahren Sie sie sorgfältig auf.",
-      "qrCodePopupTips": "Teilen Sie den Seed-Phrase-QR-Code niemals mit anderen. Bitte zeigen Sie ihn in einer sicheren Umgebung an und bewahren Sie ihn sorgfältig auf."
+      "qrCodePopupTips": "Teilen Sie den Seed-Phrase-QR-Code niemals mit anderen. Bitte zeigen Sie ihn in einer sicheren Umgebung an und bewahren Sie ihn sorgfältig auf.",
+      "tapToReveal": {
+        "line1": "Tippen Sie, um Ihren Seed-Satz anzuzeigen.",
+        "line2": "Stelle sicher, dass niemand deinen Bildschirm beobachtet."
+      }
     },
     "importSafe": {
       "gnosisChainDesc": "Diese Adresse wurde auf {{count}} Chains gefunden.",
@@ -2881,6 +2886,9 @@
         "description": "Verwenden Sie den Code von Rabby, um zu aktivieren.",
         "activatedSuccess": "4% Hyperliquid-Gebühreneinsparungen aktiviert",
         "title": "Auf Hyperliquid Gebühren sparen"
+      },
+      "dappSelect": {
+        "title": "Wählen Sie Perps-Anbieter"
       }
     },
     "perpsDetail": {
@@ -3324,6 +3332,9 @@
           "assets": "Token"
         },
         "title": "Wählen Sie Rückzahlungs-Token"
+      },
+      "dappSelect": {
+        "title": "Wählen Sie den Kreditgeber aus"
       }
     },
     "address": {
@@ -3335,6 +3346,20 @@
         "btnCopyAddress": "Adresse kopieren",
         "title": "Vermögenswerte empfangen"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "Wählen Sie den Vorhersageanbieter aus"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableTitle": "Dienst nicht verfügbar",
+      "serviceUnavailableDesc": "Der Dienst wird in Ihrer aktuellen Region nicht unterstützt."
+    },
+    "DAppFrame": {
+      "netWorth": "Vermögen",
+      "selectAWallet": "Wählen Sie eine Wallet",
+      "walletBalance": "Wallet/Balance"
     }
   },
   "constant": {

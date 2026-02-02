@@ -8,25 +8,16 @@ import { formatSmallUsdValue } from '@/hooks/useCurve';
 import PQueue from 'p-queue';
 import { formatUsdValue } from '@/utils/number';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import {
   AccountsBalanceState,
   apisAccountsBalance,
-  BalanceAccountType,
   balanceAccountsStore,
-  fetchTotalBalance,
 } from '@/hooks/useAccountsBalance';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { useShallow } from 'zustand/react/shallow';
 import { perfEvents } from '@/core/utils/perf';
-import { accountEvents, getTop10MyAccounts } from '@/core/apis/account';
-import { keyringService } from '@/core/services';
-import { debounce } from 'lodash';
-
+import { getTop10MyAccounts } from '@/core/apis/account';
 const queues: Record<BalanceScene, PQueue> = {
   Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
 };
@@ -243,26 +234,24 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
       setSceneLoading(scene, !!force);
       beforeReturn();
       const nextCheckAddress = new Set([...address]);
-      !force &&
-        address.forEach(_addr => {
-          const addr = _addr.toLowerCase();
-          setSceneAddrLoading(scene, addr, true);
-          const cacheData = getBalance24hCache(addr);
-          const existedData = !!getMulti24hBalanceBy(addr);
-          if (!existedData && cacheData?.data)
-            setMulti24hBalance(addr, {
-              ...cacheData.data,
-              updateTime: cacheData.updateTime,
-            });
-          if (!cacheData?.data || cacheData?.isExpired) {
-            return;
-          }
+      address.forEach(_addr => {
+        const addr = _addr.toLowerCase();
+        setSceneAddrLoading(scene, addr, true);
+        const cacheData = getBalance24hCache(addr);
+        const existedData = !!getMulti24hBalanceBy(addr);
+        if (!existedData && cacheData?.data)
+          setMulti24hBalance(addr, {
+            ...cacheData.data,
+            updateTime: cacheData.updateTime,
+          });
+        if (cacheData?.data && !cacheData?.isExpired) {
           nextCheckAddress.delete(addr);
           setMulti24hBalance(addr, {
             ...cacheData.data,
             updateTime: cacheData.updateTime,
           });
-        });
+        }
+      });
       beforeReturn();
       queue.clear();
       Array.from(nextCheckAddress).forEach(_addr => {

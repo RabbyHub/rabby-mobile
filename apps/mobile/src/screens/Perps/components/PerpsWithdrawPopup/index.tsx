@@ -202,7 +202,7 @@ export const PerpsWithdrawPopup: React.FC<{
             </TouchableOpacity>
           </View>
           <Button
-            type="primary"
+            type="hyperliquid"
             disabled={!amountValidation.isValid}
             title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
             loading={loading}
@@ -319,11 +319,11 @@ const getStyle = createGetStyles2024(ctx => {
     },
     maxButtonWrapper: {
       padding: 4,
-      backgroundColor: ctx.colors2024['brand-light-1'],
+      backgroundColor: 'rgba(80, 210, 193, 0.12)',
       borderRadius: 8,
     },
     maxButtonText: {
-      color: ctx.colors2024['brand-default'],
+      color: '#50D2C1',
       fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,

@@ -3,32 +3,34 @@ import { Metrics, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenLayouts } from '@/constant/layout';
 import { Dimensions, Platform, StatusBar } from 'react-native';
 import { useMemo } from 'react';
+import { makeMutable } from 'react-native-reanimated';
+import { isEqual } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 
 const isAndroid = Platform.OS === 'android';
 
-const safeAreaMetricsStore = zCreate<{
-  insets: Metrics['insets'];
-}>(() => {
-  return {
-    insets: { top: 0, bottom: 0, left: 0, right: 0 },
-    // frame: {
-    //   x: 0, y: 0,
-    //   width: Dimensions.get('window').width,
-    //   height: Dimensions.get('window').height,
-    // },
-  };
-});
-
-export const storeApiAppLayout = {
-  getSafeAreaInsets: () => safeAreaMetricsStore.getState().insets,
-  setSafeAreaMetrics: (metrics: Partial<Metrics>) => {
-    safeAreaMetricsStore.setState({
-      ...(metrics.insets && { insets: metrics.insets }),
-      // ...metrics.frame && { frame: metrics.frame },
-    });
-  },
+export const svsLayout = {
+  insets: makeMutable<Metrics['insets']>({
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  }),
+  winLayout: makeMutable(Dimensions.get('window')),
+  screenLayout: makeMutable(Dimensions.get('screen')),
 };
+
+export function startWatchLayoutChange() {
+  Dimensions.addEventListener('change', ({ window, screen }) => {
+    if (!isEqual(svsLayout.winLayout.value, window)) {
+      svsLayout.winLayout.value = window;
+    }
+
+    if (!isEqual(svsLayout.screenLayout.value, screen)) {
+      svsLayout.screenLayout.value = screen;
+    }
+  });
+}
 
 export function getVerticalLayoutHeights() {
   const screenHeight = Dimensions.get('screen').height;

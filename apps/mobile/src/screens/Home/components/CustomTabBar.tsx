@@ -1,4 +1,10 @@
-import { Dimensions, useWindowDimensions, View, Pressable } from 'react-native';
+import {
+  Dimensions,
+  useWindowDimensions,
+  View,
+  Pressable,
+  ViewStyle,
+} from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabItem,
@@ -12,6 +18,8 @@ import Animated, {
   withTiming,
   interpolate,
   AnimatedStyle,
+  Extrapolation,
+  isWorkletFunction,
 } from 'react-native-reanimated';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -44,6 +52,7 @@ type IndicatorProps = {
   itemsLayout: ItemLayout[];
   style?: AnimatedStyle;
   fadeIn?: boolean;
+  animatedStyle?: AnimatedStyle<ViewStyle>;
   secondaryIndicatorViewRef?: React.RefObject<View>;
   onLeftPress?: () => void;
   onRightPress?: () => void;
@@ -56,12 +65,19 @@ const Indicator = ({
   itemsLayout,
   style,
   fadeIn = false,
+  animatedStyle,
   secondaryIndicatorViewRef,
   onLeftPress,
   onRightPress,
   handleMeasureSecondaryIndicator,
 }: IndicatorProps) => {
-  const { styles } = useTheme2024({ getStyle: indicatorStyles });
+  const { styles, reanimatedStyles } = useTheme2024({
+    getStyle: indicatorStyles,
+  });
+  const rStyles = {
+    leftBackground: useAnimatedStyle(reanimatedStyles.leftBackground),
+    rightBackground: useAnimatedStyle(reanimatedStyles.rightBackground),
+  };
   const opacity = useSharedValue(fadeIn ? 0 : 1);
   const leftHitSlop = {
     top: leftHitSlopTop,
@@ -115,15 +131,19 @@ const Indicator = ({
   }, [fadeIn, opacity]);
 
   return (
-    <View style={[styles.indicatorContainer]}>
+    <Animated.View style={[styles.indicatorContainer, animatedStyle]}>
       <Animated.View style={[stylez, styles.indicator, style]} />
-      <View style={styles.leftBackground} />
+      <Animated.View
+        style={[rStyles.leftBackground /* , styles.leftBackground */]}
+      />
       <Pressable
         onPress={onLeftPress}
         style={styles.leftPressable}
         hitSlop={leftHitSlop}
       />
-      <View style={styles.rightBackground} />
+      <Animated.View
+        style={[rStyles.rightBackground /* , styles.rightBackground */]}
+      />
       <Pressable
         ref={secondaryIndicatorViewRef}
         style={styles.rightPressable}
@@ -133,109 +153,132 @@ const Indicator = ({
           handleMeasureSecondaryIndicator?.();
         }}
       />
-    </View>
+    </Animated.View>
   );
 };
 
 const indicatorMarginTop = 0;
-const indicatorHeight = 6;
-export const HOME_INDICATOR_HEIGHT = indicatorHeight;
+const indicatorHeight = HOME_TOP_HEADER_SIZES.headerIndicatorHeight;
 const leftHitSlopTop = 50;
 const leftHitSlopBottom = 4;
 const rightHitSlopTop = 50;
 const rightHitSlopBottom = 4;
 
-const indicatorStyles = createGetStyles2024(({ isLight, colors2024 }) => {
-  const winWidth = Dimensions.get('window').width;
+export function getHomeTabIndicatorWidth(winWidth: number) {
+  'worklet';
+  // const winWidth = Dimensions.get('window').width;
   const indicatorWidth = (winWidth - 52) / 2;
-  const rightPressableWidth = indicatorWidth * 0.5;
-  const rightPressableOffset = indicatorWidth - rightPressableWidth;
-  return {
-    indicator: {
-      height: 6,
-      backgroundColor: isLight
-        ? 'rgba(0, 0, 0, 1)'
-        : colors2024['brand-default'],
-      position: 'absolute',
-      borderRadius: 12,
-      top: indicatorMarginTop,
-      zIndex: 99,
+
+  return indicatorWidth;
+}
+
+const indicatorStyles = createGetStyles2024(
+  {
+    reanimatedStyles: {
+      leftBackground: ({ colors2024, winLayout }) => {
+        'worklet';
+        const winWidth = Math.floor(winLayout.value.width);
+        const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
+
+        return {
+          position: 'absolute',
+          top: indicatorMarginTop,
+          left: 20,
+          width: indicatorWidth,
+          height: indicatorHeight,
+          borderRadius: 12,
+          backgroundColor: colors2024['neutral-line'],
+          zIndex: 98,
+        };
+      },
+      rightBackground: ({ colors2024, winLayout }) => {
+        'worklet';
+        const winWidth = Math.floor(winLayout.value.width);
+        const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
+
+        return {
+          position: 'absolute',
+          top: indicatorMarginTop,
+          right: 20,
+          width: indicatorWidth,
+          height: indicatorHeight,
+          borderRadius: 12,
+          backgroundColor: colors2024['neutral-line'],
+          zIndex: 98,
+        };
+      },
     },
-    indicatorContainer: {
-      position: 'relative',
-      paddingTop: indicatorMarginTop,
-      height: indicatorMarginTop + indicatorHeight,
-    },
-    indicatorBgBox: {
-      backgroundColor: colors2024['neutral-bg-1'],
-    },
-    leftBackground: {
-      position: 'absolute',
-      top: indicatorMarginTop,
-      left: 20,
-      width: indicatorWidth,
-      height: 6,
-      borderRadius: 12,
-      backgroundColor: colors2024['neutral-line'],
-      zIndex: 98,
-    },
-    rightBackground: {
-      position: 'absolute',
-      right: 20,
-      top: indicatorMarginTop,
-      width: indicatorWidth,
-      height: 6,
-      borderRadius: 12,
-      backgroundColor: colors2024['neutral-line'],
-      zIndex: 98,
-    },
-    leftPressable: {
-      position: 'absolute',
-      top: indicatorMarginTop,
-      left: 20,
-      width: indicatorWidth,
-      height: indicatorHeight,
-      zIndex: 99,
-    },
-    rightPressable: {
-      position: 'absolute',
-      right: 20 + rightPressableOffset,
-      top: indicatorMarginTop,
-      width: rightPressableWidth,
-      height: indicatorHeight,
-      zIndex: 99,
-    },
-    leftHitAreaDebug: {
-      position: 'absolute',
-      top: indicatorMarginTop - leftHitSlopTop,
-      left: 20,
-      width: indicatorWidth,
-      height: indicatorHeight + leftHitSlopTop + leftHitSlopBottom,
-      borderRadius: 12,
-      backgroundColor: 'rgba(255, 0, 0, 0.12)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 0, 0, 0.4)',
-      zIndex: 97,
-    },
-    rightHitAreaDebug: {
-      position: 'absolute',
-      top: indicatorMarginTop - rightHitSlopTop,
-      right: 20 + rightPressableOffset,
-      width: rightPressableWidth,
-      height: indicatorHeight + rightHitSlopTop + rightHitSlopBottom,
-      borderRadius: 12,
-      backgroundColor: 'rgba(255, 0, 0, 0.12)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 0, 0, 0.4)',
-      zIndex: 97,
-    },
-  };
-});
+  },
+  ({ isLight, colors2024 }) => {
+    const winWidth = Dimensions.get('window').width;
+    const indicatorWidth = getHomeTabIndicatorWidth(winWidth);
+    const rightPressableWidth = indicatorWidth * 0.5;
+    const rightPressableOffset = indicatorWidth - rightPressableWidth;
+    return {
+      indicator: {
+        height: 6,
+        backgroundColor: isLight
+          ? 'rgba(0, 0, 0, 1)'
+          : colors2024['brand-default'],
+        position: 'absolute',
+        borderRadius: 12,
+        top: indicatorMarginTop,
+        zIndex: 99,
+      },
+      indicatorContainer: {
+        position: 'relative',
+        paddingTop: indicatorMarginTop,
+        height: indicatorMarginTop + indicatorHeight,
+      },
+      indicatorBgBox: {
+        backgroundColor: colors2024['neutral-bg-1'],
+      },
+      leftPressable: {
+        position: 'absolute',
+        top: indicatorMarginTop,
+        left: 20,
+        width: indicatorWidth,
+        height: indicatorHeight,
+        zIndex: 99,
+      },
+      rightPressable: {
+        position: 'absolute',
+        right: 20 + rightPressableOffset,
+        top: indicatorMarginTop,
+        width: rightPressableWidth,
+        height: indicatorHeight,
+        zIndex: 99,
+      },
+      leftHitAreaDebug: {
+        position: 'absolute',
+        top: indicatorMarginTop - leftHitSlopTop,
+        left: 20,
+        width: indicatorWidth,
+        height: indicatorHeight + leftHitSlopTop + leftHitSlopBottom,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255, 0, 0, 0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 0, 0, 0.4)',
+        zIndex: 97,
+      },
+      rightHitAreaDebug: {
+        position: 'absolute',
+        top: indicatorMarginTop - rightHitSlopTop,
+        right: 20 + rightPressableOffset,
+        width: rightPressableWidth,
+        height: indicatorHeight + rightHitSlopTop + rightHitSlopBottom,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255, 0, 0, 0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 0, 0, 0.4)',
+        zIndex: 97,
+      },
+    };
+  },
+);
 
 function SideChainSelector() {
-  const { styles, isLight, colors2024 } = useTheme2024({
-    getStyle: getSideChainSelectorStyles,
-  });
+  const { isLight, colors2024 } = useTheme2024();
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
@@ -298,19 +341,6 @@ function SideChainSelector() {
   );
 }
 
-const getSideChainSelectorStyles = createGetStyles2024(() => ({
-  container: {
-    flex: 1,
-    marginTop: 64,
-  },
-  headerContainer: {
-    backgroundColor: 'transparent',
-    shadowColor: 'transparent',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-}));
-
 type MaterialTabBarProps = React.ComponentProps<typeof MaterialTabBar>;
 const renderTabItem: MaterialTabBarProps['TabItemComponent'] & object = _p => (
   <MaterialTabItem
@@ -339,7 +369,32 @@ export const HomeCustomMaterialTabBar = ({
 
   const stylez = useAnimatedStyle(() => {
     return {
-      opacity: indexDecimal.value <= 0.5 ? 0 : 1,
+      opacity: interpolate(
+        indexDecimal.value,
+        [0, 0.9, 0.99, 1],
+        [0, 0.1, 0.5, 1],
+        Extrapolation.CLAMP,
+      ),
+      translateY: interpolate(
+        indexDecimal.value,
+        [0, 0.5, 1],
+        [
+          -HOME_TOP_HEADER_SIZES.tabItemHeight,
+          -HOME_TOP_HEADER_SIZES.tabItemHeight / 2,
+          0,
+        ],
+        Extrapolation.CLAMP,
+      ),
+      // translateX: interpolate(
+      //   indexDecimal.value,
+      //   [0, 0.5, 1],
+      //   [
+      //     -(Dimensions.get('screen').width - HOME_TOP_HEADER_SIZES.portfolioContainerPx * 2),
+      //     -(Dimensions.get('screen').width - HOME_TOP_HEADER_SIZES.portfolioContainerPx * 2 / 2),
+      //     0,
+      //   ],
+      //   Extrapolation.CLAMP,
+      // ),
     };
   });
 
@@ -380,20 +435,20 @@ export const HomeCustomMaterialTabBar = ({
         indexDecimal={props.indexDecimal}
         itemsLayout={[
           {
-            width: (winWidth - 52) / 2,
+            width: getHomeTabIndicatorWidth(winWidth),
             x: 20,
           },
           {
-            width: (winWidth - 52) / 2,
-            x: 20 + (winWidth - 52) / 2 + 12,
+            width: getHomeTabIndicatorWidth(winWidth),
+            x: 20 + getHomeTabIndicatorWidth(winWidth) + 12,
           },
           {
-            width: (winWidth - 52) / 2,
-            x: 20 + (winWidth - 52) / 2 + 12,
+            width: getHomeTabIndicatorWidth(winWidth),
+            x: 20 + getHomeTabIndicatorWidth(winWidth) + 12,
           },
           {
-            width: (winWidth - 52) / 2,
-            x: 20 + (winWidth - 52) / 2 + 12,
+            width: getHomeTabIndicatorWidth(winWidth),
+            x: 20 + getHomeTabIndicatorWidth(winWidth) + 12,
           },
         ]}
         fadeIn
@@ -419,7 +474,6 @@ export const HomeCustomMaterialTabBar = ({
           contentContainerStyle={styles.contentContainerStyle}
         />
         <SideChainSelector />
-        {/* {_props.externalContent} */}
       </Animated.View>
     </Animated.View>
   );

@@ -247,11 +247,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     maxButtonWrapper: {
       marginLeft: 12,
       padding: 4,
-      backgroundColor: colors2024['brand-light-1'],
+      backgroundColor: colors2024['neutral-line'],
       borderRadius: 8,
     },
     maxButtonText: {
-      color: colors2024['brand-default'],
+      color: colors2024['neutral-title-1'],
       fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,

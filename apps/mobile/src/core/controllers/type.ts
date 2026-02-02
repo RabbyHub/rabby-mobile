@@ -2,6 +2,7 @@ import { Account } from '../services/preference';
 
 export type MobileContext = {
   fromTabId?: string;
+  isFromMobileInnerDapp?: boolean;
 };
 
 export type MobileSession = {

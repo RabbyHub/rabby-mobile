@@ -1,4 +1,3 @@
-import { getTop10MyAccounts } from '@/core/apis/account';
 import { openapi } from '@/core/request';
 import { keyringService } from '@/core/services';
 import { zCreate } from '@/core/utils/reexports';
@@ -9,6 +8,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
+import { useAppChainStore } from './appchain';
 
 export interface CURVE_STEP_ITEM {
   timestamp: number;
@@ -42,7 +42,7 @@ const getTotalBalanceQueue = new PQueue({
   intervalCap: 10,
 });
 
-const balanceStore = zCreate<BalanceState>((set, get) => ({
+const balanceStore = zCreate<BalanceState>(set => ({
   balanceMap: {},
   chainUSDMap: {},
   isLoadingByAddress: {},
@@ -53,18 +53,25 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
 
   async initStore() {
     // 在 App 启动时执行，初始化冷备数据
-    // 取 Top10 地址
     const balanceMap: Record<string, IBalanceData> = {};
     const chainUSDMap: Record<string, ChainWithBalance[]> = {};
 
     const res = await BalanceEntity.queryAllBalance();
-    res.forEach(item => {
-      balanceMap[item.owner_addr.toLowerCase()] = {
-        totalBalance: item.balance,
-        evmBalance: item.evm_usd_value || 0,
+    const appChainMap = useAppChainStore.getState().appChainMap;
+    for (const item of res) {
+      const lowerAddr = item.owner_addr.toLowerCase();
+      const evmBalance = item.evm_usd_value || 0;
+      const appChains = appChainMap[lowerAddr] ?? [];
+      const appChainUsdValue = appChains.reduce(
+        (acc, appChain) => acc + (appChain.netWorth || 0),
+        0,
+      );
+      balanceMap[lowerAddr] = {
+        evmBalance,
+        totalBalance: evmBalance + appChainUsdValue,
       };
-      chainUSDMap[item.owner_addr.toLowerCase()] = item.chain_list;
-    });
+      chainUSDMap[lowerAddr] = item.chain_list;
+    }
     // 写入 Store
     set(() => ({ balanceMap, chainUSDMap }));
   },
@@ -99,9 +106,13 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
 
         if (!isExpired) {
           const res = await BalanceEntity.queryBalance(lowerAddress, isCore);
+          const evmBalance = res.evm_usd_value || 0;
+          const appChainUsdValue = useAppChainStore
+            .getState()
+            .getAppChainTotalUsdValue(lowerAddress);
           cacheBalanceMap[lowerAddress] = {
-            totalBalance: res.total_usd_value,
-            evmBalance: res.evm_usd_value || 0,
+            evmBalance,
+            totalBalance: evmBalance + appChainUsdValue,
           };
           cacheChainUSDMap[lowerAddress] = res.chain_list;
           nextLoadingMap[lowerAddress] = false;
@@ -130,6 +141,11 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
     if (!fetchList.length) {
       return;
     }
+    console.log('updateBalance batchGetTotalBalance');
+
+    // 先批量获取 appchain 数据
+    const fetchAddresses = fetchList.map(item => item.address);
+    await useAppChainStore.getState().batchGetAppChains(fetchAddresses, force);
 
     const results = await Promise.allSettled(
       fetchList.map(({ address, isCore }) =>
@@ -137,6 +153,7 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
           address: string;
           isCore: boolean;
           formatBalance: EvmTotalBalanceResponse;
+          appChainUsdValue: number;
         }>(async () => {
           const balance = await openapi.getTotalBalanceV2({
             address,
@@ -144,28 +161,23 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
             included_token_uuids: [],
             excluded_token_uuids: [],
             excluded_protocol_ids: [],
-            excluded_chain_ids: [], // TODO: 移除 include 和 exclude 参数
+            excluded_chain_ids: [],
           });
+          console.log('updateBalance batchGetTotalBalance single', address);
+
+          const evmUsdValue = balance.total_usd_value;
+          const appChainUsdValue = useAppChainStore
+            .getState()
+            .getAppChainTotalUsdValue(address);
 
           const formatBalance: EvmTotalBalanceResponse = {
             ...balance,
-            evm_usd_value: balance.total_usd_value,
+            evm_usd_value: evmUsdValue,
+            total_usd_value: evmUsdValue + appChainUsdValue,
           };
-          try {
-            const { apps } = await openapi.getAppChainList(address);
-            let appChainTotalNetWorth = 0;
-            apps?.forEach(app => {
-              app?.portfolio_item_list?.forEach(item => {
-                appChainTotalNetWorth += item.stats.net_usd_value;
-              });
-            });
-            formatBalance.total_usd_value =
-              appChainTotalNetWorth + formatBalance.total_usd_value;
-          } catch (error) {
-            // just ignore appChain data
-          }
+
           syncBalance(address, isCore, formatBalance);
-          return { address, isCore, formatBalance };
+          return { address, isCore, formatBalance, appChainUsdValue };
         }),
       ),
     );
@@ -174,8 +186,12 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
     const latestChainUSDMap: Record<string, ChainWithBalance[]> = {};
     const finishedLoadingMap: Record<string, boolean> = {};
     results.forEach(result => {
-      if (result.status !== 'fulfilled') return;
-      if (!result.value) return;
+      if (result.status !== 'fulfilled') {
+        return;
+      }
+      if (!result.value) {
+        return;
+      }
       const { address, formatBalance } = result.value;
       latestBalanceMap[address] = {
         totalBalance: formatBalance.total_usd_value,
@@ -223,12 +239,16 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
     try {
       if (!force && !isExpired) {
         const res = await BalanceEntity.queryBalance(address, core);
+        const evmBalance = res.evm_usd_value || 0;
+        const appChainUsdValue = useAppChainStore
+          .getState()
+          .getAppChainTotalUsdValue(lowerAddress);
         set(state => ({
           balanceMap: {
             ...state.balanceMap,
             [lowerAddress]: {
-              totalBalance: res.total_usd_value,
-              evmBalance: res.evm_usd_value || 0,
+              evmBalance,
+              totalBalance: evmBalance + appChainUsdValue,
             },
           },
           chainUSDMap: {
@@ -238,37 +258,36 @@ const balanceStore = zCreate<BalanceState>((set, get) => ({
         }));
         return;
       }
+
+      // 获取 appchain 数据
+      await useAppChainStore.getState().getAppChains(lowerAddress, force);
+      const appChainUsdValue = useAppChainStore
+        .getState()
+        .getAppChainTotalUsdValue(lowerAddress);
+
       const balance = await openapi.getTotalBalanceV2({
         address: lowerAddress,
         isCore: core,
         included_token_uuids: [],
         excluded_token_uuids: [],
         excluded_protocol_ids: [],
-        excluded_chain_ids: [], // TODO: 移除 include 和 exclude 参数
+        excluded_chain_ids: [],
       });
+
+      console.log('updateBalance getTotalBalance', lowerAddress);
+      const evmUsdValue = balance.total_usd_value;
       const formatBalance: EvmTotalBalanceResponse = {
         ...balance,
-        evm_usd_value: balance.total_usd_value,
+        evm_usd_value: evmUsdValue,
+        total_usd_value: evmUsdValue + appChainUsdValue,
       };
-      try {
-        const { apps } = await openapi.getAppChainList(lowerAddress);
-        let appChainTotalNetWorth = 0;
-        apps?.forEach(app => {
-          app?.portfolio_item_list?.forEach(item => {
-            appChainTotalNetWorth += item.stats.net_usd_value;
-          });
-        });
-        formatBalance.total_usd_value =
-          appChainTotalNetWorth + formatBalance.total_usd_value;
-      } catch (error) {
-        // just ignore appChain data
-      }
+
       set(state => ({
         balanceMap: {
           ...state.balanceMap,
           [lowerAddress]: {
-            totalBalance: formatBalance.total_usd_value,
-            evmBalance: formatBalance.evm_usd_value || 0,
+            evmBalance: evmUsdValue,
+            totalBalance: evmUsdValue + appChainUsdValue,
           },
         },
         chainUSDMap: {

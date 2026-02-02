@@ -1,15 +1,14 @@
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
-import { rtConverter, runOnComputeRt } from '@/core/perf/runtime';
 import { useTheme2024 } from '@/hooks/theme';
+import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
+import { useCurrentInnerDappTypeValue } from '@/hooks/useInnerDappValue';
 import { apisLending, useLendingHF } from '@/screens/Lending/hooks';
 import { getHealthStatusColor } from '@/screens/Lending/utils';
 import { formatNetworth, formatNum } from '@/utils/math';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useFocusEffect } from '@react-navigation/native';
-import BigNumber from 'bignumber.js';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Text } from 'react-native';
-import { runOnJS, runOnUI, useSharedValue } from 'react-native-reanimated';
+import { runOnJS } from 'react-native-reanimated';
 
 const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -28,7 +27,7 @@ const consoleFromUI = {
   }) as typeof console.debug,
 };
 
-export const LendingHF: React.FC<{}> = () => {
+export const LendingAAveHF: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { lendingHf } = useLendingHF();
 
@@ -65,6 +64,22 @@ export const LendingHF: React.FC<{}> = () => {
       {formatNum(lendingHf.healthFactor)}
     </Text>
   );
+};
+
+export const LendingDappHf: React.FC<{}> = () => {
+  const { value } = useCurrentInnerDappTypeValue('LENDING');
+  if (typeof value === 'undefined') {
+    return null;
+  }
+  return <NetWorthBadge netWorth={value + ''} />;
+};
+
+export const LendingHF = () => {
+  const { lending } = useInnerDappSelection();
+  if (lending === 'aave') {
+    return <LendingAAveHF />;
+  }
+  return <LendingDappHf />;
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({

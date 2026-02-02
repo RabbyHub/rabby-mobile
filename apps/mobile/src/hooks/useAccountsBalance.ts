@@ -230,7 +230,6 @@ const CACHE_TIME = HOME_REFRESH_INTERVAL; // 10 minutes
 export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
 export function useAccountsBalanceTrigger() {
   const lastTimeStamps = useRef<number>(0);
-
   const isNeedFetchData = useCallback(() => {
     const currentTime = Date.now();
     const diff = currentTime - lastTimeStamps.current;
@@ -264,7 +263,6 @@ export function useAccountsBalanceTrigger() {
 
 export default function useAccountsBalance() {
   const balanceAccounts = balanceAccountsStore(s => s.balance);
-  const { triggerUpdate } = useAccountsBalanceTrigger();
 
   const getTotalBalance = useCallback(
     (addresses: string[]) => {
@@ -282,42 +280,6 @@ export default function useAccountsBalance() {
 
   return {
     balanceAccounts,
-    triggerUpdate,
     getTotalBalance,
   };
 }
-
-// const accountsBalanceStatics = zCreate(
-//   zMutative<{
-//     /** @future */
-//     top10AccountsTotalBalance: number;
-//   }>(() => ({
-//     top10AccountsTotalBalance: 0,
-//   })),
-// )
-
-// export function useTop10AccountsTotalBalance() {
-//   const top10AccountsTotalBalance = accountsBalanceStatics(
-//     s => s.top10AccountsTotalBalance,
-//   );
-
-//   return {
-//     top10AccountsTotalBalance,
-//   };
-// }
-
-// runIIFEFunc(() => {
-//   perfEvents.subscribe('ACCOUNTS_MAYBE_CHANGED', async () => {
-//     getTop10MyAccounts().then(({ top10Accounts }) => {
-//       const result = getLatestTotalBalance(
-//         top10Accounts
-//           .slice(0, 10)
-//           .map(acc => acc.address)
-//       );
-
-//       accountsBalanceStatics.setState(prev => {
-//         prev.top10AccountsTotalBalance = result.total;
-//       });
-//     });
-//   });
-// });

@@ -2,7 +2,7 @@
 
 :root {
   --border-width: var(--app-border-width, 2px);
-  --radius: var(--app-border-radius, 21px);
+  --radius: var(--app-border-radius, 20px);
   --animation-ms: var(--app-animation-ms, 2500);
 
   --rect-width: var(--app-rect-width, 330px);

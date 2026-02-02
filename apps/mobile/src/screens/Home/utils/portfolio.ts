@@ -8,12 +8,6 @@ export const loadPortfolioSnapshot = (userAddr: string) => {
   });
 };
 
-export const loadAppChainList = (userAddr: string) => {
-  return pQueue.add(() => {
-    return openapi.getAppChainList(userAddr);
-  });
-};
-
 export const loadTestnetPortfolioSnapshot = (userAddr: string) => {
   return pQueue.add(() => {
     return testOpenapi.getComplexProtocolList(userAddr);

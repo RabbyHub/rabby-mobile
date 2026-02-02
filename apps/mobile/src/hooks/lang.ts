@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { findBestLanguageTag } from 'react-native-localize';
-import { useAtom } from 'jotai';
+import { getLocales } from 'react-native-localize';
 import {
-  atomByMMKV,
   duplicatelyStringifiedAppJsonStore,
   IS_BOOTED_USER,
   MMKVStorageStrategy,
@@ -18,11 +16,35 @@ import i18n, {
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 function filterOutBestLang() {
-  const langs = SupportedLangs.map(item => item.lang);
-  return findBestLanguageTag(langs);
+  const supportedLangs = SupportedLangs.map(item => item.lang);
+  const locales = getLocales();
+
+  for (const locale of locales) {
+    const { languageCode, countryCode } = locale;
+
+    // exact match (e.g., en-US -> en-US)
+    const fullTag = countryCode
+      ? `${languageCode}-${countryCode}`
+      : languageCode;
+    if (supportedLangs.includes(fullTag as SupportedLang)) {
+      return { languageTag: fullTag, isRTL: locale.isRTL };
+    }
+
+    // language-code prefix match (e.g., en-GB -> en-US)
+    const matchedByPrefix = supportedLangs.find(lang => {
+      const prefix = lang.split('-')[0];
+      return prefix && prefix.toLowerCase() === languageCode.toLowerCase();
+    });
+    if (matchedByPrefix) {
+      return { languageTag: matchedByPrefix, isRTL: locale.isRTL };
+    }
+  }
+
+  return undefined;
 }
 
-let defaultLang = filterOutBestLang()?.languageTag || DEFAULT_LANG;
+let defaultLang: SupportedLang =
+  (filterOutBestLang()?.languageTag as SupportedLang) || DEFAULT_LANG;
 /**
  * @notice
  * - users with version<0.5.4 has '@AppLang' in storage, because this file is not lazy-loaded

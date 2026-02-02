@@ -1,55 +1,64 @@
-import React, { useEffect } from 'react';
-import { View, Platform } from 'react-native';
-import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import React, { useCallback } from 'react';
+import { Platform, View } from 'react-native';
 
+import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import {
+  DappFrameAccountHeader,
+  DappSelectItem,
+} from '@/components2024/DappFrameAccountHeader';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { Account } from '@/core/services/preference';
+import {
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import {
-  PropsForAccountSwitchScreen,
-  ScreenSceneAccountProvider,
-  useSceneAccountInfo,
-} from '@/hooks/accountsSwitcher';
-import { useFetchLendingData, useSelectedMarket } from './hooks';
-import { LendingHeader } from './components/Header';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+
 import { useInitOpenDetail } from './hooks/useInitOpenDetail';
 import MyAssetHome from './MyAssetHome';
+
 const isAndroid = Platform.OS === 'android';
 
-function DashBoardScreen(): JSX.Element {
+type LendingNativeScreenProps = {
+  activeId: string;
+  dappList: DappSelectItem[];
+  onSelectDapp: (item: DappSelectItem) => void;
+  dappSelectTitle?: string;
+};
+
+export function LendingNativeScreen({
+  activeId,
+  dappList,
+  onSelectDapp,
+  dappSelectTitle,
+}: LendingNativeScreenProps): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { fetchData } = useFetchLendingData();
   useInitOpenDetail();
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const Header = React.useCallback(
-    () => (
-      <LendingHeader
-        onPendingClear={() => {
-          setTimeout(() => {
-            fetchData(true);
-          }, 200);
-        }}
-      />
-    ),
-    [fetchData],
+  const handleSelectAccount = useCallback(
+    (account: Account) => {
+      switchSceneCurrentAccount('Lending', account);
+    },
+    [switchSceneCurrentAccount],
   );
-
-  useEffect(() => {
-    setNavigationOptions({
-      headerRight: Header,
-    });
-  }, [Header, setNavigationOptions]);
 
   return (
     <NormalScreenContainer2024
       type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={styles.overwriteStyle}>
+      <DappFrameAccountHeader
+        dappSelectTitle={dappSelectTitle}
+        account={finalSceneCurrentAccount || undefined}
+        onSelectAccount={handleSelectAccount}
+        activeId={activeId}
+        dAppList={dappList}
+        onSelectDapp={onSelectDapp}
+      />
       <AccountSwitcherModal forScene="Lending" inScreen />
       <View style={styles.container}>
         <MyAssetHome />
@@ -57,27 +66,6 @@ function DashBoardScreen(): JSX.Element {
     </NormalScreenContainer2024>
   );
 }
-
-const ForMultipleAddress = (
-  props: Omit<
-    React.ComponentProps<typeof DashBoardScreen>,
-    keyof PropsForAccountSwitchScreen
-  >,
-) => {
-  const { sceneCurrentAccountDepKey } = useSceneAccountInfo({
-    forScene: 'Lending',
-  });
-  return (
-    <ScreenSceneAccountProvider
-      value={{
-        forScene: 'Lending',
-        ofScreen: 'Lending',
-        sceneScreenRenderId: `${sceneCurrentAccountDepKey}-Lending`,
-      }}>
-      <DashBoardScreen {...props} />
-    </ScreenSceneAccountProvider>
-  );
-};
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   overwriteStyle: {
@@ -91,7 +79,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   container: {
     flex: 1,
+    paddingTop: 6,
   },
 }));
-
-export default ForMultipleAddress;

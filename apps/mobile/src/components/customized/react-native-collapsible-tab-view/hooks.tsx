@@ -46,10 +46,10 @@ const workletNoop = () => {
 
 export type ScrollHandlerProps = {
   onScroll?: ScrollableEvent;
-  onScrollBeginDrag?: ScrollableEvent;
-  onScrollEndDrag?: ScrollableEvent;
-  onScrollMomentumBegin?: ScrollableEvent;
-  onScrollMomentumEnd?: ScrollableEvent;
+  onAnimatedScrollBeginDrag?: ScrollableEvent;
+  onAnimatedScrollEndDrag?: ScrollableEvent;
+  onAnimatedScrollMomentumBegin?: ScrollableEvent;
+  onAnimatedScrollMomentumEnd?: ScrollableEvent;
   scrollableEnabled?: SharedValue<boolean>;
 };
 
@@ -57,10 +57,10 @@ export const useScrollHandlerY = (
   name: TabName,
   {
     onScroll,
-    onScrollBeginDrag,
-    onScrollEndDrag,
-    onScrollMomentumBegin,
-    onScrollMomentumEnd,
+    onAnimatedScrollBeginDrag,
+    onAnimatedScrollEndDrag,
+    onAnimatedScrollMomentumBegin,
+    onAnimatedScrollMomentumEnd,
     scrollableEnabled: prop_scrollableEnabled,
   }: ScrollHandlerProps,
 ) => {
@@ -129,8 +129,8 @@ export const useScrollHandlerY = (
     ctx,
   ) => {
     'worklet';
-    if (onScrollMomentumEnd)
-      runOnJS(onScrollMomentumEnd)({ nativeEvent: event }, ctx);
+    if (onAnimatedScrollMomentumEnd)
+      runOnJS(onAnimatedScrollMomentumEnd)({ nativeEvent: event }, ctx);
     if (!enabled.value) return;
 
     if (typeof snapThreshold === 'number') {
@@ -190,7 +190,10 @@ export const useScrollHandlerY = (
     {
       onScroll: (event, ctx) => {
         if (onScroll) runOnJS(onScroll)({ nativeEvent: event }, ctx);
-        if (!enabled.value) return;
+
+        if (!enabled.value) {
+          return;
+        }
 
         if (focusedTab.value === name) {
           if (IS_IOS) {
@@ -231,8 +234,8 @@ export const useScrollHandlerY = (
         }
       },
       onBeginDrag: (event, ctx) => {
-        if (onScrollBeginDrag)
-          runOnJS(onScrollBeginDrag)({ nativeEvent: event }, ctx);
+        if (onAnimatedScrollBeginDrag)
+          runOnJS(onAnimatedScrollBeginDrag)({ nativeEvent: event }, ctx);
         if (!enabled.value) return;
 
         // ensure the header stops snapping
@@ -241,8 +244,8 @@ export const useScrollHandlerY = (
         if (IS_IOS) cancelAnimation(afterDrag);
       },
       onEndDrag: (event, ctx) => {
-        if (onScrollEndDrag)
-          runOnJS(onScrollEndDrag)({ nativeEvent: event }, ctx);
+        if (onAnimatedScrollEndDrag)
+          runOnJS(onAnimatedScrollEndDrag)({ nativeEvent: event }, ctx);
         if (!enabled.value) return;
 
         if (IS_IOS) {
@@ -261,8 +264,8 @@ export const useScrollHandlerY = (
         }
       },
       onMomentumBegin: (event, ctx) => {
-        if (onScrollMomentumBegin)
-          runOnJS(onScrollMomentumBegin)({ nativeEvent: event }, ctx);
+        if (onAnimatedScrollMomentumBegin)
+          runOnJS(onAnimatedScrollMomentumBegin)({ nativeEvent: event }, ctx);
         if (!enabled.value) return;
 
         if (IS_IOS) {

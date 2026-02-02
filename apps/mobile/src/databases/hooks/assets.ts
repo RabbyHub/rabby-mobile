@@ -9,7 +9,6 @@ import {
 import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
 import {
   batchLoadProjects,
-  loadAppChainList,
   loadPortfolioSnapshot,
 } from '@/screens/Home/utils/portfolio';
 
@@ -17,6 +16,7 @@ import { TokenItemEntity } from '../entities/tokenitem';
 import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
 import { IProtocolItem } from '@/store/protocols';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
+import { useAppChainStore } from '@/store/appchain';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -48,16 +48,23 @@ export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   return { assetsInfo, fetchAssetsInfo };
 }
 
-export const loadAppChainComplexProtocols = async (userAddr: string) => {
+export const loadAppChainComplexProtocols = async (
+  userAddr: string,
+  force = false,
+) => {
   try {
-    const appChainListRes = await loadAppChainList(userAddr);
-    const protocols: ComplexProtocol[] = [];
-    if (appChainListRes?.apps?.length) {
-      appChainListRes.apps.forEach(app => {
-        protocols.push(formatAppChain(app));
-      });
-    }
-    const errorAppIds = appChainListRes?.error_apps?.map(app => app.id) || [];
+    // 从 appchain store 读取数据
+    const lowerAddr = userAddr.toLowerCase();
+    await useAppChainStore.getState().getAppChains(lowerAddr, force);
+    const appChainMap = useAppChainStore.getState().appChainMap;
+    const appChains = appChainMap[lowerAddr] || [];
+
+    const protocols: ComplexProtocol[] = appChains.map(app =>
+      formatAppChain(app),
+    );
+
+    // store 中只存储成功的数据，没有 error_apps
+    const errorAppIds: string[] = [];
     return { protocols, errorAppIds };
   } catch (error) {
     //  just ignore the data
@@ -82,9 +89,10 @@ export const syncProtocols = async (
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
   const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
     address,
+    force,
   );
   const protocols = [...snapshotRes, ...appChainProtocols];
-  syncRemoteProtocols(address, protocols);
+  syncRemoteProtocols(address, snapshotRes);
   return protocols.map(p => complexProtocol2ProtocolItem(p, address));
 };
 
@@ -119,8 +127,9 @@ export const syncSpecificProtocol = async (
     syncRemoteProtocol(address, null, { deleteId: protocolId });
     return undefined;
   }
-
-  syncRemoteProtocol(address, projects[0]);
+  if (!isAppChainProtocol) {
+    syncRemoteProtocol(address, projects[0]);
+  }
   return complexProtocol2ProtocolItem(projects[0], address);
 };
 

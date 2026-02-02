@@ -1,8 +1,11 @@
 import { PortfolioItem } from '@rabby-wallet/rabby-api/dist/types';
 import { zCreate } from '@/core/utils/reexports';
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
+import { AppChainEntity } from '@/databases/entities/appchain';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 import { getTop10MyAccounts } from '@/core/apis/account';
+import { formatAppChain } from '@/screens/Home/utils/appchain';
+import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 
 /**
  * interface for all DeFi data
@@ -227,17 +230,56 @@ const isDataExpiredBatch = async (addresses: string[]) => {
   return res.some(item => !!item);
 };
 
+const buildAppChainProtocolMap = async (
+  addresses: string[],
+): Promise<ProtocolListMap> => {
+  if (!addresses.length) {
+    return {};
+  }
+  const normalizedAddresses = normalizeAddresses(addresses);
+  const appChainMap = await AppChainEntity.queryByOwners(normalizedAddresses);
+  const result: ProtocolListMap = {};
+  Object.entries(appChainMap).forEach(([owner, appChains]) => {
+    if (!appChains?.length) {
+      return;
+    }
+    result[owner.toLowerCase()] = appChains.map(appChain =>
+      complexProtocol2ProtocolItem(formatAppChain(appChain), owner),
+    );
+  });
+  return result;
+};
+
+const mergeProtocolMaps = (
+  base: ProtocolListMap,
+  extra: ProtocolListMap,
+): ProtocolListMap => {
+  const merged: ProtocolListMap = {};
+  const keys = new Set([...Object.keys(base), ...Object.keys(extra)]);
+  keys.forEach(key => {
+    const baseList = base[key] || [];
+    const extraList = extra[key] || [];
+    if (baseList.length || extraList.length) {
+      merged[key] = [...baseList, ...extraList];
+    }
+  });
+  return merged;
+};
+
 export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
   protocolMap: {},
   isLoading: false,
   isLoadingByAddress: {},
   async initStore() {
     const { top10Addresses } = await getTop10MyAccounts(true);
-    const protocolMap = await ProtocolItemEntity.getDefaultProtocolsByAddresses(
-      top10Addresses,
-    );
+    const [protocolMap, appChainMap] = await Promise.all([
+      ProtocolItemEntity.getDefaultProtocolsByAddresses(top10Addresses),
+      buildAppChainProtocolMap(top10Addresses),
+    ]);
     // 写入 Store
-    set(() => ({ protocolMap }));
+    set(() => ({
+      protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
+    }));
   },
   async batchGetProtocols(addresses, force = false) {
     if (!addresses.length) {
@@ -247,10 +289,12 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     if (!force) {
       const isExpired = await isDataExpiredBatch(addresses);
       if (!isExpired) {
-        const protocolMap =
-          await ProtocolItemEntity.getDefaultProtocolsByAddresses(addresses);
+        const [protocolMap, appChainMap] = await Promise.all([
+          ProtocolItemEntity.getDefaultProtocolsByAddresses(addresses),
+          buildAppChainProtocolMap(addresses),
+        ]);
         set(() => ({
-          protocolMap,
+          protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
         }));
         // cache击中，不用走下面流程了
         return;
@@ -294,13 +338,17 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
       if (!force) {
         const isExpired = await isDataExpired(normalizedAddress);
         if (!isExpired) {
-          const cacheProtocols = await ProtocolItemEntity.batchQueryProtocols(
-            address,
-          );
+          const [cacheProtocols, appChainProtocols] = await Promise.all([
+            ProtocolItemEntity.batchQueryProtocols(address),
+            buildAppChainProtocolMap([normalizedAddress]),
+          ]);
           set(state => ({
             protocolMap: {
               ...state.protocolMap,
-              [normalizedAddress]: cacheProtocols,
+              [normalizedAddress]: [
+                ...cacheProtocols,
+                ...(appChainProtocols[normalizedAddress] || []),
+              ],
             },
           }));
           return;

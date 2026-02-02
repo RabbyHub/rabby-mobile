@@ -105,7 +105,7 @@ export const TokenInfoPopup = () => {
                 longPressToken.position.y + longPressToken.position.height + 13,
               ),
             }}
-            onPressRightIcon={() => {
+            onPressBottomRow={() => {
               if (longPressToken.tokenItem) {
                 navigateDeprecated(RootNames.TokenDetail, {
                   token: tokenItemToITokenItem(longPressToken.tokenItem, ''),

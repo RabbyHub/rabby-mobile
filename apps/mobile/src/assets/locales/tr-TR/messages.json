@@ -1043,7 +1043,8 @@
         "watchlist": "Token İzleme Listesi",
         "perps": "Perps",
         "perpsMarketList": "Daha Fazla Perps",
-        "lending": "Kredi verme"
+        "lending": "Kredi verme",
+        "predict": "Tahmin Et"
       },
       "swipeUp": {
         "descAndroid": "dApp'leri keşfetmek için tıklayın",
@@ -1616,7 +1617,11 @@
       "showQrCode": "QR Kodunu Göster",
       "alert": "Bu seed phrase, varlıklarınıza erişim sağlayan kimlik bilgisidir. Bunu kaybetmeyin veya başkalarına ifşa etmeyin, aksi takdirde varlıklarınızı sonsuza dek kaybedebilirsiniz. Lütfen bunu güvenli bir ortamda görüntüleyin ve dikkatlice saklayın.",
       "qrCodePopupTips": "Kimseyle seed phrase QR kodunu paylaşmayın. Lütfen bunu güvenli bir ortamda görüntüleyin ve dikkatli bir şekilde saklayın.",
-      "qrCodePopupTitle": "QR Kodu"
+      "qrCodePopupTitle": "QR Kodu",
+      "tapToReveal": {
+        "line2": "Ekranınızı kimsenin izlemediğinden emin olun.",
+        "line1": "Tohum ifadenizi görüntülemek için dokunun."
+      }
     },
     "backupPrivateKey": {
       "clickToShow": "Özel anahtarı göstermek için tıklayın",
@@ -2517,6 +2522,9 @@
         "activatedSuccess": "%4 Hyperliquid ücret tasarrufu etkinleştirildi",
         "description": "Rabby’nin kodunu etkinleştirmek için kullanın",
         "activateNow": "Şimdi Etkinleştir"
+      },
+      "dappSelect": {
+        "title": "Perps Sağlayıcısını Seçin"
       }
     },
     "perpsDetail": {
@@ -2960,6 +2968,9 @@
           "assets": "Jeton"
         },
         "title": "Geri Ödeme Token'i Seçin"
+      },
+      "dappSelect": {
+        "title": "Kredilendirme Sağlayıcısı Seçin"
       }
     },
     "address": {
@@ -2971,6 +2982,20 @@
         "title": "Varlıkları Al",
         "btnCopyAddress": "Adresi Kopyala"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "Tahmin Sağlayıcısını Seçin"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableDesc": "Hizmet mevcut bölgenizde desteklenmiyor.",
+      "serviceUnavailableTitle": "Hizmet Kullanılamıyor"
+    },
+    "DAppFrame": {
+      "selectAWallet": "Cüzdan Seçin",
+      "walletBalance": "Cüzdan/Balance",
+      "netWorth": "Ağ Değeri"
     }
   },
   "component": {

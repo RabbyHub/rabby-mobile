@@ -806,7 +806,8 @@
         "watchlist": "토큰 워치리스트",
         "perps": "펍스",
         "perpsMarketList": "더 많은 Perps",
-        "lending": "대출"
+        "lending": "대출",
+        "predict": "예측하다"
       },
       "swipeUp": {
         "desc": "위로 스와이프하여 웹사이트 탐색하기",
@@ -1422,7 +1423,11 @@
       "qrCodePopupTitle": "QR Code",
       "showQrCode": "QR 코드 표시",
       "qrCodePopupTips": "절대로 seed phrase QR 코드를 다른 사람과 공유하지 마십시오. 안전한 환경에서 확인하고 주의 깊게 보관하시기 바랍니다.",
-      "alert": "이 시드 문구는 자산의 자격 증명입니다. 이를 분실하거나 다른 사람에게 공개하지 마십시오. 그렇지 않으면 자산을 영원히 잃을 수 있습니다. 안전한 환경에서 확인하고 주의 깊게 보관하십시오."
+      "alert": "이 시드 문구는 자산의 자격 증명입니다. 이를 분실하거나 다른 사람에게 공개하지 마십시오. 그렇지 않으면 자산을 영원히 잃을 수 있습니다. 안전한 환경에서 확인하고 주의 깊게 보관하십시오.",
+      "tapToReveal": {
+        "line2": "누구도 당신의 화면을 지켜보고 있지 않은지 확인하세요.",
+        "line1": "시드 문구를 표시하려면 탭하세요."
+      }
     },
     "miniSignFooterBar": {
       "signWithLedger": "사인",
@@ -2518,6 +2523,9 @@
         "hyperliquidFee": "하이퍼리퀴드 거래 수수료.",
         "activatedFailed": "활성화 실패",
         "activateNow": "지금 활성화하세요"
+      },
+      "dappSelect": {
+        "title": "Perps 제공자 선택"
       }
     },
     "perpsDetail": {
@@ -2961,6 +2969,9 @@
           "assets": "토큰"
         },
         "title": "상환 토큰 선택"
+      },
+      "dappSelect": {
+        "title": "대출 제공자 선택"
       }
     },
     "address": {
@@ -2972,6 +2983,20 @@
         "title": "자산 받기",
         "btnCopyAddress": "주소 복사"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "예측 제공자 선택"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableTitle": "서비스를 이용할 수 없습니다",
+      "serviceUnavailableDesc": "현재 지역에서는 이 서비스가 지원되지 않습니다."
+    },
+    "DAppFrame": {
+      "netWorth": "순자산",
+      "walletBalance": "지갑/잔액",
+      "selectAWallet": "지갑 선택"
     }
   },
   "global": {

@@ -7,7 +7,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
 import { FavoriteTag } from '@/components2024/Favorite';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
@@ -117,10 +116,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
-    color: colors2024['brand-default'],
+    color: '#50D2C1',
   },
   positionContainer: {
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.12)',
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 1,

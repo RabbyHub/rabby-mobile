@@ -83,42 +83,56 @@ function DevToast() {
               }}
             />
 
-            <Button
-              height={48}
-              titleStyle={{ color: colors2024['neutral-title-2'] }}
-              type={'danger'}
-              title={'Error'}
-              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
-              onPress={() => {
-                toast.error('This is an error toast!');
-              }}
-            />
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+              <Button
+                height={48}
+                titleStyle={{ color: colors2024['neutral-title-2'] }}
+                type={'success'}
+                title={'Success'}
+                containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                onPress={() => {
+                  toast.success('This is a success toast!');
+                }}
+              />
 
-            <Button
-              height={48}
-              titleStyle={{ color: colors2024['blue-default'] }}
-              type={'ghost'}
-              title={'Info'}
-              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
-              onPress={() => {
-                toast.info('This is an info toast with 5s duration!', {
-                  duration: 5000,
-                });
-              }}
-            />
-          </View>
-        </View>
+              <Button
+                height={48}
+                titleStyle={{ color: colors2024['neutral-title-2'] }}
+                type={'danger'}
+                title={'Error'}
+                containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                onPress={() => {
+                  toast.error('This is an error toast!');
+                }}
+              />
+            </View>
 
-        {/* toast custom node */}
-        <View style={{ width: '100%', marginBottom: 24 }}>
-          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
-            <Text style={styles.propertyType}>
-              toast with custom React Node as content{' '.repeat(100)}
-            </Text>
-            <Text style={{ marginBottom: 12 }}>
-              You can also pass a custom React Node to `toast` functions to
-              create more complex toast notifications.
-            </Text>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+              <Button
+                height={48}
+                titleStyle={{ color: colors2024['blue-default'] }}
+                type={'ghost'}
+                title={'Show'}
+                containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                onPress={() => {
+                  toast.show('Importing', {
+                    duration: 5000,
+                  });
+                }}
+              />
+              <Button
+                height={48}
+                titleStyle={{ color: colors2024['blue-default'] }}
+                type={'ghost'}
+                title={'Info'}
+                containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                onPress={() => {
+                  toast.info('This is an info toast with 5s duration!', {
+                    duration: 5000,
+                  });
+                }}
+              />
+            </View>
           </View>
 
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
@@ -172,6 +186,7 @@ function DevToast() {
                             flexDirection: 'row',
                             alignItems: 'center',
                             gap: 8,
+                            paddingHorizontal: 0,
                           },
                         ]}>
                         <ctx.Icon

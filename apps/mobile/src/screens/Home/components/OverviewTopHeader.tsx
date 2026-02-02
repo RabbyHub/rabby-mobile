@@ -40,13 +40,15 @@ import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import Animated, {
   Easing,
+  Extrapolation,
+  interpolate,
   SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { useHomeTabIndex } from '@/hooks/navigation';
+import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import {
   useScene24hBalanceCombinedData,
   useSceneIsLoading,
@@ -55,12 +57,18 @@ import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import balanceStore from '@/store/balance';
-import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
+import {
+  THRESHOLD_PERCENT,
+  useHomeDrawerOpacityStyle,
+} from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 
 export const HeaderHeight = 30;
+const handleSwitchToTokenTab = (index: number) => {
+  apisHomeTabIndex.setTabIndex(index, true);
+};
 
 export function TabsTopHeader({
   indexDecimalValue,
@@ -71,7 +79,7 @@ export function TabsTopHeader({
 }): JSX.Element {
   const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
   const showNetWorth = tabIndexFromSv > 0.7;
-  const { tabIndex, setTabIndex } = useHomeTabIndex();
+  // const { tabIndex, setTabIndex } = useHomeTabIndex();
   const { isLoading: loading } = useSceneIsLoading('Home');
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
@@ -130,12 +138,6 @@ export function TabsTopHeader({
       setTokenDisplayMode('byAddress');
     }
   }, [setTokenDisplayMode, tokenDisplayMode]);
-  const handleSwitchToTokenTab = useCallback(
-    (index: number) => {
-      setTabIndex(index, true);
-    },
-    [setTabIndex],
-  );
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(totalBalance, { currency });
@@ -161,7 +163,20 @@ export function TabsTopHeader({
     }
   }, [data.isLoss, loading, previousLoading]);
 
-  const { opacityStyle } = useHomeDrawerOpacityStyle();
+  const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
+
+  // const headerStyle = useAnimatedStyle(() => ({
+  //   transform: [
+  //     {
+  //     translateY: interpolate(
+  //       pullPercent.value,
+  //       [-THRESHOLD_PERCENT, 0],
+  //       [-HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 1],
+  //       Extrapolation.CLAMP,
+  //     ),
+  //     },
+  //   ]
+  // }));
 
   return (
     <Animated.View style={[styles.headerBox, opacityStyle]}>
@@ -237,12 +252,14 @@ export function TabsTopHeader({
                   action: 'Click_Setting',
                 });
               }}>
-              <RcIconSetting
-                width={20}
-                height={20}
-                color={colors2024['neutral-title-1']}
-              />
-              {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+              <View style={styles.headerTouchableIcon}>
+                <RcIconSetting
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-title-1']}
+                />
+                {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+              </View>
             </Pressable>
           </>
         ) : (
@@ -345,7 +362,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: 12,
-    paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
+    paddingRight: 0,
     position: 'relative',
     // ...makeDebugBorder(),
   },
