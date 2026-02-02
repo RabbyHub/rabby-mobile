@@ -116,7 +116,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
-    color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
+    color: '#50D2C1',
   },
   positionContainer: {
     backgroundColor: 'rgba(80, 210, 193, 0.12)',

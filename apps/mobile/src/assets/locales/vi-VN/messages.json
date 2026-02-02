@@ -1279,7 +1279,8 @@
         "watchlist": "Danh sách theo dõi Token",
         "perps": "Perps",
         "perpsMarketList": "Thêm Perps",
-        "lending": "Cho vay"
+        "lending": "Cho vay",
+        "predict": "Dự đoán"
       },
       "swipeUp": {
         "descMore": "Kéo lên để khám phá thêm nhiều trang web",
@@ -2120,7 +2121,11 @@
       "copySeedPhrase": "Sao chép cụm từ khôi phục",
       "qrCodePopupTitle": "QR Code",
       "qrCodePopupTips": "Không bao giờ chia sẻ mã QR cụm từ seed cho bất kỳ ai. Vui lòng xem nó trong một môi trường an toàn và giữ cẩn thận.",
-      "alert": "Cụm từ khôi phục này là thông tin xác thực cho tài sản của bạn. KHÔNG làm mất hoặc tiết lộ nó cho người khác, nếu không bạn có thể mất tài sản mãi mãi. Vui lòng xem nó trong môi trường an toàn và giữ cẩn thận."
+      "alert": "Cụm từ khôi phục này là thông tin xác thực cho tài sản của bạn. KHÔNG làm mất hoặc tiết lộ nó cho người khác, nếu không bạn có thể mất tài sản mãi mãi. Vui lòng xem nó trong môi trường an toàn và giữ cẩn thận.",
+      "tapToReveal": {
+        "line1": "Nhấn để hiện thị cụm từ khôi phục của bạn",
+        "line2": "Hãy chắc chắn rằng không ai đang nhìn vào màn hình của bạn."
+      }
     },
     "settingModal": {
       "themeMode": {
@@ -2624,6 +2629,9 @@
         "title": "Tiết kiệm phí trên Hyperliquid",
         "hyperliquidFee": "Phí giao dịch Hyperliquid.",
         "activatedSuccess": "4% phí tiết kiệm Hyperliquid đã được kích hoạt"
+      },
+      "dappSelect": {
+        "title": "Chọn nhà cung cấp Perps"
       }
     },
     "perpsDetail": {
@@ -3067,6 +3075,9 @@
           "balance": "Số dư"
         },
         "title": "Chọn Token Hoàn trả"
+      },
+      "dappSelect": {
+        "title": "Chọn Nhà Cung Cấp Cho Vay"
       }
     },
     "address": {
@@ -3078,6 +3089,20 @@
         "btnCopyAddress": "Sao chép địa chỉ",
         "title": "Nhận tài sản"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "Chọn nhà cung cấp Dự đoán"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableTitle": "Dịch vụ không khả dụng",
+      "serviceUnavailableDesc": "Dịch vụ không được hỗ trợ ở khu vực hiện tại của bạn."
+    },
+    "DAppFrame": {
+      "selectAWallet": "Chọn một ví",
+      "netWorth": "Giá trị ròng",
+      "walletBalance": "Ví/Bảng cân đối"
     }
   },
   "component": {

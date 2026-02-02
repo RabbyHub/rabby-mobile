@@ -927,7 +927,8 @@
         "watchlist": "Liste de surveillance des tokens",
         "perps": "Perps",
         "perpsMarketList": "Plus de Perps",
-        "lending": "Prêt"
+        "lending": "Prêt",
+        "predict": "Prédire"
       },
       "swipeUp": {
         "descAndroid": "Cliquez pour explorer les dApps",
@@ -1290,7 +1291,11 @@
       "qrCodePopupTitle": "QR Code",
       "clickToShow": "Cliquez pour afficher la Seed Phrase",
       "qrCodePopupTips": "Ne partagez jamais le code QR de la phrase de récupération avec qui que ce soit. Veuillez le consulter dans un environnement sécurisé et le conserver soigneusement.",
-      "alert": "Cette phrase de récupération est l'identifiant de vos actifs. NE LA PERDEZ PAS et ne la révélez pas à d'autres personnes, sinon vous pourriez perdre vos actifs pour toujours. Veuillez la consulter dans un environnement sécurisé et la conserver soigneusement."
+      "alert": "Cette phrase de récupération est l'identifiant de vos actifs. NE LA PERDEZ PAS et ne la révélez pas à d'autres personnes, sinon vous pourriez perdre vos actifs pour toujours. Veuillez la consulter dans un environnement sécurisé et la conserver soigneusement.",
+      "tapToReveal": {
+        "line2": "Assurez-vous que personne ne regarde votre écran.",
+        "line1": "Appuyez pour révéler votre phrase de récupération"
+      }
     },
     "securityEngine": {
       "unknownResult": "Résultat inconnu car le moteur de sécurité est actuellement indisponible.",
@@ -2527,6 +2532,9 @@
         "hyperliquidFee": "Frais de trading Hyperliquid.",
         "activatedSuccess": "4 % d'économies sur les frais Hyperliquid activées",
         "description": "Utilisez le code de Rabby pour activer"
+      },
+      "dappSelect": {
+        "title": "Sélectionner le fournisseur de Perps"
       }
     },
     "perpsDetail": {
@@ -2970,6 +2978,9 @@
           "balance": "Solde"
         },
         "title": "Sélectionner le jeton de remboursement"
+      },
+      "dappSelect": {
+        "title": "Sélectionner le Fournisseur de Prêts"
       }
     },
     "address": {
@@ -2980,6 +2991,20 @@
         },
         "btnCopyAddress": "Copier l'adresse",
         "title": "Recevoir des actifs"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableDesc": "Ce service n'est pas pris en charge dans votre région actuelle.",
+      "serviceUnavailableTitle": "Service indisponible"
+    },
+    "DAppFrame": {
+      "netWorth": "Valeur nette",
+      "walletBalance": "Portefeuille/Balance",
+      "selectAWallet": "Sélectionnez un Wallet"
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "Sélectionner un fournisseur de prévisions"
       }
     }
   },

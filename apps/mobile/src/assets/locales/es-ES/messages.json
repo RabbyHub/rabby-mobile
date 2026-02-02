@@ -1112,7 +1112,8 @@
         "watchlist": "Lista de Observación de Tokens",
         "perpsMarketList": "Más Perps",
         "perps": "Perps",
-        "lending": "Préstamo"
+        "lending": "Préstamo",
+        "predict": "Predecir"
       },
       "swipeUp": {
         "descAndroidMore": "Haz clic para explorar más dApps",
@@ -1839,7 +1840,11 @@
       "qrCodePopupTitle": "Código QR",
       "clickToShow": "Haz clic para mostrar la Seed Phrase",
       "qrCodePopupTips": "Nunca compartas el código QR de la seed phrase con nadie más. Por favor, visualízalo en un entorno seguro y consérvalo cuidadosamente.",
-      "alert": "Esta frase semilla es la credencial para tus activos. NO la pierdas ni la reveles a otros, de lo contrario podrías perder tus activos para siempre. Por favor, visualízala en un entorno seguro y guárdala cuidadosamente."
+      "alert": "Esta frase semilla es la credencial para tus activos. NO la pierdas ni la reveles a otros, de lo contrario podrías perder tus activos para siempre. Por favor, visualízala en un entorno seguro y guárdala cuidadosamente.",
+      "tapToReveal": {
+        "line1": "Toca para revelar tu frase semilla",
+        "line2": "Asegúrate de que nadie esté mirando tu pantalla."
+      }
     },
     "createPassword": {
       "Newpassword": "Nueva contraseña",
@@ -2790,6 +2795,9 @@
         "activatedSuccess": "Ahorros de tarifas Hyperliquid del 4% activados",
         "hyperliquidFee": "Comisiones de trading de Hyperliquid.",
         "activateFailed": "Fallido"
+      },
+      "dappSelect": {
+        "title": "Seleccionar proveedor de Perps"
       }
     },
     "perpsDetail": {
@@ -3233,6 +3241,9 @@
           "balance": "Saldo"
         },
         "title": "Seleccionar Token de Reembolso"
+      },
+      "dappSelect": {
+        "title": "Seleccionar Proveedor de Préstamos"
       }
     },
     "address": {
@@ -3244,6 +3255,20 @@
         "title": "Recibir activos",
         "btnCopyAddress": "Copiar Dirección"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "Seleccionar Proveedor de Predicción"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableTitle": "Servicio no disponible",
+      "serviceUnavailableDesc": "El servicio no está disponible en su región actual."
+    },
+    "DAppFrame": {
+      "selectAWallet": "Selecciona una billetera",
+      "netWorth": "Valor neto",
+      "walletBalance": "Cartera/Saldo"
     }
   },
   "global": {

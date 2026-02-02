@@ -955,7 +955,8 @@
         "watchlist": "トークンウォッチリスト",
         "perps": "パープス",
         "perpsMarketList": "より多くのPerps",
-        "lending": "貸し出し"
+        "lending": "貸し出し",
+        "predict": "予測する"
       },
       "swipeUp": {
         "descAndroidMore": "クリックしてさらに多くのdAppsを探索する",
@@ -1733,7 +1734,11 @@
       "copySeedPhrase": "シードフレーズをコピー",
       "clickToShow": "クリックしてSeed Phraseを表示",
       "qrCodePopupTips": "シードフレーズのQRコードを他の人と共有しないでください。安全な環境で表示し、注意深く保管してください。",
-      "alert": "このシードフレーズはあなたの資産の証明書です。失くしたり他人に見せたりしないでください。さもなければ、あなたの資産を永久に失う可能性があります。安全な環境で表示し、注意深く保管してください。"
+      "alert": "このシードフレーズはあなたの資産の証明書です。失くしたり他人に見せたりしないでください。さもなければ、あなたの資産を永久に失う可能性があります。安全な環境で表示し、注意深く保管してください。",
+      "tapToReveal": {
+        "line2": "誰もあなたの画面を見ていないことを確認してください。",
+        "line1": "シードフレーズを表示するにはタップしてください"
+      }
     },
     "safeQueue": {
       "cancelExplain": "{{protocol}} に対する {{token}} の承認をキャンセル",
@@ -2570,6 +2575,9 @@
         "description": "Rabbyのコードを使用して有効にします",
         "activatedSuccess": "4%のHyperliquid手数料節約が有効化されました",
         "activatedFailed": "アクティブ化に失敗しました"
+      },
+      "dappSelect": {
+        "title": "Perpsプロバイダーを選択してください"
       }
     },
     "perpsDetail": {
@@ -3013,6 +3021,9 @@
           "balance": "残高"
         },
         "title": "リペイトークンを選択してください"
+      },
+      "dappSelect": {
+        "title": "レンディングプロバイダーを選択してください"
       }
     },
     "address": {
@@ -3024,6 +3035,20 @@
         "title": "資産を受け取る",
         "btnCopyAddress": "アドレスをコピー"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "予測プロバイダーを選択してください"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableTitle": "サービスは利用できません",
+      "serviceUnavailableDesc": "このサービスは現在の地域ではサポートされていません。"
+    },
+    "DAppFrame": {
+      "selectAWallet": "ウォレットを選択してください",
+      "walletBalance": "ウォレット/残高",
+      "netWorth": "純資産"
     }
   },
   "global": {
