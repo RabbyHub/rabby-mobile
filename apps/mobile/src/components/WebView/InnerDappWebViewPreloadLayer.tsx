@@ -79,7 +79,7 @@ export default function InnerDappWebViewPreloadLayer({
   const { styles } = useTheme2024({ getStyle });
   const preloadStrategy = useInnerDappPreloadStrategy();
   const configuredMaxRetained = useInnerDappPreloadRetention();
-  const { lending, perps } = useInnerDappSelection();
+  const { lending, perps, prediction } = useInnerDappSelection();
   const [readyRouteName, setReadyRouteName] = useState<string | null>(null);
   const [retainedKeys, setRetainedKeys] = useState<string[]>([]);
   const { getIsAppUnlocked } = useAppUnlocked();
@@ -169,7 +169,7 @@ export default function InnerDappWebViewPreloadLayer({
       : activeScene === 'Perps'
       ? perps
       : activeScene === 'Prediction'
-      ? DEFAULT_PREDICTION_ID
+      ? prediction || DEFAULT_PREDICTION_ID
       : undefined;
 
   const shouldShowActiveWebView =
