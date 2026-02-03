@@ -930,7 +930,7 @@ runFlow({
         action: { type: 'click' },
       },
     ],
-    'https://app.venus.io': [
+    'https://venus.io': [
       {
         wait: {
           path: [
@@ -1106,7 +1106,7 @@ runFlow({
     }
   };
 
-  const WAITING_ORIGINS = ['https://app.venus.io', 'https://probable.markets'];
+  const WAITING_ORIGINS = ['https://venus.io', 'https://probable.markets'];
 
   const start = () => {
     const { origin } = window.location;
