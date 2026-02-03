@@ -3,6 +3,7 @@ import { OpenApiStore, openApiStore } from '../services/openapiStore';
 import { SignApiPlugin } from '../request';
 import {
   APP_VERSIONS,
+  APPLICATION_ID,
   INITIAL_OPENAPI_URL,
   isNonPublicProductionEnv,
 } from '@/constant';
@@ -65,6 +66,7 @@ class NotificationsOpenApiService extends OpenApiService {
     userAddrs: string[];
   }): Promise<BindDeviceResponse> {
     const response = await this.request.post('/v1/notification/bind', {
+      application_id: APPLICATION_ID,
       device_id: this.#getDeviceUUID(),
       platform: params.platform,
       push_token: params.pushToken,

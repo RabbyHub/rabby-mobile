@@ -16,7 +16,7 @@ export function getTestPushServerURL() {
   return connectURL;
 }
 
-const connectPushTestServer = async (data: { pushToken: string }) => {
+export const connectPushTestServer = async (data: { pushToken: string }) => {
   const pushToken = data.pushToken;
   if (!pushToken) {
     throw new Error(

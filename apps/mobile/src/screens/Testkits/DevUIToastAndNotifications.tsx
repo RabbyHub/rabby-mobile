@@ -35,7 +35,10 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import dayjs from 'dayjs';
 import { RABBY_MOBILE_PUSH_TEST_SERVER_URL } from '@/constant/env';
 import { useAppNotificationEnabled } from '@/hooks/appNotification';
-import { getTestPushServerURL } from '@/core/notifications/test-server';
+import {
+  connectPushTestServer,
+  getTestPushServerURL,
+} from '@/core/notifications/test-server';
 
 function DevToast() {
   const { styles, colors2024, colors } = useTheme2024({
@@ -338,6 +341,50 @@ function DevNotifications() {
             </Text>
           </View>
 
+          {/* heartbeat logs */}
+          <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+            <View style={[{ flexDirection: 'row', alignItems: 'center' }]}>
+              <Text
+                style={[
+                  styles.propertyType,
+                  { flexDirection: 'row', alignItems: 'center' },
+                ]}>
+                Heartbeat logs
+              </Text>
+            </View>
+            <View
+              style={{
+                marginTop: 8,
+                width: '100%',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-start',
+              }}>
+              <FlatList
+                data={heartbeatResps.slice(0, 5)}
+                renderItem={({ item }) => {
+                  return (
+                    <View style={{ marginTop: 6 }}>
+                      <Text
+                        style={{
+                          color: colors2024['neutral-title-1'],
+                          fontSize: 14,
+                          marginTop: 4,
+                        }}>
+                        [heartbeat] updated ttl to{' '}
+                        {dayjs(item.expireTime).format(
+                          'YYYY-MM-DD HH:mm:ss.SSS',
+                        )}
+                      </Text>
+                    </View>
+                  );
+                }}
+                keyExtractor={(_, index) =>
+                  `heartbeat-msg-${_.expireTime}-${index}`
+                }
+              />
+            </View>
+          </View>
+
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
             <Button
               height={48}
@@ -357,48 +404,6 @@ function DevNotifications() {
           </View>
         </View>
 
-        {/* heartbeat logs */}
-        <View style={[styles.propertyDesc, { marginTop: 12 }]}>
-          <View style={[{ flexDirection: 'row', alignItems: 'center' }]}>
-            <Text
-              style={[
-                styles.propertyType,
-                { flexDirection: 'row', alignItems: 'center' },
-              ]}>
-              Heartbeat logs
-            </Text>
-          </View>
-          <View
-            style={{
-              marginTop: 8,
-              width: '100%',
-              alignItems: 'flex-start',
-              justifyContent: 'flex-start',
-            }}>
-            <FlatList
-              data={heartbeatResps.slice(0, 5)}
-              renderItem={({ item }) => {
-                return (
-                  <View style={{ marginTop: 6 }}>
-                    <Text
-                      style={{
-                        color: colors2024['neutral-title-1'],
-                        fontSize: 14,
-                        marginTop: 4,
-                      }}>
-                      [heartbeat] updated ttl to{' '}
-                      {dayjs(item.expireTime).format('YYYY-MM-DD HH:mm:ss.SSS')}
-                    </Text>
-                  </View>
-                );
-              }}
-              keyExtractor={(_, index) =>
-                `heartbeat-msg-${_.expireTime}-${index}`
-              }
-            />
-          </View>
-        </View>
-
         <View style={{ width: '100%', marginBottom: 24 }}>
           <View style={[styles.propertyDesc, { marginTop: 12 }]}>
             <View style={[{ flexDirection: 'row', alignItems: 'center' }]}>
@@ -411,7 +416,27 @@ function DevNotifications() {
               </Text>
               {/* <RcIconCopyCC style={[{ marginLeft: 2 }]} /> */}
             </View>
-            <Text style={{ marginBottom: 12 }}>{getTestPushServerURL()}</Text>
+            <View style={{ width: '100%' }}>
+              <Text style={{ marginBottom: 12 }}>{getTestPushServerURL()}</Text>
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+            <Button
+              height={48}
+              titleStyle={{ color: colors2024['neutral-title-2'] }}
+              type={'primary'}
+              title={'Connect Test Server'}
+              containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+              onPress={() => {
+                pushToken &&
+                  connectPushTestServer({ pushToken }).then(res => {
+                    toast[res.success ? 'success' : 'info'](
+                      JSON.stringify(res, null, ' '.repeat(4)),
+                    );
+                  });
+              }}
+            />
           </View>
         </View>
       </View>
