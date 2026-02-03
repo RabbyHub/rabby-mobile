@@ -1034,6 +1034,61 @@ runFlow({
         action: { type: 'click' },
       },
     ],
+    'https://app.opinion.trade': [
+      {
+        wait: {
+          path: [
+            {
+              css: 'a[href="/login"]',
+            },
+          ],
+        },
+        action: { type: 'wait', ms: 2000 },
+      },
+      {
+        wait: {
+          path: [
+            {
+              css: 'a[href="/login"]',
+            },
+          ],
+        },
+        action: { type: 'click' },
+      },
+      {
+        wait: {
+          path: [
+            {
+              css: '[alt="Rabby Wallet"][src^=data\\:image\\/svg]',
+            },
+            { enabled: true },
+          ],
+        },
+        action: { type: 'click' },
+      },
+    ],
+    'https://probable.markets': [
+      {
+        wait: {
+          path: [
+            {
+              css: 'body header button + button[data-variant="primary"]',
+            },
+          ],
+        },
+        action: { type: 'click' },
+      },
+      {
+        wait: {
+          path: [
+            {
+              css: 'img[src*=wallets\\/rabby]',
+            },
+          ],
+        },
+        action: { type: 'click' },
+      },
+    ],
   };
 
   const domReadyCall = callback => {
@@ -1051,6 +1106,8 @@ runFlow({
     }
   };
 
+  const WAITING_ORIGINS = ['https://app.venus.io', 'https://probable.markets'];
+
   const start = () => {
     const { origin } = window.location;
     const rule = rules[origin];
@@ -1062,21 +1119,23 @@ runFlow({
           steps: rule,
         });
 
-      if (origin === 'https://app.venus.io') {
-        setTimeout(() => {
-          try {
-            const store = JSON.parse(
-              window.localStorage.getItem('wagmi.store'),
-            );
-            if (!store.state.current) {
-              autoRunner();
-            }
-          } catch (error) {
+      const tryConnect = () => {
+        try {
+          const store = JSON.parse(window.localStorage.getItem('wagmi.store'));
+          if (!store?.state?.current) {
             autoRunner();
           }
+        } catch (error) {
+          return autoRunner();
+        }
+      };
+
+      if (WAITING_ORIGINS.includes(origin)) {
+        setTimeout(() => {
+          tryConnect();
         }, 1000 * 2);
       } else {
-        autoRunner();
+        tryConnect();
       }
     }
   };

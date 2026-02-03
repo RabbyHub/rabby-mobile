@@ -11,10 +11,10 @@ import useAppChainStore from '@/store/appchain';
 export const useCurrentInnerDappTypeValue = (
   type: keyof typeof INNER_DAPP_LIST,
 ) => {
-  const { lending, perps } = useInnerDappSelection();
+  const { lending, perps, prediction } = useInnerDappSelection();
 
   const dappId =
-    type === 'PREDICTION' ? 'polymarket' : type === 'LENDING' ? lending : perps;
+    type === 'PREDICTION' ? prediction : type === 'LENDING' ? lending : perps;
 
   const { accounts } = useAccounts({
     disableAutoFetch: true,
