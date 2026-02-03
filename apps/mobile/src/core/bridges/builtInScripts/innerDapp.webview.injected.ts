@@ -930,7 +930,7 @@ runFlow({
         action: { type: 'click' },
       },
     ],
-    'https://app.venus.io': [
+    'https://venus.io': [
       {
         wait: {
           path: [
@@ -1051,6 +1051,8 @@ runFlow({
     }
   };
 
+  const WAITING_ORIGINS = ['https://venus.io', 'https://probable.markets'];
+
   const start = () => {
     const { origin } = window.location;
     const rule = rules[origin];
@@ -1062,7 +1064,7 @@ runFlow({
           steps: rule,
         });
 
-      if (origin === 'https://app.venus.io') {
+      if (WAITING_ORIGINS.includes(origin)) {
         setTimeout(() => {
           try {
             const store = JSON.parse(
