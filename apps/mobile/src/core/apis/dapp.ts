@@ -109,8 +109,6 @@ export function setCurrentAccountForDapp(
   });
   const dapp = dappService.getDapp(origin);
 
-  console.log('dapp setCurrentAccountForDapp', dapp);
-
   if (dapp?.isConnected) {
     sessionService.broadcastEvent(
       BroadcastEvent.accountsChanged,
