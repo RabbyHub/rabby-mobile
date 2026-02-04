@@ -37,7 +37,8 @@ const PREDICTION: DappSelectItem[] = [
     name: 'Opinion',
     icon: PngOpinion,
     url: 'https://app.opinion.trade/macro',
-    themeColor: 'rgba(22, 82, 240, 0.06)',
+    themeColor: 'rgba(0, 0, 0, 0.06);',
+
     TVL: '$118M',
   },
   {
@@ -45,7 +46,7 @@ const PREDICTION: DappSelectItem[] = [
     name: 'Probable',
     icon: PngProbable,
     url: 'https://probable.markets/',
-    themeColor: 'rgba(22, 82, 240, 0.06)',
+    themeColor: 'rgba(252, 98, 28, 0.06);',
     TVL: '$21M',
   },
 ];
