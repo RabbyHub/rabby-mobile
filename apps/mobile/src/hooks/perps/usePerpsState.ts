@@ -16,8 +16,10 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
 import {
+  AccountSummary,
   apisPerpsStore,
   getClearinghouseStateByMap,
+  PositionAndOpenOrder,
   usePerpsStore,
 } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
@@ -28,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { getAllMyAccount } from '@/core/apis/address';
 import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 import { sleep } from '@/utils/async';
+import { calcAccountValueByAllDexs } from '@/utils/perps';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
@@ -47,12 +50,9 @@ export const usePerpsState = () => {
     setUserAccountHistory,
     setUserFills,
     addUserFills,
-    updatePositionsWithClearinghouse,
     updateUserAccountHistory,
     setPerpFee,
     setMarketData,
-    setPositionAndOpenOrders,
-    setAccountSummary,
     setAccountNeedApproveAgent,
     setAccountNeedApproveBuilderFee,
     // setCurrentPerpsAccount,
@@ -61,7 +61,6 @@ export const usePerpsState = () => {
     resetAccountState,
 
     // Effects
-    fetchPositionAndOpenOrders,
     loginPerpsAccount,
     fetchClearinghouseState,
     fetchUserNonFundingLedgerUpdates,
@@ -567,7 +566,6 @@ export const usePerpsState = () => {
     ensureLoginApproveSign,
     setInitialized,
     fetchPerpPermission,
-    fetchPositionAndOpenOrders,
   ]);
 
   const judgeIsUserAgentIsExpired = useMemoizedFn(
@@ -621,7 +619,8 @@ export const usePerpsState = () => {
 
       let isNeedDepositBeforeApprove = true;
       const info = getClearinghouseStateByMap(account.address);
-      if ((Number(info?.marginSummary.accountValue) || 0) > 0) {
+      const accountValue = calcAccountValueByAllDexs(info);
+      if (Number(accountValue) > 0) {
         isNeedDepositBeforeApprove = false;
       } else {
         const { role } = await sdk.info.getUserRole();
@@ -831,12 +830,41 @@ export const usePerpsState = () => {
   //   setApproveSignatures,
   // ]);
 
+  const allDexsPositions = useMemo(() => {
+    const res = perpsState.allDexsClearinghouseState
+      .map(item => item[1].assetPositions)
+      .flat();
+    return res;
+  }, [perpsState.allDexsClearinghouseState]);
+
+  const positionAndOpenOrders: PositionAndOpenOrder[] = useMemo(() => {
+    return allDexsPositions.map(position => ({
+      ...position,
+      openOrders: perpsState.openOrders.filter(
+        item => item.coin === position.position.coin,
+      ),
+    }));
+  }, [allDexsPositions, perpsState.openOrders]);
+
+  const accountSummary: AccountSummary = useMemo(() => {
+    const allDexsClearinghouseState = perpsState.allDexsClearinghouseState;
+    const hyperDexState = allDexsClearinghouseState[0]?.[1];
+    const accountValue = calcAccountValueByAllDexs(allDexsClearinghouseState);
+    return {
+      accountValue: accountValue.toString(),
+      totalMarginUsed: hyperDexState?.marginSummary?.totalMarginUsed || '0',
+      totalNtlPos: hyperDexState?.marginSummary?.totalNtlPos || '0',
+      totalRawUsd: hyperDexState?.marginSummary?.totalRawUsd || '0',
+      withdrawable: hyperDexState?.withdrawable || '0',
+    };
+  }, [perpsState.allDexsClearinghouseState]);
+
   return {
     // State
     marketData: perpsState.marketData,
     marketDataMap: perpsState.marketDataMap,
-    positionAndOpenOrders: perpsState.positionAndOpenOrders,
-    accountSummary: perpsState.accountSummary,
+    positionAndOpenOrders,
+    accountSummary,
     currentPerpsAccount: perpsState.currentPerpsAccount,
     isLogin: perpsState.isLogin,
     isInitialized: perpsState.isInitialized,

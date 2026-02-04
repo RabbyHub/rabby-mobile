@@ -9309,16 +9309,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.1.1":
-  version: 1.1.1
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.1"
+"@rabby-wallet/hyperliquid-sdk@npm:1.1.4-beta.3":
+  version: 1.1.4-beta.3
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.4-beta.3"
   dependencies:
     "@ethereumjs/util": 9.0.0
     "@metamask/eth-sig-util": 5.1.0
     "@msgpack/msgpack": 3.1.2
     "@noble/hashes": 1.8.0
     ethereum-cryptography: 2.2.1
-  checksum: f0e6ab6f52fe5bc4c8e535e3b29c0445e3e5260425523d6f26d2148573d412896cd8fb49c020d0fbe83e58b34a8b51e8b9e2518cc8e883b79004bcdc92b9f4bd
+  checksum: aaaeff857c3ef345f135ddac5c585dd5a542e604a8075cdcb36e9cb42bab53340f2efe2b05b17381b0c5bc58d54a45f55cce0d78999200845dad83774db2a321
   languageName: node
   linkType: hard
 
@@ -9523,9 +9523,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.54":
-  version: 0.9.54
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.54"
+"@rabby-wallet/rabby-api@npm:0.9.55-beta.1":
+  version: 0.9.55-beta.1
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.55-beta.1"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -9536,7 +9536,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 1756a621d67a151a80eac03e9faebd28cb2e8423a9db5be81c87d74cb19e0d32e685940b0597cd5301cd29e90ef87feae722322ba7268b6623700deaba1d1512
+  checksum: c383e4adb9688cc8814389573662e1678f6d411f0fadf033d0d19c8cf8f340f2aba71007e0a9208bb2119e26cb4284ebdd16b1eacb4ac65d607db79b1ca19776
   languageName: node
   linkType: hard
 
@@ -35687,11 +35687,11 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.1.0
     "@rabby-wallet/gnosis-sdk": 1.4.6
-    "@rabby-wallet/hyperliquid-sdk": 1.1.1
+    "@rabby-wallet/hyperliquid-sdk": 1.1.4-beta.3
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.14
-    "@rabby-wallet/rabby-api": 0.9.54
+    "@rabby-wallet/rabby-api": 0.9.55-beta.1
     "@rabby-wallet/rabby-security-engine": 2.0.12
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.72

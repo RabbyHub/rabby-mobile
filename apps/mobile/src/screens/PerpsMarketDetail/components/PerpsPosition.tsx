@@ -15,7 +15,7 @@ import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import { formatUsdValue } from '@/utils/number';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
-import { formatPerpsPct } from '@/utils/perps';
+import { formatPerpsCoin, formatPerpsPct } from '@/utils/perps';
 
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
@@ -453,7 +453,7 @@ export const PerpsPosition: React.FC<{
                 {splitNumberByStep(
                   Number(positionData?.positionValue || 0).toFixed(2),
                 )}{' '}
-                = {positionData?.size} {coin}
+                = {positionData?.size} {formatPerpsCoin(coin)}
               </Text>
             </View>
           </View>

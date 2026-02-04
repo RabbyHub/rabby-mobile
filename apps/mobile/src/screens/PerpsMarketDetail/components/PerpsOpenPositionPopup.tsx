@@ -7,7 +7,11 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatPerpsUsdValue } from '@/utils/number';
-import { calLiquidationPrice, formatPerpsPct } from '@/utils/perps';
+import {
+  calLiquidationPrice,
+  formatPerpsCoin,
+  formatPerpsPct,
+} from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -104,21 +108,19 @@ export const PerpsOpenPositionPopup: React.FC<{
     getStyle: getStyle,
   });
 
-  const { currentClearinghouseState } = perpsStore(
+  const { allDexsClearinghouseState } = perpsStore(
     useShallow(s => ({
-      currentClearinghouseState: s.currentClearinghouseState,
+      allDexsClearinghouseState: s.allDexsClearinghouseState,
     })),
   );
 
   const crossMargin = React.useMemo(() => {
+    const currentClearinghouseState = allDexsClearinghouseState[0]?.[1];
     return (
       Number(currentClearinghouseState?.crossMarginSummary?.accountValue || 0) -
       Number(currentClearinghouseState?.crossMaintenanceMarginUsed || 0)
     );
-  }, [
-    currentClearinghouseState?.crossMarginSummary?.accountValue,
-    currentClearinghouseState?.crossMaintenanceMarginUsed,
-  ]);
+  }, [allDexsClearinghouseState]);
 
   const { t } = useTranslation();
   const [isReviewMode, setIsReviewMode] = React.useState(false);
@@ -638,7 +640,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                       Number(tradeSize) * markPrice,
                       BigNumber.ROUND_DOWN,
                     )}{' '}
-                    = {tradeSize} {coin}
+                    = {tradeSize} {formatPerpsCoin(coin)}
                   </Text>
                 </View>
               </View>

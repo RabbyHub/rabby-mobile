@@ -8,9 +8,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { FavoriteTag } from '@/components2024/Favorite';
+import { formatPerpsCoin } from '@/utils/perps';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
-export const PerpsMarketItem: React.FC<{
+const PerpsMarketItemComponent: React.FC<{
   item: MarketData;
   isFavorite?: boolean;
   hasPosition?: boolean;
@@ -31,7 +32,7 @@ export const PerpsMarketItem: React.FC<{
         <View style={styles.content}>
           <View style={styles.row}>
             <View style={styles.nameContainer}>
-              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.name}>{formatPerpsCoin(item.name)}</Text>
               {hasPosition && (
                 <View style={styles.positionContainer}>
                   <Text style={styles.positionText}>1 Position</Text>
@@ -65,6 +66,8 @@ export const PerpsMarketItem: React.FC<{
     </TouchableOpacity>
   );
 };
+
+export const PerpsMarketItem = React.memo(PerpsMarketItemComponent);
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {

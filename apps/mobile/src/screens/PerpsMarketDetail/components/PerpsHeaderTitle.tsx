@@ -13,6 +13,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
 import { apiContact } from '@/core/apis';
 import { Account } from '@/core/services/preference';
+import { formatPerpsCoin } from '@/utils/perps';
 
 export const PerpsHeaderTitle: React.FC<{
   market?: MarketData;
@@ -39,7 +40,7 @@ export const PerpsHeaderTitle: React.FC<{
     <View style={styles.container}>
       <TouchableOpacity onPress={onSelectCoin} style={styles.touchable}>
         <AssetAvatar logo={market.logoUrl} logoStyle={styles.icon} size={24} />
-        <Text style={styles.text}>{market.name} - USD</Text>
+        <Text style={styles.text}>{formatPerpsCoin(market.name)} - USD</Text>
         <IconCom
           width={20}
           height={20}

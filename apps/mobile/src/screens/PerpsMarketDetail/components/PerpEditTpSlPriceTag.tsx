@@ -20,7 +20,11 @@ import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import IconPerpDelete from '@/assets2024/icons/perps/IconTagClearCC.svg';
 import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
-import { formatPerpsPct, formatTpOrSlPrice } from '@/utils/perps';
+import {
+  formatPerpsCoin,
+  formatPerpsPct,
+  formatTpOrSlPrice,
+} from '@/utils/perps';
 import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
 
 interface Props {
@@ -378,7 +382,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                   </TouchableOpacity>
                   <View style={styles.header}>
                     <Text style={styles.title}>
-                      {direction} {coin}-USD
+                      {direction} {formatPerpsCoin(coin)}-USD
                     </Text>
                     {type === 'openPosition' ? (
                       <Text style={styles.subTitle}>
