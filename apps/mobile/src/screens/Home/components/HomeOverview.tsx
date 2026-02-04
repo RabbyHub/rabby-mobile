@@ -14,13 +14,10 @@ import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
 import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
 import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
 import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
+import RcIconMemeCC from '@/assets2024/icons/home/IconMemeCC.svg';
 import { RootNames } from '@/constant/layout';
-import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
@@ -30,11 +27,7 @@ import React, {
   useState,
 } from 'react';
 import {
-  AppState,
   Dimensions,
-  PanResponder,
-  Platform,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -85,10 +78,7 @@ import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { refreshDayCurve } from '@/hooks/useMultiCurve';
-import {
-  refresh24hAssets,
-  useScene24hBalanceLightWeightData,
-} from '@/hooks/useScene24hBalance';
+import { refresh24hAssets } from '@/hooks/useScene24hBalance';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import { colord } from 'colord';
@@ -100,7 +90,6 @@ import { BrowserSearchEntry } from '../../Browser/components/BrowserSearchEntry'
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
 import { PointsBadge } from '../../Points/components/PointsBadge';
-import { useInitDetectDBAssets } from '../../Search/useAssets';
 import { WatchListBadge } from '../../Watchlist/components/WatchListBadge';
 import { HomeCenterArea } from '../components/HomeCenterArea';
 import { HomeDappDrawer } from '../components/HomeDappDrawer';
@@ -136,6 +125,9 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { PredictBadge } from './PredicBadge';
+import { Top3MemeBadge } from '@/screens/Meme/components/Top3MemeBadge';
+import { NewTag } from './NewTag';
+import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -213,7 +205,7 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     () => {
       return scrollableStatus.value;
     },
-    (cur, prev) => {
+    () => {
       // scrollableEnabled.value = true;
     },
   );
@@ -269,15 +261,16 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
   const onScrollHandlers = {
     onAnimatedScrollBeginDrag: useCallback<
       ScrollHandlerProps['onAnimatedScrollBeginDrag'] & object
-    >((event, ctx) => {
+    >(() => {
       // // leave here for debug on some android devices
       // console.debug(
       //   '[onScrollHandlers] onAnimatedScrollBeginDrag:: event.nativeEvent',
       //   event.nativeEvent,
       // );
     }, []),
-    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(event => {},
-    []),
+    onScroll: useCallback<
+      ScrollHandlerProps['onScroll'] & object
+    >(() => {}, []),
   };
 
   const startValues = useSharedValue({
@@ -360,8 +353,6 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     mainStyle,
   };
 };
-
-const HEADER_MT_OFFSET = HOME_TOP_HEADER_SIZES.headerHeight;
 
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
@@ -451,6 +442,13 @@ const getStyle = createGetStyles2024(
       lineHeight: 20,
       textAlign: 'left',
       fontFamily: 'SF Pro Rounded',
+    },
+    titleWithNewTagRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    newTagWrapper: {
+      marginLeft: 4,
     },
     badgeWrapper: {
       display: 'flex',
@@ -607,12 +605,6 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconApprovalsCC,
           badge: alertInfo.total,
         },
-        {
-          key: MultiHomeFeatTitle.GasAccount,
-          title: t('page.home.services.gasAccount'),
-          icon: RcIconGasAccountCC,
-          showGiftIcon: isEligible,
-        },
         // __DEV__ && {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
         //   icon: RcIconDapps,
@@ -622,6 +614,17 @@ export const HomeOverview = React.memo(() => {
           key: MultiHomeFeatTitle.Watchlist,
           title: t('page.home.services.watchlist'),
           icon: RcIconWatchlistCC,
+        },
+        {
+          key: MultiHomeFeatTitle.Meme,
+          title: t('page.home.services.meme'),
+          icon: RcIconMemeCC,
+        },
+        {
+          key: MultiHomeFeatTitle.GasAccount,
+          title: t('page.home.services.gasAccount'),
+          icon: RcIconGasAccountCC,
+          showGiftIcon: isEligible,
         },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
@@ -793,6 +796,12 @@ export const HomeOverview = React.memo(() => {
           handlePressWatchlist();
           break;
         }
+        case MultiHomeFeatTitle.Meme:
+          navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
+            screen: RootNames.Meme,
+            params: {},
+          });
+          break;
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
@@ -869,6 +878,10 @@ export const HomeOverview = React.memo(() => {
         return <GasAccountBadge />;
       }
 
+      if (el.key === MultiHomeFeatTitle.Meme) {
+        return <Top3MemeBadge />;
+      }
+
       return (
         <>
           {!!el.badge && el.badge > 0 ? (
@@ -928,38 +941,13 @@ export const HomeOverview = React.memo(() => {
                 <View style={styles.gridItemsWrap}>
                   {MENU_ARR.map((el, index) => {
                     return (
-                      <FastTouchable
-                        style={StyleSheet.flatten([
-                          styles.gridItem,
-                          { width: itemWidth },
-                        ])}
+                      <HomeMenuItem
                         key={index}
-                        onPress={() => {
-                          console.debug('[perf] touched menu', el.key);
-                          requestAnimationFrame(() => {
-                            handleClickMenu(el.key);
-                          });
-                          matomoRequestEvent({
-                            category: 'Click_Services',
-                            action: `Click_${el.key}`,
-                          });
-                        }}>
-                        <View style={styles.badgeWrapper}>
-                          <View style={styles.iconWrapper}>
-                            <el.icon
-                              width={28}
-                              height={28}
-                              color={
-                                el.color || colors2024['brand-default-icon']
-                              }
-                            />
-                          </View>
-                          <View style={styles.rightBadgeWrapper}>
-                            {generateCustomBadgeIcon(el)}
-                          </View>
-                        </View>
-                        <Text style={styles.gridText}>{el.title}</Text>
-                      </FastTouchable>
+                        el={el}
+                        itemWidth={itemWidth}
+                        onPress={handleClickMenu}
+                        renderBadge={generateCustomBadgeIcon}
+                      />
                     );
                   })}
                 </View>
@@ -983,3 +971,69 @@ export const HomeOverview = React.memo(() => {
     </View>
   );
 });
+
+type HomeMenuItemProps = {
+  el: {
+    key: MultiHomeFeatTitle;
+    title: string;
+    icon: React.FC<import('react-native-svg').SvgProps>;
+    color?: string;
+    badge?: number;
+    isSuccess?: boolean;
+    showGiftIcon?: boolean;
+  };
+  itemWidth: number;
+  onPress: (key: MultiHomeFeatTitle) => void;
+  renderBadge: (el: HomeMenuItemProps['el']) => React.ReactNode;
+};
+
+const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
+  el,
+  itemWidth,
+  onPress,
+  renderBadge,
+}) => {
+  const { styles, colors2024 } = useTheme2024({
+    getStyle,
+  });
+  const { shouldShowNewTag, markVisited } = useHomeFeatureNewTag(el.key);
+
+  const handlePress = useCallback(() => {
+    console.debug('[perf] touched menu', el.key);
+    requestAnimationFrame(() => {
+      markVisited();
+      onPress(el.key);
+    });
+    matomoRequestEvent({
+      category: 'Click_Services',
+      action: `Click_${el.key}`,
+    });
+  }, [el.key, markVisited, onPress]);
+
+  return (
+    <FastTouchable
+      style={StyleSheet.flatten([styles.gridItem, { width: itemWidth }])}
+      onPress={handlePress}>
+      <View style={styles.badgeWrapper}>
+        <View style={styles.iconWrapper}>
+          <el.icon
+            width={28}
+            height={28}
+            color={el.color || colors2024['brand-default-icon']}
+          />
+        </View>
+        <View style={styles.rightBadgeWrapper}>{renderBadge(el)}</View>
+      </View>
+      <View style={styles.titleWithNewTagRow}>
+        <Text style={styles.gridText} numberOfLines={1} ellipsizeMode="tail">
+          {el.title}
+        </Text>
+        {shouldShowNewTag ? (
+          <View style={styles.newTagWrapper}>
+            <NewTag />
+          </View>
+        ) : null}
+      </View>
+    </FastTouchable>
+  );
+};

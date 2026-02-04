@@ -1047,6 +1047,7 @@
         "search": "Search Token",
         "watchlist": "Token Watchlist",
         "perps": "Perps",
+        "meme": "Memecoin",
         "lending": "Lending",
         "predict": "Predict",
         "perpsMarketList": "More Perps"
@@ -2352,6 +2353,14 @@
       },
       "toast": {
         "remove": "Remove from Watchlist Success"
+      }
+    },
+    "meme": {
+      "tokenHeader": {
+        "volume": "24H Volume",
+        "fdv": "FDV",
+        "price": "Price",
+        "change": "24H Change"
       }
     },
     "universalLink": {
