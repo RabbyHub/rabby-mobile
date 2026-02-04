@@ -1987,7 +1987,7 @@
       "excludeBalanceTipsButton": "I Got It.",
       "guideToMarketData": "Market Data:",
       "price": "Price",
-      "copyCA": "Token contract address copied:",
+      "copyCA": "Token contract address copied",
       "tabs": {
         "marketData": "Market data",
         "tokenSecurity": "Token Security"
