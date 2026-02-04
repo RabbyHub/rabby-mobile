@@ -2162,7 +2162,7 @@
       "screenshotReportSwitch": "Screenshot to report bug",
       "currency": "Currency",
       "searchCurrency": "Search Currency",
-      "transactionNotification": "Transaction notifications"
+      "transactionNotification": "Txn notifications (Beta)"
     },
     "settingModal": {
       "themeMode": {

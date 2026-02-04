@@ -47,6 +47,7 @@ import balanceStore from './store/balance';
 import { apisAutoLock } from './core/apis';
 import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
+import { startCareAppNotificationPermissions } from './hooks/appNotification';
 
 startComputationThread();
 startSubscribeLangChange();
@@ -94,6 +95,7 @@ trimNoLongerSupportsOnUnlock();
 
 startCheckClearAction();
 
+startCareAppNotificationPermissions();
 startSubscribeRemoteNotification();
 
 async function initStores() {
