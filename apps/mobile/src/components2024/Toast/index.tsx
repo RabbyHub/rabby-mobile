@@ -169,7 +169,7 @@ export const toast = {
 
 export const toastLoading = (
   msg?: string,
-  options?: Pick<Partial<ManagedOptions>, 'standalone'>,
+  options?: Omit<Partial<ManagedOptions>, 'standalone'>,
 ) => {
   clearManagedToasts();
   const toastInst = showManagedToast(
@@ -189,13 +189,13 @@ export const toastLoading = (
       ) : null}
     </View>,
     {
-      ...options,
       duration: 300000000,
       animation: true,
       hideOnPress: false,
       opacity: 0.9,
       shadow: false,
       position: 0,
+      ...options,
     },
   );
 

@@ -3479,5 +3479,8 @@
         "button": "I Know"
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "Opening Transaction..."
   }
 }
