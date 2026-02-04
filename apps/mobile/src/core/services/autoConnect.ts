@@ -52,15 +52,19 @@ export class AutoConnectService {
   }
 
   autoConnect = async (origin: string) => {
-    if (!origin || !/^https?:\/\//.test(origin)) {
-      return;
-    }
-    const site = this.dappService.getDapp(origin);
-    if (site?.isConnected) {
-      return;
-    }
-
     try {
+      // disable polymarket auto connect
+      if (origin === 'https://polymarket.com') {
+        return;
+      }
+      if (!origin || !/^https?:\/\//.test(origin)) {
+        return;
+      }
+      const site = this.dappService.getDapp(origin);
+      if (site?.isConnected) {
+        return;
+      }
+
       const collectList = await getOriginThirdPartyCollectList(origin).then(
         res => res.collect_list,
       );
@@ -108,15 +112,15 @@ export class AutoConnectService {
   };
 
   prepare = async (origin: string) => {
-    if (!origin || !/^https?:\/\//.test(origin)) {
-      return;
-    }
-    const site = this.dappService.getDapp(origin);
-    if (site?.isConnected) {
-      return;
-    }
-
     try {
+      if (!origin || !/^https?:\/\//.test(origin)) {
+        return;
+      }
+      const site = this.dappService.getDapp(origin);
+      if (site?.isConnected) {
+        return;
+      }
+
       const collectList = await getOriginThirdPartyCollectList(origin).then(
         res => res.collect_list,
       );

@@ -39,9 +39,11 @@ import tokenListStore from './store/tokens';
 import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 import useProtocolListStore from './store/protocols';
+import { useAppChainStore } from './store/appchain';
 import balanceStore from './store/balance';
 import { apisAutoLock } from './core/apis';
 import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
+import { startWatchLayoutChange } from './hooks/useAppLayout';
 
 startSubscribeLangChange();
 
@@ -67,6 +69,7 @@ runIIFEFunc(() => {
   storeApiGasAccount.fetchGasAccountInfo();
 });
 startSubscribePerpsOnAppState();
+startWatchLayoutChange();
 
 startSubscribeUserDidTakeScreenshot();
 startSubscribeAtSensitiveScene();
@@ -86,7 +89,13 @@ trimNoLongerSupportsOnUnlock();
 
 startCheckClearAction();
 
-tokenListStore.getState().initStore();
+async function initStores() {
+  console.time('initStore');
+  await useAppChainStore.getState().initStore();
+  await balanceStore.getState().initStore();
+  await tokenListStore.getState().initStore();
+  await useProtocolListStore.getState().initStore();
+  console.timeEnd('initStore');
+}
 
-useProtocolListStore.getState().initStore();
-balanceStore.getState().initStore();
+initStores();

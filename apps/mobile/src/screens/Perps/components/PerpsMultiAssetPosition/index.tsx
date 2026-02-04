@@ -81,6 +81,10 @@ const AssetPositionItem = ({
     switchPerpsAccountBeforeNavigate(item.account);
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.Perps,
+      params: {
+        dappId: 'hyperliquid',
+        account: item.account,
+      },
     });
   }, [item, navigation]);
 

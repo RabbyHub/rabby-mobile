@@ -4,7 +4,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 
 export const PerpsFooter: React.FC<{
   onLongPress?(): void;
@@ -33,10 +32,7 @@ export const PerpsFooter: React.FC<{
           <View style={styles.btnGroup}>
             <View style={styles.btnContainer}>
               <Button
-                type="ghost"
-                buttonStyle={{
-                  backgroundColor: colors2024['brand-light-1'],
-                }}
+                type="hyperliquid-light"
                 title={t('page.perpsDetail.action.add', {
                   direction,
                 })}
@@ -45,7 +41,7 @@ export const PerpsFooter: React.FC<{
             </View>
             <View style={styles.btnContainer}>
               <Button
-                type="primary"
+                type="hyperliquid"
                 title={t('page.perpsDetail.action.close')}
                 onPress={onClosePress}
               />
@@ -53,7 +49,7 @@ export const PerpsFooter: React.FC<{
           </View>
         ) : (
           <Button
-            type="primary"
+            type="hyperliquid"
             title={t('page.perpsDetail.action.close')}
             onPress={onClosePress}
           />

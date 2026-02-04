@@ -483,7 +483,7 @@ export const PerpsAddPositionPopup: React.FC<{
         </BottomSheetScrollView>
         <View style={styles.footer}>
           <Button
-            type="primary"
+            type="hyperliquid"
             title={t('page.perpsDetail.PerpsClosePositionPopup.confirm')}
             loading={loading}
             disabled={!marginValidation.isValid}
@@ -628,7 +628,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 20,
       lineHeight: 24,
       fontWeight: '900',
-      color: colors2024['brand-default'],
+      color: '#50D2C1',
     },
     percentageText: {
       fontFamily: 'SF Pro Rounded',

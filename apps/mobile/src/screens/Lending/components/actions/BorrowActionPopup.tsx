@@ -41,10 +41,11 @@ import { useTranslation } from 'react-i18next';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import { transactionHistoryService } from '@/core/services/shared';
 import { useRefreshHistoryId } from '../../hooks';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
 import {
@@ -54,13 +55,14 @@ import {
 import { CHAINS_ENUM } from '@debank/common';
 import BorrowToCapTip from '../Tips/BorrowToCapTip';
 import { formatTokenAmount } from '@/utils/number';
+import { stats } from '@/utils/stats';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const { refresh } = useRefreshHistoryId();
   const [isLoading, setIsLoading] = useState(false);
@@ -231,6 +233,31 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW },
           );
         }
+
+        const targetPool = formattedPoolReservesAndIncentives.find(item =>
+          isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+        );
+        const usdValue = targetPool
+          ? new BigNumber(amount || '0')
+              .multipliedBy(
+                BigNumber(
+                  targetPool.formattedPriceInMarketReferenceCurrency || '0',
+                ),
+              )
+              .toString()
+          : '0';
+
+        stats.report('aaveInternalTx', {
+          tx_type: LendingReportType.Borrow,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
+        });
+
         refresh();
         toast.success(
           `${t('page.Lending.borrowDetail.actions')} ${t(
@@ -249,10 +276,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       txs,
       amount,
       canShowDirectSubmit,
+      formattedPoolReservesAndIncentives,
+      chainInfo?.serverId,
       refresh,
       t,
       onClose,
       openDirect,
+      reserve.underlyingAsset,
     ],
   );
 
@@ -443,13 +473,17 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               !!ctx?.disabledProcess ||
               (isRisky && !isChecked)
             }
-            type="primary"
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}

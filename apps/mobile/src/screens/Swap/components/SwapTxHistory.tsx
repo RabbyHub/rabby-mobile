@@ -31,6 +31,8 @@ import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -311,6 +313,16 @@ export const SwapTxHistory = ({
       syncSingleAddress(currentAccount?.address);
     }
   }, [currentAccount?.address]);
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      bottomRef.current?.dismiss();
+      return !visible;
+    }, [visible]),
+    { autoEffectEnabled: false },
+  );
+
+  useFocusEffect(onHardwareBackHandler);
 
   return (
     <AppBottomSheetModal

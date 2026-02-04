@@ -1,6 +1,10 @@
 // patch from file:///./../../../../node_modules/react-native-collapsible-tab-view/src/ScrollView.tsx
 
 import React from 'react';
+import {
+  ScrollViewProps as RNScrollViewProps,
+  ScrollView as RNScrollView,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
 import { ScrollView as RNGHScrollView } from 'react-native-gesture-handler';
 
@@ -17,10 +21,18 @@ import {
 } from 'react-native-collapsible-tab-view/src/hooks';
 import { ScrollHandlerProps, useScrollHandlerY } from './hooks';
 
-type RNGHScrollViewProps = React.ComponentProps<typeof RNGHScrollView>;
+// const AnimatedScrollView = Animated.createAnimatedComponent<RNScrollViewProps>(RNScrollView);
+// const FinalScrollView = AnimatedScrollView;
+// type FinalScrollViewProps = RNScrollViewProps;
+// type FinalScrolViewType = RNScrollView;
 
+type RNGHScrollViewProps = React.ComponentProps<typeof RNGHScrollView>;
 const AnimatedRNGHScrollView =
   Animated.createAnimatedComponent<RNGHScrollViewProps>(RNGHScrollView);
+
+const FinalScrollView = AnimatedRNGHScrollView;
+type FinalScrollViewProps = RNGHScrollViewProps;
+type FinalScrolViewType = RNGHScrollView;
 
 /**
  * Used as a memo to prevent rerendering too often when the context changes.
@@ -28,15 +40,15 @@ const AnimatedRNGHScrollView =
  */
 const ScrollViewMemo = React.memo(
   React.forwardRef<
-    RNGHScrollView,
-    React.PropsWithChildren<RNGHScrollViewProps>
+    FinalScrolViewType,
+    React.PropsWithChildren<FinalScrollViewProps>
   >((props, passRef) => {
-    return <AnimatedRNGHScrollView ref={passRef} {...props} />;
+    return <FinalScrollView ref={passRef} {...props} />;
   }),
 );
 
 export type TabsScrollViewProps = React.PropsWithChildren<
-  Omit<RNGHScrollViewProps, 'onScroll'>
+  Omit<FinalScrollViewProps, 'onScroll'>
 > &
   ScrollHandlerProps;
 
@@ -44,7 +56,7 @@ export type TabsScrollViewProps = React.PropsWithChildren<
  * Use like a regular ScrollView.
  */
 export const TabsScrollView = React.forwardRef<
-  RNGHScrollView,
+  FinalScrolViewType,
   TabsScrollViewProps
 >(
   (
@@ -55,17 +67,17 @@ export const TabsScrollView = React.forwardRef<
       children,
       refreshControl,
       onScroll,
-      onScrollBeginDrag,
-      onScrollEndDrag,
-      onScrollMomentumBegin,
-      onScrollMomentumEnd,
+      onAnimatedScrollBeginDrag,
+      onAnimatedScrollEndDrag,
+      onAnimatedScrollMomentumBegin,
+      onAnimatedScrollMomentumEnd,
       scrollableEnabled,
       ...rest
     },
     passRef,
   ) => {
     const name = useTabNameContext();
-    const ref = useSharedAnimatedRef<RNGHScrollView>(passRef);
+    const ref = useSharedAnimatedRef<FinalScrolViewType>(passRef);
     const { setRef, contentInset } = useTabsContext();
     const {
       style: _style,
@@ -74,10 +86,10 @@ export const TabsScrollView = React.forwardRef<
     } = useCollapsibleStyle();
     const { scrollHandler, enable } = useScrollHandlerY(name, {
       onScroll,
-      onScrollBeginDrag,
-      onScrollEndDrag,
-      onScrollMomentumBegin,
-      onScrollMomentumEnd,
+      onAnimatedScrollBeginDrag,
+      onAnimatedScrollEndDrag,
+      onAnimatedScrollMomentumBegin,
+      onAnimatedScrollMomentumEnd,
       scrollableEnabled,
     });
     const onLayout = useAfterMountEffect(rest.onLayout, () => {

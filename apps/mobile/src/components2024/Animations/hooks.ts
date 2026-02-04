@@ -24,26 +24,22 @@ function setGuidance(valOrFunc: UpdaterOrPartials<Guidances>) {
   });
 }
 
+export const toggleViewedGuidance = (k: keyof Guidances, nextVal?: boolean) => {
+  setGuidance(prev => {
+    nextVal = nextVal ?? !prev[k];
+    return {
+      ...prev,
+      [k]: nextVal,
+    };
+  });
+};
+
 export function useGuidanceShown() {
   const multiTabs20251205Viewed = guidancePersistedStore(
     s => s.multiTabs20251205Viewed,
   );
 
-  const toggleViewedGuidance = useCallback(
-    (k: keyof Guidances, nextVal?: boolean) => {
-      setGuidance(prev => {
-        nextVal = nextVal ?? !prev[k];
-        return {
-          ...prev,
-          [k]: nextVal,
-        };
-      });
-    },
-    [],
-  );
-
   return {
     multiTabs20251205Viewed,
-    toggleViewedGuidance,
   };
 }

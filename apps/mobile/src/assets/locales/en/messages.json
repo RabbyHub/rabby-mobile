@@ -31,6 +31,11 @@
     }
   },
   "page": {
+    "predict": {
+      "dappSelect": {
+        "title": "Select Predict Provider"
+      }
+    },
     "getStart": {
       "createNewAddress": "Create New Wallet",
       "alreadyHaveAddress": "I already have a wallet",
@@ -1043,6 +1048,7 @@
         "watchlist": "Token Watchlist",
         "perps": "Perps",
         "lending": "Lending",
+        "predict": "Predict",
         "perpsMarketList": "More Perps"
       },
       "swipeUp": {
@@ -1666,7 +1672,11 @@
       "copySeedPhrase": "Copy seed phrase",
       "showQrCode": "Show QR Code",
       "qrCodePopupTitle": "QR Code",
-      "qrCodePopupTips": "Never share the seed phrase QR code to anyone else. Please view it in a secure environment and keep it carefully."
+      "qrCodePopupTips": "Never share the seed phrase QR code to anyone else. Please view it in a secure environment and keep it carefully.",
+      "tapToReveal": {
+        "line1": "Tap to reveal your seed phrase",
+        "line2": "Make sure no one is watching your screen."
+      }
     },
     "backupPrivateKey": {
       "alert": "This Private Key is the credential to your assets. DO NOT lose it or reveal it to others, otherwise you might lose your assets forever. Please view it in a secure environment and keep it carefully.",
@@ -2320,6 +2330,10 @@
         "title": "Select Chain"
       }
     },
+    "dappPermission": {
+      "serviceUnavailableTitle": "Service Unavailable",
+      "serviceUnavailableDesc": "The service is not supported in your current region."
+    },
     "watchlist": {
       "empty": {
         "title": "No tokens in your watchlist yet"
@@ -2348,6 +2362,9 @@
     },
     "perps": {
       "title": "Perps",
+      "dappSelect": {
+        "title": "Select Perps Provider"
+      },
       "searchPerpsPopup": {
         "searchPlaceholder": "Search Perps",
         "searchPosition": "Search Position",
@@ -2738,6 +2755,9 @@
       "hfTitle": "Health Factor",
       "enterAmount": "Enter Amount",
       "disabled": "DISABLED",
+      "dappSelect": {
+        "title": "Select Lending Provider"
+      },
       "availableCard": {
         "canBorrow": "You can borrow based on your supplied collateral, up to the borrow cap.",
         "needSupply": "To borrow, you need to supply assets as collateral.",
@@ -2997,6 +3017,11 @@
           "desc": "Add an existing address with funds."
         }
       }
+    },
+    "DAppFrame": {
+      "walletBalance": "Wallet/Balance",
+      "netWorth": "Net worth",
+      "selectAWallet": "Select a Wallet"
     }
   },
   "component": {

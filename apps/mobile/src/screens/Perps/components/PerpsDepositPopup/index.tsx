@@ -667,7 +667,8 @@ export const PerpsDepositPopup: React.FC<{
                 (!isDirectDeposit && quoteLoading)
               }
               loading={loading}
-              type={'primary'}
+              type={'hyperliquid'}
+              iconColor={'rgba(25, 41, 69, 1)'}
               syncUnlockTime
               onBeforeAuth={() => {
                 Keyboard.dismiss();
@@ -677,7 +678,7 @@ export const PerpsDepositPopup: React.FC<{
             />
           ) : (
             <Button
-              type="primary"
+              type="hyperliquid"
               title={t('page.perps.PerpsDepositPopup.depositBtn')}
               onPress={handleDeposit}
               disabled={

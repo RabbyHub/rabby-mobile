@@ -62,6 +62,7 @@ export const WrapperDappActionsMemoItem = ({
   item,
   chain,
   protocolLogo,
+  protocolName,
   address,
   addressType,
   onRefresh,
@@ -73,6 +74,7 @@ export const WrapperDappActionsMemoItem = ({
   item: IProtocolPortfolio;
   chain?: string;
   protocolLogo?: string;
+  protocolName?: string;
   address?: string;
   addressType?: KEYRING_TYPE;
   onRefresh?: () => Promise<void>;
@@ -120,6 +122,7 @@ export const WrapperDappActionsMemoItem = ({
             data={item._originPortfolio.withdraw_actions}
             chain={chain}
             protocolLogo={protocolLogo}
+            protocolName={protocolName}
             currentAccount={currentAccount}
             onRefresh={onRefresh}
             session={session}

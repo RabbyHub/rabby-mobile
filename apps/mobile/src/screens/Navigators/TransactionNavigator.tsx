@@ -27,11 +27,18 @@ import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
-import { PerpsScreen } from '../Perps';
+import { PerpsScreen } from '../Perps/Entry';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import LendingHistory from '../Lending/components/LendingHistory';
-import AAVEScreen from '../Lending';
+import AAVEScreen from '../Lending/Entry';
+import PredictionScreen from '../Prediction';
+import {
+  LendingScreenWithPreload,
+  PerpsScreenWithPreload,
+  PredictionScreenWithPreload,
+} from '../InnerDapp/InnerDappPreloadScreens';
+import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -43,6 +50,16 @@ export default function TransactionNavigator() {
   const { t } = useTranslation();
   const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
+  const innerDappStrategy = useInnerDappPreloadStrategy();
+
+  const LendingComponent =
+    innerDappStrategy === 'screen' ? LendingScreenWithPreload : AAVEScreen;
+  const PerpsComponent =
+    innerDappStrategy === 'screen' ? PerpsScreenWithPreload : PerpsScreen;
+  const PredictionComponent =
+    innerDappStrategy === 'screen'
+      ? PredictionScreenWithPreload
+      : PredictionScreen;
 
   return (
     <TransactionStack.Navigator
@@ -332,7 +349,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.Perps}
-        component={PerpsScreen}
+        component={PerpsComponent}
         options={mergeScreenOptions({
           title: t('page.home.services.perps'),
           // ...headerPresets.withBgCard1_2024,
@@ -378,12 +395,15 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
         })}
       />
 
       <TransactionStack.Screen
         name={RootNames.Lending}
-        component={AAVEScreen}
+        component={LendingComponent}
         options={mergeScreenOptions({
           title: t('page.home.services.lending'),
           ...headerPresets.withBgCard1_2024,
@@ -397,16 +417,25 @@ export default function TransactionNavigator() {
           },
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
+            backgroundColor: colors2024['neutral-bg-1'],
           },
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: 12,
             fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.Prediction}
+        component={PredictionComponent}
+        options={mergeScreenOptions({
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          // headerShown: false,
+          // gestureEnabled: true,
         })}
       />
     </TransactionStack.Navigator>

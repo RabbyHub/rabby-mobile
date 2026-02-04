@@ -1,5 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -21,6 +27,8 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useGetCexList } from '@/screens/Transaction/hook';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -103,6 +111,16 @@ export const SendHistory = ({
       );
     }
   };
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      bottomRef.current?.dismiss();
+      return !visible;
+    }, [visible]),
+    { autoEffectEnabled: false },
+  );
+
+  useFocusEffect(onHardwareBackHandler);
 
   return (
     <AppBottomSheetModal

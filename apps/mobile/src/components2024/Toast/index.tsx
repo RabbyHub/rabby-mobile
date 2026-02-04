@@ -50,7 +50,7 @@ const config: ToastOptions = {
 };
 
 type ToastRenderCtxBase = {
-  styles: ReturnType<typeof getStyle>;
+  styles: ReturnType<(typeof getStyle)['getStyles']>;
   config?: Partial<ManagedOptions>;
 };
 type ToastRenderCtxWithIcon = ToastRenderCtxBase & {
@@ -100,7 +100,15 @@ const show = (
       </>
     );
 
-  const toastInst = showManagedToast(msgNode, { ...config, ...extraConfig });
+  const toastInst = showManagedToast(
+    <View style={styles.containerInner}>{msgNode}</View>,
+    Object.assign({}, config, extraConfig, {
+      containerStyle: StyleSheet.flatten([
+        config.containerStyle,
+        extraConfig?.containerStyle,
+      ]),
+    }),
+  );
 
   return () => Toast.hide(toastInst);
 };
@@ -109,7 +117,7 @@ export const toastWithIcon =
   (Icon: React.FC<SvgProps>) =>
   (
     message?: string | ((ctx: ToastRenderCtxWithIcon) => React.ReactNode),
-    _config?: Partial<ManagedOptions>,
+    extraConfig?: Partial<ManagedOptions>,
   ) => {
     const styles = getTheme2024({ getStyle });
     const iconNode = <Icon width={16} height={16} style={styles.icon} />;
@@ -119,7 +127,7 @@ export const toastWithIcon =
           iconNode,
           Icon,
           styles,
-          config: _config,
+          config: extraConfig,
         }) || null
       ) : (
         <>
@@ -130,10 +138,10 @@ export const toastWithIcon =
 
     const toastInst = showManagedToast(
       <View style={styles.containerInner}>{msgNode}</View>,
-      Object.assign({}, config, _config, {
+      Object.assign({}, config, extraConfig, {
         containerStyle: StyleSheet.flatten([
           config.containerStyle,
-          _config?.containerStyle,
+          extraConfig?.containerStyle,
         ]),
       }),
     );
@@ -287,9 +295,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 12,
-      height: '100%',
+      maxHeight: '100%',
       // paddingVertical: 16,
-      // minHeight: TOAST_MIN_H,
+      minHeight: TOAST_MIN_H,
       // ...makeDevOnlyStyle({
       //   backgroundColor: 'white',
       // }),

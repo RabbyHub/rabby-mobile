@@ -256,7 +256,6 @@ const aggregateTokens = (
       ...primary,
       amount: totalAmount,
       usd_value: totalUsdValue,
-      is_core: groupItems.some(item => item.is_core),
       groupKey,
       groupItems,
     };
@@ -284,15 +283,14 @@ const computeMultiAssets = (
   const nonScamTokens: ITokenItem[] = [];
   tokens.forEach(token => {
     const usdValue = token.usd_value || 0;
-    const isZeroCore = token.is_core && usdValue === 0;
-    const isScam =
-      token.is_verified === false ||
-      (usdValue === 0 && !isZeroCore) ||
-      token.is_suspicious;
-    if (isScam) {
-      scamTokens.push(token);
-    } else {
-      nonScamTokens.push(token);
+    const isLowValueToken = token.is_core === null && usdValue === 0;
+    const isScam = token.is_verified === false || token.is_suspicious;
+    if (!isScam) {
+      if (isLowValueToken) {
+        scamTokens.push(token);
+      } else {
+        nonScamTokens.push(token);
+      }
     }
   });
   const displayMode = tokenDisplayMode || 'byAddress';
@@ -316,9 +314,7 @@ const computeMultiAssets = (
     totalValue,
   });
   return {
-    unFoldTokens: unfoldedTokens.filter(i =>
-      lpTokenFilter(i, isLpTokenEnabled),
-    ),
+    unFoldTokens: unfoldedTokens,
     foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
     scamTokens: aggregatedScamTokens.filter(i =>
       lpTokenFilter(i, isLpTokenEnabled),

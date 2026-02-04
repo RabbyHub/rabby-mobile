@@ -1043,7 +1043,8 @@
         "watchlist": "Token Watchlist",
         "perps": "Perps",
         "perpsMarketList": "Lebih Banyak Perp",
-        "lending": "Peminjaman"
+        "lending": "Peminjaman",
+        "predict": "Prediksi"
       },
       "swipeUp": {
         "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",
@@ -1616,7 +1617,11 @@
       "clickToShow": "Klik untuk menampilkan Seed Phrase",
       "alert": "Frasa benih ini adalah kredensial untuk aset Anda. JANGAN kehilangan atau membagikannya kepada orang lain, jika tidak Anda mungkin kehilangan aset Anda selamanya. Harap lihat di lingkungan yang aman dan simpan dengan hati-hati.",
       "qrCodePopupTitle": "QR Code",
-      "qrCodePopupTips": "Jangan pernah membagikan kode QR frasa benih kepada orang lain. Silakan lihat di lingkungan yang aman dan simpan dengan hati-hati."
+      "qrCodePopupTips": "Jangan pernah membagikan kode QR frasa benih kepada orang lain. Silakan lihat di lingkungan yang aman dan simpan dengan hati-hati.",
+      "tapToReveal": {
+        "line1": "Ketuk untuk menampilkan frasa biji Anda",
+        "line2": "Pastikan tidak ada yang melihat layar Anda."
+      }
     },
     "backupPrivateKey": {
       "clickToShow": "Klik untuk menunjukkan private key",
@@ -2517,6 +2522,9 @@
         "hyperliquidFee": "Biaya trading Hyperliquid.",
         "activatedSuccess": "4% penghematan biaya Hyperliquid diaktifkan",
         "description": "Gunakan kode Rabby untuk mengaktifkan"
+      },
+      "dappSelect": {
+        "title": "Pilih Penyedia Perps"
       }
     },
     "perpsDetail": {
@@ -2960,6 +2968,9 @@
           "assets": "Token"
         },
         "title": "Pilih Token Pembayaran Kembali"
+      },
+      "dappSelect": {
+        "title": "Pilih Penyedia Peminjaman"
       }
     },
     "address": {
@@ -2971,6 +2982,20 @@
         "btnCopyAddress": "Salin Alamat",
         "title": "Terima aset"
       }
+    },
+    "predict": {
+      "dappSelect": {
+        "title": "Pilih Penyedia Prediksi"
+      }
+    },
+    "dappPermission": {
+      "serviceUnavailableDesc": "Layanan ini tidak didukung di wilayah Anda saat ini.",
+      "serviceUnavailableTitle": "Layanan Tidak Tersedia"
+    },
+    "DAppFrame": {
+      "walletBalance": "Dompet/Saldo",
+      "netWorth": "Kekayaan bersih",
+      "selectAWallet": "Pilih Dompet"
     }
   },
   "component": {

@@ -101,9 +101,7 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
   async initStore() {
     try {
       // 从数据库加载缓存数据
-      const allAppChains = await AppChainEntity.getRepository().find({
-        order: { usd_value: 'DESC' },
-      });
+      const allAppChains = await AppChainEntity.queryAll();
 
       const appChainMap: AppChainListMap = {};
       for (const entity of allAppChains) {

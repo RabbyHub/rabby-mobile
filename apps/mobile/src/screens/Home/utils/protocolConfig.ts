@@ -75,9 +75,13 @@ export const useProtocolConfig = () => {
             await switchSceneCurrentAccount('Lending', account);
             setMarketKey(marketKey);
           }
+
           navigation.navigate(RootNames.StackTransaction, {
             screen: RootNames.Lending,
-            params: {},
+            params: {
+              dappId: 'aave',
+              account,
+            },
           });
         },
       };
@@ -145,6 +149,10 @@ export const useProtocolConfig = () => {
           } else {
             return navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Perps,
+              params: {
+                dappId: 'hyperliquid',
+                account,
+              },
             });
           }
         },
