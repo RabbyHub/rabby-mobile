@@ -3,6 +3,7 @@ import { AssetAvatar } from '@/components';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { splitNumberByStep } from '@/utils/number';
+import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
@@ -57,7 +58,7 @@ export const PerpsHistoryItem: React.FC<{
     return fill?.dir;
   }, [fill?.dir, fill?.liquidation, orderTpOrSl, t]);
 
-  const itemData = marketData[coin.toUpperCase()];
+  const itemData = marketData[coin];
   const logoUrl = itemData?.logoUrl;
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && _closedPnl;
   const direction =
@@ -90,7 +91,7 @@ export const PerpsHistoryItem: React.FC<{
           </View>
           <View style={styles.row}>
             <Text style={styles.coin}>
-              {coin}-USD @${Number(px)}
+              {formatPerpsCoin(coin)}-USD @${Number(px)}
             </Text>
           </View>
         </View>

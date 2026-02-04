@@ -1,4 +1,7 @@
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import {
+  AllDexsClearinghouseState,
+  MarketData,
+} from '@/hooks/perps/usePerpsStore';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import {
   Meta,
@@ -10,16 +13,22 @@ import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import { Account } from '@/core/services/preference';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisPerps } from '@/core/apis';
-import { perpsService, preferenceService } from '@/core/services';
+import { perpsService } from '@/core/services';
+import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+
+const getPxDecimals = (markPx: string) => {
+  const parts = markPx.split('.');
+  if (!parts[1]) {
+    return 2;
+  }
+  const decimalPart = parts[1];
+  return decimalPart.length;
+};
 
 export const formatMarkData = (
   marketData: [Meta, AssetCtx[]],
-  topAssets: {
-    id: number;
-    name: string;
-    full_logo_url: string | null;
-    daily_volume: number;
-  }[],
+  topAssets: PerpTopToken[],
+  xyzMarketData: [Meta, AssetCtx[]],
 ): MarketData[] => {
   try {
     if (!Array.isArray(marketData) || marketData.length < 2) {
@@ -48,9 +57,23 @@ export const formatMarkData = (
       }
     }
 
+    const xyzMarginTableMap: Record<number, MarginTable> = {};
+    if (Array.isArray(xyzMarketData[0].marginTables)) {
+      for (const entry of xyzMarketData[0].marginTables) {
+        const [id, table] = entry || [];
+        if (id != null) {
+          xyzMarginTableMap[id] = table;
+        }
+      }
+    }
+
     const result: MarketData[] = topAssets
       .map(topAsset => {
         const index = topAsset.id;
+        const dexId = topAsset.dex_id;
+        const meta = dexId === 'xyz' ? xyzMarketData[0] : marketData[0];
+        const metrics = dexId === 'xyz' ? xyzMarketData[1] : marketData[1];
+        const tableMap = dexId === 'xyz' ? xyzMarginTableMap : marginTableMap;
         const hlDataAsset = meta.universe[index];
 
         if (!hlDataAsset) {
@@ -61,8 +84,8 @@ export const formatMarkData = (
           return null;
         }
 
-        const m = metrics[index] || {};
-        const table = marginTableMap[hlDataAsset?.marginTableId];
+        const m = metrics[index];
+        const table = tableMap[hlDataAsset?.marginTableId];
         const tiers = table?.marginTiers || [];
         const firstTier =
           Array.isArray(tiers) && tiers.length > 0 ? tiers[0] : undefined;
@@ -71,6 +94,7 @@ export const formatMarkData = (
 
         const item: MarketData = {
           index,
+          dexId: topAsset.dex_id,
           name: String(topAsset.name ?? ''),
           // 取保证金表第一档的最大杠杆；若无表则回退 asset.maxLeverage
           maxLeverage: Number(
@@ -81,14 +105,7 @@ export const formatMarkData = (
           maxUsdValueSize: String(nextTier?.lowerBound ?? PERPS_MAX_NTL_VALUE),
           szDecimals: Number(hlDataAsset.szDecimals ?? 0),
           // 根据 markPx 推断价格精度
-          pxDecimals: (() => {
-            const markPx = m?.markPx;
-            if (!markPx) {
-              return 2;
-            }
-            const parts = markPx.split('.');
-            return parts.length > 1 ? parts[1].length : 2;
-          })(),
+          pxDecimals: getPxDecimals(m?.markPx ?? ''),
           dayBaseVlm: String(m?.dayBaseVlm ?? '0'),
           dayNtlVlm: String(m?.dayNtlVlm ?? '0'),
           funding: String(m?.funding ?? '0'),
@@ -236,17 +253,52 @@ export const formatTpOrSlPrice = (
   return `${integerPart}`;
 };
 
-export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
+export const calcAccountValueByAllDexs = (
+  clearinghouseState?: AllDexsClearinghouseState,
+) => {
+  if (!Array.isArray(clearinghouseState) || !clearinghouseState) {
+    return 0;
+  }
+  return clearinghouseState.reduce((acc, item) => {
+    return acc + Number(item[1]?.marginSummary?.accountValue || 0);
+  }, 0);
+};
+
+export const calcPositionCountByAllDexs = (
+  info?: AllDexsClearinghouseState,
+) => {
+  if (!Array.isArray(info) || !info) {
+    return 0;
+  }
+  return info.map(item => item[1]?.assetPositions || []).flat().length;
+};
+
+export const formatPositionPnl = (
+  clearinghouseState: AllDexsClearinghouseState,
+) => {
+  const assetPositions = clearinghouseState
+    .map(item => item[1]?.assetPositions || [])
+    .flat();
+  const accountValue = calcAccountValueByAllDexs(clearinghouseState);
   return {
-    pnl: clearinghouseState.assetPositions.reduce((acc, asset) => {
+    pnl: assetPositions.reduce((acc, asset) => {
       return acc + Number(asset.position.unrealizedPnl);
     }, 0),
-    show: Number(clearinghouseState.marginSummary.accountValue) > 0,
-    type: (clearinghouseState.assetPositions.length > 0
-      ? 'pnl'
-      : 'accountValue') as 'pnl' | 'accountValue',
-    accountValue: Number(clearinghouseState.marginSummary.accountValue),
+    show: Number(accountValue) > 0,
+    type: (assetPositions.length > 0 ? 'pnl' : 'accountValue') as
+      | 'pnl'
+      | 'accountValue',
+    accountValue: Number(accountValue),
   };
+};
+
+export const formatPerpsCoin = (coin: string) => {
+  if (coin.includes(':')) {
+    // is hip-3 coin
+    return coin.split(':')[1];
+  } else {
+    return coin;
+  }
 };
 
 export const findDefaultAccount = (

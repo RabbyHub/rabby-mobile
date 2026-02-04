@@ -8,6 +8,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -112,7 +113,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
               <View style={styles.coinContainer}>
                 <AssetAvatar size={24} logo={coinLogo} />
-                <Text style={styles.value}>{coin} - USD</Text>
+                <Text style={styles.value}>{formatPerpsCoin(coin)} - USD</Text>
               </View>
             </View>
             <View style={styles.listItem}>

@@ -24,6 +24,7 @@ import { PerpsRiskLevelPopup } from '../PerpsPositionSection/PerpsRiskLevelPopup
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import { formatPerpsCoin } from '@/utils/perps';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
@@ -50,7 +51,7 @@ const AssetPositionItem = ({
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
   const logoUrl = item.logoUrl;
-  const coin = item.assetPositions.position.coin.toUpperCase();
+  const coin = item.assetPositions.position.coin;
   const leverageType = item.assetPositions.position.leverage.type || 'isolated';
   const side = Number(item.assetPositions.position.szi) > 0 ? 'Long' : 'Short';
   const leverageText = `${item.assetPositions.position.leverage.value}x`;
@@ -97,7 +98,7 @@ const AssetPositionItem = ({
             <AssetAvatar logo={logoUrl} size={28} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <Text style={styles.coinName}>{coin}</Text>
+                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {leverageType === 'cross'
@@ -180,9 +181,9 @@ const AssetPositionItem = ({
 export const PerpsSingleAssetPosition: React.FC<{
   account?: Account | null;
 }> = ({ account }) => {
-  const { clearinghouseStateMap, marketDataMap } = perpsStore(
+  const { allDexsClearinghouseStateMap, marketDataMap } = perpsStore(
     useShallow(s => ({
-      clearinghouseStateMap: s.clearinghouseStateMap,
+      allDexsClearinghouseStateMap: s.allDexsClearinghouseStateMap,
       marketDataMap: s.marketDataMap,
     })),
   );
@@ -192,7 +193,7 @@ export const PerpsSingleAssetPosition: React.FC<{
   } | null>(null);
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
   const clearinghouseState =
-    clearinghouseStateMap[account?.address.toLowerCase() || ''];
+    allDexsClearinghouseStateMap[account?.address.toLowerCase() || ''];
 
   const dataList = useMemo(() => {
     const resList: AssetPositionWithAccount[] = [];
@@ -203,14 +204,14 @@ export const PerpsSingleAssetPosition: React.FC<{
     if (!clearinghouseState) {
       return resList;
     }
-    const assetPositions = clearinghouseState.assetPositions;
+    const assetPositions = clearinghouseState
+      .map(item => item[1]?.assetPositions || [])
+      .flat();
     assetPositions.forEach(assetPosition => {
       resList.push({
         account,
         assetPositions: assetPosition,
-        logoUrl:
-          marketDataMap[assetPosition.position.coin.toUpperCase()]?.logoUrl ||
-          '',
+        logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
       });
     });
     return resList.sort((a, b) => {
@@ -227,7 +228,10 @@ export const PerpsSingleAssetPosition: React.FC<{
     }
 
     const { address, coin } = selectedPositionKey;
-    const freshAssetPosition = clearinghouseState?.assetPositions.find(
+    const assetPositions = clearinghouseState
+      ?.map(item => item[1]?.assetPositions || [])
+      .flat();
+    const freshAssetPosition = assetPositions?.find(
       p => p.position.coin === coin,
     );
 
@@ -244,6 +248,7 @@ export const PerpsSingleAssetPosition: React.FC<{
       freshAssetPosition.position.liquidationPx,
       markPrice,
     );
+
     return {
       distanceLiquidation,
       direction:
@@ -304,9 +309,9 @@ export const PerpsSingleAssetPosition: React.FC<{
 
 export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
-  const { clearinghouseStateMap, marketDataMap } = perpsStore(
+  const { allDexsClearinghouseStateMap, marketDataMap } = perpsStore(
     useShallow(s => ({
-      clearinghouseStateMap: s.clearinghouseStateMap,
+      allDexsClearinghouseStateMap: s.allDexsClearinghouseStateMap,
       marketDataMap: s.marketDataMap,
     })),
   );
@@ -319,8 +324,8 @@ export const PerpsMultiAssetPosition: React.FC = () => {
   const dataList = useMemo(() => {
     const resList: AssetPositionWithAccount[] = [];
 
-    Object.keys(clearinghouseStateMap).forEach(item => {
-      const clearinghouseState = clearinghouseStateMap[item];
+    Object.keys(allDexsClearinghouseStateMap).forEach(item => {
+      const clearinghouseState = allDexsClearinghouseStateMap[item];
       if (!clearinghouseState) {
         return null;
       }
@@ -328,14 +333,14 @@ export const PerpsMultiAssetPosition: React.FC = () => {
       if (!account) {
         return null;
       }
-      const assetPositions = clearinghouseState.assetPositions;
+      const assetPositions = clearinghouseState
+        .map(i => i[1]?.assetPositions || [])
+        .flat();
       assetPositions.forEach(assetPosition => {
         resList.push({
           account,
           assetPositions: assetPosition,
-          logoUrl:
-            marketDataMap[assetPosition.position.coin.toUpperCase()]?.logoUrl ||
-            '',
+          logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
         });
       });
     });
@@ -346,7 +351,7 @@ export const PerpsMultiAssetPosition: React.FC = () => {
         Number(a.assetPositions.position.marginUsed)
       );
     });
-  }, [clearinghouseStateMap, getAccountByAddress, marketDataMap]);
+  }, [allDexsClearinghouseStateMap, getAccountByAddress, marketDataMap]);
 
   const riskPopupData = useMemo(() => {
     if (!selectedPositionKey) {
@@ -354,8 +359,11 @@ export const PerpsMultiAssetPosition: React.FC = () => {
     }
 
     const { address, coin } = selectedPositionKey;
-    const clearinghouseState = clearinghouseStateMap[address];
-    const freshAssetPosition = clearinghouseState?.assetPositions.find(
+    const clearinghouseState = allDexsClearinghouseStateMap[address];
+    const assetPositions = clearinghouseState
+      ?.map(item => item[1]?.assetPositions || [])
+      .flat();
+    const freshAssetPosition = assetPositions?.find(
       p => p.position.coin === coin,
     );
 
@@ -383,7 +391,7 @@ export const PerpsMultiAssetPosition: React.FC = () => {
         freshAssetPosition.position.entryPx?.split('.')[1]?.length || 2,
       liquidationPrice,
     };
-  }, [selectedPositionKey, clearinghouseStateMap]);
+  }, [selectedPositionKey, allDexsClearinghouseStateMap]);
 
   const handleShowRiskPopup = useCallback(
     (item: AssetPositionWithAccount) => {

@@ -14,6 +14,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
 import { getClearinghouseStateByMap } from '@/hooks/perps/usePerpsStore';
+import { calcPositionCountByAllDexs } from '@/utils/perps';
 
 export const PerpsAccountSelectorPopup: React.FC<{
   visible?: boolean;
@@ -76,7 +77,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
           } catch (e) {
             return {
               address: item.address,
-              info: null,
+              info: [],
             };
           }
         }),
@@ -88,14 +89,14 @@ export const PerpsAccountSelectorPopup: React.FC<{
         const item = resDict[account.address.toLowerCase()];
         return {
           account,
-          info: item?.info ? { ...item.info } : null,
+          info: item?.info ?? [],
         };
       });
 
       return sortBy(
         listWithInfo,
-        item => -(item.info?.assetPositions?.length || 0),
-        item => -Number(item.info?.withdrawable || 0),
+        item => -calcPositionCountByAllDexs(item.info || []),
+        item => -Number(item.info?.[0]?.[1]?.withdrawable || 0),
       );
     },
     {
@@ -109,7 +110,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
   );
 
   const data = useMemo(() => {
-    return _data ?? myAddresses.map(account => ({ account, info: null }));
+    return _data ?? myAddresses.map(account => ({ account, info: [] }));
   }, [_data, myAddresses]);
 
   const [tmpSelectAccount, setTmpSelectAccount] = useState<Account | null>(
@@ -194,76 +195,6 @@ export const PerpsAccountSelectorPopup: React.FC<{
               })}
             </View>
           ) : null}
-          {/* {myAddresses?.map(item => {
-            const usdValue = (() => {
-              const b = item.balance || 0;
-              return `$${splitNumberByStep(
-                b > 10 ? Math.floor(b) : b.toFixed(2),
-              )}`;
-            })();
-
-            const isCurrent = isSameAccount(item, value);
-            return (
-              <TouchableOpacity
-                key={`${item.address}-${item.type}-${item.brandName}`}
-                onPress={() => {
-                  handleSelect(item);
-                }}>
-                <AddressItemShadowView
-                  // disableShadow
-                  style={[
-                    styles.addressItemView,
-                    // style,
-                    // isCurrent || isPressing ? styles.active : null,
-                  ]}>
-                  <View style={styles.addressItemInner}>
-                    <WalletIcon
-                      borderRadius={12}
-                      width={46}
-                      height={46}
-                      style={styles.walletIcon}
-                      address={item.address}
-                      type={item.brandName}
-                    />
-                    <View style={styles.centerInfo}>
-                      <View style={styles.nameAndAdderss}>
-                        <Text style={styles.addressText}>
-                          {item.aliasName || ellipsisAddress(item.address)}
-                        </Text>
-                      </View>
-                      <View style={styles.bottomArea}>
-                        <Text style={styles.balanceText}>{usdValue}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.rightArea}>
-                      {loading && isSameAccount(item, tmpSelectAccount) ? (
-                        <ActivityIndicator />
-                      ) : isSameAddress(
-                          item.address,
-                          lastUsdeAccount?.address || '',
-                        ) && item.type === lastUsdeAccount?.type ? (
-                        <View style={styles.tag}>
-                          <Text style={styles.tagText}>
-                            {t('page.perps.PerpsAccountSelectorPopup.lastUsed')}
-                          </Text>
-                        </View>
-                      ) : (
-                        <>
-                          {isCurrent ? (
-                            <RcIconCorrectCC
-                              color={colors2024['green-default']}
-                              width={16}
-                              height={16}
-                            />
-                          ) : null}
-                        </>
-                      )}
-                    </View>
-                  </View>
-                </AddressItemShadowView>
-              </TouchableOpacity>
-            );
-          })} */}
         </AutoLockView>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
