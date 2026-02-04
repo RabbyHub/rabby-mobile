@@ -7,17 +7,24 @@ import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 
-export const PerpsHistoryItem: React.FC<{
+export interface PerpsHistoryItemProps {
   fill: WsFill;
   marketData: Record<string, MarketData>;
   onPress?: (fill: WsFill) => void;
   orderTpOrSl?: 'tp' | 'sl';
-}> = ({ fill, orderTpOrSl, marketData, onPress }) => {
+}
+
+const PerpsHistoryItemComponent: React.FC<PerpsHistoryItemProps> = ({
+  fill,
+  orderTpOrSl,
+  marketData,
+  onPress,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -108,6 +115,8 @@ export const PerpsHistoryItem: React.FC<{
     </TouchableOpacity>
   );
 };
+
+export const PerpsHistoryItem = memo(PerpsHistoryItemComponent);
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
