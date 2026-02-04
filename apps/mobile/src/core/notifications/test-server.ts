@@ -1,37 +1,41 @@
 import { getDevServerHost } from '../utils/devServerSettings';
 import { makeMobileClientPushInfo } from '../apis/device';
-import { RABBY_MOBILE_PUSH_TEST_SERVER_URL } from '@/constant/env';
+import { RABBY_MOBILE_FE_SERVICE_URL } from '@/constant/env';
 import { isNonPublicProductionEnv } from '@/constant';
 import { preferenceService } from '../services';
+import { stringUtils } from '@rabby-wallet/base-utils';
 
-export function getTestPushServerURL() {
-  if (!isNonPublicProductionEnv) return null;
+export function getFeServiceURL() {
+  if (!isNonPublicProductionEnv) return RABBY_MOBILE_FE_SERVICE_URL || null;
 
-  const localHost = getDevServerHost();
-  let connectURL = `http://${localHost}:3000`;
-  if (!localHost) {
-    connectURL = RABBY_MOBILE_PUSH_TEST_SERVER_URL || '';
+  let connectURL = getDevServerHost();
+
+  if (!connectURL) {
+    connectURL = RABBY_MOBILE_FE_SERVICE_URL || '';
+  } else if (stringUtils.isIpv4Address(connectURL)) {
+    // TODO: on iOS's non production package, apply LAN devices on bootstrap
+    connectURL = `http://${connectURL}:3000`;
   }
 
   return connectURL;
 }
 
-export const connectPushTestServer = async (data: { pushToken: string }) => {
+export const connectFeService = async (data: { pushToken: string }) => {
   const pushToken = data.pushToken;
   if (!pushToken) {
     throw new Error(
-      '[connectPushTestServer] Empty push token, cannot connect to push server',
+      '[connectFeService] Empty push token, cannot connect to push server',
     );
   }
 
-  const connectURL = getTestPushServerURL();
+  const connectURL = getFeServiceURL();
   if (!connectURL) {
-    console.error('[connectPushTestServer] No push server URL configured');
+    console.error('[connectFeService] No push server URL configured');
     return;
   }
 
   try {
-    console.debug('[connectPushTestServer] connectURL', connectURL);
+    console.debug('[connectFeService] connectURL', connectURL);
 
     const response = await fetch(
       `${connectURL}/v1/api/rabby-mobile-push/connect`,
@@ -51,7 +55,7 @@ export const connectPushTestServer = async (data: { pushToken: string }) => {
 
     if (!response.ok) {
       console.error(
-        '[connectPushTestServer] HTTP error:',
+        '[connectFeService] HTTP error:',
         response.status,
         response.statusText,
       );
@@ -59,21 +63,18 @@ export const connectPushTestServer = async (data: { pushToken: string }) => {
     }
 
     const result = await response.json();
-    console.debug('[connectPushTestServer] Token registered:', result);
+    console.debug('[connectFeService] Token registered:', result);
     return result;
   } catch (err) {
-    console.error(
-      '[connectPushTestServer] Failed to register push token:',
-      err,
-    );
+    console.error('[connectFeService] Failed to register push token:', err);
     throw err;
   }
 };
 
 const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
 export function startConnectPushTestServerInterval(pushToken: string) {
-  connectPushTestServer({ pushToken });
+  connectFeService({ pushToken });
   setInterval(async () => {
-    await connectPushTestServer({ pushToken });
+    await connectFeService({ pushToken });
   }, CONNECT_DURATION_MS);
 }

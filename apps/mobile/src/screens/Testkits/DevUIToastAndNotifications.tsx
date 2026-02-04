@@ -33,11 +33,10 @@ import { ensureDeviceUUID, makeDeviceUUID } from '@/core/apis/device';
 import i18next from 'i18next';
 import Clipboard from '@react-native-clipboard/clipboard';
 import dayjs from 'dayjs';
-import { RABBY_MOBILE_PUSH_TEST_SERVER_URL } from '@/constant/env';
 import { useAppNotificationEnabled } from '@/hooks/appNotification';
 import {
-  connectPushTestServer,
-  getTestPushServerURL,
+  connectFeService,
+  getFeServiceURL,
 } from '@/core/notifications/test-server';
 
 function DevToast() {
@@ -417,7 +416,7 @@ function DevNotifications() {
               {/* <RcIconCopyCC style={[{ marginLeft: 2 }]} /> */}
             </View>
             <View style={{ width: '100%' }}>
-              <Text style={{ marginBottom: 12 }}>{getTestPushServerURL()}</Text>
+              <Text style={{ marginBottom: 12 }}>{getFeServiceURL()}</Text>
             </View>
           </View>
 
@@ -430,7 +429,7 @@ function DevNotifications() {
               containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
               onPress={() => {
                 pushToken &&
-                  connectPushTestServer({ pushToken }).then(res => {
+                  connectFeService({ pushToken }).then(res => {
                     toast[res.success ? 'success' : 'info'](
                       JSON.stringify(res, null, ' '.repeat(4)),
                     );
