@@ -123,7 +123,6 @@ def patch_build_settings(installer)
 
   projects.each do |project|
     project.build_configurations.each do |config|
-      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64" if arch == "arm64"
       config.build_settings["DEVELOPMENT_TEAM"] = "ZPNP2SF27Q"
       config.build_settings["ENABLE_BITCODE"] = "NO"
     end

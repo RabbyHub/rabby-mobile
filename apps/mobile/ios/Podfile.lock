@@ -166,7 +166,7 @@ PODS:
     - Yoga
   - MMKV (1.3.5):
     - MMKVCore (~> 1.3.5)
-  - MMKVCore (1.3.14)
+  - MMKVCore (1.3.16)
   - MultiplatformBleAdapter (0.2.0)
   - nanopb (2.30909.1):
     - nanopb/decode (= 2.30909.1)
@@ -2672,7 +2672,7 @@ SPEC CHECKSUMS:
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: 025359cc1370416fd1e0a765b4a4f299b877e467
   MMKV: 506311d0494023c2f7e0b62cc1f31b7370fa3cfb
-  MMKVCore: 3f40b896e9ab522452df9df3ce983471aa2449ba
+  MMKVCore: 13be45a0394861b74836875ac9ec7ee939e86b78
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
   op-sqlite: 45ed00df72dd63e76d4cd071e28b64532e105774
@@ -2787,6 +2787,6 @@ SPEC CHECKSUMS:
   VisionCamera: 2230ecfd78a1f6cddd8be0fe4e6589f21a6385e1
   Yoga: 1a10502f162e8fc40ff0907c82d01cfe555d00c2
 
-PODFILE CHECKSUM: 52c6cfe02d18c02bb7a283e7d2e1e4ed3be76773
+PODFILE CHECKSUM: 772f536c470cf70e1a9dd8fd7009c36afdb56cec
 
 COCOAPODS: 1.14.3
