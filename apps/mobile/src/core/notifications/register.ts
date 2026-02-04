@@ -1,20 +1,18 @@
 import messaging from '@react-native-firebase/messaging';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import { AppState, Platform } from 'react-native';
-import notifee, { EventType } from '@notifee/react-native';
 
 import { sleep } from '@/utils/async';
 import { IS_IOS } from '../native/utils';
 import { zMutativeByMMKV } from '../storage/mmkv';
 import { HeartbeatResponse, notificationOpenapi } from './openapi';
-import { preferenceService } from '../services';
 import { perfEvents } from '../utils/perf';
-import { storeApiAccounts } from '@/hooks/account';
-import { accountEvents, getTop10MyAccounts } from '../apis/account';
+import { accountEvents } from '../apis/account';
 import { checkIfEnabledNotificationWithPermission } from './switch';
 import { useShallow } from 'zustand/shallow';
 import { zCreate, zMutative } from '../utils/reexports';
 import { notificationEvents, parseRemoteData } from './data';
+import { getTopMyAccountsOnNotifications } from './utils';
 
 const iosPush = {
   token: '',
@@ -248,7 +246,9 @@ export const requestBindDevice = async (pushToken: string) => {
   return notificationOpenapi.bindDevice({
     platform: Platform.OS === 'ios' ? 'ios' : 'android',
     pushToken,
-    userAddrs: await getTop10MyAccounts().then(acc => acc.top10Addresses),
+    userAddrs: await getTopMyAccountsOnNotifications().then(
+      acc => acc.top100Addresses,
+    ),
   });
 };
 
