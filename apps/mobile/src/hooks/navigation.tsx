@@ -51,6 +51,8 @@ import {
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
+import { toast, toastLoading } from '@/components2024/Toast';
+import i18next from 'i18next';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -710,33 +712,49 @@ export function startSubscribeRemoteNotification() {
   notificationEvents.subscribe(
     'onParsedReceivedData',
     async ({ parsedData }) => {
-      UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
-        console.debug(
-          '[notifications] [startSubscribeRemoteNotification] onParsedReceivedData:: parsedData',
-          parsedData,
-        );
-        const ownerAddress = parsedData.txInfo?.ownerAddress;
-        if (!ownerAddress) return;
-        // TODO: check if my own address
-        // if (isMyAddress(ownerAddress)) return ;
+      console.debug(
+        '[notifications] [startSubscribeRemoteNotification] onParsedReceivedData:: parsedData',
+        parsedData,
+      );
+      const ownerAddress = parsedData.txInfo?.ownerAddress;
+      if (!ownerAddress) return;
+      // TODO: check if my own address
+      // if (isMyAddress(ownerAddress)) return ;
 
-        console.debug(
-          '[notifications] onParsedReceivedData:: parsedData',
-          parsedData,
-        );
-        const txDetail = await notificationOpenapi
-          .getUserTxDetail({
-            chainId: parsedData.txInfo?.chainServerId || '',
-            txId: parsedData.txInfo?.txHash || '',
-            userAddr: ownerAddress,
-          })
-          .catch(error => {
-            console.debug(
-              '[notifications] [startSubscribeRemoteNotification] Failed to get tx detail:',
-            );
-            console.error(error);
-            return null;
-          });
+      console.debug(
+        '[notifications] onParsedReceivedData:: parsedData',
+        parsedData,
+      );
+      const txDetailPromise = notificationOpenapi
+        .getUserTxDetail({
+          chainId: parsedData.txInfo?.chainServerId || '',
+          txId: parsedData.txInfo?.txHash || '',
+          userAddr: ownerAddress,
+        })
+        .catch(error => {
+          console.debug(
+            '[notifications] [startSubscribeRemoteNotification] Failed to get tx detail:',
+          );
+          console.error(error);
+          return null;
+        });
+
+      UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
+        let txDetail = null as null | Awaited<typeof txDetailPromise>;
+        const hideToastRef = {
+          current: toastLoading(i18next.t('notifications.loadingTransaction'), {
+            duration: 3 * 1000,
+          }),
+        };
+        // setTimeout(() => {
+        //   if (!txDetail) {
+        //     hideToastRef.current = toastLoading(i18next.t('notifications.loadingTransaction'), {
+        //       duration: 3 * 1000,
+        //     });
+        //   }
+        // }, 500);
+        txDetail = await txDetailPromise;
+        hideToastRef.current();
 
         console.debug('[notifications] txDetail', txDetail);
 
