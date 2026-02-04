@@ -78,11 +78,13 @@ class NotificationsOpenApiService extends OpenApiService {
   async getUserTxDetail(params: {
     chainId: string;
     txId: string;
+    userAddr: string;
   }): Promise<TxHistoryResult | null> {
     const response = await this.request.get('/v1/user/tx', {
       params: {
         chain_id: params.chainId,
         tx_id: params.txId,
+        id: params.userAddr.toLowerCase(),
       },
     });
 

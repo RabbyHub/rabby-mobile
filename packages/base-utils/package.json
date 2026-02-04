@@ -16,6 +16,7 @@
   },
   "license": "MIT",
   "main": "./dist/index.js",
+  "react-native": "./src/index.ts",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/"

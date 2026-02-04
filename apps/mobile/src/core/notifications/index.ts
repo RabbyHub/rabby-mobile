@@ -18,7 +18,7 @@ export async function connectPushServerOnBootstrap() {
   } catch (error) {
     console.error('Failed to register for push notifications:', error);
   }
-  console.debug('[connectPushTestServer] pushToken', pushToken);
+  console.debug('[connectFeService] pushToken', pushToken);
 
   startBindPushServerOnDemand(pushToken);
   startConnectPushTestServerInterval(pushToken);

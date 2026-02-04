@@ -724,10 +724,19 @@ export function startSubscribeRemoteNotification() {
           '[notifications] onParsedReceivedData:: parsedData',
           parsedData,
         );
-        const txDetail = await notificationOpenapi.getUserTxDetail({
-          chainId: parsedData.txInfo?.chainServerId || '',
-          txId: parsedData.txInfo?.txHash || '',
-        });
+        const txDetail = await notificationOpenapi
+          .getUserTxDetail({
+            chainId: parsedData.txInfo?.chainServerId || '',
+            txId: parsedData.txInfo?.txHash || '',
+            userAddr: ownerAddress,
+          })
+          .catch(error => {
+            console.debug(
+              '[notifications] [startSubscribeRemoteNotification] Failed to get tx detail:',
+            );
+            console.error(error);
+            return null;
+          });
 
         console.debug('[notifications] txDetail', txDetail);
 

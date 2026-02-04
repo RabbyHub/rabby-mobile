@@ -232,9 +232,15 @@ export async function startConnectPushServerInterval() {
     }
   });
 
-  notificationOpenapi.heartbeat().then(onHeartbeatResponse);
+  const requestHeartbeat = async () => {
+    if (AppState.isAvailable && AppState.currentState !== 'active') return;
+    notificationOpenapi.heartbeat().then(onHeartbeatResponse);
+  };
+
+  requestHeartbeat();
   setInterval(async () => {
-    await notificationOpenapi.heartbeat().then(onHeartbeatResponse);
+    if (AppState.isAvailable && AppState.currentState !== 'active') return;
+    await requestHeartbeat();
   }, CONNECT_DURATION_MS);
 }
 
