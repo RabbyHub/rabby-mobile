@@ -280,7 +280,7 @@ export class PreferenceService extends StoreServiceBase<
         hyperliquidInvite: {
           lastTime: 0,
         },
-        enabledTransactionNofification: true,
+        enabledTransactionNofification: false,
       },
       {
         storageAdapter: options?.storageAdapter,

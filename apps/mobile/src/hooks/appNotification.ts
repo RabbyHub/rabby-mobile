@@ -34,7 +34,7 @@ const appNotificationStore = zCreate<{
     hasSystemPermission: null,
     enabledTransactionNofification:
       preferenceService.getPreferenceByKey('enabledTransactionNofification') ??
-      true,
+      false,
   };
 });
 
@@ -45,10 +45,13 @@ export async function fetchHasSystemPermission() {
   return hasSystemPermission;
 }
 
-async function startSubscribeAppStateChange() {
+export async function startCareAppNotificationPermissions() {
   const hasPermission = await fetchHasSystemPermission();
 
-  if (!hasPermission) {
+  if (
+    !hasPermission &&
+    appNotificationStore.getState().enabledTransactionNofification
+  ) {
     await requestUngrantedNotificationPermission();
     await fetchHasSystemPermission();
   }
@@ -59,10 +62,6 @@ async function startSubscribeAppStateChange() {
     }
   });
 }
-
-runIIFEFunc(() => {
-  startSubscribeAppStateChange();
-});
 
 export async function setEnableTransactionNofification(
   valOrFunc: UpdaterOrPartials<boolean>,
