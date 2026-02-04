@@ -26,6 +26,7 @@ import { findChain } from '@/utils/chain';
 import { ITokenItem } from '@/store/tokens';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
+import { useTranslation } from 'react-i18next';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -54,6 +55,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
+  const { t } = useTranslation();
 
   const isNativeToken = useMemo(() => {
     const chain = findChain({ serverId: token?.chain });
@@ -73,9 +75,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
         ignoreAndroidSystemSettings: false,
       });
       Clipboard.setString(token.id);
-      toastCopyAddressSuccess(token.id);
+      toastCopyAddressSuccess(token.id, t('page.tokenDetail.copyCA'));
     },
-    [isNativeToken, token.id],
+    [isNativeToken, t, token.id],
   );
 
   return (
