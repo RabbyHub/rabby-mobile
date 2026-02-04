@@ -53,6 +53,8 @@ import { browserApis } from './browser/useBrowser';
 import { notificationOpenapi } from '@/core/notifications/openapi';
 import { toast, toastLoading } from '@/components2024/Toast';
 import i18next from 'i18next';
+import { switchSceneCurrentAccount } from './accountsSwitcher';
+import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -719,7 +721,14 @@ export function startSubscribeRemoteNotification() {
       const ownerAddress = parsedData.txInfo?.ownerAddress;
       if (!ownerAddress) return;
       // TODO: check if my own address
-      // if (isMyAddress(ownerAddress)) return ;
+      const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
+      if (!foundAccount) {
+        console.debug(
+          '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
+          ownerAddress,
+        );
+        return;
+      }
 
       console.debug(
         '[notifications] onParsedReceivedData:: parsedData',
@@ -729,7 +738,7 @@ export function startSubscribeRemoteNotification() {
         .getUserTxDetail({
           chainId: parsedData.txInfo?.chainServerId || '',
           txId: parsedData.txInfo?.txHash || '',
-          userAddr: ownerAddress,
+          userAddr: foundAccount.address || '',
         })
         .catch(error => {
           console.debug(
@@ -746,13 +755,6 @@ export function startSubscribeRemoteNotification() {
             duration: 3 * 1000,
           }),
         };
-        // setTimeout(() => {
-        //   if (!txDetail) {
-        //     hideToastRef.current = toastLoading(i18next.t('notifications.loadingTransaction'), {
-        //       duration: 3 * 1000,
-        //     });
-        //   }
-        // }, 500);
         txDetail = await txDetailPromise;
         hideToastRef.current();
 
@@ -760,11 +762,25 @@ export function startSubscribeRemoteNotification() {
 
         if (!txDetail) {
           const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
-          if (__DEV__) {
-            Alert.alert('Warning', warnMsg);
-          } else {
-            console.warn(warnMsg);
-          }
+          console.warn(warnMsg);
+
+          const currentRouteName =
+            navigationRouteStore.getState().currentRouteName;
+          const needReplace = currentRouteName === RootNames.History;
+          const naviFn = ctx.defaultAction
+            ? resetNavigationOnTopOfHome
+            : needReplace
+            ? naviReplace
+            : naviPush;
+
+          await switchSceneCurrentAccount('History', foundAccount);
+          naviFn(RootNames.StackTransaction, {
+            screen: RootNames.History,
+            params: {
+              isForMultipleAddress: false,
+            },
+          });
+
           return;
         }
 
