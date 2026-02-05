@@ -9,8 +9,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatPerpsUsdValue } from '@/utils/number';
 import {
   calLiquidationPrice,
-  formatPerpsCoin,
   formatPerpsPct,
+  formatPerpsCoin,
 } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
