@@ -1025,9 +1025,7 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
         }
         if (
           data.clearinghouseStates.length > 0 &&
-          data.clearinghouseStates.some(
-            item => item[1].assetPositions.length > 0,
-          )
+          calcAccountValueByAllDexs(data.clearinghouseStates) > 0
         ) {
           setAllDexsClearinghouseStateMap({
             address: data.user,
