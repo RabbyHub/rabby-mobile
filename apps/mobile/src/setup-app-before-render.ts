@@ -50,6 +50,7 @@ startSubscribeLangChange();
 startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
 apisAutoLock.setupAutoLockChecker();
+apisAutoLock.startSubscribeAutoLockOnAppState();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();
 startSubscribeAppStateChange();

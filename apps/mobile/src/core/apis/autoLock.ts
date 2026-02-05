@@ -1,4 +1,5 @@
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { AppState, AppStateStatus } from 'react-native';
 import { preferenceService } from '../services';
 import { makeEEClass } from './event';
 
@@ -27,6 +28,10 @@ function calc(ms: number = AUTO_LOCK_SECS.TIMEOUT_MILLISECS) {
 const autoLockTimerRef = {
   current: calc(),
   timer: null as ReturnType<typeof setInterval> | null,
+};
+const autoLockAppStateRef = {
+  current: AppState.currentState as AppStateStatus | null,
+  backgroundAt: 0,
 };
 
 type TimeoutContext = {
@@ -120,7 +125,7 @@ export function setupAutoLockChecker() {
   autoLockTimerRef.timer = setInterval(() => {
     const unlockExpire = getAutoLockTime();
     const nowTime = Date.now();
-    if (unlockExpire <= nowTime) return;
+    if (!isValidAutoLockTime(unlockExpire)) return;
 
     const fromExpireDiff = nowTime - unlockExpire;
 
@@ -129,10 +134,54 @@ export function setupAutoLockChecker() {
     //   unlockExpire,
     //   fromExpireDiff,
     // );
-    if (fromExpireDiff > -AUTO_LOCK_SECS.ERROR_DELTA) {
+    if (fromExpireDiff >= -AUTO_LOCK_SECS.ERROR_DELTA) {
       console.debug('check auto lock:: timeout');
       const delayLock = () => refreshAutolockTimeout();
       autoLockEvent.emit('timeout', { unlockExpire, delayLock });
     }
   }, CHECK_DURATION);
+}
+
+function isInactiveState(nextState: AppStateStatus) {
+  return nextState === 'inactive' || nextState === 'background';
+}
+
+function maybeAutoLockOnForeground() {
+  const { timeoutMs } = getPersistedAutoLockTimes();
+  if (!isValidAutoLockTime(timeoutMs)) return;
+
+  const unlockExpire = getAutoLockTime();
+  if (!isValidAutoLockTime(unlockExpire)) return;
+
+  const now = Date.now();
+  const backgroundAt = autoLockAppStateRef.backgroundAt;
+  const backgroundDuration = backgroundAt > 0 ? now - backgroundAt : 0;
+
+  const shouldLockByBackground = backgroundDuration >= timeoutMs;
+  const shouldLockByExpire = now >= unlockExpire;
+
+  if (shouldLockByBackground || shouldLockByExpire) {
+    const delayLock = () => refreshAutolockTimeout();
+    autoLockEvent.emit('timeout', { unlockExpire, delayLock });
+  }
+}
+
+export function startSubscribeAutoLockOnAppState() {
+  if (!AppState.isAvailable) return;
+
+  autoLockAppStateRef.current = AppState.currentState;
+  return AppState.addEventListener('change', nextState => {
+    const prevState = autoLockAppStateRef.current;
+    autoLockAppStateRef.current = nextState;
+
+    if (isInactiveState(nextState)) {
+      autoLockAppStateRef.backgroundAt = Date.now();
+      return;
+    }
+
+    if (prevState && isInactiveState(prevState) && nextState === 'active') {
+      maybeAutoLockOnForeground();
+      autoLockAppStateRef.backgroundAt = 0;
+    }
+  });
 }
