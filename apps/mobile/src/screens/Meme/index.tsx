@@ -19,6 +19,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { TokenItemSkeleton, TokenListItem } from './components/TokenItem';
 import TokenHeader from './components/TokenHeader';
+import { useIsFocused } from '@react-navigation/native';
 import { navigateDeprecated } from '@/utils/navigation';
 import { MemeItem } from '@rabby-wallet/rabby-api/dist/types';
 import { RootNames } from '@/constant/layout';
@@ -74,16 +75,16 @@ function MemeScreen(): JSX.Element {
   }, [volumeSort, fdvSort, changeSort]);
 
   const {
-    memeTokenList: tokenList,
+    memeTokenList: list,
     getMemeTokenList,
     loading: tokenListLoading,
     loadingMore,
     hasMore,
     loadMore,
     refreshMemeTokenListSilently,
-  } = useMemeTokenList(true, orderBy, order);
+  } = useMemeTokenList(orderBy, order);
 
-  const list = tokenList;
+  const isFocused = useIsFocused();
   const [isInFirst100Items, setIsInFirst100Items] = useState(true);
 
   const handleVolumeSort = useCallback(() => {
@@ -200,21 +201,20 @@ function MemeScreen(): JSX.Element {
     setFdvSort('default');
   }, [getMemeTokenList, setChangeSort, setVolumeSort, setFdvSort]);
 
-  // 当用户当前滚动位置在前100项时，每 5 秒静默刷新一次列表，用于更新 24h 价格变化
+  // 当前页面 focus 且滚动位置在前100项时，每 5 秒静默刷新一次列表
   useEffect(() => {
-    if (!isInFirst100Items) {
+    if (!isFocused || !isInFirst100Items) {
       return;
     }
 
     const timer = setInterval(() => {
-      // 静默刷新，不展示 loading，仅更新列表数据
       refreshMemeTokenListSilently();
     }, 5000);
 
     return () => {
       clearInterval(timer);
     };
-  }, [isInFirst100Items, refreshMemeTokenListSilently]);
+  }, [isFocused, isInFirst100Items, refreshMemeTokenListSilently]);
 
   return (
     <NormalScreenContainer2024

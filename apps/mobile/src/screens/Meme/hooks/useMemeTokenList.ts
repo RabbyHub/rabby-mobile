@@ -9,11 +9,7 @@ export const memeTokenListAtom = atom<MemeItem[]>([]);
 type SortOrder = 'desc' | 'asc';
 type OrderBy = 'volume_24h' | 'fdv' | 'price_change_24h';
 
-export const useMemeTokenList = (
-  visible?: boolean,
-  orderBy?: OrderBy,
-  order?: SortOrder,
-) => {
+export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
   const [memeTokenList, setMemeTokenList] = useAtom(memeTokenListAtom);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -63,13 +59,6 @@ export const useMemeTokenList = (
         } else {
           setLoading(true);
         }
-        console.log(
-          'CUSTOM_LOGGER getMemeTokenList',
-          finalOrderBy,
-          finalOrder,
-          append,
-          nextCursorRef.current,
-        );
 
         const memeTokenListRes = await openapi.getMemeList({
           order_by: finalOrderBy,
@@ -80,7 +69,6 @@ export const useMemeTokenList = (
 
         const pagination = memeTokenListRes.pagination || {};
         const nextCursor = pagination.next_cursor;
-        console.log('CUSTOM_LOGGER nextCursor', nextCursor);
         const hasNext = pagination.has_next ?? false;
 
         if (append) {
@@ -88,7 +76,6 @@ export const useMemeTokenList = (
             [...memeTokenList, ...memeTokenListRes.data_list],
             item => item.id,
           );
-          console.log('CUSTOM_LOGGER newList', newList.length);
           setMemeTokenList(newList);
         } else {
           setMemeTokenList(memeTokenListRes.data_list);
@@ -127,14 +114,13 @@ export const useMemeTokenList = (
 
   /**
    * 首页自动轮询用：静默刷新第一页数据，不触发 loading/loadingMore
-   * 当用户滚动位置在前100项时使用。
+   * 当用户滚动位置在前100项时使用，用户不太会滑倒100项之后等刷新。
    */
   const refreshMemeTokenListSilently = useCallback(async () => {
     try {
       const finalOrderBy = currentOrderByRef.current || orderBy || 'fdv';
       const finalOrder = currentOrderRef.current || order || 'desc';
 
-      console.log('CUSTOM_LOGGER:=>: refreshMemeTokenListSilently');
       const memeTokenListRes = await openapi.getMemeList({
         order_by: finalOrderBy,
         order: finalOrder,

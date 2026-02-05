@@ -20,11 +20,13 @@ export const formatPercentage = (x: number) => {
   let formattedValue: string;
 
   if (absPercentage >= 1e9) {
-    formattedValue = `${(absPercentage / 1e9).toFixed(2)}B`;
+    formattedValue = `${(absPercentage / 1e9).toFixed(1)}B`;
   } else if (absPercentage >= 1e6) {
-    formattedValue = `${(absPercentage / 1e6).toFixed(2)}M`;
+    formattedValue = `${(absPercentage / 1e6).toFixed(1)}M`;
   } else if (absPercentage >= 1e3) {
-    formattedValue = `${(absPercentage / 1e3).toFixed(2)}K`;
+    formattedValue = `${(absPercentage / 1e3).toFixed(1)}K`;
+  } else if (absPercentage >= 10) {
+    formattedValue = absPercentage.toFixed(1);
   } else {
     formattedValue = absPercentage.toFixed(2);
   }
@@ -217,7 +219,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    width: 70,
+    width: 60,
   },
   changeTextPositive: {
     color: colors2024['red-default'],
@@ -228,7 +230,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     //paddingHorizontal: 6.5,
     paddingVertical: 6,
     borderRadius: 6,
-    width: 70,
+    width: 60,
     alignItems: 'flex-end',
   },
   leftSlot: {

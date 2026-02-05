@@ -5,7 +5,7 @@ import { useMemeTokenList } from '../hooks/useMemeTokenList';
 
 export const Top3MemeBadge = () => {
   const { styles } = useTheme2024({ getStyle });
-  const { memeTokenList: tokenList } = useMemeTokenList(true);
+  const { memeTokenList: tokenList } = useMemeTokenList();
   if (!tokenList.length) {
     return null;
   }
