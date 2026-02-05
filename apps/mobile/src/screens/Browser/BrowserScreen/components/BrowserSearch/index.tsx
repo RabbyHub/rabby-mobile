@@ -125,8 +125,9 @@ export function BrowserSearch({
     if (!searchText) {
       return;
     }
-    isOpenURLRef.current = true;
+
     if (isValidDomain) {
+      isOpenURLRef.current = true;
       onOpenURL?.(
         /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
       );
