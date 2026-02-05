@@ -27,7 +27,7 @@ export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
       append = false,
     ) => {
       try {
-        const finalOrderBy = sortOrderBy || orderBy || 'fdv';
+        const finalOrderBy = sortOrderBy || orderBy || 'volume_24h';
         const finalOrder = sortOrder || order || 'desc';
 
         if (
