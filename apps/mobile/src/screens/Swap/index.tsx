@@ -617,6 +617,12 @@ const Swap = ({
             runFetchSwapPendingCount();
           }, 1000);
           runFetchLocalPendingTx();
+          if (navState?.from === 'meme') {
+            matomoRequestEvent({
+              category: 'Rabby Memecoin',
+              action: 'Memecoin_CreateSwapTx',
+            });
+          }
           preferenceService.setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {

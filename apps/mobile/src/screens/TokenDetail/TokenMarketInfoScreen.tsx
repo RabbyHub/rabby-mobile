@@ -11,6 +11,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -122,7 +123,7 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
 export const TokenMarketInfoScreen = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
-  const { token, account, tokenSelectType } = route.params || {};
+  const { token, account, tokenSelectType, from } = route.params || {};
   console.log('token', token);
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
@@ -272,6 +273,12 @@ export const TokenMarketInfoScreen = () => {
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       // 关闭弹窗隐藏
       setIsFromBack(false);
+      if (from === 'meme') {
+        matomoRequestEvent({
+          category: 'Rabby Memecoin',
+          action: 'Memecoin_ToSwapPage',
+        });
+      }
       navigation.push(RootNames.StackTransaction, {
         screen: account ? RootNames.Swap : RootNames.MultiSwap,
         params: {
@@ -280,6 +287,7 @@ export const TokenMarketInfoScreen = () => {
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
           address,
           isFromSwap,
+          from,
         },
       });
     },

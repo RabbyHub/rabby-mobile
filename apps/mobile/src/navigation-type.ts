@@ -85,6 +85,7 @@ export type RootStackParamsList = {
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
+    from?: string;
   };
 };
 
@@ -317,6 +318,7 @@ export type TransactionNavigatorParamList = {
     isSwapToTokenDetail?: boolean;
     isFromSwap?: boolean;
     isFromCopyTrading?: boolean;
+    from?: string;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]: {
