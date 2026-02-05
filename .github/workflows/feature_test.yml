@@ -29,7 +29,7 @@ on:
       __DANGEROUS_NO_VERIFY_SSL:
         required: false
         type: boolean
-        default: false
+        default: true
       GHA_MOCK_BUILD_FAILED:
         required: false
         type: boolean
