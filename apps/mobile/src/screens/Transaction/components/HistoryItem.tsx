@@ -264,6 +264,7 @@ export const HistoryItem = React.memo(
           isForMultipleAddress,
           data,
           title: formatTitle,
+          treatSmallAssetsAsScam: true,
         },
       });
     }, [onPress, navigation, isForMultipleAddress, data, formatTitle]);

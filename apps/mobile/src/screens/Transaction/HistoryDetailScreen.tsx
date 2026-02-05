@@ -212,12 +212,17 @@ function HistoryDetailScreen(): JSX.Element {
     useRoute<
       GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'HistoryDetail'>
     >();
-  const { data, isForMultipleAddress, title } = route.params || {};
+  const {
+    data,
+    isForMultipleAddress,
+    title,
+    treatSmallAssetsAsScam = false,
+  } = route.params || {};
 
   const { t } = useTranslation();
   const status = useMemo(() => data.tx?.status ?? 1, [data]);
 
-  const isScam = data.is_scam || data.isSmallUsdTx;
+  const isScam = data.is_scam || (data.isSmallUsdTx && treatSmallAssetsAsScam);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
     // containerPb: 12,
