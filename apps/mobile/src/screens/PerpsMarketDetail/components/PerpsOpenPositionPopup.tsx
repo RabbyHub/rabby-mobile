@@ -7,11 +7,7 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatPerpsUsdValue } from '@/utils/number';
-import {
-  calLiquidationPrice,
-  formatPerpsCoin,
-  formatPerpsPct,
-} from '@/utils/perps';
+import { calLiquidationPrice, formatPerpsPct } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -645,7 +641,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                       Number(tradeSize) * markPrice,
                       BigNumber.ROUND_DOWN,
                     )}{' '}
-                    = {tradeSize} {formatPerpsCoin(coin)}
+                    = {tradeSize} {coin}
                   </Text>
                 </View>
               </View>
