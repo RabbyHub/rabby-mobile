@@ -490,6 +490,8 @@ export const PerpsOpenPositionPopup: React.FC<{
                     {
                       flexDirection: 'column',
                       gap: 0,
+                      marginTop: 16,
+                      alignItems: 'flex-start',
                     },
                   ])}>
                   <Text style={styles.marginTitle}>
@@ -804,6 +806,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     errorMsgContainer: {
       height: 18,
       marginBottom: -12,
+      flex: 1,
+      alignItems: 'flex-end',
     },
     errorMsg: {
       fontFamily: 'SF Pro Rounded',
