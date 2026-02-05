@@ -47,6 +47,7 @@ export const PerpsInfo: React.FC<{
               showTipsPopup({
                 title: t('page.perpsDetail.PerpsInfo.openInterest'),
                 desc: t('page.perpsDetail.PerpsInfo.openInterestTips'),
+                buttonType: 'hyperliquid',
               });
             }}>
             <View style={styles.listItemMain}>
@@ -78,6 +79,7 @@ export const PerpsInfo: React.FC<{
               showTipsPopup({
                 title: t('page.perpsDetail.PerpsInfo.funding'),
                 desc: t('page.perpsDetail.PerpsInfo.fundingTips'),
+                buttonType: 'hyperliquid',
               });
             }}>
             <View style={styles.listItemMain}>

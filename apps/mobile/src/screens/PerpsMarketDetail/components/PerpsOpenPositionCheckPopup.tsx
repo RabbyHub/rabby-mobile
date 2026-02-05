@@ -154,6 +154,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.sizeTips',
                     ),
+                    buttonType: 'hyperliquid',
                   });
                 }}>
                 <View style={styles.listItemMain}>
@@ -227,6 +228,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.liquidationPriceTips',
                     ),
+                    buttonType: 'hyperliquid',
                   });
                 }}>
                 <View style={styles.listItemMain}>
@@ -264,6 +266,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                       fee: formatPercent(providerFee, 4),
                     },
                   ),
+                buttonType: 'hyperliquid',
               });
             }}>
             <View style={styles.feeContainer}>

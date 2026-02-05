@@ -187,6 +187,7 @@ export const PerpsWithdrawPopup: React.FC<{
                 showTipsPopup({
                   title: t('page.perps.PerpsWithdrawPopup.feeTooltipTitle'),
                   desc: t('page.perps.PerpsWithdrawPopup.feeTooltipDesc'),
+                  buttonType: 'hyperliquid',
                 });
               }}>
               <View style={styles.feeContainer}>

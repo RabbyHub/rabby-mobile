@@ -204,7 +204,7 @@ export const PerpMarginModePopup: React.FC<{
         </View>
         <View style={styles.footer}>
           <Button
-            type="primary"
+            type="hyperliquid"
             title={t('global.confirm')}
             onPress={handleConfirm}
           />
