@@ -920,7 +920,9 @@ class ProviderController extends BaseController {
             if (defaultRPC?.txPushToRPC && !isGasLess && !isGasAccount) {
               let fePushedFailed = false;
 
-              const tx = TransactionFactory.fromTxData(txDataWithRSV);
+              const tx = TransactionFactory.fromTxData(txDataWithRSV, {
+                common,
+              });
               const rawTx = bytesToHex(tx.serialize());
 
               try {

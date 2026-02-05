@@ -442,7 +442,7 @@ export const PerpsEditMarginPopup: React.FC<{
               <PerpsSlider
                 disabled={maxMargin <= minMargin}
                 maxValue={maxMargin}
-                step={0.1}
+                step={0.01}
                 minValue={Number(minMargin)}
                 value={marginNormalized}
                 onValueChange={handleSliderChange}
