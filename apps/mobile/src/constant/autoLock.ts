@@ -54,6 +54,11 @@ function pushShortAutoLockTimeSetting() {
     getLabel: () => '30 seconds (DEV ONLY)',
     milliseconds: 30 * 1000,
   });
+  TIME_SETTINGS.push({
+    key: '5s',
+    getLabel: () => '5 seconds (DEV ONLY)',
+    milliseconds: 5 * 1000,
+  });
 }
 if (__DEV__) {
   pushShortAutoLockTimeSetting();
