@@ -368,6 +368,7 @@ const getStyle = createGetStyles2024(
     main: {
       height: '100%',
       overflow: 'hidden',
+
       // flex: 1,
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['red-light-2'],
@@ -484,7 +485,7 @@ const getStyle = createGetStyles2024(
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: 16,
+      marginTop: 36,
       // ...makeDebugBorder('purple'),
     },
     swipeUpHintText: {
