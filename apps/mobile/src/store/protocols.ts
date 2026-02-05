@@ -285,13 +285,16 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     if (!addresses.length) {
       return;
     }
+    const lowerAddresses = Array.from(
+      new Set(addresses.map(item => item.toLowerCase())),
+    );
 
     if (!force) {
-      const isExpired = await isDataExpiredBatch(addresses);
+      const isExpired = await isDataExpiredBatch(lowerAddresses);
       if (!isExpired) {
         const [protocolMap, appChainMap] = await Promise.all([
-          ProtocolItemEntity.getDefaultProtocolsByAddresses(addresses),
-          buildAppChainProtocolMap(addresses),
+          ProtocolItemEntity.getDefaultProtocolsByAddresses(lowerAddresses),
+          buildAppChainProtocolMap(lowerAddresses),
         ]);
         set(() => ({
           protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
@@ -304,11 +307,11 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
     set(() => ({ isLoading: true }));
     try {
       const results = await Promise.all(
-        addresses.map(address => syncProtocols(address, force)),
+        lowerAddresses.map(address => syncProtocols(address, force)),
       );
       const resultMap: Record<string, IProtocolItem[]> = {};
       results.forEach((protocols, index) => {
-        const address = addresses[index];
+        const address = lowerAddresses[index];
         if (!address) {
           return;
         }
