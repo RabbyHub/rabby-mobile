@@ -272,6 +272,7 @@ export const SwapTxHistory = ({
             isForMultipleAddress,
             data: detailData,
             title: t('page.swap.swapped'),
+            treatSmallAssetsAsScam: true,
           },
         });
       } else {

@@ -756,7 +756,6 @@ export function startSubscribeRemoteNotification() {
           }),
         };
         txDetail = await txDetailPromise;
-        hideToastRef.current();
 
         console.debug('[notifications] txDetail', txDetail);
 
@@ -774,6 +773,7 @@ export function startSubscribeRemoteNotification() {
             : naviPush;
 
           await switchSceneCurrentAccount('History', foundAccount);
+          hideToastRef.current();
           naviFn(RootNames.StackTransaction, {
             screen: RootNames.History,
             params: {
@@ -784,7 +784,8 @@ export function startSubscribeRemoteNotification() {
           return;
         }
 
-        // mock, for test
+        hideToastRef.current();
+
         const pinedQueue = preferenceService.getPinToken();
         const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
         const historyDisplayItem = txResultToToHistoryDisplayItem({
@@ -815,6 +816,7 @@ export function startSubscribeRemoteNotification() {
             data: historyDisplayItem,
             title:
               prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
+            treatSmallAssetsAsScam: false,
           },
         });
 

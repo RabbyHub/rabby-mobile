@@ -273,6 +273,10 @@ export type TransactionNavigatorParamList = {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;
     title?: string;
+    /**
+     * @default false
+     */
+    treatSmallAssetsAsScam?: boolean;
   };
   [RootNames.HistoryLocalDetail]: {
     data: TransactionGroup;
