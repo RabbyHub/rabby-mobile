@@ -36,7 +36,11 @@ import { getExpScreenCapture, useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
-import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  makeAvoidParallelAsyncFunc,
+  resolveValFromUpdater,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
 import { perfEvents } from '@/core/utils/perf';
 import { useShallow } from 'zustand/react/shallow';
@@ -403,25 +407,24 @@ export const resetNavigationOnTopOfHome: typeof naviReplace = (
   apisHomeTabIndex.setTabIndex(0);
 };
 
-export async function requestLockWalletAndBackToUnlockScreen(): Promise<{
-  canLockWallet: boolean;
-}> {
-  const lockInfo = await apisLock.getRabbyLockInfo();
-  const result = { canLockWallet: false };
-  if (!lockInfo.isUseCustomPwd) return result;
+export const requestLockWalletAndBackToUnlockScreen =
+  makeAvoidParallelAsyncFunc(async () => {
+    const lockInfo = await apisLock.getRabbyLockInfo();
+    const result = { canLockWallet: false };
+    if (!lockInfo.isUseCustomPwd) return result;
 
-  const isUnlocked = apisLock.isUnlocked();
-  if (isUnlocked) {
-    result.canLockWallet = true;
-    await apisLock.lockWallet();
-  }
+    const isUnlocked = apisLock.isUnlocked();
+    if (isUnlocked) {
+      result.canLockWallet = true;
+      await apisLock.lockWallet();
+    }
 
-  console.debug('will back to unlock screen');
-  const navigation = getReadyNavigationInstance();
-  if (navigation) resetNavigationTo(navigation, 'Unlock');
+    console.debug('will back to unlock screen');
+    const navigation = getReadyNavigationInstance();
+    if (navigation) resetNavigationTo(navigation, 'Unlock');
 
-  return result;
-}
+    return result;
+  });
 
 type ResetNaviOnUIUnlockFn = (ctx: {
   navigation: NavigationInstance;
