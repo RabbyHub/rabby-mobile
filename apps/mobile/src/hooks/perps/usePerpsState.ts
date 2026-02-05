@@ -27,10 +27,7 @@ import { minBy, uniqBy } from 'lodash';
 import { showToast } from './showToast';
 import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
-import { getAllMyAccount } from '@/core/apis/address';
-import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 import { sleep } from '@/utils/async';
-import { calcAccountValueByAllDexs } from '@/utils/perps';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
@@ -619,7 +616,7 @@ export const usePerpsState = () => {
 
       let isNeedDepositBeforeApprove = true;
       const info = getClearinghouseStateByMap(account.address);
-      const accountValue = calcAccountValueByAllDexs(info);
+      const accountValue = info?.marginSummary.accountValue;
       if (Number(accountValue) > 0) {
         isNeedDepositBeforeApprove = false;
       } else {
@@ -831,11 +828,9 @@ export const usePerpsState = () => {
   // ]);
 
   const allDexsPositions = useMemo(() => {
-    const res = perpsState.allDexsClearinghouseState
-      .map(item => item[1].assetPositions)
-      .flat();
+    const res = perpsState.currentClearinghouseState?.assetPositions || [];
     return res;
-  }, [perpsState.allDexsClearinghouseState]);
+  }, [perpsState.currentClearinghouseState]);
 
   const positionAndOpenOrders: PositionAndOpenOrder[] = useMemo(() => {
     return allDexsPositions.map(position => ({
@@ -847,17 +842,11 @@ export const usePerpsState = () => {
   }, [allDexsPositions, perpsState.openOrders]);
 
   const accountSummary: AccountSummary = useMemo(() => {
-    const allDexsClearinghouseState = perpsState.allDexsClearinghouseState;
-    const hyperDexState = allDexsClearinghouseState[0]?.[1];
-    const accountValue = calcAccountValueByAllDexs(allDexsClearinghouseState);
     return {
-      accountValue: accountValue.toString(),
-      totalMarginUsed: hyperDexState?.marginSummary?.totalMarginUsed || '0',
-      totalNtlPos: hyperDexState?.marginSummary?.totalNtlPos || '0',
-      totalRawUsd: hyperDexState?.marginSummary?.totalRawUsd || '0',
-      withdrawable: hyperDexState?.withdrawable || '0',
-    };
-  }, [perpsState.allDexsClearinghouseState]);
+      ...perpsState.currentClearinghouseState?.marginSummary,
+      withdrawable: perpsState.currentClearinghouseState?.withdrawable || '0',
+    } as AccountSummary;
+  }, [perpsState.currentClearinghouseState]);
 
   return {
     // State

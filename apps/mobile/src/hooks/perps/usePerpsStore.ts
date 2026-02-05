@@ -16,6 +16,7 @@ import { DEFAULT_TOP_ASSET } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import {
   calcAccountValueByAllDexs,
+  formatAllDexsClearinghouseState,
   formatMarkData,
   formatPositionPnl,
 } from '@/utils/perps';
@@ -80,13 +81,11 @@ export type AllDexsClearinghouseState = [string, ClearinghouseState][];
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
   accountSummary: AccountSummary | null;
-  // currentClearinghouseState: ClearinghouseState | null;
-  allDexsClearinghouseState: AllDexsClearinghouseState;
+  currentClearinghouseState: ClearinghouseState | null;
   openOrders: OpenOrder[];
   currentPerpsAccount: Account | null;
-  // clearinghouseStateMap: Record<string, ClearinghouseState | null>;
-  allDexsClearinghouseStateMap: Record<string, AllDexsClearinghouseState>;
-  isFetchAllDone: boolean; // init allDexsClearinghouseStateMap has done
+  clearinghouseStateMap: Record<string, ClearinghouseState | null>;
+  isFetchAllDone: boolean; // init ClearinghouseStateMap has done
   accountNeedApproveAgent: boolean; // 账户是否需要重新approve agent
   accountNeedApproveBuilderFee: boolean; // 账户是否需要重新approve builder fee
   marketData: MarketData[];
@@ -122,14 +121,12 @@ export const initialState: PerpsState = {
   // positionAndOpenOrders: [],
   openOrders: [],
   accountSummary: null,
-  // currentClearinghouseState: null,
+  currentClearinghouseState: null,
   isFetchAllDone: false,
-  allDexsClearinghouseState: [],
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
-  // clearinghouseStateMap: {},
-  allDexsClearinghouseStateMap: {},
+  clearinghouseStateMap: {},
   accountNeedApproveAgent: false,
   accountNeedApproveBuilderFee: false,
   marketData: [],
@@ -222,40 +219,26 @@ const setHomePositionPnl = (payload: {
   setPerpsState(prev => ({ ...prev, homePositionPnl: payload }));
 };
 
-// const setClearinghouseStateMap = (payload: {
-//   address: string;
-//   data: ClearinghouseState;
-// }) => {
-//   const address = payload.address.toLowerCase();
-//   const { data } = payload;
-//   const prevState = perpsStore.getState().clearinghouseStateMap[address];
-//   if (!prevState || data.time > prevState.time) {
-//     perpsStore.setState(prev => ({
-//       ...prev,
-//       clearinghouseStateMap: { ...prev.clearinghouseStateMap, [address]: data },
-//     }));
-//   }
-// };
-
-const setAllDexsClearinghouseStateMap = (payload: {
+const setClearinghouseStateMap = (payload: {
   address: string;
-  data: AllDexsClearinghouseState;
+  data: ClearinghouseState | null;
 }) => {
+  if (!payload.data) {
+    return;
+  }
   const address = payload.address.toLowerCase();
   const { data } = payload;
-  perpsStore.setState(prev => ({
-    ...prev,
-    allDexsClearinghouseStateMap: {
-      ...prev.allDexsClearinghouseStateMap,
-      [address]: data,
-    },
-  }));
+  const prevState = perpsStore.getState().clearinghouseStateMap[address];
+  if (!prevState || data.time > prevState.time) {
+    perpsStore.setState(prev => ({
+      ...prev,
+      clearinghouseStateMap: { ...prev.clearinghouseStateMap, [address]: data },
+    }));
+  }
 };
 
 export const getClearinghouseStateByMap = (address: string) => {
-  return perpsStore.getState().allDexsClearinghouseStateMap[
-    address.toLowerCase()
-  ];
+  return perpsStore.getState().clearinghouseStateMap[address.toLowerCase()];
 };
 
 const setCurrentPerpsAccount = (payload: Account) => {
@@ -269,9 +252,7 @@ const setCurrentPerpsAccount = (payload: Account) => {
 
 export const switchPerpsAccountBeforeNavigate = (payload: Account) => {
   const clearinghouseState =
-    perpsStore.getState().allDexsClearinghouseStateMap[
-      payload.address.toLowerCase()
-    ];
+    perpsStore.getState().clearinghouseStateMap[payload.address.toLowerCase()];
   const pnl = clearinghouseState
     ? formatPositionPnl(clearinghouseState)
     : initialState.homePositionPnl;
@@ -375,7 +356,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
     const handleDoneSelectAccount = (account: Account) => {
       setCurrentPerpsAccount(account);
       const clearinghouseState =
-        perpsState.allDexsClearinghouseStateMap[account.address.toLowerCase()];
+        perpsState.clearinghouseStateMap[account.address.toLowerCase()];
       const pnl = clearinghouseState
         ? formatPositionPnl(clearinghouseState)
         : initialState.homePositionPnl;
@@ -390,16 +371,19 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
       if (accounts.length > 0) {
         const res = accounts.map(item => {
           const info =
-            perpsState.allDexsClearinghouseStateMap[item.address.toLowerCase()];
+            perpsState.clearinghouseStateMap[item.address.toLowerCase()];
           return { account: item, clearinghouseState: info };
         });
         const best = res.sort((a, b) => {
           return (
-            calcAccountValueByAllDexs(b.clearinghouseState) -
-            calcAccountValueByAllDexs(a.clearinghouseState)
+            Number(b.clearinghouseState?.marginSummary.accountValue) -
+            Number(a.clearinghouseState?.marginSummary.accountValue)
           );
         })[0];
-        if (best && calcAccountValueByAllDexs(best.clearinghouseState) > 0) {
+        if (
+          best &&
+          Number(best.clearinghouseState?.marginSummary.accountValue) > 0
+        ) {
           handleDoneSelectAccount(best.account);
         } else {
           handleDoneSelectAccount(accounts[0]!);
@@ -474,15 +458,6 @@ const addUserFills = (payload: {
 //   });
 // };
 
-const updateAllDexsClearinghouseState = (
-  payload: [string, ClearinghouseState][],
-) => {
-  setPerpsState(prev => ({
-    ...prev,
-    allDexsClearinghouseState: payload,
-  }));
-};
-
 // const setPositionAndOpenOrders = (
 //   clearinghouseState: ClearinghouseState,
 //   openOrders: OpenOrder[],
@@ -505,7 +480,7 @@ const updateAllDexsClearinghouseState = (
 // };
 
 const updateMarketData = (payload: [string, AssetCtx[]][]) => {
-  if (payload.length === 0 || perpsStore.getState().marketData.length === 0) {
+  if (payload.length === 0) {
     return;
   }
 
@@ -515,20 +490,22 @@ const updateMarketData = (payload: [string, AssetCtx[]][]) => {
     const dexName = dexId ? dexId : 'hyperliquid';
     marketByDexName[dexName] = assetCtx;
   });
-  const newMarketData = perpsStore.getState().marketData.map(item => {
-    // other dex , example xyz is error
-    const dexName = item.dexId ? item.dexId : 'hyperliquid';
-    const assetCtx = marketByDexName[dexName];
+  setPerpsState(prev => {
+    const newMarketData = prev.marketData.map(item => {
+      // other dex , example xyz is error
+      const dexName = item.dexId ? item.dexId : 'hyperliquid';
+      const assetCtx = marketByDexName[dexName];
+      return {
+        ...item,
+        ...assetCtx?.[item.index],
+      };
+    });
     return {
-      ...item,
-      ...assetCtx?.[item.index],
+      ...prev,
+      marketData: newMarketData,
+      marketDataMap: buildMarketDataMap(newMarketData),
     };
   });
-  setPerpsState(prev => ({
-    ...prev,
-    marketData: newMarketData,
-    marketDataMap: buildMarketDataMap(newMarketData),
-  }));
 };
 
 const subscribeToUserData = (address: string) => {
@@ -555,7 +532,11 @@ const subscribeToUserData = (address: string) => {
       if (!isSameAddress(user, address)) {
         return;
       }
-      updateAllDexsClearinghouseState(clearinghouseStates);
+      setPerpsState(prev => ({
+        ...prev,
+        currentClearinghouseState:
+          formatAllDexsClearinghouseState(clearinghouseStates),
+      }));
     });
 
   const { unsubscribe: unsubscribeOpenOrders } = sdk.ws.subscribeToOpenOrders(
@@ -981,9 +962,9 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
             item => item[1].assetPositions.length > 0,
           )
         ) {
-          setAllDexsClearinghouseStateMap({
+          setClearinghouseStateMap({
             address: data.user,
-            data: data.clearinghouseStates,
+            data: formatAllDexsClearinghouseState(data.clearinghouseStates),
           });
         }
       });
@@ -1027,9 +1008,9 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
           data.clearinghouseStates.length > 0 &&
           calcAccountValueByAllDexs(data.clearinghouseStates) > 0
         ) {
-          setAllDexsClearinghouseStateMap({
+          setClearinghouseStateMap({
             address: data.user,
-            data: data.clearinghouseStates,
+            data: formatAllDexsClearinghouseState(data.clearinghouseStates),
           });
         }
       });

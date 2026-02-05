@@ -264,31 +264,48 @@ export const calcAccountValueByAllDexs = (
   }, 0);
 };
 
-export const calcPositionCountByAllDexs = (
-  info?: AllDexsClearinghouseState,
-) => {
-  if (!Array.isArray(info) || !info) {
-    return 0;
-  }
-  return info.map(item => item[1]?.assetPositions || []).flat().length;
+export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
+  return {
+    pnl: Number(
+      clearinghouseState.assetPositions.reduce((acc, asset) => {
+        return acc + Number(asset.position.unrealizedPnl);
+      }, 0),
+    ),
+    show: Number(clearinghouseState.marginSummary.accountValue) > 0,
+    type: (clearinghouseState.assetPositions.length > 0
+      ? 'pnl'
+      : 'accountValue') as 'pnl' | 'accountValue',
+    accountValue: Number(clearinghouseState.marginSummary.accountValue),
+  };
 };
 
-export const formatPositionPnl = (
-  clearinghouseState: AllDexsClearinghouseState,
-) => {
-  const assetPositions = clearinghouseState
+export const formatAllDexsClearinghouseState = (
+  allClearinghouseState: AllDexsClearinghouseState,
+): ClearinghouseState | null => {
+  if (!allClearinghouseState || !allClearinghouseState[0]) {
+    return null;
+  }
+  const hyperDexState = allClearinghouseState[0][1];
+
+  const assetPositions = allClearinghouseState
     .map(item => item[1]?.assetPositions || [])
     .flat();
-  const accountValue = calcAccountValueByAllDexs(clearinghouseState);
+
+  const withdrawable = allClearinghouseState.reduce((acc, item) => {
+    return acc + Number(item[1]?.withdrawable || 0);
+  }, 0);
+
   return {
-    pnl: assetPositions.reduce((acc, asset) => {
-      return acc + Number(asset.position.unrealizedPnl);
-    }, 0),
-    show: Number(accountValue) > 0,
-    type: (assetPositions.length > 0 ? 'pnl' : 'accountValue') as
-      | 'pnl'
-      | 'accountValue',
-    accountValue: Number(accountValue),
+    assetPositions: assetPositions,
+    crossMaintenanceMarginUsed:
+      hyperDexState?.crossMaintenanceMarginUsed || '0',
+    crossMarginSummary: hyperDexState?.crossMarginSummary || {},
+    marginSummary: {
+      ...hyperDexState.marginSummary,
+      accountValue: calcAccountValueByAllDexs(allClearinghouseState).toString(),
+    },
+    time: hyperDexState?.time || 0,
+    withdrawable: withdrawable.toString(),
   };
 };
 
