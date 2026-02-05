@@ -215,19 +215,21 @@ export const PerpsAddPositionPopup: React.FC<{
     }
   }, [visible, setMargin]);
 
-  const { allDexsClearinghouseState } = perpsStore(
+  const { currentClearinghouseState } = perpsStore(
     useShallow(s => ({
-      allDexsClearinghouseState: s.allDexsClearinghouseState,
+      currentClearinghouseState: s.currentClearinghouseState,
     })),
   );
 
   const crossMargin = React.useMemo(() => {
-    const hyper = allDexsClearinghouseState[0]?.[1];
     return (
-      Number(hyper?.crossMarginSummary?.accountValue || 0) -
-      Number(hyper?.crossMaintenanceMarginUsed || 0)
+      Number(currentClearinghouseState?.crossMarginSummary?.accountValue || 0) -
+      Number(currentClearinghouseState?.crossMaintenanceMarginUsed || 0)
     );
-  }, [allDexsClearinghouseState]);
+  }, [
+    currentClearinghouseState?.crossMarginSummary?.accountValue,
+    currentClearinghouseState?.crossMaintenanceMarginUsed,
+  ]);
 
   // 计算预估清算价格
   const estimatedLiquidationPrice = React.useMemo(() => {

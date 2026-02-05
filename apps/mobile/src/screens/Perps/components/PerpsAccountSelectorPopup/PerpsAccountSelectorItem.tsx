@@ -3,7 +3,6 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
-import { AllDexsClearinghouseState } from '@/hooks/perps/usePerpsStore';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { ellipsisAddress } from '@/utils/address';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
@@ -12,12 +11,12 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
-import { calcPositionCountByAllDexs } from '@/utils/perps';
+import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsAccountSelectorItem: React.FC<{
   account: KeyringAccountWithAlias;
   onPress?: (account: KeyringAccountWithAlias) => void;
-  info?: AllDexsClearinghouseState;
+  info: ClearinghouseState | null;
   loading?: boolean;
   tmpSelectAccount?: KeyringAccountWithAlias | null;
   lastUsedAccount?: KeyringAccountWithAlias | null;
@@ -44,11 +43,11 @@ export const PerpsAccountSelectorItem: React.FC<{
   }, [account.balance]);
 
   const positionCount = useMemo(() => {
-    return calcPositionCountByAllDexs(info);
+    return info?.assetPositions?.length || 0;
   }, [info]);
 
   const withdrawable = useMemo(() => {
-    return Number(info?.[0]?.[1]?.withdrawable || 0);
+    return Number(info?.withdrawable || 0);
   }, [info]);
 
   const shouldShowPerpsInfo = useMemo(() => {

@@ -108,19 +108,18 @@ export const PerpsOpenPositionPopup: React.FC<{
     getStyle: getStyle,
   });
 
-  const { allDexsClearinghouseState } = perpsStore(
+  const { currentClearinghouseState } = perpsStore(
     useShallow(s => ({
-      allDexsClearinghouseState: s.allDexsClearinghouseState,
+      currentClearinghouseState: s.currentClearinghouseState,
     })),
   );
 
   const crossMargin = React.useMemo(() => {
-    const currentClearinghouseState = allDexsClearinghouseState[0]?.[1];
     return (
       Number(currentClearinghouseState?.crossMarginSummary?.accountValue || 0) -
       Number(currentClearinghouseState?.crossMaintenanceMarginUsed || 0)
     );
-  }, [allDexsClearinghouseState]);
+  }, [currentClearinghouseState]);
 
   const { t } = useTranslation();
   const [isReviewMode, setIsReviewMode] = React.useState(false);
