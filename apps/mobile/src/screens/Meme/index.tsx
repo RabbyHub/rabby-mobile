@@ -128,7 +128,12 @@ function MemeScreen(): JSX.Element {
       token: memeItemToITokenItem(token, ''),
       unHold: false,
       needUseCacheToken: true,
-      from: 'meme',
+      from: {
+        scene: 'meme',
+        id: token.id,
+        chain: token.chain,
+        symbol: token.symbol || '',
+      },
     });
   }, []);
 

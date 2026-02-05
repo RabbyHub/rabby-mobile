@@ -273,7 +273,7 @@ export const TokenMarketInfoScreen = () => {
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       // 关闭弹窗隐藏
       setIsFromBack(false);
-      if (from === 'meme') {
+      if (from?.scene === 'meme') {
         matomoRequestEvent({
           category: 'Rabby Memecoin',
           action: 'Memecoin_ToSwapPage',
