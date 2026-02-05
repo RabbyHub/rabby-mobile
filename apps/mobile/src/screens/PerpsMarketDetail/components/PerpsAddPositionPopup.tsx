@@ -427,6 +427,7 @@ export const PerpsAddPositionPopup: React.FC<{
                   showTipsPopup({
                     title: t('page.perpsDetail.PerpsOpenPositionPopup.size'),
                     desc: t('page.perpsDetail.PerpsOpenPositionPopup.sizeTips'),
+                    buttonType: 'hyperliquid',
                   });
                 }}>
                 <View style={styles.listItemMain}>
@@ -460,6 +461,7 @@ export const PerpsAddPositionPopup: React.FC<{
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.liquidationPriceTips',
                     ),
+                    buttonType: 'hyperliquid',
                   });
                 }}>
                 <View style={styles.listItemMain}>

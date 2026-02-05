@@ -434,6 +434,7 @@ export const PerpsPosition: React.FC<{
                 showTipsPopup({
                   title: t('page.perpsDetail.PerpsPosition.size'),
                   desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
+                  buttonType: 'hyperliquid',
                 });
               }}>
               <View style={styles.listItemMain}>
@@ -495,6 +496,7 @@ export const PerpsPosition: React.FC<{
                     Number(positionData?.fundingPayments || 0) > 0
                       ? t('page.perpsDetail.PerpsPosition.fundingGainsTips')
                       : t('page.perpsDetail.PerpsPosition.fundingPaymentsTips'),
+                  buttonType: 'hyperliquid',
                 });
               }}>
               <View style={styles.listItemMain}>

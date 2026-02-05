@@ -205,7 +205,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: '#F7FAFC',
   },
   depositBtnTitle: {
-    color: '#19294',
+    color: '#040601',
   },
   withdrawBtn: {
     backgroundColor: '#2F3135',

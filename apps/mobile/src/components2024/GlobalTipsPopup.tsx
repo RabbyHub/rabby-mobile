@@ -15,7 +15,8 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
 
   const { state, hideTipsPopup } = useTipsPopup();
 
-  const { title, desc, visible } = state || {};
+  const { title, desc, visible, buttonStyle, buttonTitleStyle, buttonType } =
+    state || {};
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
@@ -56,9 +57,11 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
             <Text style={styles.desc}>{desc}</Text>
           </View>
           <Button
-            type="primary"
+            type={buttonType || 'primary'}
             title={t('component.GlobalTipsPopup.btn')}
             onPress={hideTipsPopup}
+            buttonStyle={buttonStyle}
+            titleStyle={buttonTitleStyle}
           />
         </BottomSheetView>
       </AppBottomSheetModal>
