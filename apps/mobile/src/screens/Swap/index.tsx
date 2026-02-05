@@ -634,7 +634,7 @@ const Swap = ({
                     Number(payAmount || 0) * Number(payToken.price || 0)
                   ).toString()
                 : '';
-            stats.report('MemecoinSwapTx', {
+            stats.report('memecoinSwapTx', {
               chain: chainServerId,
               tx_id: txHash,
               dex_id: activeProvider?.name || '',

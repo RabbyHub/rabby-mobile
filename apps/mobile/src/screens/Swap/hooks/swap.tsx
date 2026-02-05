@@ -262,7 +262,7 @@ export const dexSwap = async (
           transactionHistoryService.addSwapTxHistory(swapTxHistoryObj);
 
           if (from?.scene === 'meme') {
-            stats.report('MemecoinSwapTx', {
+            stats.report('memecoinSwapTx', {
               chain: chainObj.serverId,
               tx_id: hash,
               dex_id: dexId || 'WrapToken',
