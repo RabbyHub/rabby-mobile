@@ -21,6 +21,7 @@ import { TokenItemSkeleton, TokenListItem } from './components/TokenItem';
 import TokenHeader from './components/TokenHeader';
 import { useIsFocused } from '@react-navigation/native';
 import { navigateDeprecated } from '@/utils/navigation';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { MemeItem } from '@rabby-wallet/rabby-api/dist/types';
 import { RootNames } from '@/constant/layout';
 import { useMemeTokenList } from './hooks/useMemeTokenList';
@@ -118,11 +119,21 @@ function MemeScreen(): JSX.Element {
   }, [getMemeTokenList, setFdvSort, setVolumeSort, setChangeSort]);
 
   const handleOpenTokenDetail = useCallback((token: MemeItem) => {
+    matomoRequestEvent({
+      category: 'Rabby Memecoin',
+      action: 'Memecoin_ClickList',
+    });
     navigateDeprecated(RootNames.TokenMarketInfo, {
       // TODO: 可能不需要转化
       token: memeItemToITokenItem(token, ''),
       unHold: false,
       needUseCacheToken: true,
+      from: {
+        scene: 'meme',
+        id: token.id,
+        chain: token.chain,
+        symbol: token.symbol || '',
+      },
     });
   }, []);
 
@@ -209,7 +220,8 @@ function MemeScreen(): JSX.Element {
 
     const timer = setInterval(() => {
       refreshMemeTokenListSilently();
-    }, 5000);
+      // 这个值根据币价更新时间来调整，目前币价是十几秒更新一次
+    }, 10000);
 
     return () => {
       clearInterval(timer);
