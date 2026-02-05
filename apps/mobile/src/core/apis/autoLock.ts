@@ -1,3 +1,5 @@
+import { AppState } from 'react-native';
+
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { preferenceService } from '../services';
 import { makeEEClass } from './event';
@@ -25,12 +27,14 @@ function calc(ms: number = AUTO_LOCK_SECS.TIMEOUT_MILLISECS) {
 }
 
 const autoLockTimerRef = {
-  current: calc(),
+  foregroundExpire: calc(),
+  backToForegroundExpire: null as null | number,
   timer: null as ReturnType<typeof setInterval> | null,
 };
 
 type TimeoutContext = {
-  unlockExpire: number;
+  // unlockExpire: number;
+  reason: 'foreground' | 'back-to-foreground';
   delayLock: () => void;
 };
 const { EventEmitter: AutoLockEvent } = makeEEClass<{
@@ -41,14 +45,10 @@ const { EventEmitter: AutoLockEvent } = makeEEClass<{
 export const autoLockEvent = new AutoLockEvent();
 
 function setAutoLockExpireTime(expireTime: number) {
-  autoLockTimerRef.current = expireTime;
+  autoLockTimerRef.foregroundExpire = expireTime;
   autoLockEvent.emit('change', expireTime);
 
   return expireTime;
-}
-
-export function getAutoLockTime() {
-  return autoLockTimerRef.current;
 }
 
 export function coerceAutoLockTimeout(ms: number) {
@@ -116,23 +116,52 @@ export function handleLock() {
   refreshAutolockTimeout('clear');
 }
 
+const checkExpire = (
+  unlockExpire: number,
+  reason: TimeoutContext['reason'],
+) => {
+  const nowTime = Date.now();
+  // if (unlockExpire <= nowTime) return;
+
+  const fromExpireDiff = nowTime - unlockExpire;
+
+  // console.debug(
+  //   'check auto lock:: unlockExpire: %s; fromExpireDiff: %s',
+  //   unlockExpire,
+  //   fromExpireDiff,
+  // );
+  if (fromExpireDiff > -AUTO_LOCK_SECS.ERROR_DELTA) {
+    console.debug('check auto lock:: timeout');
+    const delayLock = () => refreshAutolockTimeout();
+    autoLockEvent.emit('timeout', { reason: reason, delayLock });
+  }
+};
+
 export function setupAutoLockChecker() {
   autoLockTimerRef.timer = setInterval(() => {
-    const unlockExpire = getAutoLockTime();
-    const nowTime = Date.now();
-    if (unlockExpire <= nowTime) return;
-
-    const fromExpireDiff = nowTime - unlockExpire;
-
-    // console.debug(
-    //   'check auto lock:: unlockExpire: %s; fromExpireDiff: %s',
-    //   unlockExpire,
-    //   fromExpireDiff,
-    // );
-    if (fromExpireDiff > -AUTO_LOCK_SECS.ERROR_DELTA) {
-      console.debug('check auto lock:: timeout');
-      const delayLock = () => refreshAutolockTimeout();
-      autoLockEvent.emit('timeout', { unlockExpire, delayLock });
-    }
+    const unlockExpire = autoLockTimerRef.foregroundExpire;
+    checkExpire(unlockExpire, 'foreground');
   }, CHECK_DURATION);
+
+  const prevStateRef = {
+    current: AppState.currentState,
+  };
+  AppState.addEventListener('change', state => {
+    const prevState = prevStateRef.current;
+    prevStateRef.current = state;
+    if (prevState !== 'active' && state === 'active') {
+      const backToForegroundExpire = autoLockTimerRef.backToForegroundExpire;
+      if (!backToForegroundExpire) {
+        return;
+      }
+
+      const unlockExpire = autoLockTimerRef.backToForegroundExpire;
+      // console.debug('[autoLock] app back to foreground autoLockTimerRef, unlockExpire', autoLockTimerRef, unlockExpire);
+      unlockExpire && checkExpire(unlockExpire, 'back-to-foreground');
+    } else if (prevState === 'active' && state !== 'active') {
+      // console.debug('[autoLock] app to background autoLockTimerRef', autoLockTimerRef);
+      const { expireTime } = getPersistedAutoLockTimes();
+      autoLockTimerRef.backToForegroundExpire = expireTime;
+    }
+  });
 }
