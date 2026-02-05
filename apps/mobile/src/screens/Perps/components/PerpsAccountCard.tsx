@@ -214,7 +214,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderColor: 'transparent',
   },
   btnHeight: {
-    height: 52,
+    height: 48,
   },
   depositBtn: {
     backgroundColor: '#50D2C1',

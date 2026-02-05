@@ -656,6 +656,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     amountValueContainer: {
       flexDirection: 'column',
       alignItems: 'flex-start',
+      marginTop: 16,
       // gap: 4,
     },
     amountValueRow: {
@@ -689,6 +690,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: -4,
       // marginTop: -4,
       height: 14,
+      alignItems: 'flex-end',
     },
     sizeCard: {
       width: '100%',

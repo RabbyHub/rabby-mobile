@@ -732,5 +732,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   openPositionBtn: {
     fontSize: 20,
+    lineHeight: 24,
   },
 }));
