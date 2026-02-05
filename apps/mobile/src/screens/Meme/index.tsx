@@ -209,7 +209,8 @@ function MemeScreen(): JSX.Element {
 
     const timer = setInterval(() => {
       refreshMemeTokenListSilently();
-    }, 5000);
+      // 这个值根据币价更新时间来调整，目前币价是十几秒更新一次
+    }, 10000);
 
     return () => {
       clearInterval(timer);
