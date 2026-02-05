@@ -583,7 +583,11 @@ export const PerpsOpenPositionPopup: React.FC<{
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.errorMsgContainer}>
+              <View
+                style={StyleSheet.flatten([
+                  styles.errorMsgContainer,
+                  styles.leverageErrorMsgContainer,
+                ])}>
                 {leverageRangeValidation.error ? (
                   <Text style={styles.errorMsg}>
                     {leverageRangeValidation.errorMessage}
@@ -808,6 +812,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: -12,
       flex: 1,
       alignItems: 'flex-end',
+    },
+    leverageErrorMsgContainer: {
+      marginTop: 4,
     },
     errorMsg: {
       fontFamily: 'SF Pro Rounded',
