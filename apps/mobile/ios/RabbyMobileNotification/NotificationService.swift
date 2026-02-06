@@ -51,6 +51,7 @@ class NotificationService: UNNotificationServiceExtension {
                 "sender": [
                   "displayName": "Rabby",
                   "avatar": avatarUrl,
+                  "title": userInfo["title"] ?? "",
                   "body": userInfo["body"] ?? "",
                   "un_groupName": "Rabby Wallet",
                   "un_groupAvatar": avatarUrl
