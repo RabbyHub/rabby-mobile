@@ -9,6 +9,7 @@ import { sleep } from '@/utils/async';
 import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { useShallow } from 'zustand/react/shallow';
+import { formatPerpsCoin } from '@/utils/perps';
 
 export const usePerpsPosition = () => {
   const {
@@ -199,7 +200,9 @@ export const usePerpsPosition = () => {
         if (filled) {
           fetchClearinghouseState();
           const { totalSz, avgPx } = filled;
-          const msg = `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
+          const msg = `Closed ${direction} ${formatPerpsCoin(
+            coin,
+          )}-USD: Size ${totalSz} at Price $${avgPx}`;
           showToast(msg, 'success');
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
@@ -307,7 +310,9 @@ export const usePerpsPosition = () => {
           fetchClearinghouseState();
 
           const { totalSz, avgPx } = filled;
-          const msg = `Opened ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
+          const msg = `Opened ${direction} ${formatPerpsCoin(
+            coin,
+          )}-USD: Size ${totalSz} at Price $${avgPx}`;
           showToast(msg, 'success');
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;

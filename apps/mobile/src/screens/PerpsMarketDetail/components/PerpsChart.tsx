@@ -100,7 +100,7 @@ const parseCandles = (data: CandleSnapshot): CandleBar[] => {
 };
 
 export const PerpsChart: React.FC<{
-  market: MarketData;
+  marketName: string;
   coinNameRef: React.RefObject<string>;
   markPrice: number;
   currentAssetCtx?: MarketData;
@@ -114,7 +114,7 @@ export const PerpsChart: React.FC<{
     entryPrice: number;
   };
 }> = ({
-  market,
+  marketName,
   coinNameRef,
   markPrice,
   currentAssetCtx,
@@ -218,7 +218,7 @@ export const PerpsChart: React.FC<{
       }
 
       const snapshot = await sdk.info.candleSnapshot(
-        market.name,
+        marketName,
         interval,
         start,
         end,
@@ -232,14 +232,14 @@ export const PerpsChart: React.FC<{
       //   // updatePriceLines();
       // }
       return {
-        coin: market.name,
+        coin: marketName,
         interval: interval,
         fitContent: false,
         candles: candles as any,
       };
     },
     {
-      refreshDeps: [market.name, selectedInterval],
+      refreshDeps: [marketName, selectedInterval],
       onSuccess(data) {
         if (chartIsReadyRef.current) {
           setIsReady(true);
@@ -260,13 +260,13 @@ export const PerpsChart: React.FC<{
 
     const interval = getInterval(selectedInterval);
     const { unsubscribe } = sdk.ws.subscribeToCandles(
-      market.name,
+      marketName,
       interval,
       snapshot => {
         // Check if component is still mounted before updating
         // if (!isMountedRef.current || !seriesRef.current) return;
 
-        if (coinNameRef.current?.toUpperCase() !== snapshot.s.toUpperCase()) {
+        if (coinNameRef.current !== snapshot.s) {
           return;
         }
 
@@ -292,7 +292,7 @@ export const PerpsChart: React.FC<{
     return () => {
       unsubscribe?.();
     };
-  }, [subscribeCandle, market.name, selectedInterval]);
+  }, [subscribeCandle, marketName, selectedInterval]);
 
   // Sync chart data when both chart is ready and data is available
   useEffect(() => {

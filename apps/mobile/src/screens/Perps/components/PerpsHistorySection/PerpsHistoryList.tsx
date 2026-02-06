@@ -50,7 +50,7 @@ export const PerpsHistoryList: React.FC<{
   const handleItemClick = useMemoizedFn((fill: WsFill) => {
     const obj = {
       ...fill,
-      logoUrl: marketDataMap[fill.coin.toUpperCase()]?.logoUrl || '',
+      logoUrl: marketDataMap[fill.coin]?.logoUrl || '',
     };
     setSelectedFill(obj);
     setDetailVisible(true);

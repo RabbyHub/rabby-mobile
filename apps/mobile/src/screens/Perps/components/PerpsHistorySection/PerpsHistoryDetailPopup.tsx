@@ -169,6 +169,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     showTipsPopup({
                       title: t('page.perps.historyDetail.size'),
                       desc: t('page.perps.historyDetail.sizeTips'),
+                      buttonType: 'hyperliquid',
                     });
                   }}>
                   <View style={styles.listItemMain}>
@@ -215,7 +216,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
             </View>
 
             <Button
-              type="primary"
+              type="hyperliquid"
               title={t('page.perps.historyDetail.gotItBtn')}
               onPress={onClose}
             />

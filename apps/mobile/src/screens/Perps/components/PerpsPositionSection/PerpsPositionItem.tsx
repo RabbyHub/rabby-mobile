@@ -10,6 +10,7 @@ import { useMemoizedFn } from 'ahooks';
 import { calculateDistanceToLiquidation } from './utils';
 import { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { useTranslation } from 'react-i18next';
+import { formatPerpsCoin } from '@/utils/perps';
 
 export const PerpsPositionItem: React.FC<{
   item: PositionAndOpenOrder['position'];
@@ -88,7 +89,7 @@ export const PerpsPositionItem: React.FC<{
             <AssetAvatar logo={logoUrl} size={28} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <Text style={styles.coinName}>{coin}</Text>
+                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {leverageType === 'cross'

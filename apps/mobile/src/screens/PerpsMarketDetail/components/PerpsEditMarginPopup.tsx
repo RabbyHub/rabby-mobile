@@ -42,6 +42,7 @@ import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
+import { formatPerpsCoin } from '@/utils/perps';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;
@@ -307,7 +308,7 @@ export const PerpsEditMarginPopup: React.FC<{
               <View style={styles.leftSection}>
                 <View style={styles.coinInfoRow}>
                   <AssetAvatar logo={coinLogo} size={28} />
-                  <Text style={styles.coinName}>{coin}</Text>
+                  <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
                   <View style={styles.crossTag}>
                     <Text style={styles.crossText}>
                       {marginMode === 'cross'
@@ -441,7 +442,7 @@ export const PerpsEditMarginPopup: React.FC<{
               <PerpsSlider
                 disabled={maxMargin <= minMargin}
                 maxValue={maxMargin}
-                step={0.1}
+                step={0.01}
                 minValue={Number(minMargin)}
                 value={marginNormalized}
                 onValueChange={handleSliderChange}
@@ -568,7 +569,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     errorMsg: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: '500',
       color: colors2024['red-default'],
     },
@@ -577,13 +578,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      marginBottom: -6,
+      marginBottom: -4,
     },
     input: {
       // fontFamily: 'SF Pro Rounded',
-      fontSize: 40,
+      fontSize: 36,
       paddingVertical: 0,
-      lineHeight: 48,
+      lineHeight: 42,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
       flex: 1,
@@ -940,11 +941,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: -12,
+      marginBottom: -8,
       gap: 4,
     },
     marginAvailable: {
-      fontSize: 16,
+      fontSize: 12,
       fontWeight: '500',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',

@@ -1,4 +1,7 @@
 const PngPolymarket = require('@/assets2024/icons/prediction/polymarket.jpg');
+const PngOpinion = require('@/assets2024/icons/prediction/opinion.jpg');
+const PngProbable = require('@/assets2024/icons/prediction/probable.jpg');
+
 const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.jpg');
 const PngAster = require('@/assets2024/icons/perps/aster.jpg');
 const PngLighter = require('@/assets2024/icons/perps/lighter.png');
@@ -27,7 +30,24 @@ const PREDICTION: DappSelectItem[] = [
     icon: PngPolymarket,
     url: 'https://polymarket.com/',
     themeColor: 'rgba(22, 82, 240, 0.06)',
-    TVL: '$156.396b',
+    TVL: '$370M',
+  },
+  {
+    id: 'opinion',
+    name: 'Opinion',
+    icon: PngOpinion,
+    url: 'https://app.opinion.trade/macro',
+    themeColor: 'rgba(0, 0, 0, 0.06);',
+
+    TVL: '$118M',
+  },
+  {
+    id: 'probable',
+    name: 'Probable',
+    icon: PngProbable,
+    url: 'https://probable.markets/',
+    themeColor: 'rgba(252, 98, 28, 0.06);',
+    TVL: '$21M',
   },
 ];
 
@@ -52,7 +72,7 @@ const LENDING: DappSelectItem[] = [
     id: 'venus',
     name: 'Venus',
     icon: PngVenus,
-    url: 'https://app.venus.io',
+    url: 'https://venus.io',
     themeColor: 'rgba(58, 121, 253, 0.08)',
     TVL: '$1.635b',
   },

@@ -20,7 +20,11 @@ import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import IconPerpDelete from '@/assets2024/icons/perps/IconTagClearCC.svg';
 import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
-import { formatPerpsPct, formatTpOrSlPrice } from '@/utils/perps';
+import {
+  formatPerpsCoin,
+  formatPerpsPct,
+  formatTpOrSlPrice,
+} from '@/utils/perps';
 import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
 
 interface Props {
@@ -327,7 +331,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
             height={16}
             color={
               disableEdit
-                ? colors2024['brand-disable']
+                ? 'rgba(80, 210, 193, .5)'
                 : isLight
                 ? colors2024['neutral-title-1']
                 : '#50D2C1'
@@ -378,7 +382,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
                   </TouchableOpacity>
                   <View style={styles.header}>
                     <Text style={styles.title}>
-                      {direction} {coin}-USD
+                      {direction} {formatPerpsCoin(coin)}-USD
                     </Text>
                     {type === 'openPosition' ? (
                       <Text style={styles.subTitle}>
@@ -579,7 +583,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   tagTextDisabled: {
-    color: colors2024['brand-disable'],
+    opacity: 0.5,
   },
   keyboardAvoidView: {
     height: '100%',

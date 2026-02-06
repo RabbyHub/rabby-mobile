@@ -10,6 +10,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { AssetAvatar } from '@/components';
 import { splitNumberByStep } from '@/utils/number';
+import { formatPerpsCoin } from '@/utils/perps';
 
 interface AssetPriceInfoProps {
   coin: string;
@@ -50,7 +51,7 @@ export const AssetPriceInfo = ({
   return (
     <View style={styles.section}>
       <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={24} />
-      <Text style={styles.name}>{coin}-USD</Text>
+      <Text style={styles.name}>{formatPerpsCoin(coin)}-USD</Text>
       <Text
         style={[
           styles.price,

@@ -128,18 +128,19 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
   },
 
   async batchGetAppChains(addresses, force = false) {
-    if (!addresses.length) {
+    const lowerAddresses = Array.from(
+      new Set(addresses.map(item => item.toLowerCase())),
+    );
+    if (!lowerAddresses.length) {
       set({ appChainMap: {}, isLoadingByAddress: {} });
       return;
     }
-
-    const normalizedAddresses = addresses.map(addr => addr.toLowerCase());
     const cacheMap: AppChainListMap = {};
     const fetchList: string[] = [];
     const nextLoadingMap: Record<string, boolean> = {};
 
     // 检查缓存
-    for (const address of normalizedAddresses) {
+    for (const address of lowerAddresses) {
       if (!force) {
         const expired = await AppChainEntity.isExpired(address);
         if (!expired) {

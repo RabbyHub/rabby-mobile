@@ -127,6 +127,7 @@ export const PerpsAccountCard: React.FC<{
       </View>
       <View style={styles.loginCardBtns}>
         <Button
+          height={48}
           type="primary"
           onPress={() => {
             setPopupState(prev => ({
@@ -138,6 +139,7 @@ export const PerpsAccountCard: React.FC<{
           title={t('page.perps.PerpsCard.loginBtn')}
         />
         <Button
+          height={48}
           onPress={() => {
             setPopupState(prev => ({
               ...prev,
@@ -200,19 +202,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 22,
   },
   smBtnTitle: {
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 22,
     color: '#F7FAFC',
   },
   depositBtnTitle: {
-    color: '#19294',
+    color: '#040601',
   },
   withdrawBtn: {
     backgroundColor: '#2F3135',
     borderColor: 'transparent',
   },
   btnHeight: {
-    height: 52,
+    height: 48,
   },
   depositBtn: {
     backgroundColor: '#50D2C1',
