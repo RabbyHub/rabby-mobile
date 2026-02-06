@@ -42,11 +42,17 @@ const DevUIAccountShowCase = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevUIAccountShowCase'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIAccountShowCase,
 });
-const DevUIToastAndNotifications = registerAppScreen<
-  typeof import('@/screens/Testkits/DevUIToastAndNotifications').default
+const DevUIToast = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIToast').default
 >({
-  loader: () => import('@/screens/Testkits/DevUIToastAndNotifications'),
-  name: TESTKITS_PRELOAD_SCREENS.DevUIToastAndNotifications,
+  loader: () => import('@/screens/Testkits/DevUIToast'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIToast,
+});
+const DevUINotifications = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUINotifications').default
+>({
+  loader: () => import('@/screens/Testkits/DevUINotifications'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUINotifications,
 });
 const DevUIScreenContainerShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIScreenContainerShowCase').default
@@ -152,9 +158,10 @@ export function TestkitsNavigator() {
         name={RootNames.DevUIScreenContainerShowCase}
         component={DevUIScreenContainerShowCase}
       />
+      <Stack.Screen name={RootNames.DevUIToast} component={DevUIToast} />
       <Stack.Screen
-        name={RootNames.DevUIToastAndNotifications}
-        component={DevUIToastAndNotifications}
+        name={RootNames.DevUINotifications}
+        component={DevUINotifications}
       />
       <Stack.Screen name={RootNames.DevUIDapps} component={DevUIDapps} />
       <Stack.Screen

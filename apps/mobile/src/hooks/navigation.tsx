@@ -476,6 +476,11 @@ export class UnlockUIManager {
 
     const hasUnlockOnce = unlockUIState.unlockOnceRef;
     const defaultAction = async () => {
+      if (
+        unlockUIState.finishedUnlockResetNav ||
+        navigationRouteStore.getState().currentRouteName !== RootNames.Unlock
+      )
+        return;
       const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
 
       resetNavigationTo(
@@ -721,27 +726,21 @@ export function startSubscribeRemoteNotification() {
         '[notifications] [startSubscribeRemoteNotification] onParsedReceivedData:: parsedData',
         parsedData,
       );
+
       const ownerAddress = parsedData.txInfo?.ownerAddress;
-      if (!ownerAddress) return;
-      // TODO: check if my own address
-      const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
-      if (!foundAccount) {
-        console.debug(
-          '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
-          ownerAddress,
-        );
+      if (!ownerAddress) {
+        toast.info(i18next.t('notifications.unknownAddressFromTransaction'), {
+          duration: 8 * 1000,
+          hideOnPress: true,
+        });
         return;
       }
 
-      console.debug(
-        '[notifications] onParsedReceivedData:: parsedData',
-        parsedData,
-      );
       const txDetailPromise = notificationOpenapi
         .getUserTxDetail({
           chainId: parsedData.txInfo?.chainServerId || '',
           txId: parsedData.txInfo?.txHash || '',
-          userAddr: foundAccount.address || '',
+          userAddr: ownerAddress || '',
         })
         .catch(error => {
           console.debug(
@@ -752,13 +751,33 @@ export function startSubscribeRemoteNotification() {
         });
 
       UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
-        let txDetail = null as null | Awaited<typeof txDetailPromise>;
+        const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
         const hideToastRef = {
           current: toastLoading(i18next.t('notifications.loadingTransaction'), {
             duration: 3 * 1000,
           }),
         };
-        txDetail = await txDetailPromise;
+
+        const earlyReturn = (shouldExecuteDefaultAction = false) => {
+          hideToastRef.current();
+          if (shouldExecuteDefaultAction) {
+            ctx.defaultAction?.();
+          }
+        };
+
+        if (!foundAccount) {
+          console.debug(
+            '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
+            ownerAddress,
+          );
+          toast.error(i18next.t('notifications.noTransactionOwnerAddress'), {
+            duration: 8 * 1000,
+            hideOnPress: true,
+          });
+          return earlyReturn(true);
+        }
+
+        const txDetail = await txDetailPromise;
 
         console.debug('[notifications] txDetail', txDetail);
 
@@ -784,7 +803,7 @@ export function startSubscribeRemoteNotification() {
             },
           });
 
-          return;
+          return earlyReturn(false);
         }
 
         hideToastRef.current();
@@ -801,7 +820,13 @@ export function startSubscribeRemoteNotification() {
           '[notifications] [startSubscribeRemoteNotification] received parsedData',
           historyDisplayItem,
         );
-        if (!historyDisplayItem) return;
+        if (!historyDisplayItem) {
+          toast.show(i18next.t('notifications.noTransactionDetail'), {
+            duration: 8 * 1000,
+            hideOnPress: true,
+          });
+          return earlyReturn(true);
+        }
 
         const currentRouteName =
           navigationRouteStore.getState().currentRouteName;

@@ -147,12 +147,23 @@ export default function DevUIPlaygroundModal({
         },
       },
       {
-        label: 'Toast & Notifications',
+        label: 'Toast',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
           navigation.dispatch(
             StackActions.push(RootNames.StackTestkits, {
-              screen: RootNames.DevUIToastAndNotifications,
+              screen: RootNames.DevUIToast,
+            }),
+          );
+        },
+      },
+      {
+        label: 'Notifications',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUINotifications,
             }),
           );
         },
