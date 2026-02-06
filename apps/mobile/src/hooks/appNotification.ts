@@ -52,7 +52,7 @@ export async function startCareAppNotificationPermissions() {
     !hasPermission &&
     appNotificationStore.getState().enabledTransactionNofification
   ) {
-    await requestUngrantedNotificationPermission();
+    // await requestUngrantedNotificationPermission();
     await fetchHasSystemPermission();
   }
 
