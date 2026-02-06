@@ -1,6 +1,5 @@
 import {
   accountEvents,
-  filterDirectlySignableAccounts,
   filterOutTop10Accounts,
   isDirectlySignableAccount,
   isHardwareAccount,
@@ -11,19 +10,14 @@ import {
   KeyringAccountWithAlias,
   storeApiAccounts,
   useAccounts,
-  useMyAccounts,
 } from '@/hooks/account';
-import {
-  useCreationWithDeepCompare,
-  useCreationWithShallowCompare,
-} from '@/hooks/common/useMemozied';
+import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import balanceStore from '@/store/balance';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useEffect } from 'react';
-import useAsync from 'react-use/lib/useAsync';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 export const isTabsSwiping = {
