@@ -99,6 +99,7 @@ export const RootNames = {
   FavoriteDapps: 'FavoriteDapps',
   Search: 'Search',
   Watchlist: 'Watchlist',
+  Meme: 'Meme',
   Lending: 'Lending',
 
   StackSettings: 'StackSettings',
@@ -350,6 +351,7 @@ function makeScreenSpecConfig() {
       [RootNames.FavoriteDapps]: bg1Default2024Conf,
       [RootNames.Search]: bg1Default2024Conf,
       [RootNames.Watchlist]: bg1Default2024Conf,
+      [RootNames.Meme]: bg1Default2024Conf,
       [RootNames.Lending]: bg1Default2024Conf,
 
       // StackSettings

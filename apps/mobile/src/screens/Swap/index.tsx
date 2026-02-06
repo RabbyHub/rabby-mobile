@@ -98,6 +98,8 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
+import { APP_VERSIONS } from '@/constant';
+import { stats } from '@/utils/stats';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -403,6 +405,10 @@ const Swap = ({
               (activeProvider?.quote.toTokenDecimals || receiveToken.decimals),
           )
           .toNumber();
+        const payTokenUsdValue =
+          typeof payAmount === 'string' && payToken?.price
+            ? (Number(payAmount || 0) * Number(payToken.price || 0)).toString()
+            : '';
         const addSwapTxHistoryObj = {
           chainId: findChainByEnum(chain)?.id || 0,
           address: currentAccount?.address!,
@@ -447,6 +453,9 @@ const Swap = ({
               dex_id: activeProvider?.name || 'WrapToken',
             },
             account: currentAccount!,
+            from: navState?.from,
+            payUsdValue: payTokenUsdValue || '',
+            dexId: activeProvider?.name || '',
           },
           {
             ga: {
@@ -589,6 +598,7 @@ const Swap = ({
 
         if (!isApprove) {
           mutateTxs([]);
+          const createdAt = Date.now();
           transactionHistoryService.addSwapTxHistory({
             hash: txHash,
             chainId: findChainByEnum(chain)?.id || 0,
@@ -605,7 +615,7 @@ const Swap = ({
               )
               .toNumber(),
             dexId: activeProvider?.name || 'WrapToken',
-            createdAt: Date.now(),
+            createdAt,
             status: 'pending',
             isFromCopyTrading: currentIsCopyTrading,
             copyTradingExtra: {
@@ -617,6 +627,31 @@ const Swap = ({
             runFetchSwapPendingCount();
           }, 1000);
           runFetchLocalPendingTx();
+          if (navState?.from?.scene === 'meme') {
+            const payTokenUsdValue =
+              typeof payAmount === 'string' && payToken?.price
+                ? (
+                    Number(payAmount || 0) * Number(payToken.price || 0)
+                  ).toString()
+                : '';
+            stats.report('memecoinSwapTx', {
+              chain: chainServerId,
+              tx_id: txHash,
+              dex_id: activeProvider?.name || '',
+              meme_chain: navState.from.chain || '',
+              meme_ca: navState.from.id || '',
+              meme_symbol: navState.from.symbol || '',
+              user_addr: currentAccount?.address || '',
+              pay_token_usd_value: payTokenUsdValue,
+              create_at: createdAt,
+              address_type: currentAccount?.type || '',
+              app_version: APP_VERSIONS.fromNative || '0',
+            });
+            matomoRequestEvent({
+              category: 'Rabby Memecoin',
+              action: 'Memecoin_CreateSwapTx',
+            });
+          }
           preferenceService.setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {

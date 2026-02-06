@@ -8,6 +8,7 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import MemeScreen from '../Meme';
 
 const HomeNonTabStack =
   createNativeStackNavigator<HomeNonTabNavigatorParamsList>();
@@ -47,6 +48,26 @@ export default function HomeNonTabNavigator() {
         component={WatchlistScreen}
         options={mergeScreenOptions({
           title: t('page.home.services.watchlist'),
+          ...headerPresets.withBgCard1_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+      <HomeNonTabStack.Screen
+        name={RootNames.Meme}
+        component={MemeScreen}
+        options={mergeScreenOptions({
+          title: t('page.home.services.meme'),
           ...headerPresets.withBgCard1_2024,
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {

@@ -5,7 +5,7 @@ import { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import i18n from '@/utils/i18n';
 import abiCoder, { AbiCoder } from 'web3-eth-abi';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import {
   preferenceService,
   swapService,
@@ -20,6 +20,8 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Account } from '@/core/services/preference';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { FromSceneParam } from '@/navigation-type';
+import { stats } from '@/utils/stats';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -127,6 +129,9 @@ export const dexSwap = async (
     account,
     isTwoStep,
     isApprove,
+    from,
+    payUsdValue,
+    dexId,
   }: {
     chain: CHAINS_ENUM;
     quote: QuoteResult;
@@ -145,6 +150,9 @@ export const dexSwap = async (
     account: Account;
     isApprove?: boolean;
     isTwoStep?: boolean;
+    payUsdValue?: string;
+    dexId?: string;
+    from?: FromSceneParam;
   },
   $ctx?: any,
   addSwapTxHistoryObj?: Omit<SwapTxHistoryItem, 'hash'>,
@@ -253,6 +261,25 @@ export const dexSwap = async (
           };
           transactionHistoryService.addSwapTxHistory(swapTxHistoryObj);
 
+          if (from?.scene === 'meme') {
+            stats.report('memecoinSwapTx', {
+              chain: chainObj.serverId,
+              tx_id: hash,
+              dex_id: dexId || 'WrapToken',
+              meme_chain: from?.chain || '',
+              meme_ca: from?.id || '',
+              meme_symbol: from?.symbol || '',
+              user_addr: account.address || '',
+              pay_token_usd_value: payUsdValue || '',
+              create_at: Date.now(),
+              address_type: account.type || '',
+              app_version: APP_VERSIONS.fromNative || '0',
+            });
+            matomoRequestEvent({
+              category: 'Rabby Memecoin',
+              action: 'Memecoin_CreateSwapTx',
+            });
+          }
           if (swapTxHistoryObj.isFromCopyTrading) {
             matomoRequestEvent({
               category: 'CopyTrading',
