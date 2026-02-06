@@ -327,7 +327,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
             height={16}
             color={
               disableEdit
-                ? colors2024['brand-disable']
+                ? 'rgba(80, 210, 193, .5)'
                 : isLight
                 ? colors2024['neutral-title-1']
                 : '#50D2C1'
@@ -579,7 +579,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   tagTextDisabled: {
-    color: colors2024['brand-disable'],
+    opacity: 0.5,
   },
   keyboardAvoidView: {
     height: '100%',

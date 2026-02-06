@@ -622,6 +622,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                       desc: t(
                         'page.perpsDetail.PerpsOpenPositionPopup.sizeTips',
                       ),
+                      buttonType: 'hyperliquid',
                     });
                   }}>
                   <View style={styles.listItemMain}>
