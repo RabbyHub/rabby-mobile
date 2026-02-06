@@ -35,6 +35,13 @@ export const formatPercentage = (x: number) => {
   return `${sign}${formattedValue}%`;
 };
 
+const getPercentSize = (per: string) => {
+  if (per.length > 4) {
+    return 13;
+  }
+  return 14;
+};
+
 interface TokenListItemProps {
   item: MemeItem;
   onPress: (item: MemeItem) => void;
@@ -53,6 +60,9 @@ const TokenListItemComponent = ({
     () => (item.price_24h_change || 0) >= 0,
     [item.price_24h_change],
   );
+  const percentStr = useMemo(() => {
+    return formatPercentage(Number(item.price_24h_change) || 0);
+  }, [item.price_24h_change]);
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -77,8 +87,8 @@ const TokenListItemComponent = ({
               <Image
                 source={require('@/assets2024/icons/meme/fourMeme.png')}
                 style={styles.fourMemeIcon}
-                width={14}
-                height={14}
+                width={18}
+                height={18}
               />
             </View>
             {/* FDV */}
@@ -108,8 +118,14 @@ const TokenListItemComponent = ({
           ]}>
           {/* 24小时价格百分比 */}
           {typeof item.price_24h_change === 'number' && (
-            <Text style={StyleSheet.flatten(styles.changeText)}>
-              {formatPercentage(Number(item.price_24h_change) || 0)}
+            <Text
+              style={StyleSheet.flatten([
+                styles.changeText,
+                {
+                  fontSize: getPercentSize(percentStr),
+                },
+              ])}>
+              {percentStr}
             </Text>
           )}
         </View>

@@ -143,7 +143,6 @@ export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
   }, [orderBy, order, setMemeTokenList]);
 
   useEffect(() => {
-    // TODO: 这里需要优化
     getMemeTokenList(false, orderBy, order);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order, orderBy]);

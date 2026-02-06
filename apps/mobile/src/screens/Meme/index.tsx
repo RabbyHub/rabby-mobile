@@ -124,8 +124,7 @@ function MemeScreen(): JSX.Element {
       action: 'Memecoin_ClickList',
     });
     navigateDeprecated(RootNames.TokenMarketInfo, {
-      // TODO: 可能不需要转化
-      token: memeItemToITokenItem(token, ''),
+      token: memeItemToITokenItem(token, ''), // 缺失is_suspicious，但这个接口不返回token.is_suspicious为true的
       unHold: false,
       needUseCacheToken: true,
       from: {
