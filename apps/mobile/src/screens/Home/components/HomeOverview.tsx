@@ -15,12 +15,8 @@ import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
 import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
 import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
 import { RootNames } from '@/constant/layout';
-import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
@@ -30,11 +26,7 @@ import React, {
   useState,
 } from 'react';
 import {
-  AppState,
   Dimensions,
-  PanResponder,
-  Platform,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -91,6 +83,8 @@ import {
 } from '@/hooks/useScene24hBalance';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
+import useTokenList from '@/store/tokens';
+import useProtocol from '@/store/protocols';
 import { colord } from 'colord';
 import {
   isTabsSwiping,
@@ -710,8 +704,13 @@ export const HomeOverview = React.memo(() => {
       // update at background
       forceUpdate();
       apisLending.fetchLendingData();
-      syncTop10History(myTop10Addresses, true);
-      currencyService.syncCurrencyList(true);
+      const forceRefresh = true;
+      syncTop10History(myTop10Addresses, forceRefresh);
+      currencyService.syncCurrencyList(forceRefresh);
+
+      // refresh token/protocol list
+      useTokenList.getState().batchGetTokenList(myTop10Addresses, forceRefresh);
+      useProtocol.getState().batchGetProtocols(myTop10Addresses, forceRefresh);
     });
   }, [triggerUpdate, checkAddressesEligibility, forceUpdate, myTop10Addresses]);
 
