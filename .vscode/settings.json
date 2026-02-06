@@ -14,6 +14,7 @@
   "cSpell.words": [
     "Dexs",
     "hyperliquid",
+    "matomo",
     "Paraswap",
     "Perps",
     "rabby"
@@ -37,5 +38,6 @@
     "page.sendToken.GasSelector.level.fast",
     "page.sendToken.GasSelector.level.normal",
     "page.sendToken.GasSelector.level.slow"
-  ]
+  ],
+  "references.preferredLocation": "view"
 }

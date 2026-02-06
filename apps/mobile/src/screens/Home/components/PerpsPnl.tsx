@@ -5,13 +5,25 @@ import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { useCurrentInnerDappTypeValue } from '@/hooks/useInnerDappValue';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from 'react-native-gesture-handler';
+import { useEffect } from 'react';
 
 const PerpsPnlByHyperliquid: React.FC<{}> = () => {
   const { perpsPositionInfo } = usePerpsHomePnl();
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { formatCurrentCurrency } = useCurrency();
   const { type } = perpsPositionInfo;
+
+  useEffect(() => {
+    if (perpsPositionInfo.show) {
+      matomoRequestEvent({
+        category: 'Rabby Perps',
+        action: 'Perps_ExistPosition',
+      });
+    }
+  }, [perpsPositionInfo.show]);
+
   return perpsPositionInfo.show ? (
     type === 'pnl' ? (
       <Text
