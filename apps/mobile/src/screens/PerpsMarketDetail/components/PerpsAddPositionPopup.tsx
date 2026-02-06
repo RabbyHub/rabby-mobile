@@ -29,7 +29,7 @@ import {
 import { PerpsSlider } from './PerpsSlider';
 import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
-import { calLiquidationPrice } from '@/utils/perps';
+import { calLiquidationPrice, formatPerpsCoin } from '@/utils/perps';
 import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
@@ -293,7 +293,7 @@ export const PerpsAddPositionPopup: React.FC<{
               {direction === 'Long'
                 ? t('page.perpsDetail.PerpsAddPositionPopup.addToLong')
                 : t('page.perpsDetail.PerpsAddPositionPopup.addToShort')}{' '}
-              {coin}-USD
+              {formatPerpsCoin(coin)}-USD
             </Text>
           </View>
 
@@ -309,7 +309,7 @@ export const PerpsAddPositionPopup: React.FC<{
             <View style={styles.leftSection}>
               <View style={styles.coinInfoRow}>
                 <AssetAvatar logo={coinLogo} size={28} />
-                <Text style={styles.coinName}>{coin}</Text>
+                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {marginMode === 'cross'

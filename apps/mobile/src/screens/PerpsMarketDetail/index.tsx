@@ -113,7 +113,7 @@ export const PerpsMarketDetailScreen = () => {
   }, [coin]);
 
   const market = useMemo(() => {
-    return marketDataMap[coin.toUpperCase()];
+    return marketDataMap[coin];
   }, [marketDataMap, coin]);
 
   const [activeAssetCtx, setActiveAssetCtx] = React.useState<
@@ -138,7 +138,7 @@ export const PerpsMarketDetailScreen = () => {
   }, [perpFee]);
 
   const currentAssetCtx = useMemo(() => {
-    return marketDataMap[coin.toUpperCase()];
+    return marketDataMap[coin];
   }, [marketDataMap, coin]);
 
   const { tpPrice, slPrice, tpOid, slOid } = useMemo(() => {
@@ -277,7 +277,7 @@ export const PerpsMarketDetailScreen = () => {
   const subscribeActiveAssetCtx = useMemoizedFn(() => {
     const sdk = apisPerps.getPerpsSDK();
     const { unsubscribe } = sdk.ws.subscribeToActiveAssetCtx(coin, data => {
-      if (coinNameRef.current?.toUpperCase() !== data.coin.toUpperCase()) {
+      if (coinNameRef.current !== data.coin) {
         return;
       }
       setActiveAssetCtx(data.ctx);
@@ -388,11 +388,11 @@ export const PerpsMarketDetailScreen = () => {
     });
   }, [market, navigation, HeaderTitle, HeaderRight]);
 
-  if (!market) {
-    navigation.goBack();
-    toast.error('Market not found');
-    return null;
-  }
+  // if (!market) {
+  //   navigation.goBack();
+  //   toast.error('Market not found');
+  //   return null;
+  // }
 
   return (
     <>
@@ -407,7 +407,7 @@ export const PerpsMarketDetailScreen = () => {
               selectedInterval={selectedInterval}
               setSelectedInterval={setSelectedInterval}
               coinNameRef={coinNameRef}
-              market={market}
+              marketName={coin}
               markPrice={markPrice}
               activeAssetCtx={activeAssetCtx}
               currentAssetCtx={currentAssetCtx}
@@ -583,7 +583,7 @@ export const PerpsMarketDetailScreen = () => {
       <PerpsOpenPositionPopup
         activeAssetCtx={activeAssetCtx}
         currentAssetCtx={currentAssetCtx}
-        marketDataItem={marketDataMap[coin.toUpperCase()]}
+        marketDataItem={marketDataMap[coin]}
         visible={openPositionVisible}
         direction={positionDirection}
         providerFee={providerFee}

@@ -237,7 +237,7 @@ export const PerpsOriginScreen = ({
     if (isLogin) {
       refreshData();
     }
-    fetchMarketData(false);
+    fetchMarketData();
   });
 
   // Handle scroll event

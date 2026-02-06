@@ -42,6 +42,7 @@ import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
+import { formatPerpsCoin } from '@/utils/perps';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;
@@ -307,7 +308,7 @@ export const PerpsEditMarginPopup: React.FC<{
               <View style={styles.leftSection}>
                 <View style={styles.coinInfoRow}>
                   <AssetAvatar logo={coinLogo} size={28} />
-                  <Text style={styles.coinName}>{coin}</Text>
+                  <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
                   <View style={styles.crossTag}>
                     <Text style={styles.crossText}>
                       {marginMode === 'cross'
@@ -441,7 +442,7 @@ export const PerpsEditMarginPopup: React.FC<{
               <PerpsSlider
                 disabled={maxMargin <= minMargin}
                 maxValue={maxMargin}
-                step={0.1}
+                step={0.01}
                 minValue={Number(minMargin)}
                 value={marginNormalized}
                 onValueChange={handleSliderChange}

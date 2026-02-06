@@ -12,7 +12,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsInfo: React.FC<{
-  market: MarketData;
+  market?: MarketData;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
 }> = ({ market, activeAssetCtx }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });

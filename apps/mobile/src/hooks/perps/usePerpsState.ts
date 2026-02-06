@@ -16,8 +16,10 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { apisPerps } from './../../core/apis/perps';
 import { miniSignTypedData } from '../useMiniSignTypedData';
 import {
+  AccountSummary,
   apisPerpsStore,
   getClearinghouseStateByMap,
+  PositionAndOpenOrder,
   usePerpsStore,
 } from './usePerpsStore';
 import * as Sentry from '@sentry/react-native';
@@ -25,8 +27,6 @@ import { minBy, uniqBy } from 'lodash';
 import { showToast } from './showToast';
 import { usePerpsPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { useTranslation } from 'react-i18next';
-import { getAllMyAccount } from '@/core/apis/address';
-import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 import { sleep } from '@/utils/async';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
@@ -47,12 +47,9 @@ export const usePerpsState = () => {
     setUserAccountHistory,
     setUserFills,
     addUserFills,
-    updatePositionsWithClearinghouse,
     updateUserAccountHistory,
     setPerpFee,
     setMarketData,
-    setPositionAndOpenOrders,
-    setAccountSummary,
     setAccountNeedApproveAgent,
     setAccountNeedApproveBuilderFee,
     // setCurrentPerpsAccount,
@@ -61,7 +58,6 @@ export const usePerpsState = () => {
     resetAccountState,
 
     // Effects
-    fetchPositionAndOpenOrders,
     loginPerpsAccount,
     fetchClearinghouseState,
     fetchUserNonFundingLedgerUpdates,
@@ -288,6 +284,16 @@ export const usePerpsState = () => {
     }
   }, []);
 
+  const handleSafeSetDexAbstraction = useCallback(async () => {
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.exchange?.agentEnableDexAbstraction();
+      console.log('handleSafeSetDexAbstraction res', res);
+    } catch (e) {
+      console.log('Failed to handleSafeSetDexAbstraction:', e);
+    }
+  }, []);
+
   const handleDirectApprove = useCallback(
     async (signActions: SignAction[]): Promise<void> => {
       const sdk = apisPerps.getPerpsSDK();
@@ -313,17 +319,13 @@ export const usePerpsState = () => {
         }),
       );
 
-      if (
-        currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
-        currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC
-      ) {
-        setTimeout(() => {
-          handleSafeSetReference();
-        }, 500);
-      }
+      setTimeout(() => {
+        handleSafeSetDexAbstraction();
+        handleSafeSetReference();
+      }, 100);
       // const [approveAgentRes, approveBuilderFeeRes] = results;
     },
-    [currentPerpsAccount?.type, handleSafeSetReference],
+    [handleSafeSetReference, handleSafeSetDexAbstraction],
   );
 
   const ensureLoginApproveSign = useCallback(
@@ -369,6 +371,7 @@ export const usePerpsState = () => {
         if (signActions.length === 0) {
           setAccountNeedApproveAgent(false);
           setAccountNeedApproveBuilderFee(false);
+          handleSafeSetDexAbstraction();
           return;
         }
 
@@ -415,6 +418,7 @@ export const usePerpsState = () => {
       setAccountNeedApproveAgent,
       setAccountNeedApproveBuilderFee,
       checkExtraAgent,
+      handleSafeSetDexAbstraction,
     ],
   );
 
@@ -567,7 +571,6 @@ export const usePerpsState = () => {
     ensureLoginApproveSign,
     setInitialized,
     fetchPerpPermission,
-    fetchPositionAndOpenOrders,
   ]);
 
   const judgeIsUserAgentIsExpired = useMemoizedFn(
@@ -621,7 +624,8 @@ export const usePerpsState = () => {
 
       let isNeedDepositBeforeApprove = true;
       const info = getClearinghouseStateByMap(account.address);
-      if ((Number(info?.marginSummary.accountValue) || 0) > 0) {
+      const accountValue = info?.marginSummary.accountValue;
+      if (Number(accountValue) > 0) {
         isNeedDepositBeforeApprove = false;
       } else {
         const { role } = await sdk.info.getUserRole();
@@ -831,12 +835,33 @@ export const usePerpsState = () => {
   //   setApproveSignatures,
   // ]);
 
+  const allDexsPositions = useMemo(() => {
+    const res = perpsState.currentClearinghouseState?.assetPositions || [];
+    return res;
+  }, [perpsState.currentClearinghouseState]);
+
+  const positionAndOpenOrders: PositionAndOpenOrder[] = useMemo(() => {
+    return allDexsPositions.map(position => ({
+      ...position,
+      openOrders: perpsState.openOrders.filter(
+        item => item.coin === position.position.coin,
+      ),
+    }));
+  }, [allDexsPositions, perpsState.openOrders]);
+
+  const accountSummary: AccountSummary = useMemo(() => {
+    return {
+      ...perpsState.currentClearinghouseState?.marginSummary,
+      withdrawable: perpsState.currentClearinghouseState?.withdrawable || '0',
+    } as AccountSummary;
+  }, [perpsState.currentClearinghouseState]);
+
   return {
     // State
     marketData: perpsState.marketData,
     marketDataMap: perpsState.marketDataMap,
-    positionAndOpenOrders: perpsState.positionAndOpenOrders,
-    accountSummary: perpsState.accountSummary,
+    positionAndOpenOrders,
+    accountSummary,
     currentPerpsAccount: perpsState.currentPerpsAccount,
     isLogin: perpsState.isLogin,
     isInitialized: perpsState.isInitialized,
@@ -864,5 +889,6 @@ export const usePerpsState = () => {
     handleActionApproveStatus,
 
     handleSafeSetReference,
+    handleSafeSetDexAbstraction,
   };
 };
