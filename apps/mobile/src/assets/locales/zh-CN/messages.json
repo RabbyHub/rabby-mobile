@@ -90,7 +90,8 @@
     "Wallets": "选择钱包",
     "permissionRequest": {
       "common": {
-        "askMeLater": "稍后再问我"
+        "askMeLater": "稍后再问我",
+        "goToSettings": "去设置"
       },
       "mediaLibrary": {
         "title": "媒体库权限",
@@ -115,6 +116,11 @@
       "location": {
         "title": "位置权限",
         "message": "该应用需要访问您的位置，以提供基于位置的功能。"
+      },
+      "postNotification": {
+        "title": "通知权限",
+        "message": "此应用需要访问权限以向您发送通知。",
+        "pleaseEnableInSettings": "请在设置中启用通知权限"
       }
     },
     "check": "检查",
@@ -859,7 +865,8 @@
         "perpsMarketList": "更多 Perps",
         "perps": "合约",
         "lending": "借贷",
-        "predict": "预测"
+        "predict": "预测",
+        "meme": "Memecoin"
       },
       "swipeUp": {
         "descAndroid": "点击探索 dApps",
@@ -2076,7 +2083,8 @@
       },
       "headerBalanceText": "余额",
       "price": "价格",
-      "headerTokenValueText": "代币价值"
+      "headerTokenValueText": "代币价值",
+      "copyCA": "Token 合约地址已复制"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -2134,7 +2142,8 @@
       "clearBrowserData": "清除浏览器数据",
       "currency": "货币",
       "searchCurrency": "搜索货币",
-      "screenshotReportSwitch": "截图以报告错误"
+      "screenshotReportSwitch": "截图以报告错误",
+      "transactionNotification": "事务通知 (测试版)"
     },
     "settingModal": {
       "themeMode": {
@@ -3112,6 +3121,14 @@
       "walletBalance": "钱包/余额",
       "selectAWallet": "选择一个钱包",
       "netWorth": "净资产"
+    },
+    "meme": {
+      "tokenHeader": {
+        "fdv": "FDV",
+        "change": "24小时变动",
+        "price": "价格",
+        "volume": "24H 成交量"
+      }
     }
   },
   "component": {
@@ -3432,5 +3449,11 @@
         "content": "此交易涉及的是在 OFAC 制裁名单上的一个地址。"
       }
     }
+  },
+  "notifications": {
+    "noTransactionDetail": "未找到交易详情。请稍后检查交易历史。",
+    "noTransactionOwnerAddress": "该交易不属于您钱包中的任何地址。请稍后检查交易历史记录。",
+    "loadingTransaction": "正在打开交易...",
+    "unknownAddressFromTransaction": "交易涉及一个不在您钱包中的地址。请稍后检查交易记录。"
   }
 }

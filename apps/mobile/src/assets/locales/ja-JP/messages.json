@@ -956,7 +956,8 @@
         "perps": "パープス",
         "perpsMarketList": "より多くのPerps",
         "lending": "貸し出し",
-        "predict": "予測する"
+        "predict": "予測する",
+        "meme": "メモリコイン"
       },
       "swipeUp": {
         "descAndroidMore": "クリックしてさらに多くのdAppsを探索する",
@@ -1905,7 +1906,8 @@
       },
       "price": "価格",
       "headerTokenValueText": "トークンの価値",
-      "headerBalanceText": "残高"
+      "headerBalanceText": "残高",
+      "copyCA": "トークンコントラクトアドレスがコピーされました"
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",
@@ -2071,7 +2073,8 @@
       "clearBrowserData": "ブラウザデータをクリア",
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
-      "screenshotReportSwitch": "バグを報告するためのスクリーンショット"
+      "screenshotReportSwitch": "バグを報告するためのスクリーンショット",
+      "transactionNotification": "Txn通知（ベータ）"
     },
     "settingModal": {
       "themeMode": {
@@ -3049,6 +3052,14 @@
       "selectAWallet": "ウォレットを選択してください",
       "walletBalance": "ウォレット/残高",
       "netWorth": "純資産"
+    },
+    "meme": {
+      "tokenHeader": {
+        "price": "価格",
+        "fdv": "FDV",
+        "volume": "24H ボリューム",
+        "change": "24Hの変化"
+      }
     }
   },
   "global": {
@@ -3096,7 +3107,8 @@
     "Wallets": "ウォレットを選択",
     "permissionRequest": {
       "common": {
-        "askMeLater": "後で聞いてください"
+        "askMeLater": "後で聞いてください",
+        "goToSettings": "設定に移動"
       },
       "mediaLibrary": {
         "title": "メディアライブラリのアクセス許可",
@@ -3121,6 +3133,11 @@
       "location": {
         "title": "位置の権限",
         "message": "このアプリは、位置情報に基づく機能を提供するために、あなたの位置情報へのアクセスが必要です。"
+      },
+      "postNotification": {
+        "pleaseEnableInSettings": "設定で通知の権限を有効にしてください。",
+        "message": "このアプリは、通知を送信するためのアクセスが必要です。",
+        "title": "通知の権限"
       }
     },
     "check": "チェック",
@@ -3432,5 +3449,11 @@
         "button": "知っている"
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "トランザクションを開いています...",
+    "noTransactionOwnerAddress": "その取引はあなたのウォレット内のどのアドレスにも属していません。後で取引履歴を確認してください。",
+    "unknownAddressFromTransaction": "取引にはあなたのウォレットにないアドレスが含まれています。後で取引履歴を確認してください。",
+    "noTransactionDetail": "トランザクションの詳細が見つかりません。後でトランザクション履歴を確認してください。"
   }
 }

@@ -1113,7 +1113,8 @@
         "perpsMarketList": "Más Perps",
         "perps": "Perps",
         "lending": "Préstamo",
-        "predict": "Predecir"
+        "predict": "Predecir",
+        "meme": "Memecoin"
       },
       "swipeUp": {
         "descAndroidMore": "Haz clic para explorar más dApps",
@@ -2155,7 +2156,8 @@
       },
       "headerTokenValueText": "Valor del Token",
       "price": "Precio",
-      "headerBalanceText": "Saldo"
+      "headerBalanceText": "Saldo",
+      "copyCA": "Dirección del contrato del token copiada"
     },
     "setting": {
       "feedback": "Comentarios",
@@ -2184,7 +2186,8 @@
       "clearBrowserData": "Borrar datos del navegador",
       "searchCurrency": "Buscar moneda",
       "currency": "Moneda",
-      "screenshotReportSwitch": "Captura de pantalla para informar un error"
+      "screenshotReportSwitch": "Captura de pantalla para informar un error",
+      "transactionNotification": "Notificaciones de Txn (Beta)"
     },
     "gasAccount": {
       "deposit": "Depósito",
@@ -3269,6 +3272,14 @@
       "selectAWallet": "Selecciona una billetera",
       "netWorth": "Valor neto",
       "walletBalance": "Cartera/Saldo"
+    },
+    "meme": {
+      "tokenHeader": {
+        "change": "Cambio en 24H",
+        "fdv": "FDV",
+        "price": "Precio",
+        "volume": "Volumen 24H"
+      }
     }
   },
   "global": {
@@ -3316,7 +3327,8 @@
     "Wallets": "Seleccionar Wallet",
     "permissionRequest": {
       "common": {
-        "askMeLater": "pregúntameDespués"
+        "askMeLater": "pregúntameDespués",
+        "goToSettings": "Ir a configuración"
       },
       "mediaLibrary": {
         "title": "Permiso de Biblioteca Multimedia",
@@ -3341,6 +3353,11 @@
       "location": {
         "title": "Permiso de ubicación",
         "message": "Esta aplicación necesita acceso a tu ubicación para proporcionar funciones basadas en la ubicación."
+      },
+      "postNotification": {
+        "title": "Permiso de Notificación",
+        "message": "Esta aplicación necesita acceso para enviarte notificaciones.",
+        "pleaseEnableInSettings": "Por favor, activa los permisos de notificación en la configuración."
       }
     },
     "check": "Verificar",
@@ -3432,5 +3449,11 @@
         "content": "Esta transacción interactúa con una dirección que está en la lista de sanciones de la OFAC."
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "Abriendo Transacción...",
+    "noTransactionOwnerAddress": "La transacción no pertenece a ninguna dirección en su billetera. Por favor, revise el historial de transacciones más tarde.",
+    "noTransactionDetail": "Detalles de la transacción no encontrados. Por favor, verifica el historial de transacciones más tarde.",
+    "unknownAddressFromTransaction": "La transacción implica una dirección que no está en tu wallet. Por favor, verifica el historial de transacciones más tarde."
   }
 }

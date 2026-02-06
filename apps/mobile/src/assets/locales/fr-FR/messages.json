@@ -928,7 +928,8 @@
         "perps": "Perps",
         "perpsMarketList": "Plus de Perps",
         "lending": "Prêt",
-        "predict": "Prédire"
+        "predict": "Prédire",
+        "meme": "Memecoin"
       },
       "swipeUp": {
         "descAndroid": "Cliquez pour explorer les dApps",
@@ -1920,7 +1921,8 @@
       },
       "price": "Prix",
       "headerTokenValueText": "Valeur du jeton",
-      "headerBalanceText": "Solde"
+      "headerBalanceText": "Solde",
+      "copyCA": "Adresse du contrat de jeton copiée"
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",
@@ -2028,7 +2030,8 @@
       "clearBrowserData": "Effacer les données du navigateur",
       "searchCurrency": "Rechercher une devise",
       "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
-      "currency": "Monnaie"
+      "currency": "Monnaie",
+      "transactionNotification": "Notifications de Txn (Beta)"
     },
     "settingModal": {
       "themeMode": {
@@ -3006,6 +3009,14 @@
       "dappSelect": {
         "title": "Sélectionner un fournisseur de prévisions"
       }
+    },
+    "meme": {
+      "tokenHeader": {
+        "fdv": "FDV",
+        "volume": "Volume sur 24H",
+        "price": "Prix",
+        "change": "Changement sur 24H"
+      }
     }
   },
   "native": {
@@ -3345,7 +3356,8 @@
     "Wallets": "Sélectionner le portefeuille",
     "permissionRequest": {
       "common": {
-        "askMeLater": "demandezMoiPlusTard"
+        "askMeLater": "demandezMoiPlusTard",
+        "goToSettings": "Aller à paramètres"
       },
       "mediaLibrary": {
         "title": "Permission de la bibliothèque multimédia",
@@ -3370,6 +3382,11 @@
       "location": {
         "title": "Permission d'emplacement",
         "message": "Cette application a besoin d'accéder à votre emplacement pour fournir des fonctionnalités basées sur la localisation."
+      },
+      "postNotification": {
+        "title": "Permission de notification",
+        "message": "Cette application a besoin d'accéder pour vous envoyer des notifications.",
+        "pleaseEnableInSettings": "Veuillez activer la permission de notification dans les paramètres."
       }
     },
     "gotIt": "Compris",
@@ -3432,5 +3449,11 @@
         "button": "Je sais"
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "Ouverture de la transaction...",
+    "noTransactionOwnerAddress": "La transaction n'appartient à aucune adresse de votre porte-monnaie. Veuillez vérifier l'historique des transactions plus tard.",
+    "noTransactionDetail": "Détails de la transaction non trouvés. Veuillez vérifier l'historique des transactions plus tard.",
+    "unknownAddressFromTransaction": "La transaction implique une adresse qui n'est pas dans votre keyring. Veuillez vérifier l'historique des transactions plus tard."
   }
 }

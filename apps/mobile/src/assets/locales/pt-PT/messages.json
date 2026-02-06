@@ -347,7 +347,8 @@
     "Wallets": "Selecionar Carteira",
     "permissionRequest": {
       "common": {
-        "askMeLater": "pergunteMeMaisTarde"
+        "askMeLater": "pergunteMeMaisTarde",
+        "goToSettings": "Ir para definições"
       },
       "mediaLibrary": {
         "title": "Permissão da Biblioteca de Media",
@@ -372,6 +373,10 @@
       "location": {
         "title": "Permissão de Localização",
         "message": "Este app precisa de acesso à sua localização para oferecer funcionalidades baseadas na localização."
+      },
+      "postNotification": {
+        "title": "Permissão de Notificação",
+        "pleaseEnableInSettings": "Por favor, ative a permissão de notificações nas definições."
       }
     },
     "gotIt": "Entendi",
@@ -1107,7 +1112,8 @@
         "perpsMarketList": "Mais Perps",
         "perps": "Perps",
         "lending": "Empréstimo",
-        "predict": "Prever"
+        "predict": "Prever",
+        "meme": "Memecoin"
       },
       "swipeUp": {
         "desc": "Deslize para cima para explorar websites",
@@ -2213,7 +2219,8 @@
       },
       "headerTokenValueText": "Valor do Token",
       "price": "Preço",
-      "headerBalanceText": "Saldo"
+      "headerBalanceText": "Saldo",
+      "copyCA": "Endereço do contrato do Token copiado"
     },
     "customTestnet": {
       "add": "Adicionar Rede Personalizada",
@@ -2275,7 +2282,8 @@
       "clearBrowserData": "Limpar dados do navegador",
       "currency": "Moeda",
       "searchCurrency": "Pesquisar Moeda",
-      "screenshotReportSwitch": "Captura de ecrã para reportar erro"
+      "screenshotReportSwitch": "Captura de ecrã para reportar erro",
+      "transactionNotification": "Notificações de Txn (Beta)"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -3360,6 +3368,13 @@
       "netWorth": "Valor líquido",
       "selectAWallet": "Selecione uma Carteira",
       "walletBalance": "Carteira/Saldo"
+    },
+    "meme": {
+      "tokenHeader": {
+        "change": "Alteração 24H",
+        "fdv": "FDV",
+        "volume": "24H Volume"
+      }
     }
   },
   "constant": {
@@ -3432,5 +3447,11 @@
         "button": "Eu Sei"
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "Abrindo Transação...",
+    "noTransactionDetail": "Detalhes da transação não encontrados. Por favor, verifique o histórico de transações mais tarde.",
+    "unknownAddressFromTransaction": "A transação envolve um endereço que não está na sua wallet. Por favor, verifique o histórico de transações mais tarde.",
+    "noTransactionOwnerAddress": "A transação não pertence a nenhum endereço na sua wallet. Por favor, verifique o histórico de transações mais tarde."
   }
 }
