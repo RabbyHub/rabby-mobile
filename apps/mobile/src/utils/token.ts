@@ -1,5 +1,6 @@
 import {
   GasLevel,
+  MemeItem,
   PortfolioItemToken,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -484,6 +485,29 @@ export const tokenItemToITokenItem = (
     usd_value: token.price * token.amount,
     owner_addr: owner,
     cex_ids: token.cex_ids || [],
+  };
+};
+
+export const memeItemToITokenItem = (
+  token: MemeItem,
+  owner: string,
+): ITokenItem => {
+  return {
+    ...token,
+    id: token.id,
+    chain: token.chain,
+    amount: 0,
+    decimals: 18,
+    display_symbol: token.symbol,
+    logo_url: token.logo_url,
+    name: token.name,
+    optimized_symbol: token.symbol,
+    symbol: token.symbol,
+    is_wallet: false,
+    owner_addr: owner,
+    usd_value: 0,
+    time_at: 0,
+    cex_ids: [],
   };
 };
 

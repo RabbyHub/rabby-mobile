@@ -39,6 +39,13 @@ import { ITokenItem } from './store/tokens';
  * https://reactnavigation.org/docs/typescript/
  */
 
+export type FromSceneParam = {
+  scene: string;
+  id?: string;
+  chain?: string;
+  symbol?: string;
+};
+
 export type RootStackParamsList = {
   [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackHomeNonTab]?: NavigatorScreenParams<HomeNonTabNavigatorParamsList>;
@@ -85,6 +92,7 @@ export type RootStackParamsList = {
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
+    from?: FromSceneParam;
   };
 };
 
@@ -107,6 +115,7 @@ export type HomeNavigatorParamsList = {
 export type HomeNonTabNavigatorParamsList = {
   [RootNames.Search]?: {};
   [RootNames.Watchlist]?: {};
+  [RootNames.Meme]?: {};
 };
 
 export type DappsNavigatorParamsList = {
@@ -320,6 +329,7 @@ export type TransactionNavigatorParamList = {
     isSwapToTokenDetail?: boolean;
     isFromSwap?: boolean;
     isFromCopyTrading?: boolean;
+    from?: FromSceneParam;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]: {
