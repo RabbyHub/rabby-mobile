@@ -581,7 +581,7 @@ const subscribeToUserData = (account: Account) => {
 
       if (!isSnapshot) {
         fills.forEach(item => {
-          stats.report('PerpsTradeHistory', {
+          stats.report('perpsTradeHistory', {
             created_at: item.time,
             user_addr: address || '',
             trade_type: item.dir,
@@ -688,7 +688,11 @@ export const usePerpsStore = () => {
   const updateUserAccountHistory = useMemoizedFn(
     (payload: { newHistoryList: AccountHistoryItem[] }) => {
       if (payload.newHistoryList.length === 0) {
-        return { ...state, userAccountHistory: [], localLoadingHistory: [] };
+        return setPerpsState(prev => ({
+          ...prev,
+          localLoadingHistory: [],
+          userAccountHistory: [],
+        }));
       }
       const { newHistoryList } = payload;
       const depositList = newHistoryList.filter(
@@ -810,6 +814,7 @@ export const usePerpsStore = () => {
           if (
             item.delta.type === 'deposit' ||
             item.delta.type === 'withdraw' ||
+            item.delta.type === '"send"' ||
             item.delta.type === 'internalTransfer' ||
             item.delta.type === 'accountClassTransfer'
           ) {
@@ -829,6 +834,21 @@ export const usePerpsStore = () => {
               usdValue: realUsdValue.toString(),
             };
           }
+
+          const { destination, usdcValue } = item.delta as any;
+          if (
+            item.delta.type === 'send' &&
+            destination === state.currentPerpsAccount?.address
+          ) {
+            return {
+              time: item.time,
+              hash: item.hash,
+              type: 'receive' as const,
+              status: 'success' as const,
+              usdValue: usdcValue.toString(),
+            };
+          }
+
           const type =
             item.delta.type === 'accountClassTransfer'
               ? item.delta.toPerp

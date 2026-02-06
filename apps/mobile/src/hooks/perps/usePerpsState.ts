@@ -319,22 +319,13 @@ export const usePerpsState = () => {
         }),
       );
 
-      if (
-        currentPerpsAccount?.type === KEYRING_CLASS.PRIVATE_KEY ||
-        currentPerpsAccount?.type === KEYRING_CLASS.MNEMONIC
-      ) {
-        setTimeout(() => {
-          handleSafeSetReference();
-          handleSafeSetDexAbstraction();
-        }, 500);
-      }
+      setTimeout(() => {
+        handleSafeSetDexAbstraction();
+        handleSafeSetReference();
+      }, 100);
       // const [approveAgentRes, approveBuilderFeeRes] = results;
     },
-    [
-      currentPerpsAccount?.type,
-      handleSafeSetReference,
-      handleSafeSetDexAbstraction,
-    ],
+    [handleSafeSetReference, handleSafeSetDexAbstraction],
   );
 
   const ensureLoginApproveSign = useCallback(
