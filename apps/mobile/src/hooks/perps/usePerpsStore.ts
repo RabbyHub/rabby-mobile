@@ -533,10 +533,12 @@ const subscribeToUserData = (account: Account) => {
       if (!isSameAddress(user, address)) {
         return;
       }
+      const currentClearinghouseState =
+        formatAllDexsClearinghouseState(clearinghouseStates);
       setPerpsState(prev => ({
         ...prev,
-        currentClearinghouseState:
-          formatAllDexsClearinghouseState(clearinghouseStates),
+        homePositionPnl: formatPositionPnl(currentClearinghouseState!),
+        currentClearinghouseState: currentClearinghouseState,
       }));
     });
 
@@ -675,7 +677,7 @@ export const usePerpsStore = () => {
   const updateUserAccountHistory = useMemoizedFn(
     (payload: { newHistoryList: AccountHistoryItem[] }) => {
       if (payload.newHistoryList.length === 0) {
-        return state;
+        return { ...state, userAccountHistory: [], localLoadingHistory: [] };
       }
       const { newHistoryList } = payload;
       const depositList = newHistoryList.filter(
