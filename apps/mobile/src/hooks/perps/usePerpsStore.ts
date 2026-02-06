@@ -33,6 +33,8 @@ import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { perpsService } from '@/core/services';
 import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+import { stats } from '@/utils/stats';
+import BigNumber from 'bignumber.js';
 
 let perpsTopTokenCache: PerpTopToken[] = [];
 
@@ -362,7 +364,7 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
         : initialState.homePositionPnl;
       setHomePositionPnl(pnl);
       sdk.initAccount(account.address);
-      subscribeToUserData(account.address);
+      subscribeToUserData(account);
     };
 
     if (recentlyAccount && selectedItem) {
@@ -508,9 +510,9 @@ const updateMarketData = (payload: [string, AssetCtx[]][]) => {
   });
 };
 
-const subscribeToUserData = (address: string) => {
+const subscribeToUserData = (account: Account) => {
   const sdk = apisPerps.getPerpsSDK();
-
+  const address = account.address;
   unsubscribeAll();
   // const { unsubscribe: unsubscribeWebData2 } = sdk.ws.subscribeToWebData2(
   //   data => {
@@ -563,6 +565,25 @@ const subscribeToUserData = (address: string) => {
       const { fills, isSnapshot, user } = data;
       if (!isSameAddress(user, address)) {
         return;
+      }
+
+      if (!isSnapshot) {
+        fills.forEach(item => {
+          stats.report('PerpsTradeHistory', {
+            created_at: item.time,
+            user_addr: address || '',
+            trade_type: item.dir,
+            coin: item.coin,
+            size: item.sz,
+            price: item.px,
+            trade_usd_value: new BigNumber(item.px).times(item.sz).toFixed(2),
+            builder_fee: item.builderFee || '',
+            closed_pnl: item.closedPnl,
+            service_provider: 'hyperliquid',
+            app_version: process.env.release || '0',
+            address_type: account.type || '',
+          });
+        });
       }
 
       addUserFills({
@@ -741,7 +762,7 @@ export const usePerpsStore = () => {
     apisPerps.setPerpsCurrentAccount(account);
     setCurrentPerpsAccount(account);
     await refreshData();
-    subscribeToUserData(account.address);
+    subscribeToUserData(account);
     fetchPerpPermission(account.address);
     setTimeout(() => {
       fetchPerpFee();

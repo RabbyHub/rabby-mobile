@@ -25,6 +25,7 @@ import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { formatPerpsCoin } from '@/utils/perps';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
@@ -70,16 +71,21 @@ const AssetPositionItem = ({
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
   const handlePress = useCallback(() => {
     switchPerpsAccountBeforeNavigate(item.account);
+    matomoRequestEvent({
+      category: 'Rabby Perps',
+      action: 'Perps_CardToPosition',
+    });
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.PerpsMarketDetail,
-      params: {
-        // account: item.account,
-        market: coin,
-      },
+      params: { market: coin },
     });
   }, [item, coin, navigation]);
   const handleHyperliquidPress = useCallback(() => {
     switchPerpsAccountBeforeNavigate(item.account);
+    matomoRequestEvent({
+      category: 'Rabby Perps',
+      action: 'Perps_CardToPerps',
+    });
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.Perps,
       params: {
