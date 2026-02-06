@@ -85,7 +85,9 @@ const balanceStore = zCreate<BalanceState>(set => ({
       }));
       return;
     }
-
+    const lowerAddresses = Array.from(
+      new Set(top10Addresses.map(item => item.toLowerCase())),
+    );
     const addresses = await keyringService.getAllAddresses();
     const coreAddressSet = new Set(
       addresses
@@ -98,7 +100,7 @@ const balanceStore = zCreate<BalanceState>(set => ({
     const nextLoadingMap: Record<string, boolean> = {};
     const fetchList: Array<{ address: string; isCore: boolean }> = [];
 
-    for (const address of top10Addresses) {
+    for (const address of lowerAddresses) {
       const lowerAddress = address.toLowerCase();
       const isCore = coreAddressSet.has(lowerAddress);
       if (!force) {
