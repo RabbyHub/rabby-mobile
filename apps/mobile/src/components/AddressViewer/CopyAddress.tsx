@@ -116,7 +116,12 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
   },
 );
 
-export function toastCopyAddressSuccess(address?: string, title?: string) {
+export function toastCopyAddressSuccess(
+  params: string | { hashLikeString?: string; title?: string },
+) {
+  const address = typeof params === 'string' ? params : params.hashLikeString;
+  const title = typeof params === 'string' ? undefined : params.title;
+
   if (!address) {
     toast.success(title || i18next.t('global.copied'));
     return;

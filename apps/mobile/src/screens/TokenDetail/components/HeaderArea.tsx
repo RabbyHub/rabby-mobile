@@ -75,7 +75,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
         ignoreAndroidSystemSettings: false,
       });
       Clipboard.setString(token.id);
-      toastCopyAddressSuccess(undefined, t('page.tokenDetail.copyCA'));
+      toastCopyAddressSuccess({
+        title: t('page.tokenDetail.copyCA'),
+      });
     },
     [isNativeToken, t, token.id],
   );
