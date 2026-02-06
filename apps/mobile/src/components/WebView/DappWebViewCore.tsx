@@ -74,6 +74,7 @@ export type DappWebViewCoreProps = {
   onFileDownload?: WebViewProps['onFileDownload'];
   style?: StyleProp<ViewStyle>;
   offscreenPreload?: boolean;
+  disabled?: boolean;
 };
 
 function convertToWebviewUrl(dappOrigin: string) {
@@ -117,6 +118,7 @@ export default function DappWebViewCore({
   onFileDownload,
   style,
   offscreenPreload,
+  disabled,
 }: DappWebViewCoreProps) {
   const internalController = useWebViewControl({});
   const {
@@ -475,6 +477,10 @@ export default function DappWebViewCore({
   }, [progressBar, progress, isLoading]);
 
   const { bottom } = useSafeAreaInsets();
+
+  if (disabled) {
+    return null;
+  }
 
   if (!entryScriptWeb3Loaded) {
     return <View style={[styles.placeholder, style]} />;
