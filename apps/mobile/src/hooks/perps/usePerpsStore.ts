@@ -804,7 +804,7 @@ export const usePerpsStore = () => {
           if (
             item.delta.type === 'deposit' ||
             item.delta.type === 'withdraw' ||
-            item.delta.type === '"send"' ||
+            item.delta.type === 'send' ||
             item.delta.type === 'internalTransfer' ||
             item.delta.type === 'accountClassTransfer'
           ) {
