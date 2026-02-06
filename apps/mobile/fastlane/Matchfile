@@ -90,7 +90,7 @@ else
       ]
     when "appstore"
       run_type = "appstore"
-      profile_name = !IS_WILDCARD ? "RabbyMobileAppStoreOpcode" : "RabbyMobileWildcardAppStore"
+      profile_name = !IS_WILDCARD ? "RabbyMobileAppStoreOpcode" : "RabbyMobileNotificationAppStore"
       app_identifiers = [
         "com.debank.rabby-mobile" + EXTENSION_SUFFIX
       ]

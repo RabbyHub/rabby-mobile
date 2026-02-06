@@ -5,6 +5,8 @@ import {
 
 import { runIIFEFunc } from './core/utils/store';
 import { startSubscribeLangChange } from './hooks/lang';
+import { connectPushServerOnBootstrap } from './core/notifications';
+
 import { startManageAccountStoreLifecycle } from './hooks/account';
 
 import {
@@ -30,6 +32,7 @@ import {
   startSubscribeAtSensitiveScene,
   startSubscribeIOSJustScreenshotted,
   startSubscribeIOSScreenRecording,
+  startSubscribeRemoteNotification,
 } from './hooks/navigation';
 import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
@@ -44,8 +47,12 @@ import balanceStore from './store/balance';
 import { apisAutoLock } from './core/apis';
 import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
+import { startCareAppNotificationPermissions } from './hooks/appNotification';
 
+startComputationThread();
 startSubscribeLangChange();
+
+connectPushServerOnBootstrap();
 
 startManageAccountStoreLifecycle();
 loadLockInfoOnBootstrap();
@@ -80,7 +87,6 @@ startSubscribeIOSScreenRecording();
 rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
-startComputationThread();
 startProcessAccountBalanceEvents();
 startProcessScene24hBalanceEvents();
 startProcessMultiCurveEvents();
@@ -88,6 +94,9 @@ startProcessMultiCurveEvents();
 trimNoLongerSupportsOnUnlock();
 
 startCheckClearAction();
+
+startCareAppNotificationPermissions();
+startSubscribeRemoteNotification();
 
 async function initStores() {
   console.time('initStore');

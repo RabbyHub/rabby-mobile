@@ -19,6 +19,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
+import { formatPerpsCoin } from '@/utils/perps';
 
 interface Props {
   visible?: boolean;
@@ -247,12 +248,13 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
             <View style={styles.inner}>
               <View style={styles.header}>
                 <Text style={styles.title}>
-                  {direction} {coin}-USD
+                  {direction} {formatPerpsCoin(coin)}-USD
                 </Text>
                 {type === 'openPosition' ? (
                   <Text style={styles.subTitle}>
-                    {coin}-USD {t('page.perpsDetail.PerpsAutoCloseModal.price')}{' '}
-                    ${splitNumberByStep(price)}
+                    {formatPerpsCoin(coin)}-USD{' '}
+                    {t('page.perpsDetail.PerpsAutoCloseModal.price')} $
+                    {splitNumberByStep(price)}
                   </Text>
                 ) : (
                   <Text style={styles.subTitle}>
@@ -271,7 +273,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                     keyboardType="numeric"
                     style={[
                       styles.input,
-                      priceValidation.tp.error && tpPrice !== ''
+                      priceValidation.tp?.error && tpPrice !== ''
                         ? styles.inputError
                         : null,
                     ]}
@@ -281,7 +283,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                     ref={tpInputRef}
                   />
                   <View style={styles.errorMsgContainer}>
-                    {priceValidation.tp.error ? (
+                    {priceValidation.tp?.error ? (
                       <Text style={styles.errorMsg}>
                         {priceValidation.tp.errorMessage}
                       </Text>
@@ -302,7 +304,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                     keyboardType="numeric"
                     style={[
                       styles.input,
-                      priceValidation.sl.error && slPrice !== ''
+                      priceValidation.sl?.error && slPrice !== ''
                         ? styles.inputError
                         : null,
                     ]}
@@ -312,13 +314,13 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                   />
 
                   <View style={styles.errorMsgContainer}>
-                    {priceValidation.sl.error ? (
+                    {priceValidation.sl?.error ? (
                       <Text style={styles.errorMsg}>
-                        {priceValidation.sl.errorMessage}
+                        {priceValidation.sl?.errorMessage}
                       </Text>
-                    ) : priceValidation.sl.isWarning ? (
+                    ) : priceValidation.sl?.isWarning ? (
                       <Text style={[styles.errorMsg, styles.errorMsgWarning]}>
-                        {priceValidation.sl.errorMessage}
+                        {priceValidation.sl?.errorMessage}
                       </Text>
                     ) : slPrice ? (
                       <Text style={styles.errorMsg}>

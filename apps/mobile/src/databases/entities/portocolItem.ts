@@ -177,7 +177,7 @@ export class ProtocolItemEntity extends EntityAddressAssetBase {
       .createQueryBuilder()
       .delete()
       .from(ProtocolItemEntity)
-      .where('owner_addr = :owner_addr', { owner_addr })
+      .where('lower(owner_addr) = lower(:owner_addr)', { owner_addr })
       .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
       .execute();
 

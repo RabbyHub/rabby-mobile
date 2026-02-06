@@ -2,7 +2,7 @@
 
 import { EmitterSubscription } from 'react-native';
 
-import { makeRnEEClass, resolveNativeModule } from './utils';
+import { IS_IOS, makeRnEEClass, resolveNativeModule } from './utils';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { sleep } from '@/utils/async';
 
@@ -127,9 +127,10 @@ export class Thread {
     return { remove };
   }
 
-  async start() {
+  async start(options?: Parameters<typeof RNThread.startThread>[1]) {
     return (this.#id = RNThread.startThread(this.#jsPath.replace('.js', ''), {
-      // ...(__DEV__ && { usePackedResource: true }),
+      ...options,
+      // ...(__DEV__ && IS_IOS && { usePackedResource: true }),
     })
       .then(id => {
         console.debug('RNThread running with id', id);

@@ -7,6 +7,9 @@ import type {
   ExplainTxResponse,
   GasLevel,
   Tx,
+  TxAllHistoryResult,
+  TxDisplayItem,
+  TxHistoryResult,
   TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
@@ -17,7 +20,20 @@ import { hexToString, isHex, stringToHex } from 'web3-utils';
 import { findChain, getChain } from './chain';
 import i18n from './i18n';
 import { openExternalUrl } from '@/core/utils/linking';
-import { Account } from '@/core/services/preference';
+import { Account, IManageToken } from '@/core/services/preference';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { preferenceService, transactionHistoryService } from '@/core/services';
+import { CustomTxItem } from '@/core/services/transactionHistory';
+import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
+import {
+  CUSTOM_HISTORY_TITLE_TYPE,
+  HistoryItemCateType,
+} from '@/screens/Transaction/components/type';
+import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
+import i18next from 'i18next';
+import { ellipsisOverflowedText } from './text';
+import { getTokenSymbol } from './token';
 
 export interface ApprovalRes extends Tx {
   type?: string;
@@ -523,4 +539,177 @@ export function openTxExternalUrl(input: {
   }
 
   return result;
+}
+
+export function txResultToDisplayTxItems(
+  res: TxHistoryResult | TxAllHistoryResult,
+) {
+  const { cate_dict, project_dict, history_list } = res;
+  const tokenDict =
+    (res as TxAllHistoryResult).token_uuid_dict ||
+    (res as TxHistoryResult).token_dict;
+
+  const displayList: TxDisplayItem[] = history_list
+    .map(item => ({
+      ...item,
+      projectDict: project_dict,
+      cateDict: cate_dict,
+      tokenDict: tokenDict,
+    }))
+    .sort((v1, v2) => v2.time_at - v1.time_at);
+
+  return displayList;
+}
+
+export function txResultToToHistoryDisplayItem(input: {
+  address: string;
+  res: TxHistoryResult | TxAllHistoryResult;
+  pinedQueue: IManageToken[];
+  customTxItemsMap: Record<string, CustomTxItem>;
+}) {
+  const { address, res, pinedQueue, customTxItemsMap } = input;
+  const { cate_dict, project_dict: projectDict, history_list } = res;
+  const tokenDict =
+    (res as TxAllHistoryResult).token_uuid_dict ||
+    (res as TxHistoryResult).token_dict;
+
+  // const pinedQueue = preferenceService.getPinToken();
+  //     const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
+
+  const historyItems = history_list
+    .filter(i => Boolean(i.tx))
+    .map(raw => {
+      const customKey = `${address.toLowerCase()}-${raw.chain}-${raw.id}`;
+      const item = new HistoryItemEntity();
+      HistoryItemEntity.fillEntity(
+        item,
+        address,
+        raw,
+        tokenDict,
+        projectDict,
+        pinedQueue,
+        customTxItemsMap[customKey] || undefined,
+      );
+      return ensureHistoryListItemFromDb(item);
+    });
+
+  return historyItems;
+}
+
+export function prepareTxHistoryDisplayUIData(data: HistoryDisplayItem) {
+  const formatType: HistoryItemCateType = (() => {
+    if (data.historyType === HistoryItemCateType.Swap) {
+      if (
+        data.receives?.[0]?.token?.is_core &&
+        data.sends?.[0]?.token?.is_core
+      ) {
+        return HistoryItemCateType.Swap;
+      } else {
+        return HistoryItemCateType.UnKnown;
+      }
+    }
+    return data.historyType;
+  })();
+
+  const tokenApproveData = (() => {
+    const res: TokenChangeDataItem[] = [];
+
+    if (!data.token_approve?.token_id) {
+      return res;
+    }
+
+    const tokenId = data.token_approve?.token_id || '';
+    const token = data.token_approve?.token;
+    res.push({
+      amount: data.token_approve?.value!,
+      token,
+      token_id: tokenId,
+      type: 'approve',
+    });
+
+    return res;
+  })();
+
+  const formatTitle = (() => {
+    if (data.historyCustomType) {
+      switch (data.historyCustomType) {
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY:
+          return i18next.t('page.transactions.itemTitle.LendingSupply');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW:
+          return i18next.t('page.transactions.itemTitle.LendingWithdraw');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW:
+          return i18next.t('page.transactions.itemTitle.LendingBorrow');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
+          return i18next.t('page.transactions.itemTitle.LendingRepay');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL:
+          return i18next.t('page.transactions.itemTitle.LendingOnCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
+          return i18next.t('page.transactions.itemTitle.LendingOffCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE:
+          return i18next.t('page.transactions.itemTitle.LendingManageEMode');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE:
+          return i18next.t(
+            'page.transactions.itemTitle.LendingManageEModeDisable',
+          );
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP:
+          return i18next.t('page.transactions.itemTitle.LendingDebtSwap');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY_WITH_COLLATERAL:
+          return i18next.t(
+            'page.transactions.itemTitle.LendingRepayWithCollateral',
+          );
+      }
+    }
+
+    switch (formatType) {
+      case HistoryItemCateType.GAS_DEPOSIT:
+        return i18next.t('page.transactions.itemTitle.DepositedGas');
+      case HistoryItemCateType.GAS_RECEIVED:
+        return i18next.t('page.transactions.itemTitle.ReceivedGas');
+
+      case HistoryItemCateType.GAS_WITHDRAW:
+        return i18next.t('page.transactions.itemTitle.WithdrawnGas');
+
+      case HistoryItemCateType.Swap:
+        return i18next.t('page.transactions.itemTitle.Swap');
+
+      case HistoryItemCateType.Send:
+        return i18next.t('page.transactions.itemTitle.Send');
+      case HistoryItemCateType.Recieve:
+        return i18next.t('page.transactions.itemTitle.Recieve');
+      case HistoryItemCateType.Bridge:
+        return i18next.t('page.transactions.itemTitle.Bridge');
+
+      case HistoryItemCateType.Approve:
+        return (
+          i18next.t('page.transactions.itemTitle.Approve') +
+          ' ' +
+          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0]?.token), 6)
+        );
+      case HistoryItemCateType.Revoke:
+        return i18next.t('page.transactions.itemTitle.Revoke', {
+          token: ellipsisOverflowedText(
+            getTokenSymbol(tokenApproveData[0]?.token),
+            6,
+          ),
+        });
+      case HistoryItemCateType.Contract:
+        return i18next.t('page.transactions.itemTitle.Contract');
+      case HistoryItemCateType.Cancel:
+        return i18next.t('page.transactions.itemTitle.Cancel');
+      case HistoryItemCateType.UnKnown:
+        return i18next.t('page.transactions.itemTitle.Default');
+      case HistoryItemCateType.Buy:
+        return i18next.t('page.transactions.itemTitle.Buy');
+      default:
+        return data.tx?.name
+          ? ellipsisOverflowedText(data.tx?.name, 15)
+          : i18next.t('page.transactions.itemTitle.Default');
+    }
+  })();
+
+  return {
+    tokenApproveData,
+    formatTitle,
+    formatType,
+  };
 }

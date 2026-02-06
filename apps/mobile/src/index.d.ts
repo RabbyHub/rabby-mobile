@@ -11,6 +11,8 @@ declare module '@env' {
     RABBY_MOBILE_CODE: string;
     DEV_CONSOLE_URL: string;
     DEV_SERVER_HOSTNAME?: string;
+
+    RABBY_MOBILE_FE_SERVICE_URL?: string;
   };
 
   export = Env;

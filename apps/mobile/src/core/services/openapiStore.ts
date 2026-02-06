@@ -21,10 +21,15 @@ export class OpenApiStore {
     apiKey: null,
     apiTime: null,
   };
-  constructor(options?: StorageAdapaterOptions) {
+  constructor(
+    options?: StorageAdapaterOptions & {
+      name?: APP_STORE_NAMES.openapi | APP_STORE_NAMES.notificationOpenapi;
+    },
+  ) {
+    const { name = APP_STORE_NAMES.openapi } = options || {};
     const storage = createPersistStore<Store>(
       {
-        name: APP_STORE_NAMES.openapi,
+        name: name,
         template: {
           api: {
             host: INITIAL_OPENAPI_URL,

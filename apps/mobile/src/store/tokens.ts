@@ -526,18 +526,26 @@ const tokenListStore = zCreate<TokenListState>(set => ({
     // 在 App 启动时执行，初始化冷备数据
     // 取 Top10 地址
     const { top10Addresses } = await getTop10MyAccounts(true);
+    const lowerAddresses = Array.from(
+      new Set(top10Addresses.map(item => item.toLowerCase())),
+    );
     const tokenMap = await TokenItemEntity.getDefaultTokensByAddresses(
-      top10Addresses,
+      lowerAddresses,
     );
     // 写入 Store
     set(() => ({ tokenListMap: tokenMap }));
   },
 
   async batchGetTokenList(addresses: string[], force = false) {
+    const lowerAddresses = Array.from(
+      new Set(addresses.map(item => item.toLowerCase())),
+    );
     if (!force) {
-      const isExpired = await isDataExpiredBatch(addresses);
+      const isExpired = await isDataExpiredBatch(lowerAddresses);
       if (!isExpired) {
-        const tokens = await TokenItemEntity.batchMultiAddressTokens(addresses);
+        const tokens = await TokenItemEntity.batchMultiAddressTokens(
+          lowerAddresses,
+        );
         const res: Record<string, ITokenItem[]> = {};
         for (let i = 0; i < tokens.length; i++) {
           const token = tokens[i] as TokenItemEntity;
@@ -558,7 +566,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
       concurrency: 5,
     });
     const cacheTokenMap: Record<string, ITokenItem[]> = {};
-    addresses.forEach(address => {
+    lowerAddresses.forEach(address => {
       cacheTokenQueue.add(async () => {
         const list = await queryTokensCache(address);
         cacheTokenMap[address.toLowerCase()] = list.map(item =>
@@ -573,7 +581,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
       concurrency: 15,
     });
     await Promise.allSettled(
-      addresses.map(async address => {
+      lowerAddresses.map(async address => {
         const chains = await openapi.usedChainList(address);
         const chainIdList = chains.map(item => item.id);
         const res = await Promise.allSettled(

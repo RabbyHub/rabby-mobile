@@ -11,6 +11,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -30,7 +31,6 @@ import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
-import { formatTokenAmount } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -62,6 +62,7 @@ import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
 import { ITokenItem } from '@/store/tokens';
+import { formatAmountValueKMB } from './util';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
@@ -122,7 +123,7 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
 export const TokenMarketInfoScreen = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
-  const { token, account, tokenSelectType } = route.params || {};
+  const { token, account, tokenSelectType, from } = route.params || {};
   console.log('token', token);
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
@@ -272,6 +273,12 @@ export const TokenMarketInfoScreen = () => {
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       // 关闭弹窗隐藏
       setIsFromBack(false);
+      if (from?.scene === 'meme') {
+        matomoRequestEvent({
+          category: 'Rabby Memecoin',
+          action: 'Memecoin_ToSwapPage',
+        });
+      }
       navigation.push(RootNames.StackTransaction, {
         screen: account ? RootNames.Swap : RootNames.MultiSwap,
         params: {
@@ -280,6 +287,7 @@ export const TokenMarketInfoScreen = () => {
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
           address,
           isFromSwap,
+          from,
         },
       });
     },
@@ -530,7 +538,7 @@ export const TokenMarketInfoScreen = () => {
             style={styles.innerContainer}>
             {!!account && (
               <HeaderBalanceCard
-                amount={formatTokenAmount(amountSum)}
+                amount={formatAmountValueKMB(amountSum)}
                 usdValue={usdValue}
                 percentChange={percentChange}
                 isLoss={isLoss}

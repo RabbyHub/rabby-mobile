@@ -88,7 +88,7 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
   );
 
   const hyperliquidAccountValue = usePerpsStore(
-    useShallow(s => s.accountSummary?.accountValue),
+    useShallow(s => s.currentClearinghouseState?.marginSummary?.accountValue),
   );
 
   const dappListWithValue = useMemo(() => {

@@ -90,7 +90,8 @@
     "Wallets": "Wallet auswählen",
     "permissionRequest": {
       "common": {
-        "askMeLater": "fragMichSpäter"
+        "askMeLater": "fragMichSpäter",
+        "goToSettings": "Gehe zu den Einstellungen"
       },
       "mediaLibrary": {
         "title": "Medienbibliotheksberechtigung",
@@ -115,6 +116,11 @@
       "location": {
         "title": "Standortberechtigung",
         "message": "Diese App benötigt Zugriff auf Ihren Standort, um standortbasierte Funktionen bereitzustellen."
+      },
+      "postNotification": {
+        "title": "Benachrichtigungsberechtigung",
+        "message": "Diese App benötigt Zugriff, um Ihnen Benachrichtigungen zu senden.",
+        "pleaseEnableInSettings": "Bitte aktivieren Sie die Benachrichtigungsberechtigung in den Einstellungen."
       }
     },
     "gotIt": "Verstanden",
@@ -1204,7 +1210,8 @@
         "perps": "Perps",
         "perpsMarketList": "Mehr Perps",
         "lending": "Kredite",
-        "predict": "Vorhersagen"
+        "predict": "Vorhersagen",
+        "meme": "Memecoin"
       },
       "swipeUp": {
         "descAndroidMore": "Klicken Sie, um weitere dApps zu erkunden",
@@ -2310,7 +2317,8 @@
       },
       "price": "Preis",
       "headerTokenValueText": "Token-Wert",
-      "headerBalanceText": "Guthaben"
+      "headerBalanceText": "Guthaben",
+      "copyCA": "Token-Vertrag-Adresse kopiert"
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -2339,7 +2347,8 @@
       "clearBrowserData": "Browser-Daten löschen",
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
-      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden"
+      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
+      "transactionNotification": "Txn-Benachrichtigungen (Beta)"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -3360,6 +3369,14 @@
       "netWorth": "Vermögen",
       "selectAWallet": "Wählen Sie eine Wallet",
       "walletBalance": "Wallet/Balance"
+    },
+    "meme": {
+      "tokenHeader": {
+        "change": "24H Änderung",
+        "fdv": "FDV",
+        "volume": "24H Volumen",
+        "price": "Preis"
+      }
     }
   },
   "constant": {
@@ -3432,5 +3449,11 @@
         "content": "Diese Transaktion interagiert mit einer Adresse, die auf der OFAC-Sanktionsliste steht."
       }
     }
+  },
+  "notifications": {
+    "noTransactionDetail": "Transaktionsdetails nicht gefunden. Bitte überprüfen Sie die Transaktionshistorie später.",
+    "loadingTransaction": "Transaktion wird geöffnet...",
+    "unknownAddressFromTransaction": "Die Transaktion betrifft eine Adresse, die sich nicht in Ihrem Wallet befindet. Bitte überprüfen Sie die Transaktionshistorie später.",
+    "noTransactionOwnerAddress": "Die Transaktion gehört zu keiner Adresse in Ihrem Wallet. Bitte überprüfen Sie die Transaktionshistorie später."
   }
 }

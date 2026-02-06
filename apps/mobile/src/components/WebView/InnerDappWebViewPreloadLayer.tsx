@@ -79,7 +79,7 @@ export default function InnerDappWebViewPreloadLayer({
   const { styles } = useTheme2024({ getStyle });
   const preloadStrategy = useInnerDappPreloadStrategy();
   const configuredMaxRetained = useInnerDappPreloadRetention();
-  const { lending, perps } = useInnerDappSelection();
+  const { lending, perps, prediction } = useInnerDappSelection();
   const [readyRouteName, setReadyRouteName] = useState<string | null>(null);
   const [retainedKeys, setRetainedKeys] = useState<string[]>([]);
   const { getIsAppUnlocked } = useAppUnlocked();
@@ -169,7 +169,7 @@ export default function InnerDappWebViewPreloadLayer({
       : activeScene === 'Perps'
       ? perps
       : activeScene === 'Prediction'
-      ? DEFAULT_PREDICTION_ID
+      ? prediction || DEFAULT_PREDICTION_ID
       : undefined;
 
   const shouldShowActiveWebView =
@@ -247,6 +247,9 @@ export default function InnerDappWebViewPreloadLayer({
         setDappPermission(result.has_permission);
       })
       .catch(error => {
+        if (!cancelled) {
+          setDappPermission(false);
+        }
         console.error('getDappPermission', error);
       });
 
@@ -509,6 +512,7 @@ export default function InnerDappWebViewPreloadLayer({
                   <View style={styles.edgeBackSwipeArea} />
                 </PanGestureHandler>
               ) : null}
+
               <ViewShot
                 ref={ref => {
                   if (ref) {
@@ -517,7 +521,7 @@ export default function InnerDappWebViewPreloadLayer({
                     delete viewShotRefs.current[key];
                   }
                 }}
-                style={styles.webviewWrapper}
+                style={[styles.webviewWrapper]}
                 options={{
                   format: 'jpg',
                   quality: 0.35,
@@ -535,9 +539,10 @@ export default function InnerDappWebViewPreloadLayer({
                     item.url,
                   )}
                   offscreenPreload={offscreenPreload}
+                  disabled={shouldShowPermissionUnavailable}
                 />
               </ViewShot>
-              {shouldShowSnapshot ? (
+              {shouldShowSnapshot && !shouldShowPermissionUnavailable ? (
                 <View
                   pointerEvents="none"
                   style={styles.snapshotOverlayContainer}>
@@ -547,6 +552,13 @@ export default function InnerDappWebViewPreloadLayer({
                     resizeMode="cover"
                   />
                 </View>
+              ) : null}
+
+              {shouldShowProgress && !shouldShowPermissionUnavailable ? (
+                <BrowserProgressBar
+                  progress={progressState?.progress ?? 0}
+                  style={styles.progressOverlay}
+                />
               ) : null}
 
               {shouldShowPermissionUnavailable ? (
@@ -564,13 +576,6 @@ export default function InnerDappWebViewPreloadLayer({
                     </Text>
                   </View>
                 </View>
-              ) : null}
-
-              {shouldShowProgress ? (
-                <BrowserProgressBar
-                  progress={progressState?.progress ?? 0}
-                  style={styles.progressOverlay}
-                />
               ) : null}
             </View>
           </View>

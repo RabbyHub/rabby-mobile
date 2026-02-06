@@ -1047,6 +1047,7 @@
         "search": "Search Token",
         "watchlist": "Token Watchlist",
         "perps": "Perps",
+        "meme": "Memecoin",
         "lending": "Lending",
         "predict": "Predict",
         "perpsMarketList": "More Perps"
@@ -1987,6 +1988,7 @@
       "excludeBalanceTipsButton": "I Got It.",
       "guideToMarketData": "Market Data:",
       "price": "Price",
+      "copyCA": "Token contract address copied",
       "tabs": {
         "marketData": "Market data",
         "tokenSecurity": "Token Security"
@@ -2161,7 +2163,8 @@
       "clearBrowserData": "Clear Browser Data",
       "screenshotReportSwitch": "Screenshot to report bug",
       "currency": "Currency",
-      "searchCurrency": "Search Currency"
+      "searchCurrency": "Search Currency",
+      "transactionNotification": "Txn notifications (Beta)"
     },
     "settingModal": {
       "themeMode": {
@@ -2352,6 +2355,14 @@
       },
       "toast": {
         "remove": "Remove from Watchlist Success"
+      }
+    },
+    "meme": {
+      "tokenHeader": {
+        "volume": "24H Volume",
+        "fdv": "FDV",
+        "price": "Price",
+        "change": "24H Change"
       }
     },
     "universalLink": {
@@ -3362,7 +3373,8 @@
     "Other": "Other",
     "permissionRequest": {
       "common": {
-        "askMeLater": "askMeLater"
+        "askMeLater": "askMeLater",
+        "goToSettings": "Go setting"
       },
       "mediaLibrary": {
         "title": "Media Library Permission",
@@ -3387,6 +3399,11 @@
       "location": {
         "title": "Location Permission",
         "message": "This app needs access to your location to provide location-based features."
+      },
+      "postNotification": {
+        "title": "Notification Permission",
+        "message": "This app needs access to send you notifications.",
+        "pleaseEnableInSettings": "Please enable notification permission in settings"
       }
     },
     "check": "Check",
@@ -3472,5 +3489,11 @@
         "button": "I Know"
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "Opening Transaction...",
+    "unknownAddressFromTransaction": "The transaction involves an address that is not in your wallet. Please check the transaction history later.",
+    "noTransactionOwnerAddress": "The transaction does not belong to any address in your wallet. Please check the transaction history later.",
+    "noTransactionDetail": "Transaction details not found. Please check the transaction history later."
   }
 }

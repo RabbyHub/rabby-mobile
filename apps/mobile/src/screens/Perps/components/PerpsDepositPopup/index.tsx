@@ -439,18 +439,19 @@ export const PerpsDepositPopup: React.FC<{
     tokenInfo,
   ]);
 
-  const { value: isMissingRole } = useAsync(async () => {
-    if (!account?.address || !visible) {
-      return false;
-    }
-    if (Number(accountSummary?.accountValue)) {
-      // has account value no need fetch api to check
-      return false;
-    }
-    const sdk = apisPerps.getPerpsSDK();
-    const { role } = await sdk.info.getUserRole(account.address);
-    return role === 'missing' && !isDirectDeposit;
-  }, [account?.address, visible, isDirectDeposit]);
+  const isMissingRole = false;
+  // const { value: isMissingRole } = useAsync(async () => {
+  //   if (!account?.address || !visible) {
+  //     return false;
+  //   }
+  //   if (Number(accountSummary?.accountValue)) {
+  //     // has account value no need fetch api to check
+  //     return false;
+  //   }
+  //   const sdk = apisPerps.getPerpsSDK();
+  //   const { role } = await sdk.info.getUserRole(account.address);
+  //   return role === 'missing' && !isDirectDeposit;
+  // }, [account?.address, visible, isDirectDeposit]);
 
   const estReceiveUsdValue = useMemo(() => {
     const value =
@@ -539,6 +540,7 @@ export const PerpsDepositPopup: React.FC<{
                 desc: t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
                   number: bridgeQuote?.duration || 0,
                 }),
+                buttonType: 'hyperliquid',
               });
             }}>
             <Text style={styles.estReceiveText}>
@@ -668,7 +670,10 @@ export const PerpsDepositPopup: React.FC<{
               }
               loading={loading}
               type={'hyperliquid'}
-              iconColor={'rgba(25, 41, 69, 1)'}
+              iconColor={'#040601'}
+              titleStyle={{
+                color: '#040601',
+              }}
               syncUnlockTime
               onBeforeAuth={() => {
                 Keyboard.dismiss();
@@ -766,11 +771,11 @@ const getStyle = createGetStyles2024(ctx => {
     },
     maxButtonWrapper: {
       padding: 4,
-      backgroundColor: ctx.colors2024['brand-light-1'],
+      backgroundColor: 'rgba(80, 210, 193, 0.12)',
       borderRadius: 8,
     },
     maxButtonText: {
-      color: ctx.colors2024['brand-default'],
+      color: '#50D2C1',
       fontSize: 14,
       fontWeight: '700',
       lineHeight: 18,

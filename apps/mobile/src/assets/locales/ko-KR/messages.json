@@ -807,7 +807,8 @@
         "perps": "펍스",
         "perpsMarketList": "더 많은 Perps",
         "lending": "대출",
-        "predict": "예측하다"
+        "predict": "예측하다",
+        "meme": "밈코인"
       },
       "swipeUp": {
         "desc": "위로 스와이프하여 웹사이트 탐색하기",
@@ -1990,7 +1991,8 @@
       },
       "price": "가격",
       "headerTokenValueText": "토큰 가치",
-      "headerBalanceText": "잔액"
+      "headerBalanceText": "잔액",
+      "copyCA": "토큰 계약 주소가 복사되었습니다."
     },
     "setting": {
       "screenTitle": "설정",
@@ -2019,7 +2021,8 @@
       "clearBrowserData": "브라우저 데이터 삭제",
       "currency": "통화",
       "screenshotReportSwitch": "버그 보고를 위한 스크린샷",
-      "searchCurrency": "통화 검색"
+      "searchCurrency": "통화 검색",
+      "transactionNotification": "Txn 알림 (베타)"
     },
     "settingModal": {
       "themeMode": {
@@ -2997,6 +3000,14 @@
       "netWorth": "순자산",
       "walletBalance": "지갑/잔액",
       "selectAWallet": "지갑 선택"
+    },
+    "meme": {
+      "tokenHeader": {
+        "volume": "24H 볼륨",
+        "change": "24H 변화",
+        "price": "가격",
+        "fdv": "FDV"
+      }
     }
   },
   "global": {
@@ -3044,7 +3055,8 @@
     "Wallets": "지갑 선택",
     "permissionRequest": {
       "common": {
-        "askMeLater": "나중에 물어봐"
+        "askMeLater": "나중에 물어봐",
+        "goToSettings": "설정으로 이동"
       },
       "mediaLibrary": {
         "title": "미디어 라이브러리 권한",
@@ -3069,6 +3081,11 @@
       "location": {
         "title": "위치 권한",
         "message": "이 앱은 위치 기반 기능을 제공하기 위해 귀하의 위치 접근이 필요합니다."
+      },
+      "postNotification": {
+        "title": "알림 권한",
+        "pleaseEnableInSettings": "설정에서 알림 권한을 활성화해 주세요",
+        "message": "이 앱은 알림을 전송하기 위해 접근이 필요합니다."
       }
     },
     "gotIt": "알겠습니다",
@@ -3432,5 +3449,11 @@
         "content": "이 거래는 OFAC 제재 목록에 있는 주소와 상호 작용합니다."
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "거래 열기 중...",
+    "noTransactionDetail": "거래 세부정보를 찾을 수 없습니다. 나중에 거래 내역을 확인해 주세요.",
+    "unknownAddressFromTransaction": "거래는 귀하의 지갑에 없는 주소와 관련이 있습니다. 나중에 거래 내역을 확인해 주세요.",
+    "noTransactionOwnerAddress": "트랜잭션이 귀하의 지갑에 있는 주소와 관련이 없습니다. 나중에 거래 내역을 확인해 주시기 바랍니다."
   }
 }

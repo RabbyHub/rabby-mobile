@@ -52,7 +52,16 @@ export const RcFingerprint = makeThemeIcon2024FromCC(RcFingerprintCC, ctx => ({
   onDark: ctx.colors2024['brand-default'],
 }));
 
-// terms-of-use-cc.svg
+// icon-notification-cc.svg
+import { default as RcNotificationCC } from './icon-notification-cc.svg';
+export const RcNotification = makeThemeIcon2024FromCC(
+  RcNotificationCC,
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
+);
+
 import { default as RcTermsOfUseCC } from './terms-of-use-cc.svg';
 export const RcTermsOfUse = makeThemeIcon2024FromCC(RcTermsOfUseCC, ctx => ({
   onLight: ctx.colors2024['brand-default'],
