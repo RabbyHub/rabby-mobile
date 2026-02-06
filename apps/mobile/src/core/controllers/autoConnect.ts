@@ -7,7 +7,7 @@ const AUTO_CONNECT_SILENTLY_ORIGINS = new Set<string>([
   'https://polymarket.com',
   'https://www.asterdex.com',
   'https://app.lighter.xyz',
-  'https://app.venus.io',
+  'https://venus.io',
   'https://app.spark.fi',
   'https://app.opinion.trade',
   'https://probable.markets',

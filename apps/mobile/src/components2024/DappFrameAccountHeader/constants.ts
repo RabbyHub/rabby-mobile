@@ -72,7 +72,7 @@ const LENDING: DappSelectItem[] = [
     id: 'venus',
     name: 'Venus',
     icon: PngVenus,
-    url: 'https://app.venus.io',
+    url: 'https://venus.io',
     themeColor: 'rgba(58, 121, 253, 0.08)',
     TVL: '$1.635b',
   },
