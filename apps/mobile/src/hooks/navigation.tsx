@@ -719,9 +719,22 @@ export function startSubscribeIOSScreenRecording() {
 }
 
 export function startSubscribeRemoteNotification() {
+  const isProcessingRef = {
+    current: false,
+  };
+
+  function earlyReturnL1<T = any>(retValue?: T) {
+    isProcessingRef.current = false;
+
+    return retValue;
+  }
+
   notificationEvents.subscribe(
     'onParsedReceivedData',
     async ({ parsedData }) => {
+      if (isProcessingRef.current) return;
+
+      isProcessingRef.current = true;
       console.debug(
         '[notifications] [startSubscribeRemoteNotification] onParsedReceivedData:: parsedData',
         parsedData,
@@ -733,7 +746,7 @@ export function startSubscribeRemoteNotification() {
           duration: 8 * 1000,
           hideOnPress: true,
         });
-        return;
+        return earlyReturnL1();
       }
 
       const txDetailPromise = notificationOpenapi
@@ -759,6 +772,7 @@ export function startSubscribeRemoteNotification() {
         };
 
         const earlyReturn = (shouldExecuteDefaultAction = false) => {
+          earlyReturnL1();
           hideToastRef.current();
           if (shouldExecuteDefaultAction) {
             ctx.defaultAction?.();
