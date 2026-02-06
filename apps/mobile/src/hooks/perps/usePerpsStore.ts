@@ -82,7 +82,7 @@ export type AllDexsClearinghouseState = [string, ClearinghouseState][];
 
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
-  accountSummary: AccountSummary | null;
+  // accountSummary: AccountSummary | null;
   currentClearinghouseState: ClearinghouseState | null;
   openOrders: OpenOrder[];
   currentPerpsAccount: Account | null;
@@ -122,7 +122,6 @@ const buildMarketDataMap = (list: MarketData[]): MarketDataMap => {
 export const initialState: PerpsState = {
   // positionAndOpenOrders: [],
   openOrders: [],
-  accountSummary: null,
   currentClearinghouseState: null,
   isFetchAllDone: false,
   hasPermission: true,
