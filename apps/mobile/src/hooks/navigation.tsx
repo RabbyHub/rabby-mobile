@@ -789,6 +789,13 @@ export function startSubscribeRemoteNotification() {
 
         hideToastRef.current();
 
+        if (!parsedData.txInfo?.ownerAddress) {
+          toast.show(i18next.t('notifications.noTransactionOwnerAddress'), {
+            duration: 3 * 1000,
+          });
+          return;
+        }
+
         const pinedQueue = preferenceService.getPinToken();
         const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
         const historyDisplayItem = txResultToToHistoryDisplayItem({
@@ -801,7 +808,12 @@ export function startSubscribeRemoteNotification() {
           '[notifications] [startSubscribeRemoteNotification] received parsedData',
           historyDisplayItem,
         );
-        if (!historyDisplayItem) return;
+        if (!historyDisplayItem) {
+          toast.show(i18next.t('notifications.noTransactionDetail'), {
+            duration: 3 * 1000,
+          });
+          return;
+        }
 
         const currentRouteName =
           navigationRouteStore.getState().currentRouteName;
