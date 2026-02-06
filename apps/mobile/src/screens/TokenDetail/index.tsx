@@ -234,7 +234,9 @@ const TokenDetailContent = () => {
                 <Text style={styles.floatBalanceTitle}>
                   {t('page.tokenDetail.price')}:
                 </Text>
-                <Text style={styles.floatPrice}>${formatPrice(price)}</Text>
+                <Text style={styles.floatPrice}>
+                  {price ? `${formatPrice(price)}` : ' --'}
+                </Text>
               </View>
               <View style={styles.floatBalanceContainer}>
                 <Text

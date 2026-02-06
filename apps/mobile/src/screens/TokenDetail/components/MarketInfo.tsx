@@ -3,8 +3,9 @@ import React, { useMemo } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text, View } from 'react-native';
-import { formatNumber, formatPrice, formatUsdValue } from '@/utils/number';
+import { formatPrice, formatUsdValue } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
+import { formatAmountValueKMB } from '../util';
 
 const MarketInfo = ({
   price,
@@ -65,7 +66,7 @@ const MarketInfo = ({
             {t('page.tokenDetail.marketInfo.totalSupply')}
           </Text>
           <Text style={styles.infoItemValue}>
-            {totalSupply ? formatNumber(totalSupply) : '-'}
+            {totalSupply ? formatAmountValueKMB(totalSupply) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>

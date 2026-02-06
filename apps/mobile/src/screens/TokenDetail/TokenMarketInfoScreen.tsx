@@ -30,7 +30,6 @@ import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
-import { formatTokenAmount } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -62,6 +61,7 @@ import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
 import { ITokenItem } from '@/store/tokens';
+import { formatAmountValueKMB } from './util';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
@@ -530,7 +530,7 @@ export const TokenMarketInfoScreen = () => {
             style={styles.innerContainer}>
             {!!account && (
               <HeaderBalanceCard
-                amount={formatTokenAmount(amountSum)}
+                amount={formatAmountValueKMB(amountSum)}
                 usdValue={usdValue}
                 percentChange={percentChange}
                 isLoss={isLoss}
