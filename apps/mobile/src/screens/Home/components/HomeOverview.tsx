@@ -84,6 +84,8 @@ import { refreshDayCurve } from '@/hooks/useMultiCurve';
 import { refresh24hAssets } from '@/hooks/useScene24hBalance';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
+import useTokenList from '@/store/tokens';
+import useProtocol from '@/store/protocols';
 import { colord } from 'colord';
 import {
   isTabsSwiping,
@@ -729,8 +731,13 @@ export const HomeOverview = React.memo(() => {
       // update at background
       forceUpdate();
       apisLending.fetchLendingData();
-      syncTop10History(myTop10Addresses, true);
-      currencyService.syncCurrencyList(true);
+      const forceRefresh = true;
+      syncTop10History(myTop10Addresses, forceRefresh);
+      currencyService.syncCurrencyList(forceRefresh);
+
+      // refresh token/protocol list
+      useTokenList.getState().batchGetTokenList(myTop10Addresses, forceRefresh);
+      useProtocol.getState().batchGetProtocols(myTop10Addresses, forceRefresh);
     });
   }, [triggerUpdate, checkAddressesEligibility, forceUpdate, myTop10Addresses]);
 
