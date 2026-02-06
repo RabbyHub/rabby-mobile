@@ -459,6 +459,7 @@ export const PerpsOriginScreen = ({
               <View style={styles.footer}>
                 <Button
                   type="hyperliquid"
+                  titleStyle={styles.openPositionBtn}
                   title={t('page.perps.searchPerpsPopup.openPosition')}
                   onPress={() => {
                     setPopupState(prev => ({
@@ -728,5 +729,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   listFooter: {
     height: 56,
+  },
+  openPositionBtn: {
+    fontSize: 20,
+    lineHeight: 24,
   },
 }));

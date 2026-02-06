@@ -9,7 +9,10 @@ import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
-import RcIconPredictCC from '@/assets2024/icons/home/IconPredictCC.svg';
+import RcIconPolymarketCC from '@/assets2024/icons/home/IconPredictCC.svg';
+import RcIconOpinionCC from '@/assets2024/icons/home/IconOpinionCC.svg';
+import RcIconProbableCC from '@/assets2024/icons/home/IconProbableCC.svg';
+
 import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
 import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
 import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
@@ -514,8 +517,11 @@ export const HomeOverview = React.memo(() => {
   const sortedAccounts = useSortAddressList(accounts);
   useSubscribePosition(sortedAccounts);
 
-  const { lending: lendingDappId, perps: perpsDappId } =
-    useInnerDappSelection();
+  const {
+    lending: lendingDappId,
+    perps: perpsDappId,
+    prediction: predictionDappId,
+  } = useInnerDappSelection();
 
   const perpsIcon =
     (
@@ -535,6 +541,14 @@ export const HomeOverview = React.memo(() => {
       } as const
     )[lendingDappId] ?? RcIconLending;
 
+  const predictionIcon =
+    (
+      {
+        polymarket: RcIconPolymarketCC,
+        opinion: RcIconOpinionCC,
+        probable: RcIconProbableCC,
+      } as const
+    )[predictionDappId] ?? RcIconPolymarketCC;
   const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
 
   useFocusEffect(
@@ -581,7 +595,7 @@ export const HomeOverview = React.memo(() => {
         {
           key: MultiHomeFeatTitle.Predict,
           title: t('page.home.services.predict'),
-          icon: RcIconPredictCC,
+          icon: predictionIcon,
         },
         {
           key: MultiHomeFeatTitle.Points,
@@ -634,6 +648,7 @@ export const HomeOverview = React.memo(() => {
       t,
       perpsIcon,
       lendingIcon,
+      predictionIcon,
       colors2024,
       historyCount?.fail,
       historyCount?.success,

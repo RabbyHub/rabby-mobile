@@ -302,7 +302,11 @@ export const TokenDetailHistoryList = ({
       {!loading && !displayList.length && noMore && (
         <Empty
           style={styles.emptyStyle}
-          title={t('page.activities.signedTx.empty.title')}
+          title={
+            !isMyAddress
+              ? t('page.activities.signedTx.empty.title')
+              : t('page.activities.signedTx.empty.titleLastThreeMonths')
+          }
         />
       )}
       <HistoryList
