@@ -3491,6 +3491,9 @@
     }
   },
   "notifications": {
-    "loadingTransaction": "Opening Transaction..."
+    "loadingTransaction": "Opening Transaction...",
+    "unknownAddressFromTransaction": "The transaction involves an address that is not in your wallet. Please check the transaction history later.",
+    "noTransactionOwnerAddress": "The transaction does not belong to any address in your wallet. Please check the transaction history later.",
+    "noTransactionDetail": "Transaction details not found. Please check the transaction history later."
   }
 }
