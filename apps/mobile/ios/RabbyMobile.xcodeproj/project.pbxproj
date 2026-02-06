@@ -23,23 +23,26 @@
 		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */; };
 		01DBDDA02E86FFF70060C03B /* builtin-pages in Resources */ = {isa = PBXBuildFile; fileRef = 01DBDD9F2E86FFF70060C03B /* builtin-pages */; };
+		01E0CA8B2F22E00C0050B84A /* RabbyMobileNotification.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		01E0CB3D2F238DA40050B84A /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01E0CB3B2F238DA40050B84A /* NotificationService.swift */; };
 		01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 01E584B52C370990007F3280 /* LaunchScreen.xib */; };
 		01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */; };
 		0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		338538AD968E24536277522B /* Pods_RabbyMobileNotification.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88C933734903F821FA0C5573 /* Pods_RabbyMobileNotification.framework */; };
 		5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */; };
-		61119C058F0C8F2FBCC8530A /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */; };
 		817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */ = {isa = PBXBuildFile; fileRef = FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		A435C93C4EB14CC4B4CB98D0 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		990E38247D624F6B86F999F7 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */; };
+		A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
 		A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 370EA128F5694C408EE79381 /* vconsole.min.js */; };
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
 		AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */; };
 		E576F98C62E44D04A874C8B7 /* SF-Pro-Rounded-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */; };
-		990E38247D624F6B86F999F7 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,7 +53,28 @@
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
 			remoteInfo = RabbyMobile;
 		};
+		01E0CA8C2F22E0120050B84A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 01E0CA5F2F22C39D0050B84A;
+			remoteInfo = RabbyMobileNotification;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		01E0CA452F22AE980050B84A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				01E0CA8B2F22E00C0050B84A /* RabbyMobileNotification.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RabbyMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -58,6 +82,7 @@
 		00E356F21AD99517003FC87E /* RabbyMobileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RabbyMobileTests.m; sourceTree = "<group>"; };
 		0120B20E2D082C0000FCB1B1 /* RNHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNHelpers.h; path = RabbyMobile/RNHelpers.h; sourceTree = "<group>"; };
 		0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RNHelpers.mm; path = RabbyMobile/RNHelpers.mm; sourceTree = "<group>"; };
+		0125AF792F2A3CFE0016DDB5 /* RabbyMobileNotificationRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RabbyMobileNotificationRelease.entitlements; sourceTree = "<group>"; };
 		01390F572E40CD3C0058B77C /* RabbyMobileRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileRelease.entitlements; path = RabbyMobile/RabbyMobileRelease.entitlements; sourceTree = "<group>"; };
 		014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		018EF4192EFBCDE8001A2361 /* RNThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNThread.h; sourceTree = "<group>"; };
@@ -78,6 +103,11 @@
 		01D49C742CBE7D5E008C5EE2 /* RNTimeChanged.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RNTimeChanged.h; path = RabbyMobile/RNTimeChanged.h; sourceTree = "<group>"; };
 		01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = RNTimeChanged.mm; path = RabbyMobile/RNTimeChanged.mm; sourceTree = "<group>"; };
 		01DBDD9F2E86FFF70060C03B /* builtin-pages */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "builtin-pages"; path = "../assets/ios/builtin-pages"; sourceTree = "<group>"; };
+		01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RabbyMobileNotification.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		01E0CA722F22C4AC0050B84A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		01E0CA742F22C4AC0050B84A /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
+		01E0CB3A2F238DA40050B84A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		01E0CB3B2F238DA40050B84A /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		01E584B52C370990007F3280 /* LaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LaunchScreen.xib; path = RabbyMobile/LaunchScreen.xib; sourceTree = "<group>"; };
 		01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReactNativeSecurity.h; path = RabbyMobile/ReactNativeSecurity.h; sourceTree = "<group>"; };
 		01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ReactNativeSecurity.mm; path = RabbyMobile/ReactNativeSecurity.mm; sourceTree = "<group>"; };
@@ -87,25 +117,31 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = RabbyMobile/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = RabbyMobile/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = RabbyMobile/main.m; sourceTree = "<group>"; };
+		151B773A68D0A3B50F76755A /* Pods-RabbyMobileNotification.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.release.xcconfig"; sourceTree = "<group>"; };
 		1B2D9C4676E5EA7E90C5705F /* Pods-RabbyMobile.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.regression.xcconfig"; sourceTree = "<group>"; };
 		322D3F7B9B8D39882C19A512 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };
+		32B6FD6243A2B6510D5BDC15 /* Pods-RabbyMobileNotification.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.debug.xcconfig"; sourceTree = "<group>"; };
 		370EA128F5694C408EE79381 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-RabbyMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.debug.xcconfig"; sourceTree = "<group>"; };
+		4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
 		48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Regular.otf"; path = "../assets/fonts/SF-Pro-Rounded-Regular.otf"; sourceTree = "<group>"; };
 		5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Bold.otf"; path = "../assets/fonts/SF-Pro-Rounded-Bold.otf"; sourceTree = "<group>"; };
+		62B8C84B05CF872511F26010 /* Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileNotification/Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig"; sourceTree = "<group>"; };
+		6923FF90C9FD630B289B7614 /* Pods-RabbyMobile-RabbyMobileNotification.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileNotification.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileNotification/Pods-RabbyMobile-RabbyMobileNotification.regression.xcconfig"; sourceTree = "<group>"; };
 		6B576D0FC998649BFE6FCB60 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; sourceTree = "<group>"; };
 		78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile_RabbyMobileTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = RabbyMobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		88C933734903F821FA0C5573 /* Pods_RabbyMobileNotification.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobileNotification.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
 		A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Medium.otf"; path = "../assets/fonts/SF-Pro-Rounded-Medium.otf"; sourceTree = "<group>"; };
 		A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobile.entitlements; path = RabbyMobile/RabbyMobile.entitlements; sourceTree = "<group>"; };
 		ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DE2ED77CA6BCCFCA3B356774 /* Pods-RabbyMobileNotification.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.regression.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Heavy.otf"; path = "../assets/fonts/SF-Pro-Rounded-Heavy.otf"; sourceTree = "<group>"; };
 		FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "bignumber.js@9.3.1-bignumber.min.js"; path = "../assets/custom/bignumber.js@9.3.1-bignumber.min.js"; sourceTree = "<group>"; };
-		4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; name = "InpageBridgeWeb3.js"; path = "../assets/custom/InpageBridgeWeb3.js"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,11 +153,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		01E0CA5D2F22C39D0050B84A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				338538AD968E24536277522B /* Pods_RabbyMobileNotification.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				61119C058F0C8F2FBCC8530A /* (null) in Frameworks */,
+				61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */,
 				AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -168,6 +212,16 @@
 			path = RabbyMobile/Base;
 			sourceTree = "<group>";
 		};
+		01E0CB3C2F238DA40050B84A /* RabbyMobileNotification */ = {
+			isa = PBXGroup;
+			children = (
+				0125AF792F2A3CFE0016DDB5 /* RabbyMobileNotificationRelease.entitlements */,
+				01E0CB3A2F238DA40050B84A /* Info.plist */,
+				01E0CB3B2F238DA40050B84A /* NotificationService.swift */,
+			);
+			path = RabbyMobileNotification;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* RabbyMobile */ = {
 			isa = PBXGroup;
 			children = (
@@ -205,6 +259,9 @@
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */,
 				B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */,
+				01E0CA722F22C4AC0050B84A /* UserNotifications.framework */,
+				01E0CA742F22C4AC0050B84A /* UserNotificationsUI.framework */,
+				88C933734903F821FA0C5573 /* Pods_RabbyMobileNotification.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -226,6 +283,7 @@
 				13B07FAE1A68108700A75B9A /* RabbyMobile */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* RabbyMobileTests */,
+				01E0CB3C2F238DA40050B84A /* RabbyMobileNotification */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -241,6 +299,7 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* RabbyMobile.app */,
 				00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */,
+				01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -254,6 +313,11 @@
 				322D3F7B9B8D39882C19A512 /* Pods-RabbyMobile.release.xcconfig */,
 				1B2D9C4676E5EA7E90C5705F /* Pods-RabbyMobile.regression.xcconfig */,
 				78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */,
+				62B8C84B05CF872511F26010 /* Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig */,
+				6923FF90C9FD630B289B7614 /* Pods-RabbyMobile-RabbyMobileNotification.regression.xcconfig */,
+				32B6FD6243A2B6510D5BDC15 /* Pods-RabbyMobileNotification.debug.xcconfig */,
+				151B773A68D0A3B50F76755A /* Pods-RabbyMobileNotification.release.xcconfig */,
+				DE2ED77CA6BCCFCA3B356774 /* Pods-RabbyMobileNotification.regression.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -297,6 +361,24 @@
 			productReference = 00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		01E0CA5F2F22C39D0050B84A /* RabbyMobileNotification */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 01E0CA692F22C39D0050B84A /* Build configuration list for PBXNativeTarget "RabbyMobileNotification" */;
+			buildPhases = (
+				2765AC2FAD2ECEA8C8C74398 /* [CP] Check Pods Manifest.lock */,
+				01E0CA5C2F22C39D0050B84A /* Sources */,
+				01E0CA5D2F22C39D0050B84A /* Frameworks */,
+				01E0CA5E2F22C39D0050B84A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RabbyMobileNotification;
+			productName = RabbyMobileNotification;
+			productReference = 01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		13B07F861A680F5B00A75B9A /* RabbyMobile */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "RabbyMobile" */;
@@ -309,12 +391,14 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+				01E0CA452F22AE980050B84A /* Embed Foundation Extensions */,
 				8CDE046FA7F7E8D18AC6AC0E /* [CP-User] [RNFB] Core Configuration */,
 				97C8DB28D26F4537BDE36325 /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				01E0CA8D2F22E0120050B84A /* PBXTargetDependency */,
 			);
 			name = RabbyMobile;
 			productName = RabbyMobile;
@@ -327,11 +411,15 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					00E356ED1AD99517003FC87E = {
 						CreatedOnToolsVersion = 6.2;
 						TestTargetID = 13B07F861A680F5B00A75B9A;
+					};
+					01E0CA5F2F22C39D0050B84A = {
+						CreatedOnToolsVersion = 16.2;
 					};
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1520;
@@ -353,6 +441,7 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* RabbyMobile */,
 				00E356ED1AD99517003FC87E /* RabbyMobileTests */,
+				01E0CA5F2F22C39D0050B84A /* RabbyMobileNotification */,
 			);
 		};
 /* End PBXProject section */
@@ -363,6 +452,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		01E0CA5E2F22C39D0050B84A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -385,7 +481,7 @@
 				5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */,
 				A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */,
 				817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */,
-				A435C93C4EB14CC4B4CB98D0 /* (null) in Resources */,
+				A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */,
 				990E38247D624F6B86F999F7 /* InpageBridgeWeb3.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -424,6 +520,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		2765AC2FAD2ECEA8C8C74398 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RabbyMobileNotification-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		8CDE046FA7F7E8D18AC6AC0E /* [CP-User] [RNFB] Core Configuration */ = {
@@ -578,6 +696,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		01E0CA5C2F22C39D0050B84A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01E0CB3D2F238DA40050B84A /* NotificationService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F871A680F5B00A75B9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -604,6 +730,11 @@
 			target = 13B07F861A680F5B00A75B9A /* RabbyMobile */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
 		};
+		01E0CA8D2F22E0120050B84A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 01E0CA5F2F22C39D0050B84A /* RabbyMobileNotification */;
+			targetProxy = 01E0CA8C2F22E0120050B84A /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -611,7 +742,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -639,7 +769,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
@@ -844,8 +973,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 6B576D0FC998649BFE6FCB60 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
@@ -865,6 +994,148 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile";
+			};
+			name = Regression;
+		};
+		01E0CA6A2F22C39D0050B84A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 32B6FD6243A2B6510D5BDC15 /* Pods-RabbyMobileNotification.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RabbyMobileNotification/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RabbyMobileNotification;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-debug.RabbyMobileNotification";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileWildcardDevelopment;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		01E0CA6B2F22C39D0050B84A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 151B773A68D0A3B50F76755A /* Pods-RabbyMobileNotification.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RabbyMobileNotification/RabbyMobileNotificationRelease.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RabbyMobileNotification/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RabbyMobileNotification;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile.RabbyMobileNotification";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileNotificationAppStore;
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		01E0CA6C2F22C39D0050B84A /* Regression */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = DE2ED77CA6BCCFCA3B356774 /* Pods-RabbyMobileNotification.regression.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RabbyMobileNotification/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RabbyMobileNotification;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression.RabbyMobileNotification";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileWildcardAdHocRegression;
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Regression;
 		};
@@ -1201,6 +1472,16 @@
 				00E356F61AD99517003FC87E /* Debug */,
 				00E356F71AD99517003FC87E /* Release */,
 				0169DF5E2D1286360098402E /* Regression */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		01E0CA692F22C39D0050B84A /* Build configuration list for PBXNativeTarget "RabbyMobileNotification" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				01E0CA6A2F22C39D0050B84A /* Debug */,
+				01E0CA6B2F22C39D0050B84A /* Release */,
+				01E0CA6C2F22C39D0050B84A /* Regression */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

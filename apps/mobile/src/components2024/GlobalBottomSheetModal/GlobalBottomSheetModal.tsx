@@ -23,6 +23,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeBottomSheetProps } from './utils-help';
 import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
+import { runIIFEFunc } from '@/core/utils/store';
+import { perfEvents } from '@/core/utils/perf';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -299,3 +301,9 @@ export const removeAllGlobalBottomSheetModals = (params?: RemoveParams) => {
     globalRemoveAllModals(params);
   }
 };
+
+runIIFEFunc(() => {
+  perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
+    removeAllGlobalBottomSheetModals();
+  });
+});

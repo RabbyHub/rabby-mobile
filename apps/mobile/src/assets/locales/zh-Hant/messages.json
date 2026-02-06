@@ -99,7 +99,8 @@
     "Wallets": "選擇錢包",
     "permissionRequest": {
       "common": {
-        "askMeLater": "稍後再問我"
+        "askMeLater": "稍後再問我",
+        "goToSettings": "前往設定"
       },
       "mediaLibrary": {
         "title": "媒體庫權限",
@@ -124,6 +125,11 @@
       "location": {
         "title": "位置權限",
         "message": "此應用需要訪問您的位置以提供基於位置的功能。"
+      },
+      "postNotification": {
+        "title": "通知權限",
+        "pleaseEnableInSettings": "請在設置中啟用通知權限",
+        "message": "此應用程式需要訪問權限才能發送通知給您。"
       }
     },
     "check": "檢查",
@@ -954,7 +960,8 @@
         "perpsMarketList": "更多 Perps",
         "perps": "永续合约",
         "lending": "借貸",
-        "predict": "預測"
+        "predict": "預測",
+        "meme": "Memecoin"
       },
       "swipeUp": {
         "descAndroidMore": "點擊探索更多 dApps",
@@ -2042,7 +2049,8 @@
       },
       "price": "價格",
       "headerBalanceText": "餘額",
-      "headerTokenValueText": "代幣價值"
+      "headerTokenValueText": "代幣價值",
+      "copyCA": "令牌合約地址已複製"
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -2171,7 +2179,8 @@
       "clearBrowserData": "清除瀏覽器數據",
       "searchCurrency": "搜尋貨幣",
       "currency": "貨幣",
-      "screenshotReportSwitch": "截圖以報告錯誤"
+      "screenshotReportSwitch": "截圖以報告錯誤",
+      "transactionNotification": "Txn 通知 (Beta)"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -3160,6 +3169,14 @@
       "netWorth": "淨資產",
       "selectAWallet": "選擇一個錢包",
       "walletBalance": "錢包/餘額"
+    },
+    "meme": {
+      "tokenHeader": {
+        "change": "24小時變化",
+        "volume": "24小時交易量",
+        "fdv": "FDV",
+        "price": "價格"
+      }
     }
   },
   "component": {
@@ -3432,5 +3449,11 @@
         "content": "此交易與在 OFAC 制裁名單上的位址進行互動。"
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "開啟交易...",
+    "noTransactionDetail": "找不到交易詳情。請稍後查看交易歷史。",
+    "noTransactionOwnerAddress": "該交易不屬於您錢包中的任何地址。請稍後檢查交易歷史。",
+    "unknownAddressFromTransaction": "交易涉及一個不在您錢包中的地址。請稍後檢查交易歷史。"
   }
 }

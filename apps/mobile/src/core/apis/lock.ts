@@ -368,10 +368,17 @@ export function subscribeAppLock(fn: () => any) {
 }
 
 runIIFEFunc(() => {
+  const isFirstTimeAfterLaunchRef = {
+    current: true,
+  };
   keyringService.on('unlock', ctx => {
     console.debug('[perf] keyringService unlock event ctx', ctx);
     if (ctx.scene === 'unlock') {
-      perfEvents.emit('USER_MANUALLY_UNLOCK');
+      const isFirstTimeAfterLaunch = isFirstTimeAfterLaunchRef.current;
+      isFirstTimeAfterLaunchRef.current = false;
+      perfEvents.emit('USER_MANUALLY_UNLOCK', {
+        isFirstTimeAfterLaunch,
+      });
     }
   });
 });

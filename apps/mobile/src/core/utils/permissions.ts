@@ -10,6 +10,17 @@ import i18next from 'i18next';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import DeviceUtils from './device';
 
+export async function goToSystemSettingsFor(target?: Permission) {
+  if (Platform.OS !== 'android') {
+    Linking.openURL('app-settings:'); // iOS 特有 scheme
+    console.warn(`goToSystemSettingsFor is only supported on Android`);
+  }
+
+  // const packageName = APPLICATION_ID;
+  // const settingsUrl = `package:${packageName}`;
+  Linking.openSettings();
+}
+
 export class PerAndroid {
   static requiredPermissions = [
     DeviceUtils.isGteAndroid(14) &&
@@ -27,6 +38,8 @@ export class PerAndroid {
     DeviceUtils.isAndroid() &&
       !DeviceUtils.isGteAndroid(14) &&
       PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+    DeviceUtils.isGteAndroid(13) &&
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
   ].filter(Boolean) as Permission[];
 
   static getRationaleForPermission(permission: Permission): Rationale | null {
@@ -124,6 +137,18 @@ export class PerAndroid {
           buttonNegative: i18next.t('global.cancel'),
           buttonPositive: i18next.t('global.ok'),
         };
+      case PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS:
+        return {
+          title: i18next.t('global.permissionRequest.postNotification.title'),
+          message: i18next.t(
+            'global.permissionRequest.postNotification.message',
+          ),
+          buttonNeutral: i18next.t(
+            'global.permissionRequest.common.askMeLater',
+          ),
+          buttonNegative: i18next.t('global.cancel'),
+          buttonPositive: i18next.t('global.ok'),
+        };
       default:
         return null;
     }
@@ -146,13 +171,7 @@ export class PerAndroid {
   }
 
   static async goToSystemSettingsFor(target?: Permission) {
-    if (Platform.OS !== 'android') {
-      throw new Error(`goToSystemSettingsFor is only supported on Android`);
-    }
-
-    // const packageName = APPLICATION_ID;
-    // const settingsUrl = `package:${packageName}`;
-    Linking.openSettings();
+    return goToSystemSettingsFor(target);
   }
 
   static formatAndroidPermission(permission: Permission) {

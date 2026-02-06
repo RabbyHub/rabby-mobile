@@ -4,7 +4,7 @@ import {
   BottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import React, { forwardRef, useCallback, useMemo } from 'react';
+import React, { forwardRef, useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, TextStyle } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
@@ -15,6 +15,7 @@ import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
+import { perfEvents } from '@/core/utils/perf';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -116,6 +117,19 @@ export const AppBottomSheetModal = forwardRef<
   );
 
   const { handleChange } = useAutoLockBottomSheetModalOnChange(onChange);
+
+  useEffect(() => {
+    const sub = perfEvents.subscribe(
+      'GLOBAL_CLEAR_ALL_COVERED_COMPONENTS',
+      () => {
+        ref && (ref as React.RefObject<BottomSheetModal>).current?.dismiss();
+      },
+    );
+
+    return () => {
+      sub.remove();
+    };
+  }, [ref]);
 
   return (
     <BottomSheetModal

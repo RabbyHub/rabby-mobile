@@ -1023,7 +1023,8 @@
         "perps": "Perps",
         "perpsMarketList": "มากขึ้น Perps",
         "lending": "การให้กู้ยืม",
-        "predict": "คาดการณ์"
+        "predict": "คาดการณ์",
+        "meme": "Memecoin"
       },
       "swipeUp": {
         "descAndroid": "คลิกเพื่อสำรวจ dApps",
@@ -2247,7 +2248,8 @@
       },
       "price": "ราคา",
       "headerBalanceText": "ยอดเงิน",
-      "headerTokenValueText": "ค่าโทเค็น"
+      "headerTokenValueText": "ค่าโทเค็น",
+      "copyCA": "ที่อยู่สัญญาโทเค็นได้ถูกคัดลอกแล้ว"
     },
     "setting": {
       "aboutUs": "เกี่ยวกับเรา",
@@ -2276,7 +2278,8 @@
       "clearBrowserData": "ล้างข้อมูลเบราว์เซอร์",
       "screenshotReportSwitch": "ถ่ายภาพหน้าจอเพื่อติดตามข้อบกพร่อง",
       "currency": "สกุลเงิน",
-      "searchCurrency": "ค้นหาเงินตรา"
+      "searchCurrency": "ค้นหาเงินตรา",
+      "transactionNotification": "การแจ้งเตือนTxn (เบต้า)"
     },
     "settingModal": {
       "themeMode": {
@@ -3254,6 +3257,14 @@
       "netWorth": "สินทรัพย์สุทธิ",
       "selectAWallet": "เลือกกระเป๋าเงิน",
       "walletBalance": "กระเป๋าเงิน/ยอดเงิน"
+    },
+    "meme": {
+      "tokenHeader": {
+        "fdv": "FDV",
+        "volume": "24H ปริมาณ",
+        "price": "ราคา",
+        "change": "24H เปลี่ยนแปลง"
+      }
     }
   },
   "native": {
@@ -3316,7 +3327,8 @@
     "Wallets": "เลือกกระเป๋าเงิน",
     "permissionRequest": {
       "common": {
-        "askMeLater": "ถามฉันทีหลัง"
+        "askMeLater": "ถามฉันทีหลัง",
+        "goToSettings": "ไปที่การตั้งค่า"
       },
       "mediaLibrary": {
         "title": "สิทธิ์การเข้าถึงห้องสมุดมีเดีย",
@@ -3341,6 +3353,11 @@
       "location": {
         "message": "แอปนี้ต้องการการเข้าถึงตำแหน่งของคุณเพื่อให้สามารถให้บริการฟีเจอร์ที่อิงตามตำแหน่งได้",
         "title": "สิทธิ์การเข้าถึงตำแหน่ง"
+      },
+      "postNotification": {
+        "title": "การอนุญาตการแจ้งเตือน",
+        "message": "แอปนี้ต้องการการเข้าถึงเพื่อส่งการแจ้งเตือนให้คุณ",
+        "pleaseEnableInSettings": "โปรดเปิดใช้งานสิทธิ์การแจ้งเตือนในตั้งค่า"
       }
     },
     "gotIt": "เข้าใจแล้ว",
@@ -3432,5 +3449,11 @@
         "content": "ธุรกรรมนี้โต้ตอบกับที่อยู่ที่อยู่ในรายการคว่ำบาตรของ OFAC"
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "กำลังเปิดธุรกรรม...",
+    "noTransactionOwnerAddress": "ธุรกรรมนี้ไม่ได้เป็นของที่อยู่ใดในกระเป๋าสตางค์ของคุณ กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง。",
+    "noTransactionDetail": "ไม่พบรายละเอียดธุรกรรม กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง。",
+    "unknownAddressFromTransaction": "การทำธุรกรรมเกี่ยวข้องกับที่อยู่ที่ไม่อยู่ในกระเป๋าของคุณ กรุณาตรวจสอบประวัติการทำธุรกรรมในภายหลัง"
   }
 }

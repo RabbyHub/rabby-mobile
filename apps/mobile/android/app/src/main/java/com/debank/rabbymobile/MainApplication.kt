@@ -14,6 +14,9 @@ import com.facebook.soloader.SoLoader
 
 import com.facebook.react.modules.network.OkHttpClientProvider;
 
+// import io.invertase.firebase.messaging.ReactNativeFirebaseMessagingPackage;
+
+
 class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost =
@@ -27,6 +30,7 @@ class MainApplication : Application(), ReactApplication {
               add(RNTimeChangedPackage());
               add(RNHelpersPackage());
               add(RNThreadPackage());
+              // add(ReactNativeFirebaseMessagingPackage());
             }
 
         override fun getJSMainModuleName(): String = "index"

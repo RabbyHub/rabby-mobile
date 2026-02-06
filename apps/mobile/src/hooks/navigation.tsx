@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { Alert, AppState, StyleSheet } from 'react-native';
 import { get, merge } from 'lodash';
 
 import {
@@ -11,6 +11,7 @@ import { apisTheme, useGetBinaryMode } from '../hooks/theme';
 import {
   getReadyNavigationInstance,
   navigationRef,
+  naviPush,
   naviReplace,
 } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
@@ -25,7 +26,7 @@ import {
 import type { RootStackParamsList } from '@/navigation-type';
 import { setIOSScreenCapture } from './native/security';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { apisLock } from '@/core/apis';
+import { apisAccount, apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
 import {
   atSensitiveSceneState,
@@ -45,6 +46,19 @@ import { perfEvents } from '@/core/utils/perf';
 import { useShallow } from 'zustand/react/shallow';
 import { CollapsibleRef } from 'react-native-collapsible-tab-view';
 import { autoLockEvent } from '@/core/apis/autoLock';
+import { notificationEvents } from '@/core/notifications/data';
+import {
+  prepareTxHistoryDisplayUIData,
+  txResultToToHistoryDisplayItem,
+} from '@/utils/transaction';
+// import { SampleNotifiedTxResult } from '@/core/notifications/sample-data';
+import { preferenceService, transactionHistoryService } from '@/core/services';
+import { browserApis } from './browser/useBrowser';
+import { notificationOpenapi } from '@/core/notifications/openapi';
+import { toast, toastLoading } from '@/components2024/Toast';
+import i18next from 'i18next';
+import { switchSceneCurrentAccount } from './accountsSwitcher';
+import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -341,6 +355,7 @@ export function resetNavigationTo(
         index: 0,
         routes: [{ name: RootNames.Unlock, params: {} }],
       });
+      unlockUIState.finishedUnlockResetNav = false;
       // if (
       //   getLatestNavigationName() === RootNames.BrowserScreen ||
       //   getLatestNavigationName() === RootNames.BrowserManageScreen
@@ -410,6 +425,83 @@ export const requestLockWalletAndBackToUnlockScreen =
 
     return result;
   });
+
+type ResetNaviOnUIUnlockFn = (ctx: {
+  navigation: NavigationInstance;
+  hasUnlockOnce: boolean;
+  /**
+   * @description if not provided, means default action has been taken
+   * @returns
+   */
+  defaultAction?: () => void;
+}) => Promise<void> | void;
+
+const unlockUIState = {
+  unlockOnceRef: false,
+  finishedUnlockResetNav: false,
+  resetNaviOnTopOfHomeWhenUnlockRef: null as null | ResetNaviOnUIUnlockFn,
+};
+// keyringService.addListener('lock', () => {
+//   unlockUIState.finishedUnlockResetNav = false;
+// });
+export class UnlockUIManager {
+  static markUnlockedOnce() {
+    unlockUIState.unlockOnceRef = true;
+  }
+
+  static queueResetNaviOnTopOfHomeWhenUnlock(fn: ResetNaviOnUIUnlockFn) {
+    const navigation = getReadyNavigationInstance();
+    if (!navigation) return;
+
+    // previous reset nav has been processed, do it immediately
+    if (unlockUIState.finishedUnlockResetNav) {
+      fn({
+        navigation,
+        hasUnlockOnce: unlockUIState.unlockOnceRef,
+      });
+      return;
+    } else {
+      unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef = async ctx => {
+        const ret = await fn(ctx);
+        unlockUIState.finishedUnlockResetNav = true;
+        unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef = null;
+        return ret;
+      };
+    }
+  }
+
+  static async resetNavOnUIUnlock() {
+    const navigation = getReadyNavigationInstance();
+    if (!navigation) return;
+
+    const hasUnlockOnce = unlockUIState.unlockOnceRef;
+    const defaultAction = async () => {
+      if (
+        unlockUIState.finishedUnlockResetNav ||
+        navigationRouteStore.getState().currentRouteName !== RootNames.Unlock
+      )
+        return;
+      const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
+
+      resetNavigationTo(
+        navigation,
+        !hasAccountsInKeyring && !hasUnlockOnce
+          ? RootNames.GetStartedScreen2024
+          : RootNames.Home,
+      );
+      unlockUIState.finishedUnlockResetNav = true;
+    };
+    if (unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef) {
+      await unlockUIState.resetNaviOnTopOfHomeWhenUnlockRef({
+        navigation,
+        hasUnlockOnce,
+        defaultAction,
+      });
+    } else {
+      await defaultAction();
+    }
+  }
+}
 
 export function usePreventGoBack({
   navigation,
@@ -624,4 +716,140 @@ export function startSubscribeIOSScreenRecording() {
   });
 
   return subscription;
+}
+
+export function startSubscribeRemoteNotification() {
+  notificationEvents.subscribe(
+    'onParsedReceivedData',
+    async ({ parsedData }) => {
+      console.debug(
+        '[notifications] [startSubscribeRemoteNotification] onParsedReceivedData:: parsedData',
+        parsedData,
+      );
+
+      const ownerAddress = parsedData.txInfo?.ownerAddress;
+      if (!ownerAddress) {
+        toast.info(i18next.t('notifications.unknownAddressFromTransaction'), {
+          duration: 8 * 1000,
+          hideOnPress: true,
+        });
+        return;
+      }
+
+      const txDetailPromise = notificationOpenapi
+        .getUserTxDetail({
+          chainId: parsedData.txInfo?.chainServerId || '',
+          txId: parsedData.txInfo?.txHash || '',
+          userAddr: ownerAddress || '',
+        })
+        .catch(error => {
+          console.debug(
+            '[notifications] [startSubscribeRemoteNotification] Failed to get tx detail:',
+          );
+          console.error(error);
+          return null;
+        });
+
+      UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
+        const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
+        const hideToastRef = {
+          current: toastLoading(i18next.t('notifications.loadingTransaction'), {
+            duration: 3 * 1000,
+          }),
+        };
+
+        const earlyReturn = (shouldExecuteDefaultAction = false) => {
+          hideToastRef.current();
+          if (shouldExecuteDefaultAction) {
+            ctx.defaultAction?.();
+          }
+        };
+
+        if (!foundAccount) {
+          console.debug(
+            '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
+            ownerAddress,
+          );
+          toast.error(i18next.t('notifications.noTransactionOwnerAddress'), {
+            duration: 8 * 1000,
+            hideOnPress: true,
+          });
+          return earlyReturn(true);
+        }
+
+        const txDetail = await txDetailPromise;
+
+        console.debug('[notifications] txDetail', txDetail);
+
+        if (!txDetail) {
+          const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
+          console.warn(warnMsg);
+
+          const currentRouteName =
+            navigationRouteStore.getState().currentRouteName;
+          const needReplace = currentRouteName === RootNames.History;
+          const naviFn = ctx.defaultAction
+            ? resetNavigationOnTopOfHome
+            : needReplace
+            ? naviReplace
+            : naviPush;
+
+          await switchSceneCurrentAccount('History', foundAccount);
+          hideToastRef.current();
+          naviFn(RootNames.StackTransaction, {
+            screen: RootNames.History,
+            params: {
+              isForMultipleAddress: false,
+            },
+          });
+
+          return earlyReturn(false);
+        }
+
+        hideToastRef.current();
+
+        const pinedQueue = preferenceService.getPinToken();
+        const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
+        const historyDisplayItem = txResultToToHistoryDisplayItem({
+          address: parsedData.txInfo?.ownerAddress || '',
+          res: txDetail,
+          pinedQueue,
+          customTxItemsMap,
+        })[0];
+        console.debug(
+          '[notifications] [startSubscribeRemoteNotification] received parsedData',
+          historyDisplayItem,
+        );
+        if (!historyDisplayItem) {
+          toast.show(i18next.t('notifications.noTransactionDetail'), {
+            duration: 8 * 1000,
+            hideOnPress: true,
+          });
+          return earlyReturn(true);
+        }
+
+        const currentRouteName =
+          navigationRouteStore.getState().currentRouteName;
+        const needReplace = currentRouteName === RootNames.HistoryDetail;
+
+        const naviFn = ctx.defaultAction
+          ? resetNavigationOnTopOfHome
+          : needReplace
+          ? naviReplace
+          : naviPush;
+        naviFn(RootNames.StackTransaction, {
+          screen: RootNames.HistoryDetail,
+          params: {
+            isForMultipleAddress: false,
+            data: historyDisplayItem,
+            title:
+              prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
+            treatSmallAssetsAsScam: false,
+          },
+        });
+
+        perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
+      });
+    },
+  );
 }

@@ -4,21 +4,34 @@ platform :ios do
   private_lane :prepare_apple_sign do |opts|
     # setup_ci
 
-    # enforce configuration
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      sdk: "iphoneos*",
-      path: './ios/RabbyMobile.xcodeproj',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
-      bundle_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
-    )
+    # # enforce configuration
+    # update_code_signing_settings(
+    #   use_automatic_signing: false,
+    #   targets: ['RabbyMobile'],
+    #   sdk: "iphoneos*",
+    #   path: './ios/RabbyMobile.xcodeproj',
+    #   profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
+    #   bundle_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
+    # )
 
     ENV['CONFIGURATION'] = opts[:type] == 'adhoc' ? 'Regression' : 'Release'
 
+    # Main App: RabbyMobile
     match(
       type: opts[:type],
       app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
       profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
+      readonly: true,
+      shallow_clone: true,
+      verbose: false,
+      force_for_new_devices: true,
+      clone_branch_directly: true)
+
+    # App Extension: RabbyMobileNotification
+    match(
+      type: opts[:type],
+      app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile*' : 'com.debank.rabby-mobile.RabbyMobileNotification',
+      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileNotificationAppStore',
       readonly: true,
       shallow_clone: true,
       verbose: false,
@@ -48,7 +61,8 @@ platform :ios do
         method: 'ad-hoc',
         signingStyle: 'manual',
         provisioningProfiles: {
-          "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode"
+          "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode",
+          "com.debank.rabby-mobile-regression.RabbyMobileNotification": "RabbyMobileWildcardAdHocRegression"
         },
         manifest: {
           appURL: "https://download.rabby.io/downloads/wallet-mobile/ios/rabbymobile.ipa",
@@ -109,8 +123,8 @@ platform :ios do
           method: "app-store",
           signingStyle: 'manual',
           provisioningProfiles: {
-            "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode",
-            "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode"
+            "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode",
+            "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
           }
         })
       pilot(

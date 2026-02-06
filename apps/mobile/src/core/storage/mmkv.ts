@@ -17,7 +17,12 @@ import RNHelpers from '../native/RNHelpers';
 import { IS_IOS } from '../native/utils';
 import { runDevIIFEFunc } from '../utils/store';
 import { reactotronEvents } from '../utils/reactotron-plugins/_utils';
-import { zCreate, zCreateJSONStorage, zPersist } from '../utils/reexports';
+import {
+  zCreate,
+  zCreateJSONStorage,
+  zMutative,
+  zPersist,
+} from '../utils/reexports';
 // import { lendingCacheStorage } from '@/screens/Lending/hooks';
 
 function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
@@ -356,6 +361,39 @@ export const zustandByMMKV = <T = any>(
         name: key,
         storage: zCreateJSONStorage(() => store),
       },
+    ),
+  );
+
+  return zustandStore;
+};
+
+export const zMutativeByMMKV = <T = any>(
+  key: string,
+  initialValue: T,
+  options?: {
+    storage: ZustandStringStorageOption;
+  },
+) => {
+  const {
+    storage,
+    // mutative = false,
+  } = options || {};
+  const store =
+    (isPresetStorageStrategy(storage)
+      ? GET_STRING_STORAGE_FOR_JSON_STORE(storage)
+      : storage) || appStorageForZustand;
+
+  const persistOpts = {
+    name: key,
+    storage: zCreateJSONStorage(() => store),
+  };
+
+  const zustandStore = zCreate(
+    zPersist(
+      zMutative<T>(() => ({
+        ...initialValue,
+      })),
+      persistOpts,
     ),
   );
 

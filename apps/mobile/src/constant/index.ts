@@ -2,7 +2,6 @@ import { Image, Platform, NativeModules } from 'react-native';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
-import { CHAINS_ENUM } from './chains';
 import { BUILD_CHANNEL } from './env';
 
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';

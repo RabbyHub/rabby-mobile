@@ -90,7 +90,8 @@
     "Wallets": "Chọn Ví",
     "permissionRequest": {
       "common": {
-        "askMeLater": "hãyHỏiTôiSau"
+        "askMeLater": "hãyHỏiTôiSau",
+        "goToSettings": "Đi đến cài đặt"
       },
       "mediaLibrary": {
         "message": "Ứng dụng này cần truy cập vào thư viện phương tiện của bạn để phát hiện ảnh chụp màn hình.",
@@ -115,6 +116,11 @@
       "location": {
         "message": "Ứng dụng này cần quyền truy cập vào vị trí của bạn để cung cấp các tính năng dựa trên vị trí.",
         "title": "Quyền truy cập vị trí"
+      },
+      "postNotification": {
+        "title": "Quyền Thông Báo",
+        "message": "Ứng dụng này cần quyền truy cập để gửi thông báo cho bạn.",
+        "pleaseEnableInSettings": "Vui lòng bật quyền thông báo trong cài đặt."
       }
     },
     "check": "Kiểm tra",
@@ -1280,7 +1286,8 @@
         "perps": "Perps",
         "perpsMarketList": "Thêm Perps",
         "lending": "Cho vay",
-        "predict": "Dự đoán"
+        "predict": "Dự đoán",
+        "meme": "Memecoin"
       },
       "swipeUp": {
         "descMore": "Kéo lên để khám phá thêm nhiều trang web",
@@ -1837,7 +1844,8 @@
       "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt",
       "currency": "Tiền tệ",
       "searchCurrency": "Tìm kiếm Tiền tệ",
-      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi"
+      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
+      "transactionNotification": "Thông báo Txn (Beta)"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -1963,7 +1971,8 @@
       },
       "price": "Giá",
       "headerTokenValueText": "Giá trị Token",
-      "headerBalanceText": "Số dư"
+      "headerBalanceText": "Số dư",
+      "copyCA": "Địa chỉ hợp đồng Token đã được sao chép"
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",
@@ -3103,6 +3112,14 @@
       "selectAWallet": "Chọn một ví",
       "netWorth": "Giá trị ròng",
       "walletBalance": "Ví/Bảng cân đối"
+    },
+    "meme": {
+      "tokenHeader": {
+        "change": "24H Thay đổi",
+        "fdv": "FDV",
+        "volume": "24H Khối lượng",
+        "price": "Giá"
+      }
     }
   },
   "component": {
@@ -3432,5 +3449,11 @@
         "content": "Giao dịch này tương tác với một địa chỉ nằm trong danh sách trừng phạt của OFAC."
       }
     }
+  },
+  "notifications": {
+    "loadingTransaction": "Đang mở giao dịch...",
+    "noTransactionDetail": "Không tìm thấy chi tiết giao dịch. Vui lòng kiểm tra lịch sử giao dịch sau.",
+    "noTransactionOwnerAddress": "Giao dịch không thuộc về bất kỳ địa chỉ nào trong ví của bạn. Vui lòng kiểm tra lịch sử giao dịch sau.",
+    "unknownAddressFromTransaction": "Giao dịch liên quan đến một địa chỉ không có trong ví của bạn. Vui lòng kiểm tra lịch sử giao dịch sau."
   }
 }

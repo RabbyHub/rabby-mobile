@@ -21,9 +21,9 @@ import TouchableView, {
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
 import { toast, toastWithIcon } from '@/components2024/Toast';
-import { apisAccount, apisKeychain, apisLock } from '@/core/apis';
+import { apisKeychain, apisLock } from '@/core/apis';
 import {
-  resetNavigationTo,
+  UnlockUIManager,
   usePreventGoBack,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
@@ -113,7 +113,6 @@ export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   );
 }
 
-const unlockOnceRef = { current: false };
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
 function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { t } = useTranslation();
@@ -127,21 +126,13 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const checkUnlocked = useCallback(async () => {
     if (!apisLock.isUnlocked()) return;
 
-    const hasUnlockOnce = unlockOnceRef.current;
-
-    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
     requestAnimationFrame(() => {
-      resetNavigationTo(
-        navigation,
-        !hasAccountsInKeyring && !hasUnlockOnce
-          ? RootNames.GetStartedScreen2024
-          : RootNames.Home,
-      );
+      UnlockUIManager.markUnlockedOnce();
+      UnlockUIManager.resetNavOnUIUnlock();
     });
-    unlockOnceRef.current = true;
 
     storeApisUnlock.afterLeaveFromUnlock();
-  }, [navigation]);
+  }, []);
 
   const { tipEnableBiometrics } = useTipedUserEnableBiometrics();
 

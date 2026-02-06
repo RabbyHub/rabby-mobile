@@ -22,7 +22,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { Button } from '@/components2024/Button';
 import { toast, toastLoadingSuccess } from '@/components2024/Toast';
 
-function DevUIToastAndNotifications(): JSX.Element {
+function DevUIToast(): JSX.Element {
   const { styles, colors2024, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
@@ -268,6 +268,89 @@ function DevUIToastAndNotifications(): JSX.Element {
               </View>
             </View>
 
+            {/* multiple line text */}
+            <View style={{ width: '100%', marginBottom: 24 }}>
+              <View style={[styles.propertyDesc, { marginTop: 12 }]}>
+                <Text style={styles.propertyType}>
+                  multiple line text support{' '.repeat(100)}
+                </Text>
+                <Text style={{ marginBottom: 12 }}>
+                  The content of the toast can be multiple lines. Just pass a
+                  string with line breaks or a custom React Node with multiple
+                  lines of text.
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['neutral-title-2'] }}
+                  type={'primary'}
+                  title={'Multiple Lines On Top'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    toast.info(
+                      'This is a toast with multiple lines of text!\nHere is the second line.\nAnd this is the third line.',
+                      { duration: 5000 },
+                    );
+                  }}
+                />
+
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['neutral-title-2'] }}
+                  type={'primary'}
+                  title={'Multiple Lines on Center'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    toast.info(
+                      'This is a center positioned toast with multiple lines of text!\nHere is the second line.\nAnd this is the third line.',
+                      {
+                        duration: 5000,
+                        position: toast.positions.CENTER,
+                      },
+                    );
+                  }}
+                />
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 0 }}>
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['neutral-title-2'] }}
+                  type={'primary'}
+                  title={'Multiple Lines on Bottom'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    toast.info(
+                      'This is a bottom positioned toast with multiple lines of text!\nHere is the second line.\nAnd this is the third line.',
+                      {
+                        duration: 5000,
+                        position: toast.positions.BOTTOM,
+                      },
+                    );
+                  }}
+                />
+
+                <Button
+                  height={48}
+                  titleStyle={{ color: colors2024['neutral-title-2'] }}
+                  type={'primary'}
+                  title={'Multiple Lines on Top + 80'}
+                  containerStyle={[styles.btnOnGroup, { marginTop: 12 }]}
+                  onPress={() => {
+                    toast.info(
+                      'This is a top positioned toast with multiple lines of text!\nHere is the second line.\nAnd this is the third line.',
+                      {
+                        duration: 5000,
+                        position: toast.positions.TOP + 80,
+                      },
+                    );
+                  }}
+                />
+              </View>
+            </View>
+
             {/* special api toastLoadingSuccess */}
             <View style={{ width: '100%', marginBottom: 24 }}>
               <View style={[styles.propertyDesc, { marginTop: 12 }]}>
@@ -367,4 +450,4 @@ const getStyles = createGetStyles2024(ctx =>
   }),
 );
 
-export default DevUIToastAndNotifications;
+export default DevUIToast;

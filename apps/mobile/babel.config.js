@@ -81,6 +81,8 @@ module.exports = {
         'process.env.RABBY_MOBILE_SAFE_API_KEY':
           process.env.RABBY_MOBILE_SAFE_API_KEY ||
           process.env.MOBILE_SAFE_API_KEY,
+        'process.env.RABBY_MOBILE_FE_SERVICE_URL':
+          process.env.RABBY_MOBILE_FE_SERVICE_URL || '',
       },
     ],
     [

@@ -54,7 +54,7 @@ jobs:
       - ${{ matrix.host }}
       - ${{ matrix.machine_loc }}
     env:
-      NODE_OPTIONS: '--max_old_space_size=4096'
+      NODE_OPTIONS: '--max_old_space_size=12288'
 
     steps:
       - name: Checkout git repo
@@ -121,6 +121,7 @@ jobs:
           elif [ "$OS_TYPE" == "Darwin" ]; then
             if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
               export SENTRY_DISABLE_AUTO_UPLOAD=true
+              export NODE_OPTIONS="--max_old_space_size=20480"
             else
               RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
             fi
@@ -144,11 +145,13 @@ jobs:
           RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
           RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+          RABBY_MOBILE_FE_SERVICE_URL: ${{ vars.RABBY_MOBILE_FE_SERVICE_URL || vars.RABBY_MOBILE_PUSH_TEST_SERVER_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           MATCH_PASSWORD: ${{ secrets.RABBY_MOBILE_MATCH_PASSWORD }}
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
+          GITHUB_ACTIONS_RUNNER_TLS_NO_VERIFY: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
           DISABLE_AWS_CLI_HTTPS_VALIDATION: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
           GHA_MOCK_BUILD_FAILED: ${{ inputs.GHA_MOCK_BUILD_FAILED }}
           CONFIGURATION: release
