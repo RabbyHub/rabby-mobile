@@ -22,7 +22,11 @@ export const formatAmountValueKMB = (
   const numValue = bnValue.toNumber();
   let formattedValue: string;
 
-  if (numValue >= 1e9) {
+  if (numValue >= 1e15) {
+    formattedValue = numValue.toExponential(2);
+  } else if (numValue >= 1e12) {
+    formattedValue = `${(numValue / 1e12).toFixed(2)}T`;
+  } else if (numValue >= 1e9) {
     formattedValue = `${(numValue / 1e9).toFixed(2)}B`;
   } else if (numValue >= 1e6) {
     formattedValue = `${(numValue / 1e6).toFixed(2)}M`;

@@ -13,6 +13,7 @@ import { SvgProps } from 'react-native-svg';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { IProtocolPortfolio } from '@/store/protocols';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const keyToMarketKey: Record<string, CustomMarket> = {
   aave3: CustomMarket.proto_mainnet_v3,
@@ -139,6 +140,10 @@ export const useProtocolConfig = () => {
 
           switchPerpsAccountBeforeNavigate(account);
           if (isNavigateDetail) {
+            matomoRequestEvent({
+              category: 'Rabby Perps',
+              action: 'Perps_ManageToPosition',
+            });
             return navigation.push(RootNames.StackTransaction, {
               screen: RootNames.PerpsMarketDetail,
               params: {
@@ -147,6 +152,10 @@ export const useProtocolConfig = () => {
               },
             });
           } else {
+            matomoRequestEvent({
+              category: 'Rabby Perps',
+              action: 'Perps_ManageToPerps',
+            });
             return navigation.push(RootNames.StackTransaction, {
               screen: RootNames.Perps,
               params: {

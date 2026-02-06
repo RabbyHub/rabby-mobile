@@ -24,6 +24,8 @@ import { PerpsRiskLevelPopup } from '../PerpsPositionSection/PerpsRiskLevelPopup
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
+import { formatPerpsCoin } from '@/utils/perps';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;
@@ -50,7 +52,7 @@ const AssetPositionItem = ({
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
   const logoUrl = item.logoUrl;
-  const coin = item.assetPositions.position.coin.toUpperCase();
+  const coin = item.assetPositions.position.coin;
   const leverageType = item.assetPositions.position.leverage.type || 'isolated';
   const side = Number(item.assetPositions.position.szi) > 0 ? 'Long' : 'Short';
   const leverageText = `${item.assetPositions.position.leverage.value}x`;
@@ -69,16 +71,21 @@ const AssetPositionItem = ({
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
   const handlePress = useCallback(() => {
     switchPerpsAccountBeforeNavigate(item.account);
+    matomoRequestEvent({
+      category: 'Rabby Perps',
+      action: 'Perps_CardToPosition',
+    });
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.PerpsMarketDetail,
-      params: {
-        // account: item.account,
-        market: coin,
-      },
+      params: { market: coin },
     });
   }, [item, coin, navigation]);
   const handleHyperliquidPress = useCallback(() => {
     switchPerpsAccountBeforeNavigate(item.account);
+    matomoRequestEvent({
+      category: 'Rabby Perps',
+      action: 'Perps_CardToPerps',
+    });
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.Perps,
       params: {
@@ -97,7 +104,7 @@ const AssetPositionItem = ({
             <AssetAvatar logo={logoUrl} size={28} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <Text style={styles.coinName}>{coin}</Text>
+                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {leverageType === 'cross'
@@ -208,9 +215,7 @@ export const PerpsSingleAssetPosition: React.FC<{
       resList.push({
         account,
         assetPositions: assetPosition,
-        logoUrl:
-          marketDataMap[assetPosition.position.coin.toUpperCase()]?.logoUrl ||
-          '',
+        logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
       });
     });
     return resList.sort((a, b) => {
@@ -227,7 +232,8 @@ export const PerpsSingleAssetPosition: React.FC<{
     }
 
     const { address, coin } = selectedPositionKey;
-    const freshAssetPosition = clearinghouseState?.assetPositions.find(
+    const assetPositions = clearinghouseState?.assetPositions || [];
+    const freshAssetPosition = assetPositions?.find(
       p => p.position.coin === coin,
     );
 
@@ -244,6 +250,7 @@ export const PerpsSingleAssetPosition: React.FC<{
       freshAssetPosition.position.liquidationPx,
       markPrice,
     );
+
     return {
       distanceLiquidation,
       direction:
@@ -328,14 +335,12 @@ export const PerpsMultiAssetPosition: React.FC = () => {
       if (!account) {
         return null;
       }
-      const assetPositions = clearinghouseState.assetPositions;
+      const assetPositions = clearinghouseState?.assetPositions || [];
       assetPositions.forEach(assetPosition => {
         resList.push({
           account,
           assetPositions: assetPosition,
-          logoUrl:
-            marketDataMap[assetPosition.position.coin.toUpperCase()]?.logoUrl ||
-            '',
+          logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
         });
       });
     });
@@ -355,7 +360,8 @@ export const PerpsMultiAssetPosition: React.FC = () => {
 
     const { address, coin } = selectedPositionKey;
     const clearinghouseState = clearinghouseStateMap[address];
-    const freshAssetPosition = clearinghouseState?.assetPositions.find(
+    const assetPositions = clearinghouseState?.assetPositions || [];
+    const freshAssetPosition = assetPositions?.find(
       p => p.position.coin === coin,
     );
 
@@ -401,17 +407,19 @@ export const PerpsMultiAssetPosition: React.FC = () => {
 
   return (
     <>
-      <View style={styles.container}>
-        {dataList.map(item => {
-          return (
-            <AssetPositionItem
-              key={`${item.account.address}-${item.assetPositions.position.coin}`}
-              item={item}
-              onShowRiskPopup={() => handleShowRiskPopup(item)}
-            />
-          );
-        })}
-      </View>
+      {!!dataList.length && (
+        <View style={styles.container}>
+          {dataList.map(item => {
+            return (
+              <AssetPositionItem
+                key={`${item.account.address}-${item.assetPositions.position.coin}`}
+                item={item}
+                onShowRiskPopup={() => handleShowRiskPopup(item)}
+              />
+            );
+          })}
+        </View>
+      )}
       {riskPopupData && (
         <PerpsRiskLevelPopup
           direction={riskPopupData.direction}

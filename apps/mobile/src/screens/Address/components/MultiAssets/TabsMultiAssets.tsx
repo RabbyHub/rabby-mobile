@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -12,14 +11,12 @@ import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
-import { homeDrawerAnimateMutable } from '@/screens/Home/hooks/useHomeDrawerAnimate';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { Freeze } from 'react-freeze';
 import { Container, Tabs } from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
-import { MemoizedNFTItemLoader, NFTList } from './NFTList';
-import { MemoizedDefiItemLoader, ProtocolList } from './ProtocolList';
-import { MemoizedTokenItemLoader, TokenList } from './TokenList';
+import { NFTList } from './NFTList';
+import { ProtocolList } from './ProtocolList';
+import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
 
@@ -44,24 +41,6 @@ export const enum TabName {
   token = 'token',
   defi = 'defi',
   nft = 'nft',
-}
-
-function TabIndexBasedFreeze({
-  ofIndex,
-  children,
-  ...props
-}: {
-  ofIndex: number;
-} & Omit<React.ComponentProps<typeof Freeze>, 'freeze'>) {
-  // const { tabIndex } = useHomeTabIndex();
-  return (
-    <Freeze
-      {...props}
-      // freeze={ofIndex !== tabIndex}
-      freeze={false}>
-      {children}
-    </Freeze>
-  );
 }
 
 const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
@@ -145,40 +124,16 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
         key={TabName.token}
         name={TabName.token}
         label={renderLabel('Token')}>
-        <TabIndexBasedFreeze
-          ofIndex={1}
-          placeholder={
-            <MemoizedTokenItemLoader
-              style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
-            />
-          }>
-          <TokenList />
-        </TabIndexBasedFreeze>
+        <TokenList />
       </Tabs.Tab>
       <Tabs.Tab
         key={TabName.defi}
         name={TabName.defi}
         label={renderLabel('DeFi')}>
-        <TabIndexBasedFreeze
-          ofIndex={2}
-          placeholder={
-            <MemoizedDefiItemLoader
-              style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
-            />
-          }>
-          <ProtocolList />
-        </TabIndexBasedFreeze>
+        <ProtocolList />
       </Tabs.Tab>
       <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
-        <TabIndexBasedFreeze
-          ofIndex={3}
-          placeholder={
-            <MemoizedNFTItemLoader
-              style={{ marginTop: TAB_HEADER_FULL_HEIGHT }}
-            />
-          }>
-          <NFTList />
-        </TabIndexBasedFreeze>
+        <NFTList />
       </Tabs.Tab>
     </Tabs.Container>
   );

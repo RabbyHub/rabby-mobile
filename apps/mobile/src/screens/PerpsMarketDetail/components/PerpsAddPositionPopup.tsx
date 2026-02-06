@@ -29,7 +29,7 @@ import {
 import { PerpsSlider } from './PerpsSlider';
 import { PERPS_MAX_NTL_VALUE, PERPS_MINI_USD_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
-import { calLiquidationPrice } from '@/utils/perps';
+import { calLiquidationPrice, formatPerpsCoin } from '@/utils/perps';
 import { AssetPriceInfo } from './PerpsPriceInfo';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
@@ -293,7 +293,7 @@ export const PerpsAddPositionPopup: React.FC<{
               {direction === 'Long'
                 ? t('page.perpsDetail.PerpsAddPositionPopup.addToLong')
                 : t('page.perpsDetail.PerpsAddPositionPopup.addToShort')}{' '}
-              {coin}-USD
+              {formatPerpsCoin(coin)}-USD
             </Text>
           </View>
 
@@ -309,7 +309,7 @@ export const PerpsAddPositionPopup: React.FC<{
             <View style={styles.leftSection}>
               <View style={styles.coinInfoRow}>
                 <AssetAvatar logo={coinLogo} size={28} />
-                <Text style={styles.coinName}>{coin}</Text>
+                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {marginMode === 'cross'
@@ -427,6 +427,7 @@ export const PerpsAddPositionPopup: React.FC<{
                   showTipsPopup({
                     title: t('page.perpsDetail.PerpsOpenPositionPopup.size'),
                     desc: t('page.perpsDetail.PerpsOpenPositionPopup.sizeTips'),
+                    buttonType: 'hyperliquid',
                   });
                 }}>
                 <View style={styles.listItemMain}>
@@ -460,6 +461,7 @@ export const PerpsAddPositionPopup: React.FC<{
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.liquidationPriceTips',
                     ),
+                    buttonType: 'hyperliquid',
                   });
                 }}>
                 <View style={styles.listItemMain}>
@@ -656,6 +658,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     amountValueContainer: {
       flexDirection: 'column',
       alignItems: 'flex-start',
+      marginTop: 16,
       // gap: 4,
     },
     amountValueRow: {
@@ -689,6 +692,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: -4,
       // marginTop: -4,
       height: 14,
+      alignItems: 'flex-end',
     },
     sizeCard: {
       width: '100%',

@@ -12,7 +12,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsInfo: React.FC<{
-  market: MarketData;
+  market?: MarketData;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
 }> = ({ market, activeAssetCtx }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -47,6 +47,7 @@ export const PerpsInfo: React.FC<{
               showTipsPopup({
                 title: t('page.perpsDetail.PerpsInfo.openInterest'),
                 desc: t('page.perpsDetail.PerpsInfo.openInterestTips'),
+                buttonType: 'hyperliquid',
               });
             }}>
             <View style={styles.listItemMain}>
@@ -78,6 +79,7 @@ export const PerpsInfo: React.FC<{
               showTipsPopup({
                 title: t('page.perpsDetail.PerpsInfo.funding'),
                 desc: t('page.perpsDetail.PerpsInfo.fundingTips'),
+                buttonType: 'hyperliquid',
               });
             }}>
             <View style={styles.listItemMain}>

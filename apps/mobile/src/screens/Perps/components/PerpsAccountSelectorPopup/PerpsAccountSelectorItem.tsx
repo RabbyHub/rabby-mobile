@@ -8,15 +8,15 @@ import { ellipsisAddress } from '@/utils/address';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsAccountSelectorItem: React.FC<{
   account: KeyringAccountWithAlias;
   onPress?: (account: KeyringAccountWithAlias) => void;
-  info?: ClearinghouseState | null;
+  info: ClearinghouseState | null;
   loading?: boolean;
   tmpSelectAccount?: KeyringAccountWithAlias | null;
   lastUsedAccount?: KeyringAccountWithAlias | null;
@@ -44,11 +44,11 @@ export const PerpsAccountSelectorItem: React.FC<{
 
   const positionCount = useMemo(() => {
     return info?.assetPositions?.length || 0;
-  }, [info?.assetPositions]);
+  }, [info]);
 
   const withdrawable = useMemo(() => {
     return Number(info?.withdrawable || 0);
-  }, [info?.withdrawable]);
+  }, [info]);
 
   const shouldShowPerpsInfo = useMemo(() => {
     return positionCount > 0 || withdrawable > 0;
@@ -203,7 +203,9 @@ const getStyle = createGetStyles2024(ctx => {
       width: '100%',
     },
     addressItemView: {
-      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
       padding: 16,
       marginBottom: 12,
       borderRadius: 20,

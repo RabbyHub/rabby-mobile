@@ -201,6 +201,7 @@ export const PerpsClosePositionPopup: React.FC<{
                       fee: formatPercent(providerFee, 4),
                     },
                   ),
+                buttonType: 'hyperliquid',
               });
             }}>
             <View style={styles.feeContainer}>

@@ -45,7 +45,7 @@ export const homeDrawerAnimateMutable = {
 
 export function getScrollContainerPb(bottomInset: number) {
   'worklet';
-  return IS_ANDROID ? Math.max(bottomInset, 16) : bottomInset;
+  return Math.max(IS_ANDROID ? Math.max(bottomInset, 16) : bottomInset, 48);
 }
 
 export function useHomeDrawerOpacityStyle() {
