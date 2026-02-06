@@ -26,6 +26,7 @@ import {
 } from '@/utils/styles';
 import { getTheme2024 } from '@/hooks/theme';
 import { makeThemeIcon2024FromCC } from '@/hooks/makeThemeIcon';
+import { IS_IOS } from '@/core/native/utils';
 
 const TOAST_MIN_H = 44;
 
@@ -296,10 +297,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       justifyContent: 'center',
       paddingHorizontal: 12,
       maxHeight: '100%',
-      // paddingVertical: 16,
       minHeight: TOAST_MIN_H,
+      paddingVertical: IS_IOS ? 10 : 8,
       // ...makeDevOnlyStyle({
-      //   backgroundColor: 'white',
+      //   backgroundColor: 'rgba(255, 255, 255, 0.1)',
       // }),
     },
     icon: {
