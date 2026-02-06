@@ -35,19 +35,9 @@ import { LocalWebView } from '@/components/WebView/LocalWebView/LocalWebView';
 import { AddressListScreenButton } from '@/screens/Address/AddressListScreenButton';
 import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
-import { useLoadAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
-import Animated, {
-  Easing,
-  Extrapolation,
-  interpolate,
-  SharedValue,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { SharedValue } from 'react-native-reanimated';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import {
   useScene24hBalanceCombinedData,
@@ -57,10 +47,7 @@ import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import balanceStore from '@/store/balance';
-import {
-  THRESHOLD_PERCENT,
-  useHomeDrawerOpacityStyle,
-} from '../hooks/useHomeDrawerAnimate';
+import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
@@ -103,6 +90,7 @@ export function TabsTopHeader({
   const { currency } = useCurrency();
   const { myTop10Addresses } = useAccountInfo();
   const balanceMap = balanceStore(s => s.balanceMap);
+  const isLoadingByAddress = balanceStore(s => s.isLoadingByAddress);
   const totalBalance = useMemo(() => {
     if (!myTop10Addresses.length) {
       return 0;
@@ -113,7 +101,15 @@ export function TabsTopHeader({
     }, 0);
   }, [balanceMap, myTop10Addresses]);
 
-  const { refreshing } = useLoadAssets();
+  const isTop10BalanceLoading = useMemo(() => {
+    if (!myTop10Addresses.length) {
+      return false;
+    }
+    return myTop10Addresses.some(
+      address => isLoadingByAddress[address.toLowerCase()],
+    );
+  }, [isLoadingByAddress, myTop10Addresses]);
+
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
 
@@ -196,7 +192,7 @@ export function TabsTopHeader({
             ]}>
             {changePercent}
           </Text>
-          {refreshing ? <LoadingCircle /> : null}
+          {isTop10BalanceLoading ? <LoadingCircle /> : null}
         </Pressable>
       ) : (
         <View style={styles.leftBox}>
@@ -226,7 +222,7 @@ export function TabsTopHeader({
               />
             )}
           </TouchableOpacity>
-          {loading ? <LoadingCircle /> : null}
+          {isTop10BalanceLoading ? <LoadingCircle /> : null}
         </View>
       )}
 
