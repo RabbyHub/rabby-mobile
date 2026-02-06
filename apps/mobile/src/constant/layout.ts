@@ -369,6 +369,7 @@ function makeScreenSpecConfig() {
       [RootNames.DevUIAnimatedTextAndView]: bg1Default2024Conf,
       [RootNames.DevUIFormShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAccountShowCase]: bg1Default2024Conf,
+      [RootNames.DevUIToast]: bg1Default2024Conf,
       [RootNames.DevUINotifications]: bg1Default2024Conf,
       [RootNames.DevUIScreenContainerShowCase]: bg1Default2024Conf,
       [RootNames.DevUIDapps]: bg1Default2024Conf,
