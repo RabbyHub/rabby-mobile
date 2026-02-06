@@ -116,9 +116,14 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
   },
 );
 
-export function toastCopyAddressSuccess(address?: string) {
+export function toastCopyAddressSuccess(
+  params: string | { hashLikeString?: string; title?: string },
+) {
+  const address = typeof params === 'string' ? params : params.hashLikeString;
+  const title = typeof params === 'string' ? undefined : params.title;
+
   if (!address) {
-    toast.success(i18next.t('global.copied'));
+    toast.success(title || i18next.t('global.copied'));
     return;
   }
 
@@ -132,7 +137,7 @@ export function toastCopyAddressSuccess(address?: string) {
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {tctx.iconNode}
           <Text style={[tctx.styles.text, tctx.styles.selfDefinedContent]}>
-            {i18next.t('global.copied')}
+            {title ? title : i18next.t('global.copied')}
           </Text>
         </View>
         <Text style={[tctx.styles.text, tctx.styles.selfDefinedContent]}>
