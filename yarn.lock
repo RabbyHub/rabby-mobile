@@ -9569,9 +9569,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.72":
-  version: 0.0.72
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.72"
+"@rabby-wallet/rabby-swap@npm:0.0.73":
+  version: 0.0.73
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.73"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -9580,7 +9580,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: dd0fb4c359af1ed495cfbb039465d6db1a03cd9242922101c044f498b1670b01f7b0d5f40427e8d3823a144820d7f949d8e2135c49517a7065863a146ffe17b9
+  checksum: 707cc3a506199825eaced6871e72c60e22d25d03ddd9e11dfc0de4382b826646061a1dc732d64a29d7bbf67b429fa2090e722a9fb147a37be560256a73944098
   languageName: node
   linkType: hard
 
@@ -35694,7 +35694,7 @@ __metadata:
     "@rabby-wallet/rabby-api": 0.9.54
     "@rabby-wallet/rabby-security-engine": 2.0.12
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
-    "@rabby-wallet/rabby-swap": 0.0.72
+    "@rabby-wallet/rabby-swap": 0.0.73
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-clipboard/clipboard": ^1.13.0
