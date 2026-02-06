@@ -594,6 +594,7 @@ const subscribeToUserData = (account: Account) => {
             service_provider: 'hyperliquid',
             app_version: process.env.release || '0',
             address_type: account.type || '',
+            hash: item.hash,
           });
         });
       }
