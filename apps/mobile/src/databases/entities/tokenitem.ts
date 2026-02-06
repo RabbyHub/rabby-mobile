@@ -259,7 +259,15 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
     const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
 
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
+    const ownerAddrList = [
+      ...new Set(addresses.map(addr => addr.toLowerCase())),
+    ].filter(Boolean);
+    if (!ownerAddrList.length) {
+      return [];
+    }
+    queryBuilder.andWhere('lower(tokenitem.owner_addr) IN (:...addresses)', {
+      addresses: ownerAddrList,
+    });
 
     if (core) {
       queryBuilder.andWhere({ is_core: true });
@@ -269,7 +277,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     }
 
     const tokens = await queryBuilder
-      .where({
+      .andWhere({
         id: Not(EMPTY_TOKEN_ITEM_ID),
         // amount: Raw(alias => `${alias} > 0`),
       })
@@ -657,7 +665,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         .createQueryBuilder()
         .delete()
         .from(TokenItemEntity)
-        .where('owner_addr = :owner_addr', { owner_addr })
+        .where('lower(owner_addr) = lower(:owner_addr)', { owner_addr })
         .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
         .execute();
 
