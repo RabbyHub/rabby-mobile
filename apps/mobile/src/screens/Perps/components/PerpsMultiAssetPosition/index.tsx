@@ -401,17 +401,19 @@ export const PerpsMultiAssetPosition: React.FC = () => {
 
   return (
     <>
-      <View style={styles.container}>
-        {dataList.map(item => {
-          return (
-            <AssetPositionItem
-              key={`${item.account.address}-${item.assetPositions.position.coin}`}
-              item={item}
-              onShowRiskPopup={() => handleShowRiskPopup(item)}
-            />
-          );
-        })}
-      </View>
+      {!!dataList.length && (
+        <View style={styles.container}>
+          {dataList.map(item => {
+            return (
+              <AssetPositionItem
+                key={`${item.account.address}-${item.assetPositions.position.coin}`}
+                item={item}
+                onShowRiskPopup={() => handleShowRiskPopup(item)}
+              />
+            );
+          })}
+        </View>
+      )}
       {riskPopupData && (
         <PerpsRiskLevelPopup
           direction={riskPopupData.direction}
