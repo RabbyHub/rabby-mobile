@@ -439,18 +439,19 @@ export const PerpsDepositPopup: React.FC<{
     tokenInfo,
   ]);
 
-  const { value: isMissingRole } = useAsync(async () => {
-    if (!account?.address || !visible) {
-      return false;
-    }
-    if (Number(accountSummary?.accountValue)) {
-      // has account value no need fetch api to check
-      return false;
-    }
-    const sdk = apisPerps.getPerpsSDK();
-    const { role } = await sdk.info.getUserRole(account.address);
-    return role === 'missing' && !isDirectDeposit;
-  }, [account?.address, visible, isDirectDeposit]);
+  const isMissingRole = false;
+  // const { value: isMissingRole } = useAsync(async () => {
+  //   if (!account?.address || !visible) {
+  //     return false;
+  //   }
+  //   if (Number(accountSummary?.accountValue)) {
+  //     // has account value no need fetch api to check
+  //     return false;
+  //   }
+  //   const sdk = apisPerps.getPerpsSDK();
+  //   const { role } = await sdk.info.getUserRole(account.address);
+  //   return role === 'missing' && !isDirectDeposit;
+  // }, [account?.address, visible, isDirectDeposit]);
 
   const estReceiveUsdValue = useMemo(() => {
     const value =
