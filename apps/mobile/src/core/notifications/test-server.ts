@@ -72,7 +72,7 @@ export const connectFeService = async (data: { pushToken: string }) => {
 };
 
 const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
-export function startConnectPushTestServerInterval(pushToken: string) {
+export function startConnectFeServiceInterval(pushToken: string) {
   connectFeService({ pushToken });
   setInterval(async () => {
     await connectFeService({ pushToken });

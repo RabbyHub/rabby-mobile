@@ -5,7 +5,7 @@ import {
   startSubscribePushNotifications,
 } from './register';
 
-import { startConnectPushTestServerInterval } from './test-server';
+import { startConnectFeServiceInterval } from './test-server';
 
 export async function connectPushServerOnBootstrap() {
   startSubscribePushNotifications();
@@ -21,5 +21,5 @@ export async function connectPushServerOnBootstrap() {
   console.debug('[connectFeService] pushToken', pushToken);
 
   startBindPushServerOnDemand(pushToken);
-  startConnectPushTestServerInterval(pushToken);
+  startConnectFeServiceInterval(pushToken);
 }
