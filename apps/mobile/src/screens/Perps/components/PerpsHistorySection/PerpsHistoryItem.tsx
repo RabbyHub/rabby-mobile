@@ -60,6 +60,7 @@ export const PerpsHistoryItem: React.FC<{
 
   const itemData = marketData[coin];
   const logoUrl = itemData?.logoUrl;
+  const pxDecimals = itemData?.pxDecimals;
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && _closedPnl;
   const direction =
     dir === 'Close Long' || dir === 'Open Long' ? 'Long' : 'Short';
@@ -91,7 +92,7 @@ export const PerpsHistoryItem: React.FC<{
           </View>
           <View style={styles.row}>
             <Text style={styles.coin}>
-              {formatPerpsCoin(coin)}-USD @${Number(px)}
+              {formatPerpsCoin(coin)}-USD @${Number(px).toFixed(pxDecimals)}
             </Text>
           </View>
         </View>
