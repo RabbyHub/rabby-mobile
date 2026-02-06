@@ -115,10 +115,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       Number(currentClearinghouseState?.crossMarginSummary?.accountValue || 0) -
       Number(currentClearinghouseState?.crossMaintenanceMarginUsed || 0)
     );
-  }, [
-    currentClearinghouseState?.crossMarginSummary?.accountValue,
-    currentClearinghouseState?.crossMaintenanceMarginUsed,
-  ]);
+  }, [currentClearinghouseState]);
 
   const { t } = useTranslation();
   const [isReviewMode, setIsReviewMode] = React.useState(false);
@@ -489,6 +486,8 @@ export const PerpsOpenPositionPopup: React.FC<{
                     {
                       flexDirection: 'column',
                       gap: 0,
+                      marginTop: 16,
+                      alignItems: 'flex-start',
                     },
                   ])}>
                   <Text style={styles.marginTitle}>
@@ -580,7 +579,11 @@ export const PerpsOpenPositionPopup: React.FC<{
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.errorMsgContainer}>
+              <View
+                style={StyleSheet.flatten([
+                  styles.errorMsgContainer,
+                  styles.leverageErrorMsgContainer,
+                ])}>
                 {leverageRangeValidation.error ? (
                   <Text style={styles.errorMsg}>
                     {leverageRangeValidation.errorMessage}
@@ -803,6 +806,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     errorMsgContainer: {
       height: 18,
       marginBottom: -12,
+      flex: 1,
+      alignItems: 'flex-end',
+    },
+    leverageErrorMsgContainer: {
+      marginTop: 4,
     },
     errorMsg: {
       fontFamily: 'SF Pro Rounded',
