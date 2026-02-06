@@ -211,7 +211,7 @@ function MemeScreen(): JSX.Element {
     setFdvSort('default');
   }, [getMemeTokenList, setChangeSort, setVolumeSort, setFdvSort]);
 
-  // 当前页面 focus 且滚动位置在前100项时，每 5 秒静默刷新一次列表
+  // 当前页面 focus 且滚动位置在前100项时，每 10 秒静默刷新一次列表
   useEffect(() => {
     if (!isFocused || !isInFirst100Items) {
       return;
