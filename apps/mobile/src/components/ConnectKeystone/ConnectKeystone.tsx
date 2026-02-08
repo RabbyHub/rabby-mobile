@@ -12,7 +12,7 @@ import { useImportKeystone } from './useImportKeystone';
 import AutoLockView from '../AutoLockView';
 
 export const ConnectKeystone: React.FC<{
-  onDone?: () => void;
+  onDone?: (result?: { preserveActiveForImportMore?: boolean }) => void;
 }> = ({ onDone }) => {
   const [currentScreen, setCurrentScreen] = React.useState<'scan' | 'camera'>(
     'camera',
@@ -28,6 +28,7 @@ export const ConnectKeystone: React.FC<{
     const address = await apiKeystone.importFirstAddress({});
 
     if (address) {
+      apiKeystone.clearActiveKeystoneKeyring();
       navigateDeprecated(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
@@ -37,10 +38,10 @@ export const ConnectKeystone: React.FC<{
           isFirstImport: true,
         },
       });
-      onDone?.();
+      onDone?.({ preserveActiveForImportMore: false });
     } else {
       goImport();
-      onDone?.();
+      onDone?.({ preserveActiveForImportMore: true });
     }
   }, [goImport, onDone]);
 

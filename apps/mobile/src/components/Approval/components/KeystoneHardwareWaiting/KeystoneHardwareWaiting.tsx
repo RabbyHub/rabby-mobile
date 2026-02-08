@@ -2,7 +2,7 @@ import { transactionHistoryService } from '@/core/services/shared';
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { eventBus, EVENTS } from '@/utils/events';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
@@ -279,9 +279,25 @@ export const KeystoneHardwareWaiting = ({
     setStatus(QR_HARDWARE_STATUS.RECEIVED);
   };
 
-  const handleSubmit = async () => {
-    apiKeystone.submitQRHardwareSignature(signPayload!.requestId, scanMessage!);
-  };
+  const handleSubmit = useCallback(async () => {
+    if (!signPayload || !scanMessage) {
+      return;
+    }
+    try {
+      await apiKeystone.submitQRHardwareSignature(
+        signPayload.requestId,
+        scanMessage,
+      );
+    } catch (e: any) {
+      setErrorMessage(e.message || 'Failed to submit signature');
+    }
+  }, [signPayload, scanMessage]);
+
+  useEffect(() => {
+    if (status === QR_HARDWARE_STATUS.RECEIVED) {
+      handleSubmit();
+    }
+  }, [status, handleSubmit]);
 
   const popupStatus = React.useMemo(() => {
     if (errorMessage) {
@@ -290,7 +306,6 @@ export const KeystoneHardwareWaiting = ({
     }
 
     if (status === QR_HARDWARE_STATUS.RECEIVED) {
-      handleSubmit();
       setContent(t('page.signFooterBar.qrcode.submitting'));
       return 'SENDING';
     }

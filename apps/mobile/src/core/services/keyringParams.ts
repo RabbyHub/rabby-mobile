@@ -5,6 +5,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
 import { getKeyringParams } from '../utils/getKeyringParams';
 import { EthTrezorKeyring } from '@rabby-wallet/eth-keyring-trezor';
+import { createFreshKeystoneKeyring } from '../keyring-bridge/keystone/keystone-keyring-factory';
 
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] &
   object = async (keyring, account, contactService) => {
@@ -25,6 +26,11 @@ export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] &
 
 export const onCreateKeyring: KeyringServiceOptions['onCreateKeyring'] &
   object = Keyring => {
+  // Keystone needs fresh instances to avoid singleton reuse across devices.
+  if (Keyring.type === KEYRING_CLASS.HARDWARE.KEYSTONE) {
+    return createFreshKeystoneKeyring() as any;
+  }
+
   const keyring = new Keyring(getKeyringParams(Keyring.type as any));
 
   if (Keyring.type === KEYRING_CLASS.HARDWARE.LEDGER) {

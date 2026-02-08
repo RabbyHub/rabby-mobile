@@ -322,8 +322,11 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     return () => {
       exitRef.current = true;
       stoppedRef.current = true;
+      if (params.type === KEYRING_TYPE.KeystoneKeyring) {
+        apiKeystone.clearActiveKeystoneKeyring();
+      }
     };
-  }, []);
+  }, [params.type]);
 
   React.useEffect(() => {
     if (params.type === KEYRING_TYPE.HdKeyring) {

@@ -214,8 +214,16 @@ export default class KeystoneKeyring extends MetaMaskKeyring {
   }
 
   async addAccounts(n = 1): Promise<string[]> {
+    const startIndex = (this as any).unlockedAccount;
     const accounts = await super.addAccounts(n);
-    accounts.forEach(account => {
+    // super.addAccounts does NOT populate this.indexes, so we do it here
+    // for the newly added accounts (the last n items in the array).
+    const newAccounts = accounts.slice(-n);
+    newAccounts.forEach((account, i) => {
+      const checksummed = toChecksumAddress(account);
+      if (this.indexes[checksummed] === undefined) {
+        this.indexes[checksummed] = startIndex + i;
+      }
       if (!this.brandsMap[account.toLowerCase()]) {
         this.brandsMap[account.toLowerCase()] = this.currentBrand;
       }
@@ -234,12 +242,13 @@ export default class KeystoneKeyring extends MetaMaskKeyring {
   getCurrentAccounts = async () => {
     const addrs = await this.getAccounts();
 
-    return addrs.map(address => {
+    return addrs.map((address, i) => {
       const checksummedAddress = toChecksumAddress(address);
+      const storedIndex = this.indexes[checksummedAddress];
 
       return {
         address,
-        index: this.indexes[checksummedAddress] + 1,
+        index: (storedIndex !== undefined ? storedIndex : i) + 1,
       };
     });
   };

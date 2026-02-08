@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
@@ -10,11 +11,11 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apiKeystone } from '@/core/apis';
-import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { useKeystoneDeviceActions } from '@/components/ConnectKeystone/useKeystoneDeviceActions';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -26,6 +27,8 @@ const styles = StyleSheet.create({
 });
 
 export const HardwareDeviceList = () => {
+  const { t } = useTranslation();
+
   const handleLedger = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_LEDGER,
@@ -46,7 +49,8 @@ export const HardwareDeviceList = () => {
     });
   }, []);
 
-  const goImport = useImportKeystone();
+  const { openConnectKeystoneModal, handleImportMoreKeystone } =
+    useKeystoneDeviceActions();
 
   const handleKeystone = React.useCallback(async () => {
     matomoRequestEvent({
@@ -55,25 +59,26 @@ export const HardwareDeviceList = () => {
       label: KEYRING_CLASS.HARDWARE.KEYSTONE,
     });
 
-    const isReady = await apiKeystone.isReady();
-    if (isReady) {
-      goImport();
+    const hasExistingKeyrings = await apiKeystone.hasAnyKeystoneAccount();
+
+    if (!hasExistingKeyrings) {
+      apiKeystone.clearActiveKeystoneKeyring();
+      openConnectKeystoneModal();
       return;
     }
 
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.CONNECT_KEYSTONE,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
+    Alert.alert('Keystone', t('page.newAddress.keystone.whatToDo'), [
+      {
+        text: t('page.newAddress.keystone.importMoreAddresses'),
+        onPress: () => handleImportMoreKeystone(),
       },
-      onDone: () => {
-        setTimeout(() => {
-          removeGlobalBottomSheetModal2024(id);
-        }, 0);
+      {
+        text: t('page.newAddress.keystone.connectNewDevice'),
+        onPress: () => openConnectKeystoneModal(),
       },
-    });
-  }, [goImport]);
+      { text: t('global.Cancel'), style: 'cancel' },
+    ]);
+  }, [handleImportMoreKeystone, openConnectKeystoneModal, t]);
 
   const handleOneKey = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({

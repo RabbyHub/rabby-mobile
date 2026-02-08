@@ -1,5 +1,3 @@
-import { RootNames } from '@/constant/layout';
-import { navigateDeprecated } from '@/utils/navigation';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import {
   HARDWARE_KEYRING_TYPES,
@@ -30,23 +28,24 @@ export const useImportKeystone = () => {
       });
   }, []);
 
-  const goImport = React.useCallback(() => {
-    setSetting({
-      startNumber: 1,
-      hdPath: ref.current || LedgerHDPathType.BIP44,
-    });
-    // navigateDeprecated(RootNames.StackAddress, {
-    //   screen: RootNames.ImportMoreAddress,
-    //   params: {
-    //     type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
-    //     brand: HARDWARE_KEYRING_TYPES.Keystone.brandName,
-    //   },
-    // });
-    showImportMorePopup({
-      type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
-      brandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
-    });
-  }, [setSetting, showImportMorePopup]);
+  const goImport = React.useCallback(
+    (options?: { deviceId?: number }) => {
+      if (typeof options?.deviceId === 'number') {
+        apiKeystone.setActiveKeystoneKeyringByDeviceId(options.deviceId);
+      }
+
+      setSetting({
+        startNumber: 1,
+        hdPath: ref.current || LedgerHDPathType.BIP44,
+      });
+
+      showImportMorePopup({
+        type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
+        brandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
+      });
+    },
+    [setSetting, showImportMorePopup],
+  );
 
   return goImport;
 };

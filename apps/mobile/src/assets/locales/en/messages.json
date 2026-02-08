@@ -1420,7 +1420,14 @@
         "scan": {
           "title": "Scan Keystone to Connect",
           "description": "Scan the QR-code on your Keystone wallet"
-        }
+        },
+        "addNewDevice": "Add New {{brand}} Device",
+        "selectDevice": "Select Keystone Device",
+        "chooseDevice": "Choose a device to import more addresses from.",
+        "loadDevicesFailed": "Failed to load Keystone devices",
+        "whatToDo": "What would you like to do?",
+        "importMoreAddresses": "Import more addresses",
+        "connectNewDevice": "Connect new device"
       },
       "hd": {
         "balance": "Balance",

@@ -54,11 +54,24 @@ export async function requestKeyring(
   if (keyringId !== null && keyringId !== undefined) {
     keyring = stashKeyrings[keyringId];
   } else {
-    try {
-      keyring = _getKeyringByType(type);
-    } catch {
-      const Keyring = keyringService.getKeyringClassForType(type);
-      keyring = new Keyring(getKeyringParams(type));
+    const needResolveByAddress = methodName === 'getAccountInfo';
+    const address = params[0];
+
+    if (needResolveByAddress && typeof address === 'string') {
+      try {
+        keyring = await keyringService.getKeyringForAccount(address, type);
+      } catch {
+        // fallback to legacy lookup path
+      }
+    }
+
+    if (!keyring) {
+      try {
+        keyring = _getKeyringByType(type);
+      } catch {
+        const Keyring = keyringService.getKeyringClassForType(type);
+        keyring = new Keyring(getKeyringParams(type));
+      }
     }
   }
   if (keyring[methodName]) {

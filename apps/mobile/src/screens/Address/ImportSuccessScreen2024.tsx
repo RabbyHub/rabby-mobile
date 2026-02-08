@@ -59,6 +59,10 @@ import {
   accountEvents,
   PerfAccountEventBusListeners,
 } from '@/core/apis/account';
+import { apiKeystone } from '@/core/apis';
+import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { useSetAtom } from 'jotai';
+import { settingAtom } from '@/components/HDSetting/MainContainer';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -75,6 +79,7 @@ export const ImportSuccessScreen2024 = () => {
   const modalRef =
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const { t } = useTranslation();
+  const setSetting = useSetAtom(settingAtom);
 
   const route =
     useRoute<
@@ -275,6 +280,17 @@ export const ImportSuccessScreen2024 = () => {
     };
 
     const firstAddr = importAddresses[0]?.address;
+    if (params.type === KEYRING_TYPE.KeystoneKeyring && firstAddr) {
+      await apiKeystone.setActiveKeystoneKeyringByAddress(firstAddr);
+      let hdPath = LedgerHDPathType.BIP44;
+      try {
+        const currentType = await apiKeystone.getCurrentUsedHDPathType();
+        if (currentType) {
+          hdPath = currentType;
+        }
+      } catch {}
+      setSetting({ startNumber: 1, hdPath });
+    }
     if (params.type === KEYRING_TYPE.HdKeyring && firstAddr) {
       if (!params.mnemonics) {
         throw new Error(

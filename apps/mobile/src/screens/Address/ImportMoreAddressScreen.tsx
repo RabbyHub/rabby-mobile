@@ -352,8 +352,11 @@ export const ImportMoreAddressScreen = () => {
     return () => {
       exitRef.current = true;
       stoppedRef.current = true;
+      if (state.type === KEYRING_TYPE.KeystoneKeyring) {
+        apiKeystone.clearActiveKeystoneKeyring();
+      }
     };
-  }, []);
+  }, [state.type]);
 
   React.useEffect(() => {
     if (state.type === KEYRING_TYPE.HdKeyring) {

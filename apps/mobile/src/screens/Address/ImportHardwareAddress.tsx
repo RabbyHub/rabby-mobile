@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
@@ -10,7 +11,6 @@ import {
   KEYRING_CLASS,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
@@ -18,6 +18,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { apiKeystone, apiTrezor } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { useKeystoneDeviceActions } from '@/components/ConnectKeystone/useKeystoneDeviceActions';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { keyringService, preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
@@ -51,6 +52,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 }));
 
 export function ImportHardwareAddressScreen(): JSX.Element {
+  const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [hasAccounts, setHasAccounts] = React.useState(false);
 
@@ -93,7 +95,8 @@ export function ImportHardwareAddressScreen(): JSX.Element {
       );
   }, [hasAccounts]);
 
-  const goImport = useImportKeystone();
+  const { openConnectKeystoneModal, handleImportMoreKeystone } =
+    useKeystoneDeviceActions();
 
   const handleKeystone = React.useCallback(async () => {
     matomoRequestEvent({
@@ -102,25 +105,27 @@ export function ImportHardwareAddressScreen(): JSX.Element {
       label: KEYRING_CLASS.HARDWARE.KEYSTONE,
     });
 
-    const isReady = await apiKeystone.isReady();
-    if (isReady) {
-      goImport();
+    const hasExistingKeyrings = await apiKeystone.hasAnyKeystoneAccount();
+
+    if (!hasExistingKeyrings) {
+      // First Keystone import (or all Keystone devices were removed): go direct.
+      apiKeystone.clearActiveKeystoneKeyring();
+      openConnectKeystoneModal();
       return;
     }
 
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.CONNECT_KEYSTONE,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
+    Alert.alert('Keystone', t('page.newAddress.keystone.whatToDo'), [
+      {
+        text: t('page.newAddress.keystone.importMoreAddresses'),
+        onPress: () => handleImportMoreKeystone(),
       },
-      onDone: () => {
-        setTimeout(() => {
-          removeGlobalBottomSheetModal2024(id);
-        }, 0);
+      {
+        text: t('page.newAddress.keystone.connectNewDevice'),
+        onPress: () => openConnectKeystoneModal(),
       },
-    });
-  }, [goImport]);
+      { text: t('global.Cancel'), style: 'cancel' },
+    ]);
+  }, [handleImportMoreKeystone, openConnectKeystoneModal, t]);
 
   const handleOneKey = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
