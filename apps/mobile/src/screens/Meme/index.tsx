@@ -95,7 +95,7 @@ function MemeScreen(): JSX.Element {
       if (next !== 'default') {
         getMemeTokenList(true, 'volume_24h', next);
       } else {
-        getMemeTokenList(true, 'fdv', 'desc');
+        getMemeTokenList(true, 'volume_24h', 'desc');
       }
       return next;
     });
@@ -110,7 +110,7 @@ function MemeScreen(): JSX.Element {
       if (next !== 'default') {
         getMemeTokenList(true, 'fdv', next);
       } else {
-        getMemeTokenList(true, 'fdv', 'desc');
+        getMemeTokenList(true, 'volume_24h', 'desc');
       }
       return next;
     });
@@ -203,7 +203,7 @@ function MemeScreen(): JSX.Element {
       if (next !== 'default') {
         getMemeTokenList(true, 'price_change_24h', next);
       } else {
-        getMemeTokenList(true, 'fdv', 'desc');
+        getMemeTokenList(true, 'volume_24h', 'desc');
       }
       return next;
     });
