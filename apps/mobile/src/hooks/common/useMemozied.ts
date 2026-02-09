@@ -1,4 +1,4 @@
-import { depsAreDeepSame, depsAreShallowSame } from '@/core/utils/compare';
+import { depsAreDeepSame, depsAreShallowL2Same } from '@/core/utils/compare';
 import { useRef } from 'react';
 
 export function useCreationWithShallowCompare<T = any>(
@@ -13,7 +13,7 @@ export function useCreationWithShallowCompare<T = any>(
 
   if (
     current.initialized === false ||
-    !depsAreShallowSame(current.deps, deps)
+    !depsAreShallowL2Same(current.deps, deps)
   ) {
     current.deps = deps;
     current.obj = factory();

@@ -1,5 +1,9 @@
 // run: ./node_modules/.bin/jest ./src/core/utils/compare.test.ts
-import { depsAreDeepSame, depsAreShallowSame } from './compare';
+import {
+  depsAreDeepSame,
+  depsAreShallowL2Same,
+  depsAreShallowSame,
+} from './compare';
 
 describe('depsAreShallowSame', () => {
   const func1 = () => {};
@@ -30,6 +34,51 @@ describe('depsAreShallowSame', () => {
 
   it('returns false for different lengths', () => {
     expect(depsAreShallowSame([1, 2], [1, 2, 3])).toBe(false);
+  });
+});
+
+describe('depsAreShallowL2Same', () => {
+  const func1 = () => {};
+  const func2 = () => {};
+
+  it('returns true for identical primitive values', () => {
+    expect(depsAreShallowL2Same([1, 'a', true], [1, 'a', true])).toBe(true);
+  });
+
+  it('returns false for different primitive values', () => {
+    expect(depsAreShallowL2Same([1, 'a', true], [2, 'a', true])).toBe(false);
+  });
+
+  it('returns true for same object references', () => {
+    const obj = { key: 'value' };
+    expect(depsAreShallowL2Same([obj, func1], [obj, func1])).toBe(true);
+  });
+  it('returns true for different object references with same content in L2 arrays', () => {
+    expect(
+      depsAreShallowL2Same([[{ key: 'value' }]], [[{ key: 'value' }]]),
+    ).toBe(false);
+  });
+
+  it('returns false for different function references', () => {
+    expect(depsAreShallowL2Same([func1], [func2])).toBe(false);
+  });
+
+  it('returns false for different lengths', () => {
+    expect(depsAreShallowL2Same([1, 2], [1, 2, 3])).toBe(false);
+  });
+
+  describe('nested arrays', () => {
+    it('returns true for shallowly equal nested arrays', () => {
+      const dep1 = [1, 2, [3, 4]];
+      const dep2 = [1, 2, [3, 4]];
+      expect(depsAreShallowL2Same(dep1, dep2)).toBe(true);
+    });
+
+    it('returns false for non-shallowly equal nested arrays', () => {
+      const dep1 = [1, 2, [3, 4]];
+      const dep2 = [1, 2, [3, 5]];
+      expect(depsAreShallowL2Same(dep1, dep2)).toBe(false);
+    });
   });
 });
 
