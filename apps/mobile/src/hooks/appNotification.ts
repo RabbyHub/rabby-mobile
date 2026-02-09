@@ -46,13 +46,13 @@ export async function fetchHasSystemPermission() {
 }
 
 export async function startCareAppNotificationPermissions() {
-  const hasPermission = await fetchHasSystemPermission();
+  const hasSystemPermission = await fetchHasSystemPermission();
 
   if (
-    !hasPermission &&
+    !hasSystemPermission &&
     appNotificationStore.getState().enabledTransactionNofification
   ) {
-    // await requestUngrantedNotificationPermission();
+    await requestUngrantedNotificationPermission();
     await fetchHasSystemPermission();
   }
 
