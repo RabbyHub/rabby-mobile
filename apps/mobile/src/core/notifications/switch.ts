@@ -1,9 +1,9 @@
-import { PermissionsAndroid, Platform } from 'react-native';
+import { AppState, PermissionsAndroid, Platform } from 'react-native';
 
 import { preferenceService } from '@/core/services';
 import DeviceUtils from '@/core/utils/device';
 import { PerAndroid } from '@/core/utils/permissions';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import PushNotificationIOS, {
   PushNotificationPermissions,
 } from '@react-native-community/push-notification-ios';
@@ -58,15 +58,23 @@ export const requestUngrantedNotificationPermission = async () => {
 };
 
 export async function checkIfEnabledNotificationWithPermission(
-  appEnabled?: boolean,
+  inputAppEnabled?: boolean,
 ) {
-  const enabled =
-    appEnabled ??
+  const appEnabled =
+    inputAppEnabled ??
     preferenceService.getPreferenceByKey('enabledTransactionNofification') ??
     true;
 
   const hasPermission = await checkNotificationPermission();
-  // console.debug('[debug] checkIfEnabledNotificationWithPermission:: enabled, hasPermission', enabled, hasPermission);
+  // console.debug('[debug] checkIfEnabledNotificationWithPermission:: appEnabled, hasPermission', appEnabled, hasPermission);
 
-  return enabled && hasPermission;
+  const iosDisabledDueToForeground =
+    IS_IOS && AppState.isAvailable && AppState.currentState !== 'active';
+
+  return {
+    hasPermission,
+    appEnabled: appEnabled,
+    iosDisabledDueToForeground,
+    enabled: appEnabled && hasPermission /*  && !iosDisabledDueToForeground */,
+  };
 }
