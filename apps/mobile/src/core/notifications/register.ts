@@ -8,7 +8,10 @@ import { zMutativeByMMKV } from '../storage/mmkv';
 import { HeartbeatResponse, notificationOpenapi } from './openapi';
 import { perfEvents } from '../utils/perf';
 import { accountEvents } from '../apis/account';
-import { checkIfEnabledNotificationWithPermission } from './switch';
+import {
+  checkIfEnabledNotificationWithPermission,
+  iosCheckPermission,
+} from './switch';
 import { useShallow } from 'zustand/shallow';
 import { zCreate, zMutative } from '../utils/reexports';
 import { notificationEvents, parseRemoteData } from './data';
@@ -73,11 +76,7 @@ export const registerForPushNotifications = async () => {
 
   if (Platform.OS === 'ios') {
     pushToken = await iosTokenReady;
-    const authStatus = await PushNotificationIOS.requestPermissions({
-      alert: true,
-      badge: true,
-      sound: true,
-    });
+    const authStatus = await iosCheckPermission();
     const enabled = authStatus?.alert ?? false;
     if (!enabled) {
       console.warn('Push notifications disabled by user');
