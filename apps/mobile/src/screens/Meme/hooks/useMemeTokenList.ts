@@ -118,7 +118,7 @@ export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
    */
   const refreshMemeTokenListSilently = useCallback(async () => {
     try {
-      const finalOrderBy = currentOrderByRef.current || orderBy || 'fdv';
+      const finalOrderBy = currentOrderByRef.current || orderBy || 'volume_24h';
       const finalOrder = currentOrderRef.current || order || 'desc';
 
       const memeTokenListRes = await openapi.getMemeList({
