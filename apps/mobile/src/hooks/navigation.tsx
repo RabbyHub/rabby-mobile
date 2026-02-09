@@ -59,6 +59,7 @@ import { toast, toastLoading } from '@/components2024/Toast';
 import i18next from 'i18next';
 import { switchSceneCurrentAccount } from './accountsSwitcher';
 import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
+import PQueue from 'p-queue';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -719,150 +720,155 @@ export function startSubscribeIOSScreenRecording() {
 }
 
 export function startSubscribeRemoteNotification() {
-  const isProcessingRef = {
-    current: false,
-  };
-
   function earlyReturnL1<T = any>(retValue?: T) {
-    isProcessingRef.current = false;
-
     return retValue;
   }
+
+  const notificationProcessQueue = new PQueue({ concurrency: 1 });
 
   notificationEvents.subscribe(
     'onParsedReceivedData',
     async ({ parsedData }) => {
-      if (isProcessingRef.current) return;
-
-      isProcessingRef.current = true;
       console.debug(
         '[notifications] [startSubscribeRemoteNotification] onParsedReceivedData:: parsedData',
         parsedData,
       );
 
-      const ownerAddress = parsedData.txInfo?.ownerAddress;
-      if (!ownerAddress) {
-        toast.info(i18next.t('notifications.unknownAddressFromTransaction'), {
-          duration: 8 * 1000,
-          hideOnPress: true,
-        });
-        return earlyReturnL1();
-      }
+      notificationProcessQueue.add(async () => {
+        console.debug(
+          '[notifications] [startSubscribeRemoteNotification] queue start processing parsedData',
+          parsedData,
+        );
 
-      const txDetailPromise = notificationOpenapi
-        .getUserTxDetail({
-          chainId: parsedData.txInfo?.chainServerId || '',
-          txId: parsedData.txInfo?.txHash || '',
-          userAddr: ownerAddress || '',
-        })
-        .catch(error => {
-          console.debug(
-            '[notifications] [startSubscribeRemoteNotification] Failed to get tx detail:',
-          );
-          console.error(error);
-          return null;
-        });
-
-      UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
-        const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
-        const hideToastRef = {
-          current: toastLoading(i18next.t('notifications.loadingTransaction'), {
-            duration: 3 * 1000,
-          }),
-        };
-
-        const earlyReturn = (shouldExecuteDefaultAction = false) => {
-          earlyReturnL1();
-          hideToastRef.current();
-          if (shouldExecuteDefaultAction) {
-            ctx.defaultAction?.();
-          }
-        };
-
-        if (!foundAccount) {
-          console.debug(
-            '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
-            ownerAddress,
-          );
-          toast.error(i18next.t('notifications.noTransactionOwnerAddress'), {
+        const ownerAddress = parsedData.txInfo?.ownerAddress;
+        if (!ownerAddress) {
+          toast.info(i18next.t('notifications.unknownAddressFromTransaction'), {
             duration: 8 * 1000,
             hideOnPress: true,
           });
-          return earlyReturn(true);
+          return earlyReturnL1();
         }
 
-        const txDetail = await txDetailPromise;
+        const txDetailPromise = notificationOpenapi
+          .getUserTxDetail({
+            chainId: parsedData.txInfo?.chainServerId || '',
+            txId: parsedData.txInfo?.txHash || '',
+            userAddr: ownerAddress || '',
+          })
+          .catch(error => {
+            console.debug(
+              '[notifications] [startSubscribeRemoteNotification] Failed to get tx detail:',
+            );
+            console.error(error);
+            return null;
+          });
 
-        console.debug('[notifications] txDetail', txDetail);
+        UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
+          const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);
+          const hideToastRef = {
+            current: toastLoading(
+              i18next.t('notifications.loadingTransaction'),
+              {
+                duration: 3 * 1000,
+              },
+            ),
+          };
 
-        if (!txDetail) {
-          const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
-          console.warn(warnMsg);
+          const earlyReturn = (shouldExecuteDefaultAction = false) => {
+            earlyReturnL1();
+            hideToastRef.current();
+            if (shouldExecuteDefaultAction) {
+              ctx.defaultAction?.();
+            }
+          };
+
+          if (!foundAccount) {
+            console.debug(
+              '[notifications] [startSubscribeRemoteNotification] No matched account found for ownerAddress:',
+              ownerAddress,
+            );
+            toast.error(i18next.t('notifications.noTransactionOwnerAddress'), {
+              duration: 8 * 1000,
+              hideOnPress: true,
+            });
+            return earlyReturn(true);
+          }
+
+          const txDetail = await txDetailPromise;
+
+          console.debug('[notifications] txDetail', txDetail);
+
+          if (!txDetail) {
+            const warnMsg = `[notifications] [startSubscribeRemoteNotification] No tx detail found for txHash: ${parsedData.txInfo?.txHash} on chainId: ${parsedData.txInfo?.chainServerId}`;
+            console.warn(warnMsg);
+
+            const currentRouteName =
+              navigationRouteStore.getState().currentRouteName;
+            const needReplace = currentRouteName === RootNames.History;
+            const naviFn = ctx.defaultAction
+              ? resetNavigationOnTopOfHome
+              : needReplace
+              ? naviReplace
+              : naviPush;
+
+            await switchSceneCurrentAccount('History', foundAccount);
+            hideToastRef.current();
+            naviFn(RootNames.StackTransaction, {
+              screen: RootNames.History,
+              params: {
+                isForMultipleAddress: false,
+              },
+            });
+
+            return earlyReturn(false);
+          }
+
+          hideToastRef.current();
+
+          const pinedQueue = preferenceService.getPinToken();
+          const customTxItemsMap =
+            transactionHistoryService.getCustomTxItemMap();
+          const historyDisplayItem = txResultToToHistoryDisplayItem({
+            address: parsedData.txInfo?.ownerAddress || '',
+            res: txDetail,
+            pinedQueue,
+            customTxItemsMap,
+          })[0];
+          console.debug(
+            '[notifications] [startSubscribeRemoteNotification] received parsedData',
+            historyDisplayItem,
+          );
+          if (!historyDisplayItem) {
+            toast.show(i18next.t('notifications.noTransactionDetail'), {
+              duration: 8 * 1000,
+              hideOnPress: true,
+            });
+            return earlyReturn(true);
+          }
+          earlyReturn(false);
 
           const currentRouteName =
             navigationRouteStore.getState().currentRouteName;
-          const needReplace = currentRouteName === RootNames.History;
+          const needReplace = currentRouteName === RootNames.HistoryDetail;
+
           const naviFn = ctx.defaultAction
             ? resetNavigationOnTopOfHome
             : needReplace
             ? naviReplace
             : naviPush;
-
-          await switchSceneCurrentAccount('History', foundAccount);
-          hideToastRef.current();
           naviFn(RootNames.StackTransaction, {
-            screen: RootNames.History,
+            screen: RootNames.HistoryDetail,
             params: {
               isForMultipleAddress: false,
+              data: historyDisplayItem,
+              title:
+                prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
+              treatSmallAssetsAsScam: false,
             },
           });
 
-          return earlyReturn(false);
-        }
-
-        hideToastRef.current();
-
-        const pinedQueue = preferenceService.getPinToken();
-        const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
-        const historyDisplayItem = txResultToToHistoryDisplayItem({
-          address: parsedData.txInfo?.ownerAddress || '',
-          res: txDetail,
-          pinedQueue,
-          customTxItemsMap,
-        })[0];
-        console.debug(
-          '[notifications] [startSubscribeRemoteNotification] received parsedData',
-          historyDisplayItem,
-        );
-        if (!historyDisplayItem) {
-          toast.show(i18next.t('notifications.noTransactionDetail'), {
-            duration: 8 * 1000,
-            hideOnPress: true,
-          });
-          return earlyReturn(true);
-        }
-
-        const currentRouteName =
-          navigationRouteStore.getState().currentRouteName;
-        const needReplace = currentRouteName === RootNames.HistoryDetail;
-
-        const naviFn = ctx.defaultAction
-          ? resetNavigationOnTopOfHome
-          : needReplace
-          ? naviReplace
-          : naviPush;
-        naviFn(RootNames.StackTransaction, {
-          screen: RootNames.HistoryDetail,
-          params: {
-            isForMultipleAddress: false,
-            data: historyDisplayItem,
-            title:
-              prepareTxHistoryDisplayUIData(historyDisplayItem).formatTitle,
-            treatSmallAssetsAsScam: false,
-          },
+          perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
         });
-
-        perfEvents.emit('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS');
       });
     },
   );

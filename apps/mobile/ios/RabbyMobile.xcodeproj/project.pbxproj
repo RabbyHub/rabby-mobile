@@ -23,7 +23,6 @@
 		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */; };
 		01DBDDA02E86FFF70060C03B /* builtin-pages in Resources */ = {isa = PBXBuildFile; fileRef = 01DBDD9F2E86FFF70060C03B /* builtin-pages */; };
-		01E0CA8B2F22E00C0050B84A /* RabbyMobileNotification.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 01E0CA602F22C39D0050B84A /* RabbyMobileNotification.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		01E0CB3D2F238DA40050B84A /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01E0CB3B2F238DA40050B84A /* NotificationService.swift */; };
 		01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 01E584B52C370990007F3280 /* LaunchScreen.xib */; };
 		01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */; };
@@ -33,12 +32,12 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		338538AD968E24536277522B /* Pods_RabbyMobileNotification.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88C933734903F821FA0C5573 /* Pods_RabbyMobileNotification.framework */; };
 		5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */; };
-		61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
+		61119C058F0C8F2FBCC8530A /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */; };
 		817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */ = {isa = PBXBuildFile; fileRef = FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		990E38247D624F6B86F999F7 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */; };
-		A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		A435C93C4EB14CC4B4CB98D0 /* (null) in Resources */ = {isa = PBXBuildFile; };
 		A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 370EA128F5694C408EE79381 /* vconsole.min.js */; };
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
 		AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */; };
@@ -53,28 +52,7 @@
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
 			remoteInfo = RabbyMobile;
 		};
-		01E0CA8C2F22E0120050B84A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 01E0CA5F2F22C39D0050B84A;
-			remoteInfo = RabbyMobileNotification;
-		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		01E0CA452F22AE980050B84A /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 12;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				01E0CA8B2F22E00C0050B84A /* RabbyMobileNotification.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RabbyMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -123,7 +101,7 @@
 		32B6FD6243A2B6510D5BDC15 /* Pods-RabbyMobileNotification.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.debug.xcconfig"; sourceTree = "<group>"; };
 		370EA128F5694C408EE79381 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-RabbyMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.debug.xcconfig"; sourceTree = "<group>"; };
-		4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
+		4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
 		48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Regular.otf"; path = "../assets/fonts/SF-Pro-Rounded-Regular.otf"; sourceTree = "<group>"; };
 		5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Bold.otf"; path = "../assets/fonts/SF-Pro-Rounded-Bold.otf"; sourceTree = "<group>"; };
 		62B8C84B05CF872511F26010 /* Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileNotification/Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig"; sourceTree = "<group>"; };
@@ -165,7 +143,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */,
+				61119C058F0C8F2FBCC8530A /* (null) in Frameworks */,
 				AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -391,14 +369,12 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
-				01E0CA452F22AE980050B84A /* Embed Foundation Extensions */,
 				8CDE046FA7F7E8D18AC6AC0E /* [CP-User] [RNFB] Core Configuration */,
 				97C8DB28D26F4537BDE36325 /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				01E0CA8D2F22E0120050B84A /* PBXTargetDependency */,
 			);
 			name = RabbyMobile;
 			productName = RabbyMobile;
@@ -481,7 +457,7 @@
 				5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */,
 				A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */,
 				817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */,
-				A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */,
+				A435C93C4EB14CC4B4CB98D0 /* (null) in Resources */,
 				990E38247D624F6B86F999F7 /* InpageBridgeWeb3.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -729,11 +705,6 @@
 			isa = PBXTargetDependency;
 			target = 13B07F861A680F5B00A75B9A /* RabbyMobile */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
-		};
-		01E0CA8D2F22E0120050B84A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 01E0CA5F2F22C39D0050B84A /* RabbyMobileNotification */;
-			targetProxy = 01E0CA8C2F22E0120050B84A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

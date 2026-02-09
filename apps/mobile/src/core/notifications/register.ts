@@ -1,6 +1,6 @@
 import messaging from '@react-native-firebase/messaging';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import { AppState, Platform } from 'react-native';
+import { AppState, Platform, PushNotification } from 'react-native';
 
 import { sleep } from '@/utils/async';
 import { IS_IOS } from '../native/utils';
@@ -16,6 +16,7 @@ import { useShallow } from 'zustand/shallow';
 import { zCreate, zMutative } from '../utils/reexports';
 import { notificationEvents, parseRemoteData } from './data';
 import { getTopMyAccountsOnNotifications } from './utils';
+import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 const iosPush = {
   token: '',
@@ -109,36 +110,72 @@ export const startSubscribePushNotifications = async () => {
   if (IS_IOS) {
     const intialNotificationPromise =
       PushNotificationIOS.getInitialNotification();
-    let intialNotificationConsumed = false;
-    PushNotificationIOS.addEventListener('notification', async notification => {
-      // const intialNotification = await PushNotificationIOS.getInitialNotification();
-      const intialNotification = await intialNotificationPromise;
-      const iosFromLaunch = !intialNotification
-        ? false
-        : intialNotification?.getData().userInteraction === 1;
-      console.debug(
-        '[notifications] Received foreground APNs notification:',
-        notification,
-        intialNotification,
-      );
-      const isBackground =
-        AppState.isAvailable && AppState.currentState === 'background';
-      const canProcess =
-        (iosFromLaunch && !intialNotificationConsumed) || isBackground;
-      if (!canProcess) return;
-      if (iosFromLaunch && !intialNotificationConsumed) {
-        intialNotificationConsumed = true;
-      }
+    const intialNotificationRef = {
+      consumed: false,
+      instance: null as Awaited<typeof intialNotificationPromise>,
+    };
+    PushNotificationIOS.addEventListener(
+      'localNotification',
+      async evtNotifi => {
+        // const intialNotification = await PushNotificationIOS.getInitialNotification();
+        const initialNotificationConsumed = intialNotificationRef.consumed;
+        if (!intialNotificationRef.consumed) {
+          intialNotificationRef.instance = await intialNotificationPromise;
+          intialNotificationRef.consumed = true;
+        }
+        const notification = !initialNotificationConsumed
+          ? intialNotificationRef.instance || evtNotifi
+          : evtNotifi;
+        const isUserTapped = notification?.getData().userInteraction === 1;
+        console.debug(
+          '[notifications][local] Received notification:',
+          notification,
+          intialNotificationRef,
+          isUserTapped,
+        );
+        if (!notification) return;
+        if (!isUserTapped) return;
 
-      const parsed = parseRemoteData(notification.getData());
-      parsed._parseSuccess &&
-        notificationEvents.emit('onParsedReceivedData', {
-          parsedData: parsed,
-          iosFromLaunch,
-        });
-      console.debug('[notifications] parsed:', parsed);
-      // notification.finish(PushNotificationIOS.FetchResult.NoData);
-    });
+        const parsed = parseRemoteData(notification.getData());
+        parsed._parseSuccess &&
+          notificationEvents.emit('onParsedReceivedData', {
+            parsedData: parsed,
+          });
+        console.debug('[notifications][local] parsed:', parsed);
+      },
+    );
+
+    // PushNotificationIOS.addEventListener('notification', async notification => {
+    //   // const intialNotification = await PushNotificationIOS.getInitialNotification();
+    //   const intialNotification = await intialNotificationPromise;
+    //     const isUserTapped =
+    //       intialNotification?.getData().userInteraction === 1;
+    //   const iosFromLaunch = !intialNotification
+    //     ? false
+    //     : isUserTapped;
+    //   console.debug(
+    //     '[notifications] Received foreground APNs notification:',
+    //     notification,
+    //     intialNotification,
+    //   );
+    //   const isBackground =
+    //     AppState.isAvailable && AppState.currentState === 'background';
+    //   const canProcess =
+    //     (iosFromLaunch && !initialNotificationConsumed) || isBackground;
+    //   if (!canProcess) return;
+    //   if (iosFromLaunch && !initialNotificationConsumed) {
+    //     initialNotificationConsumed = true;
+    //   }
+
+    //   const parsed = parseRemoteData(notification.getData());
+    //   parsed._parseSuccess &&
+    //     notificationEvents.emit('onParsedReceivedData', {
+    //       parsedData: parsed,
+    //       iosFromLaunch,
+    //     });
+    //   console.debug('[notifications] parsed:', parsed);
+    //   // notification.finish(PushNotificationIOS.FetchResult.NoData);
+    // });
   } else {
     messaging()
       .getInitialNotification()
@@ -213,9 +250,11 @@ function onHeartbeatResponse(resp: HeartbeatResponse) {
 const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
 export async function startConnectPushServerInterval() {
   const requstConnect = async (appEnabled?: boolean) => {
+    const { enabled } = await checkIfEnabledNotificationWithPermission(
+      appEnabled,
+    );
     return notificationOpenapi.setDeviceActiveStatus({
-      isActive:
-        (await checkIfEnabledNotificationWithPermission(appEnabled)) ?? true,
+      isActive: enabled,
     });
   };
 
@@ -229,16 +268,22 @@ export async function startConnectPushServerInterval() {
     }
   });
 
-  const requestHeartbeat = async () => {
+  const requestHeartbeat = makeAvoidParallelAsyncFunc(async () => {
     if (AppState.isAvailable && AppState.currentState !== 'active') return;
     notificationOpenapi.heartbeat().then(onHeartbeatResponse);
-  };
+  });
 
   requestHeartbeat();
   setInterval(async () => {
     if (AppState.isAvailable && AppState.currentState !== 'active') return;
     await requestHeartbeat();
   }, CONNECT_DURATION_MS);
+
+  AppState.addEventListener('change', state => {
+    if (state === 'active') {
+      requestHeartbeat();
+    }
+  });
 }
 
 export const requestBindDevice = async (pushToken: string) => {
