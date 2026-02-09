@@ -70,7 +70,7 @@ function MemeScreen(): JSX.Element {
       };
     }
     return {
-      orderBy: 'fdv' as const,
+      orderBy: 'volume_24h' as const,
       order: 'desc' as const,
     };
   }, [volumeSort, fdvSort, changeSort]);
