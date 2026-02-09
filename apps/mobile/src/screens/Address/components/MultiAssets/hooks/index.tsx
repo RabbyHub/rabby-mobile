@@ -58,7 +58,7 @@ export function useAccountInfo() {
 
   const stableTop10Addresses = useCreationWithShallowCompare(
     () => myTop10Addresses,
-    [myTop10Addresses],
+    myTop10Addresses,
   );
 
   const { hasWatchAddress, hasSafeAddress, gnosisAccounts, watchAccounts } =
