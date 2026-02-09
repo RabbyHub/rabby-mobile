@@ -1,13 +1,5 @@
-import { isEqual } from 'lodash';
+import { depsAreDeepSame, depsAreShallowSame } from '@/core/utils/compare';
 import { useRef } from 'react';
-
-function depsAreSame(oldDeps: any[], deps: any[]) {
-  if (oldDeps.length !== deps.length) return false;
-  for (let i = 0; i < oldDeps.length; i++) {
-    if (!Object.is(oldDeps[i], deps[i])) return false;
-  }
-  return true;
-}
 
 export function useCreationWithShallowCompare<T = any>(
   factory: () => T,
@@ -19,21 +11,16 @@ export function useCreationWithShallowCompare<T = any>(
     initialized: false,
   }).current;
 
-  if (current.initialized === false || !depsAreSame(current.deps, deps)) {
+  if (
+    current.initialized === false ||
+    !depsAreShallowSame(current.deps, deps)
+  ) {
     current.deps = deps;
     current.obj = factory();
     current.initialized = true;
   }
 
   return current.obj as T;
-}
-
-function deepDepsAreSame(oldDeps: any[], deps: any[]) {
-  if (oldDeps.length !== deps.length) return false;
-  for (let i = 0; i < oldDeps.length; i++) {
-    if (!isEqual(oldDeps[i], deps[i])) return false;
-  }
-  return true;
 }
 
 export function useCreationWithDeepCompare<T = any>(
@@ -46,7 +33,7 @@ export function useCreationWithDeepCompare<T = any>(
     initialized: false,
   }).current;
 
-  if (current.initialized === false || !deepDepsAreSame(current.deps, deps)) {
+  if (current.initialized === false || !depsAreDeepSame(current.deps, deps)) {
     current.deps = deps;
     current.obj = factory();
     current.initialized = true;
