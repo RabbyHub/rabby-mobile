@@ -354,7 +354,14 @@ export function resetNavigationTo(
     case 'Unlock': {
       navigation.reset({
         index: 0,
-        routes: [{ name: RootNames.Unlock, params: {} }],
+        routes: [
+          {
+            name: RootNames.Unlock,
+            params: {
+              disableAutoTriggerUnlock: true,
+            },
+          },
+        ],
       });
       unlockUIState.finishedUnlockResetNav = false;
       // if (
@@ -446,6 +453,19 @@ const unlockUIState = {
 //   unlockUIState.finishedUnlockResetNav = false;
 // });
 export class UnlockUIManager {
+  static triggerAutoUnlock(delay = 500) {
+    const action = () => {
+      const currentRouteName = navigationRef.current?.getCurrentRoute()?.name;
+      if (!currentRouteName || currentRouteName !== RootNames.Unlock) return;
+      perfEvents.emit('AUTO_TRIGGER_UNLOCK');
+    };
+    if (delay) {
+      setTimeout(action, delay);
+    } else {
+      action();
+    }
+  }
+
   static markUnlockedOnce() {
     unlockUIState.unlockOnceRef = true;
   }
@@ -762,6 +782,8 @@ export function startSubscribeRemoteNotification() {
             console.error(error);
             return null;
           });
+
+        UnlockUIManager.triggerAutoUnlock();
 
         UnlockUIManager.queueResetNaviOnTopOfHomeWhenUnlock(async ctx => {
           const foundAccount = await findMyAccountByOwnerAddress(ownerAddress);

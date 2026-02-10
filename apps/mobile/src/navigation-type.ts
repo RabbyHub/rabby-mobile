@@ -51,7 +51,9 @@ export type RootStackParamsList = {
   [RootNames.StackHomeNonTab]?: NavigatorScreenParams<HomeNonTabNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
-  [RootNames.Unlock]?: {};
+  [RootNames.Unlock]?: {
+    disableAutoTriggerUnlock?: boolean;
+  };
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
