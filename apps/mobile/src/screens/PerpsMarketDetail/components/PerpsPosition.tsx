@@ -13,9 +13,18 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import { formatUsdValue } from '@/utils/number';
+import BigNumber from 'bignumber.js';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
-import { formatPerpsCoin, formatPerpsPct } from '@/utils/perps';
+import {
+  formatPerpsCoin,
+  formatPerpsPct,
+  getStatsReportSide,
+} from '@/utils/perps';
+import { stats } from '@/utils/stats';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useShallow } from 'zustand/shallow';
+import { APP_VERSIONS } from '@/constant';
 
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
@@ -83,6 +92,9 @@ export const PerpsPosition: React.FC<{
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [editMarginVisible, setEditMarginVisible] = useState(false);
+  const currentPerpsAccount = perpsStore(
+    useShallow(s => s.currentPerpsAccount),
+  );
 
   const distanceLiquidation = calculateDistanceToLiquidation(
     positionData?.liquidationPrice,
@@ -314,6 +326,27 @@ export const PerpsPosition: React.FC<{
                       setCurrentTpOrSl({
                         tpPrice: Number(price).toString(),
                       });
+                    if (res) {
+                      const isBuy = positionData?.direction === 'Long';
+                      stats.report('perpsTradeHistory', {
+                        created_at: new Date().getTime(),
+                        user_addr: currentPerpsAccount?.address || '',
+                        trade_type: 'has position set tp',
+                        leverage: positionData?.leverage.toString(),
+                        trade_side: getStatsReportSide(!isBuy, true),
+                        margin_mode:
+                          positionData?.type === 'cross' ? 'cross' : 'isolated',
+                        coin: coin,
+                        size: positionData?.size,
+                        price: Number(price).toString(),
+                        trade_usd_value: new BigNumber(price)
+                          .times(positionData?.size)
+                          .toFixed(2),
+                        service_provider: 'hyperliquid',
+                        app_version: APP_VERSIONS.fromNative || '0',
+                        address_type: currentPerpsAccount?.type || '',
+                      });
+                    }
                   }}
                 />
               </View>
@@ -383,6 +416,27 @@ export const PerpsPosition: React.FC<{
                       setCurrentTpOrSl({
                         slPrice: Number(price).toString(),
                       });
+                    if (res) {
+                      const isBuy = positionData?.direction === 'Long';
+                      stats.report('perpsTradeHistory', {
+                        created_at: new Date().getTime(),
+                        user_addr: currentPerpsAccount?.address || '',
+                        trade_type: 'has position set sl',
+                        leverage: positionData?.leverage.toString(),
+                        trade_side: getStatsReportSide(!isBuy, true),
+                        margin_mode:
+                          positionData?.type === 'cross' ? 'cross' : 'isolated',
+                        coin: coin,
+                        size: positionData?.size,
+                        price: Number(price).toString(),
+                        trade_usd_value: new BigNumber(price)
+                          .times(positionData?.size)
+                          .toFixed(2),
+                        service_provider: 'hyperliquid',
+                        app_version: APP_VERSIONS.fromNative || '0',
+                        address_type: currentPerpsAccount?.type || '',
+                      });
+                    }
                   }}
                 />
               </View>

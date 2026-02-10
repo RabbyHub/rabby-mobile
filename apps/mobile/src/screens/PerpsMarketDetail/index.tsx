@@ -22,6 +22,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
+import BigNumber from 'bignumber.js';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
 import { PerpsChart } from './components/PerpsChart';
@@ -62,6 +63,9 @@ import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { stats } from '@/utils/stats';
+import { getStatsReportSide } from '@/utils/perps';
+import { APP_VERSIONS } from '@/constant';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -627,7 +631,7 @@ export const PerpsMarketDetailScreen = () => {
             } else {
               sizeStr = positionData?.size.toString() || '0';
             }
-            await handleClosePosition({
+            const res = await handleClosePosition({
               coin,
               size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
@@ -637,6 +641,26 @@ export const PerpsMarketDetailScreen = () => {
               tpPrice: undefined,
               slPrice: undefined,
             });
+            if (res) {
+              const { avgPx, totalSz } = res;
+              const isBuy = positionData?.direction === 'Long';
+              stats.report('perpsTradeHistory', {
+                created_at: new Date().getTime(),
+                user_addr: currentPerpsAccount?.address || '',
+                trade_type: 'close position',
+                leverage: positionData?.leverage.toString(),
+                trade_side: getStatsReportSide(!isBuy, true),
+                margin_mode:
+                  positionData.type === 'cross' ? 'cross' : 'isolated',
+                coin: coin,
+                size: totalSz,
+                price: avgPx,
+                trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
+                service_provider: 'hyperliquid',
+                app_version: APP_VERSIONS.fromNative || '0',
+                address_type: currentPerpsAccount?.type || '',
+              });
+            }
           }}
         />
       ) : null}
@@ -668,7 +692,7 @@ export const PerpsMarketDetailScreen = () => {
             setAddPositionVisible(false);
           }}
           handleAddPosition={async (tradeSize: string) => {
-            await handleOpenPosition({
+            const res = await handleOpenPosition({
               coin,
               size: tradeSize,
               leverage: positionData?.leverage || 1,
@@ -676,6 +700,26 @@ export const PerpsMarketDetailScreen = () => {
               direction: positionData?.direction as 'Long' | 'Short',
               midPx: activeAssetCtx?.markPx || '0',
             });
+            if (res) {
+              const { avgPx, totalSz } = res;
+              const isBuy = positionData?.direction === 'Long';
+              stats.report('perpsTradeHistory', {
+                created_at: new Date().getTime(),
+                user_addr: currentPerpsAccount?.address || '',
+                trade_type: 'add position',
+                leverage: positionData?.leverage.toString(),
+                trade_side: getStatsReportSide(isBuy, false),
+                margin_mode:
+                  positionData.type === 'cross' ? 'cross' : 'isolated',
+                coin: coin,
+                size: totalSz,
+                price: avgPx,
+                trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
+                service_provider: 'hyperliquid',
+                app_version: APP_VERSIONS.fromNative || '0',
+                address_type: currentPerpsAccount?.type || '',
+              });
+            }
           }}
         />
       ) : null}
