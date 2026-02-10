@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useBiometrics } from '@/hooks/biometrics';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { RequestGenericPurpose } from '@/core/apis/keychain';
@@ -36,6 +36,8 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
 
+  const isProcessingRef = useRef(false);
+
   const onFinished = useCallback(() => {
     if (syncUnlockTime) {
       updateUnlockTime();
@@ -47,15 +49,20 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
     return apisLock.throwErrorIfInvalidPwd(password);
   };
   const unlockWithBiometrics = useCallback(async () => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     onBeforeAuth?.();
     if (!isBiometricsEnabled) {
       AuthenticationModal2024.show({
         title: authTitle || t('page.addressDetail.add-to-whitelist'),
         authType: ['password'],
         onFinished: () => {
+          isProcessingRef.current = false;
           onFinished?.();
         },
         onCancel: () => {
+          isProcessingRef.current = false;
           onCancel?.();
         },
         validationHandler(password) {
@@ -63,6 +70,7 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
         },
       });
     }
+
     try {
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
@@ -88,6 +96,8 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
           return apisLock.throwErrorIfInvalidPwd(password);
         },
       });
+    } finally {
+      isProcessingRef.current = false;
     }
   }, [onBeforeAuth, isBiometricsEnabled, authTitle, t, onFinished, onCancel]);
 
