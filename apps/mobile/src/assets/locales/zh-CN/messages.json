@@ -134,7 +134,7 @@
     "toast": {
       "clipboard": {
         "copiedPrivateKey": "私钥已复制。剪贴板将在1分钟后清除。",
-        "copiedSeedPhrase": "种子短语已复制。剪贴板将在 1 分钟后清除。",
+        "copiedSeedPhrase": "助记词已复制。剪贴板将在 1 分钟后清除。",
         "pasted_and_cleared": "粘贴并清空剪贴板"
       }
     },
@@ -143,7 +143,7 @@
     }
   },
   "constant": {
-    "IMPORTED_HD_KEYRING": "通过种子短语导入",
+    "IMPORTED_HD_KEYRING": "通过助记词导入",
     "KEYRING_TYPE_TEXT": {
       "HdKeyring": "由 Seed Phrase 创建",
       "SimpleKeyring": "通过私钥导入",
@@ -172,7 +172,7 @@
         "ReceivedGas": "收到 Gas",
         "DepositedGas": "存入 Gas",
         "LendingBorrow": "借入",
-        "LendingSupply": "供应",
+        "LendingSupply": "存款",
         "LendingRepay": "偿还",
         "LendingWithdraw": "提取",
         "LendingOnCollateral": "开启作为抵押品使用",
@@ -447,7 +447,7 @@
         "notOnWhitelist": "不在我的白名单中",
         "notOnThisChain": "不在此链上",
         "whitelistTitle": "白名单",
-        "fromMySeedPhrase": "从我的种子短语"
+        "fromMySeedPhrase": "从我的助记词"
       },
       "trustValue": "信任价值",
       "revokePermit": {
@@ -851,7 +851,7 @@
         "receive": "接收",
         "history": "历史",
         "queue": "队列",
-        "bridge": "Bridge",
+        "bridge": "跨链",
         "send": "发送",
         "more": "更多",
         "websites": "网站",
@@ -863,7 +863,7 @@
         "copyTrading": "跟单交易",
         "watchlist": "代币关注列表",
         "perpsMarketList": "更多 Perps",
-        "perps": "合约",
+        "perps": "永续合约",
         "lending": "借贷",
         "predict": "预测",
         "meme": "Memecoin"
@@ -933,7 +933,7 @@
       "price-impact": "价格影响",
       "bridgeTo": "桥接到",
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
-      "title": "Bridge",
+      "title": "跨链",
       "bridged": "跨链已完成",
       "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。",
       "pendingItem": {
@@ -1047,7 +1047,7 @@
       "allApprovals": "所有授权",
       "eip7702": {
         "unsupportedTitle": "不支持的地址类型",
-        "unsupportedDesc": "撤销 EIP-7702 委托仅支持私钥或种子短语地址。"
+        "unsupportedDesc": "撤销 EIP-7702 委托仅支持私钥或助记词地址。"
       },
       "supportedChains": "支持的链",
       "delegatedAddress": "委托地址"
@@ -1203,10 +1203,10 @@
         "UnderstandsecurityPrecautions": "我了解这些安全预防措施。",
         "backupSeedPhrase": "备份你的助记词，以便在应用被删除或设备丢失时恢复你的钱包。",
         "passwordMin": "至少需要 8 个字符",
-        "createOnCurrentDesc": "使用现有导入的种子短语创建钱包",
-        "createNewDesc": "为新钱包生成一个新的种子短语",
+        "createOnCurrentDesc": "使用现有导入的助记词创建钱包",
+        "createNewDesc": "为新钱包生成一个新的助记词",
         "BackupYourSeedPhrase": "备份您的 Seed Phrase",
-        "WriteSeedPhrase": "这是你的种子短语。请将其写下并妥善保管。如果你丢失或泄露它，你的资产可能会永远丢失。在下一步中，你需要按顺序重新输入这个短语。"
+        "WriteSeedPhrase": "这是你的助记词。请将其写下并妥善保管。如果你丢失或泄露它，你的资产可能会永远丢失。在下一步中，你需要按顺序重新输入这个短语。"
       },
       "importAddress": {
         "privateKey": "导入私人密钥",
@@ -1250,16 +1250,16 @@
         "swipeToViewAllAssets": "向右滑动以查看所有资产"
       },
       "copySeedPhraseSecureTip": {
-        "tip2": "请勿在云服务或笔记应用中粘贴或保存您的种子短语。",
+        "tip2": "请勿在云服务或笔记应用中粘贴或保存您的助记词。",
         "copyAnyway": "无论如何复制",
-        "title": "保持您的 SeedPhrase 秘密",
+        "title": "请妥善保管你的助记词，不要泄露。",
         "tip1": "其他应用可能会读取您的剪贴板，因此在复制后请避免切换应用。",
-        "subTitle": "任何获取到你的 seed phrase 的人都可以完全控制你的资金。",
+        "subTitle": "任何获取到你的助记词的人都可以完全控制你的资金。",
         "copied": "助记词已复制。剪贴板将在 1 分钟后清空。",
-        "tip3": "永远不要分享你的种子短语。我们绝不会要求你提供它。"
+        "tip3": "永远不要分享你的助记词。我们绝不会要求你提供它。"
       },
       "screenshotSecureTip": {
-        "tip3": "任何获取到你的 seed phrase 的人都能完全控制你的钱包，并且这一点无法逆转。",
+        "tip3": "任何获取到你的助记词的人都能完全控制你的钱包，并且这一点无法逆转。",
         "subTitle": "将您的助记词保存为图像可能会使其暴露，因此将其写下是更安全的选择。",
         "tip1": "截图可以同步到云端或其他设备，并且如果设备丢失、被盗或受到攻击，可以访问这些截图。",
         "title": "截图并不安全",
@@ -1283,11 +1283,11 @@
       "qrCodePopupTitle": "QR Code",
       "clickToShow": "点击显示助记词",
       "copySeedPhrase": "复制助记词",
-      "qrCodePopupTips": "切勿与他人分享种子短语的二维码。请在安全的环境中查看并妥善保管。",
+      "qrCodePopupTips": "切勿与他人分享助记词的二维码。请在安全的环境中查看并妥善保管。",
       "showQrCode": "显示二维码",
       "alert": "此助记词是您资产的凭证。不要丢失或透露给他人，否则您可能会永远失去资产。请在安全的环境下查看并妥善保管。",
       "tapToReveal": {
-        "line1": "点击以显示您的种子短语",
+        "line1": "点击以显示您的助记词",
         "line2": "确保没有人监视你的屏幕。"
       }
     },
@@ -1295,7 +1295,7 @@
       "btn": {
         "unlock": "解锁",
         "switchtype_fingerprint": "使用指纹解锁",
-        "switchtype_faceid": "使用面容 ID 解锁",
+        "switchtype_faceid": "使用 Face ID 解锁",
         "switchtype_pwd": "使用密码解锁"
       },
       "biometrics": {
@@ -1313,7 +1313,7 @@
         "error": "密码错误",
         "placeholder": "请输入密码以解锁"
       },
-      "unlocking": "解锁"
+      "unlocking": "解锁中"
     },
     "importSafe": {
       "title": "添加 Safe 地址",
@@ -1329,7 +1329,7 @@
       "addContacts": {
         "cameraTitle": "请使用相机扫描二维码"
       },
-      "createNewSeedPhrase": "创建新的种子短语",
+      "createNewSeedPhrase": "创建新的助记词",
       "ledger": {
         "scan": {
           "title": "搜索设备",
@@ -1390,10 +1390,10 @@
         "title3": "安全性",
         "description4": "您的助记词存储在您的设备上，并通过您的密码加密。只有您可以访问它。Rabby 无法检索或访问您的助记词。",
         "description3": "切勿分享您的 seed phrase—任何有权访问它的人都可以控制您的资金。",
-        "title": "什么是“种子短语”",
+        "title": "什么是“助记词”",
         "title2": "切勿分享",
         "description2": "如果你丢失了你的助记词，你将无法恢复你的钱包。",
-        "description1": "种子短语是一系列用于访问和控制您钱包的单词。您可以使用它在任何设备上恢复您的钱包。"
+        "description1": "助记词是一系列用于访问和控制您钱包的单词。您可以使用它在任何设备上恢复您的钱包。"
       },
       "onekey": {
         "ble": {
@@ -1446,7 +1446,7 @@
         "backupUploadToICloud": "正在备份到 iCloud...",
         "backupRestoreImported": "已导入",
         "backupRestoreTitle": "发现{{count}}个助记词",
-        "backupRestoreEmpty": "未找到备份种子短语",
+        "backupRestoreEmpty": "未找到备份助记词",
         "backupErrorCloudNotAvailable": "iCloud 暂不可用",
         "backupRestoreCreatedAt": "备份时间: ",
         "backupUnlockTitle": "使用应用密码加密",
@@ -1678,7 +1678,7 @@
       },
       "delete-desc": "您确定要删除这个钱包吗？",
       "delete-address": "删除钱包",
-      "manage-addresses-under-this-seed-phrase": "使用此种子短语添加钱包",
+      "manage-addresses-under-this-seed-phrase": "使用此助记词添加钱包",
       "notMatterAddressDialog": {
         "notTop10Address": "排名在前10名之外的钱包",
         "title": "以下钱包不包括在总余额中",
@@ -2006,7 +2006,7 @@
       "noTransactions": "没有交易",
       "fdvTitle": "什么是 FDV？",
       "BridgeIssue": "由第三方桥接的代币",
-      "fdvContent": "如果最大供应量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大供应量。如果最大供应量为零，FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或无穷大，则不显示 FDV。",
+      "fdvContent": "如果最大存款量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大存款量。如果最大存款量为零，FDV = 价格 × 总存款量。如果最大存款量和总存款量均未定义或无穷大，则不显示 FDV。",
       "HoldingValue": "持有价值",
       "Price": "价格",
       "ContentGeneratedByAI": "此内容由 AI 生成",
@@ -2025,7 +2025,7 @@
       "marketInfo": {
         "volume24h": "24小时交易量",
         "marketCap": "市场总值",
-        "totalSupply": "总供应量",
+        "totalSupply": "总存款量",
         "holders": "持有者",
         "txns24h": "24h 交易次数",
         "holderSections": {
@@ -2130,7 +2130,7 @@
       "enableWhitelist": "启用白名单以发送资产",
       "autoLockTime": "自动锁定时间",
       "clearPending": "清除本地待处理事项",
-      "clearPendingDesc2": "这不会改变您账户中的余额，也不需要您重新输入您的种子短语。您所有的资产和账户信息都将保持安全。",
+      "clearPendingDesc2": "这不会改变您账户中的余额，也不需要您重新输入您的助记词。您所有的资产和账户信息都将保持安全。",
       "currentVersion": "当前版本",
       "clearPendingDesc1": "这将清除您所有的待处理交易。这样可以帮助您解决在某些情况下 Rabby 中的交易状态与链上状态不匹配的问题。",
       "touchId": "Touch ID",
@@ -2142,8 +2142,7 @@
       "clearBrowserData": "清除浏览器数据",
       "currency": "货币",
       "searchCurrency": "搜索货币",
-      "screenshotReportSwitch": "截图以报告错误",
-      "transactionNotification": "事务通知 (测试版)"
+      "screenshotReportSwitch": "截图以报告错误"
     },
     "settingModal": {
       "themeMode": {
@@ -2591,7 +2590,7 @@
       "PerpsAccountLogoutPopup": {
         "title": "登出当前地址",
         "logout": "登出",
-        "desc": "您正在退出当前的 Perps 账户。您可以随时通过使用此地址登录来恢复它。"
+        "desc": "您正在退出当前的永续合约账户。您可以随时通过使用此地址登录来恢复它。"
       },
       "PerpsDepositCard": {
         "availableToTrade": "可交易：",
@@ -2609,11 +2608,11 @@
       "more": "更多",
       "explorePerps": "探索永续合约",
       "positions": "仓位",
-      "deleteAgentSuccess": "代理已成功删除",
+      "deleteAgentSuccess": "代理钱包已成功删除",
       "leverageRangeMinError": "最低杠杆为 {{min}}x",
       "regionNotSupport": "在您的地区不支持开仓。",
       "leverageRangeMaxError": "最大杠杆为 {{max}}x",
-      "deleteAgentModal": "您已达到代理的最大数量。您想删除一个现有的代理以创建新的代理吗？",
+      "deleteAgentModal": "您已达到代理钱包的最大数量。您想删除一个现有的代理钱包以创建新的代理钱包吗？",
       "searchPerpsPopup": {
         "searchPosition": "搜索头寸",
         "empty": "未找到结果",
@@ -2631,12 +2630,12 @@
         "liquidationPrice": "清算价格",
         "currentPrice": "当前价格",
         "distanceLabel": "平仓距离",
-        "subtitle": "实时 liquidation 距离 (%)",
+        "subtitle": "实时清算距离 (%)",
         "liqIntro": "清算距离 (%) 表示当前价格与您的清算价格之间的距离。距离越大，说明仓位越安全；距离越小，则表示清算风险越高。",
         "liqDistanceTipsLong": "下跌 <1>{{distance}}</1> 将触发清算。",
         "liqDistanceTipsShort": "上涨 <1>{{distance}}</1> 将触发清算。"
       },
-      "closeAll": "关闭全部",
+      "closeAll": "全部关闭",
       "closeAllConfirmMessage": "您所有的未平仓头寸将以市场价格平仓。",
       "closeAllConfirmTitle": "确认平掉所有仓位",
       "assetPage": {
@@ -2644,22 +2643,22 @@
       },
       "invitePopup": {
         "hyperliquidFee": "Hyperliquid 交易手续费。",
-        "title": "在 Hyperliquid 上节省费用",
+        "title": "在 Hyperliquid 上节省手续费",
         "activatedFailed": "激活失败",
         "activateFailed": "失败",
-        "description": "使用 Rabby 的代码以启用",
+        "description": "使用 Rabby 的邀请码以启用",
         "activateNow": "立即激活",
-        "activatedSuccess": "4% Hyperliquid费用节省已激活"
+        "activatedSuccess": "4% Hyperliquid 手续费减免已激活"
       },
       "dappSelect": {
-        "title": "选择 Perps 提供者"
+        "title": "选择永续合约服务商"
       }
     },
     "perpsDetail": {
       "PerpsPosition": {
         "title": "头寸",
         "tpPrice": "止盈价格",
-        "marginCross": "保证金（跨）",
+        "marginCross": "保证金（全仓）",
         "markPrice": "标记价格",
         "justMargin": "保证金",
         "size": "大小",
@@ -2668,14 +2667,14 @@
         "liqPrice": "清算价格",
         "closePosition": "关闭 {{direction}}",
         "direction": "方向",
-        "marginIsolated": "保证金（孤立）",
-        "isolated": "隔离模式",
+        "marginIsolated": "保证金（逐仓）",
+        "isolated": "逐仓",
         "pnl": "盈亏",
         "slPrice": "止损价格",
-        "cross": "交叉",
+        "cross": "全仓",
         "liquidationPrice": "清算价格",
         "fundingPayments": "资金支付",
-        "margin": "保证金（隔离）",
+        "margin": "保证金（逐仓）",
         "sizeTips": "您交易的总价值或数量，由保证金和杠杆设置。",
         "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所自动关闭您的仓位以防止进一步亏损的价格。",
         "fundingPaymentsTips": "这是自开仓以来的净资金支付。资金费用是交易者支付或收取的每小时费用，以保持永续合约的价格接近代币的实际价格。",
@@ -2685,7 +2684,7 @@
         "currentPrice": "当前价格",
         "unrealizedPnl": "未实现的PNL",
         "marginMode": "保证金模式",
-        "positionValue": "头寸价值",
+        "positionValue": "仓位价值",
         "settings": "设置",
         "realizedPnl": "实现的PNL"
       },
@@ -2699,7 +2698,7 @@
         "fundingRate": "资金利率"
       },
       "PerpsIntro": {
-        "title": "什么是 Perps？",
+        "title": "什么是永续合约？",
         "desc": "交易永续合约涉及重大风险，包括由于高杠杆和市场波动而快速失去您的投资和抵押品的可能性。此类交易可能不适合所有用户。价格可能会受到资金利率和流动性的影响，您可能会在没有事先通知的情况下自动被平仓。市场数据由 Hyperliquid 提供。"
       },
       "PerpsClosePositionPopup": {
@@ -2757,11 +2756,11 @@
         "rabbyFeeTips": "Rabby 费用：0%",
         "sizeTips": "您交易的总价值或数量，由保证金和杠杆设定。",
         "liquidationPriceTips": "当您的保证金低于维持保证金水平时，交易所会自动以此价格平仓以防止进一步亏损。",
-        "margin": "保证金（孤立）",
+        "margin": "保证金（逐仓）",
         "free": "免费",
         "rabbyFee": "Rabby费用",
         "providerFee": "Hyperliquid手续费",
-        "marginCross": "保证金（交叉）"
+        "marginCross": "保证金（全仓）"
       },
       "action": {
         "long": "做多",
@@ -2807,16 +2806,16 @@
       "PerpsAddPositionPopup": {
         "addSize": "添加大小",
         "totalSize": "总大小",
-        "addToShort": "添加到短期",
-        "addToLong": "添加到 Long"
+        "addToShort": "添加到做空",
+        "addToLong": "添加到做多"
       },
       "needDepositFirst": "您需要先存入资金。",
       "PerpMarginModePopup": {
-        "isolatedTitle": "隔离保证金",
+        "isolatedTitle": "逐仓保证金",
         "cannotChangeMarginMode": "无法在持有头寸的情况下更改保证金模式",
-        "crossTitle": "交叉保证金",
+        "crossTitle": "全仓保证金",
         "isolatedDesc": "每个头寸使用自己的保证金。损失仅限于该头寸，但它更容易被清算。",
-        "crossDesc": "所有头寸共享相同的保证金。这降低了单个头寸被清算的机会，但在极端市场波动中，所有交叉保证金资金可能会全部亏损。"
+        "crossDesc": "所有头寸共享相同的保证金。这降低了单个头寸被清算的机会，但在极端市场波动中，所有全仓保证金资金可能会全部亏损。"
       }
     },
     "selectAccountSheetModal": {
@@ -2835,7 +2834,7 @@
       "availableCard": {
         "needSupply": "要借款，您需要提供资产作为抵押。",
         "canBorrow": "您可以根据提供的抵押品借款，最高可达借款上限。",
-        "isolated": "由于隔离模式，借贷能力和资产受到限制。",
+        "isolated": "由于逐仓模式，借贷能力和资产受到限制。",
         "emodeNoAssets": "我们无法找到与您的搜索相关的任何资产。请尝试使用不同的类别。",
         "emode": "某些资产在 E-Mode 中无法借用。退出 E-Mode 以访问所有资产。"
       },
@@ -2843,7 +2842,7 @@
         "headers": {
           "token": "代币",
           "myBorrows": "我的借款",
-          "mySupplies": "我的供应",
+          "mySupplies": "我的存款",
           "apy": "年化收益率",
           "token_tvl": "Token/TVL",
           "token_balance": "代币/余额",
@@ -2874,20 +2873,20 @@
         "repayWith": "使用还款与"
       },
       "supplyDetail": {
-        "actions": "供应",
-        "approveAndSupply": "批准与供应",
+        "actions": "存款",
+        "approveAndSupply": "批准与存款",
         "availableToBorrow": "可借款",
-        "supplyAPY": "供应 APY",
+        "supplyAPY": "存款 APY",
         "unavailable": "不可用",
         "isolatedTips": "您现有的借贷资产不受支持。",
         "collateralization": "抵押化",
-        "supplyBalance": "供应余额",
+        "supplyBalance": "存款余额",
         "enabled": "启用",
-        "supplied": "提供的"
+        "supplied": "已存款"
       },
       "withdrawDetail": {
         "actions": "提取",
-        "remainingSupply": "剩余供应"
+        "remainingSupply": "剩余存款"
       },
       "borrowDetail": {
         "actions": "借入",
@@ -2916,11 +2915,11 @@
       "supplyOverview": {
         "walletBalance": "钱包余额",
         "title": "供给详情",
-        "totalSupplied": "总供应量",
-        "availableToSupply": "可供供应",
-        "mySupply": "我的供应",
+        "totalSupplied": "总存款量",
+        "availableToSupply": "可供存款",
+        "mySupply": "我的存款",
         "almostCap": "该资产几乎达到了其借款上限。此市场中只剩下 {{available}} 可供借用。",
-        "reachCap": "该资产已达到其供应上限。该市场没有可供供应的资产。",
+        "reachCap": "该资产已达到其存款上限。该市场没有可供存款的资产。",
         "useAsCollateral": "作为抵押使用",
         "collateral": "抵押品"
       },
@@ -2950,8 +2949,8 @@
         "lqDesc": "当发生清算时，清算人会代表借款人偿还高达 50% 的未偿还借款金额。作为回报，他们可以以折扣购买抵押品，并将差额（清算罚金）作为奖励保留。",
         "isolatedTitle": "资产不能用作抵押品",
         "isolatedDesc": "该资产只能在独立模式下用作抵押品，在这种模式下，您无法提供其他资产作为借款抵押品。在独立模式下用作抵押品的资产只能借用到特定的债务上限。",
-        "isolatedSupplyDesc": "由于隔离模式，抵押品的使用受到限制。",
-        "globalIsolatedDesc": "在隔离模式下，您无法提供其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借入其他资产之前禁用 UNI 作为抵押。",
+        "isolatedSupplyDesc": "由于逐仓模式，抵押品的使用受到限制。",
+        "globalIsolatedDesc": "在逐仓模式下，您无法提供其他资产作为抵押。全球债务上限限制了逐仓资产的借贷能力。要退出逐仓模式，请在借入其他资产之前禁用 UNI 作为抵押。",
         "maxLTV": "最大 LTV 比率代表特定抵押品的最大借贷能力。例如，如果抵押品的 LTV 为 75%，用户可以针对每 1 个 ETH 的抵押品借入价值 0.75 的 ETH。"
       },
       "submitted": "提交成功",
@@ -2963,7 +2962,7 @@
       "borrowed": "借用",
       "hfTitle": "健康因子",
       "selectChain": "选择链",
-      "supplied": "提供",
+      "supplied": "已存款",
       "estNetApy": "估计净年化收益率",
       "toggleCollateralDetail": {
         "enable": "将 {{asset}} 作为抵押品启用",
@@ -2974,15 +2973,15 @@
       "toggleCollateralModal": {
         "closeTitle": "审查禁用",
         "riskToLiquidationText": "您不能将该货币切换为抵押模式，因为这将导致抵押品催缴。",
-        "exitIsolationModeTitle": "退出隔离模式",
-        "enableIsolationModeTitle": "启用隔离模式",
+        "exitIsolationModeTitle": "退出逐仓模式",
+        "enableIsolationModeTitle": "启用逐仓模式",
         "openTitle": "审核启用",
         "openDesc": "将此资产启用为抵押品可以增加您的借款能力和健康因子。不过，如果您的健康因子降到 1 以下，可能会被清算。",
         "closeDesc": "禁用此资产作为抵押物会影响您的借贷能力和健康因子。",
-        "enableIsolationModeDesc": "您正在进入隔离模式。在隔离模式下，您无法将其他资产作为抵押。全球债务上限限制了隔离资产的借贷能力。要退出隔离模式，请在借用其他资产之前禁用 CRV 作为抵押。",
-        "exitIsolationModeDesc": "您将退出隔离模式，其他代币现在可以用作抵押品。",
+        "enableIsolationModeDesc": "您正在进入逐仓模式。在逐仓模式下，您无法将其他资产作为抵押。全球债务上限限制了逐仓资产的借贷能力。要退出逐仓模式，请在借用其他资产之前禁用 CRV 作为抵押。",
+        "exitIsolationModeDesc": "您将退出逐仓模式，其他代币现在可以用作抵押品。",
         "toggleRiskTexts": {
-          "doNotHaveSuppliesInThisCurrency": "您在此货币中没有可用的供应。",
+          "doNotHaveSuppliesInThisCurrency": "您在此货币中没有可用的存款。",
           "zeroLTVWithdrawBlocked": "具有零 LTV ({{assets}}) 的资产必须被提取或禁用作为抵押才能执行此操作。",
           "canNotSwitchUsageAsCollateralMode": "您无法将此货币的使用切换为抵押模式，因为这会导致抵押品追加保证金。",
           "canNotUseThisCurrencyAsCollateral": "您无法将此货币用作抵押。"
@@ -3066,11 +3065,11 @@
         "desc": "如果其低于1.0，您的抵押品可能会被清算。"
       },
       "disableBorrowTip": {
-        "desc": "没有供应：要借款，您需要提供资产作为抵押。"
+        "desc": "没有存款：要借款，您需要提供资产作为抵押。"
       },
       "totalBorrowed": "总借款",
       "netApy": "净年收益率",
-      "totalSupplied": "总供应量",
+      "totalSupplied": "总存款量",
       "repayWithCollateral": {
         "action": {
           "title": "使用 {{collateral}} 还款"

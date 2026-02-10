@@ -2347,8 +2347,7 @@
       "clearBrowserData": "Browser-Daten löschen",
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
-      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
-      "transactionNotification": "Txn-Benachrichtigungen (Beta)"
+      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",

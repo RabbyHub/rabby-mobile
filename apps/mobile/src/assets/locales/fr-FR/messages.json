@@ -2030,8 +2030,7 @@
       "clearBrowserData": "Effacer les données du navigateur",
       "searchCurrency": "Rechercher une devise",
       "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
-      "currency": "Monnaie",
-      "transactionNotification": "Notifications de Txn (Beta)"
+      "currency": "Monnaie"
     },
     "settingModal": {
       "themeMode": {

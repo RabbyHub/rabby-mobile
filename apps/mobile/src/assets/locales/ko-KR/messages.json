@@ -2021,8 +2021,7 @@
       "clearBrowserData": "브라우저 데이터 삭제",
       "currency": "통화",
       "screenshotReportSwitch": "버그 보고를 위한 스크린샷",
-      "searchCurrency": "통화 검색",
-      "transactionNotification": "Txn 알림 (베타)"
+      "searchCurrency": "통화 검색"
     },
     "settingModal": {
       "themeMode": {

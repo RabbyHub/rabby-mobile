@@ -2282,8 +2282,7 @@
       "clearBrowserData": "Limpar dados do navegador",
       "currency": "Moeda",
       "searchCurrency": "Pesquisar Moeda",
-      "screenshotReportSwitch": "Captura de ecrã para reportar erro",
-      "transactionNotification": "Notificações de Txn (Beta)"
+      "screenshotReportSwitch": "Captura de ecrã para reportar erro"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {

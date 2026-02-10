@@ -2137,6 +2137,7 @@
       }
     },
     "setting": {
+      "__skip_translation": ["transactionNotification"],
       "screenTitle": "Settings",
       "enableWhitelist": "Enable whitelist for sending assets",
       "faceId": "Face ID",

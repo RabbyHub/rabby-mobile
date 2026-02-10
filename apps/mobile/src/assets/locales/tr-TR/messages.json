@@ -2086,8 +2086,7 @@
       "clearBrowserData": "Tarayıcı Verilerini Temizle",
       "currency": "Para Birimi",
       "searchCurrency": "Para Araştırması",
-      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
-      "transactionNotification": "Txn bildirimleri (Beta)"
+      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın"
     },
     "settingModal": {
       "themeMode": {

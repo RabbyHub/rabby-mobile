@@ -1844,8 +1844,7 @@
       "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt",
       "currency": "Tiền tệ",
       "searchCurrency": "Tìm kiếm Tiền tệ",
-      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
-      "transactionNotification": "Thông báo Txn (Beta)"
+      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
