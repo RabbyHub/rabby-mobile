@@ -47,6 +47,7 @@ import { PerpMarginModePopup } from './PerpMarginModePopup';
 import { useShallow } from 'zustand/shallow';
 import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { showToast } from '@/hooks/perps/showToast';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -466,6 +467,16 @@ export const PerpsOpenPositionPopup: React.FC<{
                 <TouchableOpacity
                   style={styles.marginModeButton}
                   onPress={() => {
+                    if (marketDataItem?.onlyIsolated) {
+                      showToast(
+                        t(
+                          'page.perpsDetail.PerpsOpenPositionPopup.onlyIsolated',
+                        ),
+                        'error',
+                      );
+                      return;
+                    }
+
                     handleOpenChangeMarginModePopup();
                   }}>
                   <Text style={styles.marginModeText}>
