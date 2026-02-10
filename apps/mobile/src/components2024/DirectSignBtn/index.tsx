@@ -81,9 +81,8 @@ export const DirectSignBtn = ({
     }
   }, [_onCancel]);
 
-  const disabled = showRiskTips
-    ? !riskChecked || props.disabled
-    : props.disabled;
+  const disabled = (showRiskTips && !riskChecked) || props.disabled;
+
   return (
     <View style={wrapperStyle}>
       {showRiskTips ? (
