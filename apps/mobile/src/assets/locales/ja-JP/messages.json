@@ -2073,8 +2073,7 @@
       "clearBrowserData": "ブラウザデータをクリア",
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
-      "screenshotReportSwitch": "バグを報告するためのスクリーンショット",
-      "transactionNotification": "Txn通知（ベータ）"
+      "screenshotReportSwitch": "バグを報告するためのスクリーンショット"
     },
     "settingModal": {
       "themeMode": {

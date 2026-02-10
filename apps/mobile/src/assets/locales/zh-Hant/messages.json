@@ -2179,8 +2179,7 @@
       "clearBrowserData": "清除瀏覽器數據",
       "searchCurrency": "搜尋貨幣",
       "currency": "貨幣",
-      "screenshotReportSwitch": "截圖以報告錯誤",
-      "transactionNotification": "Txn 通知 (Beta)"
+      "screenshotReportSwitch": "截圖以報告錯誤"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",

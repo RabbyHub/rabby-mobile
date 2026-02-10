@@ -2278,8 +2278,7 @@
       "clearBrowserData": "ล้างข้อมูลเบราว์เซอร์",
       "screenshotReportSwitch": "ถ่ายภาพหน้าจอเพื่อติดตามข้อบกพร่อง",
       "currency": "สกุลเงิน",
-      "searchCurrency": "ค้นหาเงินตรา",
-      "transactionNotification": "การแจ้งเตือนTxn (เบต้า)"
+      "searchCurrency": "ค้นหาเงินตรา"
     },
     "settingModal": {
       "themeMode": {
