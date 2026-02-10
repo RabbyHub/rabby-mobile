@@ -5,6 +5,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
+import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
@@ -31,6 +32,7 @@ export const PerpsWithdrawPopup: React.FC<{
     getStyle: getStyle,
   });
 
+  const { availableBalance } = usePerpsAccount();
   const { t } = useTranslation();
   const { showTipsPopup } = useTipsPopup();
 
@@ -64,7 +66,7 @@ export const PerpsWithdrawPopup: React.FC<{
       };
     }
 
-    if (amountValue > Number(accountSummary?.withdrawable || 0)) {
+    if (amountValue > Number(availableBalance || 0)) {
       return {
         isValid: false,
         error: 'insufficient_balance',
@@ -80,7 +82,7 @@ export const PerpsWithdrawPopup: React.FC<{
     }
 
     return { isValid: true, error: null };
-  }, [accountSummary?.withdrawable, amount, t]);
+  }, [availableBalance, amount, t]);
 
   useEffect(() => {
     if (visible) {
@@ -123,7 +125,7 @@ export const PerpsWithdrawPopup: React.FC<{
               </Text>
               <Text style={styles.formItemDesc}>
                 {formatPerpsUsdValue(
-                  accountSummary?.withdrawable || 0,
+                  availableBalance || 0,
                   BigNumber.ROUND_DOWN,
                 )}{' '}
                 {t('page.perps.PerpsWithdrawPopup.available')}
@@ -149,9 +151,7 @@ export const PerpsWithdrawPopup: React.FC<{
                     setAmount(
                       Number(
                         (
-                          Math.floor(
-                            Number(accountSummary?.withdrawable || 0) * 100,
-                          ) / 100
+                          Math.floor(Number(availableBalance || 0) * 100) / 100
                         ).toFixed(2),
                       ).toString(),
                     );
