@@ -328,7 +328,7 @@ function LendingHistory(): JSX.Element {
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
-      <View style={{ paddingTop: 0, position: 'relative' }}>
+      <View style={{ paddingTop: 0, flex: 1, position: 'relative' }}>
         <>
           <HistoryList
             ref={historyListRef}
