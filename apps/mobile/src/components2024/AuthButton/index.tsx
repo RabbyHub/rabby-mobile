@@ -53,30 +53,27 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
     isProcessingRef.current = true;
 
     onBeforeAuth?.();
-    if (!isBiometricsEnabled) {
-      AuthenticationModal2024.show({
-        title: authTitle || t('page.addressDetail.add-to-whitelist'),
-        authType: ['password'],
-        onFinished: () => {
-          isProcessingRef.current = false;
-          onFinished?.();
-        },
-        onCancel: () => {
-          isProcessingRef.current = false;
-          onCancel?.();
-        },
-        validationHandler(password) {
-          return apisLock.throwErrorIfInvalidPwd(password);
-        },
-      });
-    }
+
+    const finish = () => {
+      isProcessingRef.current = false;
+      onFinished?.();
+    };
+
+    const cancel = () => {
+      isProcessingRef.current = false;
+      onCancel?.();
+    };
 
     try {
+      if (!isBiometricsEnabled) {
+        throw new Error('Biometrics Disabled');
+      }
+
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
           await validationHandler?.(password);
-          onFinished?.();
+          finish();
         },
       });
     } catch (error: any) {
@@ -86,18 +83,12 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
       AuthenticationModal2024.show({
         title: authTitle || t('page.addressDetail.add-to-whitelist'),
         authType: ['password'],
-        onFinished: () => {
-          onFinished?.();
-        },
-        onCancel: () => {
-          onCancel?.();
-        },
+        onFinished: finish,
+        onCancel: cancel,
         validationHandler(password) {
           return apisLock.throwErrorIfInvalidPwd(password);
         },
       });
-    } finally {
-      isProcessingRef.current = false;
     }
   }, [onBeforeAuth, isBiometricsEnabled, authTitle, t, onFinished, onCancel]);
 
