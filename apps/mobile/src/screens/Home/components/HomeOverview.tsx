@@ -20,7 +20,11 @@ import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
 import RcIconMemeCC from '@/assets2024/icons/home/IconMemeCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
@@ -30,6 +34,8 @@ import React, {
   useState,
 } from 'react';
 import {
+  ActivityIndicator,
+  AppState,
   Dimensions,
   ScrollView,
   StyleSheet,
@@ -44,12 +50,15 @@ import Animated, {
   clamp,
   Extrapolate,
   interpolate,
+  makeMutable,
   runOnJS,
+  runOnUI,
   scrollTo,
   useAnimatedReaction,
   useAnimatedRef,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -125,7 +134,10 @@ import {
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
-import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import {
+  SharedValue,
+  WorkletFunction,
+} from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
@@ -133,6 +145,15 @@ import { PredictBadge } from './PredicBadge';
 import { Top3MemeBadge } from '@/screens/Meme/components/Top3MemeBadge';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
+import { useMemoizedFn } from 'ahooks';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { sleep } from '@/utils/async';
+import balanceStore from '@/store/balance';
+import { getTop10MyAccounts } from '@/core/apis/account';
+import { isEqual } from 'lodash';
+
+const AnimatedActivityIndicator =
+  Animated.createAnimatedComponent(ActivityIndicator);
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -176,6 +197,14 @@ function getIsAtBottom(scrollY: number, translateY = 0) {
     restScrollOffset,
   };
 }
+
+// const pullDistance = makeMutable(0);
+// const pulldownRefreshHeaderHeight =
+//   HOME_TOP_HEADER_SIZES.scrollableListTopOffset;
+const pulldownRefreshHeaderHeight = Math.max(
+  HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+  64,
+);
 
 const scrHeight = Dimensions.get('screen').height;
 function hasOverThreshold() {
@@ -273,9 +302,20 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
       //   event.nativeEvent,
       // );
     }, []),
-    onScroll: useCallback<
-      ScrollHandlerProps['onScroll'] & object
-    >(() => {}, []),
+    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(event => {
+      // console.debug(
+      //   '[onScrollHandlers] onScroll:: event.nativeEvent',
+      //   event.nativeEvent,
+      // );
+    }, []),
+    onAnimatedScrollEndDrag: useCallback<
+      ScrollHandlerProps['onAnimatedScrollEndDrag'] & object
+    >(event => {
+      // console.debug(
+      //   '[onScrollHandlers] onAnimatedScrollEndDrag:: event.nativeEvent',
+      //   event.nativeEvent,
+      // );
+    }, []),
   };
 
   const startValues = useSharedValue({
@@ -285,7 +325,7 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
 
   const pullThreshold = getPullThreshold(scrHeight);
   const activeY = Math.min(8, Math.round(Math.floor(pullThreshold * 0.1)));
-  const panGestureRef = useRef(
+  const panUpGestureRef = useRef(
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
       .activeOffsetY(-activeY)
@@ -300,9 +340,9 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
       })
       .onUpdate(event => {
         const { isAtBottom } = getIsAtBottom(scrollY.value, translateY.value);
+        const restScrollOffset = startValues.value.restScrollOffset;
 
-        translateY.value =
-          event.translationY + startValues.value.restScrollOffset;
+        translateY.value = event.translationY + restScrollOffset;
         if (isAtBottom) {
           scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
         } else {
@@ -334,32 +374,148 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
       }),
   );
 
-  const mainStyle = useAnimatedStyle(() => {
-    return {
-      // overflow: 'hidden',
-      transform: [
-        {
-          translateY: Math.min(0, translateY.value),
-        },
-      ],
-    };
-  });
-
-  const tabScrollViewBounces = IS_IOS && iosBounces;
-
   return {
-    tabScrollViewBounces,
-    panGestureRef,
+    panUpGestureRef,
 
     onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
     scrollableEnabled,
-    mainStyle,
   };
 };
 
+const setPulldownRefreshStage = (input: {
+  state: 'refreshing' | 'finished';
+  svIsRefreshing: SharedValue<boolean>;
+  pullDistance: SharedValue<number>;
+}) => {
+  'worklet';
+  switch (input.state) {
+    case 'refreshing': {
+      input.svIsRefreshing.value = true;
+      input.pullDistance.value = withTiming(pulldownRefreshHeaderHeight);
+      break;
+    }
+    case 'finished': {
+      input.svIsRefreshing.value = false;
+      input.pullDistance.value = withTiming(0);
+      break;
+    }
+  }
+};
+
+const noopOnUI = () => {
+  'worklet';
+};
+function useHomePullRefresh({
+  onRefreshOnJs: prop_onRefreshOnJs,
+}: {
+  onRefreshOnJs?: (ctx?: {}) => Promise<void>;
+} = {}) {
+  const scrollY = useCurrentTabScrollY();
+
+  const pullDistance = useSharedValue(0);
+  const svIsRefreshing = useSharedValue(false);
+
+  const onRefreshOnJs = useMemoizedFn(async () => {
+    await prop_onRefreshOnJs?.({});
+  });
+
+  useEffect(() => {
+    const remove = balanceStore.subscribe(async (cur, prev) => {
+      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) return;
+      const { top10Addresses } = await getTop10MyAccounts();
+      const isTop10BalanceLoading = cur.getIsTop10BalanceLoading(
+        top10Addresses,
+        cur.isLoadingByAddress,
+      ).isTop10BalanceLoading;
+
+      runOnUI(setPulldownRefreshStage)({
+        state: isTop10BalanceLoading ? 'refreshing' : 'finished',
+        svIsRefreshing,
+        pullDistance,
+      });
+    });
+
+    return () => {
+      remove();
+    };
+  }, [svIsRefreshing, pullDistance]);
+
+  const pullDownGestureRef = useRef(
+    Gesture.Pan()
+      .shouldCancelWhenOutside(false)
+      .enabled(IS_IOS)
+      .maxPointers(1)
+      .onStart(() => {
+        // pullDistance.value = 0;
+      })
+      .onUpdate(event => {
+        pullDistance.value = Math.max(0, event.translationY);
+        if (pullDistance.value >= pulldownRefreshHeaderHeight) {
+          runOnJS(triggerImpact)();
+        }
+      })
+      .onEnd(event => {
+        if (pullDistance.value >= pulldownRefreshHeaderHeight) {
+          svIsRefreshing.value = true;
+          runOnJS(onRefreshOnJs)();
+        } else {
+          setPulldownRefreshStage({
+            state: 'finished',
+            svIsRefreshing,
+            pullDistance,
+          });
+        }
+      }),
+  );
+
+  const scrollTopStyle = useAnimatedStyle(() => {
+    return {
+      height: interpolate(
+        pullDistance.value,
+        [0, pulldownRefreshHeaderHeight],
+        [0, pulldownRefreshHeaderHeight],
+        Extrapolate.CLAMP,
+      ),
+      opacity: interpolate(
+        pullDistance.value,
+        [0, pulldownRefreshHeaderHeight],
+        [0, 1],
+        Extrapolate.CLAMP,
+      ),
+    };
+  });
+
+  // rotate deg based on pullDistance, max rotate 360deg
+  const animatedIndicatorStyle = useAnimatedStyle(() => {
+    const rotate = interpolate(
+      pullDistance.value,
+      [0, pulldownRefreshHeaderHeight],
+      [0, 360],
+      Extrapolate.CLAMP,
+    );
+    return {
+      transform: [{ rotate: `${rotate}deg` }],
+    };
+  });
+
+  const isRefreshing = useValueFromSharedValue(svIsRefreshing);
+
+  return {
+    isRefreshing,
+    animatedIndicatorStyle,
+    pullDownGestureRef,
+    scrollTopStyle,
+  };
+}
+
+const HEADER_MT_OFFSET = HOME_TOP_HEADER_SIZES.headerHeight;
+
 const getStyle = createGetStyles2024(
+  {
+    reanimatedStyles: {},
+  },
   ({ colors2024, isLight, safeAreaInsets }) => ({
     main: {
       height: '100%',
@@ -380,12 +536,6 @@ const getStyle = createGetStyles2024(
       //   backgroundColor: colors2024['green-light-2'],
       // }),
     },
-    scrollTopPlaceholder: {
-      height: 0,
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['green-light-2'],
-      // }),
-    },
     scrollContainer: {
       flexGrow: 1,
       minHeight: '100%',
@@ -397,8 +547,20 @@ const getStyle = createGetStyles2024(
       paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
       // ...makeDebugBorder('orange'),
     },
-    scrollViewInner: {
+    scrollTopPlaceholder: {
+      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2 - pulldownRefreshHeaderHeight,
       marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2,
+      height: 0,
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: colors2024['green-light-2'],
+      // }),
+      // ...makeDebugBorder(),
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    scrollViewInner: {
+      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+      marginTop: 0,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
@@ -505,9 +667,14 @@ const getStyle = createGetStyles2024(
 export const HomeOverview = React.memo(() => {
   const navigation = useRabbyAppNavigation();
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, reanimatedStyles, colors2024 } = useTheme2024({
     getStyle,
   });
+  // const rStyles = {
+  //   scrollTopPlaceholder: useAnimatedStyle(
+  //     reanimatedStyles.scrollTopPlaceholder,
+  //   ),
+  // };
   const { pendingTxCount, historyCount } = useHomeHistoryStore();
 
   const { width } = useWindowDimensions();
@@ -716,11 +883,11 @@ export const HomeOverview = React.memo(() => {
     }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
   );
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     if (!couldDoRefresh()) return;
 
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
-    Promise.all([
+    return Promise.all([
       // force update balance from server api
       triggerUpdate(true).then(balanceAccounts => {
         refresh24hAssets({ force: true, balanceAccounts });
@@ -921,73 +1088,135 @@ export const HomeOverview = React.memo(() => {
   );
 
   const {
-    tabScrollViewBounces,
-    mainStyle,
     onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
     scrollableEnabled,
-    panGestureRef,
+    panUpGestureRef,
   } = useHomeAnimation<RNGHScrollView>();
+
+  const {
+    isRefreshing,
+    pullDownGestureRef,
+    animatedIndicatorStyle,
+    scrollTopStyle,
+  } = useHomePullRefresh({
+    onRefreshOnJs: async ctx => {
+      'worklet';
+      await Promise.race([onRefresh(), sleep(3000)]);
+    },
+  });
+
+  const mainStyle = useAnimatedStyle(() => {
+    return {
+      // overflow: 'hidden',
+      transform: [
+        {
+          // translateY: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2, translateY.value),
+          translateY: Math.min(0, translateY.value),
+        },
+      ],
+    };
+  });
 
   useRendererDetect({ name: 'MultiAddressHome::HomeOverview' });
 
   return (
     <View style={styles.pullUpWrapper}>
       <Animated.View style={[styles.main, mainStyle]}>
-        <GestureDetector gesture={panGestureRef.current}>
-          <TabsScrollView
-            ref={scrollableRef}
-            showsVerticalScrollIndicator={false}
-            style={[styles.scroll, { flex: undefined }]}
-            contentContainerStyle={[styles.scrollContainer]}
-            bounces={tabScrollViewBounces}
-            overScrollMode={'never'}
-            scrollEventThrottle={16}
-            onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
-            onLayout={tabsScrollHandlers.onLayout}
-            onAnimatedScrollBeginDrag={
-              onScrollHandlers.onAnimatedScrollBeginDrag
-            }
-            onScroll={onScrollHandlers.onScroll}
-            scrollableEnabled={scrollableEnabled}
-            simultaneousHandlers={[panGestureRef]}
-            refreshControl={
-              <RNGHRefreshControl refreshing={false} onRefresh={onRefresh} />
-            }>
-            <View style={styles.scrollTopPlaceholder} />
-            <View style={styles.scrollViewInner}>
-              <MultiAddressHomeHeader onRefresh={onRefresh} />
-
-              <HomeCenterArea />
-              <View style={styles.grid}>
-                <View style={styles.gridItemsWrap}>
-                  {MENU_ARR.map((el, index) => {
-                    return (
-                      <HomeMenuItem
-                        key={index}
-                        el={el}
-                        itemWidth={itemWidth}
-                        onPress={handleClickMenu}
-                        renderBadge={generateCustomBadgeIcon}
-                      />
-                    );
-                  })}
-                </View>
-                <BrowserSearchEntry />
-                <View
-                  style={styles.swipeUpHint}
-                  onLayout={swipeUpViewHandlers.onLayout}>
-                  <RcIconDoubleArrowCC
-                    color={colors2024['neutral-secondary']}
+        <GestureDetector gesture={pullDownGestureRef.current}>
+          <GestureDetector gesture={panUpGestureRef.current}>
+            <TabsScrollView
+              ref={scrollableRef}
+              showsVerticalScrollIndicator={false}
+              style={[styles.scroll, { flex: undefined }]}
+              contentContainerStyle={[styles.scrollContainer]}
+              bounces={false}
+              overScrollMode={'never'}
+              scrollEventThrottle={16}
+              onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
+              onLayout={tabsScrollHandlers.onLayout}
+              onAnimatedScrollBeginDrag={
+                onScrollHandlers.onAnimatedScrollBeginDrag
+              }
+              onAnimatedScrollEndDrag={onScrollHandlers.onAnimatedScrollEndDrag}
+              onScroll={onScrollHandlers.onScroll}
+              scrollableEnabled={scrollableEnabled}
+              simultaneousHandlers={[panUpGestureRef, pullDownGestureRef]}
+              {...(IS_ANDROID && {
+                refreshControl: (
+                  <RNGHRefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={onRefresh}
                   />
-                  <Text style={styles.swipeUpHintText}>
-                    {t('page.home.swipeUp.desc')}
-                  </Text>
+                ),
+              })}>
+              <Animated.View
+                style={[styles.scrollTopPlaceholder, scrollTopStyle]}>
+                <AnimatedActivityIndicator
+                  animating={isRefreshing}
+                  hidesWhenStopped={false}
+                  style={animatedIndicatorStyle}
+                />
+              </Animated.View>
+              <Animated.View style={[styles.scrollViewInner]}>
+                <MultiAddressHomeHeader onRefresh={onRefresh} />
+
+                <HomeCenterArea />
+                <View style={styles.grid}>
+                  <View style={styles.gridItemsWrap}>
+                    {MENU_ARR.map((el, index) => {
+                      return (
+                        <FastTouchable
+                          style={StyleSheet.flatten([
+                            styles.gridItem,
+                            { width: itemWidth },
+                          ])}
+                          key={index}
+                          onPress={() => {
+                            console.debug('[perf] touched menu', el.key);
+                            requestAnimationFrame(() => {
+                              handleClickMenu(el.key);
+                            });
+                            matomoRequestEvent({
+                              category: 'Click_Services',
+                              action: `Click_${el.key}`,
+                            });
+                          }}>
+                          <View style={styles.badgeWrapper}>
+                            <View style={styles.iconWrapper}>
+                              <el.icon
+                                width={28}
+                                height={28}
+                                color={
+                                  el.color || colors2024['brand-default-icon']
+                                }
+                              />
+                            </View>
+                            <View style={styles.rightBadgeWrapper}>
+                              {generateCustomBadgeIcon(el)}
+                            </View>
+                          </View>
+                          <Text style={styles.gridText}>{el.title}</Text>
+                        </FastTouchable>
+                      );
+                    })}
+                  </View>
+                  <BrowserSearchEntry />
+                  <View
+                    style={styles.swipeUpHint}
+                    onLayout={swipeUpViewHandlers.onLayout}>
+                    <RcIconDoubleArrowCC
+                      color={colors2024['neutral-secondary']}
+                    />
+                    <Text style={styles.swipeUpHintText}>
+                      {t('page.home.swipeUp.desc')}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </View>
-          </TabsScrollView>
+              </Animated.View>
+            </TabsScrollView>
+          </GestureDetector>
         </GestureDetector>
       </Animated.View>
       <HomeDappDrawer onScrollBack={uiOnScrollBack} />

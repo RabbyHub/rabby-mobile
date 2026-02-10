@@ -90,7 +90,11 @@ export function TabsTopHeader({
   const { currency } = useCurrency();
   const { myTop10Addresses } = useAccountInfo();
   const balanceMap = balanceStore(s => s.balanceMap);
-  const isLoadingByAddress = balanceStore(s => s.isLoadingByAddress);
+  const isTop10BalanceLoading = balanceStore(s => {
+    return s.getIsTop10BalanceLoading(myTop10Addresses, s.isLoadingByAddress)
+      .isTop10BalanceLoading;
+  });
+
   const totalBalance = useMemo(() => {
     if (!myTop10Addresses.length) {
       return 0;
@@ -100,15 +104,6 @@ export function TabsTopHeader({
       return acc + (balance?.totalBalance || 0);
     }, 0);
   }, [balanceMap, myTop10Addresses]);
-
-  const isTop10BalanceLoading = useMemo(() => {
-    if (!myTop10Addresses.length) {
-      return false;
-    }
-    return myTop10Addresses.some(
-      address => isLoadingByAddress[address.toLowerCase()],
-    );
-  }, [isLoadingByAddress, myTop10Addresses]);
 
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
