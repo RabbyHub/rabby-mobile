@@ -489,11 +489,11 @@ export const PerpsPosition: React.FC<{
               onPress={() => {
                 showTipsPopup({
                   title:
-                    Number(positionData?.fundingPayments || 0) > 0
+                    Number(positionData?.fundingPayments || 0) < 0
                       ? t('page.perpsDetail.PerpsPosition.fundingGains')
                       : t('page.perpsDetail.PerpsPosition.fundingPayments'),
                   desc:
-                    Number(positionData?.fundingPayments || 0) > 0
+                    Number(positionData?.fundingPayments || 0) < 0
                       ? t('page.perpsDetail.PerpsPosition.fundingGainsTips')
                       : t('page.perpsDetail.PerpsPosition.fundingPaymentsTips'),
                   buttonType: 'hyperliquid',
@@ -501,7 +501,7 @@ export const PerpsPosition: React.FC<{
               }}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {Number(positionData?.fundingPayments || 0) > 0
+                  {Number(positionData?.fundingPayments || 0) < 0
                     ? t('page.perpsDetail.PerpsPosition.fundingGains')
                     : t('page.perpsDetail.PerpsPosition.fundingPayments')}
                 </Text>
@@ -517,7 +517,7 @@ export const PerpsPosition: React.FC<{
                 {Number(positionData?.fundingPayments || 0) === 0
                   ? ''
                   : Number(positionData?.fundingPayments || 0) > 0
-                  ? '+'
+                  ? ''
                   : '-'}
                 ${Math.abs(Number(positionData?.fundingPayments || 0))}
               </Text>

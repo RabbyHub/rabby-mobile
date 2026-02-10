@@ -80,7 +80,6 @@ export const PerpsOriginScreen = ({
 
   const {
     positionAndOpenOrders,
-    accountSummary,
     currentPerpsAccount,
     isLogin,
     isInitialized,
@@ -327,7 +326,6 @@ export const PerpsOriginScreen = ({
         <PerpsAccountCard
           localLoadingHistory={localLoadingHistory}
           isLogin={isLogin}
-          accountSummary={accountSummary}
           positionAndOpenOrders={positionAndOpenOrders}
         />
         <PerpsPositionSection
@@ -351,7 +349,6 @@ export const PerpsOriginScreen = ({
   }, [
     localLoadingHistory,
     isLogin,
-    accountSummary,
     positionAndOpenOrders,
     marketDataMap,
     handleClosePosition,
@@ -537,7 +534,6 @@ export const PerpsOriginScreen = ({
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={popupState.isShowDepositPopup}
-        accountSummary={accountSummary}
         showSelectTokenPopup={() => {
           setPopupState(prev => ({
             ...prev,
@@ -621,7 +617,6 @@ export const PerpsOriginScreen = ({
       />
       <PerpsWithdrawPopup
         visible={popupState.isShowWithdrawPopup}
-        accountSummary={accountSummary}
         onWithdraw={async v => {
           await handleWithdraw(v);
           setPopupState(prev => ({

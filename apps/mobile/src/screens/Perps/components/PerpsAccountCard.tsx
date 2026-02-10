@@ -16,18 +16,13 @@ import { Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { PerpHeader } from './PerpHeader';
+import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 
 export const PerpsAccountCard: React.FC<{
   isLogin: boolean;
-  accountSummary?: AccountSummary | null;
   positionAndOpenOrders?: PositionAndOpenOrder[] | null;
   localLoadingHistory: AccountHistoryItem[];
-}> = ({
-  isLogin,
-  accountSummary,
-  positionAndOpenOrders,
-  localLoadingHistory,
-}) => {
+}> = ({ isLogin, positionAndOpenOrders, localLoadingHistory }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [popupState, setPopupState] = usePerpsPopupState();
@@ -40,9 +35,11 @@ export const PerpsAccountCard: React.FC<{
     );
   }, [positionAndOpenOrders]);
 
+  const { accountValue, availableBalance } = usePerpsAccount();
+
   const withdrawDisabled = useMemo(
-    () => !Number(accountSummary?.withdrawable || 0),
-    [accountSummary?.withdrawable],
+    () => !Number(availableBalance || 0),
+    [availableBalance],
   );
 
   if (isLogin) {
@@ -57,7 +54,7 @@ export const PerpsAccountCard: React.FC<{
             <RcIconPerps style={styles.relativeIcon} />
             <View style={styles.balanceCardContentLeft}>
               <Text style={styles.balance}>
-                {formatUsdValue(Number(accountSummary?.accountValue || 0))}
+                {formatUsdValue(Number(accountValue || 0))}
               </Text>
               {positionAndOpenOrders?.length ? (
                 <Text
@@ -72,7 +69,7 @@ export const PerpsAccountCard: React.FC<{
             </View>
             <Text style={styles.availableBalance}>
               {t('page.perps.PerpsCard.available')}:{' '}
-              {formatUsdValue(Number(accountSummary?.withdrawable))}
+              {formatUsdValue(Number(availableBalance))}
             </Text>
           </View>
           <View style={styles.balanceCardBtns}>

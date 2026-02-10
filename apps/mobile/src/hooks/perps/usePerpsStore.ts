@@ -7,6 +7,7 @@ import {
   ClearinghouseState,
   MarginSummary,
   OpenOrder,
+  UserAbstractionResp,
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
 // import { ApproveSignatures } from '@/background/service/perps';
@@ -19,6 +20,7 @@ import {
   formatAllDexsClearinghouseState,
   formatMarkData,
   formatPositionPnl,
+  formatSpotState,
 } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
@@ -56,6 +58,7 @@ export interface MarketData {
   maxUsdValueSize: string;
   szDecimals: number;
   pxDecimals: number;
+  onlyIsolated?: boolean;
   dayBaseVlm: string;
   dayNtlVlm: string;
   funding: string;
@@ -82,8 +85,12 @@ export type AllDexsClearinghouseState = [string, ClearinghouseState][];
 
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
-  // accountSummary: AccountSummary | null;
   currentClearinghouseState: ClearinghouseState | null;
+  spotState: {
+    accountValue: string;
+    availableToTrade: string;
+  };
+  userAbstraction: UserAbstractionResp;
   openOrders: OpenOrder[];
   currentPerpsAccount: Account | null;
   clearinghouseStateMap: Record<string, ClearinghouseState | null>;
@@ -124,6 +131,11 @@ export const initialState: PerpsState = {
   openOrders: [],
   currentClearinghouseState: null,
   isFetchAllDone: false,
+  spotState: {
+    accountValue: '0',
+    availableToTrade: '0',
+  },
+  userAbstraction: UserAbstractionResp.default,
   hasPermission: true,
   perpFee: 0.00045,
   currentPerpsAccount: null,
@@ -205,6 +217,12 @@ const fetchPerpPermission = async (address: string) => {
 
   setHasPermission(has_permission);
   // setHasPermission(true);
+};
+
+const fetchUserAbstraction = async (address: string) => {
+  const sdk = apisPerps.getPerpsSDK();
+  const userAbstraction = await sdk.info.getUserAbstraction(address);
+  setPerpsState(prev => ({ ...prev, userAbstraction: userAbstraction }));
 };
 
 const setIsFetchAllDone = (payload: boolean) => {
@@ -412,6 +430,7 @@ const resetAccountState = () => {
     // positionAndOpenOrders: [],
     currentPerpsAccount: null,
     isLogin: false,
+    userAbstraction: UserAbstractionResp.default,
     userAccountHistory: [],
     localLoadingHistory: [],
     userFills: [],
@@ -468,27 +487,6 @@ const addUserFills = (payload: {
 //       positionAndOpenOrders,
 //     };
 //   });
-// };
-
-// const setPositionAndOpenOrders = (
-//   clearinghouseState: ClearinghouseState,
-//   openOrders: OpenOrder[],
-// ) => {
-//   setPerpsState(prev => ({
-//     ...prev,
-//     accountSummary: {
-//       ...clearinghouseState.marginSummary,
-//       withdrawable: clearinghouseState.withdrawable,
-//     },
-//     currentClearinghouseState: clearinghouseState,
-//     positionAndOpenOrders: clearinghouseState.assetPositions.map(position => ({
-//       ...position,
-//       openOrders: openOrders.filter(
-//         order => order.coin === position.position.coin,
-//       ),
-//     })),
-//     homePositionPnl: formatPositionPnl(clearinghouseState),
-//   }));
 // };
 
 const updateMarketData = (payload: [string, AssetCtx[]][]) => {
@@ -553,6 +551,19 @@ const subscribeToUserData = (account: Account) => {
       }));
     });
 
+  const { unsubscribe: unsubscribeSpotState } = sdk.ws.subscribeToSpotState(
+    data => {
+      const { spotState, user } = data;
+      if (!isSameAddress(user, address) || !spotState) {
+        return;
+      }
+      setPerpsState(prev => ({
+        ...prev,
+        spotState: formatSpotState(spotState),
+      }));
+    },
+  );
+
   const { unsubscribe: unsubscribeOpenOrders } = sdk.ws.subscribeToOpenOrders(
     data => {
       const { orders, user } = data;
@@ -612,6 +623,7 @@ const subscribeToUserData = (account: Account) => {
       ...prev,
       // unsubscribeWebData2,
       unsubscribeClearinghouseState,
+      unsubscribeSpotState,
       unsubscribeAllDexsAssetCtxs,
       unsubscribeOpenOrders,
       unsubscribeFills,
@@ -657,34 +669,6 @@ export const usePerpsStore = () => {
   const setUserFills = useMemoizedFn((payload: WsFill[]) => {
     setPerpsState(prev => ({ ...prev, userFills: payload }));
   });
-
-  // const updatePositionsWithClearinghouse = useMemoizedFn(
-  //   (payload: ClearinghouseState) => {
-  //     setPerpsState(prev => {
-  //       const openOrders = prev.positionAndOpenOrders.flatMap(
-  //         order => order.openOrders,
-  //       );
-
-  //       const positionAndOpenOrders = payload.assetPositions.map(position => ({
-  //         ...position,
-  //         openOrders: openOrders.filter(
-  //           order => order.coin === position.position.coin,
-  //         ),
-  //       }));
-
-  //       return {
-  //         ...prev,
-  //         accountSummary: {
-  //           ...payload.marginSummary,
-  //           withdrawable: payload.withdrawable,
-  //         },
-  //         currentClearinghouseState: payload,
-  //         positionAndOpenOrders,
-  //         homePositionPnl: formatPositionPnl(payload),
-  //       };
-  //     });
-  //   },
-  // );
 
   const updateUserAccountHistory = useMemoizedFn(
     (payload: { newHistoryList: AccountHistoryItem[] }) => {
@@ -778,9 +762,15 @@ export const usePerpsStore = () => {
   const loginPerpsAccount = useMemoizedFn(async (account: Account) => {
     apisPerps.setPerpsCurrentAccount(account);
     setCurrentPerpsAccount(account);
-    await refreshData();
+    refreshData();
     subscribeToUserData(account);
     fetchPerpPermission(account.address);
+    setPerpsState(prev => ({
+      ...prev,
+      userAbstraction: UserAbstractionResp.default,
+    }));
+    fetchUserAbstraction(account.address);
+
     setTimeout(() => {
       fetchPerpFee();
     }, 1000);

@@ -46,6 +46,7 @@ import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { PerpMarginModePopup } from './PerpMarginModePopup';
 import { useShallow } from 'zustand/shallow';
 import { PERPS_EXCHANGE_FEE_NUMBER } from '@/constant/perps';
+import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -108,18 +109,11 @@ export const PerpsOpenPositionPopup: React.FC<{
     getStyle: getStyle,
   });
 
-  const { currentClearinghouseState } = perpsStore(
-    useShallow(s => ({
-      currentClearinghouseState: s.currentClearinghouseState,
-    })),
-  );
+  const { accountValue, crossMaintenanceMarginUsed } = usePerpsAccount();
 
   const crossMargin = React.useMemo(() => {
-    return (
-      Number(currentClearinghouseState?.crossMarginSummary?.accountValue || 0) -
-      Number(currentClearinghouseState?.crossMaintenanceMarginUsed || 0)
-    );
-  }, [currentClearinghouseState]);
+    return Number(accountValue) - Number(crossMaintenanceMarginUsed || 0);
+  }, [accountValue, crossMaintenanceMarginUsed]);
 
   const { t } = useTranslation();
   const [isReviewMode, setIsReviewMode] = React.useState(false);

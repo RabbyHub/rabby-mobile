@@ -61,6 +61,7 @@ import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
+import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -84,11 +85,10 @@ export const PerpsMarketDetailScreen = () => {
   const {
     isInitialized,
     positionAndOpenOrders,
-    accountSummary,
     marketDataMap,
     perpFee,
     marketData,
-    hasPermission,
+    // hasPermission,
     currentPerpsAccount,
     isLogin,
     userFills,
@@ -98,7 +98,7 @@ export const PerpsMarketDetailScreen = () => {
 
     handleDeleteAgent,
   } = usePerpsState();
-  // const hasPermission = true;
+  const hasPermission = true;
   const [isShowModal, setIsShowModal] = useState(false);
   const [amountVisible, setAmountVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useSelectedToken();
@@ -241,12 +241,11 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
+  const { accountValue, availableBalance } = usePerpsAccount();
+
   const needDepositFirst = useMemo(() => {
-    return (
-      Number(accountSummary?.accountValue || 0) === 0 &&
-      Number(accountSummary?.withdrawable || 0) === 0
-    );
-  }, [accountSummary]);
+    return Number(accountValue) === 0 && Number(availableBalance) === 0;
+  }, [accountValue, availableBalance]);
 
   const accountNeedApprove = useMemo(() => {
     return accountNeedApproveAgent || accountNeedApproveBuilderFee;
@@ -303,7 +302,6 @@ export const PerpsMarketDetailScreen = () => {
   }, [subscribeActiveAssetCtx, coin]);
 
   // Available balance for trading
-  const availableBalance = Number(accountSummary?.withdrawable || 0);
 
   const markPrice = useMemo(() => {
     return Number(activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0);
@@ -504,7 +502,6 @@ export const PerpsMarketDetailScreen = () => {
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={amountVisible}
-        accountSummary={accountSummary}
         onClose={() => {
           setAmountVisible(false);
         }}
@@ -596,7 +593,7 @@ export const PerpsMarketDetailScreen = () => {
         szDecimals={currentAssetCtx?.szDecimals || 0}
         leverageRang={[1, currentAssetCtx?.maxLeverage || 5]}
         markPrice={markPrice}
-        availableBalance={Number(accountSummary?.withdrawable || 0)}
+        availableBalance={Number(availableBalance || 0)}
         onCancel={() => setOpenPositionVisible(false)}
         setCurrentTpOrSl={setCurrentTpOrSl}
         handleOpenPosition={handleOpenPosition}
@@ -656,7 +653,6 @@ export const PerpsMarketDetailScreen = () => {
           coinLogo={currentAssetCtx?.logoUrl || ''}
           activeAssetCtx={activeAssetCtx}
           currentAssetCtx={currentAssetCtx || null}
-          availableBalance={Number(accountSummary?.withdrawable || 0)}
           coin={coin}
           marginMode={positionData?.type as 'cross' | 'isolated'}
           marginUsed={positionData?.marginUsed || 0}
