@@ -798,9 +798,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           a.underlyingBalanceUSD,
         );
       });
-    const hasLtvZeroCollateral = collateralTokens.some(
-      item => item.reserve.baseLTVasCollateral === '0',
-    );
+    const hasLtvZeroCollateral = collateralTokens
+      .filter(
+        item => !!item.underlyingBalance && item.underlyingBalance !== '0',
+      )
+      .some(item => item.reserve.baseLTVasCollateral === '0');
     // 如果有ltv 为 0的抵押物，必须优先还款
     const displayReserve = hasLtvZeroCollateral
       ? collateralTokens.filter(
