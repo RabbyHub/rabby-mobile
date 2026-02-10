@@ -78,7 +78,9 @@ export default function CollateralTokenSelectModal({
   ]);
 
   const hasLtvZeroCollateral = useMemo(() => {
-    return tokenToDisplay.some(item => item.baseLTVasCollateral === '0');
+    return tokenToDisplay
+      .filter(item => !!item.balance && item.balance !== '0')
+      .some(item => item.baseLTVasCollateral === '0');
   }, [tokenToDisplay]);
 
   const formatData = useMemo(() => {
