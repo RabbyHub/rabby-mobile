@@ -782,7 +782,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const defaultCollateralToken = useMemo(() => {
-    const displayReserve = displayPoolReserves
+    const collateralTokens = displayPoolReserves
       .filter(
         item =>
           !isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
@@ -791,7 +791,17 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         return BigNumber(b.underlyingBalanceUSD).comparedTo(
           a.underlyingBalanceUSD,
         );
-      })[0];
+      });
+    const hasLtvZeroCollateral = collateralTokens.some(
+      item => item.reserve.baseLTVasCollateral === '0',
+    );
+    // 如果有ltv 为 0的抵押物，必须优先还款
+    const displayReserve = hasLtvZeroCollateral
+      ? collateralTokens.filter(
+          item => item.reserve.baseLTVasCollateral === '0',
+        )?.[0]
+      : collateralTokens?.[0];
+
     const r = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(
         displayReserve?.underlyingAsset || '',
