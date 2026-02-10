@@ -54,6 +54,7 @@ import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
 import { CHAINS_ENUM } from '@debank/common';
 import { ReserveErrorTip } from '../ErrorTip';
 import { stats } from '@/utils/stats';
+import { isZeroAmount } from '../../utils/number';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -85,7 +86,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   }, [reserve.underlyingAsset]);
 
   const afterHF = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
@@ -115,7 +116,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const afterAvailable = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
@@ -150,7 +151,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
   // 检查approve额度
   const checkApproveStatus = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount) {
       setNeedApprove(false);
       return;
     }
@@ -205,7 +206,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
   // 构建交易和估算gas
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount) {
       setSupplyTx(null);
       setApproveTxs(null);
       return;
@@ -391,7 +392,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   // 执行supply交易
   const handleSupply = useCallback(
     async (forceFullSign?: boolean) => {
-      if (!currentAccount || !supplyTx || !amount || amount === '0') {
+      if (!currentAccount || !supplyTx || !amount || isZeroAmount(amount)) {
         return;
       }
 
@@ -567,7 +568,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           afterAvailable={afterAvailable}
         />
 
-        {!!amount && amount !== '0' && canShowDirectSubmit && (
+        {!!amount && !isZeroAmount(amount) && canShowDirectSubmit && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
@@ -597,7 +598,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             onFinished={() => handleSupply()}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !supplyTx ||
               isLoading ||
               !currentAccount ||
@@ -624,7 +625,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             loading={isLoading}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !supplyTx ||
               isLoading ||
               !currentAccount
