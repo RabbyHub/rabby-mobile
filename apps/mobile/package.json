@@ -233,6 +233,7 @@
     "@react-native/babel-preset": "0.76.9",
     "@react-native/eslint-config": "0.76.9",
     "@react-native/metro-config": "0.76.9",
+    "@testing-library/react-native": "^13.3.3",
     "@tsconfig/react-native": "3.0.5",
     "@types/koa-compose": "^3.2.8",
     "@types/lodash": "^4.14.202",
