@@ -61,7 +61,11 @@ import { APP_CODE_LENDING_REPAY_WITH_COLLATERAL } from '../../../utils/constant'
 import { ParaswapRatesType, SwappableToken } from '../../../types/swap';
 import { getParaswap } from '../../../config/paraswap';
 import { getParaswapSellRates } from '../DebtSwap/paraswap';
-import { usePoolDataProviderContract, useSelectedMarket } from '../../../hooks';
+import {
+  usePoolDataProviderContract,
+  useRefreshHistoryId,
+  useSelectedMarket,
+} from '../../../hooks';
 import {
   useFormatValues,
   useSwapReserves,
@@ -112,6 +116,7 @@ export default function RepayWithCollateral({
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
   const { ctx } = useSignatureStore();
+  const { refresh } = useRefreshHistoryId();
 
   const [selectedCollateralToken, setSelectedCollateralToken] = useState<
     SwappableToken | undefined
@@ -451,11 +456,14 @@ export default function RepayWithCollateral({
     }
 
     // 预留30分钟利息空间，合约会自己用最准确的，这里要保证比合约大
-    const safeAmountToRepayAll = valueToBigNumber(debtBalance || '0').plus(
-      valueToBigNumber(debtBalance || '0')
-        .multipliedBy(repayReserve.variableBorrowAPY)
-        .dividedBy(360 * 24 * 2),
-    );
+    const safeAmountToRepayAll = valueToBigNumber(debtBalance || '0')
+      .plus(
+        valueToBigNumber(debtBalance || '0')
+          .multipliedBy(repayReserve.variableBorrowAPY)
+          .dividedBy(360 * 24 * 2),
+      )
+      .decimalPlaces(repayToken.decimals, BigNumber.ROUND_CEIL)
+      .toFixed(repayToken.decimals);
 
     const { paraswap, feeTarget } = getParaswap(repayToken.chainId as ChainId);
     const slippageBps =
@@ -496,9 +504,7 @@ export default function RepayWithCollateral({
       fromUnderlyingAsset: selectedCollateralToken.underlyingAddress,
       fromATokenAddress: collateralReserve.aTokenAddress,
       toUnderlyingAsset: repayToken.underlyingAddress,
-      repayAmount: isMaxSelected
-        ? safeAmountToRepayAll.toFixed(repayToken.decimals)
-        : debouncedRepayAmount,
+      repayAmount: isMaxSelected ? safeAmountToRepayAll : debouncedRepayAmount,
       repayWithAmount: BigNumber(collateralAmount)
         .multipliedBy(1 + slippageBps / 10000)
         .decimalPlaces(selectedCollateralToken.decimals, BigNumber.ROUND_CEIL)
@@ -815,6 +821,7 @@ export default function RepayWithCollateral({
           })} ${t('page.Lending.submitted')}`,
         );
         closeMiniSigner();
+        refresh();
         onClose?.();
       } catch (error) {
         console.error('repay with collateral error', error);
@@ -834,6 +841,7 @@ export default function RepayWithCollateral({
       onClose,
       openDirect,
       ctx?.gasFeeTooHigh,
+      refresh,
     ],
   );
 

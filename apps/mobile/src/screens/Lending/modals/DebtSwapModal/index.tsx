@@ -59,7 +59,11 @@ import { APP_CODE_LENDING_DEBT_SWAP } from '../../utils/constant';
 import { ParaswapRatesType, SwappableToken } from '../../types/swap';
 import { getParaswap } from '../../config/paraswap';
 import { getParaswapSellRates } from '../../components/actions/DebtSwap/paraswap';
-import { usePoolDataProviderContract, useSelectedMarket } from '../../hooks';
+import {
+  usePoolDataProviderContract,
+  useRefreshHistoryId,
+  useSelectedMarket,
+} from '../../hooks';
 import {
   useDebtSwapSlippage,
   useFormatValues,
@@ -108,6 +112,7 @@ export default function DebtSwapModal({
   const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
   const { ctx } = useSignatureStore();
+  const { refresh } = useRefreshHistoryId();
 
   const [fromAmount, setFromAmount] = useState<string>('');
   const debouncedFromAmount = useDebouncedValue(fromAmount, 400);
@@ -682,6 +687,7 @@ export default function DebtSwapModal({
             'page.Lending.submitted',
           )}`,
         );
+        refresh();
         closeMiniSigner();
         onClose?.();
       } catch (error) {
@@ -702,6 +708,7 @@ export default function DebtSwapModal({
       currentTxs,
       openDirect,
       ctx?.gasFeeTooHigh,
+      refresh,
     ],
   );
 
