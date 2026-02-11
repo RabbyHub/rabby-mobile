@@ -38,21 +38,10 @@ const privates = new WeakMap();
 
 type SKClsOptions = { encryptor: EncryptorAdapter; salt: string };
 
-// FIXME: better use Promise.withResolves, not supported yet.
-type Deferred<T> = Promise<T> & { resolv(result: T): void };
-const makeDeferred = <T>(): Deferred<T> => {
-  let resolv;
-  const d = new Promise(r => {
-    resolv = r;
-  }) as Deferred<T>;
-  d.resolv = resolv;
-  return d;
-};
-
 class SKCls {
   static instance: SKCls;
 
-  static ready = makeDeferred<boolean>();
+  static ready = Promise.withResolvers<boolean>();
 
   isAuthenticating = false;
 
@@ -63,7 +52,7 @@ class SKCls {
     if (!SKCls.instance) {
       privates.set(this, { salt });
       SKCls.instance = this;
-      SKCls.ready.resolv(true);
+      SKCls.ready.resolve(true);
     }
 
     this.encryptor = encryptor;
@@ -101,7 +90,7 @@ export function makeSecureKeyChainInstance(
 }
 
 async function waitInstance() {
-  await SKCls.ready;
+  await SKCls.ready.promise;
 
   if (!SKCls.instance) {
     throw new Error('SKCls.instance is not initialized');
