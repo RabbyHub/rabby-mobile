@@ -14,3 +14,5 @@ export { create as mCreate } from 'mutative';
 export const jotaiStore = getDefaultStore();
 
 export { type ReactNativeDriver } from 'typeorm/browser/driver/react-native/ReactNativeDriver';
+
+export { trigger as hapticTrigger } from 'react-native-haptic-feedback';
