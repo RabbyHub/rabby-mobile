@@ -379,7 +379,8 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
 
   const startValues = useSharedValue({
     restScrollOffset: 0,
-    hasImpactOnUpdate: false,
+    hasImpactOnPandown: false,
+    hasImpactOnPanup: false,
   });
 
   const panGestureRef = useRef(
@@ -408,43 +409,43 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
             if (IS_ANDROID) {
               scrollToEnd(true, true);
             }
-            !startValues.value.hasImpactOnUpdate && runOnJS(triggerImpact)();
-            startValues.value.hasImpactOnUpdate = true;
+            !startValues.value.hasImpactOnPandown && runOnJS(triggerImpact)();
+            startValues.value.hasImpactOnPandown = true;
           }
         }
 
         pullRefresh: {
           if (SHOULD_SHOW_INDICATOR_WHEN_LOADING) {
             pullDistance.value = Math.max(0, event.translationY);
+            !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
+            startValues.value.hasImpactOnPanup = true;
           }
         }
       })
       .onEnd(() => {
         panUp: {
-          const hasImpactOnUpdate = startValues.value.hasImpactOnUpdate;
+          const hasImpactOnPandown = startValues.value.hasImpactOnPandown;
 
           if (hasOverThreshold()) {
             translateY.value = withTiming(-scrHeight, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
             });
-            !hasImpactOnUpdate && runOnJS(triggerImpact)();
+            !hasImpactOnPandown && runOnJS(triggerImpact)();
           } else {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
             });
           }
-          startValues.value.hasImpactOnUpdate = false;
+          startValues.value.hasImpactOnPandown = false;
         }
 
         pullRefresh: {
+          const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (SHOULD_SHOW_INDICATOR_WHEN_LOADING) {
             if (pullDistance.value >= pulldownRefreshSizes.headerHeight) {
-              runOnJS(hapticTrigger)('soft', {
-                enableVibrateFallback: true,
-                ignoreAndroidSystemSettings: true,
-              });
               svIsRefreshing.value = true;
               runOnJS(onRefreshOnJs)();
+              !hasImpactOnPanup && runOnJS(triggerImpact)();
             } else {
               setPulldownRefreshStage({
                 state: 'finished',
@@ -452,6 +453,7 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
                 pullDistance,
               });
             }
+            startValues.value.hasImpactOnPanup = false;
           }
         }
       }),
@@ -461,8 +463,8 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
     return {
       height: interpolate(
         pullDistance.value,
-        [0, pulldownRefreshSizes.headerHeight],
-        [0, pulldownRefreshSizes.headerHeight],
+        [0, scrHeight],
+        [0, scrHeight],
         Extrapolate.CLAMP,
       ),
       paddingTop: interpolate(
