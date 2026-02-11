@@ -15,7 +15,11 @@ import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { useUpgradeInfo } from '@/hooks/version';
@@ -28,6 +32,7 @@ import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHe
 import {
   HOME_TOP_HEADER_SIZES,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
+  SHOULD_SHOW_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
@@ -52,7 +57,7 @@ import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 
-export const HeaderHeight = 30;
+const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
   apisHomeTabIndex.setTabIndex(index, true);
 };
@@ -217,7 +222,9 @@ export function TabsTopHeader({
               />
             )}
           </TouchableOpacity>
-          {isTop10BalanceLoading ? <LoadingCircle /> : null}
+          {!SHOULD_SHOW_INDICATOR_WHEN_LOADING && isTop10BalanceLoading ? (
+            <LoadingCircle />
+          ) : null}
         </View>
       )}
 
@@ -271,6 +278,9 @@ export function TabsTopHeader({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerBox: {
     // ...makeDebugBorder(),
+    // ...makeDevOnlyStyle({
+    //   opacity: 0.5
+    // }),
     height: HOME_TOP_HEADER_SIZES.headerHeight,
     flexDirection: 'row',
     justifyContent: 'space-between',

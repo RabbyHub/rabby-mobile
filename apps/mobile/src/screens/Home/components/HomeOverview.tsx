@@ -83,6 +83,8 @@ import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
+  SHOULD_SHOW_INDICATOR_WHEN_LOADING,
+  USE_PULL_REFRESH_INDICATOR_ON_ANDROID,
 } from '@/constant/home';
 import { perfEvents } from '@/core/utils/perf';
 import { syncTop10History } from '@/databases/hooks/history';
@@ -151,6 +153,7 @@ import { sleep } from '@/utils/async';
 import balanceStore from '@/store/balance';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
+import { hapticTrigger } from '@/core/utils/reexports';
 
 const AnimatedActivityIndicator =
   Animated.createAnimatedComponent(ActivityIndicator);
@@ -198,13 +201,10 @@ function getIsAtBottom(scrollY: number, translateY = 0) {
   };
 }
 
-// const pullDistance = makeMutable(0);
-// const pulldownRefreshHeaderHeight =
-//   HOME_TOP_HEADER_SIZES.scrollableListTopOffset;
-const pulldownRefreshHeaderHeight = Math.max(
-  HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-  64,
-);
+const pulldownRefreshSizes = {
+  headerHeight: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 56),
+  offsetY: HOME_TOP_HEADER_SIZES.bottomOffsetIndicator,
+};
 
 const scrHeight = Dimensions.get('screen').height;
 function hasOverThreshold() {
@@ -227,7 +227,39 @@ const swipeUpViewHandlers = {
   }) as ViewProps['onLayout'] & object,
 };
 
-const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
+const homeGestureConfs = {
+  activeY: Math.min(
+    8,
+    Math.round(Math.floor(getPullThreshold(scrHeight) * 0.1)),
+  ),
+};
+const setPulldownRefreshStage = (input: {
+  state: 'refreshing' | 'finished';
+  svIsRefreshing: SharedValue<boolean>;
+  pullDistance: SharedValue<number>;
+}) => {
+  'worklet';
+  if (!SHOULD_SHOW_INDICATOR_WHEN_LOADING) return;
+
+  switch (input.state) {
+    case 'refreshing': {
+      input.svIsRefreshing.value = true;
+      input.pullDistance.value = withTiming(pulldownRefreshSizes.headerHeight);
+      break;
+    }
+    case 'finished': {
+      input.svIsRefreshing.value = false;
+      input.pullDistance.value = withTiming(0);
+      break;
+    }
+  }
+};
+
+const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
+  onRefreshOnJs: prop_onRefreshOnJs,
+}: {
+  onRefreshOnJs?: (ctx?: {}) => Promise<void>;
+} = {}) => {
   const scrollableRef = useAnimatedRef<T>();
   const scrollY = useCurrentTabScrollY();
 
@@ -255,8 +287,35 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     },
     [scrollableRef, scrollableStatus],
   );
-
   const [iosBounces, setIosBounces] = useState(false);
+
+  const pullDistance = useSharedValue(0);
+  const svIsRefreshing = useSharedValue(false);
+
+  const onRefreshOnJs = useMemoizedFn(async () => {
+    await prop_onRefreshOnJs?.({});
+  });
+
+  useEffect(() => {
+    const remove = balanceStore.subscribe(async (cur, prev) => {
+      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) return;
+      const { top10Addresses } = await getTop10MyAccounts();
+      const isTop10BalanceLoading = cur.getIsTop10BalanceLoading(
+        top10Addresses,
+        cur.isLoadingByAddress,
+      ).isTop10BalanceLoading;
+
+      runOnUI(setPulldownRefreshStage)({
+        state: isTop10BalanceLoading ? 'refreshing' : 'finished',
+        svIsRefreshing,
+        pullDistance,
+      });
+    });
+
+    return () => {
+      remove();
+    };
+  }, [svIsRefreshing, pullDistance]);
 
   useAnimatedReaction(
     () => translateY.value,
@@ -323,149 +382,77 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     hasImpactOnUpdate: false,
   });
 
-  const pullThreshold = getPullThreshold(scrHeight);
-  const activeY = Math.min(8, Math.round(Math.floor(pullThreshold * 0.1)));
-  const panUpGestureRef = useRef(
+  const panGestureRef = useRef(
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
-      .activeOffsetY(-activeY)
-      // .enabled(false)
+      .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
       .maxPointers(1)
       .onStart(() => {
-        // translateY.value = 0;
-        // isExpanded.value = false;
         startValues.value.restScrollOffset = getIsAtBottom(
           scrollY.value,
         ).restScrollOffset;
       })
       .onUpdate(event => {
-        const { isAtBottom } = getIsAtBottom(scrollY.value, translateY.value);
-        const restScrollOffset = startValues.value.restScrollOffset;
+        panUp: {
+          const { isAtBottom } = getIsAtBottom(scrollY.value, translateY.value);
+          const restScrollOffset = startValues.value.restScrollOffset;
 
-        translateY.value = event.translationY + restScrollOffset;
-        if (isAtBottom) {
-          scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
-        } else {
-          scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+          translateY.value = event.translationY + restScrollOffset;
+          if (isAtBottom) {
+            scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
+          } else {
+            scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+          }
+
+          if (hasOverThreshold() && event.translationY < 0) {
+            if (IS_ANDROID) {
+              scrollToEnd(true, true);
+            }
+            !startValues.value.hasImpactOnUpdate && runOnJS(triggerImpact)();
+            startValues.value.hasImpactOnUpdate = true;
+          }
         }
 
-        if (hasOverThreshold() && event.translationY < 0) {
-          if (IS_ANDROID) {
-            scrollToEnd(true, true);
+        pullRefresh: {
+          if (SHOULD_SHOW_INDICATOR_WHEN_LOADING) {
+            pullDistance.value = Math.max(0, event.translationY);
           }
-          !startValues.value.hasImpactOnUpdate && runOnJS(triggerImpact)();
-          startValues.value.hasImpactOnUpdate = true;
         }
       })
       .onEnd(() => {
-        const hasImpactOnUpdate = startValues.value.hasImpactOnUpdate;
+        panUp: {
+          const hasImpactOnUpdate = startValues.value.hasImpactOnUpdate;
 
-        if (hasOverThreshold()) {
-          translateY.value = withTiming(-scrHeight, undefined, () => {
-            scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-          });
-          !hasImpactOnUpdate && runOnJS(triggerImpact)();
-        } else {
-          translateY.value = withTiming(0, undefined, () => {
-            scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-          });
+          if (hasOverThreshold()) {
+            translateY.value = withTiming(-scrHeight, undefined, () => {
+              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+            });
+            !hasImpactOnUpdate && runOnJS(triggerImpact)();
+          } else {
+            translateY.value = withTiming(0, undefined, () => {
+              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+            });
+          }
+          startValues.value.hasImpactOnUpdate = false;
         }
-        startValues.value.hasImpactOnUpdate = false;
-      }),
-  );
 
-  return {
-    panUpGestureRef,
-
-    onScrollHandlers,
-    uiOnScrollBack,
-    scrollableRef,
-    scrollableEnabled,
-  };
-};
-
-const setPulldownRefreshStage = (input: {
-  state: 'refreshing' | 'finished';
-  svIsRefreshing: SharedValue<boolean>;
-  pullDistance: SharedValue<number>;
-}) => {
-  'worklet';
-  switch (input.state) {
-    case 'refreshing': {
-      input.svIsRefreshing.value = true;
-      input.pullDistance.value = withTiming(pulldownRefreshHeaderHeight);
-      break;
-    }
-    case 'finished': {
-      input.svIsRefreshing.value = false;
-      input.pullDistance.value = withTiming(0);
-      break;
-    }
-  }
-};
-
-const noopOnUI = () => {
-  'worklet';
-};
-function useHomePullRefresh({
-  onRefreshOnJs: prop_onRefreshOnJs,
-}: {
-  onRefreshOnJs?: (ctx?: {}) => Promise<void>;
-} = {}) {
-  const scrollY = useCurrentTabScrollY();
-
-  const pullDistance = useSharedValue(0);
-  const svIsRefreshing = useSharedValue(false);
-
-  const onRefreshOnJs = useMemoizedFn(async () => {
-    await prop_onRefreshOnJs?.({});
-  });
-
-  useEffect(() => {
-    const remove = balanceStore.subscribe(async (cur, prev) => {
-      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) return;
-      const { top10Addresses } = await getTop10MyAccounts();
-      const isTop10BalanceLoading = cur.getIsTop10BalanceLoading(
-        top10Addresses,
-        cur.isLoadingByAddress,
-      ).isTop10BalanceLoading;
-
-      runOnUI(setPulldownRefreshStage)({
-        state: isTop10BalanceLoading ? 'refreshing' : 'finished',
-        svIsRefreshing,
-        pullDistance,
-      });
-    });
-
-    return () => {
-      remove();
-    };
-  }, [svIsRefreshing, pullDistance]);
-
-  const pullDownGestureRef = useRef(
-    Gesture.Pan()
-      .shouldCancelWhenOutside(false)
-      .enabled(IS_IOS)
-      .maxPointers(1)
-      .onStart(() => {
-        // pullDistance.value = 0;
-      })
-      .onUpdate(event => {
-        pullDistance.value = Math.max(0, event.translationY);
-        if (pullDistance.value >= pulldownRefreshHeaderHeight) {
-          runOnJS(triggerImpact)();
-        }
-      })
-      .onEnd(event => {
-        if (pullDistance.value >= pulldownRefreshHeaderHeight) {
-          svIsRefreshing.value = true;
-          runOnJS(onRefreshOnJs)();
-        } else {
-          setPulldownRefreshStage({
-            state: 'finished',
-            svIsRefreshing,
-            pullDistance,
-          });
+        pullRefresh: {
+          if (SHOULD_SHOW_INDICATOR_WHEN_LOADING) {
+            if (pullDistance.value >= pulldownRefreshSizes.headerHeight) {
+              runOnJS(hapticTrigger)('soft', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: true,
+              });
+              svIsRefreshing.value = true;
+              runOnJS(onRefreshOnJs)();
+            } else {
+              setPulldownRefreshStage({
+                state: 'finished',
+                svIsRefreshing,
+                pullDistance,
+              });
+            }
+          }
         }
       }),
   );
@@ -474,13 +461,20 @@ function useHomePullRefresh({
     return {
       height: interpolate(
         pullDistance.value,
-        [0, pulldownRefreshHeaderHeight],
-        [0, pulldownRefreshHeaderHeight],
+        [0, pulldownRefreshSizes.headerHeight],
+        [0, pulldownRefreshSizes.headerHeight],
         Extrapolate.CLAMP,
       ),
+      paddingTop: interpolate(
+        pullDistance.value,
+        [0, pulldownRefreshSizes.headerHeight],
+        [pulldownRefreshSizes.offsetY, 0],
+        Extrapolate.CLAMP,
+      ),
+      // comment it on DEBUG
       opacity: interpolate(
         pullDistance.value,
-        [0, pulldownRefreshHeaderHeight],
+        [0, pulldownRefreshSizes.headerHeight],
         [0, 1],
         Extrapolate.CLAMP,
       ),
@@ -491,7 +485,7 @@ function useHomePullRefresh({
   const animatedIndicatorStyle = useAnimatedStyle(() => {
     const rotate = interpolate(
       pullDistance.value,
-      [0, pulldownRefreshHeaderHeight],
+      [0, pulldownRefreshSizes.headerHeight],
       [0, 360],
       Extrapolate.CLAMP,
     );
@@ -503,14 +497,18 @@ function useHomePullRefresh({
   const isRefreshing = useValueFromSharedValue(svIsRefreshing);
 
   return {
-    isRefreshing,
-    animatedIndicatorStyle,
-    pullDownGestureRef,
-    scrollTopStyle,
-  };
-}
+    panGestureRef,
 
-const HEADER_MT_OFFSET = HOME_TOP_HEADER_SIZES.headerHeight;
+    onScrollHandlers,
+    uiOnScrollBack,
+    scrollableRef,
+    scrollableEnabled,
+
+    isRefreshing,
+    scrollTopStyle,
+    animatedIndicatorStyle,
+  };
+};
 
 const getStyle = createGetStyles2024(
   {
@@ -548,8 +546,16 @@ const getStyle = createGetStyles2024(
       // ...makeDebugBorder('orange'),
     },
     scrollTopPlaceholder: {
-      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2 - pulldownRefreshHeaderHeight,
-      marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2,
+      width: '100%',
+      opacity: 1,
+      marginTop: -(
+        (
+          HOME_TOP_HEADER_SIZES.scrollableListTopOffset +
+          pulldownRefreshSizes.headerHeight
+        )
+        // - pulldownRefreshSizes.offsetY
+      ),
+      // paddingTop: pulldownRefreshSizes.offsetY, // just default value for tuning
       height: 0,
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['green-light-2'],
@@ -1092,15 +1098,13 @@ export const HomeOverview = React.memo(() => {
     uiOnScrollBack,
     scrollableRef,
     scrollableEnabled,
-    panUpGestureRef,
-  } = useHomeAnimation<RNGHScrollView>();
+    panGestureRef,
 
-  const {
     isRefreshing,
-    pullDownGestureRef,
+    // pullDownGestureRef,
     animatedIndicatorStyle,
     scrollTopStyle,
-  } = useHomePullRefresh({
+  } = useHomeGestures<RNGHScrollView>({
     onRefreshOnJs: async ctx => {
       'worklet';
       await Promise.race([onRefresh(), sleep(3000)]);
@@ -1124,26 +1128,26 @@ export const HomeOverview = React.memo(() => {
   return (
     <View style={styles.pullUpWrapper}>
       <Animated.View style={[styles.main, mainStyle]}>
-        <GestureDetector gesture={pullDownGestureRef.current}>
-          <GestureDetector gesture={panUpGestureRef.current}>
-            <TabsScrollView
-              ref={scrollableRef}
-              showsVerticalScrollIndicator={false}
-              style={[styles.scroll, { flex: undefined }]}
-              contentContainerStyle={[styles.scrollContainer]}
-              bounces={false}
-              overScrollMode={'never'}
-              scrollEventThrottle={16}
-              onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
-              onLayout={tabsScrollHandlers.onLayout}
-              onAnimatedScrollBeginDrag={
-                onScrollHandlers.onAnimatedScrollBeginDrag
-              }
-              onAnimatedScrollEndDrag={onScrollHandlers.onAnimatedScrollEndDrag}
-              onScroll={onScrollHandlers.onScroll}
-              scrollableEnabled={scrollableEnabled}
-              simultaneousHandlers={[panUpGestureRef, pullDownGestureRef]}
-              {...(IS_ANDROID && {
+        <GestureDetector gesture={panGestureRef.current}>
+          <TabsScrollView
+            ref={scrollableRef}
+            showsVerticalScrollIndicator={false}
+            style={[styles.scroll, { flex: undefined }]}
+            contentContainerStyle={[styles.scrollContainer]}
+            bounces={false}
+            overScrollMode={'never'}
+            scrollEventThrottle={16}
+            onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
+            onLayout={tabsScrollHandlers.onLayout}
+            onAnimatedScrollBeginDrag={
+              onScrollHandlers.onAnimatedScrollBeginDrag
+            }
+            onAnimatedScrollEndDrag={onScrollHandlers.onAnimatedScrollEndDrag}
+            onScroll={onScrollHandlers.onScroll}
+            scrollableEnabled={scrollableEnabled}
+            simultaneousHandlers={[panGestureRef]}
+            {...(IS_ANDROID &&
+              !USE_PULL_REFRESH_INDICATOR_ON_ANDROID && {
                 refreshControl: (
                   <RNGHRefreshControl
                     refreshing={isRefreshing}
@@ -1151,72 +1155,71 @@ export const HomeOverview = React.memo(() => {
                   />
                 ),
               })}>
-              <Animated.View
-                style={[styles.scrollTopPlaceholder, scrollTopStyle]}>
-                <AnimatedActivityIndicator
-                  animating={isRefreshing}
-                  hidesWhenStopped={false}
-                  style={animatedIndicatorStyle}
-                />
-              </Animated.View>
-              <Animated.View style={[styles.scrollViewInner]}>
-                <MultiAddressHomeHeader onRefresh={onRefresh} />
+            <Animated.View
+              style={[styles.scrollTopPlaceholder, scrollTopStyle]}>
+              <AnimatedActivityIndicator
+                animating={isRefreshing}
+                hidesWhenStopped={false}
+                style={animatedIndicatorStyle}
+              />
+            </Animated.View>
+            <Animated.View style={[styles.scrollViewInner]}>
+              <MultiAddressHomeHeader onRefresh={onRefresh} />
 
-                <HomeCenterArea />
-                <View style={styles.grid}>
-                  <View style={styles.gridItemsWrap}>
-                    {MENU_ARR.map((el, index) => {
-                      return (
-                        <FastTouchable
-                          style={StyleSheet.flatten([
-                            styles.gridItem,
-                            { width: itemWidth },
-                          ])}
-                          key={index}
-                          onPress={() => {
-                            console.debug('[perf] touched menu', el.key);
-                            requestAnimationFrame(() => {
-                              handleClickMenu(el.key);
-                            });
-                            matomoRequestEvent({
-                              category: 'Click_Services',
-                              action: `Click_${el.key}`,
-                            });
-                          }}>
-                          <View style={styles.badgeWrapper}>
-                            <View style={styles.iconWrapper}>
-                              <el.icon
-                                width={28}
-                                height={28}
-                                color={
-                                  el.color || colors2024['brand-default-icon']
-                                }
-                              />
-                            </View>
-                            <View style={styles.rightBadgeWrapper}>
-                              {generateCustomBadgeIcon(el)}
-                            </View>
+              <HomeCenterArea />
+              <View style={styles.grid}>
+                <View style={styles.gridItemsWrap}>
+                  {MENU_ARR.map((el, index) => {
+                    return (
+                      <FastTouchable
+                        style={StyleSheet.flatten([
+                          styles.gridItem,
+                          { width: itemWidth },
+                        ])}
+                        key={index}
+                        onPress={() => {
+                          console.debug('[perf] touched menu', el.key);
+                          requestAnimationFrame(() => {
+                            handleClickMenu(el.key);
+                          });
+                          matomoRequestEvent({
+                            category: 'Click_Services',
+                            action: `Click_${el.key}`,
+                          });
+                        }}>
+                        <View style={styles.badgeWrapper}>
+                          <View style={styles.iconWrapper}>
+                            <el.icon
+                              width={28}
+                              height={28}
+                              color={
+                                el.color || colors2024['brand-default-icon']
+                              }
+                            />
                           </View>
-                          <Text style={styles.gridText}>{el.title}</Text>
-                        </FastTouchable>
-                      );
-                    })}
-                  </View>
-                  <BrowserSearchEntry />
-                  <View
-                    style={styles.swipeUpHint}
-                    onLayout={swipeUpViewHandlers.onLayout}>
-                    <RcIconDoubleArrowCC
-                      color={colors2024['neutral-secondary']}
-                    />
-                    <Text style={styles.swipeUpHintText}>
-                      {t('page.home.swipeUp.desc')}
-                    </Text>
-                  </View>
+                          <View style={styles.rightBadgeWrapper}>
+                            {generateCustomBadgeIcon(el)}
+                          </View>
+                        </View>
+                        <Text style={styles.gridText}>{el.title}</Text>
+                      </FastTouchable>
+                    );
+                  })}
                 </View>
-              </Animated.View>
-            </TabsScrollView>
-          </GestureDetector>
+                <BrowserSearchEntry />
+                <View
+                  style={styles.swipeUpHint}
+                  onLayout={swipeUpViewHandlers.onLayout}>
+                  <RcIconDoubleArrowCC
+                    color={colors2024['neutral-secondary']}
+                  />
+                  <Text style={styles.swipeUpHintText}>
+                    {t('page.home.swipeUp.desc')}
+                  </Text>
+                </View>
+              </View>
+            </Animated.View>
+          </TabsScrollView>
         </GestureDetector>
       </Animated.View>
       <HomeDappDrawer onScrollBack={uiOnScrollBack} />
