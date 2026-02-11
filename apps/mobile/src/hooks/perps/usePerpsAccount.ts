@@ -29,6 +29,7 @@ export const usePerpsAccount = () => {
     return userAbstraction === UserAbstractionResp.unifiedAccount;
   }, [userAbstraction]);
 
+  // when isUnifiedAccount, accountValue is only the spotAccountValue
   const accountValue = useMemo(() => {
     return isUnifiedAccount
       ? Number(spotAccountValue) || 0
