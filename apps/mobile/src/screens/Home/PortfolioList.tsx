@@ -81,14 +81,10 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   );
 
   const focusedTab = useFocusedTab();
-  const hasBeenFocusedRef = useRef(false);
 
   const isFocused = useMemo(() => {
     const currentFocused = focusedTab === 'defi';
-    if (currentFocused) {
-      hasBeenFocusedRef.current = true;
-    }
-    return hasBeenFocusedRef.current;
+    return currentFocused;
   }, [focusedTab]);
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
