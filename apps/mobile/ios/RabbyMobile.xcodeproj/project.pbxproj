@@ -910,6 +910,7 @@
 				DEVELOPMENT_TEAM = ZPNP2SF27Q;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
 				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -1018,7 +1019,7 @@
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;

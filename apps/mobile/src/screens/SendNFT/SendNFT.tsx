@@ -1,6 +1,13 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
@@ -25,6 +32,10 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+
+const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
+  KeyboardAwareScrollView,
+);
 
 export default function SendNFT() {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -67,6 +78,9 @@ export default function SendNFT() {
     handleGasLevelChanged,
     scrollviewRef,
     handleIgnoreGasFeeChange,
+    onBottomAreaLayout,
+    scrollViewStyle,
+    scrollToBottom,
 
     whitelistEnabled,
     computed: {
@@ -159,14 +173,19 @@ export default function SendNFT() {
           handleFieldChange,
           handleGasLevelChanged,
           handleIgnoreGasFeeChange,
+          onBottomAreaLayout,
+          onGasInfoDebouncedLoaded: scrollToBottom,
         },
       }}>
       <NormalScreenContainer2024 type="bg1">
         <AccountSwitcherModal forScene="SendNFT" inScreen />
         <View style={styles.sendNFTScreen}>
-          <KeyboardAwareScrollView
-            ref={scrollviewRef}
-            contentContainerStyle={styles.mainContent}>
+          <AnimatedKeyboardAwareScrollView
+            innerRef={instance => {
+              scrollviewRef.current =
+                instance as unknown as KeyboardAwareScrollView;
+            }}
+            contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
             {/* From */}
             <FromAddressControl2024 disableSwitch={true} />
 
@@ -180,7 +199,7 @@ export default function SendNFT() {
               chainItem={chainItem}
             />
             <ShowMoreOnSendNFT chainServeId={chainItem?.serverId || ''} />
-          </KeyboardAwareScrollView>
+          </AnimatedKeyboardAwareScrollView>
           <BottomArea account={account} />
         </View>
       </NormalScreenContainer2024>

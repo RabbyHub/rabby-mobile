@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { Alert, TextInput } from 'react-native';
+import { Alert, LayoutChangeEvent, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Sentry from '@sentry/react-native';
 import * as Yup from 'yup';
@@ -86,6 +86,13 @@ import { IExtractFromPromise } from '@/utils/type';
 import { useFindAddressByWhitelist } from './useWhiteListAddress';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { coerceNumber } from '@/utils/coerce';
+import {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -1317,6 +1324,10 @@ export function useSendTokenForm({
     [currentToken, handleFieldChange, putScreenState],
   );
 
+  const scrollViewRef = useRef<KeyboardAwareScrollView | null>(null);
+  const scrollToBottom = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd?.(true);
+  }, []);
   const handleMaxInfoChanged = useCallback(
     async (input?: { gasLevel: GasLevel }) => {
       if (!currentAccount) {
@@ -1472,7 +1483,11 @@ export function useSendTokenForm({
     // } else {
     //   handleMaxInfoChanged();
     // }
-  }, [putScreenState, handleSlider100]);
+
+    setTimeout(() => {
+      scrollToBottom();
+    }, 300);
+  }, [putScreenState, handleSlider100, scrollToBottom]);
 
   const {
     onChangeSlider,
@@ -1844,6 +1859,31 @@ export function useSendTokenForm({
     }, [refreshCurrentToken]),
   );
 
+  const svBottomAreaHeight = useSharedValue(220);
+  useAnimatedReaction(
+    () => {
+      return svBottomAreaHeight.value;
+    },
+    (cur, prev) => {
+      if (cur !== prev) {
+        runOnJS(scrollToBottom)();
+      }
+    },
+  );
+  const scrollViewStyle = useAnimatedStyle(() => {
+    return {
+      height: svBottomAreaHeight.value,
+    };
+  });
+
+  const onBottomAreaLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      'worklet';
+      svBottomAreaHeight.value = event.nativeEvent.layout.height;
+    },
+    [svBottomAreaHeight],
+  );
+
   return {
     chainEnum,
     chainItem,
@@ -1857,6 +1897,11 @@ export function useSendTokenForm({
     handleGasLevelChanged,
     handleClickMaxButton,
     handleIgnoreGasFeeChange,
+    onBottomAreaLayout,
+    scrollViewRef,
+    scrollViewStyle,
+    scrollToBottom,
+
     onChangeSlider,
     setSlider,
     slider,
@@ -1941,6 +1986,8 @@ type InternalContext = {
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
     onChangeSlider: (v: number, syncAmount?: boolean) => void;
     setSlider: (v: number) => void;
+    onBottomAreaLayout: (layout: LayoutChangeEvent) => void;
+    onGasInfoDebouncedLoaded: () => void;
   };
 };
 const SendTokenInternalContext = React.createContext<InternalContext>({
@@ -1983,6 +2030,8 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     handleIgnoreGasFeeChange: () => {},
     onChangeSlider: () => {},
     setSlider: () => {},
+    onBottomAreaLayout: () => {},
+    onGasInfoDebouncedLoaded: () => {},
   },
 });
 

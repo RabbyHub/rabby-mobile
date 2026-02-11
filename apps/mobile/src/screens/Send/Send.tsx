@@ -90,6 +90,17 @@ import {
 import { isValidHexAddress } from '@metamask/utils';
 import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+
+const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
+  KeyboardAwareScrollView,
+);
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -236,6 +247,10 @@ function SendScreen({
     setSlider,
     handleGasLevelChanged,
     handleIgnoreGasFeeChange,
+    onBottomAreaLayout,
+    scrollViewRef,
+    scrollViewStyle,
+    scrollToBottom,
 
     checkCexSupport,
     loadCurrentToken,
@@ -541,6 +556,8 @@ function SendScreen({
           setSlider,
           handleGasLevelChanged,
           handleIgnoreGasFeeChange,
+          onBottomAreaLayout,
+          onGasInfoDebouncedLoaded: scrollToBottom,
         },
       }}>
       <NormalScreenContainer2024
@@ -554,7 +571,12 @@ function SendScreen({
             Keyboard.dismiss();
           }}>
           <ScrollView contentContainerStyle={styles.sendScreen}>
-            <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
+            <AnimatedKeyboardAwareScrollView
+              innerRef={instance => {
+                scrollViewRef.current =
+                  instance as unknown as KeyboardAwareScrollView;
+              }}
+              contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
               {/* FromToSection */}
               <View>
                 {/* From */}
@@ -583,7 +605,7 @@ function SendScreen({
                   clearLocalPendingTxData={clearLocalPendingTxData}
                 />
               )}
-            </KeyboardAwareScrollView>
+            </AnimatedKeyboardAwareScrollView>
             <BottomArea account={currentAccount} />
           </ScrollView>
         </TouchableWithoutFeedback>
@@ -640,7 +662,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     mainContent: {
       paddingHorizontal: 24,
-      paddingBottom: 220,
+      paddingBottom: 280,
     },
     balance: {
       marginTop: 24,
