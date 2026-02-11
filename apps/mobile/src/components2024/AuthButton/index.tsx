@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useBiometrics } from '@/hooks/biometrics';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { RequestGenericPurpose } from '@/core/apis/keychain';
@@ -36,6 +36,8 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
 
+  const isProcessingRef = useRef(false);
+
   const onFinished = useCallback(() => {
     if (syncUnlockTime) {
       updateUnlockTime();
@@ -47,28 +49,31 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
     return apisLock.throwErrorIfInvalidPwd(password);
   };
   const unlockWithBiometrics = useCallback(async () => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     onBeforeAuth?.();
-    if (!isBiometricsEnabled) {
-      AuthenticationModal2024.show({
-        title: authTitle || t('page.addressDetail.add-to-whitelist'),
-        authType: ['password'],
-        onFinished: () => {
-          onFinished?.();
-        },
-        onCancel: () => {
-          onCancel?.();
-        },
-        validationHandler(password) {
-          return apisLock.throwErrorIfInvalidPwd(password);
-        },
-      });
-    }
+
+    const finish = () => {
+      isProcessingRef.current = false;
+      onFinished?.();
+    };
+
+    const cancel = () => {
+      isProcessingRef.current = false;
+      onCancel?.();
+    };
+
     try {
+      if (!isBiometricsEnabled) {
+        throw new Error('Biometrics Disabled');
+      }
+
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
           await validationHandler?.(password);
-          onFinished?.();
+          finish();
         },
       });
     } catch (error: any) {
@@ -78,12 +83,8 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
       AuthenticationModal2024.show({
         title: authTitle || t('page.addressDetail.add-to-whitelist'),
         authType: ['password'],
-        onFinished: () => {
-          onFinished?.();
-        },
-        onCancel: () => {
-          onCancel?.();
-        },
+        onFinished: finish,
+        onCancel: cancel,
         validationHandler(password) {
           return apisLock.throwErrorIfInvalidPwd(password);
         },
