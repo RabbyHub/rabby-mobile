@@ -150,7 +150,7 @@ function MultiAddressHome(): JSX.Element {
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     screenContainer: {
-      paddingTop: 0,
+      paddingTop: safeAreaInsets.top,
     },
     paddingContainer: {
       paddingHorizontal: 0,

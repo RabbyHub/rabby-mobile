@@ -45,6 +45,8 @@ import {
 import { isTabsSwiping } from './hooks';
 import { useAssetsNFTs, useOnNftRefresh } from '@/screens/Home/hooks/store';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -290,7 +292,7 @@ export const NFTList = () => {
         <RefreshControl
           style={styles.bgContainer}
           onRefresh={onRefresh}
-          refreshing={false}
+          refreshing={IS_ANDROID && isLoading}
         />
       }
     />
@@ -300,11 +302,10 @@ export const NFTList = () => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    marginTop: TAB_HEADER_FULL_HEIGHT,
+    marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,
-    marginTop: -TAB_HEADER_FULL_HEIGHT,
   },
   bgContainer: {
     paddingHorizontal: 16,

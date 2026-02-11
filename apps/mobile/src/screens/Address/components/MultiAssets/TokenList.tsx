@@ -33,6 +33,8 @@ import useTokenList, {
 import { formatNetworth } from '@/utils/math';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -399,7 +401,7 @@ export const TokenList = () => {
         <RefreshControl
           style={styles.bgContainer}
           onRefresh={onRefresh}
-          refreshing={false}
+          refreshing={IS_ANDROID && isLoading}
         />
       }
       data={dataList}
@@ -412,10 +414,9 @@ export const TokenList = () => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: TAB_HEADER_FULL_HEIGHT,
+    marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
-    marginTop: -TAB_HEADER_FULL_HEIGHT,
     paddingHorizontal: 16,
   },
   bgContainer: {

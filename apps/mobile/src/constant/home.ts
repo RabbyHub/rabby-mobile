@@ -9,11 +9,16 @@ export const SHOULD_SHOW_INDICATOR_WHEN_LOADING =
 
 export const HOME_TOP_HEADER_SIZES = {
   headerHeight: 52,
+  // headerHeight: 0,
   headerIndicatorHeight: 6,
+  homecardOffsetFromIndicator: 12,
   tabItemHeight: 54,
-  bottomOffsetIndicator: 12,
   get scrollableListTopOffset() {
-    return this.tabItemHeight + this.headerIndicatorHeight;
+    // return this.tabItemHeight + this.headerIndicatorHeight;
+    return this.tabItemHeight;
+  },
+  get tabInnerHomeTopOffset() {
+    return this.headerIndicatorHeight + this.homecardOffsetFromIndicator;
   },
   portfolioContainerPx: 16,
 };

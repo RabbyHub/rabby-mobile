@@ -62,16 +62,15 @@ const handleSwitchToTokenTab = (index: number) => {
   apisHomeTabIndex.setTabIndex(index, true);
 };
 
-export function TabsTopHeader({
-  indexDecimalValue,
-}: // indexValue,
-{
-  indexDecimalValue: SharedValue<number>;
-  // indexValue: SharedValue<number>;
-}): JSX.Element {
-  const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
+export function TabsTopHeader(): JSX.Element {
+  const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
+
+  // const indexDecimalValue = useSVFromMutable(apisHomeTabIndex.svTabIndexDecimal);
+  // const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
+  const tabIndexFromSv = useValueFromSharedValue(
+    apisHomeTabIndex.svTabIndexDecimal,
+  );
   const showNetWorth = tabIndexFromSv > 0.7;
-  // const { tabIndex, setTabIndex } = useHomeTabIndex();
   const { isLoading: loading } = useSceneIsLoading('Home');
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
@@ -79,7 +78,6 @@ export function TabsTopHeader({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { remoteVersion } = useUpgradeInfo();
-  const focusedTab = useFocusedTab();
 
   const [hideType, setHideType] = useHideBalance();
   const handleHideTypeChange = useMemoizedFn((event: GestureResponderEvent) => {
@@ -279,9 +277,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerBox: {
     // ...makeDebugBorder(),
     // ...makeDevOnlyStyle({
-    //   opacity: 0.5
+    //   backgroundColor: colors2024['orange-light-1'],
     // }),
     height: HOME_TOP_HEADER_SIZES.headerHeight,
+    // height: 52,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

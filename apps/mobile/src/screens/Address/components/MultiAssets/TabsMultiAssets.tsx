@@ -1,24 +1,34 @@
 import React, { useCallback } from 'react';
+import { View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { perfEvents } from '@/core/utils/perf';
 import { runIIFEFunc } from '@/core/utils/store';
-import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  useHomeTabIndex,
+} from '@/hooks/navigation';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { Container, Tabs } from 'react-native-collapsible-tab-view';
+import {
+  Container,
+  TabBarProps,
+  Tabs,
+} from 'react-native-collapsible-tab-view';
 import { isTabsSwiping } from './hooks';
 import { NFTList } from './NFTList';
 import { ProtocolList } from './ProtocolList';
 import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
+import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -36,12 +46,9 @@ export const TAB_HEADER_FULL_HEIGHT =
 
 interface TabMultiAssetsProps {}
 
-export const enum TabName {
-  overview = 'overview',
-  token = 'token',
-  defi = 'defi',
-  nft = 'nft',
-}
+import { HomeTabName as TabName } from '@/hooks/navigation';
+import { MultiAssetsContainer } from '@/components/customized/react-native-collapsible-tab-view/MultiAssetsContainer';
+export { HomeTabName as TabName } from '@/hooks/navigation';
 
 const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
 
@@ -59,22 +66,8 @@ const onIndexChange = (idx: number) => {
   apisHomeTabIndex.setTabIndex(idx);
 };
 
-const renderTabHeader: React.ComponentProps<typeof Container>['renderHeader'] &
-  object = props => <TabsTopHeader indexDecimalValue={props.indexDecimal} />;
-const renderTabBar: React.ComponentProps<typeof Container>['renderTabBar'] &
-  object = props => <HomeCustomMaterialTabBar {...props} />;
-
 export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  // const { tabIndex } = useHomeTabIndex();
-
-  const renderLabel = useCallback(
-    (name: string) =>
-      // eslint-disable-next-line react/no-unstable-nested-components
-      ({ index, indexDecimal }) =>
-        <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
-    [],
-  );
 
   const handleTabChange = useCallback(
     ({ prevIndex, index }: { prevIndex: number; index: number }) => {
@@ -93,56 +86,70 @@ export const TabsMultiAssets: React.FC<TabMultiAssetsProps> = () => {
   useRendererDetect({ name: 'TabsMultiAssets' });
 
   return (
-    <Tabs.Container
-      ref={homeTabScrollerRef}
-      onIndexChange={onIndexChange}
-      renderHeader={renderTabHeader}
-      onTabChange={handleTabChange}
-      renderTabBar={renderTabBar}
-      headerHeight={HOME_TOP_HEADER_SIZES.headerHeight}
-      minHeaderHeight={HOME_TOP_HEADER_SIZES.headerHeight}
-      tabBarHeight={HOME_TOP_HEADER_SIZES.scrollableListTopOffset}
-      allowHeaderOverscroll={IS_IOS}
-      lazy={false}
-      cancelLazyFadeIn
-      pagerProps={{
-        onPageScrollStateChanged: event => {
-          isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
-        },
-        // scrollEnabled: !accountToShowReceiveTip,
-      }}
-      containerStyle={styles.container}
-      headerContainerStyle={styles.headerContainer}>
-      <Tabs.Tab
-        key={TabName.overview}
-        name={TabName.overview}
-        label={() => null}>
-        <HomeOverview />
-      </Tabs.Tab>
+    <View style={styles.container}>
+      <TabsTopHeader />
+      <HomeCustomMaterialTabBar />
+      <MultiAssetsContainer
+        ref={homeTabScrollerRef}
+        onIndexChange={onIndexChange}
+        onTabChange={handleTabChange}
+        // renderHeader={renderTabHeaderStub}
+        workletOnIndexDecimalChange={ctx => {
+          'worklet';
+          apisHomeTabIndex.onTabSvsChange(
+            ctx.indexDecimal,
+            ctx.tabName as HomeTabName,
+          );
+        }}
+        renderHeader={() => null}
+        renderTabBar={() => null}
+        // renderTabBar={renderTabBar}
+        headerHeight={0}
+        minHeaderHeight={0}
+        tabBarHeight={0}
+        allowHeaderOverscroll={IS_IOS}
+        lazy={false}
+        cancelLazyFadeIn
+        pagerProps={{
+          onPageScrollStateChanged: event => {
+            isTabsSwiping.value =
+              event?.nativeEvent?.pageScrollState !== 'idle';
+          },
+          // scrollEnabled: !accountToShowReceiveTip,
+        }}
+        containerStyle={styles.tabsContainer}
+        headerContainerStyle={styles.headerContainer}>
+        <Tabs.Tab
+          key={TabName.overview}
+          name={TabName.overview}
+          label={() => null}>
+          <HomeOverview />
+        </Tabs.Tab>
 
-      <Tabs.Tab
-        key={TabName.token}
-        name={TabName.token}
-        label={renderLabel('Token')}>
-        <TokenList />
-      </Tabs.Tab>
-      <Tabs.Tab
-        key={TabName.defi}
-        name={TabName.defi}
-        label={renderLabel('DeFi')}>
-        <ProtocolList />
-      </Tabs.Tab>
-      <Tabs.Tab key={TabName.nft} name={TabName.nft} label={renderLabel('NFT')}>
-        <NFTList />
-      </Tabs.Tab>
-    </Tabs.Container>
+        <Tabs.Tab key={TabName.token} name={TabName.token} label={() => null}>
+          <TokenList />
+        </Tabs.Tab>
+        <Tabs.Tab key={TabName.defi} name={TabName.defi} label={() => null}>
+          <ProtocolList />
+        </Tabs.Tab>
+        <Tabs.Tab key={TabName.nft} name={TabName.nft} label={() => null}>
+          <NFTList />
+        </Tabs.Tab>
+      </MultiAssetsContainer>
+    </View>
   );
 };
 
 const getStyles = createGetStyles2024(({ safeAreaInsets }) => ({
   container: {
+    position: 'relative',
     flex: 1,
-    marginTop: safeAreaInsets.top,
+    // paddingTop: safeAreaInsets.top,
+  },
+  tabsContainer: {
+    flex: 1,
+    // marginTop: safeAreaInsets.top,
+    // ...makeDebugBorder('blue'),
   },
   headerContainer: {
     backgroundColor: 'transparent',

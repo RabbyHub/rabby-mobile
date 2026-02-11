@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, AppState, StyleSheet } from 'react-native';
-import { get, merge } from 'lodash';
+import { debounce, get, merge } from 'lodash';
 
 import {
   NativeStackHeaderLeftProps,
@@ -59,6 +59,7 @@ import { toast, toastLoading } from '@/components2024/Toast';
 import i18next from 'i18next';
 import { switchSceneCurrentAccount } from './accountsSwitcher';
 import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
+import { makeMutable, runOnJS } from 'react-native-reanimated';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -307,24 +308,63 @@ export function useHomeTabIndex() {
     setTabIndex: apisHomeTabIndex.setTabIndex,
   };
 }
+
+export const enum HomeTabName {
+  overview = 'overview',
+  token = 'token',
+  defi = 'defi',
+  nft = 'nft',
+}
+export const TabbarLabels: {
+  [P in HomeTabName]: {
+    index: number;
+    label: string;
+  };
+} = {
+  [HomeTabName.overview]: { index: 0, label: '' },
+  [HomeTabName.token]: { index: 1, label: 'Token' },
+  [HomeTabName.defi]: { index: 2, label: 'Defi' },
+  [HomeTabName.nft]: { index: 3, label: 'NFT' },
+};
 const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
-const tabIndexRef: RefLikeObject<number> = { current: 0 };
+// const tabIndexRef: RefLikeObject<number> = { current: 0 };
+const tabIndexSvs = {
+  current: 0,
+  svIndexDecimal: makeMutable(0),
+  svTabName: makeMutable(HomeTabName.overview),
+};
 export const apisHomeTabIndex = {
   get homeTabScrollerRef() {
     return homeTabScrollerRef;
   },
-  get tabIndex() {
-    return tabIndexRef.current;
+  // get tabIndex() {
+  //   return svTabIndexDecimal.value;
+  // },
+  get svTabIndexDecimal() {
+    return tabIndexSvs.svIndexDecimal;
+  },
+  get svTabName() {
+    return tabIndexSvs.svTabName;
+  },
+  onTabSvsChange: (val: number, tabName?: HomeTabName) => {
+    'worklet';
+    tabIndexSvs.svIndexDecimal.value = val;
+    tabIndexSvs.current = Math.floor(val);
+    if (tabName) {
+      tabIndexSvs.svTabName.value = tabName;
+    }
   },
   isHomeAtFirstTab() {
-    return tabIndexRef.current === 0;
+    return tabIndexSvs.svIndexDecimal.value === 0;
   },
   setTabIndex(val: number, processJump = false) {
-    tabIndexRef.current = val;
-    tabIndexStore.setState({ tabIndex: val });
-
+    'worklet';
     if (processJump) {
       homeTabScrollerRef.current?.setIndex(val);
+    } else {
+      tabIndexSvs.svIndexDecimal.value = val;
+      tabIndexSvs.current = val;
+      runOnJS(() => tabIndexStore.setState({ tabIndex: val }))();
     }
   },
 };

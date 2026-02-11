@@ -32,6 +32,8 @@ import useProtocols, {
 import { useShallow } from 'zustand/react/shallow';
 import { useAccountInfo } from './hooks';
 import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -288,7 +290,7 @@ export const ProtocolList = () => {
         <RefreshControl
           style={styles.bgContainer}
           onRefresh={onRefresh}
-          refreshing={false}
+          refreshing={IS_ANDROID && isLoading}
         />
       }
     />
@@ -298,11 +300,10 @@ export const ProtocolList = () => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: TAB_HEADER_FULL_HEIGHT,
+    marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,
-    marginTop: -TAB_HEADER_FULL_HEIGHT,
   },
   bgContainer: {
     paddingHorizontal: 16,

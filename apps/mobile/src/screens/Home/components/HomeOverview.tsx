@@ -153,7 +153,6 @@ import { sleep } from '@/utils/async';
 import balanceStore from '@/store/balance';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
-import { hapticTrigger } from '@/core/utils/reexports';
 
 const AnimatedActivityIndicator =
   Animated.createAnimatedComponent(ActivityIndicator);
@@ -203,7 +202,6 @@ function getIsAtBottom(scrollY: number, translateY = 0) {
 
 const pulldownRefreshSizes = {
   headerHeight: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 56),
-  offsetY: HOME_TOP_HEADER_SIZES.bottomOffsetIndicator,
 };
 
 const scrHeight = Dimensions.get('screen').height;
@@ -415,7 +413,7 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
         }
 
         pullRefresh: {
-          if (SHOULD_SHOW_INDICATOR_WHEN_LOADING) {
+          if (SHOULD_SHOW_INDICATOR_WHEN_LOADING && !svIsRefreshing.value) {
             pullDistance.value = Math.max(0, event.translationY);
             !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
             startValues.value.hasImpactOnPanup = true;
@@ -441,9 +439,14 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
 
         pullRefresh: {
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
-          if (SHOULD_SHOW_INDICATOR_WHEN_LOADING) {
+          if (SHOULD_SHOW_INDICATOR_WHEN_LOADING && !svIsRefreshing.value) {
             if (pullDistance.value >= pulldownRefreshSizes.headerHeight) {
               svIsRefreshing.value = true;
+              // setPulldownRefreshStage({
+              //   state: 'refreshing',
+              //   svIsRefreshing,
+              //   pullDistance,
+              // });
               runOnJS(onRefreshOnJs)();
               !hasImpactOnPanup && runOnJS(triggerImpact)();
             } else {
@@ -459,6 +462,19 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
       }),
   );
 
+  // rotate deg based on pullDistance, max rotate 360deg
+  const animatedIndicatorStyle = useAnimatedStyle(() => {
+    const rotate = interpolate(
+      pullDistance.value,
+      [0, HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
+      [0, 360],
+      Extrapolate.CLAMP,
+    );
+    return {
+      transform: [{ rotate: `${rotate}deg` }],
+    };
+  });
+
   const scrollTopStyle = useAnimatedStyle(() => {
     return {
       height: interpolate(
@@ -470,7 +486,7 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
       paddingTop: interpolate(
         pullDistance.value,
         [0, pulldownRefreshSizes.headerHeight],
-        [pulldownRefreshSizes.offsetY, 0],
+        [HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset, 0],
         Extrapolate.CLAMP,
       ),
       // comment it on DEBUG
@@ -483,19 +499,22 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
     };
   });
 
-  // rotate deg based on pullDistance, max rotate 360deg
-  const animatedIndicatorStyle = useAnimatedStyle(() => {
-    const rotate = interpolate(
-      pullDistance.value,
-      [0, pulldownRefreshSizes.headerHeight],
-      [0, 360],
-      Extrapolate.CLAMP,
-    );
+  const scrollInnerStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ rotate: `${rotate}deg` }],
+      // marginTop: interpolate(
+      //   pullDistance.value,
+      //   [0, pulldownRefreshSizes.headerHeight],
+      //   [HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset, 0],
+      //   Extrapolate.CLAMP,
+      // ),
+      // paddingTop: interpolate(
+      //   pullDistance.value,
+      //   [0, pulldownRefreshSizes.headerHeight],
+      //   [0, HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
+      //   Extrapolate.CLAMP,
+      // ),
     };
   });
-
   const isRefreshing = useValueFromSharedValue(svIsRefreshing);
 
   return {
@@ -507,8 +526,9 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
     scrollableEnabled,
 
     isRefreshing,
-    scrollTopStyle,
     animatedIndicatorStyle,
+    scrollTopStyle,
+    scrollInnerStyle,
   };
 };
 
@@ -529,35 +549,16 @@ const getStyle = createGetStyles2024(
     scroll: {
       flex: 1,
       paddingTop: 0,
-      marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-      // marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
-      // ...makeDebugBorder('yellow'),
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['green-light-2'],
-      // }),
     },
     scrollContainer: {
       flexGrow: 1,
       minHeight: '100%',
-      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-      // marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
-      // paddingBottom:
-      //   IS_ANDROID ? Math.max(safeAreaInsets.bottom, 16)
-      //     : safeAreaInsets.bottom,
       paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
       // ...makeDebugBorder('orange'),
     },
     scrollTopPlaceholder: {
       width: '100%',
       opacity: 1,
-      marginTop: -(
-        (
-          HOME_TOP_HEADER_SIZES.scrollableListTopOffset +
-          pulldownRefreshSizes.headerHeight
-        )
-        // - pulldownRefreshSizes.offsetY
-      ),
-      // paddingTop: pulldownRefreshSizes.offsetY, // just default value for tuning
       height: 0,
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['green-light-2'],
@@ -567,8 +568,7 @@ const getStyle = createGetStyles2024(
       alignItems: 'center',
     },
     scrollViewInner: {
-      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-      marginTop: 0,
+      // marginTop: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
@@ -678,11 +678,6 @@ export const HomeOverview = React.memo(() => {
   const { styles, reanimatedStyles, colors2024 } = useTheme2024({
     getStyle,
   });
-  // const rStyles = {
-  //   scrollTopPlaceholder: useAnimatedStyle(
-  //     reanimatedStyles.scrollTopPlaceholder,
-  //   ),
-  // };
   const { pendingTxCount, historyCount } = useHomeHistoryStore();
 
   const { width } = useWindowDimensions();
@@ -1103,9 +1098,9 @@ export const HomeOverview = React.memo(() => {
     panGestureRef,
 
     isRefreshing,
-    // pullDownGestureRef,
     animatedIndicatorStyle,
     scrollTopStyle,
+    scrollInnerStyle,
   } = useHomeGestures<RNGHScrollView>({
     onRefreshOnJs: async ctx => {
       'worklet';
@@ -1148,15 +1143,14 @@ export const HomeOverview = React.memo(() => {
             onScroll={onScrollHandlers.onScroll}
             scrollableEnabled={scrollableEnabled}
             simultaneousHandlers={[panGestureRef]}
-            {...(IS_ANDROID &&
-              !USE_PULL_REFRESH_INDICATOR_ON_ANDROID && {
-                refreshControl: (
-                  <RNGHRefreshControl
-                    refreshing={isRefreshing}
-                    onRefresh={onRefresh}
-                  />
-                ),
-              })}>
+            {...(!SHOULD_SHOW_INDICATOR_WHEN_LOADING && {
+              refreshControl: (
+                <RNGHRefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={onRefresh}
+                />
+              ),
+            })}>
             <Animated.View
               style={[styles.scrollTopPlaceholder, scrollTopStyle]}>
               <AnimatedActivityIndicator
@@ -1165,7 +1159,8 @@ export const HomeOverview = React.memo(() => {
                 style={animatedIndicatorStyle}
               />
             </Animated.View>
-            <Animated.View style={[styles.scrollViewInner]}>
+            <Animated.View
+              style={[styles.scrollViewInner /* , scrollInnerStyle */]}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />
 
               <HomeCenterArea />
