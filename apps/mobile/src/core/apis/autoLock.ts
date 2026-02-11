@@ -121,7 +121,7 @@ const checkExpire = (
   reason: TimeoutContext['reason'],
 ) => {
   const nowTime = Date.now();
-  // if (unlockExpire <= nowTime) return;
+  if (unlockExpire < 0) return;
 
   const fromExpireDiff = nowTime - unlockExpire;
 
@@ -140,6 +140,7 @@ const checkExpire = (
 export function setupAutoLockChecker() {
   autoLockTimerRef.timer = setInterval(() => {
     const unlockExpire = autoLockTimerRef.foregroundExpire;
+    console.debug('[autoLock] app to foreground unlockExpire', unlockExpire);
     checkExpire(unlockExpire, 'foreground');
   }, CHECK_DURATION);
 
@@ -159,9 +160,19 @@ export function setupAutoLockChecker() {
       // console.debug('[autoLock] app back to foreground autoLockTimerRef, unlockExpire', autoLockTimerRef, unlockExpire);
       unlockExpire && checkExpire(unlockExpire, 'back-to-foreground');
     } else if (prevState === 'active' && state !== 'active') {
-      // console.debug('[autoLock] app to background autoLockTimerRef', autoLockTimerRef);
-      const { expireTime } = getPersistedAutoLockTimes();
-      autoLockTimerRef.backToForegroundExpire = expireTime;
+      console.debug(
+        '[autoLock] app to background autoLockTimerRef',
+        autoLockTimerRef,
+      );
+      const { expireTime, timeoutMs } = getPersistedAutoLockTimes();
+      console.debug(
+        '[autoLock] app to background expireTime, timeoutMs',
+        expireTime,
+        timeoutMs,
+      );
+      if (expireTime > Date.now()) {
+        autoLockTimerRef.backToForegroundExpire = expireTime;
+      }
     }
   });
 }
