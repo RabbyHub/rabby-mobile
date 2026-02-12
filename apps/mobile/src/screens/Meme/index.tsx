@@ -69,9 +69,10 @@ function MemeScreen(): JSX.Element {
         order: changeSort as 'desc' | 'asc',
       };
     }
+    // 后端排序
     return {
-      orderBy: 'fdv' as const,
-      order: 'desc' as const,
+      orderBy: undefined,
+      order: undefined,
     };
   }, [volumeSort, fdvSort, changeSort]);
 
@@ -92,31 +93,21 @@ function MemeScreen(): JSX.Element {
     setVolumeSort(prev => {
       const next =
         prev === 'default' ? 'desc' : prev === 'desc' ? 'asc' : 'default';
-      if (next !== 'default') {
-        getMemeTokenList(true, 'volume_24h', next);
-      } else {
-        getMemeTokenList(true, 'fdv', 'desc');
-      }
       return next;
     });
     setFdvSort('default');
     setChangeSort('default');
-  }, [getMemeTokenList, setVolumeSort, setFdvSort, setChangeSort]);
+  }, [setVolumeSort, setFdvSort, setChangeSort]);
 
   const handleFdvSort = useCallback(() => {
     setFdvSort(prev => {
       const next =
         prev === 'default' ? 'desc' : prev === 'desc' ? 'asc' : 'default';
-      if (next !== 'default') {
-        getMemeTokenList(true, 'fdv', next);
-      } else {
-        getMemeTokenList(true, 'fdv', 'desc');
-      }
       return next;
     });
     setVolumeSort('default');
     setChangeSort('default');
-  }, [getMemeTokenList, setFdvSort, setVolumeSort, setChangeSort]);
+  }, [setFdvSort, setVolumeSort, setChangeSort]);
 
   const handleOpenTokenDetail = useCallback((token: MemeItem) => {
     matomoRequestEvent({
@@ -200,16 +191,11 @@ function MemeScreen(): JSX.Element {
     setChangeSort(prev => {
       const next =
         prev === 'default' ? 'desc' : prev === 'desc' ? 'asc' : 'default';
-      if (next !== 'default') {
-        getMemeTokenList(true, 'price_change_24h', next);
-      } else {
-        getMemeTokenList(true, 'fdv', 'desc');
-      }
       return next;
     });
     setVolumeSort('default');
     setFdvSort('default');
-  }, [getMemeTokenList, setChangeSort, setVolumeSort, setFdvSort]);
+  }, [setChangeSort, setVolumeSort, setFdvSort]);
 
   // 当前页面 focus 且滚动位置在前100项时，每 10 秒静默刷新一次列表
   useEffect(() => {
@@ -256,7 +242,7 @@ function MemeScreen(): JSX.Element {
         refreshControl={
           <RefreshControl
             refreshing={tokenListLoading && list.length !== 0}
-            onRefresh={() => getMemeTokenList(true, orderBy, order)}
+            onRefresh={() => getMemeTokenList(orderBy, order)}
           />
         }
       />
