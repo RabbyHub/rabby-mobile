@@ -1899,8 +1899,7 @@
       "clearBrowserData": "Очистить данные браузера",
       "screenshotReportSwitch": "Скриншот для сообщения об ошибке",
       "currency": "Валюта",
-      "searchCurrency": "Поиск валюты",
-      "transactionNotification": "Уведомления о транзакциях (бета)"
+      "searchCurrency": "Поиск валюты"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -2133,7 +2132,8 @@
       },
       "price": "Цена",
       "headerTokenValueText": "Значение токена",
-      "headerBalanceText": "Баланс"
+      "headerBalanceText": "Баланс",
+      "copyCA": "Адрес контракта токена скопирован"
     },
     "settingModal": {
       "themeMode": {
@@ -2725,7 +2725,8 @@
         "takeProfitWhenPriceAbove": "Забрать прибыль, когда цена выше",
         "upTo": "До",
         "maxMargin": "Максимальный размер маржи составляет {{amount}}",
-        "minMargin": "Минимальная маржа составляет {{amount}}"
+        "minMargin": "Минимальная маржа составляет {{amount}}",
+        "onlyIsolated": "Только изолированное плечо поддерживается для этого токена"
       },
       "PerpsOpenPositionCheckPopup": {
         "price": "Цена",
@@ -3082,7 +3083,8 @@
           "balance": "Баланс",
           "assets": "Токен"
         },
-        "title": "Выберите токен для погашения"
+        "title": "Выберите токен для погашения",
+        "zeroLtvCollateralTips": "У вас следующие LTV = 0 залоги, и, таким образом, вы можете сначала погасить только этими залогами в соответствии с правилами погашения залогов."
       },
       "dappSelect": {
         "title": "Выберите поставщика кредитования"

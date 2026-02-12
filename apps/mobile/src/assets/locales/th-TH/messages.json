@@ -2278,8 +2278,7 @@
       "clearBrowserData": "ล้างข้อมูลเบราว์เซอร์",
       "screenshotReportSwitch": "ถ่ายภาพหน้าจอเพื่อติดตามข้อบกพร่อง",
       "currency": "สกุลเงิน",
-      "searchCurrency": "ค้นหาเงินตรา",
-      "transactionNotification": "การแจ้งเตือนTxn (เบต้า)"
+      "searchCurrency": "ค้นหาเงินตรา"
     },
     "settingModal": {
       "themeMode": {
@@ -2871,7 +2870,8 @@
         "takeProfitWhenPriceAbove": "ทำกำไรเมื่อราคาสูงกว่า",
         "upTo": "สูงสุดถึง",
         "minMargin": "มาร์จิ้นขั้นต่ำคือ {{amount}}",
-        "maxMargin": "最大保证金为 {{amount}}"
+        "maxMargin": "最大保证金为 {{amount}}",
+        "onlyIsolated": "เฉพาะอัตรากำไรที่แยกออกเท่านั้นที่รองรับสำหรับโทเค็นนี้"
       },
       "PerpsOpenPositionCheckPopup": {
         "fee": "ค่าธรรมเนียม",
@@ -3228,7 +3228,8 @@
           "assets": "โทเค็น",
           "balance": "ยอดคงเหลือ"
         },
-        "title": "เลือกโทเค็นคืนเงิน"
+        "title": "เลือกโทเค็นคืนเงิน",
+        "zeroLtvCollateralTips": "คุณมีหลักประกัน LTV = 0 ดังนั้นคุณจึงสามารถชำระคืนด้วยหลักประกันเหล่านี้ได้ก่อนตามกฎการชำระคืนหลักประกัน"
       },
       "dappSelect": {
         "title": "เลือกผู้ให้กู้"

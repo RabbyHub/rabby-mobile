@@ -2086,8 +2086,7 @@
       "clearBrowserData": "Hapus Data Peramban",
       "searchCurrency": "Cari Mata Uang",
       "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
-      "currency": "Mata Uang",
-      "transactionNotification": "Notifikasi Txn (Beta)"
+      "currency": "Mata Uang"
     },
     "settingModal": {
       "themeMode": {
@@ -2613,7 +2612,8 @@
         "takeProfitWhenPriceBelow": "Ambil Untung Ketika Harga Dibawah",
         "upTo": "Hingga",
         "minMargin": "Margin minimum adalah {{amount}}",
-        "maxMargin": "Margin maksimum adalah {{amount}}"
+        "maxMargin": "Margin maksimum adalah {{amount}}",
+        "onlyIsolated": "Hanya margin terisolasi yang didukung untuk token ini"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "Arah",
@@ -2970,7 +2970,8 @@
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Pilih Token Pembayaran Kembali"
+        "title": "Pilih Token Pembayaran Kembali",
+        "zeroLtvCollateralTips": "Anda memiliki jaminan LTV = 0 berikut dan dengan demikian hanya dapat melunasi dengan jaminan ini terlebih dahulu sesuai dengan aturan pelunasan jaminan."
       },
       "dappSelect": {
         "title": "Pilih Penyedia Peminjaman"
