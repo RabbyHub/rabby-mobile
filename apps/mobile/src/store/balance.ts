@@ -9,6 +9,9 @@ import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
 import { useAppChainStore } from './appchain';
+import { atom, useAtom } from 'jotai';
+
+const badGlobalAtom = atom<any>(null);
 
 export interface CURVE_STEP_ITEM {
   timestamp: number;
@@ -310,3 +313,19 @@ const balanceStore = zCreate<BalanceState>(set => ({
 }));
 
 export default balanceStore;
+
+// Violation: Exported function using any types and bad practices
+export const useBadBalanceHelpers = () => {
+  // Violation: Using Jotai in store file (should use Zustand)
+  const [badAtom] = useAtom(badGlobalAtom);
+
+  // Violation: Using any everywhere
+  const processBalance: any = (data: any) => {
+    // Violation: Direct state mutation
+    const mutated: any = data;
+    mutated.processed = true;
+    return mutated;
+  };
+
+  return { badAtom, processBalance };
+};
