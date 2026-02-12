@@ -28,7 +28,7 @@ import {
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { APP_TEST_PWD, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import {
   RequestGenericPurpose,
@@ -53,6 +53,8 @@ import { measureTime } from '@/core/utils/statics';
 import { stats } from '@/utils/stats';
 import DeviceInfo from 'react-native-device-info';
 import { getAddressesForReport } from '@/core/apis/address';
+import { perfEvents } from '@/core/utils/perf';
+import { GetRootScreenRouteProp } from '@/navigation-type';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -200,6 +202,7 @@ export default function UnlockScreen() {
 
   const RcRabbyLogo = isLight ? RcRabbyLogoLight : RcRabbyLogoDark;
   const navigation = useRabbyAppNavigation();
+  const { params } = useRoute<GetRootScreenRouteProp<'Unlock'>>();
   const {
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
@@ -282,7 +285,7 @@ export default function UnlockScreen() {
   }, [t]);
 
   const lockBiometricRef = React.useRef(false);
-  const manualUnlockWithBiometrics = useCallback(async () => {
+  const processUnlockWithBiometrics = useCallback(async () => {
     if (lockBiometricRef.current) {
       return;
     }
@@ -304,14 +307,25 @@ export default function UnlockScreen() {
 
   useLayoutEffect(() => {
     incToReset(true);
-    (async () => {
+    const sub = perfEvents.subscribe('AUTO_TRIGGER_UNLOCK', async () => {
       // wait screen rendered
       await sleep(500);
       if (!isBiometricsEnabled) return;
 
-      await manualUnlockWithBiometrics();
-    })();
-  }, [isBiometricsEnabled, manualUnlockWithBiometrics]);
+      await processUnlockWithBiometrics();
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [isBiometricsEnabled, processUnlockWithBiometrics]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (params?.disableAutoTriggerUnlock) return;
+      UnlockUIManager.triggerAutoUnlock();
+    }, [params?.disableAutoTriggerUnlock]),
+  );
 
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
@@ -393,7 +407,7 @@ export default function UnlockScreen() {
               <View style={styles.biometricsBtns}>
                 <TouchableView
                   style={styles.biometricsBtn}
-                  onPress={manualUnlockWithBiometrics}>
+                  onPress={processUnlockWithBiometrics}>
                   <BiometricsIcon isFaceID={isFaceID} />
                 </TouchableView>
               </View>
