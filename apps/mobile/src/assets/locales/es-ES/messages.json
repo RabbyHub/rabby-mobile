@@ -2885,7 +2885,8 @@
         "stopLossWhenPriceAbove": "Stop Loss Cuando el Precio Está Por Encima",
         "maxMargin": "El margen máximo es {{amount}}",
         "upTo": "Hasta",
-        "minMargin": "El margen mínimo es {{amount}}"
+        "minMargin": "El margen mínimo es {{amount}}",
+        "onlyIsolated": "Solo se admite margen aislado para este token."
       },
       "PerpsOpenPositionCheckPopup": {
         "perps": "Perpetuos",
@@ -3242,7 +3243,8 @@
           "assets": "Token",
           "balance": "Saldo"
         },
-        "title": "Seleccionar Token de Reembolso"
+        "title": "Seleccionar Token de Reembolso",
+        "zeroLtvCollateralTips": "Tienes los siguientes colaterales LTV = 0 y, por lo tanto, solo puedes reembolsar con estos colaterales primero de acuerdo con las reglas de reembolso de colaterales."
       },
       "dappSelect": {
         "title": "Seleccionar Proveedor de Préstamos"

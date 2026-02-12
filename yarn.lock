@@ -9309,16 +9309,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.1.5-beta.1":
-  version: 1.1.5-beta.1
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.5-beta.1"
+"@rabby-wallet/hyperliquid-sdk@npm:1.1.5":
+  version: 1.1.5
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.5"
   dependencies:
     "@ethereumjs/util": 9.0.0
     "@metamask/eth-sig-util": 5.1.0
     "@msgpack/msgpack": 3.1.2
     "@noble/hashes": 1.8.0
     ethereum-cryptography: 2.2.1
-  checksum: 9fe1234f488cd609b7c407de7215bffacd785c3b6955bf2f1af07d72dea7c2b75156a5f9deeb62b6074595800fdc8969461f5bda365e06f78efb373a9ac8a159
+  checksum: 14e9607a84509713b2973cfd19b2b8ed70ef758da0e5f1641900037f90cd8792f2f1f738f0e86fa0819274ab2aeaa32c84a20e13f49f4d356953444de461f004
   languageName: node
   linkType: hard
 
@@ -9360,7 +9360,7 @@ __metadata:
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
     "@rabby-wallet/gnosis-sdk": 1.4.6
-    "@rabby-wallet/rabby-api": 0.9.56-beta.0
+    "@rabby-wallet/rabby-api": 0.9.56
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
     "@typescript-eslint/parser": ^5.62.0
@@ -9506,9 +9506,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.56-beta.0":
-  version: 0.9.56-beta.0
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.56-beta.0"
+"@rabby-wallet/rabby-api@npm:0.9.56":
+  version: 0.9.56
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.56"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -9519,7 +9519,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: d0de67993ec86d53decd57d9b1120179e6f9dedf2e5ba96b355ab9717ca4bd66455182f363ff4be6959ac648d2857371de6e148d731bcc3ec4a9c701fa0a3172
+  checksum: eac4012a98a1dc86c6b24786c81225bcc0844d40302c73d5b9614d2abe401acc52ad50a7d9f9ef9626f593cb9eee28c787f6b8aa2f0b7d6753959fa56378e186
   languageName: node
   linkType: hard
 
@@ -35715,11 +35715,11 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.1.0
     "@rabby-wallet/gnosis-sdk": 1.4.6
-    "@rabby-wallet/hyperliquid-sdk": 1.1.5-beta.1
+    "@rabby-wallet/hyperliquid-sdk": 1.1.5
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.14
-    "@rabby-wallet/rabby-api": 0.9.56-beta.0
+    "@rabby-wallet/rabby-api": 0.9.56
     "@rabby-wallet/rabby-security-engine": 2.0.12
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.73

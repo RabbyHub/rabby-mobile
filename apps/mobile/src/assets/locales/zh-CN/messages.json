@@ -2737,7 +2737,8 @@
         "stopLossWhenPriceBelow": "当价格低于时止损",
         "minMargin": "最低保证金为 {{amount}}",
         "maxMargin": "最大保证金为 {{amount}}",
-        "upTo": "高达"
+        "upTo": "高达",
+        "onlyIsolated": "仅支持该代币的隔离保证金"
       },
       "PerpsOpenPositionCheckPopup": {
         "price": "价格",
@@ -3091,7 +3092,8 @@
           "assets": "代币",
           "balance": "余额"
         },
-        "title": "选择还款代币"
+        "title": "选择还款代币",
+        "zeroLtvCollateralTips": "您当前的 LTV = 0 的抵押品，因此只能根据抵押品偿还规则使用这些抵押品进行偿还。"
       },
       "dappSelect": {
         "title": "选择借贷服务提供商"
