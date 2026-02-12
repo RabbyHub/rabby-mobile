@@ -2644,6 +2644,7 @@
         "addToShort": "Add to Short"
       },
       "PerpsOpenPositionPopup": {
+        "onlyIsolated": "Only isolated margin is supported for this token",
         "margin": "Margin",
         "upTo": "Up to",
         "invalidNumber": "Please input a valid number",
