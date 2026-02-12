@@ -57,7 +57,10 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 import { SwapType } from '../../../types/swap';
 import TokenIcon from '../../TokenIcon';
-import { APP_CODE_LENDING_REPAY_WITH_COLLATERAL } from '../../../utils/constant';
+import {
+  APP_CODE_LENDING_REPAY_WITH_COLLATERAL,
+  LIQUIDATION_SAFETY_THRESHOLD,
+} from '../../../utils/constant';
 import { ParaswapRatesType, SwappableToken } from '../../../types/swap';
 import { getParaswap } from '../../../config/paraswap';
 import { getParaswapSellRates } from '../DebtSwap/paraswap';
@@ -424,6 +427,15 @@ export default function RepayWithCollateral({
       selectedCollateralToken?.balance || '0',
     );
   }, [collateralAmountAfterSlippage, selectedCollateralToken]);
+
+  const { isHFLow, isLiquidatable, currentHF, afterSwapInfo } =
+    useHFForRepayWithCollateral({
+      collateralToken: selectedCollateralToken,
+      repayToken,
+      collateralAmount: collateralAmountAfterSlippage,
+      repayAmount: debouncedRepayAmount,
+    });
+
   const buildRepayWithCollateralTxs = useCallback(async (): Promise<Tx[]> => {
     if (
       !currentAccount ||
@@ -499,6 +511,11 @@ export default function RepayWithCollateral({
       swapRate.inputAmount ||
       swapRate.optimalRateData.srcAmount ||
       '0';
+    const useFlashLoan =
+      currentHF !== '-1' &&
+      valueToBigNumber(currentHF || 0)
+        .minus(valueToBigNumber(afterSwapInfo?.hfEffectOfFromAmount || 0))
+        .lt(LIQUIDATION_SAFETY_THRESHOLD);
 
     const repayWithCollateralParams = {
       fromUnderlyingAsset: selectedCollateralToken.underlyingAddress,
@@ -511,7 +528,7 @@ export default function RepayWithCollateral({
         .toFixed(selectedCollateralToken.decimals),
       repayAllDebt: isMaxSelected,
       rateMode: InterestRate.Variable,
-      useFlashLoan: false,
+      useFlashLoan,
       swapCallData,
       augustus,
     };
@@ -658,6 +675,8 @@ export default function RepayWithCollateral({
     debtBalance,
     collateralAmount,
     isMainnet,
+    currentHF,
+    afterSwapInfo?.hfEffectOfFromAmount,
   ]);
 
   useEffect(() => {
@@ -710,14 +729,6 @@ export default function RepayWithCollateral({
     debouncedRepayAmount,
     collateralNotEnough,
   ]);
-
-  const { isHFLow, isLiquidatable, currentHF, afterSwapInfo } =
-    useHFForRepayWithCollateral({
-      collateralToken: selectedCollateralToken,
-      repayToken,
-      collateralAmount: collateralAmountAfterSlippage,
-      repayAmount: debouncedRepayAmount,
-    });
 
   useEffect(() => {
     if (
