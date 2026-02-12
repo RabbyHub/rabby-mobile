@@ -201,6 +201,7 @@ function ToggleCollateralContent({}: {}) {
       });
       setTxs(formatTxs as unknown as Tx[]);
     } catch (error) {
+      toast.error('There was some error');
       console.error('There was some error', error);
     }
   }, [

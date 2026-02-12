@@ -688,7 +688,6 @@ export default function RepayWithCollateral({
           setCurrentTxs(txs.filter(tx => !!tx));
         }
       } catch (error) {
-        console.error('CUSTOM_LOGGER:=>: error', error);
         if (!cancelled) {
           setCurrentTxs([]);
         }

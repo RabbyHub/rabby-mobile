@@ -800,7 +800,10 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       });
     const hasLtvZeroCollateral = collateralTokens
       .filter(
-        item => !!item.underlyingBalance && item.underlyingBalance !== '0',
+        item =>
+          !!item.underlyingBalance &&
+          item.underlyingBalance !== '0' &&
+          item.usageAsCollateralEnabledOnUser,
       )
       .some(item => item.reserve.baseLTVasCollateral === '0');
     // 如果有ltv 为 0的抵押物，必须优先还款
