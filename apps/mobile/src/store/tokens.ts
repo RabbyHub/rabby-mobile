@@ -78,7 +78,7 @@ interface TokenListState {
   >;
   initStore(): void;
   batchGetTokenList(addresses: string[], force?: boolean): Promise<void>;
-  getTokenList(address: string, force?: boolean): Promise<void>;
+  getTokenList(address: string, force?: boolean): Promise<ITokenItem[] | null>;
   setTokenDisplayMode(mode: TokenDisplayMode): void;
 }
 
@@ -512,7 +512,7 @@ const computeChainSelector = (
     .filter(item => item.is_core);
 };
 
-const tokenListStore = zCreate<TokenListState>(set => ({
+const tokenListStore = zCreate<TokenListState>((set, get) => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
   tokenDisplayMode: preferenceService.getTokenDisplayMode(),
@@ -627,7 +627,7 @@ const tokenListStore = zCreate<TokenListState>(set => ({
             [normalizedAddress]: res,
           },
         }));
-        return;
+        return res;
       }
     }
 
@@ -690,6 +690,8 @@ const tokenListStore = zCreate<TokenListState>(set => ({
           [normalizedAddress]: results,
         },
       }));
+
+      return results;
     } finally {
       set(state => ({
         isLoadingByAddress: {
@@ -697,6 +699,8 @@ const tokenListStore = zCreate<TokenListState>(set => ({
           [normalizedAddress]: { loading: false, allLoading: false },
         },
       }));
+
+      return get().tokenListMap[normalizedAddress] || null;
     }
   },
 }));

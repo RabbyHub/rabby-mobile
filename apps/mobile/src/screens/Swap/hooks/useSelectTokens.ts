@@ -84,11 +84,11 @@ export const useSelectTokens = ({
     useSelectTokensThreadSafe();
 
   const loadToken = useCallback(
-    (address?: string) => {
+    async (address?: string) => {
       if (!address) {
         return;
       }
-      getTokenList(address, true);
+      return getTokenList(address, true);
     },
     [getTokenList],
   );

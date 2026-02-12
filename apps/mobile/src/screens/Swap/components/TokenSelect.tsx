@@ -43,6 +43,7 @@ import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { tagTokenItemFavorite } from '@/screens/Home/utils/token';
 import { ITokenItem } from '@/store/tokens';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
+import PQueue from 'p-queue';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -79,6 +80,29 @@ export type TokenSelectInst = {
 };
 
 const SHOW_CHAIN_FILTER_SCENES = ['swapFrom', 'bridgeFrom'];
+
+const tokenMatchQueue = new PQueue({
+  concurrency: 1,
+  interval: 100,
+  intervalCap: 1,
+});
+
+/**
+ * @description only compare some important fields to determine whether two token items are the same, to avoid unnecessary re-render of token selector modal
+ * @param t1
+ * @param t2
+ */
+function isTokenSame(t1: TokenItem, t2: TokenItem) {
+  return (
+    t1.id === t2.id &&
+    t1.chain === t2.chain &&
+    t1.decimals === t2.decimals &&
+    (t1.amount === t2.amount ||
+      t1.raw_amount === t2.raw_amount ||
+      t1.raw_amount_hex_str === t2.raw_amount_hex_str) &&
+    t1.usd_value === t2.usd_value
+  );
+}
 
 const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
   (
@@ -173,6 +197,56 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       loadToken,
       checkIsExpireAndUpdate,
     ]);
+
+    const tokenRef = useRef(token);
+    useEffect(() => {
+      if (token && token?.id !== tokenRef.current?.id) {
+        tokenRef.current = token;
+      }
+    }, [token]);
+
+    useEffect(() => {
+      tokenMatchQueue.add(async () => {
+        if (tokenSelectorVisible) return;
+        console.debug(
+          '[feat] tokenSelectorVisible changed',
+          tokenSelectorVisible,
+          currentAccount?.address,
+        );
+        if (currentAccount?.address) {
+          const addrTokens = await loadToken(currentAccount.address);
+          console.debug(
+            '[feat] TokenSelect:: currentAccount.address, addrTokens',
+            currentAccount.address,
+            addrTokens,
+          );
+          const tokenToMatch = tokenRef.current;
+          console.debug('[feat] TokenSelect:: tokenToMatch', tokenToMatch);
+          if (addrTokens?.length && tokenToMatch) {
+            const matched = addrTokens?.find(
+              t => t.id === tokenToMatch?.id && t.chain === tokenToMatch?.chain,
+            );
+            console.debug('[feat] TokenSelect:: matched', matched);
+            if (!matched) {
+              const sortedToken = addrTokens.sort(
+                (a, b) => a.usd_value - b.usd_value,
+              );
+              const highestValueToken =
+                sortedToken.find(t => t.is_core) || sortedToken?.[0];
+              console.debug(
+                '[feat] TokenSelect:: highestValueToken',
+                highestValueToken,
+              );
+
+              // highestValueToken && onTokenChange(highestValueToken);
+            } else if (!isTokenSame(matched, tokenToMatch)) {
+              // onTokenChange(matched);
+            }
+          }
+          return addrTokens;
+        }
+      });
+    }, [tokenSelectorVisible, currentAccount?.address, loadToken]);
 
     const { userTokenSettings, fetchUserTokenSettings } =
       useUserTokenSettings();

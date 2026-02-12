@@ -192,7 +192,7 @@ export function BalanceSection({
         {currentAccount && chainItem && (
           <TokenAmountInput
             ref={amountInputRef}
-            defaultAccount={currentAccount}
+            currentAccount={currentAccount}
             value={formValues.amount}
             onChange={handleAmountChange}
             disableItemCheck={disableItemCheck}
