@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
+  apiSendToken,
   SendTokenEvents,
   subscribeEvent,
   useSendTokenFormik,
@@ -54,7 +55,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       onGasInfoDebouncedLoaded,
     },
 
-    fns: { putScreenState, fetchContactAccounts, disableItemCheck },
+    fns: { fetchContactAccounts, disableItemCheck },
   } = useSendTokenInternalContext();
 
   const { currentToken } = useSendTokenScreenChainToken();
@@ -99,18 +100,15 @@ export default function BottomArea({ account }: { account: Account | null }) {
         id: currentToken?.id || '',
       };
     }, [fromAddress, formValues.to, currentToken?.chain, currentToken?.id]),
-    onLoadFinished: useCallback(
-      ctx => {
-        putScreenState(prev => ({
-          ...prev,
-          agreeRequiredChecks: {
-            ...prev.agreeRequiredChecks,
-            forToAddress: false,
-          },
-        }));
-      },
-      [putScreenState],
-    ),
+    onLoadFinished: useCallback(ctx => {
+      apiSendToken.putScreenState(prev => ({
+        ...prev,
+        agreeRequiredChecks: {
+          ...prev.agreeRequiredChecks,
+          forToAddress: false,
+        },
+      }));
+    }, []),
   });
 
   useEffect(() => {
@@ -196,7 +194,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
         mostImportantRisks={mostImportantRisks}
         agreeRequiredChecked={agreeRequiredChecked}
         onToggleAgreeRequiredChecked={() => {
-          putScreenState(prev => {
+          apiSendToken.putScreenState(prev => {
             return {
               ...prev,
               agreeRequiredChecks: {
@@ -249,7 +247,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
         visible={isAllowTransferModalVisible}
         showAddToWhitelist={toAddressInContactBook}
         onFinished={() => {
-          putScreenState?.({ temporaryGrant: true });
+          apiSendToken.putScreenState({ temporaryGrant: true });
           setIsAllowTransferModalVisible(false);
         }}
         onCancel={() => {
@@ -260,7 +258,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       <ModalAddToContacts
         addrToAdd={addressToAddAsContacts || ''}
         onFinished={async result => {
-          putScreenState({ addressToAddAsContacts: null });
+          apiSendToken.putScreenState({ addressToAddAsContacts: null });
           fetchContactAccounts();
 
           // trigger get balance of address
@@ -269,7 +267,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
           });
         }}
         onCancel={() => {
-          putScreenState({ addressToAddAsContacts: null });
+          apiSendToken.putScreenState({ addressToAddAsContacts: null });
         }}
       />
     </View>
@@ -298,7 +296,7 @@ const getStyle = createGetStyles2024(
           colors,
           colors2024,
         }),
-        ...makeDebugBorder(),
+        // ...makeDebugBorder(),
         // ...makeDevOnlyStyle({
         //   backgroundColor: 'blue',
         // }),

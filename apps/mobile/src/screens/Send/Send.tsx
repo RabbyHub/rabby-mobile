@@ -22,6 +22,8 @@ import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@/constant/chains';
 import {
+  apiSendToken,
+  getSendChainToken,
   SendTokenEvents,
   SendTokenInternalContextProvider,
   subscribeEvent,
@@ -67,7 +69,7 @@ import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import {
   getAddrDescWithCexLocalCacheSync,
@@ -149,15 +151,10 @@ function SendScreen({
     >();
   const navParams = route.params;
 
-  const { chainItem, currentToken, setChainEnum } =
-    useSendTokenScreenChainToken();
-  const [routeParams] = useAtom(sendScreenParamsAtom);
+  const { chainItem, currentToken } = useSendTokenScreenChainToken();
+  const routeParams = useAtomValue(sendScreenParamsAtom);
 
-  const {
-    sendTokenScreenState: screenState,
-    putScreenState,
-    resetScreenState,
-  } = useSendTokenScreenState();
+  const { sendTokenScreenState: screenState } = useSendTokenScreenState();
 
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
@@ -279,11 +276,11 @@ function SendScreen({
     if (!isValidHexAddress(formValues.to as `0x${string}`)) return;
 
     getAddrDescWithCexLocalCacheSync(formValues.to).then(res => {
-      putScreenState({
+      apiSendToken.putScreenState({
         toAddrDesc: res,
       });
     });
-  }, [formValues.to, putScreenState]);
+  }, [formValues.to]);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
     account: currentAccount,
@@ -292,6 +289,8 @@ function SendScreen({
   const initByCacheFinishedRef = useRef(false);
   const initByCache = useCallback(async () => {
     let targetToken: TokenItem | null = null;
+    const { chainItem: latestChainItem, currentToken } = getSendChainToken();
+
     if (
       navParams &&
       'safeInfo' in navParams &&
@@ -299,7 +298,7 @@ function SendScreen({
     ) {
       const safeInfo = navParams.safeInfo;
       const target = findChainByID(safeInfo.chainId);
-      putScreenState({
+      apiSendToken.putScreenState({
         safeInfo: safeInfo,
       });
 
@@ -308,7 +307,7 @@ function SendScreen({
         chain: target ? target?.serverId : currentToken.chain,
         ...EMPTY_TOKEN_ITEM,
       };
-      target?.enum && setChainEnum(target.enum);
+      target?.enum && apiSendToken.setChainEnum(target.enum);
     } else if (
       navParams &&
       'chainEnum' in navParams &&
@@ -330,7 +329,7 @@ function SendScreen({
           : currentToken.id,
         ...EMPTY_TOKEN_ITEM,
       };
-      target && setChainEnum(target.enum);
+      target && apiSendToken.setChainEnum(target.enum);
     } else {
       const isManualChangeToken =
         routeParams?.tokenId && routeParams?.chainEnum;
@@ -382,10 +381,10 @@ function SendScreen({
           };
         }
       }
-      if (chainItem && targetToken.chain !== chainItem.serverId) {
+      if (latestChainItem && targetToken.chain !== latestChainItem.serverId) {
         const target = findChainByServerID(targetToken.chain);
         if (target?.enum) {
-          setChainEnum(target.enum);
+          apiSendToken.setChainEnum(target.enum);
         }
       }
       await Promise.race([
@@ -405,24 +404,9 @@ function SendScreen({
     navParams,
     routeParams,
     currentAccount,
-    currentToken,
-    chainItem,
-    setChainEnum,
-    putScreenState,
     fetchOrderedChainList,
     loadCurrentToken,
   ]);
-  const initByCacheOnce = useCallback(async () => {
-    if (initByCacheFinishedRef.current) return;
-    initByCacheFinishedRef.current = true;
-
-    try {
-      await initByCache();
-    } catch (e) {
-      console.error('SendScreen initByCache error', e);
-      initByCacheFinishedRef.current = false;
-    }
-  }, [initByCache]);
 
   const checkIsAddressBlocked = useCallback(async (to?: string) => {
     if (!to) return;
@@ -440,12 +424,22 @@ function SendScreen({
 
   useEffect(() => {
     if (screenState.inited) {
-      initByCacheOnce();
+      (async () => {
+        if (initByCacheFinishedRef.current) return;
+        initByCacheFinishedRef.current = true;
+
+        try {
+          await initByCache();
+        } catch (e) {
+          console.error('SendScreen initByCache error', e);
+          initByCacheFinishedRef.current = false;
+        }
+      })();
       checkIsAddressBlocked(navParams?.toAddress);
     }
   }, [
     screenState.inited,
-    initByCacheOnce,
+    initByCache,
     checkIsAddressBlocked,
     navParams?.toAddress,
   ]);
@@ -454,32 +448,33 @@ function SendScreen({
     (async () => {
       if (!initByCacheFinishedRef.current) return;
       if (!currentAccount?.address) return;
+      const { currentToken } = getSendChainToken();
 
-      loadCurrentToken(
+      apiSendToken.putScreenState({
+        balanceError: null,
+        balanceWarn: null,
+        isLoading: true,
+      });
+      const tokenItem = await loadCurrentToken(
         currentToken.id,
         currentToken.chain,
         currentAccount.address,
       );
     })();
-  }, [
-    currentToken.id,
-    currentToken.chain,
-    loadCurrentToken,
-    currentAccount?.address,
-  ]);
+  }, [loadCurrentToken, currentAccount?.address]);
 
   useEffect(() => {
     if (!currentAccount) {
       redirectBackErrorHandler(navigation);
       return;
     } else {
-      putScreenState({ inited: true });
+      apiSendToken.putScreenState({ inited: true });
 
       return () => {
         apiPageStateCache.clearPageStateCache();
       };
     }
-  }, [currentAccount, navigation, putScreenState]);
+  }, [currentAccount, navigation]);
 
   const { fetchContactAccounts } = useContactAccounts();
 
@@ -490,7 +485,7 @@ function SendScreen({
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
         isShowLoadingRef.current = false;
-        resetScreenState();
+        apiSendToken.resetScreenState();
         // navigation.dispatch(
         //   StackActions.replace(RootNames.StackRoot, {
         //     screen: RootNames.Home,
@@ -503,13 +498,13 @@ function SendScreen({
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [sendTokenEvents, resetScreenState]);
+  }, [sendTokenEvents]);
 
   useLayoutEffect(() => {
     return () => {
-      resetScreenState();
+      apiSendToken.resetScreenState();
     };
-  }, [resetScreenState]);
+  }, []);
 
   const { balanceNumText } = React.useMemo(() => {
     const balanceNum = new BigNumber(currentToken.raw_amount_hex_str || 0).div(
@@ -559,7 +554,6 @@ function SendScreen({
         formik,
         slider,
         fns: {
-          putScreenState,
           fetchContactAccounts,
           disableItemCheck,
         },
