@@ -53,6 +53,7 @@ import {
 import { CHAINS_ENUM } from '@debank/common';
 import { ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';
+import { isZeroAmount } from '../../utils/number';
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -118,7 +119,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   });
 
   const afterHF = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
@@ -148,7 +149,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   }, [afterHF]);
 
   const afterSupply = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const balance = BigNumber(reserve.underlyingBalance || '0').minus(
@@ -168,7 +169,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || amount === '0.' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount) {
       setWithdrawTxs([]);
       return;
     }
@@ -234,7 +235,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   // 执行withdraw交易
   const handleWithdraw = useCallback(
     async (forceFullSign?: boolean) => {
-      if (!currentAccount || !withdrawTxs.length || !amount || amount === '0') {
+      if (
+        !currentAccount ||
+        !withdrawTxs.length ||
+        !amount ||
+        isZeroAmount(amount)
+      ) {
         return;
       }
 
@@ -376,7 +382,12 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   }, [buildTransactions]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
+    if (
+      currentAccount &&
+      canShowDirectSubmit &&
+      amount &&
+      !isZeroAmount(amount)
+    ) {
       prefetchMiniSigner({
         txs: withdrawTxs?.length ? withdrawTxs : [],
         synGasHeaderInfo: true,
@@ -436,7 +447,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           afterSupply={afterSupply}
         />
 
-        {canShowDirectSubmit && !!amount && amount !== '0' && (
+        {canShowDirectSubmit && !!amount && !isZeroAmount(amount) && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
@@ -488,7 +499,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             onFinished={() => handleWithdraw()}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !withdrawTxs.length ||
               isLoading ||
               !currentAccount ||
@@ -516,7 +527,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             loading={isLoading}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !withdrawTxs.length ||
               isLoading ||
               !currentAccount ||

@@ -45,7 +45,7 @@ import {
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
-import { normalizeBN } from '@aave/math-utils';
+import { normalizeBN, valueToBigNumber } from '@aave/math-utils';
 import { approveToken } from '@/core/apis/approvals';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
@@ -57,11 +57,18 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 import { SwapType } from '../../../types/swap';
 import TokenIcon from '../../TokenIcon';
-import { APP_CODE_LENDING_REPAY_WITH_COLLATERAL } from '../../../utils/constant';
+import {
+  APP_CODE_LENDING_REPAY_WITH_COLLATERAL,
+  LIQUIDATION_SAFETY_THRESHOLD,
+} from '../../../utils/constant';
 import { ParaswapRatesType, SwappableToken } from '../../../types/swap';
 import { getParaswap } from '../../../config/paraswap';
 import { getParaswapSellRates } from '../DebtSwap/paraswap';
-import { usePoolDataProviderContract, useSelectedMarket } from '../../../hooks';
+import {
+  usePoolDataProviderContract,
+  useRefreshHistoryId,
+  useSelectedMarket,
+} from '../../../hooks';
 import {
   useFormatValues,
   useSwapReserves,
@@ -112,6 +119,7 @@ export default function RepayWithCollateral({
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
   const { ctx } = useSignatureStore();
+  const { refresh } = useRefreshHistoryId();
 
   const [selectedCollateralToken, setSelectedCollateralToken] = useState<
     SwappableToken | undefined
@@ -419,6 +427,15 @@ export default function RepayWithCollateral({
       selectedCollateralToken?.balance || '0',
     );
   }, [collateralAmountAfterSlippage, selectedCollateralToken]);
+
+  const { isHFLow, isLiquidatable, currentHF, afterSwapInfo } =
+    useHFForRepayWithCollateral({
+      collateralToken: selectedCollateralToken,
+      repayToken,
+      collateralAmount: collateralAmountAfterSlippage,
+      repayAmount: debouncedRepayAmount,
+    });
+
   const buildRepayWithCollateralTxs = useCallback(async (): Promise<Tx[]> => {
     if (
       !currentAccount ||
@@ -449,6 +466,16 @@ export default function RepayWithCollateral({
     ) {
       throw new Error('quote-outdated');
     }
+
+    // 预留30分钟利息空间，合约会自己用最准确的，这里要保证比合约大
+    const safeAmountToRepayAll = valueToBigNumber(debtBalance || '0')
+      .plus(
+        valueToBigNumber(debtBalance || '0')
+          .multipliedBy(repayReserve.variableBorrowAPY)
+          .dividedBy(360 * 24 * 2),
+      )
+      .decimalPlaces(repayToken.decimals, BigNumber.ROUND_CEIL)
+      .toFixed(repayToken.decimals);
 
     const { paraswap, feeTarget } = getParaswap(repayToken.chainId as ChainId);
     const slippageBps =
@@ -484,19 +511,24 @@ export default function RepayWithCollateral({
       swapRate.inputAmount ||
       swapRate.optimalRateData.srcAmount ||
       '0';
+    const useFlashLoan =
+      currentHF !== '-1' &&
+      valueToBigNumber(currentHF || 0)
+        .minus(valueToBigNumber(afterSwapInfo?.hfEffectOfFromAmount || 0))
+        .lt(LIQUIDATION_SAFETY_THRESHOLD);
 
     const repayWithCollateralParams = {
       fromUnderlyingAsset: selectedCollateralToken.underlyingAddress,
       fromATokenAddress: collateralReserve.aTokenAddress,
       toUnderlyingAsset: repayToken.underlyingAddress,
-      repayAmount: debouncedRepayAmount,
+      repayAmount: isMaxSelected ? safeAmountToRepayAll : debouncedRepayAmount,
       repayWithAmount: BigNumber(collateralAmount)
         .multipliedBy(1 + slippageBps / 10000)
         .decimalPlaces(selectedCollateralToken.decimals, BigNumber.ROUND_CEIL)
         .toFixed(selectedCollateralToken.decimals),
       repayAllDebt: isMaxSelected,
       rateMode: InterestRate.Variable,
-      useFlashLoan: false,
+      useFlashLoan,
       swapCallData,
       augustus,
     };
@@ -643,6 +675,8 @@ export default function RepayWithCollateral({
     debtBalance,
     collateralAmount,
     isMainnet,
+    currentHF,
+    afterSwapInfo?.hfEffectOfFromAmount,
   ]);
 
   useEffect(() => {
@@ -673,7 +707,6 @@ export default function RepayWithCollateral({
           setCurrentTxs(txs.filter(tx => !!tx));
         }
       } catch (error) {
-        console.error('CUSTOM_LOGGER:=>: error', error);
         if (!cancelled) {
           setCurrentTxs([]);
         }
@@ -696,14 +729,6 @@ export default function RepayWithCollateral({
     debouncedRepayAmount,
     collateralNotEnough,
   ]);
-
-  const { isHFLow, isLiquidatable, currentHF, afterSwapInfo } =
-    useHFForRepayWithCollateral({
-      collateralToken: selectedCollateralToken,
-      repayToken,
-      collateralAmount: collateralAmountAfterSlippage,
-      repayAmount: debouncedRepayAmount,
-    });
 
   useEffect(() => {
     if (
@@ -806,6 +831,7 @@ export default function RepayWithCollateral({
           })} ${t('page.Lending.submitted')}`,
         );
         closeMiniSigner();
+        refresh();
         onClose?.();
       } catch (error) {
         console.error('repay with collateral error', error);
@@ -825,6 +851,7 @@ export default function RepayWithCollateral({
       onClose,
       openDirect,
       ctx?.gasFeeTooHigh,
+      refresh,
     ],
   );
 
