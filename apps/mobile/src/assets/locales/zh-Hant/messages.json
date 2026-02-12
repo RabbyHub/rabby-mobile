@@ -2782,7 +2782,8 @@
         "takeProfitWhenPriceAbove": "當價格高於時獲利了結",
         "minMargin": "最低保证金为 {{amount}}",
         "maxMargin": "最高保证金为 {{amount}}",
-        "upTo": "高達"
+        "upTo": "高達",
+        "onlyIsolated": "此代幣只支援孤立保證金。"
       },
       "PerpsOpenPositionCheckPopup": {
         "size": "大小",
@@ -3139,7 +3140,8 @@
           "assets": "代幣",
           "balance": "餘額"
         },
-        "title": "選擇還款代幣"
+        "title": "選擇還款代幣",
+        "zeroLtvCollateralTips": "您擁有以下 LTV = 0 的抵押品，因此只能根據抵押還款規則先用這些抵押品進行還款。"
       },
       "dappSelect": {
         "title": "選擇借貸提供者"

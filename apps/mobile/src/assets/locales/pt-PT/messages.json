@@ -376,7 +376,8 @@
       },
       "postNotification": {
         "title": "Permissão de Notificação",
-        "pleaseEnableInSettings": "Por favor, ative a permissão de notificações nas definições."
+        "pleaseEnableInSettings": "Por favor, ative a permissão de notificações nas definições.",
+        "message": "Este aplicativo precisa de acesso para lhe enviar notificações."
       }
     },
     "gotIt": "Entendi",
@@ -2981,7 +2982,8 @@
         "takeProfitWhenPriceBelow": "Levar Lucro Quando o Preço Estiver Abaixo",
         "maxMargin": "Margem máxima é {{amount}}",
         "upTo": "Até",
-        "minMargin": "A margem mínima é {{amount}}"
+        "minMargin": "A margem mínima é {{amount}}",
+        "onlyIsolated": "Apenas margem isolada é suportada para este token."
       },
       "PerpsOpenPositionCheckPopup": {
         "initialMargin": "Margem Inicial",
@@ -3338,7 +3340,8 @@
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Selecionar Token de Reembolso"
+        "title": "Selecionar Token de Reembolso",
+        "zeroLtvCollateralTips": "Você tem os seguintes colaterais com LTV = 0 e, portanto, só pode reembolsar primeiro com esses colaterais de acordo com as regras de reembolso de colaterais."
       },
       "dappSelect": {
         "title": "Selecionar Fornecedor de Empréstimo"
@@ -3372,7 +3375,8 @@
       "tokenHeader": {
         "change": "Alteração 24H",
         "fdv": "FDV",
-        "volume": "24H Volume"
+        "volume": "24H Volume",
+        "price": "Preço"
       }
     }
   },

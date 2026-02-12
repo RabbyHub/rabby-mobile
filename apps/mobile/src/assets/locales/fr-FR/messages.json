@@ -2622,7 +2622,8 @@
         "stopLossWhen": "Arrêt de perte lorsque",
         "upTo": "Jusqu'à",
         "minMargin": "La marge minimale est de {{amount}}",
-        "maxMargin": "La marge maximale est {{amount}}"
+        "maxMargin": "La marge maximale est {{amount}}",
+        "onlyIsolated": "Seule la marge isolée est prise en charge pour ce token."
       },
       "PerpsOpenPositionCheckPopup": {
         "price": "Prix",
@@ -2979,7 +2980,8 @@
           "assets": "Jeton",
           "balance": "Solde"
         },
-        "title": "Sélectionner le jeton de remboursement"
+        "title": "Sélectionner le jeton de remboursement",
+        "zeroLtvCollateralTips": "Vous avez les collatéraux suivants avec un LTV = 0 et vous ne pouvez donc rembourser qu'avec ces collatéraux en premier selon les règles de remboursement de collatéraux."
       },
       "dappSelect": {
         "title": "Sélectionner le Fournisseur de Prêts"
