@@ -3,11 +3,16 @@ import { findChain } from '@/utils/chain';
 import { atom } from 'jotai';
 import { useMemo } from 'react';
 import { useChainList } from './useChainList';
+import { jotaiStore } from '@/core/utils/reexports';
 
 export const chainListAtom = atom({
   mainnetList: getChainList('mainnet'),
   testnetList: getChainList('testnet'),
 });
+
+export function getChainListFromAtom() {
+  return jotaiStore.get(chainListAtom);
+}
 
 export const useFindChain = ({
   id,
