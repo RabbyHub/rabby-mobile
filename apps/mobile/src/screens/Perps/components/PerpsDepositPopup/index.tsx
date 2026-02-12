@@ -54,7 +54,6 @@ export interface PerpBridgeHistory {
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
-  accountSummary?: AccountSummary | null;
   visible?: boolean;
   onClose(): void;
   showSelectTokenPopup(): void;
@@ -63,14 +62,7 @@ export const PerpsDepositPopup: React.FC<{
     amount: string,
     cacheBridgeHistory?: PerpBridgeHistory,
   ): void;
-}> = ({
-  visible,
-  onClose,
-  account,
-  onDeposit,
-  accountSummary,
-  showSelectTokenPopup,
-}) => {
+}> = ({ visible, onClose, account, onDeposit, showSelectTokenPopup }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({

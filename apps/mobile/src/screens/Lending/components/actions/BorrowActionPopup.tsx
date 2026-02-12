@@ -56,6 +56,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import BorrowToCapTip from '../Tips/BorrowToCapTip';
 import { formatTokenAmount } from '@/utils/number';
 import { stats } from '@/utils/stats';
+import { isZeroAmount } from '../../utils/number';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -89,7 +90,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   });
 
   const afterHF = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item =>
@@ -118,7 +119,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [afterHF]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount) {
       setTxs([]);
       return;
     }
@@ -174,7 +175,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
   const handleBorrow = useCallback(
     async (forceFullSign?: boolean) => {
-      if (!currentAccount || !txs.length || !amount || amount === '0') {
+      if (!currentAccount || !txs.length || !amount || isZeroAmount(amount)) {
         return;
       }
 
@@ -324,7 +325,12 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [buildTransactions]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
+    if (
+      currentAccount &&
+      canShowDirectSubmit &&
+      amount &&
+      !isZeroAmount(amount)
+    ) {
       prefetchMiniSigner({
         txs: txs?.length ? txs : [],
         synGasHeaderInfo: true,
@@ -413,7 +419,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           afterHF={afterHF}
         />
 
-        {canShowDirectSubmit && !!amount && amount !== '0' && (
+        {canShowDirectSubmit && !!amount && !isZeroAmount(amount) && (
           <View style={styles.gasPreContainer}>
             <DirectSignGasInfo
               supportDirectSign={true}
@@ -466,7 +472,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             onFinished={() => handleBorrow()}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !txs.length ||
               isLoading ||
               !currentAccount ||
@@ -494,7 +500,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             loading={isLoading}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !txs.length ||
               isLoading ||
               !currentAccount ||

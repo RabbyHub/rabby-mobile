@@ -114,8 +114,7 @@ export const Quotes = ({
             .div(
               10 **
                 (bestQuote?.data?.toTokenDecimals ||
-                  other.receiveToken.decimals ||
-                  1),
+                  other.receiveToken.decimals),
             )
             .toString(10)
         : receiveTokenAmount,

@@ -1254,7 +1254,7 @@ export function useSendTokenForm({
         !disableBalanceCheck &&
         new BigNumber(formValues.amount || 0).isGreaterThan(
           new BigNumber(result?.raw_amount_hex_str || 0).div(
-            10 ** (result?.decimals || 18),
+            10 ** (result?.decimals || 0),
           ),
         )
       ) {

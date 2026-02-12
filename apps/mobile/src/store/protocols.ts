@@ -342,7 +342,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         const isExpired = await isDataExpired(normalizedAddress);
         if (!isExpired) {
           const [cacheProtocols, appChainProtocols] = await Promise.all([
-            ProtocolItemEntity.batchQueryProtocols(address),
+            ProtocolItemEntity.batchQueryProtocols(normalizedAddress),
             buildAppChainProtocolMap([normalizedAddress]),
           ]);
           set(state => ({
@@ -359,7 +359,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
       }
 
       // 内部通过给db的非阻塞action，所以下面的同步store是先行的
-      const protocols = await syncProtocols(address, force);
+      const protocols = await syncProtocols(normalizedAddress, force);
       set(state => ({
         protocolMap: {
           ...state.protocolMap,
@@ -384,7 +384,7 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
 
     try {
       const targetProtocol = await syncSpecificProtocol(
-        address,
+        normalizedAddress,
         protocolId,
         chain,
       );
@@ -454,13 +454,14 @@ export const useProtocolListComputedStore = zCreate<ProtocolListComputedState>(
       return key;
     },
     registerSingleProtocols(address, chainServerId) {
-      const key = getSingleProtocolsCacheKey(address, chainServerId);
+      const normalizedAddress = address.toLowerCase();
+      const key = getSingleProtocolsCacheKey(normalizedAddress, chainServerId);
       const removedKeys = touchCacheParams(
         singleProtocolsCacheParams,
         singleProtocolsCacheOrder,
         key,
         {
-          address,
+          address: normalizedAddress,
           chainServerId,
         },
       );
@@ -493,7 +494,7 @@ const rebuildComputedCaches = (protocolMap: ProtocolListMap) => {
   singleProtocolsCacheParams.forEach((params, key) => {
     singleProtocolsCache[key] = computeSingleProtocols(
       protocolMap,
-      params.address,
+      params.address.toLowerCase(),
       params.chainServerId,
     );
   });

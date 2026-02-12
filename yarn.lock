@@ -9309,16 +9309,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.1.4":
-  version: 1.1.4
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.4"
+"@rabby-wallet/hyperliquid-sdk@npm:1.1.5":
+  version: 1.1.5
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.5"
   dependencies:
     "@ethereumjs/util": 9.0.0
     "@metamask/eth-sig-util": 5.1.0
     "@msgpack/msgpack": 3.1.2
     "@noble/hashes": 1.8.0
     ethereum-cryptography: 2.2.1
-  checksum: bb6f4f9ae2c9d3863ba0aadeca47ea73aa7981aa1a6dde14ec21cc0a5ae056d0db4c7f0a5fa6a2720b7f7cacbda0b47543dac880b9ad89d73b931d6e9960582b
+  checksum: 14e9607a84509713b2973cfd19b2b8ed70ef758da0e5f1641900037f90cd8792f2f1f738f0e86fa0819274ab2aeaa32c84a20e13f49f4d356953444de461f004
   languageName: node
   linkType: hard
 
@@ -9360,7 +9360,7 @@ __metadata:
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
     "@rabby-wallet/gnosis-sdk": 1.4.6
-    "@rabby-wallet/rabby-api": 0.9.55
+    "@rabby-wallet/rabby-api": 0.9.56
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
     "@typescript-eslint/parser": ^5.62.0
@@ -9506,9 +9506,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.55":
-  version: 0.9.55
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.55"
+"@rabby-wallet/rabby-api@npm:0.9.56":
+  version: 0.9.56
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.56"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -9519,7 +9519,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: a2fa7c3f113285d458dd329bce89bc53b44f9143a743a815e821558d3148bbf392e52bfb1fb4b7e958a2d781263ab57019717d09c3537ea4baaa39317ff6794b
+  checksum: eac4012a98a1dc86c6b24786c81225bcc0844d40302c73d5b9614d2abe401acc52ad50a7d9f9ef9626f593cb9eee28c787f6b8aa2f0b7d6753959fa56378e186
   languageName: node
   linkType: hard
 
@@ -13150,6 +13150,26 @@ __metadata:
     lz-string: ^1.5.0
     pretty-format: ^27.0.2
   checksum: dfd6fb0d6c7b4dd716ba3c47309bc9541b4a55772cb61758b4f396b3785efe2dbc75dc63423545c039078c7ffcc5e4b8c67c2db1b6af4799580466036f70026f
+  languageName: node
+  linkType: hard
+
+"@testing-library/react-native@npm:^13.3.3":
+  version: 13.3.3
+  resolution: "@testing-library/react-native@npm:13.3.3"
+  dependencies:
+    jest-matcher-utils: ^30.0.5
+    picocolors: ^1.1.1
+    pretty-format: ^30.0.5
+    redent: ^3.0.0
+  peerDependencies:
+    jest: ">=29.0.0"
+    react: ">=18.2.0"
+    react-native: ">=0.71"
+    react-test-renderer: ">=18.2.0"
+  peerDependenciesMeta:
+    jest:
+      optional: true
+  checksum: 5688918384ce834e3667a56b72c8b776a2f9a5afae0a2738e7d0077f342b3ade7eca628cbe122943201caee75f3718379ef7b3ca00cd50c4ee607b4131d09505
   languageName: node
   linkType: hard
 
@@ -28406,7 +28426,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-matcher-utils@npm:30.2.0":
+"jest-matcher-utils@npm:30.2.0, jest-matcher-utils@npm:^30.0.5":
   version: 30.2.0
   resolution: "jest-matcher-utils@npm:30.2.0"
   dependencies:
@@ -35194,7 +35214,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pretty-format@npm:30.2.0":
+"pretty-format@npm:30.2.0, pretty-format@npm:^30.0.5":
   version: 30.2.0
   resolution: "pretty-format@npm:30.2.0"
   dependencies:
@@ -35695,11 +35715,11 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.1.0
     "@rabby-wallet/gnosis-sdk": 1.4.6
-    "@rabby-wallet/hyperliquid-sdk": 1.1.4
+    "@rabby-wallet/hyperliquid-sdk": 1.1.5
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.14
-    "@rabby-wallet/rabby-api": 0.9.55
+    "@rabby-wallet/rabby-api": 0.9.56
     "@rabby-wallet/rabby-security-engine": 2.0.12
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.73
@@ -35731,6 +35751,7 @@ __metadata:
     "@rneui/themed": ^4.0.0-rc.8
     "@sentry/react-native": 6.10.0
     "@shopify/flash-list": ^1.8.0
+    "@testing-library/react-native": ^13.3.3
     "@trezor/connect-mobile": 9.6.2
     "@tsconfig/react-native": 3.0.5
     "@types/highlight-words-core": 1.2.3

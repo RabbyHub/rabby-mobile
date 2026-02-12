@@ -812,29 +812,6 @@ export const usePerpsState = () => {
     perpsState.localLoadingHistory,
   ]);
 
-  // useEffect(() => {
-  //   if (
-  //     perpsState.accountSummary?.withdrawable &&
-  //     Number(perpsState.accountSummary.withdrawable) > 0 &&
-  //     currentPerpsAccount?.address &&
-  //     perpsState.approveSignatures.length > 0
-  //   ) {
-  //     const directSendApprove = async () => {
-  //       const data = perpsState.approveSignatures;
-  //       setApproveSignatures([]);
-  //       await handleDirectApprove(data);
-  //       apisPerps.setSendApproveAfterDeposit(currentPerpsAccount.address, []);
-  //     };
-  //     directSendApprove();
-  //   }
-  // }, [
-  //   currentPerpsAccount?.address,
-  //   handleDirectApprove,
-  //   perpsState.accountSummary?.withdrawable,
-  //   perpsState.approveSignatures,
-  //   setApproveSignatures,
-  // ]);
-
   const allDexsPositions = useMemo(() => {
     const res = perpsState.currentClearinghouseState?.assetPositions || [];
     return res;
@@ -849,19 +826,11 @@ export const usePerpsState = () => {
     }));
   }, [allDexsPositions, perpsState.openOrders]);
 
-  const accountSummary: AccountSummary = useMemo(() => {
-    return {
-      ...perpsState.currentClearinghouseState?.marginSummary,
-      withdrawable: perpsState.currentClearinghouseState?.withdrawable || '0',
-    } as AccountSummary;
-  }, [perpsState.currentClearinghouseState]);
-
   return {
     // State
     marketData: perpsState.marketData,
     marketDataMap: perpsState.marketDataMap,
     positionAndOpenOrders,
-    accountSummary,
     currentPerpsAccount: perpsState.currentPerpsAccount,
     isLogin: perpsState.isLogin,
     isInitialized: perpsState.isInitialized,

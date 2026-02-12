@@ -37,6 +37,7 @@ import { useUsdInput } from '@/hooks/useUsdInput';
 import { AssetAvatar } from '@/components';
 import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
 import { useShallow } from 'zustand/react/shallow';
+import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -46,7 +47,6 @@ export const PerpsAddPositionPopup: React.FC<{
   coinLogo: string;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx: MarketData | null;
-  availableBalance: number;
   direction: 'Long' | 'Short';
   positionSize: string;
   szDecimals: number;
@@ -69,7 +69,6 @@ export const PerpsAddPositionPopup: React.FC<{
   coinLogo,
   activeAssetCtx,
   currentAssetCtx,
-  availableBalance,
   leverage,
   direction,
   positionSize,
@@ -88,6 +87,7 @@ export const PerpsAddPositionPopup: React.FC<{
   handleAddPosition,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const { availableBalance } = usePerpsAccount();
 
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
@@ -215,21 +215,11 @@ export const PerpsAddPositionPopup: React.FC<{
     }
   }, [visible, setMargin]);
 
-  const { currentClearinghouseState } = perpsStore(
-    useShallow(s => ({
-      currentClearinghouseState: s.currentClearinghouseState,
-    })),
-  );
+  const { accountValue, crossMaintenanceMarginUsed } = usePerpsAccount();
 
   const crossMargin = React.useMemo(() => {
-    return (
-      Number(currentClearinghouseState?.crossMarginSummary?.accountValue || 0) -
-      Number(currentClearinghouseState?.crossMaintenanceMarginUsed || 0)
-    );
-  }, [
-    currentClearinghouseState?.crossMarginSummary?.accountValue,
-    currentClearinghouseState?.crossMaintenanceMarginUsed,
-  ]);
+    return Number(accountValue) - Number(crossMaintenanceMarginUsed || 0);
+  }, [accountValue, crossMaintenanceMarginUsed]);
 
   // 计算预估清算价格
   const estimatedLiquidationPrice = React.useMemo(() => {

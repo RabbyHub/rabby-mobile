@@ -43,6 +43,8 @@ const MemoizedEmptyAssets = React.memo(EmptyAssets);
 
 export const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
 
+const { batchGetProtocols } = useProtocols.getState();
+
 export const ProtocolList = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -70,7 +72,6 @@ export const ProtocolList = () => {
         state.multiProtocolsCache[multiProtocolsKey] || emptyCacheProtocolItem,
     ),
   );
-  const updateMultiProtocols = useProtocols(state => state.batchGetProtocols);
 
   const isLoading = useProtocols(state => state.isLoading);
 
@@ -173,8 +174,8 @@ export const ProtocolList = () => {
   }, [myTop10Addresses, chain, registerMultiAssets]);
 
   useEffect(() => {
-    updateMultiProtocols(myTop10Addresses);
-  }, [myTop10Addresses, updateMultiProtocols]);
+    batchGetProtocols(myTop10Addresses);
+  }, [myTop10Addresses]);
 
   const renderItem = useCallback(
     ({ item }) => {
@@ -243,12 +244,12 @@ export const ProtocolList = () => {
     try {
       await Promise.all([
         triggerUpdate(true),
-        updateMultiProtocols(myTop10Addresses, true),
+        batchGetProtocols(myTop10Addresses, true),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [triggerUpdate, updateMultiProtocols, myTop10Addresses]);
+  }, [triggerUpdate, myTop10Addresses]);
 
   // if (!isFocusing) {
   //   return null;

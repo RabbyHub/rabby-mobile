@@ -137,11 +137,11 @@ export const DappSelect = ({ activeId, list, title, onSelect }: Props) => {
                               {item.description}
                             </Text>
                           ) : null}
-                          {item.TVL ? (
+                          {item.extraInfo ? (
                             <Text
                               style={styles.sheetItemMeta}
                               numberOfLines={1}>
-                              {`TVL:${item.TVL}`}
+                              {item.extraInfo}
                             </Text>
                           ) : null}
                         </View>
