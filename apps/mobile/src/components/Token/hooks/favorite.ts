@@ -19,7 +19,7 @@ const convertToITokenItem = (
   return {
     amount: token.amount || 0,
     chain: token.chain,
-    decimals: token.decimals || 18,
+    decimals: token.decimals,
     display_symbol: token.display_symbol || null,
     id: token.id,
     is_core: token.is_core || false,
