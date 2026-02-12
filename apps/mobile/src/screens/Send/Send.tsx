@@ -412,9 +412,7 @@ function SendScreen({
     loadCurrentToken,
   ]);
   const initByCacheOnce = useCallback(async () => {
-    if (initByCacheFinishedRef.current) {
-      return;
-    }
+    if (initByCacheFinishedRef.current) return;
     initByCacheFinishedRef.current = true;
 
     try {
@@ -449,6 +447,24 @@ function SendScreen({
     initByCacheOnce,
     checkIsAddressBlocked,
     navParams?.toAddress,
+  ]);
+
+  useEffect(() => {
+    (async () => {
+      if (!initByCacheFinishedRef.current) return;
+      if (!currentAccount?.address) return;
+
+      loadCurrentToken(
+        currentToken.id,
+        currentToken.chain,
+        currentAccount.address,
+      );
+    })();
+  }, [
+    currentToken.id,
+    currentToken.chain,
+    loadCurrentToken,
+    currentAccount?.address,
   ]);
 
   useEffect(() => {
