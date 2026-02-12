@@ -68,7 +68,7 @@ type RequestApprovalParamBase = {
   origin: string;
   approvalType: string;
   isUnshift?: boolean;
-  account?: Account | undefined;
+  account?: Account | null;
 };
 type RequestApprovaParam =
   | ({

@@ -170,7 +170,7 @@ const fetchOrderedChainList = async (opts: {
 export function useLoadMatteredChainBalances({
   account: currentAccount,
 }: {
-  account?: Account;
+  account?: Account | null;
 }) {
   const currentAccountAddr = currentAccount?.address;
 

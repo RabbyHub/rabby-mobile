@@ -22,7 +22,7 @@ export type ProviderRequest<TMethod extends string = string> = {
     } & Record<string, any>;
   };
   session: MobileSession;
-  account?: Account;
+  account?: Account | null;
   origin?: string;
   requestedApproval?: boolean;
 };
