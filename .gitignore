@@ -38,6 +38,6 @@ preview-build-message.txt
 
 # Cursor AI rules (local development only)
 .cursor/
-.claude/
+.claude/*.local.*
 docs
-CLAUDE*.md
+CLAUDE*.local.md

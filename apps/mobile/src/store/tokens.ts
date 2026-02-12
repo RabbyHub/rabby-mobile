@@ -63,6 +63,7 @@ type TokenAssetsResult = {
   unFoldTokens: ITokenItem[];
   foldTokens: ITokenItem[];
   scamTokens: ITokenItem[];
+  hasFoldTokens: boolean;
 };
 
 interface TokenListState {
@@ -165,6 +166,7 @@ const createEmptyAssetsResult = (): TokenAssetsResult => ({
   unFoldTokens: [],
   foldTokens: [],
   scamTokens: [],
+  hasFoldTokens: false,
 });
 
 const normalizeAddresses = (addresses: string[]) =>
@@ -315,6 +317,7 @@ const computeMultiAssets = (
   });
   return {
     unFoldTokens: unfoldedTokens,
+    hasFoldTokens: foldedTokens.length > 0 || aggregatedScamTokens.length > 0,
     foldTokens: foldedTokens.filter(i => lpTokenFilter(i, isLpTokenEnabled)),
     scamTokens: aggregatedScamTokens.filter(i =>
       lpTokenFilter(i, isLpTokenEnabled),
@@ -364,6 +367,10 @@ const computeSingleAssets = (
         unFoldTokens: unfoldedTokens.filter(
           item => item.chain === chainServerId,
         ),
+        hasFoldTokens:
+          foldedTokens.filter(item => item.chain === chainServerId).length >
+            0 ||
+          scamTokens.filter(item => item.chain === chainServerId).length > 0,
         foldTokens: foldedTokens
           .filter(item => item.chain === chainServerId)
           .filter(i => lpTokenFilter(i, isLpTokenEnabled)),
@@ -373,6 +380,7 @@ const computeSingleAssets = (
       }
     : {
         unFoldTokens: unfoldedTokens,
+        hasFoldTokens: foldedTokens.length > 0 || scamTokens.length > 0,
         foldTokens: foldedTokens.filter(i =>
           lpTokenFilter(i, isLpTokenEnabled),
         ),
