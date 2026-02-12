@@ -56,7 +56,7 @@ export { sendRequest } from './sendRequest';
 export const requestETHRpc = <T = any>(
   data: { method: string; params: any },
   chainId: string,
-  account?: Account,
+  account?: Account | null,
 ): Promise<IExtractFromPromise<T>> => {
   return providerController.ethRpc(
     {
@@ -165,7 +165,7 @@ export const getRecommendNonce = async ({
 }: {
   from: string;
   chainId: number;
-  account: Account;
+  account: Account | null;
 }) => {
   const chain = findChain({
     id: chainId,
@@ -323,7 +323,7 @@ type gasMarketV2ParamsV1 = {
 };
 export const gasMarketV2 = async (
   _params: gasMarketV2ParamsV1 | gasMarketV2ParamsV2,
-  account: Account,
+  account: Account | null,
 ) => {
   let chainId: string;
   let tx: Tx | undefined;

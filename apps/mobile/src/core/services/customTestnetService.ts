@@ -508,7 +508,7 @@ export class CustomTestnetService {
     tokenId,
   }: {
     chainId: number;
-    address: string;
+    address?: string;
     tokenId?: string | null;
   }) => {
     const client = this.getClient(+chainId);
@@ -519,19 +519,21 @@ export class CustomTestnetService {
       throw new Error(`Invalid chainId: ${chainId}`);
     }
 
-    if (!tokenId || tokenId === chain.nativeTokenAddress) {
+    if ((!tokenId || tokenId === chain.nativeTokenAddress) && address) {
       const balance = await getBalance(client, {
-        address: address as any,
+        address: address as `0x${string}`,
       });
       return balance;
     }
 
-    const balance = await readContract(client, {
-      address: tokenId as any,
-      abi: erc20Abi,
-      functionName: 'balanceOf',
-      args: [address as any],
-    });
+    const balance = !address
+      ? 0n
+      : await readContract(client, {
+          address: tokenId as `0x${string}`,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [address as `0x${string}`],
+        });
 
     return balance;
   };
@@ -573,12 +575,12 @@ export class CustomTestnetService {
     // todo: multicall
     const [symbol, decimals] = await Promise.all([
       readContract(client, {
-        address: tokenId as any,
+        address: tokenId as `0x${string}`,
         abi: erc20Abi,
         functionName: 'symbol',
       }),
       readContract(client, {
-        address: tokenId as any,
+        address: tokenId as `0x${string}`,
         abi: erc20Abi,
         functionName: 'decimals',
       }),

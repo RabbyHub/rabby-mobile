@@ -1,5 +1,5 @@
 import { makeTxPageBackgroundColors } from '@/constant/layout';
-import { useTheme2024 } from '@/hooks/theme';
+import { getTheme2024, useTheme2024 } from '@/hooks/theme';
 import { useBottomSheetOpenEnd } from '@/hooks/useBottomSheetOpenEnd';
 import React from 'react';
 import { View } from 'react-native';
@@ -28,10 +28,37 @@ function makeTxPageColors({
   return bg;
 }
 
+export function resolveBgColorByType(
+  type: NonNullable<LinearGradientContainerProps['type']>,
+  theme: Pick<
+    ReturnType<typeof useTheme2024>,
+    'isLight' | 'colors' | 'colors2024'
+  > = getTheme2024(),
+) {
+  const { isLight, colors, colors2024 } = theme;
+  switch (type) {
+    case 'bg1':
+      return colors2024['neutral-bg-1'];
+    case 'bg2':
+      return colors2024['neutral-bg-2'];
+    case 'classical:bg2':
+      return colors['neutral-bg-2'];
+    case 'linear-bg2':
+      return colors2024['neutral-bg-1'];
+    case 'tx-page':
+      return makeTxPageColors({ isLight, colors2024 });
+    case 'bg0':
+      return colors2024['neutral-bg-0'];
+    default:
+      return colors2024['neutral-bg-2'];
+  }
+}
+
 export const LinearGradientContainer: React.FC<
   LinearGradientContainerProps
 > = ({ type, inBottomSheet, ...props }) => {
-  const { colors, isLight, colors2024 } = useTheme2024();
+  const theme2024 = useTheme2024();
+  const { colors2024 } = theme2024;
   const [showLinearGradient, setShowLinearGradient] =
     React.useState<boolean>(false);
 
@@ -74,19 +101,7 @@ export const LinearGradientContainer: React.FC<
       style={[
         props.style,
         {
-          backgroundColor:
-            type === 'bg1'
-              ? colors2024['neutral-bg-1']
-              : type === 'linear-bg2'
-              ? colors2024['neutral-bg-1']
-              : type === 'classical:bg2'
-              ? colors['neutral-bg-2']
-              : type === 'tx-page'
-              ? makeTxPageColors({ isLight, colors2024 })
-              : // bg2
-              type === 'bg0'
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-2'],
+          backgroundColor: resolveBgColorByType(type!, theme2024),
         },
       ]}
     />
