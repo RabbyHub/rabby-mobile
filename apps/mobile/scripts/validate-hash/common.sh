@@ -84,6 +84,7 @@ setup_environment() {
 
   # --- 覆盖代码中用到的环境变量 ---
   export RABBY_MOBILE_CODE="RABBY_MOBILE_CODE_DEV"
+  export RABBY_MOBILE_FE_SERVICE_URL=""
 
   # write APP_ENV to .xcode.env.local
   echo "export APP_ENV=$APP_ENV" > ios/.xcode.env.local
