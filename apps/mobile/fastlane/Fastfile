@@ -27,16 +27,16 @@ platform :ios do
       force_for_new_devices: true,
       clone_branch_directly: true)
 
-    # App Extension: RabbyMobileNotification
-    match(
-      type: opts[:type],
-      app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile*' : 'com.debank.rabby-mobile.RabbyMobileNotification',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileNotificationAppStore',
-      readonly: true,
-      shallow_clone: true,
-      verbose: false,
-      force_for_new_devices: true,
-      clone_branch_directly: true)
+    # # App Extension: RabbyMobileNotification
+    # match(
+    #   type: opts[:type],
+    #   app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile*' : 'com.debank.rabby-mobile.RabbyMobileNotification',
+    #   profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileNotificationAppStore',
+    #   readonly: true,
+    #   shallow_clone: true,
+    #   verbose: false,
+    #   force_for_new_devices: true,
+    #   clone_branch_directly: true)
   end
 
   desc "Release for the iOS adhoc"
@@ -62,7 +62,7 @@ platform :ios do
         signingStyle: 'manual',
         provisioningProfiles: {
           "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode",
-          "com.debank.rabby-mobile-regression.RabbyMobileNotification": "RabbyMobileWildcardAdHocRegression"
+          # "com.debank.rabby-mobile-regression.RabbyMobileNotification": "RabbyMobileWildcardAdHocRegression"
         },
         manifest: {
           appURL: "https://download.rabby.io/downloads/wallet-mobile/ios/rabbymobile.ipa",

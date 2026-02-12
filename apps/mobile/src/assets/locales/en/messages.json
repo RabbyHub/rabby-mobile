@@ -2137,6 +2137,7 @@
       }
     },
     "setting": {
+      "__skip_translation": ["transactionNotification"],
       "screenTitle": "Settings",
       "enableWhitelist": "Enable whitelist for sending assets",
       "faceId": "Face ID",
@@ -2644,6 +2645,7 @@
         "addToShort": "Add to Short"
       },
       "PerpsOpenPositionPopup": {
+        "onlyIsolated": "Only isolated margin is supported for this token",
         "margin": "Margin",
         "upTo": "Up to",
         "invalidNumber": "Please input a valid number",
@@ -2920,7 +2922,8 @@
         "header": {
           "assets": "Token",
           "balance": "Balance"
-        }
+        },
+        "zeroLtvCollateralTips": "You have following LTV = 0 collaterals and thus can only repay with these collaterals first according to collateral repay rules. "
       },
       "manageEmode": {
         "__skip_translation": ["emode"],
