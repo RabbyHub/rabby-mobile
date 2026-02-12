@@ -113,4 +113,5 @@ export type SwappableToken = {
   walletBalanceUSD?: string;
   totalDebtUSD?: string;
   underlyingUsdValue?: string;
+  usageAsCollateralEnabled?: boolean;
 };
