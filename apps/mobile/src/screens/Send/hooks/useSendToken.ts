@@ -364,7 +364,7 @@ function findInstanceLevel(gasList: GasLevel[]) {
 const fetchGasList = async (
   chainItem: Chain | null,
   params: Tx,
-  account: Account,
+  account: Account | null,
 ) => {
   const list: GasLevel[] = chainItem?.isTestnet
     ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
@@ -395,6 +395,7 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
 };
 // const sendTokenScreenFormAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
 
+const fallbackAccount = makeAccountObject({ address: '0x' });
 /**
  * @description only called once at top level
  */
@@ -409,7 +410,7 @@ export function useSendTokenForm({
   toAddressBrandName?: string;
   isForMultipleAddress: boolean;
   disableItemCheck?: ITokenCheck;
-  currentAccount: Account;
+  currentAccount: Account | null;
 }) {
   const { t } = useTranslation();
 
@@ -581,7 +582,7 @@ export function useSendTokenForm({
   }, [loadGasListAndResolve, putScreenState]);
 
   const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
-    account: currentAccount,
+    account: currentAccount || fallbackAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
   });
@@ -1069,7 +1070,7 @@ export function useSendTokenForm({
             .then(resp => {
               const hash = resp as string;
               console.debug('hash', hash);
-              currentAccount.type !== KEYRING_CLASS.GNOSIS &&
+              currentAccount?.type !== KEYRING_CLASS.GNOSIS &&
                 transactionHistoryService.addSendTxHistory({
                   token: currentToken,
                   amount: Number(amount),
@@ -1635,11 +1636,13 @@ export function useSendTokenForm({
 
       let nextToken: TokenItem | null = null;
       try {
-        nextToken = await loadCurrentToken(
-          chain.nativeTokenAddress,
-          chain.serverId,
-          currentAccount.address,
-        );
+        if (currentAccount?.address) {
+          nextToken = await loadCurrentToken(
+            chain.nativeTokenAddress,
+            chain.serverId,
+            currentAccount?.address,
+          );
+        }
       } catch (error) {
         console.error(error);
       }
@@ -1665,7 +1668,7 @@ export function useSendTokenForm({
       patchFormValues,
       handleFormValuesChange,
       loadCurrentToken,
-      currentAccount.address,
+      currentAccount?.address,
       setSlider,
       setIsDraggingSlider,
     ],

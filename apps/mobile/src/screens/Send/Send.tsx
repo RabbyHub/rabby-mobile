@@ -271,7 +271,7 @@ function SendScreen({
     toAddressBrandName: navParams?.addressBrandName,
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
-    currentAccount: currentAccount!,
+    currentAccount,
   });
 
   useEffect(() => {
@@ -286,7 +286,7 @@ function SendScreen({
   }, [formValues.to, putScreenState]);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
-    account: currentAccount!,
+    account: currentAccount,
   });
   const isShowLoadingRef = useRef(true);
   const initByCacheFinishedRef = useRef(false);
@@ -345,15 +345,15 @@ function SendScreen({
         }
       }
 
-      if (!targetToken) {
+      if (!targetToken && currentAccount?.address) {
         targetToken =
           (await preferenceService.getLastTimeSendToken(
-            currentAccount!.address,
+            currentAccount?.address,
           )) ?? null;
       }
       if (!targetToken) {
         const { firstChain } = await fetchOrderedChainList({
-          address: currentAccount!.address,
+          address: currentAccount?.address,
           supportChains: undefined,
         });
         targetToken = firstChain ? makeTokenFromChain(firstChain) : null;
@@ -364,9 +364,9 @@ function SendScreen({
     }
 
     try {
-      if (navParams?.toAddress) {
+      if (navParams?.toAddress && currentAccount?.address) {
         const res = await getRecommendToken({
-          from: currentAccount!.address,
+          from: currentAccount?.address,
           to: navParams?.toAddress || '',
           tokenId: targetToken.id,
           chain: targetToken.chain,
@@ -389,11 +389,12 @@ function SendScreen({
         }
       }
       await Promise.race([
-        await loadCurrentToken(
-          targetToken.id,
-          targetToken.chain,
-          currentAccount!.address,
-        ),
+        currentAccount?.address &&
+          (await loadCurrentToken(
+            targetToken.id,
+            targetToken.chain,
+            currentAccount?.address,
+          )),
         sleep(5000),
       ]);
     } finally {
