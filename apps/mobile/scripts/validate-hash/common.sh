@@ -84,7 +84,7 @@ setup_environment() {
 
   # --- 覆盖代码中用到的环境变量 ---
   export RABBY_MOBILE_CODE="RABBY_MOBILE_CODE_DEV"
-  export RABBY_MOBILE_FE_SERVICE_URL=""
+  # export RABBY_MOBILE_FE_SERVICE_URL=""
 
   # write APP_ENV to .xcode.env.local
   echo "export APP_ENV=$APP_ENV" > ios/.xcode.env.local
@@ -100,6 +100,7 @@ setup_environment() {
     "RABBY_MOBILE_SAFE_API_KEY" "$RABBY_MOBILE_SAFE_API_KEY"
     "RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_KR_PWD"
     "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
+    "RABBY_MOBILE_FE_SERVICE_URL" ""
   )
 
   for ((i=0; i<${#sensitive_vars[@]}; i+=2)); do
