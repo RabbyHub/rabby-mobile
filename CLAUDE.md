@@ -9,7 +9,7 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 - **Repository**: https://github.com/RabbyHub/rabby-mobile
 - **Node.js**: >=22 (enforced)
 - **Package Manager**: Yarn 3.3.0
-- **React Native**: 0.77.3
+- **React Native**: 0.81.6
 - **TypeScript**: 5.7.3
 
 ## Common Commands
