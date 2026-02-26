@@ -220,9 +220,9 @@ export function TabsTopHeader(): JSX.Element {
               />
             )}
           </TouchableOpacity>
-          {!SHOULD_SHOW_INDICATOR_WHEN_LOADING && isTop10BalanceLoading ? (
+          {/* {!SHOULD_SHOW_INDICATOR_WHEN_LOADING && isTop10BalanceLoading ? (
             <LoadingCircle />
-          ) : null}
+          ) : null} */}
         </View>
       )}
 

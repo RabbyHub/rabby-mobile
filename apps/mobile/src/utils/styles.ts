@@ -177,12 +177,14 @@ export function makeTriangleStyle(
 }
 
 export function makeDevOnlyStyle<T extends any = ViewStyle>(input: T): T | {} {
+  'worklet';
   if (!__DEV__) return {};
 
   return input;
 }
 
 export function makeDebugBorder(color = 'blue'): ViewStyle {
+  'worklet';
   return makeDevOnlyStyle({
     borderWidth: 1,
     borderColor: color,
