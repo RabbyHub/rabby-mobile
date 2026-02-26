@@ -45,7 +45,12 @@ export function BrowserSearch({
   style,
 }: {
   onClose?(shouldClosePopup?: boolean): void;
-  onOpenURL?(url: string): void;
+  onOpenURL?(
+    url: string,
+    options?: {
+      isDirect?: boolean;
+    },
+  ): void;
   searchText: string;
   setSearchText?(v: string): void;
   trigger?: string;
@@ -114,12 +119,14 @@ export function BrowserSearch({
     });
   });
 
-  const handleOpenUrl = useMemoizedFn(async (url: string) => {
-    isOpenURLRef.current = true;
-    Keyboard.dismiss();
-    await waitKeyboardHide();
-    onOpenURL?.(url);
-  });
+  const handleOpenUrl = useMemoizedFn(
+    async (url: string, options?: { isDirect?: boolean }) => {
+      isOpenURLRef.current = true;
+      Keyboard.dismiss();
+      await waitKeyboardHide();
+      onOpenURL?.(url, options);
+    },
+  );
 
   const handleSubmitEditing = useMemoizedFn(() => {
     if (!searchText) {
@@ -130,6 +137,9 @@ export function BrowserSearch({
       isOpenURLRef.current = true;
       onOpenURL?.(
         /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
+        {
+          isDirect: true,
+        },
       );
     }
     // else {
@@ -216,9 +226,7 @@ export function BrowserSearch({
             searchText={searchText}
             data={list || []}
             isValidDomain={!!isValidDomain}
-            onOpenURL={origin => {
-              handleOpenUrl(origin);
-            }}
+            onOpenURL={handleOpenUrl}
           />
         )}
       </LocalPannableDraggableView>
