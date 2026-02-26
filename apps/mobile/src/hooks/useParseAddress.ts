@@ -12,7 +12,7 @@ import { Account } from '@/core/services/preference';
 export function useCheckAddressType(
   addr: string,
   chain: Pick<Chain, 'serverId' | 'enum'> | null,
-  account: Account,
+  account: Account | null,
 ) {
   const [addressType, setAddressType] = useState<AddressType>(
     AddressType.UNKNOWN,

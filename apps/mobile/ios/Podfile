@@ -16,7 +16,7 @@ node_require('react-native-permissions/scripts/setup.rb')
 $RNFirebaseAsStaticFramework = true
 $RNGoogleMobileAdsAsStaticFramework = true
 $RNAdMobAsStaticFramework = true
-$NotifeeExtension = true
+# $NotifeeExtension = true
 
 platform :ios, '15.1'
 prepare_react_native_project!
@@ -29,14 +29,14 @@ setup_permissions([
   # 'CalendarsWriteOnly',
   # 'Camera',
   # 'Contacts',
-  # 'FaceID',
+  'FaceID',
   # 'LocationAccuracy',
   # 'LocationAlways',
   # 'LocationWhenInUse',
   # 'MediaLibrary',
   # 'Microphone',
   # 'Motion',
-  # 'Notifications',
+  'Notifications',
   # 'PhotoLibrary',
   # 'PhotoLibraryAddOnly',
   # 'Reminders',
@@ -100,10 +100,10 @@ target 'RabbyMobile' do
   end
 end
 
-target 'RabbyMobileNotification' do
-  use_frameworks! :linkage => :static
-  pod 'RNNotifeeCore', :path => '../node_modules/@notifee/react-native/RNNotifeeCore.podspec'
-end
+# target 'RabbyMobileNotification' do
+#   use_frameworks! :linkage => :static
+#   pod 'RNNotifeeCore', :path => '../node_modules/@notifee/react-native/RNNotifeeCore.podspec'
+# end
 
 def patch_build_settings(installer)
   arch = `arch`.strip

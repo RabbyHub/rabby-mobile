@@ -64,7 +64,7 @@ export const shouldAutoPersonalSign = ({
 }: {
   origin: string;
   method?: string;
-  account?: Account;
+  account?: Account | null;
   msgParams?: [string, string];
 }) => {
   if (

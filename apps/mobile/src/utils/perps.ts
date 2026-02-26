@@ -8,6 +8,7 @@ import {
   AssetCtx,
   MarginTable,
   ClearinghouseState,
+  SpotClearinghouseState,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 import { Account } from '@/core/services/preference';
@@ -108,6 +109,7 @@ export const formatMarkData = (
           maxUsdValueSize: String(nextTier?.lowerBound ?? PERPS_MAX_NTL_VALUE),
           szDecimals: Number(hlDataAsset.szDecimals ?? 0),
           // 根据 markPx 推断价格精度
+          onlyIsolated: hlDataAsset.onlyIsolated,
           pxDecimals: getPxDecimals(m?.markPx ?? ''),
           dayBaseVlm: String(m?.dayBaseVlm ?? '0'),
           dayNtlVlm: String(m?.dayNtlVlm ?? '0'),
@@ -389,4 +391,28 @@ export const checkPerpsReference = async ({
     console.error('checkPerpsReference error', e);
     return false;
   }
+};
+
+export const formatSpotState = (spotState: SpotClearinghouseState) => {
+  return {
+    accountValue: spotState.balances?.[0]?.total || '0',
+    availableToTrade:
+      spotState.tokenToAvailableAfterMaintenance?.[0]?.[1] || '0',
+  };
+  // const token = spotState.balances.find((i) => i.token === USDC_TOKEN_ID);
+  // const availableToTrade = spotState.tokenToAvailableAfterMaintenance?.find(
+  //   (i) => i?.[0] === USDC_TOKEN_ID
+  // );
+
+  // return {
+  //   accountValue: token?.total || '0',
+  //   availableToTrade: availableToTrade?.[1] || '0',
+  // };
+};
+
+export const getStatsReportSide = (isBuy: boolean, isReduceOnly: boolean) => {
+  if (isReduceOnly) {
+    return isBuy ? 'close short' : 'close long';
+  }
+  return isBuy ? 'open long' : 'open short';
 };

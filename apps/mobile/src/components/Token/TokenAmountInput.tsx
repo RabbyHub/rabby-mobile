@@ -64,7 +64,7 @@ interface TokenAmountInputProps {
   type?: TokenSelectorProps['type'];
   placeholder?: string;
   isEstimatingGas?: boolean;
-  defaultAccount?: KeyringAccountWithAlias | null;
+  currentAccount?: KeyringAccountWithAlias | null;
   disableItemCheck?: ITokenCheck;
   inSufficient?: boolean;
 }
@@ -91,7 +91,7 @@ export const TokenAmountInput = React.forwardRef<
       isEstimatingGas,
       placeholder,
       disableItemCheck,
-      defaultAccount,
+      currentAccount,
       inSufficient,
     },
     ref,
@@ -195,7 +195,7 @@ export const TokenAmountInput = React.forwardRef<
         {<View style={styles.placeholder} />}
         <View style={styles.rightToken}>
           <TokenSelect
-            accountInScreen={defaultAccount}
+            accountInScreen={currentAccount}
             chainId={''}
             token={token}
             disableItemCheck={disableItemCheck}

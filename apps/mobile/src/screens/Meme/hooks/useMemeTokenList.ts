@@ -20,29 +20,11 @@ export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
   const loadingMoreLockRef = useRef(false);
 
   const getMemeTokenList = useCallback(
-    async (
-      force = false,
-      sortOrderBy?: OrderBy,
-      sortOrder?: SortOrder,
-      append = false,
-    ) => {
+    async (sortOrderBy?: OrderBy, sortOrder?: SortOrder, append = false) => {
       try {
-        const finalOrderBy = sortOrderBy || orderBy || 'volume_24h';
-        const finalOrder = sortOrder || order || 'desc';
-
-        if (
-          !force &&
-          !append &&
-          memeTokenList.length > 0 &&
-          !sortOrderBy &&
-          !sortOrder
-        ) {
-          return;
-        }
-
         const orderChanged =
-          currentOrderByRef.current !== finalOrderBy ||
-          currentOrderRef.current !== finalOrder;
+          currentOrderByRef.current !== sortOrderBy ||
+          currentOrderRef.current !== sortOrder;
 
         if (orderChanged && !append) {
           nextCursorRef.current = undefined;
@@ -59,10 +41,9 @@ export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
         } else {
           setLoading(true);
         }
-
         const memeTokenListRes = await openapi.getMemeList({
-          order_by: finalOrderBy,
-          order: finalOrder,
+          order_by: sortOrderBy,
+          order: sortOrder,
           limit: 100,
           cursor: append ? nextCursorRef.current || '' : '',
         });
@@ -72,19 +53,17 @@ export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
         const hasNext = pagination.has_next ?? false;
 
         if (append) {
-          const newList = uniqBy(
-            [...memeTokenList, ...memeTokenListRes.data_list],
-            item => item.id,
+          setMemeTokenList(pre =>
+            uniqBy([...pre, ...memeTokenListRes.data_list], item => item.id),
           );
-          setMemeTokenList(newList);
         } else {
           setMemeTokenList(memeTokenListRes.data_list);
         }
 
         nextCursorRef.current = nextCursor;
         setHasMore(hasNext);
-        currentOrderByRef.current = finalOrderBy;
-        currentOrderRef.current = finalOrder;
+        currentOrderByRef.current = sortOrderBy;
+        currentOrderRef.current = sortOrder;
 
         if (append) {
           loadingMoreLockRef.current = false;
@@ -103,23 +82,27 @@ export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
         return [];
       }
     },
-    [orderBy, order, memeTokenList, setMemeTokenList],
+    [setMemeTokenList],
   );
 
   const loadMore = useCallback(() => {
     if (!loadingMore && hasMore && !loading) {
-      getMemeTokenList(false, undefined, undefined, true);
+      getMemeTokenList(
+        currentOrderByRef.current,
+        currentOrderRef.current,
+        true,
+      );
     }
   }, [loadingMore, hasMore, loading, getMemeTokenList]);
 
   /**
    * 首页自动轮询用：静默刷新第一页数据，不触发 loading/loadingMore
-   * 当用户滚动位置在前100项时使用，用户不太会滑倒100项之后等刷新。
+   * 当用户滚动位置在前100项时使用，用户不太会滑到100项之后等刷新。
    */
   const refreshMemeTokenListSilently = useCallback(async () => {
     try {
-      const finalOrderBy = currentOrderByRef.current || orderBy || 'fdv';
-      const finalOrder = currentOrderRef.current || order || 'desc';
+      const finalOrderBy = currentOrderByRef.current || orderBy;
+      const finalOrder = currentOrderRef.current || order;
 
       const memeTokenListRes = await openapi.getMemeList({
         order_by: finalOrderBy,
@@ -143,9 +126,8 @@ export const useMemeTokenList = (orderBy?: OrderBy, order?: SortOrder) => {
   }, [orderBy, order, setMemeTokenList]);
 
   useEffect(() => {
-    getMemeTokenList(false, orderBy, order);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order, orderBy]);
+    getMemeTokenList(orderBy, order);
+  }, [getMemeTokenList, order, orderBy]);
 
   return {
     memeTokenList,

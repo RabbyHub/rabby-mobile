@@ -9,6 +9,11 @@ import UserNotifications
 import UniformTypeIdentifiers
 import RNNotifeeCore
 
+/** @deprecated
+ This Notification Service Extension is used to handle incoming push notifications,
+ download image attachments from URLs specified in the notification payload,
+ and attach them to the notification before it is presented to the user.
+ */
 class NotificationService: UNNotificationServiceExtension {
 
     var contentHandler: ((UNNotificationContent) -> Void)?
@@ -17,6 +22,10 @@ class NotificationService: UNNotificationServiceExtension {
     override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
         self.contentHandler = contentHandler
         bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
+
+        // if var category = bestAttemptContent?.categoryIdentifier as? String, category.isEmpty {
+        //   bestAttemptContent?.categoryIdentifier = "default"
+        // }
 
         // delete notifee_options in request.content.userInfo
         if var userInfo = bestAttemptContent?.userInfo {

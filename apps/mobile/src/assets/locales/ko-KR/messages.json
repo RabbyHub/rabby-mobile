@@ -2021,8 +2021,7 @@
       "clearBrowserData": "브라우저 데이터 삭제",
       "currency": "통화",
       "screenshotReportSwitch": "버그 보고를 위한 스크린샷",
-      "searchCurrency": "통화 검색",
-      "transactionNotification": "Txn 알림 (베타)"
+      "searchCurrency": "통화 검색"
     },
     "settingModal": {
       "themeMode": {
@@ -2614,7 +2613,8 @@
         "takeProfitWhenPriceBelow": "가격이 아래일 때 이익 실현",
         "maxMargin": "최대 마진은 {{amount}}입니다.",
         "minMargin": "최소 마진은 {{amount}}입니다.",
-        "upTo": "최대"
+        "upTo": "최대",
+        "onlyIsolated": "이 토큰에 대해서는 격리 마진만 지원됩니다."
       },
       "PerpsOpenPositionCheckPopup": {
         "initialMargin": "초기 증거금",
@@ -2971,7 +2971,8 @@
           "balance": "잔고",
           "assets": "토큰"
         },
-        "title": "상환 토큰 선택"
+        "title": "상환 토큰 선택",
+        "zeroLtvCollateralTips": "다음 LTV = 0 담보가 있으므로 담보 상환 규칙에 따라 이러한 담보로만 먼저 상환할 수 있습니다."
       },
       "dappSelect": {
         "title": "대출 제공자 선택"

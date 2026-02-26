@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import {
@@ -20,6 +20,8 @@ import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
+import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
@@ -40,7 +42,11 @@ export default function BottomArea({ account }: { account: Account | null }) {
       toAddrCex,
       currentNFT: nftItem,
     },
-    callbacks: { handleIgnoreGasFeeChange },
+    callbacks: {
+      handleIgnoreGasFeeChange,
+      onBottomAreaLayout,
+      onGasInfoDebouncedLoaded,
+    },
     fns: { putScreenState, fetchContactAccounts },
   } = useSendNFTInternalContext();
 
@@ -50,6 +56,17 @@ export default function BottomArea({ account }: { account: Account | null }) {
     React.useState(false);
 
   const { status, ctx } = useSignatureStore();
+  const [calcCount, setCalcCount] = useState(ctx?.txsCalc?.length);
+  useEffect(() => {
+    setCalcCount(ctx?.txsCalc?.length);
+  }, [ctx?.txsCalc?.length]);
+  const debouncedCalcCount = useDebouncedValue(calcCount, 300);
+  useEffect(() => {
+    if (!debouncedCalcCount) return;
+    if (debouncedCalcCount > 0) {
+      onGasInfoDebouncedLoaded();
+    }
+  }, [debouncedCalcCount, onGasInfoDebouncedLoaded]);
 
   const isDirectSigning = status === 'signing';
   const canDirectSign = !ctx?.disabledProcess;
@@ -134,7 +151,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
 
   return (
-    <View style={[styles.bottomDockArea]}>
+    <View onLayout={onBottomAreaLayout} style={[styles.bottomDockArea]}>
       <BottomRiskTip
         loadingRisks={loadingRisks}
         mostImportantRisks={mostImportantRisks}
@@ -217,24 +234,30 @@ export default function BottomArea({ account }: { account: Account | null }) {
   );
 }
 
-export const bottomAreaSizes = {
+export const SIZES = {
   containerPt: 16,
   containerPb: 48,
-  height: 220,
-  bottom: 0,
+  // height: 308,
+  bottom: 48,
 };
 
-const getStyles = createGetStyles2024(({ colors2024, safeAreaInsets }) => {
-  return {
-    bottomDockArea: {
-      bottom: bottomAreaSizes.bottom,
-      width: '100%',
-      paddingHorizontal: 24,
-      position: 'absolute',
-      paddingTop: bottomAreaSizes.containerPt,
-      paddingBottom: bottomAreaSizes.containerPb + 20 + safeAreaInsets.bottom,
-      backgroundColor: colors2024['neutral-bg-1'],
-      // ...makeDebugBorder(),
-    },
-  };
-});
+const getStyles = createGetStyles2024(
+  ({ colors2024, safeAreaInsets, isLight, colors }) => {
+    return {
+      bottomDockArea: {
+        bottom: 0,
+        width: '100%',
+        paddingHorizontal: 24,
+        position: 'absolute',
+        paddingTop: SIZES.containerPt,
+        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
+        backgroundColor: resolveBgColorByType('bg1', {
+          isLight: isLight ?? true,
+          colors,
+          colors2024,
+        }),
+        // ...makeDebugBorder(),
+      },
+    };
+  },
+);

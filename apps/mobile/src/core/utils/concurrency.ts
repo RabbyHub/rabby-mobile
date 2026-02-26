@@ -86,7 +86,7 @@ export function makeSWRKeyAsyncFunc<
   type PromiseRet = Promise<Awaited<ReturnType<T>>>;
   const wrappedFunc = async (
     ...args: Parameters<T>
-  ): Promise<ReturnType<T>> => {
+  ): Promise<Awaited<ReturnType<T>>> => {
     const key = keyFunc ? ensureStringKey(keyFunc({ args })) : staticKey;
     if (key && swrPromisesRef[key]) return swrPromisesRef[key];
 

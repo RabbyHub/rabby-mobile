@@ -2086,8 +2086,7 @@
       "clearBrowserData": "Tarayıcı Verilerini Temizle",
       "currency": "Para Birimi",
       "searchCurrency": "Para Araştırması",
-      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın",
-      "transactionNotification": "Txn bildirimleri (Beta)"
+      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın"
     },
     "settingModal": {
       "themeMode": {
@@ -2613,7 +2612,8 @@
         "takeProfitWhenPriceAbove": "Kar Al, Fiyat Yukarıda Olduğunda",
         "upTo": "En fazla",
         "maxMargin": "Maksimum marj {{amount}}'dır.",
-        "minMargin": "Minimum margin {{amount}}'dir."
+        "minMargin": "Minimum margin {{amount}}'dir.",
+        "onlyIsolated": "Bu token için yalnızca izole marj desteklenmektedir."
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "Yön",
@@ -2970,7 +2970,8 @@
           "balance": "Bakiye",
           "assets": "Jeton"
         },
-        "title": "Geri Ödeme Token'i Seçin"
+        "title": "Geri Ödeme Token'i Seçin",
+        "zeroLtvCollateralTips": "Aşağıdaki LTV = 0 teminatlarınız var ve bu nedenle teminat geri ödeme kurallarına göre önce bu teminatlarla geri ödeme yapabilirsiniz."
       },
       "dappSelect": {
         "title": "Kredilendirme Sağlayıcısı Seçin"

@@ -5,7 +5,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import { Alert, TextInput } from 'react-native';
+import { Alert, LayoutChangeEvent, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
@@ -55,6 +55,12 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { useMemoizedFn } from 'ahooks';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
+import {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 
@@ -230,7 +236,9 @@ export function useSendNFTForm({
     autoResetGasStoreOnChainChange: true,
   });
 
-  const scrollviewRef = useRef<KeyboardAwareScrollView>(null);
+  const scrollviewRef = useRef<KeyboardAwareScrollView | null>(null);
+  const navigation = useRabbyAppNavigation();
+
   const prefetchMiniSigner = useCallback<typeof prefetch>(
     async ctx => {
       try {
@@ -246,12 +254,39 @@ export function useSendNFTForm({
     [prefetch],
   );
 
-  const navigation = useRabbyAppNavigation();
+  const scrollToBottom = useCallback(() => {
+    scrollviewRef.current?.scrollToEnd?.(true);
+  }, []);
 
   const [ignoreMiniSignGasFee, setIgnoreMiniSignGasFee] = useState(false);
   const handleIgnoreGasFeeChange = useCallback((b: boolean) => {
     setIgnoreMiniSignGasFee(b);
   }, []);
+
+  const svBottomAreaHeight = useSharedValue(220);
+  useAnimatedReaction(
+    () => {
+      return svBottomAreaHeight.value;
+    },
+    (cur, prev) => {
+      if (cur !== prev) {
+        runOnJS(scrollToBottom)();
+      }
+    },
+  );
+  const scrollViewStyle = useAnimatedStyle(() => {
+    return {
+      height: svBottomAreaHeight.value,
+    };
+  });
+
+  const onBottomAreaLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      'worklet';
+      svBottomAreaHeight.value = event.nativeEvent.layout.height;
+    },
+    [svBottomAreaHeight],
+  );
 
   /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
   const formik = useFormik({
@@ -762,6 +797,10 @@ export function useSendNFTForm({
     patchFormValues,
     handleFormValuesChange,
 
+    onBottomAreaLayout,
+    scrollViewStyle,
+    scrollToBottom,
+
     whitelist,
     whitelistEnabled,
     computed,
@@ -822,6 +861,8 @@ type InternalContext = {
     ) => void;
     handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
     handleIgnoreGasFeeChange: (b: boolean) => void;
+    onBottomAreaLayout: (layout: any) => void;
+    onGasInfoDebouncedLoaded: () => void;
   };
 };
 const SendNFTInternalContext = React.createContext<InternalContext>({
@@ -850,6 +891,8 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
     handleFieldChange: () => {},
     handleGasLevelChanged: () => {},
     handleIgnoreGasFeeChange: () => {},
+    onBottomAreaLayout: () => {},
+    onGasInfoDebouncedLoaded: () => {},
   },
 });
 

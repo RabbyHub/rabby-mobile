@@ -10,6 +10,7 @@ import { Skeleton, Slider } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
+  apiSendToken,
   useInputBlurOnEvents,
   useSendTokenInternalContext,
 } from './hooks/useSendToken';
@@ -51,8 +52,6 @@ export function BalanceSection({
     formValues,
     computed: { chainItem, currentToken, currentTokenBalance },
 
-    fns: { putScreenState },
-
     callbacks: {
       handleGasLevelChanged,
       handleFieldChange,
@@ -74,14 +73,14 @@ export function BalanceSection({
       });
 
       if (result.isNormalEnough && result.normalLevel) {
-        putScreenState({ selectedGasLevel: result.normalLevel });
+        apiSendToken.putScreenState({ selectedGasLevel: result.normalLevel });
       } else if (result.isSlowEnough && result.slowLevel) {
-        putScreenState({ selectedGasLevel: result.slowLevel });
+        apiSendToken.putScreenState({ selectedGasLevel: result.slowLevel });
       } else if (result.customLevel) {
-        putScreenState({ selectedGasLevel: result.customLevel });
+        apiSendToken.putScreenState({ selectedGasLevel: result.customLevel });
       }
     }
-  }, [putScreenState, currentToken, screenState.gasList]);
+  }, [currentToken, screenState.gasList]);
 
   const showBubble = useSharedValue(false);
 
@@ -192,7 +191,7 @@ export function BalanceSection({
         {currentAccount && chainItem && (
           <TokenAmountInput
             ref={amountInputRef}
-            defaultAccount={currentAccount}
+            currentAccount={currentAccount}
             value={formValues.amount}
             onChange={handleAmountChange}
             disableItemCheck={disableItemCheck}

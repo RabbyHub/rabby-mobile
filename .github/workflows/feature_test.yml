@@ -151,7 +151,7 @@ jobs:
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
-          GITHUB_ACTIONS_RUNNER_TLS_NO_VERIFY: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
+          GITHUB_ACTIONS_RUNNER_TLS_NO_VERIFY: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL && '1' || '0' }}
           DISABLE_AWS_CLI_HTTPS_VALIDATION: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
           GHA_MOCK_BUILD_FAILED: ${{ inputs.GHA_MOCK_BUILD_FAILED }}
           CONFIGURATION: release

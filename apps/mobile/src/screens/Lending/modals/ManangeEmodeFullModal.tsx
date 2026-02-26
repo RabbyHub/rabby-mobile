@@ -119,7 +119,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   ]);
 
   const { isRisky, isBlock, desc } = useMemo(() => {
-    if (Number(newSummary?.healthFactor || '0') <= 0) {
+    if (Number(newSummary?.healthFactor || '0') <= 0 || !hasChangeCategory) {
       return {
         isRisky: false,
         isBlock: false,
@@ -139,7 +139,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
         ? t('page.Lending.risk.emodeBlockWarning')
         : '',
     };
-  }, [newSummary?.healthFactor, t]);
+  }, [hasChangeCategory, newSummary?.healthFactor, t]);
 
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
