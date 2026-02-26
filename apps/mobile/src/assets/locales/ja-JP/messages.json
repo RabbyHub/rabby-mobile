@@ -2073,8 +2073,7 @@
       "clearBrowserData": "ブラウザデータをクリア",
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
-      "screenshotReportSwitch": "バグを報告するためのスクリーンショット",
-      "transactionNotification": "Txn通知（ベータ）"
+      "screenshotReportSwitch": "バグを報告するためのスクリーンショット"
     },
     "settingModal": {
       "themeMode": {
@@ -2666,7 +2665,8 @@
         "takeProfitWhenPriceAbove": "価格が上昇したときに利益を確定する",
         "upTo": "最大で",
         "minMargin": "最小マージンは{{amount}}です。",
-        "maxMargin": "最大マージンは{{amount}}です。"
+        "maxMargin": "最大マージンは{{amount}}です。",
+        "onlyIsolated": "このトークンには、孤立したマージンのみがサポートされています。"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "方向",
@@ -3023,7 +3023,8 @@
           "assets": "トークン",
           "balance": "残高"
         },
-        "title": "リペイトークンを選択してください"
+        "title": "リペイトークンを選択してください",
+        "zeroLtvCollateralTips": "あなたは以下のLTV = 0の担保を持っているため、担保返済ルールに従ってまずこれらの担保で返済することしかできません。"
       },
       "dappSelect": {
         "title": "レンディングプロバイダーを選択してください"

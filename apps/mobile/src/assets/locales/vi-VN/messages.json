@@ -1844,8 +1844,7 @@
       "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt",
       "currency": "Tiền tệ",
       "searchCurrency": "Tìm kiếm Tiền tệ",
-      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
-      "transactionNotification": "Thông báo Txn (Beta)"
+      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -2726,7 +2725,8 @@
         "stopLossWhenPriceBelow": "Dừng lỗ khi giá dưới",
         "minMargin": "Biên độ tối thiểu là {{amount}}",
         "maxMargin": "Lợi nhuận tối đa là {{amount}}",
-        "upTo": "Lên đến"
+        "upTo": "Lên đến",
+        "onlyIsolated": "Chỉ có margin cô lập được hỗ trợ cho token này"
       },
       "PerpsOpenPositionCheckPopup": {
         "fee": "Phí",
@@ -3083,7 +3083,8 @@
           "assets": "Mã thông báo",
           "balance": "Số dư"
         },
-        "title": "Chọn Token Hoàn trả"
+        "title": "Chọn Token Hoàn trả",
+        "zeroLtvCollateralTips": "Bạn có LTV = 0 tài sản thế chấp và vì vậy chỉ có thể thanh toán trước bằng các tài sản thế chấp này theo quy tắc thanh toán tài sản thế chấp."
       },
       "dappSelect": {
         "title": "Chọn Nhà Cung Cấp Cho Vay"

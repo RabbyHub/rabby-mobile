@@ -45,6 +45,8 @@ export type PerfEventBusListeners = {
 
   USER_MANUALLY_UNLOCK: (ctx: { isFirstTimeAfterLaunch: boolean }) => void;
 
+  AUTO_TRIGGER_UNLOCK: () => void;
+
   GLOBAL_CLEAR_ALL_COVERED_COMPONENTS: () => void;
 };
 type PerfListeners = {

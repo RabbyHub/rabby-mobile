@@ -13,6 +13,7 @@ import {
   TxAllHistoryResult,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { AppState } from 'react-native';
 
 export type DeviceActiveStatusResponse = {
   success: boolean;
@@ -34,6 +35,8 @@ export type BindDeviceResponse = {
   removed: number;
 };
 
+type NotifiAppState = 'foreground' | 'background';
+
 class NotificationsOpenApiService extends OpenApiService {
   #getDeviceUUID() {
     return makeDeviceUUID().deviceUUID;
@@ -49,11 +52,13 @@ class NotificationsOpenApiService extends OpenApiService {
     return response.data;
   }
 
-  async heartbeat(/* params: { deviceId: string } */): Promise<HeartbeatResponse> {
+  async heartbeat(/* params: { app_state: 'foreground' | 'background' } */): Promise<HeartbeatResponse> {
     const response = await this.request.post(
       '/v1/notification/device/heartbeat',
       {
         device_id: this.#getDeviceUUID(),
+        // for further usage
+        is_foreground: AppState.currentState === 'active',
       },
     );
     return response.data;

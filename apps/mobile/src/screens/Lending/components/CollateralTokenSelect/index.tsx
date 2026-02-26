@@ -16,6 +16,7 @@ import { getCollateralTokens } from '../../utils/swap';
 import { SwappableToken } from '../../types/swap';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 
 export type EModeCategoryDisplay = EmodeCategory & {
   available: boolean; // indicates if the user can enter this category
@@ -50,6 +51,8 @@ export default function CollateralTokenSelectModal({
             );
             return {
               ...item,
+              baseLTVasCollateral:
+                displayPoolReserve?.reserve.baseLTVasCollateral,
               totalBorrowsUSD: displayPoolReserve?.totalBorrowsUSD,
               walletBalanceUSD: displayPoolReserve?.walletBalanceUSD,
               underlyingUsdValue:
@@ -74,25 +77,58 @@ export default function CollateralTokenSelectModal({
     displayPoolReserves,
   ]);
 
+  const hasLtvZeroCollateral = useMemo(() => {
+    return tokenToDisplay
+      .filter(
+        item =>
+          !!item.balance &&
+          item.balance !== '0' &&
+          item.usageAsCollateralEnabled,
+      )
+      .some(item => item.baseLTVasCollateral === '0');
+  }, [tokenToDisplay]);
+
+  const formatData = useMemo(() => {
+    // 如果有ltv 为 0的抵押物，必须优先还款
+    return hasLtvZeroCollateral
+      ? tokenToDisplay.filter(item => item.baseLTVasCollateral === '0')
+      : tokenToDisplay;
+  }, [hasLtvZeroCollateral, tokenToDisplay]);
+
   const isDark = useGetBinaryMode() === 'dark';
 
   const ListHeaderComponent = useCallback(() => {
     return (
-      <View style={styles.headerContainer}>
-        <Text style={[styles.headerText, styles.assetsHeaderText]}>
-          {t('page.Lending.manageEmode.collateralSwapSelector.header.assets')}
-        </Text>
-        <Text style={[styles.headerText, styles.apyHeaderText]}>
-          {t('page.Lending.apy')}
-        </Text>
-        <Text style={[styles.headerText, styles.borrowHeaderText]}>
-          {t(
-            'page.Lending.manageEmode.collateralSwapSelector.header.collateral',
-          )}
-        </Text>
+      <View>
+        {hasLtvZeroCollateral && (
+          <View style={styles.ltvZeroTipContainer}>
+            <RcIconWarningCircleCC
+              width={18}
+              height={18}
+              color={colors2024['orange-default']}
+              style={styles.ltvZeroTipIcon}
+            />
+            <Text style={styles.ltvZeroTipText}>
+              {t('page.Lending.repayWithAToken.zeroLtvCollateralTips')}
+            </Text>
+          </View>
+        )}
+        <View style={styles.headerContainer}>
+          <Text style={[styles.headerText, styles.assetsHeaderText]}>
+            {t('page.Lending.manageEmode.collateralSwapSelector.header.assets')}
+          </Text>
+          <Text style={[styles.headerText, styles.apyHeaderText]}>
+            {t('page.Lending.apy')}
+          </Text>
+          <Text style={[styles.headerText, styles.borrowHeaderText]}>
+            {t(
+              'page.Lending.manageEmode.collateralSwapSelector.header.collateral',
+            )}
+          </Text>
+        </View>
       </View>
     );
-  }, [styles, t]);
+  }, [styles, t, colors2024, hasLtvZeroCollateral]);
 
   return (
     <AutoLockView
@@ -114,7 +150,7 @@ export default function CollateralTokenSelectModal({
 
       <View style={[styles.chainListWrapper]}>
         <BottomSheetFlatList<SwappableToken>
-          data={tokenToDisplay}
+          data={formatData}
           onScrollBeginDrag={() => {
             Keyboard.dismiss();
           }}
@@ -284,5 +320,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 10,
     width: 80,
     textAlign: 'right',
+  },
+  ltvZeroTipContainer: {
+    backgroundColor: colors2024['orange-light-1'],
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 4,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 6,
+  },
+  ltvZeroTipText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: colors2024['orange-default'],
+    fontFamily: 'SF Pro Rounded',
+    flexShrink: 1,
+  },
+  ltvZeroTipIcon: {
+    position: 'relative',
+    top: 1,
+    flexShrink: 0,
   },
 }));

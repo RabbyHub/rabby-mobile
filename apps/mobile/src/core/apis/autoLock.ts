@@ -1,4 +1,4 @@
-import { AppState } from 'react-native';
+import { AppState, NativeEventSubscription } from 'react-native';
 
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { preferenceService } from '../services';
@@ -30,6 +30,7 @@ const autoLockTimerRef = {
   foregroundExpire: calc(),
   backToForegroundExpire: null as null | number,
   timer: null as ReturnType<typeof setInterval> | null,
+  subscription: null as NativeEventSubscription | null,
 };
 
 type TimeoutContext = {
@@ -46,6 +47,7 @@ export const autoLockEvent = new AutoLockEvent();
 
 function setAutoLockExpireTime(expireTime: number) {
   autoLockTimerRef.foregroundExpire = expireTime;
+  autoLockTimerRef.backToForegroundExpire = null;
   autoLockEvent.emit('change', expireTime);
 
   return expireTime;
@@ -83,24 +85,13 @@ export function getPersistedAutoLockTimes() {
   };
 }
 
-const clearAutoLockChecker = () => {
-  if (autoLockTimerRef.timer) {
-    clearInterval(autoLockTimerRef.timer);
-  }
-};
-
 export function refreshAutolockTimeout(type?: 'clear') {
-  clearAutoLockChecker();
-
   if (type === 'clear') {
     setAutoLockExpireTime(-1);
   } else {
     const { expireTime } = getPersistedAutoLockTimes();
     setAutoLockExpireTime(expireTime);
-    setupAutoLockChecker();
   }
-
-  return { dispose: clearAutoLockChecker };
 }
 
 export function uiRefreshTimeout() {
@@ -137,28 +128,47 @@ const checkExpire = (
   }
 };
 
+const prevStateRef = {
+  current: AppState.currentState,
+};
+
 export function setupAutoLockChecker() {
+  if (autoLockTimerRef.timer) {
+    clearInterval(autoLockTimerRef.timer);
+    autoLockTimerRef.timer = null;
+  }
   autoLockTimerRef.timer = setInterval(() => {
     const unlockExpire = autoLockTimerRef.foregroundExpire;
-    console.debug('[autoLock] app to foreground unlockExpire', unlockExpire);
-    checkExpire(unlockExpire, 'foreground');
+    console.debug(
+      '[autoLock] app to foreground unlockExpire, AppState.isAvailable, AppState.currentState',
+      unlockExpire,
+      AppState.isAvailable,
+      AppState.currentState,
+    );
+    if (!AppState.isAvailable || AppState.currentState === 'active') {
+      checkExpire(unlockExpire, 'foreground');
+    }
   }, CHECK_DURATION);
 
-  const prevStateRef = {
-    current: AppState.currentState,
-  };
-  AppState.addEventListener('change', state => {
+  if (autoLockTimerRef.subscription) {
+    const oldSub = autoLockTimerRef.subscription;
+    autoLockTimerRef.subscription?.remove();
+    autoLockTimerRef.subscription = null;
+    console.debug('[autoLock] clear old subscription', oldSub);
+  }
+  autoLockTimerRef.subscription = AppState.addEventListener('change', state => {
     const prevState = prevStateRef.current;
     prevStateRef.current = state;
     if (prevState !== 'active' && state === 'active') {
       const backToForegroundExpire = autoLockTimerRef.backToForegroundExpire;
+      autoLockTimerRef.backToForegroundExpire = null;
       if (!backToForegroundExpire) {
         return;
       }
 
-      const unlockExpire = autoLockTimerRef.backToForegroundExpire;
       // console.debug('[autoLock] app back to foreground autoLockTimerRef, unlockExpire', autoLockTimerRef, unlockExpire);
-      unlockExpire && checkExpire(unlockExpire, 'back-to-foreground');
+      backToForegroundExpire &&
+        checkExpire(backToForegroundExpire, 'back-to-foreground');
     } else if (prevState === 'active' && state !== 'active') {
       console.debug(
         '[autoLock] app to background autoLockTimerRef',
