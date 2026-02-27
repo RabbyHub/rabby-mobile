@@ -145,6 +145,7 @@
     "node-libs-react-native": "^1.2.1",
     "p-queue": "7.3",
     "p-retry": "^6.2.0",
+    "promise.withresolvers": "^1.0.4",
     "pump": "^3.0.0",
     "react": "18.3.1",
     "react-content-loader": "^6.2.1",
