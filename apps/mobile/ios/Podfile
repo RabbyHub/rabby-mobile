@@ -87,7 +87,7 @@ target 'RabbyMobile' do
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
+      :ccache_enabled => ENV['RABBY_MOBILE_POD_USE_CCACHE'] == "true",
     )
     # __apply_Xcode_12_5_M1_post_install_workaround(installer)
     patch_build_settings(installer)

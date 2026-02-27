@@ -26,6 +26,10 @@ on:
           - 'mobile'
           - 'mobile-local'
         default: 'mobile'
+      RABBY_MOBILE_POD_USE_CCACHE:
+        required: false
+        type: boolean
+        default: true
       __DANGEROUS_NO_VERIFY_SSL:
         required: false
         type: boolean
@@ -55,6 +59,7 @@ jobs:
       - ${{ matrix.machine_loc }}
     env:
       NODE_OPTIONS: '--max_old_space_size=12288'
+      RABBY_MOBILE_POD_USE_CCACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CCACHE }}
 
     steps:
       - name: Checkout git repo
