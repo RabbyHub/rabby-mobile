@@ -26,6 +26,10 @@ on:
           - 'mobile'
           - 'mobile-local'
         default: 'mobile'
+      RABBY_MOBILE_NM_USE_CACHE:
+        required: false
+        type: boolean
+        default: true
       RABBY_MOBILE_POD_USE_CACHE:
         required: false
         type: boolean
@@ -65,6 +69,7 @@ jobs:
       NODE_OPTIONS: '--max_old_space_size=12288'
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
+      RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v3
@@ -75,11 +80,17 @@ jobs:
         run: |
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
+          if [ "$RABBY_MOBILE_NM_USE_CACHE" = "true" ]; then
+            echo "Use yarn installed node_modules";
+            yarn_exclude_files="-e node_modules -e apps/mobile/node_modules -e apps/mobile/packages/*/node_modules"
+          else
+            yarn_exclude_files="";
+          fi
 
           if [ "$OS_TYPE" == "Linux" ]; then
             if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
               echo "Keep gradle cache";
-              git clean -ffdx -e apps/mobile/android/.gradle -e apps/mobile/android/app/build;
+              git clean -ffdx $yarn_exclude_files -e apps/mobile/android/.gradle -e apps/mobile/android/app/build;
               rm -rf apps/mobile/android/app/build/outputs;
             else
               echo "Clean gradle cache";
@@ -88,7 +99,7 @@ jobs:
           elif [ "$OS_TYPE" == "Darwin" ]; then
             if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
               echo "Keep cocoapods cache";
-              git clean -ffdx -e apps/mobile/ios/Pods -e apps/mobile/ios/build;
+              git clean -ffdx $yarn_exclude_files -e apps/mobile/ios/Pods -e apps/mobile/ios/build;
             else
               echo "Clean cocoapods cache";
               git clean -ffdx;
