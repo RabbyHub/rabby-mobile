@@ -30,7 +30,7 @@ on:
         required: false
         type: boolean
         default: true
-      RABBY_MOBILE_GRADLE_USE_CCACHE:
+      RABBY_MOBILE_GRADLE_USE_CACHE:
         required: false
         type: boolean
         default: true
@@ -64,7 +64,7 @@ jobs:
     env:
       NODE_OPTIONS: '--max_old_space_size=12288'
       RABBY_MOBILE_POD_USE_CCACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CCACHE }}
-      RABBY_MOBILE_GRADLE_USE_CCACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CCACHE }}
+      RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v3

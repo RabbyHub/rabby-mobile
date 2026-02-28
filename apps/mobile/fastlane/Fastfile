@@ -191,7 +191,7 @@ platform :android do
   desc "Release for the Android selfhost"
   lane :selfhost do
     write_key_store
-    use_cache = ENV['RABBY_MOBILE_GRADLE_USE_CCACHE'] == 'true' ? 'true' : 'false'
+    use_cache = ENV['RABBY_MOBILE_GRADLE_USE_CACHE'] == 'true' ? 'true' : 'false'
     build_channel = ENV['buildchannel'] || 'selfhost-reg'
     if build_channel == 'selfhost-reg'
       if use_cache == 'true'
