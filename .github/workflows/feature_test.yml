@@ -26,7 +26,7 @@ on:
           - 'mobile'
           - 'mobile-local'
         default: 'mobile'
-      RABBY_MOBILE_POD_USE_CCACHE:
+      RABBY_MOBILE_POD_USE_CACHE:
         required: false
         type: boolean
         default: true
@@ -63,7 +63,7 @@ jobs:
       - ${{ matrix.machine_loc }}
     env:
       NODE_OPTIONS: '--max_old_space_size=12288'
-      RABBY_MOBILE_POD_USE_CCACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CCACHE }}
+      RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
     steps:
       - name: Checkout git repo
@@ -73,16 +73,28 @@ jobs:
 
       - name: Clean git Manually
         run: |
-          if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
-            echo "Keep gradle cache";
-            git clean -ffdx -e apps/mobile/android/.gradle -e apps/mobile/android/app/build;
-            rm -rf apps/mobile/android/app/build/outputs;
-          else
-            echo "Clean gradle cache";
-            git clean -ffdx;
+          OS_TYPE=$(uname -s);
+          echo "OS_TYPE is $OS_TYPE";
+
+          if [ "$OS_TYPE" == "Linux" ]; then
+            if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
+              echo "Keep gradle cache";
+              git clean -ffdx -e apps/mobile/android/.gradle -e apps/mobile/android/app/build;
+              rm -rf apps/mobile/android/app/build/outputs;
+            else
+              echo "Clean gradle cache";
+              git clean -ffdx;
+            fi
+          elif [ "$OS_TYPE" == "Darwin" ]; then
+            if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
+              echo "Keep cocoapods cache";
+              git clean -ffdx -e apps/mobile/ios/Pods -e apps/mobile/ios/build;
+            else
+              echo "Clean cocoapods cache";
+              git clean -ffdx;
+            fi
           fi
           git reset --hard HEAD;
-
       - name: Env Test
         id: env-test
         run: |
