@@ -191,10 +191,19 @@ platform :android do
   desc "Release for the Android selfhost"
   lane :selfhost do
     write_key_store
-    gradle(task: 'clean', project_dir: './android')
+    use_cache = ENV['RABBY_MOBILE_GRADLE_USE_CCACHE'] == 'true' ? 'true' : 'false'
     build_channel = ENV['buildchannel'] || 'selfhost-reg'
     if build_channel == 'selfhost-reg'
-      build_rabbymobile_app(tasks: ['assembleRegression'])
+      if use_cache == 'true'
+        UI.message("Using Gradle cache for selfhost-reg build")
+      else
+        UI.message("Not using Gradle cache for selfhost-reg build")
+        gradle(task: 'clean', project_dir: './android')
+      end
+      build_rabbymobile_app(tasks: ['assembleRegression'], properties: {
+        "org.gradle.caching"=>use_cache == 'true',
+        "org.gradle.parallel"=>true,
+      })
     else
       build_rabbymobile_app(tasks: ['assembleRelease'])
     end
