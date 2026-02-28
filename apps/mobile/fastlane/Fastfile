@@ -201,6 +201,7 @@ platform :android do
         gradle(task: 'clean', project_dir: './android')
       end
       build_rabbymobile_app(tasks: ['assembleRegression'], properties: {
+        "org.gradle.configuration-cache"=>use_cache == 'true',
         "org.gradle.caching"=>use_cache == 'true',
         "org.gradle.parallel"=>true,
       })
