@@ -774,7 +774,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                                   styles.tokenHeaderAmount,
                                   // isExcludeBalanceShowTips && styles.textSecondary,
                                 ]}>
-                                {formatTokenAmount(token.amount)} {token.symbol}
+                                {formatTokenAmount(token.amount)}
                               </Text>
                             )}
                             {isBridgeTo && (
@@ -820,7 +820,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                               <Text
                                 style={[styles.tokenPrice]}
                                 numberOfLines={1}>
-                                {`@$${formatPrice(token.price)}`}
+                                {`$${formatPrice(token.price)}`}
                               </Text>
                               <Text
                                 style={StyleSheet.compose(styles.percent, {

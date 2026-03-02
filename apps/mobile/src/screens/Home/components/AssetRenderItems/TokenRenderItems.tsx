@@ -54,10 +54,10 @@ import LpTokenSwitch from '../LpTokenSwitch';
 
 export const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
-    return '0%';
+    return '(0%)';
   }
   const percentage = (x * 100).toFixed(2);
-  return `${x >= 0 ? '+' : ''}${percentage}%`;
+  return `(${x >= 0 ? '+' : ''}${percentage}%)`;
 };
 
 const hitSlop = {
@@ -144,12 +144,9 @@ export const TokenRow = memo(
     }, [styles.modalNextButtonText, t]);
     const children = useMemo(() => {
       const amountContent = data._priceStr ? (
-        <Text
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={styles.amountStr}>{`${data._amountStr} ${getTokenSymbol(
-          data,
-        )}`}</Text>
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
+          {data._amountStr}
+        </Text>
       ) : null;
 
       return (
@@ -373,12 +370,9 @@ export const TokenRowV2 = memo(
     }, [styles.modalNextButtonText, t]);
 
     const amountContent = (
-      <Text
-        numberOfLines={1}
-        ellipsizeMode="tail"
-        style={styles.amountStr}>{`${formatAmount(
-        data.amount,
-      )} ${getTokenSymbol(data)}`}</Text>
+      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
+        {formatAmount(data.amount)}
+      </Text>
     );
 
     return (
@@ -432,7 +426,7 @@ export const TokenRowV2 = memo(
           </Text>
           {showAccount ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
+              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
               <Text
                 style={StyleSheet.compose(styles.percent, {
                   ...(!data.is_core && (data.usd_value || 0) > 0
@@ -445,7 +439,7 @@ export const TokenRowV2 = memo(
             </View>
           ) : scene === 'portfolio' ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
+              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
               <Text
                 style={StyleSheet.compose(styles.percent, {
                   ...(!data.is_core && (data.usd_value || 0) > 0
@@ -693,7 +687,7 @@ export const ExternalTokenRow = memo(
                     styles.tokenHeaderAmount,
                     // isExcludeBalanceShowTips && styles.textSecondary,
                   ]}>
-                  {formatTokenAmount(data.amount)} {getTokenSymbol(data)}
+                  {formatTokenAmount(data.amount)}
                 </Text>
               </View>
               <View style={styles.colContent}>
@@ -702,7 +696,7 @@ export const ExternalTokenRow = memo(
                 </Text>
                 <View style={styles.priceInfo}>
                   <Text style={styles.usdValue}>
-                    @{decimalPrecision ? '$' : ''}
+                    {decimalPrecision ? '$' : ''}
                     {(decimalPrecision ? formatPrice : formatUsdValue)(
                       data.price || 0,
                     )}
