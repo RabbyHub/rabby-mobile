@@ -94,7 +94,7 @@ jobs:
               rm -rf apps/mobile/android/app/build/outputs;
             else
               echo "Clean gradle cache";
-              git clean -ffdx;
+              git clean -ffdx $yarn_exclude_files;
             fi
           elif [ "$OS_TYPE" == "Darwin" ]; then
             if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
@@ -102,7 +102,7 @@ jobs:
               git clean -ffdx $yarn_exclude_files -e apps/mobile/ios/Pods -e apps/mobile/ios/build;
             else
               echo "Clean cocoapods cache";
-              git clean -ffdx;
+              git clean -ffdx $yarn_exclude_files;
             fi
           fi
           git reset --hard HEAD;
