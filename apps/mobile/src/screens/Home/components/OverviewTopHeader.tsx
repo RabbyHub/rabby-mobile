@@ -32,7 +32,6 @@ import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHe
 import {
   HOME_TOP_HEADER_SIZES,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
-  SHOULD_SHOW_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
@@ -56,6 +55,7 @@ import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -190,7 +190,10 @@ export function TabsTopHeader(): JSX.Element {
             ]}>
             {changePercent}
           </Text>
-          {isTop10BalanceLoading ? <LoadingCircle /> : null}
+          {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+          isTop10BalanceLoading ? (
+            <LoadingCircle />
+          ) : null}
         </Pressable>
       ) : (
         <View style={styles.leftBox}>
@@ -220,9 +223,10 @@ export function TabsTopHeader(): JSX.Element {
               />
             )}
           </TouchableOpacity>
-          {/* {!SHOULD_SHOW_INDICATOR_WHEN_LOADING && isTop10BalanceLoading ? (
+          {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+          isTop10BalanceLoading ? (
             <LoadingCircle />
-          ) : null} */}
+          ) : null}
         </View>
       )}
 

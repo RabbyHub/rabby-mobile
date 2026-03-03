@@ -14,6 +14,7 @@ import {
   type PressableProps as RNGHPressableProps,
   ScrollView as RNGHScrollView,
   RefreshControl as RNGHRefreshControl,
+  FlatList as RNGHFlatList,
 } from 'react-native-gesture-handler';
 
 export {
@@ -23,6 +24,7 @@ export {
   type RNGHPressableProps,
   RNGHScrollView,
   RNGHRefreshControl,
+  RNGHFlatList,
 };
 
 export type RNGHScrollViewProps = React.ComponentProps<

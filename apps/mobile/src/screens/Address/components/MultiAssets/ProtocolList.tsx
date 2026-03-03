@@ -11,7 +11,7 @@ import { ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
-import { RefreshControl } from 'react-native-gesture-handler';
+import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
@@ -34,6 +34,16 @@ import { useAccountInfo } from './hooks';
 import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
+import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
+import {
+  pulldownRefreshSizes,
+  RefreshPlaceholderIOS,
+  setPulldownRefreshStage,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+  usePulldownRefreshGesture,
+  usePulldownRefreshStyles,
+} from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import { RNGHRefreshControl } from '@/components/customized/reexports';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -253,47 +263,84 @@ export const ProtocolList = () => {
     }
   }, [triggerUpdate, myTop10Addresses]);
 
+  const { panGestureRef, isRefreshing, pullDistance, svIsRefreshing } =
+    usePulldownRefreshGesture({
+      onRefreshOnJs: onRefresh,
+    });
+
+  useEffect(() => {
+    console.debug(
+      '[PulldownRefresh] ProtocolList isLoading changed',
+      isLoading,
+    );
+    setPulldownRefreshStage({
+      state: isLoading ? 'refreshing' : 'finished',
+      svIsRefreshing,
+      pullDistance,
+      indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+    });
+  }, [isLoading, svIsRefreshing, pullDistance]);
+
+  const pulldownRefreshReturns = usePulldownRefreshStyles({
+    indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+    pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+    states: { pullDistance, svIsRefreshing },
+  });
+
   // if (!isFocusing) {
   //   return null;
   // }
   return (
-    <Tabs.FlatList
-      keyExtractor={getItemId}
-      data={
-        hasNotAssets
-          ? [
-              {
-                type: 'empty-defi',
-                data: t('page.singleHome.sectionHeader.NoData', {
-                  name: t('page.singleHome.sectionHeader.Defi'),
-                }),
-              },
-            ]
-          : portfolioListData
-      }
-      key={isFocused ? 'defi-focused' : 'defi-unfocused'}
-      renderItem={renderItem}
-      initialNumToRender={15}
-      windowSize={5}
-      maxToRenderPerBatch={15}
-      removeClippedSubviews
-      ItemSeparatorComponent={ListRenderSeparator}
-      ListHeaderComponent={<PerpsMultiAssetPosition />}
-      ListFooterComponent={ListRenderFooter}
-      showsVerticalScrollIndicator={false}
-      showsHorizontalScrollIndicator={false}
-      style={styles.container}
-      contentContainerStyle={styles.list}
-      onEndReached={loadMorePortfolios}
-      onEndReachedThreshold={0.5}
-      refreshControl={
-        <RefreshControl
-          style={styles.bgContainer}
-          onRefresh={onRefresh}
-          refreshing={IS_ANDROID && isLoading}
-        />
-      }
-    />
+    <GestureDetector gesture={panGestureRef.current}>
+      <TabsFlatList
+        keyExtractor={getItemId}
+        data={
+          hasNotAssets
+            ? [
+                {
+                  type: 'empty-defi',
+                  data: t('page.singleHome.sectionHeader.NoData', {
+                    name: t('page.singleHome.sectionHeader.Defi'),
+                  }),
+                },
+              ]
+            : portfolioListData
+        }
+        key={isFocused ? 'defi-focused' : 'defi-unfocused'}
+        renderItem={renderItem}
+        initialNumToRender={15}
+        windowSize={5}
+        maxToRenderPerBatch={15}
+        removeClippedSubviews
+        ItemSeparatorComponent={ListRenderSeparator}
+        ListHeaderComponent={
+          <>
+            <RefreshPlaceholderIOS hooksReturn={pulldownRefreshReturns} />
+            <PerpsMultiAssetPosition />
+          </>
+        }
+        ListFooterComponent={ListRenderFooter}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        style={styles.container}
+        contentContainerStyle={styles.list}
+        onEndReached={loadMorePortfolios}
+        onEndReachedThreshold={0.5}
+        bounces={false}
+        overScrollMode={'never'}
+        scrollEventThrottle={16}
+        simultaneousHandlers={[panGestureRef]}
+        {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
+          refreshControl: (
+            <RNGHRefreshControl
+              style={{ paddingHorizontal: 16 }}
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+            />
+          ),
+        })}
+      />
+    </GestureDetector>
   );
 };
 
