@@ -33,7 +33,7 @@ on:
       RABBY_MOBILE_POD_USE_CACHE:
         required: false
         type: boolean
-        default: true
+        default: false
       RABBY_MOBILE_GRADLE_USE_CACHE:
         required: false
         type: boolean
