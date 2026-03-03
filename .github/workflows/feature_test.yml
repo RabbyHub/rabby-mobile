@@ -70,6 +70,7 @@ jobs:
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
       RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
+      XCODE_VER: '26.3'
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v3
@@ -106,6 +107,7 @@ jobs:
             fi
           fi
           git reset --hard HEAD;
+
       - name: Env Test
         id: env-test
         run: |
@@ -148,7 +150,7 @@ jobs:
         id: setup-xcode
         with:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
-          xcode-version: '26.3'
+          xcode-version: ${{ env.XCODE_VER }}
 
       - name: Install and build
         run: |

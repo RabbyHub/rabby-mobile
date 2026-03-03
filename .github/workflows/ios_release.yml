@@ -47,8 +47,20 @@ jobs:
       - self-hosted
       - ${{ matrix.host }}
       - ${{ matrix.machine_loc }}
+    env:
+      XCODE_VER: '26.3'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+
+      - name: Env Test
+        id: env-test
+        run: |
+          echo "whoami $(whoami)"
+          echo "shell is $(echo $0)"
+          echo "HOME is $HOME"
+          echo "which node $(which node)"
+
       - name: Get Actions Variables
         id: actionvars
         shell: bash
@@ -75,7 +87,7 @@ jobs:
         id: setup-xcode
         with:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
-          xcode-version: '26.3'
+          xcode-version: ${{ env.XCODE_VER }}
 
       - name: Install dependencies && Build app
         run: |
