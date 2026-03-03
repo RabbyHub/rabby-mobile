@@ -173,6 +173,15 @@ if (process.env.APP_ENV === 'hashing') {
   });
 }
 
+/**
+ * FIXME: upgrade dependencies to be compatible with metro's new default settings
+ * @see https://github.com/expo/expo/discussions/36551
+ *
+ * known incompatible libraries:
+ *   - @ledgerhq/hw-app-eth@6.45.0
+ */
+config.resolver.unstable_enablePackageExports = false;
+
 module.exports = wrapWithReanimatedMetroConfig(
   mergeConfig(defaultConfig, config),
 );
