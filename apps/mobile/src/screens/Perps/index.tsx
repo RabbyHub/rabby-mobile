@@ -40,6 +40,8 @@ import { openapi } from '@/core/request';
 import {
   ARB_USDC_TOKEN_ID,
   ARB_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_USDC_TOKEN_ID,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { PerpHeader } from './components/PerpHeader';
@@ -595,8 +597,10 @@ export const PerpsOriginScreen = ({
         onSelect={async token => {
           setSelectedToken(token);
           if (
-            token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            isSameAddress(token.id, ARB_USDC_TOKEN_ID)
+            (token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+              isSameAddress(token.id, ARB_USDC_TOKEN_ID)) ||
+            (token.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
+              isSameAddress(token.id, HYPE_USDC_TOKEN_ID))
           ) {
             setPopupState(prev => ({
               ...prev,

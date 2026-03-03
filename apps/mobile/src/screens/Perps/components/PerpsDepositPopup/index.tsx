@@ -9,6 +9,10 @@ import {
   ARB_USDC_TOKEN_ITEM,
   ARB_USDC_TOKEN_SERVER_CHAIN,
   PERPS_SEND_ARB_USDC_ADDRESS,
+  HYPE_USDC_TOKEN_ID,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_CORE_DEPOSIT_WALLET,
+  HYPE_CORE_DEPOSIT_PERPS_DEX,
 } from '@/constant/perps';
 import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
@@ -187,12 +191,81 @@ export const PerpsDepositPopup: React.FC<{
     return params as Tx;
   });
 
-  const isDirectDeposit = useMemo(() => {
+  const buildHypeDepositTxs = useMemoizedFn(
+    async (amount: number | string, token: ITokenItem) => {
+      if (!account) {
+        return [];
+      }
+      const chain = findChain({ serverId: HYPE_USDC_TOKEN_SERVER_CHAIN })!;
+      const rawAmount = new BigNumber(amount || 0)
+        .multipliedBy(10 ** token.decimals)
+        .decimalPlaces(0, BigNumber.ROUND_DOWN)
+        .toFixed(0);
+
+      const targetTxs: Tx[] = [];
+
+      const allowance = await getERC20Allowance(
+        HYPE_USDC_TOKEN_SERVER_CHAIN,
+        HYPE_USDC_TOKEN_ID,
+        HYPE_CORE_DEPOSIT_WALLET,
+        account.address,
+        account,
+      );
+
+      const tokenApproved = new BigNumber(allowance).gte(
+        new BigNumber(rawAmount),
+      );
+
+      if (!tokenApproved) {
+        const resp = await approveToken({
+          chainServerId: HYPE_USDC_TOKEN_SERVER_CHAIN,
+          id: HYPE_USDC_TOKEN_ID,
+          spender: HYPE_CORE_DEPOSIT_WALLET,
+          amount: rawAmount,
+          account: account,
+          isBuild: true,
+        });
+        targetTxs.push(resp.params[0]);
+      }
+
+      const depositData = abiCoder.encodeFunctionCall(
+        {
+          name: 'deposit',
+          type: 'function',
+          inputs: [
+            { type: 'uint256', name: 'amount' },
+            { type: 'uint32', name: 'destinationDex' },
+          ] as any[],
+        },
+        [rawAmount, String(HYPE_CORE_DEPOSIT_PERPS_DEX)] as any[],
+      );
+
+      targetTxs.push({
+        chainId: chain.id,
+        from: account.address,
+        to: HYPE_CORE_DEPOSIT_WALLET,
+        value: '0x0',
+        data: depositData,
+      } as Tx);
+
+      return targetTxs;
+    },
+  );
+
+  const isHypeDeposit = useMemo(() => {
     return (
-      selectedToken?.id === ARB_USDC_TOKEN_ID &&
-      selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN
+      selectedToken?.id === HYPE_USDC_TOKEN_ID &&
+      selectedToken?.chain === HYPE_USDC_TOKEN_SERVER_CHAIN
     );
   }, [selectedToken]);
+
+  const isDirectDeposit = useMemo(() => {
+    return (
+      (selectedToken?.id === ARB_USDC_TOKEN_ID &&
+        selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN) ||
+      isHypeDeposit
+    );
+  }, [selectedToken, isHypeDeposit]);
 
   const depositMaxUsdValue = useMemo(() => {
     return isDirectDeposit
@@ -243,7 +316,19 @@ export const PerpsDepositPopup: React.FC<{
         return;
       }
 
-      if (!isDirectDeposit) {
+      if (isHypeDeposit) {
+        setQuoteLoading(true);
+        try {
+          const hypeTxs = await buildHypeDepositTxs(value, token);
+          setTxs(hypeTxs);
+          setBridgeQuote(null);
+          setQuoteLoading(false);
+        } catch (error) {
+          console.error('buildHypeDepositTxs error', error);
+          setTxs([]);
+          setQuoteLoading(false);
+        }
+      } else if (!isDirectDeposit) {
         setQuoteLoading(true);
         const targetTxs: Tx[] = [];
         try {
@@ -353,6 +438,7 @@ export const PerpsDepositPopup: React.FC<{
         const res = buildSendTx(value);
         setTxs([res]);
         setBridgeQuote(null);
+        setQuoteLoading(false);
       }
     },
   );
@@ -655,11 +741,7 @@ export const PerpsDepositPopup: React.FC<{
               authTitle={t('page.whitelist.confirmPassword')}
               title={t('page.perps.PerpsDepositPopup.depositBtn')}
               onFinished={handleDeposit}
-              disabled={
-                !isValidAmount ||
-                Boolean(quoteError) ||
-                (!isDirectDeposit && quoteLoading)
-              }
+              disabled={!isValidAmount || Boolean(quoteError) || quoteLoading}
               loading={loading}
               type={'hyperliquid'}
               iconColor={'#040601'}
@@ -678,11 +760,7 @@ export const PerpsDepositPopup: React.FC<{
               type="hyperliquid"
               title={t('page.perps.PerpsDepositPopup.depositBtn')}
               onPress={handleDeposit}
-              disabled={
-                !isValidAmount ||
-                Boolean(quoteError) ||
-                (!isDirectDeposit && quoteLoading)
-              }
+              disabled={!isValidAmount || Boolean(quoteError) || quoteLoading}
               loading={loading}
             />
           )}
