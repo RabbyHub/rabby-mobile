@@ -41,8 +41,6 @@ type SKClsOptions = { encryptor: EncryptorAdapter; salt: string };
 class SKCls {
   static instance: SKCls;
 
-  static ready = Promise.withResolvers<boolean>();
-
   isAuthenticating = false;
 
   private encryptor: EncryptorAdapter;
@@ -52,7 +50,6 @@ class SKCls {
     if (!SKCls.instance) {
       privates.set(this, { salt });
       SKCls.instance = this;
-      SKCls.ready.resolve(true);
     }
 
     this.encryptor = encryptor;
@@ -89,13 +86,24 @@ export function makeSecureKeyChainInstance(
   return SKCls.instance;
 }
 
+async function sleep(ms: number = 1000) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+const gen = (function* genSecureKeychainInstance() {
+  while (1) yield SKCls.instance;
+})();
+
 async function waitInstance() {
-  await SKCls.ready.promise;
+  while (!gen.next().value) {
+    await sleep(200);
+  }
 
   if (!SKCls.instance) {
     throw new Error('SKCls.instance is not initialized');
   }
-
   return SKCls.instance;
 }
 
