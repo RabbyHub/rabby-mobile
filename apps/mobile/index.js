@@ -20,7 +20,7 @@ if (!__DEV__) {
 import './global';
 import './src/setup-app';
 if (__DEV__) {
-  import('./ReactotronConfig');
+  require('./ReactotronConfig');
 }
 
 import { AppRegistry } from 'react-native';

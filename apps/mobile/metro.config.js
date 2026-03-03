@@ -1,9 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const {
-  createSentryMetroSerializer,
-} = require('@sentry/react-native/dist/js/tools/sentryMetroSerializer');
+const { withSentryConfig } = require('@sentry/react-native/metro');
 const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
@@ -71,9 +69,6 @@ const config = {
         inlineRequires: true,
       },
     }),
-  },
-  serializer: {
-    customSerializer: createSentryMetroSerializer(),
   },
   resolver: {
     assetExts: assetExts.filter(ext => ext !== 'svg'),
@@ -182,6 +177,6 @@ if (process.env.APP_ENV === 'hashing') {
  */
 config.resolver.unstable_enablePackageExports = false;
 
-module.exports = wrapWithReanimatedMetroConfig(
-  mergeConfig(defaultConfig, config),
+module.exports = withSentryConfig(
+  wrapWithReanimatedMetroConfig(mergeConfig(defaultConfig, config)),
 );
