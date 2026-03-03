@@ -44,6 +44,7 @@ import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { apisPerps } from '@/core/apis';
 import { tokenAmountBn } from '@/screens/Swap/utils';
+import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useSelectedToken } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { ITokenItem } from '@/store/tokens';
@@ -65,7 +66,8 @@ export const PerpsDepositPopup: React.FC<{
     txs: Tx[],
     amount: string,
     cacheBridgeHistory?: PerpBridgeHistory,
-  ): void;
+    options?: { skipHistory?: boolean; isHypeDeposit?: boolean },
+  ): Promise<string | undefined>;
 }> = ({ visible, onClose, account, onDeposit, showSelectTokenPopup }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -537,6 +539,21 @@ export const PerpsDepositPopup: React.FC<{
     return isMissingRole ? value - 1 : value;
   }, [bridgeQuote, isMissingRole]);
 
+  const canShowDirectSubmit = isAccountSupportDirectSign(account?.type);
+
+  const {
+    shouldTwoStep,
+    currentTxs: twoStepCurrentTxs,
+    next: twoStepNext,
+    isApprove: twoStepIsApprove,
+    approvePending: twoStepApprovePending,
+  } = useTwoStepSwap({
+    chain: (chainInfo?.enum || '') as CHAINS_ENUM,
+    txs: txs.length > 0 ? txs : undefined,
+    enable: isHypeDeposit && canShowDirectSubmit,
+    type: 'approveBridge',
+  });
+
   const { runAsync: handleDeposit, loading } = useRequest(
     async () => {
       Keyboard.dismiss();
@@ -544,9 +561,22 @@ export const PerpsDepositPopup: React.FC<{
       const bridgeHistory = isDirectDeposit
         ? undefined
         : cacheBridgeHistory || undefined;
-      await onDeposit?.(txs, value, bridgeHistory);
-      setTxs([]);
-      setBridgeQuote(null);
+
+      const isApproveStep = shouldTwoStep && twoStepIsApprove;
+      const txsToSign = shouldTwoStep ? twoStepCurrentTxs || [] : txs;
+
+      const hash = await onDeposit?.(txsToSign, value, bridgeHistory, {
+        skipHistory: isApproveStep,
+        isHypeDeposit: isHypeDeposit,
+      });
+
+      if (isApproveStep && hash) {
+        twoStepNext(hash);
+      } else {
+        setTxs([]);
+        setBridgeQuote(null);
+        onClose();
+      }
     },
     {
       manual: true,
@@ -651,8 +681,6 @@ export const PerpsDepositPopup: React.FC<{
     estReceiveUsdValue,
   ]);
 
-  const canShowDirectSubmit = isAccountSupportDirectSign(account?.type);
-
   if (!account) {
     return null;
   }
@@ -739,10 +767,19 @@ export const PerpsDepositPopup: React.FC<{
           {canShowDirectSubmit ? (
             <AuthButton
               authTitle={t('page.whitelist.confirmPassword')}
-              title={t('page.perps.PerpsDepositPopup.depositBtn')}
+              title={
+                shouldTwoStep && twoStepIsApprove
+                  ? t('page.swap.approve')
+                  : t('page.perps.PerpsDepositPopup.depositBtn')
+              }
               onFinished={handleDeposit}
-              disabled={!isValidAmount || Boolean(quoteError) || quoteLoading}
-              loading={loading}
+              disabled={
+                !isValidAmount ||
+                Boolean(quoteError) ||
+                quoteLoading ||
+                twoStepApprovePending
+              }
+              loading={loading || twoStepApprovePending}
               type={'hyperliquid'}
               iconColor={'#040601'}
               titleStyle={{
@@ -752,16 +789,23 @@ export const PerpsDepositPopup: React.FC<{
               onBeforeAuth={() => {
                 Keyboard.dismiss();
               }}
-              // onCancel={() => {
-              // }}
             />
           ) : (
             <Button
               type="hyperliquid"
-              title={t('page.perps.PerpsDepositPopup.depositBtn')}
+              title={
+                shouldTwoStep && twoStepIsApprove
+                  ? t('page.swap.approve')
+                  : t('page.perps.PerpsDepositPopup.depositBtn')
+              }
               onPress={handleDeposit}
-              disabled={!isValidAmount || Boolean(quoteError) || quoteLoading}
-              loading={loading}
+              disabled={
+                !isValidAmount ||
+                Boolean(quoteError) ||
+                quoteLoading ||
+                twoStepApprovePending
+              }
+              loading={loading || twoStepApprovePending}
             />
           )}
         </BottomSheetView>

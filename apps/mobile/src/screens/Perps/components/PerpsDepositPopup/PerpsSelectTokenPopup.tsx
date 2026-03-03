@@ -159,7 +159,11 @@ export const PerpsSelectTokenPopup: React.FC<{
           ) : null}
         </View>
         <Text style={styles.text}>
-          {formatUsdValue(item.amount * item.price || 0)}
+          {formatUsdValue(
+            isDirectDepositToken(item)
+              ? item.amount
+              : item.amount * item.price || 0,
+          )}
         </Text>
       </TouchableOpacity>
     );

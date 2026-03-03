@@ -572,17 +572,17 @@ export const PerpsOriginScreen = ({
             isShowDepositPopup: false,
           }));
         }}
-        onDeposit={async (txs, amount, cacheBridgeHistory) => {
+        onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
           try {
-            await handleDeposit(txs, amount, cacheBridgeHistory);
+            return await handleDeposit(
+              txs,
+              amount,
+              cacheBridgeHistory,
+              options,
+            );
           } catch (e) {
             console.error(e);
           }
-          // await sleep(5000);
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositPopup: false,
-          }));
         }}
       />
       <PerpsSelectTokenPopup
