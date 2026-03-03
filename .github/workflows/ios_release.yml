@@ -75,7 +75,7 @@ jobs:
         id: setup-xcode
         with:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
-          xcode-version: '26.3'
+          xcode-version: '26.2'
 
       - name: Install dependencies && Build app
         run: |
