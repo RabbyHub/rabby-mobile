@@ -14,14 +14,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
-
-export const formatPercentage = (x: number) => {
-  if (Math.abs(x) < 0.00001) {
-    return '0%';
-  }
-  const percentage = (x * 100).toFixed(2);
-  return `${x >= 0 ? '+' : ''}${percentage}%`;
-};
+import { formatPercentage } from '@/screens/Home/components/AssetRenderItems';
 
 const TrendChartComponent = ({
   isPositive,
