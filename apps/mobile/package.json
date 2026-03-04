@@ -168,7 +168,7 @@
     "react-native-exception-handler": "^2.10.10",
     "react-native-fast-image": "^8.6.3",
     "react-native-fs": "^2.20.0",
-    "react-native-gesture-handler": "2.25.0",
+    "react-native-gesture-handler": "2.30.0",
     "react-native-get-random-values": "^1.10.0",
     "react-native-haptic-feedback": "2.3.3",
     "react-native-iap": "12.16.2",
