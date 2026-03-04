@@ -35,6 +35,12 @@ interface BalanceState {
   // curveMap: Record<string, CURVE_STEP_ITEM[]>;
   // tokenUSDMapByChain: Record<string, Record<string, number>>;
   // defiUSDMapByChain: Record<string, Record<string, number>>;
+  getIsTop10BalanceLoading: (
+    myTop10Addresses: string[],
+    isLoadingByAddress?: BalanceState['isLoadingByAddress'],
+  ) => {
+    isTop10BalanceLoading: boolean;
+  };
 }
 
 const getTotalBalanceQueue = new PQueue({
@@ -306,6 +312,25 @@ const balanceStore = zCreate<BalanceState>(set => ({
         },
       }));
     }
+  },
+
+  getIsTop10BalanceLoading(
+    myTop10Addresses: string[],
+    isLoadingByAddress: BalanceState['isLoadingByAddress'] = balanceStore.getState()
+      .isLoadingByAddress,
+  ) {
+    const isTop10BalanceLoading = (() => {
+      if (!myTop10Addresses.length) {
+        return false;
+      }
+      return myTop10Addresses.some(
+        address => isLoadingByAddress[address.toLowerCase()],
+      );
+    })();
+
+    return {
+      isTop10BalanceLoading,
+    };
   },
 }));
 
