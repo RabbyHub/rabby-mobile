@@ -54,7 +54,7 @@ configurations.all {
 
 ext {
   // required for react-native-gesture-handler to resolve location of react-native@<=0.78 in node_modules
-  REACT_NATIVE_NODE_MODULES_DIR = file("$rootDir/../node_modules/react-native")
+  RNGH_REACT_NATIVE_NODE_MODULES_DIR = file("$rootDir/../node_modules/react-native")
 }
 
 // 需要放在最后
