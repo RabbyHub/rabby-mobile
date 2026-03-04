@@ -83,8 +83,6 @@ import {
   HOME_REFRESH_INTERVAL,
   ITEM_GRID_GAP,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
-  SHOULD_SHOW_INDICATOR_WHEN_LOADING,
-  USE_PULL_REFRESH_INDICATOR_ON_ANDROID,
 } from '@/constant/home';
 import { perfEvents } from '@/core/utils/perf';
 import { syncTop10History } from '@/databases/hooks/history';
@@ -153,10 +151,13 @@ import { sleep } from '@/utils/async';
 import balanceStore from '@/store/balance';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
-import { hapticTrigger } from '@/core/utils/reexports';
-
-const AnimatedActivityIndicator =
-  Animated.createAnimatedComponent(ActivityIndicator);
+import {
+  pulldownRefreshSizes,
+  RefreshPlaceholderIOS,
+  setPulldownRefreshStage,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+  usePulldownRefreshStyles,
+} from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -201,11 +202,6 @@ function getIsAtBottom(scrollY: number, translateY = 0) {
   };
 }
 
-const pulldownRefreshSizes = {
-  headerHeight: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 56),
-  offsetY: HOME_TOP_HEADER_SIZES.bottomOffsetIndicator,
-};
-
 const scrHeight = Dimensions.get('screen').height;
 function hasOverThreshold() {
   'worklet';
@@ -233,29 +229,8 @@ const homeGestureConfs = {
     Math.round(Math.floor(getPullThreshold(scrHeight) * 0.1)),
   ),
 };
-const setPulldownRefreshStage = (input: {
-  state: 'refreshing' | 'finished';
-  svIsRefreshing: SharedValue<boolean>;
-  pullDistance: SharedValue<number>;
-}) => {
-  'worklet';
-  if (!SHOULD_SHOW_INDICATOR_WHEN_LOADING) return;
 
-  switch (input.state) {
-    case 'refreshing': {
-      input.svIsRefreshing.value = true;
-      input.pullDistance.value = withTiming(pulldownRefreshSizes.headerHeight);
-      break;
-    }
-    case 'finished': {
-      input.svIsRefreshing.value = false;
-      input.pullDistance.value = withTiming(0);
-      break;
-    }
-  }
-};
-
-const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
+const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   onRefreshOnJs: prop_onRefreshOnJs,
 }: {
   onRefreshOnJs?: (ctx?: {}) => Promise<void>;
@@ -287,7 +262,6 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
     },
     [scrollableRef, scrollableStatus],
   );
-  const [iosBounces, setIosBounces] = useState(false);
 
   const pullDistance = useSharedValue(0);
   const svIsRefreshing = useSharedValue(false);
@@ -309,6 +283,7 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
         state: isTop10BalanceLoading ? 'refreshing' : 'finished',
         svIsRefreshing,
         pullDistance,
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
       });
     });
 
@@ -335,10 +310,6 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
         [0, 1],
         Extrapolate.CLAMP,
       );
-
-      if (IS_IOS) {
-        runOnJS(setIosBounces)(translateYValue >= 0);
-      }
     },
   );
 
@@ -415,7 +386,10 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
         }
 
         pullRefresh: {
-          if (SHOULD_SHOW_INDICATOR_WHEN_LOADING) {
+          if (
+            SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            !svIsRefreshing.value
+          ) {
             pullDistance.value = Math.max(0, event.translationY);
             !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
             startValues.value.hasImpactOnPanup = true;
@@ -441,8 +415,11 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
 
         pullRefresh: {
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
-          if (SHOULD_SHOW_INDICATOR_WHEN_LOADING) {
-            if (pullDistance.value >= pulldownRefreshSizes.headerHeight) {
+          if (
+            SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            !svIsRefreshing.value
+          ) {
+            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
               svIsRefreshing.value = true;
               runOnJS(onRefreshOnJs)();
               !hasImpactOnPanup && runOnJS(triggerImpact)();
@@ -451,6 +428,7 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
                 state: 'finished',
                 svIsRefreshing,
                 pullDistance,
+                indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
               });
             }
             startValues.value.hasImpactOnPanup = false;
@@ -458,43 +436,6 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
         }
       }),
   );
-
-  const scrollTopStyle = useAnimatedStyle(() => {
-    return {
-      height: interpolate(
-        pullDistance.value,
-        [0, scrHeight],
-        [0, scrHeight],
-        Extrapolate.CLAMP,
-      ),
-      paddingTop: interpolate(
-        pullDistance.value,
-        [0, pulldownRefreshSizes.headerHeight],
-        [pulldownRefreshSizes.offsetY, 0],
-        Extrapolate.CLAMP,
-      ),
-      // comment it on DEBUG
-      opacity: interpolate(
-        pullDistance.value,
-        [0, pulldownRefreshSizes.headerHeight],
-        [0, 1],
-        Extrapolate.CLAMP,
-      ),
-    };
-  });
-
-  // rotate deg based on pullDistance, max rotate 360deg
-  const animatedIndicatorStyle = useAnimatedStyle(() => {
-    const rotate = interpolate(
-      pullDistance.value,
-      [0, pulldownRefreshSizes.headerHeight],
-      [0, 360],
-      Extrapolate.CLAMP,
-    );
-    return {
-      transform: [{ rotate: `${rotate}deg` }],
-    };
-  });
 
   const isRefreshing = useValueFromSharedValue(svIsRefreshing);
 
@@ -507,8 +448,8 @@ const useHomeGestures = <T extends ScrollView | RNGHScrollView>({
     scrollableEnabled,
 
     isRefreshing,
-    scrollTopStyle,
-    animatedIndicatorStyle,
+    pullDistance,
+    svIsRefreshing,
   };
 };
 
@@ -529,46 +470,15 @@ const getStyle = createGetStyles2024(
     scroll: {
       flex: 1,
       paddingTop: 0,
-      marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-      // marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
-      // ...makeDebugBorder('yellow'),
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['green-light-2'],
-      // }),
     },
     scrollContainer: {
       flexGrow: 1,
       minHeight: '100%',
-      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-      // marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
-      // paddingBottom:
-      //   IS_ANDROID ? Math.max(safeAreaInsets.bottom, 16)
-      //     : safeAreaInsets.bottom,
       paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
       // ...makeDebugBorder('orange'),
     },
-    scrollTopPlaceholder: {
-      width: '100%',
-      opacity: 1,
-      marginTop: -(
-        (
-          HOME_TOP_HEADER_SIZES.scrollableListTopOffset +
-          pulldownRefreshSizes.headerHeight
-        )
-        // - pulldownRefreshSizes.offsetY
-      ),
-      // paddingTop: pulldownRefreshSizes.offsetY, // just default value for tuning
-      height: 0,
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['green-light-2'],
-      // }),
-      // ...makeDebugBorder(),
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     scrollViewInner: {
-      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-      marginTop: 0,
+      // marginTop: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
@@ -678,11 +588,6 @@ export const HomeOverview = React.memo(() => {
   const { styles, reanimatedStyles, colors2024 } = useTheme2024({
     getStyle,
   });
-  // const rStyles = {
-  //   scrollTopPlaceholder: useAnimatedStyle(
-  //     reanimatedStyles.scrollTopPlaceholder,
-  //   ),
-  // };
   const { pendingTxCount, historyCount } = useHomeHistoryStore();
 
   const { width } = useWindowDimensions();
@@ -1103,14 +1008,20 @@ export const HomeOverview = React.memo(() => {
     panGestureRef,
 
     isRefreshing,
-    // pullDownGestureRef,
-    animatedIndicatorStyle,
-    scrollTopStyle,
-  } = useHomeGestures<RNGHScrollView>({
+    pullDistance,
+    svIsRefreshing,
+  } = usePulldownRefreshGesture<RNGHScrollView>({
     onRefreshOnJs: async ctx => {
       'worklet';
       await Promise.race([onRefresh(), sleep(3000)]);
     },
+  });
+
+  const pulldownRefreshReturns = usePulldownRefreshStyles({
+    indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+    pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+    states: { pullDistance, svIsRefreshing },
+    // onRefreshOnJs: onRefresh,
   });
 
   const mainStyle = useAnimatedStyle(() => {
@@ -1122,6 +1033,17 @@ export const HomeOverview = React.memo(() => {
           translateY: Math.min(0, translateY.value),
         },
       ],
+    };
+  });
+
+  const refreshIndicatorStyle = useAnimatedStyle(() => {
+    return {
+      paddingTop: interpolate(
+        pullDistance.value,
+        [0, pulldownRefreshSizes.homeHeaderHeight],
+        [HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset, 0],
+        Extrapolate.CLAMP,
+      ),
     };
   });
 
@@ -1148,23 +1070,19 @@ export const HomeOverview = React.memo(() => {
             onScroll={onScrollHandlers.onScroll}
             scrollableEnabled={scrollableEnabled}
             simultaneousHandlers={[panGestureRef]}
-            {...(IS_ANDROID &&
-              !USE_PULL_REFRESH_INDICATOR_ON_ANDROID && {
-                refreshControl: (
-                  <RNGHRefreshControl
-                    refreshing={isRefreshing}
-                    onRefresh={onRefresh}
-                  />
-                ),
-              })}>
-            <Animated.View
-              style={[styles.scrollTopPlaceholder, scrollTopStyle]}>
-              <AnimatedActivityIndicator
-                animating={isRefreshing}
-                hidesWhenStopped={false}
-                style={animatedIndicatorStyle}
-              />
-            </Animated.View>
+            {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
+              refreshControl: (
+                <RNGHRefreshControl
+                  style={{ paddingHorizontal: 16 }}
+                  refreshing={isRefreshing}
+                  onRefresh={onRefresh}
+                />
+              ),
+            })}>
+            <RefreshPlaceholderIOS
+              hooksReturn={pulldownRefreshReturns}
+              animtesStyle={refreshIndicatorStyle}
+            />
             <Animated.View style={[styles.scrollViewInner]}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />
 
