@@ -46,7 +46,7 @@ export function BrowserHeader({
   onLocationBarPress?(str?: string): void;
   tabsCount?: number;
   canGoBack?: boolean;
-  account?: Account;
+  account?: Account | null;
   onGoBack?(): void;
   onGoHome?(): void;
   onAccountPress?(): void;

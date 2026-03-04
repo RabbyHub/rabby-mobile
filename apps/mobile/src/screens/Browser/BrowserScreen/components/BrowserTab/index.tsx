@@ -1072,6 +1072,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                 }}
                 account={account}
                 dapp={dappInfo}
+                origin={urlInfo?.origin}
               />
               <AccountSelectorPopup
                 visible={isShowAccountPopup}
