@@ -22,10 +22,17 @@ interface Props {
   visible?: boolean;
   onClose?: () => void;
   dapp: DappInfo;
-  account?: Account;
+  account?: Account | null;
+  origin?: string;
 }
 
-export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
+export function CurrentDappPopup({
+  visible,
+  onClose,
+  dapp,
+  account,
+  origin,
+}: Props) {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
@@ -71,7 +78,7 @@ export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
                 }
                 style={styles.dappIcon}
               />
-              <Text style={styles.connectOrigin}>{dapp.origin}</Text>
+              <Text style={styles.connectOrigin}>{origin || dapp.origin}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.labelText}>
@@ -98,7 +105,7 @@ export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
                 <AccountSelector
                   value={account}
                   onChange={v => {
-                    apisDapp.setCurrentAccountForDapp(dapp.origin, v);
+                    apisDapp.setCurrentAccountForDapp(origin || dapp.origin, v);
                   }}
                 />
               </View>
@@ -109,7 +116,7 @@ export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              apisDapp.disconnect(dapp.origin);
+              apisDapp.disconnect(origin || dapp.origin);
               onClose?.();
             }}>
             <RcIconDisconnectCC color={colors2024['red-default']} />
