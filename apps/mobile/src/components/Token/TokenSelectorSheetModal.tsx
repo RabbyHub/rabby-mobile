@@ -100,6 +100,7 @@ import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { isLpToken } from '@/utils/lpToken';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { InnerModalChainInfo } from '@/screens/Send/components/InModalChainInfo';
+import { isNumber } from 'lodash';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -822,18 +823,20 @@ export const TokenSelectorSheetModal = React.forwardRef<
                                 numberOfLines={1}>
                                 {`$${formatPrice(token.price)}`}
                               </Text>
-                              <Text
-                                style={StyleSheet.compose(styles.percent, {
-                                  ...(!token.is_core &&
-                                  (token.usd_value || 0) > 0
-                                    ? styles.exclude
-                                    : {}),
-                                  color: percentColor,
-                                })}>
-                                {formatPercentage(
-                                  Number(token.price_24h_change) || 0,
-                                )}
-                              </Text>
+                              {isNumber(token.price_24h_change) && (
+                                <Text
+                                  style={StyleSheet.compose(styles.percent, {
+                                    ...(!token.is_core &&
+                                    (token.usd_value || 0) > 0
+                                      ? styles.exclude
+                                      : {}),
+                                    color: percentColor,
+                                  })}>
+                                  {formatPercentage(
+                                    Number(token.price_24h_change) || 0,
+                                  )}
+                                </Text>
+                              )}
                             </View>
                           </View>
                         </View>

@@ -51,6 +51,7 @@ import { ITokenItem } from '@/store/tokens';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '../LpTokenIcon';
 import LpTokenSwitch from '../LpTokenSwitch';
+import { isNumber } from 'lodash';
 
 export const formatPercentage = (x: number, ignoreSign = false) => {
   if (Math.abs(x) < 0.00001) {
@@ -69,6 +70,7 @@ const hitSlop = {
   right: 10,
 };
 
+// TODO：删掉，没有入口了
 export const TokenRow = memo(
   ({
     data,
@@ -429,28 +431,32 @@ export const TokenRowV2 = memo(
           {showAccount ? (
             <View style={styles.priceInfo}>
               <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
-              <Text
-                style={StyleSheet.compose(styles.percent, {
-                  ...(!data.is_core && (data.usd_value || 0) > 0
-                    ? styles.exclude
-                    : {}),
-                  color: percentColor,
-                })}>
-                {formatPercentage(Number(data.price_24h_change) || 0)}
-              </Text>
+              {isNumber(data.price_24h_change) && (
+                <Text
+                  style={StyleSheet.compose(styles.percent, {
+                    ...(!data.is_core && (data.usd_value || 0) > 0
+                      ? styles.exclude
+                      : {}),
+                    color: percentColor,
+                  })}>
+                  {formatPercentage(Number(data.price_24h_change) || 0)}
+                </Text>
+              )}
             </View>
           ) : scene === 'portfolio' ? (
             <View style={styles.priceInfo}>
               <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
-              <Text
-                style={StyleSheet.compose(styles.percent, {
-                  ...(!data.is_core && (data.usd_value || 0) > 0
-                    ? styles.exclude
-                    : {}),
-                  color: percentColor,
-                })}>
-                {formatPercentage(Number(data.price_24h_change) || 0)}
-              </Text>
+              {isNumber(data.price_24h_change) && (
+                <Text
+                  style={StyleSheet.compose(styles.percent, {
+                    ...(!data.is_core && (data.usd_value || 0) > 0
+                      ? styles.exclude
+                      : {}),
+                    color: percentColor,
+                  })}>
+                  {formatPercentage(Number(data.price_24h_change) || 0)}
+                </Text>
+              )}
             </View>
           ) : null}
         </View>
@@ -703,7 +709,7 @@ export const ExternalTokenRow = memo(
                       data.price || 0,
                     )}
                   </Text>
-                  {typeof data.price_24h_change === 'number' && (
+                  {isNumber(data.price_24h_change) && (
                     <Text
                       style={StyleSheet.flatten([
                         styles.changeText,
