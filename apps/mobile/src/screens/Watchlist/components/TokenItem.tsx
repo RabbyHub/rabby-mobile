@@ -15,6 +15,7 @@ import { Skeleton } from '@rneui/themed';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { formatPercentage } from '@/screens/Home/components/AssetRenderItems';
+import { isNumber } from 'lodash';
 
 const TrendChartComponent = ({
   isPositive,
@@ -131,7 +132,7 @@ const TokenListItemComponent = ({
             width={trendChartWidth}
           />
           {/* 24小时价格百分比 */}
-          {typeof item.price_24h_change === 'number' && (
+          {isNumber(item.price_24h_change) && (
             <Text
               style={StyleSheet.flatten([
                 styles.changeText,
