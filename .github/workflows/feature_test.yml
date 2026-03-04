@@ -158,7 +158,7 @@ jobs:
             ~/.gradle/wrapper
             ${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build
             ${{ env.WORKING_DIRECTORY }}/apps/mobile/android/.gradle
-          key: ${{ runner.os }}-kotlin-lint-gradle-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/apps/mobile/**/*.gradle*', '${{ env.WORKING_DIRECTORY }}/apps/mobile/**/gradle-wrapper.properties', '${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build.gradle') }}
+          key: ${{ runner.os }}-kotlin-lint-gradle-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/**/*.gradle*', '${{ env.WORKING_DIRECTORY }}/**/gradle-wrapper.properties', '${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build.gradle') }}
 
       - name: '[macOS] Setup Xcode'
         if: runner.os == 'macOS'
