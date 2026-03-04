@@ -40,6 +40,8 @@ import * as Sentry from '@sentry/react-native';
 import {
   ARB_USDC_TOKEN_ID,
   ARB_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_USDC_TOKEN_ID,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
   CANDLE_MENU_KEY_V2,
   PERPS_MAX_NTL_VALUE,
 } from '@/constant/perps';
@@ -512,13 +514,17 @@ export const PerpsMarketDetailScreen = () => {
         showSelectTokenPopup={() => {
           setShowDepositTokenPopup(true);
         }}
-        onDeposit={async (txs, amount, cacheBridgeHistory) => {
+        onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
           try {
-            await handleDeposit(txs, amount, cacheBridgeHistory);
+            return await handleDeposit(
+              txs,
+              amount,
+              cacheBridgeHistory,
+              options,
+            );
           } catch (e) {
             console.error(e);
           }
-          setAmountVisible(false);
         }}
       />
       <PerpsSelectTokenPopup
@@ -530,8 +536,10 @@ export const PerpsMarketDetailScreen = () => {
         onSelect={async token => {
           setSelectedToken(token);
           if (
-            token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            isSameAddress(token.id, ARB_USDC_TOKEN_ID)
+            (token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+              isSameAddress(token.id, ARB_USDC_TOKEN_ID)) ||
+            (token.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
+              isSameAddress(token.id, HYPE_USDC_TOKEN_ID))
           ) {
             setAmountVisible(true);
             setShowDepositTokenPopup(false);
