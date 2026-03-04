@@ -42,6 +42,10 @@ on:
         required: false
         type: boolean
         default: false
+      __SKIP_BUILD:
+        required: false
+        type: boolean
+        default: false
       GHA_MOCK_BUILD_FAILED:
         required: false
         type: boolean
@@ -69,6 +73,7 @@ jobs:
       NODE_OPTIONS: '--max_old_space_size=12288'
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
+      SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
       RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
       XCODE_VER: '26.3'
     steps:
