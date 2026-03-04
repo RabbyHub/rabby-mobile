@@ -11,7 +11,7 @@ import { formatPrice } from '@/utils/number';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
 
-export const formatPercentage = (x: number) => {
+const formatPercentageKMB = (x: number) => {
   if (Math.abs(x) < 0.00001) {
     return '0%';
   }
@@ -61,7 +61,7 @@ const TokenListItemComponent = ({
     [item.price_24h_change],
   );
   const percentStr = useMemo(() => {
-    return formatPercentage(Number(item.price_24h_change) || 0);
+    return formatPercentageKMB(Number(item.price_24h_change) || 0);
   }, [item.price_24h_change]);
 
   return (

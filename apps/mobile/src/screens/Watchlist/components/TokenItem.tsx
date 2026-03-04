@@ -137,7 +137,7 @@ const TokenListItemComponent = ({
                 styles.changeText,
                 !isPositive && styles.changeTextPositive,
               ])}>
-              {formatPercentage(Number(item.price_24h_change) || 0)}
+              {formatPercentage(Number(item.price_24h_change) || 0, true)}
             </Text>
           )}
         </View>

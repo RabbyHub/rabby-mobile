@@ -52,12 +52,14 @@ import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '../LpTokenIcon';
 import LpTokenSwitch from '../LpTokenSwitch';
 
-export const formatPercentage = (x: number) => {
+export const formatPercentage = (x: number, ignoreSign = false) => {
   if (Math.abs(x) < 0.00001) {
-    return '(0%)';
+    return ignoreSign ? '0%' : '(0%)';
   }
   const percentage = (x * 100).toFixed(2);
-  return `(${x >= 0 ? '+' : ''}${percentage}%)`;
+  return ignoreSign
+    ? `${x >= 0 ? '+' : ''}${percentage}%`
+    : `(${x >= 0 ? '+' : ''}${percentage}%)`;
 };
 
 const hitSlop = {
@@ -1188,7 +1190,7 @@ const getStyles = createGetStyles2024(ctx => ({
   percent: {
     textAlign: 'right',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
@@ -1214,7 +1216,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['brand-default'],
   },
   changeText: {
-    fontWeight: '700',
+    fontWeight: '500',
     fontSize: 14,
     lineHeight: 18,
     color: ctx.colors2024['green-default'],
