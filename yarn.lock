@@ -35836,7 +35836,7 @@ __metadata:
     react-native-exception-handler: ^2.10.10
     react-native-fast-image: ^8.6.3
     react-native-fs: ^2.20.0
-    react-native-gesture-handler: 2.29.0
+    react-native-gesture-handler: 2.25.0
     react-native-get-random-values: ^1.10.0
     react-native-haptic-feedback: 2.3.3
     react-native-iap: 12.16.2
@@ -36555,9 +36555,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-gesture-handler@npm:2.29.0":
-  version: 2.29.0
-  resolution: "react-native-gesture-handler@npm:2.29.0"
+"react-native-gesture-handler@npm:2.25.0":
+  version: 2.25.0
+  resolution: "react-native-gesture-handler@npm:2.25.0"
   dependencies:
     "@egjs/hammerjs": ^2.0.17
     hoist-non-react-statics: ^3.3.0
@@ -36565,7 +36565,21 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 78bc800ccc792a6e09ca2b17fd1f85e12c25892338e9336864b4cd12eceab9c4db8fb95d7e91fbe4796a7743e6d17cbe13d7877217030703d56236ff2d0e122c
+  checksum: 51b155bcc56043b9e06bf8ded089c44348e8da297b38e73f203f2d6ce8bd51698f85a38dca8eeab3d2ab721aeddefc270acd99e16cf493b20f1f429ad02214b8
+  languageName: node
+  linkType: hard
+
+"react-native-gesture-handler@patch:react-native-gesture-handler@npm%3A2.25.0#./.yarn/patches/react-native-gesture-handler-npm-2.25.0-84335ae2d8.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 2.25.0
+  resolution: "react-native-gesture-handler@patch:react-native-gesture-handler@npm%3A2.25.0#./.yarn/patches/react-native-gesture-handler-npm-2.25.0-84335ae2d8.patch::version=2.25.0&hash=272ed1&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@egjs/hammerjs": ^2.0.17
+    hoist-non-react-statics: ^3.3.0
+    invariant: ^2.2.4
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 1a96ce491af3a52980672e083c79756b42b6041f33caf1f2c817f735a24ae86f09b16983169351894e7251b060c09fa2dd606e67e9fe379a5f21963dc02a922d
   languageName: node
   linkType: hard
 

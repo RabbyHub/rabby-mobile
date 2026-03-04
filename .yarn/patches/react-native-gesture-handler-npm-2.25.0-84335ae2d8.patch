@@ -1,0 +1,148 @@
+diff --git a/apple/Handlers/RNFlingHandler.m b/apple/Handlers/RNFlingHandler.m
+index 554aba88e44b73c7da3dbb58dbfbbe0159b86f9a..79cf28511cd30c184feb4b6dae134eb2a93f3952 100644
+--- a/apple/Handlers/RNFlingHandler.m
++++ b/apple/Handlers/RNFlingHandler.m
+@@ -53,6 +53,8 @@ - (void)touchesEnded:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)event
+   _lastPoint = [[[touches allObjects] objectAtIndex:0] locationInView:_gestureHandler.recognizer.view];
+   [super touchesEnded:touches withEvent:event];
+   [_gestureHandler.pointerTracker touchesEnded:touches withEvent:event];
++
++  [self triggerAction];
+ }
+ 
+ - (void)touchesCancelled:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)event
+@@ -60,6 +62,8 @@ - (void)touchesCancelled:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)ev
+   _lastPoint = [[[touches allObjects] objectAtIndex:0] locationInView:_gestureHandler.recognizer.view];
+   [super touchesCancelled:touches withEvent:event];
+   [_gestureHandler.pointerTracker touchesCancelled:touches withEvent:event];
++
++  [self triggerAction];
+ }
+ 
+ - (void)triggerAction
+@@ -69,7 +73,6 @@ - (void)triggerAction
+ 
+ - (void)reset
+ {
+-  [self triggerAction];
+   [_gestureHandler.pointerTracker reset];
+   _hasBegan = NO;
+   [super reset];
+diff --git a/apple/Handlers/RNLongPressHandler.m b/apple/Handlers/RNLongPressHandler.m
+index 23b26130898b3118c3f5200ad1a57d077ef9e517..f4b1e5cfedd3bdc013f07128ee72d985963bc8e3 100644
+--- a/apple/Handlers/RNLongPressHandler.m
++++ b/apple/Handlers/RNLongPressHandler.m
+@@ -102,12 +102,16 @@ - (void)touchesEnded:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)event
+ {
+   [super touchesEnded:touches withEvent:event];
+   [_gestureHandler.pointerTracker touchesEnded:touches withEvent:event];
++
++  [self triggerAction];
+ }
+ 
+ - (void)touchesCancelled:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)event
+ {
+   [super touchesCancelled:touches withEvent:event];
+   [_gestureHandler.pointerTracker touchesCancelled:touches withEvent:event];
++
++  [self triggerAction];
+ }
+ 
+ #else
+@@ -181,10 +185,6 @@ - (BOOL)shouldCancelGesture
+ 
+ - (void)reset
+ {
+-  if (self.state == UIGestureRecognizerStateFailed) {
+-    [self triggerAction];
+-  }
+-
+   [_gestureHandler.pointerTracker reset];
+ 
+   [super reset];
+diff --git a/apple/Handlers/RNPanHandler.m b/apple/Handlers/RNPanHandler.m
+index 8b8c4bdc1bc409dab6ad27134d2f6cdc3ce6b708..fafdf911143ed13187165aa9d4c8e3ac134895cc 100644
+--- a/apple/Handlers/RNPanHandler.m
++++ b/apple/Handlers/RNPanHandler.m
+@@ -165,6 +165,8 @@ - (void)interactionsMoved:(NSSet *)touches withEvent:(UIEvent *)event
+       // UIGestureRecognizerStateFailed here. Making the behavior explicit.
+       self.state = (self.state == UIGestureRecognizerStatePossible) ? UIGestureRecognizerStateFailed
+                                                                     : UIGestureRecognizerStateCancelled;
++
++      [self triggerAction];  
+       [self reset];
+       return;
+     }
+@@ -243,19 +245,22 @@ - (void)touchesEnded:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)event
+ {
+   [super touchesEnded:touches withEvent:event];
+   [self interactionsEnded:touches withEvent:event];
++
++  [self triggerAction];
+ }
+ 
+ - (void)touchesCancelled:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)event
+ {
+   [super touchesCancelled:touches withEvent:event];
+   [self interactionsCancelled:touches withEvent:event];
++
++  [self triggerAction];
+ }
+ 
+ #endif
+ 
+ - (void)reset
+ {
+-  [self triggerAction];
+   [_gestureHandler.pointerTracker reset];
+   [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(activateAfterLongPress) object:nil];
+   self.enabled = YES;
+diff --git a/apple/Handlers/RNTapHandler.m b/apple/Handlers/RNTapHandler.m
+index d10c05a5ef920d0f868ad4ded41e84c17c4407fa..da0b14aa2c20da9e1ff5c6e7a9126752971ac5b7 100644
+--- a/apple/Handlers/RNTapHandler.m
++++ b/apple/Handlers/RNTapHandler.m
+@@ -131,6 +131,8 @@ - (void)interactionsEnded:(NSSet *)touches withEvent:(UIEvent *)event
+ 
+   if (_numberOfTaps == _tapsSoFar && _maxNumberOfTouches >= _minPointers) {
+     self.state = UIGestureRecognizerStateEnded;
++
++    [self triggerAction];
+     [self reset];
+   } else {
+     [self performSelector:@selector(cancel) withObject:nil afterDelay:_maxDelay];
+@@ -141,6 +143,8 @@ - (void)interactionsCancelled:(NSSet *)touches withEvent:(UIEvent *)event
+ {
+   [_gestureHandler.pointerTracker touchesCancelled:touches withEvent:event];
+   self.state = UIGestureRecognizerStateCancelled;
++
++  [self triggerAction];
+   [self reset];
+ }
+ 
+@@ -200,12 +204,16 @@ - (void)touchesEnded:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)event
+ {
+   [super touchesEnded:touches withEvent:event];
+   [self interactionsEnded:touches withEvent:event];
++
++  [self triggerAction];
+ }
+ 
+ - (void)touchesCancelled:(NSSet<RNGHUITouch *> *)touches withEvent:(UIEvent *)event
+ {
+   [super touchesCancelled:touches withEvent:event];
+   [self interactionsCancelled:touches withEvent:event];
++
++  [self triggerAction];
+ }
+ 
+ #endif
+@@ -243,9 +251,6 @@ - (BOOL)shouldFailUnderCustomCriteria
+ 
+ - (void)reset
+ {
+-  if (self.state == UIGestureRecognizerStateFailed) {
+-    [self triggerAction];
+-  }
+   [_gestureHandler.pointerTracker reset];
+ 
+   [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(cancel) object:nil];
