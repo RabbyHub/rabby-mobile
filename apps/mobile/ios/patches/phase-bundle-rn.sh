@@ -115,6 +115,6 @@ fi
 [ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;
 echo "[RabbyMobileBuild] customize build environment vars finished."
 
-/bin/bash -c "$WITH_ENVIRONMENT \"$BUNDLE_REACT_NATIVE\""
+/bin/sh -c "$WITH_ENVIRONMENT $BUNDLE_REACT_NATIVE"
 
 echo "[RabbyMobileBuild] finish bundle with sentry build."
