@@ -149,16 +149,16 @@ jobs:
           # use 16.0
           cmdline-tools-version: 12266719
 
-      - name: '[Linux] Cache Gradle'
-        if: runner.os == 'Linux'
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build
-            ${{ env.WORKING_DIRECTORY }}/apps/mobile/android/.gradle
-          key: ${{ runner.os }}-kotlin-lint-gradle-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/**/*.gradle*', '${{ env.WORKING_DIRECTORY }}/**/gradle-wrapper.properties', '${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build.gradle') }}
+      # - name: '[Linux] Cache Gradle'
+      #   if: runner.os == 'Linux'
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.gradle/caches
+      #       ~/.gradle/wrapper
+      #       ${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build
+      #       ${{ env.WORKING_DIRECTORY }}/apps/mobile/android/.gradle
+      #     key: ${{ runner.os }}-kotlin-lint-gradle-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/**/*.gradle*', '${{ env.WORKING_DIRECTORY }}/**/gradle-wrapper.properties', '${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build.gradle') }}
 
       - name: '[macOS] Setup Xcode'
         if: runner.os == 'macOS'
