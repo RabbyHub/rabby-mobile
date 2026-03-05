@@ -1,0 +1,34 @@
+diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
+index 688cd4d930e717ffbcd1527a72e22f2f0a8a14e8..f9efa2311cbf387d6fb0bd5606f1197b4d3424c1 100644
+--- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
++++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
+@@ -301,7 +301,8 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+ 
+     @Override
+     public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
+-        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++        android.graphics.Rect r = new android.graphics.Rect();
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike || !view.getGlobalVisibleRect(r) || r.width() == 0 || r.height() == 0) {
+             result.cancel();
+             return true;
+         } else
+@@ -310,7 +311,8 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+ 
+     @Override
+     public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
+-        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++        android.graphics.Rect r = new android.graphics.Rect();
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike || !view.getGlobalVisibleRect(r) || r.width() == 0 || r.height() == 0) {
+             result.cancel();
+             return true;
+         } else
+@@ -319,7 +321,8 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+ 
+     @Override
+     public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
+-        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++        android.graphics.Rect r = new android.graphics.Rect();
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike || !view.getGlobalVisibleRect(r) || r.width() == 0 || r.height() == 0) {
+             result.cancel();
+             return true;
+         } else
