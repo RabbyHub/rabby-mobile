@@ -17,7 +17,7 @@ const MarketInfo = ({
   holders,
 }: {
   price: number;
-  price24hChange: number;
+  price24hChange?: number;
   marketCap: string;
   totalSupply: string;
   volume24h: string;
@@ -26,13 +26,15 @@ const MarketInfo = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const currentIsLoss = price24hChange < 0;
+  const currentIsLoss = price24hChange ? price24hChange < 0 : false;
   const percentChangeText = useMemo(() => {
-    const changeValue = formatUsdValue(price24hChange * price);
+    const changeValue = price24hChange
+      ? formatUsdValue(price24hChange * price)
+      : '';
     const formatPercent = price24hChange
       ? Math.abs((price24hChange || 0) * 100).toFixed(2) + '%'
       : '';
-    return `${formatPercent}(${changeValue})`;
+    return price24hChange ? `${formatPercent}(${changeValue})` : '';
   }, [price24hChange, price]);
   return (
     <View style={styles.container}>
