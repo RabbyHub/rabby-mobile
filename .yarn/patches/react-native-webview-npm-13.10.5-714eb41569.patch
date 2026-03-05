@@ -111,7 +111,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
              // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
              if (androidPermission != null) {
                  if (ContextCompat.checkSelfPermission(this.mWebView.getThemedReactContext(), androidPermission) == PackageManager.PERMISSION_GRANTED) {
-@@ -178,40 +207,125 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -178,40 +207,128 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
              }
          }
  
@@ -225,7 +225,8 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
  
 +    @Override
 +    public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
-+        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++        android.graphics.Rect r = new android.graphics.Rect(); view.getLocalVisibleRect(r);
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike || r.width() == 0 || r.height() == 0) {
 +            result.cancel();
 +            return true;
 +        } else
@@ -234,7 +235,8 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 +
 +    @Override
 +    public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
-+        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++        android.graphics.Rect r = new android.graphics.Rect(); view.getLocalVisibleRect(r);
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike || r.width() == 0 || r.height() == 0) {
 +            result.cancel();
 +            return true;
 +        } else
@@ -243,7 +245,8 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 +
 +    @Override
 +    public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
-+        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++        android.graphics.Rect r = new android.graphics.Rect(); view.getLocalVisibleRect(r);
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike || r.width() == 0 || r.height() == 0) {
 +            result.cancel();
 +            return true;
 +        } else
