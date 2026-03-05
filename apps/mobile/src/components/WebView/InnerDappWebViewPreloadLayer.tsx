@@ -22,7 +22,7 @@ import {
   DappFrameAccountHeader_LAYOUT,
   INNER_DAPP_LIST,
 } from '@/components2024/DappFrameAccountHeader';
-import { RootNames, ScreenLayouts } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -48,6 +48,7 @@ import RcIconGlobeCC from '@/assets2024/icons/common/globe-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { dappService } from '@/core/services';
 import { createGetStyles2024 } from '@/utils/styles';
+import { IS_ANDROID } from '@/core/native/utils';
 
 type SceneKey = 'Lending' | 'Perps' | 'Prediction';
 
@@ -73,7 +74,7 @@ const DEFAULT_PREDICTION_ID = INNER_DAPP_LIST.PREDICTION[0]?.id ?? 'polymarket';
 export default function InnerDappWebViewPreloadLayer({
   offscreenPreload = false,
 }: InnerDappWebViewPreloadLayerProps) {
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const { currentRouteName } = useCurrentRouteName();
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
@@ -501,6 +502,7 @@ export default function InnerDappWebViewPreloadLayer({
               styles.webviewContainer,
               // { top: top + 44 },
               isActive ? styles.webviewVisible : styles.webviewHidden,
+              IS_ANDROID ? { paddingBottom: bottom } : {},
             ]}>
             <View style={styles.webviewWrapper}>
               {isActive && offscreenPreload ? (
