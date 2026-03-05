@@ -391,8 +391,10 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
-            !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
-            startValues.value.hasImpactOnPanup = true;
+            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
+              !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
+              startValues.value.hasImpactOnPanup = true;
+            }
           }
         }
       })
@@ -420,7 +422,13 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
             !svIsRefreshing.value
           ) {
             if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
-              svIsRefreshing.value = true;
+              // svIsRefreshing.value = true;
+              setPulldownRefreshStage({
+                state: 'refreshing',
+                svIsRefreshing,
+                pullDistance,
+                indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+              });
               runOnJS(onRefreshOnJs)();
               !hasImpactOnPanup && runOnJS(triggerImpact)();
             } else {
@@ -476,6 +484,9 @@ const getStyle = createGetStyles2024(
       minHeight: '100%',
       paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
       // ...makeDebugBorder('orange'),
+    },
+    absIndicatorOffset: {
+      paddingTop: HOME_TOP_HEADER_SIZES.headerIndicatorHeight,
     },
     scrollViewInner: {
       // marginTop: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
@@ -1081,7 +1092,8 @@ export const HomeOverview = React.memo(() => {
             })}>
             <RefreshPlaceholderIOS
               hooksReturn={pulldownRefreshReturns}
-              animtesStyle={refreshIndicatorStyle}
+              animatedStyle={refreshIndicatorStyle}
+              animatedIndicatorStyle={styles.absIndicatorOffset}
             />
             <Animated.View style={[styles.scrollViewInner]}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />

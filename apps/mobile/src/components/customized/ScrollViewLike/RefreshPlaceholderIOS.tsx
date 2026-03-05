@@ -1,14 +1,14 @@
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { ActivityIndicator, Dimensions, ScrollView } from 'react-native';
 import Animated, {
   AnimatedStyle,
+  Easing,
   Extrapolate,
   interpolate,
   runOnJS,
   SharedValue,
-  useAnimatedRef,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -16,7 +16,7 @@ import Animated, {
 import { RNGHFlatList, RNGHScrollView } from '../reexports';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { triggerImpact } from '@/utils/common';
 import { useMemoizedFn } from 'ahooks';
@@ -73,8 +73,10 @@ export const usePulldownRefreshGesture = <
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
-            !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
-            startValues.value.hasImpactOnPanup = true;
+            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
+              !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
+              startValues.value.hasImpactOnPanup = true;
+            }
           }
         }
       })
@@ -87,6 +89,12 @@ export const usePulldownRefreshGesture = <
           ) {
             if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
               svIsRefreshing.value = true;
+              setPulldownRefreshStage({
+                state: 'refreshing',
+                svIsRefreshing,
+                pullDistance,
+                indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+              });
               runOnJS(onRefreshOnJs)();
               !hasImpactOnPanup && runOnJS(triggerImpact)();
             } else {
@@ -145,8 +153,8 @@ export const usePulldownRefreshStyles = ({
     return {
       height: interpolate(
         pullDistance.value,
-        [0, scrHeight],
-        [0, scrHeight],
+        [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
+        [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
         Extrapolate.CLAMP,
       ),
       paddingTop: 0,
@@ -181,7 +189,10 @@ export const setPulldownRefreshStage = (input: {
   switch (input.state) {
     case 'refreshing': {
       input.svIsRefreshing.value = true;
-      input.pullDistance.value = withTiming(input.indicatorSpaceHeight);
+      input.pullDistance.value = withTiming(input.indicatorSpaceHeight, {
+        duration: 300,
+        easing: Easing.inOut(Easing.quad),
+      });
       break;
     }
     case 'finished': {
@@ -200,10 +211,12 @@ export const setPulldownRefreshStage = (input: {
  */
 export function RefreshPlaceholderIOS({
   hooksReturn,
-  animtesStyle,
+  animatedStyle,
+  animatedIndicatorStyle: propAnimatedIndicatorStyle,
 }: {
   hooksReturn: Omit<ReturnType<typeof usePulldownRefreshStyles>, 'panGesture'>;
-  animtesStyle?: AnimatedStyle;
+  animatedStyle?: AnimatedStyle;
+  animatedIndicatorStyle?: AnimatedStyle;
 }) {
   const { styles } = useTheme2024({ getStyle });
 
@@ -213,11 +226,11 @@ export function RefreshPlaceholderIOS({
 
   return (
     <Animated.View
-      style={[styles.scrollTopPlaceholder, scrollTopStyle, animtesStyle]}>
+      style={[styles.scrollTopPlaceholder, scrollTopStyle, animatedStyle]}>
       <AnimatedActivityIndicator
         animating={isRefreshing}
         hidesWhenStopped={false}
-        style={animatedIndicatorStyle}
+        style={[animatedIndicatorStyle, propAnimatedIndicatorStyle]}
         size={IS_IOS ? 'small' : 'small'}
       />
     </Animated.View>
@@ -232,6 +245,7 @@ const getStyle = createGetStyles2024(ctx => {
       height: 0,
       justifyContent: 'center',
       alignItems: 'center',
+      ...makeDebugBorder(),
     },
   };
 });
