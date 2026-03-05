@@ -32,7 +32,10 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
-import { isAccountSupportDirectSign } from '@/utils/account';
+import {
+  isAccountSupportDirectSign,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
 import { CHAINS_ENUM } from '@debank/common';
 import { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -550,8 +553,8 @@ export const PerpsDepositPopup: React.FC<{
   } = useTwoStepSwap({
     chain: (chainInfo?.enum || '') as CHAINS_ENUM,
     txs: txs.length > 0 ? txs : undefined,
-    enable: isHypeDeposit && canShowDirectSubmit,
-    type: 'approveBridge',
+    enable: isHypeDeposit && isAccountSupportMiniApproval(account?.type),
+    type: 'approveDeposit',
   });
 
   const { runAsync: handleDeposit, loading } = useRequest(
