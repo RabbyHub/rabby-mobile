@@ -101,7 +101,7 @@ export function CategorySelector({
 >) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const modalRef = React.useRef<MODAL_ID>();
+  const modalRef = React.useRef<MODAL_ID>(undefined);
   const { emodeEnabled } = useMode();
 
   const removeChainModal = React.useCallback(() => {

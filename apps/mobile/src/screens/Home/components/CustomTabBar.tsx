@@ -282,7 +282,7 @@ function SideChainSelector() {
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
-  >();
+  >(undefined);
   const { t } = useTranslation();
   const selectedChainItem = useSelectedChainItem();
   const handleOnChainClick = useCallback(

@@ -143,9 +143,9 @@ export default function DebtSwapModal({
     rawAmount: string;
     toToken?: string;
     srcAmount?: string;
-  }>();
+  }>(undefined);
 
-  const quoteExpiredTimerRef = useRef<NodeJS.Timeout>();
+  const quoteExpiredTimerRef = useRef<NodeJS.Timeout>(undefined);
   const enableQuoteAutoRefreshRef = useRef(false);
 
   const { fromBalanceBn, fromBalanceDisplay, fromUsdValue, toUsdValue } =

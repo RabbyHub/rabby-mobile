@@ -1835,7 +1835,7 @@ export function useSendTokenForm({
     );
   });
 
-  const prepareRef = useRef<Promise<Tx | void>>();
+  const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
 
   const isFocused = useIsFocused();

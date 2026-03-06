@@ -70,7 +70,7 @@ export const DynamicCustomMaterialTabBar = (
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
-  >();
+  >(undefined);
   const handleOnChainClick = useCallback((clear: boolean) => {
     if (clear) {
       apisSingleHome.setSelectChainItem(null);

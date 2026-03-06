@@ -59,7 +59,8 @@ export function BrowserManage(): JSX.Element {
     ];
   }, [t]);
 
-  const tabRef = React.useRef<React.ComponentRef<typeof Tabs.Container>>();
+  const tabRef =
+    React.useRef<React.ComponentRef<typeof Tabs.Container>>(undefined);
   // const navigation = useRabbyAppNavigation();
   const isChangingTabRef = React.useRef(false);
   const activeTabRef = React.useRef(activeTab);

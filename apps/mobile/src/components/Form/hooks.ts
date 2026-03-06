@@ -7,9 +7,6 @@ export const enum TouchawayInputEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
   'ON_LEAVE_SCREEN' = 'ON_LEAVE_SCREEN',
 }
-type BlurOnTouchawayContextType = {
-  eventsRef: React.MutableRefObject<EventEmitter>;
-};
 
 function subscribeTouchawayEvent<T extends TouchawayInputEvents>(
   events: EventEmitter,
@@ -31,7 +28,9 @@ function subscribeTouchawayEvent<T extends TouchawayInputEvents>(
   return dispose;
 }
 export function useInputBlurOnTouchaway(
-  inputRefs: React.RefObject<TextInput> | React.RefObject<TextInput>[],
+  inputRefs:
+    | React.RefObject<TextInput | null>
+    | React.RefObject<TextInput | null>[],
 ) {
   const eventsRef = useRef(new EventEmitter());
   const events = eventsRef.current;
