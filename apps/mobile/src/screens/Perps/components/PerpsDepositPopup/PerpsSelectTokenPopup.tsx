@@ -5,6 +5,8 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import {
   ARB_USDC_TOKEN_ID,
   ARB_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_USDC_TOKEN_ID,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
@@ -60,18 +62,29 @@ export const PerpsSelectTokenPopup: React.FC<{
     return state.perpsTokenSelectCache[perpsTokenKey] || EMPTY_TOKEN_LIST;
   });
 
-  const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
+  const { data: directUsdcTokens, runAsync: runFetchUsdcToken } = useRequest(
     async () => {
       if (!account?.address) {
         return;
       }
 
-      const arbUsdcToken = await openapi.getToken(
-        account?.address,
-        ARB_USDC_TOKEN_SERVER_CHAIN,
-        ARB_USDC_TOKEN_ID,
-      );
-      return tokenItemToITokenItem(arbUsdcToken, '');
+      const [arbUsdcToken, hypeUsdcToken] = await Promise.all([
+        openapi.getToken(
+          account.address,
+          ARB_USDC_TOKEN_SERVER_CHAIN,
+          ARB_USDC_TOKEN_ID,
+        ),
+        openapi.getToken(
+          account.address,
+          HYPE_USDC_TOKEN_SERVER_CHAIN,
+          HYPE_USDC_TOKEN_ID,
+        ),
+      ]);
+
+      return {
+        arbUsdc: tokenItemToITokenItem(arbUsdcToken, ''),
+        hypeUsdc: tokenItemToITokenItem(hypeUsdcToken, ''),
+      };
     },
     {
       refreshDeps: [account?.address],
@@ -79,20 +92,26 @@ export const PerpsSelectTokenPopup: React.FC<{
     },
   );
 
+  const isDirectDepositToken = (item: ITokenItem) => {
+    return (
+      (item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+        isSameAddress(item.id, ARB_USDC_TOKEN_ID)) ||
+      (item.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
+        isSameAddress(item.id, HYPE_USDC_TOKEN_ID))
+    );
+  };
+
   const tokens = useMemo(() => {
-    return !arbUsdc
-      ? _tokens
-      : [
-          arbUsdc,
-          ...(_tokens?.filter(
-            item =>
-              !(
-                item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-                isSameAddress(item.id, ARB_USDC_TOKEN_ID)
-              ) && item.is_core,
-          ) || []),
-        ];
-  }, [_tokens, arbUsdc]);
+    if (!directUsdcTokens) {
+      return _tokens;
+    }
+    const { arbUsdc, hypeUsdc } = directUsdcTokens;
+    const directTokens = [arbUsdc, hypeUsdc].filter(Boolean);
+    const filteredTokens =
+      _tokens?.filter(item => !isDirectDepositToken(item) && item.is_core) ||
+      [];
+    return [...directTokens, ...filteredTokens];
+  }, [_tokens, directUsdcTokens]);
 
   useEffect(() => {
     if (visible) {
@@ -126,8 +145,7 @@ export const PerpsSelectTokenPopup: React.FC<{
             ])}>
             {getTokenSymbol(item)}
           </Text>
-          {item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-          item.id === ARB_USDC_TOKEN_ID ? (
+          {isDirectDepositToken(item) ? (
             <View style={styles.depositTag}>
               <Text style={styles.depositTagText}>
                 {t('page.perps.PerpsDepositTokenModal.directTag')}
@@ -136,7 +154,11 @@ export const PerpsSelectTokenPopup: React.FC<{
           ) : null}
         </View>
         <Text style={styles.text}>
-          {formatUsdValue(item.amount * item.price || 0)}
+          {formatUsdValue(
+            isDirectDepositToken(item)
+              ? item.amount
+              : item.amount * item.price || 0,
+          )}
         </Text>
       </TouchableOpacity>
     );

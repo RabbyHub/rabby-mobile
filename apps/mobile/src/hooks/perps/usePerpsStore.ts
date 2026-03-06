@@ -832,7 +832,7 @@ export const usePerpsStore = () => {
             hash: item.hash,
             type: type as 'deposit' | 'withdraw',
             status: 'success' as const,
-            usdValue: item.delta.usdc || '0',
+            usdValue: item.delta.usdc || (item.delta as any).usdcValue || '0',
           };
         });
 
