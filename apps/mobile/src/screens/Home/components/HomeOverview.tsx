@@ -485,11 +485,11 @@ const getStyle = createGetStyles2024(
       paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
       // ...makeDebugBorder('orange'),
     },
-    absIndicatorOffset: {
+    iosAbsIndicatorOffset: {
       paddingTop: 0,
     },
     scrollViewInner: {
-      // marginTop: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+      marginTop: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
@@ -1093,7 +1093,7 @@ export const HomeOverview = React.memo(() => {
             <RefreshPlaceholderIOS
               hooksReturn={pulldownRefreshReturns}
               animatedStyle={refreshIndicatorStyle}
-              animatedIndicatorStyle={styles.absIndicatorOffset}
+              animatedIndicatorStyle={styles.iosAbsIndicatorOffset}
             />
             <Animated.View style={[styles.scrollViewInner]}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />
