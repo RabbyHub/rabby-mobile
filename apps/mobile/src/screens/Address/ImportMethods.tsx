@@ -2,7 +2,6 @@
 import React from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   Pressable,
   Image,
@@ -47,6 +46,7 @@ import { RootStackParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { IS_IOS } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,

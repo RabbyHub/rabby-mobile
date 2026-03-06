@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
@@ -7,6 +7,7 @@ import HealthFactorText from '../HealthFactorText';
 import { formatTokenAmount } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
+import { Text } from '@/components/Typography';
 
 const RepayActionOverView: React.FC<
   PopupDetailProps & {

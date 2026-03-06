@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -7,6 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import EmptyData from './EmptyData';
 import { formatPercent, formatAmountValueKMB } from '../../util';
 import AddressView from './AddressView';
+import { Text } from '@/components/Typography';
 
 interface SummaryProps {
   top10ratio: number;

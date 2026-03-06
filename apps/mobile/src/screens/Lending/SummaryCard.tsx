@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
-import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './components/HealthFactorText';
 import { atom, useAtom } from 'jotai';
 import { useLendingSummaryCard } from './hooks';
+import { Text } from '@/components/Typography';
 
 const isEstDailySwitchAtom = atom(true);
 const SummaryCard = (/* props: IProps */) => {

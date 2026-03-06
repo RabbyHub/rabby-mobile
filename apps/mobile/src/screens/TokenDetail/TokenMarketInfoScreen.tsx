@@ -21,7 +21,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   Dimensions,
   RefreshControl,
@@ -63,6 +62,7 @@ import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
 import { ITokenItem } from '@/store/tokens';
 import { formatAmountValueKMB } from './util';
+import { Text } from '@/components/Typography';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',

@@ -1426,16 +1426,8 @@
           }
         },
         "ledger": {
-          "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger. Trong 3 ví đầu tiên, không có ví nào được sử dụng trên chuỗi.",
-            "bip44": "Tiêu chuẩn BIP44: Đường dẫn HD được xác định bởi giao thức BIP44. Trong 3 ví đầu tiên, không có ví nào được sử dụng trên chuỗi.",
-            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto. Trong 3 ví đầu tiên, không có ví nào được sử dụng trên chuỗi."
-          },
-          "hdPathType": {
-            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger. Trong 3 ví đầu tiên, có các ví được sử dụng trên chuỗi.",
-            "bip44": "BIP44 Chuẩn: Đường dẫn HD được xác định bởi giao thức BIP44. Trong 3 ví đầu tiên, có các ví được sử dụng trên chuỗi.",
-            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto. Trong 3 ví đầu tiên, có các ví được sử dụng trên chuỗi."
-          }
+          "hdPathTypeNoChain": {},
+          "hdPathType": {}
         },
         "keystone": {
           "hdPathTypeNoChain": {

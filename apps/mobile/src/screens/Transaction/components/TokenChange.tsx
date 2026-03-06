@@ -1,5 +1,5 @@
 import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { StyleProp, StyleSheet, Text, TextStyle, View } from 'react-native';
+import { StyleProp, StyleSheet, TextStyle, View } from 'react-native';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,6 +8,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { TokenChangeDataItem } from './HistoryItem';
+import { Text } from '@/components/Typography';
 
 const TxChangeItem = ({
   item,

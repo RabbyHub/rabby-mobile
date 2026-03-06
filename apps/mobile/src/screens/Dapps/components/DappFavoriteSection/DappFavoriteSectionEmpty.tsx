@@ -1,10 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 import { IS_IOS } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 export const DappFavoriteSectionEmpty = () => {
   const { styles, isLight } = useTheme2024({ getStyle });

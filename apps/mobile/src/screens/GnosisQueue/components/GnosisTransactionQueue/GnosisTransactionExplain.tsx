@@ -16,7 +16,8 @@ import {
 import { useRequest } from 'ahooks';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export type ConfirmationProps = {
   owner: string;

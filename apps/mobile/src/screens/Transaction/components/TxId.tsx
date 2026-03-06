@@ -3,9 +3,10 @@ import { ellipsisAddress } from '@/utils/address';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { useCallback, useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 export const TxId = ({
   style,

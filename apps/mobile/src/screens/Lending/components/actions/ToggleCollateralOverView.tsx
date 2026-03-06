@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import TokenIcon from '../TokenIcon';
 import { useSelectedMarket } from '../../hooks';
 import { formatTokenAmount } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 const ToggleCollateralOverView: React.FC<
   PopupDetailProps & {

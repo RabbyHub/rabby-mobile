@@ -7,7 +7,7 @@ import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { GnosisMessageQueueConfirmations } from './GnosisMessageQueueConfirmations';
 import { GnosisMessageExplain } from './GnosisMessageExplain';
 import { isString } from 'lodash';
@@ -20,6 +20,7 @@ import { Account } from '@/core/services/preference';
 // import { GnosisTransactionExplain } from './GnosisTransactionExplain';
 // import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations';
 // import { ReplacePopup } from './ReplacePopup';
+import { Text } from '@/components/Typography';
 
 export type ConfirmationProps = {
   owner: string;

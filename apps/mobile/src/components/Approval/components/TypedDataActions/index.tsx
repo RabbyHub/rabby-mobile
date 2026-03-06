@@ -28,7 +28,7 @@ import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import { Chain } from '@/constant/chains';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import CoboSafeCreate from './CoboSafeCreate';
@@ -54,6 +54,7 @@ import { ParseCommonResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS } from '@debank/common';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
+import { Text } from '@/components/Typography';
 
 export interface MultiActionProps {
   actionList: ParsedTypedDataActionData[] | ParsedTransactionActionData[];

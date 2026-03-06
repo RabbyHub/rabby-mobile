@@ -2,7 +2,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { default as SeedCreateSuccessSVG } from '@/assets/icons/address/seed-create-success.svg';
 import { ICloudIcon } from '@/assets/icons/address/icloud-icon';
@@ -19,6 +19,7 @@ import {
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { IS_IOS } from '@/core/native/utils';
 import { useNavigation } from '@react-navigation/native';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

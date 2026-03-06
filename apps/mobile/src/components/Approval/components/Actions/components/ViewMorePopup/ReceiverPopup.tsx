@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
 import LogoWithText from '../LogoWithText';
@@ -12,6 +12,7 @@ import DescItem from '../DescItem';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { type ReceiverData } from '@rabby-wallet/rabby-action';
+import { Text } from '@/components/Typography';
 
 export interface Props {
   data: ReceiverData;

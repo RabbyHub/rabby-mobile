@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import EmptySummaryCardImage from '@/assets2024/images/lending/empty-aave.png';
+import { Text } from '@/components/Typography';
 
 const EmptySummaryCard = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });

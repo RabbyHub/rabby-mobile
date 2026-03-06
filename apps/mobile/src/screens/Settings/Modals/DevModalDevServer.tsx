@@ -8,8 +8,6 @@ import React, {
 import {
   Dimensions,
   KeyboardAvoidingView,
-  Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -25,6 +23,7 @@ import { Modal } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import { FormInput } from '@/components/Form/Input';
 import { useDevServerSettings } from '@/core/utils/devServerSettings';
+import { Text, TextInput } from '@/components/Typography';
 
 const modalVisibleAtom = atom(false);
 export function useDevServerModalVisible() {

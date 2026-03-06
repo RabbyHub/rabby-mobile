@@ -10,7 +10,7 @@ import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import LinearGradient from 'react-native-linear-gradient';
 import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
@@ -19,6 +19,7 @@ import { SelectGasAccountList } from './SelectGasAccountList';
 import { toast } from '@/components2024/Toast';
 import { filterMyAccounts } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { Text } from '@/components/Typography';
 
 const GasAccountLoginContent: React.FC<{
   onLogin?(): void;

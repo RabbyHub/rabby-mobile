@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   SectionListProps,
   ActivityIndicator,
   SectionList,
@@ -34,6 +33,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 const MemoInModalApprovalContractRow = React.memo(
   InModalApprovalContractRow,

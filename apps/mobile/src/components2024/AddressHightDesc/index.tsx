@@ -1,10 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { Button, ButtonProps } from '../Button';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export const AddressHightDesc: React.FC<{
   address: string;

@@ -8,14 +8,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
-import {
-  Image,
-  Platform,
-  StyleProp,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { Image, Platform, StyleProp, View, ViewStyle } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -23,6 +16,7 @@ import {
 import { DappIcon } from './DappIcon';
 import { noop } from 'lodash';
 import { HighlightText } from '@/components2024/HighlightText';
+import { Text } from '@/components/Typography';
 
 export const DappCardListBy = ({
   data,

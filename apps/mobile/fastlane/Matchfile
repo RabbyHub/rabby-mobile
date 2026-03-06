@@ -48,11 +48,11 @@ end
 biz_data = {
   :platform => "ios",
   # en: apple id, used to get certs
-  :username => "lei.chen@debank.com",
+  :username => ENV["RABBY_MOBILE_MATCH_APPLE_ID"] || "lei.chen@debank.com",
   :team_id => "ZPNP2SF27Q",
   # git account of certificates repo, used to update certificates
-  :git_full_name => "richardo2016x",
-  :git_user_email => "richardo2016x@gmail.com",
+  :git_full_name => "frontend_bot",
+  :git_user_email => "frontend_bot@debank.com",
 }
 
 input_envtype = ENV["TYPE"]

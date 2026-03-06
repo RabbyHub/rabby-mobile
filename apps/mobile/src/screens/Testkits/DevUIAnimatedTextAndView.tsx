@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { RcIconLogoBlue } from '@/assets/icons/common';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -15,6 +15,7 @@ import { FontNames } from '@/core/utils/fonts';
 import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 import { Slider } from '@rneui/themed';
 import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
+import { Text } from '@/components/Typography';
 
 const NUMS_CONFIG = [
   {

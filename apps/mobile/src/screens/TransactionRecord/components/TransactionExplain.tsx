@@ -1,11 +1,12 @@
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Trans, useTranslation } from 'react-i18next';
 import RcIconUnknown from '@/assets/icons/transaction-record/icon-unknown.svg';
-import { Image, ImageStyle, StyleProp, Text, View } from 'react-native';
+import { Image, ImageStyle, StyleProp, View } from 'react-native';
 import { splitNumberByStep } from '@/utils/number';
 import RcIconSend from '@/assets/icons/history/send.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 const ImageWraper = ({
   src,

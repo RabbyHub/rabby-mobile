@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Animated,
   PanResponder,
@@ -13,6 +12,7 @@ import {
   GestureResponderEvent,
 } from 'react-native';
 import usePrevious from 'react-use/lib/usePrevious';
+import { Text } from '@/components/Typography';
 
 export type SwitchProps = TouchableWithoutFeedbackProps & {
   onValueChange?: (value: boolean) => void;

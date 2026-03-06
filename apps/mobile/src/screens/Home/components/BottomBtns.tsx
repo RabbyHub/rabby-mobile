@@ -17,7 +17,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemoizedFn } from 'ahooks';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ColorValue, Pressable, Text, View } from 'react-native';
+import { ColorValue, Pressable, View } from 'react-native';
 import { useApprovalAlert } from '../hooks/approvals';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
@@ -30,6 +30,7 @@ import RcIconReceiveCC from '@/assets2024/singleHome/receive-cc.svg';
 import RcIconApprovalCC from '@/assets2024/singleHome/approvals-cc.svg';
 import RcIconQueueCC from '@/assets2024/singleHome/queue-cc.svg';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Text } from '@/components/Typography';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 

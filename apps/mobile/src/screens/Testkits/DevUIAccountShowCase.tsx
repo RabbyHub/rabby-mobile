@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -11,6 +11,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useNavigation } from '@react-navigation/native';
+import { Text } from '@/components/Typography';
 
 const TEST_ACCOUNT: Pick<
   KeyringAccountWithAlias,

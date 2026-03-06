@@ -4,7 +4,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import {
   Dimensions,
   StyleProp,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -34,6 +33,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,

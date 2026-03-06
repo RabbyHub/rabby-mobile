@@ -1,7 +1,7 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -14,6 +14,7 @@ import { MaskContainer } from './components/MaskContainer';
 import { toast } from '@/components2024/Toast';
 import i18next from 'i18next';
 import { onCopiedSensitiveData } from '@/utils/clipboard';
+import { Text } from '@/components/Typography';
 
 const QR_CODE_WIDTH = Dimensions.get('window').width - 130;
 

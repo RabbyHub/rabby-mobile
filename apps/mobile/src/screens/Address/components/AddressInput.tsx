@@ -4,8 +4,6 @@ import {
   NativeSyntheticEvent,
   Platform,
   StyleSheet,
-  Text,
-  TextInput,
   TextInputSubmitEditingEventData,
   TouchableOpacity,
   View,
@@ -15,6 +13,7 @@ import { contactService } from '@/core/services';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import RcIconClose from '@/assets/icons/import-success/clear.svg';
+import { Text, TextInput } from '@/components/Typography';
 
 interface Props {
   address: string;

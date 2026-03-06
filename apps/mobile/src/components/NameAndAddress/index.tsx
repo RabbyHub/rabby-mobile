@@ -8,8 +8,9 @@ import { useThemeStyles } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { StyleProp, Text, TextStyle, View, ViewStyle } from 'react-native';
+import { StyleProp, TextStyle, View, ViewStyle } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export const NameAndAddress = ({
   address,

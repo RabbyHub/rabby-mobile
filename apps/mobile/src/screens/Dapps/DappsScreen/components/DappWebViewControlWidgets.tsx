@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
@@ -10,6 +10,7 @@ import { Button } from '@/components';
 import { useDapps } from '@/hooks/useDapps';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { Text } from '@/components/Typography';
 
 const BOTTOM_CONTAINER_PADDING = 16;
 export function BottomSheetContent({

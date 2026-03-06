@@ -1,5 +1,4 @@
 import React from 'react';
-import { Text } from 'react-native';
 
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwitchToggleType } from '@/components';
@@ -8,6 +7,7 @@ import useInterval from 'react-use/lib/useInterval';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { useTheme2024 } from '@/hooks/theme';
 import { getTimeSpanByMs } from '@/utils/time';
+import { Text } from '@/components/Typography';
 
 export const SwitchScreenshotToReport = React.forwardRef<
   SwitchToggleType,

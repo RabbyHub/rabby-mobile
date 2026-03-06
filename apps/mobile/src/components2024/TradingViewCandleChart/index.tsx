@@ -8,7 +8,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { Platform, StyleProp, Text, View, ViewStyle } from 'react-native';
+import { Platform, StyleProp, View, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
@@ -16,6 +16,7 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { useTranslation } from 'react-i18next';
 import { IS_IOS } from '@/core/native/utils';
 import { WEBVIEW_BASEURL } from '@/core/storage/webviewAssets';
+import { Text } from '@/components/Typography';
 
 interface ChartProps {
   height: number;

@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import TokenIcon from '../../../components/TokenIcon';
 import { SwappableToken } from '../../../types/swap';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import HealthFactorText from '../../../components/HealthFactorText';
+import { Text } from '@/components/Typography';
 
 interface RepayWithCollateralOverviewProps {
   fromToken?: SwappableToken;

@@ -6,7 +6,8 @@ import { findChain } from '@/utils/chain';
 import { Dialog } from '@rneui/themed';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const ConfirmModifyRpcModal = ({
   visible,

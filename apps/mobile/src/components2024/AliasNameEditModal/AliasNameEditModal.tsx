@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -18,6 +17,7 @@ import {
   useAliasNameEditModalState,
   confirmCallBack,
 } from './useAliasNameEditModal';
+import { Text } from '@/components/Typography';
 
 export const AliasNameEditModal: React.FC = () => {
   const { styles } = useTheme2024({ getStyle });

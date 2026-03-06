@@ -8,12 +8,13 @@ import { extend } from 'colord';
 import mixPlugin from 'colord/plugins/mix';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ActionsContainer, PropsWithAuthSession } from './ActionsContainer';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { useSubmitAction } from './useSubmitAction';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Text } from '@/components/Typography';
 
 extend([mixPlugin]);
 

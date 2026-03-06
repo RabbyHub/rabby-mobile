@@ -5,7 +5,6 @@ import React, { useMemo } from 'react';
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -25,6 +24,7 @@ import {
   formatSmallCurrencyValue,
   useCurveDataByAddress,
 } from '@/hooks/useCurve';
+import { Text } from '@/components/Typography';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;

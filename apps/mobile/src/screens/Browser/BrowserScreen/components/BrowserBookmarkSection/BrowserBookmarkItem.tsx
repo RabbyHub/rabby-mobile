@@ -9,12 +9,12 @@ import React, { useMemo } from 'react';
 import {
   Image,
   StyleProp,
-  Text,
   useWindowDimensions,
   View,
   ViewStyle,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export const BrowserBookmarkItem = ({
   data,

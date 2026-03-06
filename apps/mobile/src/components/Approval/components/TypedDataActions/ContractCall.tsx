@@ -14,11 +14,12 @@ import IconQuestionMark from '@/assets2024/icons/common/help-cc.svg';
 import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Tip } from '@/components/Tip';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 const { isSameAddress } = addressUtils;
 
 const ContractCall = ({

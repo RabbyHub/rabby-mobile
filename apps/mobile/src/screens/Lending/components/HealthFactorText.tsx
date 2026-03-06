@@ -1,10 +1,10 @@
 import React from 'react';
-import { Text } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatNum } from '@/utils/math';
 import { getHealthStatusColor } from '../utils';
+import { Text } from '@/components/Typography';
 
 const HealthFactorText = ({
   healthFactor,

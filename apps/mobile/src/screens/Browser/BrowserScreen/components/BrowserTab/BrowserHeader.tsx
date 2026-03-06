@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
   Image,
-  Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
@@ -27,6 +26,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 export function BrowserHeader({
   dapp,

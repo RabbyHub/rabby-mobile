@@ -10,6 +10,13 @@ import { enableFreeze, enableScreens } from 'react-native-screens';
 // enableFreeze();
 enableScreens(true);
 
+import { initSentry } from './src/core/sentry';
+// Init Sentry before polyfills as it patches global Promise
+// @see https://docs.sentry.io/platforms/react-native/integrations/unhandled-rejections/#auto-patching-default-behavior
+if (!__DEV__) {
+  initSentry();
+}
+
 import './global';
 import './src/setup-app';
 if (__DEV__) {

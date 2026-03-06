@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { View, Text, TextInput, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import * as Yup from 'yup';
 
 import { BottomSheetModalConfirmContainer } from '@/components/customized/BottomSheetModalConfirmContainer';
@@ -13,6 +13,7 @@ import { useFormik } from 'formik';
 import { useAlias2 } from '@/hooks/alias';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import { Text, TextInput } from '@/components/Typography';
 
 const strLength = (str: string) => {
   let len = 0;

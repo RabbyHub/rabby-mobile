@@ -1,10 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { Animated } from 'react-native';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import { Easing } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const HomePendingBadge = ({ number }: { number: number }) => {
   const { styles, colors2024 } = useTheme2024();

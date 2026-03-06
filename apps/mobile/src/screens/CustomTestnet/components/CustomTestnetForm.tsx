@@ -4,14 +4,7 @@ import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { isNumber } from 'lodash';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  StyleProp,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -19,6 +12,7 @@ import {
   GestureDetector,
   Pressable,
 } from 'react-native-gesture-handler';
+import { Text, TextInput } from '@/components/Typography';
 
 const FormItem = ({
   disabled,

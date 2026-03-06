@@ -1,7 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const BubbleWithText = ({ slide }: { slide: number }) => {
   const { styles } = useTheme2024({ getStyle: getBubbleStyles });

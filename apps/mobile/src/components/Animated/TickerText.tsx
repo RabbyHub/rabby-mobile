@@ -8,7 +8,6 @@ import React, {
 } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   ViewStyle,
   TextStyle,
@@ -23,6 +22,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import usePrevious from 'react-use/lib/usePrevious';
+import { Text } from '@/components/Typography';
 
 const styles = StyleSheet.create({
   row: {

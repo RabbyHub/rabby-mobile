@@ -1,11 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, View, ViewProps } from 'react-native';
+import { Image, View, ViewProps } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import EmptyDataPNG from '@/assets2024/images/detail/empty-mark-info.png';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
+import { Text } from '@/components/Typography';
 interface Props {
   style?: ViewProps['style'];
 }

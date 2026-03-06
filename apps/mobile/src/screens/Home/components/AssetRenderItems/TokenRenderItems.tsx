@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Pressable,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -52,6 +51,7 @@ import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '../LpTokenIcon';
 import LpTokenSwitch from '../LpTokenSwitch';
 import { isNumber } from 'lodash';
+import { Text } from '@/components/Typography';
 
 export const formatPercentage = (x: number, ignoreSign = false) => {
   if (Math.abs(x) < 0.00001) {

@@ -15,7 +15,7 @@ import {
   Props as ApprovalPopupContainerProps,
 } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
@@ -39,6 +39,7 @@ import {
 } from '@/utils/errorTxRetry';
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
+import { Text } from '@/components/Typography';
 
 interface ApprovalParams {
   address: string;

@@ -4,7 +4,6 @@ import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   StyleProp,
   TextStyle,
   TouchableWithoutFeedback,
@@ -32,6 +31,7 @@ import { replaceToFirst } from '@/utils/navigation';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { Text } from '@/components/Typography';
 
 const MAX_ACCOUNT_COUNT = 50;
 const PROGRESS_BAR_STEP = {
