@@ -1,7 +1,13 @@
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { ActivityIndicator, Dimensions, ScrollView } from 'react-native';
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import Animated, {
   AnimatedStyle,
   Easing,
@@ -215,8 +221,8 @@ export function RefreshPlaceholderIOS({
   animatedIndicatorStyle: propAnimatedIndicatorStyle,
 }: {
   hooksReturn: Omit<ReturnType<typeof usePulldownRefreshStyles>, 'panGesture'>;
-  animatedStyle?: AnimatedStyle;
-  animatedIndicatorStyle?: AnimatedStyle;
+  animatedStyle?: StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>;
+  animatedIndicatorStyle?: StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>;
 }) {
   const { styles } = useTheme2024({ getStyle });
 
@@ -245,7 +251,7 @@ const getStyle = createGetStyles2024(ctx => {
       height: 0,
       justifyContent: 'center',
       alignItems: 'center',
-      ...makeDebugBorder(),
+      // ...makeDebugBorder(),
     },
   };
 });

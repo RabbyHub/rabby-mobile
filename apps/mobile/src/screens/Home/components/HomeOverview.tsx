@@ -486,7 +486,7 @@ const getStyle = createGetStyles2024(
       // ...makeDebugBorder('orange'),
     },
     absIndicatorOffset: {
-      paddingTop: HOME_TOP_HEADER_SIZES.headerIndicatorHeight,
+      paddingTop: 0,
     },
     scrollViewInner: {
       // marginTop: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,

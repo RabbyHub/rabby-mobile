@@ -41,7 +41,12 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
-import Animated, { SharedValue } from 'react-native-reanimated';
+import Animated, {
+  Extrapolate,
+  interpolate,
+  SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import {
   useScene24hBalanceCombinedData,
@@ -159,21 +164,17 @@ export function TabsTopHeader(): JSX.Element {
 
   const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
 
-  // const headerStyle = useAnimatedStyle(() => ({
-  //   transform: [
-  //     {
-  //     translateY: interpolate(
-  //       pullPercent.value,
-  //       [-THRESHOLD_PERCENT, 0],
-  //       [-HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 1],
-  //       Extrapolation.CLAMP,
-  //     ),
-  //     },
-  //   ]
-  // }));
+  const headerStyle = useAnimatedStyle(() => ({
+    height: interpolate(
+      pullPercent.value,
+      [0, -100],
+      [HOME_TOP_HEADER_SIZES.topHeaderHeight, 0],
+      Extrapolate.CLAMP,
+    ),
+  }));
 
   return (
-    <Animated.View style={[styles.headerBox, opacityStyle]}>
+    <Animated.View style={[styles.headerBox, opacityStyle, headerStyle]}>
       {showNetWorth ? (
         <Pressable
           style={styles.leftBox}
@@ -283,7 +284,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // ...makeDevOnlyStyle({
     //   backgroundColor: colors2024['orange-light-1'],
     // }),
-    height: HOME_TOP_HEADER_SIZES.headerHeight,
+    height: HOME_TOP_HEADER_SIZES.topHeaderHeight,
     // height: 52,
     flexDirection: 'row',
     justifyContent: 'space-between',
