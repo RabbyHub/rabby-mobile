@@ -1715,8 +1715,16 @@
           }
         },
         "ledger": {
-          "hdPathType": {},
-          "hdPathTypeNoChain": {}
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Ledger 공식 HD 경로.",
+            "legacy": "유산: MEW / Mycrypto에서 사용되는 HD 경로.",
+            "bip44": "BIP44 표준: BIP44 프로토콜에 의해 정의된 HDpath."
+          },
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live: Ledger 공식 HD 경로.",
+            "legacy": "레거시: MEW / Mycrypto에서 사용하는 HD 경로.",
+            "bip44": "BIP44 표준: BIP44 프로토콜에 의해 정의된 HD 경로."
+          }
         },
         "customAddressHdPath": "사용자 정의 지갑 HD 경로",
         "selectIndexTip": "지갑의 일련번호를 선택하여 시작하세요:",
@@ -2930,7 +2938,8 @@
         "entryTips": "원클릭으로 빌린 자산을 교환하여 단계와 수수료를 줄입니다.",
         "lpDangerWarning": "이 스왑 후 귀하의 건강 지수가 심각하게 낮아져 청산이 발생할 수 있습니다. 안전을 위해 다른 자산을 선택하거나 스왑 금액을 줄여 주십시오.",
         "priceImpactTips": "높은 가격 영향 ({{lostValue}}). 이 경로는 유동성이 낮거나 주문 규모가 작아 더 많은 반환이 있을 수 있습니다.",
-        "lpRiskWarning": "스왑 후 낮은 건강 지수. 귀하의 포지션은 청산 위험이 더 높습니다."
+        "lpRiskWarning": "스왑 후 낮은 건강 지수. 귀하의 포지션은 청산 위험이 더 높습니다.",
+        "maxLtvWarning": "새로운 대출 포지션을 담보할 충분한 담보가 없습니다. 부채 전환을 수행하기 위해서는 지갑에 남아 있는 대출 가능성이 있어야 합니다."
       },
       "hfTips": {
         "more": "더 보기",
