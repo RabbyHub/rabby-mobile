@@ -489,7 +489,9 @@ const getStyle = createGetStyles2024(
       paddingTop: 0,
     },
     scrollViewInner: {
-      marginTop: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+      marginTop: !SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING
+        ? HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset
+        : 0,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
