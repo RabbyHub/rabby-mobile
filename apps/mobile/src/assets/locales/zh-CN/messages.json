@@ -1479,16 +1479,8 @@
           }
         },
         "ledger": {
-          "hdPathType": {
-            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。在前三个钱包中，有在链上使用的钱包。",
-            "bip44": "BIP44标准：HDpath由BIP44协议定义。在前三个钱包中，有钱包用于链上。",
-            "legacy": "遗产：由 MEW / Mycrypto 使用的 HD 路径。在前三个钱包中，有在链上使用的钱包。"
-          },
-          "hdPathTypeNoChain": {
-            "legacy": "遗产：MEW / Mycrypto 使用的 HD 路径。在前三个钱包中，没有在链上使用的钱包。",
-            "ledgerLive": "Ledger Live: Ledger 官方 HD 路径。在前 3 个钱包中，没有在链上使用的钱包。",
-            "bip44": "BIP44 标准：由 BIP44 协议定义的 HD 路径。在前 3 个钱包中，没有在链上使用的钱包。"
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "keystone": {
           "hdPathTypeNoChain": {

@@ -1732,16 +1732,8 @@
           }
         },
         "ledger": {
-          "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden.",
-            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden.",
-            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden."
-          },
-          "hdPathTypeNoChain": {
-            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird. In den ersten 3 Wallets gibt es keine on-chain verwendeten Wallets.",
-            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad. In den ersten 3 Wallets werden keine on-chain Wallets verwendet.",
-            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist. In den ersten 3 Wallets werden keine Wallets on-chain verwendet."
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "qrCode": {
           "switch": {
