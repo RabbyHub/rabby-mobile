@@ -558,7 +558,9 @@ export const TokenMarketInfoScreen = () => {
                 <>
                   <MarketInfo
                     price={tokenWithAmount?.price ?? 0}
-                    price24hChange={tokenWithAmount?.price_24h_change ?? 0}
+                    price24hChange={
+                      tokenWithAmount?.price_24h_change ?? undefined
+                    }
                     marketCap={
                       supplyInfo?.market_cap_usd_value?.toString() ?? ''
                     }

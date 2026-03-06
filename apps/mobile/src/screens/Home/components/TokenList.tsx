@@ -20,6 +20,8 @@ type Props = {
   ListFooterComponent?: BottomSheetFlatListProps<AbstractPortfolioToken>['ListFooterComponent'];
   ListEmptyComponent?: BottomSheetFlatListProps<AbstractPortfolioToken>['ListEmptyComponent'];
 };
+
+// 实质废弃，block token和custom token 弹窗都没入口了
 export const TokenList = ({
   style,
   data,
