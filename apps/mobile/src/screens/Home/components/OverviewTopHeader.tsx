@@ -14,7 +14,11 @@ import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import { useUpgradeInfo } from '@/hooks/version';
@@ -36,7 +40,12 @@ import { formatSmallCurrencyValue } from '@/hooks/useCurve';
 import { useCurrency } from '@/hooks/useCurrency';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
-import Animated, { SharedValue } from 'react-native-reanimated';
+import Animated, {
+  Extrapolate,
+  interpolate,
+  SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import {
   useScene24hBalanceCombinedData,
@@ -50,23 +59,23 @@ import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 
-export const HeaderHeight = 30;
+const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
   apisHomeTabIndex.setTabIndex(index, true);
 };
 
-export function TabsTopHeader({
-  indexDecimalValue,
-}: // indexValue,
-{
-  indexDecimalValue: SharedValue<number>;
-  // indexValue: SharedValue<number>;
-}): JSX.Element {
-  const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
+export function TabsTopHeader(): JSX.Element {
+  const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
+
+  // const indexDecimalValue = useSVFromMutable(apisHomeTabIndex.svTabIndexDecimal);
+  // const tabIndexFromSv = useValueFromSharedValue(indexDecimalValue);
+  const tabIndexFromSv = useValueFromSharedValue(
+    apisHomeTabIndex.svTabIndexDecimal,
+  );
   const showNetWorth = tabIndexFromSv > 0.7;
-  // const { tabIndex, setTabIndex } = useHomeTabIndex();
   const { isLoading: loading } = useSceneIsLoading('Home');
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
@@ -74,7 +83,6 @@ export function TabsTopHeader({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { remoteVersion } = useUpgradeInfo();
-  const focusedTab = useFocusedTab();
 
   const [hideType, setHideType] = useHideBalance();
   const handleHideTypeChange = useMemoizedFn((event: GestureResponderEvent) => {
@@ -90,7 +98,11 @@ export function TabsTopHeader({
   const { currency } = useCurrency();
   const { myTop10Addresses } = useAccountInfo();
   const balanceMap = balanceStore(s => s.balanceMap);
-  const isLoadingByAddress = balanceStore(s => s.isLoadingByAddress);
+  const isTop10BalanceLoading = balanceStore(s => {
+    return s.getIsTop10BalanceLoading(myTop10Addresses, s.isLoadingByAddress)
+      .isTop10BalanceLoading;
+  });
+
   const totalBalance = useMemo(() => {
     if (!myTop10Addresses.length) {
       return 0;
@@ -100,15 +112,6 @@ export function TabsTopHeader({
       return acc + (balance?.totalBalance || 0);
     }, 0);
   }, [balanceMap, myTop10Addresses]);
-
-  const isTop10BalanceLoading = useMemo(() => {
-    if (!myTop10Addresses.length) {
-      return false;
-    }
-    return myTop10Addresses.some(
-      address => isLoadingByAddress[address.toLowerCase()],
-    );
-  }, [isLoadingByAddress, myTop10Addresses]);
 
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
@@ -161,21 +164,17 @@ export function TabsTopHeader({
 
   const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
 
-  // const headerStyle = useAnimatedStyle(() => ({
-  //   transform: [
-  //     {
-  //     translateY: interpolate(
-  //       pullPercent.value,
-  //       [-THRESHOLD_PERCENT, 0],
-  //       [-HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 1],
-  //       Extrapolation.CLAMP,
-  //     ),
-  //     },
-  //   ]
-  // }));
+  const headerStyle = useAnimatedStyle(() => ({
+    height: interpolate(
+      pullPercent.value,
+      [0, -100],
+      [HOME_TOP_HEADER_SIZES.topHeaderHeight, 0],
+      Extrapolate.CLAMP,
+    ),
+  }));
 
   return (
-    <Animated.View style={[styles.headerBox, opacityStyle]}>
+    <Animated.View style={[styles.headerBox, opacityStyle, headerStyle]}>
       {showNetWorth ? (
         <Pressable
           style={styles.leftBox}
@@ -192,7 +191,10 @@ export function TabsTopHeader({
             ]}>
             {changePercent}
           </Text>
-          {isTop10BalanceLoading ? <LoadingCircle /> : null}
+          {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+          isTop10BalanceLoading ? (
+            <LoadingCircle />
+          ) : null}
         </Pressable>
       ) : (
         <View style={styles.leftBox}>
@@ -222,7 +224,10 @@ export function TabsTopHeader({
               />
             )}
           </TouchableOpacity>
-          {isTop10BalanceLoading ? <LoadingCircle /> : null}
+          {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+          isTop10BalanceLoading ? (
+            <LoadingCircle />
+          ) : null}
         </View>
       )}
 
@@ -276,7 +281,11 @@ export function TabsTopHeader({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerBox: {
     // ...makeDebugBorder(),
-    height: HOME_TOP_HEADER_SIZES.headerHeight,
+    // ...makeDevOnlyStyle({
+    //   backgroundColor: colors2024['orange-light-1'],
+    // }),
+    height: HOME_TOP_HEADER_SIZES.topHeaderHeight,
+    // height: 52,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
