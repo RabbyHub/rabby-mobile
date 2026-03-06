@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, TouchableOpacity, View } from 'react-native';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -18,6 +18,7 @@ import { getFromToken } from '../../utils/swap';
 import { formatApy, formatListNetWorth } from '../../utils/format';
 import { useLendingSummary, useSelectedMarket } from '../../hooks';
 import { formatTokenAmount } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 interface BorrowItemProps extends RNViewProps {
   underlyingAsset: string;

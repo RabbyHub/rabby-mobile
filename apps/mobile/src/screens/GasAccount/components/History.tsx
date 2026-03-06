@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
-  Text,
   FlatList,
   Animated,
   Easing,
@@ -25,6 +24,7 @@ import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { GiftInfoModal } from './GiftInfoModal';
 import ImgEmpty from '@/assets2024/images/gasAccount/empty.png';
 import ImgEmptyDark from '@/assets2024/images/gasAccount/empty-dark.png';
+import { Text } from '@/components/Typography';
 
 const HistoryItem = ({
   time,

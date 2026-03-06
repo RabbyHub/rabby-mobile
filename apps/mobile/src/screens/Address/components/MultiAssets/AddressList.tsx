@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { Text, View, TouchableOpacity, Pressable } from 'react-native';
+import { View, TouchableOpacity, Pressable } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
@@ -21,6 +21,7 @@ import { naviPush } from '@/utils/navigation';
 import { useScene24hBalanceMulti24hBalance } from '@/hooks/useScene24hBalance';
 import { computeBalanceChange } from '@/core/apis/balance';
 import balanceStore from '@/store/balance';
+import { Text } from '@/components/Typography';
 
 const SPACING_HEIGHT = 8;
 interface AddressListProps {

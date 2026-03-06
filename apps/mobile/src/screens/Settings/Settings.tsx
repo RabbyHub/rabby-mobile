@@ -4,7 +4,6 @@ import {
   Linking,
   Platform,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -145,6 +144,7 @@ import {
   useAppNotificationEnabled,
 } from '@/hooks/appNotification';
 import { SwitchSettingCommon } from './components/SwitchSettingCommon';
+import { Text } from '@/components/Typography';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,

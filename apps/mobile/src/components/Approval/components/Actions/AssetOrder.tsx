@@ -12,12 +12,13 @@ import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import LogoWithText from '../Actions/components/LogoWithText';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { SubCol, SubRow, SubTable } from './components/SubTable';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Chain } from '@/constant/chains';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { formatTokenAmount } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

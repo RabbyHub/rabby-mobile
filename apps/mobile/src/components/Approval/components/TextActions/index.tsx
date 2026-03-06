@@ -5,7 +5,7 @@ import { getActionTypeText } from './utils';
 import CreateKey from './CreateKey';
 import VerifyAddress from './VerifyAddress';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components/Tip';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
@@ -20,6 +20,7 @@ import { getActionsStyle } from '../Actions';
 import { ParsedTextActionData } from '@rabby-wallet/rabby-action';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 export const getMessageStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

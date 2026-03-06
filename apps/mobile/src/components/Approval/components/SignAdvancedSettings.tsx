@@ -13,7 +13,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import {
   NativeSyntheticEvent,
   StyleSheet,
-  Text,
   TextInputChangeEventData,
   TouchableOpacity,
   View,
@@ -21,6 +20,7 @@ import {
 import { Card } from './Actions/components/Card';
 import DescItem from './Actions/components/DescItem';
 import { getStyles } from './TxComponents/GasSelector/styles';
+import { Text } from '@/components/Typography';
 
 export interface GasSelectorResponse {
   gasLimit: number;

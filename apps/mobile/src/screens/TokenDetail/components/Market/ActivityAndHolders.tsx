@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -10,6 +10,7 @@ import { useHolderInfo } from './hooks';
 import Pools from './Pools';
 import { openapi } from '@/core/request';
 import { useRequest } from 'ahooks';
+import { Text } from '@/components/Typography';
 
 const enum TabKey {
   activity = 'activity',

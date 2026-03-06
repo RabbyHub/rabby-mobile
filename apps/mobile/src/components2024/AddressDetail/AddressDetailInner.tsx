@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
@@ -17,6 +17,7 @@ import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
 import { useQrCodeModal } from '../QrCodeModal/useQrCodeModal';
 import { useTranslation } from 'react-i18next';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Text } from '@/components/Typography';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;

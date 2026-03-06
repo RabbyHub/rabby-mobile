@@ -3,13 +3,14 @@ import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
-import { Dimensions, Platform, Text } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { sleep } from '@/utils/async';
 import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { useShallow } from 'zustand/react/shallow';
 import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 
 export const usePerpsPosition = () => {
   const {

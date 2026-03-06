@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useMemo, useState } from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -20,6 +20,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { Text } from '@/components/Typography';
 
 interface Props {
   tokenEntity?: TokenEntityDetail;

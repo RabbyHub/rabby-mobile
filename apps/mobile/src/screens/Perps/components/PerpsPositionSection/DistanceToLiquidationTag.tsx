@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconArrowRightCC from '@/assets2024/icons/perps/IconArrowRightCC.svg';
 import RcIconTipsLightCC from '@/assets2024/icons/perps/IconTipsLightCC.svg';
 import { calculateDistanceToLiquidation } from './utils';
+import { Text } from '@/components/Typography';
 
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 

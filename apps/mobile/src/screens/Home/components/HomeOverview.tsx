@@ -39,7 +39,6 @@ import {
   Dimensions,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
   ViewProps,
@@ -158,6 +157,7 @@ import {
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import { Text } from '@/components/Typography';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();

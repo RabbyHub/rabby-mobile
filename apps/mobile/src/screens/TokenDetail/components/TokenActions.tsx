@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
@@ -21,6 +21,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
+import { Text } from '@/components/Typography';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 

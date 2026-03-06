@@ -4,10 +4,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Image, Text, View } from 'react-native';
+import { FlatList, Image, View } from 'react-native';
 import { AddressItem } from '../AddressItem/AddressItem';
 import { Button } from '../Button';
 import { Card } from '../Card';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {

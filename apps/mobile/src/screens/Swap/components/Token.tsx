@@ -16,14 +16,7 @@ import SwapToTokenSelect from './SwapToTokenSelect';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import Animated, {
@@ -36,6 +29,7 @@ import { Account } from '@/core/services/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
 import { ITokenItem } from '@/store/tokens';
+import { Text, TextInput } from '@/components/Typography';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';

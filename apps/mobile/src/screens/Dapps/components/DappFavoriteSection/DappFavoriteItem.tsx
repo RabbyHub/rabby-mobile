@@ -8,13 +8,13 @@ import React, { useMemo } from 'react';
 import {
   Image,
   StyleProp,
-  Text,
   useWindowDimensions,
   View,
   ViewStyle,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { DappIcon } from '../DappIcon';
+import { Text } from '@/components/Typography';
 
 export const DappFavoriteItem = ({
   data,

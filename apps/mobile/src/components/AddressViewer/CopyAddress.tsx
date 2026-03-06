@@ -2,7 +2,6 @@ import React, { useCallback, useImperativeHandle, useMemo } from 'react';
 import {
   TouchableOpacity,
   View,
-  Text,
   StyleSheet,
   StyleProp,
   TextStyle,
@@ -15,6 +14,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { toast } from '@/components2024/Toast';
 import i18next from 'i18next';
+import { Text } from '@/components/Typography';
 
 type ContainerOnPressProp = React.ComponentProps<
   typeof TouchableOpacity

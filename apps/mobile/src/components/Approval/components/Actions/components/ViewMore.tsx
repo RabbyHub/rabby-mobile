@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { SpenderPopup, SpenderPopupProps } from './ViewMorePopup/SpenderPopup';
@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { getStyle } from './getStyle';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { Text } from '@/components/Typography';
 
 type Props =
   | SpenderPopupProps

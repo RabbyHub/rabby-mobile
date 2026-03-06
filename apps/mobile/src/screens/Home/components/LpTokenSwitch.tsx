@@ -2,8 +2,9 @@ import React from 'react';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { Text } from '@/components/Typography';
 
 const LpTokenSwitch: React.FC<{
   isEnabled: boolean;

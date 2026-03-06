@@ -1,12 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -22,6 +15,7 @@ import { Button } from '@/components2024/Button';
 import { formatTimeReadable } from '@/utils/time';
 import dayjs from 'dayjs';
 import { urlUtils } from '@rabby-wallet/base-utils';
+import { Text } from '@/components/Typography';
 
 const TEST_OPEN_DAPPS = [
   'https://debank.com',

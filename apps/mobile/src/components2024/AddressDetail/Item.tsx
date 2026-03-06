@@ -3,7 +3,6 @@ import React from 'react';
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TextStyle,
   TouchableOpacity,
   View,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import ArrowSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 interface Props {
   onPress?: () => void;

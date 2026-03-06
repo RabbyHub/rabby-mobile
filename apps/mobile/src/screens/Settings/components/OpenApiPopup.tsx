@@ -13,12 +13,8 @@ import {
 } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const OpenApiPopup: React.FC<{
   visible?: boolean;

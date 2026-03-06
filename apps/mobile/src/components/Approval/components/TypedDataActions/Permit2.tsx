@@ -11,13 +11,14 @@ import * as Values from '../Actions/components/Values';
 import ViewMore from '../Actions/components/ViewMore';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Chain } from '@/constant/chains';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { TokenAmountItem } from '../Actions/components/TokenAmountItem';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
+import { Text } from '@/components/Typography';
 
 const Permit2 = ({
   data,

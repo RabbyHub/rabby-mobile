@@ -2,11 +2,12 @@ import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { NoActionBody } from './NoActionBody';
 import { AppColorsVariants } from '@/constant/theme';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { openapi } from '@/core/request';
 import RcIconAlert from '@/assets/icons/sign/tx/alert-currentcolor.svg';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

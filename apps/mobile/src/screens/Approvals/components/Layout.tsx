@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   Platform,
   View,
-  Text,
   Dimensions,
   StatusBar,
   TouchableOpacity,
@@ -26,6 +25,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 import { Account } from '@/core/services/preference';
 import { useEIP7702Approvals } from '../useEIP7702Approvals';
+import { Text } from '@/components/Typography';
 
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };

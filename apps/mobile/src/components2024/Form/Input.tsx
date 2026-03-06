@@ -1,10 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import {
   View,
-  TextInput,
   TextInputProps,
   StyleSheet,
-  Text,
   StyleProp,
   ViewStyle,
   TextStyle,
@@ -26,6 +24,7 @@ import {
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { Pressable } from 'react-native-gesture-handler';
+import { TextInput, Text } from '@/components/Typography';
 
 const RcIconClose = makeThemeIconFromCC(RcIconCloseCircleCC, 'neutral-foot');
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Dimensions, ScrollView, Text, View } from 'react-native';
+import { Dimensions, ScrollView, View } from 'react-native';
 import { atom, useAtom } from 'jotai';
 
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
@@ -21,6 +21,7 @@ import {
   setInnerDappPreloadRetention,
   useInnerDappPreloadRetention,
 } from '@/config/innerDappPreloadRetention';
+import { Text } from '@/components/Typography';
 
 const selectorVisibleAtom = atom(false);
 

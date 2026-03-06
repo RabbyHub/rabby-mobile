@@ -6,13 +6,14 @@ import SecurityLevelTagNoText from './SecurityEngine/SecurityLevelTagNoText';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { dappService } from '@/core/services';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { useTheme2024 } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
 import { Tip } from '@/components';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 interface Props {
   chain?: Chain;

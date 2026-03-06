@@ -13,7 +13,8 @@ import { useRequest } from 'ahooks';
 import { isString } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   data: SafeMessage;

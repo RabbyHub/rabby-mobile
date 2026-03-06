@@ -18,7 +18,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 import {
   createChart,
   IChartApi,
@@ -34,6 +34,7 @@ import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
 import { splitNumberByStep } from '@/utils/number';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { Text } from '@/components/Typography';
 
 import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 export interface ChartHoverData {

@@ -1,6 +1,5 @@
 import {
   View,
-  Text,
   Pressable,
   ViewStyle,
   StyleProp,
@@ -16,6 +15,7 @@ import { useFindChain } from '@/hooks/useFindChain';
 import ChainFilterItem from '@/components/Token/ChainFilterItem';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
+import { Text } from '@/components/Typography';
 
 export type AsssetKey = 'token' | 'defi' | 'nft';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
@@ -14,6 +14,7 @@ import {
 } from '../useApprovalsPage';
 import { getTooltipContentStyles } from './Layout';
 import Permit2Badge from './Permit2Badge';
+import { Text } from '@/components/Typography';
 
 function ApprovalAmountInfo({
   style,

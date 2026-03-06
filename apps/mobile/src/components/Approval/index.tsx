@@ -6,7 +6,7 @@ import {
 } from '@/utils/events';
 import { IExtractFromPromise } from '@/utils/type';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
 import { ApprovalComponent } from './components';
 import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
@@ -16,6 +16,7 @@ import {
   shouldAllowApprovePopupByTabId,
 } from '@/core/bridges/state';
 // import TouchableText from '../Touchable/TouchableText';
+import { Text } from '@/components/Typography';
 
 function ShouldntRenderApproveDueToDappDisappeared() {
   return (

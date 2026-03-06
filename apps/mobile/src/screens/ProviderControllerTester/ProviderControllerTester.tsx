@@ -7,7 +7,7 @@
 
 import React from 'react';
 import type { PropsWithChildren } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   Colors,
@@ -26,6 +26,7 @@ import { useDapps } from '@/hooks/useDapps';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { createGetStyles } from '@/utils/styles';
 import { preferenceService } from '@/core/services';
+import { Text } from '@/components/Typography';
 
 type SectionProps = PropsWithChildren<{
   title: string;

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 
 import { RcArrowRight3CC } from '@/assets/icons/common';
 import { RcIconBallCC, RcIconGoogle } from '@/assets/icons/dapp';
@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn } from 'ahooks';
 import { ViewProps } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export function DappFirstSearchResult({
   data,

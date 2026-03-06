@@ -9,7 +9,7 @@ import * as Values from './Actions/components/Values';
 import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from './Actions/components/SubTable';
@@ -19,6 +19,7 @@ import {
   ContractRequireData,
   ContractCallRequireData,
 } from '@rabby-wallet/rabby-action';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

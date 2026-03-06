@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import { OpenDetailProps } from '../type';
@@ -38,6 +38,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from '../config/nativeToWrapper';
 import DetailLoadingSkeleton from './DetailLoadingSkeleton';
+import { Text } from '@/components/Typography';
 
 export const SupplyDetailPopup: React.FC<OpenDetailProps> = ({
   underlyingAsset,

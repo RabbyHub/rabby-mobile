@@ -2,9 +2,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import OfflinePng from '@/assets2024/images/offline.png';
 import OfflineDarkPng from '@/assets2024/images/offline-dark.png';
 import { createGetStyles2024 } from '@/utils/styles';
-import { View, Text, StyleProp, ViewStyle, Image } from 'react-native';
+import { View, StyleProp, ViewStyle, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from 'react';
+import { Text } from '@/components/Typography';
 
 interface NetWorkErrorProps {
   hasError: boolean;

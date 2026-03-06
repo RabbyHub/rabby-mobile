@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, ViewProps } from 'react-native';
+import { View, ViewProps } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 interface Props {
   title: string;

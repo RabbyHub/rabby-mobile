@@ -18,7 +18,6 @@ import {
   ImageBackground,
   StyleProp,
   StyleSheet,
-  Text,
   TextStyle,
   TouchableOpacity,
   useWindowDimensions,
@@ -26,6 +25,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { Text } from '@/components/Typography';
 import Animated, {
   Easing,
   interpolate,

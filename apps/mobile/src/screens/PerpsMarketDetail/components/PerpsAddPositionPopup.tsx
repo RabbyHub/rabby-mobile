@@ -20,7 +20,6 @@ import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Text,
   TouchableOpacity,
   View,
   Platform,
@@ -38,6 +37,7 @@ import { AssetAvatar } from '@/components';
 import { DistanceToLiquidationTag } from '@/screens/Perps/components/PerpsPositionSection/DistanceToLiquidationTag';
 import { useShallow } from 'zustand/react/shallow';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 

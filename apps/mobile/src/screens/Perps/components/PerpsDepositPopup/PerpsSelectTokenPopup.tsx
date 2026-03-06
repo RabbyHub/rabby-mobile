@@ -23,14 +23,9 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
+import { Text } from '@/components/Typography';
 
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
