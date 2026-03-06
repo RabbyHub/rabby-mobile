@@ -38,6 +38,12 @@ module.exports = {
             message:
               "Please import RNEUIText from '@/components/Typography' instead",
           },
+          {
+            name: '@rneui/themed',
+            importNames: ['Text'],
+            message:
+              "Please import RNEUIText from '@/components/Typography' instead",
+          },
         ],
       },
     ],
