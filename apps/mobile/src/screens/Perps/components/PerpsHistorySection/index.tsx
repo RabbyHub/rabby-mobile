@@ -9,13 +9,7 @@ import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn } from 'ahooks';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  FlatList,
-  ListRenderItem,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, ListRenderItem, TouchableOpacity, View } from 'react-native';
 import { PerpsHistoryAccountItem } from './PerpsHistoryAccountItem';
 import { PerpsHistoryDetailPopup } from './PerpsHistoryDetailPopup';
 import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
@@ -23,6 +17,7 @@ import { PerpsHistoryItem } from './PerpsHistoryItem';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
+import { Text } from '@/components/Typography';
 
 export const PerpsHistorySection: React.FC<{
   marketDataMap: MarketDataMap;

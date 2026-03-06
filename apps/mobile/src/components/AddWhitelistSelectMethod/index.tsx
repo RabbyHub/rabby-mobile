@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import IconImport from '@/assets2024/icons/common/IconImport.svg';
@@ -9,6 +9,7 @@ import { AppRootName, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
+import { Text } from '@/components/Typography';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;

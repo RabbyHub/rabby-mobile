@@ -16,13 +16,7 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import React from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { toast } from '@/components2024/Toast';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { useAtom } from 'jotai';
@@ -42,6 +36,7 @@ import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

@@ -24,7 +24,7 @@ import {
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, unionBy, orderBy, debounce } from 'lodash';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
   TokenItem,
@@ -66,6 +66,7 @@ import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
 } from './components/type';
+import { Text } from '@/components/Typography';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;

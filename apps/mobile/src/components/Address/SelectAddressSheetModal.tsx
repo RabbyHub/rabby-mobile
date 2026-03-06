@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   BottomSheetBackdropProps,
@@ -27,6 +27,7 @@ import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal'
 import { apisLock } from '@/core/apis';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import AutoLockView from '../AutoLockView';
+import { Text } from '@/components/Typography';
 
 export interface SelectAddressProps {
   heightPercent?: `${number}%`;

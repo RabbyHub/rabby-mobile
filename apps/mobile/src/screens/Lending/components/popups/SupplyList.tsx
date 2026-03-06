@@ -1,11 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  RefreshControl,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { RefreshControl, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
@@ -41,6 +35,7 @@ import { formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { Text, TextInput } from '@/components/Typography';
 
 const FOOT_HEIGHT = 86;
 

@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { useThemeStyles } from '@/hooks/theme';
@@ -9,6 +9,7 @@ import FooterComponentForUpgrade from './FooterComponentForUpgrade';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { MarkdownInWebView } from '../Markdown/InWebView';
 import AutoLockView from '../AutoLockView';
+import { Text } from '@/components/Typography';
 
 // const DEMO_CHANGELOG = `
 // ### New features

@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { contactService } from '@/core/services';
 import { isValidHexAddress } from '@metamask/utils';
 import { IS_IOS } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 export function AddressEditorBadge({
   style,

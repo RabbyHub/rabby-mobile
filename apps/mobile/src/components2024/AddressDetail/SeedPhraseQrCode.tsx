@@ -2,10 +2,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { WINDOW_WIDTH } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import IconWarning from '@/assets/icons/address/warning-rouned.svg';
 import QRCode from 'react-native-qrcode-svg';
 import { Button } from '../Button';
+import { Text } from '@/components/Typography';
 
 export interface SeedPhraseQrCodeProps {
   data: string;

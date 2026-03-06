@@ -32,10 +32,10 @@ import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataAppro
 import RcCheckSecurity from '@/assets2024/icons/common/check-security.svg';
 import RcCheckSecurityDark from '@/assets2024/icons/common/check-security-dark.svg';
 
-import { Text } from 'react-native';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;

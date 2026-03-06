@@ -12,12 +12,13 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { PerpsSlider } from './PerpsSlider';
 import {
   PERPS_EXCHANGE_FEE_NUMBER,
   PERPS_MINI_USD_VALUE,
 } from '@/constant/perps';
+import { Text } from '@/components/Typography';
 
 export const PerpsClosePositionPopup: React.FC<{
   visible?: boolean;

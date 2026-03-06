@@ -6,7 +6,6 @@ import { getGasLevelI18nKey } from '@/utils/trans';
 import {
   NativeSyntheticEvent,
   StyleSheet,
-  Text,
   TextInputChangeEventData,
   TextInputSubmitEditingEventData,
   TouchableOpacity,
@@ -14,10 +13,10 @@ import {
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { TextInput } from 'react-native-gesture-handler';
 import { Skeleton } from '@rneui/themed';
 import { calcGasEstimated } from '@/utils/time';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;

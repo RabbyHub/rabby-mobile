@@ -8,8 +8,9 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import _ from 'lodash';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export const CreateSeedPhraseVerifyScreen = () => {
   const colors = useThemeColors();

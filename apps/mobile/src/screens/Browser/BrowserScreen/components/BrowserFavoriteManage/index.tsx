@@ -5,12 +5,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { atom } from 'jotai';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { BrowserSearch } from '../BrowserSearch';
 import { BrowserFavorite } from './BrowserFavorite';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/Typography';
 
 export const activeTabAtom = atom('favorites');
 

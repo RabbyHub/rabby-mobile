@@ -1,11 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SwapModal } from '@/screens/Swap/components/Modal';
@@ -25,6 +20,7 @@ import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { signatureStore, useSignatureStore } from '@/components2024/MiniSignV2';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { Text } from '@/components/Typography';
 
 const showMoreGasSelectModalVisibleAtom = atom(false);
 

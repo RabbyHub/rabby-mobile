@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Keyboard,
-  Pressable,
-  Text,
-  View,
-  ViewStyle,
-  TextInput,
-} from 'react-native';
+import { Keyboard, Pressable, View, ViewStyle } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
@@ -38,6 +31,7 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import { NextSearchBar } from '../SearchBar';
 import { Account } from '@/core/services/preference';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { Text, TextInput } from '@/components/Typography';
 
 const useChainSeletorList = ({
   supportChains,

@@ -4,7 +4,8 @@ import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, View, ViewProps } from 'react-native';
+import { Image, View, ViewProps } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const Empty = ({
   style,

@@ -6,7 +6,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Modal,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -23,6 +22,7 @@ import ModalInput from './ModalInput';
 import { toast } from '@/components2024/Toast';
 
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
+import { Text } from '@/components/Typography';
 
 function SwitchTextLine({
   checked,

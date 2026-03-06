@@ -1,11 +1,12 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 
 import { default as RcPasswordLockCC } from './icons/password-lock-cc.svg';
 import { Button } from '@/components';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { Text } from '@/components/Typography';
 
 const LAYOUTS = {
   footerButtonHeight: 52,

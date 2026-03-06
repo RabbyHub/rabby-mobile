@@ -24,7 +24,6 @@ import {
   ActivityIndicator,
   Image,
   ListRenderItemInfo,
-  Text,
   View,
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
@@ -37,6 +36,7 @@ import { toast } from '@/components2024/Toast';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 export type ConfirmationProps = {
   owner: string;

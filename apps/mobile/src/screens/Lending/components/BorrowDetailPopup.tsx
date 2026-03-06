@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import { OpenDetailProps } from '../type';
@@ -35,6 +35,7 @@ import { nativeToWrapper } from '../config/nativeToWrapper';
 import DetailLoadingSkeleton from './DetailLoadingSkeleton';
 import DebtSwapEntryTips from './DetSwapEntryTips';
 import { getFromToken } from '../utils/swap';
+import { Text } from '@/components/Typography';
 
 export const BorrowDetailPopup: React.FC<OpenDetailProps> = ({
   underlyingAsset,

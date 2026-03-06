@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { AssetAvatar } from '@/components';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
@@ -14,6 +14,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { apiContact } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 
 export const PerpsHeaderTitle: React.FC<{
   market?: MarketData;

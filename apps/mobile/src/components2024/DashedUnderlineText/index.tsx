@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, ViewStyle, TextStyle } from 'react-native';
+import { View, ViewStyle, TextStyle } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 interface DashedUnderlineTextProps {
   /**

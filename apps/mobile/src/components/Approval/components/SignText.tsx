@@ -1,7 +1,7 @@
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { WaitingSignComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
@@ -50,6 +50,7 @@ import { GnosisAdminFooterBarPopup } from './TxComponents/GnosisAdminFooterBarPo
 import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 import { useSetState } from 'ahooks';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 interface SignTextProps {
   data: string[];

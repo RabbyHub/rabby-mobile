@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { MemeItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -10,6 +10,7 @@ import { formatUsdValueKMB } from '../../Home/utils/price';
 import { formatPrice } from '@/utils/number';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
+import { Text } from '@/components/Typography';
 
 export const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {

@@ -12,7 +12,6 @@ import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import {
   Image,
   ImageBackground,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -26,6 +25,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { ThemeColors2024 } from '@/constant/theme';
+import { Text } from '@/components/Typography';
 
 const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 

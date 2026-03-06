@@ -1,4 +1,4 @@
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -9,6 +9,7 @@ import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
 import { ChainListItem } from './index';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useCurrency } from '@/hooks/useCurrency';
+import { Text } from '@/components/Typography';
 export default function ChainItem({
   data,
   value,

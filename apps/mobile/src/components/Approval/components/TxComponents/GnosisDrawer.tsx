@@ -12,12 +12,13 @@ import { apisSafe } from '@/core/apis/safe';
 import { useMemoizedFn } from 'ahooks';
 import { Button } from '@/components/Button';
 import { AppColorsVariants } from '@/constant/theme';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlatList } from 'react-native-gesture-handler';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 interface GnosisDrawerProps {
   safeInfo: BasicSafeInfo;

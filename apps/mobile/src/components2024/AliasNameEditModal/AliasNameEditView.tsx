@@ -3,8 +3,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { WalletIcon } from '../WalletIcon/WalletIcon';
+import { Text, TextInput } from '@/components/Typography';
 
 export interface Props {
   account: KeyringAccountWithAlias;

@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
-  Text,
   View,
   TouchableOpacity,
   ActivityIndicator,
@@ -45,6 +44,7 @@ import { toast } from '@/components2024/Toast';
 import { Skeleton } from '@rneui/themed';
 import { LoadingLinear } from '../TokenPriceChart/LoadingLinear';
 import { sortTokenWithSymbol } from './utils';
+import { Text } from '@/components/Typography';
 
 interface PoolsProps {
   tokenId: string;

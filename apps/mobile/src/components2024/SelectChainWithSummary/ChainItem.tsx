@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
@@ -17,6 +17,7 @@ import { Tip } from '@/components/Tip';
 import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
+import { Text } from '@/components/Typography';
 
 export default function ChainItem({
   data,

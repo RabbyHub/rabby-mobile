@@ -5,11 +5,9 @@ import {
   FlatList,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import AnimateableText from 'react-native-animateable-text';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
@@ -38,6 +36,7 @@ import { touchedFeedback } from '@/utils/touch';
 import { ALL_ORM_ENTITIES } from '@/databases/entities';
 import { Divider } from '@rneui/base';
 import Clipboard from '@react-native-clipboard/clipboard';
+import { Text, AnimateableText } from '@/components/Typography';
 
 function UpdatedTimeCount({ updatedAt }: { updatedAt: number }) {
   const { countdownTextStyles, countdownTextProps } = useRestCountDownLabel({

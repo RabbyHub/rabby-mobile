@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, ViewStyle } from 'react-native';
+import { StyleSheet, ViewStyle } from 'react-native';
 
 import { Card } from '@/components';
 
@@ -7,6 +7,7 @@ import { PortfolioHeader } from '../components/PortfolioDetail';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 export default React.memo(
   ({

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Text } from 'react-native';
 
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { openapi } from '@/core/request';
@@ -11,6 +10,7 @@ import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import { useRequest } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { getActionTypeTextByType } from '../../Actions/utils';
+import { Text } from '@/components/Typography';
 
 interface PendingOptionContentProps {
   data: SafeTransactionItem;

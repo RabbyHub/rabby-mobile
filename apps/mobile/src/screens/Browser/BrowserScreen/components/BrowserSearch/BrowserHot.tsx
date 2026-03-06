@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { openapi } from '@/core/request';
 import { DappInfo } from '@/core/services/dappService';
@@ -12,6 +12,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useRequest } from 'ahooks';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export function BrowserHot({ onPress }: { onPress?(dapp: DappInfo): void }) {
   const { styles } = useTheme2024({

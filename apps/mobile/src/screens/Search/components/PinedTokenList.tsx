@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Text } from '@/components/Typography';
 
 export const PinedTokenList = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });

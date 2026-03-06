@@ -33,7 +33,6 @@ import {
   Dimensions,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
   ViewProps,
@@ -133,6 +132,7 @@ import { PredictBadge } from './PredicBadge';
 import { Top3MemeBadge } from '@/screens/Meme/components/Top3MemeBadge';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
+import { Text } from '@/components/Typography';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();

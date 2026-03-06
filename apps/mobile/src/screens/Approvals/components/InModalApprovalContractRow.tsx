@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
@@ -25,6 +25,7 @@ import { getTooltipContentStyles } from './Layout';
 import Permit2Badge from './Permit2Badge';
 import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
 import { getTokenSymbol } from '@/utils/token';
+import { Text } from '@/components/Typography';
 
 function ApprovalAmountInfo({
   style,

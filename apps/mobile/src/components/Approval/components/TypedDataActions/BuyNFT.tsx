@@ -16,11 +16,12 @@ import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Chain } from '@/constant/chains';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { formatAmount } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
+import { Text } from '@/components/Typography';
 const { isSameAddress } = addressUtils;
 
 const BuyNFT = ({

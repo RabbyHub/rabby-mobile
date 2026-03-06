@@ -1,11 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  useWindowDimensions,
-  Dimensions,
-} from 'react-native';
+import { View, Image, useWindowDimensions, Dimensions } from 'react-native';
 import { useTranslation, Trans } from 'react-i18next';
 import RCIconRabbyWhite from '@/assets2024/icons/bridge/FeeRabbyWallet.svg';
 // import RCIconRabbyWhite from '@/assets/icons/swap/rabby.svg'; // Ensure this is a compatible React Native SVG component
@@ -21,6 +15,7 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEX } from '@/constant/swap';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 const swapFee = [
   {

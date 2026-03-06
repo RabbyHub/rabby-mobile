@@ -3,7 +3,7 @@ import FastImage from 'react-native-fast-image';
 import { getCHAIN_ID_LIST } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { IconDefaultNFT } from '@/assets/icons/nft';
@@ -26,6 +26,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayNftItem } from '../../types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
+import { Text } from '@/components/Typography';
 
 export const NftRow = memo(
   ({

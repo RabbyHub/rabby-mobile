@@ -1,7 +1,8 @@
 import RcIconSearch from '@/assets2024/icons/approval/search.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TouchableOpacity, Text } from 'react-native';
+import { TouchableOpacity } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface IProps {
   isSearching?: boolean;

@@ -12,8 +12,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
-  Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -23,6 +21,7 @@ import { PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { PerpsMarketItem } from '../PerpsMarketSection/PerpsMarketItem';
 import { sortBy } from 'lodash';
 import { useShallow } from 'zustand/react/shallow';
+import { Text, TextInput } from '@/components/Typography';
 
 export const PerpSearchListPopup: React.FC<{
   visible: boolean;

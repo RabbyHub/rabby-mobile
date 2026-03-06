@@ -1,7 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { ReactNode } from 'react';
-import { Text, TextProps, View, ViewProps } from 'react-native';
+import { TextProps, View, ViewProps } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const WarningText = ({
   bgColor,

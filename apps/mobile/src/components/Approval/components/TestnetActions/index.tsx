@@ -3,13 +3,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 // import {
 //   ActionRequireData,
@@ -46,6 +40,7 @@ import ViewRawModal from '../TxComponents/ViewRawModal';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { getMessageStyles } from '../TextActions';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 export const TestnetActions = ({
   chain,

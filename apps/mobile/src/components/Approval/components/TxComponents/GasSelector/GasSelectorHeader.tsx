@@ -16,7 +16,6 @@ import {
   NativeSyntheticEvent,
   Pressable,
   StyleSheet,
-  Text,
   TextInputChangeEventData,
   TouchableOpacity,
   View,
@@ -43,7 +42,6 @@ import {
 } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
 import { FooterButton } from '@/components2024/FooterButton/FooterButton';
-import { TextInput } from 'react-native-gesture-handler';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Skeleton } from '@rneui/themed';
 import GasLogoSVG from '@/assets/icons/sign/tx/gas-logo-cc.svg';
@@ -73,6 +71,7 @@ import {
   useGetShowMoreGasSelectVisible,
   useSetGasInfoByUI,
 } from '@/screens/Bridge/components/ShowMoreGasModal';
+import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
   nonce: number;

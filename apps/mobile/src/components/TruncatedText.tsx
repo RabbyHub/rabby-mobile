@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, TextProps } from 'react-native';
+import { TextProps } from 'react-native';
+import { Text } from '@/components/Typography';
 
 /**
  * if the text is truncated, call onTruncate with true, otherwise call with false

@@ -2,7 +2,7 @@ import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Tip } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../hooks/atom';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconLogoutCC, RcIconSwitchCC } from '@/assets2024/icons/gas-account';
+import { Text } from '@/components/Typography';
 
 export const GasAccountHeader: React.FC = () => {
   const color = useThemeColors();

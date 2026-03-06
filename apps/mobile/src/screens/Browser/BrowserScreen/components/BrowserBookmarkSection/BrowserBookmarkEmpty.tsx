@@ -1,11 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { IS_IOS } from '@/core/native/utils';
 import { RcIconDynamicArrowCC } from '@/assets/icons/dapp';
+import { Text } from '@/components/Typography';
 
 export const BrowserBookmarkEmpty = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });

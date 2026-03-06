@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -18,6 +18,7 @@ import {
 
 import IsolatedTag from './IsolatedTag';
 import { useMode } from '../hooks/useMode';
+import { Text } from '@/components/Typography';
 
 const EnabledEmodeInfo = ({
   title,
