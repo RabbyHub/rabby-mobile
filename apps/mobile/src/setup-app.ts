@@ -6,6 +6,7 @@ import {
 import './perfs/bundle-splitter-analysis.ts';
 import './databases/orm';
 import './core/services';
+import './core/utils/fonts';
 import './core/utils/devServerSettings';
 import './core/config/online';
 
