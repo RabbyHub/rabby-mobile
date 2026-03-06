@@ -3,7 +3,8 @@ import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { FC, useCallback, useMemo } from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   style?: StyleProp<ViewStyle>;

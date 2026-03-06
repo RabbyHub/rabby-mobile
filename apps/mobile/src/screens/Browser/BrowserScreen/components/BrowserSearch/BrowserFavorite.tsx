@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import RcIconDelete from '@/assets2024/icons/browser/delete.svg';
+import { Text } from '@/components/Typography';
 export function BrowserFavorite({
   onPress,
 }: {

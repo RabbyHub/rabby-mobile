@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTheme2024 } from '@/hooks/theme';
@@ -10,6 +10,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import AutoLockView from '@/components/AutoLockView';
 import { Button } from '@/components2024/Button';
 import { splitNumberByStep } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 

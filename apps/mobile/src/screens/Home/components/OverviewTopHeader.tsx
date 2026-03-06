@@ -4,7 +4,6 @@ import {
   Pressable,
   Animated as RNAnimated,
   Easing as RNEasing,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -56,6 +55,7 @@ import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import { Text } from '@/components/Typography';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {

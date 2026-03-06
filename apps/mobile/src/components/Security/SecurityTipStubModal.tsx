@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -20,6 +20,7 @@ import {
 } from '@/hooks/navigation';
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
+import { Text } from '@/components/Typography';
 
 const RcTip = makeThemeIconFromCC(RcTipCC, 'orange-default');
 

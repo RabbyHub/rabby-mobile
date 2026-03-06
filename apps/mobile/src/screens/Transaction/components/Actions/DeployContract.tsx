@@ -5,7 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -22,6 +22,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { formatIntlTimestamp } from '@/utils/time';
 import { formatAmount } from '@/utils/number';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface Props {
   data: TransactionGroup;

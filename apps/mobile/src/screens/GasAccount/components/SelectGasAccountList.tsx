@@ -12,16 +12,11 @@ import { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { sortBy } from 'lodash';
 import React, { ReactNode, useMemo } from 'react';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { GasAccountBalance } from './GasAccountBalance';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { trigger } from 'react-native-haptic-feedback';
+import { Text } from '@/components/Typography';
 
 export const SelectGasAccountList = ({
   onChange,

@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Text, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -15,6 +15,7 @@ import { EmodeCategory } from '../../type';
 import { useMode } from '../../hooks/useMode';
 import { useLendingISummary } from '../../hooks';
 import { isEModeCategoryAvailable } from '../../utils/emode';
+import { Text } from '@/components/Typography';
 
 export type EModeCategoryDisplay = EmodeCategory & {
   available: boolean; // indicates if the user can enter this category

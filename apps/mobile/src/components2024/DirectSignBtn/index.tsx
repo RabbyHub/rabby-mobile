@@ -1,7 +1,7 @@
 import { Account } from '@/core/services/preference';
 import AuthButton, { IAuthButtonProps } from '../AuthButton';
 import { isHardWareAccountAccountSupportMiniApproval } from '@/utils/account';
-import { Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '../Button';
 import { CheckBoxRect } from '../CheckBox';
 import { SignatureFlowState, useSignatureStore } from '../MiniSignV2';
+import { Text } from '@/components/Typography';
 
 export const DirectSignBtn = ({
   account,

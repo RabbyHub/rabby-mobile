@@ -11,7 +11,6 @@ import {
   FlatList,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -32,6 +31,7 @@ import { coerceInteger } from '@/utils/number';
 import { apisLending } from '../Lending/hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { worker_plus } from '@/perfs/workerReq';
+import { Text } from '@/components/Typography';
 
 export const makeNoop = () => () => {};
 

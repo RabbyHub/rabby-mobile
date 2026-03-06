@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,6 +16,7 @@ import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { formatPercentage } from '@/screens/Home/components/AssetRenderItems';
 import { isNumber } from 'lodash';
+import { Text } from '@/components/Typography';
 
 const TrendChartComponent = ({
   isPositive,

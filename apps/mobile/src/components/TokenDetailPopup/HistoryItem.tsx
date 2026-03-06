@@ -3,13 +3,14 @@ import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { getChain } from '@/utils/chain';
 import { sinceTime } from '@/utils/time';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import { TxInterAddressExplain } from '@/screens/Transaction/components/TxInterAddressExplain';
 import React, { useCallback, useMemo } from 'react';
 import { ellipsisAddress } from '@/utils/address';
 import { openTxExternalUrl } from '@/utils/transaction';
 import TouchableText from '../Touchable/TouchableText';
+import { Text } from '@/components/Typography';
 
 type HistoryItemProps = {
   data: TxDisplayItem;

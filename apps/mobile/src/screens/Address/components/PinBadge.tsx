@@ -1,7 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { Text, View, ViewStyle } from 'react-native';
+import { View, ViewStyle } from 'react-native';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {

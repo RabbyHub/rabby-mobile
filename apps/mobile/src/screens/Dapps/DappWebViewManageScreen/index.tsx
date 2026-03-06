@@ -8,10 +8,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { debounce } from 'lodash';
 import React, { useMemo } from 'react';
-import { Text } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { DappCardList } from '../components/DappCardList';
 import { useDappWebViewScreen } from '../hooks/useDappWebViewScreen';
+import { Text } from '@/components/Typography';
 
 export function DappWebViewManageScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();

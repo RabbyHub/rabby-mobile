@@ -13,7 +13,8 @@ import { NFTItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   nft: NFTItem;

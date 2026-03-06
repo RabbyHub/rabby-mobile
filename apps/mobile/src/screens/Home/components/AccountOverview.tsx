@@ -2,9 +2,10 @@ import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StyleProp, Text, TextStyle, View } from 'react-native';
+import { StyleProp, TextStyle, View } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Text } from '@/components/Typography';
 
 export const AccountOverview = ({
   account,

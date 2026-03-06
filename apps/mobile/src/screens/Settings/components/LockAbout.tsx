@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextStyle } from 'react-native';
+import { TextStyle } from 'react-native';
 
 import {
   getAutoLockExpireTime,
@@ -20,7 +20,7 @@ import {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import AnimateableText from 'react-native-animateable-text';
+import { Text, AnimateableText } from '@/components/Typography';
 
 function computeCountDown(autoLockTime: number) {
   'worklet';

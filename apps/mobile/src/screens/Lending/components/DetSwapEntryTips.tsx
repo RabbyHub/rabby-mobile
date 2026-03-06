@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 
 import { Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -10,6 +10,7 @@ import IconCloseCC from '@/assets2024/icons/common/close-cc.svg';
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 interface IProps {
   children: React.ReactNode;

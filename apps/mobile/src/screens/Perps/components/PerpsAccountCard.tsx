@@ -12,11 +12,12 @@ import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { PerpHeader } from './PerpHeader';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { Text } from '@/components/Typography';
 
 export const PerpsAccountCard: React.FC<{
   isLogin: boolean;

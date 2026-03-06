@@ -1,12 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAppTheme, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -17,6 +10,7 @@ import { Button } from '@rneui/themed';
 import { useTranslation } from 'react-i18next';
 import { useAppLanguage } from '@/hooks/lang';
 import { SupportedLang } from '@/utils/i18n';
+import { Text } from '@/components/Typography';
 
 function DevUIBuiltInPages() {
   const { styles, colors2024, colors } = useTheme2024({

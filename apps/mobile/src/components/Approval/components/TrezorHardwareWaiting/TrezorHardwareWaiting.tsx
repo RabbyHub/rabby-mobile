@@ -15,7 +15,7 @@ import {
   Props as ApprovalPopupContainerProps,
 } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import TrezorSVG from '@/assets/icons/wallet/trezor.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
@@ -29,6 +29,7 @@ import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
+import { Text } from '@/components/Typography';
 
 interface ApprovalParams {
   address: string;

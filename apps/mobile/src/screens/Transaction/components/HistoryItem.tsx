@@ -6,13 +6,7 @@ import {
   TxDisplayItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -29,6 +23,7 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { HistoryItemTokenArea } from './HistoryItemTokenArea';
 import { getTokenSymbol } from '@/utils/token';
 import FastImage from 'react-native-fast-image';
+import { Text } from '@/components/Typography';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;

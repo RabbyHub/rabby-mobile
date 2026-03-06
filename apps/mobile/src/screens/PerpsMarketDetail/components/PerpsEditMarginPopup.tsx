@@ -28,7 +28,6 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -43,6 +42,7 @@ import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
 import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;

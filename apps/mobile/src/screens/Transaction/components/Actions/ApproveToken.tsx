@@ -13,7 +13,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -41,6 +41,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface Props {
   data: TransactionGroup;

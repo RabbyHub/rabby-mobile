@@ -14,7 +14,6 @@ import React, {
 import {
   Dimensions,
   ImageBackground,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -38,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { unionBy } from 'lodash';
 import { CurvePoint } from '@/hooks/useCurve';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);

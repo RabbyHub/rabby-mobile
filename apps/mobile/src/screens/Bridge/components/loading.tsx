@@ -1,9 +1,10 @@
 import React from 'react';
 import { Skeleton } from '@rneui/themed';
-import { View, Text, Image, Animated, Easing, StyleSheet } from 'react-native';
+import { View, Image, Animated, Easing, StyleSheet } from 'react-native';
 import { Svg, Rect, Circle } from 'react-native-svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 const Dots = () => {
   const { styles } = useTheme2024({ getStyle });

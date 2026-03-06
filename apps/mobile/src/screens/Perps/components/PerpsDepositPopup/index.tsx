@@ -29,7 +29,7 @@ import useDebounce from 'react-use/lib/useDebounce';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
 import {
@@ -51,6 +51,7 @@ import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useSelectedToken } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;

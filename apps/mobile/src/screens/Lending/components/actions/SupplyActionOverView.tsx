@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
@@ -20,6 +20,7 @@ import {
   getAssetCollateralType,
   getCollateralState,
 } from '../../utils/collateral';
+import { Text } from '@/components/Typography';
 
 const SupplyActionOverView: React.FC<
   PopupDetailProps & {

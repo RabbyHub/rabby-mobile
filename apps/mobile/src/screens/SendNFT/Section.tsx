@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useThemeStyles, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,7 @@ import { AddressViewer } from '@/components/AddressViewer';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AddressItemShadowView } from '../Address/components/AddressItemShadowView';
+import { Text, TextInput } from '@/components/Typography';
 
 const getSectionStyles = createGetStyles(colors => {
   return {

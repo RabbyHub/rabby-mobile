@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  TextStyle,
-} from 'react-native';
+import { StyleSheet, View, TouchableOpacity, TextStyle } from 'react-native';
 import { BottomSheetInput } from '@/components/Input';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
@@ -20,6 +14,7 @@ import {
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
 import { useApprovalAlias } from '@/components/Approval/hooks/useApprovalAlias';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

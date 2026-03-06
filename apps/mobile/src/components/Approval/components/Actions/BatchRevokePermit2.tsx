@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -16,6 +16,7 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
 import { RevokeTokenApproveAction } from '@rabby-wallet/rabby-api/dist/types';
+import { Text } from '@/components/Typography';
 
 export const BatchRevokePermit2 = ({
   data,

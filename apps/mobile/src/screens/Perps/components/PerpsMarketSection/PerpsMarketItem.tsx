@@ -6,9 +6,10 @@ import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { FavoriteTag } from '@/components2024/Favorite';
 import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
 const PerpsMarketItemComponent: React.FC<{

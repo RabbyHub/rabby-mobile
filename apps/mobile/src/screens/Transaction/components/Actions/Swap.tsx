@@ -7,7 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -43,6 +43,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
 import { findAccountByPriority } from '@/utils/account';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface Props {
   data: TransactionGroup;

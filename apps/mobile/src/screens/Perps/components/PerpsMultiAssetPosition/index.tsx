@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
@@ -26,6 +26,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { formatPerpsCoin } from '@/utils/perps';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { Text } from '@/components/Typography';
 
 const calculateMarkPrice = (position: AssetPosition['position']) => {
   const entryPxDecimals = position.entryPx?.split('.')[1]?.length || 2;

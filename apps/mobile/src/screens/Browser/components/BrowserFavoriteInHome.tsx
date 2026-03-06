@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import RcIconDelete from '@/assets2024/icons/browser/delete.svg';
 import { DappInfo } from '@/core/services/dappService';
@@ -8,6 +8,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 const MAX_COUNT = 8;
 

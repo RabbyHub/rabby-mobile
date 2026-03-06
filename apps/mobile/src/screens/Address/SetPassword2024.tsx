@@ -4,8 +4,6 @@ import React, { useCallback, useEffect } from 'react';
 
 import {
   View,
-  Text,
-  TextInput,
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
@@ -45,6 +43,7 @@ import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { stats } from '@/utils/stats';
 import { IS_IOS } from '@/core/native/utils';
+import { Text, TextInput } from '@/components/Typography';
 
 const INIT_FORM_DATA = __DEV__
   ? {

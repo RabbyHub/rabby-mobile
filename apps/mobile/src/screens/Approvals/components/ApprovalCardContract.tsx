@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -12,6 +12,7 @@ import RcIconWarning from '@/assets2024/icons/common/warning.svg';
 import { AssetAvatar } from '@/components';
 import { default as RcIconExternalLink2CC } from '@/assets/icons/common/external-link-2-cc.svg';
 import { openNFTLinkFromChainItem } from '../utils';
+import { Text } from '@/components/Typography';
 
 export const ContractFloorLayouts = {
   floor1: { height: 18, paddingTop: 0 },

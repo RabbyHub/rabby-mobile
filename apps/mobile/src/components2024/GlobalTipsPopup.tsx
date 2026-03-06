@@ -8,7 +8,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const GlobalTipsPopup: React.FC<{}> = ({}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);

@@ -8,7 +8,6 @@ import {
   Animated,
   Easing,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -27,6 +26,7 @@ import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 import { BridgeQuoteItem } from './BridgeQuoteItem';
 import { QuoteLoading } from './loading';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   bottomBg: {

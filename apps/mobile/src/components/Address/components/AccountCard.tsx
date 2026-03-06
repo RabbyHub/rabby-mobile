@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -16,6 +16,7 @@ import { WalletBrandImage } from '@/components/WalletBrandImage';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useCallback } from 'react';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { Text } from '@/components/Typography';
 
 export default function AccountCard({
   account,

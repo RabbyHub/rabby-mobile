@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ScrollView,
-  Text,
   View,
   TouchableOpacity,
   Clipboard,
@@ -16,6 +15,7 @@ import { debugLogService } from '@/core/services';
 import type { DebugLogEntry } from '@/core/services/debugLogService';
 import { toast } from '@/components2024/Toast';
 import dayjs from 'dayjs';
+import { Text } from '@/components/Typography';
 
 const LOG_LEVEL_COLORS = {
   info: '#3B82F6',

@@ -13,7 +13,7 @@ import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { PopulatedTransaction } from 'ethers';
 
 import { apiProvider } from '@/core/apis';
@@ -87,6 +87,7 @@ import {
   getToAmountAfterSlippage,
 } from './warning';
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
+import { Text, TextInput } from '@/components/Typography';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;

@@ -10,7 +10,6 @@ import {
   Animated,
   Easing,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -54,6 +53,7 @@ import { useGetCexList } from './hook';
 import FastImage from 'react-native-fast-image';
 import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
 import { apisSingleHome } from '../Home/hooks/singleHome';
+import { Text } from '@/components/Typography';
 
 export const TxStatusItem = ({
   status,

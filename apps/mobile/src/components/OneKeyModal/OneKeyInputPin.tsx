@@ -3,10 +3,11 @@ import { useThemeColors } from '@/hooks/theme';
 import { BottomSheetView, TouchableOpacity } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { FooterButton } from '../FooterButton/FooterButton';
 import AutoLockView from '../AutoLockView';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

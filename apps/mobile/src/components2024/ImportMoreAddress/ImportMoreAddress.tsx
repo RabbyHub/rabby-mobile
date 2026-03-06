@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useAtom } from 'jotai';
@@ -43,6 +43,7 @@ import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import i18next from 'i18next';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import { accountEvents } from '@/core/apis/account';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, ViewStyle, StyleProp, Pressable } from 'react-native';
+import { View, ViewStyle, StyleProp, Pressable } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { WrapperDappActionsMemoItem } from '../../components/ProtocolMoreItem';
@@ -26,6 +26,7 @@ import { isBlacklistMethod, isWhitelistSpender } from '../DappActions/hook';
 import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
 import { formatUsdValue } from '@/utils/number';
 import useProtocols from '@/store/protocols';
+import { Text } from '@/components/Typography';
 
 type SectionListItem = {
   data: IProtocolPortfolio[];

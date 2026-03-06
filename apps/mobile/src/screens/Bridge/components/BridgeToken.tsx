@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   useWindowDimensions,
@@ -33,6 +31,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
+import { Text, TextInput } from '@/components/Typography';
 
 const hiddenSlider = false;
 

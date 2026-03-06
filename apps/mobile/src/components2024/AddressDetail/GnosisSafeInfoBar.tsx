@@ -10,10 +10,11 @@ import { useRequest } from 'ahooks';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { GnosisAdminItem } from './GnosisAdminItem';
 import { Item } from './Item';
+import { Text } from '@/components/Typography';
 
 export const GnosisSafeInfoBar = ({
   address,

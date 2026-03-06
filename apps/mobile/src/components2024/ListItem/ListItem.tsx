@@ -5,7 +5,6 @@ import {
   Image,
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -14,6 +13,7 @@ import { SvgProps } from 'react-native-svg';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors2024 } from '@/constant/theme';
+import { Text } from '@/components/Typography';
 
 const RcIconRight = makeThemeIconFromCC(ArrowRightCC, {
   onLight: ThemeColors2024.light['neutral-title-1'],

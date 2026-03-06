@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import React, { useEffect, useMemo } from 'react';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -12,6 +12,7 @@ import IconAlert from '@/assets/icons/sign/tx/alert.svg';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
+import { Text } from '@/components/Typography';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({

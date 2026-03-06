@@ -1,11 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
+import { View, Animated, Easing, StyleSheet } from 'react-native';
 import { Card } from '../Card';
 import RcPending from '@/assets/icons/swap/pending.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import { Text } from '@/components/Typography';
 
 interface Props {
   icon: React.ReactNode;

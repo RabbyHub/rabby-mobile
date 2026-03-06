@@ -20,13 +20,13 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
 import BigNumber from 'bignumber.js';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
 import { PerpsChart } from './components/PerpsChart';
-import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup ';
+import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
@@ -68,6 +68,7 @@ import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { stats } from '@/utils/stats';
 import { getStatsReportSide } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
+import { Text } from '@/components/Typography';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();

@@ -1,9 +1,10 @@
-import { StyleProp, StyleSheet, Text, ViewStyle, View } from 'react-native';
+import { StyleProp, StyleSheet, ViewStyle, View } from 'react-native';
 
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { Radio } from '../Radio';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 interface Props {
   checked: boolean;

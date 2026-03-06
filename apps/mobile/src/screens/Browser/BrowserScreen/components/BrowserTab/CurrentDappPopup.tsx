@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { RcIconDisconnectCC } from '@/assets/icons/dapp';
 import { AppBottomSheetModal } from '@/components';
@@ -17,6 +17,7 @@ import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
 import { useMyAccounts } from '@/hooks/account';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface Props {
   visible?: boolean;

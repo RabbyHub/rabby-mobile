@@ -1,8 +1,9 @@
 import React from 'react';
-import { Text, TextProps } from 'react-native';
+import { TextProps } from 'react-native';
 
 import { useSQLiteStatics } from '@/databases/hooks/_statics';
 import useInterval from 'react-use/lib/useInterval';
+import { Text } from '@/components/Typography';
 
 export function AppCacheSizeText(props: TextProps) {
   const { semanticBytes, fetchSqliteStatics } = useSQLiteStatics({

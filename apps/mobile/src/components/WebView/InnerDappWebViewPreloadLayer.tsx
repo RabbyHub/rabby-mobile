@@ -5,13 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Image,
-  InteractionManager,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, InteractionManager, StyleSheet, View } from 'react-native';
 import {
   PanGestureHandler,
   PanGestureHandlerStateChangeEvent,
@@ -49,6 +43,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { dappService } from '@/core/services';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 type SceneKey = 'Lending' | 'Perps' | 'Prediction';
 

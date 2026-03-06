@@ -168,6 +168,12 @@ yarn link-assets
 - Keep stores small and focused
 - Never mutate state directly
 
+### Typography (Text Components)
+- **Always import Text, TextInput from `@/components/Typography`** (not from `react-native` directly)
+- This wrapper ensures consistent `allowFontScaling: false` behavior across the app
+- Available exports: `Text`, `TextInput`, `RNGHText`, `RNGHTextInput`, `AnimateableText`, `RNEUIText`
+- ESLint rule `no-restricted-imports` enforces this pattern
+
 ### Git Workflow
 - Pre-push hook runs `yarn lint`
 - Lint-staged runs on commit for staged files

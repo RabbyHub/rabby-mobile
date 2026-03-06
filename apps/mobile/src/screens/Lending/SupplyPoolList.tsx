@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -40,6 +39,7 @@ import { displayGhoForMintableMarket } from './utils/supply';
 import { API_ETH_MOCK_ADDRESS } from './utils/constant';
 import wrapperToken from './config/wrapperToken';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { Text } from '@/components/Typography';
 
 const ListHeaderComponent = React.memo(
   ({

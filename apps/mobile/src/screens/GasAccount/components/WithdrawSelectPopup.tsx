@@ -13,7 +13,6 @@ import { PropsWithChildren, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Pressable,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -38,6 +37,7 @@ import { Button } from '@/components2024/Button';
 import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { trigger } from 'react-native-haptic-feedback';
+import { Text } from '@/components/Typography';
 
 const BottomSheetWrapper = (
   props: PropsWithChildren<
