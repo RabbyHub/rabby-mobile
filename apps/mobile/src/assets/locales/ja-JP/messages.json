@@ -1457,16 +1457,8 @@
           }
         },
         "ledger": {
-          "hdPathType": {
-            "bip44": "BIP44標準：BIP44プロトコルによって定義されたHDpath。最初の3つのウォレットには、オンチェーンで使用されるウォレットがあります。",
-            "ledgerLive": "Ledger Live: Ledger公式HDパス。最初の3つのウォレットには、オンチェーンで使用されるウォレットがあります。",
-            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットがあります。"
-          },
-          "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger公式HDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットはありません。",
-            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットはありません。",
-            "bip44": "BIP44スタンダード：BIP44プロトコルで定義されたHDパス。最初の3つのウォレットには、オンチェーンで使用されるウォレットはありません。"
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "customAddressHdPath": "カスタムウォレット HD パス",
         "selectIndexTip": "ウォレットのシリアル番号を選択して開始してください:",

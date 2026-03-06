@@ -1709,16 +1709,8 @@
           }
         },
         "ledger": {
-          "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: เลย์เอาต์ HD ทางการของ Ledger ใน 3 กระเป๋าแรก ไม่มีการใช้กระเป๋าในเครือข่าย.",
-            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto ใน 3 กระเป๋าแรกไม่มีการใช้กระเป๋าบน-chain",
-            "bip44": "มาตรฐาน BIP44: เส้นทาง HD ที่กำหนดโดยโปรโตคอล BIP44 ใน 3 กระเป๋าแรก จะไม่มีการใช้กระเป๋าบนเครือข่าย"
-          },
-          "hdPathType": {
-            "ledgerLive": "Ledger Live: เส้นทาง HD อย่างเป็นทางการของ Ledger ใน 3 กระเป๋าแรก มีการใช้งานกระเป๋าเงินแบบ on-chain",
-            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto ใน 3 กระเป๋าแรก มีการใช้กระเป๋าเหล่านี้บนเชน",
-            "bip44": "มาตรฐาน BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44 ใน 3 กระเป๋าแรก จะมีกระเป๋าที่ใช้บน-chain"
-          }
+          "hdPathTypeNoChain": {},
+          "hdPathType": {}
         },
         "keystone": {
           "hdPathTypeNoChain": {

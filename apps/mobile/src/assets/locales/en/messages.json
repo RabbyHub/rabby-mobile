@@ -1426,14 +1426,14 @@
         "balance": "Balance",
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 wallets, there are wallets used on-chain.",
-            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol. In the first 3 wallets, there are wallets used on-chain.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 wallets, there are wallets used on-chain."
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 wallets, there are no wallets used on-chain.",
-            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol. In the first 3 wallets, there are no wallets used on-chain.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 wallets, there are no wallets used on-chain."
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
           }
         },
         "onekey": {
