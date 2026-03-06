@@ -24,6 +24,7 @@ import {
 } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const PERPS_LIST = INNER_DAPP_LIST.PERPS;
 const DEFAULT_PERPS_ID = PERPS_LIST[0]?.id ?? 'hyperliquid';
@@ -128,6 +129,13 @@ export function PerpsScreen() {
   const handleSelectDapp = useCallback(
     (item: DappSelectItem) => {
       setPerps(item.id);
+      if (item?.id !== DEFAULT_PERPS_ID && item.url) {
+        matomoRequestEvent({
+          category: 'Websites Usage',
+          action: 'Website_Visit_Website Select Provider',
+          label: safeGetOrigin(item.url) || item.url,
+        });
+      }
     },
     [setPerps],
   );
