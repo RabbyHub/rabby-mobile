@@ -2,7 +2,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Keyboard, TouchableOpacity, View } from 'react-native';
 import RcIconCircleWarning from '@/assets2024/icons/common/circle-warning.svg';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
@@ -12,6 +12,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { Text } from '@/components/Typography';
 
 export const ExternalSwapBridgeDappTips = ({
   dappsAvailable,

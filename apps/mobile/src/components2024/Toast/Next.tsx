@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   StyleProp,
   TextStyle,
-  Text,
 } from 'react-native';
 import Toast, { ToastOptions } from 'react-native-root-toast';
 import { SvgProps } from 'react-native-svg';
@@ -25,6 +24,7 @@ export const RcIconInfo = makeThemeIcon2024FromCC(RcIconInfoCC, ctx => ({
 import React from 'react';
 import { ThemeColors } from '@/constant/theme';
 import { makeThemeIcon2024FromCC } from '@/hooks/makeThemeIcon';
+import { Text } from '@/components/Typography';
 
 function getConfig(): ToastOptions {
   return {

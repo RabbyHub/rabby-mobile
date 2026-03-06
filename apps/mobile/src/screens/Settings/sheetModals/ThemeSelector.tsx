@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -18,6 +18,7 @@ import { default as RcThemeSystemCC } from './icons/theme-system-cc.svg';
 import { default as RcThemeLightCC } from './icons/theme-light-cc.svg';
 import { default as RcThemeDarkCC } from './icons/theme-dark-cc.svg';
 import { IS_IOS } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 const themeSelectorModalVisibleAtom = atom(false);
 export function useThemeSelectorModalVisible() {

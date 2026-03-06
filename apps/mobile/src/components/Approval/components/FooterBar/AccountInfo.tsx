@@ -11,7 +11,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getWalletIcon } from '@/utils/walletInfo';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export interface Props {
   account: Account;

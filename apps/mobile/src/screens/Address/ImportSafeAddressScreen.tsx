@@ -22,7 +22,6 @@ import {
   Platform,
   StyleProp,
   StyleSheet,
-  TextInput,
   TextInputSubmitEditingEventData,
   View,
   ViewProps,
@@ -32,6 +31,7 @@ import { Spin } from '../TransactionRecord/components/Spin';
 import { Chain } from '@/constant/chains';
 import { ViewStyle } from 'react-native-size-matters';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
+import { TextInput } from '@/components/Typography';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',

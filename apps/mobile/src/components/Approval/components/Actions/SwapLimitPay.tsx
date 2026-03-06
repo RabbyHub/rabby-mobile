@@ -16,8 +16,9 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { Chain } from '@/constant/chains';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { formatAmount } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

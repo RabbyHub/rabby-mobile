@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
-import { Text, View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { AssetAvatar } from '@/components';
 import {
   NFTItem,
@@ -28,6 +28,7 @@ import { HistoryItemCateType } from './type';
 import { Account } from '@/core/services/preference';
 import { isArray } from 'lodash';
 import { Dimensions } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface ItemProps {
   status: number;

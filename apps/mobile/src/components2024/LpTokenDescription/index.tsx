@@ -1,11 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { Button } from '../Button';
 import AutoLockView from '@/components/AutoLockView';
 import RcLpTokenIcon from '@/assets2024/icons/home/RcLpTokenIcon.svg';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export const LpTokenDescription: React.FC<{
   protocolId: string;

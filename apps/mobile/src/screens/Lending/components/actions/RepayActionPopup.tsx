@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -66,6 +66,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IAvailableRepayToken } from '../RepayTokenModal';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
+import { Text } from '@/components/Typography';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,

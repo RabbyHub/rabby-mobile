@@ -8,9 +8,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import useAppChainStore from '@/store/appchain';
 import { useShallow } from 'zustand/shallow';
 import { formatUsdValue } from '@/utils/number';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { getStyle } from '../styles';
 import { sortBy } from 'lodash';
+import { Text } from '@/components/Typography';
 
 const PERPS_LIST = INNER_DAPP_LIST.PERPS;
 const DEFAULT_PERPS_ID = PERPS_LIST[0]?.id ?? 'hyperliquid';

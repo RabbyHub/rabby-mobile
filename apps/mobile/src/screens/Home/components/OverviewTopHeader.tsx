@@ -4,7 +4,6 @@ import {
   Pressable,
   Animated as RNAnimated,
   Easing as RNEasing,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -51,6 +50,7 @@ import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { Text } from '@/components/Typography';
 
 export const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {

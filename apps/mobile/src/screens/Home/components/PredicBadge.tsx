@@ -2,7 +2,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useCurrentInnerDappTypeValue } from '@/hooks/useInnerDappValue';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text } from 'react-native-gesture-handler';
+import { RNGHText as Text } from '@/components/Typography';
 
 export const PredictBadge: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });

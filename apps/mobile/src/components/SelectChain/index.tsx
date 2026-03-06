@@ -5,10 +5,11 @@ import { CHAINS_ENUM, getChainList } from '@/constant/chains';
 import { Input } from '@rneui/themed';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SelectChainList } from './SelectChainList';
 import AutoLockView from '../AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 export const SelectChain = ({
   value,

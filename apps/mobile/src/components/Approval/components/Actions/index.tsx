@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Chain } from '@/constant/chains';
@@ -28,6 +28,7 @@ import { TransactionActionList } from './components/TransactionActionList';
 import { Account } from '@/core/services/preference';
 import { MultiActionProps } from '../TypedDataActions';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 export const getActionsStyle = createGetStyles2024(
   ({ colors, colors2024 }) => ({

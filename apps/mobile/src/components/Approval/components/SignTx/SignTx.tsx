@@ -36,7 +36,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
 import {
@@ -123,6 +123,7 @@ import { MultiActionProps } from '../TypedDataActions';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { calcGasLimit } from '@/core/apis/transactions';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
+import { Text } from '@/components/Typography';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {

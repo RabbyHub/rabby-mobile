@@ -3,7 +3,6 @@ import { useAtom } from 'jotai';
 import {
   Pressable,
   ScrollView,
-  Text,
   View,
   RefreshControl,
   Platform,
@@ -28,6 +27,7 @@ import { useHotTokenList } from './hooks/useHotTokenList';
 import { WatchlistCheckbox } from './components/Checkbox';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { tokenItemToITokenItem } from '@/utils/token';
+import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 

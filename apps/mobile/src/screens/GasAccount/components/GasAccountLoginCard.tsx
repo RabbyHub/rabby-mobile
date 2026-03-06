@@ -2,7 +2,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import { GasAccountWrapperBg } from '../components/WrapperBg';
 import { ClaimedGiftAddress } from '@/core/services/gasAccount';
@@ -16,6 +16,7 @@ import { formatUsdValue } from '@/utils/number';
 import { GasAccountGuidePopup } from './GasAccountGuide';
 import ImgGasAccount from '@/assets2024/images/gasAccount/gasaccount.png';
 import { TouchableOpacity } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   onLoginPress?(): void;

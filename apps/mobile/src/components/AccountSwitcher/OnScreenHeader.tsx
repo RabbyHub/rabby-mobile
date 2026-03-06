@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 // caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from './icons/caret-down-circle.svg';
@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useRendererDetect } from '../Perf/PerfDetector';
+import { Text } from '@/components/Typography';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',

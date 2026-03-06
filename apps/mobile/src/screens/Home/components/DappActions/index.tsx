@@ -1,11 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import {
   ExplainTxResponse,
   Tx,
@@ -24,6 +18,7 @@ import { isAccountSupportMiniApproval } from '@/utils/account';
 import { debounce, last } from 'lodash';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { stats } from '@/utils/stats';
+import { Text } from '@/components/Typography';
 
 export const enum ActionType {
   Withdraw = 'withdraw',

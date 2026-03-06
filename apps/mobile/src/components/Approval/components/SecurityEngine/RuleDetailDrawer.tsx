@@ -10,18 +10,12 @@ import { sortBy } from 'lodash';
 import SecurityLevel from './SecurityLevel';
 import { SecurityEngineLevelOrder } from '@/constant/security';
 
-import {
-  Animated,
-  Dimensions,
-  Easing,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { RcIconNavBack } from '@/components/WebView/icons';
+import { Text } from '@/components/Typography';
 
 const width = Dimensions.get('window').width;
 

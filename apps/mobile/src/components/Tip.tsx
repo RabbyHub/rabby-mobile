@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Text, StyleSheet, View, PressableProps } from 'react-native';
+import { StyleSheet, View, PressableProps } from 'react-native';
 import { Platform, StatusBar, Pressable } from 'react-native';
 import Tooltip, { TooltipProps } from 'react-native-walkthrough-tooltip';
 import { colord } from 'colord';
@@ -7,6 +7,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import { useSwitch } from '@/hooks/useSwitch';
 import { AppColorsVariants } from '@/constant/theme';
 import { RNGHPressable, RNGHPressableProps } from './customized/reexports';
+import { Text } from '@/components/Typography';
 
 type PressableComponent = 'RNPressable' | 'RNGHPressable';
 type PressableComProps<T extends PressableComponent> = T extends 'RNPressable'

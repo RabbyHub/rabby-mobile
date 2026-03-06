@@ -7,7 +7,8 @@ import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { Text, View, ViewProps, Image } from 'react-native';
+import { View, ViewProps, Image } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const EmptyAssets = ({
   style,

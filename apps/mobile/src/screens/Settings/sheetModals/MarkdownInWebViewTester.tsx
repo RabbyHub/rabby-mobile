@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { useThemeStyles } from '@/hooks/theme';
@@ -16,6 +16,7 @@ import {
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import AutoLockView from '@/components/AutoLockView';
 import { TermOfUseMarkdown } from '@/screens/ManagePassword/components/TermOfUseMarkdown';
+import { Text } from '@/components/Typography';
 
 export function useShowMarkdownInWebVIewTester() {
   const openedModalIdRef = React.useRef<string>('');

@@ -2,8 +2,9 @@ import { AssetAvatar } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
+import { Text } from '@/components/Typography';
 
 export const DappActionHeader = ({
   logo,

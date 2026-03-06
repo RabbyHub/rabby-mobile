@@ -2,7 +2,6 @@ import React, { useLayoutEffect, useMemo, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   StyleProp,
   ViewStyle,
   TouchableOpacity,
@@ -42,6 +41,7 @@ import { useSendTokenInternalContext } from '../hooks/useSendToken';
 import { RcIconTipRightCC } from '../icons';
 import { makeAccountObject } from '@/utils/account';
 import { IExtractFromPromise } from '@/utils/type';
+import { Text } from '@/components/Typography';
 
 export const ToAccountEntry = ({
   account,

@@ -14,12 +14,8 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const PerpsHistoryDetailPopup: React.FC<{
   visible?: boolean;

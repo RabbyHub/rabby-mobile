@@ -9,12 +9,10 @@ import React, {
 } from 'react';
 import {
   View,
-  Text,
   Keyboard,
   TouchableOpacity,
   StyleSheet,
   Platform,
-  TextInput,
   Dimensions,
   Alert,
   ListRenderItem,
@@ -100,6 +98,7 @@ import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { isLpToken } from '@/utils/lpToken';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { InnerModalChainInfo } from '@/screens/Send/components/InModalChainInfo';
+import { Text, TextInput } from '@/components/Typography';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,

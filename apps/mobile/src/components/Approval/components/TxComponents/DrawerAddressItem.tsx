@@ -12,10 +12,11 @@ import { KeyringAccountWithAlias as Account } from '@/hooks/account';
 import { NameAndAddress } from '@/components/NameAndAddress';
 import { RcIconTagYou, RcIconTagNotYou } from '@/assets/icons/address';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { RcIconCheckedCC } from '@/assets/icons/common';
+import { Text } from '@/components/Typography';
 
 export const ownerPriority = [
   KEYRING_TYPE.SimpleKeyring,

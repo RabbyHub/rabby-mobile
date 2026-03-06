@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { atom, useAtom } from 'jotai';
 
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
@@ -17,6 +17,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { FontWeightEnum } from '@/core/utils/fonts';
+import { Text } from '@/components/Typography';
 
 const currentLanguageModalVisibleAtom = atom(false);
 export function useCurrentLanguageModalVisible() {

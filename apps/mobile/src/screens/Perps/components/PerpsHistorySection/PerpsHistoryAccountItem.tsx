@@ -5,10 +5,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import React, { memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Text, View } from 'react-native';
+import { Animated, View } from 'react-native';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import { Easing } from 'react-native-reanimated';
 import { formatPerpsUsdValue } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 interface HistoryAccountItemProps {
   data: AccountHistoryItem;

@@ -6,11 +6,12 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { getChain } from '@/utils/chain';
 import { Media } from '../Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { abbreviateNumber } from '@/utils/math';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { splitNumberByStep } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

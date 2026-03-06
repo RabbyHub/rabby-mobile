@@ -1,6 +1,6 @@
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { colord } from 'colord';
@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import EventEmitter from 'events';
 import { throttle } from 'lodash';
+import { Text } from '@/components/Typography';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 

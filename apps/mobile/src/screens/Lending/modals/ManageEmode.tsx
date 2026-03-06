@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 
-import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -12,6 +11,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { Text } from '@/components/Typography';
 
 export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });

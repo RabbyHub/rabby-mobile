@@ -7,16 +7,11 @@ import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React, { useMemo } from 'react';
-import {
-  StyleProp,
-  Text,
-  useWindowDimensions,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { DappFavoriteItem } from './DappFavoriteItem';
 import { DappFavoriteSectionEmpty } from './DappFavoriteSectionEmpty';
+import { Text } from '@/components/Typography';
 
 export const DappFavoriteSection = ({
   data,

@@ -12,7 +12,7 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Keyboard, Pressable, Text, View } from 'react-native';
+import { Dimensions, Keyboard, Pressable, View } from 'react-native';
 import {
   AccountSelectModalProvider,
   SelectAccountSheetModalScreen,
@@ -31,6 +31,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { touchedFeedback } from '@/utils/touch';
 import { ScreenPanelScanner } from './modalScreens/ScanQrcode';
 import { Button } from '@/components2024/Button';
+import { Text } from '@/components/Typography';
 
 function getDefaultScreenStates(): {
   isScanning: boolean;

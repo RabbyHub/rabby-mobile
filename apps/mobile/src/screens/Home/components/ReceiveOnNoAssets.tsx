@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,6 +20,7 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useState } from 'react';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 const SIZES = {
   qrCodeSize: 163,

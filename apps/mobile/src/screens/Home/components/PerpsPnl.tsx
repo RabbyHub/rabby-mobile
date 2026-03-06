@@ -6,8 +6,8 @@ import { useCurrentInnerDappTypeValue } from '@/hooks/useInnerDappValue';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { Text } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
+import { RNGHText as Text } from '@/components/Typography';
 
 const PerpsPnlByHyperliquid: React.FC<{}> = () => {
   const { perpsPositionInfo } = usePerpsHomePnl();

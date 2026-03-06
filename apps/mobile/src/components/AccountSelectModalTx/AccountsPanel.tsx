@@ -10,7 +10,6 @@ import {
   Pressable as RNPressable,
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -50,6 +49,7 @@ import { touchedFeedback } from '@/utils/touch';
 import { RcIconLockCC } from '@/assets/icons/send';
 import { default as RcIconUnknownAddressAvatarCC } from '@/screens/Send/icons/unknown-address-avatar-cc.svg';
 import { SelectAccountSheetModalSizes } from './layout';
+import { Text } from '@/components/Typography';
 
 const MY_ADDRESS_LIMIT = 3;
 

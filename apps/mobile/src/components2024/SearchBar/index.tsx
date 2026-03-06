@@ -2,8 +2,6 @@ import React, { ReactNode, useImperativeHandle, useRef, useState } from 'react';
 import {
   StyleProp,
   StyleSheet,
-  Text,
-  TextInput,
   TextInputProps,
   TextStyle,
   View,
@@ -23,6 +21,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { Text, TextInput } from '@/components/Typography';
 
 export interface Props extends Omit<TextInputProps, 'style'> {
   style?: StyleProp<ViewStyle>;

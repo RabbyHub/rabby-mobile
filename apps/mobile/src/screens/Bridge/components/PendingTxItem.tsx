@@ -16,7 +16,6 @@ import {
   Animated,
   Easing,
   Pressable,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -51,6 +50,7 @@ import { RootNames } from '@/constant/layout';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { Text } from '@/components/Typography';
 
 type StepStatusType = 'loading' | 'success' | 'failed' | 'queued' | 'dash';
 

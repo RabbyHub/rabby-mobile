@@ -4,7 +4,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BackHandler, Dimensions, Text, View } from 'react-native';
+import { BackHandler, Dimensions, View } from 'react-native';
 import {
   DappWebViewHideContext,
   useDappWebViewScreen,
@@ -29,6 +29,7 @@ import { useRoute } from '@react-navigation/native';
 import { HomeNavigatorParamsList } from '@/navigation-type';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import LinearGradient from 'react-native-linear-gradient';
+import { Text } from '@/components/Typography';
 
 /**
  * @description this screen will be put on top level of App's navigation

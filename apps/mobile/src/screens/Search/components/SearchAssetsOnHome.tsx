@@ -13,7 +13,6 @@ import {
   FlatListProps,
   Keyboard,
   Pressable,
-  Text,
   View,
   ViewProps,
 } from 'react-native';
@@ -48,6 +47,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 import { tokenItemToITokenItem } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 
 interface Props {
   resultTokens: ITokenItem[];

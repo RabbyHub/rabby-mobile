@@ -9,7 +9,7 @@ import React, {
   useLayoutEffect,
   useRef,
 } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
@@ -45,6 +45,7 @@ import { ITokenItem } from '@/store/tokens';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { isAddress } from 'viem';
+import { Text } from '@/components/Typography';
 
 interface TokenSelectProps {
   token?: TokenItem;

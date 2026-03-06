@@ -21,7 +21,6 @@ import {
   Dimensions,
   Keyboard,
   StyleSheet,
-  Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -35,6 +34,7 @@ import { ConfirmModifyRpcModal } from './ConfirmModifyRpcModal';
 import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 type Props = {
   isEdit?: boolean;

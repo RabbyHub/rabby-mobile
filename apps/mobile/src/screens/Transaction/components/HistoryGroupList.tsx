@@ -6,7 +6,7 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from 'react';
-import { FlatList, Platform, View, Text } from 'react-native';
+import { FlatList, Platform, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGetCexList } from '../hook';
 import { useMemoizedFn } from 'ahooks';
 import { Tabs } from 'react-native-collapsible-tab-view';
+import { Text } from '@/components/Typography';
 
 const isIOS = Platform.OS === 'ios';
 

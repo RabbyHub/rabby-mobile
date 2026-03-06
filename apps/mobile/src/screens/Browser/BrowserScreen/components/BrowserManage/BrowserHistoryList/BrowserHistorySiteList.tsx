@@ -7,8 +7,9 @@ import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { noop } from 'lodash';
 import React from 'react';
-import { SectionList, Text, View } from 'react-native';
+import { SectionList, View } from 'react-native';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export const BrowserHistorySiteItem = ({
   item,

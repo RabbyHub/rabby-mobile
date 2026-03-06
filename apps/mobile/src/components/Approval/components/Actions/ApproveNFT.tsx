@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -16,6 +16,7 @@ import { ProtocolListItem } from './components/ProtocolListItem';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubCol, SubRow, SubTable } from './components/SubTable';
+import { Text } from '@/components/Typography';
 
 const ApproveNFT = ({
   data,

@@ -13,7 +13,6 @@ import {
   FlatList,
   ListRenderItem,
   StyleProp,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -21,6 +20,7 @@ import { PerpsHistoryAccountItem } from './PerpsHistoryAccountItem';
 import { PerpsHistoryDetailPopup } from './PerpsHistoryDetailPopup';
 import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { PerpsHistoryItem } from './PerpsHistoryItem';
+import { Text } from '@/components/Typography';
 
 export const PerpsHistoryList: React.FC<{
   ListHeaderComponent?: React.ReactElement;
