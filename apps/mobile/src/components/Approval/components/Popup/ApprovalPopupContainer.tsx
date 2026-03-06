@@ -19,7 +19,6 @@ import {
   ScrollView,
   StyleProp,
   StyleSheet,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -30,6 +29,7 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { RetryUpdateType } from '@/utils/errorTxRetry';
 import TxFailedSVG from '@/assets2024/icons/common/failed-retry.svg';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 const getStyles = createGetStyles2024(() => ({
   wrapper: {

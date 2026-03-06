@@ -5,8 +5,9 @@ import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import { Text } from '@/components/Typography';
 
 export const PerpsMarketItem: React.FC<{
   onPress?(): void;

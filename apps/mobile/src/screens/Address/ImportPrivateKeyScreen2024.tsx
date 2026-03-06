@@ -14,7 +14,6 @@ import {
   Keyboard,
   Pressable,
   StyleSheet,
-  Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -37,6 +36,7 @@ import {
   isNewlyInputTextSameWithContentFromClipboard,
   onPastedSensitiveData,
 } from '@/utils/clipboard';
+import { Text } from '@/components/Typography';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });

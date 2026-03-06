@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
-import { Pressable, View, Text } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { RcIconMan } from '@/assets2024/icons/whitelist';
 import { RcIconLockCC } from '@/assets/icons/send';
+import { Text } from '@/components/Typography';
 
 const EmptyWhiteListHolder = ({
   onAddWhitelist,

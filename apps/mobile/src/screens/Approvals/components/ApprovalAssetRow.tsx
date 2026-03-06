@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -16,6 +16,7 @@ import ApprovalNFTBadge from './NFTBadge';
 import { parseApprovalSpenderSelection } from '../utils';
 import { HighlightText } from '@/components2024/HighlightText';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },

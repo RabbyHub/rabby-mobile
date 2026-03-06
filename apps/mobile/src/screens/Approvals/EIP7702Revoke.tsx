@@ -3,7 +3,6 @@ import {
   View,
   RefreshControl,
   Platform,
-  Text,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
@@ -41,6 +40,7 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import { EIP7702SupportedChainsSheet } from './components/EIP7702SupportedChainsSheet';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 const isIOS = Platform.OS === 'ios';
 function EIP7702Header({

@@ -3,9 +3,10 @@ import QRCode from 'react-native-qrcode-svg';
 import { UR, UREncoder } from '@ngraveio/bc-ur';
 import { useTranslation, Trans } from 'react-i18next';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 interface IProps {
   type: string;

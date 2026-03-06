@@ -1,7 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { ReactNode } from 'react';
-import { StyleSheet, View, PressableProps, Text } from 'react-native';
+import { StyleSheet, View, PressableProps } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface ProgressBarProps extends PressableProps {
   amount: number;

@@ -1,12 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +8,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { FooterButtonScreenContainer as FooterButtonScreenContainer2024 } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { Button } from '@/components2024/Button';
+import { Text } from '@/components/Typography';
 
 const ScreenContainers = {
   NormalScreenContainer,

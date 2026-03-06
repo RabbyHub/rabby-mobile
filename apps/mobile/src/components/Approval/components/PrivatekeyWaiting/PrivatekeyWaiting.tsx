@@ -13,7 +13,7 @@ import {
   Props as ApprovalPopupContainerProps,
 } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
@@ -37,6 +37,7 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
+import { Text } from '@/components/Typography';
 
 interface ApprovalParams {
   address: string;

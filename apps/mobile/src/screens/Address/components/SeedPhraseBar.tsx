@@ -6,9 +6,10 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
-import { Text, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 interface Props {
   address: string;

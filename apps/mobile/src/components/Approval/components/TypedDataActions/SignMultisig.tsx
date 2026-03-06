@@ -7,10 +7,11 @@ import { MultiSigRequireData } from '@rabby-wallet/rabby-action';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Chain } from '@/constant/chains';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
 import { findChain } from '@/utils/chain';
+import { Text } from '@/components/Typography';
 
 const PushMultiSig = ({
   data,

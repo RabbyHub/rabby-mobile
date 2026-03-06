@@ -7,7 +7,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { sortBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../Button';
@@ -15,6 +15,7 @@ import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { AccountSelectItem } from './AccountSelectItem';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface AccountSelectDrawerProps {
   onChange(account: Account): void;

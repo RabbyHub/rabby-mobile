@@ -16,7 +16,7 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { BackupItem, BackupItemSkeleton } from './BackupItem2024';
 import { Button } from '@/components2024/Button';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -24,6 +24,7 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { IS_IOS } from '@/core/native/utils';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { shouldRedirectToSetPasswordBefore2024 } from '@/hooks/useLock';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

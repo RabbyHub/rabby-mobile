@@ -2,7 +2,8 @@ import { RcArrowRightCC } from '@/assets/icons/common';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const makeNoop = () => () => {};
 

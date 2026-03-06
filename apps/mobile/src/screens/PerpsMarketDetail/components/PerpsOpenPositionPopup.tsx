@@ -24,11 +24,9 @@ import { useTranslation } from 'react-i18next';
 import {
   Platform,
   Keyboard,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
-  TextInput,
   StyleSheet,
 } from 'react-native';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
@@ -51,6 +49,7 @@ import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { showToast } from '@/hooks/perps/showToast';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
+import { Text, TextInput } from '@/components/Typography';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { GasAccountWrapperBg } from './WrapperBg';
@@ -12,6 +12,7 @@ import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { Button } from '@/components2024/Button';
+import { Text } from '@/components/Typography';
 
 const loginTipPngSource = require('@/assets/icons/gas-account/gas-account-deposit-tip-2024-new.png');
 

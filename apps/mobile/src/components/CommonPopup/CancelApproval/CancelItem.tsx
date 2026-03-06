@@ -1,9 +1,10 @@
 import clsx from 'clsx';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 export interface Props {
   onClick(): void;

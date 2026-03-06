@@ -1,7 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Platform, StyleProp, Text, TextStyle, View } from 'react-native';
+import { Platform, StyleProp, TextStyle, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 

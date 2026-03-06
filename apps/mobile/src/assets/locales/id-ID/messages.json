@@ -1355,16 +1355,8 @@
       },
       "hd": {
         "ledger": {
-          "hdPathType": {
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger. Di 3 dompet pertama, ada dompet yang digunakan di on-chain.",
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto. Di 3 dompet pertama, terdapat dompet yang digunakan secara on-chain.",
-            "bip44": "Standar BIP44: HDpath yang ditentukan oleh protokol BIP44. Di 3 dompet pertama, terdapat dompet yang digunakan di on-chain."
-          },
-          "hdPathTypeNoChain": {
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto. Di 3 dompet pertama, tidak ada dompet yang digunakan di on-chain.",
-            "bip44": "Standar BIP44: Jalur HD yang ditentukan oleh protokol BIP44. Di 3 dompet pertama, tidak ada dompet yang digunakan di blockchain.",
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger. Di 3 dompet pertama, tidak ada dompet yang digunakan di on-chain."
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "onekey": {
           "hdPathType": {

@@ -32,7 +32,7 @@ import {
   whitelistService,
 } from '@/core/services';
 import { openapi, testOpenapi } from '@/core/request';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
@@ -64,6 +64,7 @@ import {
   MultiAction,
   TypeDataActionItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { Text } from '@/components/Typography';
 
 interface SignTypedDataProps {
   method: string;

@@ -5,7 +5,6 @@ import {
   FlatList,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -38,6 +37,7 @@ import {
   connectFeService,
   getFeServiceURL,
 } from '@/core/notifications/test-server';
+import { Text } from '@/components/Typography';
 
 function DevToast() {
   const { styles, colors2024, colors } = useTheme2024({

@@ -10,11 +10,12 @@ import dayjs from 'dayjs';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { GnosisTransactionQueueList } from './GnosisTransactionQueueList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apisSafe } from '@/core/apis/safe';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 const getTabs = (
   networks: string[],

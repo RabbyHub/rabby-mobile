@@ -9,10 +9,10 @@ import {
   ImageURISource,
   StyleProp,
   StyleSheet,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
+import { Text } from '@/components/Typography';
 import FastImage, { FastImageProps } from 'react-native-fast-image';
 
 const bgColorList = [

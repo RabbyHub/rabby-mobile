@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useWalletBrandLogo } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
@@ -9,6 +9,7 @@ import { splitNumberByStep } from '@/utils/number';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { Text } from '@/components/Typography';
 
 const getStyles = createGetStyles(colors => {
   return {

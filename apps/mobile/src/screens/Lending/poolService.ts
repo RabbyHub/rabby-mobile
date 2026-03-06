@@ -258,8 +258,10 @@ export const buildDebtSwitchTx = ({
     newAssetUnderlying,
     newAssetDebtToken,
     maxNewDebtAmount,
+    // 额外抵押物能力，这里并不需要
     extraCollateralAmount: '0',
     extraCollateralAsset: '0x0000000000000000000000000000000000000000',
+
     repayAll: isMaxSelected,
     txCalldata,
     augustus,

@@ -5,8 +5,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -20,6 +18,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { toast } from '@/components2024/Toast';
 import { useSlTpUsdInput } from '@/hooks/useUsdInput';
 import { formatPerpsCoin } from '@/utils/perps';
+import { Text, TextInput } from '@/components/Typography';
 
 interface Props {
   visible?: boolean;

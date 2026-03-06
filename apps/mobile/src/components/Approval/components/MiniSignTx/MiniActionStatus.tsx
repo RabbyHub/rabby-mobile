@@ -8,8 +8,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { Dots } from '../Popup/Dots';
+import { Text } from '@/components/Typography';
 
 export type MiniActionStatusTask = {
   status: 'idle' | 'active' | 'paused' | 'completed';

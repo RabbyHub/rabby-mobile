@@ -1,13 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { memo, useState } from 'react';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 import { Account } from '@/core/services/preference';
 import { WalletIcon } from '../WalletIcon/WalletIcon';
@@ -16,6 +10,7 @@ import { useAlias } from '@/hooks/alias';
 import { useMemoizedFn } from 'ahooks';
 import { AccountSelectorPopup } from './AccountSelectorPopup';
 import { ellipsisAddress } from '@/utils/address';
+import { Text } from '@/components/Typography';
 
 interface Props {
   style?: StyleProp<ViewStyle>;

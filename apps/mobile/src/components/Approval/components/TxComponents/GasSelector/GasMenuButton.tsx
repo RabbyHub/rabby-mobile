@@ -4,7 +4,7 @@ import GasLevelFastSVG from '@/assets/icons/sign/gas-level-fast.svg';
 import GasLevelNormalSVG from '@/assets/icons/sign/gas-level-normal.svg';
 import GasLevelInstantSVG from '@/assets/icons/sign/gas-level-instant.svg';
 import ArrowSVG from '@/assets/icons/sign/arrow-cc.svg';
-import { StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import {
   useGetBinaryMode,
   useTheme2024,
@@ -19,6 +19,7 @@ import BigNumber from 'bignumber.js';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import * as DropdownMenu from 'zeego/src/dropdown-menu';
+import { Text } from '@/components/Typography';
 
 interface Props {
   gasList: GasLevel[];

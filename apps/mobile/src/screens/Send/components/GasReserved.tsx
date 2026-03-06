@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 
 import { Trans, useTranslation } from 'react-i18next';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -8,6 +8,7 @@ import { formatTokenAmount } from '@/utils/number';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 const getStyles = createGetStyles(colors => {
   return {

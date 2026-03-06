@@ -5,9 +5,9 @@ import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Text } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { Text } from '@/components/Typography';
 
 export default function TokenLabel({
   token,

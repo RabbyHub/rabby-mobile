@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import ImageInviteDark from '@/assets2024/icons/perps/hyperliquid-invite-dark.png';
 import ImageInviteLight from '@/assets2024/icons/perps/hyperliquid-invite-light.png';
@@ -18,6 +18,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useUnmount } from 'ahooks';
 import { Trans, useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 interface Props {
   visible?: boolean;

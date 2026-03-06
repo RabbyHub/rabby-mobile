@@ -1,5 +1,5 @@
 import React, { useEffect, useImperativeHandle, useMemo, useRef } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { trigger } from 'react-native-haptic-feedback';
 
@@ -10,6 +10,7 @@ import AnimationStar from './animations/star.json';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { getLottieAnimationDurationInMS } from '@/utils/time';
+import { Text } from '@/components/Typography';
 
 const STAR_SIZE = 34;
 

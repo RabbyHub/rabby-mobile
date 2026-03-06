@@ -12,7 +12,7 @@ import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ColorValue, Pressable, Text, View } from 'react-native';
+import { ColorValue, Pressable, View } from 'react-native';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import RcIconSendCC from '@/assets2024/singleHome/send.svg';
@@ -24,6 +24,7 @@ import { useSetAtom } from 'jotai';
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { CHAINS_ENUM } from '@debank/common';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 

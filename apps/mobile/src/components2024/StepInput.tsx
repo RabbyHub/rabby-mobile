@@ -1,8 +1,6 @@
 import React, { useRef } from 'react';
 import {
   StyleProp,
-  Text,
-  TextInput,
   TextStyle,
   TouchableOpacity,
   View,
@@ -14,6 +12,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { isNumber } from 'lodash';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { Text, TextInput } from '@/components/Typography';
 const isAndroid = Platform.OS === 'android';
 
 export const StepInput: React.FC<{

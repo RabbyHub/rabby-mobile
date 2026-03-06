@@ -1355,16 +1355,8 @@
       },
       "hd": {
         "ledger": {
-          "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu. İlk 3 cüzdanda, zincir üzerinde kullanılan cüzdanlar vardır.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu. İlk 3 cüzdanda, zincir üzerinde kullanılan cüzdanlar vardır.",
-            "bip44": "BIP44 Standard: BIP44 protokolü tarafından tanımlanan HDpath. İlk 3 cüzdanda, zincir üzerine kullanılan cüzdanlar vardır."
-          },
-          "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu. İlk 3 cüzdanda, on-chain'de kullanılan cüzdan yok.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu. İlk 3 cüzdanda, on-chain kullanılan cüzdan yok.",
-            "bip44": "BIP44 Standartı: BIP44 protokolü tarafından tanımlanan HD yolu. İlk 3 cüzdanda, zincir üzerinde kullanılan cüzdan yoktur."
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "onekey": {
           "hdPathType": {

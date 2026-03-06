@@ -6,7 +6,7 @@ import {
   SIGN_PERMISSION_OPTIONS,
 } from '@/constant/permission';
 import { preferenceService } from '@/core/services';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Radio } from '@/components/Radio';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

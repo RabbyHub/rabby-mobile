@@ -20,7 +20,6 @@ import {
   Keyboard,
   Pressable,
   StyleSheet,
-  Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -43,6 +42,7 @@ import {
   isNewlyInputTextSameWithContentFromClipboard,
   onPastedSensitiveData,
 } from '@/utils/clipboard';
+import { Text } from '@/components/Typography';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {

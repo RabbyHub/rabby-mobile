@@ -5,12 +5,13 @@ import { useThemeColors } from '@/hooks/theme';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Tab, TabView } from '@rneui/themed';
 import React, { useCallback } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components2024/Toast';
+import { Text } from '@/components/Typography';
 
 interface ContentProps {
   abi?: ExplainTxResponse['abi_str'];

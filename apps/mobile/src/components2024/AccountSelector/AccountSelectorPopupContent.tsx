@@ -1,12 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 import { IS_ANDROID } from '@/core/native/utils';
 import { Account } from '@/core/services/preference';
@@ -20,6 +14,7 @@ import {
   AddressItemInPanel,
   AddressItemSizes,
 } from '@/components/AccountSwitcher/AddressItemInPanel';
+import { Text } from '@/components/Typography';
 
 const SectionCollapsableNav = function ({
   isCollapsed = false,

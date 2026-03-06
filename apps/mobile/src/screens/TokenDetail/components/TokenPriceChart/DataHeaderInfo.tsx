@@ -3,7 +3,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { View } from 'react-native';
-import AnimateableText from 'react-native-animateable-text';
 import {
   useAnimatedProps,
   useAnimatedStyle,
@@ -13,6 +12,7 @@ import { LineChart } from 'react-native-wagmi-charts';
 import { LoadingLinear } from './LoadingLinear';
 import { CurvePoint } from '@/hooks/useCurve';
 import { TabKey } from './TimeTab';
+import { AnimateableText } from '@/components/Typography';
 
 export const DataHeaderInfo = ({
   activeKey,

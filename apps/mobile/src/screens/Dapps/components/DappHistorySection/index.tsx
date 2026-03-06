@@ -3,9 +3,10 @@ import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { DappHistoryCardList } from './DappHistoryCardList';
 import { DappHistorySectionEmpty } from './DappHistorySectionEmpty';
+import { Text } from '@/components/Typography';
 
 export const DappHistorySection = ({
   HeaderComponent,

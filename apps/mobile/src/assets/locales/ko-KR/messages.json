@@ -1715,16 +1715,8 @@
           }
         },
         "ledger": {
-          "hdPathType": {
-            "bip44": "BIP44 표준: BIP44 프로토콜에 의해 정의된 HDpath. 처음 3개의 지갑에는 온체인에서 사용되는 지갑이 있습니다.",
-            "ledgerLive": "Ledger Live: Ledger 공식 HD 경로. 처음 3개의 지갑은 온체인에서 사용되는 지갑입니다.",
-            "legacy": "레거시: MEW / Mycrypto에서 사용하는 HD 경로. 처음 3개의 지갑에서는 온체인에서 사용되는 지갑이 있습니다."
-          },
-          "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger 공식 HD 경로. 처음 3개의 지갑에서는 온체인에서 사용되는 지갑이 없습니다.",
-            "bip44": "BIP44 표준: BIP44 프로토콜에 의해 정의된 HD 경로. 처음 3개의 지갑에서는 온체인에서 사용되는 지갑이 없습니다.",
-            "legacy": "레거시: MEW / Mycrypto에서 사용하는 HD 경로. 처음 3개의 지갑에서는 온체인에 사용되는 지갑이 없습니다."
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "customAddressHdPath": "사용자 정의 지갑 HD 경로",
         "selectIndexTip": "지갑의 일련번호를 선택하여 시작하세요:",

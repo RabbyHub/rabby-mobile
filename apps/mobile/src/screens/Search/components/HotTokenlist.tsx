@@ -14,7 +14,6 @@ import {
   Keyboard,
   RefreshControl,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -24,6 +23,7 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { tokenItemToITokenItem } from '@/utils/token';
+import { Text } from '@/components/Typography';
 
 export const HotTokenList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });

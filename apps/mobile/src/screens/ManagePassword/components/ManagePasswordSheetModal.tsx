@@ -1,11 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import {
-  Text,
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  TextInput,
-} from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import * as Yup from 'yup';
@@ -35,6 +29,7 @@ import { useAccounts } from '@/hooks/account';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
+import { Text, TextInput } from '@/components/Typography';
 
 type Props = {
   height?: number;

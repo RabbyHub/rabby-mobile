@@ -6,7 +6,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, TouchableOpacity, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;

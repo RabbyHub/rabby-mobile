@@ -1,7 +1,6 @@
 import {
   Dimensions,
   StyleSheet,
-  Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
@@ -18,6 +17,7 @@ import { useExposureRateGuide, useRateModal } from './hooks';
 import PressableStar from './RateStar';
 import { useEffect, useState } from 'react';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { Text } from '@/components/Typography';
 
 const STAR_SIZE = 38;
 const TRIGGER_HEIGHT = 88;

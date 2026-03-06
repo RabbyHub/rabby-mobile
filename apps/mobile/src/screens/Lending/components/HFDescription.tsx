@@ -1,13 +1,14 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AutoLockView from '@/components/AutoLockView';
 import RcIconWarningCircleCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { HealthFactorBar } from './HealthFactorBar';
 import { HF_COLOR_GOOD_THRESHOLD } from '../utils/constant';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export const HFDescription: React.FC<{
   hf: string;

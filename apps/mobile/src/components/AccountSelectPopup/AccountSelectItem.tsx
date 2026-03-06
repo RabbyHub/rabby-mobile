@@ -9,9 +9,10 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { AddressViewer } from '../AddressViewer';
+import { Text } from '@/components/Typography';
 
 interface AccountItemProps {
   account: KeyringAccountWithAlias;

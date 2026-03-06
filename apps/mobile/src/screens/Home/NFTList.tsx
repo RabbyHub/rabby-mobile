@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { ListRenderItem, StyleSheet, Text, View } from 'react-native';
+import { ListRenderItem, StyleSheet, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { navigateDeprecated } from '@/utils/navigation';
@@ -47,6 +47,7 @@ import { Account } from '@/core/services/preference';
 import { getItemId } from './utils/listRenderId';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
+import { Text } from '@/components/Typography';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
