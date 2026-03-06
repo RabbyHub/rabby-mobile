@@ -31,9 +31,7 @@ export const pulldownRefreshSizes = {
   homeHeaderHeight: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 56),
 };
 
-const USE_PULL_REFRESH_INDICATOR_ON_ANDROID = false;
-export const SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING =
-  !IS_ANDROID || USE_PULL_REFRESH_INDICATOR_ON_ANDROID;
+export const SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING = !IS_ANDROID;
 
 const AnimatedActivityIndicator =
   Animated.createAnimatedComponent(ActivityIndicator);
