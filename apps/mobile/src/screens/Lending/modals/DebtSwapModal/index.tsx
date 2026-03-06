@@ -603,19 +603,25 @@ export default function DebtSwapModal({
     });
 
   const isExceedMaxLtvAfterSwap = useMemo(() => {
-    if (!toToken || !iUserSummary || !fromAmount || !toAmountAfterSlippage) {
+    if (
+      !toToken ||
+      !iUserSummary ||
+      !debouncedFromAmount ||
+      !toAmountAfterSlippage
+    ) {
       return false;
     }
-
+    if (
+      !fromReserve?.formattedPriceInMarketReferenceCurrency ||
+      !toReserve?.formattedPriceInMarketReferenceCurrency
+    ) {
+      return false;
+    }
     const fromPriceInMarketRef = valueToBigNumber(
-      fromReserve?.formattedPriceInMarketReferenceCurrency ||
-        fromToken.usdPrice ||
-        '0',
+      fromReserve.formattedPriceInMarketReferenceCurrency,
     );
     const toPriceInMarketRef = valueToBigNumber(
-      toReserve?.formattedPriceInMarketReferenceCurrency ||
-        toToken.usdPrice ||
-        '0',
+      toReserve.formattedPriceInMarketReferenceCurrency,
     );
     if (fromPriceInMarketRef.lte(0) || toPriceInMarketRef.lte(0)) {
       return false;
@@ -624,28 +630,27 @@ export default function DebtSwapModal({
     // 留了 buffer，所以一般会大于 0
     const increasedDebtInMarketRef = valueToBigNumber(toAmountAfterSlippage)
       .multipliedBy(toPriceInMarketRef)
-      .minus(valueToBigNumber(fromAmount).multipliedBy(fromPriceInMarketRef));
+      .minus(
+        valueToBigNumber(debouncedFromAmount).multipliedBy(
+          fromPriceInMarketRef,
+        ),
+      );
     if (increasedDebtInMarketRef.lte(0)) {
       return false;
     }
 
     const availableBorrowsInMarketRef = valueToBigNumber(
-      iUserSummary.availableBorrowsMarketReferenceCurrency ||
-        iUserSummary.availableBorrowsUSD ||
-        '0',
+      iUserSummary.availableBorrowsMarketReferenceCurrency || '0',
     );
 
     return increasedDebtInMarketRef.gt(availableBorrowsInMarketRef);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- toToken?.usdPrice 需单独依赖，价格更新时 token 引用可能不变
   }, [
     toToken,
     iUserSummary,
-    fromAmount,
+    debouncedFromAmount,
     toAmountAfterSlippage,
     fromReserve?.formattedPriceInMarketReferenceCurrency,
-    fromToken.usdPrice,
     toReserve?.formattedPriceInMarketReferenceCurrency,
-    toToken?.usdPrice,
   ]);
 
   useEffect(() => {
@@ -1052,7 +1057,7 @@ export default function DebtSwapModal({
           {
             height:
               BOTTOM_SIZE.BUTTON +
-              (isLiquidatable
+              (isLiquidatable || isExceedMaxLtvAfterSwap
                 ? BOTTOM_SIZE.TIPS
                 : isRisky
                 ? BOTTOM_SIZE.CHECKBOX
