@@ -13,7 +13,6 @@ import {
   Alert,
   Dimensions,
   Platform,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -23,6 +22,7 @@ import { useMemoizedFn } from 'ahooks';
 import { sleep } from '@/utils/async';
 import Toast from 'react-native-root-toast';
 import { toast } from '@/components2024/Toast';
+import { Text } from '@/components/Typography';
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
   marketDataMap: MarketDataMap;

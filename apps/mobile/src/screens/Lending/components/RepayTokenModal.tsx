@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, TouchableOpacity, View } from 'react-native';
 
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,6 +11,7 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 
 import TokenIcon from './TokenIcon';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
+import { Text } from '@/components/Typography';
 
 export interface IAvailableRepayToken {
   address: string;

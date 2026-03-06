@@ -1,16 +1,11 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import React from 'react';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { StyleSheet } from 'react-native';
 import ShieldSVG from '@/assets/icons/address/shield-cc.svg';
 import { createGetStyles } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 interface Props {
   style?: StyleProp<ViewStyle>;

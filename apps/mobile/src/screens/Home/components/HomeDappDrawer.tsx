@@ -8,7 +8,6 @@ import {
   FlatListProps,
   Platform,
   FlatList as RNFlatList,
-  Text,
   TouchableOpacity,
   View,
   useWindowDimensions,
@@ -52,6 +51,7 @@ import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTy
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { Text } from '@/components/Typography';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);

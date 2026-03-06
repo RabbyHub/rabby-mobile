@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { memo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import {
   AccountSwitcherAopProps,
@@ -16,6 +16,7 @@ import { ellipsisAddress } from '@/utils/address';
 import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
+import { Text } from '@/components/Typography';
 
 function AccountSwitcherComponent({
   forScene = 'TokenDetail',

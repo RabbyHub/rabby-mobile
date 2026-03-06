@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   TouchableOpacityProps,
   Animated,
@@ -16,6 +15,7 @@ import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { WarningText } from './WarningText';
+import { Text } from '@/components/Typography';
 
 export const BRIDGE_SLIPPAGE = ['0.5', '1'];
 

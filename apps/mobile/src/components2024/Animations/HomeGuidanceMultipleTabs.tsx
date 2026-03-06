@@ -8,7 +8,6 @@ import React, {
 } from 'react';
 import {
   LayoutRectangle,
-  Text,
   View,
   Animated as RNAnimated,
   Easing as RNEasing,
@@ -60,6 +59,7 @@ import { UpdaterOrPartials } from '@/core/utils/store';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { getHomeTabIndicatorWidth } from '@/screens/Home/components/CustomTabBar';
+import { Text } from '@/components/Typography';
 const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
   AnimSwipeRightToViewAllAssets,
   {},

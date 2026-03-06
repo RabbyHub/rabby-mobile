@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   logos: string[];

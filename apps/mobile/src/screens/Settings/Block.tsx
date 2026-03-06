@@ -1,13 +1,14 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { SvgProps } from 'react-native-svg';
 import { isValidElementType } from 'react-is';
 import { default as RcIconRight } from '@/assets/icons/settings/icon-arrow-right.svg';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 export function Block({
   label,

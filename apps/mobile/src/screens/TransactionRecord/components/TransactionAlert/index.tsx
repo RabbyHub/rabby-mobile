@@ -22,8 +22,9 @@ import dayjs from 'dayjs';
 import { flatten, flattenDeep, groupBy, maxBy, sortBy, uniqBy } from 'lodash';
 import { useMemo, useState, useTransition } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { CancelTxConfirmPopup } from '../CancelTxConfirmPopup';
+import { Text } from '@/components/Typography';
 
 const ClearPendingAlertDetail = ({
   data,

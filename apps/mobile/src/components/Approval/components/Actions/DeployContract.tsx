@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Col, Row, Table } from './components/Table';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { Text } from '@/components/Typography';
 
 const DeployContract = () => {
   const { t } = useTranslation();

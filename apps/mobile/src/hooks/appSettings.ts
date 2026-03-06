@@ -28,8 +28,8 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
      *
      * for iOS, change it need restart the app
      */
-    androidForceAllowScreenCapture: false,
-    iosForceAllowScreenRecord: false,
+    androidForceAllowScreenCapture: isNonPublicProductionEnv,
+    iosForceAllowScreenRecord: isNonPublicProductionEnv,
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
   },

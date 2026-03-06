@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, ActivityIndicator, Image } from 'react-native';
+import { View, ActivityIndicator, Image } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { useBridgeHistory } from '../hooks';
@@ -20,6 +20,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import { Text } from '@/components/Typography';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });

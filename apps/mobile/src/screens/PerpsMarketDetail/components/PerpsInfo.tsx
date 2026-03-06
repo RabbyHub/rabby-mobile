@@ -8,8 +8,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
+import { Text } from '@/components/Typography';
 
 export const PerpsInfo: React.FC<{
   market?: MarketData;

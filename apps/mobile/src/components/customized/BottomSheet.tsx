@@ -5,7 +5,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react';
-import { StyleSheet, Text, TextStyle } from 'react-native';
+import { StyleSheet, TextStyle } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
@@ -16,6 +16,7 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 import { perfEvents } from '@/core/utils/perf';
+import { Text } from '@/components/Typography';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({

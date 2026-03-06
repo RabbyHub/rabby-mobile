@@ -1,6 +1,7 @@
 import React from 'react';
-import { Dimensions, Platform, Text } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 import { toast, toastWithIcon } from '@/components2024/Toast';
+import { Text } from '@/components/Typography';
 
 export const showToast = (
   msg: string,

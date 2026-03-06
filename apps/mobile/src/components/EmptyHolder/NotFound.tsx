@@ -1,6 +1,5 @@
 import {
   View,
-  Text,
   StyleProp,
   TextStyle,
   StyleSheet,
@@ -11,6 +10,7 @@ import { RcIconNotMatchedCC } from '@/assets/icons/common';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { useMemo } from 'react';
+import { Text } from '@/components/Typography';
 
 export function NotFoundHolder({
   style,

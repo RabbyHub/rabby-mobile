@@ -53,13 +53,8 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Dimensions,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface AddAssetProps {
   data: {

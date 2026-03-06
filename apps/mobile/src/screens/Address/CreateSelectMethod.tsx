@@ -4,7 +4,6 @@ import React from 'react';
 import {
   ScrollView,
   View,
-  Text,
   TouchableWithoutFeedback,
   Keyboard,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { SeedPhraseGroup } from './CreateSelectOnCurrentSeed/SeedPhraseGroup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/Typography';
 
 function MainListBlocks() {
   const { t } = useTranslation();

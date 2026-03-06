@@ -1,9 +1,10 @@
 import React, { useCallback } from 'react';
-import { View, Pressable, Text } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconArrowDownCC from '@/assets2024/icons/watchlist/sort.svg';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export type SortState = 'desc' | 'asc' | 'default';
 

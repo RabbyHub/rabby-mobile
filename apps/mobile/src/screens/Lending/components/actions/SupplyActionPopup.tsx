@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -55,6 +55,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { ReserveErrorTip } from '../ErrorTip';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
+import { Text } from '@/components/Typography';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,

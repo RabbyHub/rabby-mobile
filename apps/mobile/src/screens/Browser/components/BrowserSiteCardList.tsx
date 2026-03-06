@@ -1,11 +1,12 @@
 import { DappInfo } from '@/core/services/dappService';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { FlatListProps, StyleSheet, Text, View } from 'react-native';
+import { FlatListProps, StyleSheet, View } from 'react-native';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 import { BrowserSiteCard } from './BrowserSiteCard';
 import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 export const BrowserSiteCardList = ({
   data,

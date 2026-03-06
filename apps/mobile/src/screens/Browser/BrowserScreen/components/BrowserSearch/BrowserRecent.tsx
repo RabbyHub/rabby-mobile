@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { RcIconDynamicArrowDownCC } from '@/assets/icons/dapp';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import dayjs from 'dayjs';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
+import { Text } from '@/components/Typography';
 
 export function BrowserRecent({
   onPress,

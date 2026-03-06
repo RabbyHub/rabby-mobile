@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, TouchableOpacity, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useLatestRepliedFeedbacks, useViewingFeedback } from './hooks';
@@ -20,6 +20,7 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { FontWeightEnum } from '@/core/utils/fonts';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
+import { Text } from '@/components/Typography';
 
 function ModalResponseDetail({
   lastRepliedFeedback,

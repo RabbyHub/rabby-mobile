@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Dimensions, Keyboard, Text, TextInput, View } from 'react-native';
+import { Dimensions, Keyboard, View } from 'react-native';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,6 +9,7 @@ import {
 } from './hooks';
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Text, TextInput } from '@/components/Typography';
 
 export type BottomInputMethods = {};
 export type BottomInputProps = {} & RNViewProps;

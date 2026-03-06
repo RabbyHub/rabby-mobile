@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
-  Text,
   Platform,
   ViewStyle,
   Image,
@@ -71,6 +70,7 @@ import { openTxExternalUrl } from '@/utils/transaction';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { Text } from '@/components/Typography';
 
 const PAGE_COUNT = 10;
 

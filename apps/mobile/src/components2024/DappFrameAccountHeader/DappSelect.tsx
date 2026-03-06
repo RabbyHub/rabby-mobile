@@ -4,16 +4,12 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
-import {
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import RcCaretDownSmallCC from '@/assets2024/icons/common/caret-down-small-cc.svg';
 import { DappSelectItem } from './constants';
 import { getStyle } from './styles';
+import { Text } from '@/components/Typography';
 
 type Props = {
   activeId: string;

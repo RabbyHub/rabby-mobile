@@ -6,11 +6,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { AssetAvatar } from '@/components';
 import { splitNumberByStep } from '@/utils/number';
 import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 
 interface AssetPriceInfoProps {
   coin: string;

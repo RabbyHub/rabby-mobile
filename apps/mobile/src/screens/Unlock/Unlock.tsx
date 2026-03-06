@@ -3,7 +3,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
   View,
-  TextInput,
   Platform,
   ActivityIndicator,
   Keyboard,
@@ -55,6 +54,7 @@ import DeviceInfo from 'react-native-device-info';
 import { getAddressesForReport } from '@/core/apis/address';
 import { perfEvents } from '@/core/utils/perf';
 import { GetRootScreenRouteProp } from '@/navigation-type';
+import { TextInput } from '@/components/Typography';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,

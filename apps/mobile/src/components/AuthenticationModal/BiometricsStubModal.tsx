@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -14,6 +14,7 @@ import DeviceUtils from '@/core/utils/device';
 import TouchableView from '../Touchable/TouchableView';
 import { useVerifyByBiometrics } from '@/hooks/biometrics';
 import { RcIconCloseCC } from '@/assets/icons/common';
+import { Text } from '@/components/Typography';
 
 const isIOS = DeviceUtils.isIOS();
 /**

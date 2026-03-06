@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Keyboard, Pressable, Text, View, TextInput } from 'react-native';
+import { Keyboard, Pressable, View } from 'react-native';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import MarketItem from './MarketItem';
 import { CustomMarket, MarketDataType, marketsData } from '../config/market';
+import { Text, TextInput } from '@/components/Typography';
 
 const marketList: MarketDataType[] = Object.values(marketsData);
 

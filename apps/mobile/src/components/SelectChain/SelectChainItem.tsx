@@ -1,7 +1,8 @@
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import clsx from 'clsx';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, TouchableOpacity, View } from 'react-native';
 import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
+import { Text } from '@/components/Typography';
 
 export const SelectChainItem = ({
   data,

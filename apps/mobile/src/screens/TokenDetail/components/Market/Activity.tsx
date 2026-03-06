@@ -9,13 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  FlatList,
-  Pressable,
-  Text,
-  View,
-  ActivityIndicator,
-} from 'react-native';
+import { FlatList, Pressable, View, ActivityIndicator } from 'react-native';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
@@ -34,6 +28,7 @@ import { throttle, uniqBy } from 'lodash';
 import { Service } from 'ahooks/lib/useInfiniteScroll/types';
 import { scrollEndCallBack } from './hooks';
 import { every10sEvent } from '../../event';
+import { Text } from '@/components/Typography';
 
 interface ISummaryData {
   data?: MarketSummary;

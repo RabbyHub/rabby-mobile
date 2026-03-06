@@ -18,9 +18,10 @@ import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Chain } from '@/constant/chains';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubCol, SubRow, SubTable } from '../Actions/components/SubTable';
+import { Text } from '@/components/Typography';
 const { isSameAddress } = addressUtils;
 
 const ApproveNFT = ({

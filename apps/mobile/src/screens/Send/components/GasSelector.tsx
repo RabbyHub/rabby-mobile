@@ -1,11 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import {
-  Text,
-  TextInputProps,
-  TextInput,
-  View,
-  GestureResponderEvent,
-} from 'react-native';
+import { TextInputProps, View, GestureResponderEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BigNumber } from 'bignumber.js';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -22,6 +16,7 @@ import { AppBottomSheetModal, Button } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { coerceNumber } from '@/utils/coerce';
 import AutoLockView from '@/components/AutoLockView';
+import { Text, TextInput } from '@/components/Typography';
 
 interface GasSelectorProps {
   chainId: Chain['id'];

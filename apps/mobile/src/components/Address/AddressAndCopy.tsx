@@ -4,7 +4,6 @@ import React from 'react';
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   TextStyle,
@@ -13,6 +12,7 @@ import { RcIconCopyCC } from '@/assets/icons/common';
 import { formatAddressToShow } from '@/utils/address';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
+import { View, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Skeleton, Slider } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
@@ -32,6 +26,7 @@ import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { tokenAmountBn } from '../Swap/utils';
 import BigNumber from 'bignumber.js';
 import usePrevious from 'react-use/lib/usePrevious';
+import { Text, TextInput } from '@/components/Typography';
 
 export function BalanceSection({
   style,

@@ -2,13 +2,7 @@
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  View,
-  Image,
-} from 'react-native';
+import { ActivityIndicator, TouchableOpacity, View, Image } from 'react-native';
 import { ModalLayouts, RootNames } from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -33,6 +27,7 @@ import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {

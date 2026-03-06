@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, TouchableOpacity, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -29,6 +29,7 @@ import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import { formatApy, formatListNetWorth } from './utils/format';
 import { assetCanBeBorrowedByUser } from './utils/borrow';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { Text } from '@/components/Typography';
 
 const ListHeaderComponent = React.memo(
   ({ sortReservesLen }: { sortReservesLen: number }) => {

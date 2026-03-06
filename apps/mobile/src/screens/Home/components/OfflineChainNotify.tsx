@@ -5,7 +5,7 @@ import balanceStore from '@/store/balance';
 import { findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import RcIconTipsCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import RcIconCloseCC from '@/assets2024/icons/offlineChain/close-cc.svg';
@@ -21,6 +21,7 @@ import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { Text } from '@/components/Typography';
 
 // const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
 type ClosedTipsState = {

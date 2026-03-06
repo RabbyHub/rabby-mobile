@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   Image,
   ListRenderItemInfo,
-  Text,
   View,
 } from 'react-native';
 import { findChain } from '@/utils/chain';
@@ -23,6 +22,7 @@ import { verifyTypedData } from 'viem';
 import { GnosisMessageQueueItem } from './GnosisMessageQueueItem';
 import { apisSafe } from '@/core/apis/safe';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface TransactionConfirmationsProps {
   confirmations: SafeMessage['confirmations'];

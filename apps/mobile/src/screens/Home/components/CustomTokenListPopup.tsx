@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { RcIconAddCircle } from '@/assets/icons/address';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
@@ -18,6 +18,7 @@ import { useChainList } from '@/hooks/useChainList';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import AutoLockView from '@/components/AutoLockView';
+import { Text } from '@/components/Typography';
 
 type Props = {
   tokens?: AbstractPortfolioToken[];

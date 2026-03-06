@@ -5,7 +5,7 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
@@ -29,6 +29,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { Text } from '@/components/Typography';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;

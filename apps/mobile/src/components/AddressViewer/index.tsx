@@ -4,7 +4,6 @@ import SvgIconArrowDown from '@/assets/icons/common/arrow-down-gray.svg';
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TextStyle,
   TouchableOpacity,
   View,
@@ -13,6 +12,7 @@ import {
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './style';
 import { ellipsisAddress } from '@/utils/address';
+import { Text } from '@/components/Typography';
 
 interface AddressViewProps {
   address: string;
