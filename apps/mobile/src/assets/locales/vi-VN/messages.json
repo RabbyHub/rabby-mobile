@@ -1426,8 +1426,16 @@
           }
         },
         "ledger": {
-          "hdPathTypeNoChain": {},
-          "hdPathType": {}
+          "hdPathTypeNoChain": {
+            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger.",
+            "bip44": "Tiêu chuẩn BIP44: Đường dẫn HD được xác định bởi giao thức BIP44."
+          },
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger.",
+            "bip44": "Tiêu chuẩn BIP44: HDpath được xác định bởi giao thức BIP44.",
+            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto."
+          }
         },
         "keystone": {
           "hdPathTypeNoChain": {
@@ -3042,7 +3050,8 @@
         "lpRiskWarning": "Số yếu tố sức khỏe thấp sau khi hoán đổi. Vị trí của bạn sẽ có rủi ro thanh lý cao hơn.",
         "lpDangerWarning": "Yếu tố sức khỏe của bạn sau giao dịch này sẽ ở mức rất thấp và có thể dẫn đến việc thanh lý. Vui lòng chọn tài sản khác hoặc giảm số lượng giao dịch để đảm bảo an toàn.",
         "priceImpactTips": "Tác động giá cao ({{lostValue}}). Đường này có thể trả lại nhiều hơn do tính thanh khoản thấp hoặc kích thước đơn hàng nhỏ.",
-        "title": "Hoán đổi Vị trí Vay"
+        "title": "Hoán đổi Vị trí Vay",
+        "maxLtvWarning": "Không đủ tài sản thế chấp để bảo hiểm vị trí vay mới. Ví phải có khả năng vay còn lại để thực hiện chuyển nợ."
       },
       "hfTips": {
         "more": "Thêm",
