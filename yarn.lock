@@ -10562,6 +10562,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native/typescript-config@npm:0.81.6":
+  version: 0.81.6
+  resolution: "@react-native/typescript-config@npm:0.81.6"
+  checksum: bfde8a72136526bb3a95f0a442feb53ed60a0ed698df42d7e6551d52eb19d11553e7b39cbc82f16e95b5f83b3b28fb59603161740be2dd01420a1520fee95fdf
+  languageName: node
+  linkType: hard
+
 "@react-native/virtualized-lists@npm:0.81.6":
   version: 0.81.6
   resolution: "@react-native/virtualized-lists@npm:0.81.6"
@@ -24484,9 +24491,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"formik@npm:^2.4.5":
-  version: 2.4.5
-  resolution: "formik@npm:2.4.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fformik%2F-%2Fformik-2.4.5.tgz"
+"formik@npm:2.4.9":
+  version: 2.4.9
+  resolution: "formik@npm:2.4.9"
   dependencies:
     "@types/hoist-non-react-statics": ^3.3.1
     deepmerge: ^2.1.1
@@ -24498,7 +24505,7 @@ __metadata:
     tslib: ^2.0.0
   peerDependencies:
     react: ">=16.8.0"
-  checksum: 316c91fc4e440094655c0d0ba47277a0f84f6082f77ae2ae959e97e2eebb8eab5b866a9e43d93a28efdae07c3f23e779da67922e2f2a1fb47d135b7346e0b5f3
+  checksum: c518f055966245b2a120307107a19b3186f554f6218f5cb0fe2d309e5d95722008b361f851eeda2acd2c06441d8d50f7d768c1313c62a2d371f9106b064fbcff
   languageName: node
   linkType: hard
 
@@ -35095,6 +35102,7 @@ __metadata:
     "@react-native/babel-preset": 0.81.6
     "@react-native/eslint-config": 0.81.6
     "@react-native/metro-config": 0.81.6
+    "@react-native/typescript-config": 0.81.6
     "@react-navigation/bottom-tabs": 7.4.7
     "@react-navigation/native": 7.1.17
     "@react-navigation/native-stack": 7.3.26
@@ -35137,7 +35145,7 @@ __metadata:
     ethereum-blockies-base64: 1.0.2
     ethers: 5.4.2
     fflate: 0.8.2
-    formik: ^2.4.5
+    formik: 2.4.9
     highlight-words-core: 1.2.3
     i18next: ^23.7.14
     interval-promise: ^1.4.0
@@ -35799,7 +35807,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::version=6.2.1&hash=26d463&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 6.2.1
   resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::version=6.2.1&hash=26d463&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
@@ -35814,6 +35822,24 @@ __metadata:
     "@shopify/flash-list":
       optional: true
   checksum: ea4a01c03d912480618ca695dbf9ac5d2e6994a519fcb76a3a35c6b25124b04774849f0dd1e4affc2a7923700cea1c742858c82a8c38a775e703ddf1697a7b8b
+  languageName: node
+  linkType: hard
+
+"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@patch%3Areact-native-collapsible-tab-view@npm%253A6.2.1%23./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch%3A%3Aversion=6.2.1&hash=26d463&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/react-native-collapsible-tab-view-patch-5273f6ccaf.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 6.2.1
+  resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@patch%3Areact-native-collapsible-tab-view@npm%253A6.2.1%23./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch%3A%3Aversion=6.2.1&hash=26d463&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/react-native-collapsible-tab-view-patch-5273f6ccaf.patch::version=6.2.1&hash=a2a731&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    use-deep-compare: ^1.1.0
+  peerDependencies:
+    "@shopify/flash-list": ">=1.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-pager-view: "*"
+    react-native-reanimated: ">=2.15.0"
+  peerDependenciesMeta:
+    "@shopify/flash-list":
+      optional: true
+  checksum: 9be9908418aff408c28d8d4b3d5cca7a6e9041271594160ea53314d839d850a41b4e351f4fc0a292a4bc059e8546bf016b964394f9896803ff18b9be3bce515c
   languageName: node
   linkType: hard
 
