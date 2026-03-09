@@ -1,4 +1,4 @@
-import { ANIMATION_STATE, useBottomSheetInternal } from '@gorhom/bottom-sheet';
+import { ANIMATION_STATUS, useBottomSheetInternal } from '@gorhom/bottom-sheet';
 import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 
 export const useBottomSheetOpenEnd = (onOpenEnd: () => void) => {
@@ -8,7 +8,8 @@ export const useBottomSheetOpenEnd = (onOpenEnd: () => void) => {
     () => bsInternal?.animatedPosition.value,
     () => {
       if (
-        bsInternal?.animatedAnimationState.value === ANIMATION_STATE.STOPPED
+        bsInternal?.animatedAnimationState.value.status ===
+        ANIMATION_STATUS.STOPPED
       ) {
         runOnJS(onOpenEnd)();
       }
