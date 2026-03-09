@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,6 +16,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 
 import { useMode } from '../../hooks/useMode';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   return {

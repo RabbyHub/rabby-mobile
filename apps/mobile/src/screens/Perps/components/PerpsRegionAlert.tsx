@@ -1,10 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { RcIconWarningCC } from '@/assets2024/icons/common';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export const PerpsRegionAlert: React.FC<{}> = ({}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });

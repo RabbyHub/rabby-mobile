@@ -3,13 +3,7 @@ import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
 import React, { memo, useCallback, useEffect, useMemo } from 'react';
-import {
-  Dimensions,
-  Pressable,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import Animated, {
   Easing,
@@ -19,7 +13,6 @@ import Animated, {
   useDerivedValue,
   withTiming,
 } from 'react-native-reanimated';
-import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
 import { useCurrency } from '@/hooks/useCurrency';
 import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
@@ -47,6 +40,7 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { RNGHPressable } from '@/components/customized/reexports';
+import { Text, AnimateableText } from '@/components/Typography';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);

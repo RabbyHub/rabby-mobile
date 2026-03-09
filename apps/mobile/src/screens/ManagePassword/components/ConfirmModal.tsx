@@ -1,16 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import {
-  Modal,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { Modal, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { Button } from '@/components';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 const LAYOUTS = {
   contentMaxWidth: 353,

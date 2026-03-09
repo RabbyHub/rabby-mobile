@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
 import RcInfoFillCC from '@/assets/icons/common/icon-info-fill-cc.svg.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { Text } from '@/components/Typography';
 
 const IsolatedTag = ({
   disablePress,

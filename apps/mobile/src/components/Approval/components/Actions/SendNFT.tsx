@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -18,6 +18,7 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubCol, SubRow, SubTable } from './components/SubTable';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { Text } from '@/components/Typography';
 
 const SendNFT = ({
   data,

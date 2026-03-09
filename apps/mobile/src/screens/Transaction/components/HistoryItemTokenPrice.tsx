@@ -6,12 +6,12 @@ import {
   StyleSheet,
   ViewStyle,
   View,
-  Text,
   TextStyle,
 } from 'react-native';
 import { useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
 import { formatPrice, formatUsdValue } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 interface ItemIconProps {
   tokenId: string;

@@ -26,7 +26,7 @@ import { getTokenSymbol } from '@/utils/token';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { sendToken } from '@/core/apis/token';
 import { useMemoizedFn } from 'ahooks';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
@@ -34,6 +34,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { noop } from 'lodash';
 import useAsync from 'react-use/lib/useAsync';
 import useMount from 'react-use/lib/useMount';
+import { Text } from '@/components/Typography';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,

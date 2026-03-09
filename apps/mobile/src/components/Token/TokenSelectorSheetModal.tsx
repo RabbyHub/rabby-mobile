@@ -9,12 +9,10 @@ import React, {
 } from 'react';
 import {
   View,
-  Text,
   Keyboard,
   TouchableOpacity,
   StyleSheet,
   Platform,
-  TextInput,
   Dimensions,
   Alert,
   ListRenderItem,
@@ -100,6 +98,8 @@ import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { isLpToken } from '@/utils/lpToken';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { InnerModalChainInfo } from '@/screens/Send/components/InModalChainInfo';
+import { isNumber } from 'lodash';
+import { Text, TextInput } from '@/components/Typography';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -774,7 +774,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                                   styles.tokenHeaderAmount,
                                   // isExcludeBalanceShowTips && styles.textSecondary,
                                 ]}>
-                                {formatTokenAmount(token.amount)} {token.symbol}
+                                {formatTokenAmount(token.amount)}
                               </Text>
                             )}
                             {isBridgeTo && (
@@ -820,20 +820,22 @@ export const TokenSelectorSheetModal = React.forwardRef<
                               <Text
                                 style={[styles.tokenPrice]}
                                 numberOfLines={1}>
-                                {`@$${formatPrice(token.price)}`}
+                                {`$${formatPrice(token.price)}`}
                               </Text>
-                              <Text
-                                style={StyleSheet.compose(styles.percent, {
-                                  ...(!token.is_core &&
-                                  (token.usd_value || 0) > 0
-                                    ? styles.exclude
-                                    : {}),
-                                  color: percentColor,
-                                })}>
-                                {formatPercentage(
-                                  Number(token.price_24h_change) || 0,
-                                )}
-                              </Text>
+                              {isNumber(token.price_24h_change) && (
+                                <Text
+                                  style={StyleSheet.compose(styles.percent, {
+                                    ...(!token.is_core &&
+                                    (token.usd_value || 0) > 0
+                                      ? styles.exclude
+                                      : {}),
+                                    color: percentColor,
+                                  })}>
+                                  {formatPercentage(
+                                    Number(token.price_24h_change) || 0,
+                                  )}
+                                </Text>
+                              )}
                             </View>
                           </View>
                         </View>
@@ -1461,7 +1463,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     percent: {
       textAlign: 'right',
       fontSize: 14,
-      fontWeight: '700',
+      fontWeight: '500',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
     },

@@ -134,8 +134,6 @@ export function MultiAddressHomeHeader(
 
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
-  // const { isLoading: loading } = useSceneIsLoading('Home');
-
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { isDisConnect } = useGlobalStatus();
@@ -335,7 +333,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
   return {
     container: {
-      marginTop: 12 + 4,
+      marginTop: 0,
       paddingVertical: 0,
       width: '100%',
       // ...makeDebugBorder('orange'),

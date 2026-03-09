@@ -2,10 +2,11 @@ import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { useApproval } from '@/hooks/useApproval';
 import { createGetStyles } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useThemeStyles } from '@/hooks/theme';
 import ImgWarning from '@/assets/icons/swap/warn.svg';
 import AutoLockView from '@/components/AutoLockView';
+import { Text } from '@/components/Typography';
 
 export const Unknown = () => {
   const [, , rejectApproval] = useApproval();

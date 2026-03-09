@@ -3,7 +3,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { colord } from 'colord';
 import { useTranslation } from 'react-i18next';
-import { Modal, Text, View } from 'react-native';
+import { Modal, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const NoNewAddressesModal = (props: {
   onCancel: () => void;

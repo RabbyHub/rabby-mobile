@@ -9,7 +9,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import { Trans, useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import { formatUsdValue } from '@/utils/number';
@@ -25,6 +25,7 @@ import { stats } from '@/utils/stats';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useShallow } from 'zustand/shallow';
 import { APP_VERSIONS } from '@/constant';
+import { Text } from '@/components/Typography';
 
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;

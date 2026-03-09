@@ -1,7 +1,8 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { FC, useMemo } from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   style?: StyleProp<ViewStyle>;

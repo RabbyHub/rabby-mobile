@@ -6,7 +6,6 @@ import { Card } from '@/components2024/Card';
 import {
   StyleSheet,
   View,
-  Text,
   StyleProp,
   ViewStyle,
   TouchableOpacity,
@@ -30,6 +29,7 @@ import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress'
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { touchedFeedback } from '@/utils/touch';
+import { Text } from '@/components/Typography';
 
 interface IProps {
   account: KeyringAccountWithAlias;

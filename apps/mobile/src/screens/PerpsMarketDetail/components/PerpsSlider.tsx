@@ -3,13 +3,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Slider } from '@rneui/themed';
 import React, { useCallback, useMemo, useRef } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
 import { useWindowDimensions } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
+import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 const sliderHapticTriggerNumbers = [0, 50, 100];

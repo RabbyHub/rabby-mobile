@@ -4,8 +4,6 @@ import React from 'react';
 import {
   StyleProp,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -17,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
+import { Text, TextInput } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { apiContact } from '@/core/apis';
@@ -10,6 +10,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
+import { Text } from '@/components/Typography';
 
 export const PerpsHeaderTitle: React.FC<{
   account?: Account | null;

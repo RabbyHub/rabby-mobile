@@ -5,7 +5,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import { Alert, LayoutChangeEvent, TextInput } from 'react-native';
+import { Alert, LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
@@ -63,6 +63,7 @@ import {
 } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
+import { TextInput } from '@/components/Typography';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',

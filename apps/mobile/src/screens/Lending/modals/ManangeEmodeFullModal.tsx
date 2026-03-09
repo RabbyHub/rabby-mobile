@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { last, noop } from 'lodash';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { apiProvider } from '@/core/apis';
@@ -44,6 +44,7 @@ import {
   HF_RISK_CHECKBOX_THRESHOLD,
 } from '../utils/constant';
 import { isEModeCategoryAvailable } from '../utils/emode';
+import { Text } from '@/components/Typography';
 
 const BOTTOM_SIZE = {
   BUTTON: 116,

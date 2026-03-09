@@ -1,6 +1,6 @@
 import { FailedCode } from '@/utils/sendTransaction';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import FailedSVG from '@/assets/icons/batchRevoke/failed.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -12,6 +12,7 @@ import BigNumber from 'bignumber.js';
 import React from 'react';
 import { FailReason } from './useBatchRevokeTask';
 import { formatGasCostUsd } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 export const BatchRevokeErrorReason: React.FC<{
   onStillRevoke: () => void;

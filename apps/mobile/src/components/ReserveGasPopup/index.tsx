@@ -7,7 +7,7 @@ import React, {
   useRef,
   useEffect,
 } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 
@@ -23,6 +23,7 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import AutoLockView from '../AutoLockView';
 import { Button } from '../Button';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/Typography';
 
 export type GasLevelType = keyof typeof SORT_SCORE;
 

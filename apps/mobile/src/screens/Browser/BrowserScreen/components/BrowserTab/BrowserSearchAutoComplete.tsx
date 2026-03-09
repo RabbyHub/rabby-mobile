@@ -1,5 +1,5 @@
 import React from 'react';
-import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, TouchableOpacity, View } from 'react-native';
 
 import { RcSearchCC } from '@/assets/icons/common';
 import { RcIconArrowTopLeftCC } from '@/assets2024/icons/browser';
@@ -8,6 +8,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useRequest } from 'ahooks';
 import { ScrollView } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export function BrowserSearchAutoComplete({
   text,

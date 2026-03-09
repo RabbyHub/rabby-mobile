@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { Alert, LayoutChangeEvent, TextInput } from 'react-native';
+import { Alert, LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Sentry from '@sentry/react-native';
 import * as Yup from 'yup';
@@ -99,6 +99,7 @@ import {
 } from '@/core/utils/concurrency';
 import { jotaiStore } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { TextInput } from '@/components/Typography';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;

@@ -4,12 +4,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import {
   StyleSheet,
-  Text,
   TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
+import { Text } from '@/components/Typography';
 
 type Option = {
   key: string;

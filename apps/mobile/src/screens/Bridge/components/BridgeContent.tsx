@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
@@ -63,6 +63,7 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { BridgeSlippage } from './BridgeSlippage';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {

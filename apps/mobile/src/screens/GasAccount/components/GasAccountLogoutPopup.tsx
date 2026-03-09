@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ViewProps } from 'react-native';
+import { View, ViewProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components';
@@ -13,6 +13,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { Button } from '@/components2024/Button';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import LinearGradient from 'react-native-linear-gradient';
+import { Text } from '@/components/Typography';
 
 export const GasAccountCurrentAddress = ({
   style,

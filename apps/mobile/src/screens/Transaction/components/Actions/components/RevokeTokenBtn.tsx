@@ -17,7 +17,8 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   account: KeyringAccountWithAlias;

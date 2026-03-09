@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 export const GiftInfoModal = ({
   visible,

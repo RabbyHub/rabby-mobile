@@ -5,7 +5,8 @@ import { createGetStyles } from '@/utils/styles';
 import { BottomSheetView, TouchableOpacity } from '@gorhom/bottom-sheet';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface ReplacePopupProps {
   visible?: boolean;

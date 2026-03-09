@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { SelectedBridgeQuote, useSetQuoteVisible } from '../hooks';
@@ -12,6 +12,7 @@ import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 // import RcIconGasCC from '@/assets/icons/swap/gas-cc.svg';
 import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
 // import RcIconDurationCC from '@/assets/icons/bridge/duration.svg';
+import { Text } from '@/components/Typography';
 
 interface QuoteItemProps extends SelectedBridgeQuote {
   payAmount: string;

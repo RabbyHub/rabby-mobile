@@ -1,9 +1,10 @@
 import React from 'react';
 import { SvgProps } from 'react-native-svg';
 import { Signal } from '@/components/Signal';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 export interface Props {
   icon: React.FC<SvgProps>;

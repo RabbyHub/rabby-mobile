@@ -1,10 +1,11 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { RcArrowRight2CC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 type OptionType = 'custom' | 'blocked' | 'customTestnet';
 

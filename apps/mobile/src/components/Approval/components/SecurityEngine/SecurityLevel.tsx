@@ -2,8 +2,9 @@ import React, { useMemo } from 'react';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

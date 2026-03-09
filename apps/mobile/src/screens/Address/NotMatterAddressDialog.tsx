@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemEntry } from './components/AddressItem';
@@ -19,6 +19,7 @@ import { ManageSetting } from './components/ManageSetting';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 export const NotMatterAddressDialog: React.FC<{
   onDone?: () => void;

@@ -7,10 +7,11 @@ import { useRequest } from 'ahooks';
 import { maxBy, sortBy, uniqBy } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { SafeNonceOptionListItem } from './SafeNonceOptionListItem';
 import { SafeNoncePendingOptionContent } from './SafeNoncePendingOptionContent';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface OptionListProps {
   chainId: number;

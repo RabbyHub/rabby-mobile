@@ -1,10 +1,11 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
 import HealthFactorText from '../HealthFactorText';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 const BorrowActionOverView: React.FC<
   PopupDetailProps & {

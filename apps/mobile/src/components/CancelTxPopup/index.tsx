@@ -6,10 +6,11 @@ import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { useThemeColors } from '@/hooks/theme';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Tip } from '../Tip';
 import AutoLockView from '../AutoLockView';
+import { Text } from '@/components/Typography';
 /**
  * @deprecated
  */

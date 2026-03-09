@@ -2869,7 +2869,7 @@ PODS:
     - RNFBApp
   - RNFS (2.20.0):
     - React-Core
-  - RNGestureHandler (2.28.0):
+  - RNGestureHandler (2.30.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -3724,7 +3724,7 @@ SPEC CHECKSUMS:
   RNFBApp: a4f5b074984cf612e4c97d68b42be690c59e2638
   RNFBMessaging: 1e7415390ae579c5949505a0709686a2de8a47e5
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
-  RNGestureHandler: 45e64176c38c837aac6b4c77fe621d6fdb96ec69
+  RNGestureHandler: 1fe7766166d8be5a28c5f2529fbfd03e22b550f8
   RNGoogleSignin: ee2938633d996756819e3212c8e0f7f696b380d0
   RNIap: 2fba6c91f79fb7c71fcc44465f606061653caf01
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
@@ -3745,6 +3745,6 @@ SPEC CHECKSUMS:
   VisionCamera: 2230ecfd78a1f6cddd8be0fe4e6589f21a6385e1
   Yoga: c7d9adcf9fca72e6219bdc5f1f11b76b38c4a030
 
-PODFILE CHECKSUM: 6a5d87641a8d0afb5c23f447138c6faed79cc548
+PODFILE CHECKSUM: ab6f8234449c7d05f107a0ccc940e96b8ff72c2f
 
 COCOAPODS: 1.14.3

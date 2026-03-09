@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { View, Text, Dimensions, TouchableOpacity, Modal } from 'react-native';
+import { View, Dimensions, TouchableOpacity, Modal } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { AssetAvatar } from '@/components';
 import { useLongPressTokenAtom } from '../hooks';
@@ -17,6 +17,7 @@ import BigNumber from 'bignumber.js';
 import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { Text } from '@/components/Typography';
 
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;

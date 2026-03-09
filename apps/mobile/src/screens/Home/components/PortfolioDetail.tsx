@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Text, ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import { colord } from 'colord';
 import LinearGradient from 'react-native-linear-gradient';
 import groupBy from 'lodash/groupBy';
@@ -16,6 +16,7 @@ import {
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IProtocolPortfolio } from '@/store/protocols';
+import { Text } from '@/components/Typography';
 
 export const PortfolioHeader = ({
   data,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity } from 'react-native';
+import { View, Modal, TouchableOpacity } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { findChainByServerID } from '@/utils/chain';
@@ -11,6 +11,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconExternalLinkCC } from '@/assets/icons/common';
 import RcIconWaring from '@/assets2024/icons/swap/waring.svg';
+import { Text } from '@/components/Typography';
 
 export const useLowCreditState = () => {
   const [lowCreditToken, setLowCreditToken] = useState<TokenItem>();

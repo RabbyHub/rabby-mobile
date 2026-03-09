@@ -3,7 +3,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { BrowserBookmarkList } from './BrowserBookmarkList';
 import { BrowserHistoryList } from './BrowserHistoryList';
 import { BrowserTabList } from './BrowserTabList';
@@ -18,6 +18,7 @@ import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useAppState } from '@react-native-community/hooks';
 import { atom, useAtom } from 'jotai';
+import { Text } from '@/components/Typography';
 
 export const activeTabAtom = atom('favorites');
 

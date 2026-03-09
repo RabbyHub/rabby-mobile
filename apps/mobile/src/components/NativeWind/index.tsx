@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { styled } from 'nativewind';
 import { useWindFallbackStyle } from './hook';
+import { Text } from '@/components/Typography';
 
 /** @deprecated */
 export const WindView = styled(

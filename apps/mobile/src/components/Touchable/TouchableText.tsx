@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { TextProps, Text } from 'react-native';
+import { TextProps } from 'react-native';
 import TouchableView from './TouchableView';
+import { Text } from '@/components/Typography';
 
 export default function TouchableText({
   onPress,

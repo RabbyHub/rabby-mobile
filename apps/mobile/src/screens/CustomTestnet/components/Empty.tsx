@@ -3,7 +3,8 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const Empty = ({
   description,

@@ -7,7 +7,7 @@ import { CustomTestnetForm } from '@/screens/CustomTestnet/components/CustomTest
 import { useCustomTestnetForm } from '@/screens/CustomTestnet/hooks/useCustomTestnetForm';
 import { Button } from '@/components/Button';
 import clsx from 'clsx';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
@@ -18,6 +18,7 @@ import { dappService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { ModalLayouts } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 interface AddChainProps {
   data: AddEthereumChainParams[];

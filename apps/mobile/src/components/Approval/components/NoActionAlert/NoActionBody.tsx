@@ -4,7 +4,8 @@ import { useThemeColors } from '@/hooks/theme';
 import { noop } from 'lodash';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   isRequested?: boolean;

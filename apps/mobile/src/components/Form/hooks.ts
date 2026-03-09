@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { TextInput } from 'react-native';
 
 import EventEmitter from 'events';
+import { TextInput } from '@/components/Typography';
 
 export const enum TouchawayInputEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',

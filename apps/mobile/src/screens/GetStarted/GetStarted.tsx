@@ -3,8 +3,6 @@ import {
   Modal,
   Platform,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -27,6 +25,7 @@ import {
 } from '@react-navigation/native';
 import { APP_VERSIONS } from '@/constant';
 import { useAppUnlocked } from '@/hooks/useLock';
+import { Text, TextInput } from '@/components/Typography';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();

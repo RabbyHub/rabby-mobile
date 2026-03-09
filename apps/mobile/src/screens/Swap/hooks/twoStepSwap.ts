@@ -19,7 +19,7 @@ export const useTwoStepSwap = ({
   chain: CHAINS_ENUM;
   txs?: Tx[];
   enable: boolean;
-  type: 'approveSwap' | 'approveBridge';
+  type: 'approveSwap' | 'approveBridge' | 'approveDeposit';
   onApprovePending?: () => void;
 }) => {
   const shouldTwoStep = enable

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
-import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,6 +11,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import TokenIcon from '../TokenIcon';
 import { CHAINS_ENUM } from '@debank/common';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
+import { Text } from '@/components/Typography';
 
 interface TokenAmountInputProps {
   symbol: string;

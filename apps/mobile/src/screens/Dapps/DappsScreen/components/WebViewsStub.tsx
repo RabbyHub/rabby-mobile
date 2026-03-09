@@ -10,7 +10,6 @@ import {
   Platform,
   StyleProp,
   StyleSheet,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -59,6 +58,7 @@ import { toast } from '@/components2024/Toast';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { WebViewHeaderRight } from '@/components/WebView/DappWebViewControl2/WebViewHeaderRight';
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
+import { Text } from '@/components/Typography';
 
 const revealedTopBackdropStyle = StyleSheet.flatten([
   {

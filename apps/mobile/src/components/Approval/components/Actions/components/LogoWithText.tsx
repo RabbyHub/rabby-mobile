@@ -1,15 +1,10 @@
-import {
-  Image,
-  View,
-  Text,
-  TextStyle,
-  ImageSourcePropType,
-} from 'react-native';
+import { Image, View, TextStyle, ImageSourcePropType } from 'react-native';
 import React, { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import IconUnknown from '@/assets/icons/token/default.svg';
+import { Text } from '@/components/Typography';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({

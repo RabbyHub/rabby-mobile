@@ -1,12 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -21,6 +14,7 @@ import { RcIconScannerCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { Button } from '@/components2024/Button';
 import { toast, toastLoadingSuccess } from '@/components2024/Toast';
+import { Text } from '@/components/Typography';
 
 function DevUIToast(): JSX.Element {
   const { styles, colors2024, colors } = useTheme2024({

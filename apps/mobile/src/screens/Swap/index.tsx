@@ -30,7 +30,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useMount from 'react-use/lib/useMount';
 import { ChainInfo2024 } from '../Send/components/ChainInfo2024';
@@ -100,6 +100,7 @@ import {
 import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
 import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
+import { Text } from '@/components/Typography';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
-import { View, StyleSheet, Button, Text } from 'react-native';
+import { View, StyleSheet, Button } from 'react-native';
 import * as Sentry from '@sentry/react-native';
+import { Text } from '@/components/Typography';
 
 const appErrorHandler = (error: Error) => {
   console.warn('[AppErrorBoundary::appErrorHandler] error occured');

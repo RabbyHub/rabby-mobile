@@ -10,7 +10,6 @@ import {
   Animated,
   Easing,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -54,6 +53,7 @@ import { useGetCexList } from './hook';
 import FastImage from 'react-native-fast-image';
 import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
 import { apisSingleHome } from '../Home/hooks/singleHome';
+import { Text } from '@/components/Typography';
 
 export const TxStatusItem = ({
   status,
@@ -665,6 +665,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
+    maxWidth: '45%',
   },
   itemAddressText: {
     color: colors2024['neutral-foot'],

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 
 import { Card } from '@/components';
 
@@ -13,6 +13,7 @@ import { formatNetworth } from '@/utils/math';
 import { getTokenSymbol } from '@/utils/token';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 export default React.memo(
   ({

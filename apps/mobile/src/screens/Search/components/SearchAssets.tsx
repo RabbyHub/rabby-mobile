@@ -7,7 +7,7 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Keyboard, Pressable, Text, View } from 'react-native';
+import { FlatList, Keyboard, Pressable, View } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -41,6 +41,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { tokenItemToITokenItem } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
 import { FavoriteTag } from '@/components2024/Favorite';
+import { Text } from '@/components/Typography';
 
 interface Props {
   resultTokens: ITokenItem[];

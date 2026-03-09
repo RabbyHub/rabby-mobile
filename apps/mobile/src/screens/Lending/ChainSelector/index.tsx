@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { CHAINS_ENUM } from '@/constant/chains';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,6 +16,7 @@ import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { apisLending, useFetchLendingData, useSelectedMarket } from '../hooks';
 import { getMarketLogo } from '../config/market';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   return {

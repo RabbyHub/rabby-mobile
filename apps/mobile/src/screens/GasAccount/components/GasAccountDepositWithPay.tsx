@@ -14,11 +14,12 @@ import * as Sentry from '@sentry/react-native';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useGasAccountInfoV2 } from '../hooks';
 import { gasAccountProducts } from '@/constant/iap';
+import { Text } from '@/components/Typography';
 
 interface Props {
   visible?: boolean;

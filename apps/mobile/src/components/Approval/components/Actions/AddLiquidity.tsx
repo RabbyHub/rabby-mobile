@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -19,6 +19,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import LogoWithText from './components/LogoWithText';
 import { formatAmount } from '@/utils/number';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
+import { Text } from '@/components/Typography';
 
 const AddLiquidity = ({
   data,
