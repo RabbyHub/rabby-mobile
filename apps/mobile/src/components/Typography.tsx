@@ -8,14 +8,24 @@ import {
 import AnimateableTextImpl from 'react-native-animateable-text';
 import { Text as RNEUITextImpl } from '@rneui/base';
 
-function withDefaults<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
-  defaultProps: Partial<P>,
-): React.ComponentType<P> {
-  return (props: P) => {
-    const mergedProps = { ...defaultProps, ...props } as P;
+function withDefaults<C extends React.ComponentType<any>>(
+  WrappedComponent: C,
+  defaultProps: Partial<React.ComponentProps<C>>,
+) {
+  type Props = React.ComponentProps<C>;
+  type Ref = React.ComponentRef<C>;
+
+  const Component = (props: Props) => {
+    const mergedProps = { ...defaultProps, ...props } as Props;
     return <WrappedComponent {...mergedProps} />;
   };
+
+  Component.displayName =
+    WrappedComponent.displayName || WrappedComponent.name || 'WithDefaults';
+
+  return Component as React.ForwardRefExoticComponent<
+    React.PropsWithoutRef<Props> & React.RefAttributes<Ref>
+  >;
 }
 
 export const Text = withDefaults(RNText, { allowFontScaling: false });
@@ -30,3 +40,10 @@ export const AnimateableText = withDefaults(AnimateableTextImpl, {
 export const RNEUIText = withDefaults(RNEUITextImpl, {
   allowFontScaling: false,
 });
+
+export type TextInput = React.ComponentRef<typeof TextInput>;
+export type Text = React.ComponentRef<typeof Text>;
+export type RNGHText = React.ComponentRef<typeof RNGHText>;
+export type RNGHTextInput = React.ComponentRef<typeof RNGHTextInput>;
+export type AnimateableText = React.ComponentRef<typeof AnimateableText>;
+export type RNEUIText = React.ComponentRef<typeof RNEUIText>;

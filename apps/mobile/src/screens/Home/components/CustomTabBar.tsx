@@ -64,7 +64,7 @@ type IndicatorProps = {
   style?: AnimatedStyle;
   fadeIn?: boolean;
   animatedStyle?: AnimatedStyle<ViewStyle>;
-  secondaryIndicatorViewRef?: React.RefObject<View>;
+  secondaryIndicatorViewRef?: React.RefObject<View | null>;
   onLeftPress?: () => void;
   onRightPress?: () => void;
   // handleMeasureSecondaryIndicator?: ViewProps['onLayout'];

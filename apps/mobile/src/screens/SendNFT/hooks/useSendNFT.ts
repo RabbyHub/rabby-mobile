@@ -922,7 +922,9 @@ export function subscribeEvent<T extends SendNFTEvents>(
 
   return dispose;
 }
-export function useInputBlurOnEvents(inputRef: React.RefObject<TextInput>) {
+export function useInputBlurOnEvents(
+  inputRef: React.RefObject<TextInput | null>,
+) {
   const { events } = useSendNFTInternalContext();
   useEffect(() => {
     const disposeRets = [] as Function[];

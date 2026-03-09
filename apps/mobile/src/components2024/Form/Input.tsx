@@ -380,7 +380,7 @@ const PasswordInput = React.forwardRef<
   const customIconProp = useMemo(() => {
     return (
       props.customIcon ||
-      ((ctx => (
+      ((ctx: RenderCtx) => (
         <TouchableView
           style={ctx.wrapperStyle}
           onPress={() => {
@@ -398,7 +398,7 @@ const PasswordInput = React.forwardRef<
             />
           )}
         </TouchableView>
-      )) as React.FC<RenderCtx>)
+      ))
     );
   }, [props.customIcon, props.iconColor, passwordVisible, colors2024]);
 

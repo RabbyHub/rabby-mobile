@@ -2101,7 +2101,9 @@ export function subscribeEvent<T extends SendTokenEvents>(
 
   return dispose;
 }
-export function useInputBlurOnEvents(inputRef: React.RefObject<TextInput>) {
+export function useInputBlurOnEvents(
+  inputRef: React.RefObject<TextInput | null>,
+) {
   const { events } = useSendTokenInternalContext();
   useEffect(() => {
     const disposeRets = [] as Function[];

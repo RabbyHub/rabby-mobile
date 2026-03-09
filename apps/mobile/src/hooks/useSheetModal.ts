@@ -43,9 +43,7 @@ export function useSheetModal(
 
 export type DappBottomSheetModalRefs<T extends string = string> = Record<
   T,
-  | React.MutableRefObject<BottomSheetModal>
-  | React.RefObject<BottomSheetModal>
-  | null
+  React.RefObject<BottomSheetModal | null> | null
 >;
 
 export function useSheetModals<T extends string>(
