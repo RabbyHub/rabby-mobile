@@ -181,6 +181,7 @@ export const createTradingViewChartTemplate = (
     <script
       src="https://js.sentry-cdn.com/e1789a3f58159a0b7c06ac86c1596058.min.js"
       crossorigin="anonymous"
+      async
     ></script>
   </head>
   <body>
