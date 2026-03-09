@@ -25,7 +25,7 @@ on:
         options:
           - 'mobile'
           - 'mobile-local'
-        default: 'mobile'
+        default: 'mobile-local'
       RABBY_MOBILE_NM_USE_CACHE:
         required: false
         type: boolean
@@ -33,7 +33,7 @@ on:
       RABBY_MOBILE_POD_USE_CACHE:
         required: false
         type: boolean
-        default: false
+        default: true
       RABBY_MOBILE_GRADLE_USE_CACHE:
         required: false
         type: boolean
