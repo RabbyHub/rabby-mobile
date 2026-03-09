@@ -1,43 +1,7 @@
-/* eslint-disable no-restricted-imports */
-import { Text as RNText, TextInput as RNTextInput } from 'react-native';
-import {
-  Text as RNGHText,
-  TextInput as RNGHTextInput,
-} from 'react-native-gesture-handler';
-
 import type { StyleProp, TextStyle } from 'react-native';
-import AnimateableText from 'react-native-animateable-text';
 
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { IS_ANDROID, IS_IOS } from '../native/utils';
-import { Text as RNEUIText } from '@rneui/base';
-
-if (IS_ANDROID || IS_IOS) {
-  // @ts-expect-error
-  RNText.defaultProps = Object.assign({}, RNText.defaultProps, {
-    allowFontScaling: false,
-  });
-  // @ts-expect-error
-  RNTextInput.defaultProps = Object.assign({}, RNTextInput.defaultProps, {
-    allowFontScaling: false,
-  });
-  RNGHText.defaultProps = Object.assign({}, RNGHText.defaultProps, {
-    allowFontScaling: false,
-  });
-  RNGHTextInput.defaultProps = Object.assign({}, RNGHTextInput.defaultProps, {
-    allowFontScaling: false,
-  });
-  AnimateableText.defaultProps = Object.assign(
-    {},
-    AnimateableText.defaultProps,
-    {
-      allowFontScaling: false,
-    },
-  );
-  RNEUIText.defaultProps = Object.assign({}, RNEUIText.defaultProps, {
-    allowFontScaling: false,
-  });
-}
+import { IS_IOS } from '../native/utils';
 
 export const enum FontWeightEnum {
   thin = 100,
