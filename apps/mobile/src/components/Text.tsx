@@ -40,7 +40,7 @@ const defaultFontFamily = {
 const RobotoLackWeights = ['200', '600', '800'];
 
 export const Text = React.forwardRef(
-  ({ style, ...rest }: TextProps, ref: React.LegacyRef<RNText>) => {
+  ({ style, ...rest }: TextProps, ref: React.Ref<RNText>) => {
     const _fontSize = useMemo(
       () => normalize((style as TextStyle)?.fontSize || 14),
       [style],

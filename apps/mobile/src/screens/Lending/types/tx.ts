@@ -10,6 +10,6 @@ export type TxErrorType = {
   blocking: boolean;
   actionBlocked: boolean;
   rawError: Error;
-  error: ReactElement | undefined;
+  error: ReactElement<any> | undefined;
   txAction: TxAction;
 };

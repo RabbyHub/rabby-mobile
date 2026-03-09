@@ -123,7 +123,8 @@ export const AppBottomSheetModal = forwardRef<
     const sub = perfEvents.subscribe(
       'GLOBAL_CLEAR_ALL_COVERED_COMPONENTS',
       () => {
-        ref && (ref as React.RefObject<BottomSheetModal>).current?.dismiss();
+        ref &&
+          (ref as React.RefObject<BottomSheetModal | null>).current?.dismiss();
       },
     );
 

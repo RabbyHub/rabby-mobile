@@ -2,49 +2,47 @@ import * as React from 'react';
 import {
   TouchableNativeFeedback,
   TouchableOpacity,
+  TouchableWithoutFeedbackProps,
   Platform,
   View,
   StyleProp,
   ViewStyle,
-  ViewProps,
 } from 'react-native';
 
-type Props = ViewProps & {
-  onPress: () => void;
-  onLongPress?: () => void;
+type Props = TouchableWithoutFeedbackProps & {
   delayPressIn?: number;
   borderless?: boolean;
-  pressColor: string;
+  pressColor?: string;
   pressOpacity?: number;
-  children?: React.ReactNode;
+  children: React.ReactElement;
   style?: StyleProp<ViewStyle>;
 };
 
 const LOLLIPOP = 21;
 
-export default class TouchableItem extends React.Component<Props> {
-  static defaultProps = {
-    pressColor: 'rgba(255, 255, 255, .4)',
-  };
+const DEFAULT_PRESS_COLOR = 'rgba(255, 255, 255, .4)';
 
-  render() {
-    const { style, pressOpacity, pressColor, borderless, children, ...rest } =
-      this.props;
-
-    if (Platform.OS === 'android' && Platform.Version >= LOLLIPOP) {
-      return (
-        <TouchableNativeFeedback
-          {...rest}
-          background={TouchableNativeFeedback.Ripple(pressColor, !!borderless)}>
-          <View style={style}>{React.Children.only(children)}</View>
-        </TouchableNativeFeedback>
-      );
-    }
-
+export default function TouchableItem({
+  style,
+  pressOpacity,
+  pressColor = DEFAULT_PRESS_COLOR,
+  borderless,
+  children,
+  ...rest
+}: Props) {
+  if (Platform.OS === 'android' && Platform.Version >= LOLLIPOP) {
     return (
-      <TouchableOpacity {...rest} style={style} activeOpacity={pressOpacity}>
-        {children}
-      </TouchableOpacity>
+      <TouchableNativeFeedback
+        {...rest}
+        background={TouchableNativeFeedback.Ripple(pressColor, !!borderless)}>
+        <View style={style}>{React.Children.only(children)}</View>
+      </TouchableNativeFeedback>
     );
   }
+
+  return (
+    <TouchableOpacity {...rest} style={style} activeOpacity={pressOpacity}>
+      {children}
+    </TouchableOpacity>
+  );
 }

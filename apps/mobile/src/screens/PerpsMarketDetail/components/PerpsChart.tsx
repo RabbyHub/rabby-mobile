@@ -102,7 +102,7 @@ const parseCandles = (data: CandleSnapshot): CandleBar[] => {
 
 export const PerpsChart: React.FC<{
   marketName: string;
-  coinNameRef: React.RefObject<string>;
+  coinNameRef: React.RefObject<string | null>;
   markPrice: number;
   currentAssetCtx?: MarketData;
   selectedInterval: CANDLE_MENU_KEY_V2;

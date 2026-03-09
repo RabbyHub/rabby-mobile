@@ -12,7 +12,7 @@ import { toastCopyAddressSuccess } from '../AddressViewer/CopyAddress';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 
 interface Props {
-  children: React.ReactElement;
+  children: React.ReactElement<any>;
   account: KeyringAccountWithAlias;
 }
 export const AccountSwitcherContextMenu: React.FC<Props> = props => {

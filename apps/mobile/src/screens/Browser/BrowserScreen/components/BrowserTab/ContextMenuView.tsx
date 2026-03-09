@@ -20,7 +20,7 @@ type Props = {
     iosMenuTitle?: string;
     menuActions: MenuAction[];
   };
-  children: React.ReactElement;
+  children: React.ReactElement<any>;
 } & ContextMenuContentProps;
 
 export const ContextMenuView: React.FC<Props> = ({

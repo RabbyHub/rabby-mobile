@@ -154,7 +154,7 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
 
 const isIOS = Platform.OS === 'ios';
 function useForceExpandOnceOnBootstrap(
-  sheetModalRef: React.RefObject<OpenedDappBottomSheetModal> | null,
+  sheetModalRef: React.RefObject<OpenedDappBottomSheetModal | null> | null,
 ) {
   const { stateRef: firstTouchedRef, setRefState: setFirstTouched } =
     useRefState(false);
@@ -433,7 +433,6 @@ export function OpenedDappWebViewStub() {
               ref={inst => {
                 if (isActiveDapp) {
                   globalSetActiveDappState({ dappOrigin: dappInfo.origin });
-                  // @ts-expect-error
                   activeDappWebViewControlRef.current = inst;
                   // const activeTabId = inst?.getWebViewId() ?? undefined;
                   globalSetActiveDappState({

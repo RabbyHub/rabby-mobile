@@ -35807,9 +35807,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::version=6.2.1&hash=26d463&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 6.2.1
-  resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::version=6.2.1&hash=26d463&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch::version=6.2.1&hash=9a13ba&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     use-deep-compare: ^1.1.0
   peerDependencies:
@@ -35821,25 +35821,7 @@ __metadata:
   peerDependenciesMeta:
     "@shopify/flash-list":
       optional: true
-  checksum: ea4a01c03d912480618ca695dbf9ac5d2e6994a519fcb76a3a35c6b25124b04774849f0dd1e4affc2a7923700cea1c742858c82a8c38a775e703ddf1697a7b8b
-  languageName: node
-  linkType: hard
-
-"react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@patch%3Areact-native-collapsible-tab-view@npm%253A6.2.1%23./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch%3A%3Aversion=6.2.1&hash=26d463&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/react-native-collapsible-tab-view-patch-5273f6ccaf.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 6.2.1
-  resolution: "react-native-collapsible-tab-view@patch:react-native-collapsible-tab-view@patch%3Areact-native-collapsible-tab-view@npm%253A6.2.1%23./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch%3A%3Aversion=6.2.1&hash=26d463&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/react-native-collapsible-tab-view-patch-5273f6ccaf.patch::version=6.2.1&hash=a2a731&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    use-deep-compare: ^1.1.0
-  peerDependencies:
-    "@shopify/flash-list": ">=1.0.0"
-    react: "*"
-    react-native: "*"
-    react-native-pager-view: "*"
-    react-native-reanimated: ">=2.15.0"
-  peerDependenciesMeta:
-    "@shopify/flash-list":
-      optional: true
-  checksum: 9be9908418aff408c28d8d4b3d5cca7a6e9041271594160ea53314d839d850a41b4e351f4fc0a292a4bc059e8546bf016b964394f9896803ff18b9be3bce515c
+  checksum: 5290d09e3d5026eec054ad0db3abf71aa67431d347dcc0b949e9d0c646a61b133a0fc3d066034e919c1a0f794422e9ba6149fad03ab8590c8ba8da68351a55e7
   languageName: node
   linkType: hard
 
@@ -44176,7 +44158,7 @@ __metadata:
 
 "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=169feb&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=9bb0a3&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": ^2.0.1
     "@radix-ui/react-dropdown-menu": ^2.0.1
@@ -44186,7 +44168,7 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: e259c4932bb50c892f7a5189590afcc12bdac216992158081195301a1f1ef8a1e147178ebe3b2255959d131b8bd8583f7b8b32522e1f2b290ec19cfc6d9b97ec
+  checksum: eb0eb9e583b0dc8543e1e323bb3b5faeab7b76c254085ee30ff3d6ec1e5798e5706ff4a1f24c93f32bef31da92c2189528d9784aa3b96ffbe990d4d89d77c090
   languageName: node
   linkType: hard
 

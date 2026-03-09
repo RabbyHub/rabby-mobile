@@ -1,4 +1,4 @@
-import { forwardRef, LegacyRef } from 'react';
+import { forwardRef, Ref } from 'react';
 import { Platform, View } from 'react-native';
 import { useGetBinaryMode } from '@/hooks/theme';
 import {

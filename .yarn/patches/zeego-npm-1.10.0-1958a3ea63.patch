@@ -28,10 +28,10 @@ index d8a29199c7a6859f2b48a5bef5dd20c4f11d1b04..39530e14717b654dbd4bf70077311c44
 @@ -23,7 +23,7 @@ import {
  } from '../menu'
  import type { FC } from 'react'
- 
+
 -import type { MenuArrowProps } from '@radix-ui/react-dropdown-menu'
 +import type { DropdownMenuArrowProps as MenuArrowProps } from '@radix-ui/react-dropdown-menu'
- 
+
  const Root: FC<MenuRootProps> = ({ children }) => <>{children}</>
  Root.displayName = MenuDisplayName.Root
 diff --git a/src/menu/create-android-menu/index.android.tsx b/src/menu/create-android-menu/index.android.tsx
@@ -41,16 +41,16 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
 @@ -1,4 +1,4 @@
 -import React, { Children, ReactElement, cloneElement } from 'react'
 +import React, { Children, ReactElement, cloneElement, useRef, useImperativeHandle, useLayoutEffect } from 'react'
- 
+
  import { MenuView } from '@react-native-menu/menu'
- 
+
 @@ -31,7 +31,7 @@ import type {
    MenuSubContentProps,
    ContextMenuAuxliliaryProps,
  } from '../types'
 -import { View } from 'react-native'
 +import { View, useColorScheme } from 'react-native'
- 
+
  const createAndroidMenu = (Menu: 'ContextMenu' | 'DropdownMenu') => {
    const Trigger = create(({ children, style, asChild }: MenuTriggerProps) => {
 @@ -166,6 +166,7 @@ If you want to use a custom component as your <Content />, you can use the creat
@@ -64,7 +64,7 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
 @@ -184,7 +185,8 @@ If you want to use a custom component as your <Content />, you can use the creat
      attributes?: MenuAttributes
    }
- 
+
 -  const Root = create((props: MenuRootProps) => {
 +  const Root = /* create */(
 +React.forwardRef((props: MenuRootProps, ref: any) => {
@@ -72,9 +72,9 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
      const content = pickChildren<MenuContentProps | ContextMenuContentProps>(
        props.children,
 @@ -193,6 +195,21 @@ If you want to use a custom component as your <Content />, you can use the creat
- 
+
      const callbacks: Record<string, () => void> = {}
- 
+
 +    const colorScheme = useColorScheme();
 +    const isDarkMode = colorScheme === 'dark';
 +    const defaultTextColor = isDarkMode ? 'white' : 'dark';
@@ -104,17 +104,17 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
        const menuAttributes: MenuAttributes = {}
 @@ -215,6 +234,7 @@ If you want to use a custom component as your <Content />, you can use the creat
        }
- 
+
        let icon: MenuItem['image']
 +      let androidIconDesc: MenuItemIconProps['androidIcon'] | undefined
- 
+
        if (typeof child.props.children == 'string') {
          title = child.props.children
 @@ -232,7 +252,6 @@ If you want to use a custom component as your <Content />, you can use the creat
          } else {
            console.error(
              `[zeego] Invalid <${Menu}.Item key="${key}" /> Missing valid title. Make sure you do one of the following:
--  
+-
    1. pass a string as the child of <${Menu}.ItemTitle />, nested directly inside of <${Menu}.Item />.
    2. OR, use the textValue prop on <${Menu}.Item textValue="Some value" />`
            )
@@ -140,7 +140,7 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
        }
        return
 @@ -341,11 +364,14 @@ If you want to use a custom component as your <Content />, you can use the creat
- 
+
              const item = getItemFromChild(child, index)
              if (item) {
 -              const { icon, title, key, menuAttributes, subtitle } = item
@@ -156,7 +156,7 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
                  subtitle,
                }
 @@ -356,7 +382,7 @@ If you want to use a custom component as your <Content />, you can use the creat
- 
+
              const item = getItemFromChild(child, index)
              if (item) {
 -              const { icon, title, key, menuAttributes, subtitle } = item
@@ -185,7 +185,7 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
 @@ -446,19 +475,26 @@ If you want to use a custom component as your <Content />, you can use the creat
        shouldOpenOnLongPress = triggerItem.props.action === 'longPress'
      }
- 
+
 +    const isAnchoredToRight = triggerItem?.props?.isAnchoredToRight;
 +    const androidSuppressNativeLongPress = triggerItem?.props?.androidSuppressNativeLongPress;
 +
@@ -207,7 +207,7 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
      )
 -  }, 'Root')
 +})/* , 'Root' */)
- 
+
    const Separator = create((_: MenuSeparatorProps) => {
      return <></>
 diff --git a/src/menu/create-ios-menu/index.ios.tsx b/src/menu/create-ios-menu/index.ios.tsx
@@ -242,8 +242,8 @@ index f2f95bdda35c82e020b4cf363c32e89ec6020a71..f2f52da3c5f83db4ea0ca1c51f01c53a
 +   *
 +   * @platform android
 +   */
-+  androidMenuViewRef?: React.RefObject<import('@react-native-menu/menu').MenuComponentRef>;
- 
++  androidMenuViewRef?: React.RefObject<import('@react-native-menu/menu').MenuComponentRef | null>;
+
    __unsafeIosProps?:
      | ComponentProps<typeof ContextMenuView>
 @@ -57,6 +63,13 @@ export type MenuTriggerProps = {
@@ -258,7 +258,7 @@ index f2f95bdda35c82e020b4cf363c32e89ec6020a71..f2f52da3c5f83db4ea0ca1c51f01c53a
 +   */
 +  androidSuppressNativeLongPress?: boolean;
  }
- 
+
  export type MenuContentProps = {
 @@ -105,6 +118,12 @@ export type MenuItemProps = {
    onBlur?: () => void
@@ -271,7 +271,7 @@ index f2f95bdda35c82e020b4cf363c32e89ec6020a71..f2f52da3c5f83db4ea0ca1c51f01c53a
 +   */
 +  androidTitleColor?: string;
  }
- 
+
  export interface MenuItemCommonProps {
 @@ -131,6 +150,14 @@ export interface MenuItemCommonProps {
     * @platform android
@@ -286,5 +286,5 @@ index f2f95bdda35c82e020b4cf363c32e89ec6020a71..f2f52da3c5f83db4ea0ca1c51f01c53a
 +    color: string;
 +  }
  }
- 
+
  export type MenuItemIconProps = MenuItemCommonProps & {

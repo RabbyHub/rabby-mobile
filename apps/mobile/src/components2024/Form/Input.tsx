@@ -218,7 +218,7 @@ const NextInputComponent = React.forwardRef<
     );
 
     const innerRef = React.useRef<TextInput>(null);
-    const inputRef = (ref as React.RefObject<TextInput>) || innerRef;
+    const inputRef = (ref as React.RefObject<TextInput | null>) || innerRef;
     const onPressClear = useCallback<
       React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
     >(

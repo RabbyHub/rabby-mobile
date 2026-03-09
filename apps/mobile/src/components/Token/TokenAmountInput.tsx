@@ -25,7 +25,7 @@ function useLoadTokenList({
   ref,
 }: {
   onTokenChange?: TokenAmountInputProps['onTokenChange'];
-  ref?: React.RefObject<TextInput> | null;
+  ref?: React.RefObject<TextInput | null> | null;
 } = {}) {
   const internalInputRef = useRef<TextInput>(null);
   const tokenInputRef = ref || internalInputRef;
@@ -103,7 +103,7 @@ export const TokenAmountInput = React.forwardRef<
     const { tokenInputRef, tokenSelectorVisible, handleCurrentTokenChange } =
       useLoadTokenList({
         onTokenChange,
-        ref: ref as React.RefObject<TextInput>,
+        ref: ref as React.RefObject<TextInput | null>,
       });
 
     useLayoutEffect(() => {

@@ -43,7 +43,7 @@ export const RNEUIText = withDefaults(RNEUITextImpl, {
 
 export type TextInput = React.ComponentRef<typeof TextInput>;
 export type Text = React.ComponentRef<typeof Text>;
-export type RNGHText = React.ComponentRef<typeof RNGHText>;
-export type RNGHTextInput = React.ComponentRef<typeof RNGHTextInput>;
+export type RNGHText = RNGHTextImpl;
+export type RNGHTextInput = RNGHTextInputImpl;
 export type AnimateableText = React.ComponentRef<typeof AnimateableText>;
 export type RNEUIText = React.ComponentRef<typeof RNEUIText>;
