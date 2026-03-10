@@ -151,6 +151,7 @@ import balanceStore from '@/store/balance';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import {
+  isOverPulldownRefreshThreshold,
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
@@ -391,8 +392,9 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
-            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
-              !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
+            if (isOverPulldownRefreshThreshold(pullDistance.value)) {
+              !startValues.value.hasImpactOnPanup &&
+                runOnJS(triggerImpact)({ __DEV_ONLY__: true });
               startValues.value.hasImpactOnPanup = true;
             }
           }
@@ -421,7 +423,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
             !svIsRefreshing.value
           ) {
-            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
+            if (isOverPulldownRefreshThreshold(pullDistance.value)) {
               // svIsRefreshing.value = true;
               setPulldownRefreshStage({
                 state: 'refreshing',
@@ -430,7 +432,8 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
                 indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
               });
               runOnJS(onRefreshOnJs)();
-              !hasImpactOnPanup && runOnJS(triggerImpact)();
+              !hasImpactOnPanup &&
+                runOnJS(triggerImpact)({ __DEV_ONLY__: true });
             } else {
               setPulldownRefreshStage({
                 state: 'finished',

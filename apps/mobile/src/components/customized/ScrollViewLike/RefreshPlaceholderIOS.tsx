@@ -33,6 +33,16 @@ export const pulldownRefreshSizes = {
 
 export const SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING = !IS_ANDROID;
 
+const scrHeight = Dimensions.get('screen').height;
+
+export function isOverPulldownRefreshThreshold(pullDistance: number) {
+  'worklet';
+  return (
+    pullDistance >=
+    Math.min(scrHeight * 0.3, pulldownRefreshSizes.homeHeaderHeight + 55)
+  );
+}
+
 const AnimatedActivityIndicator =
   Animated.createAnimatedComponent(ActivityIndicator);
 
@@ -77,8 +87,9 @@ export const usePulldownRefreshGesture = <
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
-            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
-              !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
+            if (isOverPulldownRefreshThreshold(pullDistance.value)) {
+              !startValues.value.hasImpactOnPanup &&
+                runOnJS(triggerImpact)({ __DEV_ONLY__: true });
               startValues.value.hasImpactOnPanup = true;
             }
           }
@@ -91,7 +102,7 @@ export const usePulldownRefreshGesture = <
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
             !svIsRefreshing.value
           ) {
-            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
+            if (isOverPulldownRefreshThreshold(pullDistance.value)) {
               svIsRefreshing.value = true;
               setPulldownRefreshStage({
                 state: 'refreshing',
@@ -100,7 +111,8 @@ export const usePulldownRefreshGesture = <
                 indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
               });
               runOnJS(onRefreshOnJs)();
-              !hasImpactOnPanup && runOnJS(triggerImpact)();
+              !hasImpactOnPanup &&
+                runOnJS(triggerImpact)({ __DEV_ONLY__: true });
             } else {
               setPulldownRefreshStage({
                 state: 'finished',
