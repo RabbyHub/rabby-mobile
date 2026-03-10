@@ -25,6 +25,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
+import { ListRenderFooter } from './RenderRow/Common';
 import useTokenList, {
   getMultiAssetsCacheKey,
   ITokenItem,
@@ -239,6 +240,14 @@ export const TokenList = () => {
     setFoldHideList(pre => !pre);
   }, [foldHideList]);
 
+  // const ListRenderFooter = useCallback(() => {
+  //   return hasMorePortfolios ? (
+  //     <MemoizedDefiItemLoader style={[styles.loadingMore]} />
+  //   ) : (
+  //     <ListRenderFooterComponent />
+  //   );
+  // }, [hasMorePortfolios, styles.loadingMore]);
+
   const onRefresh = useCallback(async () => {
     try {
       batchGetTokenList(myTop10Addresses, true);
@@ -403,25 +412,34 @@ export const TokenList = () => {
     return item.type;
   }, []);
 
-  const { panGestureRef, isRefreshing, pullDistance, svIsRefreshing } =
-    usePulldownRefreshGesture({
-      onRefreshOnJs: onRefresh,
-    });
+  const {
+    panGestureRef,
+    isRefreshing,
+    svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  } = usePulldownRefreshGesture({
+    onJsPulldownRefresh: ctx => {
+      ctx.svIsManualRefreshing.value = true;
+      return onRefresh();
+    },
+  });
 
   useEffect(() => {
     console.debug('[PulldownRefresh] TokenList isLoading changed', isLoading);
-    setPulldownRefreshStage({
-      state: isLoading ? 'refreshing' : 'finished',
-      svIsRefreshing,
-      pullDistance,
-      indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
-    });
-  }, [isLoading, svIsRefreshing, pullDistance]);
+    if (!isLoading) {
+      setPulldownRefreshStage({
+        state: isLoading ? 'refreshing' : 'finished',
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+        svIsRefreshing,
+        svIsManualRefreshing,
+        pullDistance,
+      });
+    }
+  }, [isLoading, svIsRefreshing, svIsManualRefreshing, pullDistance]);
 
   const pulldownRefreshReturns = usePulldownRefreshStyles({
     indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
     pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
-    states: { pullDistance, svIsRefreshing },
+    states: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   });
 
   return (
@@ -430,8 +448,12 @@ export const TokenList = () => {
         style={styles.container}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
-          <RefreshPlaceholderIOS hooksReturn={pulldownRefreshReturns} />
+          <RefreshPlaceholderIOS
+            hooksReturn={pulldownRefreshReturns}
+            __PICK_MANUAL__
+          />
         }
+        // ListFooterComponent={ListRenderFooter}
         bounces={false}
         overScrollMode={'never'}
         scrollEventThrottle={16}
@@ -460,9 +482,7 @@ const getStyles = createGetStyles2024(() => ({
   },
   list: {
     paddingHorizontal: 16,
-  },
-  bgContainer: {
-    paddingHorizontal: 16,
+    paddingBottom: 48,
   },
   tokenSectionHeader: {
     paddingLeft: 0,

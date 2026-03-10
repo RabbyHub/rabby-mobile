@@ -263,28 +263,37 @@ export const ProtocolList = () => {
     }
   }, [triggerUpdate, myTop10Addresses]);
 
-  const { panGestureRef, isRefreshing, pullDistance, svIsRefreshing } =
-    usePulldownRefreshGesture({
-      onRefreshOnJs: onRefresh,
-    });
+  const {
+    panGestureRef,
+    isRefreshing,
+    svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  } = usePulldownRefreshGesture({
+    onJsPulldownRefresh: ctx => {
+      ctx.svIsManualRefreshing.value = true;
+      return onRefresh();
+    },
+  });
 
   useEffect(() => {
     console.debug(
       '[PulldownRefresh] ProtocolList isLoading changed',
       isLoading,
     );
-    setPulldownRefreshStage({
-      state: isLoading ? 'refreshing' : 'finished',
-      svIsRefreshing,
-      pullDistance,
-      indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
-    });
-  }, [isLoading, svIsRefreshing, pullDistance]);
+    if (!isLoading) {
+      setPulldownRefreshStage({
+        state: isLoading ? 'refreshing' : 'finished',
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+        svIsRefreshing,
+        svIsManualRefreshing,
+        pullDistance,
+      });
+    }
+  }, [isLoading, svIsRefreshing, svIsManualRefreshing, pullDistance]);
 
   const pulldownRefreshReturns = usePulldownRefreshStyles({
     indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
     pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
-    states: { pullDistance, svIsRefreshing },
+    states: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   });
 
   // if (!isFocusing) {
@@ -315,11 +324,14 @@ export const ProtocolList = () => {
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <>
-            <RefreshPlaceholderIOS hooksReturn={pulldownRefreshReturns} />
+            <RefreshPlaceholderIOS
+              hooksReturn={pulldownRefreshReturns}
+              __PICK_MANUAL__
+            />
             <PerpsMultiAssetPosition />
           </>
         }
-        ListFooterComponent={ListRenderFooter}
+        // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         style={styles.container}
@@ -351,6 +363,7 @@ const getStyles = createGetStyles2024(() => ({
   },
   list: {
     paddingHorizontal: 16,
+    paddingBottom: 48,
   },
   bgContainer: {
     paddingHorizontal: 16,

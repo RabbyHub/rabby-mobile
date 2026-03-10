@@ -1,4 +1,4 @@
-import { trigger } from 'react-native-haptic-feedback';
+import { HapticOptions, trigger } from 'react-native-haptic-feedback';
 
 export const getOriginName = (origin: string) => {
   const matches = origin.replace(/https?:\/\//, '').match(/^([^.]+\.)?(\S+)\./);
@@ -28,9 +28,16 @@ export const lowcaseSame = (a: string, b: string) => {
   return a.toLowerCase() === b.toLowerCase();
 };
 
-export const triggerImpact = () => {
+export const triggerImpact = ({
+  __DEV_ONLY__,
+  ...options
+}: HapticOptions & {
+  __DEV_ONLY__?: boolean;
+} = {}) => {
+  if (__DEV_ONLY__ && !__DEV__) return;
   trigger('impactLight', {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
+    ...options,
   });
 };
