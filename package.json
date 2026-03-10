@@ -99,7 +99,8 @@
     "@ethereumjs/tx@^10.0.0": "patch:@ethereumjs/tx@npm%3A5.4.0#./.yarn/patches/@ethereumjs-tx-npm-5.4.0-0c4a0f973e.patch",
     "@rabby-wallet/eth-simple-keyring": "5.1.0",
     "react-native-collapsible-tab-view@^6.2.1": "patch:react-native-collapsible-tab-view@npm%3A6.2.1#./.yarn/patches/react-native-collapsible-tab-view-npm-6.2.1-a5b5774731.patch",
-    "react-native-gesture-handler@2.30.0": "patch:react-native-gesture-handler@npm%3A2.30.0#./.yarn/patches/react-native-gesture-handler-npm-2.30.0-d5e006b81c.patch"
+    "react-native-gesture-handler@2.30.0": "patch:react-native-gesture-handler@npm%3A2.30.0#./.yarn/patches/react-native-gesture-handler-npm-2.30.0-d5e006b81c.patch",
+    "@gorhom/bottom-sheet@5.2.8": "patch:@gorhom/bottom-sheet@npm%3A5.2.8#./.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",

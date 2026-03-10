@@ -47,7 +47,8 @@
     "@safe-global/types-kit": "1.0.4",
     "react-native-ble-plx": "3.5.0",
     "@ledgerhq/react-native-hw-transport-ble/react-native-ble-plx": "3.5.0",
-    "@onekeyfe/hd-transport-react-native": "patch:@onekeyfe/hd-transport-react-native@npm:1.1.13#./patches/@onekeyfe+hd-transport-react-native+1.1.13-android-subscription.patch"
+    "@onekeyfe/hd-transport-react-native": "patch:@onekeyfe/hd-transport-react-native@npm:1.1.13#./patches/@onekeyfe+hd-transport-react-native+1.1.13-android-subscription.patch",
+    "@gorhom/bottom-sheet": "patch:@gorhom/bottom-sheet@npm:5.2.8#../../.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch"
   },
   "dependencies": {
     "@aave/contract-helpers": "1.36.1",
