@@ -403,25 +403,34 @@ export const TokenList = () => {
     return item.type;
   }, []);
 
-  const { panGestureRef, isRefreshing, pullDistance, svIsRefreshing } =
-    usePulldownRefreshGesture({
-      onRefreshOnJs: onRefresh,
-    });
+  const {
+    panGestureRef,
+    isRefreshing,
+    svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  } = usePulldownRefreshGesture({
+    onJsPulldownRefresh: ctx => {
+      ctx.svIsManualRefreshing.value = true;
+      return onRefresh();
+    },
+  });
 
   useEffect(() => {
     console.debug('[PulldownRefresh] TokenList isLoading changed', isLoading);
-    setPulldownRefreshStage({
-      state: isLoading ? 'refreshing' : 'finished',
-      svIsRefreshing,
-      pullDistance,
-      indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
-    });
-  }, [isLoading, svIsRefreshing, pullDistance]);
+    if (!isLoading) {
+      setPulldownRefreshStage({
+        state: isLoading ? 'refreshing' : 'finished',
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+        svIsRefreshing,
+        svIsManualRefreshing,
+        pullDistance,
+      });
+    }
+  }, [isLoading, svIsRefreshing, svIsManualRefreshing, pullDistance]);
 
   const pulldownRefreshReturns = usePulldownRefreshStyles({
     indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
     pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
-    states: { pullDistance, svIsRefreshing },
+    states: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   });
 
   return (
@@ -430,7 +439,10 @@ export const TokenList = () => {
         style={styles.container}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
-          <RefreshPlaceholderIOS hooksReturn={pulldownRefreshReturns} />
+          <RefreshPlaceholderIOS
+            hooksReturn={pulldownRefreshReturns}
+            __PICK_MANUAL__
+          />
         }
         bounces={false}
         overScrollMode={'never'}
