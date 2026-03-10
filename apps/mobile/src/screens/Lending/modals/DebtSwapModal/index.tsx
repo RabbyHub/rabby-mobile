@@ -792,12 +792,19 @@ export default function DebtSwapModal({
       !!toToken &&
       !isSameToken &&
       !!quote &&
-      !!fromAmount &&
-      new BigNumber(fromAmount).gt(0) &&
-      new BigNumber(fromAmount).lte(fromBalanceBn) &&
+      !!debouncedFromAmount &&
+      new BigNumber(debouncedFromAmount).gt(0) &&
+      new BigNumber(debouncedFromAmount).lte(fromBalanceBn) &&
       !isQuoteLoading
     );
-  }, [fromAmount, fromBalanceBn, isQuoteLoading, isSameToken, quote, toToken]);
+  }, [
+    debouncedFromAmount,
+    fromBalanceBn,
+    isQuoteLoading,
+    isSameToken,
+    quote,
+    toToken,
+  ]);
 
   const buttonDisabled = useMemo(() => {
     return (
