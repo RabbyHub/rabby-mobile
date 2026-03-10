@@ -7,8 +7,8 @@ import { getHealthStatusColor } from '@/screens/Lending/utils';
 import { formatNetworth, formatNum } from '@/utils/math';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect } from 'react';
-import { Text } from 'react-native';
 import { runOnJS } from 'react-native-reanimated';
+import { Text } from '@/components/Typography';
 
 const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });

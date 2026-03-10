@@ -46,21 +46,21 @@ const HeaderBalanceCard = ({
         <View style={styles.textContainer}>
           <Text style={styles.amount}>{amount}</Text>
           <Text style={styles.usdValue}> ≈${usdValue}</Text>
-          <Text
-            style={[
-              styles.percentChange,
-              {
-                color: is24hNoChange
-                  ? colors2024['neutral-foot']
-                  : isLoss
-                  ? colors2024['red-default']
-                  : colors2024['green-default'],
-              },
-            ]}>
-            {`(${is24hNoChange ? '' : isLoss ? '-' : '+'}${
-              percentChange ? percentChange : '0.0%'
-            })`}
-          </Text>
+          {!!percentChange && (
+            <Text
+              style={[
+                styles.percentChange,
+                {
+                  color: is24hNoChange
+                    ? colors2024['neutral-foot']
+                    : isLoss
+                    ? colors2024['red-default']
+                    : colors2024['green-default'],
+                },
+              ]}>
+              {`(${is24hNoChange ? '' : isLoss ? '-' : '+'}${percentChange})`}
+            </Text>
+          )}
         </View>
       </View>
       <RcIconRightArrowCC

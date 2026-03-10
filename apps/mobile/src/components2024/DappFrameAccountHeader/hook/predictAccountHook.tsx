@@ -7,8 +7,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import useAppChainStore from '@/store/appchain';
 import { useShallow } from 'zustand/shallow';
 import { formatUsdValue } from '@/utils/number';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { getStyle } from '../styles';
+import { Text } from '@/components/Typography';
 
 const PREDICTION_LIST = INNER_DAPP_LIST.PREDICTION;
 

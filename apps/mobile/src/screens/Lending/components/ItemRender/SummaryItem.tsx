@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 
 import {
   createGetStyles2024,
@@ -22,6 +22,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useLendingService } from '../../hooks/useLendingService';
+import { Text } from '@/components/Typography';
 
 interface SummaryItemProps {
   netWorth: string;

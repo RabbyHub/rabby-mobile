@@ -3,7 +3,8 @@ import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View, ViewStyle } from 'react-native';
+import { View, ViewStyle } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export function AccountInfoInTokenRow({
   ownerAccount,

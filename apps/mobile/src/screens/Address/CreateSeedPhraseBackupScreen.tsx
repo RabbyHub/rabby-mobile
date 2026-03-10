@@ -14,8 +14,9 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export const CreateSeedPhraseBackupScreen = () => {
   const colors = useThemeColors();

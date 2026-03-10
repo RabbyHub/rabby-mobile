@@ -3,7 +3,7 @@ import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import RcPlusCC from '../icons/plus-cc.svg';
 import RcMinusCC from '../icons/minus-cc.svg';
@@ -12,6 +12,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Tip } from '@/components';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 function CalcButton({
   disabled,

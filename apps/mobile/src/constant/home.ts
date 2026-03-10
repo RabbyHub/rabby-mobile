@@ -4,11 +4,22 @@ export const ITEM_GRID_GAP = 10;
 
 export const HOME_TOP_HEADER_SIZES = {
   headerHeight: 52,
-  headerPaddingY: 14,
+  // headerHeight: 0,
   headerIndicatorHeight: 6,
+  homecardOffsetFromIndicator: 12,
   tabItemHeight: 54,
+  get topHeaderHeight() {
+    return (
+      HOME_TOP_HEADER_SIZES.headerHeight +
+      HOME_TOP_HEADER_SIZES.headerIndicatorHeight
+    );
+  },
   get scrollableListTopOffset() {
-    return this.tabItemHeight + this.headerIndicatorHeight;
+    // return this.tabItemHeight + this.headerIndicatorHeight;
+    return this.tabItemHeight;
+  },
+  get tabInnerHomeTopOffset() {
+    return /* this.headerIndicatorHeight +  */ this.homecardOffsetFromIndicator;
   },
   portfolioContainerPx: 16,
 };

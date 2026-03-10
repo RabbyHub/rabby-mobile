@@ -7,7 +7,6 @@ import {
   Keyboard,
   ScrollView,
   StyleProp,
-  Text,
   useWindowDimensions,
   View,
   ViewStyle,
@@ -21,6 +20,7 @@ import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useMemoizedFn } from 'ahooks';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { BrowserHistorySiteItem } from '../BrowserManage/BrowserHistoryList/BrowserHistorySiteList';
+import { Text } from '@/components/Typography';
 
 export const BrowserBookmarkSection = ({
   onPress,

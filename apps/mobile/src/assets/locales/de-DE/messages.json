@@ -1733,14 +1733,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden.",
-            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden.",
-            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden."
+            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad.",
+            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird.",
+            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist."
           },
           "hdPathTypeNoChain": {
-            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird. In den ersten 3 Wallets gibt es keine on-chain verwendeten Wallets.",
-            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad. In den ersten 3 Wallets werden keine on-chain Wallets verwendet.",
-            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist. In den ersten 3 Wallets werden keine Wallets on-chain verwendet."
+            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad.",
+            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird.",
+            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist."
           }
         },
         "qrCode": {
@@ -3307,7 +3307,8 @@
         "entryTips": "Ein Klick, um Ihr geliehenes Asset zu tauschen, wodurch Schritte und Gebühren reduziert werden.",
         "priceImpactTips": "Hoher Preisimpact ({{lostValue}}). Diese Route kann aufgrund niedriger Liquidität oder kleiner Bestellgröße mehr zurückgeben.",
         "lpRiskWarning": "Niedriger Gesundheitsfaktor nach dem Swap. Ihre Position trägt ein höheres Risiko der Liquidation.",
-        "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben."
+        "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben.",
+        "maxLtvWarning": "Unzureichende Sicherheiten, um eine neue Kreditposition zu decken. Die Wallet muss über verbleibende Kreditaufnahmefähigkeiten verfügen, um einen Schuldenwechsel durchzuführen."
       },
       "hfTips": {
         "more": "Mehr",

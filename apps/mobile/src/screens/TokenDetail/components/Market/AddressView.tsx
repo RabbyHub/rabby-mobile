@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { trigger } from 'react-native-haptic-feedback';
 
@@ -9,6 +9,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { shortEllipsisAddress } from '@/utils/address';
 
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
+import { Text } from '@/components/Typography';
 
 interface IProps {
   address: string;

@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -16,6 +16,7 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { TokenDetailHeaderArea } from '@/screens/TokenDetail/components/HeaderArea';
 import { formatPrice, formatTokenAmount } from '@/utils/number';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
   radiusValue: 20,

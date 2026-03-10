@@ -2,7 +2,6 @@ import React, { useLayoutEffect, useMemo, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   StyleProp,
   ViewStyle,
   TouchableOpacity,
@@ -38,6 +37,7 @@ import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import { useSendNFTInternalContext } from '../hooks/useSendNFT';
 import { RcIconTipRightCC } from '@/screens/Send/icons';
 import { makeAccountObject } from '@/utils/account';
+import { Text } from '@/components/Typography';
 
 export const ToAccountEntry = ({
   account,

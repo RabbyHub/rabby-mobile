@@ -4,12 +4,13 @@ import { Chain } from '@/constant/chains';
 import { Account } from '@/core/services/preference';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { notificationService } from '@/core/services';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
+import { Text } from '@/components/Typography';
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {

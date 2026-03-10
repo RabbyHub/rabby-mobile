@@ -1480,14 +1480,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。在前三个钱包中，有在链上使用的钱包。",
-            "bip44": "BIP44标准：HDpath由BIP44协议定义。在前三个钱包中，有钱包用于链上。",
-            "legacy": "遗产：由 MEW / Mycrypto 使用的 HD 路径。在前三个钱包中，有在链上使用的钱包。"
+            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。",
+            "legacy": "遗产：MEW / Mycrypto 使用的 HD 路径。",
+            "bip44": "BIP44标准：由BIP44协议定义的HDpath。"
           },
           "hdPathTypeNoChain": {
-            "legacy": "遗产：MEW / Mycrypto 使用的 HD 路径。在前三个钱包中，没有在链上使用的钱包。",
-            "ledgerLive": "Ledger Live: Ledger 官方 HD 路径。在前 3 个钱包中，没有在链上使用的钱包。",
-            "bip44": "BIP44 标准：由 BIP44 协议定义的 HD 路径。在前 3 个钱包中，没有在链上使用的钱包。"
+            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。",
+            "bip44": "BIP44标准：由BIP44协议定义的HD路径。",
+            "legacy": "遗留：MEW / Mycrypto 使用的 HD 路径。"
           }
         },
         "keystone": {
@@ -3059,7 +3059,8 @@
         "priceImpactTips": "高价格影响（{{lostValue}}）。由于流动性低或订单规模小，此路径可能会返回更多。",
         "lpDangerWarning": "在此交易后，您的健康因子将会非常低，并可能导致清算。请选择其他资产或减少交易金额以确保安全。",
         "lpRiskWarning": "交换后低健康因子。您的头寸将承受更高的清算风险。",
-        "entryTips": "一键交换你借入的资产，减少步骤和费用。"
+        "entryTips": "一键交换你借入的资产，减少步骤和费用。",
+        "maxLtvWarning": "抵押品不足以覆盖新的借款头寸。钱包必须有剩余的借款能力才能执行债务切换。"
       },
       "hfTips": {
         "more": "更多",

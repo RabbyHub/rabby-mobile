@@ -5,7 +5,6 @@ import {
   FlatList,
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -28,6 +27,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
 import { QrCircleCC } from '@/assets2024/icons/address';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { Text } from '@/components/Typography';
 
 interface CombineDataInterface {
   title: AccountPannelSectionTitle;

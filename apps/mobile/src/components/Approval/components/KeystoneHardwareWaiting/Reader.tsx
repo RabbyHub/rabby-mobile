@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { URDecoder } from '@ngraveio/bc-ur';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { RcArrowRightCC } from '@/assets/icons/common';
 import { Code } from 'react-native-vision-camera';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

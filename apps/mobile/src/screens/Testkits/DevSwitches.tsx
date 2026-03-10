@@ -5,14 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -81,7 +74,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDappsViewConfig } from '../Dapps/hooks/useDappView';
 import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { getScreenshotFeedbackExtra } from '@/components/Screenshot/utils';
-import AnimateableText from 'react-native-animateable-text';
+import { Text, AnimateableText } from '@/components/Typography';
 
 export const makeNoop = () => () => {};
 

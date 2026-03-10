@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -9,6 +9,7 @@ import BigNumber from 'bignumber.js';
 import { RESERVE_USAGE_WARNING_THRESHOLD } from '../utils/constant';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
+import { Text } from '@/components/Typography';
 
 export function ReserveErrorTip({
   reserve,

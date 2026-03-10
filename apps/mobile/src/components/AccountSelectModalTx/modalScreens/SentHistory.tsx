@@ -6,7 +6,7 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { formatTimestamp } from '@/utils/time';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { Empty } from '@/screens/Transaction/components/Empty';
@@ -18,6 +18,7 @@ import { useGetCexList } from '@/screens/Transaction/hook';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useRecentSend } from '@/screens/Send/hooks/useRecentSend';
 import { useAccountSelectModalCtx } from '../hooks';
+import { Text } from '@/components/Typography';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;

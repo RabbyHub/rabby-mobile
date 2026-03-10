@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, Alert } from 'react-native';
+import { View, Alert } from 'react-native';
 import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -28,6 +28,7 @@ import { IS_IOS } from '@/core/native/utils';
 import { perpsService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import { naviPush } from '@/utils/navigation';
+import { Text } from '@/components/Typography';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {

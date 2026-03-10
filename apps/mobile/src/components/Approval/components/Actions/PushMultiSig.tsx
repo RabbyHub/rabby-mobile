@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PushMultiSigAction } from '@rabby-wallet/rabby-api/dist/types';
 import { Col, Row, Table } from './components/Table';
@@ -9,6 +9,7 @@ import { PushMultiSigRequireData } from '@rabby-wallet/rabby-action';
 import LogoWithText from './components/LogoWithText';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
+import { Text } from '@/components/Typography';
 
 const PushMultiSig = ({
   data,

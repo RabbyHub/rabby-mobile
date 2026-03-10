@@ -4,8 +4,9 @@ import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { forwardRef, useRef, useMemo, useImperativeHandle } from 'react';
-import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
+import { View, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/Typography';
 
 export const ConfirmBottomSheetModal = forwardRef<
   BottomSheetModal,

@@ -3,7 +3,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Pressable, Text, View } from 'react-native';
+import { Dimensions, Pressable, View } from 'react-native';
+import { Text } from '@/components/Typography';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

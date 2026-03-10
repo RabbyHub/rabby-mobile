@@ -1,11 +1,12 @@
 import { createGetStyles } from '@/utils/styles';
-import { StyleSheet, View, Text, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { TypeKeyringGroup } from '@/hooks/useWalletTypeData';
 import { AddressItemInner } from '../components/AddressItemInner';
 import { Button } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { RcIconCreateSeed } from '@/assets/icons/address';
+import { Text } from '@/components/Typography';
 
 interface Props {
   index: number;

@@ -1,10 +1,11 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import WarningFillCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 const BorrowToCapTip = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });

@@ -18,7 +18,8 @@ import { useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;

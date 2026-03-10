@@ -2,8 +2,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { StyleProp, TextStyle } from 'react-native';
+import { Text } from '@/components/Typography';
 
 type TFunc = ReturnType<typeof useTranslation>['t'];
 export function I18nRouteScreenTitle({

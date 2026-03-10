@@ -2,7 +2,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useThemeColors } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Spin } from './Spin';
 import { useMemo } from 'react';
 import { sortBy } from 'lodash';
@@ -10,6 +10,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import RcIconCompleteCC from '@/assets/icons/transaction-record/icon-complete-cc.svg';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Tip } from '@/components';
+import { Text } from '@/components/Typography';
 
 export const TransactionCompleteTag = () => {
   const { t } = useTranslation();

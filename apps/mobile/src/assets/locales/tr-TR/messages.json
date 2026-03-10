@@ -1356,14 +1356,14 @@
       "hd": {
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu. İlk 3 cüzdanda, zincir üzerinde kullanılan cüzdanlar vardır.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu. İlk 3 cüzdanda, zincir üzerinde kullanılan cüzdanlar vardır.",
-            "bip44": "BIP44 Standard: BIP44 protokolü tarafından tanımlanan HDpath. İlk 3 cüzdanda, zincir üzerine kullanılan cüzdanlar vardır."
+            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
+            "bip44": "BIP44 Standard: BIP44 protokolü tarafından tanımlanan HDpath.",
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu. İlk 3 cüzdanda, on-chain'de kullanılan cüzdan yok.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu. İlk 3 cüzdanda, on-chain kullanılan cüzdan yok.",
-            "bip44": "BIP44 Standartı: BIP44 protokolü tarafından tanımlanan HD yolu. İlk 3 cüzdanda, zincir üzerinde kullanılan cüzdan yoktur."
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu.",
+            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
+            "bip44": "BIP44 Standartı: BIP44 protokolü tarafından tanımlanan HD yolu."
           }
         },
         "onekey": {
@@ -2937,7 +2937,8 @@
         "entryTips": "Bir tıklama ile borç aldığınız varlığı değiştirin, adımları ve ücretleri azaltın.",
         "lpRiskWarning": "Takasta sonra düşük sağlık faktörü. Pozisyonunuzun tasfiye riski daha yüksek olacaktır.",
         "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Bu yol, düşük likidite veya küçük sipariş boyutu nedeniyle daha fazla getiri sağlayabilir.",
-        "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın."
+        "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın.",
+        "maxLtvWarning": "Yetersiz teminat, yeni borç pozisyonunu karşılamak için. Cebinizin borç değiştirme işlemi yapmak için kalan borç verme gücüne sahip olması gerekir."
       },
       "hfTips": {
         "more": "Daha fazla",

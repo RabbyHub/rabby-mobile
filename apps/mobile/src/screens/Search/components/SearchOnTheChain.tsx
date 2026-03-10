@@ -1,10 +1,11 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import React from 'react';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { ItemLoader } from './Skeleton';
+import { Text } from '@/components/Typography';
 
 type Props = {
   filterText?: string;

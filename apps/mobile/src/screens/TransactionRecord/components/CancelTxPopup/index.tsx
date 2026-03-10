@@ -10,9 +10,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { CancelTxConfirmPopupContent } from '../CancelTxConfirmPopup';
+import { Text } from '@/components/Typography';
 
 export const CancelTxPopup = ({
   visible,

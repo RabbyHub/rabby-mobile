@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useRef,
 } from 'react';
-import { View, Text, Alert } from 'react-native';
+import { View, Alert } from 'react-native';
 import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -26,6 +26,7 @@ import { useAccounts } from '@/hooks/account';
 import { useDevServerModalVisible } from '../Modals/DevModalDevServer';
 import { toast } from '@/components2024/Toast';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 const devUIPlaygroundModalVisibleAtom = atom(false);
 export function useDevUIPlaygroundModalVisible() {

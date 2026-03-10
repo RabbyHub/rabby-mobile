@@ -1,10 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { TopSearch } from '../TopSearch';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Text } from '@/components/Typography';
 
 interface IProps {
   isSearching?: boolean;

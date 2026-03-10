@@ -10,8 +10,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
+import { Text } from '@/components/Typography';
 
 export const PerpsAccountSelectorItem: React.FC<{
   account: KeyringAccountWithAlias;

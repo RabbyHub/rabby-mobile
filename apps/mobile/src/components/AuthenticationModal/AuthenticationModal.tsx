@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { apisKeychain, apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
@@ -32,6 +32,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
+import { Text } from '@/components/Typography';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */

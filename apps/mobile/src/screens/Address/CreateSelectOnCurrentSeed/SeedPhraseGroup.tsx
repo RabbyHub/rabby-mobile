@@ -2,7 +2,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import {
   StyleSheet,
   View,
-  Text,
   StyleProp,
   ViewStyle,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useCurrency } from '@/hooks/useCurrency';
 import BigNumber from 'bignumber.js';
 import { splitNumberByStep } from '@/utils/number';
+import { Text } from '@/components/Typography';
 interface Props {
   index: number;
   data: TypeKeyringGroup;

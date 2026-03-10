@@ -7,7 +7,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -18,6 +17,7 @@ import { Button } from '@/components2024/Button';
 import useAsync from 'react-use/lib/useAsync';
 import { PerAndroid } from '@/core/utils/permissions';
 import { toast } from '@/components2024/Toast';
+import { Text } from '@/components/Typography';
 
 const ANDROID_PERMISSIONS = [...PerAndroid.requiredPermissions];
 

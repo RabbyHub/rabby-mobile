@@ -11,8 +11,9 @@ import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
 import { SubCol, SubRow, SubTable } from './components/SubTable';
 import { Chain } from '@/constant/chains';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { Text } from '@/components/Typography';
 
 const TransferOwner = ({
   data,

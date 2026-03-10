@@ -5,10 +5,11 @@ import { getTokenSymbol } from '@/utils/token';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 type TxInterAddressExplainProps = RNViewProps & {
   data: TxDisplayItem;

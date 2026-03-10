@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import {
   View,
-  Text,
   Image,
   TouchableOpacity,
   Animated,
@@ -45,6 +44,7 @@ import { RootNames } from '@/constant/layout';
 import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
 import { useMemoizedFn } from 'ahooks';
 import IconBestQuoteTag from '@/assets2024/icons/bridge/IconBestQuoteTag.svg';
+import { Text } from '@/components/Typography';
 
 const RABBY_FEE = '0.25%';
 

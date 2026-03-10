@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { AppBottomSheetModal } from '@/components';
@@ -12,6 +12,7 @@ import { useMemoizedFn } from 'ahooks';
 import { AbstractPortfolioToken } from '../types';
 import { TokenList } from './TokenList';
 import AutoLockView from '@/components/AutoLockView';
+import { Text } from '@/components/Typography';
 
 type Props = {
   tokens?: AbstractPortfolioToken[];

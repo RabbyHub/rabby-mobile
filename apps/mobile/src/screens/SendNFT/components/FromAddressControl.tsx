@@ -1,10 +1,11 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { AccountSwitcher } from '@/components/AccountSwitcher/InScreenSwitch';
 import { AccountSwitcherScene } from '@/components/AccountSwitcher/hooks';
+import { Text } from '@/components/Typography';
 
 export default function FromAddressControl2024({
   style,

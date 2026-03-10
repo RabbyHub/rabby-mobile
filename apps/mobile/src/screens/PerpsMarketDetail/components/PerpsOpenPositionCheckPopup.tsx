@@ -16,13 +16,8 @@ import {
 } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Text, TextInput } from '@/components/Typography';
 
 export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;

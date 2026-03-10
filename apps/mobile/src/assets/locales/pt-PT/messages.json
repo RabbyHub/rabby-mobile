@@ -1682,14 +1682,14 @@
         },
         "ledger": {
           "hdPathTypeNoChain": {
-            "bip44": "Padrão BIP44: caminho HD definido pelo protocolo BIP44. Nos primeiros 3 wallets, não há wallets usadas on-chain.",
-            "legacy": "Legado: Caminho HD usado pelo MEW / Mycrypto. Nas primeiras 3 carteiras, não há carteiras usadas on-chain.",
-            "ledgerLive": "Ledger Live: Caminho HD oficial da Ledger. Nos primeiros 3 wallets, não há wallets utilizadas na cadeia."
+            "ledgerLive": "Ledger Live: caminho HD oficial da Ledger.",
+            "bip44": "BIP44 Padrão: Caminho HD definido pelo protocolo BIP44.",
+            "legacy": "Legado: caminho HD utilizado pelo MEW / Mycrypto."
           },
           "hdPathType": {
-            "legacy": "Legado: Caminho HD usado pelo MEW / Mycrypto. Nas primeiras 3 carteiras, há carteiras usadas na cadeia.",
-            "bip44": "Padrão BIP44: HDpath definido pelo protocolo BIP44. Nos primeiros 3 wallets, existem wallets usadas em cadeia.",
-            "ledgerLive": "Ledger Live: caminho HD oficial da Ledger. Nos primeiros 3 wallets, existem wallets utilizadas em cadeia."
+            "legacy": "Legado: caminho HD usado pelo MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: caminho HD oficial da Ledger.",
+            "bip44": "Padrão BIP44: HDpath definido pelo protocolo BIP44."
           }
         },
         "qrCode": {
@@ -3307,7 +3307,8 @@
         "entryTips": "Troque o seu ativo emprestado com um clique, reduzindo etapas e taxas.",
         "lpDangerWarning": "O seu fator de saúde após esta troca ficará criticamente baixo e pode resultar em liquidação. Por favor, escolha um ativo diferente ou reduza o valor da troca para se manter seguro.",
         "lpRiskWarning": "Fator de saúde baixo após a troca. Sua posição terá um risco maior de liquidação.",
-        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Esta rota pode retornar mais devido à baixa liquidez ou ao tamanho pequeno da ordem."
+        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Esta rota pode retornar mais devido à baixa liquidez ou ao tamanho pequeno da ordem.",
+        "maxLtvWarning": "Colateral insuficiente para cobrir a nova posição de empréstimo. A carteira deve ter poder de empréstimo restante para realizar a troca de dívida."
       },
       "hfTips": {
         "more": "Mais",

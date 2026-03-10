@@ -2,7 +2,6 @@ import { createGetStyles } from '@/utils/styles';
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -18,6 +17,7 @@ import { getAccountBalance } from '@/components/HDSetting/util';
 import { isAddress } from 'web3-utils';
 import { useTranslation } from 'react-i18next';
 import { BackupData } from '@/core/utils/cloudBackup';
+import { Text } from '@/components/Typography';
 
 const getStyles = createGetStyles(colors => ({
   root: {

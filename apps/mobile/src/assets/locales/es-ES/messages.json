@@ -1545,14 +1545,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger. En las primeras 3 carteras, hay carteras utilizadas en la cadena.",
-            "legacy": "Legacy: Ruta HD utilizada por MEW / Mycrypto. En las primeras 3 carteras, hay carteras utilizadas en la cadena.",
-            "bip44": " estándar BIP44: HDpath definido por el protocolo BIP44. En las primeras 3 carteras, hay carteras utilizadas en la cadena."
+            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger.",
+            "bip44": "BIP44 Estándar: HDpath definido por el protocolo BIP44.",
+            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "legacy": "Legado: Ruta HD utilizada por MEW / Mycrypto. En las primeras 3 carteras, no hay carteras utilizadas en la cadena.",
-            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger. En las primeras 3 wallets, no se utilizan wallets en la cadena.",
-            "bip44": "BIP44 Estándar: Ruta HD definida por el protocolo BIP44. En las primeras 3 carteras, no hay carteras utilizadas en la cadena."
+            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger.",
+            "bip44": "Estándar BIP44: ruta HD definida por el protocolo BIP44.",
+            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
           }
         },
         "keystone": {
@@ -3210,7 +3210,8 @@
         "entryTips": "Un clic para intercambiar tu activo prestado, reduciendo pasos y tarifas.",
         "lpRiskWarning": "Bajo factor de salud después del intercambio. Tu posición tendrá un mayor riesgo de liquidación.",
         "priceImpactTips": "Alto impacto en el precio ({{lostValue}}). Esta ruta puede devolver más debido a la baja liquidez o al tamaño pequeño de la orden.",
-        "lpDangerWarning": "Su factor de salud después de este intercambio será críticamente bajo y puede resultar en liquidación. Por favor, elija un activo diferente o reduzca la cantidad del intercambio para mantenerse a salvo."
+        "lpDangerWarning": "Su factor de salud después de este intercambio será críticamente bajo y puede resultar en liquidación. Por favor, elija un activo diferente o reduzca la cantidad del intercambio para mantenerse a salvo.",
+        "maxLtvWarning": "Colateral insuficiente para cubrir nueva posición de préstamo. La billetera debe tener poder de préstamo restante para realizar el cambio de deuda."
       },
       "hfTips": {
         "more": "Más",

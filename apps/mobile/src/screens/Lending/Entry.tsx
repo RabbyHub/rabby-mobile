@@ -31,6 +31,7 @@ import {
 } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const LENDING_LIST = INNER_DAPP_LIST.LENDING;
 const DEFAULT_LENDING_ID = LENDING_LIST[0]?.id ?? 'aave';
@@ -90,6 +91,13 @@ export function LendingEntryScreen() {
       setLending(item.id);
       if (!resetRef.current) {
         resetRef.current = true;
+      }
+      if (item?.id !== DEFAULT_LENDING_ID && item.url) {
+        matomoRequestEvent({
+          category: 'Websites Usage',
+          action: 'Website_Visit_Website Select Provider',
+          label: safeGetOrigin(item.url) || item.url,
+        });
       }
     },
     [setLending],

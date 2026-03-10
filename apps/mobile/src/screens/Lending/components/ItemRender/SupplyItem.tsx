@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -20,6 +20,7 @@ import { useToggleCollateralModal } from '../../modals/ToggleCollateralModal';
 import { formatTokenAmount } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import wrapperToken from '../../config/wrapperToken';
+import { Text } from '@/components/Typography';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;

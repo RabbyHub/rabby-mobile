@@ -3,9 +3,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { usePerpsPopupState } from '../../hooks/usePerpsPopupState';
+import { Text } from '@/components/Typography';
 
 // Export header component separately for use in main FlatList
 export const PerpsMarketSectionHeader: React.FC = () => {

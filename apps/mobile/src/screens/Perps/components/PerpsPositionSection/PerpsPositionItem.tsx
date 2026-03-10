@@ -4,13 +4,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { DistanceToLiquidationTag } from './DistanceToLiquidationTag';
 import { useMemoizedFn } from 'ahooks';
 import { calculateDistanceToLiquidation } from './utils';
 import { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { useTranslation } from 'react-i18next';
 import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 
 export const PerpsPositionItem: React.FC<{
   item: PositionAndOpenOrder['position'];

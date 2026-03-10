@@ -1,10 +1,10 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text } from 'react-native';
 import { formatUsdValue } from '@/utils/number';
 import { useGasAccountInfo } from '../hooks';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import { Text } from '@/components/Typography';
 
 export const GasAccountBadge: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });

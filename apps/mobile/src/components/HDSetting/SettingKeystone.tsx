@@ -3,7 +3,7 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import {
   isLoadedAtom,
   MainContainer,
@@ -18,6 +18,7 @@ import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { Button } from '@/components';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
