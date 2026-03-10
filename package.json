@@ -56,6 +56,12 @@
     ]
   },
   "resolutions": {
+    "metro": "0.83.1",
+    "metro-config": "0.83.1",
+    "metro-core": "0.83.1",
+    "metro-source-map": "0.83.1",
+    "metro-symbolicate": "0.83.1",
+    "metro-runtime": "0.83.1",
     "@keystonehq/bc-ur-registry@^0.6.0": "patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch",
     "@ledgerhq/hw-app-eth@6.45.0": "patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch",
     "@ledgerhq/hw-transport@^6.31.4": "patch:@ledgerhq/hw-transport@npm%3A6.31.4#./.yarn/patches/@ledgerhq-hw-transport-npm-6.31.4-b439e9a1f8.patch",

@@ -107,7 +107,7 @@
     "@rematch/core": "^2.2.0",
     "@rneui/base": "^4.0.0-rc.8",
     "@rneui/themed": "^4.0.0-rc.8",
-    "@sentry/react-native": "6.22.0",
+    "@sentry/react-native": "7.1.0",
     "@shopify/flash-list": "2.2.2",
     "@trezor/connect-mobile": "9.6.2",
     "@types/highlight-words-core": "1.2.3",
