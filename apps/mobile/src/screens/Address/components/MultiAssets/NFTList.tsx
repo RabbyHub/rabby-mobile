@@ -329,7 +329,7 @@ export const NFTList = () => {
             __PICK_MANUAL__
           />
         }
-        ListFooterComponent={ListRenderFooter}
+        // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         style={styles.container}
@@ -359,6 +359,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   list: {
     paddingHorizontal: 16,
+    paddingBottom: 48,
   },
   bgContainer: {
     paddingHorizontal: 16,

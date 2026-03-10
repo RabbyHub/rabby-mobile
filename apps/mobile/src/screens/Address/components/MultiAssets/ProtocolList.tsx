@@ -331,7 +331,7 @@ export const ProtocolList = () => {
             <PerpsMultiAssetPosition />
           </>
         }
-        ListFooterComponent={ListRenderFooter}
+        // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         style={styles.container}
@@ -363,6 +363,7 @@ const getStyles = createGetStyles2024(() => ({
   },
   list: {
     paddingHorizontal: 16,
+    paddingBottom: 48,
   },
   bgContainer: {
     paddingHorizontal: 16,
