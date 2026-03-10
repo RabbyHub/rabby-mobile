@@ -35970,20 +35970,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-gesture-handler@patch:react-native-gesture-handler@npm%3A2.30.0#./.yarn/patches/react-native-gesture-handler-npm-2.30.0-d5e006b81c.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 2.30.0
-  resolution: "react-native-gesture-handler@patch:react-native-gesture-handler@npm%3A2.30.0#./.yarn/patches/react-native-gesture-handler-npm-2.30.0-d5e006b81c.patch::version=2.30.0&hash=d9cfac&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    "@egjs/hammerjs": ^2.0.17
-    hoist-non-react-statics: ^3.3.0
-    invariant: ^2.2.4
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 9864117da490e3439b668a06e966f4ddbdd1f150637c1c846a12697b43d57ea5e4fdf87ec256731ded3702bbd4e0a1f56a3cf051a9c8e6f27f1297bff61d28d3
-  languageName: node
-  linkType: hard
-
 "react-native-get-random-values@npm:^1.10.0":
   version: 1.10.0
   resolution: "react-native-get-random-values@npm:1.10.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-get-random-values%2F-%2Freact-native-get-random-values-1.10.0.tgz"
