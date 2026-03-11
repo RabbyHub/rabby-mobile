@@ -12,7 +12,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
 import { Text } from '@/components/Typography';
 
-const formatPercentageKMB = (x: number) => {
+export const formatPercentageKMB = (x: number) => {
   if (Math.abs(x) < 0.00001) {
     return '0%';
   }
@@ -154,8 +154,9 @@ export const TokenItemSkeleton = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingLeft: 12,
+    paddingRight: 14,
     gap: 8,
     marginBottom: 8,
     display: 'flex',
@@ -217,9 +218,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   tokenRightSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11.6,
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 4,
     justifyContent: 'center',
   },
   priceText: {

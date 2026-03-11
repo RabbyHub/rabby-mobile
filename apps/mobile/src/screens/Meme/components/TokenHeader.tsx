@@ -150,17 +150,12 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
           {renderArrows(fdvSort)}
         </Pressable>
       </View>
-      <View style={[styles.headerCell, styles.priceCell]}>
-        <Text style={styles.headerText}>
-          {t('page.meme.tokenHeader.price')}
-        </Text>
-      </View>
       <Pressable
         style={[styles.headerCell, styles.changeCell]}
         hitSlop={10}
         onPress={onChangeSort}>
         <Text style={getTextStyle(changeSort)}>
-          {t('page.meme.tokenHeader.change')}
+          {t('page.meme.tokenHeader.priceAndChange')}
         </Text>
         {renderArrows(changeSort)}
       </Pressable>

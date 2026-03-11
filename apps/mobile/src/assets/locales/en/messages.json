@@ -2349,7 +2349,8 @@
       "tokenHeader": {
         "token": "Token/FDV",
         "price": "Price",
-        "change": "24H Change"
+        "change": "24H Change",
+        "priceAndChange": "Price/24H Change"
       },
       "footer": {
         "skip": "Skip",
@@ -2372,7 +2373,8 @@
         "volume": "24H Volume",
         "fdv": "FDV",
         "price": "Price",
-        "change": "24H Change"
+        "change": "24H Change",
+        "priceAndChange": "Price/24H Change"
       }
     },
     "universalLink": {
