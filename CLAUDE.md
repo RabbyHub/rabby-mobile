@@ -7,7 +7,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organized as a **Yarn 3 monorepo**. It supports iOS/Android with multiple hardware wallet integrations.
 
 - **Repository**: https://github.com/RabbyHub/rabby-mobile
-- **Node.js**: >=22 (enforced)
 - **Package Manager**: Yarn 3.3.0
 - **React Native**: 0.81.6
 - **TypeScript**: 5.7.3
@@ -135,6 +134,7 @@ yarn link-assets
 - **Reanimated 3** for animations (use `useSharedValue`, not `useState` for animation state)
 - **FlashList** from Shopify for long lists
 - Lazy loading with **Suspense** for heavy components
+- Utilize React 19 **transitions** for non-urgent state updates.
 
 ### Testing Setup
 
@@ -183,7 +183,7 @@ yarn link-assets
 
 - Screens: `src/screens/` (lazy and eager imports)
 - Components: `src/components/` (legacy), `src/components2024/` (new theme)
-- Hooks: `src/hooks/` (99+ custom hooks)
+- Hooks: `src/hooks/` (custom hooks)
 - Utils: `src/utils/` (general utilities)
 - Core: `src/core/` (services, APIs, controllers, bridges)
 - Store: `src/store/` (Zustand stores)
