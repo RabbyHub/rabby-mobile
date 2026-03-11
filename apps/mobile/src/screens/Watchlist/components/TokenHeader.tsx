@@ -17,6 +17,7 @@ interface TokenHeaderProps {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRow: {
+    marginTop: 36,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,

@@ -1045,6 +1045,7 @@
         "websites": "Websites",
         "copyTrading": "Copy Trading",
         "search": "Search Token",
+        "market": "Market",
         "watchlist": "Token Watchlist",
         "perps": "Perps",
         "meme": "Memecoin",
@@ -2356,6 +2357,14 @@
       },
       "toast": {
         "remove": "Remove from Watchlist Success"
+      }
+    },
+    "market": {
+      "tabs": {
+        "watchlist": "Watchlist",
+        "memecoin": "Memecoin",
+        "stock": "Stock",
+        "commodities": "Commodities"
       }
     },
     "meme": {
