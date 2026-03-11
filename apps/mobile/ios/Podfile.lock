@@ -1977,7 +1977,7 @@ PODS:
     - SocketRocket
   - react-native-aes (3.2.1):
     - React-Core
-  - react-native-animateable-text (0.15.0):
+  - react-native-animateable-text (0.17.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -3121,7 +3121,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNSentry (6.22.0):
+  - RNSentry (7.1.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -3148,7 +3148,7 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - Sentry/HybridSDK (= 8.56.2)
+    - Sentry/HybridSDK (= 8.56.0)
     - SocketRocket
     - Yoga
   - RNSVG (15.12.1):
@@ -3187,7 +3187,7 @@ PODS:
   - SDWebImageWebPCoder (0.8.5):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.10)
-  - Sentry/HybridSDK (8.56.2)
+  - Sentry/HybridSDK (8.56.0)
   - SocketRocket (0.7.1)
   - VisionCamera (4.7.2):
     - VisionCamera/Core (= 4.7.2)
@@ -3664,7 +3664,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: c07241666cc1c354749556ed6b5b48579e269b77
   React-microtasksnativemodule: dc9eedafc87d677c7b49c9db9a51753e8c0b1ca1
   react-native-aes: 2f9ce51c4bd1e9fb5c50f5c867df05bcac10884b
-  react-native-animateable-text: aba8dd92cf6054448d1624d34d58a813c9b24fee
+  react-native-animateable-text: 0c9fdbbf97c8fdacd93b1b441b692ec7fca332cf
   react-native-ble-manager: 7e6373a746c5a815d0a65a11cc5f633c72c36c5b
   react-native-ble-plx: 659374ba52f0160f5c46a69cd49d136f8fa01ba6
   react-native-blur: aa2c298b36e5aa0ac7feff837315a4668afbf25a
@@ -3735,12 +3735,12 @@ SPEC CHECKSUMS:
   RNReactNativeHapticFeedback: 108e0779dcc17acfba116cb07d20ff919c188096
   RNReanimated: 5535e8529e8272abab396641a9135c2718055b14
   RNScreens: df68a9d884c93da2f6f342183b630bac30b770c5
-  RNSentry: 9927cd5fc3119182f69ded53df06ec48229dc531
+  RNSentry: 9b547dbbf1bb4d25e8a5bb95935830468743574b
   RNSVG: 3e87821b2215b30e19f90232247007e5c313a06c
   RNVectorIcons: dad3d501c383f9ba1414de38735e0ccfb50044e4
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
-  Sentry: b53951377b78e21a734f5dc8318e333dbfc682d7
+  Sentry: 3d82977434c80381cae856c40b99c39e4be6bc11
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   VisionCamera: 2230ecfd78a1f6cddd8be0fe4e6589f21a6385e1
   Yoga: c7d9adcf9fca72e6219bdc5f1f11b76b38c4a030
