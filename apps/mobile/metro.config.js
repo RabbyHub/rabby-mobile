@@ -139,6 +139,12 @@ const config = {
       } catch (error) {
         console.warn('\n5️⃣ getDefaultConfig cannot resolve: ', moduleName);
       }
+
+      // If all resolution attempts fail, throw the original error
+      // instead of returning undefined to avoid "Cannot read properties of undefined (reading 'type')"
+      throw new Error(
+        `Unable to resolve module ${moduleName} from ${context.originModulePath}`,
+      );
     },
   },
   watchFolders: [

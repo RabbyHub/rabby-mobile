@@ -1,4 +1,4 @@
-import type { ColorValue } from 'react-native/Libraries/StyleSheet/StyleSheet';
+import type { ColorValue } from 'react-native';
 import { AppColorsVariants, ThemeColors } from '@/constant/theme';
 
 export type ColorOrVariant = keyof AppColorsVariants | ColorValue;
