@@ -16,6 +16,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisPerps } from '@/core/apis';
 import { perpsService } from '@/core/services';
 import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
 
 const getPxDecimals = (markPx: string) => {
   const parts = markPx.split('.');
