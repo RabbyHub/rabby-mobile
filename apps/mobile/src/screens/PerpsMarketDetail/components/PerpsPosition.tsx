@@ -21,6 +21,7 @@ import {
   formatPerpsCoin,
   formatPerpsPct,
   getStatsReportSide,
+  handleDisplayFundingPayments,
 } from '@/utils/perps';
 import { stats } from '@/utils/stats';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
@@ -583,16 +584,13 @@ export const PerpsPosition: React.FC<{
               <Text
                 style={[
                   styles.value,
-                  Number(positionData?.fundingPayments || 0) >= 0
+                  Number(positionData?.fundingPayments || 0) < 0
                     ? styles.green
                     : styles.red,
                 ]}>
-                {Number(positionData?.fundingPayments || 0) === 0
-                  ? ''
-                  : Number(positionData?.fundingPayments || 0) > 0
-                  ? '+'
-                  : '-'}
-                ${Math.abs(Number(positionData?.fundingPayments || 0))}
+                {handleDisplayFundingPayments(
+                  positionData?.fundingPayments || '0',
+                )}
               </Text>
             </View>
           </View>

@@ -416,3 +416,17 @@ export const getStatsReportSide = (isBuy: boolean, isReduceOnly: boolean) => {
   }
   return isBuy ? 'open long' : 'open short';
 };
+
+export const handleDisplayFundingPayments = (fundingPayments: string) => {
+  const bn = new BigNumber(fundingPayments || 0);
+  if (bn.isZero()) {
+    return '$0.00';
+  }
+  // negative means funding payment, positive means funding gains
+  const sign = bn.isNegative() ? '+' : '-';
+  if (bn.abs().lt(0.01)) {
+    return sign + '$0.01';
+  }
+
+  return sign + '$' + bn.abs().toFixed(2);
+};
