@@ -18,7 +18,13 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
+import {
+  AppState,
+  AppStateStatus,
+  Dimensions,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   createChart,
   IChartApi,
@@ -185,7 +191,7 @@ export const PerpsChart: React.FC<{
     return currentAssetCtx?.pxDecimals || 2;
   }, [currentAssetCtx]);
 
-  const { data: chartData } = useRequest(
+  const { data: chartData, refresh: refreshChartData } = useRequest(
     async () => {
       const sdk = apisPerps.getPerpsSDK();
       // if (!seriesRef.current) return;
@@ -307,6 +313,32 @@ export const PerpsChart: React.FC<{
       chartWebViewRef.current?.updateTPSLPriceLines(lineTagInfo);
     }
   }, [isReady, lineTagInfo, chartData]);
+
+  // Re-subscribe and refresh data when app returns to foreground
+  useEffect(() => {
+    let appStateRef = AppState.currentState;
+    const subscription = AppState.addEventListener(
+      'change',
+      (nextAppState: AppStateStatus) => {
+        if (
+          appStateRef.match(/inactive|background/) &&
+          nextAppState === 'active'
+        ) {
+          // Re-subscribe candle WebSocket
+          if (unsubscribeRef.current) {
+            unsubscribeRef.current();
+          }
+          const unsubscribe = subscribeCandle();
+          unsubscribeRef.current = unsubscribe;
+
+          // Refresh historical chart data
+          refreshChartData();
+        }
+        appStateRef = nextAppState;
+      },
+    );
+    return () => subscription.remove();
+  }, [subscribeCandle, refreshChartData]);
 
   // // Reset chart when market changes
   // useEffect(() => {

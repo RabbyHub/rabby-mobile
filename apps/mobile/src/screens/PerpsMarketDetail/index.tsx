@@ -20,7 +20,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { AppState, AppStateStatus, ScrollView, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
 import BigNumber from 'bignumber.js';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
@@ -307,6 +307,28 @@ export const PerpsMarketDetailScreen = () => {
       unsubscribe?.();
     };
   }, [subscribeActiveAssetCtx, coin]);
+
+  // Re-subscribe activeAssetCtx when app returns to foreground
+  useEffect(() => {
+    let appStateRef = AppState.currentState;
+    const subscription = AppState.addEventListener(
+      'change',
+      (nextAppState: AppStateStatus) => {
+        if (
+          appStateRef.match(/inactive|background/) &&
+          nextAppState === 'active'
+        ) {
+          if (unsubscribeActiveAssetRef.current) {
+            unsubscribeActiveAssetRef.current();
+          }
+          const unsubscribe = subscribeActiveAssetCtx();
+          unsubscribeActiveAssetRef.current = unsubscribe;
+        }
+        appStateRef = nextAppState;
+      },
+    );
+    return () => subscription.remove();
+  }, [subscribeActiveAssetCtx]);
 
   // Available balance for trading
 

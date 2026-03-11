@@ -2,13 +2,21 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { Platform, StyleProp, View, ViewStyle } from 'react-native';
+import {
+  AppState,
+  AppStateStatus,
+  Platform,
+  StyleProp,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
@@ -115,6 +123,35 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
     const [webViewError, setWebViewError] = useState<string | null>(null);
     const [isChartReady, setIsChartReady] = useState(false);
     const { t } = useTranslation();
+
+    // Handle WebView content process termination (iOS)
+    const handleContentProcessDidTerminate = useCallback(() => {
+      webViewRef.current?.reload();
+      setIsChartReady(false);
+    }, []);
+
+    // Reload WebView when app returns to foreground after being background for 30+ seconds
+    useEffect(() => {
+      let appStateRef = AppState.currentState;
+      let backgroundTimestamp = 0;
+      const subscription = AppState.addEventListener(
+        'change',
+        (nextAppState: AppStateStatus) => {
+          if (nextAppState.match(/inactive|background/)) {
+            backgroundTimestamp = Date.now();
+          } else if (
+            appStateRef.match(/inactive|background/) &&
+            nextAppState === 'active' &&
+            Date.now() - backgroundTimestamp > 30000
+          ) {
+            webViewRef.current?.reload();
+            setIsChartReady(false);
+          }
+          appStateRef = nextAppState;
+        },
+      );
+      return () => subscription.remove();
+    }, []);
 
     // Handle WebView errors
     const handleWebViewError = useCallback(
@@ -290,6 +327,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           source={{ html: htmlContent, baseUrl: WEBVIEW_BASEURL }}
           onMessage={handleWebViewMessage}
           onError={handleWebViewError}
+          onContentProcessDidTerminate={handleContentProcessDidTerminate}
           {...(Platform.OS === 'ios' ? iosWebViewProps : androidWebViewProps)}
         />
       </View>
