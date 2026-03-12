@@ -35241,7 +35241,7 @@ __metadata:
     react-native-wagmi-charts: ^2.3.2
     react-native-walkthrough-tooltip: ^1.5.0
     react-native-webview: 13.10.5
-    react-test-renderer: 19.1.0
+    react-test-renderer: 19.1.4
     react-use: 17.4.2
     reactotron-react-native: 5.1.18
     readable-stream: 4.7.0
@@ -35652,7 +35652,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^19.0.0":
+"react-is@npm:^19.0.0, react-is@npm:^19.1.4":
   version: 19.2.4
   resolution: "react-is@npm:19.2.4"
   checksum: 646d4f0f11b50131f3f7ac5b50d12b79de35be20fa84bce33fd3fc91557589e388562cb6203b5237098fd983cd1cdf12c5fb952b7f9903ac014de9a5a6cc7e28
@@ -36760,15 +36760,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-test-renderer@npm:19.1.0":
-  version: 19.1.0
-  resolution: "react-test-renderer@npm:19.1.0"
+"react-test-renderer@npm:19.1.4":
+  version: 19.1.4
+  resolution: "react-test-renderer@npm:19.1.4"
   dependencies:
-    react-is: ^19.1.0
+    react-is: ^19.1.4
     scheduler: ^0.26.0
   peerDependencies:
-    react: ^19.1.0
-  checksum: e060239f8fbfbe54c2fa0e1d7a9eb1ee77787b0b29fd75ba6170dc22cd637c3a9052a82285db6be5a269309a65b8e8c40ddc8103620fbe1652cce693fd608acc
+    react: ^19.1.4
+  checksum: 03f369edf8fc1322d543b2e50aa31824c0802e916ffad5cd7f7434cd2d4a78cbd2f7430d60b7a80f8345df114b5cfafeb2d87e4736812392f823d4d84aee870c
   languageName: node
   linkType: hard
 

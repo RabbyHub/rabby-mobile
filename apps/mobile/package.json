@@ -262,7 +262,7 @@
     "react-native-bundle-visualizer": "3.1.0",
     "react-native-svg-transformer": "1.5.0",
     "react-native-version": "^4.0.0",
-    "react-test-renderer": "19.1.0",
+    "react-test-renderer": "19.1.4",
     "reactotron-react-native": "5.1.18",
     "reflect-metadata": "0.1.13",
     "rimraf": "^3.0.2",
