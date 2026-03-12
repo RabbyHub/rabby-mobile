@@ -905,12 +905,6 @@ export const HomeOverview = React.memo(() => {
           handlePressMarket();
           break;
         }
-        case MultiHomeFeatTitle.Meme:
-          navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-            screen: RootNames.Meme,
-            params: {},
-          });
-          break;
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:

@@ -25,7 +25,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingVertical: 10,
   },
   headerCell: {

@@ -1,11 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  FlatList,
-  Platform,
-  RefreshControl,
-  View,
-  ViewToken,
-} from 'react-native';
+import { Platform, RefreshControl, View, ViewToken } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
 import { atomByMMKV } from '@/core/storage/mmkv';
@@ -17,6 +11,7 @@ import { memeItemToITokenItem } from '@/utils/token';
 import { useIsFocused } from '@react-navigation/native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useAtom } from 'jotai';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 
 import TokenHeader, { SortState } from '../../Meme/components/TokenHeader';
@@ -249,50 +244,64 @@ export function MarketCategoryContent({
     };
   }, [isFocused, isInFirst100Items, refreshTokenListSilently]);
 
+  const renderListHeaderComponent = useCallback(
+    () => (
+      <>
+        {!!headerSpacerHeight && (
+          <View style={[styles.header, { height: headerSpacerHeight }]} />
+        )}
+        <TokenHeader
+          volumeSort={volumeSort}
+          onVolumeSort={handleVolumeSort}
+          fdvSort={fdvSort}
+          onFdvSort={handleFdvSort}
+          changeSort={changeSort}
+          onChangeSort={handleChangeSort}
+          showVolumeSort={supportedSortFields.has('volume_24h')}
+          showFdvSort={supportedSortFields.has('fdv')}
+          showChangeSort={supportedSortFields.has('price_change_24h')}
+          leftLabel={leftHeaderLabel}
+        />
+      </>
+    ),
+    [
+      changeSort,
+      fdvSort,
+      handleChangeSort,
+      handleFdvSort,
+      handleVolumeSort,
+      headerSpacerHeight,
+      leftHeaderLabel,
+      styles.header,
+      supportedSortFields,
+      volumeSort,
+    ],
+  );
+
   return (
-    <View style={styles.container}>
-      {!!headerSpacerHeight && (
-        <View style={[styles.header, { height: headerSpacerHeight }]} />
-      )}
-      <TokenHeader
-        volumeSort={volumeSort}
-        onVolumeSort={handleVolumeSort}
-        fdvSort={fdvSort}
-        onFdvSort={handleFdvSort}
-        changeSort={changeSort}
-        onChangeSort={handleChangeSort}
-        showVolumeSort={supportedSortFields.has('volume_24h')}
-        showFdvSort={supportedSortFields.has('fdv')}
-        showChangeSort={supportedSortFields.has('price_change_24h')}
-        leftLabel={leftHeaderLabel}
-      />
-      <FlatList
-        data={list}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        ListEmptyComponent={renderListEmptyComponent}
-        ListFooterComponent={renderListFooterComponent}
-        contentContainerStyle={styles.scrollView}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.3}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig.current}
-        refreshControl={
-          <RefreshControl
-            refreshing={tokenListLoading && list.length !== 0}
-            onRefresh={() => getTokenList(orderBy, order)}
-          />
-        }
-      />
-    </View>
+    <Tabs.FlatList
+      data={list}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      ListHeaderComponent={renderListHeaderComponent}
+      ListEmptyComponent={renderListEmptyComponent}
+      ListFooterComponent={renderListFooterComponent}
+      contentContainerStyle={styles.scrollView}
+      onEndReached={handleEndReached}
+      onEndReachedThreshold={0.3}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig.current}
+      refreshControl={
+        <RefreshControl
+          refreshing={tokenListLoading && list.length !== 0}
+          onRefresh={() => getTokenList(orderBy, order)}
+        />
+      }
+    />
   );
 }
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
-  container: {
-    paddingTop: 38,
-    flex: 1,
-  },
   header: {
     height: isAndroid ? 46 : 44,
   },

@@ -17,10 +17,9 @@ interface TokenHeaderProps {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRow: {
-    marginTop: 36,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingVertical: 10,
   },
   headerCell: {
@@ -67,7 +66,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-const TokenHeader: React.FC<TokenHeaderProps> = ({
+const WatchListHeader: React.FC<TokenHeaderProps> = ({
   tokenSort,
   onTokenSort,
   changeSort,
@@ -136,4 +135,4 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   );
 };
 
-export default TokenHeader;
+export default WatchListHeader;

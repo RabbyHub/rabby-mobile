@@ -1,12 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom } from 'jotai';
-import {
-  Platform,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  View,
-} from 'react-native';
+import { Platform, Pressable, RefreshControl, View } from 'react-native';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
@@ -23,10 +18,9 @@ import { useTranslation } from 'react-i18next';
 
 import { WatchlistCheckbox } from './components/Checkbox';
 import { EmptyWatchlist } from './components/EmptyHolder';
-import SearchEntry from './components/SearchEntry';
 import { useHotTokenList } from './hooks/useHotTokenList';
 import { useWatchlistTokens } from './hooks/useWatchlistTokens';
-import TokenHeader from './components/TokenHeader';
+import WatchListHeader from './components/TokenHeader';
 import { TokenItemSkeleton, TokenListItem } from './components/TokenItem';
 
 const isAndroid = Platform.OS === 'android';
@@ -42,10 +36,8 @@ const changeSortAtom = atomByMMKV<'desc' | 'asc' | 'default'>(
 
 export function WatchlistContent({
   headerSpacerHeight = isAndroid ? 46 : 44,
-  showSearchEntry = true,
 }: {
   headerSpacerHeight?: number;
-  showSearchEntry?: boolean;
 }) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -179,98 +171,138 @@ export function WatchlistContent({
     setTokenSort('default');
   }, [setChangeSort, setTokenSort]);
 
-  return (
-    <View style={styles.container}>
-      {!!headerSpacerHeight && (
+  const renderHeaderSpacer = useCallback(
+    () =>
+      headerSpacerHeight ? (
         <View style={[styles.header, { height: headerSpacerHeight }]} />
-      )}
-      {!list.length && !watchlistLoading && (
-        <EmptyWatchlist style={centerEmpty ? styles.centerEmpty : undefined} />
-      )}
-      {showGuide ? (
-        <>
-          <ScrollView
-            showsHorizontalScrollIndicator={false}
-            showsVerticalScrollIndicator={false}
-            style={styles.scrollView}>
-            {hotTokenListLoading &&
-              hotTokenList.length === 0 &&
+      ) : null,
+    [headerSpacerHeight, styles.header],
+  );
+
+  const renderGuideContent = useCallback(
+    () => (
+      <>
+        {renderHeaderSpacer()}
+        {hotTokenListLoading &&
+          hotTokenList.length === 0 &&
+          Array.from({ length: 8 }).map((_, idx) => (
+            <TokenItemSkeleton key={idx} />
+          ))}
+        {hotTokenList.map(item => (
+          <TokenListItem
+            leftSlot={
+              <WatchlistCheckbox
+                checked={selectedTokens.has(`${item.chain}:${item.id}`)}
+                onPress={() => handleTokenSelect(`${item.chain}:${item.id}`)}
+              />
+            }
+            key={item.id}
+            item={item}
+            onPress={() => handleTokenSelect(`${item.chain}:${item.id}`)}
+          />
+        ))}
+        <View style={styles.footer}>
+          <Pressable
+            onPress={() => {
+              setSkip(true);
+              preferenceService.setWatchlistSkip(true);
+            }}>
+            <Text style={styles.skipText}>
+              {t('page.watchlist.footer.skip')}
+            </Text>
+          </Pressable>
+          <Button
+            title={t('page.watchlist.footer.add', {
+              count: selectedTokens.size,
+            })}
+            disabled={selectedTokens.size === 0}
+            onPress={handleAddToWatchlist}
+          />
+        </View>
+      </>
+    ),
+    [
+      handleAddToWatchlist,
+      handleTokenSelect,
+      hotTokenList,
+      hotTokenListLoading,
+      renderHeaderSpacer,
+      selectedTokens,
+      setSkip,
+      styles.footer,
+      styles.skipText,
+      t,
+    ],
+  );
+
+  const renderListContent = useCallback(
+    () => (
+      <>
+        {renderHeaderSpacer()}
+        {!list.length && !watchlistLoading && (
+          <EmptyWatchlist
+            style={centerEmpty ? styles.centerEmpty : undefined}
+          />
+        )}
+        {!!list.length && (
+          <>
+            <WatchListHeader
+              tokenSort={tokenSort}
+              onTokenSort={handleTokenSort}
+              changeSort={changeSort}
+              onChangeSort={handleChangeSort}
+            />
+            {watchlistLoading &&
+              list.length === 0 &&
               Array.from({ length: 8 }).map((_, idx) => (
                 <TokenItemSkeleton key={idx} />
               ))}
-            {hotTokenList.map(item => (
+            {list.map(item => (
               <TokenListItem
-                leftSlot={
-                  <WatchlistCheckbox
-                    checked={selectedTokens.has(`${item.chain}:${item.id}`)}
-                    onPress={() =>
-                      handleTokenSelect(`${item.chain}:${item.id}`)
-                    }
-                  />
-                }
                 key={item.id}
                 item={item}
-                onPress={() => handleTokenSelect(`${item.chain}:${item.id}`)}
+                onPress={handleOpenTokenDetail}
               />
             ))}
-          </ScrollView>
-          <View style={styles.footer}>
-            <Pressable
-              onPress={() => {
-                setSkip(true);
-                preferenceService.setWatchlistSkip(true);
-              }}>
-              <Text style={styles.skipText}>
-                {t('page.watchlist.footer.skip')}
-              </Text>
-            </Pressable>
-            <Button
-              title={t('page.watchlist.footer.add', {
-                count: selectedTokens.size,
-              })}
-              disabled={selectedTokens.size === 0}
-              onPress={handleAddToWatchlist}
-            />
-          </View>
-        </>
-      ) : (
-        <>
-          {!!list.length && (
-            <>
-              <TokenHeader
-                tokenSort={tokenSort}
-                onTokenSort={handleTokenSort}
-                changeSort={changeSort}
-                onChangeSort={handleChangeSort}
-              />
-              <ScrollView
-                style={styles.scrollView}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={watchlistLoading && list.length !== 0}
-                    onRefresh={() => handleFetchTokens(true)}
-                  />
-                }>
-                {watchlistLoading &&
-                  list.length === 0 &&
-                  Array.from({ length: 8 }).map((_, idx) => (
-                    <TokenItemSkeleton key={idx} />
-                  ))}
-                {list.map(item => (
-                  <TokenListItem
-                    key={item.id}
-                    item={item}
-                    onPress={handleOpenTokenDetail}
-                  />
-                ))}
-                <View style={styles.bottomPadding} />
-              </ScrollView>
-            </>
-          )}
-          {showSearchEntry ? <SearchEntry /> : null}
-        </>
-      )}
-    </View>
+            <View style={styles.bottomPadding} />
+          </>
+        )}
+      </>
+    ),
+    [
+      centerEmpty,
+      changeSort,
+      handleChangeSort,
+      handleOpenTokenDetail,
+      handleTokenSort,
+      list,
+      renderHeaderSpacer,
+      styles.bottomPadding,
+      styles.centerEmpty,
+      tokenSort,
+      watchlistLoading,
+    ],
+  );
+
+  return (
+    <Tabs.ScrollView
+      showsHorizontalScrollIndicator={false}
+      showsVerticalScrollIndicator={false}
+      tvParallaxProperties={undefined}
+      horizontal={false}
+      nestedScrollEnabled={false}
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollViewContent}
+      refreshControl={
+        !showGuide ? (
+          <RefreshControl
+            refreshing={watchlistLoading && list.length !== 0}
+            onRefresh={() => handleFetchTokens(true)}
+          />
+        ) : undefined
+      }>
+      {showGuide ? renderGuideContent() : renderListContent()}
+    </Tabs.ScrollView>
   );
 }
 
@@ -282,8 +314,12 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     height: isAndroid ? 46 : 44,
   },
   scrollView: {
-    paddingHorizontal: 12,
+    marginTop: 8,
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 12,
+    flexGrow: 1,
   },
   centerEmpty: {
     marginTop: '50%',

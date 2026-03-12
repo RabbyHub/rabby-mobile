@@ -135,9 +135,7 @@ export default function MarketScreen() {
           setActiveTab(tabName);
         }}>
         <Tabs.Tab label={renderWatchlistLabel} name="watchlist">
-          <View style={styles.content}>
-            <WatchlistContent headerSpacerHeight={0} showSearchEntry={false} />
-          </View>
+          <WatchlistContent headerSpacerHeight={0} />
         </Tabs.Tab>
         {
           (categories ?? []).map(category => {
@@ -216,5 +214,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   content: {
     flex: 1,
+    marginTop: 8,
   },
 }));
