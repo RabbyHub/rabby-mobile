@@ -57,46 +57,46 @@ window.utils = {
     }
     return v.toFixed(2);
   },
-  formatYTime: (t) => {
+  _MONTHS: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  _DAYS: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  formatYTime: (t, tickMarkType) => {
+    const MONTHS = window.utils._MONTHS;
     if (typeof t === 'number') {
       const d = new Date(t * 1000);
-      return (
-        '' +
-        (d.getMonth() + 1) +
-        '/' +
-        d.getDate() +
-        ' ' +
-        d.getHours().toString().padStart(2, '0') +
-        ':' +
-        d.getMinutes().toString().padStart(2, '0')
-      );
+      const mon = MONTHS[d.getMonth()];
+      const day = String(d.getDate()).padStart(2, '0');
+      const yr = String(d.getFullYear()).slice(-2);
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      if (tickMarkType === 0) return String(d.getFullYear());
+      if (tickMarkType === 1) return mon + " '" + yr;
+      if (tickMarkType === 2) return day + ' ' + mon;
+      if (tickMarkType === 4) return hours + ':' + minutes;
+      return day + ' ' + mon;
     }
     const bd = t;
-    return '' + bd.month + '/' + bd.day;
+    const mon = MONTHS[(bd.month || 1) - 1] || '';
+    const day = String(bd.day || 1).padStart(2, '0');
+    return day + ' ' + mon;
   },
   formatTime: (t) => {
+    const MONTHS = window.utils._MONTHS;
+    const DAYS = window.utils._DAYS;
     if (typeof t === 'number') {
       const d = new Date(t * 1000);
-      return (
-        '' +
-        String(d.getMonth() + 1).padStart(2, '0') +
-        '/' +
-        String(d.getDate()).padStart(2, '0') +
-        ' ' +
-        String(d.getHours()).padStart(2, '0') +
-        ':' +
-        String(d.getMinutes()).padStart(2, '0')
-      );
+      const dow = DAYS[d.getDay()];
+      const mon = MONTHS[d.getMonth()];
+      const day = String(d.getDate()).padStart(2, '0');
+      const yr = String(d.getFullYear()).slice(-2);
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return dow + ' ' + day + ' ' + mon + " '" + yr + ' ' + hours + ':' + minutes;
     }
     const bd = t;
-    return (
-      '' +
-      bd.year +
-      '-' +
-      String(bd.month).padStart(2, '0') +
-      '-' +
-      String(bd.day).padStart(2, '0')
-    );
+    const mon = MONTHS[(bd.month || 1) - 1] || '';
+    const day = String(bd.day || 1).padStart(2, '0');
+    const yr = String(bd.year || 0).slice(-2);
+    return day + ' ' + mon + " '" + yr;
   },
   // 计算当前可见范围的最高最低价格
   calculateVisibleExtremes: (data, from, to) => {
