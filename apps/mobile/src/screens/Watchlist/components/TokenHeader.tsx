@@ -19,7 +19,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingVertical: 10,
   },
   headerCell: {
@@ -66,7 +66,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-const TokenHeader: React.FC<TokenHeaderProps> = ({
+const WatchListHeader: React.FC<TokenHeaderProps> = ({
   tokenSort,
   onTokenSort,
   changeSort,
@@ -122,17 +122,12 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
         </Text>
         {renderArrows(tokenSort)}
       </Pressable>
-      <View style={[styles.headerCell, styles.priceCell]}>
-        <Text style={styles.headerText}>
-          {t('page.watchlist.tokenHeader.price')}
-        </Text>
-      </View>
       <Pressable
         style={[styles.headerCell, styles.changeCell]}
         hitSlop={10}
         onPress={onChangeSort}>
         <Text style={getTextStyle(changeSort)}>
-          {t('page.watchlist.tokenHeader.change')}
+          {t('page.watchlist.tokenHeader.priceAndChange')}
         </Text>
         {renderArrows(changeSort)}
       </Pressable>
@@ -140,4 +135,4 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   );
 };
 
-export default TokenHeader;
+export default WatchListHeader;

@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { LineChart } from 'react-native-wagmi-charts';
-import * as d3Shape from 'd3-shape';
 import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { formatUsdValueKMB } from '../../Home/utils/price';
@@ -14,66 +12,60 @@ import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
-import { formatPercentage } from '@/screens/Home/components/AssetRenderItems';
-import { isNumber } from 'lodash';
 import { Text } from '@/components/Typography';
+import { formatPercentageKMB } from '@/screens/Meme/components/TokenItem';
+import { isNumber } from 'lodash';
 
-const TrendChartComponent = ({
-  isPositive,
-  data,
-  width,
-}: {
-  isPositive: boolean;
-  data: { time_at: number; price: number }[];
-  width: number;
-}) => {
-  const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
-
-  const chartData = React.useMemo(() => {
-    if (!data.length || data.length < 2) {
-      return [
-        {
-          timestamp: 0,
-          value: 0,
-        },
-        {
-          timestamp: 1,
-          value: 0,
-        },
-      ];
-    }
-
-    return data.map(point => ({
-      timestamp: point.time_at * 1000, // Convert to milliseconds
-      value: point.price,
-    }));
-  }, [data]);
-
-  const pathColor = isPositive
-    ? colors2024['green-default']
-    : colors2024['red-default'];
-
+export const PercentChangeBadge = ({ percent }: { percent?: number }) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const isZeroChange = useMemo(() => {
+    return percent === 0;
+  }, [percent]);
+  const isPositive = useMemo(() => {
+    return (percent || 0) > 0;
+  }, [percent]);
+  const percentStr = useMemo(() => {
+    return formatPercentageKMB(Number(percent) || 0);
+  }, [percent]);
   return (
-    <View style={[styles.trendChartWrapper, { width: width }]}>
-      <LineChart.Provider data={chartData}>
-        <LineChart height={50} width={width} shape={d3Shape.curveCatmullRom}>
-          <LineChart.Path showInactivePath={false} color={pathColor} width={1}>
-            <LineChart.Gradient color={pathColor} />
-          </LineChart.Path>
-        </LineChart>
-      </LineChart.Provider>
+    <View
+      style={[
+        styles.trendContainer,
+        {
+          backgroundColor: isZeroChange
+            ? colors2024['neutral-bg-5']
+            : isPositive
+            ? colors2024['green-default']
+            : colors2024['red-default'],
+        },
+      ]}>
+      <Text
+        style={StyleSheet.flatten([
+          styles.changeText,
+          {
+            fontSize: getPercentSize(percentStr),
+            color: isZeroChange
+              ? colors2024['neutral-secondary']
+              : colors2024['neutral-InvertHighlight'],
+          },
+        ])}>
+        {percentStr}
+      </Text>
     </View>
   );
 };
-
+const getPercentSize = (per: string) => {
+  if (per.length > 4) {
+    return 13;
+  }
+  return 14;
+};
 interface TokenListItemProps {
   item: TokenDetailWithPriceCurve;
   onPress: (item: TokenDetailWithPriceCurve) => void;
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
 }
-
-const TrendChart = React.memo(TrendChartComponent);
 
 const TokenListItemComponent = ({
   item,
@@ -82,9 +74,6 @@ const TokenListItemComponent = ({
   rightSlot,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const isPositive = (item.price_24h_change || 0) >= 0;
-  const hasSlot = !!leftSlot || !!rightSlot;
-  const trendChartWidth = hasSlot ? 58 : 78;
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -125,24 +114,10 @@ const TokenListItemComponent = ({
       <View style={styles.tokenRightSection}>
         {/* 价格 */}
         <Text style={styles.priceText}>${formatPrice(item.price)}</Text>
-        {/* 24小时价格曲线 */}
-        <View style={styles.trendChartContainer}>
-          <TrendChart
-            isPositive={isPositive}
-            data={item.price_curve_24h || []}
-            width={trendChartWidth}
-          />
-          {/* 24小时价格百分比 */}
-          {isNumber(item.price_24h_change) && (
-            <Text
-              style={StyleSheet.flatten([
-                styles.changeText,
-                !isPositive && styles.changeTextPositive,
-              ])}>
-              {formatPercentage(Number(item.price_24h_change) || 0, true)}
-            </Text>
-          )}
-        </View>
+        {/* 24小时价格百分比 */}
+        {isNumber(item.price_24h_change) && (
+          <PercentChangeBadge percent={item.price_24h_change} />
+        )}
       </View>
       {/* 右slot */}
       {rightSlot && <View style={styles.rightSlot}>{rightSlot}</View>}
@@ -167,8 +142,9 @@ export const TokenItemSkeleton = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingLeft: 12,
+    paddingRight: 14,
     gap: 8,
     marginBottom: 8,
     display: 'flex',
@@ -219,9 +195,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   tokenRightSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11.6,
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 4,
     justifyContent: 'center',
   },
   priceText: {
@@ -235,17 +211,21 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     fontSize: 14,
     lineHeight: 18,
-    color: colors2024['green-default'],
+    color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    marginTop: -4,
+    width: 60,
   },
   changeTextPositive: {
     color: colors2024['red-default'],
   },
-  trendChartContainer: {
+  trendContainer: {
     display: 'flex',
     flexDirection: 'column',
+    //paddingHorizontal: 6.5,
+    paddingVertical: 6,
+    borderRadius: 6,
+    width: 60,
     alignItems: 'flex-end',
   },
   leftSlot: {

@@ -8,16 +8,15 @@ import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
-import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import RcIconPolymarketCC from '@/assets2024/icons/home/IconPredictCC.svg';
 import RcIconOpinionCC from '@/assets2024/icons/home/IconOpinionCC.svg';
 import RcIconProbableCC from '@/assets2024/icons/home/IconProbableCC.svg';
+import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 
 import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
 import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
 import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
 import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
-import RcIconMemeCC from '@/assets2024/icons/home/IconMemeCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -141,7 +140,6 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { PredictBadge } from './PredicBadge';
-import { Top3MemeBadge } from '@/screens/Meme/components/Top3MemeBadge';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 import { useMemoizedFn } from 'ahooks';
@@ -720,14 +718,9 @@ export const HomeOverview = React.memo(() => {
         // },
 
         {
-          key: MultiHomeFeatTitle.Watchlist,
-          title: t('page.home.services.watchlist'),
-          icon: RcIconWatchlistCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Meme,
-          title: t('page.home.services.meme'),
-          icon: RcIconMemeCC,
+          key: MultiHomeFeatTitle.Market,
+          title: t('page.home.services.market'),
+          icon: RcIconMarketCC,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
@@ -834,9 +827,9 @@ export const HomeOverview = React.memo(() => {
   }, [triggerUpdate, checkAddressesEligibility, forceUpdate, myTop10Addresses]);
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-  const handlePressWatchlist = useCallback(() => {
+  const handlePressMarket = useCallback(() => {
     navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-      screen: RootNames.Watchlist,
+      screen: RootNames.Market,
       params: {},
     });
   }, [navigation]);
@@ -907,16 +900,10 @@ export const HomeOverview = React.memo(() => {
             }),
           );
           break;
-        case MultiHomeFeatTitle.Watchlist: {
-          handlePressWatchlist();
+        case MultiHomeFeatTitle.Market: {
+          handlePressMarket();
           break;
         }
-        case MultiHomeFeatTitle.Meme:
-          navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-            screen: RootNames.Meme,
-            params: {},
-          });
-          break;
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
@@ -948,7 +935,7 @@ export const HomeOverview = React.memo(() => {
           break;
       }
     },
-    [handlePressWatchlist, navigation],
+    [handlePressMarket, navigation],
   );
 
   const generateCustomBadgeIcon = useCallback(
@@ -960,7 +947,7 @@ export const HomeOverview = React.memo(() => {
       isSuccess?: boolean;
       showGiftIcon?: boolean;
     }) => {
-      if (el.key === MultiHomeFeatTitle.Watchlist) {
+      if (el.key === MultiHomeFeatTitle.Market) {
         return <WatchListBadge />;
       }
 
@@ -991,10 +978,6 @@ export const HomeOverview = React.memo(() => {
 
       if (el.key === MultiHomeFeatTitle.GasAccount) {
         return <GasAccountBadge />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Meme) {
-        return <Top3MemeBadge />;
       }
 
       return (

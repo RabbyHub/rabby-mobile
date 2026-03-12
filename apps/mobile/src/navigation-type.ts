@@ -116,6 +116,7 @@ export type HomeNavigatorParamsList = {
 
 export type HomeNonTabNavigatorParamsList = {
   [RootNames.Search]?: {};
+  [RootNames.Market]?: {};
   [RootNames.Watchlist]?: {};
   [RootNames.Meme]?: {};
 };
