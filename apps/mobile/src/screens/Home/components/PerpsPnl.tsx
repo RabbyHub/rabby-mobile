@@ -15,15 +15,6 @@ const PerpsPnlByHyperliquid: React.FC<{}> = () => {
   const { formatCurrentCurrency } = useCurrency();
   const { type } = perpsPositionInfo;
 
-  useEffect(() => {
-    if (perpsPositionInfo.show) {
-      matomoRequestEvent({
-        category: 'Rabby Perps',
-        action: 'Perps_ExistPosition',
-      });
-    }
-  }, [perpsPositionInfo.show]);
-
   return perpsPositionInfo.show ? (
     type === 'pnl' ? (
       <Text
