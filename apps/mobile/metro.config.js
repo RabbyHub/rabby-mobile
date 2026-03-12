@@ -78,7 +78,7 @@ const config = {
       rootDir: '../../',
       policyDir: './Warden-RN',
       sourceRoot: './apps/mobile/src',
-      dev: false,
+      dev: true,
       protectPrototype: false,
     }),
   },
