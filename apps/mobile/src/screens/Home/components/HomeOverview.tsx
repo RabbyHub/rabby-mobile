@@ -273,13 +273,15 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         cur.isLoadingByAddress,
       ).isTop10BalanceLoading;
 
-      runOnUI(setPulldownRefreshStage)({
-        state: isTop10BalanceLoading ? 'refreshing' : 'finished',
-        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
-        svIsRefreshing,
-        pullDistance,
-        svIsManualRefreshing,
-      });
+      if (!isTop10BalanceLoading) {
+        runOnUI(setPulldownRefreshStage)({
+          state: isTop10BalanceLoading ? 'refreshing' : 'finished',
+          indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+          svIsRefreshing,
+          pullDistance,
+          svIsManualRefreshing,
+        });
+      }
     });
 
     return () => {
@@ -1094,6 +1096,7 @@ export const HomeOverview = React.memo(() => {
               hooksReturn={pulldownRefreshReturns}
               animatedStyle={refreshIndicatorStyle}
               animatedIndicatorStyle={styles.iosAbsIndicatorOffset}
+              __PICK_MANUAL__
             />
             <Animated.View style={[styles.scrollViewInner]}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />
