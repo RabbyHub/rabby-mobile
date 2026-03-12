@@ -64,13 +64,13 @@ jobs:
           - host: macOS
             machine_loc: ${{ inputs.macos_machine_location }}
           - host: Linux
-            machine_loc: mobile
+            machine_loc: ${{ inputs.macos_machine_location }}
     runs-on:
       - self-hosted
       - ${{ matrix.host }}
       - ${{ matrix.machine_loc }}
     env:
-      NODE_OPTIONS: '--max_old_space_size=12288'
+      NODE_OPTIONS: '--max_old_space_size=16384'
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
       SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
@@ -182,6 +182,10 @@ jobs:
 
           if [ "$OS_TYPE" == "Linux" ]; then
             buildchannel=selfhost-reg ./scripts/deploy-android.sh
+            if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
+              export SENTRY_DISABLE_AUTO_UPLOAD=true
+              export NODE_OPTIONS="--max_old_space_size=20480"
+            fi
           elif [ "$OS_TYPE" == "Darwin" ]; then
             if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
               export SENTRY_DISABLE_AUTO_UPLOAD=true
