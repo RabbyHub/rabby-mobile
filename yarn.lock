@@ -35207,7 +35207,7 @@ __metadata:
     react-native-gesture-handler: 2.30.0
     react-native-get-random-values: ^1.10.0
     react-native-haptic-feedback: 2.3.3
-    react-native-iap: 12.16.2
+    react-native-iap: "patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch"
     react-native-inappbrowser-reborn: ^3.7.0
     react-native-indicators: ^0.17.0
     react-native-ios-context-menu: 1.15.3
@@ -35977,9 +35977,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-iap@npm:12.16.2":
-  version: 12.16.2
-  resolution: "react-native-iap@npm:12.16.2"
+"react-native-iap@npm:12.16.4":
+  version: 12.16.4
+  resolution: "react-native-iap@npm:12.16.4"
   peerDependencies:
     expo: ">=47.0.0"
     react: ">=16.13.1"
@@ -35987,7 +35987,21 @@ __metadata:
   peerDependenciesMeta:
     expo:
       optional: true
-  checksum: 8d107815f3e352da9bed3aabed8fee519864b25393bfc63c5c6a6ff9ab0d7e0fd187484218279a57f579ebae977072c9674cec322cfba2e46935e14a7cae84d9
+  checksum: dde61376f4c7ea396746b90140bdcf16777dd6082b4d316c0d1bba9b285c2f3e8ea004e2bddd0b48758ce5830236193e56e574567f8d7057bf1c9dcb572c19b5
+  languageName: node
+  linkType: hard
+
+"react-native-iap@patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch::locator=rabby-mobile%40workspace%3Aapps%2Fmobile":
+  version: 12.16.4
+  resolution: "react-native-iap@patch:react-native-iap@npm%3A12.16.4#../../.yarn/patches/react-native-iap-npm-12.16.4-49632744b4.patch::version=12.16.4&hash=67e825&locator=rabby-mobile%40workspace%3Aapps%2Fmobile"
+  peerDependencies:
+    expo: ">=47.0.0"
+    react: ">=16.13.1"
+    react-native: ">=0.65.1"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 1c9fc76d5c9b5722a72eac6395e93737b20faa8c626f17d0972a4778f71ff92c6d7299e1c85c90a22bfa1a06a1879e927fde506dfc9f7288cc5f97c30e932dce
   languageName: node
   linkType: hard
 
