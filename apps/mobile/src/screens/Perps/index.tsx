@@ -229,6 +229,7 @@ export const PerpsOriginScreen = ({
   useEffect(() => {
     apisPerps.getHasDoneNewUserProcess().then(hasDoneNewUserProcess => {
       if (!hasDoneNewUserProcess) {
+        apisPerps.setHasDoneNewUserProcess(true);
         setPopupState(prev => ({
           ...prev,
           isShowGuidePopup: true,
@@ -539,11 +540,6 @@ export const PerpsOriginScreen = ({
       <PerpsGuidePopup
         visible={popupState.isShowGuidePopup}
         onClose={async () => {
-          const hasDoneNewUserProcess =
-            await apisPerps.getHasDoneNewUserProcess();
-          if (!hasDoneNewUserProcess) {
-            navigation.goBack();
-          }
           setPopupState(prev => ({
             ...prev,
             isShowGuidePopup: false,
