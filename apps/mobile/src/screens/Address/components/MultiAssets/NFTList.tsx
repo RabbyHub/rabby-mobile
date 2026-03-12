@@ -328,14 +328,21 @@ export const NFTList = () => {
         ListHeaderComponent={
           <RefreshPlaceholderIOS
             hooksReturn={pulldownRefreshReturns}
+            animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
             __PICK_MANUAL__
           />
         }
         // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        style={styles.container}
-        contentContainerStyle={styles.list}
+        style={[
+          styles.container,
+          pulldownRefreshReturns.scrollableStyle.container,
+        ]}
+        contentContainerStyle={[
+          styles.list,
+          pulldownRefreshReturns.scrollableStyle.list,
+        ]}
         bounces={false}
         overScrollMode={'never'}
         scrollEventThrottle={16}
@@ -357,7 +364,7 @@ export const NFTList = () => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+    // marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,

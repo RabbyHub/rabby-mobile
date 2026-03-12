@@ -6,6 +6,7 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { TextProps } from 'react-native';
 import { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 
 interface CustomLabelProps {
   index: number;
@@ -65,7 +66,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 32,
+    height: HOME_TOP_HEADER_SIZES.headerTabItemHeight,
     width: 70,
     paddingLeft: 8,
     paddingRight: 8,

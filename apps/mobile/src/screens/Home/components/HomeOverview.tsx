@@ -1053,17 +1053,6 @@ export const HomeOverview = React.memo(() => {
     };
   });
 
-  const refreshIndicatorStyle = useAnimatedStyle(() => {
-    return {
-      paddingTop: interpolate(
-        pullDistance.value,
-        [0, pulldownRefreshSizes.homeHeaderHeight],
-        [HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset, 0],
-        Extrapolate.CLAMP,
-      ),
-    };
-  });
-
   useRendererDetect({ name: 'MultiAddressHome::HomeOverview' });
 
   return (
@@ -1098,7 +1087,7 @@ export const HomeOverview = React.memo(() => {
             })}>
             <RefreshPlaceholderIOS
               hooksReturn={pulldownRefreshReturns}
-              animatedStyle={refreshIndicatorStyle}
+              animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
               animatedIndicatorStyle={styles.iosAbsIndicatorOffset}
               __PICK_MANUAL__
             />

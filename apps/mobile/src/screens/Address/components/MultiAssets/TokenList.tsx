@@ -46,7 +46,6 @@ import {
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -448,11 +447,18 @@ export const TokenList = () => {
   return (
     <GestureDetector gesture={panGestureRef.current}>
       <TabsFlatList
-        style={styles.container}
-        contentContainerStyle={styles.list}
+        style={[
+          styles.container,
+          pulldownRefreshReturns.scrollableStyle.container,
+        ]}
+        contentContainerStyle={[
+          styles.list,
+          pulldownRefreshReturns.scrollableStyle.list,
+        ]}
         ListHeaderComponent={
           <RefreshPlaceholderIOS
             hooksReturn={pulldownRefreshReturns}
+            animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
             __PICK_MANUAL__
           />
         }
@@ -481,7 +487,6 @@ export const TokenList = () => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,

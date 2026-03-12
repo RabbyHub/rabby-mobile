@@ -328,6 +328,7 @@ export const ProtocolList = () => {
           <>
             <RefreshPlaceholderIOS
               hooksReturn={pulldownRefreshReturns}
+              animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
               __PICK_MANUAL__
             />
             <PerpsMultiAssetPosition />
@@ -336,8 +337,14 @@ export const ProtocolList = () => {
         // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        style={styles.container}
-        contentContainerStyle={styles.list}
+        style={[
+          styles.container,
+          pulldownRefreshReturns.scrollableStyle.container,
+        ]}
+        contentContainerStyle={[
+          styles.list,
+          pulldownRefreshReturns.scrollableStyle.list,
+        ]}
         onEndReached={loadMorePortfolios}
         onEndReachedThreshold={0.5}
         bounces={false}
@@ -361,7 +368,7 @@ export const ProtocolList = () => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+    // marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,
