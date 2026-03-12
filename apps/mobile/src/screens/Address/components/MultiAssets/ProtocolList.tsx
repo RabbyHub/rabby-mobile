@@ -322,7 +322,7 @@ export const ProtocolList = () => {
         initialNumToRender={15}
         windowSize={5}
         maxToRenderPerBatch={15}
-        // removeClippedSubviews
+        removeClippedSubviews={IS_ANDROID}
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <>
