@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { RcNextSearchCC } from '@/assets/icons/common';
@@ -10,17 +10,20 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 
-import { MemeContent } from '../Meme/MemeContent';
 import CustomLabel from '../TokenDetail/components/CustomLabel';
 import { DynamicCustomMaterialTabBar } from '../TokenDetail/components/CustomTabBar';
 import { WatchlistContent } from '../Watchlist/WatchlistContent';
+import { MarketCategoryContent } from './components/MarketCategoryContent';
+import { useTokenMarketCategoryList } from './hooks/useTokenMarketCategoryList';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
-type MarketTabKey = 'watchlist' | 'meme' | 'stock' | 'commodities';
+type MarketTabKey = 'watchlist' | string;
 
 export default function MarketScreen() {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
+  const { categories } = useTokenMarketCategoryList();
   const [activeTab, setActiveTab] = useState<MarketTabKey>('watchlist');
 
   const renderHeaderRight = useCallback(
@@ -50,6 +53,31 @@ export default function MarketScreen() {
     });
   }, [renderHeaderRight, setNavigationOptions]);
 
+  const tabs = useMemo(
+    () => [
+      {
+        key: 'watchlist',
+        label: t('page.market.tabs.watchlist'),
+      },
+      ...categories.map(category => ({
+        key: category.id,
+        label: category.name,
+        sortFields: category.sort_fields,
+      })),
+    ],
+    [categories, t],
+  );
+
+  const initialTabItemsLayout = useMemo(() => {
+    let x = 20;
+    return tabs.map(tab => {
+      const width = Math.max(60, tab.label.length * 12 + 20);
+      const item = { x, width };
+      x += width;
+      return item;
+    });
+  }, [tabs]);
+
   const renderTabBar = useCallback(
     (props: any) => (
       <DynamicCustomMaterialTabBar
@@ -59,16 +87,16 @@ export default function MarketScreen() {
         }}
         containerStyle={styles.tabsBarContainer}
         indicatorStyle={styles.indicator}
-        initialTabItemsLayout={[
-          { x: 20, width: 70 },
-          { x: 90, width: 80 },
-          { x: 170, width: 60 },
-          { x: 230, width: 120 },
-        ]}
+        initialTabItemsLayout={initialTabItemsLayout}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
       />
     ),
-    [styles.indicator, styles.tabBar, styles.tabsBarContainer],
+    [
+      initialTabItemsLayout,
+      styles.indicator,
+      styles.tabBar,
+      styles.tabsBarContainer,
+    ],
   );
 
   const renderWatchlistLabel = useCallback(
@@ -76,43 +104,21 @@ export default function MarketScreen() {
       <CustomLabel
         index={index}
         indexDecimal={indexDecimal}
-        text={t('page.market.tabs.watchlist')}
+        text=""
+        icon={
+          <RcIconFavorite
+            width={18}
+            height={18}
+            color={
+              Math.abs(index - indexDecimal.value) < 0.5
+                ? colors2024['orange-default']
+                : colors2024['neutral-secondary']
+            }
+          />
+        }
       />
     ),
-    [t],
-  );
-
-  const renderMemeLabel = useCallback(
-    ({ index, indexDecimal }) => (
-      <CustomLabel
-        index={index}
-        indexDecimal={indexDecimal}
-        text={t('page.market.tabs.memecoin')}
-      />
-    ),
-    [t],
-  );
-
-  const renderStockLabel = useCallback(
-    ({ index, indexDecimal }) => (
-      <CustomLabel
-        index={index}
-        indexDecimal={indexDecimal}
-        text={t('page.market.tabs.stock')}
-      />
-    ),
-    [t],
-  );
-
-  const renderCommoditiesLabel = useCallback(
-    ({ index, indexDecimal }) => (
-      <CustomLabel
-        index={index}
-        indexDecimal={indexDecimal}
-        text={t('page.market.tabs.commodities')}
-      />
-    ),
-    [t],
+    [colors2024],
   );
 
   return (
@@ -125,26 +131,40 @@ export default function MarketScreen() {
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
         initialTabName={activeTab}
-        pagerProps={{ scrollEnabled: false }}
         onTabChange={({ tabName }) => {
-          setActiveTab(tabName as MarketTabKey);
+          setActiveTab(tabName);
         }}>
         <Tabs.Tab label={renderWatchlistLabel} name="watchlist">
           <View style={styles.content}>
             <WatchlistContent headerSpacerHeight={0} showSearchEntry={false} />
           </View>
         </Tabs.Tab>
-        <Tabs.Tab label={renderMemeLabel} name="meme">
-          <View style={styles.content}>
-            <MemeContent headerSpacerHeight={0} />
-          </View>
-        </Tabs.Tab>
-        <Tabs.Tab label={renderStockLabel} name="stock">
-          <View style={styles.placeholder} />
-        </Tabs.Tab>
-        <Tabs.Tab label={renderCommoditiesLabel} name="commodities">
-          <View style={styles.placeholder} />
-        </Tabs.Tab>
+        {
+          (categories ?? []).map(category => {
+            const renderCategoryLabel = ({ index, indexDecimal }) => (
+              <CustomLabel
+                index={index}
+                indexDecimal={indexDecimal}
+                text={category.name}
+              />
+            );
+
+            return (
+              <Tabs.Tab
+                key={category.id}
+                label={renderCategoryLabel}
+                name={category.id}>
+                <View style={styles.content}>
+                  <MarketCategoryContent
+                    categoryId={category.id}
+                    sortFields={category.sort_fields}
+                    headerSpacerHeight={0}
+                  />
+                </View>
+              </Tabs.Tab>
+            );
+          }) as unknown as React.ReactElement
+        }
       </Tabs.Container>
     </NormalScreenContainer2024>
   );
@@ -196,11 +216,5 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   content: {
     flex: 1,
-  },
-  placeholder: {
-    flex: 1,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
   },
 }));

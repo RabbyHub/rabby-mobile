@@ -55,9 +55,11 @@ const CustomLabel = ({
   });
   return (
     <View style={styles.container}>
-      <Animated.Text style={[styles.label, stylez, style]}>
-        {text}
-      </Animated.Text>
+      {!!text && (
+        <Animated.Text style={[styles.label, stylez, style]}>
+          {text}
+        </Animated.Text>
+      )}
       {icon}
     </View>
   );

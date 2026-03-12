@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { MemeItem } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -44,10 +44,11 @@ const getPercentSize = (per: string) => {
 };
 
 interface TokenListItemProps {
-  item: MemeItem;
-  onPress: (item: MemeItem) => void;
+  item: TokenMarketTokenItem;
+  onPress: (item: TokenMarketTokenItem) => void;
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
+  showChainLogo?: boolean;
 }
 
 const TokenListItemComponent = ({
@@ -55,6 +56,7 @@ const TokenListItemComponent = ({
   onPress,
   leftSlot,
   rightSlot,
+  showChainLogo = false,
 }: TokenListItemProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const isPositive = useMemo(
@@ -76,7 +78,7 @@ const TokenListItemComponent = ({
             logo={item.logo_url}
             size={46}
             chain={item.chain}
-            chainSize={0}
+            chainSize={showChainLogo ? 18 : 0}
             innerChainStyle={styles.chainLogo}
           />
           <View style={styles.tokenInfo}>
@@ -85,21 +87,34 @@ const TokenListItemComponent = ({
               <Text style={styles.tokenName}>
                 {ellipsisOverflowedText(getTokenSymbol(item), 12)}
               </Text>
-              <Image
-                source={require('@/assets2024/icons/meme/fourMeme.png')}
-                style={styles.fourMemeIcon}
-                width={18}
-                height={18}
-              />
+              {item.launchpad?.logo ? (
+                <Image
+                  source={{ uri: item.launchpad?.logo }}
+                  style={styles.fourMemeIcon}
+                  width={18}
+                  height={18}
+                />
+              ) : null}
             </View>
-            {/* FDV */}
-            {!!item?.fdv && (
+            {item.asset ? (
+              <View style={styles.tokenAssetContainer}>
+                {item.asset?.logo ? (
+                  <Image
+                    source={{ uri: item.asset?.logo }}
+                    style={styles.fourMemeIcon}
+                    width={18}
+                    height={18}
+                  />
+                ) : null}
+                <Text style={styles.tokenFdv}>{item.asset?.name}</Text>
+              </View>
+            ) : item?.fdv ? (
               <Text style={styles.tokenFdv}>
                 <Text>{formatUsdValueKMB(item.volume_24h)}</Text>
                 <Text style={styles.tokenFdvSeparator}> | </Text>
                 <Text>{formatUsdValueKMB(item.fdv)}</Text>
               </Text>
-            )}
+            ) : null}
             {/* Chain Logo */}
           </View>
         </View>
@@ -284,5 +299,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 0,
     flexShrink: 0,
     justifyContent: 'flex-start',
+  },
+  tokenAssetContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 }));

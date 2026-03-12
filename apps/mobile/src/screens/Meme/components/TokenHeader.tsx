@@ -15,6 +15,9 @@ interface TokenHeaderProps {
   onFdvSort: () => void;
   changeSort: SortState;
   onChangeSort: () => void;
+  showVolumeSort?: boolean;
+  showFdvSort?: boolean;
+  showChangeSort?: boolean;
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -87,6 +90,9 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   onFdvSort,
   changeSort,
   onChangeSort,
+  showVolumeSort = true,
+  showFdvSort = true,
+  showChangeSort = true,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -130,35 +136,55 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   return (
     <View style={styles.headerRow}>
       <View style={styles.headerLeft}>
-        <Pressable
-          style={[styles.headerCell, styles.tokenCell]}
-          hitSlop={10}
-          onPress={onVolumeSort}>
-          <Text style={getTextStyle(volumeSort)}>
+        {showVolumeSort ? (
+          <Pressable
+            style={[styles.headerCell, styles.tokenCell]}
+            hitSlop={10}
+            onPress={onVolumeSort}>
+            <Text style={getTextStyle(volumeSort)}>
+              {t('page.meme.tokenHeader.volume')}
+            </Text>
+            {renderArrows(volumeSort)}
+          </Pressable>
+        ) : (
+          <Text style={styles.headerText}>
             {t('page.meme.tokenHeader.volume')}
           </Text>
-          {renderArrows(volumeSort)}
-        </Pressable>
+        )}
         <Text style={styles.headerTextSeparator}> / </Text>
-        <Pressable
-          style={[styles.headerCell, styles.tokenCell]}
-          hitSlop={10}
-          onPress={onFdvSort}>
-          <Text style={getTextStyle(fdvSort)}>
+        {showFdvSort ? (
+          <Pressable
+            style={[styles.headerCell, styles.tokenCell]}
+            hitSlop={10}
+            onPress={onFdvSort}>
+            <Text style={getTextStyle(fdvSort)}>
+              {t('page.meme.tokenHeader.fdv')}
+            </Text>
+            {renderArrows(fdvSort)}
+          </Pressable>
+        ) : (
+          <Text style={styles.headerText}>
             {t('page.meme.tokenHeader.fdv')}
           </Text>
-          {renderArrows(fdvSort)}
-        </Pressable>
+        )}
       </View>
-      <Pressable
-        style={[styles.headerCell, styles.changeCell]}
-        hitSlop={10}
-        onPress={onChangeSort}>
-        <Text style={getTextStyle(changeSort)}>
-          {t('page.meme.tokenHeader.priceAndChange')}
-        </Text>
-        {renderArrows(changeSort)}
-      </Pressable>
+      {showChangeSort ? (
+        <Pressable
+          style={[styles.headerCell, styles.changeCell]}
+          hitSlop={10}
+          onPress={onChangeSort}>
+          <Text style={getTextStyle(changeSort)}>
+            {t('page.meme.tokenHeader.priceAndChange')}
+          </Text>
+          {renderArrows(changeSort)}
+        </Pressable>
+      ) : (
+        <View style={[styles.headerCell, styles.changeCell]}>
+          <Text style={styles.headerText}>
+            {t('page.meme.tokenHeader.priceAndChange')}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
