@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
@@ -422,7 +422,13 @@ export const PerpsMultiAssetPosition: React.FC<{
   return (
     <>
       {!!dataList.length && (
-        <View style={styles.container}>
+        <View
+          style={StyleSheet.flatten([
+            styles.container,
+            source === 'home' && {
+              marginTop: 12,
+            },
+          ])}>
           {dataList.map(item => {
             return (
               <AssetPositionItem
