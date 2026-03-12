@@ -14,7 +14,46 @@ import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { Text } from '@/components/Typography';
 import { formatPercentageKMB } from '@/screens/Meme/components/TokenItem';
+import { isNumber } from 'lodash';
 
+export const PercentChangeBadge = ({ percent }: { percent?: number }) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const isZeroChange = useMemo(() => {
+    return percent === 0;
+  }, [percent]);
+  const isPositive = useMemo(() => {
+    return (percent || 0) > 0;
+  }, [percent]);
+  const percentStr = useMemo(() => {
+    return formatPercentageKMB(Number(percent) || 0);
+  }, [percent]);
+  return (
+    <View
+      style={[
+        styles.trendContainer,
+        {
+          backgroundColor: isZeroChange
+            ? colors2024['neutral-bg-5']
+            : isPositive
+            ? colors2024['green-default']
+            : colors2024['red-default'],
+        },
+      ]}>
+      <Text
+        style={StyleSheet.flatten([
+          styles.changeText,
+          {
+            fontSize: getPercentSize(percentStr),
+            color: isZeroChange
+              ? colors2024['neutral-secondary']
+              : colors2024['neutral-InvertHighlight'],
+          },
+        ])}>
+        {percentStr}
+      </Text>
+    </View>
+  );
+};
 const getPercentSize = (per: string) => {
   if (per.length > 4) {
     return 13;
@@ -34,11 +73,7 @@ const TokenListItemComponent = ({
   leftSlot,
   rightSlot,
 }: TokenListItemProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const isPositive = (item.price_24h_change || 0) >= 0;
-  const percentStr = useMemo(() => {
-    return formatPercentageKMB(Number(item.price_24h_change) || 0);
-  }, [item.price_24h_change]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -80,28 +115,9 @@ const TokenListItemComponent = ({
         {/* 价格 */}
         <Text style={styles.priceText}>${formatPrice(item.price)}</Text>
         {/* 24小时价格百分比 */}
-        <View
-          style={[
-            styles.trendContainer,
-            {
-              backgroundColor: isPositive
-                ? colors2024['green-default']
-                : colors2024['red-default'],
-            },
-          ]}>
-          {/* 24小时价格百分比 */}
-          {typeof item.price_24h_change === 'number' && (
-            <Text
-              style={StyleSheet.flatten([
-                styles.changeText,
-                {
-                  fontSize: getPercentSize(percentStr),
-                },
-              ])}>
-              {percentStr}
-            </Text>
-          )}
-        </View>
+        {isNumber(item.price_24h_change) && (
+          <PercentChangeBadge percent={item.price_24h_change} />
+        )}
       </View>
       {/* 右slot */}
       {rightSlot && <View style={styles.rightSlot}>{rightSlot}</View>}

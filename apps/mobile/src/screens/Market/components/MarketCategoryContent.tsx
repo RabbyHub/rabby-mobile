@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
+import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
@@ -15,6 +16,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { memeItemToITokenItem } from '@/utils/token';
 import { useIsFocused } from '@react-navigation/native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useAtom } from 'jotai';
 import { useTranslation } from 'react-i18next';
 
 import TokenHeader, { SortState } from '../../Meme/components/TokenHeader';
@@ -49,9 +51,21 @@ export function MarketCategoryContent({
 }) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const [volumeSort, setVolumeSort] = useState<SortState>('default');
-  const [fdvSort, setFdvSort] = useState<SortState>('default');
-  const [changeSort, setChangeSort] = useState<SortState>('default');
+  const volumeSortAtom = useMemo(
+    () => atomByMMKV<SortState>(`@market.${categoryId}.volumeSort`, 'default'),
+    [categoryId],
+  );
+  const fdvSortAtom = useMemo(
+    () => atomByMMKV<SortState>(`@market.${categoryId}.fdvSort`, 'default'),
+    [categoryId],
+  );
+  const changeSortAtom = useMemo(
+    () => atomByMMKV<SortState>(`@market.${categoryId}.changeSort`, 'default'),
+    [categoryId],
+  );
+  const [volumeSort, setVolumeSort] = useAtom(volumeSortAtom);
+  const [fdvSort, setFdvSort] = useAtom(fdvSortAtom);
+  const [changeSort, setChangeSort] = useAtom(changeSortAtom);
 
   const supportedSortFields = useMemo(
     () => new Set(sortFields || []),
@@ -111,7 +125,7 @@ export function MarketCategoryContent({
     setVolumeSort(prev => toggleSort(prev));
     setFdvSort('default');
     setChangeSort('default');
-  }, [supportedSortFields]);
+  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
 
   const handleFdvSort = useCallback(() => {
     if (!supportedSortFields.has('fdv')) {
@@ -120,7 +134,7 @@ export function MarketCategoryContent({
     setFdvSort(prev => toggleSort(prev));
     setVolumeSort('default');
     setChangeSort('default');
-  }, [supportedSortFields]);
+  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
 
   const handleChangeSort = useCallback(() => {
     if (!supportedSortFields.has('price_change_24h')) {
@@ -129,7 +143,7 @@ export function MarketCategoryContent({
     setChangeSort(prev => toggleSort(prev));
     setVolumeSort('default');
     setFdvSort('default');
-  }, [supportedSortFields]);
+  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenMarketTokenItem) => {

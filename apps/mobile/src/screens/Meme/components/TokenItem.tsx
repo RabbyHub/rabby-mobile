@@ -11,6 +11,8 @@ import { formatPrice } from '@/utils/number';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
 import { Text } from '@/components/Typography';
+import { PercentChangeBadge } from '@/screens/Watchlist/components/TokenItem';
+import { isNumber } from 'lodash';
 
 export const formatPercentageKMB = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -123,28 +125,9 @@ const TokenListItemComponent = ({
         {/* 价格 */}
         <Text style={styles.priceText}>${formatPrice(item.price)}</Text>
         {/* 24小时价格变化 */}
-        <View
-          style={[
-            styles.trendChartContainer,
-            {
-              backgroundColor: isPositive
-                ? colors2024['green-default']
-                : colors2024['red-default'],
-            },
-          ]}>
-          {/* 24小时价格百分比 */}
-          {typeof item.price_24h_change === 'number' && (
-            <Text
-              style={StyleSheet.flatten([
-                styles.changeText,
-                {
-                  fontSize: getPercentSize(percentStr),
-                },
-              ])}>
-              {percentStr}
-            </Text>
-          )}
-        </View>
+        {isNumber(item.price_24h_change) && (
+          <PercentChangeBadge percent={item.price_24h_change} />
+        )}
       </View>
       {/* 右slot */}
       {rightSlot && <View style={styles.rightSlot}>{rightSlot}</View>}
