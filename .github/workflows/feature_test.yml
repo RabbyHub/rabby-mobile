@@ -25,7 +25,7 @@ on:
         options:
           - 'mobile'
           - 'mobile-local'
-        default: 'mobile'
+        default: 'mobile-local'
       RABBY_MOBILE_NM_USE_CACHE:
         required: false
         type: boolean
@@ -67,6 +67,7 @@ jobs:
             machine_loc: mobile
     runs-on:
       - self-hosted
+      - ARM64
       - ${{ matrix.host }}
       - ${{ matrix.machine_loc }}
     env:
