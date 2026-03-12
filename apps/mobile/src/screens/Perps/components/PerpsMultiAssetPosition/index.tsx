@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
@@ -78,17 +78,7 @@ const AssetPositionItem = ({
     onShowRiskPopup(item);
   }, [item, onShowRiskPopup]);
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
-  // const handlePress = useCallback(() => {
-  //   switchPerpsAccountBeforeNavigate(item.account);
-  //   matomoRequestEvent({
-  //     category: 'Rabby Perps',
-  //     action: 'Perps_CardToPosition',
-  //   });
-  //   navigation.push(RootNames.StackTransaction, {
-  //     screen: RootNames.PerpsMarketDetail,
-  //     params: { market: coin },
-  //   });
-  // }, [item, coin, navigation]);
+
   const handleHyperliquidPress = useCallback(() => {
     switchPerpsAccountBeforeNavigate(item.account);
     matomoRequestEvent({
@@ -415,22 +405,30 @@ export const PerpsMultiAssetPosition: React.FC<{
     setSelectedPositionKey(null);
   }, [setSelectedPositionKey]);
 
-  let hasLoggedEvent = useRef(false);
+  const hasLoggedEvent = useRef(false);
+
+  const hasPosition = useMemo(() => dataList.length > 0, [dataList.length]);
 
   useEffect(() => {
-    if (dataList.length > 0 && source === 'home' && !hasLoggedEvent.current) {
+    if (hasPosition && source === 'home' && !hasLoggedEvent.current) {
       matomoRequestEvent({
         category: 'Rabby Perps',
         action: 'Perps_ExistPosition',
       });
       hasLoggedEvent.current = true;
     }
-  }, [dataList.length, source]);
+  }, [hasPosition, source]);
 
   return (
     <>
       {!!dataList.length && (
-        <View style={styles.container}>
+        <View
+          style={StyleSheet.flatten([
+            styles.container,
+            source === 'home' && {
+              marginTop: 12,
+            },
+          ])}>
           {dataList.map(item => {
             return (
               <AssetPositionItem
