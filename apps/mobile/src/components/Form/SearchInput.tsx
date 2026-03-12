@@ -1,10 +1,11 @@
 import { useCallback, useMemo } from 'react';
-import { View, TextInput, TextInputProps, StyleSheet } from 'react-native';
+import { View, TextInputProps, StyleSheet } from 'react-native';
 
 import { RcSearchCC, RcIconCloseCC } from '@/assets/icons/common';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import TouchableView from '../Touchable/TouchableView';
+import { TextInput } from '@/components/Typography';
 
 const getInputStyles = createGetStyles(colors => {
   return {

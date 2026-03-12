@@ -1,4 +1,4 @@
-name: Type Check
+name: Type Check & Test
 
 on:
   push:
@@ -46,5 +46,6 @@ jobs:
           cd apps/mobile;
           yarn install;
           time yarn typecheck;
+          time yarn test;
 
 

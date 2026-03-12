@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -14,14 +14,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
-
-export const formatPercentage = (x: number) => {
-  if (Math.abs(x) < 0.00001) {
-    return '0%';
-  }
-  const percentage = (x * 100).toFixed(2);
-  return `${x >= 0 ? '+' : ''}${percentage}%`;
-};
+import { formatPercentage } from '@/screens/Home/components/AssetRenderItems';
+import { isNumber } from 'lodash';
+import { Text } from '@/components/Typography';
 
 const TrendChartComponent = ({
   isPositive,
@@ -138,13 +133,13 @@ const TokenListItemComponent = ({
             width={trendChartWidth}
           />
           {/* 24小时价格百分比 */}
-          {typeof item.price_24h_change === 'number' && (
+          {isNumber(item.price_24h_change) && (
             <Text
               style={StyleSheet.flatten([
                 styles.changeText,
                 !isPositive && styles.changeTextPositive,
               ])}>
-              {formatPercentage(Number(item.price_24h_change) || 0)}
+              {formatPercentage(Number(item.price_24h_change) || 0, true)}
             </Text>
           )}
         </View>

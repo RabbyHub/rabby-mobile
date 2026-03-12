@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -18,6 +18,7 @@ import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { useTranslation } from 'react-i18next';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
+import { Text, TextInput } from '@/components/Typography';
 
 function useLoadTokenList({
   onTokenChange,
@@ -64,7 +65,7 @@ interface TokenAmountInputProps {
   type?: TokenSelectorProps['type'];
   placeholder?: string;
   isEstimatingGas?: boolean;
-  defaultAccount?: KeyringAccountWithAlias | null;
+  currentAccount?: KeyringAccountWithAlias | null;
   disableItemCheck?: ITokenCheck;
   inSufficient?: boolean;
 }
@@ -91,7 +92,7 @@ export const TokenAmountInput = React.forwardRef<
       isEstimatingGas,
       placeholder,
       disableItemCheck,
-      defaultAccount,
+      currentAccount,
       inSufficient,
     },
     ref,
@@ -195,7 +196,7 @@ export const TokenAmountInput = React.forwardRef<
         {<View style={styles.placeholder} />}
         <View style={styles.rightToken}>
           <TokenSelect
-            accountInScreen={defaultAccount}
+            accountInScreen={currentAccount}
             chainId={''}
             token={token}
             disableItemCheck={disableItemCheck}

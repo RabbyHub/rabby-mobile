@@ -9,6 +9,10 @@ import {
   ARB_USDC_TOKEN_ITEM,
   ARB_USDC_TOKEN_SERVER_CHAIN,
   PERPS_SEND_ARB_USDC_ADDRESS,
+  HYPE_USDC_TOKEN_ID,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_CORE_DEPOSIT_WALLET,
+  HYPE_CORE_DEPOSIT_PERPS_DEX,
 } from '@/constant/perps';
 import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
@@ -25,10 +29,13 @@ import useDebounce from 'react-use/lib/useDebounce';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
-import { isAccountSupportDirectSign } from '@/utils/account';
+import {
+  isAccountSupportDirectSign,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
 import { CHAINS_ENUM } from '@debank/common';
 import { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -40,9 +47,11 @@ import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { apisPerps } from '@/core/apis';
 import { tokenAmountBn } from '@/screens/Swap/utils';
+import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useSelectedToken } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -54,7 +63,6 @@ export interface PerpBridgeHistory {
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
-  accountSummary?: AccountSummary | null;
   visible?: boolean;
   onClose(): void;
   showSelectTokenPopup(): void;
@@ -62,15 +70,9 @@ export const PerpsDepositPopup: React.FC<{
     txs: Tx[],
     amount: string,
     cacheBridgeHistory?: PerpBridgeHistory,
-  ): void;
-}> = ({
-  visible,
-  onClose,
-  account,
-  onDeposit,
-  accountSummary,
-  showSelectTokenPopup,
-}) => {
+    options?: { skipHistory?: boolean; isHypeDeposit?: boolean },
+  ): Promise<string | undefined>;
+}> = ({ visible, onClose, account, onDeposit, showSelectTokenPopup }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -195,12 +197,81 @@ export const PerpsDepositPopup: React.FC<{
     return params as Tx;
   });
 
-  const isDirectDeposit = useMemo(() => {
+  const buildHypeDepositTxs = useMemoizedFn(
+    async (amount: number | string, token: ITokenItem) => {
+      if (!account) {
+        return [];
+      }
+      const chain = findChain({ serverId: HYPE_USDC_TOKEN_SERVER_CHAIN })!;
+      const rawAmount = new BigNumber(amount || 0)
+        .multipliedBy(10 ** token.decimals)
+        .decimalPlaces(0, BigNumber.ROUND_DOWN)
+        .toFixed(0);
+
+      const targetTxs: Tx[] = [];
+
+      const allowance = await getERC20Allowance(
+        HYPE_USDC_TOKEN_SERVER_CHAIN,
+        HYPE_USDC_TOKEN_ID,
+        HYPE_CORE_DEPOSIT_WALLET,
+        account.address,
+        account,
+      );
+
+      const tokenApproved = new BigNumber(allowance).gte(
+        new BigNumber(rawAmount),
+      );
+
+      if (!tokenApproved) {
+        const resp = await approveToken({
+          chainServerId: HYPE_USDC_TOKEN_SERVER_CHAIN,
+          id: HYPE_USDC_TOKEN_ID,
+          spender: HYPE_CORE_DEPOSIT_WALLET,
+          amount: rawAmount,
+          account: account,
+          isBuild: true,
+        });
+        targetTxs.push(resp.params[0]);
+      }
+
+      const depositData = abiCoder.encodeFunctionCall(
+        {
+          name: 'deposit',
+          type: 'function',
+          inputs: [
+            { type: 'uint256', name: 'amount' },
+            { type: 'uint32', name: 'destinationDex' },
+          ] as any[],
+        },
+        [rawAmount, String(HYPE_CORE_DEPOSIT_PERPS_DEX)] as any[],
+      );
+
+      targetTxs.push({
+        chainId: chain.id,
+        from: account.address,
+        to: HYPE_CORE_DEPOSIT_WALLET,
+        value: '0x0',
+        data: depositData,
+      } as Tx);
+
+      return targetTxs;
+    },
+  );
+
+  const isHypeDeposit = useMemo(() => {
     return (
-      selectedToken?.id === ARB_USDC_TOKEN_ID &&
-      selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN
+      selectedToken?.id === HYPE_USDC_TOKEN_ID &&
+      selectedToken?.chain === HYPE_USDC_TOKEN_SERVER_CHAIN
     );
   }, [selectedToken]);
+
+  const isDirectDeposit = useMemo(() => {
+    return (
+      (selectedToken?.id === ARB_USDC_TOKEN_ID &&
+        selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN) ||
+      isHypeDeposit
+    );
+  }, [selectedToken, isHypeDeposit]);
 
   const depositMaxUsdValue = useMemo(() => {
     return isDirectDeposit
@@ -251,7 +322,19 @@ export const PerpsDepositPopup: React.FC<{
         return;
       }
 
-      if (!isDirectDeposit) {
+      if (isHypeDeposit) {
+        setQuoteLoading(true);
+        try {
+          const hypeTxs = await buildHypeDepositTxs(value, token);
+          setTxs(hypeTxs);
+          setBridgeQuote(null);
+          setQuoteLoading(false);
+        } catch (error) {
+          console.error('buildHypeDepositTxs error', error);
+          setTxs([]);
+          setQuoteLoading(false);
+        }
+      } else if (!isDirectDeposit) {
         setQuoteLoading(true);
         const targetTxs: Tx[] = [];
         try {
@@ -361,6 +444,7 @@ export const PerpsDepositPopup: React.FC<{
         const res = buildSendTx(value);
         setTxs([res]);
         setBridgeQuote(null);
+        setQuoteLoading(false);
       }
     },
   );
@@ -459,6 +543,21 @@ export const PerpsDepositPopup: React.FC<{
     return isMissingRole ? value - 1 : value;
   }, [bridgeQuote, isMissingRole]);
 
+  const canShowDirectSubmit = isAccountSupportDirectSign(account?.type);
+
+  const {
+    shouldTwoStep,
+    currentTxs: twoStepCurrentTxs,
+    next: twoStepNext,
+    isApprove: twoStepIsApprove,
+    approvePending: twoStepApprovePending,
+  } = useTwoStepSwap({
+    chain: (chainInfo?.enum || '') as CHAINS_ENUM,
+    txs: txs.length > 0 ? txs : undefined,
+    enable: isHypeDeposit && isAccountSupportMiniApproval(account?.type),
+    type: 'approveDeposit',
+  });
+
   const { runAsync: handleDeposit, loading } = useRequest(
     async () => {
       Keyboard.dismiss();
@@ -466,9 +565,22 @@ export const PerpsDepositPopup: React.FC<{
       const bridgeHistory = isDirectDeposit
         ? undefined
         : cacheBridgeHistory || undefined;
-      await onDeposit?.(txs, value, bridgeHistory);
-      setTxs([]);
-      setBridgeQuote(null);
+
+      const isApproveStep = shouldTwoStep && twoStepIsApprove;
+      const txsToSign = shouldTwoStep ? twoStepCurrentTxs || [] : txs;
+
+      const hash = await onDeposit?.(txsToSign, value, bridgeHistory, {
+        skipHistory: isApproveStep,
+        isHypeDeposit: isHypeDeposit,
+      });
+
+      if (isApproveStep && hash) {
+        twoStepNext(hash);
+      } else {
+        setTxs([]);
+        setBridgeQuote(null);
+        onClose();
+      }
     },
     {
       manual: true,
@@ -573,8 +685,6 @@ export const PerpsDepositPopup: React.FC<{
     estReceiveUsdValue,
   ]);
 
-  const canShowDirectSubmit = isAccountSupportDirectSign(account?.type);
-
   if (!account) {
     return null;
   }
@@ -661,14 +771,19 @@ export const PerpsDepositPopup: React.FC<{
           {canShowDirectSubmit ? (
             <AuthButton
               authTitle={t('page.whitelist.confirmPassword')}
-              title={t('page.perps.PerpsDepositPopup.depositBtn')}
+              title={
+                shouldTwoStep && twoStepIsApprove
+                  ? t('page.swap.approve')
+                  : t('page.perps.PerpsDepositPopup.depositBtn')
+              }
               onFinished={handleDeposit}
               disabled={
                 !isValidAmount ||
                 Boolean(quoteError) ||
-                (!isDirectDeposit && quoteLoading)
+                quoteLoading ||
+                twoStepApprovePending
               }
-              loading={loading}
+              loading={loading || twoStepApprovePending}
               type={'hyperliquid'}
               iconColor={'#040601'}
               titleStyle={{
@@ -678,20 +793,23 @@ export const PerpsDepositPopup: React.FC<{
               onBeforeAuth={() => {
                 Keyboard.dismiss();
               }}
-              // onCancel={() => {
-              // }}
             />
           ) : (
             <Button
               type="hyperliquid"
-              title={t('page.perps.PerpsDepositPopup.depositBtn')}
+              title={
+                shouldTwoStep && twoStepIsApprove
+                  ? t('page.swap.approve')
+                  : t('page.perps.PerpsDepositPopup.depositBtn')
+              }
               onPress={handleDeposit}
               disabled={
                 !isValidAmount ||
                 Boolean(quoteError) ||
-                (!isDirectDeposit && quoteLoading)
+                quoteLoading ||
+                twoStepApprovePending
               }
-              loading={loading}
+              loading={loading || twoStepApprovePending}
             />
           )}
         </BottomSheetView>

@@ -7,9 +7,10 @@ import {
 import { Radio } from '@/components/Radio';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Chain } from '@/constant/chains';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

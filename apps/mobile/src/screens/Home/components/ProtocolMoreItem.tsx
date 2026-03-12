@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import PortfolioTemplate from '../portfolios';
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,6 +11,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useTranslation } from 'react-i18next';
 import { TonManageAction } from '../utils/protocolConfig';
 import { IProtocolPortfolio } from '@/store/protocols';
+import { Text } from '@/components/Typography';
 
 // 已支持的模板
 const TemplateDict = {

@@ -48,7 +48,6 @@ import {
   Dimensions,
   Keyboard,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -62,6 +61,7 @@ import {
 } from '@/utils/account';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useMiniSigner } from '@/hooks/useSigner';
+import { Text } from '@/components/Typography';
 
 const amountList = [10, 100];
 

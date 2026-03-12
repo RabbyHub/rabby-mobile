@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, TouchableOpacity, View } from 'react-native';
 
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,6 +11,7 @@ import RcIconDelete from '@/assets2024/icons/browser/delete.svg';
 import { ScrollView } from 'react-native-gesture-handler';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
+import { Text } from '@/components/Typography';
 export function BrowserFavorite({
   onPress,
 }: {

@@ -26,7 +26,23 @@ on:
           - 'mobile'
           - 'mobile-local'
         default: 'mobile'
+      RABBY_MOBILE_NM_USE_CACHE:
+        required: false
+        type: boolean
+        default: true
+      RABBY_MOBILE_POD_USE_CACHE:
+        required: false
+        type: boolean
+        default: false
+      RABBY_MOBILE_GRADLE_USE_CACHE:
+        required: false
+        type: boolean
+        default: true
       __DANGEROUS_NO_VERIFY_SSL:
+        required: false
+        type: boolean
+        default: false
+      __SKIP_BUILD:
         required: false
         type: boolean
         default: false
@@ -55,10 +71,47 @@ jobs:
       - ${{ matrix.machine_loc }}
     env:
       NODE_OPTIONS: '--max_old_space_size=12288'
-
+      RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
+      RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
+      SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
+      RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
+      XCODE_VER: '26.3'
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v3
+        with:
+          clean: false
+
+      - name: Clean git Manually
+        run: |
+          OS_TYPE=$(uname -s);
+          echo "OS_TYPE is $OS_TYPE";
+          if [ "$RABBY_MOBILE_NM_USE_CACHE" = "true" ]; then
+            echo "Use yarn installed node_modules";
+            yarn_exclude_files="-e node_modules -e apps/mobile/node_modules -e apps/mobile/packages/*/node_modules"
+          else
+            yarn_exclude_files="";
+          fi
+
+          if [ "$OS_TYPE" == "Linux" ]; then
+            if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
+              echo "Keep gradle cache";
+              git clean -ffdx $yarn_exclude_files -e apps/mobile/android/.gradle -e apps/mobile/android/app/build;
+              rm -rf apps/mobile/android/app/build/outputs;
+            else
+              echo "Clean gradle cache";
+              git clean -ffdx $yarn_exclude_files;
+            fi
+          elif [ "$OS_TYPE" == "Darwin" ]; then
+            if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
+              echo "Keep cocoapods cache";
+              git clean -ffdx $yarn_exclude_files -e apps/mobile/ios/Pods -e apps/mobile/ios/build;
+            else
+              echo "Clean cocoapods cache";
+              git clean -ffdx $yarn_exclude_files;
+            fi
+          fi
+          git reset --hard HEAD;
 
       - name: Env Test
         id: env-test
@@ -96,13 +149,24 @@ jobs:
           # use 16.0
           cmdline-tools-version: 12266719
 
+      # - name: '[Linux] Cache Gradle'
+      #   if: runner.os == 'Linux'
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.gradle/caches
+      #       ~/.gradle/wrapper
+      #       ${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build
+      #       ${{ env.WORKING_DIRECTORY }}/apps/mobile/android/.gradle
+      #     key: ${{ runner.os }}-kotlin-lint-gradle-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/**/*.gradle*', '${{ env.WORKING_DIRECTORY }}/**/gradle-wrapper.properties', '${{ env.WORKING_DIRECTORY }}/apps/mobile/android/build.gradle') }}
+
       - name: '[macOS] Setup Xcode'
         if: runner.os == 'macOS'
         uses: maxim-lobanov/setup-xcode@v1
         id: setup-xcode
         with:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
-          xcode-version: '16.2'
+          xcode-version: ${{ env.XCODE_VER }}
 
       - name: Install and build
         run: |
@@ -151,7 +215,7 @@ jobs:
           INPUT_MOBILE_LOC: ${{ inputs.macos_machine_location }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
-          GITHUB_ACTIONS_RUNNER_TLS_NO_VERIFY: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
+          GITHUB_ACTIONS_RUNNER_TLS_NO_VERIFY: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL && '1' || '0' }}
           DISABLE_AWS_CLI_HTTPS_VALIDATION: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
           GHA_MOCK_BUILD_FAILED: ${{ inputs.GHA_MOCK_BUILD_FAILED }}
           CONFIGURATION: release

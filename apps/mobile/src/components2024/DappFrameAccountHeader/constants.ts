@@ -18,7 +18,7 @@ export type DappSelectItem = {
   rightText?: string;
   onPress?: (item: DappSelectItem) => void;
   themeColor: string;
-  TVL: string;
+  extraInfo: string;
   value?: string;
   remoteUrl?: string;
 };
@@ -30,7 +30,7 @@ const PREDICTION: DappSelectItem[] = [
     icon: PngPolymarket,
     url: 'https://polymarket.com/',
     themeColor: 'rgba(22, 82, 240, 0.06)',
-    TVL: '$370M',
+    extraInfo: 'Vol: $3.614b',
   },
   {
     id: 'opinion',
@@ -38,8 +38,7 @@ const PREDICTION: DappSelectItem[] = [
     icon: PngOpinion,
     url: 'https://app.opinion.trade/macro',
     themeColor: 'rgba(0, 0, 0, 0.06);',
-
-    TVL: '$118M',
+    extraInfo: 'Vol: $2.915b',
   },
   {
     id: 'probable',
@@ -47,7 +46,7 @@ const PREDICTION: DappSelectItem[] = [
     icon: PngProbable,
     url: 'https://probable.markets/',
     themeColor: 'rgba(252, 98, 28, 0.06);',
-    TVL: '$21M',
+    extraInfo: 'Vol: $1.823b',
   },
 ];
 
@@ -58,7 +57,7 @@ const LENDING: DappSelectItem[] = [
     icon: PngAave,
     url: 'https://app.aave.com',
     themeColor: 'rgba(11, 11, 11, 0.06)',
-    TVL: '$33.803b',
+    extraInfo: 'TVL: $27.925b',
   },
   {
     id: 'spark',
@@ -66,7 +65,7 @@ const LENDING: DappSelectItem[] = [
     icon: PngSpark,
     url: 'https://app.spark.fi/my-portfolio',
     themeColor: 'rgba(252, 105, 137, 0.08)',
-    TVL: '$5.977b',
+    extraInfo: 'TVL: $5.246b',
   },
   {
     id: 'venus',
@@ -74,7 +73,7 @@ const LENDING: DappSelectItem[] = [
     icon: PngVenus,
     url: 'https://venus.io',
     themeColor: 'rgba(58, 121, 253, 0.08)',
-    TVL: '$1.635b',
+    extraInfo: 'TVL: $1.226b',
   },
 ];
 
@@ -85,7 +84,7 @@ const PERPS: DappSelectItem[] = [
     icon: PngHyperliquid,
     url: 'https://app.hyperliquid.xyz/',
     themeColor: 'rgba(175, 249, 229, 0.15)',
-    TVL: '$156.396b',
+    extraInfo: 'Vol: $262.013b',
   },
   {
     id: 'aster',
@@ -93,7 +92,7 @@ const PERPS: DappSelectItem[] = [
     icon: PngAster,
     url: 'https://www.asterdex.com/trade/pro/futures/BTCUSDT',
     themeColor: 'rgba(247, 212, 172, 0.16)',
-    TVL: '$124.388b',
+    extraInfo: 'Vol: $147.423b',
   },
   {
     id: 'lighter',
@@ -101,7 +100,7 @@ const PERPS: DappSelectItem[] = [
     icon: PngLighter,
     url: 'https://app.lighter.xyz/trade/LIT_USDC',
     themeColor: 'rgba(11, 11, 11, 0.06)',
-    TVL: '$116.548b',
+    extraInfo: 'Vol: $114.536b',
   },
 ];
 

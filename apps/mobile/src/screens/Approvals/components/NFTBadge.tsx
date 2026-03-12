@@ -1,10 +1,10 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { useThemeStyles } from '@/hooks/theme';
 
 import { createGetStyles } from '@/utils/styles';
 
 import { NFTBadgeType } from '../utils';
+import { Text } from '@/components/Typography';
 
 export default function ApprovalNFTBadge({
   style,

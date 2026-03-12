@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { last, noop } from 'lodash';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { apiProvider } from '@/core/apis';
@@ -44,6 +44,7 @@ import {
   HF_RISK_CHECKBOX_THRESHOLD,
 } from '../utils/constant';
 import { isEModeCategoryAvailable } from '../utils/emode';
+import { Text } from '@/components/Typography';
 
 const BOTTOM_SIZE = {
   BUTTON: 116,
@@ -119,7 +120,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   ]);
 
   const { isRisky, isBlock, desc } = useMemo(() => {
-    if (Number(newSummary?.healthFactor || '0') <= 0) {
+    if (Number(newSummary?.healthFactor || '0') <= 0 || !hasChangeCategory) {
       return {
         isRisky: false,
         isBlock: false,
@@ -139,7 +140,7 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
         ? t('page.Lending.risk.emodeBlockWarning')
         : '',
     };
-  }, [newSummary?.healthFactor, t]);
+  }, [hasChangeCategory, newSummary?.healthFactor, t]);
 
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),

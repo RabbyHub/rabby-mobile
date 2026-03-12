@@ -21,7 +21,6 @@ import {
   Dimensions,
   Image,
   ScrollView,
-  Text,
   TouchableWithoutFeedback,
   useWindowDimensions,
   View,
@@ -30,6 +29,7 @@ import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
 } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 import Animated, {
   interpolateColor,
   runOnJS,

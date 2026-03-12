@@ -3,7 +3,6 @@ import {
   setJSExceptionHandler,
   setNativeExceptionHandler,
 } from 'react-native-exception-handler';
-import { initSentry } from './core/sentry';
 import './perfs/bundle-splitter-analysis.ts';
 import './databases/orm';
 import './core/services';
@@ -38,7 +37,3 @@ ErrorUtils.setGlobalHandler((error, isFatal) => {
     // WIP: alert on release mode?
   }
 });
-
-if (!__DEV__) {
-  initSentry();
-}

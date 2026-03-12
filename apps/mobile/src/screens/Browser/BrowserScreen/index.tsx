@@ -199,7 +199,7 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
               });
             }
           }}
-          onOpenURL={url => {
+          onOpenURL={(url, options) => {
             if (!url?.trim()) {
               return;
             }
@@ -209,13 +209,15 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 browserState.searchTabId
             ) {
               const targetOrigin = safeGetOrigin(url);
-              const sameOriginTab = displayedTabs.find(
-                item =>
-                  safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
-              );
-              if (sameOriginTab && !isGoogle(targetOrigin)) {
-                switchToTab(sameOriginTab.id);
-                return;
+              if (!options?.isDirect) {
+                const sameOriginTab = displayedTabs.find(
+                  item =>
+                    safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+                );
+                if (sameOriginTab && !isGoogle(targetOrigin)) {
+                  switchToTab(sameOriginTab.id);
+                  return;
+                }
               }
               activeDappWebViewControlRef?.current.navigateTo(url);
               setPartialBrowserState({

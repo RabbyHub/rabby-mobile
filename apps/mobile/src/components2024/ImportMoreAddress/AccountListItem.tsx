@@ -4,8 +4,9 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isNumber } from 'lodash';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { CheckBoxRect } from '../CheckBox';
+import { Text } from '@/components/Typography';
 
 export type ViewAccount = {
   address: string;

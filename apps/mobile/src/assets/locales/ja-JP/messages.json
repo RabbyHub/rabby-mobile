@@ -1458,14 +1458,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "bip44": "BIP44標準：BIP44プロトコルによって定義されたHDpath。最初の3つのウォレットには、オンチェーンで使用されるウォレットがあります。",
-            "ledgerLive": "Ledger Live: Ledger公式HDパス。最初の3つのウォレットには、オンチェーンで使用されるウォレットがあります。",
-            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットがあります。"
+            "ledgerLive": "Ledger Live: Ledger公式HDパス。",
+            "bip44": "BIP44標準：BIP44プロトコルによって定義されたHDpath。",
+            "legacy": "レガシー: MEW / Mycryptoで使用されるHDパス。"
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger公式HDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットはありません。",
-            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットはありません。",
-            "bip44": "BIP44スタンダード：BIP44プロトコルで定義されたHDパス。最初の3つのウォレットには、オンチェーンで使用されるウォレットはありません。"
+            "ledgerLive": "Ledger Live: Ledger公式HDパス。",
+            "bip44": "BIP44標準：BIP44プロトコルによって定義されたHDパス。",
+            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。"
           }
         },
         "customAddressHdPath": "カスタムウォレット HD パス",
@@ -2073,8 +2073,7 @@
       "clearBrowserData": "ブラウザデータをクリア",
       "searchCurrency": "通貨を検索",
       "currency": "通貨",
-      "screenshotReportSwitch": "バグを報告するためのスクリーンショット",
-      "transactionNotification": "Txn通知（ベータ）"
+      "screenshotReportSwitch": "バグを報告するためのスクリーンショット"
     },
     "settingModal": {
       "themeMode": {
@@ -2666,7 +2665,8 @@
         "takeProfitWhenPriceAbove": "価格が上昇したときに利益を確定する",
         "upTo": "最大で",
         "minMargin": "最小マージンは{{amount}}です。",
-        "maxMargin": "最大マージンは{{amount}}です。"
+        "maxMargin": "最大マージンは{{amount}}です。",
+        "onlyIsolated": "このトークンには、孤立したマージンのみがサポートされています。"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "方向",
@@ -2990,7 +2990,8 @@
         "title": "スワップ 借入 ポジション",
         "lpRiskWarning": "スワップ後の健康係数が低下しています。あなたのポジションは、清算のリスクが高くなります。",
         "priceImpactTips": "高い価格影響（{{lostValue}}）。このルートは、流動性が低いか小さな注文サイズのために、より多く返す可能性があります。",
-        "lpDangerWarning": "このスワップ後のあなたのヘルスファクターは非常に低くなり、清算のリスクがあります。安全を保つために、別の資産を選ぶか、スワップ額を減らしてください。"
+        "lpDangerWarning": "このスワップ後のあなたのヘルスファクターは非常に低くなり、清算のリスクがあります。安全を保つために、別の資産を選ぶか、スワップ額を減らしてください。",
+        "maxLtvWarning": "新しい借入ポジションをカバーするための担保が不足しています。ウォレットには、債務スイッチを実行するために残っている借入権限が必要です。"
       },
       "hfTips": {
         "more": "もっと",
@@ -3023,7 +3024,8 @@
           "assets": "トークン",
           "balance": "残高"
         },
-        "title": "リペイトークンを選択してください"
+        "title": "リペイトークンを選択してください",
+        "zeroLtvCollateralTips": "あなたは以下のLTV = 0の担保を持っているため、担保返済ルールに従ってまずこれらの担保で返済することしかできません。"
       },
       "dappSelect": {
         "title": "レンディングプロバイダーを選択してください"

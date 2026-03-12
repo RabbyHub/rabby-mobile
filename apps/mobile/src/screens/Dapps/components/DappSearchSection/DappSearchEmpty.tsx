@@ -3,8 +3,9 @@ import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 interface Props {
   onLinkPress?(): void;

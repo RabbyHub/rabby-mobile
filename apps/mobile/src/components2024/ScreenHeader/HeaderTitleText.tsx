@@ -1,7 +1,8 @@
-import { Text, TextStyle } from 'react-native';
+import { TextStyle } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 export default function HeaderTitleText2024({
   children,

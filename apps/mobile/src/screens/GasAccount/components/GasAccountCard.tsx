@@ -15,12 +15,13 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { useAml } from '../hooks';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { GasAccountLoginCard } from './GasAccountLoginCard';
 import { GasAccountWrapperBg } from './WrapperBg';
 import { ClaimedGiftAddress } from '@/core/services/gasAccount';
+import { Text } from '@/components/Typography';
 
 const DEPOSIT_LIMIT = 1000;
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
@@ -21,6 +21,7 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
 import { Tip } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

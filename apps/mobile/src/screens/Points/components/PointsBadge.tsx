@@ -1,8 +1,8 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text } from 'react-native';
 import { usePointsBadge } from '../hooks';
 import { formatTokenAmount } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 export const PointsBadge: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });

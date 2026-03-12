@@ -1,11 +1,4 @@
-import {
-  Image,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  TextStyle,
-} from 'react-native';
+import { Image, StyleProp, StyleSheet, View, TextStyle } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import React from 'react';
 import { useThemeColors } from '@/hooks/theme';
@@ -16,6 +9,7 @@ import BackupLockSVG from '@/assets/icons/address/backup-lock.svg';
 import BackupSuccessSVG from '@/assets/icons/address/backup-success.svg';
 import BackupUploadSVG from '@/assets/icons/address/backup-upload.svg';
 import { MaterialIndicator } from 'react-native-indicators';
+import { Text } from '@/components/Typography';
 
 interface Props {
   status:

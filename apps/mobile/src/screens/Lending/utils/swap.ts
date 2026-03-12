@@ -75,6 +75,7 @@ export const getTokensTo = (
         supplyAPY: reserve.supplyAPY,
         variableBorrowAPY: reserve.variableBorrowAPY,
         totalDebtUSD: reserve.totalDebtUSD,
+        usageAsCollateralEnabled: reserve.usageAsCollateralEnabled,
       };
     })
     .filter(token => token !== undefined);
@@ -98,6 +99,7 @@ export const getFromToken = (
     supplyAPY: reserve.supplyAPY,
     variableBorrowAPY: reserve.variableBorrowAPY,
     totalDebtUSD: reserve.totalDebtUSD,
+    usageAsCollateralEnabled: reserve.usageAsCollateralEnabled,
   };
 };
 
@@ -134,6 +136,7 @@ export const getCollateralTokens = (
         supplyAPY: position.reserve.supplyAPY,
         variableBorrowAPY: position.reserve.variableBorrowAPY,
         totalDebtUSD: position.reserve.totalDebtUSD,
+        usageAsCollateralEnabled: position.usageAsCollateralEnabledOnUser,
       };
     })
     .filter(token => token !== undefined);
@@ -156,5 +159,6 @@ export const getCollateralToken = (
     supplyAPY: reserve.supplyAPY,
     variableBorrowAPY: reserve.variableBorrowAPY,
     totalDebtUSD: reserve.totalDebtUSD,
+    usageAsCollateralEnabled: reserve.usageAsCollateralEnabled,
   };
 };

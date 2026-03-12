@@ -1,4 +1,4 @@
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -7,6 +7,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
 import { useFindChain } from '@/hooks/useFindChain';
 import { CustomMarket, getMarketLogo, MarketDataType } from '../config/market';
+import { Text } from '@/components/Typography';
 
 interface MarketItem {
   chain: string;

@@ -3,8 +3,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { Text } from '@/components/Typography';
 
 const linearStyle = StyleSheet.create({
   gradient: {

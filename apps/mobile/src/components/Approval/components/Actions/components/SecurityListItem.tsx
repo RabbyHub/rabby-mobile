@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import React from 'react';
@@ -6,6 +6,7 @@ import { SecurityListItemTag } from './SecurityListItemTag';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { capitalize } from 'lodash';
 import { SubCol, SubRow } from './SubTable';
+import { Text } from '@/components/Typography';
 
 export interface Props {
   id: string;

@@ -20,12 +20,13 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
+import BigNumber from 'bignumber.js';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
 import { PerpsChart } from './components/PerpsChart';
-import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup ';
+import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup';
 import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
@@ -39,6 +40,8 @@ import * as Sentry from '@sentry/react-native';
 import {
   ARB_USDC_TOKEN_ID,
   ARB_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_USDC_TOKEN_ID,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
   CANDLE_MENU_KEY_V2,
   PERPS_MAX_NTL_VALUE,
 } from '@/constant/perps';
@@ -61,6 +64,11 @@ import { showToast } from '@/hooks/perps/showToast';
 import { PerpsAgentsLimitModal } from '../Perps/components/PerpsAgentsLimitModal';
 import { PerpsPositionSkeletonLoader } from '../Perps/components/PerpsSkeletonLoader';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
+import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
+import { stats } from '@/utils/stats';
+import { getStatsReportSide } from '@/utils/perps';
+import { APP_VERSIONS } from '@/constant';
+import { Text } from '@/components/Typography';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -84,7 +92,6 @@ export const PerpsMarketDetailScreen = () => {
   const {
     isInitialized,
     positionAndOpenOrders,
-    accountSummary,
     marketDataMap,
     perpFee,
     marketData,
@@ -241,12 +248,11 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
+  const { accountValue, availableBalance } = usePerpsAccount();
+
   const needDepositFirst = useMemo(() => {
-    return (
-      Number(accountSummary?.accountValue || 0) === 0 &&
-      Number(accountSummary?.withdrawable || 0) === 0
-    );
-  }, [accountSummary]);
+    return Number(accountValue) === 0 && Number(availableBalance) === 0;
+  }, [accountValue, availableBalance]);
 
   const accountNeedApprove = useMemo(() => {
     return accountNeedApproveAgent || accountNeedApproveBuilderFee;
@@ -303,7 +309,6 @@ export const PerpsMarketDetailScreen = () => {
   }, [subscribeActiveAssetCtx, coin]);
 
   // Available balance for trading
-  const availableBalance = Number(accountSummary?.withdrawable || 0);
 
   const markPrice = useMemo(() => {
     return Number(activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0);
@@ -504,20 +509,23 @@ export const PerpsMarketDetailScreen = () => {
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={amountVisible}
-        accountSummary={accountSummary}
         onClose={() => {
           setAmountVisible(false);
         }}
         showSelectTokenPopup={() => {
           setShowDepositTokenPopup(true);
         }}
-        onDeposit={async (txs, amount, cacheBridgeHistory) => {
+        onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
           try {
-            await handleDeposit(txs, amount, cacheBridgeHistory);
+            return await handleDeposit(
+              txs,
+              amount,
+              cacheBridgeHistory,
+              options,
+            );
           } catch (e) {
             console.error(e);
           }
-          setAmountVisible(false);
         }}
       />
       <PerpsSelectTokenPopup
@@ -529,8 +537,10 @@ export const PerpsMarketDetailScreen = () => {
         onSelect={async token => {
           setSelectedToken(token);
           if (
-            token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            isSameAddress(token.id, ARB_USDC_TOKEN_ID)
+            (token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+              isSameAddress(token.id, ARB_USDC_TOKEN_ID)) ||
+            (token.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
+              isSameAddress(token.id, HYPE_USDC_TOKEN_ID))
           ) {
             setAmountVisible(true);
             setShowDepositTokenPopup(false);
@@ -596,7 +606,7 @@ export const PerpsMarketDetailScreen = () => {
         szDecimals={currentAssetCtx?.szDecimals || 0}
         leverageRang={[1, currentAssetCtx?.maxLeverage || 5]}
         markPrice={markPrice}
-        availableBalance={Number(accountSummary?.withdrawable || 0)}
+        availableBalance={Number(availableBalance || 0)}
         onCancel={() => setOpenPositionVisible(false)}
         setCurrentTpOrSl={setCurrentTpOrSl}
         handleOpenPosition={handleOpenPosition}
@@ -630,7 +640,7 @@ export const PerpsMarketDetailScreen = () => {
             } else {
               sizeStr = positionData?.size.toString() || '0';
             }
-            await handleClosePosition({
+            const res = await handleClosePosition({
               coin,
               size: sizeStr,
               direction: positionData?.direction as 'Long' | 'Short',
@@ -640,6 +650,26 @@ export const PerpsMarketDetailScreen = () => {
               tpPrice: undefined,
               slPrice: undefined,
             });
+            if (res) {
+              const { avgPx, totalSz } = res;
+              const isBuy = positionData?.direction === 'Long';
+              stats.report('perpsTradeHistory', {
+                created_at: new Date().getTime(),
+                user_addr: currentPerpsAccount?.address || '',
+                trade_type: 'close position',
+                leverage: positionData?.leverage.toString(),
+                trade_side: getStatsReportSide(!isBuy, true),
+                margin_mode:
+                  positionData.type === 'cross' ? 'cross' : 'isolated',
+                coin: coin,
+                size: totalSz,
+                price: avgPx,
+                trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
+                service_provider: 'hyperliquid',
+                app_version: APP_VERSIONS.fromNative || '0',
+                address_type: currentPerpsAccount?.type || '',
+              });
+            }
           }}
         />
       ) : null}
@@ -656,7 +686,6 @@ export const PerpsMarketDetailScreen = () => {
           coinLogo={currentAssetCtx?.logoUrl || ''}
           activeAssetCtx={activeAssetCtx}
           currentAssetCtx={currentAssetCtx || null}
-          availableBalance={Number(accountSummary?.withdrawable || 0)}
           coin={coin}
           marginMode={positionData?.type as 'cross' | 'isolated'}
           marginUsed={positionData?.marginUsed || 0}
@@ -672,7 +701,7 @@ export const PerpsMarketDetailScreen = () => {
             setAddPositionVisible(false);
           }}
           handleAddPosition={async (tradeSize: string) => {
-            await handleOpenPosition({
+            const res = await handleOpenPosition({
               coin,
               size: tradeSize,
               leverage: positionData?.leverage || 1,
@@ -680,6 +709,26 @@ export const PerpsMarketDetailScreen = () => {
               direction: positionData?.direction as 'Long' | 'Short',
               midPx: activeAssetCtx?.markPx || '0',
             });
+            if (res) {
+              const { avgPx, totalSz } = res;
+              const isBuy = positionData?.direction === 'Long';
+              stats.report('perpsTradeHistory', {
+                created_at: new Date().getTime(),
+                user_addr: currentPerpsAccount?.address || '',
+                trade_type: 'add position',
+                leverage: positionData?.leverage.toString(),
+                trade_side: getStatsReportSide(isBuy, false),
+                margin_mode:
+                  positionData.type === 'cross' ? 'cross' : 'isolated',
+                coin: coin,
+                size: totalSz,
+                price: avgPx,
+                trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
+                service_provider: 'hyperliquid',
+                app_version: APP_VERSIONS.fromNative || '0',
+                address_type: currentPerpsAccount?.type || '',
+              });
+            }
           }}
         />
       ) : null}

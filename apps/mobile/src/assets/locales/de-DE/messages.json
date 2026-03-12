@@ -1733,14 +1733,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden.",
-            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden.",
-            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist. In den ersten 3 Wallets gibt es Wallets, die on-chain verwendet werden."
+            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad.",
+            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird.",
+            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist."
           },
           "hdPathTypeNoChain": {
-            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird. In den ersten 3 Wallets gibt es keine on-chain verwendeten Wallets.",
-            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad. In den ersten 3 Wallets werden keine on-chain Wallets verwendet.",
-            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist. In den ersten 3 Wallets werden keine Wallets on-chain verwendet."
+            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad.",
+            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird.",
+            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist."
           }
         },
         "qrCode": {
@@ -2347,8 +2347,7 @@
       "clearBrowserData": "Browser-Daten löschen",
       "currency": "Währung",
       "searchCurrency": "Währung suchen",
-      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden",
-      "transactionNotification": "Txn-Benachrichtigungen (Beta)"
+      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -2983,7 +2982,8 @@
         "takeProfitWhenPriceBelow": "Take Profit Wenn Preis Unter",
         "minMargin": "Der Mindestmargin beträgt {{amount}}",
         "upTo": "Bis zu",
-        "maxMargin": "Der maximale Betrag beträgt {{amount}}"
+        "maxMargin": "Der maximale Betrag beträgt {{amount}}",
+        "onlyIsolated": "Für dieses Token wird nur isolierte Margin unterstützt."
       },
       "PerpsOpenPositionCheckPopup": {
         "perps": "Perps",
@@ -3307,7 +3307,8 @@
         "entryTips": "Ein Klick, um Ihr geliehenes Asset zu tauschen, wodurch Schritte und Gebühren reduziert werden.",
         "priceImpactTips": "Hoher Preisimpact ({{lostValue}}). Diese Route kann aufgrund niedriger Liquidität oder kleiner Bestellgröße mehr zurückgeben.",
         "lpRiskWarning": "Niedriger Gesundheitsfaktor nach dem Swap. Ihre Position trägt ein höheres Risiko der Liquidation.",
-        "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben."
+        "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben.",
+        "maxLtvWarning": "Unzureichende Sicherheiten, um eine neue Kreditposition zu decken. Die Wallet muss über verbleibende Kreditaufnahmefähigkeiten verfügen, um einen Schuldenwechsel durchzuführen."
       },
       "hfTips": {
         "more": "Mehr",
@@ -3340,7 +3341,8 @@
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Wählen Sie Rückzahlungs-Token"
+        "title": "Wählen Sie Rückzahlungs-Token",
+        "zeroLtvCollateralTips": "Sie haben folgende LTV = 0 Sicherheiten und können daher gemäß den Rückzahlungsregeln für Sicherheiten nur zunächst mit diesen Sicherheiten zurückzahlen."
       },
       "dappSelect": {
         "title": "Wählen Sie den Kreditgeber aus"

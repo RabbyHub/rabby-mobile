@@ -18,7 +18,6 @@ import {
   ScrollView,
   StyleProp,
   StyleSheet,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -31,6 +30,7 @@ import { MiniFooterResendCancelGroup } from './MiniFooterResendCancelGroup';
 import { RetryUpdateType } from '@/utils/errorTxRetry';
 
 import TxFailedSVG from '@/assets2024/icons/common/failed-retry.svg';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors }) =>
   StyleSheet.create({

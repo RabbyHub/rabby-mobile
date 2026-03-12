@@ -6,7 +6,6 @@ import { Card } from '@/components2024/Card';
 import {
   StyleSheet,
   View,
-  Text,
   StyleProp,
   ViewStyle,
   Image,
@@ -29,6 +28,7 @@ import {
 import { Skeleton } from '@rneui/themed';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
+import { Text } from '@/components/Typography';
 
 interface IProps {
   account: KeyringAccountWithAlias;

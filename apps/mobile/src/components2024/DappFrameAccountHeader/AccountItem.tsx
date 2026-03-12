@@ -6,13 +6,14 @@ import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import { useTheme2024 } from '@/hooks/theme';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import React, { useCallback, useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { getStyle } from './styles';
 import { useLendingAccountExtraInfo } from './hook/lendingAccountHook';
 import { usePerpsDappAccountExtraInfo } from './hook/perpsAccountHook';
 import { INNER_DAPP_LIST } from './constants';
 import { useTranslation } from 'react-i18next';
 import { usePredictDappAccountExtraInfo } from './hook/predictAccountHook';
+import { Text } from '@/components/Typography';
 
 type Props = {
   account?: Account;

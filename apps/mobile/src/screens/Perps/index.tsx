@@ -40,6 +40,8 @@ import { openapi } from '@/core/request';
 import {
   ARB_USDC_TOKEN_ID,
   ARB_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_USDC_TOKEN_ID,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { PerpHeader } from './components/PerpHeader';
@@ -51,13 +53,16 @@ import { PerpsRiskLevelPopup } from './components/PerpsPositionSection/PerpsRisk
 import { PerpsSkeletonLoader } from './components/PerpsSkeletonLoader';
 import { usePerpsPosition } from '../PerpsMarketDetail/hooks/usePerpsPosition';
 import { PerpsInvitePopup } from './components/PerpsInvitePopup';
-import { checkPerpsReference } from '@/utils/perps';
+import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
 import { perpsService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import {
   DappFrameAccountHeader,
   DappSelectItem,
 } from '@/components2024/DappFrameAccountHeader';
+import { stats } from '@/utils/stats';
+import { APP_VERSIONS } from '@/constant';
+import BigNumber from 'bignumber.js';
 
 type PerpsNativeScreenProps = {
   activeId: string;
@@ -80,7 +85,6 @@ export const PerpsOriginScreen = ({
 
   const {
     positionAndOpenOrders,
-    accountSummary,
     currentPerpsAccount,
     isLogin,
     isInitialized,
@@ -327,7 +331,6 @@ export const PerpsOriginScreen = ({
         <PerpsAccountCard
           localLoadingHistory={localLoadingHistory}
           isLogin={isLogin}
-          accountSummary={accountSummary}
           positionAndOpenOrders={positionAndOpenOrders}
         />
         <PerpsPositionSection
@@ -338,20 +341,40 @@ export const PerpsOriginScreen = ({
           marketDataMap={marketDataMap}
           onClosePosition={async position => {
             const marketDataItem = marketDataMap[position.coin];
-            await handleClosePosition({
+            const res = await handleClosePosition({
               coin: position.coin,
               size: Math.abs(Number(position.szi || 0)).toString() || '0',
               direction: Number(position.szi || 0) > 0 ? 'Long' : 'Short',
               price: marketDataItem?.markPx || '0',
             });
+            if (res) {
+              const { avgPx, totalSz } = res;
+              const isBuy = Number(position.szi || 0) > 0;
+              stats.report('perpsTradeHistory', {
+                created_at: new Date().getTime(),
+                user_addr: currentPerpsAccount?.address || '',
+                trade_type: 'close all position',
+                leverage: position.leverage.value.toString(),
+                trade_side: getStatsReportSide(!isBuy, true),
+                margin_mode:
+                  position.leverage.type === 'cross' ? 'cross' : 'isolated',
+                coin: position.coin,
+                size: totalSz,
+                price: avgPx,
+                trade_usd_value: new BigNumber(avgPx).times(totalSz).toFixed(2),
+                service_provider: 'hyperliquid',
+                app_version: APP_VERSIONS.fromNative || '0',
+                address_type: currentPerpsAccount?.type || '',
+              });
+            }
           }}
         />
       </>
     );
   }, [
     localLoadingHistory,
+    currentPerpsAccount,
     isLogin,
-    accountSummary,
     positionAndOpenOrders,
     marketDataMap,
     handleClosePosition,
@@ -537,7 +560,6 @@ export const PerpsOriginScreen = ({
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={popupState.isShowDepositPopup}
-        accountSummary={accountSummary}
         showSelectTokenPopup={() => {
           setPopupState(prev => ({
             ...prev,
@@ -550,17 +572,17 @@ export const PerpsOriginScreen = ({
             isShowDepositPopup: false,
           }));
         }}
-        onDeposit={async (txs, amount, cacheBridgeHistory) => {
+        onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
           try {
-            await handleDeposit(txs, amount, cacheBridgeHistory);
+            return await handleDeposit(
+              txs,
+              amount,
+              cacheBridgeHistory,
+              options,
+            );
           } catch (e) {
             console.error(e);
           }
-          // await sleep(5000);
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositPopup: false,
-          }));
         }}
       />
       <PerpsSelectTokenPopup
@@ -575,8 +597,10 @@ export const PerpsOriginScreen = ({
         onSelect={async token => {
           setSelectedToken(token);
           if (
-            token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            isSameAddress(token.id, ARB_USDC_TOKEN_ID)
+            (token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+              isSameAddress(token.id, ARB_USDC_TOKEN_ID)) ||
+            (token.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
+              isSameAddress(token.id, HYPE_USDC_TOKEN_ID))
           ) {
             setPopupState(prev => ({
               ...prev,
@@ -621,7 +645,6 @@ export const PerpsOriginScreen = ({
       />
       <PerpsWithdrawPopup
         visible={popupState.isShowWithdrawPopup}
-        accountSummary={accountSummary}
         onWithdraw={async v => {
           await handleWithdraw(v);
           setPopupState(prev => ({

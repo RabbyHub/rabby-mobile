@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Pressable,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -51,13 +50,17 @@ import { ITokenItem } from '@/store/tokens';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '../LpTokenIcon';
 import LpTokenSwitch from '../LpTokenSwitch';
+import { isNumber } from 'lodash';
+import { Text } from '@/components/Typography';
 
-export const formatPercentage = (x: number) => {
+export const formatPercentage = (x: number, ignoreSign = false) => {
   if (Math.abs(x) < 0.00001) {
-    return '0%';
+    return ignoreSign ? '0%' : '(0%)';
   }
   const percentage = (x * 100).toFixed(2);
-  return `${x >= 0 ? '+' : ''}${percentage}%`;
+  return ignoreSign
+    ? `${x >= 0 ? '+' : ''}${percentage}%`
+    : `(${x >= 0 ? '+' : ''}${percentage}%)`;
 };
 
 const hitSlop = {
@@ -67,6 +70,7 @@ const hitSlop = {
   right: 10,
 };
 
+// TODO：删掉，没有入口了
 export const TokenRow = memo(
   ({
     data,
@@ -144,12 +148,9 @@ export const TokenRow = memo(
     }, [styles.modalNextButtonText, t]);
     const children = useMemo(() => {
       const amountContent = data._priceStr ? (
-        <Text
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={styles.amountStr}>{`${data._amountStr} ${getTokenSymbol(
-          data,
-        )}`}</Text>
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
+          {data._amountStr}
+        </Text>
       ) : null;
 
       return (
@@ -373,12 +374,9 @@ export const TokenRowV2 = memo(
     }, [styles.modalNextButtonText, t]);
 
     const amountContent = (
-      <Text
-        numberOfLines={1}
-        ellipsizeMode="tail"
-        style={styles.amountStr}>{`${formatAmount(
-        data.amount,
-      )} ${getTokenSymbol(data)}`}</Text>
+      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
+        {formatAmount(data.amount)}
+      </Text>
     );
 
     return (
@@ -432,29 +430,33 @@ export const TokenRowV2 = memo(
           </Text>
           {showAccount ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
-              <Text
-                style={StyleSheet.compose(styles.percent, {
-                  ...(!data.is_core && (data.usd_value || 0) > 0
-                    ? styles.exclude
-                    : {}),
-                  color: percentColor,
-                })}>
-                {formatPercentage(Number(data.price_24h_change) || 0)}
-              </Text>
+              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              {isNumber(data.price_24h_change) && (
+                <Text
+                  style={StyleSheet.compose(styles.percent, {
+                    ...(!data.is_core && (data.usd_value || 0) > 0
+                      ? styles.exclude
+                      : {}),
+                    color: percentColor,
+                  })}>
+                  {formatPercentage(Number(data.price_24h_change) || 0)}
+                </Text>
+              )}
             </View>
           ) : scene === 'portfolio' ? (
             <View style={styles.priceInfo}>
-              <Text style={styles.price}>{`@$${formatPrice(data.price)}`}</Text>
-              <Text
-                style={StyleSheet.compose(styles.percent, {
-                  ...(!data.is_core && (data.usd_value || 0) > 0
-                    ? styles.exclude
-                    : {}),
-                  color: percentColor,
-                })}>
-                {formatPercentage(Number(data.price_24h_change) || 0)}
-              </Text>
+              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              {isNumber(data.price_24h_change) && (
+                <Text
+                  style={StyleSheet.compose(styles.percent, {
+                    ...(!data.is_core && (data.usd_value || 0) > 0
+                      ? styles.exclude
+                      : {}),
+                    color: percentColor,
+                  })}>
+                  {formatPercentage(Number(data.price_24h_change) || 0)}
+                </Text>
+              )}
             </View>
           ) : null}
         </View>
@@ -693,7 +695,7 @@ export const ExternalTokenRow = memo(
                     styles.tokenHeaderAmount,
                     // isExcludeBalanceShowTips && styles.textSecondary,
                   ]}>
-                  {formatTokenAmount(data.amount)} {getTokenSymbol(data)}
+                  {formatTokenAmount(data.amount)}
                 </Text>
               </View>
               <View style={styles.colContent}>
@@ -702,12 +704,12 @@ export const ExternalTokenRow = memo(
                 </Text>
                 <View style={styles.priceInfo}>
                   <Text style={styles.usdValue}>
-                    @{decimalPrecision ? '$' : ''}
+                    {decimalPrecision ? '$' : ''}
                     {(decimalPrecision ? formatPrice : formatUsdValue)(
                       data.price || 0,
                     )}
                   </Text>
-                  {typeof data.price_24h_change === 'number' && (
+                  {isNumber(data.price_24h_change) && (
                     <Text
                       style={StyleSheet.flatten([
                         styles.changeText,
@@ -1194,7 +1196,7 @@ const getStyles = createGetStyles2024(ctx => ({
   percent: {
     textAlign: 'right',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
@@ -1220,7 +1222,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['brand-default'],
   },
   changeText: {
-    fontWeight: '700',
+    fontWeight: '500',
     fontSize: 14,
     lineHeight: 18,
     color: ctx.colors2024['green-default'],

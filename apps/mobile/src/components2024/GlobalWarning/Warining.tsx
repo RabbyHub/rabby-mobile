@@ -1,9 +1,10 @@
-import { View, Text, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleProp, ViewStyle } from 'react-native';
 import RcOfflineCC from '@/assets2024/icons/common/offline-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export enum GlobalWarningType {
   Network = 'network',

@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 interface Props {
   currentInterval: CandlePeriod;

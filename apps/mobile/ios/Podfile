@@ -16,7 +16,7 @@ node_require('react-native-permissions/scripts/setup.rb')
 $RNFirebaseAsStaticFramework = true
 $RNGoogleMobileAdsAsStaticFramework = true
 $RNAdMobAsStaticFramework = true
-$NotifeeExtension = true
+# $NotifeeExtension = true
 
 platform :ios, '15.1'
 prepare_react_native_project!
@@ -29,14 +29,14 @@ setup_permissions([
   # 'CalendarsWriteOnly',
   # 'Camera',
   # 'Contacts',
-  # 'FaceID',
+  'FaceID',
   # 'LocationAccuracy',
   # 'LocationAlways',
   # 'LocationWhenInUse',
   # 'MediaLibrary',
   # 'Microphone',
   # 'Motion',
-  # 'Notifications',
+  'Notifications',
   # 'PhotoLibrary',
   # 'PhotoLibraryAddOnly',
   # 'Reminders',
@@ -87,7 +87,7 @@ target 'RabbyMobile' do
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
+      :ccache_enabled => ENV['RABBY_MOBILE_POD_USE_CACHE'] == "true",
     )
     # __apply_Xcode_12_5_M1_post_install_workaround(installer)
     patch_build_settings(installer)
@@ -100,10 +100,10 @@ target 'RabbyMobile' do
   end
 end
 
-target 'RabbyMobileNotification' do
-  use_frameworks! :linkage => :static
-  pod 'RNNotifeeCore', :path => '../node_modules/@notifee/react-native/RNNotifeeCore.podspec'
-end
+# target 'RabbyMobileNotification' do
+#   use_frameworks! :linkage => :static
+#   pod 'RNNotifeeCore', :path => '../node_modules/@notifee/react-native/RNNotifeeCore.podspec'
+# end
 
 def patch_build_settings(installer)
   arch = `arch`.strip
@@ -129,7 +129,6 @@ def patch_build_settings(installer)
 
   projects.each do |project|
     project.build_configurations.each do |config|
-      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64" if arch == "arm64"
       config.build_settings["DEVELOPMENT_TEAM"] = "ZPNP2SF27Q"
       config.build_settings["ENABLE_BITCODE"] = "NO"
     end

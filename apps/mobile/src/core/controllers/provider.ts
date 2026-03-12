@@ -240,7 +240,7 @@ class ProviderController extends BaseController {
     req: {
       data: RPCRequest;
       session: Session;
-      account?: Account;
+      account?: Account | null;
     },
     forceChainServerId?: string,
   ) => {
@@ -377,7 +377,7 @@ class ProviderController extends BaseController {
     account,
   }: {
     session: Session;
-    account?: Account;
+    account?: Account | null;
   }) => {
     if (
       !dappService.getDapp(origin)?.isConnected ||

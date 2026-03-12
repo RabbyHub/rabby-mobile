@@ -9,11 +9,11 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
 import { DappCardList } from '../components/DappCardList';
 import { useDappWebViewScreen } from '../hooks/useDappWebViewScreen';
-import { Text } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
 import { debounce } from 'lodash';
 import { RootNames } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 export function FavoriteDappsScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();

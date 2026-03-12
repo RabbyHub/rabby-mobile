@@ -1472,14 +1472,14 @@
         },
         "ledger": {
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger. Dans les 3 premiers portefeuilles, il n'y a pas de portefeuilles utilisés sur la chaîne.",
-            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto. Dans les 3 premiers portefeuilles, il n'y a pas de portefeuilles utilisés en chaîne.",
-            "bip44": "BIP44 Standard : Chemin HD défini par le protocole BIP44. Dans les 3 premiers portefeuilles, aucun portefeuille n'est utilisé sur la chaîne."
+            "bip44": "Norme BIP44 : chemin HD défini par le protocole BIP44.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger."
           },
           "hdPathType": {
-            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne.",
-            "bip44": "Standard BIP44 : HDpath défini par le protocole BIP44. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne.",
-            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne."
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger.",
+            "bip44": "BIP44 Standard : HDpath défini par le protocole BIP44.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto."
           }
         },
         "manageAddressFrom": "Gérer le portefeuille de {{0}} à {{1}}",
@@ -2030,8 +2030,7 @@
       "clearBrowserData": "Effacer les données du navigateur",
       "searchCurrency": "Rechercher une devise",
       "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
-      "currency": "Monnaie",
-      "transactionNotification": "Notifications de Txn (Beta)"
+      "currency": "Monnaie"
     },
     "settingModal": {
       "themeMode": {
@@ -2623,7 +2622,8 @@
         "stopLossWhen": "Arrêt de perte lorsque",
         "upTo": "Jusqu'à",
         "minMargin": "La marge minimale est de {{amount}}",
-        "maxMargin": "La marge maximale est {{amount}}"
+        "maxMargin": "La marge maximale est {{amount}}",
+        "onlyIsolated": "Seule la marge isolée est prise en charge pour ce token."
       },
       "PerpsOpenPositionCheckPopup": {
         "price": "Prix",
@@ -2947,7 +2947,8 @@
         "borrowBalance": "Emprunter un solde",
         "lpRiskWarning": "Facteur de santé faible après l'échange. Votre position comportera un risque plus élevé de liquidation.",
         "priceImpactTips": "Impact de prix élevé ({{lostValue}}). Cet itinéraire peut retourner plus en raison d'une faible liquidité ou d'une petite taille de commande.",
-        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité."
+        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité.",
+        "maxLtvWarning": "Fonds de garantie insuffisants pour couvrir la nouvelle position d'emprunt. Le portefeuille doit disposer d'une capacité d'emprunt restante pour effectuer le changement de dette."
       },
       "hfTips": {
         "more": "Plus",
@@ -2980,7 +2981,8 @@
           "assets": "Jeton",
           "balance": "Solde"
         },
-        "title": "Sélectionner le jeton de remboursement"
+        "title": "Sélectionner le jeton de remboursement",
+        "zeroLtvCollateralTips": "Vous avez les collatéraux suivants avec un LTV = 0 et vous ne pouvez donc rembourser qu'avec ces collatéraux en premier selon les règles de remboursement de collatéraux."
       },
       "dappSelect": {
         "title": "Sélectionner le Fournisseur de Prêts"

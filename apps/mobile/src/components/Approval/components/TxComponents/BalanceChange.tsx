@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, ViewProps } from 'react-native';
+import { View, StyleSheet, ViewProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -23,6 +23,7 @@ import NFTDefaultSVG from '@/assets/nft-default.svg';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { Account } from '@/core/services/preference';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   tokenBalanceChange: {

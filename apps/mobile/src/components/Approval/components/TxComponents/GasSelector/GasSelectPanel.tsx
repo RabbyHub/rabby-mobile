@@ -8,13 +8,13 @@ import { Tip } from '@/components/Tip';
 import {
   NativeSyntheticEvent,
   StyleSheet,
-  Text,
   TextInputChangeEventData,
   View,
 } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { GasSelectContainer } from './GasSelectContainer';
+import { Text } from '@/components/Typography';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;

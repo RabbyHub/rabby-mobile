@@ -1,10 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import {
   View,
-  TextInput,
   TextInputProps,
   StyleSheet,
-  Text,
   StyleProp,
   ViewStyle,
   TextStyle,
@@ -21,6 +19,7 @@ import TouchableView from '../Touchable/TouchableView';
 import { RcIconCloseCircleCC } from '@/assets/icons/common';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Pressable } from 'react-native-gesture-handler';
+import { TextInput, Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 

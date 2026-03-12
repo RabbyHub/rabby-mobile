@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -10,6 +10,7 @@ import { Skeleton } from '@rneui/themed';
 import { AccountPoints } from '../hooks';
 import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import { formatTokenAmount } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {

@@ -3,7 +3,7 @@ import { TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
@@ -18,6 +18,7 @@ import { Card } from '../Actions/components/Card';
 import { Radio } from '@/components/Radio';
 import { findChain } from '@/utils/chain';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface BroadcastModeProps {
   value: {

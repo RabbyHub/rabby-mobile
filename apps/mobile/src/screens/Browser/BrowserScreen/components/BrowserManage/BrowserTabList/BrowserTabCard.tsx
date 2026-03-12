@@ -5,14 +5,9 @@ import { getViewShotUri } from '@/utils/browser';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import { Text } from '@/components/Typography';
 
 interface Props {
   tab: Tab;

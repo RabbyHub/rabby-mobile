@@ -12,6 +12,7 @@ import { getDappAccount, useDapps } from '@/hooks/useDapps';
 import { useAccounts } from '@/hooks/account';
 import { perpsStore as usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 
 const ORIGIN_PNG_IDS = new Set(['venus', 'hyperliquid']);
 
@@ -87,9 +88,7 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
     [appChainMap],
   );
 
-  const hyperliquidAccountValue = usePerpsStore(
-    useShallow(s => s.currentClearinghouseState?.marginSummary?.accountValue),
-  );
+  const { accountValue: hyperliquidAccountValue } = usePerpsAccount();
 
   const dappListWithValue = useMemo(() => {
     if (!dAppList.length) {

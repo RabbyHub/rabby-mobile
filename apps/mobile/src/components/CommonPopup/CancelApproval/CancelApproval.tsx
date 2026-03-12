@@ -3,12 +3,13 @@ import { CancelItem } from './CancelItem';
 import { useTranslation } from 'react-i18next';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { notificationService } from '@/core/services';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import AutoLockView from '@/components/AutoLockView';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

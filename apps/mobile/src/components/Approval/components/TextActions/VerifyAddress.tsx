@@ -4,8 +4,9 @@ import { VerifyAddressAction } from '@rabby-wallet/rabby-api/dist/types';
 import { Col, Row, Table } from '../Actions/components/Table';
 import * as Values from '../Actions/components/Values';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { Text } from '@/components/Typography';
 
 const VerifyAddress = ({
   data,

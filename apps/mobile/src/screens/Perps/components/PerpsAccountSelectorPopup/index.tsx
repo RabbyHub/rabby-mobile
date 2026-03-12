@@ -11,9 +11,10 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { keyBy, sortBy, uniqBy } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
 import { getClearinghouseStateByMap } from '@/hooks/perps/usePerpsStore';
+import { Text } from '@/components/Typography';
 
 export const PerpsAccountSelectorPopup: React.FC<{
   visible?: boolean;

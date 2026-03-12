@@ -7,12 +7,12 @@ import { Trans, useTranslation } from 'react-i18next';
 import {
   Image,
   StyleProp,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
+import { Text } from '@/components/Typography';
 
 interface Props {
   code: number;

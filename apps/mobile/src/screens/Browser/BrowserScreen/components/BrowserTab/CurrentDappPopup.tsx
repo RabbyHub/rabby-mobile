@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { RcIconDisconnectCC } from '@/assets/icons/dapp';
 import { AppBottomSheetModal } from '@/components';
@@ -17,15 +17,23 @@ import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
 import { useMyAccounts } from '@/hooks/account';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface Props {
   visible?: boolean;
   onClose?: () => void;
   dapp: DappInfo;
-  account?: Account;
+  account?: Account | null;
+  origin?: string;
 }
 
-export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
+export function CurrentDappPopup({
+  visible,
+  onClose,
+  dapp,
+  account,
+  origin,
+}: Props) {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
@@ -71,7 +79,7 @@ export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
                 }
                 style={styles.dappIcon}
               />
-              <Text style={styles.connectOrigin}>{dapp.origin}</Text>
+              <Text style={styles.connectOrigin}>{origin || dapp.origin}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.labelText}>
@@ -98,7 +106,7 @@ export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
                 <AccountSelector
                   value={account}
                   onChange={v => {
-                    apisDapp.setCurrentAccountForDapp(dapp.origin, v);
+                    apisDapp.setCurrentAccountForDapp(origin || dapp.origin, v);
                   }}
                 />
               </View>
@@ -109,7 +117,7 @@ export function CurrentDappPopup({ visible, onClose, dapp, account }: Props) {
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              apisDapp.disconnect(dapp.origin);
+              apisDapp.disconnect(origin || dapp.origin);
               onClose?.();
             }}>
             <RcIconDisconnectCC color={colors2024['red-default']} />

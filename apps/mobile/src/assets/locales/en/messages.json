@@ -1433,14 +1433,14 @@
         "balance": "Balance",
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 wallets, there are wallets used on-chain.",
-            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol. In the first 3 wallets, there are wallets used on-chain.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 wallets, there are wallets used on-chain."
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 wallets, there are no wallets used on-chain.",
-            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol. In the first 3 wallets, there are no wallets used on-chain.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 wallets, there are no wallets used on-chain."
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
           }
         },
         "onekey": {
@@ -2144,6 +2144,7 @@
       }
     },
     "setting": {
+      "__skip_translation": ["transactionNotification"],
       "screenTitle": "Settings",
       "enableWhitelist": "Enable whitelist for sending assets",
       "faceId": "Face ID",
@@ -2651,6 +2652,7 @@
         "addToShort": "Add to Short"
       },
       "PerpsOpenPositionPopup": {
+        "onlyIsolated": "Only isolated margin is supported for this token",
         "margin": "Margin",
         "upTo": "Up to",
         "invalidNumber": "Please input a valid number",
@@ -2927,7 +2929,8 @@
         "header": {
           "assets": "Token",
           "balance": "Balance"
-        }
+        },
+        "zeroLtvCollateralTips": "You have following LTV = 0 collaterals and thus can only repay with these collaterals first according to collateral repay rules. "
       },
       "manageEmode": {
         "__skip_translation": ["emode"],
@@ -2999,6 +3002,7 @@
           "swap": "Swap"
         },
         "priceImpactTips": "High price impact ({{lostValue}}). This route may return more due to low liquidity or small order size.",
+        "maxLtvWarning": "Insufficient collateral to cover new borrow position. Wallet must have borrowing power remaining to perform debt switch.",
         "lpRiskWarning": "Low health factor after swap. Your position will carry a higher risk of liquidation.",
         "lpDangerWarning": "Your health factor after this swap will be critically low and may result in liquidation. Please choose a different asset or reduce the swap amount to stay safe."
       },

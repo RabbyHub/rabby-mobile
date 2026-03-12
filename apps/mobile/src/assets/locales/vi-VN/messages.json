@@ -1427,14 +1427,14 @@
         },
         "ledger": {
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger. Trong 3 ví đầu tiên, không có ví nào được sử dụng trên chuỗi.",
-            "bip44": "Tiêu chuẩn BIP44: Đường dẫn HD được xác định bởi giao thức BIP44. Trong 3 ví đầu tiên, không có ví nào được sử dụng trên chuỗi.",
-            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto. Trong 3 ví đầu tiên, không có ví nào được sử dụng trên chuỗi."
+            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger.",
+            "bip44": "Tiêu chuẩn BIP44: Đường dẫn HD được xác định bởi giao thức BIP44."
           },
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger. Trong 3 ví đầu tiên, có các ví được sử dụng trên chuỗi.",
-            "bip44": "BIP44 Chuẩn: Đường dẫn HD được xác định bởi giao thức BIP44. Trong 3 ví đầu tiên, có các ví được sử dụng trên chuỗi.",
-            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto. Trong 3 ví đầu tiên, có các ví được sử dụng trên chuỗi."
+            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger.",
+            "bip44": "Tiêu chuẩn BIP44: HDpath được xác định bởi giao thức BIP44.",
+            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto."
           }
         },
         "keystone": {
@@ -1844,8 +1844,7 @@
       "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt",
       "currency": "Tiền tệ",
       "searchCurrency": "Tìm kiếm Tiền tệ",
-      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi",
-      "transactionNotification": "Thông báo Txn (Beta)"
+      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -2726,7 +2725,8 @@
         "stopLossWhenPriceBelow": "Dừng lỗ khi giá dưới",
         "minMargin": "Biên độ tối thiểu là {{amount}}",
         "maxMargin": "Lợi nhuận tối đa là {{amount}}",
-        "upTo": "Lên đến"
+        "upTo": "Lên đến",
+        "onlyIsolated": "Chỉ có margin cô lập được hỗ trợ cho token này"
       },
       "PerpsOpenPositionCheckPopup": {
         "fee": "Phí",
@@ -3050,7 +3050,8 @@
         "lpRiskWarning": "Số yếu tố sức khỏe thấp sau khi hoán đổi. Vị trí của bạn sẽ có rủi ro thanh lý cao hơn.",
         "lpDangerWarning": "Yếu tố sức khỏe của bạn sau giao dịch này sẽ ở mức rất thấp và có thể dẫn đến việc thanh lý. Vui lòng chọn tài sản khác hoặc giảm số lượng giao dịch để đảm bảo an toàn.",
         "priceImpactTips": "Tác động giá cao ({{lostValue}}). Đường này có thể trả lại nhiều hơn do tính thanh khoản thấp hoặc kích thước đơn hàng nhỏ.",
-        "title": "Hoán đổi Vị trí Vay"
+        "title": "Hoán đổi Vị trí Vay",
+        "maxLtvWarning": "Không đủ tài sản thế chấp để bảo hiểm vị trí vay mới. Ví phải có khả năng vay còn lại để thực hiện chuyển nợ."
       },
       "hfTips": {
         "more": "Thêm",
@@ -3083,7 +3084,8 @@
           "assets": "Mã thông báo",
           "balance": "Số dư"
         },
-        "title": "Chọn Token Hoàn trả"
+        "title": "Chọn Token Hoàn trả",
+        "zeroLtvCollateralTips": "Bạn có LTV = 0 tài sản thế chấp và vì vậy chỉ có thể thanh toán trước bằng các tài sản thế chấp này theo quy tắc thanh toán tài sản thế chấp."
       },
       "dappSelect": {
         "title": "Chọn Nhà Cung Cấp Cho Vay"

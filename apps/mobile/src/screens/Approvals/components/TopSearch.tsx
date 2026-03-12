@@ -1,11 +1,12 @@
 import { useRef } from 'react';
-import { TextInput, Dimensions } from 'react-native';
+import { Dimensions } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { ApprovalsLayouts } from '../layout';
+import { TextInput } from '@/components/Typography';
 
 const screenWidth = Dimensions.get('window').width;
 export function TopSearch({

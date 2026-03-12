@@ -1,9 +1,10 @@
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { MODAL_CREATE_PARAMS } from '../GlobalBottomSheetModal/types';
 import AutoLockView from '../AutoLockView';
+import { Text } from '@/components/Typography';
 
 export default function SimpleConfirmInner({
   title,

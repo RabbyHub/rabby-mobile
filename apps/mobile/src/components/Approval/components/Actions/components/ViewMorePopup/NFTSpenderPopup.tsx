@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, Col, Row } from '../Table';
@@ -9,6 +9,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyle } from '../getStyle';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

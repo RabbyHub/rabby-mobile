@@ -14,7 +14,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
@@ -23,6 +23,7 @@ import { GasLessNotEnough } from './GasLessComponents/GasLessNotEnough';
 import { GasLessConfig } from './GasLessComponents';
 import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Text } from '@/components/Typography';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   isSwap?: boolean;

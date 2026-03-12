@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { atom, useAtom } from 'jotai';
 import { DisplayPoolReserveInfo } from '../type';
@@ -47,6 +47,7 @@ import IconCloseCC from '@/assets2024/icons/common/close-cc.svg';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { useCollateralWaring } from '../hooks/useCollateralWaring';
+import { Text } from '@/components/Typography';
 
 export const toggleCollateralModalAtom = atom(false);
 export const currentToggleReserveAtom = atom<DisplayPoolReserveInfo | null>(
@@ -201,6 +202,7 @@ function ToggleCollateralContent({}: {}) {
       });
       setTxs(formatTxs as unknown as Tx[]);
     } catch (error) {
+      toast.error('There was some error');
       console.error('There was some error', error);
     }
   }, [

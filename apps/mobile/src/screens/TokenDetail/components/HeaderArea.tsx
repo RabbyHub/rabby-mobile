@@ -5,7 +5,6 @@ import {
   TextStyle,
   View,
   ViewStyle,
-  Text,
   TouchableOpacity,
   Clipboard,
 } from 'react-native';
@@ -27,6 +26,7 @@ import { ITokenItem } from '@/store/tokens';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {

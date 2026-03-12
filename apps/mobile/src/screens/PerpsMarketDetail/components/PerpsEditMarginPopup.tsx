@@ -5,6 +5,7 @@ import { Button } from '@/components2024/Button';
 import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import RcIconTipsLightCC from '@/assets2024/icons/perps/IconTipsLightCC.svg';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import BigNumber from 'bignumber.js';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   formatPerpsUsdValue,
@@ -27,13 +28,11 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
 const isAndroid = Platform.OS === 'android';
-import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { PerpsSlider } from './PerpsSlider';
 import { toast } from '@/components2024/Toast';
@@ -43,6 +42,7 @@ import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { calculateDistanceToLiquidation } from '@/screens/Perps/components/PerpsPositionSection/utils';
 import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 
 export const PerpsEditMarginPopup: React.FC<{
   visible: boolean;

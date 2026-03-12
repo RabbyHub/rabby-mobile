@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { noop } from 'lodash';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,6 +20,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { CategorySelector } from '../components/EmodeCategory/CategorySelector';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import { formatPercent } from '@/screens/TokenDetail/util';
+import { Text } from '@/components/Typography';
 
 const DisableEmodeOverviewModal = ({ onClose }: { onClose: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });

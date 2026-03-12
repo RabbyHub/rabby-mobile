@@ -5,11 +5,12 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { BackupIcon } from './BackupIcon';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {

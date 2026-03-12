@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -18,7 +18,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { RcIconLogo } from '@/assets/icons/common';
-import AnimateableText from 'react-native-animateable-text';
+import { Text, AnimateableText } from '@/components/Typography';
 
 function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max);

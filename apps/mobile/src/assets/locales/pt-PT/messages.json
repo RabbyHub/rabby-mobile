@@ -376,7 +376,8 @@
       },
       "postNotification": {
         "title": "Permissão de Notificação",
-        "pleaseEnableInSettings": "Por favor, ative a permissão de notificações nas definições."
+        "pleaseEnableInSettings": "Por favor, ative a permissão de notificações nas definições.",
+        "message": "Este aplicativo precisa de acesso para lhe enviar notificações."
       }
     },
     "gotIt": "Entendi",
@@ -1681,14 +1682,14 @@
         },
         "ledger": {
           "hdPathTypeNoChain": {
-            "bip44": "Padrão BIP44: caminho HD definido pelo protocolo BIP44. Nos primeiros 3 wallets, não há wallets usadas on-chain.",
-            "legacy": "Legado: Caminho HD usado pelo MEW / Mycrypto. Nas primeiras 3 carteiras, não há carteiras usadas on-chain.",
-            "ledgerLive": "Ledger Live: Caminho HD oficial da Ledger. Nos primeiros 3 wallets, não há wallets utilizadas na cadeia."
+            "ledgerLive": "Ledger Live: caminho HD oficial da Ledger.",
+            "bip44": "BIP44 Padrão: Caminho HD definido pelo protocolo BIP44.",
+            "legacy": "Legado: caminho HD utilizado pelo MEW / Mycrypto."
           },
           "hdPathType": {
-            "legacy": "Legado: Caminho HD usado pelo MEW / Mycrypto. Nas primeiras 3 carteiras, há carteiras usadas na cadeia.",
-            "bip44": "Padrão BIP44: HDpath definido pelo protocolo BIP44. Nos primeiros 3 wallets, existem wallets usadas em cadeia.",
-            "ledgerLive": "Ledger Live: caminho HD oficial da Ledger. Nos primeiros 3 wallets, existem wallets utilizadas em cadeia."
+            "legacy": "Legado: caminho HD usado pelo MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: caminho HD oficial da Ledger.",
+            "bip44": "Padrão BIP44: HDpath definido pelo protocolo BIP44."
           }
         },
         "qrCode": {
@@ -2282,8 +2283,7 @@
       "clearBrowserData": "Limpar dados do navegador",
       "currency": "Moeda",
       "searchCurrency": "Pesquisar Moeda",
-      "screenshotReportSwitch": "Captura de ecrã para reportar erro",
-      "transactionNotification": "Notificações de Txn (Beta)"
+      "screenshotReportSwitch": "Captura de ecrã para reportar erro"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -2982,7 +2982,8 @@
         "takeProfitWhenPriceBelow": "Levar Lucro Quando o Preço Estiver Abaixo",
         "maxMargin": "Margem máxima é {{amount}}",
         "upTo": "Até",
-        "minMargin": "A margem mínima é {{amount}}"
+        "minMargin": "A margem mínima é {{amount}}",
+        "onlyIsolated": "Apenas margem isolada é suportada para este token."
       },
       "PerpsOpenPositionCheckPopup": {
         "initialMargin": "Margem Inicial",
@@ -3306,7 +3307,8 @@
         "entryTips": "Troque o seu ativo emprestado com um clique, reduzindo etapas e taxas.",
         "lpDangerWarning": "O seu fator de saúde após esta troca ficará criticamente baixo e pode resultar em liquidação. Por favor, escolha um ativo diferente ou reduza o valor da troca para se manter seguro.",
         "lpRiskWarning": "Fator de saúde baixo após a troca. Sua posição terá um risco maior de liquidação.",
-        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Esta rota pode retornar mais devido à baixa liquidez ou ao tamanho pequeno da ordem."
+        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Esta rota pode retornar mais devido à baixa liquidez ou ao tamanho pequeno da ordem.",
+        "maxLtvWarning": "Colateral insuficiente para cobrir a nova posição de empréstimo. A carteira deve ter poder de empréstimo restante para realizar a troca de dívida."
       },
       "hfTips": {
         "more": "Mais",
@@ -3339,7 +3341,8 @@
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Selecionar Token de Reembolso"
+        "title": "Selecionar Token de Reembolso",
+        "zeroLtvCollateralTips": "Você tem os seguintes colaterais com LTV = 0 e, portanto, só pode reembolsar primeiro com esses colaterais de acordo com as regras de reembolso de colaterais."
       },
       "dappSelect": {
         "title": "Selecionar Fornecedor de Empréstimo"
@@ -3373,7 +3376,8 @@
       "tokenHeader": {
         "change": "Alteração 24H",
         "fdv": "FDV",
-        "volume": "24H Volume"
+        "volume": "24H Volume",
+        "price": "Preço"
       }
     }
   },

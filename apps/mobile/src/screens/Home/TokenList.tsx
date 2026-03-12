@@ -104,6 +104,7 @@ export const TokenList = ({
       unFoldTokens: [] as ITokenItem[],
       foldTokens: [] as ITokenItem[],
       scamTokens: [] as ITokenItem[],
+      hasFoldTokens: false,
     }),
     [],
   );
@@ -130,20 +131,25 @@ export const TokenList = ({
     registerSingleAssets(currentAddress, selectedChain, isLpTokenEnabled);
   }, [currentAddress, selectedChain, isLpTokenEnabled, registerSingleAssets]);
 
-  const { unFoldTokens, foldTokens, scamTokens } = useTokenListComputedStore(
-    useShallow(state =>
-      singleAssetsKey
-        ? state.singleAssetsCache[singleAssetsKey] || emptyResult
-        : emptyResult,
-    ),
-  );
+  const { unFoldTokens, foldTokens, scamTokens, hasFoldTokens } =
+    useTokenListComputedStore(
+      useShallow(state =>
+        singleAssetsKey
+          ? state.singleAssetsCache[singleAssetsKey] || emptyResult
+          : emptyResult,
+      ),
+    );
 
   const isLoading = useTokenList(state => {
-    if (!lowerAddress) return false;
+    if (!lowerAddress) {
+      return false;
+    }
     return !!state.isLoadingByAddress[lowerAddress]?.loading;
   });
   const isAllLoading = useTokenList(state => {
-    if (!lowerAddress) return false;
+    if (!lowerAddress) {
+      return false;
+    }
     return !!state.isLoadingByAddress[lowerAddress]?.allLoading;
   });
   const getTokenList = useTokenList(s => s.getTokenList);
@@ -172,8 +178,8 @@ export const TokenList = ({
       items.push({ type: 'unfold_token', data: token });
     });
 
-    const hasFoldSection = foldTokens.length > 0 || scamTokens.length > 0;
-    if (hasFoldSection || isLpTokenEnabled) {
+    const hasFoldSection = hasFoldTokens || isLpTokenEnabled;
+    if (hasFoldSection) {
       items.push({ type: 'toggle_token_fold' });
       if (!foldHideList) {
         foldTokens.forEach(token => {
@@ -233,6 +239,7 @@ export const TokenList = ({
     foldHideList,
     foldScam,
     foldTokens,
+    hasFoldTokens,
     isAllLoading,
     isLoading,
     isLpTokenEnabled,

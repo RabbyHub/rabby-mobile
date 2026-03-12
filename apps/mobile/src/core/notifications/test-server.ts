@@ -4,6 +4,9 @@ import { RABBY_MOBILE_FE_SERVICE_URL } from '@/constant/env';
 import { isNonPublicProductionEnv } from '@/constant';
 import { preferenceService } from '../services';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { checkIfEnabledNotificationWithPermission } from './switch';
+import { IS_IOS } from '../native/utils';
+import { AppState } from 'react-native';
 
 export function getFeServiceURL() {
   if (!isNonPublicProductionEnv) return RABBY_MOBILE_FE_SERVICE_URL || null;
@@ -37,18 +40,14 @@ export const connectFeService = async (data: { pushToken: string }) => {
   try {
     console.debug('[connectFeService] connectURL', connectURL);
 
+    const { enabled } = await checkIfEnabledNotificationWithPermission();
     const response = await fetch(
       `${connectURL}/v1/api/rabby-mobile-push/connect`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...makeMobileClientPushInfo(
-            pushToken,
-            preferenceService.getPreferenceByKey(
-              'enabledTransactionNofification',
-            ) ?? false,
-          ),
+          ...makeMobileClientPushInfo(pushToken, enabled),
         }),
       },
     );
@@ -74,6 +73,7 @@ export const connectFeService = async (data: { pushToken: string }) => {
 const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
 export function startConnectFeServiceInterval(pushToken: string) {
   connectFeService({ pushToken });
+
   setInterval(async () => {
     await connectFeService({ pushToken });
   }, CONNECT_DURATION_MS);

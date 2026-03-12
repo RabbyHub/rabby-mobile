@@ -1356,14 +1356,14 @@
       "hd": {
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger. Di 3 dompet pertama, ada dompet yang digunakan di on-chain.",
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto. Di 3 dompet pertama, terdapat dompet yang digunakan secara on-chain.",
-            "bip44": "Standar BIP44: HDpath yang ditentukan oleh protokol BIP44. Di 3 dompet pertama, terdapat dompet yang digunakan di on-chain."
+            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
+            "bip44": "BIP44 Standar: HDpath yang ditentukan oleh protokol BIP44.",
+            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto. Di 3 dompet pertama, tidak ada dompet yang digunakan di on-chain.",
-            "bip44": "Standar BIP44: Jalur HD yang ditentukan oleh protokol BIP44. Di 3 dompet pertama, tidak ada dompet yang digunakan di blockchain.",
-            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger. Di 3 dompet pertama, tidak ada dompet yang digunakan di on-chain."
+            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
+            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto.",
+            "bip44": "Standar BIP44: Jalur HD yang ditentukan oleh protokol BIP44."
           }
         },
         "onekey": {
@@ -2086,8 +2086,7 @@
       "clearBrowserData": "Hapus Data Peramban",
       "searchCurrency": "Cari Mata Uang",
       "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
-      "currency": "Mata Uang",
-      "transactionNotification": "Notifikasi Txn (Beta)"
+      "currency": "Mata Uang"
     },
     "settingModal": {
       "themeMode": {
@@ -2613,7 +2612,8 @@
         "takeProfitWhenPriceBelow": "Ambil Untung Ketika Harga Dibawah",
         "upTo": "Hingga",
         "minMargin": "Margin minimum adalah {{amount}}",
-        "maxMargin": "Margin maksimum adalah {{amount}}"
+        "maxMargin": "Margin maksimum adalah {{amount}}",
+        "onlyIsolated": "Hanya margin terisolasi yang didukung untuk token ini"
       },
       "PerpsOpenPositionCheckPopup": {
         "direction": "Arah",
@@ -2937,7 +2937,8 @@
         "entryTips": "Satu klik untuk menukarkan aset yang Anda pinjam, mengurangi langkah dan biaya.",
         "priceImpactTips": "Dampak harga tinggi ({{lostValue}}). Rute ini mungkin memberikan lebih banyak karena likuiditas rendah atau ukuran pesanan kecil.",
         "lpDangerWarning": "Setelah pertukaran ini, faktor kesehatan Anda akan sangat rendah dan dapat mengakibatkan likuidasi. Silakan pilih aset lain atau kurangi jumlah pertukaran untuk tetap aman.",
-        "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi."
+        "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi.",
+        "maxLtvWarning": "Jaminan tidak cukup untuk menutupi posisi pinjaman baru. Dompet harus memiliki sisa daya pinjaman untuk melakukan perpindahan utang."
       },
       "hfTips": {
         "more": "Lebih banyak",
@@ -2970,7 +2971,8 @@
           "balance": "Saldo",
           "assets": "Token"
         },
-        "title": "Pilih Token Pembayaran Kembali"
+        "title": "Pilih Token Pembayaran Kembali",
+        "zeroLtvCollateralTips": "Anda memiliki jaminan LTV = 0 berikut dan dengan demikian hanya dapat melunasi dengan jaminan ini terlebih dahulu sesuai dengan aturan pelunasan jaminan."
       },
       "dappSelect": {
         "title": "Pilih Penyedia Peminjaman"

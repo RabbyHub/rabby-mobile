@@ -1,17 +1,12 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BottomArrowCC from '@/assets2024/icons/home/bottomArrow.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
+import { Text } from '@/components/Typography';
 
 export const ScamTokenHeader = memo(
   ({

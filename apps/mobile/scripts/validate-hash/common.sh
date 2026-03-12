@@ -87,6 +87,7 @@ setup_environment() {
 
   # write APP_ENV to .xcode.env.local
   echo "export APP_ENV=$APP_ENV" > ios/.xcode.env.local
+  echo "export RABBY_MOBILE_FE_SERVICE_URL=\"\"" >> ios/.xcode.env.local
 
   rm -f .env.hashing && cp .env .env.hashing;
   local apiKey="";
@@ -99,6 +100,7 @@ setup_environment() {
     "RABBY_MOBILE_SAFE_API_KEY" "$RABBY_MOBILE_SAFE_API_KEY"
     "RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_KR_PWD"
     "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
+    "RABBY_MOBILE_FE_SERVICE_URL" ""
   )
 
   for ((i=0; i<${#sensitive_vars[@]}; i+=2)); do

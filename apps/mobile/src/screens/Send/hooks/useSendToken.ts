@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { Alert, TextInput } from 'react-native';
+import { Alert, LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Sentry from '@sentry/react-native';
 import * as Yup from 'yup';
@@ -27,7 +27,7 @@ import {
   TokenItemWithEntity,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
@@ -51,7 +51,7 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { zeroAddress } from '@ethereumjs/util';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
-import { useFindChain } from '@/hooks/useFindChain';
+import { getChainListFromAtom, useFindChain } from '@/hooks/useFindChain';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
@@ -74,7 +74,7 @@ import {
   useRecentSendToHistoryFor,
   useRecentSendPendingTx,
 } from './useRecentSend';
-import { last } from 'lodash';
+import { isEqual, last } from 'lodash';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -82,10 +82,24 @@ import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureMana
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
-import { IExtractFromPromise } from '@/utils/type';
+import { ExtractAtomValueType, IExtractFromPromise } from '@/utils/type';
 import { useFindAddressByWhitelist } from './useWhiteListAddress';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { coerceNumber } from '@/utils/coerce';
+import {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {
+  makeAvoidParallelAsyncFunc,
+  makeSWRKeyAsyncFunc,
+} from '@/core/utils/concurrency';
+import { jotaiStore } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { TextInput } from '@/components/Typography';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -116,81 +130,114 @@ export const enum SendTokenEvents {
   'ON_SIGNED_SUCCESS' = 'ON_SIGNED_SUCCESS',
 }
 
-const sendTokenScreenChainTokenAtom = atom({
-  chainEnum: CHAINS_ENUM.ETH,
-  currentToken: makeDefaultToken(),
-});
+function getDefaultChainToken() {
+  return {
+    chainEnum: CHAINS_ENUM.ETH,
+    currentToken: makeDefaultToken(),
+  };
+}
+const sendTokenScreenChainTokenAtom = atom(getDefaultChainToken());
+export function getSendChainToken() {
+  const chainToken = jotaiStore.get(sendTokenScreenChainTokenAtom);
+  const chainLists = getChainListFromAtom();
+  const chainItem =
+    findChain({ enum: chainToken.chainEnum }, [
+      ...chainLists.mainnetList,
+      ...chainLists.testnetList,
+    ]) || null;
+
+  return {
+    ...chainToken,
+    chainItem,
+  };
+}
+
+const putChainToken = (
+  valOrFunc: UpdaterOrPartials<
+    ExtractAtomValueType<typeof sendTokenScreenChainTokenAtom>
+  >,
+) => {
+  return jotaiStore.set(sendTokenScreenChainTokenAtom, prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    const nextVal = {
+      ...prev,
+      ...newVal,
+    };
+
+    if (isEqual(prev, nextVal)) return prev;
+
+    return nextVal;
+  });
+};
+
+function setRouteParams(
+  valOrFunc: UpdaterOrPartials<
+    ExtractAtomValueType<typeof sendScreenParamsAtom>
+  >,
+) {
+  return jotaiStore.set(sendScreenParamsAtom, prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return { ...prev, ...newVal };
+  });
+}
+
+const setChainEnum = (chain: CHAINS_ENUM) => {
+  setRouteParams(pre => ({
+    ...pre,
+    chainEnum: chain,
+  }));
+  putChainToken({ chainEnum: chain });
+};
+
+const setCurrentToken = (token: TokenItem) => {
+  setRouteParams(pre => ({
+    ...pre,
+    tokenId: token.id,
+  }));
+  putChainToken({ currentToken: token /* chainEnum: token.chain */ });
+};
+
+export const apiSendToken = {
+  putChainToken,
+  setChainEnum,
+  setCurrentToken,
+
+  putScreenState,
+  resetScreenState,
+};
+
 export function useSendTokenScreenChainToken() {
-  const [chainToken, _setChainToken] = useAtom(sendTokenScreenChainTokenAtom);
-  const { chainEnum, currentToken } = chainToken;
-  const [, setRouteParams] = useAtom(sendScreenParamsAtom);
+  const { chainEnum, currentToken } = useAtomValue(
+    sendTokenScreenChainTokenAtom,
+  );
 
   const chainItem =
     useFindChain({
       enum: chainEnum,
     }) || null;
-  /** @deprecated weried behavior */
-  const currentTokenRef = useRef(currentToken);
-  const putChainToken = useCallback(
-    (values: Partial<typeof chainToken>) => {
-      if (values.currentToken) {
-        currentTokenRef.current = values.currentToken;
-      }
-
-      return _setChainToken(prev => {
-        const nextVal = {
-          ...prev,
-          ...values,
-        };
-
-        return nextVal;
-      });
-    },
-    [_setChainToken],
-  );
-  // devLog('currentToken.chain', currentToken.chain);
 
   const { isNativeToken } = useMemo(() => {
     const isNativeToken =
       !!chainItem && currentToken?.id === chainItem.nativeTokenAddress;
 
     return {
+      chainItem,
       isNativeToken,
     };
   }, [chainItem, currentToken?.id]);
 
-  const setChainEnum = useCallback(
-    (chain: CHAINS_ENUM) => {
-      setRouteParams(pre => ({
-        ...pre,
-        chainEnum: chain,
-      }));
-      putChainToken({ chainEnum: chain });
-    },
-    [putChainToken, setRouteParams],
-  );
-
-  const setCurrentToken = useCallback(
-    (token: TokenItem) => {
-      setRouteParams(pre => ({
-        ...pre,
-        tokenId: token.id,
-      }));
-      putChainToken({ currentToken: token /* chainEnum: token.chain */ });
-    },
-    [putChainToken, setRouteParams],
-  );
-
   return {
-    putChainToken,
     chainItem,
     isNativeToken,
 
     chainEnum,
-    setChainEnum,
-
     currentToken,
-    setCurrentToken,
   };
 }
 export type SendScreenState = {
@@ -289,36 +336,44 @@ const DFLT_SEND_STATE: SendScreenState = {
   toAddrDesc: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
+function setSendScreenState(valOrFunc: UpdaterOrPartials<SendScreenState>) {
+  return jotaiStore.set(sendTokenScreenStateAtom, prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+function putScreenState(
+  patchOrUpdateFunc:
+    | Partial<SendScreenState>
+    | ((prev: SendScreenState) => Partial<SendScreenState>),
+) {
+  setSendScreenState(prev => {
+    const patch =
+      typeof patchOrUpdateFunc === 'function'
+        ? patchOrUpdateFunc(prev)
+        : patchOrUpdateFunc;
+
+    return {
+      ...prev,
+      ...patch,
+    };
+  });
+}
+
+function resetScreenState() {
+  putScreenState({ ...DFLT_SEND_STATE });
+  jotaiStore.set(sendTokenScreenChainTokenAtom, getDefaultChainToken());
+}
+
 export function useSendTokenScreenState() {
-  const [sendTokenScreenState, setSendScreenState] = useAtom(
-    sendTokenScreenStateAtom,
-  );
-
-  const putScreenState = useCallback<InternalContext['fns']['putScreenState']>(
-    patchOrUpdateFunc => {
-      setSendScreenState(prev => {
-        const patch =
-          typeof patchOrUpdateFunc === 'function'
-            ? patchOrUpdateFunc(prev)
-            : patchOrUpdateFunc;
-
-        return {
-          ...prev,
-          ...patch,
-        };
-      });
-    },
-    [setSendScreenState],
-  );
-
-  const resetScreenState = useCallback(() => {
-    setSendScreenState({ ...DFLT_SEND_STATE });
-  }, [setSendScreenState]);
+  const sendTokenScreenState = useAtomValue(sendTokenScreenStateAtom);
 
   return {
     sendTokenScreenState,
-    putScreenState,
-    resetScreenState,
   };
 }
 
@@ -361,7 +416,7 @@ function findInstanceLevel(gasList: GasLevel[]) {
 const fetchGasList = async (
   chainItem: Chain | null,
   params: Tx,
-  account: Account,
+  account: Account | null,
 ) => {
   const list: GasLevel[] = chainItem?.isTestnet
     ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
@@ -390,8 +445,35 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
   messageDataForSendToEoa: '',
   messageDataForContractCall: '',
 };
-// const sendTokenScreenFormAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
 
+const getTokenRealtime = makeSWRKeyAsyncFunc(
+  async (chainId: string, currentAddress: string, tokenId: string) => {
+    const chain = findChain({
+      serverId: chainId,
+    });
+    let result: TokenItem | null = null;
+    if (chain?.isTestnet) {
+      const res = await apiCustomTestnet.getCustomTestnetToken({
+        address: currentAddress,
+        chainId: chain.id,
+        tokenId: tokenId,
+      });
+      if (res) {
+        result = customTestnetTokenToTokenItem(res);
+      }
+    } else {
+      result = await openapi.getToken(currentAddress, chainId, tokenId);
+    }
+
+    return result;
+  },
+  ctx => {
+    const [chainId, currentAddress, tokenId] = ctx.args[0] || [];
+    return `getTokenRealtime-${chainId}-${currentAddress}-${tokenId}`;
+  },
+);
+
+const fallbackAccount = makeAccountObject({ address: '0x' });
 /**
  * @description only called once at top level
  */
@@ -406,21 +488,18 @@ export function useSendTokenForm({
   toAddressBrandName?: string;
   isForMultipleAddress: boolean;
   disableItemCheck?: ITokenCheck;
-  currentAccount: Account;
+  currentAccount: Account | null;
 }) {
   const { t } = useTranslation();
 
   const sendTokenEventsRef = useRef(new EventEmitter());
-  const account = currentAccount;
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
 
-  const { chainEnum, isNativeToken, currentToken, putChainToken, chainItem } =
+  const { chainEnum, isNativeToken, currentToken, chainItem } =
     useSendTokenScreenChainToken();
-  const [, setRouteParams] = useAtom(sendScreenParamsAtom);
 
-  const { sendTokenScreenState: screenState, putScreenState } =
-    useSendTokenScreenState();
+  const { sendTokenScreenState: screenState } = useSendTokenScreenState();
 
   const route =
     useRoute<
@@ -435,7 +514,7 @@ export function useSendTokenForm({
   const { addressType } = useCheckAddressType(
     formValues.to,
     chainItem,
-    account,
+    currentAccount,
   );
 
   const { isShowMessageDataForToken, isShowMessageDataForContract } =
@@ -540,7 +619,7 @@ export function useSendTokenForm({
   const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
     async () =>
       fetchGasList(chainItem, getParams(formValues) as Tx, currentAccount),
-    [chainItem, formValues, putScreenState, currentAccount],
+    [chainItem, formValues, currentAccount],
   );
 
   const loadGasListAndResolve = useCallback(async () => {
@@ -576,10 +655,10 @@ export function useSendTokenForm({
     loadGasListAndResolve().then(result => {
       result.isValidArray && putScreenState({ gasList: result.gasList });
     });
-  }, [loadGasListAndResolve, putScreenState]);
+  }, [loadGasListAndResolve]);
 
   const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
-    account,
+    account: currentAccount || fallbackAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
   });
@@ -648,11 +727,6 @@ export function useSendTokenForm({
 
       const targetToken = token || currentToken;
       // devLog('handleFormValuesChange:: token', token);
-      // devLog(
-      //   'handleFormValuesChange:: currentToken',
-      //   currentToken,
-      //   currentTokenRef.current === targetToken,
-      // );
       if (!currentValues.to || !isValidAddress(currentValues.to)) {
         putScreenState({ editBtnDisabled: true, showWhitelistAlert: true });
       } else {
@@ -743,7 +817,6 @@ export function useSendTokenForm({
       screenState.showGasReserved,
       formik,
       currentToken,
-      putScreenState,
       t,
     ],
   );
@@ -796,7 +869,7 @@ export function useSendTokenForm({
             params: [to, 'latest'],
           },
           chain.serverId,
-          account,
+          currentAccount,
         );
         const notContract = !!code && (code === '0x' || code === '0x0');
         let gasLimit = 0;
@@ -854,7 +927,7 @@ export function useSendTokenForm({
             },
           },
           session: INTERNAL_REQUEST_SESSION,
-          account,
+          account: currentAccount,
         },
         true,
       );
@@ -921,7 +994,7 @@ export function useSendTokenForm({
               params: [to, 'latest'],
             },
             chain.serverId,
-            account,
+            currentAccount,
           );
           const notContract = !!code && (code === '0x' || code === '0x0');
           let gasLimit = 0;
@@ -1067,12 +1140,12 @@ export function useSendTokenForm({
                 },
               },
               session: INTERNAL_REQUEST_SESSION,
-              account,
+              account: currentAccount,
             })
             .then(resp => {
               const hash = resp as string;
               console.debug('hash', hash);
-              currentAccount.type !== KEYRING_CLASS.GNOSIS &&
+              currentAccount?.type !== KEYRING_CLASS.GNOSIS &&
                 transactionHistoryService.addSendTxHistory({
                   token: currentToken,
                   amount: Number(amount),
@@ -1107,7 +1180,7 @@ export function useSendTokenForm({
     [
       ignoreMiniSignGasFee,
       prefetchMiniSigner,
-      putScreenState,
+
       currentToken,
       getParams,
       currentAccount,
@@ -1116,7 +1189,6 @@ export function useSendTokenForm({
       screenState.showGasReserved,
       screenState.estimatedGas,
       screenState.selectedGasLevel?.price,
-      account,
       prepareDirectSubmitMiniTx,
       openDirect,
       runFetchPendingCount,
@@ -1146,9 +1218,11 @@ export function useSendTokenForm({
         return result;
       };
 
+      const latestChainToken = getSendChainToken();
+
       const {
-        chainItem: lastestChainItem = chainItem,
-        tokenItem = currentToken,
+        chainItem: lastestChainItem = latestChainToken.chainItem,
+        tokenItem = latestChainToken.currentToken,
         currentAddress = currentAccount?.address,
       } = input || {};
 
@@ -1185,7 +1259,7 @@ export function useSendTokenForm({
             ],
           },
           lastestChainItem.serverId,
-          account,
+          currentAccount,
         );
       } catch (err) {
         console.error(err);
@@ -1197,14 +1271,7 @@ export function useSendTokenForm({
 
       return doReturn(Number(gasUsed));
     },
-    [
-      chainItem,
-      currentToken,
-      currentAccount?.address,
-      formik.values.to,
-      putScreenState,
-      account,
-    ],
+    [formik.values.to, currentAccount],
   );
 
   const loadCurrentToken = useCallback(
@@ -1217,19 +1284,11 @@ export function useSendTokenForm({
       const chain = findChain({
         serverId: chainId,
       });
-      let result: TokenItem | null = null;
-      if (chain?.isTestnet) {
-        const res = await apiCustomTestnet.getCustomTestnetToken({
-          address: currentAddress,
-          chainId: chain.id,
-          tokenId: id,
-        });
-        if (res) {
-          result = customTestnetTokenToTokenItem(res);
-        }
-      } else {
-        result = await openapi.getToken(currentAddress, chainId, id);
-      }
+      const result: TokenItem | null = await getTokenRealtime(
+        chainId,
+        currentAddress,
+        id,
+      );
       if (result) {
         estimateGasOnChain({
           chainItem: chain,
@@ -1254,7 +1313,7 @@ export function useSendTokenForm({
         !disableBalanceCheck &&
         new BigNumber(formValues.amount || 0).isGreaterThan(
           new BigNumber(result?.raw_amount_hex_str || 0).div(
-            10 ** (result?.decimals || 18),
+            10 ** (result?.decimals || 0),
           ),
         )
       ) {
@@ -1268,14 +1327,7 @@ export function useSendTokenForm({
 
       return result;
     },
-    [
-      putScreenState,
-      formValues.amount,
-      estimateGasOnChain,
-      setRouteParams,
-      putChainToken,
-      t,
-    ],
+    [formValues.amount, estimateGasOnChain, t],
   );
 
   const couldReserveGas = isNativeToken && !screenState.isGnosisSafe;
@@ -1314,9 +1366,13 @@ export function useSendTokenForm({
 
       return gasTokenAmount;
     },
-    [currentToken, handleFieldChange, putScreenState],
+    [currentToken, handleFieldChange],
   );
 
+  const scrollViewRef = useRef<KeyboardAwareScrollView | null>(null);
+  const scrollToBottom = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd?.(true);
+  }, []);
   const handleMaxInfoChanged = useCallback(
     async (input?: { gasLevel: GasLevel }) => {
       if (!currentAccount) {
@@ -1372,7 +1428,7 @@ export function useSendTokenForm({
                   gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
                   data: '0x',
                 },
-                account,
+                account: currentAccount,
               },
               chainItem.enum,
             );
@@ -1413,11 +1469,10 @@ export function useSendTokenForm({
       loadGasListAndResolve,
       couldReserveGas,
       patchFormValues,
-      putScreenState,
+
       estimateGasOnChain,
       chainItem,
       onGasChange,
-      account,
     ],
   );
   const handleGasLevelChanged = useCallback(
@@ -1435,7 +1490,7 @@ export function useSendTokenForm({
         putScreenState({ reserveGasOpen: false });
       }
     },
-    [putScreenState, handleMaxInfoChanged, loadGasListAndResolve],
+    [handleMaxInfoChanged, loadGasListAndResolve],
   );
 
   const handleSlider100 = useCallback(async () => {
@@ -1458,7 +1513,7 @@ export function useSendTokenForm({
     currentToken,
     couldReserveGas,
     patchFormValues,
-    putScreenState,
+
     handleMaxInfoChanged,
     screenState,
   ]);
@@ -1472,7 +1527,11 @@ export function useSendTokenForm({
     // } else {
     //   handleMaxInfoChanged();
     // }
-  }, [putScreenState, handleSlider100]);
+
+    setTimeout(() => {
+      scrollToBottom();
+    }, 300);
+  }, [handleSlider100, scrollToBottom]);
 
   const {
     onChangeSlider,
@@ -1493,8 +1552,8 @@ export function useSendTokenForm({
       if (screenState.showGasReserved) {
         putScreenState({ showGasReserved: false });
       }
-      if (!account) {
-        console.error('[handleCurrentTokenChange] no account');
+      if (!currentAccount) {
+        console.error('[handleCurrentTokenChange] no currentAccount');
       }
       const newToken =
         token.id !== currentToken.id || token.chain !== currentToken.chain;
@@ -1527,23 +1586,21 @@ export function useSendTokenForm({
         isLoading: true,
       });
 
-      if (account) {
+      if (currentAccount) {
         await loadCurrentToken(
           token.id,
           token.chain,
-          account.address,
+          currentAccount.address,
           newToken,
         );
       }
     },
     [
       screenState.showGasReserved,
-      account,
+      currentAccount,
       currentToken.id,
       currentToken.chain,
-      putChainToken,
-      setRouteParams,
-      putScreenState,
+
       patchFormValues,
       loadCurrentToken,
       setSlider,
@@ -1639,11 +1696,13 @@ export function useSendTokenForm({
 
       let nextToken: TokenItem | null = null;
       try {
-        nextToken = await loadCurrentToken(
-          chain.nativeTokenAddress,
-          chain.serverId,
-          account.address,
-        );
+        if (currentAccount?.address) {
+          nextToken = await loadCurrentToken(
+            chain.nativeTokenAddress,
+            chain.serverId,
+            currentAccount?.address,
+          );
+        }
       } catch (error) {
         console.error(error);
       }
@@ -1663,13 +1722,10 @@ export function useSendTokenForm({
       );
     },
     [
-      putScreenState,
-      setRouteParams,
-      putChainToken,
       patchFormValues,
       handleFormValuesChange,
       loadCurrentToken,
-      account.address,
+      currentAccount?.address,
       setSlider,
       setIsDraggingSlider,
     ],
@@ -1798,14 +1854,14 @@ export function useSendTokenForm({
   }, [
     prefetchMiniSigner,
     chainItem?.id,
-    formValues.to,
+    // formValues.to,
     stableAmountValue,
-    formValues.messageDataForSendToEoa,
-    formValues.messageDataForContractCall,
+    // formValues.messageDataForSendToEoa,
+    // formValues.messageDataForContractCall,
     currentAccount?.type,
     chainItem?.isTestnet,
     toAddress,
-    account,
+    currentAccount,
   ]);
 
   useEffect(() => {
@@ -1822,7 +1878,6 @@ export function useSendTokenForm({
       prepareRef.current = prepareDirectSubmitMiniTx(prepareCountRef.current);
     }
   }, [
-    putScreenState,
     isFocused,
     chainItem?.id,
     chainItem?.isTestnet,
@@ -1844,6 +1899,31 @@ export function useSendTokenForm({
     }, [refreshCurrentToken]),
   );
 
+  const svBottomAreaHeight = useSharedValue(220);
+  useAnimatedReaction(
+    () => {
+      return svBottomAreaHeight.value;
+    },
+    (cur, prev) => {
+      if (cur !== prev) {
+        runOnJS(scrollToBottom)();
+      }
+    },
+  );
+  const scrollViewStyle = useAnimatedStyle(() => {
+    return {
+      height: svBottomAreaHeight.value,
+    };
+  });
+
+  const onBottomAreaLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      'worklet';
+      svBottomAreaHeight.value = event.nativeEvent.layout.height;
+    },
+    [svBottomAreaHeight],
+  );
+
   return {
     chainEnum,
     chainItem,
@@ -1857,6 +1937,11 @@ export function useSendTokenForm({
     handleGasLevelChanged,
     handleClickMaxButton,
     handleIgnoreGasFeeChange,
+    onBottomAreaLayout,
+    scrollViewRef,
+    scrollViewStyle,
+    scrollToBottom,
+
     onChangeSlider,
     setSlider,
     slider,
@@ -1915,11 +2000,11 @@ type InternalContext = {
   events: EventEmitter;
   slider: number;
   fns: {
-    putScreenState: (
-      patch:
-        | Partial<SendScreenState>
-        | ((prev: SendScreenState) => Partial<SendScreenState>),
-    ) => void;
+    // putScreenState: (
+    //   patch:
+    //     | Partial<SendScreenState>
+    //     | ((prev: SendScreenState) => Partial<SendScreenState>),
+    // ) => void;
     fetchContactAccounts: () => void;
     disableItemCheck: ITokenCheck;
   };
@@ -1941,6 +2026,8 @@ type InternalContext = {
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
     onChangeSlider: (v: number, syncAmount?: boolean) => void;
     setSlider: (v: number) => void;
+    onBottomAreaLayout: (layout: LayoutChangeEvent) => void;
+    onGasInfoDebouncedLoaded: () => void;
   };
 };
 const SendTokenInternalContext = React.createContext<InternalContext>({
@@ -1966,7 +2053,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   events: null as any,
   slider: 0,
   fns: {
-    putScreenState: () => {},
+    // putScreenState: () => { },
     fetchContactAccounts: () => {},
     disableItemCheck: () => ({
       disable: false,
@@ -1983,6 +2070,8 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     handleIgnoreGasFeeChange: () => {},
     onChangeSlider: () => {},
     setSlider: () => {},
+    onBottomAreaLayout: () => {},
+    onGasInfoDebouncedLoaded: () => {},
   },
 });
 

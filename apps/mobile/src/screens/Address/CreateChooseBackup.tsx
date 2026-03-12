@@ -3,7 +3,6 @@ import React from 'react';
 
 import {
   View,
-  Text,
   TouchableWithoutFeedback,
   Keyboard,
   StyleSheet,
@@ -31,6 +30,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { IS_IOS } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Text } from '@/components/Typography';
 
 function MainListBlocks() {
   const { t } = useTranslation();

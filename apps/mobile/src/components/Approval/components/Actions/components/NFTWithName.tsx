@@ -8,7 +8,6 @@ import { TokenLabel } from './Values';
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TextStyle,
   TouchableOpacity,
   View,
@@ -20,6 +19,7 @@ import { useThemeColors } from '@/hooks/theme';
 import ModalPreviewNFTItem from '@/components/ModalPreviewNFTItem';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { ModalLayouts } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports */
 import { Text as RNText, TextInput as RNTextInput } from 'react-native';
 import {
   Text as RNGHText,

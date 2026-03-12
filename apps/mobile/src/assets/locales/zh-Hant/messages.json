@@ -1632,14 +1632,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live：Ledger 官方 HD 路徑。在前三個錢包中，有在鏈上使用的錢包。",
-            "legacy": "舊版：MEW / Mycrypto 使用的 HD 路徑。在前三個錢包中，有在鏈上使用的錢包。",
-            "bip44": "BIP44 標準：由 BIP44 協議定義的 HDpath。在前 3 個錢包中，有在鏈上使用的錢包。"
+            "ledgerLive": "Ledger Live: Ledger 官方 HD 路徑。",
+            "legacy": "傳統：MEW / Mycrypto 使用的 HD 路徑。",
+            "bip44": "BIP44 標準：由 BIP44 協議定義的 HDpath。"
           },
           "hdPathTypeNoChain": {
-            "bip44": "BIP44 標準：由 BIP44 協議定義的 HD 路徑。在前三個錢包中，沒有在鏈上使用的錢包。",
-            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。在前 3 個錢包中，沒有在鏈上使用的錢包。",
-            "legacy": "遺留：MEW / Mycrypto 使用的 HD 路徑。在前三個錢包中，沒有在鏈上使用的錢包。"
+            "ledgerLive": "Ledger Live: Ledger 官方 HD 路徑。",
+            "legacy": "Legacy: MEW / Mycrypto 使用的 HD 路径。",
+            "bip44": "BIP44 標準：由 BIP44 協議定義的 HD 路徑。"
           }
         },
         "qrCode": {
@@ -2179,8 +2179,7 @@
       "clearBrowserData": "清除瀏覽器數據",
       "searchCurrency": "搜尋貨幣",
       "currency": "貨幣",
-      "screenshotReportSwitch": "截圖以報告錯誤",
-      "transactionNotification": "Txn 通知 (Beta)"
+      "screenshotReportSwitch": "截圖以報告錯誤"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -2783,7 +2782,8 @@
         "takeProfitWhenPriceAbove": "當價格高於時獲利了結",
         "minMargin": "最低保证金为 {{amount}}",
         "maxMargin": "最高保证金为 {{amount}}",
-        "upTo": "高達"
+        "upTo": "高達",
+        "onlyIsolated": "此代幣只支援孤立保證金。"
       },
       "PerpsOpenPositionCheckPopup": {
         "size": "大小",
@@ -3107,7 +3107,8 @@
         "lpRiskWarning": "換幣後健康指數過低。您的頭寸將承擔更高的清算風險。",
         "borrowBalance": "借入餘額",
         "lpDangerWarning": "進行此次交換後，您的健康因子將會非常低，可能導致清算。請選擇其他資產或減少交換金額以保持安全。",
-        "priceImpactTips": "高價格影響 ({{lostValue}})。此路徑可能因流動性低或訂單規模小而返回更多。"
+        "priceImpactTips": "高價格影響 ({{lostValue}})。此路徑可能因流動性低或訂單規模小而返回更多。",
+        "maxLtvWarning": "抵押品不足以覆盖新的借款头寸。钱包必须保留借款能力以执行债务切换。"
       },
       "hfTips": {
         "more": "更多",
@@ -3140,7 +3141,8 @@
           "assets": "代幣",
           "balance": "餘額"
         },
-        "title": "選擇還款代幣"
+        "title": "選擇還款代幣",
+        "zeroLtvCollateralTips": "您擁有以下 LTV = 0 的抵押品，因此只能根據抵押還款規則先用這些抵押品進行還款。"
       },
       "dappSelect": {
         "title": "選擇借貸提供者"

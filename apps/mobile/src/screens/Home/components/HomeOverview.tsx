@@ -20,7 +20,11 @@ import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
 import RcIconMemeCC from '@/assets2024/icons/home/IconMemeCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
@@ -30,10 +34,11 @@ import React, {
   useState,
 } from 'react';
 import {
+  ActivityIndicator,
+  AppState,
   Dimensions,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
   ViewProps,
@@ -44,12 +49,15 @@ import Animated, {
   clamp,
   Extrapolate,
   interpolate,
+  makeMutable,
   runOnJS,
+  runOnUI,
   scrollTo,
   useAnimatedReaction,
   useAnimatedRef,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -125,7 +133,10 @@ import {
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { ScrollHandlerProps } from '@/components/customized/react-native-collapsible-tab-view/hooks';
 import { triggerImpact } from '@/utils/common';
-import { WorkletFunction } from 'react-native-reanimated/lib/typescript/commonTypes';
+import {
+  SharedValue,
+  WorkletFunction,
+} from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
@@ -133,6 +144,20 @@ import { PredictBadge } from './PredicBadge';
 import { Top3MemeBadge } from '@/screens/Meme/components/Top3MemeBadge';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
+import { useMemoizedFn } from 'ahooks';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import { sleep } from '@/utils/async';
+import balanceStore from '@/store/balance';
+import { getTop10MyAccounts } from '@/core/apis/account';
+import { isEqual } from 'lodash';
+import {
+  pulldownRefreshSizes,
+  RefreshPlaceholderIOS,
+  setPulldownRefreshStage,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+  usePulldownRefreshStyles,
+} from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import { Text } from '@/components/Typography';
 
 function couldDoRefresh() {
   return apisHomeTabIndex.isHomeAtFirstTab();
@@ -198,7 +223,18 @@ const swipeUpViewHandlers = {
   }) as ViewProps['onLayout'] & object,
 };
 
-const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
+const homeGestureConfs = {
+  activeY: Math.min(
+    8,
+    Math.round(Math.floor(getPullThreshold(scrHeight) * 0.1)),
+  ),
+};
+
+const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
+  onRefreshOnJs: prop_onRefreshOnJs,
+}: {
+  onRefreshOnJs?: (ctx?: {}) => Promise<void>;
+} = {}) => {
   const scrollableRef = useAnimatedRef<T>();
   const scrollY = useCurrentTabScrollY();
 
@@ -227,7 +263,34 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
     [scrollableRef, scrollableStatus],
   );
 
-  const [iosBounces, setIosBounces] = useState(false);
+  const pullDistance = useSharedValue(0);
+  const svIsRefreshing = useSharedValue(false);
+
+  const onRefreshOnJs = useMemoizedFn(async () => {
+    await prop_onRefreshOnJs?.({});
+  });
+
+  useEffect(() => {
+    const remove = balanceStore.subscribe(async (cur, prev) => {
+      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) return;
+      const { top10Addresses } = await getTop10MyAccounts();
+      const isTop10BalanceLoading = cur.getIsTop10BalanceLoading(
+        top10Addresses,
+        cur.isLoadingByAddress,
+      ).isTop10BalanceLoading;
+
+      runOnUI(setPulldownRefreshStage)({
+        state: isTop10BalanceLoading ? 'refreshing' : 'finished',
+        svIsRefreshing,
+        pullDistance,
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+      });
+    });
+
+    return () => {
+      remove();
+    };
+  }, [svIsRefreshing, pullDistance]);
 
   useAnimatedReaction(
     () => translateY.value,
@@ -247,10 +310,6 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
         [0, 1],
         Extrapolate.CLAMP,
       );
-
-      if (IS_IOS) {
-        runOnJS(setIosBounces)(translateYValue >= 0);
-      }
     },
   );
 
@@ -273,93 +332,139 @@ const useHomeAnimation = <T extends ScrollView | RNGHScrollView>() => {
       //   event.nativeEvent,
       // );
     }, []),
-    onScroll: useCallback<
-      ScrollHandlerProps['onScroll'] & object
-    >(() => {}, []),
+    onScroll: useCallback<ScrollHandlerProps['onScroll'] & object>(event => {
+      // console.debug(
+      //   '[onScrollHandlers] onScroll:: event.nativeEvent',
+      //   event.nativeEvent,
+      // );
+    }, []),
+    onAnimatedScrollEndDrag: useCallback<
+      ScrollHandlerProps['onAnimatedScrollEndDrag'] & object
+    >(event => {
+      // console.debug(
+      //   '[onScrollHandlers] onAnimatedScrollEndDrag:: event.nativeEvent',
+      //   event.nativeEvent,
+      // );
+    }, []),
   };
 
   const startValues = useSharedValue({
     restScrollOffset: 0,
-    hasImpactOnUpdate: false,
+    hasImpactOnPandown: false,
+    hasImpactOnPanup: false,
   });
 
-  const pullThreshold = getPullThreshold(scrHeight);
-  const activeY = Math.min(8, Math.round(Math.floor(pullThreshold * 0.1)));
   const panGestureRef = useRef(
     Gesture.Pan()
       .shouldCancelWhenOutside(false)
-      .activeOffsetY(-activeY)
-      // .enabled(false)
+      .activeOffsetY([-homeGestureConfs.activeY, homeGestureConfs.activeY])
       .maxPointers(1)
       .onStart(() => {
-        // translateY.value = 0;
-        // isExpanded.value = false;
         startValues.value.restScrollOffset = getIsAtBottom(
           scrollY.value,
         ).restScrollOffset;
       })
       .onUpdate(event => {
-        const { isAtBottom } = getIsAtBottom(scrollY.value, translateY.value);
+        panUp: {
+          const { isAtBottom } = getIsAtBottom(scrollY.value, translateY.value);
+          const restScrollOffset = startValues.value.restScrollOffset;
 
-        translateY.value =
-          event.translationY + startValues.value.restScrollOffset;
-        if (isAtBottom) {
-          scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
-        } else {
-          scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+          translateY.value = event.translationY + restScrollOffset;
+          if (isAtBottom) {
+            scrollableStatus.value = SCROLLABLE_STATUS.LOCKED;
+          } else {
+            scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+          }
+
+          if (hasOverThreshold() && event.translationY < 0) {
+            if (IS_ANDROID) {
+              scrollToEnd(true, true);
+            }
+            !startValues.value.hasImpactOnPandown && runOnJS(triggerImpact)();
+            startValues.value.hasImpactOnPandown = true;
+          }
         }
 
-        if (hasOverThreshold() && event.translationY < 0) {
-          if (IS_ANDROID) {
-            scrollToEnd(true, true);
+        pullRefresh: {
+          if (
+            SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            !svIsRefreshing.value
+          ) {
+            pullDistance.value = Math.max(0, event.translationY);
+            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
+              !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
+              startValues.value.hasImpactOnPanup = true;
+            }
           }
-          !startValues.value.hasImpactOnUpdate && runOnJS(triggerImpact)();
-          startValues.value.hasImpactOnUpdate = true;
         }
       })
       .onEnd(() => {
-        const hasImpactOnUpdate = startValues.value.hasImpactOnUpdate;
+        panUp: {
+          const hasImpactOnPandown = startValues.value.hasImpactOnPandown;
 
-        if (hasOverThreshold()) {
-          translateY.value = withTiming(-scrHeight, undefined, () => {
-            scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-          });
-          !hasImpactOnUpdate && runOnJS(triggerImpact)();
-        } else {
-          translateY.value = withTiming(0, undefined, () => {
-            scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-          });
+          if (hasOverThreshold()) {
+            translateY.value = withTiming(-scrHeight, undefined, () => {
+              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+            });
+            !hasImpactOnPandown && runOnJS(triggerImpact)();
+          } else {
+            translateY.value = withTiming(0, undefined, () => {
+              scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
+            });
+          }
+          startValues.value.hasImpactOnPandown = false;
         }
-        startValues.value.hasImpactOnUpdate = false;
+
+        pullRefresh: {
+          const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
+          if (
+            SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            !svIsRefreshing.value
+          ) {
+            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
+              // svIsRefreshing.value = true;
+              setPulldownRefreshStage({
+                state: 'refreshing',
+                svIsRefreshing,
+                pullDistance,
+                indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+              });
+              runOnJS(onRefreshOnJs)();
+              !hasImpactOnPanup && runOnJS(triggerImpact)();
+            } else {
+              setPulldownRefreshStage({
+                state: 'finished',
+                svIsRefreshing,
+                pullDistance,
+                indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+              });
+            }
+            startValues.value.hasImpactOnPanup = false;
+          }
+        }
       }),
   );
 
-  const mainStyle = useAnimatedStyle(() => {
-    return {
-      // overflow: 'hidden',
-      transform: [
-        {
-          translateY: Math.min(0, translateY.value),
-        },
-      ],
-    };
-  });
-
-  const tabScrollViewBounces = IS_IOS && iosBounces;
+  const isRefreshing = useValueFromSharedValue(svIsRefreshing);
 
   return {
-    tabScrollViewBounces,
     panGestureRef,
 
     onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
     scrollableEnabled,
-    mainStyle,
+
+    isRefreshing,
+    pullDistance,
+    svIsRefreshing,
   };
 };
 
 const getStyle = createGetStyles2024(
+  {
+    reanimatedStyles: {},
+  },
   ({ colors2024, isLight, safeAreaInsets }) => ({
     main: {
       height: '100%',
@@ -373,32 +478,20 @@ const getStyle = createGetStyles2024(
     scroll: {
       flex: 1,
       paddingTop: 0,
-      marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-      // marginBottom: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
-      // ...makeDebugBorder('yellow'),
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['green-light-2'],
-      // }),
-    },
-    scrollTopPlaceholder: {
-      height: 0,
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: colors2024['green-light-2'],
-      // }),
     },
     scrollContainer: {
       flexGrow: 1,
       minHeight: '100%',
-      // marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
-      // marginTop: -HOME_TOP_HEADER_SIZES.tabItemHeight - HEADER_MT_OFFSET,
-      // paddingBottom:
-      //   IS_ANDROID ? Math.max(safeAreaInsets.bottom, 16)
-      //     : safeAreaInsets.bottom,
       paddingBottom: getScrollContainerPb(safeAreaInsets.bottom),
       // ...makeDebugBorder('orange'),
     },
+    iosAbsIndicatorOffset: {
+      paddingTop: 0,
+    },
     scrollViewInner: {
-      marginTop: -HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2,
+      marginTop: !SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING
+        ? HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset
+        : 0,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
@@ -505,7 +598,7 @@ const getStyle = createGetStyles2024(
 export const HomeOverview = React.memo(() => {
   const navigation = useRabbyAppNavigation();
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, reanimatedStyles, colors2024 } = useTheme2024({
     getStyle,
   });
   const { pendingTxCount, historyCount } = useHomeHistoryStore();
@@ -716,11 +809,11 @@ export const HomeOverview = React.memo(() => {
     }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
   );
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     if (!couldDoRefresh()) return;
 
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
-    Promise.all([
+    return Promise.all([
       // force update balance from server api
       triggerUpdate(true).then(balanceAccounts => {
         refresh24hAssets({ force: true, balanceAccounts });
@@ -921,14 +1014,51 @@ export const HomeOverview = React.memo(() => {
   );
 
   const {
-    tabScrollViewBounces,
-    mainStyle,
     onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
     scrollableEnabled,
     panGestureRef,
-  } = useHomeAnimation<RNGHScrollView>();
+
+    isRefreshing,
+    pullDistance,
+    svIsRefreshing,
+  } = usePulldownRefreshGesture<RNGHScrollView>({
+    onRefreshOnJs: async ctx => {
+      'worklet';
+      await Promise.race([onRefresh(), sleep(3000)]);
+    },
+  });
+
+  const pulldownRefreshReturns = usePulldownRefreshStyles({
+    indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+    pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+    states: { pullDistance, svIsRefreshing },
+    // onRefreshOnJs: onRefresh,
+  });
+
+  const mainStyle = useAnimatedStyle(() => {
+    return {
+      // overflow: 'hidden',
+      transform: [
+        {
+          // translateY: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset * 2, translateY.value),
+          translateY: Math.min(0, translateY.value),
+        },
+      ],
+    };
+  });
+
+  const refreshIndicatorStyle = useAnimatedStyle(() => {
+    return {
+      paddingTop: interpolate(
+        pullDistance.value,
+        [0, pulldownRefreshSizes.homeHeaderHeight],
+        [HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset, 0],
+        Extrapolate.CLAMP,
+      ),
+    };
+  });
 
   useRendererDetect({ name: 'MultiAddressHome::HomeOverview' });
 
@@ -941,7 +1071,7 @@ export const HomeOverview = React.memo(() => {
             showsVerticalScrollIndicator={false}
             style={[styles.scroll, { flex: undefined }]}
             contentContainerStyle={[styles.scrollContainer]}
-            bounces={tabScrollViewBounces}
+            bounces={false}
             overScrollMode={'never'}
             scrollEventThrottle={16}
             onContentSizeChange={tabsScrollHandlers.onContentSizeChange}
@@ -949,14 +1079,25 @@ export const HomeOverview = React.memo(() => {
             onAnimatedScrollBeginDrag={
               onScrollHandlers.onAnimatedScrollBeginDrag
             }
+            onAnimatedScrollEndDrag={onScrollHandlers.onAnimatedScrollEndDrag}
             onScroll={onScrollHandlers.onScroll}
             scrollableEnabled={scrollableEnabled}
             simultaneousHandlers={[panGestureRef]}
-            refreshControl={
-              <RNGHRefreshControl refreshing={false} onRefresh={onRefresh} />
-            }>
-            <View style={styles.scrollTopPlaceholder} />
-            <View style={styles.scrollViewInner}>
+            {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
+              refreshControl: (
+                <RNGHRefreshControl
+                  style={{ paddingHorizontal: 16 }}
+                  refreshing={isRefreshing}
+                  onRefresh={onRefresh}
+                />
+              ),
+            })}>
+            <RefreshPlaceholderIOS
+              hooksReturn={pulldownRefreshReturns}
+              animatedStyle={refreshIndicatorStyle}
+              animatedIndicatorStyle={styles.iosAbsIndicatorOffset}
+            />
+            <Animated.View style={[styles.scrollViewInner]}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />
 
               <HomeCenterArea />
@@ -964,13 +1105,38 @@ export const HomeOverview = React.memo(() => {
                 <View style={styles.gridItemsWrap}>
                   {MENU_ARR.map((el, index) => {
                     return (
-                      <HomeMenuItem
+                      <FastTouchable
+                        style={StyleSheet.flatten([
+                          styles.gridItem,
+                          { width: itemWidth },
+                        ])}
                         key={index}
-                        el={el}
-                        itemWidth={itemWidth}
-                        onPress={handleClickMenu}
-                        renderBadge={generateCustomBadgeIcon}
-                      />
+                        onPress={() => {
+                          console.debug('[perf] touched menu', el.key);
+                          requestAnimationFrame(() => {
+                            handleClickMenu(el.key);
+                          });
+                          matomoRequestEvent({
+                            category: 'Click_Services',
+                            action: `Click_${el.key}`,
+                          });
+                        }}>
+                        <View style={styles.badgeWrapper}>
+                          <View style={styles.iconWrapper}>
+                            <el.icon
+                              width={28}
+                              height={28}
+                              color={
+                                el.color || colors2024['brand-default-icon']
+                              }
+                            />
+                          </View>
+                          <View style={styles.rightBadgeWrapper}>
+                            {generateCustomBadgeIcon(el)}
+                          </View>
+                        </View>
+                        <Text style={styles.gridText}>{el.title}</Text>
+                      </FastTouchable>
                     );
                   })}
                 </View>
@@ -986,7 +1152,7 @@ export const HomeOverview = React.memo(() => {
                   </Text>
                 </View>
               </View>
-            </View>
+            </Animated.View>
           </TabsScrollView>
         </GestureDetector>
       </Animated.View>

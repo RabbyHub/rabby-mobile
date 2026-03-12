@@ -21,7 +21,7 @@ import {
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, orderBy, debounce } from 'lodash';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -41,6 +41,7 @@ import {
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { makeTxPageBackgroundColors } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 const _PAGE_COUNT = 200;
 
@@ -328,7 +329,7 @@ function LendingHistory(): JSX.Element {
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
-      <View style={{ paddingTop: 0, position: 'relative' }}>
+      <View style={{ paddingTop: 0, flex: 1, position: 'relative' }}>
         <>
           <HistoryList
             ref={historyListRef}

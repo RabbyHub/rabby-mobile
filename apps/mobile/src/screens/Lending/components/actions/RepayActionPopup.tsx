@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
@@ -65,6 +65,8 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { IAvailableRepayToken } from '../RepayTokenModal';
 import { stats } from '@/utils/stats';
+import { isZeroAmount } from '../../utils/number';
+import { Text } from '@/components/Typography';
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -173,7 +175,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   );
 
   const afterHF = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item =>
@@ -205,7 +207,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   ]);
 
   const checkApproveStatus = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount || isAtTokenRepay) {
+    if (!amount || isZeroAmount(amount) || !currentAccount || isAtTokenRepay) {
       setNeedApprove(false);
       return;
     }
@@ -257,7 +259,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   ]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount) {
       setRepayTx(null);
       setApproveTxs(null);
       return;
@@ -432,7 +434,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         !currentAccount ||
         !txsForMiniApproval?.length ||
         !amount ||
-        amount === '0'
+        isZeroAmount(amount)
       ) {
         return;
       }
@@ -616,7 +618,12 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   }, [buildTransactions]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
+    if (
+      currentAccount &&
+      canShowDirectSubmit &&
+      amount &&
+      !isZeroAmount(amount)
+    ) {
       prefetchMiniSigner({
         txs: txsForMiniApproval?.length ? txsForMiniApproval : [],
         synGasHeaderInfo: true,
@@ -684,7 +691,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             afterHF={afterHF}
           />
 
-          {!!amount && amount !== '0' && canShowDirectSubmit && (
+          {!!amount && !isZeroAmount(amount) && canShowDirectSubmit && (
             <View style={styles.gasPreContainer}>
               <DirectSignGasInfo
                 supportDirectSign={true}
@@ -716,7 +723,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             onFinished={() => handleRepay()}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !txsForMiniApproval?.length ||
               isLoading ||
               !currentAccount ||
@@ -740,7 +747,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             loading={isLoading}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !txsForMiniApproval?.length ||
               isLoading ||
               !currentAccount
@@ -782,7 +789,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const defaultCollateralToken = useMemo(() => {
-    const displayReserve = displayPoolReserves
+    const collateralTokens = displayPoolReserves
       .filter(
         item =>
           !isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
@@ -791,7 +798,22 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         return BigNumber(b.underlyingBalanceUSD).comparedTo(
           a.underlyingBalanceUSD,
         );
-      })[0];
+      });
+    const hasLtvZeroCollateral = collateralTokens
+      .filter(
+        item =>
+          !!item.underlyingBalance &&
+          item.underlyingBalance !== '0' &&
+          item.usageAsCollateralEnabledOnUser,
+      )
+      .some(item => item.reserve.baseLTVasCollateral === '0');
+    // 如果有ltv 为 0的抵押物，必须优先还款
+    const displayReserve = hasLtvZeroCollateral
+      ? collateralTokens.filter(
+          item => item.reserve.baseLTVasCollateral === '0',
+        )?.[0]
+      : collateralTokens?.[0];
+
     const r = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(
         displayReserve?.underlyingAsset || '',

@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { Text } from '@/components/Typography';
 
 type ChainItem = {
   chainEnum: CHAINS_ENUM | string;
