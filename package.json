@@ -75,7 +75,7 @@
     "react-native-webview@13.10.5": "patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch",
     "react-use@17.4.2": "patch:react-use@npm%3A17.4.2#./.yarn/patches/react-use-npm-17.4.2-d0e8220eaa.patch",
     "typeorm@^0.3.20": "patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch",
-    "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch",
+    "zeego@1.10.0": "patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=9bb0a3&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch",
     "react-native-bundle-visualizer@3.1.0": "patch:react-native-bundle-visualizer@npm%3A3.1.0#./.yarn/patches/react-native-bundle-visualizer-npm-3.1.0-6744c68ec9.patch",
     "react-native-ble-plx": "3.5.0",
     "@debank/common@^0.3.54": "patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch",

@@ -1,0 +1,60 @@
+diff --git a/src/menu/children.ts b/src/menu/children.ts
+index 40f5bbc3d1834321bc204dac629322827a6a0ee5..5225509981289ddc86cc32bf95e76cfc354155cc 100644
+--- a/src/menu/children.ts
++++ b/src/menu/children.ts
+@@ -5,6 +5,7 @@
+ import React, {
+   ReactNode,
+   Children,
++  // @ts-expect-error - ReactChild removed in React 18
+   ReactChild,
+   isValidElement,
+   cloneElement,
+@@ -86,6 +87,7 @@ export const pickChildren = <Props = any>(
+ }
+ 
+ export const isInstanceOfComponent = <Props>(
++  // @ts-expect-error - ReactText removed in React 18
+   element: React.ReactElement | React.ReactText | undefined,
+   targetElement: React.ComponentType<Props> | React.ElementType<Props>
+ ): element is NonNullable<React.ReactElement<Props>> => {
+diff --git a/src/menu/create-android-menu/index.android.tsx b/src/menu/create-android-menu/index.android.tsx
+index 980872c0347ef28f30786840239126821be4915e..7cfd22c3290c099ddec0e75230bd02f2ba02e9b4 100644
+--- a/src/menu/create-android-menu/index.android.tsx
++++ b/src/menu/create-android-menu/index.android.tsx
+@@ -37,6 +37,7 @@ const createAndroidMenu = (Menu: 'ContextMenu' | 'DropdownMenu') => {
+   const Trigger = create(({ children, style, asChild }: MenuTriggerProps) => {
+     if (asChild) {
+       return cloneElement(children, {
++        // @ts-expect-error - style type mismatch in React 18
+         style,
+       })
+     }
+diff --git a/src/menu/create-ios-menu/index.ios.tsx b/src/menu/create-ios-menu/index.ios.tsx
+index 82da3896fd094d617ba6bbc78951b88f5232361e..ba2ccb397aa4798d6f3aefb0366c95d856379b0d 100644
+--- a/src/menu/create-ios-menu/index.ios.tsx
++++ b/src/menu/create-ios-menu/index.ios.tsx
+@@ -43,6 +43,7 @@ const createIosMenu = (Menu: 'ContextMenu' | 'DropdownMenu') => {
+   const Trigger = create(({ children, style, asChild }: MenuTriggerProps) => {
+     if (asChild) {
+       return cloneElement(children, {
++        // @ts-expect-error - style type mismatch in React 18
+         style,
+       })
+     }
+@@ -145,6 +146,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+     return <></>
+   }, 'Preview')
+ 
++  // @ts-expect-error - defaultProps not available on FC in React 18
+   Preview.defaultProps = {
+     isResizeAnimated: true,
+   }
+@@ -499,6 +501,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+ 
+     const auxiliaryProps = auxiliary?.[0]?.props
+ 
++    // @ts-expect-error - useRef requires initial value in strict mode
+     const menuRef = useRef<ContextMenuButton>()
+ 
+     return (
