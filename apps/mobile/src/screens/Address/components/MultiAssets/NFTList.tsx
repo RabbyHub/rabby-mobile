@@ -323,7 +323,7 @@ export const NFTList = () => {
         windowSize={15}
         key={isFocused ? 'nft-focused' : 'nft-unfocused'}
         maxToRenderPerBatch={15}
-        removeClippedSubviews
+        // removeClippedSubviews
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <RefreshPlaceholderIOS
