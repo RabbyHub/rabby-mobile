@@ -71,7 +71,7 @@ window.utils = {
       if (tickMarkType === 0) return String(d.getFullYear());
       if (tickMarkType === 1) return mon + " '" + yr;
       if (tickMarkType === 2) return day + ' ' + mon;
-      if (tickMarkType === 4) return hours + ':' + minutes;
+      if (tickMarkType >= 3) return hours + ':' + minutes;
       return day + ' ' + mon;
     }
     const bd = t;
