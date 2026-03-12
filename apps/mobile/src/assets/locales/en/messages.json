@@ -2361,6 +2361,9 @@
       }
     },
     "market": {
+      "tokenHeader": {
+        "name": "Name"
+      },
       "tabs": {
         "watchlist": "Watchlist",
         "memecoin": "Memecoin",

@@ -15,6 +15,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { memeItemToITokenItem } from '@/utils/token';
 import { useIsFocused } from '@react-navigation/native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useTranslation } from 'react-i18next';
 
 import TokenHeader, { SortState } from '../../Meme/components/TokenHeader';
 import {
@@ -47,6 +48,7 @@ export function MarketCategoryContent({
   headerSpacerHeight?: number;
 }) {
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
   const [volumeSort, setVolumeSort] = useState<SortState>('default');
   const [fdvSort, setFdvSort] = useState<SortState>('default');
   const [changeSort, setChangeSort] = useState<SortState>('default');
@@ -54,6 +56,11 @@ export function MarketCategoryContent({
   const supportedSortFields = useMemo(
     () => new Set(sortFields || []),
     [sortFields],
+  );
+  const leftHeaderLabel = useMemo(
+    () =>
+      categoryId === 'meme' ? undefined : t('page.market.tokenHeader.name'),
+    [categoryId, t],
   );
 
   const { orderBy, order } = useMemo(() => {
@@ -243,6 +250,7 @@ export function MarketCategoryContent({
         showVolumeSort={supportedSortFields.has('volume_24h')}
         showFdvSort={supportedSortFields.has('fdv')}
         showChangeSort={supportedSortFields.has('price_change_24h')}
+        leftLabel={leftHeaderLabel}
       />
       <FlatList
         data={list}
