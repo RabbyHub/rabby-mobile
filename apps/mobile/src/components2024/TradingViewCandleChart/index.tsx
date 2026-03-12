@@ -122,15 +122,22 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
     const [webViewError, setWebViewError] = useState<string | null>(null);
     const [isChartReady, setIsChartReady] = useState(false);
+    const [webViewKey, setWebViewKey] = useState(0);
     const { t } = useTranslation();
 
-    // Handle WebView content process termination (iOS)
-    const handleContentProcessDidTerminate = useCallback(() => {
-      webViewRef.current?.reload();
+    // Force remount WebView (reload() doesn't work with source={{ html }})
+    const remountWebView = useCallback(() => {
+      setWebViewKey(k => k + 1);
       setIsChartReady(false);
+      setWebViewError(null);
     }, []);
 
-    // Reload WebView when app returns to foreground after being background for 30+ seconds
+    // Handle WebView content process termination
+    const handleContentProcessDidTerminate = useCallback(() => {
+      remountWebView();
+    }, [remountWebView]);
+
+    // Remount WebView when app returns to foreground after being background for 30+ seconds
     useEffect(() => {
       let appStateRef = AppState.currentState;
       let backgroundTimestamp = 0;
@@ -144,14 +151,13 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
             nextAppState === 'active' &&
             Date.now() - backgroundTimestamp > 30000
           ) {
-            webViewRef.current?.reload();
-            setIsChartReady(false);
+            remountWebView();
           }
           appStateRef = nextAppState;
         },
       );
       return () => subscription.remove();
-    }, []);
+    }, [remountWebView]);
 
     // Handle WebView errors
     const handleWebViewError = useCallback(
@@ -321,6 +327,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           { height, width: '100%', minHeight: height },
         ]}>
         <WebView
+          key={webViewKey}
           ref={webViewRef}
           style={styles.webView}
           {...(IS_IOS && { allowFileAccess: true })}
