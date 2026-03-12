@@ -33,7 +33,7 @@ import {
   NftItemWithCollection,
   varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
 import {
@@ -267,11 +267,13 @@ export const NFTList = () => {
     }
   }, [checkIsExpireAndUpdate, triggerUpdate, nftRefresh]);
 
+  const scrollY = useCurrentTabScrollY();
   const {
     panGestureRef,
     isRefreshing,
     svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   } = usePulldownRefreshGesture({
+    scrollViewYValue: scrollY,
     onJsPulldownRefresh: ctx => {
       ctx.svIsManualRefreshing.value = true;
       return onRefresh();

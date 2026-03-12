@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -263,11 +263,13 @@ export const ProtocolList = () => {
     }
   }, [triggerUpdate, myTop10Addresses]);
 
+  const scrollY = useCurrentTabScrollY();
   const {
     panGestureRef,
     isRefreshing,
     svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   } = usePulldownRefreshGesture({
+    scrollViewYValue: scrollY,
     onJsPulldownRefresh: ctx => {
       ctx.svIsManualRefreshing.value = true;
       return onRefresh();

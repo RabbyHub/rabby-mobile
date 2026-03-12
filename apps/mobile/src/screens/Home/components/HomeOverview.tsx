@@ -346,6 +346,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   };
 
   const startValues = useSharedValue({
+    startedAtTop: scrollY.value <= 5,
     restScrollOffset: 0,
     hasImpactOnPandown: false,
     hasImpactOnPanup: false,
@@ -360,6 +361,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         startValues.value.restScrollOffset = getIsAtBottom(
           scrollY.value,
         ).restScrollOffset;
+        startValues.value.startedAtTop = scrollY.value <= 5;
       })
       .onUpdate(event => {
         panUp: {
@@ -385,6 +387,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         pullRefresh: {
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
@@ -417,6 +420,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             if (isOverPulldownRefreshThreshold(pullDistance.value)) {

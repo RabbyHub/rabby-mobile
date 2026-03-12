@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListRenderItem, View, Dimensions } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
@@ -46,6 +46,7 @@ import {
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -412,11 +413,13 @@ export const TokenList = () => {
     return item.type;
   }, []);
 
+  const scrollY = useCurrentTabScrollY();
   const {
     panGestureRef,
     isRefreshing,
     svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   } = usePulldownRefreshGesture({
+    scrollViewYValue: scrollY,
     onJsPulldownRefresh: ctx => {
       ctx.svIsManualRefreshing.value = true;
       return onRefresh();

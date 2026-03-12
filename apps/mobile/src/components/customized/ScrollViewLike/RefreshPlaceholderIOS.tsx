@@ -68,10 +68,12 @@ export type OnRefreshOnJs = (ctx: {
 export const usePulldownRefreshGesture = <
   T extends ScrollView | RNGHScrollView | RNGHFlatList,
 >({
+  scrollViewYValue,
   onJsPulldownRefresh: prop_onJsPulldownRefresh,
 }: {
+  scrollViewYValue: SharedValue<number>;
   onJsPulldownRefresh?: OnRefreshOnJs;
-} = {}) => {
+}) => {
   const { pullDistance, svIsRefreshing, svIsManualRefreshing } =
     useIOSPulldownRefreshStates();
 
@@ -80,6 +82,7 @@ export const usePulldownRefreshGesture = <
   });
 
   const startValues = useSharedValue({
+    startedAtTop: scrollViewYValue.value <= 5,
     hasImpactOnPanup: false,
   });
 
@@ -88,11 +91,14 @@ export const usePulldownRefreshGesture = <
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-8, 8])
       .maxPointers(1)
-      .onStart(() => {})
+      .onStart(event => {
+        startValues.value.startedAtTop = scrollViewYValue.value <= 5;
+      })
       .onUpdate(event => {
         pullRefresh: {
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
@@ -109,6 +115,7 @@ export const usePulldownRefreshGesture = <
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             if (isOverPulldownRefreshThreshold(pullDistance.value)) {
