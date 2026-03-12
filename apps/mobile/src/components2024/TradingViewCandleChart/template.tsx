@@ -269,7 +269,7 @@ export const createTradingViewChartTemplate = (
               },
               localization: {
                 priceFormatter: window?.utils?.formatPrice,
-                dateFormat: window?.utils?.formatTime,
+                timeFormatter: window?.utils?.formatTime,
               },
               grid: {
                 vertLines: { color: window.colors.border },
