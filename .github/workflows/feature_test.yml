@@ -70,7 +70,7 @@ jobs:
       - ${{ matrix.host }}
       - ${{ matrix.machine_loc }}
     env:
-      NODE_OPTIONS: '--max_old_space_size=16384'
+      NODE_OPTIONS: '--max_old_space_size=20480'
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
       SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
