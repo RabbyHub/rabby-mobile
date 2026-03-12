@@ -195,6 +195,7 @@ echo ""
 echo "[deploy-android] start sync..."
 
 if [ "$REALLY_UPLOAD" == "true" ]; then
+  set -x
   echo "[deploy-android] will be backup at $backup_s3_dir (not public)"
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
@@ -209,6 +210,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
     echo "[deploy-android] will public as $apk_url"
     aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
   fi
+  set +x
 
   echo "";
   if [ $buildchannel != "appstore" ]; then
