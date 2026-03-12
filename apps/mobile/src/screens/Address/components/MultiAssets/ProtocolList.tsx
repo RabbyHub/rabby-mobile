@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -263,11 +263,13 @@ export const ProtocolList = () => {
     }
   }, [triggerUpdate, myTop10Addresses]);
 
+  const scrollY = useCurrentTabScrollY();
   const {
     panGestureRef,
     isRefreshing,
     svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   } = usePulldownRefreshGesture({
+    scrollViewYValue: scrollY,
     onJsPulldownRefresh: ctx => {
       ctx.svIsManualRefreshing.value = true;
       return onRefresh();
@@ -320,12 +322,13 @@ export const ProtocolList = () => {
         initialNumToRender={15}
         windowSize={5}
         maxToRenderPerBatch={15}
-        removeClippedSubviews
+        // removeClippedSubviews
         ItemSeparatorComponent={ListRenderSeparator}
         ListHeaderComponent={
           <>
             <RefreshPlaceholderIOS
               hooksReturn={pulldownRefreshReturns}
+              animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
               __PICK_MANUAL__
             />
             <PerpsMultiAssetPosition />
@@ -334,8 +337,14 @@ export const ProtocolList = () => {
         // ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        style={styles.container}
-        contentContainerStyle={styles.list}
+        style={[
+          styles.container,
+          pulldownRefreshReturns.scrollableStyle.container,
+        ]}
+        contentContainerStyle={[
+          styles.list,
+          pulldownRefreshReturns.scrollableStyle.list,
+        ]}
         onEndReached={loadMorePortfolios}
         onEndReachedThreshold={0.5}
         bounces={false}
@@ -359,7 +368,7 @@ export const ProtocolList = () => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+    // marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,

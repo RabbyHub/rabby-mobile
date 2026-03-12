@@ -271,13 +271,15 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         cur.isLoadingByAddress,
       ).isTop10BalanceLoading;
 
-      runOnUI(setPulldownRefreshStage)({
-        state: isTop10BalanceLoading ? 'refreshing' : 'finished',
-        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
-        svIsRefreshing,
-        pullDistance,
-        svIsManualRefreshing,
-      });
+      if (!isTop10BalanceLoading) {
+        runOnUI(setPulldownRefreshStage)({
+          state: isTop10BalanceLoading ? 'refreshing' : 'finished',
+          indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+          svIsRefreshing,
+          pullDistance,
+          svIsManualRefreshing,
+        });
+      }
     });
 
     return () => {
@@ -342,6 +344,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   };
 
   const startValues = useSharedValue({
+    startedAtTop: scrollY.value <= 5,
     restScrollOffset: 0,
     hasImpactOnPandown: false,
     hasImpactOnPanup: false,
@@ -356,6 +359,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         startValues.value.restScrollOffset = getIsAtBottom(
           scrollY.value,
         ).restScrollOffset;
+        startValues.value.startedAtTop = scrollY.value <= 5;
       })
       .onUpdate(event => {
         panUp: {
@@ -381,6 +385,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         pullRefresh: {
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
@@ -413,6 +418,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             if (isOverPulldownRefreshThreshold(pullDistance.value)) {
@@ -1030,17 +1036,6 @@ export const HomeOverview = React.memo(() => {
     };
   });
 
-  const refreshIndicatorStyle = useAnimatedStyle(() => {
-    return {
-      paddingTop: interpolate(
-        pullDistance.value,
-        [0, pulldownRefreshSizes.homeHeaderHeight],
-        [HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset, 0],
-        Extrapolate.CLAMP,
-      ),
-    };
-  });
-
   useRendererDetect({ name: 'MultiAddressHome::HomeOverview' });
 
   return (
@@ -1075,8 +1070,9 @@ export const HomeOverview = React.memo(() => {
             })}>
             <RefreshPlaceholderIOS
               hooksReturn={pulldownRefreshReturns}
-              animatedStyle={refreshIndicatorStyle}
+              animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
               animatedIndicatorStyle={styles.iosAbsIndicatorOffset}
+              __PICK_MANUAL__
             />
             <Animated.View style={[styles.scrollViewInner]}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />

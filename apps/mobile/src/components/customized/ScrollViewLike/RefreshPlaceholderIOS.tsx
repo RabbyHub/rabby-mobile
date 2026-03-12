@@ -6,6 +6,7 @@ import {
   Dimensions,
   ScrollView,
   StyleProp,
+  StyleSheet,
   ViewStyle,
 } from 'react-native';
 import Animated, {
@@ -22,7 +23,7 @@ import Animated, {
 import { RNGHFlatList, RNGHScrollView } from '../reexports';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { triggerImpact } from '@/utils/common';
 import { useMemoizedFn } from 'ahooks';
@@ -68,10 +69,12 @@ export type OnRefreshOnJs = (ctx: {
 export const usePulldownRefreshGesture = <
   T extends ScrollView | RNGHScrollView | RNGHFlatList,
 >({
+  scrollViewYValue,
   onJsPulldownRefresh: prop_onJsPulldownRefresh,
 }: {
+  scrollViewYValue: SharedValue<number>;
   onJsPulldownRefresh?: OnRefreshOnJs;
-} = {}) => {
+}) => {
   const { pullDistance, svIsRefreshing, svIsManualRefreshing } =
     useIOSPulldownRefreshStates();
 
@@ -80,6 +83,7 @@ export const usePulldownRefreshGesture = <
   });
 
   const startValues = useSharedValue({
+    startedAtTop: scrollViewYValue.value <= 5,
     hasImpactOnPanup: false,
   });
 
@@ -88,11 +92,14 @@ export const usePulldownRefreshGesture = <
       .shouldCancelWhenOutside(false)
       .activeOffsetY([-8, 8])
       .maxPointers(1)
-      .onStart(() => {})
+      .onStart(event => {
+        startValues.value.startedAtTop = scrollViewYValue.value <= 5;
+      })
       .onUpdate(event => {
         pullRefresh: {
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
@@ -109,6 +116,7 @@ export const usePulldownRefreshGesture = <
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             if (isOverPulldownRefreshThreshold(pullDistance.value)) {
@@ -191,7 +199,7 @@ export const usePulldownRefreshStyles = ({
         [0, scrHeight * 0.5 - HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset],
         Extrapolate.CLAMP,
       ),
-      paddingTop: 0,
+      // paddingTop: 0,
       // comment it on DEBUG
       opacity: interpolate(
         pullDistance.value,
@@ -202,14 +210,51 @@ export const usePulldownRefreshStyles = ({
     };
   });
 
+  const refreshPlaceholderStyle = useAnimatedStyle(() => {
+    return {
+      paddingTop: !SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING
+        ? 0
+        : interpolate(
+            pullDistance.value,
+            [0, pulldownRefreshSizes.homeHeaderHeight],
+            [HOME_TOP_HEADER_SIZES.headerOffsetAfterTabItem, 0],
+            Extrapolate.CLAMP,
+          ),
+    };
+  });
+
+  const scrollableStyle = useMemo(() => {
+    if (!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING) {
+      return StyleSheet.create({
+        container: {
+          marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+        },
+        list: {
+          paddingTop: 0,
+        },
+      });
+    }
+    return StyleSheet.create({
+      container: {
+        marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+      },
+      list: {
+        // marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
+        // paddingTop: HOME_TOP_HEADER_SIZES.headerOffsetAfterTabItem,
+      },
+    });
+  }, []);
+
   const isRefreshing = useValueFromSharedValue(svIsRefreshing);
   const isManualRefreshing = useValueFromSharedValue(svIsManualRefreshing);
 
   return {
     isRefreshing,
     isManualRefreshing,
+    scrollableStyle,
     animatedIndicatorStyle,
     scrollTopStyle,
+    refreshPlaceholderStyle,
   };
 };
 

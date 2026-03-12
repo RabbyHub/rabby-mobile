@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListRenderItem, View, Dimensions } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
@@ -412,11 +412,13 @@ export const TokenList = () => {
     return item.type;
   }, []);
 
+  const scrollY = useCurrentTabScrollY();
   const {
     panGestureRef,
     isRefreshing,
     svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   } = usePulldownRefreshGesture({
+    scrollViewYValue: scrollY,
     onJsPulldownRefresh: ctx => {
       ctx.svIsManualRefreshing.value = true;
       return onRefresh();
@@ -445,11 +447,18 @@ export const TokenList = () => {
   return (
     <GestureDetector gesture={panGestureRef.current}>
       <TabsFlatList
-        style={styles.container}
-        contentContainerStyle={styles.list}
+        style={[
+          styles.container,
+          pulldownRefreshReturns.scrollableStyle.container,
+        ]}
+        contentContainerStyle={[
+          styles.list,
+          pulldownRefreshReturns.scrollableStyle.list,
+        ]}
         ListHeaderComponent={
           <RefreshPlaceholderIOS
             hooksReturn={pulldownRefreshReturns}
+            animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
             __PICK_MANUAL__
           />
         }
@@ -478,7 +487,6 @@ export const TokenList = () => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,
