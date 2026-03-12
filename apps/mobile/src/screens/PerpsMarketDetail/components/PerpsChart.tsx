@@ -171,7 +171,8 @@ export const PerpsChart: React.FC<{
   const { t } = useTranslation();
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
   const chartIsReadyRef = useRef(false);
-  const [isReady, setIsReady] = useState(false);
+  const [chartReadyCount, setChartReadyCount] = useState(0);
+  const isReady = chartReadyCount > 0;
   // const [selectedInterval, setSelectedInterval] =
   //   React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const unsubscribeRef = useRef<() => void>(() => {});
@@ -291,7 +292,7 @@ export const PerpsChart: React.FC<{
       refreshDeps: [marketName, selectedInterval],
       onSuccess(data) {
         if (chartIsReadyRef.current) {
-          setIsReady(true);
+          setChartReadyCount(c => c || 1);
           chartWebViewRef.current?.setData(data);
         }
       },
@@ -300,7 +301,8 @@ export const PerpsChart: React.FC<{
 
   const handleChartReady = useMemoizedFn(() => {
     chartIsReadyRef.current = true;
-    setIsReady(true);
+    // Increment counter to ensure useEffect re-triggers after WebView reload
+    setChartReadyCount(c => c + 1);
   });
 
   const subscribeCandle = useMemoizedFn(() => {
@@ -372,17 +374,18 @@ export const PerpsChart: React.FC<{
   }, [subscribeCandle, marketName, selectedInterval]);
 
   // Sync chart data when both chart is ready and data is available
+  // Use chartReadyCount (not boolean isReady) so WebView reloads also trigger re-send
   useEffect(() => {
-    if (isReady && chartData) {
+    if (chartReadyCount > 0 && chartData) {
       chartWebViewRef.current?.setData(chartData);
     }
-  }, [isReady, chartData]);
+  }, [chartReadyCount, chartData]);
 
   useEffect(() => {
-    if (isReady && chartData && lineTagInfo) {
+    if (chartReadyCount > 0 && chartData && lineTagInfo) {
       chartWebViewRef.current?.updateTPSLPriceLines(lineTagInfo);
     }
-  }, [isReady, lineTagInfo, chartData]);
+  }, [chartReadyCount, lineTagInfo, chartData]);
 
   // Re-subscribe and refresh data when app returns to foreground
   useEffect(() => {
