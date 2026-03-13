@@ -101,7 +101,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   tabContainer: {
-    marginBottom: 18,
+    // marginBottom: 18,
     ...Platform.select({
       ios: {
         shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
