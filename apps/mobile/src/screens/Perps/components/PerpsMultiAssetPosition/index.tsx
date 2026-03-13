@@ -426,7 +426,7 @@ export const PerpsMultiAssetPosition: React.FC<{
           style={StyleSheet.flatten([
             styles.container,
             source === 'home' && {
-              marginTop: 12,
+              marginTop: 20,
             },
           ])}>
           {dataList.map(item => {

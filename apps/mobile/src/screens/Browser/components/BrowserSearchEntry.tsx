@@ -92,7 +92,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   container: {
-    marginTop: 12,
+    marginTop: 20,
     flex: 1,
   },
 
