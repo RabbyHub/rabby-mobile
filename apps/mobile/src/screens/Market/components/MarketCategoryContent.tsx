@@ -257,18 +257,20 @@ export function MarketCategoryContent({
         {!!headerSpacerHeight && (
           <View style={[styles.header, { height: headerSpacerHeight }]} />
         )}
-        <TokenHeader
-          volumeSort={volumeSort}
-          onVolumeSort={handleVolumeSort}
-          fdvSort={fdvSort}
-          onFdvSort={handleFdvSort}
-          changeSort={changeSort}
-          onChangeSort={handleChangeSort}
-          showVolumeSort={supportedSortFields.has('volume_24h')}
-          showFdvSort={supportedSortFields.has('fdv')}
-          showChangeSort={supportedSortFields.has('price_change_24h')}
-          leftLabel={leftHeaderLabel}
-        />
+        <View style={styles.stickyHeader}>
+          <TokenHeader
+            volumeSort={volumeSort}
+            onVolumeSort={handleVolumeSort}
+            fdvSort={fdvSort}
+            onFdvSort={handleFdvSort}
+            changeSort={changeSort}
+            onChangeSort={handleChangeSort}
+            showVolumeSort={supportedSortFields.has('volume_24h')}
+            showFdvSort={supportedSortFields.has('fdv')}
+            showChangeSort={supportedSortFields.has('price_change_24h')}
+            leftLabel={leftHeaderLabel}
+          />
+        </View>
       </>
     ),
     [
@@ -280,6 +282,7 @@ export function MarketCategoryContent({
       headerSpacerHeight,
       leftHeaderLabel,
       styles.header,
+      styles.stickyHeader,
       supportedSortFields,
       volumeSort,
     ],
@@ -290,7 +293,9 @@ export function MarketCategoryContent({
       data={list}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
+      showsVerticalScrollIndicator={false}
       ListHeaderComponent={renderListHeaderComponent}
+      stickyHeaderIndices={[headerSpacerHeight ? 1 : 0]}
       ListEmptyComponent={renderListEmptyComponent}
       ListFooterComponent={renderListFooterComponent}
       contentContainerStyle={styles.scrollView}
@@ -315,6 +320,12 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   scrollView: {
     paddingHorizontal: 12,
     flexGrow: 1,
+  },
+  stickyHeader: {
+    paddingTop: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   bottomPadding: {
     height: 120,
