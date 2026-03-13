@@ -1,12 +1,7 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 import { BrowserSearchEntry } from '../../Browser/components/BrowserSearchEntry';
-
-const PerpsMultiAssetPosition = React.lazy(() =>
-  import('../../Perps/components/PerpsMultiAssetPosition').then(m => ({
-    default: m.PerpsMultiAssetPosition,
-  })),
-);
+import { PerpsMultiAssetPosition } from '../../Perps/components/PerpsMultiAssetPosition';
 
 export const BrowserOrPerpsPosition: React.FC = () => {
   const { homeDisplayedTabs } = useHomeDisplayedTabs();
@@ -15,9 +10,5 @@ export const BrowserOrPerpsPosition: React.FC = () => {
     return <BrowserSearchEntry />;
   }
 
-  return (
-    <Suspense fallback={null}>
-      <PerpsMultiAssetPosition source="home" />
-    </Suspense>
-  );
+  return <PerpsMultiAssetPosition source="home" />;
 };
