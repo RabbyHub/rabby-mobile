@@ -1,5 +1,5 @@
 import { Indicator } from '@/components2024/CustomTabs/CustomIndicator';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import {
   MaterialTabBar,
@@ -30,18 +30,12 @@ export const DynamicCustomMaterialTabBar = (
       width: number;
     }[]
   >(props.initialTabItemsLayout);
-  const [measuredTabIndexes, setMeasuredTabIndexes] = useState<number[]>([]);
 
   const handleTabItemLayout = useCallback(
     (index: number, e: any) => {
       const tabsPaddingLeft = props.initPaddingLeft ?? 0;
       const { x, width } = e.nativeEvent.layout;
       const nextX = x + tabsPaddingLeft;
-
-      setMeasuredTabIndexes(prev =>
-        prev.includes(index) ? prev : [...prev, index],
-      );
-
       setTabItemsLayout(prev => {
         const next = [...prev];
         if (
@@ -57,14 +51,6 @@ export const DynamicCustomMaterialTabBar = (
     },
     [props.initPaddingLeft],
   );
-
-  const isIndicatorReady = useMemo(
-    () =>
-      measuredTabIndexes.length >= props.initialTabItemsLayout.length &&
-      props.initialTabItemsLayout.length > 0,
-    [measuredTabIndexes.length, props.initialTabItemsLayout.length],
-  );
-
   const renderTabItem = useCallback(
     (_props: any) => (
       <MaterialTabItem
@@ -90,7 +76,6 @@ export const DynamicCustomMaterialTabBar = (
         style={props.indicatorStyle}
         itemsLayout={tabItemsLayout}
         fadeIn
-        visible={isIndicatorReady}
       />
       {props.externalContent}
     </View>
