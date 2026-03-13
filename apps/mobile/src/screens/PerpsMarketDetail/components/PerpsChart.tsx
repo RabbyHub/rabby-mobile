@@ -281,10 +281,15 @@ export const PerpsChart: React.FC<{
         currentWeekCandleRef.current = { ...candles[candles.length - 1]! };
       }
 
+      const noTime =
+        selectedInterval === CANDLE_MENU_KEY_V2.ONE_DAY ||
+        selectedInterval === CANDLE_MENU_KEY_V2.ONE_WEEK;
+
       return {
         coin: marketName,
         interval: interval,
         fitContent: false,
+        noTime,
         candles: candles as any,
       };
     },
