@@ -82,19 +82,17 @@ const formatCandleItem = (candle: CandleStick) => {
     close: candle.close,
     volume: candle.volume,
   };
-  // Validate all values are valid numbers
+  // Validate all values are valid numbers (volume is optional for aggregated candles like weekly)
   const isValid =
     !isNaN(formattedCandle.time) &&
     !isNaN(formattedCandle.open) &&
     !isNaN(formattedCandle.high) &&
     !isNaN(formattedCandle.low) &&
     !isNaN(formattedCandle.close) &&
-    !isNaN(formattedCandle.volume) &&
     formattedCandle.open > 0 &&
     formattedCandle.high > 0 &&
     formattedCandle.low > 0 &&
-    formattedCandle.close > 0 &&
-    formattedCandle.volume > 0;
+    formattedCandle.close > 0;
 
   if (!isValid) {
     console.log('🚨 Invalid candle data:', candle, '→', formattedCandle);

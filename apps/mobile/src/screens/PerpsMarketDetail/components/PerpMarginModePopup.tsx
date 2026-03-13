@@ -87,13 +87,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
     },
     radioOuterActive: {
-      borderColor: colors2024['brand-disable'],
+      borderColor: 'rgba(80, 210, 193, 0.4)',
     },
     radioInner: {
       width: 10,
       height: 10,
       borderRadius: 5,
-      backgroundColor: colors2024['brand-default'],
+      backgroundColor: '#50D2C1',
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
