@@ -477,9 +477,10 @@ export default function DebtSwapModal({
     const swapCallData = txParams.data;
     const augustus = txParams.to;
     const maxNewDebtAmount =
-      swapRate.inputAmount || swapRate.optimalRateData.srcAmount || '0';
-    const delegationAmount =
-      swapRate.maxInputAmountWithSlippage || maxNewDebtAmount;
+      swapRate.maxInputAmountWithSlippage ||
+      swapRate.inputAmount ||
+      swapRate.optimalRateData.srcAmount ||
+      '0';
     const isMaxSelected = new BigNumber(debouncedFromAmount || 0).gte(
       fromBalanceBn,
     );
@@ -506,7 +507,7 @@ export default function DebtSwapModal({
         address: currentAccount.address,
         delegatee: selectedMarketData.addresses.DEBT_SWITCH_ADAPTER,
         debtTokenAddress: toReserve.variableDebtTokenAddress,
-        amount: getApproveAmount(delegationAmount, slippageBps),
+        amount: getApproveAmount(maxNewDebtAmount, slippageBps),
         decimals: toToken.decimals,
       });
     }
