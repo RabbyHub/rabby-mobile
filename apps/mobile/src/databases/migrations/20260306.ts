@@ -23,7 +23,7 @@ export class ClearTokenItemForNullablePrice24hChange1773132444267
     const tableExists = await checkIfTableExists(queryRunner, tokenTableName);
     if (tableExists) {
       // This is a cache table; drop it so synchronize(false) recreates it.
-      await queryRunner.query(`DROP TABLE '${tokenTableName}'`);
+      await queryRunner.query(`DROP TABLE IF EXISTS "${tokenTableName}"`);
     }
   }
 
