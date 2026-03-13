@@ -830,13 +830,7 @@ export default function RepayWithCollateral({
         }
 
         const usdValue = new BigNumber(debouncedRepayAmount || '0')
-          .multipliedBy(
-            new BigNumber(
-              repayReserve?.formattedPriceInMarketReferenceCurrency ||
-                repayToken.usdPrice ||
-                '0',
-            ),
-          )
+          .multipliedBy(new BigNumber(repayToken.usdPrice || '0'))
           .toString();
 
         stats.report('aaveInternalTx', {
@@ -877,7 +871,6 @@ export default function RepayWithCollateral({
       openDirect,
       ctx?.gasFeeTooHigh,
       refresh,
-      repayReserve?.formattedPriceInMarketReferenceCurrency,
       repayToken.usdPrice,
     ],
   );
