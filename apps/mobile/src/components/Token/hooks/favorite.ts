@@ -33,7 +33,7 @@ const convertToITokenItem = (
     usd_value: (token.price || 0) * (token.amount || 0),
     owner_addr: ownerAddr,
     raw_amount: token.raw_amount,
-    price_24h_change: token.price_24h_change || null,
+    price_24h_change: token.price_24h_change ?? null,
     cex_ids: token.cex_ids || [],
     time_at: token.time_at || 0,
     credit_score: token.credit_score,
