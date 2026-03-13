@@ -64,12 +64,6 @@ export default function MarketScreen() {
     ? storedActiveTab
     : 'watchlist';
 
-  useEffect(() => {
-    if (storedActiveTab !== activeTab) {
-      setStoredActiveTab(activeTab);
-    }
-  }, [activeTab, setStoredActiveTab, storedActiveTab]);
-
   const renderHeaderRight = useCallback(
     () => (
       <Pressable
