@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
@@ -425,9 +425,7 @@ export const PerpsMultiAssetPosition: React.FC<{
         <View
           style={StyleSheet.flatten([
             styles.container,
-            source === 'home' && {
-              marginTop: 20,
-            },
+            source === 'home' && styles.homeContainer,
           ])}>
           {dataList.map(item => {
             return (
@@ -464,6 +462,18 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     marginTop: 0,
     alignItems: 'center',
     marginBottom: 16,
+  },
+  homeContainer: {
+    marginTop: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+        shadowOffset: { width: 0, height: isLight ? -6 : -27 },
+        shadowOpacity: 1,
+        shadowRadius: isLight ? 20 : 13,
+      },
+      android: {},
+    }),
   },
   singleAssetContainer: {
     paddingHorizontal: 16,
