@@ -25,7 +25,10 @@ export function AccountInfoInTokenRow({
         return (
           <View style={[styles.accountContainer, containerStyle]}>
             <WalletIcon style={styles.walletIcon} />
-            <Text style={styles.accountAddress}>
+            <Text
+              style={styles.accountAddress}
+              numberOfLines={1}
+              ellipsizeMode="tail">
               {ownerAccount.aliasName || ellipsisAddress(ownerAccount?.address)}
             </Text>
           </View>
@@ -39,15 +42,17 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     accountContainer: {
       borderRadius: 12,
-
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
+      flexShrink: 1,
+      minWidth: 0,
     },
     walletIcon: {
       width: 18,
       height: 18,
       borderRadius: 4,
+      flexShrink: 0,
     },
     accountAddress: {
       color: colors2024['neutral-body'],
@@ -55,6 +60,8 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
       fontWeight: '500',
       fontFamily: 'SF Pro Rounded',
       marginHorizontal: 6,
+      flexShrink: 1,
+      minWidth: 0,
     },
 
     filterAccountClose: {
