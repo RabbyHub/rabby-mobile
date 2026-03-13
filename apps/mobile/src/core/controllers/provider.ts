@@ -80,6 +80,7 @@ import { ProviderRequest } from './type';
 import { hexToNumber, isAddress, toHex } from 'viem';
 import { add0x } from '@/utils/address';
 import { removeLeadingZeroes } from '@/utils/7702';
+import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -971,10 +972,13 @@ class ProviderController extends BaseController {
               adoptBE7702Params();
               const res = await openapi.submitTxV2(params);
               if (res.access_token) {
-                gasAccountService.setGasAccountSig(
+                handleGasAccountLoginSuccess(
                   res.access_token,
                   currentAccount,
-                );
+                ).catch(error => {
+                  console.error('[handleGasAccountLoginSuccess] failed', error);
+                });
+
                 eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
               }
               hash = res?.tx_id;
