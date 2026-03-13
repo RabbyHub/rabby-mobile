@@ -149,12 +149,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 8,
     display: 'flex',
     flexDirection: 'row',
+    alignContent: 'center',
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
   },
   tokenLeftSection: {
+    justifyContent: 'center',
     flexDirection: 'column',
     alignItems: 'center',
     flex: 1,
@@ -214,7 +216,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    width: 60,
+    width: '100%',
   },
   changeTextPositive: {
     color: colors2024['red-default'],
@@ -222,10 +224,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   trendContainer: {
     display: 'flex',
     flexDirection: 'column',
-    //paddingHorizontal: 6.5,
+    justifyContent: 'center',
     paddingVertical: 6,
     borderRadius: 6,
-    width: 60,
+    width: 68,
     alignItems: 'flex-end',
   },
   leftSlot: {

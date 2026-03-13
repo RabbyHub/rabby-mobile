@@ -11,7 +11,7 @@ import { memeItemToITokenItem } from '@/utils/token';
 import { useIsFocused } from '@react-navigation/native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useAtom } from 'jotai';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 
 import TokenHeader, { SortState } from '../../Meme/components/TokenHeader';
@@ -111,6 +111,7 @@ export function MarketCategoryContent({
   } = useTokenMarketTokenList(categoryId, orderBy, order);
 
   const isFocused = useIsFocused();
+  const focusedTab = useFocusedTab();
   const [isInFirst100Items, setIsInFirst100Items] = useState(true);
 
   const handleVolumeSort = useCallback(() => {
@@ -231,7 +232,7 @@ export function MarketCategoryContent({
   });
 
   React.useEffect(() => {
-    if (!isFocused || !isInFirst100Items) {
+    if (!isFocused || focusedTab !== categoryId || !isInFirst100Items) {
       return;
     }
 
@@ -242,7 +243,13 @@ export function MarketCategoryContent({
     return () => {
       clearInterval(timer);
     };
-  }, [isFocused, isInFirst100Items, refreshTokenListSilently]);
+  }, [
+    categoryId,
+    focusedTab,
+    isFocused,
+    isInFirst100Items,
+    refreshTokenListSilently,
+  ]);
 
   const renderListHeaderComponent = useCallback(
     () => (

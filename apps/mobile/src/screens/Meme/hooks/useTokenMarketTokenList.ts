@@ -55,7 +55,6 @@ export const useTokenMarketTokenList = (
           limit: 100,
           cursor: append ? nextCursorRef.current || '' : '',
         });
-        console.log('CUSTOM_LOGGER:=>: res', res.data_list.length);
 
         const pagination = res.pagination || {};
         const nextCursor = pagination.next_cursor;

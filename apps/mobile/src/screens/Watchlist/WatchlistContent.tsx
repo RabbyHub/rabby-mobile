@@ -14,6 +14,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { tokenItemToITokenItem } from '@/utils/token';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
+import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 
 import { WatchlistCheckbox } from './components/Checkbox';
@@ -53,6 +54,7 @@ export function WatchlistContent({
   const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
+  const focusedTab = useFocusedTab();
 
   const showGuide = useMemo(() => {
     return !skip && !hasData && !watchlistLoading && !watchlistTokens.length;
@@ -67,8 +69,11 @@ export function WatchlistContent({
 
   useFocusEffect(
     useCallback(() => {
+      if (focusedTab !== 'watchlist') {
+        return;
+      }
       handleFetchTokens();
-    }, [handleFetchTokens]),
+    }, [focusedTab, handleFetchTokens]),
   );
 
   useEffect(() => {
@@ -188,6 +193,9 @@ export function WatchlistContent({
           Array.from({ length: 8 }).map((_, idx) => (
             <TokenItemSkeleton key={idx} />
           ))}
+        {!list.length && !watchlistLoading && (
+          <EmptyWatchlist style={styles.topEmpty} />
+        )}
         {hotTokenList.map(item => (
           <TokenListItem
             leftSlot={
@@ -201,37 +209,19 @@ export function WatchlistContent({
             onPress={() => handleTokenSelect(`${item.chain}:${item.id}`)}
           />
         ))}
-        <View style={styles.footer}>
-          <Pressable
-            onPress={() => {
-              setSkip(true);
-              preferenceService.setWatchlistSkip(true);
-            }}>
-            <Text style={styles.skipText}>
-              {t('page.watchlist.footer.skip')}
-            </Text>
-          </Pressable>
-          <Button
-            title={t('page.watchlist.footer.add', {
-              count: selectedTokens.size,
-            })}
-            disabled={selectedTokens.size === 0}
-            onPress={handleAddToWatchlist}
-          />
-        </View>
+        <View style={styles.bottomPadding} />
       </>
     ),
     [
-      handleAddToWatchlist,
       handleTokenSelect,
       hotTokenList,
       hotTokenListLoading,
+      list.length,
       renderHeaderSpacer,
       selectedTokens,
-      setSkip,
-      styles.footer,
-      styles.skipText,
-      t,
+      styles.bottomPadding,
+      styles.topEmpty,
+      watchlistLoading,
     ],
   );
 
@@ -285,24 +275,46 @@ export function WatchlistContent({
   );
 
   return (
-    <Tabs.ScrollView
-      showsHorizontalScrollIndicator={false}
-      showsVerticalScrollIndicator={false}
-      tvParallaxProperties={undefined}
-      horizontal={false}
-      nestedScrollEnabled={false}
-      style={styles.scrollView}
-      contentContainerStyle={styles.scrollViewContent}
-      refreshControl={
-        !showGuide ? (
-          <RefreshControl
-            refreshing={watchlistLoading && list.length !== 0}
-            onRefresh={() => handleFetchTokens(true)}
+    <>
+      <Tabs.ScrollView
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        tvParallaxProperties={undefined}
+        horizontal={false}
+        nestedScrollEnabled={false}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          !showGuide ? (
+            <RefreshControl
+              refreshing={watchlistLoading && list.length !== 0}
+              onRefresh={() => handleFetchTokens(true)}
+            />
+          ) : undefined
+        }>
+        {showGuide ? renderGuideContent() : renderListContent()}
+      </Tabs.ScrollView>
+      {showGuide && (
+        <View style={styles.footer}>
+          <Pressable
+            onPress={() => {
+              setSkip(true);
+              preferenceService.setWatchlistSkip(true);
+            }}>
+            <Text style={styles.skipText}>
+              {t('page.watchlist.footer.skip')}
+            </Text>
+          </Pressable>
+          <Button
+            title={t('page.watchlist.footer.add', {
+              count: selectedTokens.size,
+            })}
+            disabled={selectedTokens.size === 0}
+            onPress={handleAddToWatchlist}
           />
-        ) : undefined
-      }>
-      {showGuide ? renderGuideContent() : renderListContent()}
-    </Tabs.ScrollView>
+        </View>
+      )}
+    </>
   );
 }
 
@@ -325,8 +337,13 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     marginTop: '50%',
   },
   footer: {
+    backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 20,
     paddingBottom: 48,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   skipText: {
     fontSize: 16,
@@ -339,7 +356,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingTop: 14,
   },
   bottomPadding: {
-    height: 120,
+    height: 160,
   },
   skeletonBlock: {
     backgroundColor: isLight
@@ -350,5 +367,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     padding: 0,
     borderRadius: 16,
     marginTop: 8,
+  },
+  topEmpty: {
+    marginTop: 26,
   },
 }));

@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
+import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useAtom } from 'jotai';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 
@@ -14,17 +16,53 @@ import CustomLabel from '../TokenDetail/components/CustomLabel';
 import { DynamicCustomMaterialTabBar } from '../TokenDetail/components/CustomTabBar';
 import { WatchlistContent } from '../Watchlist/WatchlistContent';
 import { MarketCategoryContent } from './components/MarketCategoryContent';
-import { useTokenMarketCategoryList } from './hooks/useTokenMarketCategoryList';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 type MarketTabKey = 'watchlist' | string;
+const TAB_GAP = 8;
+
+const marketTabAtom = atomByMMKV<MarketTabKey>(
+  '@market.activeTab',
+  'watchlist',
+);
+
+const MARKET_TABS: { id: string; name: string; sort_fields: string[] }[] = [
+  {
+    id: 'meme',
+    name: 'Memecoin',
+    sort_fields: ['volume_24h', 'fdv', 'price_change_24h'],
+  },
+  {
+    id: 'stock',
+    name: 'Stock',
+    sort_fields: ['price_change_24h'],
+  },
+  {
+    id: 'commodities',
+    name: 'Commodities',
+    sort_fields: ['price_change_24h'],
+  },
+] as const;
+
+const VALID_MARKET_TABS = new Set<MarketTabKey>([
+  'watchlist',
+  ...MARKET_TABS.map(tab => tab.id),
+]);
 
 export default function MarketScreen() {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { categories } = useTokenMarketCategoryList();
-  const [activeTab, setActiveTab] = useState<MarketTabKey>('watchlist');
+  const [storedActiveTab, setStoredActiveTab] = useAtom(marketTabAtom);
+  const activeTab = VALID_MARKET_TABS.has(storedActiveTab)
+    ? storedActiveTab
+    : 'watchlist';
+
+  useEffect(() => {
+    if (storedActiveTab !== activeTab) {
+      setStoredActiveTab(activeTab);
+    }
+  }, [activeTab, setStoredActiveTab, storedActiveTab]);
 
   const renderHeaderRight = useCallback(
     () => (
@@ -59,13 +97,13 @@ export default function MarketScreen() {
         key: 'watchlist',
         label: t('page.market.tabs.watchlist'),
       },
-      ...categories.map(category => ({
+      ...MARKET_TABS.map(category => ({
         key: category.id,
         label: category.name,
         sortFields: category.sort_fields,
       })),
     ],
-    [categories, t],
+    [t],
   );
 
   const initialTabItemsLayout = useMemo(() => {
@@ -73,7 +111,7 @@ export default function MarketScreen() {
     return tabs.map(tab => {
       const width = Math.max(60, tab.label.length * 12 + 20);
       const item = { x, width };
-      x += width;
+      x += width + TAB_GAP;
       return item;
     });
   }, [tabs]);
@@ -105,6 +143,7 @@ export default function MarketScreen() {
         index={index}
         indexDecimal={indexDecimal}
         text=""
+        containerStyle={styles.watchlistLabelContainer}
         icon={
           <RcIconFavorite
             width={18}
@@ -112,13 +151,13 @@ export default function MarketScreen() {
             color={
               Math.abs(index - indexDecimal.value) < 0.5
                 ? colors2024['orange-default']
-                : colors2024['neutral-secondary']
+                : colors2024['neutral-info']
             }
           />
         }
       />
     ),
-    [colors2024],
+    [colors2024, styles.watchlistLabelContainer],
   );
 
   return (
@@ -127,21 +166,22 @@ export default function MarketScreen() {
       overwriteStyle={styles.overwriteStyle}>
       <Tabs.Container
         renderTabBar={renderTabBar}
-        tabBarHeight={30}
+        tabBarHeight={36}
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
         initialTabName={activeTab}
         onTabChange={({ tabName }) => {
-          setActiveTab(tabName);
+          setStoredActiveTab(tabName);
         }}>
         <Tabs.Tab label={renderWatchlistLabel} name="watchlist">
           <WatchlistContent headerSpacerHeight={0} />
         </Tabs.Tab>
         {
-          (categories ?? []).map(category => {
+          MARKET_TABS.map(category => {
             const renderCategoryLabel = ({ index, indexDecimal }) => (
               <CustomLabel
                 index={index}
+                containerStyle={styles.categoryLabelContainer}
                 indexDecimal={indexDecimal}
                 text={category.name}
               />
@@ -190,18 +230,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderBottomColor: colors2024['neutral-line'],
   },
   tabBar: {
-    height: 30,
+    height: 36,
     width: 'auto',
     flexShrink: 0,
     flex: 0,
     paddingHorizontal: 0,
-    marginRight: 20,
+    marginRight: TAB_GAP,
   },
   tabsBarContainer: {
     display: 'flex',
     paddingLeft: 20,
     position: 'relative',
-    height: 30,
+    height: 36,
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
@@ -215,5 +255,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   content: {
     flex: 1,
     marginTop: 8,
+  },
+  categoryLabelContainer: {
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  watchlistLabelContainer: {
+    height: 36,
+    paddingRight: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }));
