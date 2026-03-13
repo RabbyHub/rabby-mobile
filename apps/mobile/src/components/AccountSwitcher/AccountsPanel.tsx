@@ -43,7 +43,9 @@ const SectionCollapsableNav = function ({
   onCollapsedChange?: (collapsed: boolean) => void;
   title: React.ReactNode;
 }) {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getPanelStyle,
+  });
 
   const tilteNode = useMemo(() => {
     return typeof title === 'string' ? (
@@ -99,7 +101,9 @@ AccountSwitcherAopProps<{
   token?: ITokenItem;
   scrollToBottom(): void;
 }>) {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { styles, colors2024, isLight } = useTheme2024({
+    getStyle: getPanelStyle,
+  });
 
   const { toggleSceneVisible } = useAccountSceneVisible(forScene);
 
@@ -493,7 +497,7 @@ AccountSwitcherAopProps<{
 
   return (
     <LinearGradientContainer
-      type="bg1"
+      type={isLight ? 'bg0' : 'bg1'}
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
       <View style={styles.header}>
