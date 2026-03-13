@@ -1045,7 +1045,8 @@
         "perpsMarketList": "Daha Fazla Perps",
         "lending": "Kredi verme",
         "predict": "Tahmin Et",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Pazar"
       },
       "swipeUp": {
         "descAndroid": "dApp'leri keşfetmek için tıklayın",
@@ -2326,7 +2327,8 @@
       "tokenHeader": {
         "change": "24H Değişiklik",
         "token": "Token/FDV",
-        "price": "Fiyat"
+        "price": "Fiyat",
+        "priceAndChange": "Fiyat/24s Değişim"
       },
       "footer": {
         "add": "İzleme Listesine Ekle ({{count}})",
@@ -2561,7 +2563,8 @@
         "currentPrice": "Güncel Fiyat",
         "unrealizedPnl": "Gerçekleşmemiş PNL",
         "details": "Ayrıntılar",
-        "realizedPnl": "Gerçekleşen PNL"
+        "realizedPnl": "Gerçekleşen PNL",
+        "fundingTipsBold": "Bu, pozisyon açıldığından bu yana hesaplanan toplam fonlamanızı gösterir. <bold>Yeşil (pozitif)</bold> değerler, diğer yatırımcılardan kazandığınızı, <bold>Kırmızı (negatif)</bold> değerler ise onlara ödediğiniz fonlama maliyetleridir."
       },
       "PerpsInfo": {
         "24Vol": "24s Hacim",
@@ -3007,7 +3010,19 @@
         "price": "Fiyat",
         "volume": "24H Hacim",
         "change": "24H Değişim",
-        "fdv": "FDV"
+        "fdv": "FDV",
+        "priceAndChange": "Fiyat/24S Değişim"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Adı"
+      },
+      "tabs": {
+        "commodities": "Emtia",
+        "watchlist": "İzleme Listesi",
+        "stock": "Hisse",
+        "memecoin": "Memecoin"
       }
     }
   },

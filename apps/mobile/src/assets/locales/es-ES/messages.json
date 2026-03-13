@@ -1114,7 +1114,8 @@
         "perps": "Perps",
         "lending": "Préstamo",
         "predict": "Predecir",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Mercado"
       },
       "swipeUp": {
         "descAndroidMore": "Haz clic para explorar más dApps",
@@ -2599,7 +2600,8 @@
       "tokenHeader": {
         "token": "Token/FDV",
         "price": "Precio",
-        "change": "Cambio 24H"
+        "change": "Cambio 24H",
+        "priceAndChange": "Precio/Cambio 24H"
       },
       "footer": {
         "skip": "Saltar",
@@ -2834,7 +2836,8 @@
         "settings": "Configuraciones",
         "unrealizedPnl": "PNL no realizado",
         "marginMode": "Modo Margen",
-        "realizedPnl": "PNL realizado"
+        "realizedPnl": "PNL realizado",
+        "fundingTipsBold": "Esto muestra el financiamiento total que se ha liquidado desde que se abrió la posición. Los valores en <bold>verde (positivo)</bold> significan que has ganado de otros traders, mientras que los valores en <bold>rojo (negativo)</bold> son los costos de financiamiento que les has pagado."
       },
       "PerpsInfo": {
         "openInterestTips": "El total de posiciones pendientes de todos los usuarios en este contrato.",
@@ -3280,7 +3283,19 @@
         "change": "Cambio en 24H",
         "fdv": "FDV",
         "price": "Precio",
-        "volume": "Volumen 24H"
+        "volume": "Volumen 24H",
+        "priceAndChange": "Precio/Cambio 24H"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Nombre"
+      },
+      "tabs": {
+        "stock": "Acciones",
+        "commodities": "Commodities",
+        "watchlist": "Lista de seguimiento",
+        "memecoin": "Memecoin"
       }
     }
   },

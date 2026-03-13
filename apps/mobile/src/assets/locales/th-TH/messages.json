@@ -1024,7 +1024,8 @@
         "perpsMarketList": "มากขึ้น Perps",
         "lending": "การให้กู้ยืม",
         "predict": "คาดการณ์",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "ตลาด"
       },
       "swipeUp": {
         "descAndroid": "คลิกเพื่อสำรวจ dApps",
@@ -2584,7 +2585,8 @@
       "tokenHeader": {
         "token": "Token/FDV",
         "price": "ราคา",
-        "change": "การเปลี่ยนแปลง 24 ชั่วโมง"
+        "change": "การเปลี่ยนแปลง 24 ชั่วโมง",
+        "priceAndChange": "ราคา/24 ชม. เปลี่ยนแปลง"
       },
       "footer": {
         "add": "เพิ่มในรายการดู ({{count}})",
@@ -2819,7 +2821,8 @@
         "settings": "การตั้งค่า",
         "marginMode": "โหมดมาร์จิ้น",
         "realizedPnl": "Realized PNL",
-        "unrealizedPnl": "未实现的 PNL"
+        "unrealizedPnl": "未实现的 PNL",
+        "fundingTipsBold": "นี่แสดงถึงยอดรวมการจัดหาเงินที่ตั้งถิ่นฐานตั้งแต่เปิดตำแหน่ง <bold>สีเขียว (บวก)</bold> หมายถึงคุณได้รับจากผู้ซื้อขายคนอื่น ในขณะที่ <bold>สีแดง (ลบ)</bold> หมายถึงค่าธรรมเนียมที่คุณจ่ายให้กับพวกเขา"
       },
       "PerpsInfo": {
         "title": "ข้อมูล",
@@ -3265,7 +3268,19 @@
         "fdv": "FDV",
         "volume": "24H ปริมาณ",
         "price": "ราคา",
-        "change": "24H เปลี่ยนแปลง"
+        "change": "24H เปลี่ยนแปลง",
+        "priceAndChange": "ราคา/การเปลี่ยนแปลง 24 ชั่วโมง"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "ชื่อ"
+      },
+      "tabs": {
+        "commodities": "สินค้าโภคภัณฑ์",
+        "stock": "สต็อก",
+        "watchlist": "รายการที่เฝ้าดู",
+        "memecoin": "Memecoin"
       }
     }
   },

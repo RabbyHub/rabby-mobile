@@ -929,7 +929,8 @@
         "perpsMarketList": "Plus de Perps",
         "lending": "Prêt",
         "predict": "Prédire",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Marché"
       },
       "swipeUp": {
         "descAndroid": "Cliquez pour explorer les dApps",
@@ -2336,7 +2337,8 @@
       "tokenHeader": {
         "token": "Token/FDV",
         "change": "Changement 24H",
-        "price": "Prix"
+        "price": "Prix",
+        "priceAndChange": "Prix/Changement sur 24H"
       },
       "footer": {
         "skip": "Passer",
@@ -2571,7 +2573,8 @@
         "details": "Détails",
         "currentPrice": "Prix actuel",
         "positionValue": "Valeur de la position",
-        "marginMode": "Mode de marge"
+        "marginMode": "Mode de marge",
+        "fundingTipsBold": "Cela montre votre financement total réglé depuis l'ouverture de la position. Les valeurs <bold>vertes (positives)</bold> signifient que vous avez gagné par d'autres traders, tandis que les valeurs <bold>rouges (négatives)</bold> représentent les coûts de financement que vous leur avez payés."
       },
       "PerpsInfo": {
         "openInterest": "Intérêt Ouvert",
@@ -3017,7 +3020,19 @@
         "fdv": "FDV",
         "volume": "Volume sur 24H",
         "price": "Prix",
-        "change": "Changement sur 24H"
+        "change": "Changement sur 24H",
+        "priceAndChange": "Prix/Variation sur 24H"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Nom"
+      },
+      "tabs": {
+        "watchlist": "Liste de surveillance",
+        "memecoin": "Memecoin",
+        "commodities": "Marchandises",
+        "stock": "Actions"
       }
     }
   },

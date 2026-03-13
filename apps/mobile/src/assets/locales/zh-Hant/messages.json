@@ -961,7 +961,8 @@
         "perps": "永续合约",
         "lending": "借貸",
         "predict": "預測",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "市場"
       },
       "swipeUp": {
         "descAndroidMore": "點擊探索更多 dApps",
@@ -2496,7 +2497,8 @@
       "tokenHeader": {
         "token": "Token/FDV",
         "price": "價格",
-        "change": "24H 變化"
+        "change": "24H 變化",
+        "priceAndChange": "價格/24小時變化"
       },
       "footer": {
         "skip": "跳過",
@@ -2731,7 +2733,8 @@
         "marginMode": "保證金模式",
         "positionValue": "持倉價值",
         "realizedPnl": "已实现盈虧",
-        "details": "詳情"
+        "details": "詳情",
+        "fundingTipsBold": "這顯示自從該持倉開設以來您總共的資金結算。<bold>綠色（正向）</bold>值意味著您從其他交易者那裡賺取了利益，而<bold>紅色（負向）</bold>值則是您支付給他們的資金成本。"
       },
       "PerpsInfo": {
         "funding": "資金負擔",
@@ -3177,7 +3180,19 @@
         "change": "24小時變化",
         "volume": "24小時交易量",
         "fdv": "FDV",
-        "price": "價格"
+        "price": "價格",
+        "priceAndChange": "價格/24小時變化"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "名稱"
+      },
+      "tabs": {
+        "stock": "庫存",
+        "memecoin": "Memecoin",
+        "commodities": "商品",
+        "watchlist": "關注列表"
       }
     }
   },

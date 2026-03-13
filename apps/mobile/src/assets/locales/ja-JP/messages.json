@@ -957,7 +957,8 @@
         "perpsMarketList": "より多くのPerps",
         "lending": "貸し出し",
         "predict": "予測する",
-        "meme": "メモリコイン"
+        "meme": "メモリコイン",
+        "market": "市場"
       },
       "swipeUp": {
         "descAndroidMore": "クリックしてさらに多くのdAppsを探索する",
@@ -2379,7 +2380,8 @@
       "tokenHeader": {
         "price": "価格",
         "change": "24時間の変化",
-        "token": "トークン/FDV"
+        "token": "トークン/FDV",
+        "priceAndChange": "価格/24時間の変動"
       },
       "footer": {
         "skip": "スキップ",
@@ -2614,7 +2616,8 @@
         "positionValue": "ポジションの価値",
         "details": "詳細情報",
         "settings": "設定",
-        "unrealizedPnl": "未実現PNL"
+        "unrealizedPnl": "未実現PNL",
+        "fundingTipsBold": "これは、ポジションがオープンして以来、あなたの合計資金調達が決済されたことを示しています。<bold>緑（プラス）</bold>の値は、他のトレーダーから得た利益を意味し、<bold>赤（マイナス）</bold>の値は、彼らに支払った資金調達コストを示しています。"
       },
       "PerpsInfo": {
         "funding": "資金調達",
@@ -3060,7 +3063,19 @@
         "price": "価格",
         "fdv": "FDV",
         "volume": "24H ボリューム",
-        "change": "24Hの変化"
+        "change": "24Hの変化",
+        "priceAndChange": "価格/24時間の変化"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "名前"
+      },
+      "tabs": {
+        "watchlist": "ウォッチリスト",
+        "commodities": "商品",
+        "stock": "在庫",
+        "memecoin": "メモコイン"
       }
     }
   },
