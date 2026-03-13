@@ -17,7 +17,6 @@ jobs:
       android_hash: ${{ steps.generate_hash.outputs.hash }}
     env:
       NODE_OPTIONS: '--max_old_space_size=8192'
-      XCODE_VER: '26.3'
 
     steps:
       - name: Checkout repository
@@ -65,9 +64,10 @@ jobs:
   # --- Job 2: 构建 iOS ---
   build-ios:
     name: Build iOS & Generate Hash
-    runs-on: macos-14
+    runs-on: macos-26
     env:
       NODE_OPTIONS: '--max_old_space_size=8192'
+      XCODE_VER: '26.3'
 
     outputs:
       ios_hash: ${{ steps.generate_hash.outputs.hash }}
@@ -94,6 +94,11 @@ jobs:
       - name: Validate iOS App
         id: generate_hash
         run: |
+          # test sorting consistency across platforms by using a fixed set of inputs
+          echo "Testing sort consistency across platforms..."
+          printf 'Z\0a\0A\0z\0' | LC_ALL=C LC_COLLATE=C sort -z | xargs -0
+          echo "Testing sort consistency with default locale..."
+          printf 'Z\0a\0A\0z\0' | sort -z | xargs -0
           cd apps/mobile
           GENERATED_HASH=$(./scripts/validate-hash/run.sh ios | tee /dev/stderr | grep 'iOS Hash:' | awk '{print $NF}')
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT

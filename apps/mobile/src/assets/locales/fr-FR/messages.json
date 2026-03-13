@@ -1471,8 +1471,16 @@
           }
         },
         "ledger": {
-          "hdPathTypeNoChain": {},
-          "hdPathType": {}
+          "hdPathTypeNoChain": {
+            "bip44": "Norme BIP44 : chemin HD défini par le protocole BIP44.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger."
+          },
+          "hdPathType": {
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger.",
+            "bip44": "BIP44 Standard : HDpath défini par le protocole BIP44.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto."
+          }
         },
         "manageAddressFrom": "Gérer le portefeuille de {{0}} à {{1}}",
         "customAddressHdPath": "Chemin HD de portefeuille personnalisé",
@@ -2939,7 +2947,8 @@
         "borrowBalance": "Emprunter un solde",
         "lpRiskWarning": "Facteur de santé faible après l'échange. Votre position comportera un risque plus élevé de liquidation.",
         "priceImpactTips": "Impact de prix élevé ({{lostValue}}). Cet itinéraire peut retourner plus en raison d'une faible liquidité ou d'une petite taille de commande.",
-        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité."
+        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité.",
+        "maxLtvWarning": "Fonds de garantie insuffisants pour couvrir la nouvelle position d'emprunt. Le portefeuille doit disposer d'une capacité d'emprunt restante pour effectuer le changement de dette."
       },
       "hfTips": {
         "more": "Plus",

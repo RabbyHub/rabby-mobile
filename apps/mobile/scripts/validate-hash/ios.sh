@@ -76,7 +76,7 @@ run_ios_build_and_hash() {
   # 计算哈希
   echo "⏳ 计算 iOS 哈希..."
   local file_hashes_report="$export_dir/file_hashes_ios.txt"
-  local overall_hash=$(find "$app_path" -type f ! -name ".DS_Store" -print0 | LC_COLLATE=C sort -z | xargs -0 shasum -a 256 | tee "$file_hashes_report" | shasum -a 256 | awk '{print $1}')
+  local overall_hash=$(find "$app_path" -type f ! -name ".DS_Store" -print0 | LC_ALL=C LC_COLLATE=C sort -z | xargs -0 -P 1 shasum -a 256 | tee "$file_hashes_report" | shasum -a 256 | awk '{print $1}')
   local bundle_hash=$(shasum -a 256 "$app_path/main.jsbundle" | awk '{print $1}')
 
   # 导出产物和报告
