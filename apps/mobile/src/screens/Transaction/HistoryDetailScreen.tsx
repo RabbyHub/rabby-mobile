@@ -228,7 +228,7 @@ function HistoryDetailScreen(): JSX.Element {
   const buttonContainerStyle = useMemo(() => {
     return [
       styles.buttonContainerStyle,
-      { marginBottom: Math.max(safeBottomInset, 16) },
+      { marginBottom: Math.max(safeBottomInset, 24) },
     ];
   }, [styles.buttonContainerStyle, safeBottomInset]);
 
@@ -623,7 +623,7 @@ function HistoryDetailScreen(): JSX.Element {
 const PADDING_HORIZONTAL = 16;
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: { height: '100%', paddingTop: 24 },
+  container: { height: '100%', paddingTop: 24, paddingBottom: 24 },
   scrollView: {
     // height: '100%',
     paddingHorizontal: PADDING_HORIZONTAL,
