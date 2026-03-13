@@ -88,6 +88,9 @@ window.utils = {
       const mon = MONTHS[d.getMonth()];
       const day = String(d.getDate()).padStart(2, '0');
       const yr = String(d.getFullYear()).slice(-2);
+      if (window.noTime) {
+        return dow + ' ' + day + ' ' + mon + " '" + yr;
+      }
       const hours = String(d.getHours()).padStart(2, '0');
       const minutes = String(d.getMinutes()).padStart(2, '0');
       return dow + ' ' + day + ' ' + mon + " '" + yr + ' ' + hours + ':' + minutes;
@@ -221,6 +224,7 @@ export const createTradingViewChartTemplate = (
       window.volumeSeries = null;
       window.isInitialDataLoad = true; // Track if this is the first data load
       window.lastDataKey = null; // Track the last dataset to avoid unnecessary autoscaling
+      window.noTime = false; // Hide time (HH:mm) in hover tooltip for daily/weekly intervals
       window.tooltip = null;
       window.clearMarkers = null;
       window.currentExtremes = null;
@@ -736,6 +740,7 @@ export const createTradingViewChartTemplate = (
           const message = JSON.parse(event.data);
           switch (message.type) {
             case 'SET_CANDLESTICK_DATA':
+              window.noTime = !!message.noTime;
               if (window.chart && message.data?.length > 0) {
                 // Create or get candlestick series
                 if (!window.candlestickSeries) {
