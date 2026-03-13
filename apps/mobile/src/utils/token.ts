@@ -2,6 +2,7 @@ import {
   GasLevel,
   MemeItem,
   PortfolioItemToken,
+  TokenMarketTokenItem,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Contract, providers } from 'ethers';
@@ -489,7 +490,7 @@ export const tokenItemToITokenItem = (
 };
 
 export const memeItemToITokenItem = (
-  token: MemeItem,
+  token: MemeItem | TokenMarketTokenItem,
   owner: string,
 ): ITokenItem => {
   return {

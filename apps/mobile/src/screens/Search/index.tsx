@@ -57,6 +57,12 @@ function SearchScreen(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchValue]);
 
+  const handleCancel = React.useCallback(() => {
+    Keyboard.dismiss();
+    setSearchState('');
+    navigation.goBack();
+  }, [navigation, setSearchState]);
+
   return (
     <NormalScreenContainer2024
       noHeader
@@ -79,11 +85,12 @@ function SearchScreen(): JSX.Element {
           <RcNextLeftCC color={colors2024['neutral-title-1']} />
         </TouchableOpacity>
         <NextSearchBar
-          noCancel={true}
+          alwaysShowCancel
           style={styles.searchBar}
           placeholder={t('page.search.header.searchPlaceHolder')}
           value={searchState}
           autoFocus
+          onCancel={handleCancel}
           onChangeText={v => {
             setSearchState(v);
           }}

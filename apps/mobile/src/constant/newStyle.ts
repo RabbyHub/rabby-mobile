@@ -12,6 +12,7 @@ export enum MultiHomeFeatTitle {
   Predict = 'Predict',
   Buy = 'Buy',
   Search = 'Search',
+  Market = 'Market',
   Watchlist = 'Watchlist',
   Meme = 'Meme',
   Perps = 'Perps',
@@ -42,7 +43,7 @@ export const HOME_FEATURE_NEW_TAG_CONFIG: Partial<
   Record<MultiHomeFeatTitle, HomeFeatureNewTagConfig>
 > = {
   // 配置是否显示NEW标签在这里
-  [MultiHomeFeatTitle.Meme]: {
+  [MultiHomeFeatTitle.Market]: {
     enableNewTag: true,
   },
 };
