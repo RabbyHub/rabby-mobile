@@ -162,6 +162,9 @@ export const createTradingViewChartTemplate = (
       refAssetForLocalWebView('lightweight-charts.standalone.production.js')
         .quoted
     } as="script" crossorigin="anonymous">
+    <link rel="preload" href=${
+      refAssetForLocalWebView('e1789a3f58159a0b7c06ac86c1596058.min.js').quoted
+    } as="script" crossorigin="anonymous">
     <style>
       body, html {
           margin: 0;
@@ -179,9 +182,10 @@ export const createTradingViewChartTemplate = (
       }
     </style>
     <script
-      src="https://js.sentry-cdn.com/e1789a3f58159a0b7c06ac86c1596058.min.js"
-      crossorigin="anonymous"
-      async
+      src=${
+        refAssetForLocalWebView('e1789a3f58159a0b7c06ac86c1596058.min.js')
+          .quoted
+      }
     ></script>
   </head>
   <body>

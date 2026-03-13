@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { IS_IOS } from '@/core/native/utils';
 import { WEBVIEW_BASEURL } from '@/core/storage/webviewAssets';
 import { Text } from '@/components/Typography';
+import { getLocalWebViewDefaultProps } from '@/components/WebView/LocalWebView/utils';
 
 interface ChartProps {
   height: number;
@@ -37,32 +38,7 @@ export interface TradingViewChartRef {
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
 
-const baseWebViewProps = {
-  javaScriptEnabled: true,
-  domStorageEnabled: true,
-  originWhitelist: ['*'],
-  mixedContentMode: 'compatibility' as const,
-  startInLoadingState: true,
-  scrollEnabled: false,
-  showsHorizontalScrollIndicator: false,
-  showsVerticalScrollIndicator: false,
-  scalesPageToFit: false,
-  webviewDebuggingEnabled: __DEV__,
-};
-const iosWebViewProps = {
-  ...baseWebViewProps,
-  allowsInlineMediaPlayback: true,
-  mediaPlaybackRequiresUserAction: false,
-  cacheEnabled: false,
-  incognito: true,
-  bounces: false,
-  allowsFullscreenVideo: false,
-  allowsBackForwardNavigationGestures: false,
-  dataDetectorTypes: 'none' as const,
-};
-const androidWebViewProps = {
-  ...baseWebViewProps,
-};
+const { iosWebViewProps, androidWebViewProps } = getLocalWebViewDefaultProps();
 
 const formatCandleItem = (candle: CandleStick) => {
   const timeInSeconds = Math.floor(candle.time);
