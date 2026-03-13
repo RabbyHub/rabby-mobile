@@ -5,7 +5,7 @@ import { StyleProp, TextStyle, ViewStyle } from 'react-native';
 type TipsPopupState = {
   visible: boolean;
   title: string;
-  desc: string;
+  desc: string | React.ReactNode;
   buttonStyle?: StyleProp<ViewStyle>;
   buttonTitleStyle?: StyleProp<TextStyle>;
   buttonType?:
@@ -31,7 +31,7 @@ export const useTipsPopup = () => {
   const showTipsPopup = useMemoizedFn(
     (payload: {
       title: string;
-      desc: string;
+      desc: string | React.ReactNode;
       buttonStyle?: StyleProp<ViewStyle>;
       buttonTitleStyle?: StyleProp<TextStyle>;
       buttonType?: TipsPopupState['buttonType'];

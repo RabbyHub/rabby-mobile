@@ -41,7 +41,7 @@ import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useTranslation } from 'react-i18next';
@@ -224,16 +224,13 @@ function HistoryDetailScreen(): JSX.Element {
 
   const isScam = data.is_scam || (data.isSmallUsdTx && treatSmallAssetsAsScam);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { safeSizes } = useSafeAndroidBottomSizes({
-    // containerPb: 12,
-    btnContainerBottomOffset: 40,
-  });
+  const { bottom: safeBottomInset } = useSafeAreaInsets();
   const buttonContainerStyle = useMemo(() => {
     return [
       styles.buttonContainerStyle,
-      { marginBottom: safeSizes.btnContainerBottomOffset },
+      { marginBottom: Math.max(safeBottomInset, 24) },
     ];
-  }, [styles.buttonContainerStyle, safeSizes.btnContainerBottomOffset]);
+  }, [styles.buttonContainerStyle, safeBottomInset]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const getHeaderTitle = React.useCallback(() => {
