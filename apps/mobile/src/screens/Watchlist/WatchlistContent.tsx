@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom } from 'jotai';
-import { Platform, Pressable, RefreshControl, View } from 'react-native';
+import { Pressable, RefreshControl, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';
 import { Text } from '@/components/Typography';
 import { preferenceService } from '@/core/services';
-import { atomByMMKV } from '@/core/storage/mmkv';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
@@ -23,23 +22,13 @@ import { useHotTokenList } from './hooks/useHotTokenList';
 import { useWatchlistTokens } from './hooks/useWatchlistTokens';
 import WatchListHeader from './components/TokenHeader';
 import { TokenItemSkeleton, TokenListItem } from './components/TokenItem';
+import {
+  sortWatchlistTokens,
+  watchlistChangeSortAtom,
+  watchlistTokenSortAtom,
+} from './sort';
 
-const isAndroid = Platform.OS === 'android';
-
-const tokenSortAtom = atomByMMKV<'desc' | 'asc' | 'default'>(
-  '@watchlist.tokenSort',
-  'default',
-);
-const changeSortAtom = atomByMMKV<'desc' | 'asc' | 'default'>(
-  '@watchlist.changeSort',
-  'default',
-);
-
-export function WatchlistContent({
-  headerSpacerHeight = isAndroid ? 46 : 44,
-}: {
-  headerSpacerHeight?: number;
-}) {
+export function WatchlistContent() {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const {
@@ -49,11 +38,12 @@ export function WatchlistContent({
     loading: watchlistLoading,
   } = useWatchlistTokens();
 
-  const [tokenSort, setTokenSort] = useAtom(tokenSortAtom);
-  const [changeSort, setChangeSort] = useAtom(changeSortAtom);
+  const [tokenSort, setTokenSort] = useAtom(watchlistTokenSortAtom);
+  const [changeSort, setChangeSort] = useAtom(watchlistChangeSortAtom);
   const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const focusedTab = useFocusedTab();
 
   const showGuide = useMemo(() => {
@@ -115,23 +105,10 @@ export function WatchlistContent({
     handleFetchTokens();
   }, [handleFetchTokens, hotTokenList, selectedTokens]);
 
-  const list = useMemo(() => {
-    return [...watchlistTokens].sort((a, b) => {
-      if (tokenSort !== 'default') {
-        if (tokenSort === 'asc') {
-          return (a.identity?.fdv ?? 0) - (b.identity?.fdv ?? 0);
-        }
-        return (b.identity?.fdv ?? 0) - (a.identity?.fdv ?? 0);
-      }
-      if (changeSort !== 'default') {
-        if (changeSort === 'asc') {
-          return (a.price_24h_change ?? 0) - (b.price_24h_change ?? 0);
-        }
-        return (b.price_24h_change ?? 0) - (a.price_24h_change ?? 0);
-      }
-      return 0;
-    });
-  }, [watchlistTokens, tokenSort, changeSort]);
+  const list = useMemo(
+    () => sortWatchlistTokens(watchlistTokens, tokenSort, changeSort),
+    [watchlistTokens, tokenSort, changeSort],
+  );
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
@@ -176,12 +153,21 @@ export function WatchlistContent({
     setTokenSort('default');
   }, [setChangeSort, setTokenSort]);
 
+  const renderItem = useCallback(
+    ({ item }: { item: TokenDetailWithPriceCurve }) => (
+      <TokenListItem item={item} onPress={handleOpenTokenDetail} />
+    ),
+    [handleOpenTokenDetail],
+  );
+
+  const keyExtractor = useCallback(
+    (item: TokenDetailWithPriceCurve) => item.id + '/' + item.chain,
+    [],
+  );
+
   const renderHeaderSpacer = useCallback(
-    () =>
-      headerSpacerHeight ? (
-        <View style={[styles.header, { height: headerSpacerHeight }]} />
-      ) : null,
-    [headerSpacerHeight, styles.header],
+    () => <View style={[styles.header]} />,
+    [styles.header],
   );
 
   const renderGuideContent = useCallback(
@@ -225,75 +211,94 @@ export function WatchlistContent({
     ],
   );
 
-  const renderListContent = useCallback(
+  const renderListHeader = useCallback(
     () => (
       <>
-        {renderHeaderSpacer()}
-        {!list.length && !watchlistLoading && (
-          <EmptyWatchlist
-            style={centerEmpty ? styles.centerEmpty : undefined}
-          />
-        )}
         {!!list.length && (
-          <>
+          <View style={styles.stickyHeader}>
             <WatchListHeader
               tokenSort={tokenSort}
               onTokenSort={handleTokenSort}
               changeSort={changeSort}
               onChangeSort={handleChangeSort}
             />
-            {watchlistLoading &&
-              list.length === 0 &&
-              Array.from({ length: 8 }).map((_, idx) => (
-                <TokenItemSkeleton key={idx} />
-              ))}
-            {list.map(item => (
-              <TokenListItem
-                key={item.id}
-                item={item}
-                onPress={handleOpenTokenDetail}
-              />
-            ))}
-            <View style={styles.bottomPadding} />
-          </>
+          </View>
         )}
       </>
     ),
     [
-      centerEmpty,
       changeSort,
       handleChangeSort,
-      handleOpenTokenDetail,
       handleTokenSort,
       list,
-      renderHeaderSpacer,
-      styles.bottomPadding,
-      styles.centerEmpty,
+      styles.stickyHeader,
       tokenSort,
-      watchlistLoading,
     ],
   );
 
+  const renderListEmptyComponent = useCallback(() => {
+    if (watchlistLoading) {
+      return (
+        <>
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <TokenItemSkeleton key={idx} />
+          ))}
+        </>
+      );
+    }
+
+    return (
+      <EmptyWatchlist style={centerEmpty ? styles.centerEmpty : undefined} />
+    );
+  }, [centerEmpty, styles.centerEmpty, watchlistLoading]);
+
+  const renderListFooter = useCallback(
+    () => <View style={styles.bottomPadding} />,
+    [styles.bottomPadding],
+  );
+
+  const handleManualRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await handleFetchTokens(true);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [handleFetchTokens]);
+
   return (
     <>
-      <Tabs.ScrollView
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        tvParallaxProperties={undefined}
-        horizontal={false}
-        nestedScrollEnabled={false}
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
-        refreshControl={
-          !showGuide ? (
+      {showGuide ? (
+        <Tabs.ScrollView
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          tvParallaxProperties={undefined}
+          horizontal={false}
+          nestedScrollEnabled={false}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}>
+          {renderGuideContent()}
+        </Tabs.ScrollView>
+      ) : (
+        <Tabs.FlatList
+          data={list}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+          ListHeaderComponent={renderListHeader}
+          stickyHeaderIndices={list.length ? [0] : undefined}
+          ListEmptyComponent={renderListEmptyComponent}
+          ListFooterComponent={renderListFooter}
+          refreshControl={
             <RefreshControl
-              refreshing={watchlistLoading && list.length !== 0}
-              onRefresh={() => handleFetchTokens(true)}
+              refreshing={isManualRefreshing}
+              onRefresh={handleManualRefresh}
             />
-          ) : undefined
-        }>
-        {showGuide ? renderGuideContent() : renderListContent()}
-      </Tabs.ScrollView>
+          }
+        />
+      )}
       {showGuide && (
         <View style={styles.footer}>
           <Pressable
@@ -323,15 +328,20 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flex: 1,
   },
   header: {
-    height: isAndroid ? 46 : 44,
+    height: 8,
   },
   scrollView: {
-    marginTop: 8,
     flex: 1,
   },
   scrollViewContent: {
     paddingHorizontal: 12,
     flexGrow: 1,
+  },
+  stickyHeader: {
+    paddingTop: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   centerEmpty: {
     marginTop: '50%',

@@ -17,6 +17,7 @@ type IndicatorProps = {
   itemsLayout: ItemLayout[];
   style?: AnimatedStyle;
   fadeIn?: boolean;
+  visible?: boolean;
 };
 
 const Indicator: React.FC<IndicatorProps> = ({
@@ -24,6 +25,7 @@ const Indicator: React.FC<IndicatorProps> = ({
   itemsLayout,
   style,
   fadeIn = false,
+  visible = true,
 }) => {
   const opacity = useSharedValue(fadeIn ? 0 : 1);
 
@@ -55,9 +57,9 @@ const Indicator: React.FC<IndicatorProps> = ({
     return {
       transform,
       width,
-      opacity: withTiming(opacity.value),
+      opacity: withTiming(visible ? opacity.value : 0),
     };
-  }, [indexDecimal, itemsLayout]);
+  }, [indexDecimal, itemsLayout, visible]);
 
   React.useEffect(() => {
     if (fadeIn) {

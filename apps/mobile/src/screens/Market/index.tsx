@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -17,9 +17,13 @@ import { DynamicCustomMaterialTabBar } from '../TokenDetail/components/CustomTab
 import { WatchlistContent } from '../Watchlist/WatchlistContent';
 import { MarketCategoryContent } from './components/MarketCategoryContent';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+
+const isAndroid = Platform.OS === 'android';
 
 type MarketTabKey = 'watchlist' | string;
 const TAB_GAP = 8;
+const FIRST_TAB_GAP = 12;
 
 const marketTabAtom = atomByMMKV<MarketTabKey>(
   '@market.activeTab',
@@ -51,6 +55,8 @@ const VALID_MARKET_TABS = new Set<MarketTabKey>([
 
 export default function MarketScreen() {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { safeOffHeader } = useSafeSizes();
+
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const [storedActiveTab, setStoredActiveTab] = useAtom(marketTabAtom);
@@ -108,10 +114,10 @@ export default function MarketScreen() {
 
   const initialTabItemsLayout = useMemo(() => {
     let x = 20;
-    return tabs.map(tab => {
+    return tabs.map((tab, index) => {
       const width = Math.max(60, tab.label.length * 12 + 20);
       const item = { x, width };
-      x += width + TAB_GAP;
+      x += width + (index === 0 ? FIRST_TAB_GAP : TAB_GAP);
       return item;
     });
   }, [tabs]);
@@ -127,11 +133,16 @@ export default function MarketScreen() {
         indicatorStyle={styles.indicator}
         initialTabItemsLayout={initialTabItemsLayout}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
+        getTabItemStyle={index =>
+          index === 0 ? styles.firstTabBar : styles.restTabBar
+        }
       />
     ),
     [
       initialTabItemsLayout,
+      styles.firstTabBar,
       styles.indicator,
+      styles.restTabBar,
       styles.tabBar,
       styles.tabsBarContainer,
     ],
@@ -163,7 +174,13 @@ export default function MarketScreen() {
   return (
     <NormalScreenContainer2024
       type={isLight ? 'bg0' : 'bg1'}
-      overwriteStyle={styles.overwriteStyle}>
+      overwriteStyle={[
+        styles.overwriteStyle,
+        {
+          // 收窄范围
+          paddingTop: safeOffHeader - (isAndroid ? 0 : 10),
+        },
+      ]}>
       <Tabs.Container
         renderTabBar={renderTabBar}
         tabBarHeight={36}
@@ -174,7 +191,7 @@ export default function MarketScreen() {
           setStoredActiveTab(tabName);
         }}>
         <Tabs.Tab label={renderWatchlistLabel} name="watchlist">
-          <WatchlistContent headerSpacerHeight={0} />
+          <WatchlistContent />
         </Tabs.Tab>
         {
           MARKET_TABS.map(category => {
@@ -235,6 +252,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexShrink: 0,
     flex: 0,
     paddingHorizontal: 0,
+  },
+  firstTabBar: {
+    marginRight: FIRST_TAB_GAP,
+  },
+  restTabBar: {
     marginRight: TAB_GAP,
   },
   tabsBarContainer: {
@@ -254,7 +276,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   content: {
     flex: 1,
-    marginTop: 8,
   },
   categoryLabelContainer: {
     height: 36,
@@ -263,7 +284,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   watchlistLabelContainer: {
     height: 36,
-    paddingRight: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
