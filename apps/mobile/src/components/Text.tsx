@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { TextProps, Platform, TextStyle } from 'react-native';
 import { Text as RNText } from '@/components/Typography';
 import { moderateScale } from 'react-native-size-matters';
@@ -39,39 +39,41 @@ const defaultFontFamily = {
 
 const RobotoLackWeights = ['200', '600', '800'];
 
-export const Text = React.forwardRef(
-  ({ style, ...rest }: TextProps, ref: React.Ref<RNText>) => {
-    const _fontSize = useMemo(
-      () => normalize((style as TextStyle)?.fontSize || 14),
-      [style],
-    );
-    const _fontWeight = useMemo(() => {
-      const fontWeight = (style as TextStyle)?.fontWeight;
+export const Text = ({
+  style,
+  ref,
+  ...rest
+}: TextProps & { ref: React.Ref<RNText> }) => {
+  const _fontSize = useMemo(
+    () => normalize((style as TextStyle)?.fontSize || 14),
+    [style],
+  );
+  const _fontWeight = useMemo(() => {
+    const fontWeight = (style as TextStyle)?.fontWeight;
 
-      if (
-        Platform.OS === 'android' &&
-        fontWeight &&
-        RobotoLackWeights.includes(fontWeight as string)
-      ) {
-        return (Number(fontWeight) - 100).toString();
-      }
+    if (
+      Platform.OS === 'android' &&
+      fontWeight &&
+      RobotoLackWeights.includes(fontWeight as string)
+    ) {
+      return (Number(fontWeight) - 100).toString();
+    }
 
-      return fontWeight;
-    }, [style]);
+    return fontWeight;
+  }, [style]);
 
-    return (
-      <RNText
-        style={[
-          defaultFontFamily,
-          style,
-          {
-            fontSize: _fontSize,
-            fontWeight: _fontWeight as TextStyle['fontWeight'],
-          },
-        ]}
-        {...rest}
-        ref={ref}
-      />
-    );
-  },
-);
+  return (
+    <RNText
+      style={[
+        defaultFontFamily,
+        style,
+        {
+          fontSize: _fontSize,
+          fontWeight: _fontWeight as TextStyle['fontWeight'],
+        },
+      ]}
+      {...rest}
+      ref={ref}
+    />
+  );
+};
