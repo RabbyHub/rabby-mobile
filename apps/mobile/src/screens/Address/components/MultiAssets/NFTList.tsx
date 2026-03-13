@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -14,7 +14,6 @@ import {
 } from '@/screens/Home/components/AssetRenderItems';
 import { ActionItem, DisplayNftItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useLoadAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
@@ -42,8 +41,8 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
-import { isTabsSwiping } from './hooks';
-import { useAssetsNFTs, useOnNftRefresh } from '@/screens/Home/hooks/store';
+import { isTabsSwiping, useAccountInfo } from './hooks';
+import nftListStore, { combinedNfts, useOnNftRefresh } from '@/store/nfts';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
@@ -58,6 +57,7 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
 export const NFTList = () => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { myTop10Addresses } = useAccountInfo();
 
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
@@ -74,11 +74,18 @@ export const NFTList = () => {
     isFocusing,
   });
 
-  const { checkIsExpireAndUpdate, isLoading } = useLoadAssets();
+  const isLoading = nftListStore(s => s.isLoading);
+  const nftsMap = nftListStore(s => s.nftsMap);
+  const batchGetNFTList = nftListStore(s => s.batchGetNFTList);
 
-  const { nfts: _rawNftList } = useAssetsNFTs({
-    hideCombined: false,
-  });
+  useEffect(() => {
+    console.log('nftsMap', nftsMap);
+  }, [nftsMap]);
+
+  const _rawNftList = useMemo(
+    () => combinedNfts(nftsMap, myTop10Addresses),
+    [nftsMap, myTop10Addresses],
+  );
 
   const nftList = useMemo(() => {
     return _rawNftList?.filter(item =>
@@ -247,17 +254,14 @@ export const NFTList = () => {
     try {
       await Promise.all([
         triggerUpdate(true),
-        checkIsExpireAndUpdate(true, {}),
+        batchGetNFTList(true, {}),
         nftRefresh(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate, nftRefresh]);
+  }, [batchGetNFTList, triggerUpdate, nftRefresh]);
 
-  // if (!isFocusing) {
-  //   return null;
-  // }
   return (
     <Tabs.FlatList
       keyExtractor={getItemId}

@@ -48,11 +48,9 @@ export const useFindAccountByAddress = () => {
 export const useCheckIsExpireAndUpdate = ({
   isFocused,
   isFocusing,
-  disableNFT,
 }: {
   isFocused: boolean;
   isFocusing: boolean;
-  disableNFT?: boolean;
 }) => {
   const initRef = useRef(false);
   const { myTop10Addresses } = useAccountInfo();
@@ -86,7 +84,6 @@ export const useCheckIsExpireAndUpdate = ({
       }
       initRef.current = true;
       checkIsExpireAndUpdate(false, {
-        disableNFT,
         updateReturn: true,
         realTimeAddresses: myTop10Addresses,
         ignoreLoading: !hasBalanceAccounts,
@@ -96,21 +93,13 @@ export const useCheckIsExpireAndUpdate = ({
     return () => {
       cacheTop10AssetsId && clearTimeout(cacheTop10AssetsId);
     };
-  }, [
-    isFocused,
-    disableNFT,
-    checkIsExpireAndUpdate,
-    myTop10Addresses,
-    hasBalanceAccounts,
-  ]);
+  }, [isFocused, checkIsExpireAndUpdate, myTop10Addresses, hasBalanceAccounts]);
 
   useEffect(() => {
     if (isFocusing) {
-      checkIsExpireAndUpdate(false, {
-        disableNFT,
-      });
+      checkIsExpireAndUpdate(false, {});
     }
-  }, [checkIsExpireAndUpdate, disableNFT, isFocusing]);
+  }, [checkIsExpireAndUpdate, isFocusing]);
 
   return {
     triggerUpdate,
