@@ -193,7 +193,7 @@ export const TokenMarketInfoScreen = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: -3 }}
+        style={{ marginLeft: isAndroid ? 0 : -30 }}
         key={finalAccount?.address}
         token={token}
         showCopyIcon
