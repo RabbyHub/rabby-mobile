@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React from 'react';
+import { View, TouchableOpacity, Image } from 'react-native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -38,13 +38,6 @@ export const formatPercentageKMB = (x: number) => {
   return `${sign}${formattedValue}%`;
 };
 
-const getPercentSize = (per: string) => {
-  if (per.length > 4) {
-    return 13;
-  }
-  return 14;
-};
-
 interface TokenListItemProps {
   item: TokenMarketTokenItem;
   onPress: (item: TokenMarketTokenItem) => void;
@@ -60,14 +53,7 @@ const TokenListItemComponent = ({
   rightSlot,
   showChainLogo = false,
 }: TokenListItemProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const isPositive = useMemo(
-    () => (item.price_24h_change || 0) >= 0,
-    [item.price_24h_change],
-  );
-  const percentStr = useMemo(() => {
-    return formatPercentageKMB(Number(item.price_24h_change) || 0);
-  }, [item.price_24h_change]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -104,8 +90,8 @@ const TokenListItemComponent = ({
                   <Image
                     source={{ uri: item.asset?.logo }}
                     style={styles.fourMemeIcon}
-                    width={18}
-                    height={18}
+                    width={16}
+                    height={16}
                   />
                 ) : null}
                 <Text style={styles.tokenFdv}>{item.asset?.name}</Text>
@@ -165,6 +151,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
   },
   tokenLeftSection: {
+    justifyContent: 'center',
     flexDirection: 'column',
     alignItems: 'center',
     flex: 1,

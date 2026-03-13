@@ -126,8 +126,12 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
         style={[styles.headerCell, styles.changeCell]}
         hitSlop={10}
         onPress={onChangeSort}>
+        <Text style={getTextStyle('default')}>
+          {t('page.watchlist.tokenHeader.price')}
+        </Text>
+        <Text style={getTextStyle('default')}>/</Text>
         <Text style={getTextStyle(changeSort)}>
-          {t('page.watchlist.tokenHeader.priceAndChange')}
+          {t('page.watchlist.tokenHeader.change')}
         </Text>
         {renderArrows(changeSort)}
       </Pressable>

@@ -776,7 +776,9 @@ export const HomeOverview = React.memo(() => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) return;
+      if (!couldDoRefresh()) {
+        return;
+      }
       resetFetchHistoryTxCount();
     }, []),
   );
@@ -1088,38 +1090,13 @@ export const HomeOverview = React.memo(() => {
                 <View style={styles.gridItemsWrap}>
                   {MENU_ARR.map((el, index) => {
                     return (
-                      <FastTouchable
-                        style={StyleSheet.flatten([
-                          styles.gridItem,
-                          { width: itemWidth },
-                        ])}
+                      <HomeMenuItem
                         key={index}
-                        onPress={() => {
-                          console.debug('[perf] touched menu', el.key);
-                          requestAnimationFrame(() => {
-                            handleClickMenu(el.key);
-                          });
-                          matomoRequestEvent({
-                            category: 'Click_Services',
-                            action: `Click_${el.key}`,
-                          });
-                        }}>
-                        <View style={styles.badgeWrapper}>
-                          <View style={styles.iconWrapper}>
-                            <el.icon
-                              width={28}
-                              height={28}
-                              color={
-                                el.color || colors2024['brand-default-icon']
-                              }
-                            />
-                          </View>
-                          <View style={styles.rightBadgeWrapper}>
-                            {generateCustomBadgeIcon(el)}
-                          </View>
-                        </View>
-                        <Text style={styles.gridText}>{el.title}</Text>
-                      </FastTouchable>
+                        el={el}
+                        itemWidth={itemWidth}
+                        onPress={handleClickMenu}
+                        renderBadge={generateCustomBadgeIcon}
+                      />
                     );
                   })}
                 </View>

@@ -3,7 +3,7 @@ import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { TextProps, View } from 'react-native';
+import { TextProps, View, ViewProps } from 'react-native';
 import { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
 
 interface CustomLabelProps {
@@ -18,6 +18,7 @@ interface CustomLabelProps {
   activeFontSize?: number;
   inactiveFontSize?: number;
   style?: TextProps['style'];
+  containerStyle?: ViewProps['style'];
 }
 const CustomLabel = ({
   index,
@@ -31,6 +32,7 @@ const CustomLabel = ({
   activeFontSize = 16,
   inactiveFontSize = 16,
   style,
+  containerStyle,
 }: CustomLabelProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -54,7 +56,7 @@ const CustomLabel = ({
     } as DefaultStyle;
   });
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       {!!text && (
         <Animated.Text style={[styles.label, stylez, style]}>
           {text}
