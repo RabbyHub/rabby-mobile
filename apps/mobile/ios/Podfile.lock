@@ -2900,7 +2900,7 @@ PODS:
   - RNGoogleSignin (13.2.0):
     - GoogleSignIn (~> 7.1)
     - React-Core
-  - RNIap (12.16.2):
+  - RNIap (12.16.4):
     - React-Core
   - RNInAppBrowser (3.7.0):
     - React-Core
@@ -3726,7 +3726,7 @@ SPEC CHECKSUMS:
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: 1fe7766166d8be5a28c5f2529fbfd03e22b550f8
   RNGoogleSignin: ee2938633d996756819e3212c8e0f7f696b380d0
-  RNIap: 2fba6c91f79fb7c71fcc44465f606061653caf01
+  RNIap: cc6ad44185936b2ced74691b154cc9c322a2cb5a
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNKeychain: bfe3d12bf4620fe488771c414530bf16e88f3678
   RNLocalize: 298e85ce16540a11de40c1a588ead39fc5e9a072
