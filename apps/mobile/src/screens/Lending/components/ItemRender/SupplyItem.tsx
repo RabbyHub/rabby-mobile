@@ -395,9 +395,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       backgroundColor: colors2024['neutral-bg-5'],
     },
-    wrapperTokenButton: {
-      backgroundColor: colors2024['neutral-line'],
-    },
     buttonSecondaryText: {
       fontSize: 14,
       lineHeight: 18,
