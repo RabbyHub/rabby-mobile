@@ -373,6 +373,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
     gap: 8,
   },
   assetIcon: {
@@ -385,6 +386,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   tokenInfo: {
     flexDirection: 'column',
     justifyContent: 'center',
+    flex: 1,
     gap: 2,
   },
   tokenInfoHeader: {

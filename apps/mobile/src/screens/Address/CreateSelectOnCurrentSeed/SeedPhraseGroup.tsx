@@ -147,6 +147,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   itemInfo: {
     marginLeft: 8,
     gap: 4,
+    flex: 1,
   },
   itemNameText: {
     fontSize: 14,
