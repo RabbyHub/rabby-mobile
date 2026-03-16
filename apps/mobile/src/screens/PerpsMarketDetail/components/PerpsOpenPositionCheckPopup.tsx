@@ -278,7 +278,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
           </TouchableOpacity>
 
           <Button
-            type="primary"
+            type="hyperliquid"
             title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
               direction,
             })}

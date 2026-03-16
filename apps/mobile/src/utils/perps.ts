@@ -16,6 +16,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisPerps } from '@/core/apis';
 import { perpsService } from '@/core/services';
 import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
 
 const getPxDecimals = (markPx: string) => {
   const parts = markPx.split('.');
@@ -24,6 +25,25 @@ const getPxDecimals = (markPx: string) => {
   }
   const decimalPart = parts[1];
   return decimalPart.length;
+};
+
+export const normalizeHyperliquidCoinForLogo = (coin: string) => {
+  if (!coin) {
+    return '';
+  }
+  // Keep km:* untouched, but drop k-prefix for meme perps like kPEPE -> PEPE.
+  if (coin.startsWith('k') && !coin.startsWith('km:')) {
+    return coin.slice(1);
+  }
+  return coin;
+};
+
+export const getHyperliquidCoinLogoUrl = (coin: string) => {
+  const iconKey = normalizeHyperliquidCoinForLogo(coin);
+  if (!iconKey) {
+    return '';
+  }
+  return `https://app.hyperliquid.xyz/coins/${iconKey}.svg`;
 };
 
 export const formatMarkData = (
@@ -121,8 +141,7 @@ export const formatMarkData = (
           premium: String(m?.premium ?? '0'),
           prevDayPx: String(m?.prevDayPx ?? ''),
           logoUrl:
-            topAsset.full_logo_url ||
-            `https://app.hyperliquid.xyz/coins/${topAsset.name}.svg`,
+            topAsset.full_logo_url || getHyperliquidCoinLogoUrl(topAsset.name),
         };
         return item;
       })
@@ -415,4 +434,18 @@ export const getStatsReportSide = (isBuy: boolean, isReduceOnly: boolean) => {
     return isBuy ? 'close short' : 'close long';
   }
   return isBuy ? 'open long' : 'open short';
+};
+
+export const handleDisplayFundingPayments = (fundingPayments: string) => {
+  const bn = new BigNumber(fundingPayments || 0);
+  if (bn.isZero()) {
+    return '$0.00';
+  }
+  // negative means funding payment, positive means funding gains
+  const sign = bn.isNegative() ? '+' : '-';
+  if (bn.abs().lt(0.01)) {
+    return sign + '$0.01';
+  }
+
+  return sign + '$' + bn.abs().toFixed(2);
 };

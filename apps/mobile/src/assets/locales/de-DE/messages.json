@@ -1211,7 +1211,8 @@
         "perpsMarketList": "Mehr Perps",
         "lending": "Kredite",
         "predict": "Vorhersagen",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Markt"
       },
       "swipeUp": {
         "descAndroidMore": "Klicken Sie, um weitere dApps zu erkunden",
@@ -1732,8 +1733,16 @@
           }
         },
         "ledger": {
-          "hdPathType": {},
-          "hdPathTypeNoChain": {}
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad.",
+            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird.",
+            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist."
+          },
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live: Ledger offizieller HD-Pfad.",
+            "legacy": "Legacy: HD-Pfad, der von MEW / Mycrypto verwendet wird.",
+            "bip44": "BIP44-Standard: HD-Pfad, der durch das BIP44-Protokoll definiert ist."
+          }
         },
         "qrCode": {
           "switch": {
@@ -2688,7 +2697,8 @@
       "tokenHeader": {
         "price": "Preis",
         "change": "24H Veränderung",
-        "token": "Token/FDV"
+        "token": "Token/FDV",
+        "priceAndChange": "Preis/24H Veränderung"
       },
       "footer": {
         "skip": "Überspringen",
@@ -2923,7 +2933,8 @@
         "currentPrice": "Aktueller Preis",
         "unrealizedPnl": "Unrealisierter PNL",
         "details": "Details",
-        "realizedPnl": "Realisiertes PNL"
+        "realizedPnl": "Realisiertes PNL",
+        "fundingTipsBold": "Dies zeigt Ihre gesamte Finanzierung an, die seit der Eröffnung der Position abgewickelt wurde. <bold>Grüne (positive)</bold> Werte bedeuten, dass Sie von anderen Händlern verdient haben, während <bold>Rote (negative)</bold> Werte die Finanzierungskosten sind, die Sie an sie gezahlt haben."
       },
       "PerpsInfo": {
         "funding": "Finanzierung",
@@ -3299,7 +3310,8 @@
         "entryTips": "Ein Klick, um Ihr geliehenes Asset zu tauschen, wodurch Schritte und Gebühren reduziert werden.",
         "priceImpactTips": "Hoher Preisimpact ({{lostValue}}). Diese Route kann aufgrund niedriger Liquidität oder kleiner Bestellgröße mehr zurückgeben.",
         "lpRiskWarning": "Niedriger Gesundheitsfaktor nach dem Swap. Ihre Position trägt ein höheres Risiko der Liquidation.",
-        "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben."
+        "lpDangerWarning": "Ihr Gesundheitsfaktor nach diesem Swap wird kritisch niedrig sein und kann zu einer Liquidation führen. Bitte wählen Sie einen anderen Vermögenswert oder reduzieren Sie den Swap-Betrag, um sicher zu bleiben.",
+        "maxLtvWarning": "Unzureichende Sicherheiten, um eine neue Kreditposition zu decken. Die Wallet muss über verbleibende Kreditaufnahmefähigkeiten verfügen, um einen Schuldenwechsel durchzuführen."
       },
       "hfTips": {
         "more": "Mehr",
@@ -3368,7 +3380,19 @@
         "change": "24H Änderung",
         "fdv": "FDV",
         "volume": "24H Volumen",
-        "price": "Preis"
+        "price": "Preis",
+        "priceAndChange": "Preis/24H Änderung"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Name"
+      },
+      "tabs": {
+        "watchlist": "Beobachtungsliste",
+        "memecoin": "Memecoin",
+        "stock": "Bestand",
+        "commodities": "Rohstoffe"
       }
     }
   },

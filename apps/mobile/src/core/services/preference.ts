@@ -178,7 +178,7 @@ export interface PreferenceStore {
    */
   tempCurrentAccount?: Account;
   /** 用户是否跳过了watchlist引导 */
-  watchlistSkip?: boolean;
+  watchlistSkipV2?: boolean;
 
   lastReportTime?: number;
 
@@ -271,7 +271,7 @@ export class PreferenceService extends StoreServiceBase<
         safeSelfHostConfirm: {},
         addressAvatarMap: {},
         hasOpenCopyTrading: false,
-        watchlistSkip: false,
+        watchlistSkipV2: false,
         balanceHideType: BALANCE_HIDE_TYPE.SHOW,
         currency: 'USD',
         tokenDisplayMode: 'byAddress',
@@ -836,11 +836,11 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   setWatchlistSkip = (value: boolean) => {
-    this.store.watchlistSkip = value;
+    this.store.watchlistSkipV2 = value;
   };
 
   getWatchlistSkip = () => {
-    return !!this.store.watchlistSkip;
+    return !!this.store.watchlistSkipV2;
   };
 
   resetAddressSortStoreExpiredValue = () => {

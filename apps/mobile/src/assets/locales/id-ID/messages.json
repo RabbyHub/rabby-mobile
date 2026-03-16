@@ -1045,7 +1045,8 @@
         "perpsMarketList": "Lebih Banyak Perp",
         "lending": "Peminjaman",
         "predict": "Prediksi",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Pasar"
       },
       "swipeUp": {
         "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",
@@ -1355,8 +1356,16 @@
       },
       "hd": {
         "ledger": {
-          "hdPathType": {},
-          "hdPathTypeNoChain": {}
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
+            "bip44": "BIP44 Standar: HDpath yang ditentukan oleh protokol BIP44.",
+            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto."
+          },
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger.",
+            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto.",
+            "bip44": "Standar BIP44: Jalur HD yang ditentukan oleh protokol BIP44."
+          }
         },
         "onekey": {
           "hdPathType": {
@@ -2318,7 +2327,8 @@
       "tokenHeader": {
         "change": "Perubahan 24H",
         "price": "Harga",
-        "token": "Token/FDV"
+        "token": "Token/FDV",
+        "priceAndChange": "Harga/Perubahan 24 Jam"
       },
       "footer": {
         "skip": "Lewati",
@@ -2553,7 +2563,8 @@
         "realizedPnl": "PNL yang Direalisasikan",
         "positionValue": "Nilai Posisi",
         "settings": "Pengaturan",
-        "marginMode": "Mode Margin"
+        "marginMode": "Mode Margin",
+        "fundingTipsBold": "Ini menunjukkan total pendanaan Anda yang diselesaikan sejak posisi dibuka. Nilai <bold>Hijau (positif)</bold> berarti Anda telah menghasilkan dari trader lain, sedangkan nilai <bold>Merah (negatif)</bold> adalah biaya pendanaan yang telah Anda bayar kepada mereka."
       },
       "PerpsInfo": {
         "openInterestTips": "Total posisi terbuka dari semua pengguna pada kontrak ini.",
@@ -2929,7 +2940,8 @@
         "entryTips": "Satu klik untuk menukarkan aset yang Anda pinjam, mengurangi langkah dan biaya.",
         "priceImpactTips": "Dampak harga tinggi ({{lostValue}}). Rute ini mungkin memberikan lebih banyak karena likuiditas rendah atau ukuran pesanan kecil.",
         "lpDangerWarning": "Setelah pertukaran ini, faktor kesehatan Anda akan sangat rendah dan dapat mengakibatkan likuidasi. Silakan pilih aset lain atau kurangi jumlah pertukaran untuk tetap aman.",
-        "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi."
+        "lpRiskWarning": "Faktor kesehatan rendah setelah pertukaran. Posisi Anda akan membawa risiko likuidasi yang lebih tinggi.",
+        "maxLtvWarning": "Jaminan tidak cukup untuk menutupi posisi pinjaman baru. Dompet harus memiliki sisa daya pinjaman untuk melakukan perpindahan utang."
       },
       "hfTips": {
         "more": "Lebih banyak",
@@ -2998,7 +3010,19 @@
         "price": "Harga",
         "change": "Perubahan 24J",
         "volume": "24H Volume",
-        "fdv": "FDV"
+        "fdv": "FDV",
+        "priceAndChange": "Harga/Perubahan 24J"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Nama"
+      },
+      "tabs": {
+        "stock": "Stok",
+        "memecoin": "Memecoin",
+        "watchlist": "Daftar Pantauan",
+        "commodities": "Komoditas"
       }
     }
   },

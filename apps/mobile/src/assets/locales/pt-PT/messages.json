@@ -1114,7 +1114,8 @@
         "perps": "Perps",
         "lending": "Empréstimo",
         "predict": "Prever",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Mercado"
       },
       "swipeUp": {
         "desc": "Deslize para cima para explorar websites",
@@ -1681,8 +1682,16 @@
           }
         },
         "ledger": {
-          "hdPathTypeNoChain": {},
-          "hdPathType": {}
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live: caminho HD oficial da Ledger.",
+            "bip44": "BIP44 Padrão: Caminho HD definido pelo protocolo BIP44.",
+            "legacy": "Legado: caminho HD utilizado pelo MEW / Mycrypto."
+          },
+          "hdPathType": {
+            "legacy": "Legado: caminho HD usado pelo MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: caminho HD oficial da Ledger.",
+            "bip44": "Padrão BIP44: HDpath definido pelo protocolo BIP44."
+          }
         },
         "qrCode": {
           "switch": {
@@ -2688,7 +2697,8 @@
       "tokenHeader": {
         "price": "Preço",
         "token": "Token/FDV",
-        "change": "Mudança em 24H"
+        "change": "Mudança em 24H",
+        "priceAndChange": "Preço/Variação 24H"
       },
       "footer": {
         "skip": "Saltar",
@@ -2923,7 +2933,8 @@
         "unrealizedPnl": "PNL Não Realizado",
         "realizedPnl": "Lucro e Prejuízo Realizado",
         "settings": "Configurações",
-        "marginMode": "Modo de Margem"
+        "marginMode": "Modo de Margem",
+        "fundingTipsBold": "Isto mostra o seu financiamento total liquidado desde que a posição foi aberta. Valores <bold>verdes (positivos)</bold> significam que você ganhou de outros negociantes, enquanto valores <bold>vermelhos (negativos)</bold> são os custos de financiamento que você pagou a eles."
       },
       "PerpsInfo": {
         "funding": "Financiamento",
@@ -3299,7 +3310,8 @@
         "entryTips": "Troque o seu ativo emprestado com um clique, reduzindo etapas e taxas.",
         "lpDangerWarning": "O seu fator de saúde após esta troca ficará criticamente baixo e pode resultar em liquidação. Por favor, escolha um ativo diferente ou reduza o valor da troca para se manter seguro.",
         "lpRiskWarning": "Fator de saúde baixo após a troca. Sua posição terá um risco maior de liquidação.",
-        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Esta rota pode retornar mais devido à baixa liquidez ou ao tamanho pequeno da ordem."
+        "priceImpactTips": "Impacto de preço elevado ({{lostValue}}). Esta rota pode retornar mais devido à baixa liquidez ou ao tamanho pequeno da ordem.",
+        "maxLtvWarning": "Colateral insuficiente para cobrir a nova posição de empréstimo. A carteira deve ter poder de empréstimo restante para realizar a troca de dívida."
       },
       "hfTips": {
         "more": "Mais",
@@ -3368,7 +3380,19 @@
         "change": "Alteração 24H",
         "fdv": "FDV",
         "volume": "24H Volume",
-        "price": "Preço"
+        "price": "Preço",
+        "priceAndChange": "Preço/Alteração nas últimas 24H"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Nome"
+      },
+      "tabs": {
+        "watchlist": "Lista de Vigilância",
+        "memecoin": "Memecoin",
+        "stock": "Ação",
+        "commodities": "Mercadorias"
       }
     }
   },

@@ -1,5 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useFindAccountByAddress } from '@/screens/Address/components/MultiAssets/hooks/share';
@@ -44,10 +50,12 @@ const AssetPositionItem = ({
   item,
   onShowRiskPopup,
   isSingleAddress,
+  source,
 }: {
   item: AssetPositionWithAccount;
   onShowRiskPopup: (item: AssetPositionWithAccount) => void;
   isSingleAddress?: boolean;
+  source?: 'home' | 'multiAssets';
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -70,22 +78,12 @@ const AssetPositionItem = ({
     onShowRiskPopup(item);
   }, [item, onShowRiskPopup]);
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
-  const handlePress = useCallback(() => {
-    switchPerpsAccountBeforeNavigate(item.account);
-    matomoRequestEvent({
-      category: 'Rabby Perps',
-      action: 'Perps_CardToPosition',
-    });
-    navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.PerpsMarketDetail,
-      params: { market: coin },
-    });
-  }, [item, coin, navigation]);
+
   const handleHyperliquidPress = useCallback(() => {
     switchPerpsAccountBeforeNavigate(item.account);
     matomoRequestEvent({
       category: 'Rabby Perps',
-      action: 'Perps_CardToPerps',
+      action: source === 'home' ? 'Perps_HomeCardClick' : 'Perps_CardToPerps',
     });
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.Perps,
@@ -94,10 +92,10 @@ const AssetPositionItem = ({
         account: item.account,
       },
     });
-  }, [item, navigation]);
+  }, [item, navigation, source]);
 
   return (
-    <TouchableOpacity style={styles.card} onPress={handlePress}>
+    <TouchableOpacity style={styles.card} onPress={handleHyperliquidPress}>
       <View style={styles.mainContent}>
         {/* Left section: icon + coin info */}
         <View style={styles.leftSection}>
@@ -179,7 +177,6 @@ const AssetPositionItem = ({
         <Text style={styles.hyperliquidText}>
           {t('page.perps.assetPage.hyperliquidPosition')}
         </Text>
-        <RcArrowRight2CC color={colors2024['neutral-secondary']} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -310,7 +307,9 @@ export const PerpsSingleAssetPosition: React.FC<{
   );
 };
 
-export const PerpsMultiAssetPosition: React.FC = () => {
+export const PerpsMultiAssetPosition: React.FC<{
+  source?: 'home' | 'multiAssets';
+}> = ({ source }) => {
   const getAccountByAddress = useFindAccountByAddress();
   const { clearinghouseStateMap, marketDataMap } = perpsStore(
     useShallow(s => ({
@@ -406,16 +405,35 @@ export const PerpsMultiAssetPosition: React.FC = () => {
     setSelectedPositionKey(null);
   }, [setSelectedPositionKey]);
 
+  const hasLoggedEvent = useRef(false);
+
+  const hasPosition = useMemo(() => dataList.length > 0, [dataList.length]);
+
+  useEffect(() => {
+    if (hasPosition && source === 'home' && !hasLoggedEvent.current) {
+      matomoRequestEvent({
+        category: 'Rabby Perps',
+        action: 'Perps_ExistPosition',
+      });
+      hasLoggedEvent.current = true;
+    }
+  }, [hasPosition, source]);
+
   return (
     <>
       {!!dataList.length && (
-        <View style={styles.container}>
+        <View
+          style={StyleSheet.flatten([
+            styles.container,
+            source === 'home' && styles.homeContainer,
+          ])}>
           {dataList.map(item => {
             return (
               <AssetPositionItem
                 key={`${item.account.address}-${item.assetPositions.position.coin}`}
                 item={item}
                 onShowRiskPopup={() => handleShowRiskPopup(item)}
+                source={source}
               />
             );
           })}
@@ -444,6 +462,18 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     marginTop: 0,
     alignItems: 'center',
     marginBottom: 16,
+  },
+  homeContainer: {
+    marginTop: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+        shadowOffset: { width: 0, height: isLight ? -6 : -27 },
+        shadowOpacity: 1,
+        shadowRadius: isLight ? 20 : 13,
+      },
+      android: {},
+    }),
   },
   singleAssetContainer: {
     paddingHorizontal: 16,

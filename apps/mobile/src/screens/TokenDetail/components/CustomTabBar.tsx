@@ -18,6 +18,7 @@ interface DynamicCustomMaterialTabBarProps {
   indicatorStyle: AnimatedStyle;
   initialTabItemsLayout: ItemLayout[];
   initPaddingLeft: number;
+  getTabItemStyle?: (index: number) => StyleProp<ViewStyle>;
   externalContent?: React.ReactNode;
 }
 export const DynamicCustomMaterialTabBar = (
@@ -57,9 +58,11 @@ export const DynamicCustomMaterialTabBar = (
         onLayout={event => handleTabItemLayout(_props.index, event)}
         pressOpacity={1}
         inactiveOpacity={1}
+        pressColor="transparent"
+        style={[_props.style, props.getTabItemStyle?.(_props.index)]}
       />
     ),
-    [handleTabItemLayout],
+    [handleTabItemLayout, props],
   );
   return (
     <View style={props.containerStyle}>

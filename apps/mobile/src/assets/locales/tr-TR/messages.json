@@ -1045,7 +1045,8 @@
         "perpsMarketList": "Daha Fazla Perps",
         "lending": "Kredi verme",
         "predict": "Tahmin Et",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Pazar"
       },
       "swipeUp": {
         "descAndroid": "dApp'leri keşfetmek için tıklayın",
@@ -1355,8 +1356,16 @@
       },
       "hd": {
         "ledger": {
-          "hdPathType": {},
-          "hdPathTypeNoChain": {}
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
+            "bip44": "BIP44 Standard: BIP44 protokolü tarafından tanımlanan HDpath.",
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu."
+          },
+          "hdPathTypeNoChain": {
+            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu.",
+            "ledgerLive": "Ledger Live: Ledger resmi HD yolu.",
+            "bip44": "BIP44 Standartı: BIP44 protokolü tarafından tanımlanan HD yolu."
+          }
         },
         "onekey": {
           "hdPathType": {
@@ -2318,7 +2327,8 @@
       "tokenHeader": {
         "change": "24H Değişiklik",
         "token": "Token/FDV",
-        "price": "Fiyat"
+        "price": "Fiyat",
+        "priceAndChange": "Fiyat/24s Değişim"
       },
       "footer": {
         "add": "İzleme Listesine Ekle ({{count}})",
@@ -2553,7 +2563,8 @@
         "currentPrice": "Güncel Fiyat",
         "unrealizedPnl": "Gerçekleşmemiş PNL",
         "details": "Ayrıntılar",
-        "realizedPnl": "Gerçekleşen PNL"
+        "realizedPnl": "Gerçekleşen PNL",
+        "fundingTipsBold": "Bu, pozisyon açıldığından bu yana hesaplanan toplam fonlamanızı gösterir. <bold>Yeşil (pozitif)</bold> değerler, diğer yatırımcılardan kazandığınızı, <bold>Kırmızı (negatif)</bold> değerler ise onlara ödediğiniz fonlama maliyetleridir."
       },
       "PerpsInfo": {
         "24Vol": "24s Hacim",
@@ -2929,7 +2940,8 @@
         "entryTips": "Bir tıklama ile borç aldığınız varlığı değiştirin, adımları ve ücretleri azaltın.",
         "lpRiskWarning": "Takasta sonra düşük sağlık faktörü. Pozisyonunuzun tasfiye riski daha yüksek olacaktır.",
         "priceImpactTips": "Yüksek fiyat etkisi ({{lostValue}}). Bu yol, düşük likidite veya küçük sipariş boyutu nedeniyle daha fazla getiri sağlayabilir.",
-        "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın."
+        "lpDangerWarning": "Bu takas sonrası sağlık faktörünüz kritik derecede düşük olacak ve tasfiye ile sonuçlanabilir. Lütfen güvende kalmak için farklı bir varlık seçin veya takas miktarını azaltın.",
+        "maxLtvWarning": "Yetersiz teminat, yeni borç pozisyonunu karşılamak için. Cebinizin borç değiştirme işlemi yapmak için kalan borç verme gücüne sahip olması gerekir."
       },
       "hfTips": {
         "more": "Daha fazla",
@@ -2998,7 +3010,19 @@
         "price": "Fiyat",
         "volume": "24H Hacim",
         "change": "24H Değişim",
-        "fdv": "FDV"
+        "fdv": "FDV",
+        "priceAndChange": "Fiyat/24S Değişim"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Adı"
+      },
+      "tabs": {
+        "commodities": "Emtia",
+        "watchlist": "İzleme Listesi",
+        "stock": "Hisse",
+        "memecoin": "Memecoin"
       }
     }
   },

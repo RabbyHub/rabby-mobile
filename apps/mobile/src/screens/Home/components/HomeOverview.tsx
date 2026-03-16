@@ -8,16 +8,15 @@ import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
-import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 import RcIconPolymarketCC from '@/assets2024/icons/home/IconPredictCC.svg';
 import RcIconOpinionCC from '@/assets2024/icons/home/IconOpinionCC.svg';
 import RcIconProbableCC from '@/assets2024/icons/home/IconProbableCC.svg';
+import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 
 import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
 import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
 import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
 import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
-import RcIconMemeCC from '@/assets2024/icons/home/IconMemeCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -99,7 +98,7 @@ import {
   isTabsSwiping,
   useAccountInfo,
 } from '../../Address/components/MultiAssets/hooks';
-import { BrowserSearchEntry } from '../../Browser/components/BrowserSearchEntry';
+import { BrowserOrPerpsPosition } from './BrowserOrPerpsPosition';
 import { GasAccountBadge } from '../../GasAccount/components/GasAccountBadge';
 import { apisLending } from '../../Lending/hooks';
 import { PointsBadge } from '../../Points/components/PointsBadge';
@@ -141,7 +140,6 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { PredictBadge } from './PredicBadge';
-import { Top3MemeBadge } from '@/screens/Meme/components/Top3MemeBadge';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 import { useMemoizedFn } from 'ahooks';
@@ -151,10 +149,13 @@ import balanceStore from '@/store/balance';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import {
+  isOverPulldownRefreshThreshold,
+  OnRefreshOnJs,
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
   SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+  useIOSPulldownRefreshStates,
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
@@ -231,9 +232,9 @@ const homeGestureConfs = {
 };
 
 const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
-  onRefreshOnJs: prop_onRefreshOnJs,
+  onJsPulldownRefresh: prop_onJsPulldownRefresh,
 }: {
-  onRefreshOnJs?: (ctx?: {}) => Promise<void>;
+  onJsPulldownRefresh?: OnRefreshOnJs;
 } = {}) => {
   const scrollableRef = useAnimatedRef<T>();
   const scrollY = useCurrentTabScrollY();
@@ -241,15 +242,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   const scrollableStatus = useSharedValue<SCROLLABLE_STATUS>(
     SCROLLABLE_STATUS.UNLOCKED,
   );
-  const scrollableEnabled = useSharedValue(true);
-  useAnimatedReaction(
-    () => {
-      return scrollableStatus.value;
-    },
-    () => {
-      // scrollableEnabled.value = true;
-    },
-  );
+
   const scrollToEnd = useCallback(
     (toBottom: boolean, animated = true) => {
       'worklet';
@@ -262,12 +255,11 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     },
     [scrollableRef, scrollableStatus],
   );
+  const { pullDistance, svIsRefreshing, svIsManualRefreshing } =
+    useIOSPulldownRefreshStates();
 
-  const pullDistance = useSharedValue(0);
-  const svIsRefreshing = useSharedValue(false);
-
-  const onRefreshOnJs = useMemoizedFn(async () => {
-    await prop_onRefreshOnJs?.({});
+  const onJsPulldownRefresh = useMemoizedFn(async () => {
+    await prop_onJsPulldownRefresh?.({ svIsManualRefreshing });
   });
 
   useEffect(() => {
@@ -279,18 +271,21 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         cur.isLoadingByAddress,
       ).isTop10BalanceLoading;
 
-      runOnUI(setPulldownRefreshStage)({
-        state: isTop10BalanceLoading ? 'refreshing' : 'finished',
-        svIsRefreshing,
-        pullDistance,
-        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
-      });
+      if (!isTop10BalanceLoading) {
+        runOnUI(setPulldownRefreshStage)({
+          state: isTop10BalanceLoading ? 'refreshing' : 'finished',
+          indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+          svIsRefreshing,
+          pullDistance,
+          svIsManualRefreshing,
+        });
+      }
     });
 
     return () => {
       remove();
     };
-  }, [svIsRefreshing, pullDistance]);
+  }, [svIsRefreshing, pullDistance, svIsManualRefreshing]);
 
   useAnimatedReaction(
     () => translateY.value,
@@ -349,6 +344,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   };
 
   const startValues = useSharedValue({
+    startedAtTop: scrollY.value <= 5,
     restScrollOffset: 0,
     hasImpactOnPandown: false,
     hasImpactOnPanup: false,
@@ -363,6 +359,7 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         startValues.value.restScrollOffset = getIsAtBottom(
           scrollY.value,
         ).restScrollOffset;
+        startValues.value.startedAtTop = scrollY.value <= 5;
       })
       .onUpdate(event => {
         panUp: {
@@ -388,11 +385,13 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
         pullRefresh: {
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
             pullDistance.value = Math.max(0, event.translationY);
-            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
-              !startValues.value.hasImpactOnPanup && runOnJS(triggerImpact)();
+            if (isOverPulldownRefreshThreshold(pullDistance.value)) {
+              !startValues.value.hasImpactOnPanup &&
+                runOnJS(triggerImpact)({ __DEV_ONLY__: true });
               startValues.value.hasImpactOnPanup = true;
             }
           }
@@ -419,24 +418,28 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
           const hasImpactOnPanup = startValues.value.hasImpactOnPanup;
           if (
             SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
+            startValues.value.startedAtTop &&
             !svIsRefreshing.value
           ) {
-            if (pullDistance.value >= pulldownRefreshSizes.homeHeaderHeight) {
+            if (isOverPulldownRefreshThreshold(pullDistance.value)) {
               // svIsRefreshing.value = true;
               setPulldownRefreshStage({
                 state: 'refreshing',
-                svIsRefreshing,
-                pullDistance,
                 indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+                svIsRefreshing,
+                svIsManualRefreshing,
+                pullDistance,
               });
-              runOnJS(onRefreshOnJs)();
-              !hasImpactOnPanup && runOnJS(triggerImpact)();
+              runOnJS(onJsPulldownRefresh)();
+              !hasImpactOnPanup &&
+                runOnJS(triggerImpact)({ __DEV_ONLY__: true });
             } else {
               setPulldownRefreshStage({
                 state: 'finished',
-                svIsRefreshing,
-                pullDistance,
                 indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+                svIsRefreshing,
+                svIsManualRefreshing,
+                pullDistance,
               });
             }
             startValues.value.hasImpactOnPanup = false;
@@ -453,11 +456,11 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
     onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
-    scrollableEnabled,
 
     isRefreshing,
     pullDistance,
     svIsRefreshing,
+    svIsManualRefreshing,
   };
 };
 
@@ -489,7 +492,9 @@ const getStyle = createGetStyles2024(
       paddingTop: 0,
     },
     scrollViewInner: {
-      marginTop: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+      marginTop: !SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING
+        ? HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset
+        : 0,
       // ...makeDebugBorder('orange'),
       // ...makeDevOnlyStyle({
       //   backgroundColor: colors2024['orange-light-2'],
@@ -719,14 +724,9 @@ export const HomeOverview = React.memo(() => {
         // },
 
         {
-          key: MultiHomeFeatTitle.Watchlist,
-          title: t('page.home.services.watchlist'),
-          icon: RcIconWatchlistCC,
-        },
-        {
-          key: MultiHomeFeatTitle.Meme,
-          title: t('page.home.services.meme'),
-          icon: RcIconMemeCC,
+          key: MultiHomeFeatTitle.Market,
+          title: t('page.home.services.market'),
+          icon: RcIconMarketCC,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
@@ -781,7 +781,9 @@ export const HomeOverview = React.memo(() => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) return;
+      if (!couldDoRefresh()) {
+        return;
+      }
       resetFetchHistoryTxCount();
     }, []),
   );
@@ -833,9 +835,9 @@ export const HomeOverview = React.memo(() => {
   }, [triggerUpdate, checkAddressesEligibility, forceUpdate, myTop10Addresses]);
 
   // const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
-  const handlePressWatchlist = useCallback(() => {
+  const handlePressMarket = useCallback(() => {
     navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-      screen: RootNames.Watchlist,
+      screen: RootNames.Market,
       params: {},
     });
   }, [navigation]);
@@ -906,16 +908,10 @@ export const HomeOverview = React.memo(() => {
             }),
           );
           break;
-        case MultiHomeFeatTitle.Watchlist: {
-          handlePressWatchlist();
+        case MultiHomeFeatTitle.Market: {
+          handlePressMarket();
           break;
         }
-        case MultiHomeFeatTitle.Meme:
-          navigation.navigateDeprecated(RootNames.StackHomeNonTab, {
-            screen: RootNames.Meme,
-            params: {},
-          });
-          break;
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
@@ -947,7 +943,7 @@ export const HomeOverview = React.memo(() => {
           break;
       }
     },
-    [handlePressWatchlist, navigation],
+    [handlePressMarket, navigation],
   );
 
   const generateCustomBadgeIcon = useCallback(
@@ -959,7 +955,7 @@ export const HomeOverview = React.memo(() => {
       isSuccess?: boolean;
       showGiftIcon?: boolean;
     }) => {
-      if (el.key === MultiHomeFeatTitle.Watchlist) {
+      if (el.key === MultiHomeFeatTitle.Market) {
         return <WatchListBadge />;
       }
 
@@ -992,10 +988,6 @@ export const HomeOverview = React.memo(() => {
         return <GasAccountBadge />;
       }
 
-      if (el.key === MultiHomeFeatTitle.Meme) {
-        return <Top3MemeBadge />;
-      }
-
       return (
         <>
           {!!el.badge && el.badge > 0 ? (
@@ -1015,15 +1007,15 @@ export const HomeOverview = React.memo(() => {
     onScrollHandlers,
     uiOnScrollBack,
     scrollableRef,
-    scrollableEnabled,
     panGestureRef,
 
     isRefreshing,
     pullDistance,
     svIsRefreshing,
+    svIsManualRefreshing,
   } = usePulldownRefreshGesture<RNGHScrollView>({
-    onRefreshOnJs: async ctx => {
-      'worklet';
+    onJsPulldownRefresh: async ctx => {
+      ctx.svIsManualRefreshing.value = true;
       await Promise.race([onRefresh(), sleep(3000)]);
     },
   });
@@ -1031,8 +1023,7 @@ export const HomeOverview = React.memo(() => {
   const pulldownRefreshReturns = usePulldownRefreshStyles({
     indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
     pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
-    states: { pullDistance, svIsRefreshing },
-    // onRefreshOnJs: onRefresh,
+    states: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   });
 
   const mainStyle = useAnimatedStyle(() => {
@@ -1044,17 +1035,6 @@ export const HomeOverview = React.memo(() => {
           translateY: Math.min(0, translateY.value),
         },
       ],
-    };
-  });
-
-  const refreshIndicatorStyle = useAnimatedStyle(() => {
-    return {
-      paddingTop: interpolate(
-        pullDistance.value,
-        [0, pulldownRefreshSizes.homeHeaderHeight],
-        [HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset, 0],
-        Extrapolate.CLAMP,
-      ),
     };
   });
 
@@ -1079,7 +1059,7 @@ export const HomeOverview = React.memo(() => {
             }
             onAnimatedScrollEndDrag={onScrollHandlers.onAnimatedScrollEndDrag}
             onScroll={onScrollHandlers.onScroll}
-            scrollableEnabled={scrollableEnabled}
+            // scrollableEnabled={scrollableEnabled}
             simultaneousHandlers={[panGestureRef]}
             {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
               refreshControl: (
@@ -1092,8 +1072,9 @@ export const HomeOverview = React.memo(() => {
             })}>
             <RefreshPlaceholderIOS
               hooksReturn={pulldownRefreshReturns}
-              animatedStyle={refreshIndicatorStyle}
+              animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
               animatedIndicatorStyle={styles.iosAbsIndicatorOffset}
+              __PICK_MANUAL__
             />
             <Animated.View style={[styles.scrollViewInner]}>
               <MultiAddressHomeHeader onRefresh={onRefresh} />
@@ -1103,42 +1084,17 @@ export const HomeOverview = React.memo(() => {
                 <View style={styles.gridItemsWrap}>
                   {MENU_ARR.map((el, index) => {
                     return (
-                      <FastTouchable
-                        style={StyleSheet.flatten([
-                          styles.gridItem,
-                          { width: itemWidth },
-                        ])}
+                      <HomeMenuItem
                         key={index}
-                        onPress={() => {
-                          console.debug('[perf] touched menu', el.key);
-                          requestAnimationFrame(() => {
-                            handleClickMenu(el.key);
-                          });
-                          matomoRequestEvent({
-                            category: 'Click_Services',
-                            action: `Click_${el.key}`,
-                          });
-                        }}>
-                        <View style={styles.badgeWrapper}>
-                          <View style={styles.iconWrapper}>
-                            <el.icon
-                              width={28}
-                              height={28}
-                              color={
-                                el.color || colors2024['brand-default-icon']
-                              }
-                            />
-                          </View>
-                          <View style={styles.rightBadgeWrapper}>
-                            {generateCustomBadgeIcon(el)}
-                          </View>
-                        </View>
-                        <Text style={styles.gridText}>{el.title}</Text>
-                      </FastTouchable>
+                        el={el}
+                        itemWidth={itemWidth}
+                        onPress={handleClickMenu}
+                        renderBadge={generateCustomBadgeIcon}
+                      />
                     );
                   })}
                 </View>
-                <BrowserSearchEntry />
+                <BrowserOrPerpsPosition />
                 <View
                   style={styles.swipeUpHint}
                   onLayout={swipeUpViewHandlers.onLayout}>

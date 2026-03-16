@@ -236,7 +236,8 @@ export const DEFAULT_TOP_ASSET = [
     name: 'kPEPE',
     full_logo_url: null,
     daily_volume: 21181624,
-    dex_id: '',
+    dex_id:
+      'https://static.debank.com/image/eth_token/logo_url/0x6982508145454ce325ddbe47a25d4ec3d2311933/7135c3afc4ad95f1ec7c5ec79a3a3c8e.png',
   },
   {
     id: 17,
@@ -512,7 +513,8 @@ export const DEFAULT_TOP_ASSET = [
   {
     id: 85,
     name: 'kBONK',
-    full_logo_url: null,
+    full_logo_url:
+      'https://static.debank.com/image/eth_token/logo_url/0x1151cb3d861920e07a38e03eead12c32178567f6/1816e0c3f68f2e4ea8d649da5fc5b75a.png',
     daily_volume: 4682598,
     dex_id: '',
   },
@@ -815,7 +817,8 @@ export const DEFAULT_TOP_ASSET = [
   {
     id: 38,
     name: 'kSHIB',
-    full_logo_url: null,
+    full_logo_url:
+      'https://static.debank.com/image/eth_token/logo_url/0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce/c40c50b2655492975ad5d68bc2ad0996.png',
     daily_volume: 1465325,
     dex_id: '',
   },
@@ -1016,7 +1019,8 @@ export const DEFAULT_TOP_ASSET = [
     name: 'kFLOKI',
     full_logo_url: null,
     daily_volume: 790517,
-    dex_id: '',
+    dex_id:
+      'https://static.debank.com/image/eth_token/logo_url/0xcf0c122c6b73ff809c693db761e7baebe62b6a2e/4dba60d2f00756d3a811f74931bcf73d.png',
   },
   {
     id: 206,
@@ -1411,7 +1415,8 @@ export const DEFAULT_TOP_ASSET = [
   {
     id: 148,
     name: 'kNEIRO',
-    full_logo_url: null,
+    full_logo_url:
+      'https://static.debank.com/image/eth_token/logo_url/0x812ba41e071c7b7fa4ebcfb62df5f45f6fa853ee/acd2cf8c3c24499eea19ef4eb77e2215.png',
     daily_volume: 228455,
     dex_id: '',
   },

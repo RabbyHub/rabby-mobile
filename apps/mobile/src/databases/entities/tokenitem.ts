@@ -119,8 +119,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column('text', { default: '' })
   raw_amount_hex_str: TokenItem['raw_amount_hex_str'] = '';
   // price_24h_change
-  @Column('real')
-  price_24h_change: TokenItem['price_24h_change'] = 0;
+  @Column('real', { nullable: true })
+  price_24h_change: TokenItem['price_24h_change'] = null;
   // low_credit_score
   @Column('boolean')
   low_credit_score: TokenItem['low_credit_score'] = false;
@@ -181,7 +181,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.usd_value = input.usd_value ?? 0;
     e.raw_amount = input.raw_amount;
     e.raw_amount_hex_str = input.raw_amount_hex_str ?? '';
-    e.price_24h_change = input.price_24h_change ?? 0;
+    e.price_24h_change = input.price_24h_change ?? null;
     e.low_credit_score = input.low_credit_score ?? false;
     e.value_24h_change = input.value_24h_change ?? '1';
     e.cex_ids = columnConverter.jsonObjToString(input.cex_ids || []);

@@ -1287,7 +1287,8 @@
         "perpsMarketList": "Thêm Perps",
         "lending": "Cho vay",
         "predict": "Dự đoán",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Thị trường"
       },
       "swipeUp": {
         "descMore": "Kéo lên để khám phá thêm nhiều trang web",
@@ -1426,8 +1427,16 @@
           }
         },
         "ledger": {
-          "hdPathTypeNoChain": {},
-          "hdPathType": {}
+          "hdPathTypeNoChain": {
+            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger.",
+            "bip44": "Tiêu chuẩn BIP44: Đường dẫn HD được xác định bởi giao thức BIP44."
+          },
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger.",
+            "bip44": "Tiêu chuẩn BIP44: HDpath được xác định bởi giao thức BIP44.",
+            "legacy": "Legacy: Đường dẫn HD được sử dụng bởi MEW / Mycrypto."
+          }
         },
         "keystone": {
           "hdPathTypeNoChain": {
@@ -2431,7 +2440,8 @@
       "tokenHeader": {
         "price": "Giá",
         "token": "Token/FDV",
-        "change": "24H Thay đổi"
+        "change": "24H Thay đổi",
+        "priceAndChange": "Giá/Thay đổi 24H"
       },
       "footer": {
         "skip": "Bỏ qua",
@@ -2666,7 +2676,8 @@
         "details": "Chi tiết",
         "settings": "Cài đặt",
         "unrealizedPnl": "Lợi nhuận chưa thực hiện",
-        "marginMode": "Chế độ ký quỹ"
+        "marginMode": "Chế độ ký quỹ",
+        "fundingTipsBold": "Điều này cho thấy tổng số tiền tài trợ của bạn đã được thanh toán kể từ khi vị trí được mở. Các giá trị <bold>Xanh (dương)</bold> có nghĩa là bạn đã kiếm được từ các nhà giao dịch khác, trong khi các giá trị <bold>Đỏ (âm)</bold> là chi phí tài trợ mà bạn đã trả cho họ."
       },
       "PerpsInfo": {
         "title": "Thông tin",
@@ -3042,7 +3053,8 @@
         "lpRiskWarning": "Số yếu tố sức khỏe thấp sau khi hoán đổi. Vị trí của bạn sẽ có rủi ro thanh lý cao hơn.",
         "lpDangerWarning": "Yếu tố sức khỏe của bạn sau giao dịch này sẽ ở mức rất thấp và có thể dẫn đến việc thanh lý. Vui lòng chọn tài sản khác hoặc giảm số lượng giao dịch để đảm bảo an toàn.",
         "priceImpactTips": "Tác động giá cao ({{lostValue}}). Đường này có thể trả lại nhiều hơn do tính thanh khoản thấp hoặc kích thước đơn hàng nhỏ.",
-        "title": "Hoán đổi Vị trí Vay"
+        "title": "Hoán đổi Vị trí Vay",
+        "maxLtvWarning": "Không đủ tài sản thế chấp để bảo hiểm vị trí vay mới. Ví phải có khả năng vay còn lại để thực hiện chuyển nợ."
       },
       "hfTips": {
         "more": "Thêm",
@@ -3111,7 +3123,19 @@
         "change": "24H Thay đổi",
         "fdv": "FDV",
         "volume": "24H Khối lượng",
-        "price": "Giá"
+        "price": "Giá",
+        "priceAndChange": "Giá/24H Thay đổi"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Tên"
+      },
+      "tabs": {
+        "watchlist": "Danh sách theo dõi",
+        "commodities": "Hàng hóa",
+        "memecoin": "Memecoin",
+        "stock": "Cổ phiếu"
       }
     }
   },

@@ -16,6 +16,7 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { eventBus, EVENTS } from '@/utils/events';
+import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -141,7 +142,7 @@ export const useGasAccountHistoryRefresh = () => {
 const syncDeleteGasAccount = async ({
   address,
   type,
-  brandName,
+  brandName: _brandName,
 }: KeyringEventAccount) => {
   if (type !== KEYRING_TYPE.WatchAddressKeyring) {
     const restAddresses = await keyringService.getAllAddresses();
@@ -191,10 +192,15 @@ async function fetchGasAccountInfo() {
   const { sig, accountId } = gasAccountStore.getState().sigState || {};
 
   if (!sig || !accountId) {
+    gasAccountService.setCurrentBalanceState();
     return undefined;
   }
   return openapi.getGasAccountInfo({ sig, id: accountId }).then(e => {
     if (e.account.id) {
+      gasAccountService.setCurrentBalanceState(
+        accountId,
+        Number(e.account.balance || 0) > 0,
+      );
       return e;
     }
     storeApiGasAccount.setGasAccount();
@@ -261,6 +267,7 @@ export const storeApiGasAccount = {
       );
 
       if (result?.success) {
+        handleGasAccountLoginSuccess(signature, account);
         storeApiGasAccount.setGasAccount(signature, account);
         gasAccountService.setHasClaimedGift(true);
         // setLoginVisible(false);

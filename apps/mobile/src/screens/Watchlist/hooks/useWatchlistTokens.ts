@@ -4,6 +4,12 @@ import { preferenceService } from '@/core/services';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAtomValue } from 'jotai';
+import {
+  sortWatchlistTokens,
+  watchlistChangeSortAtom,
+  watchlistTokenSortAtom,
+} from '../sort';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
   const chunks: IManageToken[][] = [];
@@ -104,10 +110,16 @@ export const useWatchlistTokens = () => {
 
 export const useWatchListTokenBadge = () => {
   const { handleFetchTokens, data } = useWatchlistTokens();
+  const tokenSort = useAtomValue(watchlistTokenSortAtom);
+  const changeSort = useAtomValue(watchlistChangeSortAtom);
+  const sortedTokens = useMemo(
+    () => sortWatchlistTokens(data, tokenSort, changeSort),
+    [changeSort, data, tokenSort],
+  );
 
   const last3Token = useMemo(
-    () => (data.length >= 3 ? data.slice(0, 3) : data),
-    [data],
+    () => (sortedTokens.length >= 3 ? sortedTokens.slice(0, 3) : sortedTokens),
+    [sortedTokens],
   );
 
   useEffect(() => {

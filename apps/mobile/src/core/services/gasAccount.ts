@@ -4,6 +4,7 @@ import createPersistStore, {
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { Account } from './preference';
 import { openapi } from '../request';
+import dayjs from 'dayjs';
 
 const CACHE_VALIDITY_PERIOD = 60 * 60 * 1000;
 
@@ -45,6 +46,28 @@ export type GasAccountServiceStore = {
   eligibilityCache: GasAccountEligibilityCache;
   lastEligibilityCheckTimestamp?: number;
   currentEligibleAddress?: ClaimedGiftAddress;
+  hasEverLoggedIn?: boolean;
+  currentBalanceAccountId?: string;
+  currentHasBalance?: boolean;
+  ga4ActiveEventTime?: number;
+};
+
+const getInitialHasEverLoggedIn = (
+  rawStore?: Partial<GasAccountServiceStore> | null,
+) => {
+  if (typeof rawStore?.hasEverLoggedIn === 'boolean') {
+    return rawStore.hasEverLoggedIn;
+  }
+
+  if (rawStore?.sig && rawStore?.accountId) {
+    return true;
+  }
+
+  if (rawStore) {
+    return undefined;
+  }
+
+  return false;
 };
 
 export class GasAccountService {
@@ -55,9 +78,14 @@ export class GasAccountService {
     eligibilityCache: {},
     lastEligibilityCheckTimestamp: undefined,
     currentEligibleAddress: undefined,
+    hasEverLoggedIn: false,
+    ga4ActiveEventTime: 0,
   };
 
   constructor(options?: StorageAdapaterOptions) {
+    const rawStore = options?.storageAdapter?.getItem(
+      APP_STORE_NAMES.gasAccount,
+    ) as Partial<GasAccountServiceStore> | null | undefined;
     const storage = createPersistStore<GasAccountServiceStore>(
       {
         name: APP_STORE_NAMES.gasAccount,
@@ -66,6 +94,8 @@ export class GasAccountService {
           eligibilityCache: {},
           lastEligibilityCheckTimestamp: undefined,
           currentEligibleAddress: undefined,
+          hasEverLoggedIn: false,
+          ga4ActiveEventTime: 0,
         },
       },
       {
@@ -74,6 +104,7 @@ export class GasAccountService {
     );
 
     this.store = storage || this.store;
+    this.store.hasEverLoggedIn = getInitialHasEverLoggedIn(rawStore);
   }
 
   getGasAccountData = (key?: keyof GasAccountServiceStore) => {
@@ -92,6 +123,8 @@ export class GasAccountService {
       this.store.sig = undefined;
       this.store.accountId = undefined;
       this.store.account = undefined;
+      this.store.currentBalanceAccountId = undefined;
+      this.store.currentHasBalance = undefined;
     } else {
       this.store.sig = sig;
       this.store.accountId = account?.address;
@@ -219,11 +252,13 @@ export class GasAccountService {
         cachedData.push({
           address: addr,
           isEligible:
-            this.store.eligibilityCache![addr.toLowerCase()].isEligible,
-          isChecked: this.store.eligibilityCache![addr.toLowerCase()].isChecked,
-          isClaimed: this.store.eligibilityCache![addr.toLowerCase()].isClaimed,
+            !!this.store.eligibilityCache[addr.toLowerCase()]?.isEligible,
+          isChecked:
+            !!this.store.eligibilityCache[addr.toLowerCase()]?.isChecked,
+          isClaimed:
+            !!this.store.eligibilityCache[addr.toLowerCase()]?.isClaimed,
           giftUsdValue:
-            this.store.eligibilityCache![addr.toLowerCase()].giftUsdValue,
+            this.store.eligibilityCache[addr.toLowerCase()]!.giftUsdValue,
         });
       } else {
         uncachedAddresses.push(addr);
@@ -480,4 +515,32 @@ export class GasAccountService {
       remainingTime,
     };
   };
+
+  markLoggedIn() {
+    const isFirstLogin = this.store.hasEverLoggedIn === false;
+    this.store.hasEverLoggedIn = true;
+    return isFirstLogin;
+  }
+
+  getCurrentBalanceState() {
+    return {
+      accountId: this.store.currentBalanceAccountId,
+      hasBalance: this.store.currentHasBalance,
+    };
+  }
+
+  setCurrentBalanceState(accountId?: string, hasBalance?: boolean) {
+    this.store.currentBalanceAccountId = accountId;
+    this.store.currentHasBalance = hasBalance;
+  }
+
+  hasTrackedGa4ActiveToday() {
+    return dayjs(this.store.ga4ActiveEventTime || 0)
+      .utc()
+      .isSame(dayjs().utc(), 'day');
+  }
+
+  markGa4ActiveTracked(timestamp = Date.now()) {
+    this.store.ga4ActiveEventTime = timestamp;
+  }
 }

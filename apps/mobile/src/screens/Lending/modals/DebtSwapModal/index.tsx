@@ -23,7 +23,7 @@ import { Button } from '@/components2024/Button';
 import { useMiniSigner } from '@/hooks/useSigner';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -45,6 +45,7 @@ import {
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import {
   createGlobalBottomSheetModal2024,
@@ -89,6 +90,7 @@ import {
 } from './warning';
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { Text, TextInput } from '@/components/Typography';
+import { stats } from '@/utils/stats';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -740,6 +742,21 @@ export default function DebtSwapModal({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP },
           );
         }
+
+        const usdValue = new BigNumber(debouncedFromAmount || '0')
+          .multipliedBy(new BigNumber(fromToken.usdPrice || '0'))
+          .toString();
+
+        stats.report('aaveInternalTx', {
+          tx_type: LendingReportType.DebtSwap,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
+        });
         toast.success(
           `${t('page.Lending.debtSwap.actions.title')} ${t(
             'page.Lending.submitted',
@@ -760,6 +777,7 @@ export default function DebtSwapModal({
       currentAccount,
       canShowDirectSubmit,
       chainInfo?.id,
+      chainInfo?.serverId,
       t,
       closeMiniSigner,
       onClose,
@@ -768,6 +786,8 @@ export default function DebtSwapModal({
       ctx?.gasFeeTooHigh,
       refresh,
       isExceedMaxLtvAfterSwap,
+      debouncedFromAmount,
+      fromToken.usdPrice,
     ],
   );
 
@@ -792,12 +812,19 @@ export default function DebtSwapModal({
       !!toToken &&
       !isSameToken &&
       !!quote &&
-      !!fromAmount &&
-      new BigNumber(fromAmount).gt(0) &&
-      new BigNumber(fromAmount).lte(fromBalanceBn) &&
+      !!debouncedFromAmount &&
+      new BigNumber(debouncedFromAmount).gt(0) &&
+      new BigNumber(debouncedFromAmount).lte(fromBalanceBn) &&
       !isQuoteLoading
     );
-  }, [fromAmount, fromBalanceBn, isQuoteLoading, isSameToken, quote, toToken]);
+  }, [
+    debouncedFromAmount,
+    fromBalanceBn,
+    isQuoteLoading,
+    isSameToken,
+    quote,
+    toToken,
+  ]);
 
   const buttonDisabled = useMemo(() => {
     return (

@@ -376,8 +376,8 @@ function AssetsTabBar() {
         indexDecimal.value,
         [0, 0.5, 1],
         [
-          -HOME_TOP_HEADER_SIZES.tabItemHeight,
-          -HOME_TOP_HEADER_SIZES.tabItemHeight / 2,
+          -HOME_TOP_HEADER_SIZES.tabItemLineHeight,
+          -HOME_TOP_HEADER_SIZES.tabItemLineHeight / 2,
           0,
         ],
         Extrapolation.CLAMP,
@@ -499,7 +499,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     left: 0,
     right: 0,
     paddingHorizontal: 0,
-    height: HOME_TOP_HEADER_SIZES.tabItemHeight,
+    maxHeight: HOME_TOP_HEADER_SIZES.tabItemLineHeight,
     zIndex: 10,
     // ...makeDevOnlyStyle({
     //   backgroundColor: colors2024['neutral-foot'],
@@ -510,14 +510,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     height: 0,
   },
   tabBar: {},
-  innerTabBar: {
-    height: 32,
-    width: 'auto',
-    flexShrink: 0,
-    flex: 0,
-    paddingHorizontal: 0,
-    // marginRight: 20,
-  },
   contentContainerStyle: {
     width: '100%',
     // display: 'flex',
@@ -526,7 +518,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   portfolioContainer: {
     position: 'relative',
     paddingHorizontal: HOME_TOP_HEADER_SIZES.portfolioContainerPx,
-    paddingTop: indicatorHeight + 2,
+    paddingTop: HOME_TOP_HEADER_SIZES.headerOffsetAfterIndicator,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -534,6 +526,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     // ...makeDevOnlyStyle({
     //   backgroundColor: colors2024['red-light-1'],
     // }),
-    // height: HOME_TOP_HEADER_SIZES.tabItemHeight,
+    // height: HOME_TOP_HEADER_SIZES.tabItemLineHeight,
   },
 }));
