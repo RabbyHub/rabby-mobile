@@ -65,7 +65,7 @@ interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
-const SPACING_HEIGHT = 16;
+const SPACING_HEIGHT = 8;
 
 export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const { styles } = useTheme2024({
