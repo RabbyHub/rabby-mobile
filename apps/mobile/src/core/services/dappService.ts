@@ -128,6 +128,7 @@ export class DappService extends StoreServiceBase<
       this.store.dapps[origin] = {
         ...this.store.dapps[origin],
         ...dapps[origin],
+        origin,
       };
     });
     this.store.dapps = { ...this.store.dapps };
