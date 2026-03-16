@@ -44,6 +44,16 @@ export class DappService extends StoreServiceBase<
       },
     );
 
+    Object.keys(this.store.dapps).forEach(origin => {
+      const dapp = this.store.dapps[origin];
+      if (dapp && !dapp.origin) {
+        this.store.dapps[origin] = {
+          ...dapp,
+          origin,
+        };
+      }
+    });
+
     this.patchDapps(
       ['https://www.google.com', 'https://x.com', 'https://github.com'].reduce(
         (result, key) => {
@@ -95,7 +105,13 @@ export class DappService extends StoreServiceBase<
   }
 
   updateDapp(dapp: DappInfo) {
-    this.store.dapps[dapp.origin] = dapp;
+    if (!dapp.origin) {
+      throw new Error('Dapp origin is required');
+    }
+    this.store.dapps[dapp.origin] = {
+      ...this.store.dapps[dapp.origin],
+      ...dapp,
+    };
     this.store.dapps = { ...this.store.dapps };
   }
 
@@ -112,6 +128,7 @@ export class DappService extends StoreServiceBase<
       this.store.dapps[origin] = {
         ...this.store.dapps[origin],
         ...dapps[origin],
+        origin,
       };
     });
     this.store.dapps = { ...this.store.dapps };
