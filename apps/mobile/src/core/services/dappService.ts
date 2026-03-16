@@ -53,6 +53,7 @@ export class DappService extends StoreServiceBase<
         };
       }
     });
+    this.store.dapps = { ...this.store.dapps };
 
     this.patchDapps(
       ['https://www.google.com', 'https://x.com', 'https://github.com'].reduce(
@@ -105,7 +106,7 @@ export class DappService extends StoreServiceBase<
   }
 
   updateDapp(dapp: DappInfo) {
-    if (!dapp.origin) {
+    if (!dapp?.origin || !/^https?:\/\//.test(dapp.origin)) {
       throw new Error('Dapp origin is required');
     }
     this.store.dapps[dapp.origin] = {
