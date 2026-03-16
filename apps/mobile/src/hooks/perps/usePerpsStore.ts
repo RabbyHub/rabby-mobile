@@ -16,7 +16,6 @@ import { ApproveSignatures } from '@/core/services/perpsService';
 import { DEFAULT_TOP_ASSET } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import {
-  calcAccountValueByAllDexs,
   formatAllDexsClearinghouseState,
   formatMarkData,
   formatPositionPnl,
@@ -242,11 +241,22 @@ const setClearinghouseStateMap = (payload: {
   address: string;
   data: ClearinghouseState | null;
 }) => {
-  if (!payload.data) {
-    return;
-  }
   const address = payload.address.toLowerCase();
   const { data } = payload;
+  const hasPositions =
+    data && data.assetPositions && data.assetPositions.length > 0;
+
+  if (!hasPositions) {
+    const prevState = perpsStore.getState().clearinghouseStateMap[address];
+    if (prevState) {
+      perpsStore.setState(prev => {
+        const { [address]: _, ...rest } = prev.clearinghouseStateMap;
+        return { ...prev, clearinghouseStateMap: rest };
+      });
+    }
+    return;
+  }
+
   const prevState = perpsStore.getState().clearinghouseStateMap[address];
   if (!prevState || data.time > prevState.time) {
     perpsStore.setState(prev => ({
@@ -980,17 +990,10 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
     eventBus.on('PERPS_ADD_ADDRESSES', (addresses: string[]) => {
       const sdk = apisPerps.getPerpsSDK();
       sdk.ws.subscribeToAllDexsClearinghouseState(addresses, data => {
-        if (
-          data.clearinghouseStates.length > 0 &&
-          data.clearinghouseStates.some(
-            item => item[1].assetPositions.length > 0,
-          )
-        ) {
-          setClearinghouseStateMap({
-            address: data.user,
-            data: formatAllDexsClearinghouseState(data.clearinghouseStates),
-          });
-        }
+        setClearinghouseStateMap({
+          address: data.user,
+          data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+        });
       });
     });
 
@@ -1028,15 +1031,10 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
             }
           }
         }
-        if (
-          data.clearinghouseStates.length > 0 &&
-          calcAccountValueByAllDexs(data.clearinghouseStates) > 0
-        ) {
-          setClearinghouseStateMap({
-            address: data.user,
-            data: formatAllDexsClearinghouseState(data.clearinghouseStates),
-          });
-        }
+        setClearinghouseStateMap({
+          address: data.user,
+          data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+        });
       });
     }
   }, [top10Accounts]);
