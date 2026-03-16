@@ -36,6 +36,7 @@ import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Text, TextInput } from '@/components/Typography';
+import { colord } from 'colord';
 
 const FOOT_HEIGHT = 86;
 
@@ -198,7 +199,9 @@ const LendingSupplyList: React.FC<
     (item: DisplayPoolReserveInfo) => {
       const reserve = getTargetReserve(item.reserve.underlyingAsset);
       const userSummary = iUserSummary;
-      if (!reserve || !userSummary) return;
+      if (!reserve || !userSummary) {
+        return;
+      }
       const modalId = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SUPPLY_ACTION_DETAIL,
         reserve,
@@ -386,236 +389,243 @@ const LendingSupplyList: React.FC<
 
 export default LendingSupplyList;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    width: '100%',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  titleContainer: {
-    paddingTop: 12,
-    paddingBottom: 12,
-  },
-  titleText: {
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
-    textAlign: 'center',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    marginBottom: 12,
-  },
-  searchBar: {
-    //flex: 1,
-  },
-  list: {
-    flex: 1,
-  },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    justifyContent: 'space-between',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 16,
-    marginTop: 8,
-    overflow: 'visible',
-  },
-  wrapperToken: {
-    backgroundColor: colors2024['neutral-bg-5'],
-  },
-  wrapperTokenArrow: {
-    position: 'absolute',
-    top: -14,
-    left: 30,
-    zIndex: 1,
-    ...makeTriangleStyle({
-      dir: 'up',
-      size: 7,
-      color: colors2024['neutral-bg-5'],
-      backgroundColor: 'transparent',
-    }),
-  },
-  left: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  apy: {
-    width: 80,
-    textAlign: 'right',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  right: {
-    flex: 0,
-    width: 80,
-    gap: 2,
-  },
-  tvl: {
-    width: 80,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    textAlign: 'right',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  symbolContainer: {
-    gap: 2,
-  },
-  wrapperTokenText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['neutral-info'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  symbol: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    maxWidth: 80,
-    overflow: 'hidden',
-  },
-  yourSupplied: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-  },
-  zeroSupplied: {
-    color: colors2024['neutral-info'],
-  },
-  yourBalanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  walletIcon: {
-    width: 16,
-    height: 16,
-    color: colors2024['neutral-secondary'],
-    marginTop: -2,
-  },
-  yourBalance: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'right',
-  },
-  listHeader: {
-    paddingVertical: 2,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    marginBottom: 2,
-  },
-  loading: {
-    width: 124,
-    marginTop: 16,
-    backgroundColor: colors2024['neutral-bg-5'],
-    marginBottom: 2,
-    marginLeft: 8,
-  },
-  headerToken: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-  },
-  headerTokenContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 4,
-  },
-  headerTvl: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    width: 80,
-    flex: 0,
-    textAlign: 'right',
-  },
-  headerApy: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    width: 80,
-    textAlign: 'right',
-    flex: 0,
-  },
-  headerMySupplies: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors2024['neutral-secondary'],
-    flex: 0,
-    marginLeft: 10,
-    width: 80,
-  },
-  absoluteContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
-  },
-  sectionHeader: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-    marginTop: 8,
-    paddingHorizontal: 0,
-    paddingLeft: 0,
-  },
-  buttonHeader: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-  },
-  //headerContainer: {
-  //  backgroundColor: isLight
-  //    ? colors2024['neutral-bg-0']
-  //    : colors2024['neutral-bg-1'],
-  //},
-  availableCard: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors2024['orange-light-1'],
-    borderRadius: 6,
-    marginTop: 8,
-    gap: 2,
-  },
-  availableCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  availableCardTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    color: colors2024['orange-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+  const cardBgColor = isLight
+    ? colors2024['neutral-bg-1']
+    : colors2024['neutral-bg-2'];
+  const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
+
+  return {
+    container: {
+      flex: 1,
+      paddingHorizontal: 16,
+      width: '100%',
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+    },
+    titleContainer: {
+      paddingTop: 12,
+      paddingBottom: 12,
+    },
+    titleText: {
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '900',
+      textAlign: 'center',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      marginBottom: 12,
+    },
+    searchBar: {
+      //flex: 1,
+    },
+    list: {
+      flex: 1,
+    },
+    item: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 14,
+      justifyContent: 'space-between',
+      backgroundColor: cardBgColor,
+      borderRadius: 16,
+      marginTop: 8,
+      overflow: 'visible',
+    },
+    wrapperToken: {
+      backgroundColor: wrapperTokenCardBgColor,
+      borderWidth: 1,
+      borderColor: cardBgColor,
+    },
+    wrapperTokenArrow: {
+      position: 'absolute',
+      top: -14,
+      left: 30,
+      zIndex: 1,
+      ...makeTriangleStyle({
+        dir: 'up',
+        size: 7,
+        color: cardBgColor,
+        backgroundColor: 'transparent',
+      }),
+    },
+    left: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    apy: {
+      width: 80,
+      textAlign: 'right',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    right: {
+      flex: 0,
+      width: 80,
+      gap: 2,
+    },
+    tvl: {
+      width: 80,
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      textAlign: 'right',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    symbolContainer: {
+      gap: 2,
+    },
+    wrapperTokenText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['neutral-info'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    symbol: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      maxWidth: 80,
+      overflow: 'hidden',
+    },
+    yourSupplied: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'right',
+    },
+    zeroSupplied: {
+      color: colors2024['neutral-info'],
+    },
+    yourBalanceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    walletIcon: {
+      width: 16,
+      height: 16,
+      color: colors2024['neutral-secondary'],
+      marginTop: -2,
+    },
+    yourBalance: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'right',
+    },
+    listHeader: {
+      paddingVertical: 2,
+      paddingHorizontal: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 16,
+      marginBottom: 2,
+    },
+    loading: {
+      width: 124,
+      marginTop: 16,
+      backgroundColor: colors2024['neutral-bg-5'],
+      marginBottom: 2,
+      marginLeft: 8,
+    },
+    headerToken: {
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['neutral-secondary'],
+    },
+    headerTokenContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      gap: 4,
+    },
+    headerTvl: {
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['neutral-secondary'],
+      width: 80,
+      flex: 0,
+      textAlign: 'right',
+    },
+    headerApy: {
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['neutral-secondary'],
+      width: 80,
+      textAlign: 'right',
+      flex: 0,
+    },
+    headerMySupplies: {
+      fontSize: 14,
+      lineHeight: 18,
+      color: colors2024['neutral-secondary'],
+      flex: 0,
+      marginLeft: 10,
+      width: 80,
+    },
+    absoluteContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 1,
+    },
+    sectionHeader: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+      marginTop: 8,
+      paddingHorizontal: 0,
+      paddingLeft: 0,
+    },
+    buttonHeader: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
+    //headerContainer: {
+    //  backgroundColor: isLight
+    //    ? colors2024['neutral-bg-0']
+    //    : colors2024['neutral-bg-1'],
+    //},
+    availableCard: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: colors2024['orange-light-1'],
+      borderRadius: 6,
+      marginTop: 8,
+      gap: 2,
+    },
+    availableCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    availableCardTitle: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      color: colors2024['orange-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+  };
+});

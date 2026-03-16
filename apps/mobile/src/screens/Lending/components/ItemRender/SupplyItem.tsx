@@ -21,6 +21,7 @@ import { formatTokenAmount } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import wrapperToken from '../../config/wrapperToken';
 import { Text } from '@/components/Typography';
+import { colord } from 'colord';
 
 interface SupplyItemProps extends RNViewProps {
   underlyingAsset: string;
@@ -207,10 +208,7 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
             />
           </View>
           <TouchableOpacity
-            style={[
-              styles.buttonSecondary,
-              isWrapperToken && styles.wrapperTokenButton,
-            ]}
+            style={styles.buttonSecondary}
             activeOpacity={0.8}
             onPress={handleOpenSupplyDetail}>
             <Text style={styles.buttonSecondaryText}>
@@ -241,210 +239,217 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 
 export default SupplyItem;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  container: {
-    borderRadius: 16,
-    paddingTop: 40,
-    paddingBottom: 12,
-    paddingHorizontal: 0,
-    marginTop: 12,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.07,
-        shadowRadius: 16,
-        shadowOffset: {
-          width: 0,
-          height: 8,
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+  const cardBgColor = isLight
+    ? colors2024['neutral-bg-1']
+    : colors2024['neutral-bg-2'];
+  const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
+
+  return {
+    container: {
+      borderRadius: 16,
+      paddingTop: 40,
+      paddingBottom: 12,
+      paddingHorizontal: 0,
+      marginTop: 12,
+      backgroundColor: cardBgColor,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOpacity: 0.07,
+          shadowRadius: 16,
+          shadowOffset: {
+            width: 0,
+            height: 8,
+          },
         },
-      },
-      android: {
-        elevation: 0,
-      },
-      default: {},
-    }),
-    position: 'relative',
-  },
-  wrapperToken: {
-    backgroundColor: colors2024['neutral-bg-5'],
-  },
-  wrapperTokenArrow: {
-    position: 'absolute',
-    top: -14,
-    left: 30,
-    zIndex: 1,
-    ...makeTriangleStyle({
-      dir: 'up',
-      size: 7,
-      color: colors2024['neutral-bg-5'],
-      backgroundColor: 'transparent',
-    }),
-  },
-  content: {
-    paddingHorizontal: 14,
-    gap: 12,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  tokenInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexShrink: 1,
-  },
-  tokenTextArea: {
-    flexDirection: 'column',
-    gap: 4,
-  },
-  symbolArea: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    flexShrink: 1,
-  },
-  symbol: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '800',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  apyTag: {
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4,
-    backgroundColor: colors2024['green-light-1'],
-  },
-  apyTagText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  isolatedTag: {
-    paddingHorizontal: 4.8,
-    paddingVertical: 2.8,
-    borderRadius: 6,
-    borderWidth: 0.8,
-    borderColor: colors2024['orange-light-2'],
-    backgroundColor: colors2024['orange-light-1'],
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  isolatedTagText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['orange-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  amountArea: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  amountUsd: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  amountToken: {
-    marginTop: 2,
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  collateralArea: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  collateralLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  buttonSecondary: {
-    flex: 1,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors2024['neutral-bg-5'],
-  },
-  wrapperTokenButton: {
-    backgroundColor: colors2024['neutral-line'],
-  },
-  buttonSecondaryText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  aaveButtonPrimary: {
-    flex: 1,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors2024['neutral-line'],
-  },
-  aaveButtonPrimaryText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  buttonPrimary: {
-    flex: 1,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors2024['brand-light-1'],
-  },
-  buttonPrimaryText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['brand-default'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  suppliedBadge: {
-    position: 'absolute',
-    top: 9,
-    left: 9,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4,
-    backgroundColor: colors2024['green-default'],
-  },
-  suppliedBadgeText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: colors2024['neutral-InvertHighlight'],
-    fontFamily: 'SF Pro Rounded',
-  },
-}));
+        android: {
+          elevation: 0,
+        },
+        default: {},
+      }),
+      position: 'relative',
+    },
+    wrapperToken: {
+      backgroundColor: wrapperTokenCardBgColor,
+      borderWidth: 1,
+      borderColor: cardBgColor,
+    },
+    wrapperTokenArrow: {
+      position: 'absolute',
+      top: -14,
+      left: 30,
+      zIndex: 1,
+      ...makeTriangleStyle({
+        dir: 'up',
+        size: 7,
+        color: cardBgColor,
+        backgroundColor: 'transparent',
+      }),
+    },
+    content: {
+      paddingHorizontal: 14,
+      gap: 12,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    tokenInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      flexShrink: 1,
+    },
+    tokenTextArea: {
+      flexDirection: 'column',
+      gap: 4,
+    },
+    symbolArea: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      flexShrink: 1,
+    },
+    symbol: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '800',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    apyTag: {
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 4,
+      backgroundColor: colors2024['green-light-1'],
+    },
+    apyTagText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['green-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    isolatedTag: {
+      paddingHorizontal: 4.8,
+      paddingVertical: 2.8,
+      borderRadius: 6,
+      borderWidth: 0.8,
+      borderColor: colors2024['orange-light-2'],
+      backgroundColor: colors2024['orange-light-1'],
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    isolatedTagText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['orange-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    amountArea: {
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+    },
+    amountUsd: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    amountToken: {
+      marginTop: 2,
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    footerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    collateralArea: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+    },
+    collateralLabel: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      color: colors2024['neutral-foot'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    buttonSecondary: {
+      flex: 1,
+      height: 32,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors2024['neutral-bg-5'],
+    },
+    wrapperTokenButton: {
+      backgroundColor: colors2024['neutral-line'],
+    },
+    buttonSecondaryText: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    aaveButtonPrimary: {
+      flex: 1,
+      height: 32,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors2024['neutral-line'],
+    },
+    aaveButtonPrimaryText: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    buttonPrimary: {
+      flex: 1,
+      height: 32,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors2024['brand-light-1'],
+    },
+    buttonPrimaryText: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      color: colors2024['brand-default'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    suppliedBadge: {
+      position: 'absolute',
+      top: 9,
+      left: 9,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 4,
+      backgroundColor: colors2024['green-default'],
+    },
+    suppliedBadgeText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '700',
+      color: colors2024['neutral-InvertHighlight'],
+      fontFamily: 'SF Pro Rounded',
+    },
+  };
+});
