@@ -188,7 +188,7 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
 
 +    const isAnchoredToRight = triggerItem?.props?.isAnchoredToRight;
 +    const androidSuppressNativeLongPress = triggerItem?.props?.androidSuppressNativeLongPress;
-+
++    shouldOpenOnLongPress &&= !androidSuppressNativeLongPress
      return (
        <MenuView
          title={menuTitle}
