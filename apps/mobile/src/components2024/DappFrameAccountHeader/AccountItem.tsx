@@ -72,6 +72,7 @@ const AccountItemInner = ({
         onPress={() => {
           onPress?.();
         }}
+        style={styles.containerWrapper}
         disabled={!account}>
         <View style={styles.container}>
           {account ? (
@@ -83,7 +84,10 @@ const AccountItemInner = ({
                 type={account.brandName}
                 address={account.address}
               />
-              <Text style={styles.address}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.address}>
                 {alias || ellipsisAddress(account?.address)}
               </Text>
               <CaretArrowIconCC

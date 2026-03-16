@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemo } from 'react';
-import { View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 
 // caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from './icons/caret-down-circle.svg';
@@ -95,7 +95,10 @@ export function ScreenHeaderAccountSwitcher({
                 return (
                   <View style={styles.addressRow}>
                     <WalletIcon style={styles.walletIcon} />
-                    <Text style={styles.address}>
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={styles.address}>
                       {finalSceneCurrentAccount.aliasName ||
                         ellipsisAddress(finalSceneCurrentAccount?.address)}
                     </Text>
@@ -125,6 +128,7 @@ export function ScreenHeaderAccountSwitcher({
   );
 }
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
@@ -133,6 +137,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
+      width: SCREEN_WIDTH - 160,
       marginTop: -4,
     },
     titleText: {
@@ -158,6 +163,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
+      maxWidth: '90%',
       color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {

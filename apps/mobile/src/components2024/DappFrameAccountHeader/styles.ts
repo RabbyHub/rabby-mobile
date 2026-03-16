@@ -1,12 +1,16 @@
 import { createGetStyles2024 } from '@/utils/styles';
 
 export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  containerWrapper: {
+    flex: 1,
+  },
   container: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: 4,
     justifyContent: 'center',
+    flex: 1,
   },
 
   addressContainer: {
@@ -22,6 +26,7 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     lineHeight: 18,
     color: colors2024['neutral-foot'],
+    flex: 1,
   },
   reverseCaret: {
     transform: [{ rotate: '180deg' }],

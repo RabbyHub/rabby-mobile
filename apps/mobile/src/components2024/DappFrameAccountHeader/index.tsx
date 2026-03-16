@@ -150,6 +150,7 @@ export const DappFrameAccountHeader = (props: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 6,
           }}>
           {headerLeft()}
           {headerRight()}

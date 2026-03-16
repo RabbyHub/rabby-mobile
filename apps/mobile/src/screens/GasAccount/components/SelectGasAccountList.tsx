@@ -197,6 +197,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   itemContent: {
     display: 'flex',
     flexDirection: 'column',
+    flex: 1,
     gap: 4,
   },
 
