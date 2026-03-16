@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { RefAttributes, useMemo } from 'react';
 import { TextProps, Platform, TextStyle } from 'react-native';
 import { Text as RNText } from '@/components/Typography';
 import { moderateScale } from 'react-native-size-matters';
@@ -43,7 +43,7 @@ export const Text = ({
   style,
   ref,
   ...rest
-}: TextProps & { ref: React.Ref<RNText> }) => {
+}: TextProps & RefAttributes<RNText>) => {
   const _fontSize = useMemo(
     () => normalize((style as TextStyle)?.fontSize || 14),
     [style],
