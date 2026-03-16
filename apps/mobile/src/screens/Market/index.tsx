@@ -212,7 +212,7 @@ export default function MarketScreen() {
                 </View>
               </Tabs.Tab>
             );
-          }) as unknown as React.ReactElement
+          }) as unknown as React.ReactElement<any>
         }
       </Tabs.Container>
     </NormalScreenContainer2024>
