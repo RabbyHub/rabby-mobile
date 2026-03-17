@@ -929,7 +929,8 @@
         "perpsMarketList": "Plus de Perps",
         "lending": "Prêt",
         "predict": "Prédire",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Marché"
       },
       "swipeUp": {
         "descAndroid": "Cliquez pour explorer les dApps",
@@ -1472,14 +1473,14 @@
         },
         "ledger": {
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger. Dans les 3 premiers portefeuilles, il n'y a pas de portefeuilles utilisés sur la chaîne.",
-            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto. Dans les 3 premiers portefeuilles, il n'y a pas de portefeuilles utilisés en chaîne.",
-            "bip44": "BIP44 Standard : Chemin HD défini par le protocole BIP44. Dans les 3 premiers portefeuilles, aucun portefeuille n'est utilisé sur la chaîne."
+            "bip44": "Norme BIP44 : chemin HD défini par le protocole BIP44.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto.",
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger."
           },
           "hdPathType": {
-            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne.",
-            "bip44": "Standard BIP44 : HDpath défini par le protocole BIP44. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne.",
-            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne."
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger.",
+            "bip44": "BIP44 Standard : HDpath défini par le protocole BIP44.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto."
           }
         },
         "manageAddressFrom": "Gérer le portefeuille de {{0}} à {{1}}",
@@ -2336,7 +2337,8 @@
       "tokenHeader": {
         "token": "Token/FDV",
         "change": "Changement 24H",
-        "price": "Prix"
+        "price": "Prix",
+        "priceAndChange": "Prix/Changement sur 24H"
       },
       "footer": {
         "skip": "Passer",
@@ -2571,7 +2573,8 @@
         "details": "Détails",
         "currentPrice": "Prix actuel",
         "positionValue": "Valeur de la position",
-        "marginMode": "Mode de marge"
+        "marginMode": "Mode de marge",
+        "fundingTipsBold": "Cela montre votre financement total réglé depuis l'ouverture de la position. Les valeurs <bold>vertes (positives)</bold> signifient que vous avez gagné par d'autres traders, tandis que les valeurs <bold>rouges (négatives)</bold> représentent les coûts de financement que vous leur avez payés."
       },
       "PerpsInfo": {
         "openInterest": "Intérêt Ouvert",
@@ -2947,7 +2950,8 @@
         "borrowBalance": "Emprunter un solde",
         "lpRiskWarning": "Facteur de santé faible après l'échange. Votre position comportera un risque plus élevé de liquidation.",
         "priceImpactTips": "Impact de prix élevé ({{lostValue}}). Cet itinéraire peut retourner plus en raison d'une faible liquidité ou d'une petite taille de commande.",
-        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité."
+        "lpDangerWarning": "Votre facteur de santé après cet échange sera extrêmement bas et pourrait entraîner une liquidation. Veuillez choisir un autre actif ou réduire le montant de l'échange pour rester en sécurité.",
+        "maxLtvWarning": "Fonds de garantie insuffisants pour couvrir la nouvelle position d'emprunt. Le portefeuille doit disposer d'une capacité d'emprunt restante pour effectuer le changement de dette."
       },
       "hfTips": {
         "more": "Plus",
@@ -3016,7 +3020,19 @@
         "fdv": "FDV",
         "volume": "Volume sur 24H",
         "price": "Prix",
-        "change": "Changement sur 24H"
+        "change": "Changement sur 24H",
+        "priceAndChange": "Prix/Variation sur 24H"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Nom"
+      },
+      "tabs": {
+        "watchlist": "Liste de surveillance",
+        "memecoin": "Memecoin",
+        "commodities": "Marchandises",
+        "stock": "Actions"
       }
     }
   },

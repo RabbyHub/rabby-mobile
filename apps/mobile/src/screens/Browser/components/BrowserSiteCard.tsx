@@ -10,12 +10,12 @@ import {
   Image,
   Platform,
   StyleProp,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
 // import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export const BrowserSiteListBy = ({
   data,

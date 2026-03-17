@@ -1,13 +1,14 @@
 import { useTheme2024 } from '@/hooks/theme';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { Button } from '../Button';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {

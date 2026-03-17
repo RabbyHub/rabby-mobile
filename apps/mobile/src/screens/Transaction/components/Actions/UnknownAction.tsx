@@ -6,7 +6,7 @@ import { findChain } from '@/utils/chain';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { BalanceChange } from './components/BalanceChange';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface Props {
   data: TransactionGroup;
@@ -309,6 +310,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
+    maxWidth: '45%',
   },
   itemAddressText: {
     color: colors2024['neutral-foot'],

@@ -1,8 +1,9 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export const ManageSetting = ({
   isManageMode,

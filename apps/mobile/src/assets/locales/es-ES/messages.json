@@ -1114,7 +1114,8 @@
         "perps": "Perps",
         "lending": "Préstamo",
         "predict": "Predecir",
-        "meme": "Memecoin"
+        "meme": "Memecoin",
+        "market": "Mercado"
       },
       "swipeUp": {
         "descAndroidMore": "Haz clic para explorar más dApps",
@@ -1545,14 +1546,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger. En las primeras 3 carteras, hay carteras utilizadas en la cadena.",
-            "legacy": "Legacy: Ruta HD utilizada por MEW / Mycrypto. En las primeras 3 carteras, hay carteras utilizadas en la cadena.",
-            "bip44": " estándar BIP44: HDpath definido por el protocolo BIP44. En las primeras 3 carteras, hay carteras utilizadas en la cadena."
+            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger.",
+            "bip44": "BIP44 Estándar: HDpath definido por el protocolo BIP44.",
+            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "legacy": "Legado: Ruta HD utilizada por MEW / Mycrypto. En las primeras 3 carteras, no hay carteras utilizadas en la cadena.",
-            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger. En las primeras 3 wallets, no se utilizan wallets en la cadena.",
-            "bip44": "BIP44 Estándar: Ruta HD definida por el protocolo BIP44. En las primeras 3 carteras, no hay carteras utilizadas en la cadena."
+            "ledgerLive": "Ledger Live: ruta HD oficial de Ledger.",
+            "bip44": "Estándar BIP44: ruta HD definida por el protocolo BIP44.",
+            "legacy": "Legado: ruta HD utilizada por MEW / Mycrypto."
           }
         },
         "keystone": {
@@ -2599,7 +2600,8 @@
       "tokenHeader": {
         "token": "Token/FDV",
         "price": "Precio",
-        "change": "Cambio 24H"
+        "change": "Cambio 24H",
+        "priceAndChange": "Precio/Cambio 24H"
       },
       "footer": {
         "skip": "Saltar",
@@ -2834,7 +2836,8 @@
         "settings": "Configuraciones",
         "unrealizedPnl": "PNL no realizado",
         "marginMode": "Modo Margen",
-        "realizedPnl": "PNL realizado"
+        "realizedPnl": "PNL realizado",
+        "fundingTipsBold": "Esto muestra el financiamiento total que se ha liquidado desde que se abrió la posición. Los valores en <bold>verde (positivo)</bold> significan que has ganado de otros traders, mientras que los valores en <bold>rojo (negativo)</bold> son los costos de financiamiento que les has pagado."
       },
       "PerpsInfo": {
         "openInterestTips": "El total de posiciones pendientes de todos los usuarios en este contrato.",
@@ -3210,7 +3213,8 @@
         "entryTips": "Un clic para intercambiar tu activo prestado, reduciendo pasos y tarifas.",
         "lpRiskWarning": "Bajo factor de salud después del intercambio. Tu posición tendrá un mayor riesgo de liquidación.",
         "priceImpactTips": "Alto impacto en el precio ({{lostValue}}). Esta ruta puede devolver más debido a la baja liquidez o al tamaño pequeño de la orden.",
-        "lpDangerWarning": "Su factor de salud después de este intercambio será críticamente bajo y puede resultar en liquidación. Por favor, elija un activo diferente o reduzca la cantidad del intercambio para mantenerse a salvo."
+        "lpDangerWarning": "Su factor de salud después de este intercambio será críticamente bajo y puede resultar en liquidación. Por favor, elija un activo diferente o reduzca la cantidad del intercambio para mantenerse a salvo.",
+        "maxLtvWarning": "Colateral insuficiente para cubrir nueva posición de préstamo. La billetera debe tener poder de préstamo restante para realizar el cambio de deuda."
       },
       "hfTips": {
         "more": "Más",
@@ -3279,7 +3283,19 @@
         "change": "Cambio en 24H",
         "fdv": "FDV",
         "price": "Precio",
-        "volume": "Volumen 24H"
+        "volume": "Volumen 24H",
+        "priceAndChange": "Precio/Cambio 24H"
+      }
+    },
+    "market": {
+      "tokenHeader": {
+        "name": "Nombre"
+      },
+      "tabs": {
+        "stock": "Acciones",
+        "commodities": "Commodities",
+        "watchlist": "Lista de seguimiento",
+        "memecoin": "Memecoin"
       }
     }
   },

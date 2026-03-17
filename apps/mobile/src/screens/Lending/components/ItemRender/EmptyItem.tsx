@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import EmptySummaryCard from '../../EmptySummaryCard';
 import { useLendingSummary } from '../../hooks';
 import TokenIcon from '../TokenIcon';
@@ -21,6 +21,7 @@ import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
 import RightArrowCC from '@/assets2024/icons/common/right-cc.svg';
 import { CustomMarket } from '../../config/market';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { Text } from '@/components/Typography';
 
 const EmptyItem = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });

@@ -1,10 +1,11 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useGasAccountInfo } from '../hooks';
 import { formatTokenAmount } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
 import { RcIconGasAccount } from '@/assets/icons/gas-account';
 import { useThemeColors } from '@/hooks/theme';
 import { useMemo } from 'react';
+import { Text } from '@/components/Typography';
 
 const formatUsdValue = (usd: string | number) => {
   const v = Number(usd);

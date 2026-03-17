@@ -3,8 +3,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Modal,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -25,6 +23,7 @@ import {
 } from './hooks';
 import { toast } from '@/components2024/Toast';
 import PressableStar from './RateStar';
+import { Text, TextInput } from '@/components/Typography';
 
 const LOGO_SIZE = 67;
 

@@ -3,11 +3,12 @@ import { keyringService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { BackupIcon } from '@/components/SeedPhraseBackupToCloud2024/BackupIcon';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(colors => ({
   title: {

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Text as RNText, TextProps, Platform, TextStyle } from 'react-native';
+import { TextProps, Platform, TextStyle } from 'react-native';
+import { Text as RNText } from '@/components/Typography';
 import { moderateScale } from 'react-native-size-matters';
 
 // https://github.com/react-native-elements/react-native-elements/blob/1709780f72a42b2a5d656976f2034a75a78a1796/packages/base/src/helpers/normalizeText.tsx

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -11,7 +11,7 @@ import { ActionItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
-import { RefreshControl } from 'react-native-gesture-handler';
+import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
@@ -32,6 +32,18 @@ import useProtocols, {
 import { useShallow } from 'zustand/react/shallow';
 import { useAccountInfo } from './hooks';
 import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { IS_ANDROID } from '@/core/native/utils';
+import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
+import {
+  pulldownRefreshSizes,
+  RefreshPlaceholderIOS,
+  setPulldownRefreshStage,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+  usePulldownRefreshGesture,
+  usePulldownRefreshStyles,
+} from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import { RNGHRefreshControl } from '@/components/customized/reexports';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -251,58 +263,116 @@ export const ProtocolList = () => {
     }
   }, [triggerUpdate, myTop10Addresses]);
 
+  const scrollY = useCurrentTabScrollY();
+  const {
+    panGestureRef,
+    isRefreshing,
+    svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  } = usePulldownRefreshGesture({
+    scrollViewYValue: scrollY,
+    onJsPulldownRefresh: ctx => {
+      ctx.svIsManualRefreshing.value = true;
+      return onRefresh();
+    },
+  });
+
+  useEffect(() => {
+    console.debug(
+      '[PulldownRefresh] ProtocolList isLoading changed',
+      isLoading,
+    );
+    if (!isLoading) {
+      setPulldownRefreshStage({
+        state: isLoading ? 'refreshing' : 'finished',
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+        svIsRefreshing,
+        svIsManualRefreshing,
+        pullDistance,
+      });
+    }
+  }, [isLoading, svIsRefreshing, svIsManualRefreshing, pullDistance]);
+
+  const pulldownRefreshReturns = usePulldownRefreshStyles({
+    indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+    pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+    states: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  });
+
   // if (!isFocusing) {
   //   return null;
   // }
   return (
-    <Tabs.FlatList
-      keyExtractor={getItemId}
-      data={
-        hasNotAssets
-          ? [
-              {
-                type: 'empty-defi',
-                data: t('page.singleHome.sectionHeader.NoData', {
-                  name: t('page.singleHome.sectionHeader.Defi'),
-                }),
-              },
-            ]
-          : portfolioListData
-      }
-      key={isFocused ? 'defi-focused' : 'defi-unfocused'}
-      renderItem={renderItem}
-      initialNumToRender={15}
-      windowSize={5}
-      maxToRenderPerBatch={15}
-      removeClippedSubviews
-      ItemSeparatorComponent={ListRenderSeparator}
-      ListHeaderComponent={<PerpsMultiAssetPosition />}
-      ListFooterComponent={ListRenderFooter}
-      showsVerticalScrollIndicator={false}
-      showsHorizontalScrollIndicator={false}
-      style={styles.container}
-      contentContainerStyle={styles.list}
-      onEndReached={loadMorePortfolios}
-      onEndReachedThreshold={0.5}
-      refreshControl={
-        <RefreshControl
-          style={styles.bgContainer}
-          onRefresh={onRefresh}
-          refreshing={false}
-        />
-      }
-    />
+    <GestureDetector gesture={panGestureRef.current}>
+      <TabsFlatList
+        keyExtractor={getItemId}
+        data={
+          hasNotAssets
+            ? [
+                {
+                  type: 'empty-defi',
+                  data: t('page.singleHome.sectionHeader.NoData', {
+                    name: t('page.singleHome.sectionHeader.Defi'),
+                  }),
+                },
+              ]
+            : portfolioListData
+        }
+        key={isFocused ? 'defi-focused' : 'defi-unfocused'}
+        renderItem={renderItem}
+        initialNumToRender={15}
+        windowSize={5}
+        maxToRenderPerBatch={15}
+        removeClippedSubviews={IS_ANDROID}
+        ItemSeparatorComponent={ListRenderSeparator}
+        ListHeaderComponent={
+          <>
+            <RefreshPlaceholderIOS
+              hooksReturn={pulldownRefreshReturns}
+              animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
+              __PICK_MANUAL__
+            />
+            <PerpsMultiAssetPosition />
+          </>
+        }
+        // ListFooterComponent={ListRenderFooter}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        style={[
+          styles.container,
+          pulldownRefreshReturns.scrollableStyle.container,
+        ]}
+        contentContainerStyle={[
+          styles.list,
+          pulldownRefreshReturns.scrollableStyle.list,
+        ]}
+        onEndReached={loadMorePortfolios}
+        onEndReachedThreshold={0.5}
+        bounces={false}
+        overScrollMode={'never'}
+        scrollEventThrottle={16}
+        simultaneousHandlers={[panGestureRef]}
+        {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
+          refreshControl: (
+            <RNGHRefreshControl
+              style={{ paddingHorizontal: 16 }}
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+            />
+          ),
+        })}
+      />
+    </GestureDetector>
   );
 };
 
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: TAB_HEADER_FULL_HEIGHT,
+    // marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,
-    marginTop: -TAB_HEADER_FULL_HEIGHT,
+    paddingBottom: 48,
   },
   bgContainer: {
     paddingHorizontal: 16,

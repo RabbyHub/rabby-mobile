@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
 import { Chain } from '@/constant/chains';
@@ -9,6 +9,7 @@ import { useApprovalSecurityEngine } from '@/components/Approval/hooks/useApprov
 import { getStyle } from '../getStyle';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

@@ -2031,7 +2031,7 @@ PODS:
     - Yoga
   - RNFS (2.20.0):
     - React-Core
-  - RNGestureHandler (2.25.0):
+  - RNGestureHandler (2.30.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2805,7 +2805,7 @@ SPEC CHECKSUMS:
   RNFBMessaging: 1e7415390ae579c5949505a0709686a2de8a47e5
   RNFlashList: 0fa798594f8be58d951ae1e3bf021cdf976b22e8
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
-  RNGestureHandler: 0573a746155b37786d57d89951f71433c90f80a5
+  RNGestureHandler: bb922ea171c462852f695c1fe2d39242cdd33333
   RNGoogleSignin: ee2938633d996756819e3212c8e0f7f696b380d0
   RNIap: 2fba6c91f79fb7c71fcc44465f606061653caf01
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
@@ -2826,6 +2826,6 @@ SPEC CHECKSUMS:
   VisionCamera: 2230ecfd78a1f6cddd8be0fe4e6589f21a6385e1
   Yoga: 1a10502f162e8fc40ff0907c82d01cfe555d00c2
 
-PODFILE CHECKSUM: 59feb3abf71931bca4020ac5e5e79a536a48b6ce
+PODFILE CHECKSUM: 1c2b81ead649f5af550d0cb848c4a582c3ce62f3
 
 COCOAPODS: 1.14.3

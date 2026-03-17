@@ -1,9 +1,10 @@
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import IconPhone from '@/assets2024/icons/sync-extension/phone.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import React from 'react';
+import { Text } from '@/components/Typography';
 
 export const SyncExtensionHeader = ({
   type,

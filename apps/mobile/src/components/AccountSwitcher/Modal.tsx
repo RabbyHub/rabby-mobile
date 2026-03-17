@@ -75,6 +75,7 @@ export function AccountSwitcherModal({
         linearGradientType: 'linear',
         colors: colors2024,
       })}
+      handleStyle={styles.handleStyle}
       onDismiss={onCancel}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
@@ -97,7 +98,9 @@ export function AccountSwitcherModal({
 const getModalStyle = createGetStyles2024(ctx => {
   return {
     handleStyle: {
-      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-0']
+        : ctx.colors2024['neutral-bg-1'],
       paddingTop: 10,
       height: 36,
     },
@@ -171,6 +174,7 @@ export function AccountSwitcherModalInDappWebView({
         linearGradientType: 'linear',
         colors: colors2024,
       })}
+      handleStyle={styles.handleStyle}
       onDismiss={onCancel}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
@@ -217,7 +221,7 @@ const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
       backgroundColor: 'rgba(0, 0, 0, 0.60)',
     },
     handleStyle: {
-      backgroundColor: 'transparent',
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
       paddingTop: 10,
       height: 36,
     },

@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { MemeItem } from '@rabby-wallet/rabby-api/dist/types';
+import React from 'react';
+import { View, TouchableOpacity, Image } from 'react-native';
+import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -10,8 +10,11 @@ import { formatUsdValueKMB } from '../../Home/utils/price';
 import { formatPrice } from '@/utils/number';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/themed';
+import { Text } from '@/components/Typography';
+import { PercentChangeBadge } from '@/screens/Watchlist/components/TokenItem';
+import { isNumber } from 'lodash';
 
-export const formatPercentage = (x: number) => {
+export const formatPercentageKMB = (x: number) => {
   if (Math.abs(x) < 0.00001) {
     return '0%';
   }
@@ -35,18 +38,12 @@ export const formatPercentage = (x: number) => {
   return `${sign}${formattedValue}%`;
 };
 
-const getPercentSize = (per: string) => {
-  if (per.length > 4) {
-    return 13;
-  }
-  return 14;
-};
-
 interface TokenListItemProps {
-  item: MemeItem;
-  onPress: (item: MemeItem) => void;
+  item: TokenMarketTokenItem;
+  onPress: (item: TokenMarketTokenItem) => void;
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
+  showChainLogo?: boolean;
 }
 
 const TokenListItemComponent = ({
@@ -54,15 +51,9 @@ const TokenListItemComponent = ({
   onPress,
   leftSlot,
   rightSlot,
+  showChainLogo = false,
 }: TokenListItemProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const isPositive = useMemo(
-    () => (item.price_24h_change || 0) >= 0,
-    [item.price_24h_change],
-  );
-  const percentStr = useMemo(() => {
-    return formatPercentage(Number(item.price_24h_change) || 0);
-  }, [item.price_24h_change]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -75,7 +66,7 @@ const TokenListItemComponent = ({
             logo={item.logo_url}
             size={46}
             chain={item.chain}
-            chainSize={0}
+            chainSize={showChainLogo ? 18 : 0}
             innerChainStyle={styles.chainLogo}
           />
           <View style={styles.tokenInfo}>
@@ -84,21 +75,34 @@ const TokenListItemComponent = ({
               <Text style={styles.tokenName}>
                 {ellipsisOverflowedText(getTokenSymbol(item), 12)}
               </Text>
-              <Image
-                source={require('@/assets2024/icons/meme/fourMeme.png')}
-                style={styles.fourMemeIcon}
-                width={18}
-                height={18}
-              />
+              {item.launchpad?.logo ? (
+                <Image
+                  source={{ uri: item.launchpad?.logo }}
+                  style={styles.fourMemeIcon}
+                  width={18}
+                  height={18}
+                />
+              ) : null}
             </View>
-            {/* FDV */}
-            {!!item?.fdv && (
+            {item.asset ? (
+              <View style={styles.tokenAssetContainer}>
+                {item.asset?.logo ? (
+                  <Image
+                    source={{ uri: item.asset?.logo }}
+                    style={styles.fourMemeIcon}
+                    width={16}
+                    height={16}
+                  />
+                ) : null}
+                <Text style={styles.tokenFdv}>{item.asset?.name}</Text>
+              </View>
+            ) : item?.fdv ? (
               <Text style={styles.tokenFdv}>
                 <Text>{formatUsdValueKMB(item.volume_24h)}</Text>
                 <Text style={styles.tokenFdvSeparator}> | </Text>
                 <Text>{formatUsdValueKMB(item.fdv)}</Text>
               </Text>
-            )}
+            ) : null}
             {/* Chain Logo */}
           </View>
         </View>
@@ -107,28 +111,9 @@ const TokenListItemComponent = ({
         {/* 价格 */}
         <Text style={styles.priceText}>${formatPrice(item.price)}</Text>
         {/* 24小时价格变化 */}
-        <View
-          style={[
-            styles.trendChartContainer,
-            {
-              backgroundColor: isPositive
-                ? colors2024['green-default']
-                : colors2024['red-default'],
-            },
-          ]}>
-          {/* 24小时价格百分比 */}
-          {typeof item.price_24h_change === 'number' && (
-            <Text
-              style={StyleSheet.flatten([
-                styles.changeText,
-                {
-                  fontSize: getPercentSize(percentStr),
-                },
-              ])}>
-              {percentStr}
-            </Text>
-          )}
-        </View>
+        {isNumber(item.price_24h_change) && (
+          <PercentChangeBadge percent={item.price_24h_change} />
+        )}
       </View>
       {/* 右slot */}
       {rightSlot && <View style={styles.rightSlot}>{rightSlot}</View>}
@@ -153,8 +138,9 @@ export const TokenItemSkeleton = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingLeft: 12,
+    paddingRight: 14,
     gap: 8,
     marginBottom: 8,
     display: 'flex',
@@ -165,6 +151,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
   },
   tokenLeftSection: {
+    justifyContent: 'center',
     flexDirection: 'column',
     alignItems: 'center',
     flex: 1,
@@ -216,9 +203,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   tokenRightSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11.6,
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 4,
     justifyContent: 'center',
   },
   priceText: {
@@ -282,5 +269,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 0,
     flexShrink: 0,
     justifyContent: 'flex-start',
+  },
+  tokenAssetContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 }));

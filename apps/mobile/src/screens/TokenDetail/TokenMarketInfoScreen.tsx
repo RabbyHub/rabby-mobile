@@ -21,7 +21,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   Dimensions,
   RefreshControl,
@@ -63,6 +62,7 @@ import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
 import { ITokenItem } from '@/store/tokens';
 import { formatAmountValueKMB } from './util';
+import { Text } from '@/components/Typography';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
@@ -193,7 +193,7 @@ export const TokenMarketInfoScreen = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: -3 }}
+        style={{ marginLeft: isAndroid ? 0 : -30 }}
         key={finalAccount?.address}
         token={token}
         showCopyIcon
@@ -558,7 +558,9 @@ export const TokenMarketInfoScreen = () => {
                 <>
                   <MarketInfo
                     price={tokenWithAmount?.price ?? 0}
-                    price24hChange={tokenWithAmount?.price_24h_change ?? 0}
+                    price24hChange={
+                      tokenWithAmount?.price_24h_change ?? undefined
+                    }
                     marketCap={
                       supplyInfo?.market_cap_usd_value?.toString() ?? ''
                     }

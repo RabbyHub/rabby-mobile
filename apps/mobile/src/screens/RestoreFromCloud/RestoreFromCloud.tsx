@@ -18,8 +18,9 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { BackupItem } from './BackupItem';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

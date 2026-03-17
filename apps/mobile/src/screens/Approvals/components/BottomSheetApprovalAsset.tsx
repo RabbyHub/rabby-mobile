@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   SectionListProps,
   ActivityIndicator,
   SectionList,
@@ -31,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 import { querySelectedAssetSpender } from '../utils';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 const MemoInModalApprovalAssetRow = React.memo(
   InModalApprovalAssetRow,

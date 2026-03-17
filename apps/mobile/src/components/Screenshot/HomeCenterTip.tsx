@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -11,6 +11,7 @@ import RcCloseCC from './icons/hometip-close-cc.svg';
 import { useViewedHomeTip } from './hooks';
 import { ScreenLayouts } from '@/constant/layout';
 import { IS_IOS } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 export function TipFeedbackByScreenshot({ style }: RNViewProps) {
   const { styles } = useTheme2024({ getStyle });

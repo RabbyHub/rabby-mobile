@@ -1,7 +1,8 @@
 import React from 'react';
 import LogoWithText from './LogoWithText';
-import { Text, TextStyle, View } from 'react-native';
+import { TextStyle, View } from 'react-native';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { Text } from '@/components/Typography';
 
 export interface Props {
   protocol: {

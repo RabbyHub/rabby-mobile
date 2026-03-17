@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListRenderItem, View, Dimensions } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
@@ -14,7 +14,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
-import { RefreshControl } from 'react-native-gesture-handler';
+import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -25,6 +25,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
+import { ListRenderFooter } from './RenderRow/Common';
 import useTokenList, {
   getMultiAssetsCacheKey,
   ITokenItem,
@@ -33,6 +34,18 @@ import useTokenList, {
 import { formatNetworth } from '@/utils/math';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { IS_ANDROID } from '@/core/native/utils';
+import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
+import {
+  pulldownRefreshSizes,
+  RefreshPlaceholderIOS,
+  setPulldownRefreshStage,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+  usePulldownRefreshGesture,
+  usePulldownRefreshStyles,
+} from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import { RNGHRefreshControl } from '@/components/customized/reexports';
 
 const MemoizedTokenRow = React.memo(TokenRowV2);
 const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
@@ -227,6 +240,14 @@ export const TokenList = () => {
     setFoldHideList(pre => !pre);
   }, [foldHideList]);
 
+  // const ListRenderFooter = useCallback(() => {
+  //   return hasMorePortfolios ? (
+  //     <MemoizedDefiItemLoader style={[styles.loadingMore]} />
+  //   ) : (
+  //     <ListRenderFooterComponent />
+  //   );
+  // }, [hasMorePortfolios, styles.loadingMore]);
+
   const onRefresh = useCallback(async () => {
     try {
       batchGetTokenList(myTop10Addresses, true);
@@ -391,35 +412,85 @@ export const TokenList = () => {
     return item.type;
   }, []);
 
+  const scrollY = useCurrentTabScrollY();
+  const {
+    panGestureRef,
+    isRefreshing,
+    svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  } = usePulldownRefreshGesture({
+    scrollViewYValue: scrollY,
+    onJsPulldownRefresh: ctx => {
+      ctx.svIsManualRefreshing.value = true;
+      return onRefresh();
+    },
+  });
+
+  useEffect(() => {
+    console.debug('[PulldownRefresh] TokenList isLoading changed', isLoading);
+    if (!isLoading) {
+      setPulldownRefreshStage({
+        state: isLoading ? 'refreshing' : 'finished',
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+        svIsRefreshing,
+        svIsManualRefreshing,
+        pullDistance,
+      });
+    }
+  }, [isLoading, svIsRefreshing, svIsManualRefreshing, pullDistance]);
+
+  const pulldownRefreshReturns = usePulldownRefreshStyles({
+    indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+    pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+    states: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  });
+
   return (
-    <Tabs.FlatList
-      style={styles.container}
-      contentContainerStyle={styles.list}
-      refreshControl={
-        <RefreshControl
-          style={styles.bgContainer}
-          onRefresh={onRefresh}
-          refreshing={false}
-        />
-      }
-      data={dataList}
-      keyExtractor={keyExtractor}
-      renderItem={renderItem}
-    />
+    <GestureDetector gesture={panGestureRef.current}>
+      <TabsFlatList
+        style={[
+          styles.container,
+          pulldownRefreshReturns.scrollableStyle.container,
+        ]}
+        contentContainerStyle={[
+          styles.list,
+          pulldownRefreshReturns.scrollableStyle.list,
+        ]}
+        ListHeaderComponent={
+          <RefreshPlaceholderIOS
+            hooksReturn={pulldownRefreshReturns}
+            animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
+            __PICK_MANUAL__
+          />
+        }
+        // ListFooterComponent={ListRenderFooter}
+        bounces={false}
+        overScrollMode={'never'}
+        scrollEventThrottle={16}
+        simultaneousHandlers={[panGestureRef]}
+        {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
+          refreshControl: (
+            <RNGHRefreshControl
+              style={{ paddingHorizontal: 16 }}
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+            />
+          ),
+        })}
+        data={dataList}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+      />
+    </GestureDetector>
   );
 };
 
 const getStyles = createGetStyles2024(() => ({
   container: {
     flex: 1,
-    marginTop: TAB_HEADER_FULL_HEIGHT,
   },
   list: {
-    marginTop: -TAB_HEADER_FULL_HEIGHT,
     paddingHorizontal: 16,
-  },
-  bgContainer: {
-    paddingHorizontal: 16,
+    paddingBottom: 48,
   },
   tokenSectionHeader: {
     paddingLeft: 0,

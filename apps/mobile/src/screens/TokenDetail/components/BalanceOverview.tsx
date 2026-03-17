@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatAmountValueKMB } from '../util';
+import { Text } from '@/components/Typography';
 
 interface Props {
   usdValue: string;

@@ -1,7 +1,7 @@
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -10,6 +10,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
@@ -86,13 +87,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
     },
     radioOuterActive: {
-      borderColor: colors2024['brand-disable'],
+      borderColor: 'rgba(80, 210, 193, 0.4)',
     },
     radioInner: {
       width: 10,
       height: 10,
       borderRadius: 5,
-      backgroundColor: colors2024['brand-default'],
+      backgroundColor: '#50D2C1',
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],

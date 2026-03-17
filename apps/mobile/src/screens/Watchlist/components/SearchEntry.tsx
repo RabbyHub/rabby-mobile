@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, Platform } from 'react-native';
+import { View, TouchableOpacity, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { RcNextSearchCC } from '@/assets/icons/common';
@@ -8,6 +8,7 @@ import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { BlurView } from '@react-native-community/blur';
+import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 

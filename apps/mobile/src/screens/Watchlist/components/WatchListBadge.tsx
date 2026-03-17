@@ -5,7 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 
 export const WatchListBadge = () => {
   const last3Token = useWatchListTokenBadge();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   if (!last3Token.length) {
     return null;
   }
@@ -15,7 +15,13 @@ export const WatchListBadge = () => {
         <Image
           key={`${token.id}${token.chain}`}
           style={styles.badgeImage}
-          source={{ uri: token.logo_url }}
+          source={
+            token.logo_url
+              ? { uri: token.logo_url }
+              : isLight
+              ? require('@/assets/icons/token/default-token.png')
+              : require('@/assets/icons/token/default-token-dark.png')
+          }
         />
       ))}
     </View>

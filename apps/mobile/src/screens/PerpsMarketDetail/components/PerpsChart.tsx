@@ -18,7 +18,13 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import {
+  AppState,
+  AppStateStatus,
+  Dimensions,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   createChart,
   IChartApi,
@@ -34,6 +40,7 @@ import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
 import { splitNumberByStep } from '@/utils/number';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { Text } from '@/components/Typography';
 
 import TickerTexts, { TickItem } from '@/components/Animated/TickerText';
 export interface ChartHoverData {
@@ -77,6 +84,45 @@ type CandleBar = CandlestickData<UTCTimestamp>;
 
 const toUtc = (t: number): UTCTimestamp => Math.floor(t) as UTCTimestamp;
 
+const getMondayUtc = (utcSeconds: number): UTCTimestamp => {
+  const date = new Date(utcSeconds * 1000);
+  const day = date.getUTCDay(); // 0=Sun,1=Mon,...,6=Sat
+  const diffDays = day === 0 ? -6 : 1 - day;
+  date.setUTCDate(date.getUTCDate() + diffDays);
+  date.setUTCHours(0, 0, 0, 0);
+  return Math.floor(date.getTime() / 1000) as UTCTimestamp;
+};
+
+const aggregateDailyToWeekly = (dailyCandles: CandleBar[]): CandleBar[] => {
+  if (dailyCandles.length === 0) {
+    return [];
+  }
+
+  const weeks = new Map<number, CandleBar>();
+
+  for (const candle of dailyCandles) {
+    const mondayTs = getMondayUtc(candle.time as number);
+    const existing = weeks.get(mondayTs);
+    if (existing) {
+      existing.high = Math.max(existing.high, candle.high);
+      existing.low = Math.min(existing.low, candle.low);
+      existing.close = candle.close;
+    } else {
+      weeks.set(mondayTs, {
+        time: mondayTs,
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+      } as CandleBar);
+    }
+  }
+
+  return Array.from(weeks.values()).sort(
+    (a, b) => (a.time as number) - (b.time as number),
+  );
+};
+
 const parseCandles = (data: CandleSnapshot): CandleBar[] => {
   if (!data || !Array.isArray(data) || data.length === 0) {
     return [];
@@ -85,12 +131,10 @@ const parseCandles = (data: CandleSnapshot): CandleBar[] => {
   const result = data.map((row: Candle) => {
     const candle = {
       time: toUtc(Number(row.t) / 1000),
-      // time: Number(row.t),
       open: Number(row.o),
       high: Number(row.h),
       low: Number(row.l),
       close: Number(row.c),
-      // todo check this line
       volume: Number(row.v),
     };
     return candle;
@@ -127,10 +171,12 @@ export const PerpsChart: React.FC<{
   const { t } = useTranslation();
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
   const chartIsReadyRef = useRef(false);
-  const [isReady, setIsReady] = useState(false);
+  const [chartReadyCount, setChartReadyCount] = useState(0);
+  const isReady = chartReadyCount > 0;
   // const [selectedInterval, setSelectedInterval] =
   //   React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const unsubscribeRef = useRef<() => void>(() => {});
+  const currentWeekCandleRef = useRef<CandleBar | null>(null);
 
   const CANDLE_MENU_ITEM = useMemo(
     () => [
@@ -184,15 +230,18 @@ export const PerpsChart: React.FC<{
     return currentAssetCtx?.pxDecimals || 2;
   }, [currentAssetCtx]);
 
-  const { data: chartData } = useRequest(
+  const { data: chartData, refresh: refreshChartData } = useRequest(
     async () => {
       const sdk = apisPerps.getPerpsSDK();
-      // if (!seriesRef.current) return;
+
+      const isWeekly = selectedInterval === CANDLE_MENU_KEY_V2.ONE_WEEK;
+      // Weekly mode: fetch daily candles and aggregate client-side for Monday alignment
+      const interval = isWeekly
+        ? CandlePeriod.ONE_DAY
+        : getInterval(selectedInterval);
 
       let start = 0;
       let end = Date.now();
-
-      const interval = getInterval(selectedInterval);
 
       switch (selectedInterval) {
         case CANDLE_MENU_KEY_V2.FIVE_MINUTES:
@@ -208,12 +257,10 @@ export const PerpsChart: React.FC<{
           start = end - 4 * 30 * 24 * 60 * 60 * 1000; // 4 months
           break;
         case CANDLE_MENU_KEY_V2.ONE_DAY:
-          start = end - 12 * 30 * 24 * 60 * 60 * 1000; // 1 years;
-          end = Date.now();
+          start = end - 12 * 30 * 24 * 60 * 60 * 1000; // 1 year
           break;
         case CANDLE_MENU_KEY_V2.ONE_WEEK:
           start = 0;
-          end = Date.now();
           break;
       }
 
@@ -224,17 +271,25 @@ export const PerpsChart: React.FC<{
         end,
       );
 
-      const candles = parseCandles(snapshot);
-      // if (candles.length > 0 && seriesRef.current) {
-      //   seriesRef.current.setData(candles);
-      //   chartRef.current?.timeScale().fitContent();
-      //   // Update price lines after data is loaded
-      //   // updatePriceLines();
-      // }
+      const dailyCandles = parseCandles(snapshot);
+      const candles = isWeekly
+        ? aggregateDailyToWeekly(dailyCandles)
+        : dailyCandles;
+
+      // Track current week candle for real-time updates
+      if (isWeekly && candles.length > 0) {
+        currentWeekCandleRef.current = { ...candles[candles.length - 1]! };
+      }
+
+      const noTime =
+        selectedInterval === CANDLE_MENU_KEY_V2.ONE_DAY ||
+        selectedInterval === CANDLE_MENU_KEY_V2.ONE_WEEK;
+
       return {
         coin: marketName,
         interval: interval,
         fitContent: false,
+        noTime,
         candles: candles as any,
       };
     },
@@ -242,7 +297,7 @@ export const PerpsChart: React.FC<{
       refreshDeps: [marketName, selectedInterval],
       onSuccess(data) {
         if (chartIsReadyRef.current) {
-          setIsReady(true);
+          setChartReadyCount(c => c || 1);
           chartWebViewRef.current?.setData(data);
         }
       },
@@ -251,27 +306,56 @@ export const PerpsChart: React.FC<{
 
   const handleChartReady = useMemoizedFn(() => {
     chartIsReadyRef.current = true;
-    setIsReady(true);
+    // Increment counter to ensure useEffect re-triggers after WebView reload
+    setChartReadyCount(c => c + 1);
   });
 
   const subscribeCandle = useMemoizedFn(() => {
     const sdk = apisPerps.getPerpsSDK();
-    // if (!seriesRef.current) return;
 
-    const interval = getInterval(selectedInterval);
+    const isWeekly = selectedInterval === CANDLE_MENU_KEY_V2.ONE_WEEK;
+    // Weekly mode: subscribe to daily candles, aggregate client-side
+    const interval = isWeekly
+      ? CandlePeriod.ONE_DAY
+      : getInterval(selectedInterval);
+
     const { unsubscribe } = sdk.ws.subscribeToCandles(
       marketName,
       interval,
       snapshot => {
-        // Check if component is still mounted before updating
-        // if (!isMountedRef.current || !seriesRef.current) return;
-
         if (coinNameRef.current !== snapshot.s) {
           return;
         }
 
         const candles = parseCandles([snapshot]);
-        if (candles.length > 0) {
+        if (candles.length === 0) {
+          return;
+        }
+
+        if (isWeekly) {
+          const daily = candles[0]!;
+          const mondayTs = getMondayUtc(daily.time as number);
+          const current = currentWeekCandleRef.current;
+
+          if (current && current.time === mondayTs) {
+            // Same week: merge high/low, update close
+            current.high = Math.max(current.high, daily.high);
+            current.low = Math.min(current.low, daily.low);
+            current.close = daily.close;
+          } else {
+            // New week starts
+            currentWeekCandleRef.current = {
+              time: mondayTs,
+              open: daily.open,
+              high: daily.high,
+              low: daily.low,
+              close: daily.close,
+            } as CandleBar;
+          }
+          chartWebViewRef.current?.updateCandleData(
+            currentWeekCandleRef.current! as any,
+          );
+        } else {
           chartWebViewRef.current?.updateCandleData(candles[0] as any);
         }
       },
@@ -295,17 +379,44 @@ export const PerpsChart: React.FC<{
   }, [subscribeCandle, marketName, selectedInterval]);
 
   // Sync chart data when both chart is ready and data is available
+  // Use chartReadyCount (not boolean isReady) so WebView reloads also trigger re-send
   useEffect(() => {
-    if (isReady && chartData) {
+    if (chartReadyCount > 0 && chartData) {
       chartWebViewRef.current?.setData(chartData);
     }
-  }, [isReady, chartData]);
+  }, [chartReadyCount, chartData]);
 
   useEffect(() => {
-    if (isReady && chartData && lineTagInfo) {
+    if (chartReadyCount > 0 && chartData && lineTagInfo) {
       chartWebViewRef.current?.updateTPSLPriceLines(lineTagInfo);
     }
-  }, [isReady, lineTagInfo, chartData]);
+  }, [chartReadyCount, lineTagInfo, chartData]);
+
+  // Re-subscribe and refresh data when app returns to foreground
+  useEffect(() => {
+    let appStateRef = AppState.currentState;
+    const subscription = AppState.addEventListener(
+      'change',
+      (nextAppState: AppStateStatus) => {
+        if (
+          appStateRef.match(/inactive|background/) &&
+          nextAppState === 'active'
+        ) {
+          // Re-subscribe candle WebSocket
+          if (unsubscribeRef.current) {
+            unsubscribeRef.current();
+          }
+          const unsubscribe = subscribeCandle();
+          unsubscribeRef.current = unsubscribe;
+
+          // Refresh historical chart data
+          refreshChartData();
+        }
+        appStateRef = nextAppState;
+      },
+    );
+    return () => subscription.remove();
+  }, [subscribeCandle, refreshChartData]);
 
   // // Reset chart when market changes
   // useEffect(() => {

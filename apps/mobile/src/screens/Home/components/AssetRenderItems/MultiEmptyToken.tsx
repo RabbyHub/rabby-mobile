@@ -1,11 +1,5 @@
 import React, { memo } from 'react';
-import {
-  View,
-  Text,
-  ImageBackground,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, ImageBackground, StyleProp, ViewStyle } from 'react-native';
 import { RootNames, TOKEN_EMPTY_ROW_HIGHT } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +8,7 @@ import { Card } from '@/components2024/Card';
 import { RcIconOldReceive, RcIconImport } from '@/assets2024/singleHome';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { naviPush } from '@/utils/navigation';
+import { Text } from '@/components/Typography';
 interface IProps {
   style?: StyleProp<ViewStyle>;
 }

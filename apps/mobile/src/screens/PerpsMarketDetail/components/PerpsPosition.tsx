@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
@@ -9,7 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import IconPerpEdit from '@/assets2024/icons/perps/IconPerpEdit.svg';
 import { Trans, useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { PerpEditTpSlPriceTag } from './PerpEditTpSlPriceTag';
 import { PerpsEditMarginPopup } from './PerpsEditMarginPopup';
 import { formatUsdValue } from '@/utils/number';
@@ -20,11 +21,13 @@ import {
   formatPerpsCoin,
   formatPerpsPct,
   getStatsReportSide,
+  handleDisplayFundingPayments,
 } from '@/utils/perps';
 import { stats } from '@/utils/stats';
 import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useShallow } from 'zustand/shallow';
 import { APP_VERSIONS } from '@/constant';
+import { Text } from '@/components/Typography';
 
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
@@ -546,10 +549,21 @@ export const PerpsPosition: React.FC<{
                     Number(positionData?.fundingPayments || 0) < 0
                       ? t('page.perpsDetail.PerpsPosition.fundingGains')
                       : t('page.perpsDetail.PerpsPosition.fundingPayments'),
-                  desc:
-                    Number(positionData?.fundingPayments || 0) < 0
-                      ? t('page.perpsDetail.PerpsPosition.fundingGainsTips')
-                      : t('page.perpsDetail.PerpsPosition.fundingPaymentsTips'),
+                  desc: (
+                    <Trans
+                      t={t}
+                      i18nKey={'page.perpsDetail.PerpsPosition.fundingTipsBold'}
+                      components={{
+                        bold: (
+                          <Text
+                            style={{
+                              fontWeight: '800',
+                            }}
+                          />
+                        ),
+                      }}
+                    />
+                  ),
                   buttonType: 'hyperliquid',
                 });
               }}>
@@ -567,13 +581,16 @@ export const PerpsPosition: React.FC<{
               </View>
             </TouchableOpacity>
             <View>
-              <Text style={styles.value}>
-                {Number(positionData?.fundingPayments || 0) === 0
-                  ? ''
-                  : Number(positionData?.fundingPayments || 0) > 0
-                  ? ''
-                  : '-'}
-                ${Math.abs(Number(positionData?.fundingPayments || 0))}
+              <Text
+                style={[
+                  styles.value,
+                  Number(positionData?.fundingPayments || 0) < 0
+                    ? styles.green
+                    : styles.red,
+                ]}>
+                {handleDisplayFundingPayments(
+                  positionData?.fundingPayments || '0',
+                )}
               </Text>
             </View>
           </View>

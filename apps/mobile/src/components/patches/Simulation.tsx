@@ -1,6 +1,7 @@
 import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import { Text, View, ViewStyle, StyleSheet } from 'react-native';
+import { View, ViewStyle, StyleSheet } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export function SimulateUnderline({
   innerBg,

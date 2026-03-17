@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SwapModal } from './Modal';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { Button } from '@/components';
 import TouchableItem from '@/components/Touchable/TouchableItem';
+import { Text } from '@/components/Typography';
 
 type ModalProps = {
   open: boolean;

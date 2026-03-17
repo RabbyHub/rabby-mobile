@@ -1045,6 +1045,7 @@
         "websites": "Websites",
         "copyTrading": "Copy Trading",
         "search": "Search Token",
+        "market": "Market",
         "watchlist": "Token Watchlist",
         "perps": "Perps",
         "meme": "Memecoin",
@@ -1426,14 +1427,14 @@
         "balance": "Balance",
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 wallets, there are wallets used on-chain.",
-            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol. In the first 3 wallets, there are wallets used on-chain.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 wallets, there are wallets used on-chain."
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 wallets, there are no wallets used on-chain.",
-            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol. In the first 3 wallets, there are no wallets used on-chain.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 wallets, there are no wallets used on-chain."
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
           }
         },
         "onekey": {
@@ -2348,7 +2349,8 @@
       "tokenHeader": {
         "token": "Token/FDV",
         "price": "Price",
-        "change": "24H Change"
+        "change": "24H Change",
+        "priceAndChange": "Price/24H Change"
       },
       "footer": {
         "skip": "Skip",
@@ -2358,12 +2360,24 @@
         "remove": "Remove from Watchlist Success"
       }
     },
+    "market": {
+      "tokenHeader": {
+        "name": "Name"
+      },
+      "tabs": {
+        "watchlist": "Watchlist",
+        "memecoin": "Memecoin",
+        "stock": "Stock",
+        "commodities": "Commodities"
+      }
+    },
     "meme": {
       "tokenHeader": {
         "volume": "24H Volume",
         "fdv": "FDV",
         "price": "Price",
-        "change": "24H Change"
+        "change": "24H Change",
+        "priceAndChange": "Price/24H Change"
       }
     },
     "universalLink": {
@@ -2587,6 +2601,7 @@
         "liqPrice": "Liq.Price",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
+        "fundingTipsBold": "This shows your total funding settled since the position was opened. <bold>Green (positive)</bold> values mean you’ve earned from other traders, while <bold>Red (negative)</bold> values are funding costs you've paid to them.",
         "fundingGainsTips": "This is the net funding gains since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
@@ -2995,6 +3010,7 @@
           "swap": "Swap"
         },
         "priceImpactTips": "High price impact ({{lostValue}}). This route may return more due to low liquidity or small order size.",
+        "maxLtvWarning": "Insufficient collateral to cover new borrow position. Wallet must have borrowing power remaining to perform debt switch.",
         "lpRiskWarning": "Low health factor after swap. Your position will carry a higher risk of liquidation.",
         "lpDangerWarning": "Your health factor after this swap will be critically low and may result in liquidation. Please choose a different asset or reduce the swap amount to stay safe."
       },

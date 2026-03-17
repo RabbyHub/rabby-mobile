@@ -2,13 +2,21 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { Platform, StyleProp, Text, View, ViewStyle } from 'react-native';
+import {
+  AppState,
+  AppStateStatus,
+  Platform,
+  StyleProp,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
@@ -16,6 +24,8 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { useTranslation } from 'react-i18next';
 import { IS_IOS } from '@/core/native/utils';
 import { WEBVIEW_BASEURL } from '@/core/storage/webviewAssets';
+import { Text } from '@/components/Typography';
+import { getLocalWebViewDefaultProps } from '@/components/WebView/LocalWebView/utils';
 
 interface ChartProps {
   height: number;
@@ -36,32 +46,7 @@ export interface TradingViewChartRef {
   updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
 
-const baseWebViewProps = {
-  javaScriptEnabled: true,
-  domStorageEnabled: true,
-  originWhitelist: ['*'],
-  mixedContentMode: 'compatibility' as const,
-  startInLoadingState: true,
-  scrollEnabled: false,
-  showsHorizontalScrollIndicator: false,
-  showsVerticalScrollIndicator: false,
-  scalesPageToFit: false,
-  webviewDebuggingEnabled: __DEV__,
-};
-const iosWebViewProps = {
-  ...baseWebViewProps,
-  allowsInlineMediaPlayback: true,
-  mediaPlaybackRequiresUserAction: false,
-  cacheEnabled: false,
-  incognito: true,
-  bounces: false,
-  allowsFullscreenVideo: false,
-  allowsBackForwardNavigationGestures: false,
-  dataDetectorTypes: 'none' as const,
-};
-const androidWebViewProps = {
-  ...baseWebViewProps,
-};
+const { iosWebViewProps, androidWebViewProps } = getLocalWebViewDefaultProps();
 
 const formatCandleItem = (candle: CandleStick) => {
   const timeInSeconds = Math.floor(candle.time);
@@ -73,19 +58,17 @@ const formatCandleItem = (candle: CandleStick) => {
     close: candle.close,
     volume: candle.volume,
   };
-  // Validate all values are valid numbers
+  // Validate all values are valid numbers (volume is optional for aggregated candles like weekly)
   const isValid =
     !isNaN(formattedCandle.time) &&
     !isNaN(formattedCandle.open) &&
     !isNaN(formattedCandle.high) &&
     !isNaN(formattedCandle.low) &&
     !isNaN(formattedCandle.close) &&
-    !isNaN(formattedCandle.volume) &&
     formattedCandle.open > 0 &&
     formattedCandle.high > 0 &&
     formattedCandle.low > 0 &&
-    formattedCandle.close > 0 &&
-    formattedCandle.volume > 0;
+    formattedCandle.close > 0;
 
   if (!isValid) {
     console.log('🚨 Invalid candle data:', candle, '→', formattedCandle);
@@ -113,7 +96,42 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
     const [webViewError, setWebViewError] = useState<string | null>(null);
     const [isChartReady, setIsChartReady] = useState(false);
+    const [webViewKey, setWebViewKey] = useState(0);
     const { t } = useTranslation();
+
+    // Force remount WebView (reload() doesn't work with source={{ html }})
+    const remountWebView = useCallback(() => {
+      setWebViewKey(k => k + 1);
+      setIsChartReady(false);
+      setWebViewError(null);
+    }, []);
+
+    // Handle WebView content process termination
+    const handleContentProcessDidTerminate = useCallback(() => {
+      remountWebView();
+    }, [remountWebView]);
+
+    // Remount WebView when app returns to foreground after being background for 30+ seconds
+    useEffect(() => {
+      let appStateRef = AppState.currentState;
+      let backgroundTimestamp = 0;
+      const subscription = AppState.addEventListener(
+        'change',
+        (nextAppState: AppStateStatus) => {
+          if (nextAppState.match(/inactive|background/)) {
+            backgroundTimestamp = Date.now();
+          } else if (
+            appStateRef.match(/inactive|background/) &&
+            nextAppState === 'active' &&
+            Date.now() - backgroundTimestamp > 30000
+          ) {
+            remountWebView();
+          }
+          appStateRef = nextAppState;
+        },
+      );
+      return () => subscription.remove();
+    }, [remountWebView]);
 
     // Handle WebView errors
     const handleWebViewError = useCallback(
@@ -175,6 +193,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
             source: dataSource,
             showVolume: data.showVolume ?? false,
             fitContent: data.fitContent ?? false,
+            noTime: data.noTime ?? false,
           };
           webViewRef.current.postMessage(JSON.stringify(message));
         }
@@ -283,12 +302,14 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           { height, width: '100%', minHeight: height },
         ]}>
         <WebView
+          key={webViewKey}
           ref={webViewRef}
           style={styles.webView}
           {...(IS_IOS && { allowFileAccess: true })}
           source={{ html: htmlContent, baseUrl: WEBVIEW_BASEURL }}
           onMessage={handleWebViewMessage}
           onError={handleWebViewError}
+          onContentProcessDidTerminate={handleContentProcessDidTerminate}
           {...(Platform.OS === 'ios' ? iosWebViewProps : androidWebViewProps)}
         />
       </View>

@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { StyleProp, StyleSheet, Text, View } from 'react-native';
+import { StyleProp, StyleSheet, View } from 'react-native';
 
 import { AssetAvatar } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
@@ -9,6 +9,7 @@ import { BottomSheetFlatListProps } from '@gorhom/bottom-sheet/lib/typescript/co
 import { useMemoizedFn } from 'ahooks';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { AbstractPortfolioToken } from '../types';
+import { Text } from '@/components/Typography';
 
 type Props = {
   isTestnet?: boolean;
@@ -19,6 +20,8 @@ type Props = {
   ListFooterComponent?: BottomSheetFlatListProps<AbstractPortfolioToken>['ListFooterComponent'];
   ListEmptyComponent?: BottomSheetFlatListProps<AbstractPortfolioToken>['ListEmptyComponent'];
 };
+
+// 实质废弃，block token和custom token 弹窗都没入口了
 export const TokenList = ({
   style,
   data,

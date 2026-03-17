@@ -20,7 +20,6 @@ import {
   NativeSyntheticEvent,
   Platform,
   StyleSheet,
-  TextInput,
   TextInputSubmitEditingEventData,
   TouchableOpacity,
   View,
@@ -30,6 +29,7 @@ import { Code } from 'react-native-vision-camera';
 import { CameraPopup } from './components/CameraPopup';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { TextInput } from '@/components/Typography';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',

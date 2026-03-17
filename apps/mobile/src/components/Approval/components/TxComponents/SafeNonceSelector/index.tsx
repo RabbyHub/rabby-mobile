@@ -4,17 +4,12 @@ import { intToHex } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { GasSelectorSkeleton } from '../GasSelector/GasSelectorSkeleton';
 import { SafeNonceOptionList } from './SafeNonceOptionList';
 import { RcArrowDownCC } from '@/assets/icons/common';
 import { Account } from '@/core/services/preference';
+import { Text, TextInput } from '@/components/Typography';
 
 interface SafeNonceSelectorProps {
   value?: string;

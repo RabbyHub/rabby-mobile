@@ -17,13 +17,23 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
-import { RefreshControl } from 'react-native-gesture-handler';
+import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
+import {
+  pulldownRefreshSizes,
+  RefreshPlaceholderIOS,
+  setPulldownRefreshStage,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+  usePulldownRefreshGesture,
+  usePulldownRefreshStyles,
+} from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import {
   NftItemWithCollection,
   varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
 import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
 import {
   ListHeaderComponent,
@@ -44,6 +54,8 @@ import {
 import { isTabsSwiping, useAccountInfo } from './hooks';
 import nftListStore, { combinedNfts, useOnNftRefresh } from '@/store/nfts';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
+import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -262,53 +274,105 @@ export const NFTList = () => {
     }
   }, [batchGetNFTList, triggerUpdate, nftRefresh]);
 
+  const scrollY = useCurrentTabScrollY();
+  const {
+    panGestureRef,
+    isRefreshing,
+    svs: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  } = usePulldownRefreshGesture({
+    scrollViewYValue: scrollY,
+    onJsPulldownRefresh: ctx => {
+      ctx.svIsManualRefreshing.value = true;
+      return onRefresh();
+    },
+  });
+
+  useEffect(() => {
+    console.debug('[PulldownRefresh] NFTList isLoading changed', isLoading);
+    if (!isLoading) {
+      setPulldownRefreshStage({
+        state: isLoading ? 'refreshing' : 'finished',
+        svIsRefreshing,
+        pullDistance,
+        svIsManualRefreshing,
+        indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+      });
+    }
+  }, [isLoading, svIsRefreshing, pullDistance, svIsManualRefreshing]);
+
+  const pulldownRefreshReturns = usePulldownRefreshStyles({
+    indicatorSpaceHeight: pulldownRefreshSizes.homeHeaderHeight,
+    pullDistanceMaxValue: HOME_TOP_HEADER_SIZES.tabInnerHomeTopOffset,
+    states: { pullDistance, svIsRefreshing, svIsManualRefreshing },
+  });
+
   return (
-    <Tabs.FlatList
-      keyExtractor={getItemId}
-      data={
-        hasNotAssets
-          ? [
-              {
-                type: 'empty-nft',
-                data: t('page.singleHome.sectionHeader.NoData', {
-                  name: t('page.singleHome.sectionHeader.Nft'),
-                }),
-              },
-            ]
-          : dataList
-      }
-      renderItem={renderItem}
-      initialNumToRender={15}
-      windowSize={15}
-      key={isFocused ? 'nft-focused' : 'nft-unfocused'}
-      maxToRenderPerBatch={15}
-      removeClippedSubviews
-      ItemSeparatorComponent={ListRenderSeparator}
-      ListHeaderComponent={ListHeaderComponent}
-      ListFooterComponent={ListRenderFooter}
-      showsVerticalScrollIndicator={false}
-      showsHorizontalScrollIndicator={false}
-      style={styles.container}
-      contentContainerStyle={styles.list}
-      refreshControl={
-        <RefreshControl
-          style={styles.bgContainer}
-          onRefresh={onRefresh}
-          refreshing={false}
-        />
-      }
-    />
+    <GestureDetector gesture={panGestureRef.current}>
+      <TabsFlatList
+        keyExtractor={getItemId}
+        data={
+          hasNotAssets
+            ? [
+                {
+                  type: 'empty-nft',
+                  data: t('page.singleHome.sectionHeader.NoData', {
+                    name: t('page.singleHome.sectionHeader.Nft'),
+                  }),
+                },
+              ]
+            : dataList
+        }
+        renderItem={renderItem}
+        initialNumToRender={15}
+        windowSize={15}
+        key={isFocused ? 'nft-focused' : 'nft-unfocused'}
+        maxToRenderPerBatch={15}
+        removeClippedSubviews={IS_ANDROID}
+        ItemSeparatorComponent={ListRenderSeparator}
+        ListHeaderComponent={
+          <RefreshPlaceholderIOS
+            hooksReturn={pulldownRefreshReturns}
+            animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
+            __PICK_MANUAL__
+          />
+        }
+        // ListFooterComponent={ListRenderFooter}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        style={[
+          styles.container,
+          pulldownRefreshReturns.scrollableStyle.container,
+        ]}
+        contentContainerStyle={[
+          styles.list,
+          pulldownRefreshReturns.scrollableStyle.list,
+        ]}
+        bounces={false}
+        overScrollMode={'never'}
+        scrollEventThrottle={16}
+        simultaneousHandlers={[panGestureRef]}
+        {...(!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING && {
+          refreshControl: (
+            <RNGHRefreshControl
+              style={{ paddingHorizontal: 16 }}
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+            />
+          ),
+        })}
+      />
+    </GestureDetector>
   );
 };
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    marginTop: TAB_HEADER_FULL_HEIGHT,
+    // marginTop: HOME_TOP_HEADER_SIZES.scrollableListTopOffset,
   },
   list: {
     paddingHorizontal: 16,
-    marginTop: -TAB_HEADER_FULL_HEIGHT,
+    paddingBottom: 48,
   },
   bgContainer: {
     paddingHorizontal: 16,

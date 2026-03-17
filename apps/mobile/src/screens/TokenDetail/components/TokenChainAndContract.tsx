@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -25,6 +25,7 @@ import { useMemoizedFn } from 'ahooks';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 interface Props {
   token: ITokenItem;
   tokenEntity?: TokenEntityDetail;

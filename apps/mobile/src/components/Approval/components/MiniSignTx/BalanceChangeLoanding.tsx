@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { Text } from '@/components/Typography';
 
 export const BalanceChangeLoading = () => {
   const { t } = useTranslation();

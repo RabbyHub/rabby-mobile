@@ -1,9 +1,10 @@
 import React, { useCallback } from 'react';
-import { View, Pressable, Text } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconArrowDownCC from '@/assets2024/icons/watchlist/sort.svg';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export type SortState = 'desc' | 'asc' | 'default';
 
@@ -14,13 +15,17 @@ interface TokenHeaderProps {
   onFdvSort: () => void;
   changeSort: SortState;
   onChangeSort: () => void;
+  showVolumeSort?: boolean;
+  showFdvSort?: boolean;
+  showChangeSort?: boolean;
+  leftLabel?: string;
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingVertical: 10,
   },
   headerCell: {
@@ -86,6 +91,10 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   onFdvSort,
   changeSort,
   onChangeSort,
+  showVolumeSort = true,
+  showFdvSort = true,
+  showChangeSort = true,
+  leftLabel,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -129,40 +138,65 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   return (
     <View style={styles.headerRow}>
       <View style={styles.headerLeft}>
-        <Pressable
-          style={[styles.headerCell, styles.tokenCell]}
-          hitSlop={10}
-          onPress={onVolumeSort}>
-          <Text style={getTextStyle(volumeSort)}>
-            {t('page.meme.tokenHeader.volume')}
-          </Text>
-          {renderArrows(volumeSort)}
-        </Pressable>
-        <Text style={styles.headerTextSeparator}> / </Text>
-        <Pressable
-          style={[styles.headerCell, styles.tokenCell]}
-          hitSlop={10}
-          onPress={onFdvSort}>
-          <Text style={getTextStyle(fdvSort)}>
-            {t('page.meme.tokenHeader.fdv')}
-          </Text>
-          {renderArrows(fdvSort)}
-        </Pressable>
+        {leftLabel ? (
+          <Text style={styles.headerText}>{leftLabel}</Text>
+        ) : (
+          <>
+            {showVolumeSort ? (
+              <Pressable
+                style={[styles.headerCell, styles.tokenCell]}
+                hitSlop={10}
+                onPress={onVolumeSort}>
+                <Text style={getTextStyle(volumeSort)}>
+                  {t('page.meme.tokenHeader.volume')}
+                </Text>
+                {renderArrows(volumeSort)}
+              </Pressable>
+            ) : (
+              <Text style={styles.headerText}>
+                {t('page.meme.tokenHeader.volume')}
+              </Text>
+            )}
+            <Text style={styles.headerTextSeparator}> / </Text>
+            {showFdvSort ? (
+              <Pressable
+                style={[styles.headerCell, styles.tokenCell]}
+                hitSlop={10}
+                onPress={onFdvSort}>
+                <Text style={getTextStyle(fdvSort)}>
+                  {t('page.meme.tokenHeader.fdv')}
+                </Text>
+                {renderArrows(fdvSort)}
+              </Pressable>
+            ) : (
+              <Text style={styles.headerText}>
+                {t('page.meme.tokenHeader.fdv')}
+              </Text>
+            )}
+          </>
+        )}
       </View>
-      <View style={[styles.headerCell, styles.priceCell]}>
-        <Text style={styles.headerText}>
-          {t('page.meme.tokenHeader.price')}
-        </Text>
-      </View>
-      <Pressable
-        style={[styles.headerCell, styles.changeCell]}
-        hitSlop={10}
-        onPress={onChangeSort}>
-        <Text style={getTextStyle(changeSort)}>
-          {t('page.meme.tokenHeader.change')}
-        </Text>
-        {renderArrows(changeSort)}
-      </Pressable>
+      {showChangeSort ? (
+        <Pressable
+          style={[styles.headerCell, styles.changeCell]}
+          hitSlop={10}
+          onPress={onChangeSort}>
+          <Text style={getTextStyle('default')}>
+            {t('page.meme.tokenHeader.price')}
+          </Text>
+          <Text style={getTextStyle('default')}>/</Text>
+          <Text style={getTextStyle(changeSort)}>
+            {t('page.meme.tokenHeader.change')}
+          </Text>
+          {renderArrows(changeSort)}
+        </Pressable>
+      ) : (
+        <View style={[styles.headerCell, styles.changeCell]}>
+          <Text style={styles.headerText}>
+            {t('page.meme.tokenHeader.priceAndChange')}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

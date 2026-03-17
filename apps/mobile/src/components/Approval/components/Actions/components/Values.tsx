@@ -8,7 +8,6 @@ import React, {
 import {
   View,
   StyleSheet,
-  Text,
   Image,
   TouchableOpacity,
   TextStyle,
@@ -52,6 +51,7 @@ import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPop
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { useFindChain } from '@/hooks/useFindChain';
 import { Chain } from '@/constant/chains';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

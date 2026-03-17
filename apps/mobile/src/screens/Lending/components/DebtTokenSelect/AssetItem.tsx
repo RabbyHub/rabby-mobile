@@ -2,12 +2,13 @@ import React from 'react';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { SwappableToken } from '../../types/swap';
 import WalletFillCC from '@/assets2024/icons/lending/wallet-fill-cc.svg';
 import TokenIcon from '../TokenIcon';
 import { formatUsdValueKMB } from '@/screens/TokenDetail/util';
 import { formatApy, formatListNetWorth } from '../../utils/format';
+import { Text } from '@/components/Typography';
 
 const AssetItem = ({
   token,

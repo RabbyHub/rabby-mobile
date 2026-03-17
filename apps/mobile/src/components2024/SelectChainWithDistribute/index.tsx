@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, Pressable, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
@@ -15,6 +15,7 @@ import { NextSearchBar } from '../SearchBar';
 import { useForceUpdate } from '@/hooks/useForceUpdate';
 import { findChainByServerID, searchChains } from '@/utils/chain';
 import { Chain } from '@/constant/chains';
+import { Text, TextInput } from '@/components/Typography';
 
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
 

@@ -5,7 +5,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Platform,
-  Text,
   TouchableOpacity,
   TouchableOpacityProps,
   View,
@@ -16,6 +15,7 @@ import { useShowSearchBottomSheet } from './SeachBottomSheet';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useHomeTabIndex } from '@/hooks/navigation';
+import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 

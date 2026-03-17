@@ -2,9 +2,10 @@ import React from 'react';
 import { CommonAccount } from './CommonAccount';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

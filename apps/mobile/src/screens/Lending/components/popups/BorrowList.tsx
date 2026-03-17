@@ -2,13 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import {
-  RefreshControl,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { RefreshControl, TouchableOpacity, View } from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
@@ -39,6 +33,7 @@ import { formatApy } from '../../utils/format';
 import { isUnFoldToken } from '../../config/unfold';
 import { useSelectedMarket } from '../../hooks';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { Text, TextInput } from '@/components/Typography';
 
 const FOOT_HEIGHT = 86;
 

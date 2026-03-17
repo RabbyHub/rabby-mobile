@@ -20,7 +20,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Text, View, Pressable, Image } from 'react-native';
+import { Modal, View, Pressable, Image } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
@@ -37,6 +37,7 @@ import { RcArrowRightCC } from '@/assets/icons/common';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
+import { Text } from '@/components/Typography';
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);

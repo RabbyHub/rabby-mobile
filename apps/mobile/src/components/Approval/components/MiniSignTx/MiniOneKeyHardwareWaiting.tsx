@@ -5,9 +5,10 @@ import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
 import { getTxFailedResult, setRetryTxType } from '@/utils/errorTxRetry';
+import { Text } from '@/components/Typography';
 
 interface Props {
   onCancel?: () => void;

@@ -13,7 +13,7 @@ import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { PopulatedTransaction } from 'ethers';
 
 import { apiProvider } from '@/core/apis';
@@ -23,7 +23,7 @@ import { Button } from '@/components2024/Button';
 import { useMiniSigner } from '@/hooks/useSigner';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -45,6 +45,7 @@ import {
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import {
   createGlobalBottomSheetModal2024,
@@ -60,6 +61,7 @@ import { ParaswapRatesType, SwappableToken } from '../../types/swap';
 import { getParaswap } from '../../config/paraswap';
 import { getParaswapSellRates } from '../../components/actions/DebtSwap/paraswap';
 import {
+  useLendingSummary,
   usePoolDataProviderContract,
   useRefreshHistoryId,
   useSelectedMarket,
@@ -80,13 +82,15 @@ import {
   buildDebtSwitchTx,
   generateApproveDelegation,
 } from '../../poolService';
-import { normalizeBN } from '@aave/math-utils';
+import { normalizeBN, valueToBigNumber } from '@aave/math-utils';
 import {
   getApproveAmount,
   getPriceImpactData,
   getToAmountAfterSlippage,
 } from './warning';
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
+import { Text, TextInput } from '@/components/Typography';
+import { stats } from '@/utils/stats';
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -113,6 +117,7 @@ export default function DebtSwapModal({
   const { pools } = usePoolDataProviderContract();
   const { ctx } = useSignatureStore();
   const { refresh } = useRefreshHistoryId();
+  const { iUserSummary } = useLendingSummary();
 
   const [fromAmount, setFromAmount] = useState<string>('');
   const debouncedFromAmount = useDebouncedValue(fromAmount, 400);
@@ -600,6 +605,57 @@ export default function DebtSwapModal({
       toAmount: toAmountAfterSlippage,
     });
 
+  const isExceedMaxLtvAfterSwap = useMemo(() => {
+    if (
+      !toToken ||
+      !iUserSummary ||
+      !debouncedFromAmount ||
+      !toAmountAfterSlippage
+    ) {
+      return false;
+    }
+    if (
+      !fromReserve?.formattedPriceInMarketReferenceCurrency ||
+      !toReserve?.formattedPriceInMarketReferenceCurrency
+    ) {
+      return false;
+    }
+    const fromPriceInMarketRef = valueToBigNumber(
+      fromReserve.formattedPriceInMarketReferenceCurrency,
+    );
+    const toPriceInMarketRef = valueToBigNumber(
+      toReserve.formattedPriceInMarketReferenceCurrency,
+    );
+    if (fromPriceInMarketRef.lte(0) || toPriceInMarketRef.lte(0)) {
+      return false;
+    }
+
+    // 留了 buffer，所以一般会大于 0
+    const increasedDebtInMarketRef = valueToBigNumber(toAmountAfterSlippage)
+      .multipliedBy(toPriceInMarketRef)
+      .minus(
+        valueToBigNumber(debouncedFromAmount).multipliedBy(
+          fromPriceInMarketRef,
+        ),
+      );
+    if (increasedDebtInMarketRef.lte(0)) {
+      return false;
+    }
+
+    const availableBorrowsInMarketRef = valueToBigNumber(
+      iUserSummary.availableBorrowsMarketReferenceCurrency || '0',
+    );
+
+    return increasedDebtInMarketRef.gt(availableBorrowsInMarketRef);
+  }, [
+    toToken,
+    iUserSummary,
+    debouncedFromAmount,
+    toAmountAfterSlippage,
+    fromReserve?.formattedPriceInMarketReferenceCurrency,
+    toReserve?.formattedPriceInMarketReferenceCurrency,
+  ]);
+
   useEffect(() => {
     if (!currentAccount || !canShowDirectSubmit || !currentTxs?.length) {
       closeMiniSigner();
@@ -621,6 +677,10 @@ export default function DebtSwapModal({
   const handleSwap = useCallback(
     async (p?: { ignoreGasFee?: boolean; forceFullSign?: boolean }) => {
       if (!toToken || !fromAmount || !currentAccount) {
+        return;
+      }
+      if (isExceedMaxLtvAfterSwap) {
+        toast.error(t('page.Lending.debtSwap.maxLtvWarning'));
         return;
       }
 
@@ -682,6 +742,21 @@ export default function DebtSwapModal({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP },
           );
         }
+
+        const usdValue = new BigNumber(debouncedFromAmount || '0')
+          .multipliedBy(new BigNumber(fromToken.usdPrice || '0'))
+          .toString();
+
+        stats.report('aaveInternalTx', {
+          tx_type: LendingReportType.DebtSwap,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
+        });
         toast.success(
           `${t('page.Lending.debtSwap.actions.title')} ${t(
             'page.Lending.submitted',
@@ -702,6 +777,7 @@ export default function DebtSwapModal({
       currentAccount,
       canShowDirectSubmit,
       chainInfo?.id,
+      chainInfo?.serverId,
       t,
       closeMiniSigner,
       onClose,
@@ -709,6 +785,9 @@ export default function DebtSwapModal({
       openDirect,
       ctx?.gasFeeTooHigh,
       refresh,
+      isExceedMaxLtvAfterSwap,
+      debouncedFromAmount,
+      fromToken.usdPrice,
     ],
   );
 
@@ -733,16 +812,28 @@ export default function DebtSwapModal({
       !!toToken &&
       !isSameToken &&
       !!quote &&
-      !!fromAmount &&
-      new BigNumber(fromAmount).gt(0) &&
-      new BigNumber(fromAmount).lte(fromBalanceBn) &&
+      !!debouncedFromAmount &&
+      new BigNumber(debouncedFromAmount).gt(0) &&
+      new BigNumber(debouncedFromAmount).lte(fromBalanceBn) &&
       !isQuoteLoading
     );
-  }, [fromAmount, fromBalanceBn, isQuoteLoading, isSameToken, quote, toToken]);
+  }, [
+    debouncedFromAmount,
+    fromBalanceBn,
+    isQuoteLoading,
+    isSameToken,
+    quote,
+    toToken,
+  ]);
 
   const buttonDisabled = useMemo(() => {
-    return !canSwap || (isRisky && !riskChecked) || isLiquidatable;
-  }, [canSwap, isLiquidatable, isRisky, riskChecked]);
+    return (
+      !canSwap ||
+      (isRisky && !riskChecked) ||
+      isLiquidatable ||
+      isExceedMaxLtvAfterSwap
+    );
+  }, [canSwap, isExceedMaxLtvAfterSwap, isLiquidatable, isRisky, riskChecked]);
 
   return (
     <AutoLockView style={styles.container}>
@@ -994,14 +1085,20 @@ export default function DebtSwapModal({
           {
             height:
               BOTTOM_SIZE.BUTTON +
-              (isLiquidatable
+              (isLiquidatable || isExceedMaxLtvAfterSwap
                 ? BOTTOM_SIZE.TIPS
                 : isRisky
                 ? BOTTOM_SIZE.CHECKBOX
                 : 0),
           },
         ]}>
-        {isLiquidatable ? (
+        {isExceedMaxLtvAfterSwap ? (
+          <View style={styles.riskContainer}>
+            <Text style={styles.dangerWarningText}>
+              {t('page.Lending.debtSwap.maxLtvWarning')}
+            </Text>
+          </View>
+        ) : isLiquidatable ? (
           <View style={styles.riskContainer}>
             <Text style={styles.dangerWarningText}>
               {t('page.Lending.debtSwap.lpDangerWarning')}

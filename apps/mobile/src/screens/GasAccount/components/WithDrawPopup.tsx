@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatUsdValue } from '@/utils/number';
 import { openapi } from '@/core/request';
@@ -24,6 +24,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import LinearGradient from 'react-native-linear-gradient';
 import { GiftInfoModal } from './GiftInfoModal';
+import { Text } from '@/components/Typography';
 
 const WithDrawInitContent = ({
   balance,

@@ -5,8 +5,6 @@ import {
   Modal,
   Platform,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -26,6 +24,7 @@ import {
   formatTpOrSlPrice,
 } from '@/utils/perps';
 import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
+import { Text, TextInput } from '@/components/Typography';
 
 interface Props {
   coin: string;

@@ -11,7 +11,6 @@ import {
   Image,
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -23,6 +22,7 @@ import {
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 
 // import { TestnetChainLogo } from '../Chain/TestnetChainLogo';
+import { Text } from '@/components/Typography';
 
 interface ChainSelectorProps {
   value: CHAINS_ENUM;

@@ -2,7 +2,7 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { Dimensions, Pressable, Text, View } from 'react-native';
+import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
 import Animated, {
@@ -13,7 +13,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
@@ -30,6 +29,7 @@ import {
   useSingleHomeHomeTopChart,
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { Text, AnimateableText } from '@/components/Typography';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 

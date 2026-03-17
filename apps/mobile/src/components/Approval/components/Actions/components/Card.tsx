@@ -3,7 +3,6 @@ import React from 'react';
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -11,6 +10,7 @@ import {
 import { Divide } from './Divide';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) =>
   StyleSheet.create({

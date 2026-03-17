@@ -9,6 +9,7 @@ import { UpdateTokenItemAddFdv1754616616128 } from './20250808';
 import { UpdateHistoryTableAddCustomType1761706571381 } from './20251029';
 import { UpdateTokenItemAddProtocolId1767166930239 } from './20251231';
 import { CleanupTables1768475805228 } from './20260115';
+import { ClearTokenItemForNullablePrice24hChange1773132444267 } from './20260306';
 
 export function getMigrations() {
   return [
@@ -23,5 +24,6 @@ export function getMigrations() {
     UpdateHistoryTableAddCustomType1761706571381,
     UpdateTokenItemAddProtocolId1767166930239,
     CleanupTables1768475805228,
+    ClearTokenItemForNullablePrice24hChange1773132444267,
   ];
 }

@@ -21,7 +21,11 @@ import Animated, {
   Extrapolation,
   isWorkletFunction,
 } from 'react-native-reanimated';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
@@ -42,6 +46,13 @@ import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { useTranslation } from 'react-i18next';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import { useValueFromSharedValue } from '@/hooks/reanimated';
+import {
+  apisHomeTabIndex,
+  HomeTabName,
+  TabbarLabels,
+} from '@/hooks/navigation';
+import CustomLabel from './Tabs/CustomLabel';
 
 type ItemLayout = {
   width: number;
@@ -342,30 +353,16 @@ function SideChainSelector() {
 }
 
 type MaterialTabBarProps = React.ComponentProps<typeof MaterialTabBar>;
-const renderTabItem: MaterialTabBarProps['TabItemComponent'] & object = _p => (
-  <MaterialTabItem
-    {..._p}
-    pressOpacity={__DEV__ ? 0.5 : 1}
-    inactiveOpacity={1}
-  />
-);
 
-export const HomeCustomMaterialTabBar = ({
-  style,
-  ...props
-}: Omit<
-  MaterialTabBarProps,
-  | 'scrollEnabled'
-  | 'tabStyle'
-  | 'TabItemComponent'
-  | 'style'
-  | 'indicatorStyle'
-  | 'contentContainerStyle'
-> &
-  RNViewProps) => {
+const AssetsTabLabels = [
+  TabbarLabels[HomeTabName.token],
+  TabbarLabels[HomeTabName.defi],
+  TabbarLabels[HomeTabName.nft],
+];
+
+function AssetsTabBar() {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const indexDecimal = props.indexDecimal;
+  const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
 
   const stylez = useAnimatedStyle(() => {
     return {
@@ -379,22 +376,58 @@ export const HomeCustomMaterialTabBar = ({
         indexDecimal.value,
         [0, 0.5, 1],
         [
-          -HOME_TOP_HEADER_SIZES.tabItemHeight,
-          -HOME_TOP_HEADER_SIZES.tabItemHeight / 2,
+          -HOME_TOP_HEADER_SIZES.tabItemLineHeight,
+          -HOME_TOP_HEADER_SIZES.tabItemLineHeight / 2,
           0,
         ],
         Extrapolation.CLAMP,
       ),
-      // translateX: interpolate(
-      //   indexDecimal.value,
-      //   [0, 0.5, 1],
-      //   [
-      //     -(Dimensions.get('screen').width - HOME_TOP_HEADER_SIZES.portfolioContainerPx * 2),
-      //     -(Dimensions.get('screen').width - HOME_TOP_HEADER_SIZES.portfolioContainerPx * 2 / 2),
-      //     0,
-      //   ],
-      //   Extrapolation.CLAMP,
-      // ),
+    };
+  });
+
+  const tabbarContainerStyle = useAnimatedStyle(() => {
+    return {
+      pointerEvents: indexDecimal.value < 1 ? 'none' : 'auto',
+    };
+  });
+
+  const focusedTab = useValueFromSharedValue(apisHomeTabIndex.svTabName);
+
+  return (
+    <Animated.View
+      pointerEvents={focusedTab === TabName.overview ? 'none' : 'auto'}
+      style={[styles.portfolioContainer, stylez, tabbarContainerStyle]}>
+      {/* <CustomLabel.Slider indexDecimal={indexDecimal} /> */}
+      {AssetsTabLabels.map(({ index, label }) => {
+        const key = `tab-label-${index}`;
+        return (
+          <Pressable
+            key={key}
+            onPress={() => {
+              apisHomeTabIndex.setTabIndex(index, true);
+            }}>
+            <CustomLabel
+              index={index}
+              indexDecimal={indexDecimal}
+              text={label}
+            />
+          </Pressable>
+        );
+      })}
+      <SideChainSelector />
+    </Animated.View>
+  );
+}
+
+export const HomeCustomMaterialTabBar = ({}: Partial<
+  Pick<MaterialTabBarProps, 'indexDecimal'>
+>) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const indexDecimal = apisHomeTabIndex.svTabIndexDecimal;
+
+  const containerStyle = useAnimatedStyle(() => {
+    return {
+      zIndex: indexDecimal.value < 1 ? -1 : 10,
     };
   });
 
@@ -404,20 +437,11 @@ export const HomeCustomMaterialTabBar = ({
     secondaryIndicatorViewRef,
     measureSecondaryIndicator,
   } = useMeasureLayoutForHomeGuidanceMultipleTabs();
-  const focusedTab = useFocusedTab();
+  // const focusedTab = useFocusedTab();
 
   const handleMeasureSecondaryIndicator = useCallback(() => {
     measureSecondaryIndicator();
   }, [measureSecondaryIndicator]);
-  const handleSwitchTab = useCallback(
-    (name: TabName) => {
-      if (!props.tabNames.includes(name)) {
-        return;
-      }
-      props.onTabPress(name);
-    },
-    [props],
-  );
 
   const { opacityStyle } = useHomeDrawerOpacityStyle();
   // const winWidth = Dimensions.get('window').width;
@@ -425,14 +449,14 @@ export const HomeCustomMaterialTabBar = ({
 
   return (
     <Animated.View
-      style={[styles.container, style, opacityStyle]}
+      style={[styles.container, opacityStyle, containerStyle]}
       // ref={homeGuidanceMultipleTabsTargetViewRef}
       // onLayout={() => {
       //   measureTabBarWrapper();
       // }}
     >
       <Indicator
-        indexDecimal={props.indexDecimal}
+        indexDecimal={indexDecimal}
         itemsLayout={[
           {
             width: getHomeTabIndicatorWidth(winWidth),
@@ -455,60 +479,53 @@ export const HomeCustomMaterialTabBar = ({
         secondaryIndicatorViewRef={secondaryIndicatorViewRef}
         handleMeasureSecondaryIndicator={handleMeasureSecondaryIndicator}
         onLeftPress={() => {
-          handleSwitchTab(TabName.overview);
+          apisHomeTabIndex.setTabIndex(0, true);
         }}
         onRightPress={() => {
-          handleSwitchTab(TabName.token);
+          if (indexDecimal.value < 1) {
+            apisHomeTabIndex.setTabIndex(1, true);
+          }
         }}
       />
-      <Animated.View
-        pointerEvents={focusedTab === TabName.overview ? 'none' : 'auto'}
-        style={[styles.portfolioContainer, stylez]}>
-        <MaterialTabBar
-          {...props}
-          scrollEnabled={false}
-          tabStyle={styles.innerTabBar}
-          TabItemComponent={renderTabItem}
-          style={styles.tabBar}
-          indicatorStyle={styles.hideInnerIndicator}
-          contentContainerStyle={styles.contentContainerStyle}
-        />
-        <SideChainSelector />
-      </Animated.View>
+      <AssetsTabBar />
     </Animated.View>
   );
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    position: 'relative',
+    position: 'absolute',
+    top: HOME_TOP_HEADER_SIZES.headerHeight,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 0,
+    maxHeight: HOME_TOP_HEADER_SIZES.tabItemLineHeight,
+    zIndex: 10,
+    // ...makeDevOnlyStyle({
+    //   backgroundColor: colors2024['neutral-foot'],
+    // }),
     // ...makeDebugBorder('green'),
-    // backgroundColor: colors2024['neutral-bg-1'],
   },
   hideInnerIndicator: {
     height: 0,
   },
   tabBar: {},
-  innerTabBar: {
-    height: 32,
-    width: 'auto',
-    flexShrink: 0,
-    flex: 0,
-    paddingHorizontal: 0,
-    // marginRight: 20,
-  },
   contentContainerStyle: {
     width: '100%',
     // display: 'flex',
     // justifyContent: 'flex-end',
   },
   portfolioContainer: {
+    position: 'relative',
     paddingHorizontal: HOME_TOP_HEADER_SIZES.portfolioContainerPx,
-    paddingTop: 2,
+    paddingTop: HOME_TOP_HEADER_SIZES.headerOffsetAfterIndicator,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: HOME_TOP_HEADER_SIZES.tabItemHeight,
+    // ...makeDevOnlyStyle({
+    //   backgroundColor: colors2024['red-light-1'],
+    // }),
+    // height: HOME_TOP_HEADER_SIZES.tabItemLineHeight,
   },
 }));

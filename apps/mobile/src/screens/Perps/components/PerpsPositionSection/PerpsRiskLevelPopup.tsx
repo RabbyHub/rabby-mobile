@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import RcImgTipsLightCC from '@/assets2024/icons/perps/ImgTipsLightCC.svg';
+import RcIconCloseCC from '@/assets2024/icons/perps/IconCloseCC.svg';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import AutoLockView from '@/components/AutoLockView';
-import { Button } from '@/components2024/Button';
 import { splitNumberByStep } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
@@ -57,6 +58,13 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
       enableDynamicSizing>
       <BottomSheetView>
         <AutoLockView style={styles.container}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <RcIconCloseCC
+              width={20}
+              height={20}
+              color={colors2024['neutral-secondary']}
+            />
+          </TouchableOpacity>
           <View style={styles.imgContainer}>
             <RcImgTipsLightCC
               width={35}
@@ -108,13 +116,6 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
             </View>
           </View>
         </AutoLockView>
-        <View style={styles.footer}>
-          <Button
-            type="hyperliquid"
-            title={t('global.gotIt')}
-            onPress={onClose}
-          />
-        </View>
       </BottomSheetView>
     </AppBottomSheetModal>
   );
@@ -123,7 +124,13 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     paddingHorizontal: 20,
-    // paddingBottom: 56,
+    paddingBottom: 32,
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 20,
+    top: 0,
+    zIndex: 1,
   },
   imgContainer: {
     alignItems: 'center',
@@ -231,11 +238,5 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
-  },
-  footer: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 48,
-    // backgroundColor: colors2024['neutral-bg-1'],
   },
 }));

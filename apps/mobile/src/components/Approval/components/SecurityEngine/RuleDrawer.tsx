@@ -17,7 +17,7 @@ import {
   SecurityEngineLevel,
 } from '@/constant/security';
 import { Tip } from '@/components/Tip';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
@@ -32,6 +32,7 @@ import { Button } from '@/components';
 import { Switch } from '@rneui/themed';
 import { ScreenLayouts } from '@/constant/layout';
 import { Divide } from '../Actions/components/Divide';
+import { Text } from '@/components/Typography';
 
 const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

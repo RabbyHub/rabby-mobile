@@ -4,7 +4,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import {
   Dimensions,
   StyleProp,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -34,6 +33,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -43,7 +43,9 @@ const SectionCollapsableNav = function ({
   onCollapsedChange?: (collapsed: boolean) => void;
   title: React.ReactNode;
 }) {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getPanelStyle,
+  });
 
   const tilteNode = useMemo(() => {
     return typeof title === 'string' ? (
@@ -99,7 +101,9 @@ AccountSwitcherAopProps<{
   token?: ITokenItem;
   scrollToBottom(): void;
 }>) {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { styles, colors2024, isLight } = useTheme2024({
+    getStyle: getPanelStyle,
+  });
 
   const { toggleSceneVisible } = useAccountSceneVisible(forScene);
 
@@ -493,7 +497,7 @@ AccountSwitcherAopProps<{
 
   return (
     <LinearGradientContainer
-      type="bg1"
+      type={isLight ? 'bg0' : 'bg1'}
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
       <View style={styles.header}>

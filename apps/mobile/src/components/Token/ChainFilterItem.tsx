@@ -1,4 +1,4 @@
-import { Pressable, TouchableOpacity, View, Text } from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 import { Chain } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -6,6 +6,7 @@ import ChainIconImage from '../Chain/ChainIconImage';
 import CloseBoldSVG from '@/assets2024/icons/common/close-bold-cc.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 const FILTER_ITEM_H = 34;
 

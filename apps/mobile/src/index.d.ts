@@ -1,4 +1,3 @@
-/// <reference lib="es2024.promise" />
 /// <reference types="nativewind/types" />
 /// <reference path="./assets/assets.d.ts" />
 /// <reference path="./types/token.d.ts" />

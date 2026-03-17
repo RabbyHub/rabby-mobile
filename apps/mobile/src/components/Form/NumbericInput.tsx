@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { StyleSheet, TextInput, TextInputProps, TextStyle } from 'react-native';
+import { StyleSheet, TextInputProps, TextStyle } from 'react-native';
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
@@ -10,6 +10,7 @@ import {
 } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
+import { TextInput } from '@/components/Typography';
 
 type BottomSheetTextInputProps = React.ComponentProps<
   typeof BottomSheetTextInput

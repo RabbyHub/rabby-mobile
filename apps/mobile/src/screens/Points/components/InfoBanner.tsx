@@ -1,9 +1,10 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import RcIconPointsStar from '@/assets2024/icons/points/rabby-points-star.svg';
 import RcIconClaimComingCC from '@/assets2024/icons/points/claim-coming-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 export const InfoBanner = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });

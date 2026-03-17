@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import {
   RcIconBackCC,
@@ -15,6 +15,7 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { DropdownMenuView } from './DropdownMenuView';
 import { WebViewProps } from 'react-native-webview';
+import { Text } from '@/components/Typography';
 
 export function BrowserFooter({
   isConnected,

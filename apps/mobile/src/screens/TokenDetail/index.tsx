@@ -15,7 +15,6 @@ import {
   ImageBackground,
   Platform,
   Pressable,
-  Text,
   View,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
@@ -46,6 +45,7 @@ import { patchSingleToken } from '@/databases/sync/assets';
 import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
@@ -142,7 +142,7 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: isAndroid ? 0 : -10 }}
+        style={{ marginLeft: isAndroid ? 0 : -30 }}
         key={effectiveAccount?.address}
         tokenSize={33}
         chainSize={15}

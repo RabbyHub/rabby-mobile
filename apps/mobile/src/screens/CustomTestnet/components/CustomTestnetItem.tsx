@@ -8,19 +8,13 @@ import { useMemoizedFn } from 'ahooks';
 import { EventEmitter } from 'ahooks/lib/useEventEmitter';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Animated,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   RectButton,
   Swipeable,
   TouchableOpacity,
 } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export const CustomTestnetItem = ({
   style,

@@ -1,9 +1,10 @@
 import { RootNames } from '@/constant/layout';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
+import { trackGasAccountActiveStatusOncePerDay } from '@/utils/gasAccountAnalytics';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
-import { View } from 'react-native';
+import { AppState, View } from 'react-native';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { apisAccount } from '@/core/apis';
@@ -49,6 +50,12 @@ function MultiAddressHome(): JSX.Element {
 
   useInitDetectDBAssets();
 
+  const trackGasAccountActive = useCallback(() => {
+    trackGasAccountActiveStatusOncePerDay().catch(error => {
+      console.error('trackGasAccountActiveStatusOncePerDay error', error);
+    });
+  }, []);
+
   useEffect(() => {
     setTimeout(() => {
       deleteLongTimeCurveCache();
@@ -65,6 +72,22 @@ function MultiAddressHome(): JSX.Element {
         }
       })();
     }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      trackGasAccountActive();
+
+      const subscription = AppState.addEventListener('change', state => {
+        if (state === 'active') {
+          trackGasAccountActive();
+        }
+      });
+
+      return () => {
+        subscription.remove();
+      };
+    }, [trackGasAccountActive]),
   );
 
   useEffect(() => {
@@ -150,7 +173,7 @@ function MultiAddressHome(): JSX.Element {
 const getStyle = createGetStyles2024(
   ({ colors2024, isLight, safeAreaInsets }) => ({
     screenContainer: {
-      paddingTop: 0,
+      paddingTop: safeAreaInsets.top,
     },
     paddingContainer: {
       paddingHorizontal: 0,

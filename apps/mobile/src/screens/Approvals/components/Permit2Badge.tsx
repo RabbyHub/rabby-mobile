@@ -1,6 +1,6 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { Text } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export default function Permit2Badge({ style }: RNViewProps) {
   const { styles } = useThemeStyles(permit2BadgeStyles);

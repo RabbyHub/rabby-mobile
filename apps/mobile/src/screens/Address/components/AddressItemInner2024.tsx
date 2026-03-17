@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   KeyringAccountWithAlias,
@@ -14,6 +14,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {

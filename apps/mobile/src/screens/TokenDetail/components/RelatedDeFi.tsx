@@ -8,13 +8,14 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import BigNumber from 'bignumber.js';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { RelatedDeFiType } from '..';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
+import { Text } from '@/components/Typography';
 
 interface Props {
   deFiList: RelatedDeFiType[];

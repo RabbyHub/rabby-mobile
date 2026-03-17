@@ -4,9 +4,10 @@ import { Col, Row, Table } from '../Actions/components/Table';
 import { ParsedTypedDataActionData } from '@rabby-wallet/rabby-action';
 import * as Values from '../Actions/components/Values';
 import LogoWithText from '../Actions/components/LogoWithText';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
+import { Text } from '@/components/Typography';
 
 const CoboSafeModificationDelegatedAddress = ({
   data,

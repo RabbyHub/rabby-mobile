@@ -1,7 +1,6 @@
 import {
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -24,6 +23,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { getAccountBalance } from '@/components/HDSetting/util';
 import { ellipsisAddress } from '@/utils/address';
 import { CheckBoxRect } from '@/components2024/CheckBox';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   rootImported: {

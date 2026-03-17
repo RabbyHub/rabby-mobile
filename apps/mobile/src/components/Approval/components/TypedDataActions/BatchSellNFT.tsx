@@ -16,9 +16,10 @@ import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubCol, SubRow, SubTable } from '../Actions/components/SubTable';
+import { Text } from '@/components/Typography';
 const { isSameAddress } = addressUtils;
 
 const BatchSellNFT = ({

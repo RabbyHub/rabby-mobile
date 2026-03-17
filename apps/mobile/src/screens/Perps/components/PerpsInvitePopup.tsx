@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import RcIconRabby from '@/assets2024/icons/common/rabby-wallet.svg';
 import RcIconHyperliquid from '@/assets2024/icons/perps/IconHyperliquid.svg';
@@ -17,6 +17,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest, useUnmount } from 'ahooks';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 interface Props {
   visible?: boolean;
