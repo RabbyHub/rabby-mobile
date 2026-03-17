@@ -82,7 +82,7 @@ const useToken = (type: 'from' | 'to') => {
   const userAddress = currentAccount?.address;
 
   // 使用 useRef 保持 chain 状态，避免账户切换时重置
-  const chainRef = useRef<CHAINS_ENUM | undefined>();
+  const chainRef = useRef<CHAINS_ENUM | undefined>(undefined);
   const [chain, setChain] = useState<CHAINS_ENUM | undefined>(chainRef.current);
 
   // 标记是否已经初始化过 chain，避免重复初始化
@@ -199,7 +199,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     SelectedBridgeQuote | undefined
   >();
 
-  const expiredTimer = useRef<NodeJS.Timeout>();
+  const expiredTimer = useRef<NodeJS.Timeout>(undefined);
 
   const inSufficient = useMemo(
     () =>

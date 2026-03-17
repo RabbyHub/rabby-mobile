@@ -31,7 +31,7 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
   const resolvedUrlRef = useRef<string>(BLANK_PAGE);
   const urlRef = useRef<string>(BLANK_PAGE);
   const titleRef = useRef<string>('');
-  const iconRef = useRef<string | undefined>();
+  const iconRef = useRef<string | undefined>(undefined);
 
   const [webviewState, setWebViewState] = useState<WebViewState>({
     canGoBack: false,

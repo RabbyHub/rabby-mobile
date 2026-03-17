@@ -1,10 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { getChain } from '@/utils/chain';
-import {
-  ProjectItem,
-  TokenItem,
-  TxDisplayItem,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { ProjectItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';

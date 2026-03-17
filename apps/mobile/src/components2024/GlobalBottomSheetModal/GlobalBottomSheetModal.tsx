@@ -30,7 +30,7 @@ type ModalData = {
   snapPoints: (string | number)[] | undefined;
   params: CreateParams;
   id: MODAL_ID;
-  ref: React.RefObject<AppBottomSheetModal>;
+  ref: React.RefObject<AppBottomSheetModal | null>;
 };
 
 let globalRemoveAllModals: ((params?: RemoveParams) => void) | null = null;

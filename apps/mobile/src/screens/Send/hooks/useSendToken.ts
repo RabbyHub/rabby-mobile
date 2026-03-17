@@ -1836,7 +1836,7 @@ export function useSendTokenForm({
     );
   });
 
-  const prepareRef = useRef<Promise<Tx | void>>();
+  const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
 
   const isFocused = useIsFocused();
@@ -2101,7 +2101,9 @@ export function subscribeEvent<T extends SendTokenEvents>(
 
   return dispose;
 }
-export function useInputBlurOnEvents(inputRef: React.RefObject<TextInput>) {
+export function useInputBlurOnEvents(
+  inputRef: React.RefObject<TextInput | null>,
+) {
   const { events } = useSendTokenInternalContext();
   useEffect(() => {
     const disposeRets = [] as Function[];

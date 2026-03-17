@@ -170,7 +170,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     QuoteProvider | undefined
   >();
 
-  const expiredTimer = useRef<NodeJS.Timeout>();
+  const expiredTimer = useRef<NodeJS.Timeout>(undefined);
 
   const clearExpiredTimer = useCallback(() => {
     if (expiredTimer.current) {

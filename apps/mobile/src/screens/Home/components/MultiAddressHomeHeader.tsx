@@ -181,7 +181,7 @@ export function MultiAddressHomeHeader(
   }, [data.isLoss, data.rawChange, loadBalanceFromApiStage, previousLoading]);
 
   const modalRef =
-    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
 
   const handleWalletsListPress = useCallback(() => {
     setIsFoldMultiChart(true);

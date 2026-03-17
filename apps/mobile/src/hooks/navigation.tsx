@@ -569,7 +569,7 @@ export function usePreventGoBack({
   shouldGoback,
 }: {
   navigation?: ReturnType<typeof useRabbyAppNavigation>;
-  shouldGoback: (() => boolean) | React.RefObject<boolean>;
+  shouldGoback: (() => boolean) | React.RefObject<boolean | null>;
 }) {
   const shouldPreventFn = useCallback(() => {
     if (typeof shouldGoback === 'function') {

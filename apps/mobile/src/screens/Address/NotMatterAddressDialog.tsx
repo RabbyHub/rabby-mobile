@@ -32,7 +32,7 @@ export const NotMatterAddressDialog: React.FC<{
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [isScrolling, setIsScrolling] = React.useState(false);
-  const scrollTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const scrollTimeoutRef = React.useRef<NodeJS.Timeout>(undefined);
   const [isManageMode, setIsManageMode] = React.useState(false);
 
   const switchManageMode = () => {

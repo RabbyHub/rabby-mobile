@@ -317,7 +317,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       };
     });
 
-    const initialRouteRef = useRef<string | undefined>();
+    const initialRouteRef = useRef<string | undefined>(undefined);
     useEffect(() => {
       if (!initialRouteRef.current && visible) {
         initialRouteRef.current = getLatestNavigationName();

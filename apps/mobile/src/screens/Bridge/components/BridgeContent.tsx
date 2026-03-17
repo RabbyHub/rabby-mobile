@@ -567,7 +567,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     }
   }, [isFocused, refresh]);
 
-  const runBuildBridgeTxsRef = useRef<ReturnType<typeof runBuildTxs>>();
+  const runBuildBridgeTxsRef =
+    useRef<ReturnType<typeof runBuildTxs>>(undefined);
 
   const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type);
 

@@ -46,213 +46,204 @@ export type SwitchProps = TouchableWithoutFeedbackProps & {
 };
 
 export type RabbySwitch = {};
-const Switch = React.forwardRef<RabbySwitch, SwitchProps>(
-  ({
-    value: propValue = false,
-    onValueChange = () => null,
-    renderInsideCircle = () => null,
-    disabled = false,
-    activeText = 'On',
-    inActiveText = 'Off',
-    containerStyle,
-    activeTextStyle,
-    inactiveTextStyle,
-    backgroundActive = 'green',
-    backgroundInactive = 'gray',
-    circleActiveColor = 'white',
-    circleInActiveColor = 'white',
-    circleBorderActiveColor = 'rgb(100, 100, 100)',
-    circleBorderInactiveColor = 'rgb(80, 80, 80)',
-    circleSize = 30,
-    barHeight = null,
-    circleBorderWidth = 1,
-    changeValueImmediately = true,
-    innerCircleStyle = { alignItems: 'center', justifyContent: 'center' },
-    outerCircleStyle = {},
-    renderActiveText = true,
-    renderInActiveText = true,
-    switchLeftPx = 2,
-    switchRightPx = 2,
-    switchWidthMultiplier = 2,
-    switchBorderRadius = null,
-    testID = '',
-    onPress,
-    ...restProps
-  }: SwitchProps) => {
-    const [
-      {
-        value,
-        transformSwitch,
-        backgroundColor,
-        circleColor,
-        circleBorderColor,
-      },
-      setState,
-    ] = React.useState({
-      value: propValue,
-      transformSwitch: new Animated.Value(
-        propValue ? circleSize / switchLeftPx : -circleSize / switchRightPx,
-      ),
-      backgroundColor: new Animated.Value(propValue ? 75 : -75),
-      circleColor: new Animated.Value(propValue ? 75 : -75),
-      circleBorderColor: new Animated.Value(propValue ? 75 : -75),
+const Switch = ({
+  value: propValue = false,
+  onValueChange = () => null,
+  renderInsideCircle = () => null,
+  disabled = false,
+  activeText = 'On',
+  inActiveText = 'Off',
+  containerStyle,
+  activeTextStyle,
+  inactiveTextStyle,
+  backgroundActive = 'green',
+  backgroundInactive = 'gray',
+  circleActiveColor = 'white',
+  circleInActiveColor = 'white',
+  circleBorderActiveColor = 'rgb(100, 100, 100)',
+  circleBorderInactiveColor = 'rgb(80, 80, 80)',
+  circleSize = 30,
+  barHeight = null,
+  circleBorderWidth = 1,
+  changeValueImmediately = true,
+  innerCircleStyle = { alignItems: 'center', justifyContent: 'center' },
+  outerCircleStyle = {},
+  renderActiveText = true,
+  renderInActiveText = true,
+  switchLeftPx = 2,
+  switchRightPx = 2,
+  switchWidthMultiplier = 2,
+  switchBorderRadius = null,
+  testID = '',
+  onPress,
+  ...restProps
+}: SwitchProps) => {
+  const [
+    { value, transformSwitch, backgroundColor, circleColor, circleBorderColor },
+    setState,
+  ] = React.useState({
+    value: propValue,
+    transformSwitch: new Animated.Value(
+      propValue ? circleSize / switchLeftPx : -circleSize / switchRightPx,
+    ),
+    backgroundColor: new Animated.Value(propValue ? 75 : -75),
+    circleColor: new Animated.Value(propValue ? 75 : -75),
+    circleBorderColor: new Animated.Value(propValue ? 75 : -75),
+  });
+
+  const interpolatedColorAnimation = backgroundColor.interpolate({
+    inputRange: [-75, 75],
+    outputRange: [backgroundInactive, backgroundActive],
+  });
+
+  const interpolatedCircleColor = circleColor.interpolate({
+    inputRange: [-75, 75],
+    outputRange: [circleInActiveColor, circleActiveColor],
+  });
+
+  const interpolatedCircleBorderColor = circleBorderColor.interpolate({
+    inputRange: [-75, 75],
+    outputRange: [circleBorderInactiveColor, circleBorderActiveColor],
+  });
+
+  const animateSwitch = useCallback(
+    (val: boolean, cb = () => {}) => {
+      Animated.parallel([
+        Animated.spring(transformSwitch, {
+          toValue: val
+            ? circleSize / switchLeftPx
+            : -circleSize / switchRightPx,
+          useNativeDriver: false,
+        }),
+        Animated.timing(backgroundColor, {
+          toValue: val ? 75 : -75,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+        Animated.timing(circleColor, {
+          toValue: val ? 75 : -75,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+        Animated.timing(circleBorderColor, {
+          toValue: val ? 75 : -75,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+      ]).start(cb);
+    },
+    [
+      transformSwitch,
+      circleSize,
+      switchLeftPx,
+      switchRightPx,
+      backgroundColor,
+      circleColor,
+      circleBorderColor,
+    ],
+  );
+
+  // const previousDisabled = usePrevious(disabled);
+  useEffect(() => {
+    if (propValue === value) return;
+    // if (disabled === previousDisabled) return;
+
+    animateSwitch(propValue, () => {
+      setState(prev => ({ ...prev, value: propValue }));
     });
+  }, [
+    animateSwitch,
+    propValue,
+    value,
+    // disabled,
+    // previousDisabled
+  ]);
 
-    const interpolatedColorAnimation = backgroundColor.interpolate({
-      inputRange: [-75, 75],
-      outputRange: [backgroundInactive, backgroundActive],
-    });
+  const handleSwitch = useCallback(
+    (evt: GestureResponderEvent) => {
+      onPress?.(evt);
 
-    const interpolatedCircleColor = circleColor.interpolate({
-      inputRange: [-75, 75],
-      outputRange: [circleInActiveColor, circleActiveColor],
-    });
+      if (disabled) return;
 
-    const interpolatedCircleBorderColor = circleBorderColor.interpolate({
-      inputRange: [-75, 75],
-      outputRange: [circleBorderInactiveColor, circleBorderActiveColor],
-    });
+      if (propValue === value) {
+        onValueChange(!value);
+        return;
+      }
 
-    const animateSwitch = useCallback(
-      (val: boolean, cb = () => {}) => {
-        Animated.parallel([
-          Animated.spring(transformSwitch, {
-            toValue: val
-              ? circleSize / switchLeftPx
-              : -circleSize / switchRightPx,
-            useNativeDriver: false,
-          }),
-          Animated.timing(backgroundColor, {
-            toValue: val ? 75 : -75,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-          Animated.timing(circleColor, {
-            toValue: val ? 75 : -75,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-          Animated.timing(circleBorderColor, {
-            toValue: val ? 75 : -75,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-        ]).start(cb);
-      },
-      [
-        transformSwitch,
-        circleSize,
-        switchLeftPx,
-        switchRightPx,
-        backgroundColor,
-        circleColor,
-        circleBorderColor,
-      ],
-    );
-
-    // const previousDisabled = usePrevious(disabled);
-    useEffect(() => {
-      if (propValue === value) return;
-      // if (disabled === previousDisabled) return;
-
-      animateSwitch(propValue, () => {
-        setState(prev => ({ ...prev, value: propValue }));
-      });
-    }, [
-      animateSwitch,
+      if (changeValueImmediately) {
+        animateSwitch(!propValue);
+        onValueChange(!propValue);
+      } else {
+        animateSwitch(!propValue, () => {
+          setState(prev => ({ ...prev, value: !propValue }));
+          onValueChange(!propValue);
+        });
+      }
+    },
+    [
+      disabled,
       propValue,
       value,
-      // disabled,
-      // previousDisabled
-    ]);
+      changeValueImmediately,
+      onValueChange,
+      animateSwitch,
+      onPress,
+    ],
+  );
 
-    const handleSwitch = useCallback(
-      (evt: GestureResponderEvent) => {
-        onPress?.(evt);
-
-        if (disabled) return;
-
-        if (propValue === value) {
-          onValueChange(!value);
-          return;
-        }
-
-        if (changeValueImmediately) {
-          animateSwitch(!propValue);
-          onValueChange(!propValue);
-        } else {
-          animateSwitch(!propValue, () => {
-            setState(prev => ({ ...prev, value: !propValue }));
-            onValueChange(!propValue);
-          });
-        }
-      },
-      [
-        disabled,
-        propValue,
-        value,
-        changeValueImmediately,
-        onValueChange,
-        animateSwitch,
-        onPress,
-      ],
-    );
-
-    return (
-      <TouchableWithoutFeedback onPress={handleSwitch} {...restProps}>
+  return (
+    <TouchableWithoutFeedback onPress={handleSwitch} {...restProps}>
+      <Animated.View
+        style={[
+          styles.container,
+          containerStyle,
+          {
+            backgroundColor: interpolatedColorAnimation,
+            width: circleSize * switchWidthMultiplier,
+            height: barHeight || circleSize,
+            borderRadius: switchBorderRadius || circleSize,
+          },
+        ]}>
         <Animated.View
           style={[
-            styles.container,
-            containerStyle,
+            styles.animatedContainer,
             {
-              backgroundColor: interpolatedColorAnimation,
+              left: transformSwitch,
               width: circleSize * switchWidthMultiplier,
-              height: barHeight || circleSize,
-              borderRadius: switchBorderRadius || circleSize,
             },
+            outerCircleStyle,
           ]}>
+          {propValue && renderActiveText && (
+            <Text style={[styles.text, styles.paddingRight, activeTextStyle]}>
+              {activeText}
+            </Text>
+          )}
+
           <Animated.View
             style={[
-              styles.animatedContainer,
+              styles.circle,
               {
-                left: transformSwitch,
-                width: circleSize * switchWidthMultiplier,
+                borderWidth: circleBorderWidth,
+                borderColor: interpolatedCircleBorderColor,
+                backgroundColor: interpolatedCircleColor,
+                width: circleSize,
+                height: circleSize,
+                borderRadius: circleSize / 2,
               },
-              outerCircleStyle,
+              innerCircleStyle,
             ]}>
-            {propValue && renderActiveText && (
-              <Text style={[styles.text, styles.paddingRight, activeTextStyle]}>
-                {activeText}
-              </Text>
-            )}
-
-            <Animated.View
-              style={[
-                styles.circle,
-                {
-                  borderWidth: circleBorderWidth,
-                  borderColor: interpolatedCircleBorderColor,
-                  backgroundColor: interpolatedCircleColor,
-                  width: circleSize,
-                  height: circleSize,
-                  borderRadius: circleSize / 2,
-                },
-                innerCircleStyle,
-              ]}>
-              {renderInsideCircle()}
-            </Animated.View>
-            {!propValue && renderInActiveText && (
-              <Text
-                style={[styles.text, styles.paddingLeft, inactiveTextStyle]}>
-                {inActiveText}
-              </Text>
-            )}
+            {renderInsideCircle()}
           </Animated.View>
+          {!propValue && renderInActiveText && (
+            <Text style={[styles.text, styles.paddingLeft, inactiveTextStyle]}>
+              {inActiveText}
+            </Text>
+          )}
         </Animated.View>
-      </TouchableWithoutFeedback>
-    );
-  },
-);
+      </Animated.View>
+    </TouchableWithoutFeedback>
+  );
+};
 
 export const RabbySwitch = Switch;
 

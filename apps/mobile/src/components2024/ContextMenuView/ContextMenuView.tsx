@@ -29,7 +29,7 @@ type Props = {
     menuActions: MenuAction[];
   };
   preViewBorderRadius?: number;
-  children: React.ReactElement;
+  children: React.ReactElement<any>;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
   androidLongPressDuration?: number;
 } & ContextMenuContentProps;

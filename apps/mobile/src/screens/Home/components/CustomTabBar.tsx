@@ -64,7 +64,7 @@ type IndicatorProps = {
   style?: AnimatedStyle;
   fadeIn?: boolean;
   animatedStyle?: AnimatedStyle<ViewStyle>;
-  secondaryIndicatorViewRef?: React.RefObject<View>;
+  secondaryIndicatorViewRef?: React.RefObject<View | null>;
   onLeftPress?: () => void;
   onRightPress?: () => void;
   // handleMeasureSecondaryIndicator?: ViewProps['onLayout'];
@@ -293,7 +293,7 @@ function SideChainSelector() {
 
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
-  >();
+  >(undefined);
   const { t } = useTranslation();
   const selectedChainItem = useSelectedChainItem();
   const handleOnChainClick = useCallback(
