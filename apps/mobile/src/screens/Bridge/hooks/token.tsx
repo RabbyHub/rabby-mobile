@@ -729,6 +729,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
               const fromFindChain = findChain({ serverId: fromToken?.chain });
               if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
                 tokenApproved = true;
+              }
+              // near intents send token to themselves address, so no need approve
+              if (!quote.approve_contract_id) {
+                tokenApproved = true;
               } else {
                 allowance = await getERC20Allowance(
                   fromToken.chain,
@@ -869,7 +873,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         let useQuote = sortedList[0];
 
         setOriSelectedBridgeQuote(preItem => {
-          useQuote = preItem?.manualClick ? preItem : sortedList[0];
+          useQuote = preItem?.manualClick ? preItem : sortedList[0]!;
           return preItem;
         });
 
