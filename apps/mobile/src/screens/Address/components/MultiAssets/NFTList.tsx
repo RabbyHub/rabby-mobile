@@ -32,14 +32,10 @@ import {
   NftItemWithCollection,
   varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
-import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
-import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
-import {
-  ListHeaderComponent,
-  ListRenderFooter,
-  ListRenderSeparator,
-} from './RenderRow/Common';
+import { TabName } from './TabsMultiAssets';
+import { ListRenderSeparator } from './RenderRow/Common';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -89,10 +85,6 @@ export const NFTList = () => {
   const isLoading = nftListStore(s => s.isLoading);
   const nftsMap = nftListStore(s => s.nftsMap);
   const batchGetNFTList = nftListStore(s => s.batchGetNFTList);
-
-  useEffect(() => {
-    console.log('nftsMap', nftsMap);
-  }, [nftsMap]);
 
   const _rawNftList = useMemo(
     () => combinedNfts(nftsMap, myTop10Addresses),

@@ -5,6 +5,7 @@ import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { DisplayNftItem } from '@/screens/Home/types';
 import { eventBus, EventBusListeners } from '@/utils/events';
 import { useCallback, useEffect } from 'react';
+import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 
 const normalizeAddresses = (addresses: string[]) =>
   Array.from(new Set(addresses.map(address => address.toLowerCase())));
@@ -13,8 +14,8 @@ type CombinedNFTItem = DisplayNftItem & { address?: string };
 
 const tagNfts = (nfts: DisplayNftItem[]) => {
   return nfts.map(i => {
-    const isFold = !i.is_core;
-
+    const collection = i.collection as CollectionList | null | undefined;
+    const isFold = !i.collection?.is_core || collection?.is_hidden;
     return Object.assign(i, {
       _isFold: isFold,
       _isManualFold: false,
@@ -71,6 +72,11 @@ export interface NFTListState {
     },
   ): Promise<void>;
   getNFTList(
+    address: string,
+    force?: boolean,
+    updateReturn?: boolean,
+  ): Promise<void>;
+  getNFTListWithCache(
     address: string,
     force?: boolean,
     updateReturn?: boolean,
@@ -206,6 +212,15 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     } catch (e) {
       console.error('ServiceErrorType.NFT', e);
     }
+  },
+
+  async getNFTListWithCache(address, force, updateReturn) {
+    if (!address) {
+      return;
+    }
+
+    await get().batchLoadCacheNFT([address]);
+    await get().getNFTList(address, force, updateReturn);
   },
 
   async batchGetNFTList(force, options) {
