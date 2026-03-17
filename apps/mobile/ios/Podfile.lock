@@ -3121,7 +3121,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNSentry (7.1.0):
+  - RNSentry (7.3.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -3148,7 +3148,7 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - Sentry/HybridSDK (= 8.56.0)
+    - Sentry/HybridSDK (= 8.56.2)
     - SocketRocket
     - Yoga
   - RNSVG (15.12.1):
@@ -3187,7 +3187,7 @@ PODS:
   - SDWebImageWebPCoder (0.8.5):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.10)
-  - Sentry/HybridSDK (8.56.0)
+  - Sentry/HybridSDK (8.56.2)
   - SocketRocket (0.7.1)
   - VisionCamera (4.7.2):
     - VisionCamera/Core (= 4.7.2)
@@ -3735,12 +3735,12 @@ SPEC CHECKSUMS:
   RNReactNativeHapticFeedback: 108e0779dcc17acfba116cb07d20ff919c188096
   RNReanimated: 5535e8529e8272abab396641a9135c2718055b14
   RNScreens: df68a9d884c93da2f6f342183b630bac30b770c5
-  RNSentry: 9b547dbbf1bb4d25e8a5bb95935830468743574b
+  RNSentry: 0c4143e43acee4334a965a00c1583a316310efee
   RNSVG: 3e87821b2215b30e19f90232247007e5c313a06c
   RNVectorIcons: dad3d501c383f9ba1414de38735e0ccfb50044e4
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
-  Sentry: 3d82977434c80381cae856c40b99c39e4be6bc11
+  Sentry: b53951377b78e21a734f5dc8318e333dbfc682d7
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   VisionCamera: 2230ecfd78a1f6cddd8be0fe4e6589f21a6385e1
   Yoga: c7d9adcf9fca72e6219bdc5f1f11b76b38c4a030
