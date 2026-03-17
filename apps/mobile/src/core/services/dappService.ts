@@ -6,6 +6,8 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { Account } from './preference';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { omit } from 'lodash';
+import * as Sentry from '@sentry/react-native';
 
 export interface DappInfo {
   origin: string;
@@ -107,7 +109,15 @@ export class DappService extends StoreServiceBase<
 
   updateDapp(dapp: DappInfo) {
     if (!dapp?.origin || !/^https?:\/\//.test(dapp.origin)) {
-      throw new Error('Dapp origin is required');
+      Sentry.captureException(new Error('Invalid dapp origin'), {
+        tags: {
+          scene: 'dappService',
+        },
+        extra: {
+          dapp: omit(dapp, 'currentAccount'),
+        },
+      });
+      return;
     }
     this.store.dapps[dapp.origin] = {
       ...this.store.dapps[dapp.origin],

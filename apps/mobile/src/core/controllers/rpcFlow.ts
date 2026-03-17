@@ -220,14 +220,6 @@ const flowContext = flow
           ctx.request.account =
             defaultAccount || preferenceService.getFallbackAccount()!;
         } catch (e) {
-          Sentry.captureException(e, {
-            tags: {
-              scene: 'rpcFlow.connect',
-            },
-            extra: {
-              origin,
-            },
-          });
           connectOrigins.delete(origin);
           throw e;
         }
