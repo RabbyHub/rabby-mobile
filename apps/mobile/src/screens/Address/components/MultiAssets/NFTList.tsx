@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -33,6 +39,7 @@ import {
   varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
 import { TabName } from './TabsMultiAssets';
 import { ListRenderSeparator } from './RenderRow/Common';
@@ -62,7 +69,7 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   );
 });
 
-export const NFTList = () => {
+const NFTListInner = () => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { myTop10Addresses } = useAccountInfo();
@@ -355,6 +362,20 @@ export const NFTList = () => {
       />
     </GestureDetector>
   );
+};
+
+export const NFTList = () => {
+  const focusedTab = useFocusedTab();
+  const hasBeenFocusedRef = useRef(false);
+  if (focusedTab === TabName.nft) {
+    hasBeenFocusedRef.current = true;
+  }
+
+  if (!hasBeenFocusedRef.current) {
+    return null;
+  }
+
+  return <NFTListInner />;
 };
 
 const getStyles = createGetStyles2024(ctx => ({
