@@ -1,9 +1,20 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Platform, RefreshControl, View, ViewToken } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
+import {
+  buildMarketTokenDetailFrom,
+  getMarketTabClickListAction,
+  getMarketTabViewAction,
+} from '@/screens/Market/analytics';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -114,6 +125,18 @@ export function MarketCategoryContent({
   const focusedTab = useFocusedTab();
   const [isInFirst100Items, setIsInFirst100Items] = useState(true);
 
+  useEffect(() => {
+    const isTabActive = isFocused && focusedTab === categoryId;
+    const action = getMarketTabViewAction(categoryId);
+
+    if (isTabActive && action) {
+      matomoRequestEvent({
+        category: 'Rabby Market',
+        action,
+      });
+    }
+  }, [categoryId, focusedTab, isFocused]);
+
   const handleVolumeSort = useCallback(() => {
     if (!supportedSortFields.has('volume_24h')) {
       return;
@@ -143,10 +166,12 @@ export function MarketCategoryContent({
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenMarketTokenItem) => {
-      if (categoryId === 'meme') {
+      const clickAction = getMarketTabClickListAction(categoryId);
+
+      if (clickAction) {
         matomoRequestEvent({
-          category: 'Rabby Memecoin',
-          action: 'Memecoin_ClickList',
+          category: 'Rabby Market',
+          action: clickAction,
         });
       }
 
@@ -154,15 +179,12 @@ export function MarketCategoryContent({
         token: memeItemToITokenItem(token, ''),
         unHold: false,
         needUseCacheToken: true,
-        from:
-          categoryId === 'meme'
-            ? {
-                scene: 'meme',
-                id: token.id,
-                chain: token.chain,
-                symbol: token.symbol || '',
-              }
-            : undefined,
+        from: buildMarketTokenDetailFrom({
+          categoryId,
+          id: token.id,
+          chain: token.chain,
+          symbol: token.symbol,
+        }),
       });
     },
     [categoryId],

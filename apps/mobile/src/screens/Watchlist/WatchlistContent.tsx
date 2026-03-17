@@ -8,10 +8,16 @@ import { Text } from '@/components/Typography';
 import { preferenceService } from '@/core/services';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
+import {
+  buildMarketTokenDetailFrom,
+  getMarketTabClickListAction,
+  getMarketTabViewAction,
+} from '@/screens/Market/analytics';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { tokenItemToITokenItem } from '@/utils/token';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +51,7 @@ export function WatchlistContent() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const focusedTab = useFocusedTab();
+  const isFocused = useIsFocused();
 
   const showGuide = useMemo(() => {
     return !skip && !hasData && !watchlistLoading && !watchlistTokens.length;
@@ -69,6 +76,18 @@ export function WatchlistContent() {
   useEffect(() => {
     setSkip(preferenceService.getWatchlistSkip());
   }, []);
+
+  useEffect(() => {
+    const isTabActive = isFocused && focusedTab === 'watchlist';
+    const action = getMarketTabViewAction('watchlist');
+
+    if (isTabActive && action) {
+      matomoRequestEvent({
+        category: 'Rabby Market',
+        action,
+      });
+    }
+  }, [focusedTab, isFocused]);
 
   useEffect(() => {
     if (hotTokenList.length > 0 && !hasInitialized) {
@@ -112,10 +131,24 @@ export function WatchlistContent() {
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
+      const clickAction = getMarketTabClickListAction('watchlist');
+
+      if (clickAction) {
+        matomoRequestEvent({
+          category: 'Rabby Market',
+          action: clickAction,
+        });
+      }
       navigateDeprecated(RootNames.TokenMarketInfo, {
         token: tokenItemToITokenItem(token, ''),
         unHold: false,
         needUseCacheToken: true,
+        from: buildMarketTokenDetailFrom({
+          categoryId: 'watchlist',
+          id: token.id,
+          chain: token.chain,
+          symbol: token.symbol,
+        }),
       });
     },
     [],
