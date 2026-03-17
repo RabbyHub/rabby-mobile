@@ -19,6 +19,7 @@ import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useRendererDetect } from '../Perf/PerfDetector';
 import { Text } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -137,7 +138,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
-      width: SCREEN_WIDTH - 160,
+      width: SCREEN_WIDTH - (IS_ANDROID ? 200 : 160),
       marginTop: -4,
     },
     titleText: {

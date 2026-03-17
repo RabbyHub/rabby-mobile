@@ -702,7 +702,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         <View
                           style={[
                             styles.tokenCenterFloor,
-                            styles.utilMl,
                             styles.tokenCenterFloor1,
                           ]}>
                           <View
@@ -712,12 +711,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                             ]}>
                             <View style={styles.tokenNameBox}>
                               <Text
-                                style={[
-                                  styles.tokenName,
-                                  !needToTokenMarketInfo &&
-                                    !isLpToken(token) &&
-                                    styles.tokenNameFullWidth,
-                                ]}
+                                style={styles.tokenName}
                                 ellipsizeMode="tail"
                                 numberOfLines={1}>
                                 {token?.symbol}
@@ -740,7 +734,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                             style={[
                               styles.tokenInfoCol,
                               styles.tokenInfoColRightFixed,
-                              styles.utilMl,
                               styles.tokenInfoColRight,
                             ]}>
                             <Text style={[styles.tokenHeaderNetworth]}>
@@ -751,7 +744,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         <View
                           style={[
                             styles.tokenCenterFloor,
-                            styles.utilMl,
                             styles.tokenCenterFloor2,
                           ]}>
                           <View
@@ -813,7 +805,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                             style={[
                               styles.tokenInfoCol,
                               styles.tokenInfoColRightFixed,
-                              styles.utilMl,
                               styles.tokenInfoColRight,
                             ]}>
                             <View style={styles.priceInfo}>
@@ -1349,6 +1340,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       height: ITEM_HEIGHT,
+      gap: 12,
       // ...makeDebugBorder(),
       // // leave here for debug
       // borderWidth: 1,
@@ -1381,13 +1373,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenCenter: {
       flexShrink: 1,
-      width: '100%',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
     tokenCenterFloor: {
       flexDirection: 'row',
+      width: '100%',
+      gap: 4,
       justifyContent: 'space-between',
     },
     tokenCenterFloor1: {
@@ -1417,20 +1410,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     tokenInfoColLeftFlex: {
       flexShrink: 1,
-      width: '100%',
-      minWidth: 0,
     },
     tokenInfoColRightFixed: {
       flexShrink: 0,
-      width: 120,
+      flexGrow: 0,
     },
     tokenInfoCol: {
       flexDirection: 'column',
       alignItems: 'flex-start',
       justifyContent: 'center',
-    },
-    utilMl: {
-      marginLeft: 12,
     },
     tokenNameBox: {
       flexDirection: 'row',
@@ -1439,6 +1427,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // ...makeDebugBorder(),
     },
     tokenName: {
+      flexShrink: 1,
       marginRight: 8,
       color: colors2024['neutral-title-1'],
       fontSize: 16,
@@ -1446,9 +1435,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '700',
       lineHeight: 20,
       fontFamily: 'SF Pro Rounded',
-    },
-    tokenNameFullWidth: {
-      width: '100%',
     },
     lpTokenIconContainer: {
       marginLeft: 0,
@@ -1487,7 +1473,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-end',
-      width: '100%',
       gap: 2,
     },
     tokenHeaderAmount: {

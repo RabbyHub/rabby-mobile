@@ -232,7 +232,12 @@ export const HistoryItem = React.memo(
             isShowRPCStatus={true}
           />
           {typeof address === 'string' ? (
-            <Text style={styles.describeText}>{address}</Text>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={styles.describeText}>
+              {address}
+            </Text>
           ) : (
             address
           )}

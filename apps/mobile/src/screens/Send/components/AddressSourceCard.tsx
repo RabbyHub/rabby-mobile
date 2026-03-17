@@ -106,7 +106,10 @@ const AddressSource = ({
               </View>
               <View style={styles.itemInfo}>
                 <View style={styles.itemNameWrapper}>
-                  <Text style={styles.itemNameText}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.itemNameText}>
                     {editingAlias ||
                       account.aliasName ||
                       ellipsisAddress(account.address, 6)}
