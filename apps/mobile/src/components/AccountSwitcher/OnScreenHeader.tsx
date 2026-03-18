@@ -19,7 +19,6 @@ import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { useRendererDetect } from '../Perf/PerfDetector';
 import { Text } from '@/components/Typography';
-import { IS_ANDROID } from '@/core/native/utils';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -88,10 +87,12 @@ export function ScreenHeaderAccountSwitcher({
         }
       }}>
       {titleTextNode}
-      <View style={styles.addressRow}>
+      <View style={styles.wrapperAddressRow}>
         {!isSceneUsingAllAccounts ? (
           !!finalSceneCurrentAccount && (
-            <AddressItem account={finalSceneCurrentAccount}>
+            <AddressItem
+              style={styles.addressItem}
+              account={finalSceneCurrentAccount}>
               {({ WalletIcon, WalletAddress }) => {
                 return (
                   <View style={styles.addressRow}>
@@ -138,7 +139,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
-      width: SCREEN_WIDTH - (IS_ANDROID ? 200 : 160),
+      width: SCREEN_WIDTH - 160,
       marginTop: -4,
     },
     titleText: {
@@ -148,9 +149,19 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 20,
       color: ctx.colors2024['neutral-title-1'],
     },
-    addressRow: {
+    wrapperAddressRow: {
       flexDirection: 'row',
       alignItems: 'center',
+      width: '100%',
+      justifyContent: 'center',
+    },
+    addressRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    addressItem: {
+      flexShrink: 1,
     },
     walletIcon: {
       borderRadius: 4,
@@ -159,6 +170,7 @@ const getStyle = createGetStyles2024(ctx => {
       marginRight: 4,
     },
     address: {
+      flexShrink: 1,
       margin: 4,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
@@ -169,6 +181,8 @@ const getStyle = createGetStyles2024(ctx => {
     },
     addressCaretIcon: {
       marginLeft: 4,
+      flexShrink: 0,
+      width: 18,
     },
     reverseCaret: {
       transform: [{ rotate: '180deg' }],

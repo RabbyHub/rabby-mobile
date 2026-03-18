@@ -332,7 +332,11 @@ export const HistoryItem = React.memo(
                 tokenChangeData={tokenChangeData}
                 tokenApproveData={tokenApproveData}
               />
-              <View style={styles.textBox}>
+              <View
+                style={[
+                  styles.textBox,
+                  noNeedTokenChangeType && styles.textBoxNotChange,
+                ]}>
                 <View style={styles.titleBox}>
                   <Text style={styles.titleText} numberOfLines={1}>
                     {formatTitle}
@@ -405,6 +409,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     justifyContent: 'center',
   },
+  textBoxNotChange: {
+    flexShrink: 1,
+  },
   titleText: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
@@ -418,6 +425,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
+    flexShrink: 1,
   },
   cardHeader: {
     paddingHorizontal: 16,

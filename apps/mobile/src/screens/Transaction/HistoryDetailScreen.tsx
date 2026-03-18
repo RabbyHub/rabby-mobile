@@ -189,7 +189,10 @@ export const AddressItemInDetail = ({
                 }}
               />
             )}
-            <Text style={styles.itemContentText}>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.itemContentText, styles.itemContentTextAliasName]}>
               {getAliasName(address) || ellipsisAddress(address)}
             </Text>
             {!disableNavigate && (
@@ -679,6 +682,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
+  },
+  itemContentTextAliasName: {
+    maxWidth: 230,
   },
   headerTitleStyle: {
     color: colors2024['neutral-title-1'],
