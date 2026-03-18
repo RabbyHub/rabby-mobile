@@ -182,13 +182,12 @@ index 95aaaaf1813e8ffee49a81eea1cfb18bd0eb35cf..980872c0347ef28f3078684023912682
                      image: triggerItem?.icon,
                      subactions: nestedItems,
                      attributes: triggerItem.menuAttributes,
-@@ -446,19 +475,26 @@ If you want to use a custom component as your <Content />, you can use the creat
+@@ -446,19 +475,25 @@ If you want to use a custom component as your <Content />, you can use the creat
        shouldOpenOnLongPress = triggerItem.props.action === 'longPress'
      }
 
 +    const isAnchoredToRight = triggerItem?.props?.isAnchoredToRight;
 +    const androidSuppressNativeLongPress = triggerItem?.props?.androidSuppressNativeLongPress;
-+    shouldOpenOnLongPress &&= !androidSuppressNativeLongPress
      return (
        <MenuView
          title={menuTitle}
