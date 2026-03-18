@@ -106,7 +106,6 @@ const nftListStore = zCreate<NFTListState>((set, get) => ({
     const { top10Addresses } = await getTop10MyAccounts(true);
     await get().batchLoadCacheNFT(top10Addresses, {
       core: true,
-      maxLength: 20,
     });
   },
 
