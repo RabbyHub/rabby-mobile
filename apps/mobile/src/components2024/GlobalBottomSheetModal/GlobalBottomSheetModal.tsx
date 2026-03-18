@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { cloneElement } from 'react';
 import { useApproval } from '@/hooks/useApproval';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -246,18 +246,44 @@ export const GlobalBottomSheetModal2024 = () => {
             ? View
             : BottomSheetView;
 
-        override_nested_object_props: {
-          finalBottomSheetModalProps.rootViewStyle = StyleSheet.flatten([
-            propsPreset?.rootViewStyle || {},
-            finalBottomSheetModalProps?.enableDynamicSizing ? {} : { flex: 1 },
-            finalBottomSheetModalProps?.rootViewStyle || {},
-          ]);
-        }
+        finalBottomSheetModalProps.rootViewStyle = StyleSheet.flatten([
+          propsPreset?.rootViewStyle || {},
+          finalBottomSheetModalProps?.enableDynamicSizing
+            ? {}
+            : {
+                flex: 1,
+              },
+          finalBottomSheetModalProps?.rootViewStyle || {},
+        ]);
 
         const modalViewProps = {
           ...modal.params,
           $createParams: modal.params,
         };
+
+        let children = (
+          <RootView
+            // eslint-disable-next-line react-native/no-inline-styles
+            // TODO: need check
+            style={finalBottomSheetModalProps.rootViewStyle}
+            {...panResponder.panHandlers}>
+            <ModalView {...modalViewProps} />
+          </RootView>
+        );
+
+        if (
+          !finalBottomSheetModalProps.enableDynamicSizing &&
+          RootView === BottomSheetView
+        ) {
+          children = (
+            // eslint-disable-next-line react-native/no-inline-styles
+            <View style={{ flex: 1 }}>
+              {cloneElement(children, {
+                style: [children.props.style, { bottom: 0 }],
+              })}
+            </View>
+          );
+        }
 
         return (
           <AppBottomSheetModal
@@ -275,15 +301,7 @@ export const GlobalBottomSheetModal2024 = () => {
             key={modal.id}
             ref={modal.ref}
             name={modal.id}
-            children={
-              <RootView
-                // eslint-disable-next-line react-native/no-inline-styles
-                // TODO: need check
-                style={finalBottomSheetModalProps.rootViewStyle}
-                {...panResponder.panHandlers}>
-                <ModalView {...modalViewProps} />
-              </RootView>
-            }
+            children={children}
             stackBehavior="push"
             {...makeBottomSheetProps({
               createParams: modal.params,
