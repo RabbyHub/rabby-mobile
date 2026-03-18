@@ -57,7 +57,10 @@ const HistoryList = ({ recentShowTime }: { recentShowTime: number }) => {
               return (
                 <View style={styles.addressRow}>
                   <WalletIcon style={styles.walletIcon} />
-                  <Text style={styles.address}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.address}>
                     {currentAccount?.aliasName ||
                       ellipsisAddress(currentAccount?.address || '')}
                   </Text>
@@ -243,6 +246,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
   },
   walletIcon: {
     borderRadius: 4,
