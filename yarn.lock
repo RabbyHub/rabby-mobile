@@ -10336,6 +10336,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 2.0.0
+  resolution: "@react-native-menu/menu@patch:@react-native-menu/menu@npm%3A2.0.0#./.yarn/patches/@react-native-menu-menu-npm-2.0.0-15e1fd477a.patch::version=2.0.0&hash=b67015&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: f906ed842252fd6afb0ce3f8cc5e7cbc0c71f5ea606f66045184966e7ab2e0c1c0230b5ad73906de9bd781fb1f564be6b4bc32f83c832add17acebf96831c3bb
+  languageName: node
+  linkType: hard
+
 "@react-native/assets-registry@npm:0.81.6":
   version: 0.81.6
   resolution: "@react-native/assets-registry@npm:0.81.6"
