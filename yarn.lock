@@ -44165,7 +44165,7 @@ __metadata:
 
 "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=9bb0a3&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=513c49&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch::version=1.10.0&hash=21cfe7&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": ^2.0.1
     "@radix-ui/react-dropdown-menu": ^2.0.1
@@ -44175,13 +44175,13 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: 6ceb0aad1df0ed3bc3ecfbef34f7e0834bdc90f1192804b3aa60eea5de71b3a370113ee1b0fe906a408f5dd0af8dbd542362cb9906c80f0626f9389483fcae95
+  checksum: 12a99c59d90f4b42102966fd1bff8345d3f58d84d23ec7ee2d6aa2b24c66581073a501130c7e29080c7ef19c2325266945c948c1399d10de5e624b1df87aeb8d
   languageName: node
   linkType: hard
 
 "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=9bb0a3&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.10.0
-  resolution: "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=513c49&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::version=1.10.0&hash=2d6f92&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "zeego@patch:zeego@patch%3Azeego@npm%253A1.10.0%23./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch%3A%3Aversion=1.10.0&hash=21cfe7&locator=%2540rabby-wallet%252Fmobile-monorepo%2540workspace%253A.#./.yarn/patches/zeego-patch-5b72c1c320.patch::version=1.10.0&hash=2d6f92&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@radix-ui/react-context-menu": ^2.0.1
     "@radix-ui/react-dropdown-menu": ^2.0.1
@@ -44191,7 +44191,7 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-ios-context-menu: ^2.3.2
-  checksum: a8ff086701ae5956f59c85d9462d3ab624a97f296d99b31caaf6a7a7ffe34713431af86e3a2e0b5755bec0e494b606b690716c4c595fb28b523af20ca4373d0f
+  checksum: 014e1409f3f9d7eb9da0aafecbda5ea2002e80a8801df71a0fc62fd0c4debca53dadcf4f66247c7711673c5d52adf958af9d5de98f313e582fc1d300c6615436
   languageName: node
   linkType: hard
 
