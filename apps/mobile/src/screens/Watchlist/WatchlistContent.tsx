@@ -11,13 +11,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import {
   buildMarketTokenDetailFrom,
   getMarketTabClickListAction,
-  getMarketTabViewAction,
 } from '@/screens/Market/analytics';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { tokenItemToITokenItem } from '@/utils/token';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +31,7 @@ import {
   watchlistChangeSortAtom,
   watchlistTokenSortAtom,
 } from './sort';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export function WatchlistContent() {
   const { styles } = useTheme2024({ getStyle });
@@ -51,7 +50,6 @@ export function WatchlistContent() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const focusedTab = useFocusedTab();
-  const isFocused = useIsFocused();
 
   const showGuide = useMemo(() => {
     return !skip && !hasData && !watchlistLoading && !watchlistTokens.length;
@@ -76,18 +74,6 @@ export function WatchlistContent() {
   useEffect(() => {
     setSkip(preferenceService.getWatchlistSkip());
   }, []);
-
-  useEffect(() => {
-    const isTabActive = isFocused && focusedTab === 'watchlist';
-    const action = getMarketTabViewAction('watchlist');
-
-    if (isTabActive && action) {
-      matomoRequestEvent({
-        category: 'Rabby Market',
-        action,
-      });
-    }
-  }, [focusedTab, isFocused]);
 
   useEffect(() => {
     if (hotTokenList.length > 0 && !hasInitialized) {

@@ -9,45 +9,17 @@ export const getMarketTabActionPrefix = (categoryId: string) => {
   return MARKET_TAB_ACTION_PREFIX[categoryId] || null;
 };
 
-export const getMarketTabViewAction = (categoryId: string) => {
+const buildAction = (categoryId: string, suffix: string) => {
   const prefix = getMarketTabActionPrefix(categoryId);
-
-  if (!prefix) {
-    return null;
-  }
-
-  return `${prefix}_View`;
+  return prefix ? `${prefix}_${suffix}` : null;
 };
-
-export const getMarketTabClickListAction = (categoryId: string) => {
-  const prefix = getMarketTabActionPrefix(categoryId);
-
-  if (!prefix) {
-    return null;
-  }
-
-  return `${prefix}_ClickList`;
-};
-
-export const getMarketTabToSwapPageAction = (categoryId: string) => {
-  const prefix = getMarketTabActionPrefix(categoryId);
-
-  if (!prefix) {
-    return null;
-  }
-
-  return `${prefix}_ToSwapPage`;
-};
-
-export const getMarketTabCreateSwapTxAction = (categoryId: string) => {
-  const prefix = getMarketTabActionPrefix(categoryId);
-
-  if (!prefix) {
-    return null;
-  }
-
-  return `${prefix}_CreateSwapTx`;
-};
+export const getMarketTabViewAction = (id: string) => buildAction(id, 'View');
+export const getMarketTabClickListAction = (id: string) =>
+  buildAction(id, 'ClickList');
+export const getMarketTabToSwapPageAction = (id: string) =>
+  buildAction(id, 'ToSwapPage');
+export const getMarketTabCreateSwapTxAction = (id: string) =>
+  buildAction(id, 'CreateSwapTx');
 
 export const buildMarketTokenDetailFrom = ({
   categoryId,
@@ -59,9 +31,12 @@ export const buildMarketTokenDetailFrom = ({
   id?: string;
   chain?: string;
   symbol?: string;
-}) => ({
-  scene: categoryId,
-  id,
-  chain,
-  symbol: symbol || '',
-});
+}) =>
+  MARKET_TAB_ACTION_PREFIX[categoryId.toLowerCase()]
+    ? {
+        scene: categoryId,
+        id,
+        chain,
+        symbol: symbol || '',
+      }
+    : undefined;
