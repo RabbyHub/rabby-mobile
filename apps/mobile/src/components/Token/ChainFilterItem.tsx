@@ -31,6 +31,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
       marginHorizontal: 4,
+      maxWidth: 80,
     },
 
     chainFilterItemClose: {
@@ -65,7 +66,12 @@ export default function ChainFilterItem({
         style={{ flexDirection: 'row', alignItems: 'center' }}>
         <ChainIconImage size={16} chainEnum={chainItem.enum} />
         {!hideChainText && (
-          <Text style={[styles.chainFilterChainName]}>{chainItem.name}</Text>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.chainFilterChainName]}>
+            {chainItem.name}
+          </Text>
         )}
       </Pressable>
       <TouchableOpacity
