@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Platform, RefreshControl, View, ViewToken } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
@@ -13,9 +7,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import {
   buildMarketTokenDetailFrom,
   getMarketTabClickListAction,
-  getMarketTabViewAction,
 } from '@/screens/Market/analytics';
-import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { memeItemToITokenItem } from '@/utils/token';
@@ -31,6 +23,7 @@ import {
   TokenListItem,
 } from '../../Meme/components/TokenItem';
 import { useTokenMarketTokenList } from '../../Meme/hooks/useTokenMarketTokenList';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -124,18 +117,6 @@ export function MarketCategoryContent({
   const isFocused = useIsFocused();
   const focusedTab = useFocusedTab();
   const [isInFirst100Items, setIsInFirst100Items] = useState(true);
-
-  useEffect(() => {
-    const isTabActive = isFocused && focusedTab === categoryId;
-    const action = getMarketTabViewAction(categoryId);
-
-    if (isTabActive && action) {
-      matomoRequestEvent({
-        category: 'Rabby Market',
-        action,
-      });
-    }
-  }, [categoryId, focusedTab, isFocused]);
 
   const handleVolumeSort = useCallback(() => {
     if (!supportedSortFields.has('volume_24h')) {
