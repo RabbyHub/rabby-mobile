@@ -7,16 +7,23 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatPercentageKMB } from '@/screens/Meme/components/TokenItem';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
-import { atom, getDefaultStore, useAtomValue } from 'jotai';
+import { create } from 'zustand';
 
 const ETH_UUID = 'eth:eth';
-export const ethTokenAtom = atom<TokenDetailWithPriceCurve | null>(null);
-const defaultStore = getDefaultStore();
+type ETHStatusStore = {
+  ethToken: TokenDetailWithPriceCurve | null;
+  setEthToken: (token: TokenDetailWithPriceCurve | null) => void;
+};
+
+const useETHStatusStore = create<ETHStatusStore>(set => ({
+  ethToken: null,
+  setEthToken: token => set({ ethToken: token }),
+}));
 
 export const refreshETHStatus = async () => {
   try {
     const [token] = await openapi.getTokensDetailByUuids([ETH_UUID]);
-    defaultStore.set(ethTokenAtom, token || null);
+    useETHStatusStore.getState().setEthToken(token || null);
   } catch (error) {
     console.error('get ETH status error', error);
   }
@@ -24,13 +31,11 @@ export const refreshETHStatus = async () => {
 
 export const ETHStatus = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const ethToken = useAtomValue(ethTokenAtom);
+  const ethToken = useETHStatusStore(s => s.ethToken);
 
   useEffect(() => {
-    if (!ethToken) {
-      refreshETHStatus();
-    }
-  }, [ethToken]);
+    refreshETHStatus();
+  }, []);
 
   const priceChange = ethToken?.price_24h_change;
   const priceChangeText = useMemo(() => {
