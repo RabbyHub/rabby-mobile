@@ -307,7 +307,7 @@ export function WatchlistContent() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
           ListHeaderComponent={renderListHeader}
-          stickyHeaderIndices={list.length ? [0] : undefined}
+          stickyHeaderIndices={[0]}
           ListEmptyComponent={renderListEmptyComponent}
           ListFooterComponent={renderListFooter}
           refreshControl={
