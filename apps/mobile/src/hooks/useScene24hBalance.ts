@@ -11,8 +11,9 @@ import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import {
   AccountsBalanceState,
+  accountsBalanceEvents,
   apisAccountsBalance,
-  balanceAccountsStore,
+  getBalanceCacheAccounts,
 } from '@/hooks/useAccountsBalance';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { useShallow } from 'zustand/react/shallow';
@@ -191,21 +192,29 @@ export type FetchTotalBalanceOptions = {
   addresses?: string | string[];
   force?: boolean;
   totals?: ReturnType<typeof apisAccountsBalance.computeTotalBalance>;
+  reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
 };
 const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
   async (scene: BalanceScene, options?: FetchTotalBalanceOptions) => {
-    let { addresses, force = false } = options || {};
+    let { addresses, force = false, reason } = options || {};
     if (!addresses?.length) {
       addresses = (await getTop10MyAccounts()).top10Addresses;
     }
     const address = Array.isArray(addresses) ? addresses : [addresses];
+    const prevAddresses = scene24hBalanceStore.getState().addresses[scene];
+    const nextAddressesSorted = [...address].map(i => i.toLowerCase()).sort();
+    const prevAddressesSorted = [...prevAddresses]
+      .map(i => i.toLowerCase())
+      .sort();
+    const hasAddressSelectionChanged =
+      nextAddressesSorted.join('|') !== prevAddressesSorted.join('|');
     setSceneAddresses(scene, address);
 
     const totals =
       options?.totals ||
       apisAccountsBalance.computeTotalBalance(
         address,
-        balanceAccountsStore.getState().balance,
+        getBalanceCacheAccounts(),
       );
     const queue = queues[scene];
 
@@ -223,7 +232,11 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
       }
       if (!force) {
         const now = Date.now();
-        if (now - sceneLastLoadingRef[scene] < TEN_MINUTES) {
+        if (
+          !hasAddressSelectionChanged &&
+          reason !== 'selection_changed' &&
+          now - sceneLastLoadingRef[scene] < TEN_MINUTES
+        ) {
           beforeReturn();
           return;
         }
@@ -293,16 +306,22 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
 );
 
 export const refresh24hAssets = async ({
+  addresses,
   force = false,
   balanceAccounts,
+  reason,
 }: {
+  addresses?: string[];
   force?: boolean;
   balanceAccounts?: AccountsBalanceState['balance'];
+  reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
 } = {}) => {
-  const { top10Addresses } = await getTop10MyAccounts();
+  const top10Addresses =
+    addresses || (await getTop10MyAccounts()).top10Addresses;
   refreshCombinedDataForScene('Home', {
     addresses: top10Addresses,
     force,
+    reason,
     ...(balanceAccounts &&
       Object.keys(balanceAccounts).length > 0 && {
         totals: apisAccountsBalance.computeTotalBalance(
@@ -314,9 +333,22 @@ export const refresh24hAssets = async ({
 };
 
 export function startProcessScene24hBalanceEvents() {
-  balanceAccountsStore.subscribe(state => {
+  accountsBalanceEvents.on(
+    'SELECTION_CHANGED',
+    ({ nextAddresses, balance }) => {
+      refresh24hAssets({
+        addresses: nextAddresses,
+        balanceAccounts: balance,
+        reason: 'selection_changed',
+      });
+    },
+  );
+
+  accountsBalanceEvents.on('BALANCE_CHANGED', ({ addresses, balance }) => {
     refresh24hAssets({
-      balanceAccounts: state.balance,
+      addresses,
+      balanceAccounts: balance,
+      reason: 'balance_changed',
     });
   });
 }

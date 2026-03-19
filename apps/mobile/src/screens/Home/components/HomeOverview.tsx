@@ -799,8 +799,8 @@ export const HomeOverview = React.memo(() => {
       }
       triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
-        refresh24hAssets({ balanceAccounts });
-        refreshDayCurve({ balanceAccounts });
+        refresh24hAssets({ balanceAccounts, reason: 'manual_refresh' });
+        refreshDayCurve({ balanceAccounts, reason: 'manual_refresh' });
       });
       triggerUpdateAlert();
       // // leave here to measure perf impact
@@ -816,8 +816,16 @@ export const HomeOverview = React.memo(() => {
     return Promise.all([
       // force update balance from server api
       triggerUpdate(true).then(balanceAccounts => {
-        refresh24hAssets({ force: true, balanceAccounts });
-        refreshDayCurve({ force: true, balanceAccounts });
+        refresh24hAssets({
+          force: true,
+          balanceAccounts,
+          reason: 'manual_refresh',
+        });
+        refreshDayCurve({
+          force: true,
+          balanceAccounts,
+          reason: 'manual_refresh',
+        });
       }),
       checkAddressesEligibility(true),
     ]).finally(() => {
