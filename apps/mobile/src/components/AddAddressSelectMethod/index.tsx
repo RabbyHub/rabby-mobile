@@ -16,6 +16,7 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
+import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
   shouldRedirectToSetPasswordBefore2024: ReturnType<
@@ -29,6 +30,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { seedPhraseList } = useSeedPhrase();
 
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
@@ -48,9 +50,20 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
               return;
             }
 
-            naviPush(RootNames.StackAddress, {
-              screen: RootNames.CreateSelectMethod,
-            });
+            if (seedPhraseList.length > 0) {
+              naviPush(RootNames.StackAddress, {
+                screen: RootNames.CreateSelectMethod,
+              });
+            } else {
+              naviPush(RootNames.StackAddress, {
+                screen: RootNames.CreateNewAddress,
+                params: {
+                  noSetupPassword: true,
+                  useCurrentSeed: false,
+                },
+              });
+            }
+
             onDone();
           }}
           style={styles.importItem}
