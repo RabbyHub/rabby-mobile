@@ -88,6 +88,7 @@ export const connect = async ({
         icon: '',
       },
     ),
+    origin,
     currentAccount: account,
     isConnected: true,
     chainId,
