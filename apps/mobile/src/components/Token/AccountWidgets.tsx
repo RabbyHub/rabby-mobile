@@ -20,7 +20,7 @@ export function AccountInfoInTokenRow({
   if (!ownerAccount) return null;
 
   return (
-    <AddressItem account={ownerAccount}>
+    <AddressItem account={ownerAccount} style={styles.root}>
       {({ WalletIcon }) => {
         return (
           <View style={[styles.accountContainer, containerStyle]}>
@@ -40,6 +40,9 @@ export function AccountInfoInTokenRow({
 
 const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
   return {
+    root: {
+      flexShrink: 1,
+    },
     accountContainer: {
       borderRadius: 12,
       flexDirection: 'row',
@@ -47,6 +50,7 @@ const getAccountInfoInTokenRowStyle = createGetStyles2024(({ colors2024 }) => {
       justifyContent: 'flex-start',
       flexShrink: 1,
       minWidth: 0,
+      width: '100%',
     },
     walletIcon: {
       width: 18,

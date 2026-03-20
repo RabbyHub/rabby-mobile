@@ -21,6 +21,7 @@ import {
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
 import { Text } from '@/components/Typography';
+import { useIosForceDisableAlertForSensitiveScene } from '@/hooks/appSettings';
 
 const RcTip = makeThemeIconFromCC(RcTipCC, 'orange-default');
 
@@ -78,14 +79,14 @@ export default function SecurityTipStubModal({
 
 export function GlobalSecurityTipStubModal() {
   const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
-  const { atSensitiveScene, iosBlurType, onOk } = useAtSensitiveScene();
+  const { atSensitiveScene, iosBlurType, warningScreenshotBackup, onOk } =
+    useAtSensitiveScene();
 
   const shouldShowSecurityTip =
     atSensitiveScene &&
     isBeingCaptured &&
     iosBlurType === ProtectType.SafeTipModal;
 
-  const { warningScreenshotBackup } = useAtSensitiveScene();
   const { isScreenshotJustNow } = useIOSScreenshottedJustNow();
 
   React.useEffect(() => {

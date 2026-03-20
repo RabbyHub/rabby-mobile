@@ -76,7 +76,7 @@
         "Approve": "Approved",
         "Revoke": "Revoked {{token}} Approval",
         "Contract": "Deploy Contract",
-        "Cancel": "Cancel Pending Transction",
+        "Cancel": "Cancel Pending Transaction",
         "Default": "Interaction",
         "Buy": "Purchased"
       },

@@ -19,6 +19,7 @@ import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
+import useAppChainStore from '@/store/appchain';
 
 export const isTabsSwiping = {
   value: false,
@@ -140,6 +141,17 @@ export async function getShowReceiveAddressTip(options?: {
     targetAccount.evmBalance ??
     0;
 
+  const appChains = await useAppChainStore
+    .getState()
+    .getAppChains(targetAccount.address);
+  const appChainHasBalance =
+    !!appChains &&
+    appChains.some(chain =>
+      typeof chain.netWorth === 'number'
+        ? chain.netWorth > 0
+        : !!chain.netWorth,
+    );
+
   let borned = true;
   try {
     const addressDesc = await openapi.addrDesc(targetAccount.address);
@@ -151,6 +163,7 @@ export async function getShowReceiveAddressTip(options?: {
   return {
     targetAccount,
     evmBalance,
+    appChainHasBalance,
     borned,
   };
 }
@@ -174,7 +187,8 @@ export function useAccountHomeShowReceiveTip(
   const accountToShowReceiveTip =
     !!targetAccount &&
     asyncResult.value?.evmBalance === 0 &&
-    !asyncResult.value?.borned
+    !asyncResult.value?.borned &&
+    !asyncResult.value?.appChainHasBalance
       ? targetAccount
       : null;
 

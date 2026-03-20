@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DisplayNftItem } from '../types';
-import { useSafeState } from 'ahooks';
 import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
-import { syncNFTs } from '@/databases/hooks/assets';
 import { useSingleNftRefresh } from './refresh';
-import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { CombineNFTItem } from './store';
 import { apisAddrChainStatics } from '../useChainInfo';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import nftListStore from '@/store/nfts';
+
+const EMPTY_NFT_LIST: DisplayNftItem[] = [];
 
 export const tagNfts = (nfts: NFTItem[]): DisplayNftItem[] => {
   return nfts.map(i => {
@@ -29,31 +29,44 @@ export const tagNfts = (nfts: NFTItem[]): DisplayNftItem[] => {
 };
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [list, setList] = useSafeState<DisplayNftItem[]>([]);
+  const normalizedAddr = addr?.toLowerCase();
+  const list = nftListStore(
+    useCallback(
+      s =>
+        normalizedAddr
+          ? s.nftsMap[normalizedAddr] || EMPTY_NFT_LIST
+          : EMPTY_NFT_LIST,
+      [normalizedAddr],
+    ),
+  );
+  const getNFTListWithCache = nftListStore(s => s.getNFTListWithCache);
+  const batchLoadCacheNFT = nftListStore(s => s.batchLoadCacheNFT);
+  const refreshTagNftByStore = nftListStore(s => s.refreshTagNft);
 
   const debouncedList = useDebouncedValue(list, 500);
   useEffect(() => {
-    if (!addr || !debouncedList) return;
+    if (!addr || !debouncedList) {
+      return;
+    }
     apisAddrChainStatics.updateNft(addr, debouncedList);
   }, [addr, debouncedList]);
 
   const fetchData = useCallback(
     async (force?: boolean) => {
       if (!addr) {
+        setIsLoading(false);
         return;
       }
+      setIsLoading(true);
       try {
-        const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
-        setList(tagNfts(cacheNfts));
-        const nfts = await syncNFTs(addr, force);
-        setList(tagNfts(nfts));
+        await getNFTListWithCache(addr, force);
       } catch (e) {
         console.error('ServiceErrorType.NFT', e);
       } finally {
         setIsLoading(false);
       }
     },
-    [addr, setList],
+    [addr, getNFTListWithCache],
   );
 
   const batchLocalData = useCallback(async () => {
@@ -61,16 +74,15 @@ export const useQueryNft = (addr?: string, visible = true) => {
       return;
     }
     try {
-      const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
-      setList(tagNfts(cacheNfts));
+      await batchLoadCacheNFT([addr]);
     } catch (e) {
       console.error('nft batchLocalData error', e);
     }
-  }, [addr, setList]);
+  }, [addr, batchLoadCacheNFT]);
 
   const refreshTagNft = useCallback(async () => {
-    setList(pre => tagNfts(pre || []));
-  }, [setList]);
+    refreshTagNftByStore();
+  }, [refreshTagNftByStore]);
 
   const debounceReloadNftList = useMemo(
     () => debounce(batchLocalData, 2000),
@@ -123,7 +135,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
 
   return {
     isLoading,
-    list: list || [],
+    list,
     reload: fetchData,
   };
 };

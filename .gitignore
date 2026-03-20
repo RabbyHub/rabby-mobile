@@ -42,3 +42,6 @@ preview-build-message.txt
 .claude/worktrees
 docs
 CLAUDE*.local.md
+
+# codex
+.codex

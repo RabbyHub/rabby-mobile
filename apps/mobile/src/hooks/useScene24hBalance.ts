@@ -22,6 +22,9 @@ const queues: Record<BalanceScene, PQueue> = {
   Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
 };
 const TEN_MINUTES = 10 * 60 * 1000;
+const normalizeAddressesForCompare = (addresses: string[]) =>
+  Array.from(new Set(addresses.map(addr => addr.toLowerCase()))).sort();
+let lastTop10AddressesSerialized = '';
 
 type Multi24hBalance = {
   [P: string]: IBalance24hData['data'] & {
@@ -300,13 +303,18 @@ export const refresh24hAssets = async ({
   balanceAccounts?: AccountsBalanceState['balance'];
 } = {}) => {
   const { top10Addresses } = await getTop10MyAccounts();
+  const normalizedTop10Addresses = normalizeAddressesForCompare(top10Addresses);
+  const serializedTop10Addresses = normalizedTop10Addresses.join(',');
+  const hasTop10AddressesChanged =
+    serializedTop10Addresses !== lastTop10AddressesSerialized;
+  lastTop10AddressesSerialized = serializedTop10Addresses;
   refreshCombinedDataForScene('Home', {
-    addresses: top10Addresses,
-    force,
+    addresses: normalizedTop10Addresses,
+    force: force || hasTop10AddressesChanged,
     ...(balanceAccounts &&
       Object.keys(balanceAccounts).length > 0 && {
         totals: apisAccountsBalance.computeTotalBalance(
-          top10Addresses,
+          normalizedTop10Addresses,
           balanceAccounts || {},
         ),
       }),

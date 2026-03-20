@@ -32,7 +32,10 @@ import {
   atSensitiveSceneState,
   bottomSheetModalSecurityApis,
 } from '@/components2024/GlobalBottomSheetModal/security';
-import { getExpScreenCapture, useExpScreenCapture } from './appSettings';
+import {
+  getExpScreenCapture,
+  useIosForceDisableAlertForSensitiveScene,
+} from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
@@ -324,7 +327,7 @@ export const TabbarLabels: {
 } = {
   [HomeTabName.overview]: { index: 0, label: '' },
   [HomeTabName.token]: { index: 1, label: 'Token' },
-  [HomeTabName.defi]: { index: 2, label: 'Defi' },
+  [HomeTabName.defi]: { index: 2, label: 'DeFi' },
   [HomeTabName.nft]: { index: 3, label: 'NFT' },
 };
 const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
@@ -715,7 +718,22 @@ atSensitiveSceneState.subscribe(s => {
 });
 
 export function useAtSensitiveScene() {
-  return atSensitiveScreenStore(useShallow(s => getAtSensitiveScene(s)));
+  const { iosForceDisableAlertForSensitiveScene } =
+    useIosForceDisableAlertForSensitiveScene();
+
+  return atSensitiveScreenStore(
+    useShallow(s => {
+      const ret = getAtSensitiveScene(s);
+
+      if (iosForceDisableAlertForSensitiveScene) {
+        ret.atSensitiveScene = false;
+        ret.iosBlurType = ProtectType.NONE;
+        ret.warningScreenshotBackup = false;
+      }
+
+      return ret;
+    }),
+  );
 }
 
 export function getAtSensitiveScene(s = atSensitiveScreenStore.getState()) {

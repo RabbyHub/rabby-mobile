@@ -21,6 +21,10 @@ import { Account } from '@/core/services/preference';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { FromSceneParam } from '@/navigation-type';
+import {
+  getMarketTabActionPrefix,
+  getMarketTabCreateSwapTxAction,
+} from '@/screens/Market/analytics';
 import { stats } from '@/utils/stats';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
@@ -261,11 +265,19 @@ export const dexSwap = async (
           };
           transactionHistoryService.addSwapTxHistory(swapTxHistoryObj);
 
-          if (from?.scene === 'meme') {
+          const marketTab = from?.scene
+            ? getMarketTabActionPrefix(from.scene)
+            : null;
+          const createSwapTxAction = from?.scene
+            ? getMarketTabCreateSwapTxAction(from.scene)
+            : null;
+
+          if (marketTab && createSwapTxAction) {
             stats.report('memecoinSwapTx', {
               chain: chainObj.serverId,
               tx_id: hash,
               dex_id: dexId || 'WrapToken',
+              market_tab: marketTab,
               meme_chain: from?.chain || '',
               meme_ca: from?.id || '',
               meme_symbol: from?.symbol || '',
@@ -276,8 +288,8 @@ export const dexSwap = async (
               app_version: APP_VERSIONS.fromNative || '0',
             });
             matomoRequestEvent({
-              category: 'Rabby Memecoin',
-              action: 'Memecoin_CreateSwapTx',
+              category: 'Rabby Market',
+              action: createSwapTxAction,
             });
           }
           if (swapTxHistoryObj.isFromCopyTrading) {

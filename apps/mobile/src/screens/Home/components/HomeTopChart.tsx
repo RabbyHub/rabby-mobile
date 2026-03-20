@@ -3,8 +3,8 @@ import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Dimensions, Pressable, View } from 'react-native';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
+import { createGetStyles2024 } from '@/utils/styles';
+import { formatSmallCurrencyValue, type CurvePoint } from '@/hooks/useCurve';
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -29,11 +29,38 @@ import {
   useSingleHomeHomeTopChart,
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { Text, AnimateableText } from '@/components/Typography';
+import { AnimateableText } from '@/components/Typography';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
+
+const ZERO_LINE_CHART_DATA: CurvePoint[] = [
+  {
+    value: 0,
+    netWorth: '$0',
+    change: '$0',
+    rawChange: 0,
+    isLoss: false,
+    changePercent: '0%',
+    timestamp: 0,
+    dateString: '',
+    clockTimeString: '',
+    dateTimeString: '',
+  },
+  {
+    value: 0,
+    netWorth: '$0',
+    change: '$0',
+    rawChange: 0,
+    isLoss: false,
+    changePercent: '0%',
+    timestamp: 1,
+    dateString: '',
+    clockTimeString: '',
+    dateTimeString: '',
+  },
+];
 
 export const HomeTopChart = memo(function Chart({
   isOffline,
@@ -92,6 +119,10 @@ export const HomeTopChart = memo(function Chart({
     };
   });
 
+  const chartData = useMemo(() => {
+    return data.list.length ? data.list : ZERO_LINE_CHART_DATA;
+  }, [data.list]);
+
   return (
     <Animated.View
       onTouchStart={e => {
@@ -99,7 +130,7 @@ export const HomeTopChart = memo(function Chart({
       }}
       style={[styles.container, animatedHeightStyle]}>
       <View style={styles.chartContainer}>
-        <LineChart.Provider data={data.list}>
+        <LineChart.Provider data={chartData}>
           {balanceLoadingWithoutLocal ? (
             <Skeleton
               width={181}
@@ -113,7 +144,7 @@ export const HomeTopChart = memo(function Chart({
           <Animated.View style={[animOpacityStyle]}>
             {isOffline ||
             isNoAssets ||
-            !data.list.length ? null : !isLoadingChartData ? (
+            !chartData.length ? null : !isLoadingChartData ? (
               <LineChart
                 height={104}
                 width={ScreenWidth - 32}
@@ -155,7 +186,6 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     balanceLoadingWithoutLocal: loading,
     selectData,
     balance,
-    evmBalance,
   } = useSingleHomeHomeTopChart();
 
   const rawNetWorth = balance || 0;
@@ -197,7 +227,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
       if (changePercent === '0%') {
         return changePercent;
       }
-      return `${isLoss ? '-' : '+'}${changePercent}`;
+      return `${changePercent ? (isLoss ? '-' : '+') : ''}${changePercent}`;
     }
 
     const isActiveIndexData =
@@ -211,7 +241,9 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     if (changePercent === '0%') {
       return changePercent;
     }
-    return `${formatLoss ? '-' : '+'}${formatChangePercent}`;
+    return `${
+      formatChangePercent ? (formatLoss ? '-' : '+') : ''
+    }${formatChangePercent}`;
   }, [data, currentIndex.value, changePercent, isLoss, isInitialized]);
 
   const dateTime = useDerivedValue(() => {

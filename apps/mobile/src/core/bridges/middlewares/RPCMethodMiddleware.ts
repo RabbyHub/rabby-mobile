@@ -102,12 +102,15 @@ RPCMethodsMiddleParameters) =>
     };
 
     // todo check this
-    const methodAllowed =
+    let methodAllowed =
       req.method === SELF_CHECK_RPC_METHOD ||
       SAFE_RPC_METHODS.includes(req.method) ||
       req.method === 'eth_accounts' ||
       checkTabActive() ||
       bridge?.isFromMobileInnerDapp;
+    if (req.method === 'eth_sendTransaction' && !checkTabActive()) {
+      methodAllowed = bridge?.isFromMobileInnerDapp;
+    }
 
     // const methodAllowed =
     //   req.method === SELF_CHECK_RPC_METHOD ||
