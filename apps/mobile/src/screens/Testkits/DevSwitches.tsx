@@ -32,6 +32,7 @@ import {
 import {
   storeApiExpSettingData,
   useExpScreenCapture,
+  useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToggleShowAutoLockCountdown,
@@ -84,6 +85,11 @@ function DevSwitchAboutScreenProtection() {
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
 
+  const {
+    iosForceDisableAlertForSensitiveScene,
+    toggleIosForceDisableAlertForSensitiveScene,
+  } = useIosForceDisableAlertForSensitiveScene();
+
   const { isScreenshotReportEnabled } = useIsShowFeedbackOnScreenshot();
   const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
 
@@ -129,6 +135,27 @@ function DevSwitchAboutScreenProtection() {
               : `Disallow Capture Sensitive Scene`}
           </Text>
         </TouchableOpacity>
+
+        {IS_IOS && (
+          <TouchableOpacity
+            style={[styles.switchRowWrapper, { marginTop: 12 }]}
+            onPress={() => {
+              toggleIosForceDisableAlertForSensitiveScene();
+            }}>
+            <AppSwitch2024
+              onPress={evt => evt.stopPropagation()}
+              value={iosForceDisableAlertForSensitiveScene}
+              onValueChange={nextVal => {
+                toggleIosForceDisableAlertForSensitiveScene(nextVal);
+              }}
+            />
+            <Text style={styles.switchLabel}>
+              {iosForceDisableAlertForSensitiveScene
+                ? `Force Disable Alert for Sensitive Scene`
+                : `Alert for Sensitive Scene when screen recording/screenshot`}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[styles.switchRowWrapper, { marginTop: 12 }]}
