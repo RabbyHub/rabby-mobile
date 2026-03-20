@@ -35,7 +35,7 @@ export const EIP7702SupportedChainsSheet = forwardRef<
 >(({ chains, title = 'Supported Chains', onClose }, ref) => {
   const { t } = useTranslation();
   const { safeOffBottom } = useSafeSizes();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
 
@@ -82,7 +82,7 @@ export const EIP7702SupportedChainsSheet = forwardRef<
       onDismiss={onClose}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg1',
+        linearGradientType: isLight ? 'bg0' : 'bg1',
       })}>
       <AppBottomSheetModalTitle title={title} style={styles.sheetTitle} />
       <View style={styles.sheetBody}>
@@ -99,18 +99,6 @@ export const EIP7702SupportedChainsSheet = forwardRef<
           ]}
           ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
         />
-        <View
-          style={[
-            styles.footerContainer,
-            { paddingBottom: safeOffBottom + 12 },
-          ]}>
-          <Button
-            title={t('global.GotIt')}
-            onPress={handleClose}
-            buttonStyle={styles.footerButton}
-            titleStyle={styles.footerButtonText}
-          />
-        </View>
       </View>
     </AppBottomSheetModal>
   );
@@ -118,7 +106,7 @@ export const EIP7702SupportedChainsSheet = forwardRef<
 
 EIP7702SupportedChainsSheet.displayName = 'EIP7702SupportedChainsSheet';
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   sheetTitle: {
     paddingTop: 12,
     marginBottom: 16,
@@ -142,7 +130,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   chainItem: {
     height: 78,
     borderRadius: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     paddingHorizontal: 16,
     paddingVertical: 14,
     flexDirection: 'row',
