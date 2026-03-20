@@ -117,10 +117,14 @@ const AssetPositionItem = ({
                   <WalletIcon
                     width={14}
                     height={14}
+                    style={styles.walletIcon}
                     type={item.account.brandName}
                     address={item.account.address}
                   />
-                  <Text style={styles.address}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.address}>
                     {item.account.aliasName ||
                       ellipsisAddress(item.account.address)}
                   </Text>
@@ -622,11 +626,16 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   pnlTextDown: {
     color: colors2024['red-default'],
   },
+  walletIcon: {
+    width: 14,
+    flexShrink: 0,
+  },
   address: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
+    flexShrink: 1,
     color: colors2024['neutral-secondary'],
   },
   hyperliquidText: {

@@ -107,8 +107,7 @@ export default function HomeHeaderArea({ style }: RNViewProps) {
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    width: '100%',
-    // marginLeft: -10,
+    flexShrink: 1,
   },
   innerBox: {
     width: '100%',
@@ -121,6 +120,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 1,
     gap: 6,
   },
   accountBox: {
