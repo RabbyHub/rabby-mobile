@@ -592,7 +592,17 @@ const tokenListStore = zCreate<TokenListState>(set => ({
       });
     });
     await waitQueueFinished(cacheTokenQueue);
-    set(() => ({ tokenListMap: cacheTokenMap }));
+    set(state => {
+      const mergedCacheTokenMap = { ...state.tokenListMap };
+      lowerAddresses.forEach(address => {
+        const normalizedAddress = address.toLowerCase();
+        const previousTokens = state.tokenListMap[normalizedAddress] || [];
+        const cacheTokens = cacheTokenMap[normalizedAddress] || [];
+        mergedCacheTokenMap[normalizedAddress] =
+          replacePreviousCoreTokensWithCacheTokens(previousTokens, cacheTokens);
+      });
+      return { tokenListMap: mergedCacheTokenMap };
+    });
     const realTimeTokenMap: Record<string, ITokenItem[]> = {};
     const realTimeTokenQueue = new PQueue({
       concurrency: 15,
