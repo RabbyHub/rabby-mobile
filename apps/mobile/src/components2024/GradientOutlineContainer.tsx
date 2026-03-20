@@ -1,5 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React, { forwardRef } from 'react';
+import React, { type Ref } from 'react';
 import {
   StyleSheet,
   View,
@@ -12,6 +12,7 @@ import LinearGradient, {
 } from 'react-native-linear-gradient';
 
 type GradientOutlineContainerProps = {
+  ref?: Ref<View>;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
@@ -28,29 +29,33 @@ type GradientOutlineContainerProps = {
  * Creates a frosted style card with a vertical gradient border that matches the
  * latest Figma spec for the multi-address home layout.
  */
-export const GradientOutlineContainer = forwardRef<
-  View,
-  GradientOutlineContainerProps
->((props, ref) => {
+export const GradientOutlineContainer = ({
+  ref,
+  children,
+  style,
+  contentStyle,
+  borderRadius = 16,
+  borderWidth = 1.5,
+  gradientColors: gradientColorsProp,
+  gradientLocations = undefined,
+  gradientStart = { x: 0.5, y: 0 },
+  gradientEnd: gradientEndProp,
+  pointerEvents,
+}: GradientOutlineContainerProps) => {
   const { isLight } = useTheme2024();
-  const {
-    children,
-    style,
-    contentStyle,
-    borderRadius = 16,
-    borderWidth = 1.5,
-    gradientColors = isLight
+
+  const gradientColors =
+    gradientColorsProp ??
+    (isLight
       ? [
           'rgba(255, 255, 255, 0.48)',
           'rgba(255, 255, 255, 0.18)',
           'rgba(255, 255, 255, 0.0)',
         ]
-      : ['rgba(35, 36, 40, 1)', 'rgba(35, 36, 40, 0)', 'rgba(35, 36, 40, 0)'],
-    gradientLocations = isLight ? [0, 0.46, 1] : [0, 0.11, 1],
-    gradientStart = { x: 0.5, y: 0 },
-    gradientEnd = isLight ? { x: 0.5, y: 1 } : { x: 0.5, y: 1 },
-    pointerEvents,
-  } = props;
+      : ['rgba(35, 36, 40, 1)', 'rgba(35, 36, 40, 0)', 'rgba(35, 36, 40, 0)']);
+
+  const gradientEnd =
+    gradientEndProp ?? (isLight ? { x: 0.5, y: 1 } : { x: 0.5, y: 1 });
 
   const innerRadius = Math.max(borderRadius - borderWidth, 0);
 
@@ -83,7 +88,7 @@ export const GradientOutlineContainer = forwardRef<
       </View>
     </LinearGradient>
   );
-});
+};
 
 GradientOutlineContainer.displayName = 'GradientOutlineContainer';
 

@@ -1,6 +1,6 @@
 // patch from file:///./../../../../node_modules/react-native-collapsible-tab-view/src/FlatList.tsx
 
-import React from 'react';
+import React, { type Ref } from 'react';
 import {
   FlatListProps as RNFlatListProps,
   FlatList as RNFlatList,
@@ -38,27 +38,29 @@ type FinalType<T> = RNGHFlatList<T>;
  * See: https://github.com/facebook/react/issues/15156#issuecomment-474590693
  */
 const FlatListMemo = React.memo(
-  React.forwardRef<
-    FinalType<unknown>,
-    React.PropsWithChildren<FinalProps<unknown>>
-  >((props, passRef) => {
-    return <FinalView ref={passRef} {...props} />;
-  }),
+  ({
+    ref,
+    ...props
+  }: React.PropsWithChildren<FinalProps<unknown>> & {
+    ref?: Ref<FinalType<unknown>>;
+  }) => {
+    return <FinalView ref={ref} {...props} />;
+  },
 );
 
-function FlatListImpl<R>(
-  {
-    contentContainerStyle,
-    style,
-    onContentSizeChange,
-    refreshControl,
-    ...rest
-  }: Omit<FinalProps<R>, 'onScroll'>,
-  passRef: React.Ref<FinalType<R>>,
-): React.ReactElement<any> {
+function TabsFlatList<R>({
+  contentContainerStyle,
+  style,
+  onContentSizeChange,
+  refreshControl,
+  ref,
+  ...rest
+}: Omit<FinalProps<R>, 'onScroll'> & {
+  ref?: Ref<FinalType<R>>;
+}): React.ReactElement<any> {
   const name = useTabNameContext();
   const { setRef, contentInset } = useTabsContext();
-  const ref = useSharedAnimatedRef<FinalType<R>>(passRef);
+  const innerRef = useSharedAnimatedRef<FinalType<R>>(ref ?? null);
 
   const { scrollHandler, enable } = useScrollHandlerY(name);
   const onLayout = useAfterMountEffect(rest.onLayout, () => {
@@ -75,8 +77,8 @@ function FlatListImpl<R>(
   } = useCollapsibleStyle();
 
   React.useEffect(() => {
-    setRef(name, ref);
-  }, [name, ref, setRef]);
+    setRef(name, innerRef);
+  }, [name, innerRef, setRef]);
 
   const scrollContentSizeChange = useUpdateScrollViewContentSize({
     name,
@@ -126,7 +128,7 @@ function FlatListImpl<R>(
       {...rest}
       onLayout={onLayout}
       // @ts-expect-error - TODO: investigate type issues with ref
-      ref={ref}
+      ref={innerRef}
       bouncesZoom={false}
       style={memoStyle}
       contentContainerStyle={memoContentContainerStyle}
@@ -147,6 +149,4 @@ function FlatListImpl<R>(
 /**
  * Use like a regular FlatList.
  */
-export const TabsFlatList = React.forwardRef(FlatListImpl) as <T>(
-  p: FinalProps<T> & { ref?: React.Ref<FinalType<T>> },
-) => React.ReactElement<any>;
+export { TabsFlatList };

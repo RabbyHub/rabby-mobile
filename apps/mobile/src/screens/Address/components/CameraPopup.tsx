@@ -8,21 +8,23 @@ import {
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { forwardRef } from 'react';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+import React, { type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-export const CameraPopup = forwardRef<
-  BottomSheetModal,
-  QRCodeScannerProps & {
-    tip?: string;
-  }
->(({ tip, ...props }, ref) => {
+export const CameraPopup = ({
+  tip,
+  ...props
+}: QRCodeScannerProps & {
+  tip?: string;
+  ref?: Ref<BottomSheetModal>;
+}) => {
   const { colors, styles } = useThemeStyles(getStyle);
   const { t } = useTranslation();
 
   return (
-    <AppBottomSheetModal ref={ref} snapPoints={[436]}>
+    <AppBottomSheetModal ref={props.ref} snapPoints={[436]}>
       <BottomSheetView style={styles.container}>
         <View>
           <Text style={styles.title}>
@@ -37,7 +39,7 @@ export const CameraPopup = forwardRef<
       </BottomSheetView>
     </AppBottomSheetModal>
   );
-});
+};
 
 const getStyle = createGetStyles(colors => ({
   container: {

@@ -1,4 +1,10 @@
-import React, { ReactNode, useImperativeHandle, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from 'react';
 import {
   StyleProp,
   StyleSheet,
@@ -40,126 +46,121 @@ export type NextSearchBarMethods = {
   clear(): void;
 };
 
-export const NextSearchBar = React.forwardRef<NextSearchBarMethods, Props>(
-  (
-    {
-      style,
-      inputContainerStyle,
-      inputStyle,
-      value,
-      searchIcon,
-      alwaysShowCancel,
-      onChangeText,
-      onChange,
-      onBlur,
-      onFocus,
-      onCancel,
-      noCancel,
-      as = 'TextInput',
-      ...rest
-    },
-    ref,
-  ) => {
-    const { styles, colors2024, isLight } = useTheme2024({
-      getStyle,
-    });
+export const NextSearchBar = ({
+  ref,
+  style,
+  inputContainerStyle,
+  inputStyle,
+  value,
+  searchIcon,
+  alwaysShowCancel,
+  onChangeText,
+  onChange,
+  onBlur,
+  onFocus,
+  onCancel,
+  noCancel,
+  as = 'TextInput',
+  ...rest
+}: Props & { ref?: Ref<NextSearchBarMethods> }) => {
+  const { styles, colors2024, isLight } = useTheme2024({
+    getStyle,
+  });
 
-    const inputRef = useRef<any>(null);
-    const isEmpty = !value;
-    const [isFocus, setIsFocus] = useState(false);
-    const handleBlur = useMemoizedFn(e => {
-      setIsFocus(false);
-      onBlur?.(e);
-    });
-    const handleFocus = useMemoizedFn(e => {
-      setIsFocus(true);
-      onFocus?.(e);
-    });
+  const inputRef = useRef<any>(null);
+  const isEmpty = !value;
+  const [isFocus, setIsFocus] = useState(false);
+  const handleBlur = useMemoizedFn(e => {
+    setIsFocus(false);
+    onBlur?.(e);
+  });
+  const handleFocus = useMemoizedFn(e => {
+    setIsFocus(true);
+    onFocus?.(e);
+  });
 
-    const InputComponent =
-      as === 'TextInput' ? TextInput : BottomSheetTextInput;
+  const InputComponent = as === 'TextInput' ? TextInput : BottomSheetTextInput;
 
-    useImperativeHandle(ref, () => {
-      return {
-        focus() {
-          return inputRef.current?.focus();
-        },
-        blur() {
-          return inputRef.current?.blur();
-        },
-        clear() {
-          return inputRef.current?.clear();
-        },
-      };
-    });
+  useImperativeHandle(ref, () => {
+    return {
+      focus() {
+        return inputRef.current?.focus();
+      },
+      blur() {
+        return inputRef.current?.blur();
+      },
+      clear() {
+        return inputRef.current?.clear();
+      },
+    };
+  });
 
-    return (
-      <View style={[styles.container, style]}>
-        <View style={[styles.inputContainer, inputContainerStyle]}>
+  return (
+    <View style={[styles.container, style]}>
+      <View style={[styles.inputContainer, inputContainerStyle]}>
+        <TouchableWithoutFeedback
+          hitSlop={8}
+          onPress={() => {
+            inputRef.current?.focus();
+          }}>
+          {searchIcon || (
+            <RcNextSearchCC
+              style={styles.searchIcon}
+              color={colors2024['neutral-secondary']}
+              width={20}
+              height={20}
+            />
+          )}
+        </TouchableWithoutFeedback>
+        <InputComponent
+          ref={inputRef}
+          style={StyleSheet.flatten([
+            styles.input,
+            inputStyle,
+            isEmpty ? styles.placeholder : null,
+          ])}
+          placeholderTextColor={styles.placeholder.color}
+          value={value}
+          onChangeText={onChangeText}
+          onChange={onChange}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          autoCorrect={false}
+          spellCheck={false}
+          {...rest}
+        />
+        {!isEmpty ? (
           <TouchableWithoutFeedback
             hitSlop={8}
             onPress={() => {
-              inputRef.current?.focus();
+              onChangeText?.('');
             }}>
-            {searchIcon || (
-              <RcNextSearchCC
-                style={styles.searchIcon}
+            {isLight ? (
+              <RcNextCloseCircle
+                style={styles.closeIcon}
                 color={colors2024['neutral-secondary']}
-                width={20}
-                height={20}
+              />
+            ) : (
+              <RcNextCloseCircleDark
+                style={styles.closeIcon}
+                color={colors2024['neutral-secondary']}
               />
             )}
           </TouchableWithoutFeedback>
-          <InputComponent
-            ref={inputRef}
-            style={StyleSheet.flatten([
-              styles.input,
-              inputStyle,
-              isEmpty ? styles.placeholder : null,
-            ])}
-            placeholderTextColor={styles.placeholder.color}
-            value={value}
-            onChangeText={onChangeText}
-            onChange={onChange}
-            onBlur={handleBlur}
-            onFocus={handleFocus}
-            autoCorrect={false}
-            spellCheck={false}
-            {...rest}
-          />
-          {!isEmpty ? (
-            <TouchableWithoutFeedback
-              hitSlop={8}
-              onPress={() => {
-                onChangeText?.('');
-              }}>
-              {isLight ? (
-                <RcNextCloseCircle
-                  style={styles.closeIcon}
-                  color={colors2024['neutral-secondary']}
-                />
-              ) : (
-                <RcNextCloseCircleDark
-                  style={styles.closeIcon}
-                  color={colors2024['neutral-secondary']}
-                />
-              )}
-            </TouchableWithoutFeedback>
-          ) : null}
-        </View>
-        {alwaysShowCancel || (isFocus && !noCancel) ? (
-          <TouchableOpacity
-            onPress={() => {
-              onCancel?.();
-              inputRef?.current?.blur();
-            }}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
         ) : null}
       </View>
-    );
-  },
-);
+      {alwaysShowCancel || (isFocus && !noCancel) ? (
+        <TouchableOpacity
+          onPress={() => {
+            onCancel?.();
+            inputRef?.current?.blur();
+          }}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  );
+};
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
