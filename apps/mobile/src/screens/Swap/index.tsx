@@ -9,6 +9,10 @@ import {
   transactionHistoryService,
 } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
+import {
+  getMarketTabActionPrefix,
+  getMarketTabCreateSwapTxAction,
+} from '@/screens/Market/analytics';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
@@ -628,7 +632,14 @@ const Swap = ({
             runFetchSwapPendingCount();
           }, 1000);
           runFetchLocalPendingTx();
-          if (navState?.from?.scene === 'meme') {
+          const marketTab = navState?.from?.scene
+            ? getMarketTabActionPrefix(navState.from.scene)
+            : null;
+          const createSwapTxAction = navState?.from?.scene
+            ? getMarketTabCreateSwapTxAction(navState.from.scene)
+            : null;
+
+          if (marketTab && createSwapTxAction) {
             const payTokenUsdValue =
               typeof payAmount === 'string' && payToken?.price
                 ? (
@@ -639,9 +650,10 @@ const Swap = ({
               chain: chainServerId,
               tx_id: txHash,
               dex_id: activeProvider?.name || '',
-              meme_chain: navState.from.chain || '',
-              meme_ca: navState.from.id || '',
-              meme_symbol: navState.from.symbol || '',
+              market_tab: marketTab,
+              meme_chain: navState?.from?.chain || '',
+              meme_ca: navState?.from?.id || '',
+              meme_symbol: navState?.from?.symbol || '',
               user_addr: currentAccount?.address || '',
               pay_token_usd_value: payTokenUsdValue,
               create_at: createdAt,
@@ -649,8 +661,8 @@ const Swap = ({
               app_version: APP_VERSIONS.fromNative || '0',
             });
             matomoRequestEvent({
-              category: 'Rabby Memecoin',
-              action: 'Memecoin_CreateSwapTx',
+              category: 'Rabby Market',
+              action: createSwapTxAction,
             });
           }
           preferenceService.setReportActionTs(
