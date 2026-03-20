@@ -41,3 +41,6 @@ preview-build-message.txt
 .claude/*.local.*
 docs
 CLAUDE*.local.md
+
+# codex
+.codex
