@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -14,7 +20,6 @@ import {
 } from '@/screens/Home/components/AssetRenderItems';
 import { ActionItem, DisplayNftItem } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useLoadAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
@@ -33,14 +38,11 @@ import {
   NftItemWithCollection,
   varyNftListByFold,
 } from '@/screens/Home/hooks/nft';
-import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
-import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
-import {
-  ListHeaderComponent,
-  ListRenderFooter,
-  ListRenderSeparator,
-} from './RenderRow/Common';
+import { TabName } from './TabsMultiAssets';
+import { ListRenderSeparator } from './RenderRow/Common';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -52,8 +54,8 @@ import {
   useFindAccountByAddress,
   useIsFocusedCurrentTab,
 } from './hooks/share';
-import { isTabsSwiping } from './hooks';
-import { useAssetsNFTs, useOnNftRefresh } from '@/screens/Home/hooks/store';
+import { isTabsSwiping, useAccountInfo } from './hooks';
+import nftListStore, { combinedNfts, useOnNftRefresh } from '@/store/nfts';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -67,9 +69,10 @@ export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {
   );
 });
 
-export const NFTList = () => {
+const NFTListInner = () => {
   const { t } = useTranslation();
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { myTop10Addresses } = useAccountInfo();
 
   const selectedChainItem = useSelectedChainItem();
   const chain = selectedChainItem?.chain;
@@ -86,11 +89,14 @@ export const NFTList = () => {
     isFocusing,
   });
 
-  const { checkIsExpireAndUpdate, isLoading } = useLoadAssets();
+  const isLoading = nftListStore(s => s.isLoading);
+  const nftsMap = nftListStore(s => s.nftsMap);
+  const batchGetNFTList = nftListStore(s => s.batchGetNFTList);
 
-  const { nfts: _rawNftList } = useAssetsNFTs({
-    hideCombined: false,
-  });
+  const _rawNftList = useMemo(
+    () => combinedNfts(nftsMap, myTop10Addresses),
+    [nftsMap, myTop10Addresses],
+  );
 
   const nftList = useMemo(() => {
     return _rawNftList?.filter(item =>
@@ -259,13 +265,13 @@ export const NFTList = () => {
     try {
       await Promise.all([
         triggerUpdate(true),
-        checkIsExpireAndUpdate(true, {}),
+        batchGetNFTList(true, {}),
         nftRefresh(),
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
     }
-  }, [checkIsExpireAndUpdate, triggerUpdate, nftRefresh]);
+  }, [batchGetNFTList, triggerUpdate, nftRefresh]);
 
   const scrollY = useCurrentTabScrollY();
   const {
@@ -299,9 +305,6 @@ export const NFTList = () => {
     states: { pullDistance, svIsRefreshing, svIsManualRefreshing },
   });
 
-  // if (!isFocusing) {
-  //   return null;
-  // }
   return (
     <GestureDetector gesture={panGestureRef.current}>
       <TabsFlatList
@@ -359,6 +362,20 @@ export const NFTList = () => {
       />
     </GestureDetector>
   );
+};
+
+export const NFTList = () => {
+  const focusedTab = useFocusedTab();
+  const hasBeenFocusedRef = useRef(false);
+  if (focusedTab === TabName.nft) {
+    hasBeenFocusedRef.current = true;
+  }
+
+  if (!hasBeenFocusedRef.current) {
+    return null;
+  }
+
+  return <NFTListInner />;
 };
 
 const getStyles = createGetStyles2024(ctx => ({
