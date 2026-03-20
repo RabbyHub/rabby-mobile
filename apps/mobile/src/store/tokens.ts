@@ -150,6 +150,15 @@ const compareByUsdValueDesc = (a: ITokenItem, b: ITokenItem) => {
 const sortByUsdValueDesc = (list: ITokenItem[]) =>
   list.slice().sort(compareByUsdValueDesc);
 
+const replacePreviousCoreTokensWithCacheTokens = (
+  previousTokens: ITokenItem[],
+  cacheTokens: ITokenItem[],
+) => {
+  const previousNonCoreTokens = previousTokens.filter(token => !token.is_core);
+
+  return [...cacheTokens, ...previousNonCoreTokens];
+};
+
 const isDataExpired = async (address: string) => {
   const isExpired = await TokenItemEntity.isExpired(address);
   return isExpired;
@@ -651,17 +660,24 @@ const tokenListStore = zCreate<TokenListState>(set => ({
       const cacheTokens = cacheList.map(item =>
         tokenItemToITokenItem(item, address),
       );
-      set(state => ({
-        tokenListMap: {
-          ...state.tokenListMap,
-          [normalizedAddress]: cacheTokens,
-        },
-        isLoadingByAddress: {
-          ...state.isLoadingByAddress,
-          // cache已经拿到，但是不是所有token都拿到
-          [normalizedAddress]: { loading: false, allLoading: true },
-        },
-      }));
+      set(state => {
+        const previousTokens = state.tokenListMap[normalizedAddress] || [];
+        const mergedCacheTokens = replacePreviousCoreTokensWithCacheTokens(
+          previousTokens,
+          cacheTokens,
+        );
+        return {
+          tokenListMap: {
+            ...state.tokenListMap,
+            [normalizedAddress]: mergedCacheTokens,
+          },
+          isLoadingByAddress: {
+            ...state.isLoadingByAddress,
+            // cache已经拿到，但是不是所有token都拿到
+            [normalizedAddress]: { loading: false, allLoading: true },
+          },
+        };
+      });
 
       let chainIdList: string[] = [];
       // 单地址的查询还是使用 usedChainList，不然担心 token 选择器之类的地方用户找不到自己的 token
