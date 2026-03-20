@@ -32,7 +32,10 @@ import {
   atSensitiveSceneState,
   bottomSheetModalSecurityApis,
 } from '@/components2024/GlobalBottomSheetModal/security';
-import { getExpScreenCapture, useExpScreenCapture } from './appSettings';
+import {
+  getExpScreenCapture,
+  useIosForceDisableAlertForSensitiveScene,
+} from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { zCreate } from '@/core/utils/reexports';
@@ -715,7 +718,22 @@ atSensitiveSceneState.subscribe(s => {
 });
 
 export function useAtSensitiveScene() {
-  return atSensitiveScreenStore(useShallow(s => getAtSensitiveScene(s)));
+  const { iosForceDisableAlertForSensitiveScene } =
+    useIosForceDisableAlertForSensitiveScene();
+
+  return atSensitiveScreenStore(
+    useShallow(s => {
+      const ret = getAtSensitiveScene(s);
+
+      if (iosForceDisableAlertForSensitiveScene) {
+        ret.atSensitiveScene = false;
+        ret.iosBlurType = ProtectType.NONE;
+        ret.warningScreenshotBackup = false;
+      }
+
+      return ret;
+    }),
+  );
 }
 
 export function getAtSensitiveScene(s = atSensitiveScreenStore.getState()) {
