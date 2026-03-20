@@ -7,6 +7,7 @@ import { formatPrice, formatUsdValue } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
 import { formatAmountValueKMB } from '../util';
 import { Text } from '@/components/Typography';
+import { isNumber } from 'lodash';
 
 const MarketInfo = ({
   price,
@@ -27,15 +28,23 @@ const MarketInfo = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const currentIsLoss = price24hChange ? price24hChange < 0 : false;
+  const currentIsLoss = isNumber(price24hChange) ? price24hChange < 0 : false;
   const percentChangeText = useMemo(() => {
-    const changeValue = price24hChange
+    const changeValue = isNumber(price24hChange)
       ? formatUsdValue(price24hChange * price)
       : '';
-    const formatPercent = price24hChange
+    const formatPercent = isNumber(price24hChange)
       ? Math.abs((price24hChange || 0) * 100).toFixed(2) + '%'
       : '';
-    return price24hChange ? `${formatPercent}(${changeValue})` : '';
+    return isNumber(price24hChange)
+      ? `${
+          !!formatPercent && price24hChange !== 0
+            ? price24hChange > 0
+              ? '+'
+              : '-'
+            : ''
+        }${formatPercent}(${changeValue})`
+      : '';
   }, [price24hChange, price]);
   return (
     <View style={styles.container}>
@@ -46,7 +55,9 @@ const MarketInfo = ({
             style={[
               styles.priceChangeValue,
               {
-                color: currentIsLoss
+                color: !price24hChange
+                  ? colors2024['neutral-secondary']
+                  : currentIsLoss
                   ? colors2024['red-default']
                   : colors2024['green-default'],
               },
