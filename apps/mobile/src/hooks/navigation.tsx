@@ -324,7 +324,7 @@ export const TabbarLabels: {
 } = {
   [HomeTabName.overview]: { index: 0, label: '' },
   [HomeTabName.token]: { index: 1, label: 'Token' },
-  [HomeTabName.defi]: { index: 2, label: 'Defi' },
+  [HomeTabName.defi]: { index: 2, label: 'DeFi' },
   [HomeTabName.nft]: { index: 3, label: 'NFT' },
 };
 const homeTabScrollerRef = React.createRef<CollapsibleRef<string>>();
