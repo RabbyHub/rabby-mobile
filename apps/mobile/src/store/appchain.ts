@@ -31,7 +31,10 @@ interface AppChainState {
 
   initStore(): Promise<void>;
   batchGetAppChains(addresses: string[], force?: boolean): Promise<void>;
-  getAppChains(address: string, force?: boolean): Promise<void>;
+  getAppChains(
+    address: string,
+    force?: boolean,
+  ): Promise<IAppChainItem[] | void>;
   getAppChainTotalUsdValue(address: string): number;
   getMultiAddressAppChainTotalUsdValue(addresses: string[]): number;
 }
@@ -233,13 +236,14 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
         const expired = await AppChainEntity.isExpired(lowerAddress);
         if (!expired) {
           const cached = await AppChainEntity.queryByOwner(lowerAddress);
+          const value = cached.map(toAppChainItem);
           set(state => ({
             appChainMap: {
               ...state.appChainMap,
-              [lowerAddress]: cached.map(toAppChainItem),
+              [lowerAddress]: value,
             },
           }));
-          return;
+          return value;
         }
       }
 
@@ -250,13 +254,15 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
       // 同步到数据库
       await syncAppChains(lowerAddress, appChains);
 
+      const value = appChains.map(toAppChainItem);
       // 更新 store
       set(state => ({
         appChainMap: {
           ...state.appChainMap,
-          [lowerAddress]: appChains.map(toAppChainItem),
+          [lowerAddress]: value,
         },
       }));
+      return value;
     } catch (error) {
       console.error(`Failed to get appchains for ${address}:`, error);
     } finally {
