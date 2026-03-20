@@ -102,7 +102,7 @@ const MiniSignTxV2 = ({
               ? {
                   maxFeePerGas: intToHex(Math.round(gas.price || 0)),
                   maxPriorityFeePerGas:
-                    gas.maxPriorityFee <= 0
+                    gas.maxPriorityFee < 0
                       ? item.tx.maxFeePerGas
                       : intToHex(Math.round(gas.maxPriorityFee)),
                 }

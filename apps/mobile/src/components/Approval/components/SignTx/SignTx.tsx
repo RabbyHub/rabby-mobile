@@ -1025,7 +1025,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (support1559) {
       transaction.maxFeePerGas = tx.maxFeePerGas;
       transaction.maxPriorityFeePerGas =
-        maxPriorityFee <= 0
+        maxPriorityFee < 0
           ? tx.maxFeePerGas
           : intToHex(Math.round(maxPriorityFee));
     } else {
