@@ -8,6 +8,10 @@ import { Text } from '@/components/Typography';
 import { preferenceService } from '@/core/services';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
+import {
+  buildMarketTokenDetailFrom,
+  getMarketTabClickListAction,
+} from '@/screens/Market/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { tokenItemToITokenItem } from '@/utils/token';
@@ -27,6 +31,7 @@ import {
   watchlistChangeSortAtom,
   watchlistTokenSortAtom,
 } from './sort';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export function WatchlistContent() {
   const { styles } = useTheme2024({ getStyle });
@@ -112,10 +117,24 @@ export function WatchlistContent() {
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
+      const clickAction = getMarketTabClickListAction('watchlist');
+
+      if (clickAction) {
+        matomoRequestEvent({
+          category: 'Rabby Market',
+          action: clickAction,
+        });
+      }
       navigateDeprecated(RootNames.TokenMarketInfo, {
         token: tokenItemToITokenItem(token, ''),
         unHold: false,
         needUseCacheToken: true,
+        from: buildMarketTokenDetailFrom({
+          categoryId: 'watchlist',
+          id: token.id,
+          chain: token.chain,
+          symbol: token.symbol,
+        }),
       });
     },
     [],

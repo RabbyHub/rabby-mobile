@@ -7,6 +7,7 @@ import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractProject } from '@/screens/Home/types';
+import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
@@ -273,10 +274,14 @@ export const TokenMarketInfoScreen = () => {
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       // 关闭弹窗隐藏
       setIsFromBack(false);
-      if (from?.scene === 'meme') {
+      const marketAction = from?.scene
+        ? getMarketTabToSwapPageAction(from.scene)
+        : null;
+
+      if (marketAction) {
         matomoRequestEvent({
-          category: 'Rabby Memecoin',
-          action: 'Memecoin_ToSwapPage',
+          category: 'Rabby Market',
+          action: marketAction,
         });
       }
       navigation.push(RootNames.StackTransaction, {
