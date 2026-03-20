@@ -39,5 +39,6 @@ preview-build-message.txt
 # Cursor AI rules (local development only)
 .cursor/
 .claude/*.local.*
+.claude/worktrees/
 docs
 CLAUDE*.local.md
