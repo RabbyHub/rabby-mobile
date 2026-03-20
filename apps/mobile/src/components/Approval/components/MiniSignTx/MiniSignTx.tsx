@@ -524,7 +524,7 @@ export const MiniSignTx = ({
             ? {
                 maxFeePerGas: intToHex(Math.round(gas.price)),
                 maxPriorityFeePerGas:
-                  gas.maxPriorityFee <= 0
+                  gas.maxPriorityFee < 0
                     ? item.tx.maxFeePerGas
                     : intToHex(Math.round(gas.maxPriorityFee)),
               }
@@ -769,7 +769,7 @@ export const MiniSignTx = ({
               ? {
                   maxFeePerGas: intToHex(Math.round(gas.price || 0)),
                   maxPriorityFeePerGas:
-                    gas.maxPriorityFee <= 0
+                    gas.maxPriorityFee < 0
                       ? item.tx.maxFeePerGas
                       : intToHex(Math.round(gas.maxPriorityFee)),
                 }
@@ -881,7 +881,7 @@ export const MiniSignTx = ({
           if (support1559) {
             tx = convertLegacyTo1559(tx);
             tx.maxPriorityFeePerGas =
-              maxPriorityFee <= 0
+              maxPriorityFee < 0
                 ? tx.maxFeePerGas
                 : intToHex(Math.round(maxPriorityFee));
           }
