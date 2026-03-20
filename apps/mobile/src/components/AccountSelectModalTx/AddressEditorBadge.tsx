@@ -93,6 +93,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 146,
   },
   addressText: {
+    maxWidth: '60%',
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,

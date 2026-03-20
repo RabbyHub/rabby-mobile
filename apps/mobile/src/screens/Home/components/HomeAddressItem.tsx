@@ -198,6 +198,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
+    flex: 1,
   },
   accountName: {
     fontFamily: 'SF Pro Rounded',

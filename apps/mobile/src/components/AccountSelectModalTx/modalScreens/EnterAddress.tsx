@@ -510,6 +510,7 @@ const getStyles = createGetStyles2024(ctx => ({
     position: 'absolute',
     bottom: 16,
     left: 20,
+    right: 20,
     // ...makeDebugBorder(),
     ...makeDevOnlyStyle({}),
   },
