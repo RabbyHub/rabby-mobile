@@ -32,6 +32,9 @@ import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen202
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
+import CreateNewWallet from '../Address/CreateNewWallet';
+import SelectImportMethod from '../Address/SelectImportMethod';
+import ImportRabbyWallet from '../Address/ImportRabbyWallet';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
 import SetPassword2024 from '../Address/SetPassword2024';
 import CreateChooseBackup from '../Address/CreateChooseBackup';
@@ -253,6 +256,27 @@ export function AddressNavigator() {
             backgroundColor: colors2024['neutral-bg-0'],
           },
           headerTitleStyle: styles.headerTitleText,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.CreateNewWallet}
+        component={CreateNewWallet}
+        options={mergeScreenOptions({
+          headerShown: false,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.SelectImportMethod}
+        component={SelectImportMethod}
+        options={mergeScreenOptions({
+          headerShown: false,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportRabbyWallet}
+        component={ImportRabbyWallet}
+        options={mergeScreenOptions({
+          headerShown: false,
         })}
       />
       <AddressStack.Screen

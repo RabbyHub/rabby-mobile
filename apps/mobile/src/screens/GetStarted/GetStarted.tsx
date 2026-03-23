@@ -30,7 +30,7 @@ import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
-import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.svg';
+import ChevronRightSmallCC from '@/assets/icons/common/right-2-cc.svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -117,10 +117,7 @@ function NewUserGetStarted2024V2(): JSX.Element {
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
     );
     navigateDeprecated(RootNames.StackAddress, {
-      screen: RootNames.CreateNewAddress,
-      params: {
-        isFirstCreate: true,
-      },
+      screen: RootNames.CreateNewWallet,
     });
   }, [getStarted.processedInit, startCreateAddressProc]);
 
@@ -137,7 +134,7 @@ function NewUserGetStarted2024V2(): JSX.Element {
       REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
     );
     navigateDeprecated(RootNames.StackAddress, {
-      screen: RootNames.ImportMethods,
+      screen: RootNames.SelectImportMethod,
     });
   }, [getStarted.processedInit]);
 
@@ -150,8 +147,8 @@ function NewUserGetStarted2024V2(): JSX.Element {
       return;
     }
 
-    navigateDeprecated(RootNames.Scanner, {
-      syncExtension: true,
+    navigateDeprecated(RootNames.StackAddress, {
+      screen: RootNames.ImportRabbyWallet,
     });
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
@@ -260,8 +257,6 @@ function NewUserGetStarted2024V2(): JSX.Element {
                     {'I already use Rabby'}
                   </Text>
                   <ChevronRightSmallCC
-                    width={6}
-                    height={10}
                     color={colors2024['neutral-secondary']}
                   />
                 </View>
@@ -375,7 +370,6 @@ const getStyle = createGetStyles2024(ctx =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 4,
     },
     syncLinkText: {
       fontFamily: 'SF Pro Rounded',

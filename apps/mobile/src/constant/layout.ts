@@ -179,6 +179,9 @@ export const RootNames = {
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
   CreateNewAddress: 'CreateNewAddress',
+  CreateNewWallet: 'CreateNewWallet',
+  SelectImportMethod: 'SelectImportMethod',
+  ImportRabbyWallet: 'ImportRabbyWallet',
   SetPassword2024: 'SetPassword2024',
   CreateChooseBackup: 'CreateChooseBackup',
 
@@ -424,6 +427,9 @@ function makeScreenSpecConfig() {
       [RootNames.AddressDetail]: bg1Default2024Conf,
       [RootNames.NftDetail]: bg1Default2024Conf,
       [RootNames.CreateNewAddress]: bg1Default2024Conf,
+      [RootNames.CreateNewWallet]: bg1Default2024Conf,
+      [RootNames.SelectImportMethod]: bg1Default2024Conf,
+      [RootNames.ImportRabbyWallet]: bg1Default2024Conf,
       [RootNames.SetPassword2024]: bg1Default2024Conf,
       [RootNames.CreateChooseBackup]: bg1Default2024Conf,
 
