@@ -14,7 +14,6 @@ import { useWindowDimensions, View } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import LinearGradient from 'react-native-linear-gradient';
 import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
-import { useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
 import { toast } from '@/components2024/Toast';
 import { filterMyAccounts } from '@/utils/account';
@@ -26,7 +25,7 @@ const GasAccountLoginContent: React.FC<{
 }> = ({ onLogin }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { login, logout } = useGasAccountMethods();
+  const { login } = useGasAccountMethods();
   const { value: gasAccountInfo } = useGasAccountInfo();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
@@ -35,8 +34,6 @@ const GasAccountLoginContent: React.FC<{
     () => [...filterMyAccounts(accounts)],
     [accounts],
   );
-  const { sig } = useGasAccountSign();
-
   const [loading, setLoading] = useState(false);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
@@ -56,13 +53,9 @@ const GasAccountLoginContent: React.FC<{
     if (loading) {
       return;
     }
-    const isSwitch = gasAccountInfo?.account.id || sig;
     setLoading(true);
     try {
       await switchSceneCurrentAccount('GasAccount', account);
-      if (isSwitch) {
-        await logout();
-      }
       await login(account);
       await onLogin?.();
       toast.success(t('page.gasAccount.loginSuccess'));

@@ -1,4 +1,3 @@
-import { toast } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { sendRequest } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
@@ -62,13 +61,19 @@ type GasAccountRefresherState = {
 };
 
 type GasAccountVisibleState = {
-  logoutVisible: boolean;
   loginVisible: boolean;
   switchVisible: boolean;
 };
 
+type AccountWithBalanceItem = {
+  address: string;
+  type: string;
+  brandName: string;
+};
+
 type GasAccountState = GasAccountRefresherState & {
   sigState?: Partial<GasAccountServiceStore>;
+  accountsWithGasAccountBalance: AccountWithBalanceItem[];
 } & GasAccountVisibleState;
 
 function setRefreshIdFor(
@@ -105,9 +110,10 @@ const gasAccountStore = zCreate<GasAccountState>(() => ({
   sigState: {
     ...(gasAccountService.getGasAccountData() as GasAccountServiceStore),
   },
-  logoutVisible: false,
   loginVisible: false,
   switchVisible: false,
+  accountsWithGasAccountBalance:
+    gasAccountService.getAccountsWithGasAccountBalance(),
 }));
 
 function setGasAccountSigState(
@@ -214,14 +220,15 @@ export const storeApiGasAccount = {
     return gasAccountStore.getState().sigState;
   },
   fetchGasAccountInfo,
-  setLogoutVisible(valOrFunc: UpdaterOrPartials<boolean>) {
-    setVisibleFor('logoutVisible', valOrFunc);
-  },
   setLoginVisible(valOrFunc: UpdaterOrPartials<boolean>) {
     setVisibleFor('loginVisible', valOrFunc);
   },
   setSwitchVisible(valOrFunc: UpdaterOrPartials<boolean>) {
     setVisibleFor('switchVisible', valOrFunc);
+  },
+  setAccountsWithGasAccountBalance(accounts: AccountWithBalanceItem[]) {
+    gasAccountService.setAccountsWithGasAccountBalance(accounts);
+    gasAccountStore.setState({ accountsWithGasAccountBalance: accounts });
   },
 
   loginGasAccount: async (selectAccount: Account) => {
@@ -270,35 +277,13 @@ export const storeApiGasAccount = {
         handleGasAccountLoginSuccess(signature, account);
         storeApiGasAccount.setGasAccount(signature, account);
         gasAccountService.setHasClaimedGift(true);
-        // setLoginVisible(false);
+        gasAccountService.clearPendingHardwareAccount();
       } else {
         throw new Error('Login failed');
       }
     }
     return signature;
   },
-
-  logoutGasAccount: async () => {
-    const { sig, accountId } = storeApiGasAccount.getSigState() || {};
-    if (sig && accountId) {
-      const result = await openapi.logoutGasAccount({
-        sig,
-        account_id: accountId,
-      });
-      if (result.success) {
-        storeApiGasAccount.setGasAccount();
-        storeApiGasAccount.setLogoutVisible(false);
-        // gotoDashboard();
-      } else {
-        toast.show('please retry');
-      }
-    }
-  },
-};
-
-export const useGasAccountLogoutVisible = () => {
-  const isVisible = gasAccountStore(s => s.logoutVisible);
-  return [isVisible, storeApiGasAccount.setLogoutVisible] as const;
 };
 
 export const useGasAccountLoginVisible = () => {
@@ -307,6 +292,10 @@ export const useGasAccountLoginVisible = () => {
     setVisibleFor('loginVisible', valOrFunc);
   }, []);
   return [isVisible, setIsVisible] as const;
+};
+
+export const useAccountsWithGasAccountBalance = () => {
+  return gasAccountStore(s => s.accountsWithGasAccountBalance);
 };
 
 export const useGasAccountSwitchVisible = () => {

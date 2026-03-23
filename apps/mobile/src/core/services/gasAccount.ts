@@ -50,6 +50,16 @@ export type GasAccountServiceStore = {
   currentBalanceAccountId?: string;
   currentHasBalance?: boolean;
   ga4ActiveEventTime?: number;
+  pendingHardwareAccount?: {
+    address: string;
+    type: string;
+    brandName: string;
+  };
+  accountsWithGasAccountBalance?: {
+    address: string;
+    type: string;
+    brandName: string;
+  }[];
 };
 
 const getInitialHasEverLoggedIn = (
@@ -542,5 +552,35 @@ export class GasAccountService {
 
   markGa4ActiveTracked(timestamp = Date.now()) {
     this.store.ga4ActiveEventTime = timestamp;
+  }
+
+  getPendingHardwareAccount() {
+    return this.store.pendingHardwareAccount;
+  }
+
+  setPendingHardwareAccount(
+    account?: GasAccountServiceStore['pendingHardwareAccount'],
+  ) {
+    this.store.pendingHardwareAccount = account;
+  }
+
+  clearPendingHardwareAccount() {
+    this.store.pendingHardwareAccount = undefined;
+  }
+
+  getAccountsWithGasAccountBalance() {
+    return this.store.accountsWithGasAccountBalance || [];
+  }
+
+  setAccountsWithGasAccountBalance(
+    accounts: NonNullable<
+      GasAccountServiceStore['accountsWithGasAccountBalance']
+    >,
+  ) {
+    this.store.accountsWithGasAccountBalance = accounts;
+  }
+
+  clearAccountsWithGasAccountBalance() {
+    this.store.accountsWithGasAccountBalance = undefined;
   }
 }

@@ -1,6 +1,7 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
+import { useFocusEffect } from '@react-navigation/native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useState, useMemo } from 'react';
@@ -8,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import { GasAccountCard } from './components/GasAccountCard';
 import { GasAccountDepositPopup } from './components/GasAccountDepositPopup';
 import { GasAccountLoginPopup } from './components/GasAccountLoginPopup';
-import { GasAccountLogoutPopup } from './components/GasAccountLogoutPopup';
 import { GasAccountHeader } from './components/HeaderRight';
 import { GasAccountHistory } from './components/History';
 import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrModal';
@@ -17,11 +17,11 @@ import { useGasAccountInfo, useGasAccountLogin } from './hooks';
 import {
   useGasAccountHistoryRefresh,
   useGasAccountLoginVisible,
-  useGasAccountLogoutVisible,
 } from './hooks/atom';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { gasAccountService } from '@/core/services';
+import { refreshAccountsWithGasAccountBalance } from '@/utils/autoLoginGasAccount';
 
 export const GasAccountScreen = () => {
   const { t } = useTranslation();
@@ -60,9 +60,6 @@ export const GasAccountScreen = () => {
   const withdrawable_balance = gasAccount?.account?.withdrawable_balance || 0;
   const nonWithdrawable_balance =
     gasAccount?.account?.non_withdrawable_balance || 0;
-  const [logoutPopupVisible, setLogoutPopupVisible] =
-    useGasAccountLogoutVisible();
-
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const headerRight = useCallback(
@@ -73,6 +70,14 @@ export const GasAccountScreen = () => {
   useEffect(() => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshAccountsWithGasAccountBalance().catch(error => {
+        console.error('refreshAccountsWithGasAccountBalance error', error);
+      });
+    }, []),
+  );
 
   const { isLight } = useTheme2024({ getStyle: getStyles });
 
@@ -131,13 +136,6 @@ export const GasAccountScreen = () => {
         onLogin={async () => {
           await runFetchGasAccountInfo();
           setLoginVisible(false);
-        }}
-      />
-
-      <GasAccountLogoutPopup
-        visible={logoutPopupVisible}
-        onClose={() => {
-          setLogoutPopupVisible(false);
         }}
       />
 
