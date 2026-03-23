@@ -6,6 +6,7 @@ import {
   Dimensions,
   Image,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
@@ -29,6 +30,7 @@ import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
+import ChevronRightSmallCC from '@/assets/icons/common/chevron-right-small-cc.svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -68,6 +70,7 @@ const HeroIllustration = ({
 function NewUserGetStarted2024V2(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const navigation = useRabbyAppNavigation();
 
   const [getStarted, setGetStarted] = useState<{
     localHasAccounts: boolean;
@@ -154,8 +157,6 @@ function NewUserGetStarted2024V2(): JSX.Element {
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
     );
   }, [getStarted.processedInit]);
-
-  const navigation = useRabbyAppNavigation();
 
   const initAccounts = useMemoizedFn(async () => {
     setGetStarted(prev => ({ ...prev, processedInit: false }));
@@ -248,14 +249,23 @@ function NewUserGetStarted2024V2(): JSX.Element {
                 onPress={handleGoToImport}
                 buttonStyle={styles.secondaryButton}
               />
-              <TouchableText
+              <TouchableOpacity
                 style={styles.syncLink}
                 disabled={
                   !getStarted.processedInit || getStarted.localHasAccounts
                 }
                 onPress={handleGoToSyncExtension}>
-                {t('page.getStart.sync') || 'I already use Rabby'}
-              </TouchableText>
+                <View style={styles.syncLinkContent}>
+                  <Text style={styles.syncLinkText}>
+                    {'I already use Rabby'}
+                  </Text>
+                  <ChevronRightSmallCC
+                    width={6}
+                    height={10}
+                    color={colors2024['neutral-secondary']}
+                  />
+                </View>
+              </TouchableOpacity>
             </>
           ) : (
             <Button
@@ -359,12 +369,19 @@ const getStyle = createGetStyles2024(ctx =>
       borderWidth: 0,
     },
     syncLink: {
+      marginTop: 8,
+    },
+    syncLinkContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    syncLinkText: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
       fontSize: 17,
       color: ctx.colors2024['neutral-secondary'],
-      textAlign: 'center',
-      marginTop: 8,
     },
     testLink: {
       fontFamily: 'SF Pro Rounded',
