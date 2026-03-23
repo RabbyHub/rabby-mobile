@@ -109,7 +109,6 @@ export const RootNames = {
   CustomTestnet: 'CustomTestnet',
   CustomRPC: 'CustomRPC',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
-  /** @deprecated */
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
@@ -363,8 +362,7 @@ function makeScreenSpecConfig() {
       [RootNames.CustomTestnet]: bg1Default2024Conf,
       [RootNames.CustomRPC]: bg1Default2024Conf,
       [RootNames.SetBiometricsAuthentication]: bg1DefaultConf,
-      /** @deprecated */
-      [RootNames.GetStarted]: blueLightConf,
+      [RootNames.GetStarted]: bg1Default2024Conf,
       [RootNames.ProviderControllerTester]: bg1Default2024Conf,
 
       // StackTestkits
