@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Image } from 'react-native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
+import { marketRealtimePriceAtom } from '@/screens/Market/atom';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -13,6 +14,8 @@ import { Skeleton } from '@rneui/themed';
 import { Text } from '@/components/Typography';
 import { PercentChangeBadge } from '@/screens/Watchlist/components/TokenItem';
 import { isNumber } from 'lodash';
+import { useAtomValue } from 'jotai';
+import { selectAtom } from 'jotai/utils';
 
 export const formatPercentageKMB = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -54,6 +57,21 @@ const TokenListItemComponent = ({
   showChainLogo = false,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const uuid = `${item.chain}:${item.id}`;
+  const realtimePrice = useAtomValue(
+    React.useMemo(
+      () => selectAtom(marketRealtimePriceAtom, state => state[uuid]),
+      [uuid],
+    ),
+  );
+  const displayPrice = useMemo(
+    () => realtimePrice?.price ?? item.price,
+    [realtimePrice, item.price],
+  );
+  const displayPriceChange = useMemo(
+    () => realtimePrice?.price_24h_change ?? item.price_24h_change,
+    [realtimePrice, item.price_24h_change],
+  );
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -109,10 +127,10 @@ const TokenListItemComponent = ({
       </View>
       <View style={styles.tokenRightSection}>
         {/* 价格 */}
-        <Text style={styles.priceText}>${formatPrice(item.price)}</Text>
+        <Text style={styles.priceText}>${formatPrice(displayPrice)}</Text>
         {/* 24小时价格变化 */}
-        {isNumber(item.price_24h_change) && (
-          <PercentChangeBadge percent={item.price_24h_change} />
+        {isNumber(displayPriceChange) && (
+          <PercentChangeBadge percent={displayPriceChange} />
         )}
       </View>
       {/* 右slot */}

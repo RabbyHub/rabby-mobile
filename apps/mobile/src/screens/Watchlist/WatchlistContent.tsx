@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom } from 'jotai';
-import { Pressable, RefreshControl, View } from 'react-native';
+import { Pressable, RefreshControl, View, ViewToken } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';
@@ -33,7 +33,15 @@ import {
 } from './sort';
 import { matomoRequestEvent } from '@/utils/analytics';
 
-export function WatchlistContent() {
+const VIEWABILITY_CONFIG = {
+  itemVisiblePercentThreshold: 0,
+};
+
+export function WatchlistContent({
+  onVisibleUuidsChange,
+}: {
+  onVisibleUuidsChange?: (uuids: string[]) => void;
+}) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const {
@@ -285,6 +293,18 @@ export function WatchlistContent() {
     }
   }, [handleFetchTokens]);
 
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      onVisibleUuidsChange?.(
+        viewableItems
+          .map(item => item.item)
+          .filter(Boolean)
+          .map(item => `${item.chain}:${item.id}`),
+      );
+    },
+    [onVisibleUuidsChange],
+  );
+
   return (
     <>
       {showGuide ? (
@@ -310,6 +330,8 @@ export function WatchlistContent() {
           stickyHeaderIndices={[0]}
           ListEmptyComponent={renderListEmptyComponent}
           ListFooterComponent={renderListFooter}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={VIEWABILITY_CONFIG}
           refreshControl={
             <RefreshControl
               refreshing={isManualRefreshing}
