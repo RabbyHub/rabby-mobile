@@ -48,12 +48,7 @@ export const SeedPhraseGroup: React.FC<Props> = ({
     )}`;
   }, [allAddrBalance, currency.symbol, currency.usd_rate]);
 
-  const noBalance = useMemo(
-    () => allAddrBalance.isEqualTo(0),
-    [allAddrBalance],
-  );
-
-  const [isFold, setFold] = useState(noBalance ? true : false);
+  const [isFold, setFold] = useState(false);
 
   const toggle = useCallback(() => {
     setFold(e => !e);
@@ -147,6 +142,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   itemInfo: {
     marginLeft: 8,
     gap: 4,
+    flex: 1,
   },
   itemNameText: {
     fontSize: 14,

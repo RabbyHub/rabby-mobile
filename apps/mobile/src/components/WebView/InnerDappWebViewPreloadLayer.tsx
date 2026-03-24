@@ -497,7 +497,7 @@ export default function InnerDappWebViewPreloadLayer({
               styles.webviewContainer,
               // { top: top + 44 },
               isActive ? styles.webviewVisible : styles.webviewHidden,
-           IS_ANDROID && { paddingBottom: bottom },
+              IS_ANDROID && { paddingBottom: bottom },
             ]}>
             <View style={styles.webviewWrapper}>
               {isActive && offscreenPreload ? (

@@ -48,6 +48,8 @@ import { apisAutoLock } from './core/apis';
 import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
+import nftListStore from './store/nfts';
+import { keyringService } from './core/services';
 
 startComputationThread();
 startSubscribeLangChange();
@@ -103,8 +105,35 @@ async function initStores() {
   await useAppChainStore.getState().initStore();
   await balanceStore.getState().initStore();
   await tokenListStore.getState().initStore();
+  await nftListStore.getState().initStore();
   await useProtocolListStore.getState().initStore();
   console.timeEnd('initStore');
 }
 
-initStores();
+const initStoresStateRef = {
+  started: false,
+};
+const startInitStores = async () => {
+  if (initStoresStateRef.started) {
+    return;
+  }
+  initStoresStateRef.started = true;
+  await initStores();
+};
+
+function startInitStoresOnUnlock() {
+  if (keyringService.isUnlocked()) {
+    startInitStores().catch(error => {
+      console.error('startInitStoresOnUnlock::error', error);
+    });
+    return;
+  }
+
+  keyringService.once('unlock', () => {
+    startInitStores().catch(error => {
+      console.error('startInitStoresOnUnlock::error', error);
+    });
+  });
+}
+
+startInitStoresOnUnlock();

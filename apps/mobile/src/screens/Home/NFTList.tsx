@@ -10,20 +10,16 @@ import { RefreshControl } from 'react-native-gesture-handler';
 
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
-import { AbstractProject, ActionItem, DisplayNftItem } from './types';
+import { ActionItem, DisplayNftItem } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   RootNames,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
 import { NftRow, TokenRowSectionHeader } from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
-import { preferenceService } from '@/core/services';
-import { toast } from '@/components2024/Toast';
-import { useTriggerTagAssets } from './hooks/refresh';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -43,9 +39,7 @@ import {
 } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
-import { Account } from '@/core/services/preference';
 import { getItemId } from './utils/listRenderId';
-import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { Text } from '@/components/Typography';
 
@@ -67,7 +61,7 @@ interface Props {
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
+const NFTListInner = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
@@ -80,15 +74,7 @@ export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
   const focusedTab = useFocusedTab();
-  const hasBeenFocusedRef = useRef(false);
-
-  const isFocused = useMemo(() => {
-    const currentFocused = focusedTab === 'nft';
-    if (currentFocused) {
-      hasBeenFocusedRef.current = true;
-    }
-    return hasBeenFocusedRef.current;
-  }, [focusedTab]);
+  const isFocused = focusedTab === 'nft';
 
   const userAddr = currentAccount?.address?.toLowerCase();
   const {
@@ -101,8 +87,7 @@ export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     if (isFocused) {
       reloadNftList?.();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, currentAccount?.address]);
+  }, [isFocused, reloadNftList, currentAccount?.address]);
 
   const nftList = useMemo(() => {
     return _rawNftList.filter(item =>
@@ -164,8 +149,6 @@ export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
       .flat();
   }, [foldNft, foldNftList, loadingNft, nftList.length, t, unFoldNftList]);
 
-  const { singleNFTRefresh } = useTriggerTagAssets();
-
   const handlePressNft = useCallback(
     (item: NftItemWithCollection) => {
       if ('nft_list' in item && item.nft_list.length) {
@@ -203,71 +186,6 @@ export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     [colors2024, currentAccount],
   );
 
-  const getNftMenuAction = useCallback(
-    (data: NftItemWithCollection): MenuAction[] => {
-      const isFold = (data as CollectionList)?.nft_list?.every(
-        i => (i as unknown as AbstractProject)._isFold,
-      );
-      return [
-        {
-          title: isFold
-            ? t('page.tokenDetail.action.unfold')
-            : t('page.tokenDetail.action.fold'),
-          icon: isFold
-            ? isLight
-              ? icons.unfoldLight
-              : icons.unfoldDark
-            : isLight
-            ? icons.foldLight
-            : icons.foldDark,
-          androidIconName: isFold
-            ? 'ic_rabby_menu_unfold'
-            : 'ic_rabby_menu_fold',
-          key: 'fold',
-          action() {
-            if (isFold) {
-              if (data.chain) {
-                if ('nft_list' in data && data.nft_list.length) {
-                  data.nft_list.forEach(i => {
-                    preferenceService.manualUnFoldNft({
-                      chain: i.chain,
-                      id: i.id,
-                    });
-                  });
-                } else {
-                  preferenceService.manualUnFoldNft({
-                    chain: data.chain,
-                    id: data.id,
-                  });
-                }
-                toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-              }
-            } else {
-              if (data.chain) {
-                if ('nft_list' in data && data.nft_list.length) {
-                  data.nft_list.forEach(i => {
-                    preferenceService.manualFoldNft({
-                      chain: i.chain,
-                      id: i.id,
-                    });
-                  });
-                } else {
-                  preferenceService.manualFoldNft({
-                    chain: data.chain,
-                    id: data.id,
-                  });
-                }
-                toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-              }
-            }
-            singleNFTRefresh();
-          },
-        },
-      ];
-    },
-    [isLight, singleNFTRefresh, t],
-  );
-
   const renderItem = useCallback<ListRenderItem<ActionItem>>(
     ({ item }) => {
       const { type, data } = item;
@@ -281,7 +199,6 @@ export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
                   styles.renderItemWrapper,
                   !isLight && styles.bg2,
                 ])}
-                menuActions={getNftMenuAction(data)}
                 logoSize={46}
                 chainLogoSize={18}
                 item={data}
@@ -323,15 +240,7 @@ export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
           return null;
       }
     },
-    [
-      foldNft,
-      foldNftList.length,
-      getNftMenuAction,
-      handlePressNft,
-      isLight,
-      styles,
-      t,
-    ],
+    [foldNft, foldNftList.length, handlePressNft, isLight, styles, t],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -384,6 +293,25 @@ export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
         }
       />
     </View>
+  );
+};
+
+export const NFTList = ({ onRefresh, onReachTopStatusChange }: Props) => {
+  const focusedTab = useFocusedTab();
+  const hasBeenFocusedRef = useRef(false);
+  if (focusedTab === 'nft') {
+    hasBeenFocusedRef.current = true;
+  }
+
+  if (!hasBeenFocusedRef.current) {
+    return null;
+  }
+
+  return (
+    <NFTListInner
+      onRefresh={onRefresh}
+      onReachTopStatusChange={onReachTopStatusChange}
+    />
   );
 };
 

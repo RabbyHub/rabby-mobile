@@ -19,10 +19,13 @@ import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { useShallow } from 'zustand/react/shallow';
 import { perfEvents } from '@/core/utils/perf';
 import { getTop10MyAccounts } from '@/core/apis/account';
+import { isEqual } from 'lodash';
 const queues: Record<BalanceScene, PQueue> = {
   Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
 };
 const TEN_MINUTES = 10 * 60 * 1000;
+const normalizeAddressesForCompare = (addresses: string[]) =>
+  Array.from(new Set(addresses.map(addr => addr.toLowerCase()))).sort();
 
 type Multi24hBalance = {
   [P: string]: IBalance24hData['data'] & {
@@ -305,6 +308,9 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
   },
 );
 
+const lastTop10AddressesRef = {
+  current: null as null | string[],
+};
 export const refresh24hAssets = async ({
   addresses,
   force = false,
@@ -318,14 +324,25 @@ export const refresh24hAssets = async ({
 } = {}) => {
   const top10Addresses =
     addresses || (await getTop10MyAccounts()).top10Addresses;
+
+  const lastTop10Addresses = lastTop10AddressesRef.current;
+  lastTop10AddressesRef.current = normalizeAddressesForCompare(top10Addresses);
+  const lastTop10Changed = !isEqual(
+    lastTop10AddressesRef.current,
+    lastTop10Addresses,
+  );
+  const finalTop10Addresses = lastTop10Changed
+    ? lastTop10AddressesRef.current
+    : top10Addresses;
+
   refreshCombinedDataForScene('Home', {
-    addresses: top10Addresses,
-    force,
+    addresses: finalTop10Addresses,
+    force: force || lastTop10Changed,
     reason,
     ...(balanceAccounts &&
       Object.keys(balanceAccounts).length > 0 && {
         totals: apisAccountsBalance.computeTotalBalance(
-          top10Addresses,
+          finalTop10Addresses,
           balanceAccounts || {},
         ),
       }),

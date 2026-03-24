@@ -57,12 +57,17 @@ function AccountSwitcherComponent({
         }
       }}>
       {!!finalSceneCurrentAccount && (
-        <AddressItem account={finalSceneCurrentAccount}>
+        <AddressItem
+          style={styles.addressItem}
+          account={finalSceneCurrentAccount}>
           {({ WalletIcon }) => {
             return (
               <View style={styles.addressRow}>
                 <WalletIcon style={styles.walletIcon} />
-                <Text style={styles.address}>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.address}>
                   {finalSceneCurrentAccount.aliasName ||
                     ellipsisAddress(finalSceneCurrentAccount?.address)}
                 </Text>
@@ -97,6 +102,10 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       alignSelf: 'flex-start',
       marginBottom: 12,
+      maxWidth: '100%',
+    },
+    addressItem: {
+      flexShrink: 1,
     },
     titleText: {
       fontFamily: 'SF Pro Rounded',
@@ -122,9 +131,12 @@ const getStyle = createGetStyles2024(ctx => {
       lineHeight: 20,
       fontSize: 16,
       color: ctx.colors2024['neutral-body'],
+      flexShrink: 1,
     },
     addressCaretIcon: {
       marginLeft: 0,
+      width: 20,
+      flexShrink: 0,
     },
     reverseCaret: {
       // transform: [{ rotate: '180deg' }],

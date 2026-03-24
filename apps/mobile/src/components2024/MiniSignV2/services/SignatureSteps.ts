@@ -97,7 +97,7 @@ async function recomputeExplainForCalcItems(params: {
       if (is1559Capable) {
         newTx.maxFeePerGas = intToHex(Math.round(newGas.price));
         newTx.maxPriorityFeePerGas =
-          maxPriorityFee <= 0
+          maxPriorityFee < 0
             ? newTx.maxFeePerGas
             : intToHex(Math.round(maxPriorityFee));
         delete newTx.gasPrice;
@@ -447,7 +447,7 @@ export class SignatureSteps {
       if (is1559Capable) {
         buildTx = convertLegacyTo1559(buildTx) as any;
         (buildTx as any).maxPriorityFeePerGas =
-          maxPriorityFee <= 0
+          maxPriorityFee < 0
             ? (buildTx as any).maxFeePerGas
             : intToHex(Math.round(maxPriorityFee));
       }

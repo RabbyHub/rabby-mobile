@@ -4,7 +4,10 @@ import { Platform, RefreshControl, View, ViewToken } from 'react-native';
 import { RootNames } from '@/constant/layout';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useTheme2024 } from '@/hooks/theme';
-import { matomoRequestEvent } from '@/utils/analytics';
+import {
+  buildMarketTokenDetailFrom,
+  getMarketTabClickListAction,
+} from '@/screens/Market/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { memeItemToITokenItem } from '@/utils/token';
@@ -20,6 +23,7 @@ import {
   TokenListItem,
 } from '../../Meme/components/TokenItem';
 import { useTokenMarketTokenList } from '../../Meme/hooks/useTokenMarketTokenList';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -143,10 +147,12 @@ export function MarketCategoryContent({
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenMarketTokenItem) => {
-      if (categoryId === 'meme') {
+      const clickAction = getMarketTabClickListAction(categoryId);
+
+      if (clickAction) {
         matomoRequestEvent({
-          category: 'Rabby Memecoin',
-          action: 'Memecoin_ClickList',
+          category: 'Rabby Market',
+          action: clickAction,
         });
       }
 
@@ -154,15 +160,12 @@ export function MarketCategoryContent({
         token: memeItemToITokenItem(token, ''),
         unHold: false,
         needUseCacheToken: true,
-        from:
-          categoryId === 'meme'
-            ? {
-                scene: 'meme',
-                id: token.id,
-                chain: token.chain,
-                symbol: token.symbol || '',
-              }
-            : undefined,
+        from: buildMarketTokenDetailFrom({
+          categoryId,
+          id: token.id,
+          chain: token.chain,
+          symbol: token.symbol,
+        }),
       });
     },
     [categoryId],

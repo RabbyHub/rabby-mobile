@@ -64,6 +64,7 @@ export const DappFrameAccountHeader = (props: {
           alignItems: 'center',
           gap: 8,
           padding: 0,
+          flex: 1,
         }}>
         <HeaderBackPressable />
         <DappSelect
@@ -150,6 +151,7 @@ export const DappFrameAccountHeader = (props: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 6,
           }}>
           {headerLeft()}
           {headerRight()}

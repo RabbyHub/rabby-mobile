@@ -11,13 +11,14 @@ import { zCreate } from '@/core/utils/reexports';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { apisAutoLock } from '@/core/apis';
 import { preferenceService } from '@/core/services';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 const isIOS = DeviceUtils.isIOS();
 
 type ScreenshotSettings = {
   androidForceAllowScreenCapture: boolean;
   iosForceAllowScreenRecord: boolean;
+  iosForceDisableAlertForSensitiveScene: boolean;
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
@@ -30,6 +31,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
      */
     androidForceAllowScreenCapture: isNonPublicProductionEnv,
     iosForceAllowScreenRecord: isNonPublicProductionEnv,
+    iosForceDisableAlertForSensitiveScene: isNonPublicProductionEnv,
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
   },
@@ -82,16 +84,23 @@ const onExpScreenCaptureChange = (partials: Partial<ScreenshotSettings>) => {
 const prodData = {
   androidForceAllowScreenCapture: false,
   iosForceAllowScreenRecord: false,
+  iosForceDisableAlertForSensitiveScene: false,
   forceAllowScreenshot: false,
   onExpScreenCaptureChange,
 };
 export function getExpScreenCapture(
   s: Pick<
     ScreenshotSettings,
-    'androidForceAllowScreenCapture' | 'iosForceAllowScreenRecord'
+    | 'androidForceAllowScreenCapture'
+    | 'iosForceAllowScreenRecord'
+    | 'iosForceDisableAlertForSensitiveScene'
   > = experimentalSettingsStore.getState(),
 ) {
-  const { androidForceAllowScreenCapture, iosForceAllowScreenRecord } = s;
+  const {
+    androidForceAllowScreenCapture,
+    iosForceAllowScreenRecord,
+    iosForceDisableAlertForSensitiveScene,
+  } = s;
 
   if (!isNonPublicProductionEnv) {
     return prodData;
@@ -100,12 +109,38 @@ export function getExpScreenCapture(
   return {
     androidForceAllowScreenCapture,
     iosForceAllowScreenRecord,
+    iosForceDisableAlertForSensitiveScene,
     forceAllowScreenshot: isAllowScreenshot({
       androidForceAllowScreenCapture,
       iosForceAllowScreenRecord,
     }),
   };
 }
+
+export function useIosForceDisableAlertForSensitiveScene() {
+  const iosForceDisableAlertForSensitiveScene = experimentalSettingsStore(
+    s => s.iosForceDisableAlertForSensitiveScene,
+  );
+
+  const toggleIosForceDisableAlertForSensitiveScene = useCallback(
+    (nextVal?: boolean) => {
+      setExpSettingData(prev => ({
+        ...prev,
+        iosForceDisableAlertForSensitiveScene:
+          typeof nextVal === 'boolean'
+            ? nextVal
+            : !prev.iosForceDisableAlertForSensitiveScene,
+      }));
+    },
+    [],
+  );
+
+  return {
+    iosForceDisableAlertForSensitiveScene,
+    toggleIosForceDisableAlertForSensitiveScene,
+  };
+}
+
 export function useExpScreenCapture() {
   const {
     androidForceAllowScreenCapture,
