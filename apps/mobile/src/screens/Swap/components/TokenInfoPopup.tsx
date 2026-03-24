@@ -119,6 +119,7 @@ export const TokenInfoPopup = () => {
             onTokenPress={() => {}}
             touchable={false}
             logoSize={40}
+            rightInfoMode="balance"
           />
         )}
         {IS_ANDROID ? (
