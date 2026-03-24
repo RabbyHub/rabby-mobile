@@ -102,7 +102,7 @@ export const RevokeNFTCollectionBtn = ({
     resetNavigationTo(navigation, 'Home');
   });
 
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   return (
     <View style={styles.card}>

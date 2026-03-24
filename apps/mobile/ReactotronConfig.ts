@@ -5,7 +5,6 @@ import { APP_VERSIONS, isNonPublicProductionEnv } from '@/constant';
 import { getDevServerHost } from '@/core/utils/devServerSettings';
 import mmkvPlugin from '@/core/utils/reactotron-plugins/react-native-mmkv';
 import opSQLitePlugin from '@/core/utils/reactotron-plugins/op-sqlite';
-import '@/core/utils/reactotron-plugins/_setup';
 import {
   reactotronEvents,
   waitTronReady,

@@ -218,7 +218,7 @@ const NextInputComponent = React.forwardRef<
     );
 
     const innerRef = React.useRef<TextInput>(null);
-    const inputRef = (ref as React.RefObject<TextInput>) || innerRef;
+    const inputRef = (ref as React.RefObject<TextInput | null>) || innerRef;
     const onPressClear = useCallback<
       React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
     >(
@@ -380,7 +380,7 @@ const PasswordInput = React.forwardRef<
   const customIconProp = useMemo(() => {
     return (
       props.customIcon ||
-      ((ctx => (
+      ((ctx: RenderCtx) => (
         <TouchableView
           style={ctx.wrapperStyle}
           onPress={() => {
@@ -398,7 +398,7 @@ const PasswordInput = React.forwardRef<
             />
           )}
         </TouchableView>
-      )) as React.FC<RenderCtx>)
+      ))
     );
   }, [props.customIcon, props.iconColor, passwordVisible, colors2024]);
 

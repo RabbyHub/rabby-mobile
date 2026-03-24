@@ -30,7 +30,7 @@ export const renderNode = <T extends object = any>(
     }
     return <Component {...defaultProps}>{content}</Component>;
   }
-  if (typeof content === 'number') {
+  if (typeof content === 'number' || typeof content === 'bigint') {
     return <Component {...defaultProps}>{content}</Component>;
   }
   return <Component {...defaultProps} {...content} />;

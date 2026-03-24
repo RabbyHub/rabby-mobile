@@ -6,7 +6,7 @@ import { WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
 export type SheetModalShowType = boolean | 'destroy' | 'collapse' | number;
 
 export function useSheetModal(
-  existingSheetModalRef?: React.RefObject<BottomSheetModal> | null,
+  existingSheetModalRef?: React.RefObject<BottomSheetModal | null> | null,
 ) {
   const internalRef = React.useRef<BottomSheetModal>(null);
 
@@ -43,9 +43,7 @@ export function useSheetModal(
 
 export type DappBottomSheetModalRefs<T extends string = string> = Record<
   T,
-  | React.MutableRefObject<BottomSheetModal>
-  | React.RefObject<BottomSheetModal>
-  | null
+  React.RefObject<BottomSheetModal | null> | null
 >;
 
 export function useSheetModals<T extends string>(

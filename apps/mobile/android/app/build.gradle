@@ -60,22 +60,18 @@ react {
  */
 def enableProguardInReleaseBuilds = true
 
-def isNewArchitectureEnabled() {
-  return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
-}
-
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
  * For example, to use the international variant, you can use:
- * `def jscFlavor = 'org.webkit:android-jsc-intl:+'`
+ * `def jscFlavor = io.github.react-native-community:jsc-android-intl:2026004.+`
  *
  * The international variant includes ICU i18n library and necessary data
  * allowing to use e.g. `Date.toLocaleString` and `String.localeCompare` that
  * give correct results when using with locales other than en-US. Note that
  * this variant is about 6MiB larger per architecture than default.
  */
-def jscFlavor = 'org.webkit:android-jsc:+'
+def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 
@@ -172,27 +168,10 @@ android {
 		  it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
     }
     sourceSets {
-      main {
-        if (isNewArchitectureEnabled()) {
-          java.srcDirs += [
-            "src/newarch",
-            // This is needed to build Kotlin project with NewArch enabled
-            "${project.buildDir}/generated/source/codegen/java"
-          ]
-        } else {
-          java.srcDirs += ["src/oldarch"]
+        main {
+            java.srcDirs += ["src/oldarch"]
         }
-      }
     }
-    // packagingOptions {
-    //   jniLibs {
-    //     // useLegacyPackaging true
-    //     pickFirsts += [
-    //       'lib/**/libjsi.so'
-    //       'lib/**/libreactnative.so'
-    //     ]
-    //   }
-    // }
 }
 
 androidComponents {

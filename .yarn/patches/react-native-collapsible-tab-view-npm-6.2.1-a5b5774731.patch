@@ -1,3 +1,31 @@
+diff --git a/lib/typescript/src/index.d.ts b/lib/typescript/src/index.d.ts
+index f435a5acd1ed474e5edf1d4b431a2fcce5825157..621cbefab4bad3a2c31595f3330d0e385fceeb25 100644
+--- a/lib/typescript/src/index.d.ts
++++ b/lib/typescript/src/index.d.ts
+@@ -20,19 +20,19 @@ export declare const Tabs: {
+         children: import("react").ReactElement<any, string | ((props: any) => import("react").ReactElement<any, any> | null) | (new (props: any) => import("react").Component<any, any, any>)>;
+     }>;
+     FlatList: <T>(p: import("react-native/types").FlatListProps<T> & {
+-        ref?: ((instance: import("react-native/types").FlatList<T> | null) => void) | import("react").RefObject<import("react-native/types").FlatList<T>> | null | undefined;
++        ref?: ((instance: import("react-native/types").FlatList<T> | null) => void) | import("react").RefObject<import("react-native/types").FlatList<T> | null> | null | undefined;
+     }) => import("react").ReactElement<any, string | ((props: any) => import("react").ReactElement<any, any> | null) | (new (props: any) => import("react").Component<any, any, any>)>;
+     ScrollView: import("react").ForwardRefExoticComponent<Pick<import("react-native/types").ScrollViewProps, "scrollEnabled" | "keyboardDismissMode" | "style" | "children" | "onMoveShouldSetResponderCapture" | "onStartShouldSetResponder" | "overScrollMode" | "contentContainerStyle" | "decelerationRate" | "horizontal" | "invertStickyHeaders" | "keyboardShouldPersistTaps" | "onContentSizeChange" | "onScrollBeginDrag" | "onScrollEndDrag" | "onMomentumScrollEnd" | "onMomentumScrollBegin" | "pagingEnabled" | "removeClippedSubviews" | "showsHorizontalScrollIndicator" | "showsVerticalScrollIndicator" | "stickyHeaderHiddenOnScroll" | "refreshControl" | "snapToInterval" | "snapToOffsets" | "snapToStart" | "snapToEnd" | "stickyHeaderIndices" | "disableIntervalMomentum" | "disableScrollViewPanResponder" | "StickyHeaderComponent" | "hitSlop" | "id" | "onLayout" | "pointerEvents" | "testID" | "nativeID" | "collapsable" | "needsOffscreenAlphaCompositing" | "renderToHardwareTextureAndroid" | "focusable" | "shouldRasterizeIOS" | "isTVSelectable" | "hasTVPreferredFocus" | "tvParallaxProperties" | "tvParallaxShiftDistanceX" | "tvParallaxShiftDistanceY" | "tvParallaxTiltAngle" | "tvParallaxMagnification" | "onMoveShouldSetResponder" | "onResponderEnd" | "onResponderGrant" | "onResponderReject" | "onResponderMove" | "onResponderRelease" | "onResponderStart" | "onResponderTerminationRequest" | "onResponderTerminate" | "onStartShouldSetResponderCapture" | "onTouchStart" | "onTouchMove" | "onTouchEnd" | "onTouchCancel" | "onTouchEndCapture" | "onPointerEnter" | "onPointerEnterCapture" | "onPointerLeave" | "onPointerLeaveCapture" | "onPointerMove" | "onPointerMoveCapture" | "onPointerCancel" | "onPointerCancelCapture" | "onPointerDown" | "onPointerDownCapture" | "onPointerUp" | "onPointerUpCapture" | "accessible" | "accessibilityActions" | "accessibilityLabel" | "aria-label" | "accessibilityRole" | "accessibilityState" | "aria-busy" | "aria-checked" | "aria-disabled" | "aria-expanded" | "aria-selected" | "aria-labelledby" | "accessibilityHint" | "accessibilityValue" | "aria-valuemax" | "aria-valuemin" | "aria-valuenow" | "aria-valuetext" | "onAccessibilityAction" | "importantForAccessibility" | "aria-hidden" | "aria-live" | "aria-modal" | "role" | "accessibilityLiveRegion" | "accessibilityLabelledBy" | "accessibilityElementsHidden" | "accessibilityViewIsModal" | "onAccessibilityEscape" | "onAccessibilityTap" | "onMagicTap" | "accessibilityIgnoresInvertColors" | "accessibilityLanguage" | "alwaysBounceHorizontal" | "alwaysBounceVertical" | "automaticallyAdjustContentInsets" | "automaticallyAdjustKeyboardInsets" | "automaticallyAdjustsScrollIndicatorInsets" | "bounces" | "bouncesZoom" | "canCancelContentTouches" | "centerContent" | "contentInset" | "contentOffset" | "contentInsetAdjustmentBehavior" | "directionalLockEnabled" | "indicatorStyle" | "maintainVisibleContentPosition" | "maximumZoomScale" | "minimumZoomScale" | "onScrollAnimationEnd" | "pinchGestureEnabled" | "scrollEventThrottle" | "scrollIndicatorInsets" | "scrollToOverflowEnabled" | "scrollsToTop" | "snapToAlignment" | "onScrollToTop" | "zoomScale" | "endFillColor" | "scrollPerfTag" | "nestedScrollEnabled" | "fadingEdgeLength" | "persistentScrollbar"> & {
+         children?: import("react").ReactNode;
+     } & import("react").RefAttributes<import("react-native/types").ScrollView>>;
+     SectionList: <T_1>(p: import("react-native/types").SectionListProps<T_1, import("react-native/types").DefaultSectionT> & {
+-        ref?: ((instance: import("react-native/types").SectionList<T_1, import("react-native/types").DefaultSectionT> | null) => void) | import("react").RefObject<import("react-native/types").SectionList<T_1, import("react-native/types").DefaultSectionT>> | null | undefined;
++        ref?: ((instance: import("react-native/types").SectionList<T_1, import("react-native/types").DefaultSectionT> | null) => void) | import("react").RefObject<import("react-native/types").SectionList<T_1, import("react-native/types").DefaultSectionT> | null> | null | undefined;
+     }) => import("react").ReactElement<any, string | ((props: any) => import("react").ReactElement<any, any> | null) | (new (props: any) => import("react").Component<any, any, any>)>;
+     FlashList: <T_2>(p: import("@shopify/flash-list").FlashListProps<T_2> & {
+-        ref?: ((instance: import("@shopify/flash-list/dist/FlashList").default<T_2> | null) => void) | import("react").RefObject<import("@shopify/flash-list/dist/FlashList").default<T_2>> | null | undefined;
++        ref?: ((instance: import("@shopify/flash-list/dist/FlashList").default<T_2> | null) => void) | import("react").RefObject<import("@shopify/flash-list/dist/FlashList").default<T_2> | null> | null | undefined;
+     }) => import("react").ReactElement<any, string | ((props: any) => import("react").ReactElement<any, any> | null) | (new (props: any) => import("react").Component<any, any, any>)>;
+     MasonryFlashList: <T_3>(p: import("@shopify/flash-list").MasonryFlashListProps<T_3> & {
+-        ref?: ((instance: import("@shopify/flash-list").MasonryFlashListRef<any> | null) => void) | import("react").RefObject<import("@shopify/flash-list").MasonryFlashListRef<any>> | null | undefined;
++        ref?: ((instance: import("@shopify/flash-list").MasonryFlashListRef<any> | null) => void) | import("react").RefObject<import("@shopify/flash-list").MasonryFlashListRef<any> | null> | null | undefined;
+     }) => import("react").ReactElement<any, string | ((props: any) => import("react").ReactElement<any, any> | null) | (new (props: any) => import("react").Component<any, any, any>)>;
+ };
+ export { Container, Tab, Lazy, FlatList, ScrollView, SectionList, FlashList, MasonryFlashList, };
 diff --git a/src/helpers.tsx b/src/helpers.tsx
 index 4a6b572f2bbdc7e26e12d21c08194e159c3e4307..66efb2346466c49589cccdc9b60a9869f7a9498f 100644
 --- a/src/helpers.tsx
@@ -10,9 +38,18 @@ index 4a6b572f2bbdc7e26e12d21c08194e159c3e4307..66efb2346466c49589cccdc9b60a9869
    scrollTo(ref, x, y, animated)
  }
 diff --git a/src/hooks.tsx b/src/hooks.tsx
-index 75e9c9f557a094db8b658f62203f3fef51a2ae80..e422665fdac801db096e84c4abd1fc66abd0e3c9 100644
+index 75e9c9f557a094db8b658f62203f3fef51a2ae80..f02219cffb97dc377319f613ce00d6040bb82805 100644
 --- a/src/hooks.tsx
 +++ b/src/hooks.tsx
+@@ -52,7 +52,7 @@ export function useAnimatedDynamicRefs(): [
+   const [map, setMap] = useState<ContextType['refMap']>({})
+   const setRef = useCallback(function <T extends RefComponent>(
+     key: TabName,
+-    ref: React.RefObject<T>
++    ref: React.RefObject<T | null>
+   ) {
+     setMap((map) => ({ ...map, [key]: ref }))
+     return ref
 @@ -671,6 +671,7 @@ export const usePageScrollHandler = (
    },
    dependencies?: DependencyList
@@ -21,3 +58,34 @@ index 75e9c9f557a094db8b658f62203f3fef51a2ae80..e422665fdac801db096e84c4abd1fc66
    const { context, doDependenciesDiffer } = useHandler(handlers, dependencies)
    const subscribeForEvents = ['onPageScroll']
  
+diff --git a/src/types.ts b/src/types.ts
+index 4cf32ee5a2795e2ef1c1f790268268506f319cb1..defa91a71951602fcb74e9869ba789296dac650e 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -17,7 +17,7 @@ export type RefComponent =
+   | Animated.ScrollView
+   | SectionList<any>
+ 
+-export type Ref<T extends RefComponent> = React.RefObject<T>
++export type Ref<T extends RefComponent> = React.RefObject<T | null>
+ 
+ export type TabName = string
+ 
+@@ -37,7 +37,7 @@ export type TabBarProps<T extends TabName = TabName> = {
+   focusedTab: Animated.SharedValue<T>
+   tabNames: T[]
+   index: Animated.SharedValue<number>
+-  containerRef: React.RefObject<ContainerRef>
++  containerRef: React.RefObject<ContainerRef | null>
+   onTabPress: (name: T) => void
+   tabProps: TabsWithProps<T>
+ 
+@@ -175,7 +175,7 @@ export type ContextType<T extends TabName = TabName> = {
+    */
+   setRef: <TComponent extends RefComponent>(
+     key: T,
+-    ref: React.RefObject<TComponent>
++    ref: React.RefObject<TComponent | null>
+   ) => Ref<TComponent>
+   /**
+    * Max distance allowed to collapse the header.
