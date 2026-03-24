@@ -714,7 +714,7 @@ export const ExternalTokenRow = memo(
                     </>
                   )}
                   <Text style={styles.tokenFdv}>
-                    {formatUsdValueKMB(data.fdv || 0)}
+                    {fdv ? formatUsdValueKMB(data.fdv || 0) : '-'}
                   </Text>
                 </View>
               </View>

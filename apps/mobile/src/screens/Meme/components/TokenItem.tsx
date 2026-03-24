@@ -106,9 +106,9 @@ const TokenListItemComponent = ({
               ) : null}
             </View>
             {showFdvOnly ? (
-              !!item.fdv && (
+              !!item.identity?.fdv && (
                 <Text style={styles.tokenFdv}>
-                  {formatUsdValueKMB(item.fdv)}
+                  {formatUsdValueKMB(item.identity.fdv)}
                 </Text>
               )
             ) : item.asset ? (
