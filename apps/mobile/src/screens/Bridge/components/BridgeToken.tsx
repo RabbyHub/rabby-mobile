@@ -55,6 +55,7 @@ const BridgeToken = ({
   handleMax,
   skeletonLoading,
   disabled,
+  clearOnDisabled,
   slider,
   onChangeSlider,
   onSliderScrollEnabledChange,
@@ -76,6 +77,7 @@ const BridgeToken = ({
   inSufficient?: boolean;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  clearOnDisabled?: boolean;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
   onSliderScrollEnabledChange?: (enabled: boolean) => void;
@@ -194,10 +196,10 @@ const BridgeToken = ({
   );
 
   useEffect(() => {
-    if (isFromToken && disabled) {
+    if (isFromToken && disabled && clearOnDisabled) {
       onInputChange?.('');
     }
-  }, [isFromToken, disabled, onInputChange]);
+  }, [isFromToken, disabled, clearOnDisabled, onInputChange]);
 
   return (
     <View style={styles.container}>
