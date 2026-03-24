@@ -102,6 +102,7 @@ import {
   useSignatureStore,
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { BridgeSlippage } from '../Bridge/components/BridgeSlippage';
+import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
@@ -210,6 +211,7 @@ const Swap = ({
     clearExpiredTimer,
     finishedQuotes,
     inSufficientCanGetQuote,
+    quoteBlockedByClosedMarket,
 
     autoSuggestSlippage,
   } = useTokenPair({
@@ -763,6 +765,7 @@ const Swap = ({
     () =>
       Number(payAmount) > 0 &&
       inSufficientCanGetQuote &&
+      !quoteBlockedByClosedMarket &&
       amountAvailable &&
       !quoteLoading &&
       !!payToken &&
@@ -771,6 +774,7 @@ const Swap = ({
     [
       payAmount,
       inSufficientCanGetQuote,
+      quoteBlockedByClosedMarket,
       amountAvailable,
       quoteLoading,
       payToken,
@@ -780,6 +784,21 @@ const Swap = ({
   );
 
   const noQuote = useDebouncedValue(noQuoteOrigin, 10);
+  const showClosedMarketTip = useMemo(
+    () =>
+      Number(payAmount) > 0 &&
+      amountAvailable &&
+      !!payToken &&
+      !!receiveToken &&
+      quoteBlockedByClosedMarket,
+    [
+      payAmount,
+      amountAvailable,
+      payToken,
+      receiveToken,
+      quoteBlockedByClosedMarket,
+    ],
+  );
 
   const lowCreditToken = useMemo(() => {
     if (!navState) {
@@ -1120,7 +1139,9 @@ const Swap = ({
             />
           </View>
 
-          {noQuote ? (
+          {showClosedMarketTip ? (
+            <MarketClosedTip />
+          ) : noQuote ? (
             <>
               <Text style={styles.errorTip}>
                 {t('page.swap.no-quote-found')}

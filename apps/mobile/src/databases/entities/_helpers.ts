@@ -92,6 +92,21 @@ export const jsonTransformer: ValueTransformer = {
 };
 
 /**
+ * @description should used with nullable TEXT column type
+ */
+export const nullableJsonTransformer: ValueTransformer = {
+  to: (val: any) => {
+    if (val === null || val === undefined || val === '') return null;
+    if (typeof val === 'string') return val;
+    return JSON.stringify(val);
+  },
+  from: (val: any) => {
+    if (val === null || val === undefined || val === '') return null;
+    return columnConverter.jsonStringToObj(val);
+  },
+};
+
+/**
  * @description should used with TEXT column type
  */
 export const bigNumberTransformer: ValueTransformer = {

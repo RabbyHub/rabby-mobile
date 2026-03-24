@@ -936,6 +936,7 @@
       "no-fees-for-wrap": "No Rabby fee for Wrap",
       "Auto": "Auto",
       "no-quote-found": "No quote found",
+      "market-closed": "Market not open: Order placement is not supported.",
       "source": "Source",
       "token": "Token",
       "results": "Results",
@@ -2363,6 +2364,7 @@
       }
     },
     "market": {
+      "noOpen": "No Open",
       "tokenHeader": {
         "name": "Name"
       },

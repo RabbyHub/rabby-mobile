@@ -3,11 +3,10 @@ import RcIconClose from '@/assets2024/icons/search/RcIconClose.svg';
 import RcIconRight from '@/assets2024/icons/search/IconRight.svg';
 import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
 import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Keyboard, Pressable, View } from 'react-native';
+import { FlatList, Keyboard, View } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -15,7 +14,6 @@ import {
 
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
@@ -42,6 +40,7 @@ import { tokenItemToITokenItem } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
 import { FavoriteTag } from '@/components2024/Favorite';
 import { Text } from '@/components/Typography';
+import { SearchTokenHeader } from './SearchTokenHeader';
 
 interface Props {
   resultTokens: ITokenItem[];
@@ -271,6 +270,7 @@ export const SearchAssets: React.FC<Props> = ({
       <FlatList
         keyExtractor={(_, index) => index.toString()}
         data={filterTokens}
+        ListHeaderComponent={<SearchTokenHeader />}
         ListEmptyComponent={ListEmptyComponent}
         renderItem={({ item }) => renderItem({ item })}
         style={styles.list}
@@ -364,7 +364,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
   },
   emptyHolder: {
     marginTop: 65,
