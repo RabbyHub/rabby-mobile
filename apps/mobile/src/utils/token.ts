@@ -172,6 +172,10 @@ export function getTokenSymbol(token?: {
   );
 }
 
+export function isTokenMarketClosed(token?: { market_status?: string | null }) {
+  return token?.market_status === 'closed';
+}
+
 export type TokenItemFromAbstractPortfolioToken = TokenItemMaybeWithOwner & {
   cex_ids?: string[];
   isFakerFoldRow?: boolean;

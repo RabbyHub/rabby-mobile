@@ -16,7 +16,7 @@ import { useSwapSettings } from './settings';
 import { QuoteProvider, TDexQuoteData, useQuoteMethods } from './quote';
 import { stats } from '@/utils/stats';
 import { formatSpeicalAmount } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
 import { findChainByEnum } from '@/utils/chain';
 import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
@@ -443,6 +443,14 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const inSufficientCanGetQuote = enableInsufficientQuote
     ? true
     : !inSufficient;
+  const quoteBlockedByClosedMarket = useMemo(
+    () => isTokenMarketClosed(payToken) || isTokenMarketClosed(receiveToken),
+    [payToken, receiveToken],
+  );
+  const canRequestQuote = useMemo(
+    () => inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
+    [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
+  );
 
   useEffect(() => {
     if (autoSlippage) {
@@ -493,7 +501,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         chain &&
         Number(payAmount) > 0 &&
         feeRate &&
-        inSufficientCanGetQuote &&
+        canRequestQuote &&
         !isDraggingSlider
       ) {
         setTokenRefreshId(e => e + 1);
@@ -579,7 +587,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
-      inSufficientCanGetQuote
+      canRequestQuote
     ) {
       setFinishedQuotes(0);
       setQuoteLoading(true);
@@ -591,7 +599,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       setQuoteLoading(false);
     }
   }, [
-    inSufficientCanGetQuote,
+    canRequestQuote,
     refreshId,
     userAddress,
     payToken?.id,
@@ -615,13 +623,13 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
-      inSufficientCanGetQuote
+      canRequestQuote
     ) {
       return true;
     }
     return false;
   }, [
-    inSufficientCanGetQuote,
+    canRequestQuote,
     chain,
     feeRate,
     payAmount,
@@ -768,12 +776,12 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   }, [payAmount, setActiveProvider]);
 
   useEffect(() => {
-    if (!inSufficientCanGetQuote) {
+    if (!canRequestQuote) {
       clearTimeout(expiredTimer.current);
       setQuotesList([]);
       setActiveProvider(undefined);
     }
-  }, [inSufficientCanGetQuote, setActiveProvider]);
+  }, [canRequestQuote, setActiveProvider]);
 
   const search = {};
   const [searchObj] = useState<{
@@ -940,6 +948,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     wrapTokenSymbol,
     inSufficient,
     inSufficientCanGetQuote,
+    quoteBlockedByClosedMarket,
     slippageChanged,
     setSlippageChanged,
     slippageState,

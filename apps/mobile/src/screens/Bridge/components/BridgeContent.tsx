@@ -69,6 +69,7 @@ import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
 import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
 import { Alert } from 'react-native';
+import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 
 /** Bridge form snapshot for validation - only stores amount to detect changes */
 export interface BridgeFormSnapshot {
@@ -299,6 +300,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     isMaxRef,
     payTokenIsNativeToken,
     inSufficientCanGetQuote,
+    quoteBlockedByClosedMarket,
     slider,
     onChangeSlider,
   } = useBridge(isForMultipleAddress);
@@ -808,11 +810,17 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const noQuote =
     inSufficientCanGetQuote &&
+    !quoteBlockedByClosedMarket &&
     !!fromToken &&
     !!toToken &&
     Number(amount) > 0 &&
     !quoteLoading &&
     !quoteList?.length;
+  const showClosedMarketTip =
+    !!fromToken &&
+    !!toToken &&
+    Number(amount) > 0 &&
+    quoteBlockedByClosedMarket;
 
   const btnDisabled =
     inSufficient ||
@@ -1036,6 +1044,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               }
             />
           )}
+          {showClosedMarketTip && <MarketClosedTip />}
           {noQuote && (
             <>
               {recommendFromToken ? (
