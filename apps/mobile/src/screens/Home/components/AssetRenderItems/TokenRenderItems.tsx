@@ -555,22 +555,7 @@ export const ExternalTokenRow = memo(
               <View style={styles.gasBadgeTextRoot}>
                 <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
               </View>
-            ) : (
-              <Text
-                style={styles.searchSubText}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {'FDV'}
-                <Text style={styles.fdvValue}>
-                  {':'}
-                  {fdv ? formatUsdValueKMB(fdv || 0) : ' -'}
-                </Text>
-              </Text>
-            )}
-            {!isGasToken &&
-              Boolean(
-                (data as TokenItemWithEntity)?.identity?.token_id || data.id,
-              ) && <View style={styles.verticalLine} />}
+            ) : null}
             {!isGasToken &&
               Boolean(
                 (data as TokenItemWithEntity)?.identity?.token_id || data.id,
@@ -626,16 +611,12 @@ export const ExternalTokenRow = memo(
       styles.leftSection,
       styles.gasBadgeTextRoot,
       styles.gasBadgeText,
-      styles.searchSubText,
-      styles.fdvValue,
-      styles.verticalLine,
       styles.tokenRowContent,
       styles.caValue,
       styles.caValueText,
       styles.rightSection,
       styles.tips,
       isGasToken,
-      fdv,
       colors2024,
       onPressBottomRow,
       onPressToken,
