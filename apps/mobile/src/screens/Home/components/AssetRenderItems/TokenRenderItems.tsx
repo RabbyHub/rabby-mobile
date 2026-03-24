@@ -1,6 +1,7 @@
 import React, { memo, ReactNode, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Image,
   Pressable,
   StyleSheet,
   TouchableOpacity,
@@ -495,6 +496,7 @@ export const ExternalTokenRow = memo(
     rightSlot,
     onPressBottomRow,
     afterNode,
+    rightInfoMode = 'priceChange',
   }: {
     data: ITokenItem | TokenItem | TokenItemWithEntity;
     style?: StyleProp<ViewStyle>;
@@ -508,6 +510,7 @@ export const ExternalTokenRow = memo(
     rightSlot?: ReactNode;
     onPressBottomRow?(): void;
     afterNode?: ReactNode;
+    rightInfoMode?: 'priceChange' | 'balance';
   }) => {
     const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -641,6 +644,23 @@ export const ExternalTokenRow = memo(
       () => (data.price_24h_change || 0) >= 0,
       [data.price_24h_change],
     );
+    const topRightText = useMemo(() => {
+      if (rightInfoMode === 'balance') {
+        return formatNetworth(data.usd_value);
+      }
+      return `${decimalPrecision ? '$' : ''}${(decimalPrecision
+        ? formatPrice
+        : formatUsdValue)(data.price || 0)}`;
+    }, [data.price, data.usd_value, decimalPrecision, rightInfoMode]);
+    const bottomRightText = useMemo(() => {
+      if (rightInfoMode === 'balance') {
+        return formatTokenAmount(data.amount || 0);
+      }
+      if (!isNumber(data.price_24h_change)) {
+        return null;
+      }
+      return formatPercentage(Number(data.price_24h_change) || 0, true);
+    }, [data.amount, data.price_24h_change, rightInfoMode]);
 
     return (
       <Container
@@ -672,7 +692,16 @@ export const ExternalTokenRow = memo(
                       <LpTokenIcon protocolId={data?.protocol_id || ''} />
                     </View>
                   )}
+                  {data.launchpad?.logo ? (
+                    <Image
+                      source={{ uri: data.launchpad?.logo }}
+                      style={styles.fourMemeIcon}
+                      width={18}
+                      height={18}
+                    />
+                  ) : null}
                   <ExchangeLogos
+                    style={styles.exchangeLogos}
                     logos={
                       data.cex_ids?.length
                         ? data.cex_ids
@@ -688,36 +717,43 @@ export const ExternalTokenRow = memo(
                     }
                   />
                 </View>
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[
-                    styles.tokenHeaderAmount,
-                    // isExcludeBalanceShowTips && styles.textSecondary,
-                  ]}>
-                  {formatTokenAmount(data.amount)}
-                </Text>
+                <View style={styles.tokenAssetContainer}>
+                  {!!data.asset && (
+                    <>
+                      {data.asset?.logo ? (
+                        <Image
+                          source={{ uri: data.asset?.logo }}
+                          style={styles.fourMemeIcon}
+                          width={16}
+                          height={16}
+                        />
+                      ) : null}
+                      <Text style={styles.tokenFdv}>{data.asset?.name}</Text>
+                      <Text style={styles.tokenFdvSeparator}>|</Text>
+                    </>
+                  )}
+                  <Text style={styles.tokenFdv}>
+                    {formatUsdValueKMB(data.fdv || 0)}
+                  </Text>
+                </View>
               </View>
               <View style={styles.colContent}>
-                <Text style={styles.tokenRowAmount}>
-                  {formatNetworth(data.usd_value || 0)}
-                </Text>
+                <Text style={styles.tokenRowAmount}>{topRightText}</Text>
                 <View style={styles.priceInfo}>
-                  <Text style={styles.usdValue}>
-                    {decimalPrecision ? '$' : ''}
-                    {(decimalPrecision ? formatPrice : formatUsdValue)(
-                      data.price || 0,
-                    )}
-                  </Text>
-                  {isNumber(data.price_24h_change) && (
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.changeText,
-                        !isPositive && styles.changeTextPositive,
-                      ])}>
-                      {formatPercentage(Number(data.price_24h_change) || 0)}
-                    </Text>
-                  )}
+                  {bottomRightText &&
+                    (rightInfoMode === 'balance' ? (
+                      <Text style={styles.searchAmountStr}>
+                        {bottomRightText}
+                      </Text>
+                    ) : isNumber(data.price_24h_change) ? (
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.changeText,
+                          !isPositive && styles.changeTextPositive,
+                        ])}>
+                        {bottomRightText}
+                      </Text>
+                    ) : null)}
                 </View>
               </View>
             </View>
@@ -923,6 +959,17 @@ const getStyles = createGetStyles2024(ctx => ({
     flexShrink: 0,
     justifyContent: 'flex-start',
   },
+  exchangeLogos: {
+    backgroundColor: ctx.colors2024['neutral-bg-5'],
+    paddingHorizontal: 0,
+    paddingVertical: 2,
+    borderRadius: 12,
+    paddingRight: 4,
+  },
+  fourMemeIcon: {
+    width: 16,
+    height: 16,
+  },
   priceInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -991,6 +1038,30 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     // gap: 8,
   },
+  tokenAssetContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tokenAssetItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tokenFdv: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+  },
+  tokenFdvSeparator: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-line'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+  },
   colContent: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -1012,6 +1083,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     flex: 1,
+    gap: 2,
     overflow: 'hidden',
   },
   verticalLine: {

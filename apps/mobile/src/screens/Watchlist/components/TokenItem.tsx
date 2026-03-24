@@ -18,6 +18,7 @@ import { formatPercentageKMB } from '@/screens/Meme/components/TokenItem';
 import { isNumber } from 'lodash';
 import { useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
+import { NoOpen } from './NoOpen';
 
 export const PercentChangeBadge = ({ percent }: { percent?: number }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -127,9 +128,13 @@ const TokenListItemComponent = ({
       <View style={styles.tokenRightSection}>
         {/* 价格 */}
         <Text style={styles.priceText}>${formatPrice(displayPrice)}</Text>
-        {/* 24小时价格百分比 */}
-        {isNumber(displayPriceChange) && (
-          <PercentChangeBadge percent={displayPriceChange} />
+        {/* 24小时价格百分比,如果市场关闭则显示No Open */}
+        {item.market_status === 'closed' ? (
+          <NoOpen />
+        ) : (
+          isNumber(displayPriceChange) && (
+            <PercentChangeBadge percent={displayPriceChange} />
+          )
         )}
       </View>
       {/* 右slot */}

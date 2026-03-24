@@ -604,6 +604,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         decimalPrecision
                         data={token}
                         logoSize={40}
+                        rightInfoMode="balance"
                         touchable={false}
                         style={[
                           (disabled || lightDisable) &&
