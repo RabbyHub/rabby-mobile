@@ -161,11 +161,44 @@ export const sortAccountsByBalance = <
 >(
   accounts: T,
 ) => {
-  return accounts.sort((a, b) => {
-    return new BigNumber(b?.balance || 0)
+  return [...accounts].sort((a, b) => {
+    const balanceDiff = new BigNumber(b?.balance || 0)
       .minus(new BigNumber(a?.balance || 0))
       .toNumber();
-  });
+
+    if (balanceDiff !== 0) {
+      return balanceDiff;
+    }
+
+    const aAddress = a.address.toLowerCase();
+    const bAddress = b.address.toLowerCase();
+    if (aAddress !== bAddress) {
+      return aAddress.localeCompare(bAddress);
+    }
+
+    const aType =
+      typeof (a as KeyringAccountWithAlias).type === 'string'
+        ? (a as KeyringAccountWithAlias).type
+        : '';
+    const bType =
+      typeof (b as KeyringAccountWithAlias).type === 'string'
+        ? (b as KeyringAccountWithAlias).type
+        : '';
+    if (aType !== bType) {
+      return aType.localeCompare(bType);
+    }
+
+    const aBrandName =
+      typeof (a as Account).brandName === 'string'
+        ? (a as Account).brandName
+        : '';
+    const bBrandName =
+      typeof (b as Account).brandName === 'string'
+        ? (b as Account).brandName
+        : '';
+
+    return aBrandName.localeCompare(bBrandName);
+  }) as T;
 };
 
 export function isMyAccount<T extends KeyringAccount | KeyringAccountWithAlias>(
@@ -333,6 +366,46 @@ export function filterOutTopAccounts<
   return { ...ret, topRecords };
 }
 
+type TopAccountsOptions = {
+  topCount?: number;
+  gatherSameAddress?: boolean;
+  sortBy?: 'highlight'[];
+};
+
+function normalizeTopAccountsOptions(
+  options?: boolean | TopAccountsOptions,
+): Required<TopAccountsOptions> {
+  if (typeof options === 'boolean') {
+    return {
+      topCount: 10,
+      gatherSameAddress: options,
+      sortBy: ['highlight'],
+    };
+  }
+
+  return {
+    topCount: options?.topCount ?? 10,
+    gatherSameAddress: options?.gatherSameAddress ?? false,
+    sortBy: options?.sortBy ?? ['highlight'],
+  };
+}
+
+export const getTopMyAccounts = makeAvoidParallelAsyncFunc(
+  async (options?: boolean | TopAccountsOptions) => {
+    const { topCount, gatherSameAddress, sortBy } =
+      normalizeTopAccountsOptions(options);
+    const { sortedAccounts } = await getAccountList({
+      filter: 'onlyMine',
+      sortBy,
+    });
+
+    return filterOutTopAccounts(sortedAccounts, {
+      topCount,
+      gatherSameAddress,
+    });
+  },
+);
+
 export function filterOutTop10Accounts<
   T extends { address: string; balance?: number },
 >(sortedAccounts: T[], { gatherSameAddress = false } = {}) {
@@ -350,12 +423,18 @@ export function filterOutTop10Accounts<
 }
 
 export const getTop10MyAccounts = makeAvoidParallelAsyncFunc(
-  async ({ gatherSameAddress = false } = {}) => {
-    const { sortedAccounts } = await getAccountList({
-      filter: 'onlyMine',
+  async (options?: boolean | { gatherSameAddress?: boolean }) => {
+    const result = await getTopMyAccounts({
+      ...normalizeTopAccountsOptions(options),
+      topCount: 10,
     });
 
-    return filterOutTop10Accounts(sortedAccounts, { gatherSameAddress });
+    return {
+      top10Accounts: result.topAccounts,
+      top10Addresses: result.topAddresses,
+      top10Records: result.topRecords,
+      restAccounts: result.restAccounts,
+    };
   },
 );
 
