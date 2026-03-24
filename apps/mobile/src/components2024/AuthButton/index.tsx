@@ -15,6 +15,7 @@ import { updateUnlockTime } from '@/core/apis/lock';
 export type IAuthButtonProps = Omit<ButtonProps, 'onPress'> & {
   onFinished?: () => void;
   onCancel?: () => void;
+  onAuthModalDismiss?: () => void;
   onBeforeAuth?: () => void;
   authTitle?: string;
   syncUnlockTime?: boolean;
@@ -25,6 +26,7 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
   onFinished: _onFinished,
   onBeforeAuth,
   onCancel,
+  onAuthModalDismiss,
   authTitle,
   syncUnlockTime,
   iconColor,
@@ -64,6 +66,11 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
       onCancel?.();
     };
 
+    const onDismiss = () => {
+      isProcessingRef.current = false;
+      onAuthModalDismiss?.();
+    };
+
     try {
       if (!isBiometricsEnabled) {
         throw new Error('Biometrics Disabled');
@@ -85,12 +92,21 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
         authType: ['password'],
         onFinished: finish,
         onCancel: cancel,
+        onDismiss: onDismiss,
         validationHandler(password) {
           return apisLock.throwErrorIfInvalidPwd(password);
         },
       });
     }
-  }, [onBeforeAuth, isBiometricsEnabled, authTitle, t, onFinished, onCancel]);
+  }, [
+    onBeforeAuth,
+    isBiometricsEnabled,
+    authTitle,
+    t,
+    onFinished,
+    onCancel,
+    onAuthModalDismiss,
+  ]);
 
   return (
     <Button
