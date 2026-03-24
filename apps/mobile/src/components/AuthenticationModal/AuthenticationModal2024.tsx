@@ -49,6 +49,7 @@ export interface AuthenticationModalProps extends ValidationBehaviorProps {
   checklist?: string[];
   placeholder?: string;
   onCancel?(): void;
+  onDismiss?(): void;
   disableValidation?: boolean;
   authType?:
     | Exclude<apisLock.UIAuthType, 'none'>[]
@@ -458,7 +459,12 @@ AuthenticationModal2024.show = async (
     closeDuration?: number;
   },
 ) => {
-  const { closeDuration = IS_IOS ? 0 : 300, onCancel, ...props } = showConfig;
+  const {
+    closeDuration = IS_IOS ? 0 : 300,
+    onCancel,
+    onDismiss,
+    ...props
+  } = showConfig;
   let disableValidation = showConfig.disableValidation;
   const lockInfo = await apisLock.getRabbyLockInfo();
   if (!lockInfo.isUseCustomPwd) {
@@ -472,6 +478,7 @@ AuthenticationModal2024.show = async (
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
+      onDismiss,
     },
     ...props,
     onCancel: () => {
