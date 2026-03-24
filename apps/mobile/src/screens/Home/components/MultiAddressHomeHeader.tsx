@@ -218,6 +218,8 @@ export function MultiAddressHomeHeader(
     <View style={[styles.container, style]}>
       <GlobalWarning
         hasError={isDisConnect}
+        // // leave here for debug
+        // {...__DEV__ && { hasError: true }}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {
@@ -453,8 +455,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     globalWarning: {
       marginHorizontal: 16,
-      marginTop: 16,
-      // marginBottom: -16,
+      marginBottom: 16,
     },
 
     multiChart: {
