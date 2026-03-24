@@ -23,6 +23,7 @@ import {
 } from '../../Meme/components/TokenItem';
 import { useTokenMarketTokenList } from '../../Meme/hooks/useTokenMarketTokenList';
 import { matomoRequestEvent } from '@/utils/analytics';
+import WatchListHeader from '../../Watchlist/components/TokenHeader';
 
 const isAndroid = Platform.OS === 'android';
 const VIEWABILITY_CONFIG = {
@@ -174,6 +175,7 @@ export function MarketCategoryContent({
     ({ item }: { item: TokenMarketTokenItem }) => (
       <TokenListItem
         showChainLogo={categoryId !== 'meme'}
+        showFdvOnly={categoryId === 'hot'}
         item={item}
         onPress={handleOpenTokenDetail}
       />
@@ -236,22 +238,33 @@ export function MarketCategoryContent({
           <View style={[styles.header, { height: headerSpacerHeight }]} />
         )}
         <View style={styles.stickyHeader}>
-          <TokenHeader
-            volumeSort={volumeSort}
-            onVolumeSort={handleVolumeSort}
-            fdvSort={fdvSort}
-            onFdvSort={handleFdvSort}
-            changeSort={changeSort}
-            onChangeSort={handleChangeSort}
-            showVolumeSort={supportedSortFields.has('volume_24h')}
-            showFdvSort={supportedSortFields.has('fdv')}
-            showChangeSort={supportedSortFields.has('price_change_24h')}
-            leftLabel={leftHeaderLabel}
-          />
+          {categoryId === 'hot' ? (
+            <WatchListHeader
+              tokenSort="default"
+              onTokenSort={handleVolumeSort}
+              changeSort={changeSort}
+              onChangeSort={handleChangeSort}
+              disableLeftSort
+            />
+          ) : (
+            <TokenHeader
+              volumeSort={volumeSort}
+              onVolumeSort={handleVolumeSort}
+              fdvSort={fdvSort}
+              onFdvSort={handleFdvSort}
+              changeSort={changeSort}
+              onChangeSort={handleChangeSort}
+              showVolumeSort={supportedSortFields.has('volume_24h')}
+              showFdvSort={supportedSortFields.has('fdv')}
+              showChangeSort={supportedSortFields.has('price_change_24h')}
+              leftLabel={leftHeaderLabel}
+            />
+          )}
         </View>
       </>
     ),
     [
+      categoryId,
       changeSort,
       fdvSort,
       handleChangeSort,

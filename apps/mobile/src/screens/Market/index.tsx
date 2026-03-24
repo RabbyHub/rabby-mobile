@@ -49,6 +49,11 @@ const MARKET_TABS: { id: string; name: string; sort_fields: string[] }[] = [
     name: 'Commodities',
     sort_fields: ['price_change_24h'],
   },
+  {
+    id: 'hot',
+    name: 'Hot',
+    sort_fields: ['price_change_24h'],
+  },
 ] as const;
 
 const VALID_MARKET_TABS = new Set<MarketTabKey>([
