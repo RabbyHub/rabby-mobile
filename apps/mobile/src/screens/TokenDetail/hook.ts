@@ -318,19 +318,24 @@ export const useSingleTokenBalance = ({ token }: { token: TokenItem }) => {
     return formatPrice(_usdValue || 0, 8, true);
   }, [token.price, amountSum]);
 
+  const has24hChangeData = useMemo(() => {
+    const price24hChange = token?.price_24h_change;
+    return price24hChange !== null && price24hChange !== undefined;
+  }, [token?.price_24h_change]);
+
   const percentChange = useMemo(() => {
-    return token?.price_24h_change
-      ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+    return has24hChangeData
+      ? Math.abs(Number(token?.price_24h_change || 0) * 100).toFixed(2) + '%'
       : '';
-  }, [token.price_24h_change]);
+  }, [has24hChangeData, token?.price_24h_change]);
 
   const is24hNoChange = useMemo(() => {
-    return !token?.price_24h_change;
-  }, [token.price_24h_change]);
+    return has24hChangeData && Number(token?.price_24h_change) === 0;
+  }, [has24hChangeData, token?.price_24h_change]);
 
   const isLoss = useMemo(() => {
-    return token.price_24h_change ? Number(token.price_24h_change) < 0 : false;
-  }, [token.price_24h_change]);
+    return has24hChangeData ? Number(token.price_24h_change) < 0 : false;
+  }, [has24hChangeData, token?.price_24h_change]);
 
   const price = useMemo(() => {
     return token.price;
@@ -340,6 +345,7 @@ export const useSingleTokenBalance = ({ token }: { token: TokenItem }) => {
     amountSum,
     usdValue,
     percentChange,
+    has24hChangeData,
     isLoss,
     is24hNoChange,
     price,
