@@ -1586,6 +1586,8 @@ class ProviderController extends BaseController {
         chain,
       });
     }
+
+    return true;
   };
 
   walletRequestPermissions = ({
