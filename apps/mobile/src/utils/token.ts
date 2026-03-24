@@ -4,6 +4,7 @@ import {
   PortfolioItemToken,
   TokenMarketTokenItem,
   TokenItem,
+  TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Contract, providers } from 'ethers';
 import { hexToString } from 'web3-utils';
@@ -474,11 +475,19 @@ export const tokenItemEntityToTokenItem = (
       typeof token.cex_ids === 'string' // TODO: 处理干净后移除兼容逻辑
         ? columnConverter.jsonStringToObj(token.cex_ids)
         : token.cex_ids,
+    launchpad:
+      typeof token.launchpad === 'string'
+        ? columnConverter.jsonStringToObj(token.launchpad)
+        : token.launchpad,
+    asset:
+      typeof token.asset === 'string'
+        ? columnConverter.jsonStringToObj(token.asset)
+        : token.asset,
   };
 };
 
 export const tokenItemToITokenItem = (
-  token: TokenItem,
+  token: TokenItemWithEntity,
   owner: string,
 ): ITokenItem => {
   return {
@@ -486,6 +495,7 @@ export const tokenItemToITokenItem = (
     usd_value: token.price * token.amount,
     owner_addr: owner,
     cex_ids: token.cex_ids || [],
+    fdv: token.identity?.fdv || token.fdv,
   };
 };
 

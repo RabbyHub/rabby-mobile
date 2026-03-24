@@ -13,6 +13,7 @@ import {
   tokenItemEntityToTokenItem,
   tokenItemToITokenItem,
 } from '@/utils/token';
+import { TokenMarketTokenRelatedItem } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
 
 const waitQueueFinished = (q: PQueue) => {
@@ -57,6 +58,9 @@ export interface ITokenItem {
   trade_volume_level?: 'low' | 'middle' | 'high';
   support_market_data?: boolean;
   protocol_id?: string;
+  launchpad?: TokenMarketTokenRelatedItem | null;
+  asset?: TokenMarketTokenRelatedItem | null;
+  market_status?: string;
 }
 
 type TokenAssetsResult = {

@@ -2363,6 +2363,7 @@
       }
     },
     "market": {
+      "noOpen": "No Open",
       "tokenHeader": {
         "name": "Name"
       },
