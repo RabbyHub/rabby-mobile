@@ -48,6 +48,7 @@ interface TokenListItemProps {
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
   showChainLogo?: boolean;
+  showFdvOnly?: boolean;
 }
 
 const TokenListItemComponent = ({
@@ -56,6 +57,7 @@ const TokenListItemComponent = ({
   leftSlot,
   rightSlot,
   showChainLogo = false,
+  showFdvOnly = false,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const uuid = `${item.chain}:${item.id}`;
@@ -103,7 +105,13 @@ const TokenListItemComponent = ({
                 />
               ) : null}
             </View>
-            {item.asset ? (
+            {showFdvOnly ? (
+              !!item.fdv && (
+                <Text style={styles.tokenFdv}>
+                  {formatUsdValueKMB(item.fdv)}
+                </Text>
+              )
+            ) : item.asset ? (
               <View style={styles.tokenAssetContainer}>
                 {item.asset?.logo ? (
                   <Image
