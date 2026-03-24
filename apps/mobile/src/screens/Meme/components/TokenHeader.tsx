@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, ViewStyle } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconArrowDownCC from '@/assets2024/icons/watchlist/sort.svg';
@@ -19,6 +19,7 @@ interface TokenHeaderProps {
   showFdvSort?: boolean;
   showChangeSort?: boolean;
   leftLabel?: string;
+  style?: ViewStyle;
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -95,6 +96,7 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   showFdvSort = true,
   showChangeSort = true,
   leftLabel,
+  style,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -136,7 +138,7 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   );
 
   return (
-    <View style={styles.headerRow}>
+    <View style={[styles.headerRow, style]}>
       <View style={styles.headerLeft}>
         {leftLabel ? (
           <Text style={styles.headerText}>{leftLabel}</Text>
