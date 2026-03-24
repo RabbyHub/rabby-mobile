@@ -30,6 +30,7 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { isTokenMarketClosed } from '@/utils/token';
 
 export const enableInsufficientQuote = true;
 
@@ -212,6 +213,14 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const inSufficientCanGetQuote = useMemo(
     () => (enableInsufficientQuote ? true : !inSufficient),
     [inSufficient],
+  );
+  const quoteBlockedByClosedMarket = useMemo(
+    () => isTokenMarketClosed(fromToken) || isTokenMarketClosed(toToken),
+    [fromToken, toToken],
+  );
+  const canRequestQuote = useMemo(
+    () => inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
+    [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
   );
 
   const getRecommendToChain = async (chain: CHAINS_ENUM) => {
@@ -573,7 +582,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       const currentFetchId = fetchIdRef.current;
 
       if (
-        inSufficientCanGetQuote &&
+        canRequestQuote &&
         userAddress &&
         fromToken?.id &&
         toToken?.id &&
@@ -797,7 +806,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         }
       }
     }, [
-      inSufficientCanGetQuote,
+      canRequestQuote,
       aggregatorsList,
       refreshId,
       userAddress,
@@ -814,7 +823,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   useEffect(() => {
     if (
-      inSufficientCanGetQuote &&
+      canRequestQuote &&
       userAddress &&
       fromToken?.id &&
       toToken?.id &&
@@ -828,7 +837,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       setPending(false);
     }
   }, [
-    inSufficientCanGetQuote,
+    canRequestQuote,
     userAddress,
     fromToken?.id,
     toToken?.id,
@@ -975,12 +984,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
 
   useEffect(() => {
-    if (!inSufficientCanGetQuote) {
+    if (!canRequestQuote) {
       setQuotesList([]);
       setRecommendFromToken(undefined);
       setSelectedBridgeQuote(undefined);
     }
-  }, [inSufficientCanGetQuote, setSelectedBridgeQuote]);
+  }, [canRequestQuote, setSelectedBridgeQuote]);
 
   useEffect(() => {
     if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
@@ -1030,6 +1039,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
     inSufficient,
     inSufficientCanGetQuote,
+    quoteBlockedByClosedMarket,
     amount,
     handleAmountChange,
     showLoss,
