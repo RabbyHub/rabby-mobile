@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import {
-  StyleSheet,
   View,
   ScrollView,
   Dimensions,
@@ -296,95 +295,93 @@ function NewUserGetStarted2024V2(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(ctx =>
-  StyleSheet.create({
-    screen: {
-      flex: 1,
-      backgroundColor: ctx.colors['neutral-card1'],
-    },
-    logoWrapper: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      zIndex: 10,
-      alignItems: 'center',
-    },
-    logoImage: {
-      width: 142, // ~33px (icon) + 4.27px (gap) + 105px (text) from Figma
-      height: 33,
-    },
-    scrollView: {
-      flex: 1,
-    },
-    scrollContent: {
-      flexGrow: 1,
-    },
-    heroContainer: {
-      width: SCREEN_WIDTH,
-      position: 'relative',
-    },
-    heroBackground: {
-      position: 'absolute',
-      width: SCREEN_WIDTH,
-      left: 0,
-      top: 0,
-    },
-    textContent: {
-      alignItems: 'center',
-      paddingHorizontal: 24,
-    },
-    title: {
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '800',
-      fontSize: 28,
-      lineHeight: 36,
-      textAlign: 'center',
-      color: ctx.colors2024['neutral-title-1'],
-      marginBottom: 12,
-    },
-    subtitle: {
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 17,
-      lineHeight: 22,
-      textAlign: 'center',
-      color: ctx.colors2024['neutral-secondary'],
-    },
-    spacer: {
-      flex: 1,
-      minHeight: 24,
-    },
-    bottomActions: {
-      paddingHorizontal: 24,
-      paddingTop: 16,
-      gap: 16,
-    },
-    secondaryButton: {
-      backgroundColor: ctx.colors2024['brand-light-1'],
-      borderWidth: 0,
-    },
-    syncLink: {
-      marginTop: 8,
-    },
-    syncLinkContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    syncLinkText: {
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 17,
-      color: ctx.colors2024['neutral-secondary'],
-    },
-    testLink: {
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      fontSize: 14,
-      textAlign: 'center',
-      marginTop: 8,
-    },
-  }),
-);
+const getStyle = createGetStyles2024(ctx => ({
+  screen: {
+    flex: 1,
+    backgroundColor: ctx.colors['neutral-card1'],
+  },
+  logoWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: 142, // ~33px (icon) + 4.27px (gap) + 105px (text) from Figma
+    height: 33,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  heroContainer: {
+    width: SCREEN_WIDTH,
+    position: 'relative',
+  },
+  heroBackground: {
+    position: 'absolute',
+    width: SCREEN_WIDTH,
+    left: 0,
+    top: 0,
+  },
+  textContent: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  title: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '800',
+    fontSize: 28,
+    lineHeight: 36,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-title-1'],
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  spacer: {
+    flex: 1,
+    minHeight: 24,
+  },
+  bottomActions: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    gap: 16,
+  },
+  secondaryButton: {
+    backgroundColor: ctx.colors2024['brand-light-1'],
+    borderWidth: 0,
+  },
+  syncLink: {
+    marginTop: 8,
+  },
+  syncLinkContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  syncLinkText: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 17,
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  testLink: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+}));
 
 export default NewUserGetStarted2024V2;

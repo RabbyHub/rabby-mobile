@@ -268,9 +268,14 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.SelectImportMethod}
         component={SelectImportMethod}
-        options={mergeScreenOptions({
-          headerShown: false,
-        })}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: 'Select import method',
+            title: 'Select import method',
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
+          },
+        ])}
       />
       <AddressStack.Screen
         name={RootNames.ImportRabbyWallet}

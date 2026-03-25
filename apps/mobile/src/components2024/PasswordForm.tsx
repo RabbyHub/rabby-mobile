@@ -1,0 +1,377 @@
+import React, { useCallback } from 'react';
+import { View, TouchableOpacity } from 'react-native';
+import * as Yup from 'yup';
+import { useTranslation } from 'react-i18next';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { NextInput } from '@/components2024/Form/Input';
+import { Button } from '@/components2024/Button';
+import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
+import { CheckBoxRect } from '@/components2024/CheckBox';
+import TouchableText from '@/components/Touchable/TouchableText';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { useBiometrics } from '@/hooks/biometrics';
+import { Text } from '@/components/Typography';
+import YesIcon from '@/assets2024/icons/common/check.svg';
+import { useShowUserAgreementLikeModal } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner2024';
+import { APP_TEST_PWD } from '@/constant';
+
+const INIT_FORM_DATA = __DEV__
+  ? {
+      password: APP_TEST_PWD,
+      confirmPassword: APP_TEST_PWD,
+      checked: true,
+      enableBiometrics: true,
+    }
+  : {
+      password: '',
+      confirmPassword: '',
+      checked: true,
+      enableBiometrics: true,
+    };
+
+export interface PasswordFormValues {
+  password: string;
+  confirmPassword: string;
+  checked: boolean;
+  enableBiometrics: boolean;
+}
+
+export interface PasswordFormProps {
+  /**
+   * Called when form is submitted with valid values
+   */
+  onSubmit: (values: PasswordFormValues) => void | Promise<void>;
+  /**
+   * Optional initial values
+   */
+  initialValues?: Partial<PasswordFormValues>;
+  /**
+   * Optional button text
+   */
+  submitButtonTitle?: string;
+  /**
+   * Disable form submission
+   */
+  disabled?: boolean;
+  /**
+   * Optional top tip text
+   */
+  topTip?: string;
+  /**
+   * Show loading state on button
+   */
+  loading?: boolean;
+}
+
+export const PasswordForm: React.FC<PasswordFormProps> = ({
+  onSubmit,
+  initialValues = {},
+  submitButtonTitle,
+  disabled = false,
+  topTip,
+  loading = false,
+}) => {
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
+
+  const {
+    computed: { defaultTypeLabel, couldSetupBiometrics },
+  } = useBiometrics({ autoFetch: true });
+
+  const mergedInitialValues = {
+    ...INIT_FORM_DATA,
+    ...initialValues,
+  };
+
+  const yupSchema = React.useMemo(() => {
+    const passSchema = Yup.string()
+      .default(mergedInitialValues.password)
+      .required(t('page.createPassword.passwordRequired'))
+      .min(8, t('page.nextComponent.createNewAddress.passwordMin'));
+
+    return Yup.object({
+      password: passSchema,
+      confirmPassword: Yup.string()
+        .default(mergedInitialValues.confirmPassword)
+        .when('password', {
+          is: (password: string) => passSchema.isValidSync(password),
+          then: schema =>
+            schema
+              .required(t('page.createPassword.confirmRequired'))
+              .oneOf(
+                [Yup.ref('password')],
+                t('page.createPassword.confirmError'),
+              ),
+        }),
+      enableBiometrics: Yup.boolean().default(
+        mergedInitialValues.enableBiometrics,
+      ),
+      checked: Yup.boolean().default(mergedInitialValues.checked).oneOf([true]),
+    });
+  }, [
+    t,
+    mergedInitialValues.password,
+    mergedInitialValues.confirmPassword,
+    mergedInitialValues.enableBiometrics,
+    mergedInitialValues.checked,
+  ]);
+
+  const formik = useAppFormik({
+    initialValues: yupSchema.getDefault(),
+    validationSchema: yupSchema,
+    validateOnMount: false,
+    validateOnChange: false,
+    onSubmit: async values => {
+      const errors = formik.validateFormValues();
+      if (getFormikErrorsCount(errors)) {
+        return;
+      }
+
+      await onSubmit(values);
+    },
+  });
+
+  // Initialize biometrics default value once capability is known
+  React.useEffect(() => {
+    if (couldSetupBiometrics) {
+      formik.setFieldValue('enableBiometrics', true, false);
+    }
+  }, [couldSetupBiometrics, formik]);
+
+  const handleContinue = useCallback(() => {
+    const validationResult = formik.validateFormValues();
+    if (getFormikErrorsCount(validationResult)) {
+      return;
+    }
+    formik.handleSubmit();
+  }, [formik]);
+
+  const shouldDisabled =
+    !formik.values.checked ||
+    !!getFormikErrorsCount(formik.validateFormValues()) ||
+    disabled;
+
+  return (
+    <View style={styles.container}>
+      {topTip && <Text style={styles.topTipText}>{topTip}</Text>}
+
+      <View style={styles.inputHorizontalGroup}>
+        <NextInput.Password
+          fieldName={t('page.createPassword.Newpassword')}
+          fieldNameStyle={styles.absoluteLeft}
+          inputStyle={styles.paddingLeft}
+          containerStyle={styles.inputStyle}
+          inputProps={{
+            value: formik.values.password,
+            secureTextEntry: true,
+            inputMode: 'text',
+            returnKeyType: 'done',
+            placeholder: '',
+            onChangeText(text) {
+              formik.setFieldValue('password', text, true);
+            },
+          }}
+          hasError={Boolean(formik.errors.password)}
+          tipText={
+            formik.errors.password ||
+            t('page.nextComponent.createNewAddress.passwordMin')
+          }
+          tipIcon={
+            !formik.errors.password &&
+            formik.values.password && <YesIcon width={12} height={12} />
+          }
+        />
+
+        <NextInput.Password
+          fieldName={t('page.createPassword.ConfirmPassword')}
+          style={{ marginTop: 20 }}
+          containerStyle={styles.inputStyle}
+          fieldNameStyle={styles.absoluteLeft}
+          inputStyle={styles.paddingLeft}
+          inputProps={{
+            value: formik.values.confirmPassword,
+            secureTextEntry: true,
+            inputMode: 'text',
+            returnKeyType: 'done',
+            placeholder: '',
+            placeholderTextColor: colors2024['neutral-foot'],
+            onChangeText(text) {
+              formik.setFieldValue('confirmPassword', text, true);
+            },
+          }}
+          hasError={Boolean(
+            formik.values.confirmPassword && formik.errors.confirmPassword,
+          )}
+          tipText={
+            formik.values.confirmPassword
+              ? formik.errors.confirmPassword ||
+                t('page.nextComponent.createNewAddress.confirmPasswordTips')
+              : undefined
+          }
+          tipIcon={
+            !formik.errors.password &&
+            formik.values.password &&
+            !formik.errors.confirmPassword &&
+            formik.values.confirmPassword && <YesIcon width={12} height={12} />
+          }
+        />
+      </View>
+
+      <View style={styles.switchContainer}>
+        <Text style={styles.labelText}>
+          {t('page.createPassword.enable', { bioType: defaultTypeLabel })}
+        </Text>
+        <View style={styles.valueView}>
+          <AppSwitch2024
+            value={formik.values.enableBiometrics}
+            disabled={!couldSetupBiometrics}
+            onValueChange={async value => {
+              formik.setFieldValue('enableBiometrics', value, true);
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Spacer between switch and agreement */}
+      <View style={styles.spacer} />
+
+      <TouchableOpacity
+        style={styles.agreementWrapper}
+        onPress={() => {
+          formik.setFieldValue('checked', !formik.values.checked, true);
+        }}>
+        <View style={styles.agreementCheckbox}>
+          <CheckBoxRect checked={formik.values.checked} />
+        </View>
+        <View style={styles.agreementTextWrapper}>
+          <Text style={styles.agreementText}>
+            {t('page.createPassword.agreeToTerms')}{' '}
+          </Text>
+          <TouchableText
+            style={styles.userAgreementTouchText}
+            touchableProps={{ style: styles.userAgreementTouchable }}
+            onPress={evt => {
+              evt.stopPropagation();
+              viewTermsOfUse();
+            }}>
+            {t('page.createPassword.termOfUse')}
+          </TouchableText>
+          <Text style={styles.agreementText}>
+            {' ' + t('page.createPassword.and') + ' '}
+          </Text>
+          <TouchableText
+            style={styles.userAgreementTouchText}
+            touchableProps={{ style: styles.userAgreementTouchable }}
+            onPress={evt => {
+              evt.stopPropagation();
+              viewPrivacyPolicy();
+            }}>
+            {t('page.createPassword.PrivacyPolicy')}
+          </TouchableText>
+        </View>
+      </TouchableOpacity>
+
+      <Button
+        disabled={shouldDisabled}
+        loading={loading}
+        containerStyle={styles.btnContainer}
+        type="primary"
+        title={submitButtonTitle || t('global.Done')}
+        onPress={handleContinue}
+      />
+    </View>
+  );
+};
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    width: '100%',
+    flex: 1,
+  },
+  topTipText: {
+    color: colors2024['neutral-secondary'],
+    fontWeight: '500',
+    fontSize: 18,
+    marginBottom: 24,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+  },
+  inputHorizontalGroup: {
+    width: '100%',
+    flexDirection: 'column',
+  },
+  inputStyle: {
+    borderWidth: 0,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 12,
+  },
+  paddingLeft: {
+    paddingLeft: 16,
+  },
+  absoluteLeft: {
+    left: 16,
+  },
+  labelText: {
+    width: '50%',
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+  },
+  valueView: {
+    width: '50%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 24,
+    paddingHorizontal: 8,
+  },
+  agreementWrapper: {
+    marginTop: 24,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  agreementCheckbox: {
+    marginRight: 6,
+  },
+  agreementTextWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  agreementText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+  },
+  userAgreementTouchText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['brand-default'],
+  },
+  userAgreementTouchable: {
+    padding: 0,
+  },
+  spacer: {
+    flex: 1,
+  },
+  btnContainer: {
+    width: '100%',
+    marginTop: 16,
+    marginBottom: 48,
+  },
+}));
+
+export default PasswordForm;

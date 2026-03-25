@@ -103,8 +103,7 @@ const RootAnimOptions: React.ComponentProps<
   typeof RootStack.Navigator
 >['screenOptions'] &
   object = {
-  // animation: IS_IOS ? 'slide_from_right' : 'none',
-  animation: __DEV__ ? 'slide_from_right' : 'none',
+  animation: 'none',
   animationDuration: 200,
 };
 

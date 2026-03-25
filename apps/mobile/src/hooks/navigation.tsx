@@ -375,7 +375,7 @@ export const apisHomeTabIndex = {
 
 export function resetNavigationTo(
   navigation: NavigationInstance,
-  type: 'Home' | 'Unlock' | 'GetStartedScreen2024' = 'Home',
+  type: 'Home' | 'Unlock' | 'GetStarted' = 'Home',
 ) {
   switch (type) {
     default:
@@ -416,14 +416,14 @@ export function resetNavigationTo(
 
       break;
     }
-    case 'GetStartedScreen2024': {
+    case 'GetStarted': {
       navigation.reset({
         index: 0,
         routes: [
           {
             name: RootNames.StackGetStarted,
             params: {
-              screen: RootNames.GetStartedScreen2024,
+              screen: RootNames.GetStarted,
             },
           },
         ],
@@ -549,9 +549,7 @@ export class UnlockUIManager {
 
       resetNavigationTo(
         navigation,
-        !hasAccountsInKeyring && !hasUnlockOnce
-          ? RootNames.GetStartedScreen2024
-          : RootNames.Home,
+        !hasAccountsInKeyring && !hasUnlockOnce ? 'GetStarted' : 'Home',
       );
       unlockUIState.finishedUnlockResetNav = true;
     };
