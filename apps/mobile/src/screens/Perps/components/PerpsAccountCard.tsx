@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import { ImageBackground, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
-import { PerpHeader } from './PerpHeader';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { Text } from '@/components/Typography';
 import RcIconMinButton from '@/assets2024/icons/perps/IconMinButton.svg';
