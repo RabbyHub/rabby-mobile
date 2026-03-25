@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { ReadRisk } from './ReadRisk';
 import { SeedPhrase } from './SeedPhrase';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
@@ -52,13 +51,11 @@ export const SeedPhraseManualBackup: React.FC<Props | Props2> = ({
   }, [step]);
 
   return (
-    <BottomSheetView>
-      <Components
-        onConfirm={handleNextTick}
-        delaySetPassword={delaySetPassword}
-        seedPhraseData={seedPhraseData}
-        readMode={readMode}
-      />
-    </BottomSheetView>
+    <Components
+      onConfirm={handleNextTick}
+      delaySetPassword={delaySetPassword}
+      seedPhraseData={seedPhraseData}
+      readMode={readMode}
+    />
   );
 };
