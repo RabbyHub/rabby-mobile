@@ -107,10 +107,8 @@ export const PerpsSelectTokenPopup: React.FC<{
     }
     const { arbUsdc, hypeUsdc } = directUsdcTokens;
     const directTokens = [arbUsdc, hypeUsdc].filter(Boolean);
-    const filteredTokens =
-      _tokens?.filter(item => !isDirectDepositToken(item) && item.is_core) ||
-      [];
-    return [...directTokens, ...filteredTokens];
+    const filteredTokens = _tokens?.filter(item => item.is_core) || [];
+    return filteredTokens;
   }, [_tokens, directUsdcTokens]);
 
   useEffect(() => {
@@ -147,8 +145,16 @@ export const PerpsSelectTokenPopup: React.FC<{
           </Text>
           {isDirectDepositToken(item) ? (
             <View style={styles.depositTag}>
+              <svg
+                width="8"
+                height="10"
+                viewBox="0 0 10 12"
+                fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg">
+                <path d="M5.833 0 0 6.667h4.167L4.167 12 10 5.333H5.833z" />
+              </svg>
               <Text style={styles.depositTagText}>
-                {t('page.perps.PerpsDepositTokenModal.directTag')}
+                {t('page.perps.PerpsDepositTokenModal.directDepositFast')}
               </Text>
             </View>
           ) : null}

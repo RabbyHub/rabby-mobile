@@ -37,8 +37,8 @@ export const PerpsAccountCard: React.FC<{
   const { availableBalance, accountValue } = usePerpsAccount();
 
   const isNewUser = React.useMemo(() => {
-    return Number(availableBalance) === 0 && accountValue === 0;
-  }, [availableBalance, accountValue]);
+    return Number(availableBalance) === 0 && accountValue === 0 && isLogin;
+  }, [availableBalance, accountValue, isLogin]);
 
   const [hasClosedLearnMore, setHasClosedLearnMore] = React.useState(true);
   React.useEffect(() => {
@@ -107,7 +107,7 @@ export const PerpsAccountCard: React.FC<{
           </View>
         </View>
       </LinearGradient>
-      {isNewUser && (
+      {showLearnMore && (
         <LinearGradient
           colors={isLight ? ['#FFF', '#FFF'] : ['#0F2F3A', '#041920']}
           start={{ x: 0, y: 0 }}

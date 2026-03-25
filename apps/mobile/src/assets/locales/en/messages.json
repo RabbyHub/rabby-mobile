@@ -2491,7 +2491,11 @@
         },
         "perps": "Perps",
         "gotItBtn": "I Got it",
-        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
+        "feeTitle": "Fee",
+        "feeDesc": "When users place trades, both\n<1>trading fees</1> and <2>builder fees</2> apply.",
+        "feeHyperliquid": "Hyperliquid",
+        "feeRabby": "Rabby Wallet"
       },
       "PerpsAutoCloseModal": {
         "noPosition": "You must input margin first.",
@@ -2513,6 +2517,7 @@
         "goBridgeDesc": "Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.",
         "swapBtn": "Swap",
         "bridgeBtn": "Bridge",
+        "directDepositFast": "Fast, 0 Slippage",
         "directTag": "Direct Deposit"
       },
       "closeAll": "Close All",
