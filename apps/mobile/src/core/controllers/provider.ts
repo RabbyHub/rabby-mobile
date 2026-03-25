@@ -1580,12 +1580,13 @@ class ProviderController extends BaseController {
         decimals,
         id,
       });
-    } else {
-      preferenceService.addCustomizedToken({
-        address: id,
-        chain,
-      });
     }
+    // else {
+    //   preferenceService.addCustomizedToken({
+    //     address: id,
+    //     chain,
+    //   });
+    // }
 
     return true;
   };
