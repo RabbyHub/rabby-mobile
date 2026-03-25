@@ -69,6 +69,7 @@ import { stats } from '@/utils/stats';
 import { getStatsReportSide } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
+import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -86,7 +87,12 @@ export const PerpsMarketDetailScreen = () => {
       >
     >();
 
-  const { market: marketName, fromSource, showOpenPosition } = route.params;
+  const {
+    market: marketName,
+    fromSource,
+    showOpenPosition,
+    direction,
+  } = route.params;
   const [coin, setCoin] = useState(marketName);
 
   const {
@@ -114,10 +120,34 @@ export const PerpsMarketDetailScreen = () => {
     React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const [showDepositTokenPopup, setShowDepositTokenPopup] = useState(false);
   const [showSearchListPopup, setShowSearchListPopup] = useState(false);
+  const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
+  const pendingGoBackRef = useRef(false);
   const coinNameRef = useRef(coin);
   useEffect(() => {
     coinNameRef.current = coin;
   }, [coin]);
+
+  // Intercept back navigation to show guide popup for homePagePositionList users
+  useEffect(() => {
+    if (fromSource !== 'homePagePositionList') {
+      return;
+    }
+    const unsubscribe = navigation.addListener('beforeRemove', e => {
+      if (pendingGoBackRef.current) {
+        return; // allow navigation after popup dismissed
+      }
+      e.preventDefault();
+      apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
+        if (hasShown) {
+          pendingGoBackRef.current = true;
+          navigation.dispatch(e.data.action);
+        } else {
+          setShowGuideEntryPopup(true);
+        }
+      });
+    });
+    return unsubscribe;
+  }, [navigation, fromSource]);
 
   const market = useMemo(() => {
     return marketDataMap[coin];
@@ -129,7 +159,7 @@ export const PerpsMarketDetailScreen = () => {
 
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
-  >('Long');
+  >(direction || 'Long');
   const [closePositionVisible, setClosePositionVisible] = React.useState(false);
   const [addPositionVisible, setAddPositionVisible] = React.useState(false);
 
@@ -410,8 +440,9 @@ export const PerpsMarketDetailScreen = () => {
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: HeaderTitle,
+      headerLeft: HeaderTitle,
       headerRight: HeaderRight,
+      headerTitle: '',
     });
   }, [market, navigation, HeaderTitle, HeaderRight]);
 
@@ -789,6 +820,15 @@ export const PerpsMarketDetailScreen = () => {
         marketData={marketData}
         positionAndOpenOrders={positionAndOpenOrders}
       />
+      <PerpsGuideEntryPopup
+        visible={showGuideEntryPopup}
+        onClose={() => {
+          apisPerps.setHasShownPerpsGuidePopup(true);
+          setShowGuideEntryPopup(false);
+          pendingGoBackRef.current = true;
+          navigation.goBack();
+        }}
+      />
     </>
   );
 };
@@ -797,7 +837,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     height: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     position: 'relative',
   },
   scrollContent: {

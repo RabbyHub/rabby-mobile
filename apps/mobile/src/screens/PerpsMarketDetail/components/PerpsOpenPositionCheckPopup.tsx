@@ -248,35 +248,6 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
           </View>
         </BottomSheetScrollView>
         <View style={styles.footer}>
-          <TouchableOpacity
-            onPress={() => {
-              showTipsPopup({
-                title: t('page.perpsDetail.PerpsClosePositionPopup.fee'),
-                desc:
-                  t('page.perpsDetail.PerpsClosePositionPopup.rabbyFeeTipsV2') +
-                  '\n' +
-                  t(
-                    'page.perpsDetail.PerpsClosePositionPopup.providerFeeTips',
-                    {
-                      fee: formatPercent(providerFee, 4),
-                    },
-                  ),
-                buttonType: 'hyperliquid',
-              });
-            }}>
-            <View style={styles.feeContainer}>
-              <Text style={styles.fee}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.fee')}:{' '}
-                {formatPercent(bothFee, 4)}
-              </Text>
-              <RcIconInfoCC
-                color={colors2024['neutral-info']}
-                width={18}
-                height={18}
-              />
-            </View>
-          </TouchableOpacity>
-
           <Button
             type="hyperliquid"
             title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
@@ -323,7 +294,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 12,
+      paddingTop: 16,
       paddingHorizontal: 16,
       paddingBottom: 56,
     },

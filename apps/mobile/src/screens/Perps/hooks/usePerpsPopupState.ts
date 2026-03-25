@@ -11,6 +11,7 @@ const visibleAtom = atom({
   isShowDeleteAgentPopup: false,
   isShowSearchListPopup: false,
   searchListOpenFrom: 'searchPerps' as 'openPosition' | 'searchPerps',
+  searchListDirection: undefined as 'Long' | 'Short' | undefined,
 });
 
 const selectedTokenAtom = atom<ITokenItem | null>(null);

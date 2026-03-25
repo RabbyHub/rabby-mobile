@@ -371,8 +371,9 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
-    fromSource?: string;
+    fromSource?: 'homePagePositionList' | 'openPosition' | '';
     showOpenPosition?: boolean;
+    direction?: 'Long' | 'Short';
   };
   [RootNames.Lending]?: {
     tokenAddress?: string;

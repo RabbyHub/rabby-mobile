@@ -28,6 +28,7 @@ import { perpsStore } from '@/hooks/perps/usePerpsStore';
 import { useShallow } from 'zustand/shallow';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
+import { Tip } from '@/components/Tip';
 
 export const PerpsPosition: React.FC<{
   showRiskPopup: boolean;
@@ -166,13 +167,33 @@ export const PerpsPosition: React.FC<{
               {positionData?.direction} {`${positionData?.leverage}x`}
             </Text>
           </View>
-          <View style={styles.crossTag}>
-            <Text style={styles.crossText}>
-              {positionData?.type === 'cross'
-                ? t('page.perpsDetail.PerpsPosition.cross')
-                : t('page.perpsDetail.PerpsPosition.isolated')}
-            </Text>
-          </View>
+          {positionData?.type === 'cross' ? (
+            <Tip
+              content={t('page.perpsDetail.PerpsPosition.crossTips')}
+              placement="top">
+              <View style={styles.crossTag}>
+                <Text style={styles.crossText}>
+                  {t('page.perpsDetail.PerpsPosition.cross')}
+                </Text>
+                <RcIconInfoCC
+                  width={12}
+                  height={12}
+                  color={colors2024['neutral-info']}
+                />
+              </View>
+            </Tip>
+          ) : (
+            <View style={styles.crossTag}>
+              <Text style={styles.crossText}>
+                {t('page.perpsDetail.PerpsPosition.isolated')}
+              </Text>
+              <RcIconInfoCC
+                width={12}
+                height={12}
+                color={colors2024['neutral-info']}
+              />
+            </View>
+          )}
         </View>
         <View style={[styles.list, styles.pnlWrapper]}>
           <Text style={styles.unrealizedPnlTitle}>
@@ -186,12 +207,14 @@ export const PerpsPosition: React.FC<{
             {positionData && positionData.pnl >= 0 ? '+' : '-'}$
             {Math.abs(positionData?.pnl || 0).toFixed(2)}
           </Text>
-          <Text style={styles.positionValueTitle}>
-            {t('page.perpsDetail.PerpsPosition.positionValue')}{' '}
+          <View style={styles.positionValueWrapper}>
+            <Text style={styles.positionValueTitle}>
+              {t('page.perpsDetail.PerpsPosition.positionValue')}
+            </Text>
             <Text style={styles.positionValue}>
               {formatUsdValue(Number(positionData?.positionValue || 0))}
             </Text>
-          </Text>
+          </View>
         </View>
         <View style={styles.list}>
           <View style={styles.listItem}>
@@ -598,6 +621,7 @@ export const PerpsPosition: React.FC<{
       </View>
 
       <PerpsRiskLevelPopup
+        isCross={positionData?.type === 'cross'}
         visible={!!showRiskPopup}
         direction={positionData?.direction}
         pxDecimals={pxDecimals}
@@ -723,26 +747,35 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '800',
     textAlign: 'center',
   },
+  positionValueWrapper: {
+    alignItems: 'center',
+    width: '100%',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    paddingTop: 16,
+    marginTop: 16,
+    borderTopColor: colors2024['neutral-line'],
+    borderTopWidth: 1,
+  },
   positionValueTitle: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    textAlign: 'center',
-    marginTop: 8,
+    color: colors2024['neutral-foot'],
   },
   positionValue: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
-    color: colors2024['neutral-foot'],
-    textAlign: 'center',
+    color: colors2024['neutral-title-1'],
   },
   pnlWrapper: {
     paddingVertical: 16,
-    gap: 8,
+    alignItems: 'flex-start',
+    gap: 4,
+    paddingHorizontal: 16,
   },
   list: {
     borderRadius: 16,
@@ -763,7 +796,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   crossTag: {
     borderRadius: 4,
     paddingHorizontal: 4,
+    flexDirection: 'row',
     height: 18,
+    gap: 2,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
@@ -773,6 +808,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+    paddingVertical: 12,
     justifyContent: 'space-between',
   },
   listItemRow: {

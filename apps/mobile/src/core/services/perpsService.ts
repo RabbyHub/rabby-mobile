@@ -39,6 +39,8 @@ export interface PerpsServiceStore {
   currentAccount: StoreAccount | null;
   lastUsedAccount: StoreAccount | null;
   hasDoneNewUserProcess: boolean;
+  hasShownPerpsGuidePopup: boolean;
+  hasClosedLearnMoreCard: boolean;
   inviteConfig: {
     [address: string]: {
       lastInvitedAt?: number;
@@ -74,6 +76,8 @@ export class PerpsService {
           // no clear account , just cache for last used
           lastUsedAccount: null,
           hasDoneNewUserProcess: false,
+          hasShownPerpsGuidePopup: false,
+          hasClosedLearnMoreCard: false,
           favoriteMarkets: [],
         },
       },
@@ -127,6 +131,34 @@ export class PerpsService {
       throw new Error('PerpsService not initialized');
     }
     return this.store.hasDoneNewUserProcess;
+  };
+
+  setHasShownPerpsGuidePopup = async (value: boolean) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.hasShownPerpsGuidePopup = value;
+  };
+
+  getHasShownPerpsGuidePopup = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.hasShownPerpsGuidePopup;
+  };
+
+  setHasClosedLearnMoreCard = async (value: boolean) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.hasClosedLearnMoreCard = value;
+  };
+
+  getHasClosedLearnMoreCard = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.hasClosedLearnMoreCard;
   };
 
   setSendApproveAfterDeposit = async (

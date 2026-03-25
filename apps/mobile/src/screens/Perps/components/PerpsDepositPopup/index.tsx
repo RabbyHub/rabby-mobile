@@ -43,7 +43,7 @@ import { abiCoder } from '@/core/apis/sendRequest';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { Linear } from '@/screens/Transaction/components/SkeletonCard';
-import { useTipsPopup } from '@/hooks/useTipsPopup';
+import { Tip } from '@/components/Tip';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { apisPerps } from '@/core/apis';
 import { tokenAmountBn } from '@/screens/Swap/utils';
@@ -84,7 +84,6 @@ export const PerpsDepositPopup: React.FC<{
     onChangeText: setUsdValue,
     displayedValue: displayedAmount,
   } = useUsdInput();
-  const { showTipsPopup } = useTipsPopup();
 
   const [isShowTokenPopup, setIsShowTokenPopup] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
@@ -641,31 +640,24 @@ export const PerpsDepositPopup: React.FC<{
 
       if (bridgeQuote?.tx) {
         return (
-          <TouchableOpacity
-            style={styles.estReceiveContainer}
-            onPress={() => {
-              Keyboard.dismiss();
-              showTipsPopup({
-                title: t('page.perps.PerpsDepositPopup.estReceive', {
+          <Tip
+            content={t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
+              number: bridgeQuote?.duration || 0,
+            })}
+            placement="top">
+            <View style={styles.estReceiveContainer}>
+              <Text style={styles.estReceiveText}>
+                {t('page.perps.PerpsDepositPopup.estReceive', {
                   balance: formatUsdValue(estReceiveUsdValue),
-                }),
-                desc: t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
-                  number: bridgeQuote?.duration || 0,
-                }),
-                buttonType: 'hyperliquid',
-              });
-            }}>
-            <Text style={styles.estReceiveText}>
-              {t('page.perps.PerpsDepositPopup.estReceive', {
-                balance: formatUsdValue(estReceiveUsdValue),
-              })}
-            </Text>
-            <RcIconInfoFill1CC
-              color={colors2024['neutral-info']}
-              width={18}
-              height={18}
-            />
-          </TouchableOpacity>
+                })}
+              </Text>
+              <RcIconInfoFill1CC
+                color={colors2024['neutral-info']}
+                width={18}
+                height={18}
+              />
+            </View>
+          </Tip>
         );
       }
     }
@@ -680,7 +672,6 @@ export const PerpsDepositPopup: React.FC<{
     isDirectDeposit,
     quoteLoading,
     quoteError,
-    showTipsPopup,
     colors2024,
     estReceiveUsdValue,
   ]);
@@ -699,7 +690,7 @@ export const PerpsDepositPopup: React.FC<{
         })}
         onDismiss={onClose}
         // enableDynamicSizing
-        snapPoints={[400]}
+        snapPoints={[440]}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore">
         <BottomSheetView style={[styles.container]}>
@@ -724,27 +715,37 @@ export const PerpsDepositPopup: React.FC<{
               </Text>
             </View>
             <View style={styles.inputContainer}>
-              <BottomSheetTextInput
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  !amountValidation.isValid && usdValue !== ''
-                    ? styles.inputError
-                    : null,
-                ]}
-                textAlignVertical="center"
-                placeholder="$0"
-                value={displayedAmount}
-                onChangeText={setUsdValue}
-                numberOfLines={1}
-              />
-              {!usdValue && (
-                <TouchableOpacity
-                  style={styles.maxButtonWrapper}
-                  onPress={handleMax}>
-                  <Text style={styles.maxButtonText}>MAX</Text>
-                </TouchableOpacity>
-              )}
+              <View style={styles.inputWrapper}>
+                <BottomSheetTextInput
+                  keyboardType="numeric"
+                  style={[
+                    styles.input,
+                    !amountValidation.isValid && usdValue !== ''
+                      ? styles.inputError
+                      : null,
+                  ]}
+                  textAlignVertical="center"
+                  placeholder="$0"
+                  value={displayedAmount}
+                  onChangeText={setUsdValue}
+                  numberOfLines={1}
+                />
+                {usdValue ? (
+                  <Text style={styles.tokenAmountHint}>
+                    {isDirectDeposit
+                      ? usdValue
+                      : new BigNumber(usdValue)
+                          .div(tokenInfo?.price || 1)
+                          .decimalPlaces(2, BigNumber.ROUND_DOWN)
+                          .toFixed()}{' '}
+                    {getTokenSymbol(tokenInfo)}
+                  </Text>
+                ) : (
+                  <Text style={styles.tokenAmountHint}>
+                    0 {getTokenSymbol(tokenInfo)}
+                  </Text>
+                )}
+              </View>
               <View style={styles.divider} />
               <TouchableOpacity
                 onPress={() => {
@@ -764,6 +765,31 @@ export const PerpsDepositPopup: React.FC<{
 
                   <RcIconSwapBottomArrow />
                 </View>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.quickAmountRow}>
+              {[
+                { label: '25%', value: 0.25 },
+                { label: '50%', value: 0.5 },
+                { label: '75%', value: 0.75 },
+              ].map(item => (
+                <TouchableOpacity
+                  key={item.label}
+                  style={styles.quickAmountBtn}
+                  onPress={() => {
+                    const val = new BigNumber(depositMaxUsdValue)
+                      .times(item.value)
+                      .decimalPlaces(2, BigNumber.ROUND_DOWN)
+                      .toFixed();
+                    setUsdValue(val);
+                  }}>
+                  <Text style={styles.quickAmountText}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={[styles.quickAmountBtn]}
+                onPress={handleMax}>
+                <Text style={[styles.quickAmountText]}>Max</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.bottomContainer}>{BottomComponent}</View>
@@ -829,7 +855,7 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'column',
     },
     formItem: {
-      marginBottom: 48,
+      marginBottom: 25,
     },
     formItemLabelRow: {
       display: 'flex',
@@ -949,6 +975,46 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
+    },
+    inputWrapper: {
+      flex: 1,
+      paddingVertical: 20,
+    },
+    tokenAmountHint: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 13,
+      lineHeight: 16,
+      fontWeight: '400',
+      color: ctx.colors2024['neutral-foot'],
+      marginTop: -4,
+    },
+    quickAmountRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 8,
+    },
+    quickAmountBtn: {
+      flex: 1,
+      height: 40,
+      borderRadius: 8,
+      backgroundColor: ctx.colors2024['neutral-bg-5'],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quickAmountBtnMax: {
+      backgroundColor: 'rgba(80, 210, 193, 0.12)',
+      borderColor: 'transparent',
+    },
+    quickAmountText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: ctx.colors2024['neutral-body'],
+    },
+    quickAmountTextMax: {
+      color: '#50D2C1',
+      fontWeight: '700',
     },
   };
 });

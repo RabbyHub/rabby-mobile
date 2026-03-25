@@ -217,7 +217,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors2024['neutral-foot'],
   },
   crossTag: {
