@@ -52,6 +52,7 @@ import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useSelectedToken } from '@/screens/Perps/hooks/usePerpsPopupState';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
+import { toChecksumAddress } from '@ethereumjs/util';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -183,7 +184,7 @@ export const PerpsDepositPopup: React.FC<{
           },
         ] as any[],
       } as const,
-      [to, sendValue.toFixed(0)] as any[],
+      [toChecksumAddress(to), sendValue.toFixed(0)] as any[],
     ] as const;
     const params: Record<string, any> = {
       chainId: chain.id,
