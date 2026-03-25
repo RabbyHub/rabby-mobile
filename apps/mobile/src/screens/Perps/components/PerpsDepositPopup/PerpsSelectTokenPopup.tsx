@@ -1,3 +1,4 @@
+import RcIconBolt from '@/assets2024/icons/perps/IconBolt.svg';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -145,14 +146,7 @@ export const PerpsSelectTokenPopup: React.FC<{
           </Text>
           {isDirectDepositToken(item) ? (
             <View style={styles.depositTag}>
-              <svg
-                width="8"
-                height="10"
-                viewBox="0 0 10 12"
-                fill="currentColor"
-                xmlns="http://www.w3.org/2000/svg">
-                <path d="M5.833 0 0 6.667h4.167L4.167 12 10 5.333H5.833z" />
-              </svg>
+              <RcIconBolt width={8} height={10} color={'#50D2C1'} />
               <Text style={styles.depositTagText}>
                 {t('page.perps.PerpsDepositTokenModal.directDepositFast')}
               </Text>
