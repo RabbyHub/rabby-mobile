@@ -16,7 +16,8 @@ import {
   AssetPosition,
   ClearinghouseState,
 } from '@rabby-wallet/hyperliquid-sdk';
-import RcIconHyperliquid from '@/assets2024/icons/perps/IconHyperliquid.svg';
+import RcIconHyperliquid from '@/assets2024/icons/perps/IconHyper.svg';
+// import RcIconHyperliquid from '@/assets2024/icons/perps/IconHyperliquid.svg';
 import { AssetAvatar } from '@/components';
 import { formatUsdValue } from '@/utils/number';
 import { DistanceToLiquidationTag } from '../PerpsPositionSection/DistanceToLiquidationTag';
@@ -49,13 +50,9 @@ interface AssetPositionWithAccount {
 const AssetPositionItem = ({
   item,
   onShowRiskPopup,
-  isSingleAddress,
-  source,
 }: {
   item: AssetPositionWithAccount;
   onShowRiskPopup: (item: AssetPositionWithAccount) => void;
-  isSingleAddress?: boolean;
-  source?: 'home' | 'multiAssets';
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -83,16 +80,24 @@ const AssetPositionItem = ({
     switchPerpsAccountBeforeNavigate(item.account);
     matomoRequestEvent({
       category: 'Rabby Perps',
-      action: source === 'home' ? 'Perps_HomeCardClick' : 'Perps_CardToPerps',
+      action: 'Perps_CardToPerps',
     });
+    // navigation.push(RootNames.StackTransaction, {
+    //   screen: RootNames.Perps,
+    //   params: {
+    //     dappId: 'hyperliquid',
+    //     account: item.account,
+    //   },
+    // })
     navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.Perps,
+      screen: RootNames.PerpsMarketDetail,
       params: {
-        dappId: 'hyperliquid',
-        account: item.account,
+        market: coin,
+        fromSource: 'homePagePositionList',
+        showOpenPosition: false,
       },
     });
-  }, [item, navigation, source]);
+  }, [item, navigation, coin]);
 
   return (
     <TouchableOpacity style={styles.card} onPress={handleHyperliquidPress}>
@@ -112,24 +117,6 @@ const AssetPositionItem = ({
                   </Text>
                 </View>
               </View>
-              {!isSingleAddress && (
-                <View style={styles.coinNameRow}>
-                  <WalletIcon
-                    width={14}
-                    height={14}
-                    style={styles.walletIcon}
-                    type={item.account.brandName}
-                    address={item.account.address}
-                  />
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={styles.address}>
-                    {item.account.aliasName ||
-                      ellipsisAddress(item.account.address)}
-                  </Text>
-                </View>
-              )}
             </View>
           </View>
           <View style={styles.tagRow}>
@@ -174,146 +161,156 @@ const AssetPositionItem = ({
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.bottomSection}
-        onPress={handleHyperliquidPress}>
-        <RcIconHyperliquid width={16} height={16} />
-        <Text style={styles.hyperliquidText}>
-          {t('page.perps.assetPage.hyperliquidPosition')}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.bottomSection}>
+        <View style={styles.coinNameRow}>
+          <WalletIcon
+            width={14}
+            height={14}
+            style={styles.walletIcon}
+            type={item.account.brandName}
+            address={item.account.address}
+          />
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.address}>
+            {item.account.aliasName || ellipsisAddress(item.account.address)}
+          </Text>
+        </View>
+        <View style={styles.coinNameRow}>
+          <RcIconHyperliquid />
+          <Text style={styles.hyperliquidText}>
+            {t('page.perps.assetPage.hyperliquidPosition')}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 };
 
-export const PerpsSingleAssetPosition: React.FC<{
-  account?: Account | null;
-}> = ({ account }) => {
-  const { clearinghouseStateMap, marketDataMap } = perpsStore(
-    useShallow(s => ({
-      clearinghouseStateMap: s.clearinghouseStateMap,
-      marketDataMap: s.marketDataMap,
-    })),
-  );
-  const [selectedPositionKey, setSelectedPositionKey] = useState<{
-    address: string;
-    coin: string;
-  } | null>(null);
-  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
-  const clearinghouseState =
-    clearinghouseStateMap[account?.address.toLowerCase() || ''];
+// export const PerpsSingleAssetPosition: React.FC<{
+//   account?: Account | null;
+// }> = ({ account }) => {
+//   const { clearinghouseStateMap, marketDataMap } = perpsStore(
+//     useShallow(s => ({
+//       clearinghouseStateMap: s.clearinghouseStateMap,
+//       marketDataMap: s.marketDataMap,
+//     })),
+//   );
+//   const [selectedPositionKey, setSelectedPositionKey] = useState<{
+//     address: string;
+//     coin: string;
+//   } | null>(null);
+//   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+//   const clearinghouseState =
+//     clearinghouseStateMap[account?.address.toLowerCase() || ''];
 
-  const dataList = useMemo(() => {
-    const resList: AssetPositionWithAccount[] = [];
-    if (!account) {
-      return resList;
-    }
+//   const dataList = useMemo(() => {
+//     const resList: AssetPositionWithAccount[] = [];
+//     if (!account) {
+//       return resList;
+//     }
 
-    if (!clearinghouseState) {
-      return resList;
-    }
-    const assetPositions = clearinghouseState.assetPositions;
-    assetPositions.forEach(assetPosition => {
-      resList.push({
-        account,
-        assetPositions: assetPosition,
-        logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
-      });
-    });
-    return resList.sort((a, b) => {
-      return (
-        Number(b.assetPositions.position.marginUsed) -
-        Number(a.assetPositions.position.marginUsed)
-      );
-    });
-  }, [clearinghouseState, marketDataMap, account]);
+//     if (!clearinghouseState) {
+//       return resList;
+//     }
+//     const assetPositions = clearinghouseState.assetPositions;
+//     assetPositions.forEach(assetPosition => {
+//       resList.push({
+//         account,
+//         assetPositions: assetPosition,
+//         logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
+//       });
+//     });
+//     return resList.sort((a, b) => {
+//       return (
+//         Number(b.assetPositions.position.marginUsed) -
+//         Number(a.assetPositions.position.marginUsed)
+//       );
+//     });
+//   }, [clearinghouseState, marketDataMap, account]);
 
-  const riskPopupData = useMemo(() => {
-    if (!selectedPositionKey) {
-      return null;
-    }
+//   const riskPopupData = useMemo(() => {
+//     if (!selectedPositionKey) {
+//       return null;
+//     }
 
-    const { address, coin } = selectedPositionKey;
-    const assetPositions = clearinghouseState?.assetPositions || [];
-    const freshAssetPosition = assetPositions?.find(
-      p => p.position.coin === coin,
-    );
+//     const { address, coin } = selectedPositionKey;
+//     const assetPositions = clearinghouseState?.assetPositions || [];
+//     const freshAssetPosition = assetPositions?.find(
+//       p => p.position.coin === coin,
+//     );
 
-    if (!freshAssetPosition) {
-      return null;
-    }
+//     if (!freshAssetPosition) {
+//       return null;
+//     }
 
-    const markPrice = Number(calculateMarkPrice(freshAssetPosition.position));
-    const liquidationPrice = Number(
-      freshAssetPosition.position.liquidationPx || 0,
-    );
+//     const markPrice = Number(calculateMarkPrice(freshAssetPosition.position));
+//     const liquidationPrice = Number(
+//       freshAssetPosition.position.liquidationPx || 0,
+//     );
 
-    const distanceLiquidation = calculateDistanceToLiquidation(
-      freshAssetPosition.position.liquidationPx,
-      markPrice,
-    );
+//     const distanceLiquidation = calculateDistanceToLiquidation(
+//       freshAssetPosition.position.liquidationPx,
+//       markPrice,
+//     );
 
-    return {
-      distanceLiquidation,
-      direction:
-        Number(freshAssetPosition.position.szi || 0) > 0
-          ? 'Long'
-          : ('Short' as 'Long' | 'Short'),
-      currentPrice: markPrice,
-      pxDecimals:
-        freshAssetPosition.position.entryPx?.split('.')[1]?.length || 2,
-      liquidationPrice,
-    };
-  }, [selectedPositionKey, clearinghouseState]);
+//     return {
+//       distanceLiquidation,
+//       direction:
+//         Number(freshAssetPosition.position.szi || 0) > 0
+//           ? 'Long'
+//           : ('Short' as 'Long' | 'Short'),
+//       currentPrice: markPrice,
+//       pxDecimals:
+//         freshAssetPosition.position.entryPx?.split('.')[1]?.length || 2,
+//       liquidationPrice,
+//     };
+//   }, [selectedPositionKey, clearinghouseState]);
 
-  const handleShowRiskPopup = useCallback(
-    (item: AssetPositionWithAccount) => {
-      setSelectedPositionKey({
-        address: item.account.address,
-        coin: item.assetPositions.position.coin,
-      });
-    },
-    [setSelectedPositionKey],
-  );
+//   const handleShowRiskPopup = useCallback(
+//     (item: AssetPositionWithAccount) => {
+//       setSelectedPositionKey({
+//         address: item.account.address,
+//         coin: item.assetPositions.position.coin,
+//       });
+//     },
+//     [setSelectedPositionKey],
+//   );
 
-  const handleCloseRiskPopup = useCallback(() => {
-    setSelectedPositionKey(null);
-  }, [setSelectedPositionKey]);
+//   const handleCloseRiskPopup = useCallback(() => {
+//     setSelectedPositionKey(null);
+//   }, [setSelectedPositionKey]);
 
-  return (
-    <>
-      {!!dataList.length && (
-        <View style={[styles.container, styles.singleAssetContainer]}>
-          {dataList.map(item => {
-            return (
-              <AssetPositionItem
-                key={`${item.account.address}-${item.assetPositions.position.coin}`}
-                isSingleAddress={true}
-                item={item}
-                onShowRiskPopup={() => handleShowRiskPopup(item)}
-              />
-            );
-          })}
-        </View>
-      )}
-      {riskPopupData && (
-        <PerpsRiskLevelPopup
-          direction={riskPopupData.direction}
-          visible={!!riskPopupData}
-          pxDecimals={riskPopupData?.pxDecimals || 2}
-          onClose={handleCloseRiskPopup}
-          distanceLiquidation={riskPopupData.distanceLiquidation}
-          currentPrice={riskPopupData.currentPrice}
-          liquidationPrice={riskPopupData.liquidationPrice}
-        />
-      )}
-    </>
-  );
-};
+//   return (
+//     <>
+//       {!!dataList.length && (
+//         <View style={[styles.container, styles.singleAssetContainer]}>
+//           {dataList.map(item => {
+//             return (
+//               <AssetPositionItem
+//                 key={`${item.account.address}-${item.assetPositions.position.coin}`}
+//                 isSingleAddress={true}
+//                 item={item}
+//                 onShowRiskPopup={() => handleShowRiskPopup(item)}
+//               />
+//             );
+//           })}
+//         </View>
+//       )}
+//       {riskPopupData && (
+//         <PerpsRiskLevelPopup
+//           direction={riskPopupData.direction}
+//           visible={!!riskPopupData}
+//           pxDecimals={riskPopupData?.pxDecimals || 2}
+//           onClose={handleCloseRiskPopup}
+//           distanceLiquidation={riskPopupData.distanceLiquidation}
+//           currentPrice={riskPopupData.currentPrice}
+//           liquidationPrice={riskPopupData.liquidationPrice}
+//         />
+//       )}
+//     </>
+//   );
+// };
 
-export const PerpsMultiAssetPosition: React.FC<{
-  source?: 'home' | 'multiAssets';
-}> = ({ source }) => {
+export const PerpsMultiAssetPosition: React.FC = () => {
   const getAccountByAddress = useFindAccountByAddress();
   const { clearinghouseStateMap, marketDataMap } = perpsStore(
     useShallow(s => ({
@@ -384,6 +381,7 @@ export const PerpsMultiAssetPosition: React.FC<{
     );
     return {
       distanceLiquidation,
+      isCross: freshAssetPosition.position.leverage.type === 'cross',
       direction:
         Number(freshAssetPosition.position.szi || 0) > 0
           ? 'Long'
@@ -414,30 +412,26 @@ export const PerpsMultiAssetPosition: React.FC<{
   const hasPosition = useMemo(() => dataList.length > 0, [dataList.length]);
 
   useEffect(() => {
-    if (hasPosition && source === 'home' && !hasLoggedEvent.current) {
+    if (hasPosition && !hasLoggedEvent.current) {
       matomoRequestEvent({
         category: 'Rabby Perps',
         action: 'Perps_ExistPosition',
       });
       hasLoggedEvent.current = true;
     }
-  }, [hasPosition, source]);
+  }, [hasPosition]);
 
   return (
     <>
       {!!dataList.length && (
         <View
-          style={StyleSheet.flatten([
-            styles.container,
-            source === 'home' && styles.homeContainer,
-          ])}>
+          style={StyleSheet.flatten([styles.container, styles.homeContainer])}>
           {dataList.map(item => {
             return (
               <AssetPositionItem
                 key={`${item.account.address}-${item.assetPositions.position.coin}`}
                 item={item}
                 onShowRiskPopup={() => handleShowRiskPopup(item)}
-                source={source}
               />
             );
           })}
@@ -446,6 +440,7 @@ export const PerpsMultiAssetPosition: React.FC<{
       {riskPopupData && (
         <PerpsRiskLevelPopup
           direction={riskPopupData.direction}
+          isCross={riskPopupData.isCross}
           visible={!!riskPopupData}
           pxDecimals={riskPopupData?.pxDecimals || 2}
           onClose={handleCloseRiskPopup}
@@ -583,7 +578,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingTop: 10,
     borderTopWidth: 0.5,
     alignItems: 'center',
-    paddingHorizontal: 14,
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
     borderTopColor: colors2024['neutral-line'],
   },
   distanceDot: {
@@ -632,18 +628,16 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   address: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 16,
     flexShrink: 1,
     color: colors2024['neutral-secondary'],
   },
   hyperliquidText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    marginLeft: 6,
-    marginRight: 2,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },

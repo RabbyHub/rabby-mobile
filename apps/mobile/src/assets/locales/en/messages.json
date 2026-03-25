@@ -2423,7 +2423,9 @@
         "learnBtn": "Learn about Perps",
         "available": "Available",
         "withdrawBtn": "Withdraw",
-        "depositBtn": "Deposit"
+        "depositBtn": "Deposit",
+        "addFunds": "Add Funds",
+        "learnMore": "Learn More"
       },
       "selectAccountTitle": "Select a Wallet to Log In",
       "PerpsGuidePopup": {
@@ -2579,6 +2581,7 @@
         "positionValue": "Position Value",
         "settings": "Settings",
         "cross": "Cross",
+        "crossTips": "In Cross Margin mode, the liquidation price for a single position is an estimate for reference only.",
         "isolated": "Isolated",
         "size": "Size",
         "markPrice": "Mark Price",
@@ -2712,6 +2715,9 @@
         "long": "Long",
         "short": "Short",
         "noPermission": "Opening positions is not supported in your region"
+      },
+      "guideEntry": {
+        "gotIt": "Got it"
       },
       "PerpsAutoCloseModal": {
         "takeProfitExpectedPNL": "Take profit expected PNL",

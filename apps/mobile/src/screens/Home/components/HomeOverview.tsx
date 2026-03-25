@@ -1,3 +1,4 @@
+import { apisPerps } from '@/core/apis';
 import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
@@ -917,6 +918,7 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
+          apisPerps.setHasShownPerpsGuidePopup(true);
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Perps,
             params: {},

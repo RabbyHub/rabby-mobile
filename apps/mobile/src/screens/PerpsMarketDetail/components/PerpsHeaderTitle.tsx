@@ -15,6 +15,7 @@ import { apiContact } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
+import { HeaderBackPressable } from '@/hooks/navigation';
 
 export const PerpsHeaderTitle: React.FC<{
   market?: MarketData;
@@ -39,8 +40,9 @@ export const PerpsHeaderTitle: React.FC<{
 
   return (
     <View style={styles.container}>
+      <HeaderBackPressable />
+      <AssetAvatar logo={market.logoUrl} logoStyle={styles.icon} size={24} />
       <TouchableOpacity onPress={onSelectCoin} style={styles.touchable}>
-        <AssetAvatar logo={market.logoUrl} logoStyle={styles.icon} size={24} />
         <Text style={styles.text}>{formatPerpsCoin(market.name)} - USD</Text>
         <IconCom
           width={20}
@@ -98,9 +100,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 4,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
     justifyContent: 'center',
   },
   text: {

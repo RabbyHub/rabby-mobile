@@ -1,157 +1,190 @@
+/* eslint-disable react-native/no-inline-styles */
 import { RcTradPerps } from '@/assets2024/icons/perps';
-import RcIconPerps from '@/assets2024/icons/perps/IconPerps.svg';
 import { Button } from '@/components2024/Button';
 import {
   AccountHistoryItem,
-  AccountSummary,
   PositionAndOpenOrder,
 } from '@/hooks/perps/usePerpsStore';
+import { RcIconCloseCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { GasAccountWrapperBg } from '@/screens/GasAccount/components/WrapperBg';
-import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { ImageBackground, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { PerpHeader } from './PerpHeader';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { Text } from '@/components/Typography';
+import RcIconMinButton from '@/assets2024/icons/perps/IconMinButton.svg';
+import ImgLearnMore from '@/assets2024/icons/perps/ImgLearnMore.png';
+import RcIconLearnArrow from '@/assets2024/icons/perps/IconLearnArrow.svg';
+import RcIconPlusButton from '@/assets2024/icons/perps/IconPlusButton.svg';
+import RcIconAddFunds from '@/assets2024/icons/perps/IconAddFunds.svg';
+import { apisPerps } from '@/core/apis';
 
 export const PerpsAccountCard: React.FC<{
   isLogin: boolean;
   positionAndOpenOrders?: PositionAndOpenOrder[] | null;
   localLoadingHistory: AccountHistoryItem[];
-}> = ({ isLogin, positionAndOpenOrders, localLoadingHistory }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+}> = ({ isLogin, localLoadingHistory }) => {
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [popupState, setPopupState] = usePerpsPopupState();
 
-  const positionAllPnl = useMemo(() => {
-    return (
-      positionAndOpenOrders?.reduce((acc, asset) => {
-        return acc + Number(asset.position.unrealizedPnl || 0);
-      }, 0) || 0
-    );
-  }, [positionAndOpenOrders]);
+  const { availableBalance, accountValue } = usePerpsAccount();
 
-  const { accountValue, availableBalance } = usePerpsAccount();
+  const isNewUser = React.useMemo(() => {
+    return Number(availableBalance) === 0 && accountValue === 0;
+  }, [availableBalance, accountValue]);
 
-  const withdrawDisabled = useMemo(
-    () => !Number(availableBalance || 0),
-    [availableBalance],
-  );
+  const [hasClosedLearnMore, setHasClosedLearnMore] = React.useState(true);
+  React.useEffect(() => {
+    apisPerps.getHasClosedLearnMoreCard().then(closed => {
+      setHasClosedLearnMore(closed);
+    });
+  }, []);
 
-  if (isLogin) {
-    return (
+  const showLearnMore = isNewUser && !hasClosedLearnMore;
+
+  return (
+    <>
       <LinearGradient
         colors={['#0F2F3A', '#041920']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.card, styles.balanceCard]}>
         <View style={styles.balanceCardInner}>
-          <View style={styles.balanceCardContent}>
-            <RcIconPerps style={styles.relativeIcon} />
+          <View style={styles.balanceCardRow}>
             <View style={styles.balanceCardContentLeft}>
               <Text style={styles.balance}>
-                {formatUsdValue(Number(accountValue || 0))}
+                {formatUsdValue(Number(availableBalance || 0))}
               </Text>
-              {positionAndOpenOrders?.length ? (
-                <Text
-                  style={[
-                    styles.pnl,
-                    positionAllPnl >= 0 ? styles.pnlGreen : styles.pnlRed,
-                  ]}>
-                  {positionAllPnl >= 0 ? '+' : '-'}$
-                  {splitNumberByStep(Math.abs(positionAllPnl).toFixed(2))}
-                </Text>
-              ) : null}
+              <Text style={styles.availableBalance}>
+                {t('page.perps.PerpsCard.available')}
+              </Text>
             </View>
-            <Text style={styles.availableBalance}>
-              {t('page.perps.PerpsCard.available')}:{' '}
-              {formatUsdValue(Number(availableBalance))}
-            </Text>
-          </View>
-          <View style={styles.balanceCardBtns}>
-            <View style={styles.btnItem}>
-              <Button
-                type="ghost"
-                onPress={() => {
-                  setPopupState(prev => ({
-                    ...prev,
-                    isShowWithdrawPopup: true,
-                  }));
-                }}
-                titleStyle={styles.smBtnTitle}
-                title={t('page.perps.PerpsCard.withdrawBtn')}
-                buttonStyle={[styles.withdrawBtn, styles.btnHeight]}
-                disabled={withdrawDisabled}
-              />
-            </View>
-            <View style={styles.btnItem}>
-              <Button
-                type="hyperliquid"
+            {Number(availableBalance) === 0 ? (
+              <TouchableOpacity
+                style={styles.actionBtn}
                 onPress={() => {
                   setPopupState(prev => ({
                     ...prev,
                     isShowDepositTokenPopup: true,
                   }));
-                }}
-                titleStyle={[styles.smBtnTitle, styles.depositBtnTitle]}
-                title={t('page.perps.PerpsCard.depositBtn')}
-                buttonStyle={[styles.btnHeight, styles.depositBtn]}
-              />
-            </View>
+                }}>
+                <RcIconAddFunds />
+                <Text style={styles.actionBtnText}>
+                  {t('page.perps.PerpsCard.addFunds')}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.actionBtns}>
+                <TouchableOpacity
+                  // style={styles.actionBtn}
+                  onPress={() => {
+                    setPopupState(prev => ({
+                      ...prev,
+                      isShowDepositTokenPopup: true,
+                    }));
+                  }}>
+                  <RcIconPlusButton />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  // style={styles.actionBtn}
+                  onPress={() => {
+                    setPopupState(prev => ({
+                      ...prev,
+                      isShowWithdrawPopup: true,
+                    }));
+                  }}>
+                  <RcIconMinButton />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
-        <View style={styles.history}>
-          <PerpHeader localLoadingHistory={localLoadingHistory} />
-        </View>
       </LinearGradient>
-    );
-  }
-
-  return (
-    <GasAccountWrapperBg style={[styles.card, styles.loginCard]}>
-      <View style={styles.loginCardContent}>
-        <RcTradPerps style={styles.icon} />
-        <Text style={styles.loginCardTitle}>
-          {t('page.perps.PerpsCard.title')}
-        </Text>
-        <Text style={styles.loginCardDesc}>
-          {t('page.perps.PerpsCard.loginDesc')}
-        </Text>
-      </View>
-      <View style={styles.loginCardBtns}>
-        <Button
-          height={48}
-          type="primary"
-          onPress={() => {
-            setPopupState(prev => ({
-              ...prev,
-              isShowLoginPopup: true,
-            }));
-          }}
-          titleStyle={styles.btnTitle}
-          title={t('page.perps.PerpsCard.loginBtn')}
-        />
-        <Button
-          height={48}
-          onPress={() => {
-            setPopupState(prev => ({
-              ...prev,
-              isShowGuidePopup: true,
-            }));
-          }}
-          buttonStyle={styles.learnBtn}
-          titleStyle={styles.learnBtnTitle}
-          title={t('page.perps.PerpsCard.learnBtn')}
-        />
-      </View>
-    </GasAccountWrapperBg>
+      {isNewUser && (
+        <LinearGradient
+          colors={isLight ? ['#FFF', '#FFF'] : ['#0F2F3A', '#041920']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.card, styles.balanceCard, { marginTop: 12 }]}>
+          <ImageBackground
+            source={ImgLearnMore}
+            resizeMode="cover"
+            style={styles.learnCardInner}>
+            <View style={{ position: 'absolute', right: 16, top: 16 }}>
+              <RcIconCloseCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+            </View>
+            <Text style={styles.learnTitle}>
+              {t('page.perps.PerpsCard.title')}
+            </Text>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 4,
+              }}>
+              <Text style={styles.learnDesc}>
+                {t('page.perps.PerpsCard.learnMore')}
+              </Text>
+              <RcIconLearnArrow />
+            </TouchableOpacity>
+          </ImageBackground>
+        </LinearGradient>
+      )}
+    </>
   );
 };
+
+// return (
+//   <GasAccountWrapperBg style={[styles.card, styles.loginCard]}>
+//     <View style={styles.loginCardContent}>
+//       <RcTradPerps style={styles.icon} />
+//       <Text style={styles.loginCardTitle}>
+//         {t('page.perps.PerpsCard.title')}
+//       </Text>
+//       <Text style={styles.loginCardDesc}>
+//         {t('page.perps.PerpsCard.loginDesc')}
+//       </Text>
+//     </View>
+//     <View style={styles.loginCardBtns}>
+//       <Button
+//         height={48}
+//         type="primary"
+//         onPress={() => {
+//           setPopupState(prev => ({
+//             ...prev,
+//             isShowLoginPopup: true,
+//           }));
+//         }}
+//         titleStyle={styles.btnTitle}
+//         title={t('page.perps.PerpsCard.loginBtn')}
+//       />
+//       <Button
+//         height={48}
+//         onPress={() => {
+//           setPopupState(prev => ({
+//             ...prev,
+//             isShowGuidePopup: true,
+//           }));
+//         }}
+//         buttonStyle={styles.learnBtn}
+//         titleStyle={styles.learnBtnTitle}
+//         title={t('page.perps.PerpsCard.learnBtn')}
+//       />
+//     </View>
+//   </GasAccountWrapperBg>
+// );
+// };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -174,11 +207,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 20,
     height: 20,
   },
-  relativeIcon: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-  },
   loginCardTitle: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
@@ -199,24 +227,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 17,
     lineHeight: 22,
   },
-  smBtnTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    color: '#F7FAFC',
-  },
-  depositBtnTitle: {
-    color: '#040601',
-  },
-  withdrawBtn: {
-    backgroundColor: '#2F3135',
-    borderColor: 'transparent',
-  },
-  btnHeight: {
-    height: 48,
-  },
-  depositBtn: {
-    backgroundColor: '#50D2C1',
-  },
   loginCardContent: {
     display: 'flex',
     flexDirection: 'column',
@@ -230,6 +240,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 12,
     width: '100%',
     marginTop: 'auto',
+  },
+  learnTitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
+    color: colors2024['neutral-title-1'],
+  },
+  learnDesc: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: '#23C0B0',
   },
   learnBtn: {
     backgroundColor: colors2024['neutral-line'],
@@ -247,65 +271,65 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 2, // gradient border width
   },
   balanceCardInner: {
-    borderRadius: 14,
-    paddingTop: 20,
+    borderRadius: 16,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    paddingBottom: 20,
     backgroundColor: '#0E1A1E',
   },
-  balanceCardContent: {
-    display: 'flex',
-    flexDirection: 'column',
+  learnCardInner: {
     position: 'relative',
-    // alignItems: 'center',
-    // minHeight: 93,
-    marginBottom: 14,
+    borderRadius: 16,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    height: 106,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  balanceCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   balanceCardContentLeft: {
-    display: 'flex',
-    gap: 4,
-    flexDirection: 'row',
-    // justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    flex: 1,
   },
   balance: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 32,
+    lineHeight: 36,
     fontWeight: '900',
     color: '#F7FAFC',
   },
-  pnl: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    marginTop: 0,
-  },
-  pnlRed: {
-    color: colors2024['red-default'],
-  },
-  pnlGreen: {
-    color: colors2024['green-default'],
-  },
   availableBalance: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
     color: '#717380',
     marginTop: 4,
   },
-  balanceCardBtns: {
-    display: 'flex',
+  actionBtns: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-    width: '100%',
+    gap: 8,
   },
-  btnItem: {
-    flex: 1,
-    width: '50%',
+  actionBtn: {
+    width: 120,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#23C0B0',
+    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionBtnText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    color: '#040601',
   },
   history: {
     position: 'absolute',

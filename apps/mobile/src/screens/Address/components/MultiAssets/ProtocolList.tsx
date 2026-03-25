@@ -22,7 +22,6 @@ import {
 } from './RenderRow/Common';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { getAllDefiCount } from '@/screens/Home/utils/converAssets';
-import { PerpsMultiAssetPosition } from '@/screens/Perps/components/PerpsMultiAssetPosition';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 import useProtocols, {
   getMultiProtocolsCacheKey,
@@ -331,7 +330,6 @@ export const ProtocolList = () => {
               animatedStyle={pulldownRefreshReturns.refreshPlaceholderStyle}
               __PICK_MANUAL__
             />
-            <PerpsMultiAssetPosition />
           </>
         }
         // ListFooterComponent={ListRenderFooter}

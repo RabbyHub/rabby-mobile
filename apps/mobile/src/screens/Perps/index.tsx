@@ -1,13 +1,7 @@
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components2024/Button';
@@ -44,7 +38,7 @@ import {
   HYPE_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { PerpHeader } from './components/PerpHeader';
+import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
 import { PerpSearchListPopup } from './components/PerpSearchListPopup';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
@@ -56,27 +50,11 @@ import { PerpsInvitePopup } from './components/PerpsInvitePopup';
 import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
 import { perpsService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
-import {
-  DappFrameAccountHeader,
-  DappSelectItem,
-} from '@/components2024/DappFrameAccountHeader';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
 
-type PerpsNativeScreenProps = {
-  activeId: string;
-  dappList: DappSelectItem[];
-  onSelectDapp: (item: DappSelectItem) => void;
-  dappSelectTitle?: string;
-};
-
-export const PerpsOriginScreen = ({
-  activeId,
-  dappList,
-  onSelectDapp,
-  dappSelectTitle,
-}: PerpsNativeScreenProps) => {
+export const PerpsOriginScreen = () => {
   const { t } = useTranslation();
 
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -110,38 +88,6 @@ export const PerpsOriginScreen = ({
     favoriteMarkets,
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
-
-  // use switchPerpsAccount global function to switch
-  // useEffect(() => {
-  //   if (_account) {
-  //     if (
-  //       currentPerpsAccount?.address === _account.address &&
-  //       currentPerpsAccount?.type === _account.type
-  //     ) {
-  //       if (fromName) {
-  //         navigation.push(RootNames.StackTransaction, {
-  //           screen: RootNames.PerpsMarketDetail,
-  //           params: {
-  //             market: fromName,
-  //           },
-  //         });
-  //       }
-  //     } else {
-  //       loginWithNoHardwareSign(_account).then(loginSuccess => {
-  //         if (loginSuccess && fromName) {
-  //           navigation.push(RootNames.StackTransaction, {
-  //             screen: RootNames.PerpsMarketDetail,
-  //             params: {
-  //               market: fromName,
-  //             },
-  //           });
-  //         }
-  //         setInitialized(true);
-  //       });
-  //     }
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
 
   const [selectedToken, setSelectedToken] = useSelectedToken();
   const [popupState, setPopupState] = usePerpsPopupState();
@@ -219,24 +165,7 @@ export const PerpsOriginScreen = ({
     currentPerpsAccount,
   });
 
-  const handlePressAccountList = useCallback(() => {
-    setPopupState(prev => ({
-      ...prev,
-      isShowLoginPopup: !prev.isShowLoginPopup,
-    }));
-  }, [setPopupState]);
-
-  useEffect(() => {
-    apisPerps.getHasDoneNewUserProcess().then(hasDoneNewUserProcess => {
-      if (!hasDoneNewUserProcess) {
-        apisPerps.setHasDoneNewUserProcess(true);
-        setPopupState(prev => ({
-          ...prev,
-          isShowGuidePopup: true,
-        }));
-      }
-    });
-  }, [setPopupState]);
+  // Guide popup is now triggered by LearnMore card in PerpsAccountCard
 
   const onRefresh = useMemoizedFn(() => {
     if (isLogin) {
@@ -315,6 +244,7 @@ export const PerpsOriginScreen = ({
     );
     return {
       distanceLiquidation,
+      isCross: selectedPosition.position.leverage.type === 'cross',
       direction:
         Number(selectedPosition.position.szi || 0) > 0
           ? 'Long'
@@ -434,15 +364,9 @@ export const PerpsOriginScreen = ({
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
-        <DappFrameAccountHeader
-          dappSelectTitle={dappSelectTitle}
-          account={currentPerpsAccount || undefined}
-          activeId={activeId}
-          dAppList={dappList}
-          onSelectDapp={onSelectDapp}
-          onPressAccountList={handlePressAccountList}
-          isShowAccountList={popupState.isShowLoginPopup}
-          disableAccountPopup
+        <PerpsNativeHeader
+          account={currentPerpsAccount}
+          localLoadingHistory={localLoadingHistory}
         />
         {!hasPermission ? <PerpsRegionAlert /> : null}
         {!isInitialized ? (
@@ -481,18 +405,40 @@ export const PerpsOriginScreen = ({
             )}
             {hasPermission && isLogin && (
               <View style={styles.footer}>
-                <Button
-                  type="hyperliquid"
-                  titleStyle={styles.openPositionBtn}
-                  title={t('page.perps.searchPerpsPopup.openPosition')}
-                  onPress={() => {
-                    setPopupState(prev => ({
-                      ...prev,
-                      isShowSearchListPopup: true,
-                      searchListOpenFrom: 'openPosition',
-                    }));
-                  }}
-                />
+                <View style={styles.footerBtns}>
+                  <View style={styles.footerBtnItem}>
+                    <Button
+                      type="primary"
+                      titleStyle={styles.openPositionBtn}
+                      buttonStyle={styles.longBtn}
+                      title={t('page.perpsDetail.action.long')}
+                      onPress={() => {
+                        setPopupState(prev => ({
+                          ...prev,
+                          isShowSearchListPopup: true,
+                          searchListOpenFrom: 'openPosition',
+                          searchListDirection: 'Long' as const,
+                        }));
+                      }}
+                    />
+                  </View>
+                  <View style={styles.footerBtnItem}>
+                    <Button
+                      type="primary"
+                      titleStyle={styles.openPositionBtn}
+                      buttonStyle={styles.shortBtn}
+                      title={t('page.perpsDetail.action.short')}
+                      onPress={() => {
+                        setPopupState(prev => ({
+                          ...prev,
+                          isShowSearchListPopup: true,
+                          searchListOpenFrom: 'openPosition',
+                          searchListDirection: 'Short' as const,
+                        }));
+                      }}
+                    />
+                  </View>
+                </View>
               </View>
             )}
           </View>
@@ -660,12 +606,16 @@ export const PerpsOriginScreen = ({
         openFromSource={popupState.searchListOpenFrom}
         onSelect={name => {
           scrollToTop();
+          const hasPosition = positionCoinSet.has(name);
           naviPush(RootNames.StackTransaction, {
             screen: RootNames.PerpsMarketDetail,
             params: {
               market: name,
               fromSource: 'openPosition',
-              showOpenPosition: true,
+              showOpenPosition: !hasPosition,
+              direction: hasPosition
+                ? undefined
+                : popupState.searchListDirection,
             },
           });
         }}
@@ -681,6 +631,7 @@ export const PerpsOriginScreen = ({
       {/* Shared Risk Level Popup */}
       {riskPopupData && (
         <PerpsRiskLevelPopup
+          isCross={riskPopupData.isCross}
           direction={riskPopupData.direction}
           visible={!!riskPopupData}
           pxDecimals={riskPopupData?.pxDecimals || 2}
@@ -709,7 +660,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     height: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   screenContainer: {
     position: 'relative',
@@ -727,12 +678,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     paddingTop: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 48,
   },
   backToTopButton: {
     position: 'absolute',
-    right: 16,
+    right: 12,
     bottom: 140,
     width: 50,
     height: 50,
@@ -748,6 +699,21 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   listFooter: {
     height: 56,
+  },
+  footerBtns: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  footerBtnItem: {
+    flex: 1,
+  },
+  longBtn: {
+    backgroundColor: colors2024['green-default'],
+    height: 48,
+  },
+  shortBtn: {
+    backgroundColor: colors2024['red-default'],
+    height: 48,
   },
   openPositionBtn: {
     fontSize: 20,

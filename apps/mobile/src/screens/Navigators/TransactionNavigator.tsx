@@ -27,7 +27,7 @@ import MultiAddressHistory from '../Transaction/MultiAddressHistory';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
-import { PerpsScreen } from '../Perps/Entry';
+import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import LendingHistory from '../Lending/components/LendingHistory';
@@ -54,8 +54,6 @@ export default function TransactionNavigator() {
 
   const LendingComponent =
     innerDappStrategy === 'screen' ? LendingScreenWithPreload : AAVEScreen;
-  const PerpsComponent =
-    innerDappStrategy === 'screen' ? PerpsScreenWithPreload : PerpsScreen;
   const PredictionComponent =
     innerDappStrategy === 'screen'
       ? PredictionScreenWithPreload
@@ -349,7 +347,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.Perps}
-        component={PerpsComponent}
+        component={PerpsOriginScreen}
         options={mergeScreenOptions({
           title: t('page.home.services.perps'),
           // ...headerPresets.withBgCard1_2024,
