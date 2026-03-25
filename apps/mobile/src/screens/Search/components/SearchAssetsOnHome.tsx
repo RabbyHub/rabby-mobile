@@ -263,6 +263,7 @@ export const SearchAssetsOnHome: React.FC<Props> = ({
       keyExtractor={(_, index) => index.toString()}
       data={filterTokens}
       ListEmptyComponent={ListEmptyComponent}
+      onScrollBeginDrag={Keyboard.dismiss}
       renderItem={({ item }) => renderItem({ item })}
       style={[
         styles.container,

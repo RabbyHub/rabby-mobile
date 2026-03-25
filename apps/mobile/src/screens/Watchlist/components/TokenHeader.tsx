@@ -13,6 +13,9 @@ interface TokenHeaderProps {
   onTokenSort: () => void;
   changeSort: SortState;
   onChangeSort: () => void;
+  fdvSort?: SortState;
+  onFdvSort?: () => void;
+  showFdvSort?: boolean;
   disableSort?: boolean;
   disableLeftSort?: boolean;
 }
@@ -30,6 +33,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tokenCell: {
     flex: 2,
+  },
+  tokenCompoundCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   priceCell: {
     justifyContent: 'center',
@@ -73,6 +81,9 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
   onTokenSort,
   changeSort,
   onChangeSort,
+  fdvSort = 'default',
+  onFdvSort,
+  showFdvSort = false,
   disableSort = false,
   disableLeftSort = false,
 }) => {
@@ -138,9 +149,25 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
         <>
           {disableLeftSort ? (
             <View style={[styles.headerCell, styles.tokenCell]}>
-              <Text style={styles.headerText}>
-                {t('page.watchlist.tokenHeader.token')}
-              </Text>
+              {showFdvSort ? (
+                <View style={styles.tokenCompoundCell}>
+                  <Text style={styles.headerText}>{t('global.Token')}</Text>
+                  <Text style={styles.headerText}>/</Text>
+                  <Pressable
+                    style={styles.headerCell}
+                    hitSlop={10}
+                    onPress={onFdvSort}>
+                    <Text style={getTextStyle(fdvSort)}>
+                      {t('page.meme.tokenHeader.fdv')}
+                    </Text>
+                    {renderArrows(fdvSort)}
+                  </Pressable>
+                </View>
+              ) : (
+                <Text style={styles.headerText}>
+                  {t('page.watchlist.tokenHeader.token')}
+                </Text>
+              )}
             </View>
           ) : (
             <Pressable

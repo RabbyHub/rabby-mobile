@@ -23,7 +23,7 @@ export const SearchTokenHeader = () => {
         showVolumeSort={false}
         showFdvSort={false}
         showChangeSort={false}
-        leftLabel={t('page.market.tokenHeader.name')}
+        leftLabel={t('page.search.tokenHeader.tokenAndFdv')}
         style={styles.tokenHeader}
       />
     </View>

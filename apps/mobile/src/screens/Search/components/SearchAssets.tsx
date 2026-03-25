@@ -272,6 +272,7 @@ export const SearchAssets: React.FC<Props> = ({
         data={filterTokens}
         ListHeaderComponent={<SearchTokenHeader />}
         ListEmptyComponent={ListEmptyComponent}
+        onScrollBeginDrag={Keyboard.dismiss}
         renderItem={({ item }) => renderItem({ item })}
         style={styles.list}
       />

@@ -3,6 +3,7 @@ export const MARKET_TAB_ACTION_PREFIX: Record<string, string> = {
   meme: 'Memecoin',
   stock: 'Stock',
   commodities: 'Commodities',
+  hot: 'Hot',
 };
 
 export const getMarketTabActionPrefix = (categoryId: string) => {

@@ -75,6 +75,9 @@ const TokenListItemComponent = ({
     () => realtimePrice?.price_24h_change ?? item.price_24h_change,
     [realtimePrice, item.price_24h_change],
   );
+  const isMarketClosed =
+    (item as TokenMarketTokenItem & { market_status?: string })
+      .market_status === 'closed';
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -138,7 +141,7 @@ const TokenListItemComponent = ({
         {/* 价格 */}
         <Text style={styles.priceText}>${formatPrice(displayPrice)}</Text>
         {/* 24小时价格变化,如果市场关闭则显示No Open */}
-        {item.market_status === 'closed' ? (
+        {isMarketClosed ? (
           <NoOpen />
         ) : (
           isNumber(displayPriceChange) && (
