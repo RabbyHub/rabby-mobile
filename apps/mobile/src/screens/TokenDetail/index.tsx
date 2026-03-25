@@ -264,7 +264,7 @@ const TokenDetailContent = () => {
                             : colors2024['green-default'],
                         },
                       ]}>
-                      {is24hNoChange ? '0.0%' : isLoss ? '-' : '+'}
+                      {is24hNoChange ? '' : isLoss ? '-' : '+'}
                       {percentChange}
                     </Text>
                     <RcIconRightArrowCC
