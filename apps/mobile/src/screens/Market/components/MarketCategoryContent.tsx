@@ -75,11 +75,15 @@ export function MarketCategoryContent({
     () => new Set(sortFields || []),
     [sortFields],
   );
-  const leftHeaderLabel = useMemo(
-    () =>
-      categoryId === 'meme' ? undefined : t('page.market.tokenHeader.name'),
-    [categoryId, t],
-  );
+  const leftHeaderLabel = useMemo(() => {
+    if (categoryId === 'meme') {
+      return undefined;
+    }
+    if (categoryId === 'stock' || categoryId === 'commodities') {
+      return t('page.market.tokenHeader.tokenAndName');
+    }
+    return t('page.market.tokenHeader.name');
+  }, [categoryId, t]);
 
   const { orderBy, order } = useMemo(() => {
     if (supportedSortFields.has('volume_24h') && volumeSort !== 'default') {
@@ -242,6 +246,9 @@ export function MarketCategoryContent({
             <WatchListHeader
               tokenSort="default"
               onTokenSort={handleVolumeSort}
+              fdvSort={fdvSort}
+              onFdvSort={handleFdvSort}
+              showFdvSort={supportedSortFields.has('fdv')}
               changeSort={changeSort}
               onChangeSort={handleChangeSort}
               disableLeftSort

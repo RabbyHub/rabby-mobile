@@ -18,7 +18,6 @@ export const useMarketVisibleTokenPriceRefresh = (activeTab: string) => {
 
   useEffect(() => {
     if (!isScreenFocused) {
-      setMarketRealtimePrice({});
       return;
     }
 
@@ -48,7 +47,6 @@ export const useMarketVisibleTokenPriceRefresh = (activeTab: string) => {
 
     return () => {
       clearInterval(timer);
-      setMarketRealtimePrice({});
     };
   }, [isScreenFocused, setMarketRealtimePrice]);
 

@@ -2106,6 +2106,9 @@
       "appChain": "Dapp Account"
     },
     "search": {
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
+      },
       "sectionHeader": {
         "token": "Tokens",
         "Defi": "DeFi",
@@ -2362,9 +2365,10 @@
       }
     },
     "market": {
-      "noOpen": "No Open",
+      "noOpen": "Not Open",
       "tokenHeader": {
-        "name": "Name"
+        "name": "Name",
+        "tokenAndName": "Token/Name"
       },
       "tabs": {
         "watchlist": "Watchlist",

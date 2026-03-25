@@ -36,19 +36,25 @@ export const TokenInfoPopup = () => {
     });
   };
 
-  const usdValueStr = useMemo(() => {
+  const usdValue = useMemo(() => {
     if (
       !longPressToken.tokenEntity?.price ||
       !longPressToken.tokenItem?.amount
     ) {
-      return '0';
+      return 0;
     }
     const amount = longPressToken.tokenItem?.amount || 0;
     const amountBn = new BigNumber(amount);
     const priceBn = new BigNumber(longPressToken.tokenEntity?.price || 0);
-    const usdValue = amountBn.times(priceBn).toNumber();
-    return formatUsdValue(usdValue);
+    return amountBn.times(priceBn).toNumber();
   }, [longPressToken.tokenEntity?.price, longPressToken.tokenItem?.amount]);
+
+  const usdValueStr = useMemo(() => {
+    if (usdValue === 0) {
+      return '0';
+    }
+    return formatUsdValue(usdValue);
+  }, [usdValue]);
 
   return (
     <Modal
@@ -97,6 +103,7 @@ export const TokenInfoPopup = () => {
                 _usdValueStr: usdValueStr,
                 _amountStr: formatAmount(longPressToken.tokenItem?.amount),
                 _tokenId: longPressToken.tokenEntity.id,
+                usd_value: usdValue,
               } as unknown as AbstractPortfolioToken
             }
             style={{

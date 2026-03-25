@@ -35,6 +35,11 @@ const marketTabAtom = atomByMMKV<MarketTabKey>(
 
 const MARKET_TABS: { id: string; name: string; sort_fields: string[] }[] = [
   {
+    id: 'hot',
+    name: 'Top',
+    sort_fields: ['fdv', 'price_change_24h'],
+  },
+  {
     id: 'meme',
     name: 'Memecoin',
     sort_fields: ['volume_24h', 'fdv', 'price_change_24h'],
@@ -47,11 +52,6 @@ const MARKET_TABS: { id: string; name: string; sort_fields: string[] }[] = [
   {
     id: 'commodities',
     name: 'Commodities',
-    sort_fields: ['price_change_24h'],
-  },
-  {
-    id: 'hot',
-    name: 'Hot',
     sort_fields: ['price_change_24h'],
   },
 ] as const;

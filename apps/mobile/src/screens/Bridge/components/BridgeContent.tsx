@@ -754,10 +754,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     !quoteLoading &&
     !quoteList?.length;
   const showClosedMarketTip =
-    !!fromToken &&
-    !!toToken &&
-    Number(amount) > 0 &&
-    quoteBlockedByClosedMarket;
+    (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
   const btnDisabled =
     inSufficient ||

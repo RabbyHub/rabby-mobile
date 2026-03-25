@@ -785,19 +785,8 @@ const Swap = ({
 
   const noQuote = useDebouncedValue(noQuoteOrigin, 10);
   const showClosedMarketTip = useMemo(
-    () =>
-      Number(payAmount) > 0 &&
-      amountAvailable &&
-      !!payToken &&
-      !!receiveToken &&
-      quoteBlockedByClosedMarket,
-    [
-      payAmount,
-      amountAvailable,
-      payToken,
-      receiveToken,
-      quoteBlockedByClosedMarket,
-    ],
+    () => (!!payToken || !!receiveToken) && quoteBlockedByClosedMarket,
+    [payToken, receiveToken, quoteBlockedByClosedMarket],
   );
 
   const lowCreditToken = useMemo(() => {
