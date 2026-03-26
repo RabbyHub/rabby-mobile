@@ -125,12 +125,19 @@ export const PerpsMarketDetailScreen = () => {
     if (fromSource !== 'homePagePositionList') {
       return;
     }
+    let isChecking = false;
     const unsubscribe = navigation.addListener('beforeRemove', e => {
       if (pendingGoBackRef.current) {
         return; // allow navigation after popup dismissed
       }
+      if (isChecking) {
+        e.preventDefault();
+        return;
+      }
       e.preventDefault();
+      isChecking = true;
       apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
+        isChecking = false;
         if (hasShown) {
           pendingGoBackRef.current = true;
           navigation.dispatch(e.data.action);
