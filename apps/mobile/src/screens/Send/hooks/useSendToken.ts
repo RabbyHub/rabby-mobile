@@ -9,7 +9,12 @@ import { Alert, LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Sentry from '@sentry/react-native';
 import * as Yup from 'yup';
-import { intToHex } from '@ethereumjs/util';
+import {
+  intToHex,
+  isValidAddress,
+  toChecksumAddress,
+  zeroAddress,
+} from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
 import {
@@ -30,7 +35,6 @@ import {
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
-import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -49,7 +53,6 @@ import {
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
-import { zeroAddress } from '@ethereumjs/util';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { getChainListFromAtom, useFindChain } from '@/hooks/useFindChain';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
@@ -557,6 +560,8 @@ export function useSendTokenForm({
 
       if (!isValidAddress(to)) {
         to = dataInput[1][0] = '0x0000000000000000000000000000000000000000';
+      } else {
+        dataInput[1][0] = toChecksumAddress(to);
       }
 
       const params: Record<string, any> = {

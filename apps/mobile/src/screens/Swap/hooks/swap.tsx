@@ -26,6 +26,7 @@ import {
   getMarketTabCreateSwapTxAction,
 } from '@/screens/Market/analytics';
 import { stats } from '@/utils/stats';
+import { toChecksumAddress } from '@ethereumjs/util';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -92,7 +93,7 @@ export const approveToken = async ({
         stateMutability: 'nonpayable',
         type: 'function',
       },
-      [spender, amount] as any,
+      [toChecksumAddress(spender), amount] as any,
     ),
   };
   if (gasPrice) {
