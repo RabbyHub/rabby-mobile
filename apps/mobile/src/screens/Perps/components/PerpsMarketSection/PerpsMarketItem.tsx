@@ -87,6 +87,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 46,
     height: 46,
     borderRadius: 1000,
+    backgroundColor: 'white',
     flexShrink: 0,
   },
   content: {

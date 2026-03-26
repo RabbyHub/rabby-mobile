@@ -3,7 +3,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  FlatList,
+  ImageBackground,
+  RefreshControl,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
@@ -13,10 +20,7 @@ import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
-import {
-  usePerpsPopupState,
-  useSelectedToken,
-} from './hooks/usePerpsPopupState';
+import { usePerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
@@ -28,16 +32,6 @@ import { sortBy } from 'lodash';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { PerpsSelectTokenPopup } from './components/PerpsDepositPopup/PerpsSelectTokenPopup';
-import { PerpsDepositTokenModal } from './components/PerpsDepositPopup/PerpsDepositTokenModal';
-import { openapi } from '@/core/request';
-import {
-  ARB_USDC_TOKEN_ID,
-  ARB_USDC_TOKEN_SERVER_CHAIN,
-  HYPE_USDC_TOKEN_ID,
-  HYPE_USDC_TOKEN_SERVER_CHAIN,
-} from '@/constant/perps';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
 import { PerpSearchListPopup } from './components/PerpSearchListPopup';
 import { RootNames } from '@/constant/layout';
@@ -89,9 +83,7 @@ export const PerpsOriginScreen = () => {
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
 
-  const [selectedToken, setSelectedToken] = useSelectedToken();
   const [popupState, setPopupState] = usePerpsPopupState();
-  const [isShowModal, setIsShowModal] = useState(false);
 
   // Scroll related states
   const flatListRef = useRef<FlatList>(null);
@@ -364,6 +356,13 @@ export const PerpsOriginScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+        {!isLight && (
+          <ImageBackground
+            source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}
+            resizeMode="cover"
+            style={styles.topBg}
+          />
+        )}
         <PerpsNativeHeader
           account={currentPerpsAccount}
           localLoadingHistory={localLoadingHistory}
@@ -502,12 +501,6 @@ export const PerpsOriginScreen = () => {
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={popupState.isShowDepositPopup}
-        showSelectTokenPopup={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: true,
-          }));
-        }}
         onClose={() => {
           setPopupState(prev => ({
             ...prev,
@@ -525,64 +518,6 @@ export const PerpsOriginScreen = () => {
           } catch (e) {
             console.error(e);
           }
-        }}
-      />
-      <PerpsSelectTokenPopup
-        account={currentPerpsAccount}
-        visible={popupState.isShowDepositTokenPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: false,
-          }));
-        }}
-        onSelect={async token => {
-          setSelectedToken(token);
-          if (
-            (token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-              isSameAddress(token.id, ARB_USDC_TOKEN_ID)) ||
-            (token.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
-              isSameAddress(token.id, HYPE_USDC_TOKEN_ID))
-          ) {
-            setPopupState(prev => ({
-              ...prev,
-              isShowDepositTokenPopup: false,
-              isShowDepositPopup: true,
-            }));
-            return;
-          }
-
-          const res = await openapi.getPerpsBridgeIsSupportToken({
-            token_id: token.id,
-            chain_id: token.chain,
-          });
-
-          if (res?.success) {
-            // bridge token with liFi dex
-            setPopupState(prev => ({
-              ...prev,
-              isShowDepositTokenPopup: false,
-              isShowDepositPopup: true,
-            }));
-            // setClickLoading(false);
-          } else {
-            setIsShowModal(true);
-          }
-        }}
-      />
-      <PerpsDepositTokenModal
-        visible={isShowModal}
-        onCancel={() => {
-          setIsShowModal(false);
-        }}
-        token={selectedToken}
-        onNavigate={() => {
-          setIsShowModal(false);
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: false,
-            isShowDepositPopup: false,
-          }));
         }}
       />
       <PerpsWithdrawPopup
@@ -656,7 +591,17 @@ export const PerpsOriginScreen = () => {
   );
 };
 
+const ScreenWidth = Dimensions.get('window').width;
+
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
+  topBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: ScreenWidth,
+    height: ScreenWidth,
+    zIndex: -1,
+  },
   container: {
     flex: 1,
     height: '100%',
@@ -674,9 +619,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     // paddingBottom: 10,
   },
   footer: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
     paddingTop: 16,
     paddingHorizontal: 12,
     paddingBottom: 48,
@@ -709,14 +652,15 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   longBtn: {
     backgroundColor: colors2024['green-default'],
-    height: 48,
+    height: 52,
   },
   shortBtn: {
     backgroundColor: colors2024['red-default'],
-    height: 48,
+    height: 52,
   },
   openPositionBtn: {
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
   },
 }));

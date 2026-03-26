@@ -43,7 +43,7 @@ const PerpsHeaderContent: React.FC<{
         {/* Left: back + icon + title */}
         <View style={styles.headerLeft}>
           <HeaderBackPressable />
-          <RcIconHyper width={24} height={24} />
+          <RcIconHyper />
           <Text style={styles.title}>Perps</Text>
         </View>
 
@@ -72,8 +72,8 @@ const PerpsHeaderContent: React.FC<{
                 style={[
                   popupState.isShowLoginPopup ? styles.reverseCaret : null,
                 ]}
-                width={16}
-                height={16}
+                width={18}
+                height={18}
                 bgColor={colors2024['neutral-bg-5']}
                 lineColor={colors2024['neutral-title-1']}
               />
@@ -115,6 +115,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerOuter: {
     height: HEADER_HEIGHT,
     paddingHorizontal: 12,
+    paddingRight: 16,
     paddingVertical: 10,
   },
   headerInner: {
@@ -145,6 +146,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 4,
     backgroundColor: colors2024['neutral-bg-5'],
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 6,

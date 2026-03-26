@@ -4,27 +4,26 @@ import React, { useMemo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
 import { AssetAvatar } from '@/components';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
-import { useTranslation } from 'react-i18next';
-// caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from '@/components/AccountSwitcher/icons/caret-down-circle.svg';
 import { default as RcCaretDownCircleDarkCC } from '@/components/AccountSwitcher/icons/caret-down-circle-dark.svg';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { ellipsisAddress } from '@/utils/address';
 import { apiContact } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 import { HeaderBackPressable } from '@/hooks/navigation';
+import { PerpsHeaderRight } from './PerpsHeaderRight';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const PerpsHeaderTitle: React.FC<{
-  market?: MarketData;
   account?: Account | null;
   onSelectCoin: () => void;
   popupIsOpen: boolean;
-}> = ({ market, account, onSelectCoin, popupIsOpen }) => {
+  coin: string;
+  logoUrl?: string;
+}> = ({ logoUrl, coin, account, onSelectCoin, popupIsOpen }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
+  const { top } = useSafeAreaInsets();
   const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
 
   const alias = useMemo(() => {
@@ -34,40 +33,32 @@ export const PerpsHeaderTitle: React.FC<{
     return apiContact.getAliasName(account?.address);
   }, [account?.address]);
 
-  if (!market) {
-    return null;
-  }
-
   return (
-    <View style={styles.container}>
-      <HeaderBackPressable />
-      <AssetAvatar logo={market.logoUrl} logoStyle={styles.icon} size={24} />
-      <TouchableOpacity onPress={onSelectCoin} style={styles.touchable}>
-        <Text style={styles.text}>{formatPerpsCoin(market.name)} - USD</Text>
-        <IconCom
-          width={20}
-          height={20}
-          style={[styles.addressCaretIcon, popupIsOpen && styles.reverseCaret]}
-          color={colors2024['neutral-bg-4']}
-        />
-      </TouchableOpacity>
-      {account ? (
-        <View style={styles.addressContainer}>
-          <WalletIcon
-            style={styles.walletIcon}
-            width={18}
-            height={18}
-            type={account.brandName}
-            address={account.address}
-          />
-          <Text style={styles.address}>
-            {alias || ellipsisAddress(account?.address)}
-          </Text>
+    <View style={[styles.headerOuter, { marginTop: top }]}>
+      <View style={styles.headerInner}>
+        <View style={styles.headerLeft}>
+          <HeaderBackPressable />
+          <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={24} />
+          <TouchableOpacity onPress={onSelectCoin} style={styles.touchable}>
+            <Text style={styles.text}>{formatPerpsCoin(coin)} - USD</Text>
+            <IconCom
+              width={20}
+              height={20}
+              style={[
+                styles.addressCaretIcon,
+                popupIsOpen && styles.reverseCaret,
+              ]}
+              color={colors2024['neutral-bg-4']}
+            />
+          </TouchableOpacity>
         </View>
-      ) : null}
+        <PerpsHeaderRight marketName={coin} />
+      </View>
     </View>
   );
 };
+
+const HEADER_HEIGHT = 58;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   touchable: {
@@ -75,6 +66,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 4,
     justifyContent: 'center',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  headerOuter: {
+    height: HEADER_HEIGHT,
+    paddingHorizontal: 12,
+    paddingRight: 16,
+    paddingVertical: 10,
   },
   addressContainer: {
     display: 'flex',

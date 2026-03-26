@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -33,6 +34,7 @@ export const PerpsFooter: React.FC<{
             <View style={styles.btnContainer}>
               <Button
                 type="hyperliquid-light"
+                buttonStyle={{ height: 52 }}
                 title={t('page.perpsDetail.action.add', {
                   direction,
                 })}
@@ -42,6 +44,7 @@ export const PerpsFooter: React.FC<{
             <View style={styles.btnContainer}>
               <Button
                 type="hyperliquid"
+                buttonStyle={{ height: 52 }}
                 title={t('page.perpsDetail.action.close')}
                 onPress={onClosePress}
               />
@@ -65,10 +68,8 @@ export const PerpsFooter: React.FC<{
             <Button
               type="primary"
               buttonStyle={{
-                backgroundColor: colors2024['green-light-1'],
-              }}
-              titleStyle={{
-                color: colors2024['green-default'],
+                height: 52,
+                backgroundColor: colors2024['green-default'],
               }}
               title={t('page.perpsDetail.action.long')}
               onPress={onLongPress}
@@ -78,10 +79,8 @@ export const PerpsFooter: React.FC<{
             <Button
               type="primary"
               buttonStyle={{
-                backgroundColor: colors2024['red-light-1'],
-              }}
-              titleStyle={{
-                color: colors2024['red-default'],
+                height: 52,
+                backgroundColor: colors2024['red-default'],
               }}
               title={t('page.perpsDetail.action.short')}
               onPress={onShortPress}
@@ -98,6 +97,7 @@ export const PerpsFooter: React.FC<{
         title={t('page.perpsDetail.action.noPermission')}
         disabled
         titleStyle={styles.noPermissonBtn}
+        buttonStyle={{ height: 52 }}
       />
     </View>
   );
@@ -107,7 +107,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   footer: {
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+      : colors2024['neutral-bg-1'],
     paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 48,

@@ -57,7 +57,7 @@ export const PerpsInfo: React.FC<{
               </Text>
               <RcIconInfoCC
                 width={18}
-                height={16}
+                height={18}
                 color={colors2024['neutral-info']}
               />
             </View>

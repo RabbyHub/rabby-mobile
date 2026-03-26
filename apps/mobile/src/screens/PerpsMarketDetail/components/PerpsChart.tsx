@@ -549,7 +549,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   priceText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 40,
-    lineHeight: 48,
+    lineHeight: 40,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },

@@ -71,7 +71,7 @@ export const PerpsAccountCard: React.FC<{
                 onPress={() => {
                   setPopupState(prev => ({
                     ...prev,
-                    isShowDepositTokenPopup: true,
+                    isShowDepositPopup: true,
                   }));
                 }}>
                 <RcIconAddFunds />
@@ -82,11 +82,10 @@ export const PerpsAccountCard: React.FC<{
             ) : (
               <View style={styles.actionBtns}>
                 <TouchableOpacity
-                  // style={styles.actionBtn}
                   onPress={() => {
                     setPopupState(prev => ({
                       ...prev,
-                      isShowDepositTokenPopup: true,
+                      isShowDepositPopup: true,
                     }));
                   }}>
                   <RcIconPlusButton />
@@ -116,7 +115,7 @@ export const PerpsAccountCard: React.FC<{
             source={ImgLearnMore}
             resizeMode="cover"
             style={styles.learnCardInner}>
-            <View style={{ position: 'absolute', right: 16, top: 16 }}>
+            <View style={{ position: 'absolute', right: 14, top: 14 }}>
               <RcIconCloseCC
                 width={20}
                 height={20}
@@ -127,6 +126,12 @@ export const PerpsAccountCard: React.FC<{
               {t('page.perps.PerpsCard.title')}
             </Text>
             <TouchableOpacity
+              onPress={() => {
+                setPopupState(prev => ({
+                  ...prev,
+                  isShowGuidePopup: true,
+                }));
+              }}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -270,8 +275,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 2, // gradient border width
   },
   balanceCardInner: {
+    height: 106,
     borderRadius: 16,
-    paddingVertical: 14,
+    paddingVertical: 24,
     paddingHorizontal: 16,
     backgroundColor: '#0E1A1E',
   },
@@ -280,14 +286,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     alignItems: 'flex-start',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 24,
     paddingHorizontal: 16,
     height: 106,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight ? colors2024['neutral-bg-1'] : '#0E1A1E',
   },
   balanceCardRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   balanceCardContentLeft: {
@@ -296,7 +302,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   balance: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 32,
+    fontSize: 36,
     lineHeight: 36,
     fontWeight: '900',
     color: '#F7FAFC',
