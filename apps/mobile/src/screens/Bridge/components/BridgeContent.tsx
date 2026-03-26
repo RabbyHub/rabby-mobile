@@ -374,6 +374,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         };
         await bridgeToken(
           {
+            approveId: selectedBridgeQuote.approve_contract_id,
             to: tx.to,
             value: tx.value,
             data: tx.data,
@@ -485,6 +486,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
         return buildBridgeToken(
           {
+            approveId: selectedBridgeQuote.approve_contract_id,
             to: tx.to,
             value: tx.value,
             data: tx.data,

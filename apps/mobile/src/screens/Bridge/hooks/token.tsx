@@ -729,9 +729,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
               const fromFindChain = findChain({ serverId: fromToken?.chain });
               if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
                 tokenApproved = true;
-              }
-              // near intents send token to themselves address, so no need approve
-              if (!quote.approve_contract_id) {
+              } else if (!quote.approve_contract_id) {
                 tokenApproved = true;
               } else {
                 allowance = await getERC20Allowance(
