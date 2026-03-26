@@ -64,11 +64,7 @@ export const PerpHistoryHeader: React.FC<{
           <PendingTx number={loadingNumber} onClick={openHistory} />
         ) : (
           <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
-            <RcIconSwapHistory
-              color={colors2024['neutral-title-1']}
-              width={24}
-              height={24}
-            />
+            <RcIconSwapHistory color={colors2024['neutral-title-1']} />
           </TouchableOpacity>
         )}
       </View>

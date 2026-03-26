@@ -375,15 +375,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     feeDesc: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 18,
       fontWeight: '400',
       color: colors2024['neutral-secondary'],
       textAlign: 'center',
       marginBottom: 20,
     },
     feeBold: {
-      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },
     feeTable: {

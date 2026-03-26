@@ -209,7 +209,7 @@ export const PerpsWithdrawPopup: React.FC<{
                   {t('page.perps.PerpsWithdrawPopup.feeTip')}
                 </Text>
                 <RcIconInfoCC
-                  color={colors2024['neutral-info']}
+                  color={colors2024['neutral-secondary']}
                   width={18}
                   height={18}
                 />
@@ -325,7 +325,7 @@ const getStyle = createGetStyles2024(ctx => {
       lineHeight: 18,
       fontWeight: '400',
       fontFamily: 'SF Pro Rounded',
-      color: ctx.colors2024['neutral-foot'],
+      color: ctx.colors2024['neutral-secondary'],
     },
     divider: {
       width: 1,

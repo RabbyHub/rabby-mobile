@@ -844,7 +844,7 @@ export const PerpsDepositPopup: React.FC<{
                       ? usdValue
                       : new BigNumber(usdValue)
                           .div(tokenInfo?.price || 1)
-                          .decimalPlaces(2, BigNumber.ROUND_DOWN)
+                          .decimalPlaces(4, BigNumber.ROUND_DOWN)
                           .toFixed()}{' '}
                     {getTokenSymbol(tokenInfo)}
                   </Text>

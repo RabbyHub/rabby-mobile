@@ -414,30 +414,26 @@ export const PerpsMarketDetailScreen = () => {
       <PerpsHeaderTitle
         // account={currentPerpsAccount}
         popupIsOpen={showSearchListPopup}
-        market={market}
+        coin={coin}
+        logoUrl={currentAssetCtx?.logoUrl}
         onSelectCoin={() => {
           setShowSearchListPopup(true);
         }}
       />
     );
   }, [
-    market,
     setShowSearchListPopup,
     showSearchListPopup,
+    coin,
+    currentAssetCtx?.logoUrl,
     // currentPerpsAccount,
   ]);
 
-  const HeaderRight = useCallback(() => {
-    return <PerpsHeaderRight marketName={coin} />;
-  }, [coin]);
-
   useEffect(() => {
     navigation.setOptions({
-      headerLeft: HeaderTitle,
-      headerRight: HeaderRight,
-      headerTitle: '',
+      header: HeaderTitle,
     });
-  }, [market, navigation, HeaderTitle, HeaderRight]);
+  }, [navigation, HeaderTitle]);
 
   // if (!market) {
   //   navigation.goBack();

@@ -3,7 +3,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  FlatList,
+  ImageBackground,
+  RefreshControl,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
@@ -349,6 +356,13 @@ export const PerpsOriginScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+        {!isLight && (
+          <ImageBackground
+            source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}
+            resizeMode="cover"
+            style={styles.topBg}
+          />
+        )}
         <PerpsNativeHeader
           account={currentPerpsAccount}
           localLoadingHistory={localLoadingHistory}
@@ -577,7 +591,17 @@ export const PerpsOriginScreen = () => {
   );
 };
 
+const ScreenWidth = Dimensions.get('window').width;
+
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
+  topBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: ScreenWidth,
+    height: ScreenWidth,
+    zIndex: -1,
+  },
   container: {
     flex: 1,
     height: '100%',
@@ -595,9 +619,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     // paddingBottom: 10,
   },
   footer: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
     paddingTop: 16,
     paddingHorizontal: 12,
     paddingBottom: 48,
@@ -630,14 +652,15 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   longBtn: {
     backgroundColor: colors2024['green-default'],
-    height: 48,
+    height: 52,
   },
   shortBtn: {
     backgroundColor: colors2024['red-default'],
-    height: 48,
+    height: 52,
   },
   openPositionBtn: {
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
   },
 }));

@@ -169,15 +169,21 @@ export const PerpsPosition: React.FC<{
           </View>
           {positionData?.type === 'cross' ? (
             <Tip
-              content={t('page.perpsDetail.PerpsPosition.crossTips')}
+              content={
+                <View style={{ width: 280, padding: 8 }}>
+                  <Text style={{ fontSize: 12, color: '#fff' }}>
+                    {t('page.perpsDetail.PerpsPosition.crossTips')}
+                  </Text>
+                </View>
+              }
               placement="top">
               <View style={styles.crossTag}>
                 <Text style={styles.crossText}>
                   {t('page.perpsDetail.PerpsPosition.cross')}
                 </Text>
                 <RcIconInfoCC
-                  width={12}
-                  height={12}
+                  width={14}
+                  height={14}
                   color={colors2024['neutral-info']}
                 />
               </View>
@@ -187,11 +193,6 @@ export const PerpsPosition: React.FC<{
               <Text style={styles.crossText}>
                 {t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
-              <RcIconInfoCC
-                width={12}
-                height={12}
-                color={colors2024['neutral-info']}
-              />
             </View>
           )}
         </View>
@@ -573,19 +574,23 @@ export const PerpsPosition: React.FC<{
                       ? t('page.perpsDetail.PerpsPosition.fundingGains')
                       : t('page.perpsDetail.PerpsPosition.fundingPayments'),
                   desc: (
-                    <Trans
-                      t={t}
-                      i18nKey={'page.perpsDetail.PerpsPosition.fundingTipsBold'}
-                      components={{
-                        bold: (
-                          <Text
-                            style={{
-                              fontWeight: '800',
-                            }}
-                          />
-                        ),
-                      }}
-                    />
+                    <Text style={styles.fundingText}>
+                      <Trans
+                        t={t}
+                        i18nKey={
+                          'page.perpsDetail.PerpsPosition.fundingTipsBold'
+                        }
+                        components={{
+                          bold: (
+                            <Text
+                              style={{
+                                fontWeight: '800',
+                              }}
+                            />
+                          ),
+                        }}
+                      />
+                    </Text>
                   ),
                   buttonType: 'hyperliquid',
                 });
@@ -790,7 +795,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors2024['neutral-foot'],
   },
   crossTag: {
@@ -802,6 +807,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-5'],
+  },
+  fundingText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    textAlign: 'center',
   },
   listItem: {
     display: 'flex',
