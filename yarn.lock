@@ -9292,6 +9292,7 @@ __metadata:
   checksum: 84442c1a51414665de3dbc31e4ce2b1e17b5b2d9fbe87818726e5cdb0233eb2547e935ab01dffad60320d8ed7a0da7b0284535e86b52dbc9636f2ed4ea611dfb
   languageName: node
   linkType: hard
+
 "@rabby-wallet/rabby-api@npm:0.9.58":
   version: 0.9.58
   resolution: "@rabby-wallet/rabby-api@npm:0.9.58"
