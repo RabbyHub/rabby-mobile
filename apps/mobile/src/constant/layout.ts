@@ -192,6 +192,7 @@ export const RootNames = {
   /** @deprecated */
   ImportMnemonic: 'ImportMnemonic',
   ImportMnemonic2024: 'ImportMnemonic2024',
+  ImportSecret: 'ImportSecret',
   CreateMnemonic: 'CreateMnemonic',
   PreCreateMnemonic: 'PreCreateMnemonic',
   AddMnemonic: 'AddMnemonic',
@@ -439,6 +440,7 @@ function makeScreenSpecConfig() {
       [RootNames.ImportPrivateKey2024]: bg1Default2024Conf,
       [RootNames.ImportMnemonic]: bg1Default2024Conf,
       [RootNames.ImportMnemonic2024]: bg1Default2024Conf,
+      [RootNames.ImportSecret]: bg1Default2024Conf,
       [RootNames.CreateMnemonic]: bg1Default2024Conf,
       [RootNames.PreCreateMnemonic]: bg1Default2024Conf,
       [RootNames.AddMnemonic]: bg1Default2024Conf,

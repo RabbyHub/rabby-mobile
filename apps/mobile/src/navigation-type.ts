@@ -164,7 +164,10 @@ export type AddressNavigatorParamList = {
     accounts?: string[];
     isFirstCreate?: boolean;
   };
-  [RootNames.CreateNewWallet]?: {};
+  [RootNames.CreateNewWallet]?:
+    | { seedPhrase: string }
+    | { privateKey: string }
+    | undefined;
   [RootNames.SelectImportMethod]?: {};
   [RootNames.ImportRabbyWallet]?: {};
   [RootNames.SetPassword2024]?: {
@@ -244,6 +247,7 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportHardwareAddress]?: {};
   [RootNames.ImportMnemonic]?: {};
   [RootNames.ImportMnemonic2024]?: {};
+  [RootNames.ImportSecret]?: {};
   [RootNames.AddMnemonic]?: {};
   [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};

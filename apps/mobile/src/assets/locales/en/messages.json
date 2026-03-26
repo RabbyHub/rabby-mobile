@@ -42,6 +42,19 @@
       "goToHome": "Go to Home",
       "sync": "Scan to Sync Rabby Extension Wallet"
     },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Restore your Rabby wallet",
+        "subtitle": "Welcome back! 🎉\nChoose a method to quickly restore your wallet."
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "Or you can <clickable>create a new wallet</clickable>"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "Enter your seed phrase",
+        "privateKeyPlaceholder": "Enter your private key"
+      }
+    },
     "transactions": {
       "title": "Transactions",
       "ViewHiddenItems": "View scam transactions",

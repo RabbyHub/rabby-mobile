@@ -30,6 +30,7 @@ import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
 import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
+import { ImportSecret } from '../Address/ImportSecret';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
 import CreateNewWallet from '../Address/CreateNewWallet';
@@ -280,9 +281,14 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportRabbyWallet}
         component={ImportRabbyWallet}
-        options={mergeScreenOptions({
-          headerShown: false,
-        })}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: t('page.newUserOnboarding.restoreWallet.title'),
+            title: t('page.newUserOnboarding.restoreWallet.title'),
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
+          },
+        ])}
       />
       <AddressStack.Screen
         name={RootNames.CreateNewAddress}
@@ -392,6 +398,15 @@ export function AddressNavigator() {
         options={{
           headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
           title: t('screens.addressStackTitle.ImportMnemonic'),
+          headerTitleStyle: styles.headerTitleText,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportSecret}
+        component={ImportSecret}
+        options={{
+          headerTitle: 'Import Secret',
+          title: 'Import Secret',
           headerTitleStyle: styles.headerTitleText,
         }}
       />

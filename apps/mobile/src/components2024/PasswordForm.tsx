@@ -138,7 +138,8 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
     if (couldSetupBiometrics) {
       formik.setFieldValue('enableBiometrics', true, false);
     }
-  }, [couldSetupBiometrics, formik]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couldSetupBiometrics]);
 
   const handleContinue = useCallback(() => {
     const validationResult = formik.validateFormValues();

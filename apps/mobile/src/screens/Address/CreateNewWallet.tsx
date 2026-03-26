@@ -1,7 +1,7 @@
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 
@@ -19,21 +19,24 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 import { AddressCard } from '@/components2024/AddressCard';
-import { apiMnemonic, apisLock } from '@/core/apis';
-import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
-import { keyringService, preferenceService } from '@/core/services';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import useAsync from 'react-use/lib/useAsync';
-import { useCreateAddressProc } from '@/hooks/address/useNewUser';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { PasswordForm } from '@/components2024/PasswordForm';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { CompositeScreenProps } from '@react-navigation/native';
 import {
-  PasswordForm,
-  PasswordFormValues,
-} from '@/components2024/PasswordForm';
-import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
-import { apisHomeTabIndex } from '@/hooks/navigation';
-import { useBiometrics } from '@/hooks/biometrics';
-import { toast } from '@/components2024/Toast';
+  RootStackParamsList,
+  AddressNavigatorParamList,
+} from '@/navigation-type';
+import { RootNames } from '@/constant/layout';
+import { useCreateWallet } from '@/hooks/address/useCreateWallet';
+
+type ScreenProps = CompositeScreenProps<
+  NativeStackScreenProps<
+    AddressNavigatorParamList,
+    typeof RootNames.CreateNewWallet
+  >,
+  NativeStackScreenProps<RootStackParamsList>
+>;
 
 const DisMissKBWrapper = ({ children }: { children: React.ReactNode }) => (
   <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -74,43 +77,22 @@ const ANIMATION_START_TIMES = {
     ANIMATION_CONFIG.DELAY_AFTER_ADDRESS,
 } as const;
 
-export default function CreateNewWalletScreen() {
+export default function CreateNewWalletScreen({ route }: ScreenProps) {
   const { styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {
-    storeSeedPharse,
-    storeAddressList,
-    storePassword,
-    resetCreateAddressProc,
-  } = useCreateAddressProc();
-  const { toggleBiometrics } = useBiometrics({ autoFetch: true });
+  // Convert route params to CreateWalletParams union type
+  const rawParams = route.params;
+  const params =
+    rawParams && 'seedPhrase' in rawParams
+      ? { seedPhrase: rawParams.seedPhrase }
+      : rawParams && 'privateKey' in rawParams
+      ? { privateKey: rawParams.privateKey }
+      : undefined;
 
-  // Generate new address on mount
-  const { value } = useAsync(async () => {
-    // Generate seed phrase
-    const generatedSeedPhrase = await apiMnemonic.generatePreMnemonic();
-
-    // Create keyring and get first address
-    const Keyring = keyringService.getKeyringClassForType(
-      KEYRING_CLASS.MNEMONIC,
-    ) as any;
-    const keyring = new Keyring({
-      mnemonic: generatedSeedPhrase,
-      passphrase: '',
-    });
-    const accountsToCreate = keyring?.getAddresses(0, 1);
-
-    const address = accountsToCreate?.[0].address;
-
-    return {
-      seedPhrase: generatedSeedPhrase,
-      accountsToCreate,
-      address,
-      addressIndex: accountsToCreate?.[0].index,
-    };
-  }, []);
+  // Use the polymorphic hook for all wallet creation logic
+  const { address, isLoading, isSubmitting, handleSubmit } =
+    useCreateWallet(params);
 
   // Animation values
   const textProgress = useSharedValue(0);
@@ -197,91 +179,6 @@ export default function CreateNewWalletScreen() {
     };
   });
 
-  const handlePasswordSubmit = useCallback(
-    async (formValues: PasswordFormValues) => {
-      if (!value?.address || !value?.seedPhrase) return;
-
-      setIsSubmitting(true);
-
-      try {
-        // Store password
-        storePassword({
-          password: formValues.password,
-          confirmPassword: formValues.confirmPassword,
-          enableBiometrics: formValues.enableBiometrics,
-        });
-
-        // Store address and seed phrase
-        storeAddressList([
-          {
-            address: value.address,
-            aliasName: '',
-            index: value.addressIndex,
-          },
-        ]);
-        storeSeedPharse(value.seedPhrase);
-
-        // Update password
-        const result = await apisLock.resetPasswordOnUI(formValues.password);
-        if (result.error) {
-          toast.show(result.error);
-          return;
-        }
-
-        // Enable biometrics if selected
-        try {
-          await toggleBiometrics?.(formValues.enableBiometrics, {
-            validatedPassword: formValues.password,
-          });
-        } catch (e) {
-          console.log('toggleBiometrics error', e);
-          toast.show('Enable biometrics failed');
-        }
-
-        // Add keyring and activate accounts
-        await addKeyringAndactiveAndPersistAccounts(
-          value.seedPhrase,
-          '',
-          value.accountsToCreate || [],
-          true,
-        );
-
-        // Clean up temporary pre-mnemonic data
-        keyringService.removePreMnemonics();
-
-        // Report action
-        preferenceService.setReportActionTs(
-          REPORT_TIMEOUT_ACTION_KEY.ADD_NEW_ADDRESS_DONE,
-        );
-
-        // Reset the temporary process state
-        resetCreateAddressProc();
-
-        // Navigate directly to Home
-        apisSingleHome.navigateToSingleHome(
-          {
-            address: value.address,
-            brandName: KEYRING_CLASS.MNEMONIC,
-            type: KEYRING_TYPE.HdKeyring,
-            index: value.addressIndex ?? 0,
-          },
-          { replace: true },
-        );
-        apisHomeTabIndex.setTabIndex(0);
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [
-      value,
-      storeSeedPharse,
-      storeAddressList,
-      storePassword,
-      toggleBiometrics,
-      resetCreateAddressProc,
-    ],
-  );
-
   return (
     <DisMissKBWrapper>
       <View style={styles.container}>
@@ -308,9 +205,9 @@ export default function CreateNewWalletScreen() {
               styles.shadowContainer,
               addressAnimatedStyle,
             ]}>
-            {value?.address && (
+            {address && (
               <AddressCard
-                address={value.address}
+                address={address}
                 brandName={KEYRING_CLASS.MNEMONIC}
               />
             )}
@@ -319,9 +216,9 @@ export default function CreateNewWalletScreen() {
           {/* Password Form - fades in + slides up after 350ms */}
           <Animated.View style={[styles.formContainer, formAnimatedStyle]}>
             <PasswordForm
-              onSubmit={handlePasswordSubmit}
+              onSubmit={handleSubmit}
               topTip="Set a password to secure your wallet"
-              loading={isSubmitting}
+              loading={isSubmitting || isLoading}
             />
           </Animated.View>
         </View>

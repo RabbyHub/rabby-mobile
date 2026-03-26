@@ -17,7 +17,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
 
-import RightArrowSVG from '@/assets2024/icons/common/right-2.svg';
+import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import HelpSVG from '@/assets2024/icons/common/help.svg';
 
 // Wallet brand icons
@@ -45,7 +45,7 @@ function SelectImportMethod(): JSX.Element {
   const handleSeedPhraseOrPrivateKey = React.useCallback(() => {
     navigation.dispatch(
       StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ImportMnemonic2024,
+        screen: RootNames.ImportSecret,
         params: {},
       }),
     );
@@ -111,10 +111,9 @@ function SelectImportMethod(): JSX.Element {
             </View>
             <View style={styles.arrowWrapper}>
               <RightArrowSVG
-                width={16}
-                height={16}
+                width={12}
+                height={12}
                 color={colors2024['neutral-title-1']}
-                style={styles.arrowIcon}
               />
             </View>
           </Card>
@@ -134,10 +133,9 @@ function SelectImportMethod(): JSX.Element {
             </View>
             <View style={styles.arrowWrapper}>
               <RightArrowSVG
-                width={16}
-                height={16}
+                width={12}
+                height={12}
                 color={colors2024['neutral-title-1']}
-                style={styles.arrowIcon}
               />
             </View>
           </Card>
@@ -179,12 +177,13 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingVertical: 24,
     borderRadius: 20,
     marginBottom: 12,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.colors2024['neutral-card-1'],
+    borderWidth: 0,
     shadowColor: 'rgba(55, 56, 63, 0.02)',
     shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 1,
     shadowRadius: 40,
-    elevation: 4,
+    elevation: 2,
   },
   itemContent: {
     flex: 1,
@@ -214,9 +213,6 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  arrowIcon: {
-    transform: [{ rotate: '180deg' }],
   },
   tipWrapper: {
     flexDirection: 'row',
