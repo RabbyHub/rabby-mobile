@@ -1,6 +1,5 @@
 import {
   DEV_CONSOLE_URL as DEV_CONSOLE_URL_,
-  RABBY_MOBILE_SAFE_API_KEY as RABBY_MOBILE_SAFE_API_KEY_,
   RABBY_MOBILE_FE_SERVICE_URL as RABBY_MOBILE_FE_SERVICE_URL_,
 } from '@env';
 
@@ -42,12 +41,6 @@ export const IS_HERMES_ENABLED = !!(global as any).HermesInternal;
 
 export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;
-
-export const SAFE_API_KEY =
-  /* from .env* */ RABBY_MOBILE_SAFE_API_KEY_ ||
-  /* for developer */ process.env.RABBY_MOBILE_SAFE_API_KEY ||
-  process.env.MOBILE_SAFE_API_KEY ||
-  '';
 
 export const RABBY_MOBILE_FE_SERVICE_URL =
   RABBY_MOBILE_FE_SERVICE_URL_ || process.env.RABBY_MOBILE_FE_SERVICE_URL || '';

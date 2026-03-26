@@ -43,12 +43,6 @@ check_env_file() {
 
   echo "[RabbyMobileBuild] checking env file: $env_file"
 
-  if [ -z $RABBY_MOBILE_SAFE_API_KEY ] && [ ! -z $MOBILE_SAFE_API_KEY ]; then
-    export RABBY_MOBILE_SAFE_API_KEY=$MOBILE_SAFE_API_KEY
-  fi
-
-  local sysenv_apiKey=$RABBY_MOBILE_SAFE_API_KEY
-  local apiKey_fromEnvFile=""
   local sysenv_krPwd=$RABBY_MOBILE_KR_PWD
   local krPwd_fromEnvFile=""
   local env_buildchannel=""
@@ -58,9 +52,7 @@ check_env_file() {
       key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1')
       if [ -z "$key_cleaned" ]; then continue; fi
       value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
-      if [ "$key_cleaned" == "RABBY_MOBILE_SAFE_API_KEY" ]; then
-        apiKey_fromEnvFile="$value_cleaned"
-      elif [ "$key_cleaned" == "RABBY_MOBILE_KR_PWD" ]; then
+      if [ "$key_cleaned" == "RABBY_MOBILE_KR_PWD" ]; then
         krPwd_fromEnvFile="$value_cleaned"
       elif [ "$key_cleaned" == "RABBY_MOBILE_BUILD_CHANNEL" ]; then
         env_buildchannel="$value_cleaned"
@@ -71,10 +63,7 @@ check_env_file() {
       fi
     done < <(grep -v '^[[:space:]]*#' "$env_file" | grep -v '^[[:space:]]*$')
 
-    if [ -z "$apiKey_fromEnvFile" ]; then
-      echo "[RabbyMobileBuild] no RABBY_MOBILE_SAFE_API_KEY in env file $env_file, abort bundle"
-      exit 1
-    elif [ -z "$krPwd_fromEnvFile" ]; then
+    if [ -z "$krPwd_fromEnvFile" ]; then
       echo "[RabbyMobileBuild] no RABBY_MOBILE_KR_PWD in env file $env_file, abort bundle"
       exit 1
     elif [ "$CONFIGURATION" == "Release" ] && [ "$env_buildchannel" != "appstore" ]; then
@@ -84,15 +73,10 @@ check_env_file() {
       echo "[RabbyMobileBuild] found env file $env_file, use its vars"
     fi
   else
-    if [ -z "$sysenv_apiKey" ]; then
-      echo "[RabbyMobileBuild] no RABBY_MOBILE_SAFE_API_KEY in system env, abort bundle"
-      exit 1
-    fi
     if [ -z "$sysenv_krPwd" ]; then
       echo "[RabbyMobileBuild] no RABBY_MOBILE_KR_PWD in system env, abort bundle"
       exit 1
     fi
-    echo "RABBY_MOBILE_SAFE_API_KEY=$sysenv_apiKey" >> $env_file
     echo "RABBY_MOBILE_KR_PWD=$sysenv_krPwd" >> $env_file
     if [ "$CONFIGURATION" == "Release" ]; then
       echo "RABBY_MOBILE_BUILD_CHANNEL=appstore" >> $env_file
