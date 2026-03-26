@@ -6035,7 +6035,7 @@ __metadata:
 
 "@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.2.8#./.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 5.2.8
-  resolution: "@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.2.8#./.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch::version=5.2.8&hash=39f5ad&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@gorhom/bottom-sheet@patch:@gorhom/bottom-sheet@npm%3A5.2.8#./.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch::version=5.2.8&hash=43220a&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@gorhom/portal": 1.0.14
     invariant: ^2.2.4
@@ -6051,7 +6051,7 @@ __metadata:
       optional: true
     "@types/react-native":
       optional: true
-  checksum: 80f840912950b39d4a16abe2757949c7c7d95cd67e70d747a1a30c59a8def9be79f36003e7a53b8a6e1a277ae8231e03e3ede1e00ca46760b45ca729de9be5d2
+  checksum: efe9d9509b6d50ad2a0678050a5031dcdbeffbdc9519f5424fee5cc6ddd98905b4c38b8499c082a0d196562c92e9306ac92ae27cad3e913b1dceac931afd5b7a
   languageName: node
   linkType: hard
 
@@ -35202,7 +35202,7 @@ __metadata:
     react-native-animateable-text: 0.17.1
     react-native-asset: ^2.1.1
     react-native-ble-manager: 11.6.0
-    react-native-ble-plx: 3.5.0
+    react-native-ble-plx: 3.5.1
     react-native-bundle-splitter: ^3.0.1
     react-native-bundle-visualizer: 3.1.0
     react-native-cloud-storage: ^1.4.1
@@ -35742,13 +35742,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-ble-plx@npm:3.5.0":
-  version: 3.5.0
-  resolution: "react-native-ble-plx@npm:3.5.0"
+"react-native-ble-plx@npm:3.5.1":
+  version: 3.5.1
+  resolution: "react-native-ble-plx@npm:3.5.1"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: d84ce1eefdc584c8a4891266941f5951b31c8a800d0993659d7f87ba57cb8c23c4ba09dc3d4d8bfbc1d16f64dbd7405fad2b5fd2cf79fa7578d001a22aee47ae
+  checksum: a66f2af098e7c5bf73fd537496da93541ea742b96a716c13c759d0ab04376a9361f35495145f484ac583ee87305324f13d74bf90479d3cd1ac5bcf450a2abc9e
   languageName: node
   linkType: hard
 

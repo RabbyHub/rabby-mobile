@@ -92,3 +92,16 @@ index 9202b4bf48bef2d1a03b9b279f9fb6a228560421..69177eee37fc8e0aaaf41ce11ee155ba
        callbackRef.current = undefined;
      };
    }, []);
+diff --git a/src/components/bottomSheet/BottomSheet.tsx b/src/components/bottomSheet/BottomSheet.tsx
+index 6748c93cac1a29c745480fe2282b8d8f6b36226f..3dbb2fd7e5268d4e6b57ea44e6c314791ff10642 100644
+--- a/src/components/bottomSheet/BottomSheet.tsx
++++ b/src/components/bottomSheet/BottomSheet.tsx
+@@ -659,7 +659,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+           status === KEYBOARD_STATUS.SHOWN &&
+           position !== closedDetentPosition
+         ) {
+-          index = highestDetentPosition ?? DEFAULT_KEYBOARD_INDEX;
++          index = detents?.indexOf(highestDetentPosition ?? 0) ?? DEFAULT_KEYBOARD_INDEX;
+         }
+
+         /**
