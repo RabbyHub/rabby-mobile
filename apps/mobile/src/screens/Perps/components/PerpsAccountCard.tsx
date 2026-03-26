@@ -71,7 +71,7 @@ export const PerpsAccountCard: React.FC<{
                 onPress={() => {
                   setPopupState(prev => ({
                     ...prev,
-                    isShowDepositTokenPopup: true,
+                    isShowDepositPopup: true,
                   }));
                 }}>
                 <RcIconAddFunds />
@@ -82,11 +82,10 @@ export const PerpsAccountCard: React.FC<{
             ) : (
               <View style={styles.actionBtns}>
                 <TouchableOpacity
-                  // style={styles.actionBtn}
                   onPress={() => {
                     setPopupState(prev => ({
                       ...prev,
-                      isShowDepositTokenPopup: true,
+                      isShowDepositPopup: true,
                     }));
                   }}>
                   <RcIconPlusButton />

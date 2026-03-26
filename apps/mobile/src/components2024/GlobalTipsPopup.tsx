@@ -55,11 +55,7 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
             <Text style={styles.title}>{title}</Text>
           </View>
           <View style={styles.content}>
-            {typeof desc === 'string' ? (
-              <Text style={styles.desc}>{desc}</Text>
-            ) : (
-              desc
-            )}
+            <Text style={styles.desc}>{desc}</Text>
           </View>
           <Button
             type={buttonType || 'primary'}

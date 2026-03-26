@@ -13,10 +13,7 @@ import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
-import {
-  usePerpsPopupState,
-  useSelectedToken,
-} from './hooks/usePerpsPopupState';
+import { usePerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
@@ -28,16 +25,6 @@ import { sortBy } from 'lodash';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { PerpsSelectTokenPopup } from './components/PerpsDepositPopup/PerpsSelectTokenPopup';
-import { PerpsDepositTokenModal } from './components/PerpsDepositPopup/PerpsDepositTokenModal';
-import { openapi } from '@/core/request';
-import {
-  ARB_USDC_TOKEN_ID,
-  ARB_USDC_TOKEN_SERVER_CHAIN,
-  HYPE_USDC_TOKEN_ID,
-  HYPE_USDC_TOKEN_SERVER_CHAIN,
-} from '@/constant/perps';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
 import { PerpSearchListPopup } from './components/PerpSearchListPopup';
 import { RootNames } from '@/constant/layout';
@@ -89,9 +76,7 @@ export const PerpsOriginScreen = () => {
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
 
-  const [selectedToken, setSelectedToken] = useSelectedToken();
   const [popupState, setPopupState] = usePerpsPopupState();
-  const [isShowModal, setIsShowModal] = useState(false);
 
   // Scroll related states
   const flatListRef = useRef<FlatList>(null);
@@ -502,12 +487,6 @@ export const PerpsOriginScreen = () => {
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={popupState.isShowDepositPopup}
-        showSelectTokenPopup={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: true,
-          }));
-        }}
         onClose={() => {
           setPopupState(prev => ({
             ...prev,
@@ -525,64 +504,6 @@ export const PerpsOriginScreen = () => {
           } catch (e) {
             console.error(e);
           }
-        }}
-      />
-      <PerpsSelectTokenPopup
-        account={currentPerpsAccount}
-        visible={popupState.isShowDepositTokenPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: false,
-          }));
-        }}
-        onSelect={async token => {
-          setSelectedToken(token);
-          if (
-            (token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-              isSameAddress(token.id, ARB_USDC_TOKEN_ID)) ||
-            (token.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
-              isSameAddress(token.id, HYPE_USDC_TOKEN_ID))
-          ) {
-            setPopupState(prev => ({
-              ...prev,
-              isShowDepositTokenPopup: false,
-              isShowDepositPopup: true,
-            }));
-            return;
-          }
-
-          const res = await openapi.getPerpsBridgeIsSupportToken({
-            token_id: token.id,
-            chain_id: token.chain,
-          });
-
-          if (res?.success) {
-            // bridge token with liFi dex
-            setPopupState(prev => ({
-              ...prev,
-              isShowDepositTokenPopup: false,
-              isShowDepositPopup: true,
-            }));
-            // setClickLoading(false);
-          } else {
-            setIsShowModal(true);
-          }
-        }}
-      />
-      <PerpsDepositTokenModal
-        visible={isShowModal}
-        onCancel={() => {
-          setIsShowModal(false);
-        }}
-        token={selectedToken}
-        onNavigate={() => {
-          setIsShowModal(false);
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: false,
-            isShowDepositPopup: false,
-          }));
         }}
       />
       <PerpsWithdrawPopup

@@ -362,7 +362,6 @@ const getStyle = createGetStyles2024(ctx => {
     },
     inputWrapper: {
       flex: 1,
-      // paddingVertical: 20,
     },
     tokenAmountHint: {
       fontFamily: 'SF Pro Rounded',
