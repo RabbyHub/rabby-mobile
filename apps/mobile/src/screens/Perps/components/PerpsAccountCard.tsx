@@ -115,13 +115,18 @@ export const PerpsAccountCard: React.FC<{
             source={ImgLearnMore}
             resizeMode="cover"
             style={styles.learnCardInner}>
-            <View style={{ position: 'absolute', right: 14, top: 14 }}>
+            <TouchableOpacity
+              style={{ position: 'absolute', right: 14, top: 14 }}
+              onPress={() => {
+                setHasClosedLearnMore(true);
+                apisPerps.setHasClosedLearnMoreCard(true);
+              }}>
               <RcIconCloseCC
                 width={20}
                 height={20}
                 color={colors2024['neutral-secondary']}
               />
-            </View>
+            </TouchableOpacity>
             <Text style={styles.learnTitle}>
               {t('page.perps.PerpsCard.title')}
             </Text>

@@ -4,12 +4,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Dimensions,
   FlatList,
   ImageBackground,
   RefreshControl,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
@@ -52,6 +52,7 @@ export const PerpsOriginScreen = () => {
   const { t } = useTranslation();
 
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { width: screenWidth } = useWindowDimensions();
 
   const navigation = useRabbyAppNavigation();
 
@@ -360,7 +361,7 @@ export const PerpsOriginScreen = () => {
           <ImageBackground
             source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}
             resizeMode="cover"
-            style={styles.topBg}
+            style={[styles.topBg, { width: screenWidth, height: screenWidth }]}
           />
         )}
         <PerpsNativeHeader
@@ -591,15 +592,11 @@ export const PerpsOriginScreen = () => {
   );
 };
 
-const ScreenWidth = Dimensions.get('window').width;
-
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   topBg: {
     position: 'absolute',
     top: 0,
     left: 0,
-    width: ScreenWidth,
-    height: ScreenWidth,
     zIndex: -1,
   },
   container: {

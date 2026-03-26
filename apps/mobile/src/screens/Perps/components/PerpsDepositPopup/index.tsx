@@ -178,11 +178,13 @@ export const PerpsDepositPopup: React.FC<{
         isSameAddress(item.id, HYPE_USDC_TOKEN_ID),
     );
     if (!hasArbUsdc) {
-      filtered.push(directUsdcTokens?.arbUsdc || (ARB_USDC_TOKEN_ITEM as any));
+      filtered.push(
+        directUsdcTokens?.arbUsdc || (ARB_USDC_TOKEN_ITEM as ITokenItem),
+      );
     }
     if (!hasHypeUsdc) {
       filtered.push(
-        directUsdcTokens?.hypeUsdc || (HYPE_USDC_TOKEN_ITEM as any),
+        directUsdcTokens?.hypeUsdc || (HYPE_USDC_TOKEN_ITEM as ITokenItem),
       );
     }
 
@@ -844,7 +846,7 @@ export const PerpsDepositPopup: React.FC<{
                     {isDirectDeposit
                       ? usdValue
                       : new BigNumber(usdValue)
-                          .div(tokenInfo?.price || 1)
+                          .div(Number(tokenInfo?.price) || 1)
                           .decimalPlaces(4, BigNumber.ROUND_DOWN)
                           .toFixed()}{' '}
                     {getTokenSymbol(tokenInfo)}
@@ -1137,20 +1139,12 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    quickAmountBtnMax: {
-      backgroundColor: 'rgba(80, 210, 193, 0.12)',
-      borderColor: 'transparent',
-    },
     quickAmountText: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
       color: ctx.colors2024['neutral-body'],
-    },
-    quickAmountTextMax: {
-      color: '#50D2C1',
-      fontWeight: '700',
     },
   };
 });
