@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { AssetAvatar } from '@/components';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -28,7 +29,13 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useMemoizedFn, useRequest } from 'ahooks';
 import useDebounce from 'react-use/lib/useDebounce';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
@@ -47,6 +54,7 @@ import { Linear } from '@/screens/Transaction/components/SkeletonCard';
 import { Tip } from '@/components/Tip';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { apisPerps } from '@/core/apis';
+import { IS_ANDROID } from '@/core/native/utils';
 import { tokenAmountBn } from '@/screens/Swap/utils';
 import { useTwoStepSwap } from '@/screens/Swap/hooks/twoStepSwap';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
@@ -104,6 +112,17 @@ export const PerpsDepositPopup: React.FC<{
   const abortControllerRef = useRef<AbortController | null>(null);
   const { t } = useTranslation();
   const [gasPrice, setGasPrice] = useState<number>(0);
+
+  const [tipVisible, setTipVisible] = useState(false);
+  const hideTip = useCallback(() => setTipVisible(false), []);
+
+  useEffect(() => {
+    const sub = Keyboard.addListener(
+      IS_ANDROID ? 'keyboardDidHide' : 'keyboardWillHide',
+      hideTip,
+    );
+    return () => sub.remove();
+  }, [hideTip]);
 
   // Load token list and auto-select the first (highest balance) token
   const registerPerpsTokenSelect = useTokenListComputedStore(
@@ -198,6 +217,15 @@ export const PerpsDepositPopup: React.FC<{
       useTokenList.getState().getTokenList(account.address, true);
     }
   }, [visible, account?.address, registerPerpsTokenSelect]);
+
+  // Reset selected token when account changes or popup closes
+  const prevAddressRef = useRef(account?.address);
+  useEffect(() => {
+    if (prevAddressRef.current !== account?.address) {
+      prevAddressRef.current = account?.address;
+      setSelectedToken(null);
+    }
+  }, [account?.address]);
 
   useEffect(() => {
     if (visible && depositTokens.length > 0 && !selectedToken) {
@@ -751,11 +779,24 @@ export const PerpsDepositPopup: React.FC<{
       if (bridgeQuote?.tx) {
         return (
           <Tip
-            content={t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
-              number: bridgeQuote?.duration || 0,
-            })}
+            isVisible={tipVisible}
+            onClose={hideTip}
+            // content={t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
+            //   number: bridgeQuote?.duration || 0,
+            // })}
+            content={
+              <View style={{ width: 280, padding: 8 }}>
+                <Text style={{ fontSize: 12, color: '#fff' }}>
+                  {t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
+                    number: bridgeQuote?.duration || 0,
+                  })}
+                </Text>
+              </View>
+            }
             placement="top">
-            <View style={styles.estReceiveContainer}>
+            <TouchableOpacity
+              onPress={() => setTipVisible(true)}
+              style={styles.estReceiveContainer}>
               <Text style={styles.estReceiveText}>
                 {t('page.perps.PerpsDepositPopup.estReceive', {
                   balance: formatUsdValue(estReceiveUsdValue),
@@ -766,7 +807,7 @@ export const PerpsDepositPopup: React.FC<{
                 width={18}
                 height={18}
               />
-            </View>
+            </TouchableOpacity>
           </Tip>
         );
       }
@@ -784,6 +825,8 @@ export const PerpsDepositPopup: React.FC<{
     quoteError,
     colors2024,
     estReceiveUsdValue,
+    tipVisible,
+    hideTip,
   ]);
 
   if (!account) {
@@ -800,7 +843,7 @@ export const PerpsDepositPopup: React.FC<{
         })}
         onDismiss={onClose}
         // enableDynamicSizing
-        snapPoints={[440]}
+        snapPoints={[424]}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore">
         <BottomSheetView style={[styles.container]}>
@@ -986,6 +1029,7 @@ const getStyle = createGetStyles2024(ctx => {
     container: {
       // height: '100%',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
+      paddingTop: 10,
       paddingBottom: 56,
       paddingHorizontal: 20,
       display: 'flex',
@@ -1122,7 +1166,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 13,
       lineHeight: 16,
       fontWeight: '400',
-      color: ctx.colors2024['neutral-foot'],
+      color: ctx.colors2024['neutral-secondary'],
       marginTop: -4,
     },
     quickAmountRow: {

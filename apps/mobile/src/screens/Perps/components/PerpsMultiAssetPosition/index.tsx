@@ -175,7 +175,7 @@ const AssetPositionItem = ({
           </Text>
         </View>
         <View style={styles.coinNameRow}>
-          <RcIconHyperliquid />
+          <RcIconHyperliquid opacity={0.3} />
           <Text style={styles.hyperliquidText}>
             {t('page.perps.assetPage.hyperliquidPosition')}
           </Text>

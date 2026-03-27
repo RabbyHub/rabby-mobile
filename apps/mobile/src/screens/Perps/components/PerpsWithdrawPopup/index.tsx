@@ -16,10 +16,11 @@ import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
@@ -35,6 +36,17 @@ export const PerpsWithdrawPopup: React.FC<{
 
   const { availableBalance } = usePerpsAccount();
   const { t } = useTranslation();
+
+  const [tipVisible, setTipVisible] = useState(false);
+  const hideTip = useCallback(() => setTipVisible(false), []);
+
+  useEffect(() => {
+    const sub = Keyboard.addListener(
+      IS_ANDROID ? 'keyboardDidHide' : 'keyboardWillHide',
+      hideTip,
+    );
+    return () => sub.remove();
+  }, [hideTip]);
 
   // const [amount, setAmount] = React.useState<string>('');
   const {
@@ -201,10 +213,14 @@ export const PerpsWithdrawPopup: React.FC<{
             </View>
 
             <Tip
-              topAdjustment={-10}
+              isVisible={tipVisible}
+              onClose={hideTip}
+              topAdjustment={IS_ANDROID ? -10 : 10}
               content={t('page.perps.PerpsWithdrawPopup.feeTooltipDesc')}
               placement="top">
-              <View style={styles.feeContainer}>
+              <TouchableOpacity
+                onPress={() => setTipVisible(true)}
+                style={styles.feeContainer}>
                 <Text style={styles.fee}>
                   {t('page.perps.PerpsWithdrawPopup.feeTip')}
                 </Text>
@@ -213,7 +229,7 @@ export const PerpsWithdrawPopup: React.FC<{
                   width={18}
                   height={18}
                 />
-              </View>
+              </TouchableOpacity>
             </Tip>
           </View>
           <Button
@@ -236,6 +252,7 @@ const getStyle = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingBottom: 56,
       paddingHorizontal: 20,
+      paddingTop: 10,
       display: 'flex',
       flexDirection: 'column',
     },
@@ -368,7 +385,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 13,
       lineHeight: 16,
       fontWeight: '400',
-      color: ctx.colors2024['neutral-foot'],
+      color: ctx.colors2024['neutral-secondary'],
       marginTop: -4,
     },
     quickAmountRow: {
