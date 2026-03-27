@@ -19,9 +19,9 @@ const hitSlop = {
   right: 10,
 };
 
-export const ImportMoreAddressScreenButton: React.FC<
-  NativeStackHeaderRightProps
-> = ({ tintColor }) => {
+export const ImportMoreAddressScreenButton = ({
+  tintColor,
+}: NativeStackHeaderRightProps) => {
   const route =
     useRoute<
       GetNestedScreenRouteProp<'AddressNavigatorParamList', 'ImportMoreAddress'>

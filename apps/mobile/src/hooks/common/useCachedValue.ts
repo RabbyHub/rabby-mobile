@@ -4,7 +4,7 @@ function useCachedValue<T extends object, K extends keyof T>(
   obj: T | null | undefined,
   key: K,
 ): T[K] | undefined {
-  const cachedValue = useRef<T[K]>();
+  const cachedValue = useRef<T[K]>(undefined);
 
   return useMemo(() => {
     if (obj && key in obj) {

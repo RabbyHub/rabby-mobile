@@ -153,9 +153,9 @@ export default function RepayWithCollateral({
     rawAmount: string;
     toToken?: string;
     srcAmount?: string;
-  }>();
+  }>(undefined);
 
-  const quoteExpiredTimerRef = useRef<NodeJS.Timeout>();
+  const quoteExpiredTimerRef = useRef<NodeJS.Timeout>(undefined);
   const enableQuoteAutoRefreshRef = useRef(false);
 
   const {

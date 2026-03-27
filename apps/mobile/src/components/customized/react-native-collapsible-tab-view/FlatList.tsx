@@ -55,7 +55,7 @@ function FlatListImpl<R>(
     ...rest
   }: Omit<FinalProps<R>, 'onScroll'>,
   passRef: React.Ref<FinalType<R>>,
-): React.ReactElement {
+): React.ReactElement<any> {
   const name = useTabNameContext();
   const { setRef, contentInset } = useTabsContext();
   const ref = useSharedAnimatedRef<FinalType<R>>(passRef);
@@ -149,4 +149,4 @@ function FlatListImpl<R>(
  */
 export const TabsFlatList = React.forwardRef(FlatListImpl) as <T>(
   p: FinalProps<T> & { ref?: React.Ref<FinalType<T>> },
-) => React.ReactElement;
+) => React.ReactElement<any>;

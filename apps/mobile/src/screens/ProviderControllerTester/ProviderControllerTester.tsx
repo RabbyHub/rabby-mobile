@@ -9,17 +9,26 @@ import React from 'react';
 import type { PropsWithChildren } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-} from 'react-native/Libraries/NewAppScreen';
+// Local Header component
+const Header = () => (
+  <View style={headerStyles.container}>
+    <Text style={headerStyles.text}>Provider Controller Test</Text>
+  </View>
+);
 
-import {
-  useGetBinaryMode,
-  useThemeColors,
-  useThemeStyles,
-} from '@/hooks/theme';
+const headerStyles = StyleSheet.create({
+  container: {
+    padding: 20,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+  },
+  text: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+});
+
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { useDapps } from '@/hooks/useDapps';
@@ -33,7 +42,7 @@ type SectionProps = PropsWithChildren<{
 }>;
 
 function Section({ children, title }: SectionProps): JSX.Element {
-  const isDarkMode = useGetBinaryMode() === 'dark';
+  const colors = useThemeColors();
 
   return (
     <View style={sectionStyles.sectionContainer}>
@@ -41,7 +50,7 @@ function Section({ children, title }: SectionProps): JSX.Element {
         style={[
           sectionStyles.sectionTitle,
           {
-            color: isDarkMode ? Colors.white : Colors.black,
+            color: colors['neutral-title-1'],
           },
         ]}>
         {title}
@@ -118,9 +127,9 @@ const TEST_SESSION = {
 };
 
 function ProviderControllerTester(): JSX.Element {
-  const isDarkMode = useGetBinaryMode() === 'dark';
+  const colors = useThemeColors();
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: colors['neutral-bg-1'],
   };
 
   const { addDapp } = useDapps();

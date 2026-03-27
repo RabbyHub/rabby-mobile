@@ -18,7 +18,7 @@ import { tokenItemToITokenItem } from '@/utils/token';
 interface Props {
   token: TokenItem;
   closeBottomSheet: () => void;
-  children: React.ReactElement;
+  children: React.ReactElement<any>;
   type?: TokenSelectType;
   needToTokenMarketInfo?: boolean;
 }

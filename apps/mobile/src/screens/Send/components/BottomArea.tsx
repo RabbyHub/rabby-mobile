@@ -239,7 +239,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
-          onPress={handleSubmit}
+          onPress={() => handleSubmit()}
         />
       )}
 

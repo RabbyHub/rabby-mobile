@@ -8,23 +8,53 @@
 import React from 'react';
 import type { PropsWithChildren } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import { useGetBinaryMode } from '@/hooks/theme';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import { useThemeColors } from '@/hooks/theme';
 import { Text } from '@/components/Typography';
+
+// Local components (react-native/Libraries/NewAppScreen was removed in RN 0.81+)
+const Header = () => (
+  <View style={localStyles.header}>
+    <Text style={localStyles.headerText}>Welcome to React Native</Text>
+  </View>
+);
+
+const ReloadInstructions = () => (
+  <Text>Press Cmd + R on iOS or Cmd + M on Android to reload.</Text>
+);
+
+const DebugInstructions = () => (
+  <Text>
+    Press Cmd + D on iOS or Cmd + M on Android to open developer menu.
+  </Text>
+);
+
+const LearnMoreLinks = () => (
+  <View style={localStyles.links}>
+    <Text>Learn more at reactnative.dev</Text>
+  </View>
+);
+
+const localStyles = StyleSheet.create({
+  header: {
+    padding: 20,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: '600',
+  },
+  links: {
+    padding: 20,
+  },
+});
 
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
 
 function Section({ children, title }: SectionProps): JSX.Element {
-  const isDarkMode = useGetBinaryMode() === 'dark';
+  const colors = useThemeColors();
 
   return (
     <View style={styles.sectionContainer}>
@@ -32,7 +62,7 @@ function Section({ children, title }: SectionProps): JSX.Element {
         style={[
           styles.sectionTitle,
           {
-            color: isDarkMode ? Colors.white : Colors.black,
+            color: colors['neutral-title-1'],
           },
         ]}>
         {title}
@@ -41,7 +71,7 @@ function Section({ children, title }: SectionProps): JSX.Element {
         style={[
           styles.sectionDescription,
           {
-            color: isDarkMode ? Colors.light : Colors.dark,
+            color: colors['neutral-body'],
           },
         ]}>
         {children}
@@ -51,10 +81,10 @@ function Section({ children, title }: SectionProps): JSX.Element {
 }
 
 function SampleScreen(): JSX.Element {
-  const isDarkMode = useGetBinaryMode() === 'dark';
+  const colors = useThemeColors();
 
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: colors['neutral-bg-1'],
   };
 
   return (
@@ -65,7 +95,7 @@ function SampleScreen(): JSX.Element {
         <Header />
         <View
           style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            backgroundColor: colors['neutral-bg-1'],
           }}>
           <Section title="Step One">
             Edit <Text style={styles.highlight}>SampleScreen.tsx</Text> to

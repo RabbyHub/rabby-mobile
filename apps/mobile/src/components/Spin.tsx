@@ -15,6 +15,7 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     spin: {
       position: 'relative',
+      flex: 1,
     },
     mask: {
       position: 'absolute',
