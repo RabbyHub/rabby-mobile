@@ -1040,7 +1040,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 18,
-    maxWidth: 120,
+    maxWidth: 116,
   },
   tokenFdvSeparator: {
     fontSize: 14,
