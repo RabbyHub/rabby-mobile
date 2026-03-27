@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -33,17 +34,21 @@ export const PerpsFooter: React.FC<{
             <View style={styles.btnContainer}>
               <Button
                 type="hyperliquid-light"
+                buttonStyle={{ height: 52 }}
                 title={t('page.perpsDetail.action.add', {
                   direction,
                 })}
+                titleStyle={styles.titleFontsize}
                 onPress={onAddPress}
               />
             </View>
             <View style={styles.btnContainer}>
               <Button
                 type="hyperliquid"
+                buttonStyle={{ height: 52 }}
                 title={t('page.perpsDetail.action.close')}
                 onPress={onClosePress}
+                titleStyle={styles.titleFontsize}
               />
             </View>
           </View>
@@ -52,6 +57,7 @@ export const PerpsFooter: React.FC<{
             type="hyperliquid"
             title={t('page.perpsDetail.action.close')}
             onPress={onClosePress}
+            titleStyle={styles.titleFontsize}
           />
         )}
       </View>
@@ -64,11 +70,10 @@ export const PerpsFooter: React.FC<{
           <View style={styles.btnContainer}>
             <Button
               type="primary"
+              titleStyle={styles.titleFontsize}
               buttonStyle={{
-                backgroundColor: colors2024['green-light-1'],
-              }}
-              titleStyle={{
-                color: colors2024['green-default'],
+                height: 52,
+                backgroundColor: colors2024['green-default'],
               }}
               title={t('page.perpsDetail.action.long')}
               onPress={onLongPress}
@@ -77,11 +82,10 @@ export const PerpsFooter: React.FC<{
           <View style={styles.btnContainer}>
             <Button
               type="primary"
+              titleStyle={styles.titleFontsize}
               buttonStyle={{
-                backgroundColor: colors2024['red-light-1'],
-              }}
-              titleStyle={{
-                color: colors2024['red-default'],
+                height: 52,
+                backgroundColor: colors2024['red-default'],
               }}
               title={t('page.perpsDetail.action.short')}
               onPress={onShortPress}
@@ -98,6 +102,7 @@ export const PerpsFooter: React.FC<{
         title={t('page.perpsDetail.action.noPermission')}
         disabled
         titleStyle={styles.noPermissonBtn}
+        buttonStyle={{ height: 52 }}
       />
     </View>
   );
@@ -107,10 +112,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   footer: {
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+      : colors2024['neutral-bg-1'],
     paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 48,
+  },
+  titleFontsize: {
+    fontSize: 18,
+    lineHeight: 22,
   },
   btnGroup: {
     display: 'flex',

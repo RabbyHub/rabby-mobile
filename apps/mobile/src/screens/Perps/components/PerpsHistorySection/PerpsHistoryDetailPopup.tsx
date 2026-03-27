@@ -1,4 +1,6 @@
 import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
+import RcIconHyper from '@/assets2024/icons/perps/IconHyper.svg';
+import RcIconRabby from '@/assets2024/icons/common/rabby-wallet.svg';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -13,7 +15,7 @@ import { sinceTime } from '@/utils/time';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Typography';
 
@@ -187,11 +189,59 @@ export const PerpsHistoryDetailPopup: React.FC<{
               </View>
               {fee ? (
                 <View style={styles.listItem}>
-                  <View style={styles.listItemMain}>
-                    <Text style={styles.label}>
-                      {t('page.perps.historyDetail.fee')}
-                    </Text>
-                  </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      showTipsPopup({
+                        title: t('page.perps.historyDetail.feeTitle'),
+                        desc: (
+                          <View>
+                            <Text style={styles.feeDesc}>
+                              <Trans
+                                i18nKey="page.perps.historyDetail.feeDesc"
+                                components={{
+                                  1: <Text style={styles.feeBold} />,
+                                  2: <Text style={styles.feeBold} />,
+                                }}
+                              />
+                            </Text>
+                            <View style={styles.feeTable}>
+                              <View style={styles.feeRow}>
+                                <View style={styles.feeRowLeft}>
+                                  <RcIconHyper width={20} height={20} />
+                                  <Text style={styles.feeRowLabel}>
+                                    {t(
+                                      'page.perps.historyDetail.feeHyperliquid',
+                                    )}
+                                  </Text>
+                                </View>
+                                <Text style={styles.feeRowValue}>0.045%</Text>
+                              </View>
+                              <View style={styles.feeRow}>
+                                <View style={styles.feeRowLeft}>
+                                  <RcIconRabby width={20} height={20} />
+                                  <Text style={styles.feeRowLabel}>
+                                    {t('page.perps.historyDetail.feeRabby')}
+                                  </Text>
+                                </View>
+                                <Text style={styles.feeRowValue}>0.02%</Text>
+                              </View>
+                            </View>
+                          </View>
+                        ),
+                        buttonType: 'hyperliquid',
+                      });
+                    }}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.fee')}
+                      </Text>
+                      <RcIconInfoCC
+                        width={18}
+                        height={18}
+                        color={colors2024['neutral-info']}
+                      />
+                    </View>
+                  </TouchableOpacity>
                   <View>
                     <Text style={styles.value}>
                       ${splitNumberByStep(Number(fee).toFixed(4))}
@@ -299,7 +349,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
-      color: colors2024['neutral-foot'],
+      color: colors2024['neutral-secondary'],
     },
     labelInfo: {
       color: colors2024['neutral-info'],
@@ -308,8 +358,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
+      fontWeight: '500',
+      color: colors2024['neutral-body'],
     },
     coinContainer: {
       display: 'flex',
@@ -322,6 +372,54 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     red: {
       color: colors2024['red-default'],
+    },
+    feeDesc: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      color: colors2024['neutral-secondary'],
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    feeBold: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+    },
+    feeTable: {
+      borderRadius: 12,
+      backgroundColor: colors2024['neutral-bg-2'],
+      overflow: 'hidden',
+    },
+    feeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 0.5,
+      borderBottomColor: colors2024['neutral-line'],
+    },
+    feeRowLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    feeRowLabel: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors2024['neutral-title-1'],
+    },
+    feeRowValue: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
     },
   };
 });

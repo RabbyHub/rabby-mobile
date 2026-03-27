@@ -74,6 +74,10 @@ class ApisPerps {
   };
   setHasDoneNewUserProcess = perpsService.setHasDoneNewUserProcess;
   getHasDoneNewUserProcess = perpsService.getHasDoneNewUserProcess;
+  setHasShownPerpsGuidePopup = perpsService.setHasShownPerpsGuidePopup;
+  getHasShownPerpsGuidePopup = perpsService.getHasShownPerpsGuidePopup;
+  setHasClosedLearnMoreCard = perpsService.setHasClosedLearnMoreCard;
+  getHasClosedLearnMoreCard = perpsService.getHasClosedLearnMoreCard;
   getPerpsAgentWallet = async (masterWallet: string) => {
     return perpsService.getAgentWallet(masterWallet);
   };

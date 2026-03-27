@@ -2423,7 +2423,9 @@
         "learnBtn": "Learn about Perps",
         "available": "Available",
         "withdrawBtn": "Withdraw",
-        "depositBtn": "Deposit"
+        "depositBtn": "Deposit",
+        "addFunds": "Add Funds",
+        "learnMore": "Learn More"
       },
       "selectAccountTitle": "Select a Wallet to Log In",
       "PerpsGuidePopup": {
@@ -2489,7 +2491,11 @@
         },
         "perps": "Perps",
         "gotItBtn": "I Got it",
-        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
+        "feeTitle": "Fee",
+        "feeDesc": "When users place trades, both\n<1>trading fees</1> and <2>builder fees</2> apply.",
+        "feeHyperliquid": "Hyperliquid",
+        "feeRabby": "Rabby Wallet"
       },
       "PerpsAutoCloseModal": {
         "noPosition": "You must input margin first.",
@@ -2511,6 +2517,7 @@
         "goBridgeDesc": "Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.",
         "swapBtn": "Swap",
         "bridgeBtn": "Bridge",
+        "directDepositFast": "Fast, 0 Slippage",
         "directTag": "Direct Deposit"
       },
       "closeAll": "Close All",
@@ -2536,6 +2543,9 @@
         "withdraw": "Withdraw"
       },
       "PerpsSelectTokenPopup": {
+        "token": "Token",
+        "noTokens": "No tokens",
+        "balance": "Balance",
         "title": "Select Token to Deposit"
       },
       "positions": "Positions",
@@ -2579,6 +2589,7 @@
         "positionValue": "Position Value",
         "settings": "Settings",
         "cross": "Cross",
+        "crossTips": "In Cross Margin mode, the liquidation price for a single position is an estimate for reference only.",
         "isolated": "Isolated",
         "size": "Size",
         "markPrice": "Mark Price",
@@ -2712,6 +2723,9 @@
         "long": "Long",
         "short": "Short",
         "noPermission": "Opening positions is not supported in your region"
+      },
+      "guideEntry": {
+        "gotIt": "Got it"
       },
       "PerpsAutoCloseModal": {
         "takeProfitExpectedPNL": "Take profit expected PNL",

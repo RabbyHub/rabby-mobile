@@ -8,7 +8,7 @@ import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
-import { useTipsPopup } from '@/hooks/useTipsPopup';
+import { Tip } from '@/components/Tip';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,10 +16,11 @@ import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
@@ -35,7 +36,17 @@ export const PerpsWithdrawPopup: React.FC<{
 
   const { availableBalance } = usePerpsAccount();
   const { t } = useTranslation();
-  const { showTipsPopup } = useTipsPopup();
+
+  const [tipVisible, setTipVisible] = useState(false);
+  const hideTip = useCallback(() => setTipVisible(false), []);
+
+  useEffect(() => {
+    const sub = Keyboard.addListener(
+      IS_ANDROID ? 'keyboardDidHide' : 'keyboardWillHide',
+      hideTip,
+    );
+    return () => sub.remove();
+  }, [hideTip]);
 
   // const [amount, setAmount] = React.useState<string>('');
   const {
@@ -110,7 +121,6 @@ export const PerpsWithdrawPopup: React.FC<{
         })}
         onDismiss={onClose}
         enableDynamicSizing
-        // snapPoints={[386]
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore">
         <BottomSheetView style={[styles.container]}>
@@ -133,35 +143,24 @@ export const PerpsWithdrawPopup: React.FC<{
               </Text>
             </View>
             <View style={styles.inputContainer}>
-              <BottomSheetTextInput
-                value={displayedAmount}
-                onChangeText={setAmount}
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  !amountValidation.isValid && amount !== ''
-                    ? styles.inputError
-                    : null,
-                ]}
-                placeholder="$0"
-              />
-              {!amount && (
-                <TouchableOpacity
-                  style={styles.maxButtonWrapper}
-                  onPress={() => {
-                    setAmount(
-                      Number(
-                        (
-                          Math.floor(Number(availableBalance || 0) * 100) / 100
-                        ).toFixed(2),
-                      ).toString(),
-                    );
-                  }}>
-                  <Text style={styles.maxButtonText}>MAX</Text>
-                </TouchableOpacity>
-              )}
+              <View style={styles.inputWrapper}>
+                <BottomSheetTextInput
+                  value={displayedAmount}
+                  onChangeText={setAmount}
+                  keyboardType="numeric"
+                  style={[
+                    styles.input,
+                    !amountValidation.isValid && amount !== ''
+                      ? styles.inputError
+                      : null,
+                  ]}
+                  placeholder="$0"
+                />
+                <Text style={styles.tokenAmountHint}>
+                  {amount || '0'} {getTokenSymbol(ARB_USDC_TOKEN_ITEM)}
+                </Text>
+              </View>
               <View style={styles.divider} />
-
               <View style={styles.tokenContainer}>
                 <AssetAvatar
                   size={26}
@@ -174,6 +173,37 @@ export const PerpsWithdrawPopup: React.FC<{
                 </Text>
               </View>
             </View>
+            <View style={styles.quickAmountRow}>
+              {[
+                { label: '25%', value: 0.25 },
+                { label: '50%', value: 0.5 },
+                { label: '75%', value: 0.75 },
+              ].map(item => (
+                <TouchableOpacity
+                  key={item.label}
+                  style={styles.quickAmountBtn}
+                  onPress={() => {
+                    const val = new BigNumber(availableBalance || 0)
+                      .times(item.value)
+                      .decimalPlaces(2, BigNumber.ROUND_DOWN)
+                      .toFixed();
+                    setAmount(val);
+                  }}>
+                  <Text style={styles.quickAmountText}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={styles.quickAmountBtn}
+                onPress={() => {
+                  setAmount(
+                    new BigNumber(availableBalance || 0)
+                      .decimalPlaces(2, BigNumber.ROUND_DOWN)
+                      .toFixed(),
+                  );
+                }}>
+                <Text style={styles.quickAmountText}>Max</Text>
+              </TouchableOpacity>
+            </View>
             <View style={styles.errorContainer}>
               {amountValidation.errorMessage ? (
                 <Text style={styles.errorMessage}>
@@ -182,26 +212,28 @@ export const PerpsWithdrawPopup: React.FC<{
               ) : null}
             </View>
 
-            <TouchableOpacity
-              onPress={() => {
-                Keyboard.dismiss();
-                showTipsPopup({
-                  title: t('page.perps.PerpsWithdrawPopup.feeTooltipTitle'),
-                  desc: t('page.perps.PerpsWithdrawPopup.feeTooltipDesc'),
-                  buttonType: 'hyperliquid',
-                });
-              }}>
-              <View style={styles.feeContainer}>
+            <Tip
+              isVisible={tipVisible}
+              onClose={hideTip}
+              topAdjustment={IS_ANDROID ? -10 : 10}
+              content={t('page.perps.PerpsWithdrawPopup.feeTooltipDesc')}
+              placement="top">
+              <TouchableOpacity
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setTipVisible(true);
+                }}
+                style={styles.feeContainer}>
                 <Text style={styles.fee}>
                   {t('page.perps.PerpsWithdrawPopup.feeTip')}
                 </Text>
                 <RcIconInfoCC
-                  color={colors2024['neutral-info']}
+                  color={colors2024['neutral-secondary']}
                   width={18}
                   height={18}
                 />
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Tip>
           </View>
           <Button
             type="hyperliquid"
@@ -223,6 +255,7 @@ const getStyle = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingBottom: 56,
       paddingHorizontal: 20,
+      paddingTop: 10,
       display: 'flex',
       flexDirection: 'column',
     },
@@ -251,11 +284,11 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
     },
     inputContainer: {
+      height: 98,
       borderRadius: 16,
       paddingVertical: 20,
       paddingHorizontal: 20,
       backgroundColor: ctx.colors2024['neutral-bg-2'],
-      display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
@@ -312,7 +345,7 @@ const getStyle = createGetStyles2024(ctx => {
       lineHeight: 18,
       fontWeight: '400',
       fontFamily: 'SF Pro Rounded',
-      color: ctx.colors2024['neutral-foot'],
+      color: ctx.colors2024['neutral-secondary'],
     },
     divider: {
       width: 1,
@@ -346,6 +379,37 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '700',
       color: ctx.colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
+    },
+    inputWrapper: {
+      flex: 1,
+    },
+    tokenAmountHint: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 13,
+      lineHeight: 16,
+      fontWeight: '400',
+      color: ctx.colors2024['neutral-secondary'],
+      marginTop: -4,
+    },
+    quickAmountRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 8,
+    },
+    quickAmountBtn: {
+      flex: 1,
+      height: 40,
+      borderRadius: 8,
+      backgroundColor: ctx.colors2024['neutral-bg-5'],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quickAmountText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: ctx.colors2024['neutral-body'],
     },
   };
 });
