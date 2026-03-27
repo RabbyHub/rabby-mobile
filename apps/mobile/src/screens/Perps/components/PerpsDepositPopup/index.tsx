@@ -795,9 +795,7 @@ export const PerpsDepositPopup: React.FC<{
           <Tip
             isVisible={tipVisible}
             onClose={hideTip}
-            // content={t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
-            //   number: bridgeQuote?.duration || 0,
-            // })}
+            horizontalAdjustment={-15}
             content={
               <View style={{ width: 280, padding: 8 }}>
                 <Text style={{ fontSize: 12, color: '#fff' }}>
