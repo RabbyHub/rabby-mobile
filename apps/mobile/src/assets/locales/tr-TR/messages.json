@@ -1008,7 +1008,9 @@
         "longTimeNoReceive": "Ağ yoğun. Bu daha uzun sürebilir. Lütfen sabırsızlanmayın.",
         "receivingTo": "{{chain}} üzerinde alma"
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "Form Değiştirildi",
+      "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurmasından dolayı. Lütfen kontrol edin ve doğru miktarı tekrar girin."
     },
     "manageAddress": {
       "watch-address": "Adres İzle",

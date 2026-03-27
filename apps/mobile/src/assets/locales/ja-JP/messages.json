@@ -1135,7 +1135,9 @@
         "completed": "完了しました",
         "bridgeStatus": "ブリッジのステータス"
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "フォームが変更されました",
+      "formChangedAmount": "金額が変更されました。これは、システムキーボードからのパスワード自動入力が原因の可能性があります。正しい金額を確認し、再入力してください。"
     },
     "dashboard": {
       "hd": {

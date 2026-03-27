@@ -1362,7 +1362,9 @@
         "failed": "Fehlgeschlagen",
         "longTimeNoReceive": "Das Netzwerk ist beschäftigt. Dies kann länger als üblich dauern. Bitte haben Sie Geduld."
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "Formular geändert",
+      "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der Passwort-Autofill-Funktion der Systemtastatur. Bitte überprüfen Sie und geben Sie den korrekten Betrag erneut ein."
     },
     "nextComponent": {
       "multiAddressHome": {

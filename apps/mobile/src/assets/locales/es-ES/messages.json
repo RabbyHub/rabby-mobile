@@ -1416,7 +1416,9 @@
         "receivedDifferentTokenNeedSwap": "Has recibido un token diferente. Puedes cambiarlo por el token que seleccionaste.",
         "receivedDifferentTokenFromSource": "El puente falló. Se devolvió un token diferente en la cadena de origen."
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "Formulario cambiado",
+      "formChangedAmount": "La cantidad ha cambiado, posiblemente debido a la autocompletación de la contraseña por parte del teclado del sistema. Por favor, revise y vuelva a ingresar la cantidad correcta."
     },
     "newAddress": {
       "Quick": "Rápido",
