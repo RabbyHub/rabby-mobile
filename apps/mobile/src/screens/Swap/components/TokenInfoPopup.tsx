@@ -55,7 +55,6 @@ export const TokenInfoPopup = () => {
     }
     return formatUsdValue(usdValue);
   }, [usdValue]);
-  console.log('CUSTOM_LOGGER:=>: longPressToken', longPressToken);
 
   return (
     <Modal
