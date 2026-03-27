@@ -162,7 +162,7 @@ const AssetPositionItem = ({
       </View>
 
       <View style={styles.bottomSection}>
-        <View style={styles.coinNameRow}>
+        <View style={[styles.coinNameRow, styles.addressRow]}>
           <WalletIcon
             width={14}
             height={14}
@@ -575,6 +575,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   bottomSection: {
     flexDirection: 'row',
     marginTop: 10,
+    gap: 8,
     paddingTop: 10,
     borderTopWidth: 0.5,
     alignItems: 'center',
@@ -625,6 +626,10 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   walletIcon: {
     width: 14,
     flexShrink: 0,
+  },
+  addressRow: {
+    flex: 1,
+    flexShrink: 1,
   },
   address: {
     fontFamily: 'SF Pro Rounded',
