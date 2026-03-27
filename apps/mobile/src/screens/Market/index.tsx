@@ -220,9 +220,8 @@ export default function MarketScreen() {
         }}>
         <Tabs.Tab label={renderWatchlistLabel} name="watchlist">
           <WatchlistContent
-            onVisibleUuidsChange={uuids =>
-              handleVisibleUuidsChange('watchlist', uuids)
-            }
+            onVisibleUuidsChange={handleVisibleUuidsChange}
+            visibleUuidsTabId="watchlist"
           />
         </Tabs.Tab>
         {
@@ -246,9 +245,7 @@ export default function MarketScreen() {
                     categoryId={category.id}
                     sortFields={category.sort_fields}
                     headerSpacerHeight={0}
-                    onVisibleUuidsChange={uuids =>
-                      handleVisibleUuidsChange(category.id, uuids)
-                    }
+                    onVisibleUuidsChange={handleVisibleUuidsChange}
                   />
                 </View>
               </Tabs.Tab>

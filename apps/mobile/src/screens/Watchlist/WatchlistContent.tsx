@@ -40,8 +40,10 @@ const VIEWABILITY_CONFIG = {
 
 export function WatchlistContent({
   onVisibleUuidsChange,
+  visibleUuidsTabId = 'watchlist',
 }: {
-  onVisibleUuidsChange?: (uuids: string[]) => void;
+  onVisibleUuidsChange?: (tabId: string, uuids: string[]) => void;
+  visibleUuidsTabId?: string;
 }) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -315,13 +317,14 @@ export function WatchlistContent({
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       onVisibleUuidsChange?.(
+        visibleUuidsTabId,
         viewableItems
           .map(item => item.item)
           .filter(Boolean)
           .map(item => `${item.chain}:${item.id}`),
       );
     },
-    [onVisibleUuidsChange],
+    [onVisibleUuidsChange, visibleUuidsTabId],
   );
 
   return (

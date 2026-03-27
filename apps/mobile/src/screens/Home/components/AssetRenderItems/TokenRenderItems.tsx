@@ -709,7 +709,12 @@ export const ExternalTokenRow = memo(
                           height={16}
                         />
                       ) : null}
-                      <Text style={styles.tokenFdv}>{data.asset?.name}</Text>
+                      <Text
+                        style={styles.tokenFdv}
+                        ellipsizeMode="tail"
+                        numberOfLines={1}>
+                        {data.asset?.name}
+                      </Text>
                       <Text style={styles.tokenFdvSeparator}>|</Text>
                     </>
                   )}
@@ -1035,6 +1040,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 18,
+    maxWidth: 120,
   },
   tokenFdvSeparator: {
     fontSize: 14,

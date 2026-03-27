@@ -53,7 +53,7 @@ export function MarketCategoryContent({
   categoryId: string;
   sortFields: string[];
   headerSpacerHeight?: number;
-  onVisibleUuidsChange?: (uuids: string[]) => void;
+  onVisibleUuidsChange?: (tabId: string, uuids: string[]) => void;
 }) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -268,13 +268,14 @@ export function MarketCategoryContent({
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       onVisibleUuidsChange?.(
+        categoryId,
         viewableItems
           .map(item => item.item)
           .filter(Boolean)
           .map(item => `${item.chain}:${item.id}`),
       );
     },
-    [onVisibleUuidsChange],
+    [categoryId, onVisibleUuidsChange],
   );
 
   const renderListHeaderComponent = useCallback(
