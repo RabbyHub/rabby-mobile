@@ -152,16 +152,8 @@ PODS:
     - GTMSessionFetcher/Core (< 4.0, >= 3.3)
   - GTMSessionFetcher/Core (3.5.0)
   - hermes-engine (0.81.6):
-    - hermes-engine/cdp (= 0.81.6)
-    - hermes-engine/Hermes (= 0.81.6)
-    - hermes-engine/inspector (= 0.81.6)
-    - hermes-engine/inspector_chrome (= 0.81.6)
-    - hermes-engine/Public (= 0.81.6)
-  - hermes-engine/cdp (0.81.6)
-  - hermes-engine/Hermes (0.81.6)
-  - hermes-engine/inspector (0.81.6)
-  - hermes-engine/inspector_chrome (0.81.6)
-  - hermes-engine/Public (0.81.6)
+    - hermes-engine/Pre-built (= 0.81.6)
+  - hermes-engine/Pre-built (0.81.6)
   - libwebp (1.5.0):
     - libwebp/demux (= 1.5.0)
     - libwebp/mux (= 1.5.0)
@@ -3627,7 +3619,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: ea963c370a38a8069cc5f7ba4ca849a60b6d7d15
   GTMAppAuth: f69bd07d68cd3b766125f7e072c45d7340dea0de
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  hermes-engine: cf1a3560522d735addc11284023990726abdb26e
+  hermes-engine: 7219f6e751ad6ec7f3d7ec121830ee34dae40749
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   lottie-ios: 8f959969761e9c45d70353667d00af0e5b9cadb3
   lottie-react-native: ab71a5ac2c8392dbe6f612c8c564d0820ee8716b
