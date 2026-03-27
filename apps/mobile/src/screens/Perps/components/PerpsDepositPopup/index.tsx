@@ -810,8 +810,11 @@ export const PerpsDepositPopup: React.FC<{
             }
             placement="top">
             <TouchableOpacity
-              onPress={() => setTipVisible(true)}
-              style={styles.estReceiveContainer}>
+              onPress={() => {
+                Keyboard.dismiss();
+                setTipVisible(true);
+              }}
+              style={[styles.estReceiveContainer, { alignSelf: 'flex-start' }]}>
               <Text style={styles.estReceiveText}>
                 {t('page.perps.PerpsDepositPopup.estReceive', {
                   balance: formatUsdValue(estReceiveUsdValue),
