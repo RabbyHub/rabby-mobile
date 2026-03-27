@@ -461,6 +461,8 @@ export class PerpsService {
     this.store.agentPreferences = {};
     this.store.currentAccount = null;
     this.store.lastUsedAccount = null;
+    this.store.hasShownPerpsGuidePopup = false;
+    this.store.hasClosedLearnMoreCard = false;
     this.store.hasDoneNewUserProcess = false;
     this.memoryState.agentWallets = {};
   };
