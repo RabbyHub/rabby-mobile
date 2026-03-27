@@ -77,22 +77,27 @@ const AccountItemInner = ({
         <View style={styles.container}>
           {account ? (
             <View style={styles.addressContainer}>
-              <WalletIcon
-                style={styles.walletIcon}
-                width={18}
-                height={18}
-                type={account.brandName}
-                address={account.address}
-              />
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.address}>
-                {alias || ellipsisAddress(account?.address)}
-              </Text>
+              <View style={styles.addressTextWrap}>
+                <WalletIcon
+                  style={styles.walletIcon}
+                  width={18}
+                  height={18}
+                  type={account.brandName}
+                  address={account.address}
+                />
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.address}>
+                  {alias || ellipsisAddress(account?.address)}
+                </Text>
+              </View>
               <CaretArrowIconCC
                 dir="down"
-                style={[isShowAccountList ? styles.reverseCaret : null]}
+                style={[
+                  styles.caret,
+                  isShowAccountList ? styles.reverseCaret : null,
+                ]}
                 width={18}
                 height={18}
                 bgColor={colors2024['neutral-bg-5']}

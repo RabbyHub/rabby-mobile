@@ -7,17 +7,31 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 4,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     flex: 1,
   },
 
   addressContainer: {
     display: 'flex',
+    justifyContent: 'flex-end',
     flexDirection: 'row',
+    flex: 1,
+    width: '100%',
     alignItems: 'center',
     gap: 4,
+  },
+  addressTextWrap: {
+    flexShrink: 1,
+    minWidth: 0,
+    gap: 4,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  caret: {
+    flexShrink: 0,
+    width: 18,
   },
   walletIcon: {},
   address: {
@@ -25,8 +39,9 @@ export const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-foot'],
-    flex: 1,
   },
   reverseCaret: {
     transform: [{ rotate: '180deg' }],
