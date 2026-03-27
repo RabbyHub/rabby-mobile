@@ -100,6 +100,7 @@ import {
 import { jotaiStore } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { TextInput } from '@/components/Typography';
+import { getChainDefaultToken } from '@/constant/swap';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -1666,31 +1667,19 @@ export function useSendTokenForm({
       putScreenState(prev => ({ ...prev, clickedMax: false }));
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;
+      const defaultToken = {
+        ...getChainDefaultToken(val),
+        cex_ids: [],
+      } as TokenItem;
       setRouteParams(pre => ({
         ...pre,
         chainEnum: val,
-        tokenId: chain.nativeTokenAddress,
+        tokenId: defaultToken.id,
       }));
 
       putChainToken({
         chainEnum: val,
-        currentToken: {
-          id: chain.nativeTokenAddress,
-          decimals: chain.nativeTokenDecimals,
-          logo_url: chain.nativeTokenLogo,
-          symbol: chain.nativeTokenSymbol,
-          display_symbol: chain.nativeTokenSymbol,
-          optimized_symbol: chain.nativeTokenSymbol,
-          is_core: true,
-          is_verified: true,
-          is_wallet: true,
-          cex_ids: [],
-          amount: 0,
-          price: 0,
-          name: chain.nativeTokenSymbol,
-          chain: chain.serverId,
-          time_at: 0,
-        },
+        currentToken: defaultToken,
       });
       putScreenState({ estimatedGas: 0 });
 
@@ -1698,7 +1687,7 @@ export function useSendTokenForm({
       try {
         if (currentAccount?.address) {
           nextToken = await loadCurrentToken(
-            chain.nativeTokenAddress,
+            defaultToken.id,
             chain.serverId,
             currentAccount?.address,
           );
