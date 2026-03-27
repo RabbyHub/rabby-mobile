@@ -114,37 +114,33 @@ export const PerpsMarketDetailScreen = () => {
     React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
   const [showSearchListPopup, setShowSearchListPopup] = useState(false);
   const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
-  const pendingGoBackRef = useRef(false);
   const coinNameRef = useRef(coin);
   useEffect(() => {
     coinNameRef.current = coin;
   }, [coin]);
+
+  // Pre-fetch guide popup status on mount, then use synchronously in beforeRemove
+  const hasShownGuideRef = useRef(true);
+  useEffect(() => {
+    if (fromSource !== 'homePagePositionList') {
+      return;
+    }
+    apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
+      hasShownGuideRef.current = hasShown;
+    });
+  }, [fromSource]);
 
   // Intercept back navigation to show guide popup for homePagePositionList users
   useEffect(() => {
     if (fromSource !== 'homePagePositionList') {
       return;
     }
-    let isChecking = false;
     const unsubscribe = navigation.addListener('beforeRemove', e => {
-      if (pendingGoBackRef.current) {
-        return; // allow navigation after popup dismissed
-      }
-      if (isChecking) {
-        e.preventDefault();
+      if (hasShownGuideRef.current) {
         return;
       }
       e.preventDefault();
-      isChecking = true;
-      apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
-        isChecking = false;
-        if (hasShown) {
-          pendingGoBackRef.current = true;
-          navigation.dispatch(e.data.action);
-        } else {
-          setShowGuideEntryPopup(true);
-        }
-      });
+      setShowGuideEntryPopup(true);
     });
     return unsubscribe;
   }, [navigation, fromSource]);
@@ -714,6 +710,7 @@ export const PerpsMarketDetailScreen = () => {
               marginMode: positionData.type,
               direction: positionData?.direction as 'Long' | 'Short',
               midPx: activeAssetCtx?.markPx || '0',
+              isAddingPosition: true,
             });
             if (res) {
               const { avgPx, totalSz } = res;
@@ -778,7 +775,7 @@ export const PerpsMarketDetailScreen = () => {
         onClose={() => {
           apisPerps.setHasShownPerpsGuidePopup(true);
           setShowGuideEntryPopup(false);
-          pendingGoBackRef.current = true;
+          hasShownGuideRef.current = true;
           navigation.goBack();
         }}
       />
