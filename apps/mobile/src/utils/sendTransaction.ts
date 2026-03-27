@@ -27,7 +27,7 @@ import { intToHex } from './number';
 import BigNumber from 'bignumber.js';
 import {
   explainGas,
-  getNativeTokenBalance,
+  getGasTokenBalance,
   getRecommendGas,
 } from '@/components/Approval/components/SignTx/calc';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -50,6 +50,7 @@ import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeStore } from '@/hooks/appSettings';
 import { Account } from '@/core/services/preference';
 import miscService from '@/core/services/misc';
+import { isTempoChain } from './tempo';
 
 // fail code
 export enum FailedCode {
@@ -231,11 +232,13 @@ export const sendTransaction = async ({
       }),
     }));
 
-  const balance = await getNativeTokenBalance({
+  const gasToken = await getGasTokenBalance({
     chainId: chain.id,
     address,
     account,
   });
+  const balance = gasToken.rawBalance;
+  const checkTxValueInBalance = !isTempoChain(chain.serverId);
   let estimateGas = 0;
   if (preExecResult.gas.success) {
     estimateGas = preExecResult.gas.gas_limit || preExecResult.gas.gas_used;
@@ -267,6 +270,8 @@ export const sendTransaction = async ({
       explainTx: preExecResult,
       needRatio,
       account,
+      gasTokenDecimals: gasToken.token.decimals,
+      checkTxValueInBalance,
     });
     gasLimit = _gasLimit;
     recommendGasLimitRatio = _recommendGasLimitRatio;
@@ -281,6 +286,7 @@ export const sendTransaction = async ({
     tx,
     gasLimit,
     account,
+    gasTokenDecimals: gasToken.token.decimals,
   });
 
   // check gas errors
@@ -298,6 +304,8 @@ export const sendTransaction = async ({
         isGnosisAccount: false,
         nativeTokenBalance: balance,
         recommendGasLimitRatio,
+        gasTokenDecimals: gasToken.token.decimals,
+        checkTxValueInBalance,
       });
 
   const isGasNotEnough = !isGasLess && checkErrors.some(e => e.code === 3001);
@@ -466,9 +474,11 @@ export const sendTransaction = async ({
   const estimateGasCost = {
     gasCostUsd: gasCost.gasCostUsd,
     gasCostAmount: gasCost.gasCostAmount,
-    nativeTokenSymbol: preExecResult.native_token.symbol,
+    nativeTokenSymbol: gasToken.token.symbol,
     gasPrice: normalGas.price,
-    nativeTokenPrice: preExecResult.native_token.price,
+    nativeTokenPrice: isTempoChain(chain.serverId)
+      ? 1
+      : preExecResult.native_token.price,
   };
 
   onProgress?.('builded');
@@ -578,7 +588,7 @@ export const sendTransaction = async ({
     // calc gas cost
     const gasCostAmount = new BigNumber(txCompleted.gasUsed)
       .times(estimateGasCost.gasPrice)
-      .div(1e18);
+      .div(new BigNumber(10).pow(gasToken.token.decimals || 18));
     const gasCostUsd = new BigNumber(gasCostAmount).times(
       estimateGasCost.nativeTokenPrice,
     );
