@@ -219,7 +219,10 @@ export const PerpsWithdrawPopup: React.FC<{
               content={t('page.perps.PerpsWithdrawPopup.feeTooltipDesc')}
               placement="top">
               <TouchableOpacity
-                onPress={() => setTipVisible(true)}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setTipVisible(true);
+                }}
                 style={styles.feeContainer}>
                 <Text style={styles.fee}>
                   {t('page.perps.PerpsWithdrawPopup.feeTip')}
