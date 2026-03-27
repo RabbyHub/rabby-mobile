@@ -936,6 +936,7 @@
       "no-fees-for-wrap": "No Rabby fee for Wrap",
       "Auto": "Auto",
       "no-quote-found": "No quote found",
+      "market-closed": "Market not open: Order placement is not supported.",
       "source": "Source",
       "token": "Token",
       "results": "Results",
@@ -2105,6 +2106,9 @@
       "appChain": "Dapp Account"
     },
     "search": {
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
+      },
       "sectionHeader": {
         "token": "Tokens",
         "Defi": "DeFi",
@@ -2361,8 +2365,11 @@
       }
     },
     "market": {
+      "noOpen": "Not Open",
+      "marketNotOpenTooltip": "Market not open",
       "tokenHeader": {
-        "name": "Name"
+        "name": "Name",
+        "tokenAndName": "Token/Name"
       },
       "tabs": {
         "watchlist": "Watchlist",

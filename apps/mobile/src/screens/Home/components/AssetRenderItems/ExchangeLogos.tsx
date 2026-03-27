@@ -1,14 +1,15 @@
 import React, { useMemo } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Image, View } from 'react-native';
+import { Image, View, ViewStyle } from 'react-native';
 import { Text } from '@/components/Typography';
 
 interface Props {
   logos: string[];
+  style?: ViewStyle;
 }
 const MAX_CEX_LENGTH = 3;
-export const ExchangeLogos = ({ logos }: Props) => {
+export const ExchangeLogos = ({ logos, style }: Props) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const displayLogos = useMemo(() => {
     if (logos.length > MAX_CEX_LENGTH) {
@@ -22,7 +23,7 @@ export const ExchangeLogos = ({ logos }: Props) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.line} />
       {displayLogos.map(logo => (
         <Image key={logo} source={{ uri: logo }} style={styles.logo} />

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Platform, RefreshControl, View, ViewToken } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
@@ -11,10 +11,9 @@ import {
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { memeItemToITokenItem } from '@/utils/token';
-import { useIsFocused } from '@react-navigation/native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useAtom } from 'jotai';
-import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
 
 import TokenHeader, { SortState } from '../../Meme/components/TokenHeader';
@@ -24,8 +23,14 @@ import {
 } from '../../Meme/components/TokenItem';
 import { useTokenMarketTokenList } from '../../Meme/hooks/useTokenMarketTokenList';
 import { matomoRequestEvent } from '@/utils/analytics';
+import WatchListHeader from '../../Watchlist/components/TokenHeader';
+import { marketRealtimePriceAtom } from '../atom';
+import { useSetAtom } from 'jotai';
 
 const isAndroid = Platform.OS === 'android';
+const VIEWABILITY_CONFIG = {
+  itemVisiblePercentThreshold: 0,
+};
 
 type SortOrder = 'desc' | 'asc';
 
@@ -43,38 +48,54 @@ export function MarketCategoryContent({
   categoryId,
   sortFields,
   headerSpacerHeight = isAndroid ? 46 : 44,
+  onVisibleUuidsChange,
 }: {
   categoryId: string;
   sortFields: string[];
   headerSpacerHeight?: number;
+  onVisibleUuidsChange?: (tabId: string, uuids: string[]) => void;
 }) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const volumeSortAtom = useMemo(
-    () => atomByMMKV<SortState>(`@market.${categoryId}.volumeSort`, 'default'),
+    () =>
+      atomByMMKV<SortState>(`@market.${categoryId}.volumeSort`, 'default', {
+        getOnInit: true,
+      }),
     [categoryId],
   );
   const fdvSortAtom = useMemo(
-    () => atomByMMKV<SortState>(`@market.${categoryId}.fdvSort`, 'default'),
+    () =>
+      atomByMMKV<SortState>(`@market.${categoryId}.fdvSort`, 'default', {
+        getOnInit: true,
+      }),
     [categoryId],
   );
   const changeSortAtom = useMemo(
-    () => atomByMMKV<SortState>(`@market.${categoryId}.changeSort`, 'default'),
+    () =>
+      atomByMMKV<SortState>(`@market.${categoryId}.changeSort`, 'default', {
+        getOnInit: true,
+      }),
     [categoryId],
   );
   const [volumeSort, setVolumeSort] = useAtom(volumeSortAtom);
   const [fdvSort, setFdvSort] = useAtom(fdvSortAtom);
   const [changeSort, setChangeSort] = useAtom(changeSortAtom);
+  const setMarketRealtimePrice = useSetAtom(marketRealtimePriceAtom);
 
   const supportedSortFields = useMemo(
     () => new Set(sortFields || []),
     [sortFields],
   );
-  const leftHeaderLabel = useMemo(
-    () =>
-      categoryId === 'meme' ? undefined : t('page.market.tokenHeader.name'),
-    [categoryId, t],
-  );
+  const leftHeaderLabel = useMemo(() => {
+    if (categoryId === 'meme') {
+      return undefined;
+    }
+    if (categoryId === 'stock' || categoryId === 'commodities') {
+      return t('page.market.tokenHeader.tokenAndName');
+    }
+    return t('page.market.tokenHeader.name');
+  }, [categoryId, t]);
 
   const { orderBy, order } = useMemo(() => {
     if (supportedSortFields.has('volume_24h') && volumeSort !== 'default') {
@@ -104,6 +125,10 @@ export function MarketCategoryContent({
     };
   }, [changeSort, fdvSort, supportedSortFields, volumeSort]);
 
+  const clearCurrentListRealtimePrice = useCallback(() => {
+    setMarketRealtimePrice({});
+  }, [setMarketRealtimePrice]);
+
   const {
     tokenList: list,
     getTokenList,
@@ -111,39 +136,60 @@ export function MarketCategoryContent({
     loadingMore,
     hasMore,
     loadMore,
-    refreshTokenListSilently,
-  } = useTokenMarketTokenList(categoryId, orderBy, order);
-
-  const isFocused = useIsFocused();
-  const focusedTab = useFocusedTab();
-  const [isInFirst100Items, setIsInFirst100Items] = useState(true);
+  } = useTokenMarketTokenList(
+    categoryId,
+    orderBy,
+    order,
+    clearCurrentListRealtimePrice,
+  );
 
   const handleVolumeSort = useCallback(() => {
     if (!supportedSortFields.has('volume_24h')) {
       return;
     }
+    clearCurrentListRealtimePrice();
     setVolumeSort(prev => toggleSort(prev));
     setFdvSort('default');
     setChangeSort('default');
-  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
+  }, [
+    clearCurrentListRealtimePrice,
+    setChangeSort,
+    setFdvSort,
+    setVolumeSort,
+    supportedSortFields,
+  ]);
 
   const handleFdvSort = useCallback(() => {
     if (!supportedSortFields.has('fdv')) {
       return;
     }
+    clearCurrentListRealtimePrice();
     setFdvSort(prev => toggleSort(prev));
     setVolumeSort('default');
     setChangeSort('default');
-  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
+  }, [
+    clearCurrentListRealtimePrice,
+    setChangeSort,
+    setFdvSort,
+    setVolumeSort,
+    supportedSortFields,
+  ]);
 
   const handleChangeSort = useCallback(() => {
     if (!supportedSortFields.has('price_change_24h')) {
       return;
     }
+    clearCurrentListRealtimePrice();
     setChangeSort(prev => toggleSort(prev));
     setVolumeSort('default');
     setFdvSort('default');
-  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
+  }, [
+    clearCurrentListRealtimePrice,
+    setChangeSort,
+    setFdvSort,
+    setVolumeSort,
+    supportedSortFields,
+  ]);
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenMarketTokenItem) => {
@@ -175,6 +221,7 @@ export function MarketCategoryContent({
     ({ item }: { item: TokenMarketTokenItem }) => (
       <TokenListItem
         showChainLogo={categoryId !== 'meme'}
+        showFdvOnly={categoryId === 'hot'}
         item={item}
         onPress={handleOpenTokenDetail}
       />
@@ -220,39 +267,16 @@ export function MarketCategoryContent({
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0) {
-        const firstVisibleIndex = viewableItems[0]?.index;
-        if (typeof firstVisibleIndex === 'number' && firstVisibleIndex >= 0) {
-          setIsInFirst100Items(firstVisibleIndex < 100);
-        }
-      }
+      onVisibleUuidsChange?.(
+        categoryId,
+        viewableItems
+          .map(item => item.item)
+          .filter(Boolean)
+          .map(item => `${item.chain}:${item.id}`),
+      );
     },
-    [],
+    [categoryId, onVisibleUuidsChange],
   );
-
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 0,
-  });
-
-  React.useEffect(() => {
-    if (!isFocused || focusedTab !== categoryId || !isInFirst100Items) {
-      return;
-    }
-
-    const timer = setInterval(() => {
-      refreshTokenListSilently();
-    }, 10000);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, [
-    categoryId,
-    focusedTab,
-    isFocused,
-    isInFirst100Items,
-    refreshTokenListSilently,
-  ]);
 
   const renderListHeaderComponent = useCallback(
     () => (
@@ -261,22 +285,36 @@ export function MarketCategoryContent({
           <View style={[styles.header, { height: headerSpacerHeight }]} />
         )}
         <View style={styles.stickyHeader}>
-          <TokenHeader
-            volumeSort={volumeSort}
-            onVolumeSort={handleVolumeSort}
-            fdvSort={fdvSort}
-            onFdvSort={handleFdvSort}
-            changeSort={changeSort}
-            onChangeSort={handleChangeSort}
-            showVolumeSort={supportedSortFields.has('volume_24h')}
-            showFdvSort={supportedSortFields.has('fdv')}
-            showChangeSort={supportedSortFields.has('price_change_24h')}
-            leftLabel={leftHeaderLabel}
-          />
+          {categoryId === 'hot' ? (
+            <WatchListHeader
+              tokenSort="default"
+              onTokenSort={handleVolumeSort}
+              fdvSort={fdvSort}
+              onFdvSort={handleFdvSort}
+              showFdvSort={supportedSortFields.has('fdv')}
+              changeSort={changeSort}
+              onChangeSort={handleChangeSort}
+              disableLeftSort
+            />
+          ) : (
+            <TokenHeader
+              volumeSort={volumeSort}
+              onVolumeSort={handleVolumeSort}
+              fdvSort={fdvSort}
+              onFdvSort={handleFdvSort}
+              changeSort={changeSort}
+              onChangeSort={handleChangeSort}
+              showVolumeSort={supportedSortFields.has('volume_24h')}
+              showFdvSort={supportedSortFields.has('fdv')}
+              showChangeSort={supportedSortFields.has('price_change_24h')}
+              leftLabel={leftHeaderLabel}
+            />
+          )}
         </View>
       </>
     ),
     [
+      categoryId,
       changeSort,
       fdvSort,
       handleChangeSort,
@@ -305,7 +343,7 @@ export function MarketCategoryContent({
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.3}
       onViewableItemsChanged={onViewableItemsChanged}
-      viewabilityConfig={viewabilityConfig.current}
+      viewabilityConfig={VIEWABILITY_CONFIG}
       refreshControl={
         <RefreshControl
           refreshing={tokenListLoading && list.length !== 0}

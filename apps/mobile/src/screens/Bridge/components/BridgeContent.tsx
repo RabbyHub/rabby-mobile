@@ -64,6 +64,7 @@ import {
 } from '@/components2024/MiniSignV2/state/SignatureManager';
 import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
+import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -184,6 +185,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   btnTitle: {
     color: colors['neutral-title-2'],
   },
+  marketClosedTip: {
+    marginHorizontal: 24,
+  },
 }));
 
 export const BridgeContent = ({ isForMultipleAddress = false }) => {
@@ -280,6 +284,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     isMaxRef,
     payTokenIsNativeToken,
     inSufficientCanGetQuote,
+    quoteBlockedByClosedMarket,
     slider,
     onChangeSlider,
   } = useBridge(isForMultipleAddress);
@@ -745,11 +750,14 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const noQuote =
     inSufficientCanGetQuote &&
+    !quoteBlockedByClosedMarket &&
     !!fromToken &&
     !!toToken &&
     Number(amount) > 0 &&
     !quoteLoading &&
     !quoteList?.length;
+  const showClosedMarketTip =
+    (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
   const btnDisabled =
     inSufficient ||
@@ -965,6 +973,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
               }
             />
+          )}
+          {showClosedMarketTip && (
+            <MarketClosedTip style={styles.marketClosedTip} />
           )}
           {noQuote && (
             <>

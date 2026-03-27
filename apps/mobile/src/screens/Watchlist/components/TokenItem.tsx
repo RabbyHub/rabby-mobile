@@ -2,7 +2,9 @@ import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
+import { Tip } from '@/components/Tip';
 import { useTheme2024 } from '@/hooks/theme';
+import { marketRealtimePriceAtom } from '@/screens/Market/atom';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -15,8 +17,20 @@ import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { Text } from '@/components/Typography';
 import { formatPercentageKMB } from '@/screens/Meme/components/TokenItem';
 import { isNumber } from 'lodash';
+import { useAtomValue } from 'jotai';
+import { selectAtom } from 'jotai/utils';
+import { NoOpen } from './NoOpen';
+import RcIconWarningCircleCC from '@/assets2024/icons/common/WarningFill-cc.svg';
+import { useTranslation } from 'react-i18next';
 
-export const PercentChangeBadge = ({ percent }: { percent?: number }) => {
+export const PercentChangeBadge = ({
+  percent,
+  isClosed = false,
+}: {
+  percent?: number;
+  isClosed?: boolean;
+}) => {
+  const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const isZeroChange = useMemo(() => {
     return percent === 0;
@@ -28,29 +42,46 @@ export const PercentChangeBadge = ({ percent }: { percent?: number }) => {
     return formatPercentageKMB(Number(percent) || 0);
   }, [percent]);
   return (
-    <View
-      style={[
-        styles.trendContainer,
-        {
-          backgroundColor: isZeroChange
-            ? colors2024['neutral-bg-5']
-            : isPositive
-            ? colors2024['green-default']
-            : colors2024['red-default'],
-        },
-      ]}>
-      <Text
-        style={StyleSheet.flatten([
-          styles.changeText,
+    <View style={styles.trendWrapper}>
+      <View
+        style={[
+          styles.trendContainer,
           {
-            fontSize: getPercentSize(percentStr),
-            color: isZeroChange
-              ? colors2024['neutral-secondary']
-              : colors2024['neutral-InvertHighlight'],
+            backgroundColor: isClosed
+              ? colors2024['neutral-bg-5']
+              : isZeroChange
+              ? colors2024['neutral-bg-5']
+              : isPositive
+              ? colors2024['green-default']
+              : colors2024['red-default'],
           },
-        ])}>
-        {percentStr}
-      </Text>
+        ]}>
+        <Text
+          style={StyleSheet.flatten([
+            styles.changeText,
+            {
+              fontSize: getPercentSize(percentStr),
+              color: isClosed
+                ? colors2024['neutral-secondary']
+                : isZeroChange
+                ? colors2024['neutral-secondary']
+                : colors2024['neutral-InvertHighlight'],
+            },
+          ])}>
+          {percentStr}
+        </Text>
+        {isClosed ? (
+          <Tip
+            content={t('page.market.marketNotOpenTooltip')}
+            arrowSize={{ width: 10, height: 4 }}>
+            <RcIconWarningCircleCC
+              width={12}
+              height={12}
+              color={colors2024['neutral-info']}
+            />
+          </Tip>
+        ) : null}
+      </View>
     </View>
   );
 };
@@ -74,6 +105,16 @@ const TokenListItemComponent = ({
   rightSlot,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const uuid = `${item.chain}:${item.id}`;
+  const realtimePrice = useAtomValue(
+    React.useMemo(
+      () => selectAtom(marketRealtimePriceAtom, state => state[uuid]),
+      [uuid],
+    ),
+  );
+  const displayPrice = realtimePrice?.price ?? item.price;
+  const displayPriceChange =
+    realtimePrice?.price_24h_change ?? item.price_24h_change;
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -113,10 +154,18 @@ const TokenListItemComponent = ({
       </View>
       <View style={styles.tokenRightSection}>
         {/* 价格 */}
-        <Text style={styles.priceText}>${formatPrice(item.price)}</Text>
-        {/* 24小时价格百分比 */}
-        {isNumber(item.price_24h_change) && (
-          <PercentChangeBadge percent={item.price_24h_change} />
+        <Text style={styles.priceText}>${formatPrice(displayPrice)}</Text>
+        {/* 24小时价格百分比,如果市场关闭则显示No Open */}
+        {item.market_status === 'closed' ? (
+          isNumber(displayPriceChange) ? (
+            <PercentChangeBadge percent={displayPriceChange} isClosed />
+          ) : (
+            <NoOpen />
+          )
+        ) : (
+          isNumber(displayPriceChange) && (
+            <PercentChangeBadge percent={displayPriceChange} />
+          )
         )}
       </View>
       {/* 右slot */}
@@ -202,6 +251,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     justifyContent: 'center',
   },
+  trendWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   priceText: {
     fontWeight: '700',
     fontSize: 14,
@@ -216,19 +270,27 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    width: '100%',
+    //width: '100%',
   },
   changeTextPositive: {
     color: colors2024['red-default'],
   },
   trendContainer: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     justifyContent: 'center',
+    alignContent: 'center',
     paddingVertical: 6,
     borderRadius: 6,
     width: 68,
-    alignItems: 'flex-end',
+    gap: 2,
+    alignItems: 'center',
+  },
+  closedTipIcon: {
+    width: 12,
+    height: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   leftSlot: {
     width: 24,
