@@ -84,7 +84,10 @@ const BridgeToTokenSelect = ({
   const handleCurrentTokenChange = (token: TokenItem) => {
     onChange && onChange('');
     onTokenChange(token);
-    setTokenSelectorVisible(false);
+    // Close the modal without triggering state update
+    // The state update will be handled by handleTokenSelectorClose (via onCancel)
+    // when the modal finishes closing, which avoids a race condition
+    setTokenSelectorVisible(false, { noTriggerRerender: true });
 
     setQueryConds(prev => ({ ...prev }));
   };
