@@ -9,6 +9,7 @@ export const useTokenMarketTokenList = (
   categoryId: string,
   orderBy?: string,
   order?: SortOrder,
+  onBeforeRefresh?: () => void,
 ) => {
   const [tokenList, setTokenList] = useState<TokenMarketTokenItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,6 +35,10 @@ export const useTokenMarketTokenList = (
         if (orderChanged && !append) {
           nextCursorRef.current = undefined;
           setHasMore(true);
+        }
+
+        if (!append) {
+          onBeforeRefresh?.();
         }
 
         if (!silent) {
@@ -92,7 +97,7 @@ export const useTokenMarketTokenList = (
         return [];
       }
     },
-    [categoryId],
+    [categoryId, onBeforeRefresh],
   );
 
   const loadMore = useCallback(() => {

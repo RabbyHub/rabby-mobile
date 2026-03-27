@@ -45,16 +45,19 @@ export function WatchlistContent({
 }) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const setMarketRealtimePrice = useSetAtom(marketRealtimePriceAtom);
+  const clearCurrentListRealtimePrice = useCallback(() => {
+    setMarketRealtimePrice({});
+  }, [setMarketRealtimePrice]);
   const {
     data: watchlistTokens,
     handleFetchTokens,
     hasData,
     loading: watchlistLoading,
-  } = useWatchlistTokens();
+  } = useWatchlistTokens(clearCurrentListRealtimePrice);
 
   const [tokenSort, setTokenSort] = useAtom(watchlistTokenSortAtom);
   const [changeSort, setChangeSort] = useAtom(watchlistChangeSortAtom);
-  const setMarketRealtimePrice = useSetAtom(marketRealtimePriceAtom);
   const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -124,10 +127,6 @@ export function WatchlistContent({
     () => sortWatchlistTokens(watchlistTokens, tokenSort, changeSort),
     [watchlistTokens, tokenSort, changeSort],
   );
-
-  const clearCurrentListRealtimePrice = useCallback(() => {
-    setMarketRealtimePrice({});
-  }, [setMarketRealtimePrice]);
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
