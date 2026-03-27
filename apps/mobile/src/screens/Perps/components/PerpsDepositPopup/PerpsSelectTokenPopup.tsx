@@ -10,7 +10,7 @@ import {
   HYPE_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue } from '@/utils/number';
+import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { ITokenItem } from '@/store/tokens';
@@ -74,13 +74,16 @@ export const PerpsSelectTokenPopup: React.FC<{
             </View>
           ) : null}
         </View>
-        <Text style={styles.text}>
-          {formatUsdValue(
-            isDirectDepositToken(item)
-              ? item.amount
-              : item.amount * item.price || 0,
-          )}
-        </Text>
+        <View style={styles.rightArea}>
+          <Text style={styles.text}>
+            {formatUsdValue(
+              isDirectDepositToken(item)
+                ? item.amount
+                : item.amount * item.price || 0,
+            )}
+          </Text>
+          <Text style={styles.amountText}>{formatAmount(item.amount)}</Text>
+        </View>
       </TouchableOpacity>
     );
   });
@@ -108,6 +111,14 @@ export const PerpsSelectTokenPopup: React.FC<{
         <Text style={styles.title}>
           {t('page.perps.PerpsSelectTokenPopup.title')}
         </Text>
+        <View style={styles.subTitleRow}>
+          <Text style={styles.subTitleText}>
+            {t('page.perps.PerpsSelectTokenPopup.token')}
+          </Text>
+          <Text style={styles.subTitleText}>
+            {t('page.perps.PerpsSelectTokenPopup.balance')}
+          </Text>
+        </View>
         <BottomSheetFlatList
           keyboardShouldPersistTaps="handled"
           data={tokens}
@@ -117,10 +128,11 @@ export const PerpsSelectTokenPopup: React.FC<{
           keyExtractor={item => item.id + item.chain}
           ListEmptyComponent={
             <NotMatchedHolder
+              // eslint-disable-next-line react-native/no-inline-styles
               style={{
                 height: 400,
               }}
-              text="No tokens"
+              text={t('page.perps.PerpsSelectTokenPopup.noTokens')}
             />
           }
         />
@@ -136,13 +148,19 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     position: 'relative',
     paddingBottom: 20,
   },
+  rightArea: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
-    marginBottom: 24,
+    marginBottom: 12,
     textAlign: 'center',
   },
 
@@ -164,7 +182,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
 
   flatList: {
     flexShrink: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   tokenListItem: {
     paddingVertical: 14,
@@ -189,6 +207,32 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 20,
+  },
+
+  amountText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+
+  subTitleText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+
+  subTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 24,
+    marginBottom: 8,
   },
 
   divider: {
