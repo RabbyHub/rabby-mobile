@@ -30,6 +30,7 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
 
 export const enableInsufficientQuote = true;
 
@@ -200,6 +201,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   >();
 
   const expiredTimer = useRef<NodeJS.Timeout>();
+  const autoQuoteRefreshPausedRef = useRef(false);
 
   const inSufficient = useMemo(
     () =>
@@ -358,12 +360,40 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         clearTimeout(expiredTimer.current);
       }
 
-      if (!quote?.manualClick && quote) {
+      if (
+        !quote?.manualClick &&
+        quote &&
+        shouldScheduleQuotePolling({
+          enabled: true,
+          paused: autoQuoteRefreshPausedRef.current,
+        })
+      ) {
         expiredTimer.current = setTimeout(() => {
-          setRefreshId(e => e + 1);
+          if (
+            shouldScheduleQuotePolling({
+              enabled: true,
+              paused: autoQuoteRefreshPausedRef.current,
+            })
+          ) {
+            setRefreshId(e => e + 1);
+          }
         }, 1000 * 30);
       }
       setOriSelectedBridgeQuote(quote);
+    },
+    [setRefreshId],
+  );
+
+  const setAutoQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      autoQuoteRefreshPausedRef.current = paused;
+      if (paused) {
+        if (expiredTimer.current) {
+          clearTimeout(expiredTimer.current);
+        }
+        return;
+      }
+      setRefreshId(e => e + 1);
     },
     [setRefreshId],
   );
@@ -729,9 +759,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
               const fromFindChain = findChain({ serverId: fromToken?.chain });
               if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
                 tokenApproved = true;
-              }
-              // near intents send token to themselves address, so no need approve
-              if (!quote.approve_contract_id) {
+              } else if (!quote.approve_contract_id) {
                 tokenApproved = true;
               } else {
                 allowance = await getERC20Allowance(
@@ -1051,6 +1079,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     payTokenIsNativeToken,
 
     setSelectedBridgeQuote,
+    setAutoQuoteRefreshPaused,
     ...slippageObj,
 
     onChangeSlider,

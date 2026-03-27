@@ -599,7 +599,6 @@
       },
       "cancelConnection": "Annuler la connexion",
       "gasAccount": {
-        "notEnough": "GasAccount n'est pas suffisant",
         "useGasAccount": "Utiliser GasAccount",
         "loginFirst": "Veuillez d'abord vous connecter à GasAccount.",
         "deposit": "Dépôt",
@@ -913,7 +912,6 @@
       "services": {
         "receive": "Recevoir",
         "swap": "Échanger",
-        "gasAccount": "GasAccount",
         "queue": "File d'attente",
         "approvals": "Approbations",
         "dapps": "Dapps",
@@ -1721,7 +1719,6 @@
         "followingTokenInSufficient": "Le solde du jeton suivant est insuffisant",
         "zeroInvalidAmount": "Le montant ne peut pas être zéro",
         "title": "Dépôt",
-        "selectToken": "Sélectionner le Token",
         "desc": "Effectuez un dépôt sur le compte DeBank L2 de Rabby sans frais supplémentaires - retirez à tout moment.",
         "amount": "Montant",
         "invalidAmount": "Doit être inférieur à 500",
@@ -1793,7 +1790,6 @@
       },
       "depositCanceled": "Dépôt annulé",
       "depositSuccess": "Dépôt réussi",
-      "switchAccount": "Changer GasAccount",
       "loginFailed": "Échec de la connexion",
       "loginSuccess": "Connexion réussie",
       "withdrawDisabledIAP": "Les retraits sont désactivés car votre solde inclut des fonds en fiat, qui ne peuvent pas être retirés. Contactez le support pour retirer le solde de vos tokens."
@@ -3164,8 +3160,7 @@
         "depositTitle": "Déposer USDC/USDT Payer les frais de gaz"
       },
       "loginConfirmModal": {
-        "desc": "Une fois connecté, vous ne pouvez le déposer qu'à cette adresse.",
-        "title": "Sélectionner le portefeuille pour se connecter"
+        "desc": "Une fois connecté, vous ne pouvez le déposer qu'à cette adresse."
       },
       "depositPopup": {
         "amount": "Montant",

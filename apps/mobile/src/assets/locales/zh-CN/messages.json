@@ -813,7 +813,6 @@
         "login": "登录",
         "loginFirst": "请先登录GasAccount",
         "chainNotSupported": "GasAccount 不支持该链",
-        "notEnough": "GasAccount 不足",
         "customRPC": "使用自定义 RPC 时不支持",
         "WalletConnectTips": "GasAccount 不支持 WalletConnect"
       },
@@ -856,7 +855,6 @@
         "more": "更多",
         "websites": "网站",
         "swap": "交换",
-        "gasAccount": "GasAccount",
         "dapps": "Dapps",
         "approvals": "授权",
         "search": "搜索 Token",
@@ -1851,7 +1849,6 @@
         "invalidAmount": "必须在 500 以下",
         "amount": "金额",
         "token": "Token",
-        "selectToken": "选择 Token",
         "followingTokenInSufficient": "以下代币余额不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 手续费。不可提现",
         "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现",
@@ -1919,7 +1916,6 @@
       "loginFailed": "登录失败",
       "depositSuccess": "存款成功",
       "depositCanceled": "存款已取消",
-      "switchAccount": "切换GasAccount",
       "loginSuccess": "登录成功",
       "withdrawDisabledIAP": "由于您的余额中包含无法提取的法币资金，因此提款被禁用。请联系支持以提取您的代币余额。"
     },
@@ -3280,7 +3276,6 @@
         "depositTitle": "存入 USDC/USDT 支付 Gas Fees"
       },
       "loginConfirmModal": {
-        "title": "选择钱包登录",
         "desc": "登录后，您只能在此地址进行存款。"
       },
       "depositPopup": {

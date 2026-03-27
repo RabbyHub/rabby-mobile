@@ -268,7 +268,6 @@
       },
       "withdraw": "Abheben",
       "loginConfirmModal": {
-        "title": "Wallet zum Anmelden auswählen",
         "desc": "Sobald Sie sich eingeloggt haben, können Sie es nur an dieser Adresse einzahlen."
       },
       "gasExceed": "GasAccount-Guthaben darf $1000 nicht überschreiten",
@@ -1048,7 +1047,6 @@
         "login": "Einloggen",
         "chainNotSupported": "Diese Chain wird von GasAccount nicht unterstützt.",
         "customRPC": "Nicht unterstützt bei Verwendung von benutzerdefiniertem RPC",
-        "notEnough": "GasAccount ist nicht genug",
         "deposit": "Einzahlung",
         "WalletConnectTips": "WalletConnect wird von GasAccount nicht unterstützt",
         "loginFirst": "Bitte melden Sie sich zuerst bei GasAccount an."
@@ -1202,7 +1200,6 @@
         "dapps": "Dapps",
         "send": "Senden",
         "swap": "Tauschen",
-        "gasAccount": "GasAccount",
         "queue": "Warteschlange",
         "search": "Token suchen",
         "copyTrading": "Copy Trading",
@@ -2081,7 +2078,6 @@
       },
       "depositPopup": {
         "token": "Token",
-        "selectToken": "Token auswählen",
         "amount": "Betrag",
         "zeroInvalidAmount": "Der Betrag darf nicht null sein",
         "followingTokenInSufficient": "Das folgende Token-Guthaben ist unzureichend",
@@ -2156,7 +2152,6 @@
       },
       "depositSuccess": "Einzahlung erfolgreich",
       "loginFailed": "Anmeldung fehlgeschlagen",
-      "switchAccount": "Wechsel GasAccount",
       "loginSuccess": "Anmeldung erfolgreich",
       "depositCanceled": "Einzahlung Abgebrochen",
       "withdrawDisabledIAP": "Abhebungen sind deaktiviert, da Ihr Guthaben Fiat-Funds enthält, die nicht abgehoben werden können. Kontaktieren Sie den Support, um Ihr Token-Guthaben abzuheben."

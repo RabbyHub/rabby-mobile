@@ -145,8 +145,7 @@
       "deposit": "Depósito",
       "withdraw": "Levantar",
       "loginConfirmModal": {
-        "desc": "Uma vez logado, pode apenas depositar neste endereço.",
-        "title": "Selecionar Carteira para Iniciar Sessão"
+        "desc": "Uma vez logado, pode apenas depositar neste endereço."
       },
       "loginInTip": {
         "login": "Iniciar sessão GasAccount",
@@ -1048,7 +1047,6 @@
         "useGasAccount": "Use GasAccount",
         "WalletConnectTips": "GasAccount não suporta WalletConnect",
         "chainNotSupported": "Esta cadeia não é suportada pelo GasAccount",
-        "notEnough": "GasAccount não é suficiente",
         "loginFirst": "Por favor, inicie sessão no GasAccount primeiro.",
         "customRPC": "Não é suportado ao utilizar RPC personalizado"
       },
@@ -1105,7 +1103,6 @@
         "dapps": "Dapps",
         "swap": "Swap",
         "bridge": "Bridge",
-        "gasAccount": "GasAccount",
         "websites": "Websites",
         "search": "Pesquisar Token",
         "copyTrading": "Copy Trading",
@@ -2313,7 +2310,6 @@
       },
       "depositPopup": {
         "amount": "Montante",
-        "selectToken": "Selecionar Token",
         "invalidAmount": "Deve ter menos de 500",
         "token": "Token",
         "title": "Depósito",
@@ -2386,7 +2382,6 @@
         "address": "Endereço",
         "wallet": "Carteira"
       },
-      "switchAccount": "Alternar GasAccount",
       "loginFailed": "Falha no Login",
       "depositCanceled": "Depósito cancelado",
       "depositSuccess": "Depósito bem-sucedido",

@@ -1,17 +1,15 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Account } from '@/core/services/preference';
 import { useAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWindowDimensions, View } from 'react-native';
-import { trigger } from 'react-native-haptic-feedback';
 import LinearGradient from 'react-native-linear-gradient';
 import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
 import { SelectGasAccountList } from './SelectGasAccountList';

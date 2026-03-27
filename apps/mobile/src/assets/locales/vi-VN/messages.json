@@ -340,7 +340,6 @@
       },
       "gasAccount": {
         "WalletConnectTips": "GasAccount không hỗ trợ WalletConnect",
-        "notEnough": "GasAccount không đủ",
         "chainNotSupported": "Chuỗi này không được GasAccount hỗ trợ",
         "useGasAccount": "Sử dụng GasAccount",
         "login": "Đăng nhập",
@@ -1273,7 +1272,6 @@
         "send": "Gửi",
         "more": "Thêm",
         "dapps": "Dapps",
-        "gasAccount": "GasAccount",
         "bridge": "Bridge",
         "approvals": "Phê duyệt",
         "queue": "Hàng chờ",
@@ -1738,7 +1736,6 @@
       },
       "depositPopup": {
         "invalidAmount": "Phải dưới 500",
-        "selectToken": "Chọn Token",
         "zeroInvalidAmount": "Số tiền không thể bằng 0",
         "amount": "Số lượng",
         "token": "Token",
@@ -1813,7 +1810,6 @@
       },
       "depositSuccess": "Nạp tiền thành công",
       "depositCanceled": "Gửi tiền đã hủy",
-      "switchAccount": "Chuyển đổi GasAccount",
       "loginFailed": "Đăng nhập thất bại",
       "loginSuccess": "Đăng nhập thành công",
       "withdrawDisabledIAP": "Việc rút tiền bị vô hiệu hóa vì số dư của bạn bao gồm tiền fiat, không thể rút được. Liên hệ hỗ trợ để rút số dư token của bạn"
@@ -3276,7 +3272,6 @@
         "desc": "Gửi tiền vào tài khoản DeBank L2 của Rabby mà không mất phí — rút tiền bất cứ lúc nào."
       },
       "loginConfirmModal": {
-        "title": "Chọn Ví để Đăng Nhập",
         "desc": "Khi đăng nhập, bạn chỉ có thể gửi tiền vào địa chỉ này."
       },
       "withdrawPopup": {

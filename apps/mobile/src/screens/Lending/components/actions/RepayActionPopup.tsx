@@ -44,10 +44,11 @@ import { useRefreshHistoryId } from '../../hooks';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
 import { CHAINS_ENUM } from '@debank/common';
 import {
   API_ETH_MOCK_ADDRESS,
@@ -160,8 +161,6 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   }, [_amount, repayAmount.amount]);
 
   const { t } = useTranslation();
-
-  const { ctx } = useSignatureStore();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -420,13 +419,19 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     return list as Tx[];
   }, [approveTxs, repayTx]);
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: txsForMiniApproval.length
       ? txsForMiniApproval?.[0]?.chainId + ''
       : '',
     autoResetGasStoreOnChainChange: true,
   });
+
+  const { ctx } = useSignatureStoreOf(instance);
 
   const handleRepay = useCallback(
     async (forceFullSign?: boolean) => {
@@ -638,7 +643,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   ]);
 
   return (
-    <>
+    <SignatureInstanceProvider instance={instance}>
       <BottomSheetScrollView
         style={styles.bottomSheetScrollView}
         showsVerticalScrollIndicator
@@ -755,7 +760,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
           />
         )}
       </View>
-    </>
+    </SignatureInstanceProvider>
   );
 };
 

@@ -315,8 +315,7 @@
         "deposit": "Депозит",
         "customRPC": "Не поддерживается при использовании пользовательского RPC",
         "useGasAccount": "Используйте GasAccount",
-        "loginFirst": "Пожалуйста, сначала войдите в GasAccount.",
-        "notEnough": "GasAccount не хватает"
+        "loginFirst": "Пожалуйста, сначала войдите в GasAccount."
       },
       "gasless": {
         "notEnough": "Gas баланса недостаточно",
@@ -1011,7 +1010,6 @@
     "home": {
       "services": {
         "receive": "Получить",
-        "gasAccount": "GasAccount",
         "approvals": "Одобрения",
         "dapps": "Dapps",
         "swap": "Swap",
@@ -1929,7 +1927,6 @@
       },
       "depositPopup": {
         "amount": "Сумма",
-        "selectToken": "Выбрать Token",
         "followingTokenInSufficient": "Следующего баланса токена недостаточно",
         "token": "Токен",
         "title": "Депозит",
@@ -2006,7 +2003,6 @@
       "loginFailed": "Ошибка входа",
       "depositCanceled": "Депозит отменен",
       "loginSuccess": "Вход выполнен успешно",
-      "switchAccount": "Переключить GasAccount",
       "withdrawDisabledIAP": "Выводы отключены, потому что ваш баланс включает фиатные средства, которые не могут быть выведены. Свяжитесь с поддержкой для вывода баланса ваших токенов."
     },
     "tokenDetail": {
@@ -3272,7 +3268,6 @@
         "depositDesc": "на всех цепях, когда у вас закончился Gas"
       },
       "loginConfirmModal": {
-        "title": "Выберите кошелек для входа",
         "desc": "После входа в систему вы можете только внести депозит по этому адресу."
       },
       "withdrawPopup": {

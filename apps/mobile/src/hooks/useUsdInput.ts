@@ -1,10 +1,10 @@
 import { useMemoizedFn } from 'ahooks';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export const useUsdInput = () => {
   const [input, setInput] = useState('');
 
-  const onChangeText = useMemoizedFn((v: string) => {
+  const onChangeText = useCallback((v: string) => {
     // Replace comma with dot for decimal point
     const normalizedValue = v.replace(/,/g, '.');
     const value = normalizedValue.startsWith('$')
@@ -14,7 +14,7 @@ export const useUsdInput = () => {
     if (/^\d*\.?\d*$/.test(value) || value === '') {
       setInput(value);
     }
-  });
+  }, []);
 
   return {
     value: input.replace(/^\$/, ''),

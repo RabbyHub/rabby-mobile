@@ -4,11 +4,13 @@ import {
   getAccountList,
   filterDirectlySignableAccounts,
   isHardwareAccount,
-  KeyringAccountWithAlias,
 } from '@/core/apis/account';
 import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 import { Account } from '@/core/services/preference';
 import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import type { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
 let hasAttemptedAutoLogin = false;
 
@@ -22,7 +24,7 @@ type GasAccountBalanceAccount = {
   brandName: string;
 };
 
-function toGasAccountBalanceAccounts<T extends KeyringAccountWithAlias>(
+function toGasAccountBalanceAccounts<T extends KeyringAccount>(
   accounts: T[],
 ): GasAccountBalanceAccount[] {
   return accounts.map(account => ({
@@ -32,7 +34,7 @@ function toGasAccountBalanceAccounts<T extends KeyringAccountWithAlias>(
   }));
 }
 
-async function findAccountsWithBalance<T extends KeyringAccountWithAlias>(
+async function findAccountsWithBalance<T extends KeyringAccount>(
   accounts: T[],
 ) {
   if (!accounts.length) return [] as T[];
@@ -52,6 +54,28 @@ async function findAccountsWithBalance<T extends KeyringAccountWithAlias>(
     }
   }
   return matched;
+}
+
+function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
+  if (!nextAccounts.length) {
+    return;
+  }
+
+  const prevAccounts = gasAccountService.getAccountsWithGasAccountBalance();
+  const merged = [...prevAccounts];
+
+  nextAccounts.forEach(account => {
+    const existed = merged.some(
+      item =>
+        isSameAddress(item.address, account.address) &&
+        item.type === account.type,
+    );
+    if (!existed) {
+      merged.push(account);
+    }
+  });
+
+  storeApiGasAccount.setAccountsWithGasAccountBalance(merged);
 }
 
 export const refreshAccountsWithGasAccountBalance = makeAvoidParallelAsyncFunc(
@@ -106,13 +130,13 @@ export async function autoLoginGasAccountIfNeeded() {
     if (directWithBalance.length > 0) {
       // Auto-login with the first directly signable account
       await storeApiGasAccount.loginGasAccount(directWithBalance[0] as Account);
-      gasAccountService.clearPendingHardwareAccount();
+      storeApiGasAccount.clearPendingHardwareAccount();
       return;
     }
 
     if (hwWithBalance[0]) {
       // Don't auto-login hardware wallets, just mark
-      gasAccountService.setPendingHardwareAccount({
+      storeApiGasAccount.setPendingHardwareAccount({
         address: hwWithBalance[0].address,
         type: hwWithBalance[0].type,
         brandName: hwWithBalance[0].brandName,
@@ -122,3 +146,40 @@ export async function autoLoginGasAccountIfNeeded() {
     console.error('autoLoginGasAccountIfNeeded error', error);
   }
 }
+
+export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
+  async (accounts: KeyringEventAccount[]) => {
+    if (!accounts.length) {
+      return;
+    }
+
+    const { sig } = storeApiGasAccount.getSigState() || {};
+    if (sig) {
+      return;
+    }
+
+    const directlySignable = filterDirectlySignableAccounts(accounts);
+    const hardware = accounts.filter(isHardwareAccount);
+
+    const directWithBalance = await findAccountsWithBalance(directlySignable);
+    const hwWithBalance = await findAccountsWithBalance(hardware);
+
+    mergeAccountsWithGasBalance(
+      toGasAccountBalanceAccounts([...directWithBalance, ...hwWithBalance]),
+    );
+
+    if (directWithBalance.length > 0) {
+      await storeApiGasAccount.loginGasAccount(directWithBalance[0] as Account);
+      storeApiGasAccount.clearPendingHardwareAccount();
+      return;
+    }
+
+    if (hwWithBalance[0]) {
+      storeApiGasAccount.setPendingHardwareAccount({
+        address: hwWithBalance[0].address,
+        type: hwWithBalance[0].type,
+        brandName: hwWithBalance[0].brandName,
+      });
+    }
+  },
+);

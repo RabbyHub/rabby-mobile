@@ -40,6 +40,7 @@ import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';
 import { ormEvents } from '@/databases/entities/_helpers';
 import { InteractionManager } from 'react-native';
+import { checkAddedAccountsGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -155,6 +156,9 @@ export function startManageAccountStoreLifecycle() {
   accountEvents.on('ACCOUNT_ADDED', async ({ accounts, scene }) => {
     await AccountInfoEntity.recordNewAccount(accounts);
     await fetchNewlyAddedAccounts();
+    checkAddedAccountsGasAccountIfNeeded(accounts).catch(error => {
+      console.error('checkAddedAccountsGasAccountIfNeeded error', error);
+    });
   });
 
   ormEvents.on(`account_info:removed`, () => {

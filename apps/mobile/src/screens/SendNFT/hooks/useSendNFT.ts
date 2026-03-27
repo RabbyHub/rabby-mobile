@@ -231,7 +231,11 @@ export function useSendNFTForm({
 
   const chainItem = findChain({ serverId: nftToken?.chain });
 
-  const { openDirect, prefetch } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch,
+    instance: miniSignInstance,
+  } = useMiniSigner({
     account: currentAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
@@ -805,6 +809,7 @@ export function useSendNFTForm({
     whitelist,
     whitelistEnabled,
     computed,
+    miniSignInstance,
   };
 }
 export function useSendNFTFormikContext() {

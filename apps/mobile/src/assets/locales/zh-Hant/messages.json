@@ -953,7 +953,6 @@
         "receive": "接收",
         "swap": "交換",
         "history": "歷史",
-        "gasAccount": "GasAccount",
         "search": "搜尋 Token",
         "copyTrading": "複製交易",
         "watchlist": "代幣觀察列表",
@@ -1119,7 +1118,6 @@
         "WalletConnectTips": "GasAccount 不支援 WalletConnect",
         "chainNotSupported": "GasAccount 不支持該鍊",
         "customRPC": "使用自定義 RPC 時不支持",
-        "notEnough": "GasAccount 不足",
         "deposit": "存入",
         "loginFirst": "請先登入GasAccount"
       },
@@ -1850,7 +1848,6 @@
         "invalidAmount": "必須少於 500",
         "amount": "Amount",
         "token": "Token",
-        "selectToken": "選擇 Token",
         "followingTokenInSufficient": "以下代幣餘額不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 費用。不提供提款。",
         "googlePayDesc": "包含 ${{ amount }} Google Pay 手續費。不可提款。",
@@ -1915,7 +1912,6 @@
         "gasAccountBalance": "GasAccount 餘額",
         "wallet": "錢包"
       },
-      "switchAccount": "切換 GasAccount",
       "depositSuccess": "存款成功",
       "depositCanceled": "存款已取消",
       "loginFailed": "登入失敗",
@@ -3292,7 +3288,6 @@
         "noHistory": "暫無歷史記錄"
       },
       "loginConfirmModal": {
-        "title": "選擇錢包以登入",
         "desc": "一旦登錄，您只能在此地址進行充值"
       },
       "depositPopup": {

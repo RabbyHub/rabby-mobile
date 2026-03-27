@@ -143,6 +143,14 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps & RNViewProps>(
       keyword: queryConds.keyword,
     });
 
+    console.log('useSelectTokens', {
+      tokens,
+      currentAccount,
+      chain_server_id: queryConds.chainServerId,
+      isLpTokenEnabled,
+      keyword: queryConds.keyword,
+    });
+
     useImperativeHandle(ref, () => ({
       openTokenModal: conds => {
         setQueryConds(prev => ({ ...prev, ...conds }));

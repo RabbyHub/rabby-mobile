@@ -10,6 +10,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { GasAccountDepositTipPopup } from '@/screens/GasAccount/components/GasAccountDepositTipPopup';
 import { Text } from '@/components/Typography';
+import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 
 export const GasLessNotEnough: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -18,6 +19,8 @@ export const GasLessNotEnough: React.FC<{
   canGotoUseGasAccount?: boolean;
   canDepositUseGasAccount?: boolean;
   onDeposit?(): void;
+  onWaitDepositResult?: GasAccountTopUpWaitCallback;
+  onDepositPopupVisibleChange?: (visible: boolean) => void;
   onGotoGasAccount?(): void;
   inShowMore?: boolean;
 }> = ({
@@ -27,6 +30,8 @@ export const GasLessNotEnough: React.FC<{
   canGotoUseGasAccount,
   canDepositUseGasAccount,
   onDeposit,
+  onWaitDepositResult,
+  onDepositPopupVisibleChange,
   onGotoGasAccount,
   inShowMore,
 }) => {
@@ -38,8 +43,9 @@ export const GasLessNotEnough: React.FC<{
   useEffect(() => {
     return () => {
       setTipPopupVisible(false);
+      onDepositPopupVisibleChange?.(false);
     };
-  }, []);
+  }, [onDepositPopupVisibleChange]);
 
   return (
     <>
@@ -66,7 +72,11 @@ export const GasLessNotEnough: React.FC<{
                 color: colors2024['red-default'],
               },
             ]}>
-            {t('page.signFooterBar.gasless.notEnough')}
+            {canDepositUseGasAccount
+              ? t('page.signFooterBar.gasAccount.notEnough', {
+                  usd: gasAccountCost?.gas_account_cost?.total_cost,
+                })
+              : t('page.signFooterBar.gasless.notEnough')}
           </Text>
         </View>
 
@@ -74,6 +84,7 @@ export const GasLessNotEnough: React.FC<{
           <TouchableOpacity
             style={[styles.gasAccountBtn]}
             onPress={() => {
+              onDepositPopupVisibleChange?.(true);
               setTipPopupVisible(true);
             }}>
             <Text style={styles.gasAccountTipBtnText}>
@@ -93,15 +104,24 @@ export const GasLessNotEnough: React.FC<{
       <GasAccountDepositTipPopup
         gasAccountAddress={gasAccountAddress}
         visible={tipPopupVisible}
-        onClose={() => setTipPopupVisible(false)}
+        onClose={() => {
+          setTipPopupVisible(false);
+          onDepositPopupVisibleChange?.(false);
+        }}
         onDeposit={() => {
           setTipPopupVisible(false);
+          onDepositPopupVisibleChange?.(false);
           onDeposit?.();
         }}
-        onGotoGasAccount={() => {
+        onWaitDepositResult={async result => {
           setTipPopupVisible(false);
-          onGotoGasAccount?.();
+          onDepositPopupVisibleChange?.(false);
+          await onWaitDepositResult?.(result);
         }}
+        // onGotoGasAccount={() => {
+        //   setTipPopupVisible(false);
+        //   onGotoGasAccount?.();
+        // }}
         minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
       />
     </>

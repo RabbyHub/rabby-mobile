@@ -615,7 +615,6 @@
         "login": "ログイン",
         "deposit": "入金",
         "WalletConnectTips": "GasAccountではWalletConnectはサポートされていません。",
-        "notEnough": "GasAccountが足りません。",
         "loginFirst": "最初にGasAccountにログインしてください。",
         "customRPC": "カスタムRPCを使用する場合はサポートされていません。",
         "chainNotSupported": "このチェーンはGasAccountにサポートされていません。"
@@ -939,7 +938,6 @@
     },
     "home": {
       "services": {
-        "gasAccount": "GasAccount",
         "dapps": "Dapps",
         "history": "履歴",
         "more": "もっと",
@@ -1582,7 +1580,6 @@
       },
       "depositPopup": {
         "token": "トークン",
-        "selectToken": "トークンを選択",
         "amount": "量",
         "followingTokenInSufficient": "以下のトークン残高が不十分です",
         "invalidAmount": "500 未満でなければなりません",
@@ -1655,7 +1652,6 @@
         "address": "アドレス",
         "wallet": "ウォレット"
       },
-      "switchAccount": "GasAccount を変更",
       "depositSuccess": "入金が成功しました",
       "depositCanceled": "入金がキャンセルされました",
       "loginFailed": "ログインに失敗しました",
@@ -3313,7 +3309,6 @@
       "withdraw": "出金",
       "deposit": "入金",
       "loginConfirmModal": {
-        "title": "ウォレットを選択してログイン",
         "desc": "ログインすると、このアドレスにのみ入金できます。"
       },
       "withdrawPopup": {

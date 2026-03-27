@@ -168,7 +168,6 @@
       "ledgerSign": "서명하기",
       "beginSigning": "서명 프로세스 시작",
       "gasAccount": {
-        "notEnough": "GasAccount는 충분하지 않습니다",
         "deposit": "입금",
         "login": "로그인",
         "useGasAccount": "GasAccount 사용",
@@ -793,7 +792,6 @@
         "send": "보내기",
         "more": "더보기",
         "bridge": "Bridge",
-        "gasAccount": "GasAccount",
         "receive": "받기",
         "queue": "대기열",
         "websites": "웹사이트",
@@ -1478,7 +1476,6 @@
       "depositPopup": {
         "title": "예금",
         "token": "토큰",
-        "selectToken": "토큰 선택",
         "invalidAmount": "500 이하여야 합니다.",
         "zeroInvalidAmount": "금액은 0이 될 수 없습니다.",
         "followingTokenInSufficient": "다음 토큰 잔액이 부족합니다",
@@ -1552,7 +1549,6 @@
       },
       "depositSuccess": "입금 성공",
       "loginFailed": "로그인 실패",
-      "switchAccount": "GasAccount 전환",
       "depositCanceled": "입금이 취소되었습니다",
       "loginSuccess": "로그인 성공",
       "withdrawDisabledIAP": "출금이 비활성화되었습니다. 잔고에 출금할 수 없는 법정화폐 자금이 포함되어 있기 때문입니다. 토큰 잔액을 출금하려면 지원팀에 문의하세요."
@@ -3248,7 +3244,6 @@
       },
       "withdraw": "출금",
       "loginConfirmModal": {
-        "title": "지갑을 선택하여 로그인하세요",
         "desc": "로그인 후, 이 주소에만 예치할 수 있습니다."
       },
       "gasExceed": "GasAccount 잔액은 $1000을 초과할 수 없습니다.",

@@ -169,8 +169,7 @@
         "learnAbout": "Aprender más sobre GasAccount"
       },
       "loginConfirmModal": {
-        "desc": "Una vez que inicie sesión, solo puede depositarlo en esta dirección.",
-        "title": "Selecciona una cartera para iniciar sesión"
+        "desc": "Una vez que inicie sesión, solo puede depositarlo en esta dirección."
       },
       "withdrawPopup": {
         "title": "Retirar",
@@ -870,7 +869,6 @@
         "loginFirst": "Por favor, inicie sesión en GasAccount primero.",
         "useGasAccount": "Usar GasAccount",
         "WalletConnectTips": "GasAccount no es compatible con WalletConnect.",
-        "notEnough": "GasAccount no es suficiente",
         "customRPC": "No compatible con el uso de RPC personalizado",
         "login": "Iniciar sesión"
       },
@@ -1105,7 +1103,6 @@
         "approvals": "Aprobaciones",
         "websites": "Sitios web",
         "history": "Historial",
-        "gasAccount": "GasAccount",
         "queue": "Cola",
         "search": "Buscar Token",
         "copyTrading": "Copy Trading",
@@ -2219,7 +2216,6 @@
         "amount": "Cantidad",
         "invalidAmount": "Debe estar por debajo de 500",
         "title": "Depósito",
-        "selectToken": "Seleccionar Token",
         "followingTokenInSufficient": "El saldo de los siguientes tokens es insuficiente",
         "zeroInvalidAmount": "El importe no puede ser cero",
         "desc": "Haz un depósito en la cuenta de DeBank L2 de Rabby sin tarifas adicionales: retira en cualquier momento.",
@@ -2291,7 +2287,6 @@
       },
       "depositSuccess": "Depósito exitoso",
       "loginFailed": "Error de inicio de sesión",
-      "switchAccount": "Cambiar GasAccount",
       "depositCanceled": "Depósito Cancelado",
       "loginSuccess": "Inicio de sesión exitoso",
       "withdrawDisabledIAP": "Los retiros están deshabilitados porque tu saldo incluye fondos fiduciarios, los cuales no pueden ser retirados. Contacta con soporte para retirar el saldo de tus tokens."

@@ -8,8 +8,6 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { useTranslation } from 'react-i18next';
 import { formatUsdValue } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
@@ -19,12 +17,14 @@ import RcIconHistoryLoading from '@/assets/icons/gas-account/IconHistoryLoading.
 import { sinceTime } from '@/utils/time';
 import { useGasAccountHistory } from '../hooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { EmptyHolder } from '@/components/EmptyHolder';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { GiftInfoModal } from './GiftInfoModal';
 import ImgEmpty from '@/assets2024/images/gasAccount/empty.png';
 import ImgEmptyDark from '@/assets2024/images/gasAccount/empty-dark.png';
 import { Text } from '@/components/Typography';
+import { StyleProp, ViewStyle } from 'react-native';
+
+type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
 
 const HistoryItem = ({
   time,
@@ -134,10 +134,13 @@ const LoadingItem = ({ borderT }) => {
   );
 };
 
-export const GasAccountHistory = () => {
+export const GasAccountHistory: React.FC<{
+  historyState: GasAccountHistoryState;
+  style?: StyleProp<ViewStyle>;
+  listStyle?: StyleProp<ViewStyle>;
+}> = ({ historyState, style, listStyle }) => {
   const { t } = useTranslation();
-  const { loading, txList, loadingMore, loadMore, noMore } =
-    useGasAccountHistory();
+  const { loading, txList, loadMore, noMore } = historyState;
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -271,7 +274,8 @@ export const GasAccountHistory = () => {
       <View
         style={[
           styles.container,
-          { height: 254 },
+          { height: 234 },
+          style,
           isLight ? styles.containerLight : styles.containerDark,
         ]}>
         <View style={styles.emptyContent}>
@@ -293,7 +297,9 @@ export const GasAccountHistory = () => {
       <FlatList
         style={[
           styles.container,
+          listStyle,
           { marginBottom: bottom },
+          style,
           isLight ? styles.containerLight : styles.containerDark,
         ]}
         data={txList?.list}

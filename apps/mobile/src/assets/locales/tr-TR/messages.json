@@ -463,7 +463,6 @@
       },
       "gasAccount": {
         "deposit": "Yatırma",
-        "notEnough": "GasAccount yeterli değil.",
         "login": "Giriş yap",
         "customRPC": "Özel RPC kullanılırken desteklenmiyor.",
         "chainNotSupported": "Bu zincir GasAccount tarafından desteklenmiyor.",
@@ -1028,7 +1027,6 @@
     "home": {
       "services": {
         "history": "İşlemler",
-        "gasAccount": "GasAccount",
         "send": "Gönder",
         "approvals": "Onaylar",
         "bridge": "Köprü",
@@ -1781,7 +1779,6 @@
         "token": "Token",
         "amount": "Miktar",
         "invalidAmount": "500'ün altında olmalıdır",
-        "selectToken": "Token Seçin",
         "followingTokenInSufficient": "Aşağıdaki token bakiyesi yetersizdir.",
         "zeroInvalidAmount": "Miktar sıfır olamaz",
         "title": "Hesapla geçme",
@@ -1866,7 +1863,6 @@
       "loginFailed": "Giriş Başarısız",
       "depositCanceled": "Yatırım İptal Edildi",
       "loginSuccess": "Giriş Başarılı",
-      "switchAccount": "GasAccount'ı Değiştir",
       "withdrawDisabledIAP": "Çekimler devre dışı bırakılmıştır çünkü bakiyeniz çekilemeyen fiat fonları içermektedir. Token bakiyenizi çekmek için destek ile iletişime geçin."
     },
     "tokenDetail": {
@@ -3044,8 +3040,7 @@
         "depositTitle": "USDC/USDT Yatırı, Gas Ücretlerini Öde"
       },
       "loginConfirmModal": {
-        "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz.",
-        "title": "Cüzdan Seçin Giriş Yapmak İçin"
+        "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz."
       },
       "depositPopup": {
         "amount": "Miktar",

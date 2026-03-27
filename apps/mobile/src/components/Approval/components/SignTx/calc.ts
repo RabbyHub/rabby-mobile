@@ -1,18 +1,17 @@
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import i18n from '@/utils/i18n';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
 import { openapi } from '@/core/request';
 import { apiProvider } from '@/core/apis';
-import {
-  CAN_ESTIMATE_L1_FEE_CHAINS,
-  DEFAULT_GAS_LIMIT_RATIO,
-  MINIMUM_GAS_LIMIT,
-} from '@/constant/gas';
+import { CAN_ESTIMATE_L1_FEE_CHAINS } from '@/constant/gas';
 import { transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import { Account } from '@/core/services/preference';
+import {
+  getNativeGasBalanceErrors,
+  getSharedGasAndNonceErrors,
+} from './validation';
 
 export const getRecommendGas = async ({
   gas,
@@ -265,76 +264,24 @@ export const checkGasAndNonce = ({
   isSpeedUp: boolean;
   isGnosisAccount: boolean;
 }) => {
-  const errors: {
-    code: number;
-    msg: string;
-    level?: 'warn' | 'danger' | 'forbidden';
-  }[] = [];
-  if (!isGnosisAccount && new BigNumber(gasLimit).lt(MINIMUM_GAS_LIMIT)) {
-    errors.push({
-      code: 3006,
-      msg: i18n.t('page.signTx.gasLimitNotEnough'),
-      level: 'forbidden',
-    });
-  }
-  if (
-    !isGnosisAccount &&
-    new BigNumber(gasLimit).lt(
-      new BigNumber(recommendGasLimit).times(recommendGasLimitRatio),
-    ) &&
-    new BigNumber(gasLimit).gte(21000)
-  ) {
-    if (recommendGasLimitRatio === DEFAULT_GAS_LIMIT_RATIO) {
-      const realRatio = new BigNumber(gasLimit).div(recommendGasLimit);
-      if (realRatio.lt(DEFAULT_GAS_LIMIT_RATIO) && realRatio.gt(1)) {
-        errors.push({
-          code: 3004,
-          msg: i18n.t('page.signTx.gasLimitLessThanExpect'),
-          level: 'warn',
-        });
-      } else if (realRatio.lt(1)) {
-        errors.push({
-          code: 3005,
-          msg: i18n.t('page.signTx.gasLimitLessThanGasUsed'),
-          level: 'danger',
-        });
-      }
-    } else {
-      if (new BigNumber(gasLimit).lt(recommendGasLimit)) {
-        errors.push({
-          code: 3004,
-          msg: i18n.t('page.signTx.gasLimitLessThanExpect'),
-          level: 'warn',
-        });
-      }
-    }
-  }
-  let sendNativeTokenAmount = new BigNumber(tx.value); // current transaction native token transfer count
-  sendNativeTokenAmount = isNaN(sendNativeTokenAmount.toNumber())
-    ? new BigNumber(0)
-    : sendNativeTokenAmount;
-  if (
-    !isGnosisAccount &&
-    gasExplainResponse.maxGasCostAmount
-      .plus(sendNativeTokenAmount.div(1e18))
-      .isGreaterThan(new BigNumber(nativeTokenBalance).div(1e18))
-  ) {
-    errors.push({
-      code: 3001,
-      msg: i18n.t('page.signTx.nativeTokenNotEngouthForGas'),
-      level: 'forbidden',
-    });
-  }
-  if (new BigNumber(nonce).lt(recommendNonce) && !(isCancel || isSpeedUp)) {
-    errors.push({
-      code: 3003,
-      // @ts-ignore
-      msg: i18n.t('page.signTx.nonceLowerThanExpect', [
-        new BigNumber(recommendNonce),
-      ]),
-    });
-  }
-  return errors;
+  return [
+    ...getSharedGasAndNonceErrors({
+      recommendGasLimitRatio,
+      recommendGasLimit,
+      recommendNonce,
+      gasLimit,
+      nonce,
+      isCancel,
+      isSpeedUp,
+      isGnosisAccount,
+    }),
+    ...getNativeGasBalanceErrors({
+      tx,
+      gasExplainResponse,
+      isGnosisAccount,
+      nativeTokenBalance,
+    }),
+  ];
 };
 
 export const useCheckGasAndNonce = ({

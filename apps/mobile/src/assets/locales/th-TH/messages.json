@@ -164,7 +164,6 @@
       },
       "gasExceed": "ยอดคงเหลือใน GasAccount ไม่เกิน $1000",
       "loginConfirmModal": {
-        "title": "เลือกกระเป๋าเงินเพื่อเข้าสู่ระบบ",
         "desc": "เมื่อเข้าสู่ระบบแล้ว คุณสามารถฝากได้เฉพาะที่อยู่นี้เท่านั้น"
       },
       "depositPopup": {
@@ -964,7 +963,6 @@
         "loginFirst": "กรุณาเข้าสู่ระบบ GasAccount ก่อน",
         "deposit": "ฝากเงิน",
         "WalletConnectTips": "GasAccount ไม่รองรับ WalletConnect",
-        "notEnough": "GasAccount ไม่เพียงพอ",
         "chainNotSupported": "เครือนี้ไม่ได้รับการสนับสนุนโดย GasAccount"
       },
       "ledger": {
@@ -1015,7 +1013,6 @@
         "bridge": "Bridge",
         "dapps": "Dapps",
         "websites": "Websites",
-        "gasAccount": "GasAccount",
         "queue": "คิว",
         "search": "ค้นหา Token",
         "copyTrading": "การคัดลอกการซื้อขาย",
@@ -2013,7 +2010,6 @@
         "invalidAmount": "ต้องต่ำกว่า 500",
         "zeroInvalidAmount": "จำนวนเงินต้องไม่เป็นศูนย์",
         "desc": "ทำการฝากเงินไปยังบัญชี DeBank L2 ของ Rabby ได้โดยไม่มีค่าใช้จ่ายเพิ่มเติม—ถอนเงินได้ทุกเวลา",
-        "selectToken": "เลือกโทเค็น",
         "followingTokenInSufficient": "ยอดคงเหลือโทเค็นต่อไปนี้ไม่เพียงพอ",
         "googlePayDesc": "รวมค่าธรรมเนียม Google Pay ${{ amount }} ไม่สามารถถอนเงินได้",
         "applePayDesc": "รวมค่าธรรมเนียม Apple Pay ${{amount}} ไม่มีการถอนไม่ได้",
@@ -2082,7 +2078,6 @@
         "wallet": "กระเป๋าเงิน"
       },
       "loginFailed": "เข้าสู่ระบบล้มเหลว",
-      "switchAccount": "สวิตช์ GasAccount",
       "depositCanceled": "การฝากถูกยกเลิก",
       "depositSuccess": "ฝากเงินสำเร็จ",
       "loginSuccess": "ล็อกอินสำเร็จ",
