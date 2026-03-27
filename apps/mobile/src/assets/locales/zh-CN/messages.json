@@ -954,7 +954,9 @@
         "completed": "已完成",
         "receivingTo": "在 {{chain}} 上接收"
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "表单已更改",
+      "formChangedAmount": "金额已更改，可能是由于系统键盘的密码自动填充。请检查并重新输入正确的金额。"
     },
     "approvals": {
       "tab-switch": {

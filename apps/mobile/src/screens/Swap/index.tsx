@@ -95,7 +95,10 @@ import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTwoStepSwap } from './hooks/twoStepSwap';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import useDebounce from 'react-use/lib/useDebounce';
 import {
   MINI_SIGN_ERROR,
@@ -106,6 +109,8 @@ import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
 import { APP_VERSIONS } from '@/constant';
 import { stats } from '@/utils/stats';
 import { Text } from '@/components/Typography';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
+import { Alert } from 'react-native';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -116,6 +121,20 @@ type SwapRouteProps = CompositeScreenProps<
 const Swap = ({
   isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen) => {
+  /** Swap form snapshot for validation - only stores amount to detect changes */
+  interface SwapFormSnapshot {
+    amount: string;
+  }
+
+  // Form values snapshot for validation before transaction - only tracks amount
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<SwapFormSnapshot>({
+      comparers: {
+        amount: createAmountComparer(),
+      },
+    }),
+  );
+
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
 
@@ -568,11 +587,42 @@ const Swap = ({
 
   const checkGasFeeTooHighRef = useRef(true);
 
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+
   const onChangeCheckGasFeeTooHigh = useCallback((b: boolean) => {
     checkGasFeeTooHighRef.current = b;
   }, []);
 
   const handleSwap = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
+    const snapshot = formValuesRef.current.getSnapshot();
+
+    if (!snapshot) {
+      toast.info(t('page.bridge.formChangedAmount'));
+      return;
+    }
+
+    // Check if amount changed during authentication
+    const comparison = formValuesRef.current.compare({
+      amount: payAmount || '',
+    });
+
+    // If amount changed during authentication, close modal and alert user
+    if (comparison.isChanged) {
+      formValuesRef.current.clear();
+      closeMiniSigner();
+      Alert.alert(
+        t('page.bridge.formChangedTitle') || 'Form Changed',
+        t('page.bridge.formChangedAmount'),
+        [{ text: t('global.ok') || 'OK' }],
+      );
+      refresh(e => e + 1);
+      mutateTxs([]);
+      return;
+    }
+
+    // Clear snapshot after validation
+    formValuesRef.current.clear();
+
     if (isSubmitting) {
       return;
     }
@@ -1059,7 +1109,10 @@ const Swap = ({
               slider={slider}
               onChangeSlider={onChangeSlider}
               value={payAmount}
-              onValueChange={handleAmountChange}
+              onValueChange={value => {
+                if (directSignBtnRef.current?.isAuthInProgress()) return;
+                handleAmountChange(value);
+              }}
               token={payToken}
               onTokenChange={token => {
                 const chainItem = findChainByServerID(token.chain);
@@ -1261,6 +1314,7 @@ const Swap = ({
           <View>
             {canShowDirectSubmit ? (
               <DirectSignBtn
+                ref={directSignBtnRef}
                 // refresh  risk check
                 key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
                 loading={miniSignLoading}
@@ -1279,9 +1333,18 @@ const Swap = ({
                 syncUnlockTime
                 onBeforeAuth={() => {
                   clearExpiredTimer();
+                  // Disable input during authentication to prevent autofill
+                  // Save amount snapshot before authentication starts
+                  formValuesRef.current.save({
+                    amount: payAmount || '',
+                  });
                 }}
                 onCancel={() => {
+                  formValuesRef.current.clear();
                   refresh(e => e + 1);
+                }}
+                onAuthModalDismiss={() => {
+                  formValuesRef.current.clear();
                 }}
                 account={currentAccount}
                 showHardWalletProcess
@@ -1303,6 +1366,10 @@ const Swap = ({
                     return;
                   }
                   if (activeProvider?.shouldTwoStepApprove) {
+                    // Save amount snapshot before showing approval modal
+                    formValuesRef.current.save({
+                      amount: payAmount || '',
+                    });
                     setTwoStepApproveModalVisible(true);
                     return;
                   }

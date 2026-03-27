@@ -936,7 +936,6 @@
       "no-fees-for-wrap": "No Rabby fee for Wrap",
       "Auto": "Auto",
       "no-quote-found": "No quote found",
-      "market-closed": "Market not open: Order placement is not supported.",
       "source": "Source",
       "token": "Token",
       "results": "Results",
@@ -998,6 +997,8 @@
       "no-route-found": "No route found",
       "bridged": "Bridged",
       "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "Form Changed",
+      "formChangedAmount": "The amount has changed, possibly due to password autofill from the system keyboard. Please review and re-enter the correct amount.",
       "pendingItem": {
         "pending": "Pending",
         "completed": "Completed",
@@ -2106,9 +2107,6 @@
       "appChain": "Dapp Account"
     },
     "search": {
-      "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
-      },
       "sectionHeader": {
         "token": "Tokens",
         "Defi": "DeFi",
@@ -2365,11 +2363,8 @@
       }
     },
     "market": {
-      "noOpen": "Not Open",
-      "marketNotOpenTooltip": "Market not open",
       "tokenHeader": {
-        "name": "Name",
-        "tokenAndName": "Token/Name"
+        "name": "Name"
       },
       "tabs": {
         "watchlist": "Watchlist",
@@ -2430,9 +2425,7 @@
         "learnBtn": "Learn about Perps",
         "available": "Available",
         "withdrawBtn": "Withdraw",
-        "depositBtn": "Deposit",
-        "addFunds": "Add Funds",
-        "learnMore": "Learn More"
+        "depositBtn": "Deposit"
       },
       "selectAccountTitle": "Select a Wallet to Log In",
       "PerpsGuidePopup": {
@@ -2498,11 +2491,7 @@
         },
         "perps": "Perps",
         "gotItBtn": "I Got it",
-        "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
-        "feeTitle": "Fee",
-        "feeDesc": "When users place trades, both\n<1>trading fees</1> and <2>builder fees</2> apply.",
-        "feeHyperliquid": "Hyperliquid",
-        "feeRabby": "Rabby Wallet"
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpsAutoCloseModal": {
         "noPosition": "You must input margin first.",
@@ -2524,7 +2513,6 @@
         "goBridgeDesc": "Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.",
         "swapBtn": "Swap",
         "bridgeBtn": "Bridge",
-        "directDepositFast": "Fast, 0 Slippage",
         "directTag": "Direct Deposit"
       },
       "closeAll": "Close All",
@@ -2550,9 +2538,6 @@
         "withdraw": "Withdraw"
       },
       "PerpsSelectTokenPopup": {
-        "token": "Token",
-        "noTokens": "No tokens",
-        "balance": "Balance",
         "title": "Select Token to Deposit"
       },
       "positions": "Positions",
@@ -2596,7 +2581,6 @@
         "positionValue": "Position Value",
         "settings": "Settings",
         "cross": "Cross",
-        "crossTips": "In Cross Margin mode, the liquidation price for a single position is an estimate for reference only.",
         "isolated": "Isolated",
         "size": "Size",
         "markPrice": "Mark Price",
@@ -2730,9 +2714,6 @@
         "long": "Long",
         "short": "Short",
         "noPermission": "Opening positions is not supported in your region"
-      },
-      "guideEntry": {
-        "gotIt": "Got it"
       },
       "PerpsAutoCloseModal": {
         "takeProfitExpectedPNL": "Take profit expected PNL",

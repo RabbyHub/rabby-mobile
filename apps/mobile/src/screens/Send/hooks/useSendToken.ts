@@ -34,7 +34,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { openapi } from '@/core/request';
-import { TFunction } from 'i18next';
+import i18next, { TFunction } from 'i18next';
 import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -103,6 +103,10 @@ import {
 import { jotaiStore } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { TextInput } from '@/components/Typography';
+import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { createAmountComparer, FormValuesOnSubmit } from '@/utils/form';
+import { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeContent';
+import { toast } from '@/components2024/Toast';
 import { getChainDefaultToken } from '@/constant/swap';
 
 function makeDefaultToken(): TokenItemWithEntity & {
@@ -827,6 +831,15 @@ export function useSendTokenForm({
     ],
   );
 
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<BridgeFormSnapshot>({
+      comparers: {
+        amount: createAmountComparer(),
+      },
+    }),
+  );
+
   const handleFieldChange = useCallback(
     <T extends keyof FormSendToken>(
       f: T,
@@ -836,10 +849,15 @@ export function useSendTokenForm({
         __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__?: boolean;
       },
     ) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       formik.setFieldValue(f, value);
       setFormValues(prev => ({ ...prev, [f]: value }));
 
       const nextVal = { ...formik.values, [f]: value };
+      formValuesRef.current.save({ amount: nextVal.amount });
+
       const { __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__ = false } =
         options || {};
       if (!__NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__) {
@@ -973,6 +991,32 @@ export function useSendTokenForm({
     }: FormSendToken & {
       isForceSignTx?: boolean;
     }) => {
+      const snapshot = formValuesRef.current.getSnapshot();
+
+      if (!snapshot) {
+        toast.info(i18next.t('page.bridge.formChangedAmount'));
+        return;
+      }
+
+      // Check if amount changed during authentication
+      const comparison = formValuesRef.current.compare({
+        amount: amount || '',
+      });
+
+      // If amount changed during authentication, close modal and alert user
+      if (comparison.isChanged) {
+        formValuesRef.current.clear();
+        Alert.alert(
+          i18next.t('page.bridge.formChangedTitle') || 'Form Changed',
+          i18next.t('page.bridge.formChangedAmount'),
+          [{ text: i18next.t('global.ok') || 'OK' }],
+        );
+        return;
+      }
+
+      // Clear snapshot after validation
+      formValuesRef.current.clear();
+
       sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
       putScreenState({ isSubmitLoading: true });
       const chain = findChain({
@@ -1928,6 +1972,9 @@ export function useSendTokenForm({
     checkCexSupport,
     handleCurrentTokenChange,
 
+    directSignBtnRef,
+    formValuesRef,
+
     handleGasLevelChanged,
     handleClickMaxButton,
     handleIgnoreGasFeeChange,
@@ -2002,6 +2049,8 @@ type InternalContext = {
     fetchContactAccounts: () => void;
     disableItemCheck: ITokenCheck;
   };
+  directSignBtnRef: React.RefObject<DirectSignBtnMethods>;
+  formValuesRef: React.MutableRefObject<FormValuesOnSubmit<BridgeFormSnapshot>>;
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
     checkCexSupport: (token: TokenItem) => void;
@@ -2022,6 +2071,7 @@ type InternalContext = {
     setSlider: (v: number) => void;
     onBottomAreaLayout: (layout: LayoutChangeEvent) => void;
     onGasInfoDebouncedLoaded: () => void;
+    // isAuthInProgress?: () => boolean;
   };
 };
 const SendTokenInternalContext = React.createContext<InternalContext>({
@@ -2055,6 +2105,8 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
       simpleReason: '',
     }),
   },
+  directSignBtnRef: React.createRef<DirectSignBtnMethods>(),
+  formValuesRef: { current: null } as any,
   callbacks: {
     handleCurrentTokenChange: () => {},
     checkCexSupport: () => {},
@@ -2066,6 +2118,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     setSlider: () => {},
     onBottomAreaLayout: () => {},
     onGasInfoDebouncedLoaded: () => {},
+    // isAuthInProgress: () => false,
   },
 });
 

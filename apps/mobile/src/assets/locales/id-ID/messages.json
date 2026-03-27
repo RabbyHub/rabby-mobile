@@ -1008,7 +1008,9 @@
         "receivedDifferentTokenNeedSwap": "Anda menerima token yang berbeda. Anda dapat menukarnya dengan token yang Anda pilih.",
         "beReturnFailed": "Jembatan gagal. Aset Anda telah dikembalikan."
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "Form Diubah",
+      "formChangedAmount": "Jumlahnya telah berubah, mungkin disebabkan oleh pengisian otomatis kata sandi dari keyboard sistem. Silakan tinjau dan masukkan jumlah yang benar."
     },
     "manageAddress": {
       "cancel": "Batal",

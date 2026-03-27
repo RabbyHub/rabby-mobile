@@ -45,6 +45,7 @@ export function BalanceSection({
 
     slider,
     formValues,
+    directSignBtnRef,
     computed: { chainItem, currentToken, currentTokenBalance },
 
     callbacks: {
@@ -54,6 +55,7 @@ export function BalanceSection({
       checkCexSupport,
       onChangeSlider,
       setSlider,
+      // isAuthInProgress,
     },
   } = useSendTokenInternalContext();
 
@@ -111,8 +113,11 @@ export function BalanceSection({
     [onChangeSlider, showBubble],
   );
 
-  const handleAmountChange = useCallback(
-    (value: string) => {
+  const handleAmountChange = useCallback<
+    React.ComponentProps<typeof TokenAmountInput>['onChange'] & object
+  >(
+    value => {
+      if (directSignBtnRef.current?.isAuthInProgress()) return false;
       try {
         handleFieldChange?.('amount', value);
         const sliderValue = value
@@ -128,7 +133,7 @@ export function BalanceSection({
         console.error('handleAmountChange error', e);
       }
     },
-    [handleFieldChange, currentToken, setSlider],
+    [handleFieldChange, currentToken, setSlider, directSignBtnRef],
   );
 
   const sliderDisable = useMemo(() => {
