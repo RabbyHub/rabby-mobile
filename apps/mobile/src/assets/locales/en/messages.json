@@ -2552,6 +2552,9 @@
         "withdraw": "Withdraw"
       },
       "PerpsSelectTokenPopup": {
+        "token": "Token",
+        "noTokens": "No tokens",
+        "balance": "Balance",
         "title": "Select Token to Deposit"
       },
       "positions": "Positions",

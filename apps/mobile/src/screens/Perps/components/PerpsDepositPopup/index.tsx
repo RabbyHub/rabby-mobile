@@ -228,14 +228,28 @@ export const PerpsDepositPopup: React.FC<{
     }
   }, [account?.address]);
 
+  // Wait for real token list to load before auto-selecting
+  const isTokenListReady = useMemo(() => _tokens.length > 0, [_tokens.length]);
+
   useEffect(() => {
-    if (visible && depositTokens.length > 0 && !selectedToken) {
+    if (
+      visible &&
+      isTokenListReady &&
+      depositTokens.length > 0 &&
+      !selectedToken
+    ) {
       setSelectedToken(depositTokens[0] ?? null);
     }
     if (!visible && selectedToken) {
       setSelectedToken(null);
     }
-  }, [visible, selectedToken, depositTokens, setSelectedToken]);
+  }, [
+    visible,
+    isTokenListReady,
+    selectedToken,
+    depositTokens,
+    setSelectedToken,
+  ]);
 
   const { data: _tokenInfo, runAsync: runFetchUsdcToken } = useRequest(
     async () => {
@@ -880,6 +894,7 @@ export const PerpsDepositPopup: React.FC<{
                   ]}
                   textAlignVertical="center"
                   placeholder="$0"
+                  placeholderTextColor={colors2024['neutral-info']}
                   value={displayedAmount}
                   onChangeText={setUsdValue}
                   numberOfLines={1}
