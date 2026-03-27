@@ -73,7 +73,9 @@ export const PercentChangeBadge = ({
         {isClosed ? (
           <Tip
             placement="top"
+            showChildInTooltip={false}
             content={t('page.market.marketNotOpenTooltip')}
+            arrowSize={{ width: 10, height: 4 }}
             pressableProps={{
               onPress: ({ event, turnOn }) => {
                 event.stopPropagation();

@@ -356,6 +356,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         onLpTokenChange?.(false);
         onFavoriteFilterChange?.('all');
         setQuery('');
+        inputRef.current?.clear();
       }
     }, [onFavoriteFilterChange, onLpTokenChange, visible]);
 
@@ -1025,7 +1026,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   searchPlaceholder ||
                   t('component.TokenSelector.searchPlaceHolder2')
                 }
-                value={query}
                 onChangeText={v => {
                   handleQueryChange(v);
                 }}

@@ -1192,14 +1192,14 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 4,
   },
   caValue: {
-    color: ctx.colors2024['neutral-title-1'],
+    color: ctx.colors2024['neutral-foot'],
     fontSize: 14,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
   caValueText: {
-    color: ctx.colors2024['neutral-title-1'],
+    color: ctx.colors2024['neutral-foot'],
   },
   searchTokenDanger: {
     flex: 1,

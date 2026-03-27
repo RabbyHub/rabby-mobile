@@ -195,6 +195,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   btnTitle: {
     color: colors['neutral-title-2'],
   },
+  marketClosedTip: {
+    marginHorizontal: 24,
+  },
 }));
 
 export const BridgeContent = ({ isForMultipleAddress = false }) => {
@@ -1043,7 +1046,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               }
             />
           )}
-          {showClosedMarketTip && <MarketClosedTip />}
+          {showClosedMarketTip && (
+            <MarketClosedTip style={styles.marketClosedTip} />
+          )}
           {noQuote && (
             <>
               {recommendFromToken ? (
