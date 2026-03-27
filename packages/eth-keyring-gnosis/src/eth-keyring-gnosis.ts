@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 /* eslint-disable jsdoc/require-returns */
 import Safe from '@rabby-wallet/gnosis-sdk';
+import type { SafeOpenApiService } from '@rabby-wallet/gnosis-sdk/src/api';
 import type { KeyringIntf } from '@rabby-wallet/keyring-utils';
 import { SigningMethod } from '@safe-global/protocol-kit/dist/src/types/signing';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
@@ -184,10 +185,8 @@ export const generateTypedDataFrom = ({
 export class GnosisKeyring extends EventEmitter implements KeyringIntf {
   static type = keyringType;
 
-  static #apiSet = false;
-  static setApiKey (apiKey: string) {
-    Safe.apiKey = apiKey;
-    GnosisKeyring.#apiSet = true;
+  static setOpenapiService(openapi: SafeOpenApiService) {
+    Safe.openapiService = openapi;
   }
 
   type = keyringType;
@@ -217,9 +216,6 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
 
   constructor(options: DeserializeOption = {}) {
     super();
-    if (!GnosisKeyring.#apiSet) {
-      throw new Error('GnosisKeyring API key is not set, please call GnosisKeyring.setApiKey first');
-    }
 
     this.deserialize(options);
   }
@@ -666,35 +662,6 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
     };
   }
 
-  // async getMessageInfo() {
-  //   if (
-  //     !this.currentSafeMessage ||
-  //     !this.safeInstance ||
-  //     !this.currentSafeMessageHash
-  //   ) {
-  //     throw new Error('No message in Gnosis keyring');
-  //   }
-  //   try {
-  //     const message = await this.safeInstance.apiKit.getMessage(
-  //       this.currentSafeMessageHash,
-  //     );
-
-  //     return {
-  //       safeAddress: this.safeInstance.safeAddress,
-  //       status:
-  //         message.confirmations.length ===
-  //         (await this.safeInstance.getThreshold())
-  //           ? SafeClientTxStatus.MESSAGE_CONFIRMED
-  //           : SafeClientTxStatus.MESSAGE_PENDING_SIGNATURES,
-  //       safeMessageHash: this.currentSafeMessageHash,
-  //       message,
-  //     };
-  //   } catch (e) {
-  //     console.error(e);
-  //     return null;
-  //   }
-  // }
-
   async addMessage({
     signerAddress,
     signature,
@@ -730,7 +697,6 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
     ) {
       throw new Error('No message in Gnosis keyring');
     }
-    const apiKit = Safe.createSafeApiKit(this.safeInstance.network);
     signature = await adjustVInSignature(
       SigningMethod.ETH_SIGN_TYPED_DATA,
       signature,
@@ -738,7 +704,7 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
     const safeSignature = new EthSafeSignature(signerAddress, signature);
     this.currentSafeMessage.addSignature(safeSignature);
 
-    return apiKit.addMessageSignature(
+    return this.safeInstance.addMessageSignature(
       this.currentSafeMessageHash,
       buildSignatureBytes([safeSignature]),
     );

@@ -367,7 +367,7 @@ class ApisSafe {
                 address: safeAddress,
               });
               const threshold = await safe.getThreshold();
-              const { results } = await safe.apiKit.getMessages(safeAddress);
+              const { results } = await safe.getMessages();
               return {
                 networkId,
                 messages: results.filter(
@@ -643,8 +643,7 @@ class ApisSafe {
     chainId: number;
     messageHash: string;
   }) => {
-    const apiKit = Safe.createSafeApiKit(String(chainId));
-    return apiKit.getMessage(messageHash);
+    return Safe.getMessage(messageHash, String(chainId));
   };
 
   getGnosisMessageHash = async ({
