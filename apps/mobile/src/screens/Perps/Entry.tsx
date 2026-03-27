@@ -60,6 +60,9 @@ type PerpsRouteProps = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamsList>
 >;
 
+/**
+ * deprecated, only used for entry from old Perps dapp, will be removed after all users migrated to new Perps dapp
+ */
 export function PerpsScreen() {
   const { t } = useTranslation();
   const { perps, setPerps } = useInnerDappSelection();
@@ -156,12 +159,5 @@ export function PerpsScreen() {
     );
   }
 
-  return (
-    <PerpsOriginScreen
-      activeId={activeId}
-      dappList={PERPS_LIST}
-      onSelectDapp={handleSelectDapp}
-      dappSelectTitle={t('page.perps.dappSelect.title')}
-    />
-  );
+  return <PerpsOriginScreen />;
 }

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Image } from 'react-native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
+import { marketRealtimePriceAtom } from '@/screens/Market/atom';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -13,6 +14,8 @@ import { Skeleton } from '@rneui/themed';
 import { Text } from '@/components/Typography';
 import { PercentChangeBadge } from '@/screens/Watchlist/components/TokenItem';
 import { isNumber } from 'lodash';
+import { useAtomValue } from 'jotai';
+import { selectAtom } from 'jotai/utils';
 
 export const formatPercentageKMB = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -44,6 +47,7 @@ interface TokenListItemProps {
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
   showChainLogo?: boolean;
+  showFdvOnly?: boolean;
 }
 
 const TokenListItemComponent = ({
@@ -52,8 +56,27 @@ const TokenListItemComponent = ({
   leftSlot,
   rightSlot,
   showChainLogo = false,
+  showFdvOnly = false,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const uuid = `${item.chain}:${item.id}`;
+  const realtimePrice = useAtomValue(
+    React.useMemo(
+      () => selectAtom(marketRealtimePriceAtom, state => state[uuid]),
+      [uuid],
+    ),
+  );
+  const displayPrice = useMemo(
+    () => realtimePrice?.price ?? item.price,
+    [realtimePrice, item.price],
+  );
+  const displayPriceChange = useMemo(
+    () => realtimePrice?.price_24h_change ?? item.price_24h_change,
+    [realtimePrice, item.price_24h_change],
+  );
+  const isMarketClosed =
+    (item as TokenMarketTokenItem & { market_status?: string })
+      .market_status === 'closed';
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -84,7 +107,13 @@ const TokenListItemComponent = ({
                 />
               ) : null}
             </View>
-            {item.asset ? (
+            {showFdvOnly ? (
+              !!item.identity?.fdv && (
+                <Text style={styles.tokenFdv}>
+                  {formatUsdValueKMB(item.identity.fdv)}
+                </Text>
+              )
+            ) : item.asset ? (
               <View style={styles.tokenAssetContainer}>
                 {item.asset?.logo ? (
                   <Image
@@ -109,10 +138,14 @@ const TokenListItemComponent = ({
       </View>
       <View style={styles.tokenRightSection}>
         {/* 价格 */}
-        <Text style={styles.priceText}>${formatPrice(item.price)}</Text>
-        {/* 24小时价格变化 */}
-        {isNumber(item.price_24h_change) && (
-          <PercentChangeBadge percent={item.price_24h_change} />
+        <Text style={styles.priceText}>${formatPrice(displayPrice)}</Text>
+        {/* 24小时价格变化,如果市场关闭则显示No Open */}
+        {isMarketClosed ? (
+          <PercentChangeBadge percent={displayPriceChange} isClosed />
+        ) : (
+          isNumber(displayPriceChange) && (
+            <PercentChangeBadge percent={displayPriceChange} />
+          )
         )}
       </View>
       {/* 右slot */}

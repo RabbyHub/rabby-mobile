@@ -15,9 +15,10 @@ import { zCreate, zMutative } from '@/core/utils/reexports';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import {
   AccountsBalanceState,
+  accountsBalanceEvents,
   apisAccountsBalance,
-  balanceAccountsStore,
   fetchTotalBalance,
+  getBalanceCacheAccounts,
 } from './useAccountsBalance';
 import { debounce } from 'lodash';
 import { runIIFEFunc } from '@/core/utils/store';
@@ -290,23 +291,30 @@ const onComputeCombineData = debounce(
 
 export const refreshDayCurve = makeSWRKeyAsyncFunc(
   async ({
+    addresses,
     force = false,
     balanceAccounts,
+    reason,
   }: {
+    addresses?: string[];
     force?: boolean;
     balanceAccounts?: AccountsBalanceState['balance'];
+    reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
   } = {}) => {
-    const { top10Addresses } = await getTop10MyAccounts();
-    try {
-      await fetchData(top10Addresses, force);
-    } catch (error) {
-      console.error('refreshDayCurve fetchData error', error);
+    const top10Addresses =
+      addresses || (await getTop10MyAccounts()).top10Addresses;
+    if (reason !== 'balance_changed' || force) {
+      try {
+        await fetchData(top10Addresses, force);
+      } catch (error) {
+        console.error('refreshDayCurve fetchData error', error);
+      }
     }
 
     const multiTimeStamp = getMultiTimeStamp();
     const totals = apisAccountsBalance.computeTotalBalance(
       top10Addresses,
-      balanceAccounts,
+      balanceAccounts || getBalanceCacheAccounts(),
     );
 
     onComputeCombineData({
@@ -318,7 +326,8 @@ export const refreshDayCurve = makeSWRKeyAsyncFunc(
   },
   ctx => {
     const force: boolean = ctx.args[0]?.force || false;
-    const addresses = Object.keys(ctx.args[0]?.balanceAccounts || {});
+    const addresses = (ctx.args[0]?.addresses ||
+      Object.keys(ctx.args[0]?.balanceAccounts || {})) as string[];
     return `refresh-multi-day-curve-force-${force}-addrs-${addresses
       .sort()
       .join(',')}`;
@@ -326,9 +335,22 @@ export const refreshDayCurve = makeSWRKeyAsyncFunc(
 );
 
 export function startProcessMultiCurveEvents() {
-  balanceAccountsStore.subscribe(state => {
+  accountsBalanceEvents.on(
+    'SELECTION_CHANGED',
+    ({ nextAddresses, balance }) => {
+      refreshDayCurve({
+        addresses: nextAddresses,
+        balanceAccounts: balance,
+        reason: 'selection_changed',
+      });
+    },
+  );
+
+  accountsBalanceEvents.on('BALANCE_CHANGED', ({ addresses, balance }) => {
     refreshDayCurve({
-      balanceAccounts: state.balance,
+      addresses,
+      balanceAccounts: balance,
+      reason: 'balance_changed',
     });
   });
 }

@@ -378,7 +378,10 @@ const ChartHeader = React.memo(
               const nextValue = !svIsFoldMultiChart.value;
               svIsFoldMultiChart.value = nextValue;
               if (!nextValue) {
-                refreshDayCurve({ force: false });
+                refreshDayCurve({
+                  force: false,
+                  reason: 'manual_refresh',
+                });
               }
             }}
             hitSlop={10}

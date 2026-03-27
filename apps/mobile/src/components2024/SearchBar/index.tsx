@@ -132,7 +132,6 @@ export const NextSearchBar = React.forwardRef<NextSearchBarMethods, Props>(
               hitSlop={8}
               onPress={() => {
                 onChangeText?.('');
-                console.log('xx');
               }}>
               {isLight ? (
                 <RcNextCloseCircle

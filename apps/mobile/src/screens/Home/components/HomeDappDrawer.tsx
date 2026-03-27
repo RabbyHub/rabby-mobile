@@ -81,7 +81,7 @@ export const HomeDappDrawer: React.FC<{
     );
   }, [bookmarkList, removedItems]);
 
-  const hasData = list.length > 0;
+  const hasData = bookmarkList.length > 0;
   const isEditing = _isEditing && hasData;
 
   const startEditing = useCallback(() => {
