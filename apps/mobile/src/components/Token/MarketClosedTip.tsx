@@ -3,15 +3,19 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-export const MarketClosedTip = () => {
+export const MarketClosedTip = ({
+  style,
+}: {
+  style?: StyleProp<ViewStyle>;
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <RcIconWarningCircleCC
         width={18}
         height={18}
@@ -30,7 +34,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 6,
     backgroundColor: colors2024['orange-light-1'],
     flexDirection: 'row',
-    alignItems: 'flex-end',
     gap: 2,
   },
   text: {
