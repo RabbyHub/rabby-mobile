@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAtom } from 'jotai';
-import { Pressable, RefreshControl, View } from 'react-native';
+import { useAtom, useSetAtom } from 'jotai';
+import { Pressable, RefreshControl, View, ViewToken } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';
@@ -32,16 +32,31 @@ import {
   watchlistTokenSortAtom,
 } from './sort';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { marketRealtimePriceAtom } from '../Market/atom';
 
-export function WatchlistContent() {
+const VIEWABILITY_CONFIG = {
+  itemVisiblePercentThreshold: 0,
+};
+
+export function WatchlistContent({
+  onVisibleUuidsChange,
+  visibleUuidsTabId = 'watchlist',
+}: {
+  onVisibleUuidsChange?: (tabId: string, uuids: string[]) => void;
+  visibleUuidsTabId?: string;
+}) {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const setMarketRealtimePrice = useSetAtom(marketRealtimePriceAtom);
+  const clearCurrentListRealtimePrice = useCallback(() => {
+    setMarketRealtimePrice({});
+  }, [setMarketRealtimePrice]);
   const {
     data: watchlistTokens,
     handleFetchTokens,
     hasData,
     loading: watchlistLoading,
-  } = useWatchlistTokens();
+  } = useWatchlistTokens(clearCurrentListRealtimePrice);
 
   const [tokenSort, setTokenSort] = useAtom(watchlistTokenSortAtom);
   const [changeSort, setChangeSort] = useAtom(watchlistChangeSortAtom);
@@ -141,6 +156,7 @@ export function WatchlistContent() {
   );
 
   const handleTokenSort = useCallback(() => {
+    clearCurrentListRealtimePrice();
     setTokenSort(prev => {
       if (prev === 'default') {
         return 'desc';
@@ -154,9 +170,16 @@ export function WatchlistContent() {
       return 'default';
     });
     setChangeSort('default');
-  }, [setChangeSort, setTokenSort]);
+    handleFetchTokens(true);
+  }, [
+    clearCurrentListRealtimePrice,
+    handleFetchTokens,
+    setChangeSort,
+    setTokenSort,
+  ]);
 
   const handleChangeSort = useCallback(() => {
+    clearCurrentListRealtimePrice();
     setChangeSort(prev => {
       if (prev === 'default') {
         return 'desc';
@@ -170,7 +193,13 @@ export function WatchlistContent() {
       return 'default';
     });
     setTokenSort('default');
-  }, [setChangeSort, setTokenSort]);
+    handleFetchTokens(true);
+  }, [
+    clearCurrentListRealtimePrice,
+    handleFetchTokens,
+    setChangeSort,
+    setTokenSort,
+  ]);
 
   const renderItem = useCallback(
     ({ item }: { item: TokenDetailWithPriceCurve }) => (
@@ -285,6 +314,19 @@ export function WatchlistContent() {
     }
   }, [handleFetchTokens]);
 
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      onVisibleUuidsChange?.(
+        visibleUuidsTabId,
+        viewableItems
+          .map(item => item.item)
+          .filter(Boolean)
+          .map(item => `${item.chain}:${item.id}`),
+      );
+    },
+    [onVisibleUuidsChange, visibleUuidsTabId],
+  );
+
   return (
     <>
       {showGuide ? (
@@ -310,6 +352,8 @@ export function WatchlistContent() {
           stickyHeaderIndices={[0]}
           ListEmptyComponent={renderListEmptyComponent}
           ListFooterComponent={renderListFooter}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={VIEWABILITY_CONFIG}
           refreshControl={
             <RefreshControl
               refreshing={isManualRefreshing}

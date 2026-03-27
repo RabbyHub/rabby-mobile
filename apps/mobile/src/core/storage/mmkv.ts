@@ -287,20 +287,23 @@ export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
   options?: {
+    getOnInit?: boolean;
     storage?: JotaiStringStorageOption;
     setupSubscribe?(ctx: {
       jsonStore: SyncStorage<T>;
     }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;
   },
 ) => {
-  const { storage } = options || {};
+  const { storage, getOnInit = false } = options || {};
   const jsonStore = makeJotaiJsonStore<T>({ storage });
 
   if (typeof options?.setupSubscribe === 'function') {
     jsonStore.subscribe = options?.setupSubscribe({ jsonStore });
   }
 
-  return atomWithStorage<T>(key, initialValue, jsonStore);
+  return atomWithStorage<T>(key, initialValue, jsonStore, {
+    getOnInit,
+  });
 };
 
 const defaultMigrateFromAtom: MigrateFromAtom<any> = ctx => {

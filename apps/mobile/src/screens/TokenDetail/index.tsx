@@ -46,6 +46,7 @@ import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
+import { IconRightCC } from './components/IconRightCC';
 
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
@@ -197,10 +198,17 @@ const TokenDetailContent = () => {
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
-  const { amountSum, usdValue, percentChange, isLoss, is24hNoChange, price } =
-    useSingleTokenBalance({
-      token: baseTokenInfo || token,
-    });
+  const {
+    amountSum,
+    usdValue,
+    percentChange,
+    has24hChangeData,
+    isLoss,
+    is24hNoChange,
+    price,
+  } = useSingleTokenBalance({
+    token: baseTokenInfo || token,
+  });
 
   const onRefresh = useCallback(async () => {
     refreshBaseTokenInfo();
@@ -215,56 +223,78 @@ const TokenDetailContent = () => {
             <Pressable
               style={[
                 styles.floatingBarContent,
-                isLoss ? styles.lossShadow : styles.upShadow,
-                {
-                  borderColor: is24hNoChange
-                    ? colors2024['neutral-secondary']
-                    : isLoss
-                    ? colors2024['red-disable']
-                    : colors2024['green-light-2'],
-                  backgroundColor: is24hNoChange
-                    ? colors2024['neutral-bg-1']
-                    : isLoss
-                    ? colors2024['red-light-1']
-                    : colors2024['green-light-1'],
-                },
+                has24hChangeData
+                  ? [
+                      isLoss ? styles.lossShadow : styles.upShadow,
+                      {
+                        borderColor: is24hNoChange
+                          ? colors2024['neutral-secondary']
+                          : isLoss
+                          ? colors2024['red-disable']
+                          : colors2024['green-light-2'],
+                        backgroundColor: is24hNoChange
+                          ? colors2024['neutral-bg-1']
+                          : isLoss
+                          ? colors2024['red-light-1']
+                          : colors2024['green-light-1'],
+                      },
+                    ]
+                  : styles.marketDataBarContent,
               ]}
               onPress={handleOpenTokenMarketInfo}>
-              <View style={styles.floatPriceContainer}>
-                <Text style={styles.floatBalanceTitle}>
-                  {t('page.tokenDetail.price')}:
-                </Text>
-                <Text style={styles.floatPrice}>
-                  {price ? `${formatPrice(price)}` : ' --'}
-                </Text>
-              </View>
-              <View style={styles.floatBalanceContainer}>
-                <Text
-                  style={[
-                    styles.floatPriceChange,
-                    {
-                      color: is24hNoChange
-                        ? colors2024['neutral-body']
-                        : isLoss
-                        ? colors2024['red-default']
-                        : colors2024['green-default'],
-                    },
-                  ]}>
-                  {is24hNoChange ? '0.0%' : isLoss ? '-' : '+'}
-                  {percentChange}
-                </Text>
-                <RcIconRightArrowCC
-                  width={14}
-                  height={14}
-                  color={
-                    is24hNoChange
-                      ? colors2024['neutral-body']
-                      : isLoss
-                      ? colors2024['red-default']
-                      : colors2024['green-default']
-                  }
-                />
-              </View>
+              {has24hChangeData ? (
+                <>
+                  <View style={styles.floatPriceContainer}>
+                    <Text style={styles.floatBalanceTitle}>
+                      {t('page.tokenDetail.price')}:
+                    </Text>
+                    <Text style={styles.floatPrice}>
+                      {price ? `${formatPrice(price)}` : ' --'}
+                    </Text>
+                  </View>
+                  <View style={styles.floatBalanceContainer}>
+                    <Text
+                      style={[
+                        styles.floatPriceChange,
+                        {
+                          color: is24hNoChange
+                            ? colors2024['neutral-body']
+                            : isLoss
+                            ? colors2024['red-default']
+                            : colors2024['green-default'],
+                        },
+                      ]}>
+                      {is24hNoChange ? '' : isLoss ? '-' : '+'}
+                      {percentChange}
+                    </Text>
+                    <RcIconRightArrowCC
+                      width={14}
+                      height={14}
+                      color={
+                        is24hNoChange
+                          ? colors2024['neutral-body']
+                          : isLoss
+                          ? colors2024['red-default']
+                          : colors2024['green-default']
+                      }
+                    />
+                  </View>
+                </>
+              ) : (
+                <View style={styles.marketDataContainer}>
+                  <Text style={styles.marketDataText}>
+                    {t('page.tokenDetail.tabs.marketData')}
+                  </Text>
+                  <View style={styles.marketDataIconContainer}>
+                    <IconRightCC
+                      width={14}
+                      height={14}
+                      rectColor={colors2024['neutral-line']}
+                      pathColor={colors2024['neutral-title-1']}
+                    />
+                  </View>
+                </View>
+              )}
             </Pressable>
           )}
         </View>
@@ -281,6 +311,7 @@ const TokenDetailContent = () => {
     baseTokenInfo,
     colors2024,
     handleOpenTokenMarketInfo,
+    has24hChangeData,
     is24hNoChange,
     isLoss,
     percentChange,
@@ -435,6 +466,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: 16,
       borderBottomRightRadius: 2,
     },
+    marketDataBarContent: {
+      height: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      backgroundColor: colors2024['neutral-bg-1'],
+      borderRadius: 16,
+      borderBottomRightRadius: 2,
+    },
     upShadow: {
       ...Platform.select({
         ios: {
@@ -476,6 +517,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
+    },
+    marketDataContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      minWidth: 90,
+    },
+    marketDataText: {
+      color: colors2024['neutral-body'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+    },
+    marketDataIconContainer: {
+      width: 14,
+      height: 14,
+      borderRadius: 999,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     floatPrice: {
       color: colors2024['neutral-title-1'],

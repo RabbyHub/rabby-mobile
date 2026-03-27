@@ -17,7 +17,10 @@ export const PerpsMarketSectionHeader: React.FC = () => {
 
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{t('page.perps.explorePerps')}</Text>
+      <View style={styles.sectionTitleRow}>
+        <View style={styles.sectionTitleBar} />
+        <Text style={styles.sectionTitle}>{t('page.perps.explorePerps')}</Text>
+      </View>
       <TouchableOpacity
         style={styles.sectionAction}
         onPress={() => {
@@ -51,9 +54,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sectionTitleBar: {
+    width: 4,
+    height: 20,
+    borderRadius: 100,
+    backgroundColor: '#50D2C1',
   },
   sectionTitle: {
     fontFamily: 'SF Pro Rounded',

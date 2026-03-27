@@ -10,5 +10,5 @@ export const BrowserOrPerpsPosition: React.FC = () => {
     return <BrowserSearchEntry />;
   }
 
-  return <PerpsMultiAssetPosition source="home" />;
+  return <PerpsMultiAssetPosition />;
 };

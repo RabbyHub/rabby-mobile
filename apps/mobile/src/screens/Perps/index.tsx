@@ -1,15 +1,16 @@
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, RefreshControl, TouchableOpacity, View } from 'react-native';
+import {
+  FlatList,
+  ImageBackground,
+  RefreshControl,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { Button } from '@/components2024/Button';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
@@ -19,10 +20,7 @@ import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
-import {
-  usePerpsPopupState,
-  useSelectedToken,
-} from './hooks/usePerpsPopupState';
+import { usePerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
@@ -34,17 +32,7 @@ import { sortBy } from 'lodash';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
-import { PerpsSelectTokenPopup } from './components/PerpsDepositPopup/PerpsSelectTokenPopup';
-import { PerpsDepositTokenModal } from './components/PerpsDepositPopup/PerpsDepositTokenModal';
-import { openapi } from '@/core/request';
-import {
-  ARB_USDC_TOKEN_ID,
-  ARB_USDC_TOKEN_SERVER_CHAIN,
-  HYPE_USDC_TOKEN_ID,
-  HYPE_USDC_TOKEN_SERVER_CHAIN,
-} from '@/constant/perps';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { PerpHeader } from './components/PerpHeader';
+import { PerpsNativeHeader } from './components/PerpsHeaderTitle';
 import { PerpSearchListPopup } from './components/PerpSearchListPopup';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
@@ -56,30 +44,15 @@ import { PerpsInvitePopup } from './components/PerpsInvitePopup';
 import { checkPerpsReference, getStatsReportSide } from '@/utils/perps';
 import { perpsService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
-import {
-  DappFrameAccountHeader,
-  DappSelectItem,
-} from '@/components2024/DappFrameAccountHeader';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import BigNumber from 'bignumber.js';
 
-type PerpsNativeScreenProps = {
-  activeId: string;
-  dappList: DappSelectItem[];
-  onSelectDapp: (item: DappSelectItem) => void;
-  dappSelectTitle?: string;
-};
-
-export const PerpsOriginScreen = ({
-  activeId,
-  dappList,
-  onSelectDapp,
-  dappSelectTitle,
-}: PerpsNativeScreenProps) => {
+export const PerpsOriginScreen = () => {
   const { t } = useTranslation();
 
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { width: screenWidth } = useWindowDimensions();
 
   const navigation = useRabbyAppNavigation();
 
@@ -111,41 +84,7 @@ export const PerpsOriginScreen = ({
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
 
-  // use switchPerpsAccount global function to switch
-  // useEffect(() => {
-  //   if (_account) {
-  //     if (
-  //       currentPerpsAccount?.address === _account.address &&
-  //       currentPerpsAccount?.type === _account.type
-  //     ) {
-  //       if (fromName) {
-  //         navigation.push(RootNames.StackTransaction, {
-  //           screen: RootNames.PerpsMarketDetail,
-  //           params: {
-  //             market: fromName,
-  //           },
-  //         });
-  //       }
-  //     } else {
-  //       loginWithNoHardwareSign(_account).then(loginSuccess => {
-  //         if (loginSuccess && fromName) {
-  //           navigation.push(RootNames.StackTransaction, {
-  //             screen: RootNames.PerpsMarketDetail,
-  //             params: {
-  //               market: fromName,
-  //             },
-  //           });
-  //         }
-  //         setInitialized(true);
-  //       });
-  //     }
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
-
-  const [selectedToken, setSelectedToken] = useSelectedToken();
   const [popupState, setPopupState] = usePerpsPopupState();
-  const [isShowModal, setIsShowModal] = useState(false);
 
   // Scroll related states
   const flatListRef = useRef<FlatList>(null);
@@ -219,24 +158,7 @@ export const PerpsOriginScreen = ({
     currentPerpsAccount,
   });
 
-  const handlePressAccountList = useCallback(() => {
-    setPopupState(prev => ({
-      ...prev,
-      isShowLoginPopup: !prev.isShowLoginPopup,
-    }));
-  }, [setPopupState]);
-
-  useEffect(() => {
-    apisPerps.getHasDoneNewUserProcess().then(hasDoneNewUserProcess => {
-      if (!hasDoneNewUserProcess) {
-        apisPerps.setHasDoneNewUserProcess(true);
-        setPopupState(prev => ({
-          ...prev,
-          isShowGuidePopup: true,
-        }));
-      }
-    });
-  }, [setPopupState]);
+  // Guide popup is now triggered by LearnMore card in PerpsAccountCard
 
   const onRefresh = useMemoizedFn(() => {
     if (isLogin) {
@@ -315,6 +237,7 @@ export const PerpsOriginScreen = ({
     );
     return {
       distanceLiquidation,
+      isCross: selectedPosition.position.leverage.type === 'cross',
       direction:
         Number(selectedPosition.position.szi || 0) > 0
           ? 'Long'
@@ -434,15 +357,16 @@ export const PerpsOriginScreen = ({
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
-        <DappFrameAccountHeader
-          dappSelectTitle={dappSelectTitle}
-          account={currentPerpsAccount || undefined}
-          activeId={activeId}
-          dAppList={dappList}
-          onSelectDapp={onSelectDapp}
-          onPressAccountList={handlePressAccountList}
-          isShowAccountList={popupState.isShowLoginPopup}
-          disableAccountPopup
+        {!isLight && (
+          <ImageBackground
+            source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}
+            resizeMode="cover"
+            style={[styles.topBg, { width: screenWidth, height: screenWidth }]}
+          />
+        )}
+        <PerpsNativeHeader
+          account={currentPerpsAccount}
+          localLoadingHistory={localLoadingHistory}
         />
         {!hasPermission ? <PerpsRegionAlert /> : null}
         {!isInitialized ? (
@@ -481,18 +405,40 @@ export const PerpsOriginScreen = ({
             )}
             {hasPermission && isLogin && (
               <View style={styles.footer}>
-                <Button
-                  type="hyperliquid"
-                  titleStyle={styles.openPositionBtn}
-                  title={t('page.perps.searchPerpsPopup.openPosition')}
-                  onPress={() => {
-                    setPopupState(prev => ({
-                      ...prev,
-                      isShowSearchListPopup: true,
-                      searchListOpenFrom: 'openPosition',
-                    }));
-                  }}
-                />
+                <View style={styles.footerBtns}>
+                  <View style={styles.footerBtnItem}>
+                    <Button
+                      type="primary"
+                      titleStyle={styles.openPositionBtn}
+                      buttonStyle={styles.longBtn}
+                      title={t('page.perpsDetail.action.long')}
+                      onPress={() => {
+                        setPopupState(prev => ({
+                          ...prev,
+                          isShowSearchListPopup: true,
+                          searchListOpenFrom: 'openPosition',
+                          searchListDirection: 'Long' as const,
+                        }));
+                      }}
+                    />
+                  </View>
+                  <View style={styles.footerBtnItem}>
+                    <Button
+                      type="primary"
+                      titleStyle={styles.openPositionBtn}
+                      buttonStyle={styles.shortBtn}
+                      title={t('page.perpsDetail.action.short')}
+                      onPress={() => {
+                        setPopupState(prev => ({
+                          ...prev,
+                          isShowSearchListPopup: true,
+                          searchListOpenFrom: 'openPosition',
+                          searchListDirection: 'Short' as const,
+                        }));
+                      }}
+                    />
+                  </View>
+                </View>
               </View>
             )}
           </View>
@@ -556,12 +502,6 @@ export const PerpsOriginScreen = ({
       <PerpsDepositPopup
         account={currentPerpsAccount}
         visible={popupState.isShowDepositPopup}
-        showSelectTokenPopup={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: true,
-          }));
-        }}
         onClose={() => {
           setPopupState(prev => ({
             ...prev,
@@ -579,64 +519,6 @@ export const PerpsOriginScreen = ({
           } catch (e) {
             console.error(e);
           }
-        }}
-      />
-      <PerpsSelectTokenPopup
-        account={currentPerpsAccount}
-        visible={popupState.isShowDepositTokenPopup}
-        onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: false,
-          }));
-        }}
-        onSelect={async token => {
-          setSelectedToken(token);
-          if (
-            (token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-              isSameAddress(token.id, ARB_USDC_TOKEN_ID)) ||
-            (token.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
-              isSameAddress(token.id, HYPE_USDC_TOKEN_ID))
-          ) {
-            setPopupState(prev => ({
-              ...prev,
-              isShowDepositTokenPopup: false,
-              isShowDepositPopup: true,
-            }));
-            return;
-          }
-
-          const res = await openapi.getPerpsBridgeIsSupportToken({
-            token_id: token.id,
-            chain_id: token.chain,
-          });
-
-          if (res?.success) {
-            // bridge token with liFi dex
-            setPopupState(prev => ({
-              ...prev,
-              isShowDepositTokenPopup: false,
-              isShowDepositPopup: true,
-            }));
-            // setClickLoading(false);
-          } else {
-            setIsShowModal(true);
-          }
-        }}
-      />
-      <PerpsDepositTokenModal
-        visible={isShowModal}
-        onCancel={() => {
-          setIsShowModal(false);
-        }}
-        token={selectedToken}
-        onNavigate={() => {
-          setIsShowModal(false);
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositTokenPopup: false,
-            isShowDepositPopup: false,
-          }));
         }}
       />
       <PerpsWithdrawPopup
@@ -660,12 +542,16 @@ export const PerpsOriginScreen = ({
         openFromSource={popupState.searchListOpenFrom}
         onSelect={name => {
           scrollToTop();
+          const hasPosition = positionCoinSet.has(name);
           naviPush(RootNames.StackTransaction, {
             screen: RootNames.PerpsMarketDetail,
             params: {
               market: name,
               fromSource: 'openPosition',
-              showOpenPosition: true,
+              showOpenPosition: !hasPosition,
+              direction: hasPosition
+                ? undefined
+                : popupState.searchListDirection,
             },
           });
         }}
@@ -681,6 +567,7 @@ export const PerpsOriginScreen = ({
       {/* Shared Risk Level Popup */}
       {riskPopupData && (
         <PerpsRiskLevelPopup
+          isCross={riskPopupData.isCross}
           direction={riskPopupData.direction}
           visible={!!riskPopupData}
           pxDecimals={riskPopupData?.pxDecimals || 2}
@@ -706,10 +593,16 @@ export const PerpsOriginScreen = ({
 };
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
+  topBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: -1,
+  },
   container: {
     flex: 1,
     height: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   screenContainer: {
     position: 'relative',
@@ -723,16 +616,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     // paddingBottom: 10,
   },
   footer: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
     paddingTop: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 48,
   },
   backToTopButton: {
     position: 'absolute',
-    right: 16,
+    right: 12,
     bottom: 140,
     width: 50,
     height: 50,
@@ -749,8 +640,24 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   listFooter: {
     height: 56,
   },
+  footerBtns: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  footerBtnItem: {
+    flex: 1,
+  },
+  longBtn: {
+    backgroundColor: colors2024['green-default'],
+    height: 52,
+  },
+  shortBtn: {
+    backgroundColor: colors2024['red-default'],
+    height: 52,
+  },
   openPositionBtn: {
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
   },
 }));

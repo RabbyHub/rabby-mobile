@@ -48,14 +48,11 @@ import {
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 import { trigger } from 'react-native-haptic-feedback';
 import { useAppState } from '@react-native-community/hooks';
-import { PerpsSelectTokenPopup } from '../Perps/components/PerpsDepositPopup/PerpsSelectTokenPopup';
-import {
-  usePerpsPopupState,
-  useSelectedToken,
-} from '../Perps/hooks/usePerpsPopupState';
+
+import { usePerpsPopupState } from '../Perps/hooks/usePerpsPopupState';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { openapi } from '@/core/request';
-import { PerpsDepositTokenModal } from '../Perps/components/PerpsDepositPopup/PerpsDepositTokenModal';
+
 import Toast from 'react-native-root-toast';
 import { PerpSearchListPopup } from '../Perps/components/PerpSearchListPopup';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
@@ -69,6 +66,7 @@ import { stats } from '@/utils/stats';
 import { getStatsReportSide } from '@/utils/perps';
 import { APP_VERSIONS } from '@/constant';
 import { Text } from '@/components/Typography';
+import { PerpsGuideEntryPopup } from './components/PerpsGuideEntryPopup';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -86,7 +84,12 @@ export const PerpsMarketDetailScreen = () => {
       >
     >();
 
-  const { market: marketName, fromSource, showOpenPosition } = route.params;
+  const {
+    market: marketName,
+    fromSource,
+    showOpenPosition,
+    direction,
+  } = route.params;
   const [coin, setCoin] = useState(marketName);
 
   const {
@@ -106,18 +109,41 @@ export const PerpsMarketDetailScreen = () => {
     handleDeleteAgent,
   } = usePerpsState();
   // const hasPermission = true;
-  const [isShowModal, setIsShowModal] = useState(false);
-  const [amountVisible, setAmountVisible] = useState(false);
-  const [selectedToken, setSelectedToken] = useSelectedToken();
   const [showRiskPopup, setShowRiskPopup] = useState(false);
   const [selectedInterval, setSelectedInterval] =
     React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
-  const [showDepositTokenPopup, setShowDepositTokenPopup] = useState(false);
   const [showSearchListPopup, setShowSearchListPopup] = useState(false);
+  const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
   const coinNameRef = useRef(coin);
   useEffect(() => {
     coinNameRef.current = coin;
   }, [coin]);
+
+  // Pre-fetch guide popup status on mount, then use synchronously in beforeRemove
+  const hasShownGuideRef = useRef(true);
+  useEffect(() => {
+    if (fromSource !== 'homePagePositionList') {
+      return;
+    }
+    apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
+      hasShownGuideRef.current = hasShown;
+    });
+  }, [fromSource]);
+
+  // Intercept back navigation to show guide popup for homePagePositionList users
+  useEffect(() => {
+    if (fromSource !== 'homePagePositionList') {
+      return;
+    }
+    const unsubscribe = navigation.addListener('beforeRemove', e => {
+      if (hasShownGuideRef.current) {
+        return;
+      }
+      e.preventDefault();
+      setShowGuideEntryPopup(true);
+    });
+    return unsubscribe;
+  }, [navigation, fromSource]);
 
   const market = useMemo(() => {
     return marketDataMap[coin];
@@ -129,7 +155,7 @@ export const PerpsMarketDetailScreen = () => {
 
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
-  >('Long');
+  >(direction || 'Long');
   const [closePositionVisible, setClosePositionVisible] = React.useState(false);
   const [addPositionVisible, setAddPositionVisible] = React.useState(false);
 
@@ -391,29 +417,26 @@ export const PerpsMarketDetailScreen = () => {
       <PerpsHeaderTitle
         // account={currentPerpsAccount}
         popupIsOpen={showSearchListPopup}
-        market={market}
+        coin={coin}
+        logoUrl={currentAssetCtx?.logoUrl}
         onSelectCoin={() => {
           setShowSearchListPopup(true);
         }}
       />
     );
   }, [
-    market,
     setShowSearchListPopup,
     showSearchListPopup,
+    coin,
+    currentAssetCtx?.logoUrl,
     // currentPerpsAccount,
   ]);
 
-  const HeaderRight = useCallback(() => {
-    return <PerpsHeaderRight marketName={coin} />;
-  }, [coin]);
-
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: HeaderTitle,
-      headerRight: HeaderRight,
+      header: HeaderTitle,
     });
-  }, [market, navigation, HeaderTitle, HeaderRight]);
+  }, [navigation, HeaderTitle]);
 
   // if (!market) {
   //   navigation.goBack();
@@ -444,7 +467,10 @@ export const PerpsMarketDetailScreen = () => {
               <PerpsDepositCard
                 availableBalance={availableBalance}
                 onDepositPress={() => {
-                  setShowDepositTokenPopup(true);
+                  setPopupState(prev => ({
+                    ...prev,
+                    isShowDepositPopup: true,
+                  }));
                 }}
               />
             ) : null}
@@ -530,12 +556,12 @@ export const PerpsMarketDetailScreen = () => {
 
       <PerpsDepositPopup
         account={currentPerpsAccount}
-        visible={amountVisible}
+        visible={popupState.isShowDepositPopup}
         onClose={() => {
-          setAmountVisible(false);
-        }}
-        showSelectTokenPopup={() => {
-          setShowDepositTokenPopup(true);
+          setPopupState(prev => ({
+            ...prev,
+            isShowDepositPopup: false,
+          }));
         }}
         onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
           try {
@@ -547,40 +573,6 @@ export const PerpsMarketDetailScreen = () => {
             );
           } catch (e) {
             console.error(e);
-          }
-        }}
-      />
-      <PerpsSelectTokenPopup
-        account={currentPerpsAccount}
-        visible={showDepositTokenPopup}
-        onClose={() => {
-          setShowDepositTokenPopup(false);
-        }}
-        onSelect={async token => {
-          setSelectedToken(token);
-          if (
-            (token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-              isSameAddress(token.id, ARB_USDC_TOKEN_ID)) ||
-            (token.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
-              isSameAddress(token.id, HYPE_USDC_TOKEN_ID))
-          ) {
-            setAmountVisible(true);
-            setShowDepositTokenPopup(false);
-            return;
-          }
-
-          const res = await openapi.getPerpsBridgeIsSupportToken({
-            token_id: token.id,
-            chain_id: token.chain,
-          });
-
-          if (res?.success) {
-            // bridge token with liFi dex
-            setAmountVisible(true);
-            setShowDepositTokenPopup(false);
-            // setClickLoading(false);
-          } else {
-            setIsShowModal(true);
           }
         }}
       />
@@ -598,18 +590,6 @@ export const PerpsMarketDetailScreen = () => {
             ...prev,
             isShowDeleteAgentPopup: false,
           }));
-        }}
-      />
-      <PerpsDepositTokenModal
-        visible={isShowModal}
-        onCancel={() => {
-          setIsShowModal(false);
-        }}
-        token={selectedToken}
-        onNavigate={() => {
-          setIsShowModal(false);
-          setShowDepositTokenPopup(false);
-          setAmountVisible(false);
         }}
       />
       <PerpsOpenPositionPopup
@@ -730,6 +710,7 @@ export const PerpsMarketDetailScreen = () => {
               marginMode: positionData.type,
               direction: positionData?.direction as 'Long' | 'Short',
               midPx: activeAssetCtx?.markPx || '0',
+              isAddingPosition: true,
             });
             if (res) {
               const { avgPx, totalSz } = res;
@@ -789,6 +770,15 @@ export const PerpsMarketDetailScreen = () => {
         marketData={marketData}
         positionAndOpenOrders={positionAndOpenOrders}
       />
+      <PerpsGuideEntryPopup
+        visible={showGuideEntryPopup}
+        onClose={() => {
+          apisPerps.setHasShownPerpsGuidePopup(true);
+          setShowGuideEntryPopup(false);
+          hasShownGuideRef.current = true;
+          navigation.goBack();
+        }}
+      />
     </>
   );
 };
@@ -797,7 +787,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     height: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     position: 'relative',
   },
   scrollContent: {

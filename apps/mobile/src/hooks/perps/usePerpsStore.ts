@@ -246,19 +246,22 @@ const setClearinghouseStateMap = (payload: {
   const hasPositions =
     data && data.assetPositions && data.assetPositions.length > 0;
 
-  if (!hasPositions) {
-    const prevState = perpsStore.getState().clearinghouseStateMap[address];
-    if (prevState) {
-      perpsStore.setState(prev => {
-        const { [address]: _, ...rest } = prev.clearinghouseStateMap;
-        return { ...prev, clearinghouseStateMap: rest };
-      });
-    }
+  if (!data) {
     return;
   }
+  // if (!hasPositions) {
+  //   const prevState = perpsStore.getState().clearinghouseStateMap[address];
+  //   if (prevState) {
+  //     perpsStore.setState(prev => {
+  //       const { [address]: _, ...rest } = prev.clearinghouseStateMap;
+  //       return { ...prev, clearinghouseStateMap: rest };
+  //     });
+  //   }
+  //   return;
+  // }
 
   const prevState = perpsStore.getState().clearinghouseStateMap[address];
-  if (!prevState || data.time > prevState.time) {
+  if (!prevState || data?.time > prevState.time) {
     perpsStore.setState(prev => ({
       ...prev,
       clearinghouseStateMap: { ...prev.clearinghouseStateMap, [address]: data },

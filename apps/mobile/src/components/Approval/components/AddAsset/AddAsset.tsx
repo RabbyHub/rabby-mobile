@@ -121,31 +121,32 @@ export const AddAsset = ({
         reason: '',
       };
     }
-    if (!token)
+    if (!token) {
       return {
         disable: true,
         reason: t('page.addToken.noTokenFound'),
       };
-    if (token?.is_core) {
-      return {
-        disable: true,
-        reason: t('page.addToken.tokenSupported'),
-      };
     }
-    const isCustom = customTokens.some(
-      t => isSameAddress(t.address, token.id) && token.chain === t.chain,
-    );
-    if (isCustom) {
-      return {
-        disable: true,
-        reason: t('page.addToken.tokenCustomized'),
-      };
-    }
+    // if (token?.is_core) {
+    //   return {
+    //     disable: true,
+    //     reason: t('page.addToken.tokenSupported'),
+    //   };
+    // }
+    // const isCustom = customTokens.some(
+    //   t => isSameAddress(t.address, token.id) && token.chain === t.chain,
+    // );
+    // if (isCustom) {
+    //   return {
+    //     disable: true,
+    //     reason: t('page.addToken.tokenCustomized'),
+    //   };
+    // }
     return {
       disable: false,
       reason: '',
     };
-  }, [customTestnetToken, token, t, customTokens, isCustomTestnetTokenAdded]);
+  }, [customTestnetToken, token, t, isCustomTestnetTokenAdded]);
 
   const supportChains = useMemo(() => {
     const chains: CHAINS_ENUM[] = [];

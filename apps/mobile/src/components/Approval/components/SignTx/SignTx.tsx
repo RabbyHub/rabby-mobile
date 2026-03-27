@@ -81,7 +81,7 @@ import {
   useCheckGasAndNonce,
   getRecommendNonce,
   getRecommendGas,
-  getNativeTokenBalance,
+  getGasTokenBalance,
   explainGas,
 } from './calc';
 import { TxTypeComponent } from './TxTypeComponent';
@@ -124,6 +124,7 @@ import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { calcGasLimit } from '@/core/apis/transactions';
 import { getEIP7702MiniGasLimit } from '@/utils/7702';
 import { Text } from '@/components/Typography';
+import { GasTokenInfo, isTempoChain } from '@/utils/tempo';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -310,7 +311,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   // const scrollRefSize = useSize(scrollRef);
   // const scrollInfo = useScroll(scrollRef);
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
-  if (!chain) throw new Error('No support chain found');
+  if (!chain) {
+    throw new Error('No support chain found');
+  }
   const [support1559, setSupport1559] = useState(chain.eip['1559']);
   const [footerShowShadow, setFooterShowShadow] = useState(false);
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
@@ -368,8 +371,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   });
 
   let updateNonce = true;
-  if (isCancel || isSpeedUp || (nonce && from === to) || nonceChanged)
+  if (isCancel || isSpeedUp || (nonce && from === to) || nonceChanged) {
     updateNonce = false;
+  }
 
   const getGasPrice = () => {
     let result = '';
@@ -405,6 +409,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const [safeInfo, setSafeInfo] = useState<BasicSafeInfo | null>(null);
   const [maxPriorityFee, setMaxPriorityFee] = useState(0);
   const [nativeTokenBalance, setNativeTokenBalance] = useState('0x0');
+  const [gasToken, setGasToken] = useState<GasTokenInfo | undefined>(undefined);
   const { executeEngine } = useSecurityEngine();
   const [multiActionList, setMultiActionList] = useState<
     ParsedTransactionActionData[]
@@ -425,16 +430,23 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     const enableResults = engineResults.filter(result => {
       return result.enable && !currentTx.processedRules.includes(result.id);
     });
-    if (enableResults.some(result => result.level === Level.FORBIDDEN))
+    if (enableResults.some(result => result.level === Level.FORBIDDEN)) {
       return Level.FORBIDDEN;
-    if (enableResults.some(result => result.level === Level.DANGER))
+    }
+    if (enableResults.some(result => result.level === Level.DANGER)) {
       return Level.DANGER;
-    if (enableResults.some(result => result.level === Level.WARNING))
+    }
+    if (enableResults.some(result => result.level === Level.WARNING)) {
       return Level.WARNING;
+    }
     return undefined;
   }, [engineResults, currentTx]);
 
   const isGasTopUp = tx.to?.toLowerCase() === GAS_TOP_UP_ADDRESS.toLowerCase();
+  const checkTxValueInBalance = useMemo(
+    () => !isTempoChain(chain?.serverId),
+    [chain?.serverId],
+  );
 
   const gasCalcMethod = useCallback(
     (price: number) => {
@@ -446,6 +458,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         tx,
         gasLimit,
         account: currentAccount,
+        gasTokenDecimals: gasToken?.decimals || 18,
       });
     },
     [
@@ -453,6 +466,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       currentAccount,
       gasLimit,
       gasUsed,
+      gasToken?.decimals,
       tx,
       txDetail?.native_token.price,
     ],
@@ -467,6 +481,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     gasLimit,
     isReady,
     account: currentAccount,
+    gasTokenDecimals: gasToken?.decimals || 18,
   });
 
   const checkErrors = useCheckGasAndNonce({
@@ -481,6 +496,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     isGnosisAccount: isGnosisAccount,
     nativeTokenBalance,
     recommendGasLimitRatio,
+    gasTokenDecimals: gasToken?.decimals || 18,
+    checkTxValueInBalance,
   });
 
   const isGasNotEnough = useMemo(() => {
@@ -683,6 +700,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             needRatio,
             account: currentAccount,
             preparedBlock: blockPromise,
+            gasTokenDecimals: gasToken?.decimals || 18,
+            checkTxValueInBalance,
           });
           setRecommendGasLimitRatio(_recommendGasLimitRatio);
           setGasLimit(_gasLimit);
@@ -981,7 +1000,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
 
   const handleAllow = async () => {
-    if (!selectedGas) return;
+    if (!selectedGas) {
+      return;
+    }
 
     if (activeApprovalPopup()) {
       return;
@@ -1140,7 +1161,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (gas.level === 'custom') {
       setGasList(
         (gasList || []).map(item => {
-          if (item.level === 'custom') return gas;
+          if (item.level === 'custom') {
+            return gas;
+          }
           return item;
         }),
       );
@@ -1449,13 +1472,14 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         false,
       );
       try {
-        const balance = await getNativeTokenBalance({
+        const balanceInfo = await getGasTokenBalance({
           chainId,
           address: currentAccount.address,
           account: currentAccount,
         });
 
-        setNativeTokenBalance(balance);
+        setNativeTokenBalance(balanceInfo.rawBalance);
+        setGasToken(balanceInfo.token);
       } catch (e) {
         if (await apiCustomRPC.hasCustomRPC(chain.enum)) {
           setIsShowCustomRPCErrorModal(true);
@@ -1680,7 +1704,9 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   }, [handleIsGnosisAccountChange, isGnosisAccount]);
 
   useEffect(() => {
-    if (!inited) return;
+    if (!inited) {
+      return;
+    }
     explain();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inited, updateId]);
@@ -1890,6 +1916,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 errors={checkErrors}
                 engineResults={engineResults}
                 nativeTokenBalance={nativeTokenBalance}
+                gasToken={gasToken}
                 gasPriceMedian={gasPriceMedian}
                 account={currentAccount}
               />

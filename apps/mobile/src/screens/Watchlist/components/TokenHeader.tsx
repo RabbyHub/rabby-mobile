@@ -13,6 +13,11 @@ interface TokenHeaderProps {
   onTokenSort: () => void;
   changeSort: SortState;
   onChangeSort: () => void;
+  fdvSort?: SortState;
+  onFdvSort?: () => void;
+  showFdvSort?: boolean;
+  disableSort?: boolean;
+  disableLeftSort?: boolean;
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -28,6 +33,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tokenCell: {
     flex: 2,
+  },
+  tokenCompoundCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   priceCell: {
     justifyContent: 'center',
@@ -71,6 +81,11 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
   onTokenSort,
   changeSort,
   onChangeSort,
+  fdvSort = 'default',
+  onFdvSort,
+  showFdvSort = false,
+  disableSort = false,
+  disableLeftSort = false,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -113,28 +128,73 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
 
   return (
     <View style={styles.headerRow}>
-      <Pressable
-        style={[styles.headerCell, styles.tokenCell]}
-        hitSlop={10}
-        onPress={onTokenSort}>
-        <Text style={getTextStyle(tokenSort)}>
-          {t('page.watchlist.tokenHeader.token')}
-        </Text>
-        {renderArrows(tokenSort)}
-      </Pressable>
-      <Pressable
-        style={[styles.headerCell, styles.changeCell]}
-        hitSlop={10}
-        onPress={onChangeSort}>
-        <Text style={getTextStyle('default')}>
-          {t('page.watchlist.tokenHeader.price')}
-        </Text>
-        <Text style={getTextStyle('default')}>/</Text>
-        <Text style={getTextStyle(changeSort)}>
-          {t('page.watchlist.tokenHeader.change')}
-        </Text>
-        {renderArrows(changeSort)}
-      </Pressable>
+      {disableSort ? (
+        <>
+          <View style={[styles.headerCell, styles.tokenCell]}>
+            <Text style={styles.headerText}>
+              {t('page.watchlist.tokenHeader.token')}
+            </Text>
+          </View>
+          <View style={[styles.headerCell, styles.changeCell]}>
+            <Text style={styles.headerText}>
+              {t('page.watchlist.tokenHeader.price')}
+            </Text>
+            <Text style={styles.headerText}>/</Text>
+            <Text style={styles.headerText}>
+              {t('page.watchlist.tokenHeader.change')}
+            </Text>
+          </View>
+        </>
+      ) : (
+        <>
+          {disableLeftSort ? (
+            <View style={[styles.headerCell, styles.tokenCell]}>
+              {showFdvSort ? (
+                <View style={styles.tokenCompoundCell}>
+                  <Text style={styles.headerText}>{t('global.Token')}</Text>
+                  <Text style={styles.headerText}>/</Text>
+                  <Pressable
+                    style={styles.headerCell}
+                    hitSlop={10}
+                    onPress={onFdvSort}>
+                    <Text style={getTextStyle(fdvSort)}>
+                      {t('page.meme.tokenHeader.fdv')}
+                    </Text>
+                    {renderArrows(fdvSort)}
+                  </Pressable>
+                </View>
+              ) : (
+                <Text style={styles.headerText}>
+                  {t('page.watchlist.tokenHeader.token')}
+                </Text>
+              )}
+            </View>
+          ) : (
+            <Pressable
+              style={[styles.headerCell, styles.tokenCell]}
+              hitSlop={10}
+              onPress={onTokenSort}>
+              <Text style={getTextStyle(tokenSort)}>
+                {t('page.watchlist.tokenHeader.token')}
+              </Text>
+              {renderArrows(tokenSort)}
+            </Pressable>
+          )}
+          <Pressable
+            style={[styles.headerCell, styles.changeCell]}
+            hitSlop={10}
+            onPress={onChangeSort}>
+            <Text style={getTextStyle('default')}>
+              {t('page.watchlist.tokenHeader.price')}
+            </Text>
+            <Text style={getTextStyle('default')}>/</Text>
+            <Text style={getTextStyle(changeSort)}>
+              {t('page.watchlist.tokenHeader.change')}
+            </Text>
+            {renderArrows(changeSort)}
+          </Pressable>
+        </>
+      )}
     </View>
   );
 };

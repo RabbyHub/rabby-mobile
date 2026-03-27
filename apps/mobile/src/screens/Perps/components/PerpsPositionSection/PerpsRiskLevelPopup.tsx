@@ -11,6 +11,8 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import AutoLockView from '@/components/AutoLockView';
 import { splitNumberByStep } from '@/utils/number';
 import { Text } from '@/components/Typography';
+import { Tip } from '@/components';
+import { RcIconInfoCC } from '@/assets/icons/common';
 
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
@@ -21,6 +23,7 @@ interface PerpsRiskLevelPopupProps {
   pxDecimals: number;
   currentPrice: number;
   liquidationPrice: number;
+  isCross: boolean;
   direction: 'Long' | 'Short';
 }
 
@@ -31,6 +34,7 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
   currentPrice,
   liquidationPrice,
   pxDecimals,
+  isCross,
   direction,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -86,9 +90,27 @@ export const PerpsRiskLevelPopup: React.FC<PerpsRiskLevelPopupProps> = ({
               </Text>
             </View>
             <View style={styles.priceItem}>
-              <Text style={styles.priceLabel}>
-                {t('page.perps.PerpsRiskPopup.liquidationPrice')}
-              </Text>
+              <View style={styles.liquidationPriceContainer}>
+                <Text style={styles.priceLabel}>
+                  {t('page.perps.PerpsRiskPopup.liquidationPrice')}
+                </Text>
+                {isCross && (
+                  <Tip
+                    content={t('page.perpsDetail.PerpsPosition.crossTips')}
+                    placement="top">
+                    <View style={styles.crossTag}>
+                      <Text style={styles.crossText}>
+                        {t('page.perpsDetail.PerpsPosition.cross')}
+                      </Text>
+                      <RcIconInfoCC
+                        width={12}
+                        height={12}
+                        color={colors2024['neutral-info']}
+                      />
+                    </View>
+                  </Tip>
+                )}
+              </View>
               <Text style={styles.priceValue}>
                 ${splitNumberByStep(liquidationPrice.toFixed(pxDecimals))}
               </Text>
@@ -125,6 +147,28 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     paddingHorizontal: 20,
     paddingBottom: 32,
+  },
+  crossText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+  },
+  crossTag: {
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    flexDirection: 'row',
+    height: 18,
+    gap: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
+  liquidationPriceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   closeButton: {
     position: 'absolute',

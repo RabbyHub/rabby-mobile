@@ -116,7 +116,7 @@ export const PerpsClosePositionPopup: React.FC<{
         linearGradientType: 'bg1',
       })}
       onDismiss={onCancel}
-      snapPoints={[490]}>
+      snapPoints={[460]}>
       <BottomSheetView>
         <AutoLockView style={[styles.container]}>
           <View>
@@ -188,35 +188,6 @@ export const PerpsClosePositionPopup: React.FC<{
               </Text>
             </View>
           </View>
-
-          <TouchableOpacity
-            onPress={() => {
-              showTipsPopup({
-                title: t('page.perpsDetail.PerpsClosePositionPopup.fee'),
-                desc:
-                  t('page.perpsDetail.PerpsClosePositionPopup.rabbyFeeTipsV2') +
-                  '\n' +
-                  t(
-                    'page.perpsDetail.PerpsClosePositionPopup.providerFeeTips',
-                    {
-                      fee: formatPercent(providerFee, 4),
-                    },
-                  ),
-                buttonType: 'hyperliquid',
-              });
-            }}>
-            <View style={styles.feeContainer}>
-              <Text style={styles.fee}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.fee')}:{' '}
-                {formatPercent(bothFee, 4)}
-              </Text>
-              <RcIconInfoCC
-                color={colors2024['neutral-info']}
-                width={18}
-                height={18}
-              />
-            </View>
-          </TouchableOpacity>
 
           <Button
             type="hyperliquid"
@@ -331,7 +302,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: '100%',
       alignContent: 'center',
       alignItems: 'center',
-      marginBottom: 30,
+      marginBottom: 20,
     },
     pnlLabel: {
       fontFamily: 'SF Pro Rounded',
