@@ -35,6 +35,34 @@ import i18next from 'i18next';
 import { ellipsisOverflowedText } from './text';
 import { getTokenSymbol } from './token';
 
+const GAS_PRICE_DECIMALS = 18;
+
+const rawAmountToBn = (
+  value: string | number | BigNumber | null | undefined,
+) => {
+  if (BigNumber.isBigNumber(value)) {
+    return value;
+  }
+  return new BigNumber(value || 0);
+};
+
+const pow10 = (decimals: number) => {
+  return new BigNumber(10).pow(Math.max(0, decimals));
+};
+
+const convert18RawToTokenRaw = (
+  rawAmountIn18: BigNumber,
+  tokenDecimals: number,
+) => {
+  if (tokenDecimals === GAS_PRICE_DECIMALS) {
+    return rawAmountIn18;
+  }
+  if (tokenDecimals > GAS_PRICE_DECIMALS) {
+    return rawAmountIn18.times(pow10(tokenDecimals - GAS_PRICE_DECIMALS));
+  }
+  return rawAmountIn18.div(pow10(GAS_PRICE_DECIMALS - tokenDecimals));
+};
+
 export interface ApprovalRes extends Tx {
   type?: string;
   address?: string;
@@ -346,7 +374,9 @@ export function formatTxInputDataOnERC20(maybeHex: string) {
     utf8Data: '',
   };
 
-  if (!maybeHex) return result;
+  if (!maybeHex) {
+    return result;
+  }
 
   result.currentIsHex = maybeHex.startsWith('0x') && isHex(maybeHex);
 
@@ -413,6 +443,8 @@ export const checkGasAndNonce = ({
   isSpeedUp,
   isGnosisAccount,
   nativeTokenBalance,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
+  checkTxValueInBalance = true,
 }: {
   recommendGasLimitRatio: number;
   nativeTokenBalance: string;
@@ -426,10 +458,14 @@ export const checkGasAndNonce = ({
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
     maxGasCostAmount: BigNumber;
+    gasCostRawAmount?: BigNumber;
+    maxGasCostRawAmount?: BigNumber;
   };
   isCancel: boolean;
   isSpeedUp: boolean;
   isGnosisAccount: boolean;
+  gasTokenDecimals?: number;
+  checkTxValueInBalance?: boolean;
 }) => {
   const errors: {
     code: number;
@@ -475,15 +511,20 @@ export const checkGasAndNonce = ({
       }
     }
   }
-  let sendNativeTokenAmount = new BigNumber(tx.value); // current transaction native token transfer count
-  sendNativeTokenAmount = isNaN(sendNativeTokenAmount.toNumber())
-    ? new BigNumber(0)
-    : sendNativeTokenAmount;
+  const balanceRawAmount = rawAmountToBn(nativeTokenBalance || 0);
+  const sendNativeTokenRawAmount = checkTxValueInBalance
+    ? convert18RawToTokenRaw(rawAmountToBn(tx.value || 0), gasTokenDecimals)
+    : new BigNumber(0);
+  const maxGasCostRawAmount =
+    gasExplainResponse.maxGasCostRawAmount ||
+    rawAmountToBn(gasExplainResponse.maxGasCostAmount).times(
+      pow10(gasTokenDecimals),
+    );
   if (
     !isGnosisAccount &&
-    gasExplainResponse.maxGasCostAmount
-      .plus(sendNativeTokenAmount.div(1e18))
-      .isGreaterThan(new BigNumber(nativeTokenBalance).div(1e18))
+    maxGasCostRawAmount
+      .plus(sendNativeTokenRawAmount)
+      .isGreaterThan(balanceRawAmount)
   ) {
     errors.push({
       code: 3001,
@@ -512,14 +553,20 @@ export function openTxExternalUrl(input: {
     openPromise: null as ReturnType<typeof openExternalUrl> | null,
   };
   const { chain, txHash, address } = input;
-  if (!chain) return result;
+  if (!chain) {
+    return result;
+  }
 
   const chainItem = typeof chain === 'string' ? getChain(chain) : chain;
-  if (!chainItem) return result;
+  if (!chainItem) {
+    return result;
+  }
 
   result.canOpen = !!chainItem?.scanLink;
 
-  if (!result.canOpen) return result;
+  if (!result.canOpen) {
+    return result;
+  }
 
   if (txHash) {
     result.openPromise = openExternalUrl(

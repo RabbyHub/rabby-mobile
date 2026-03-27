@@ -45,7 +45,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import {
   explainGas,
-  getNativeTokenBalance,
+  getGasTokenBalance,
   getRecommendGas,
   getRecommendNonce,
 } from '../SignTx/calc';
@@ -80,9 +80,19 @@ import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
 import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
 import BalanceChange from '../TxComponents/BalanceChange';
+import { GasTokenInfo, isTempoChain } from '@/utils/tempo';
 
 let count = 1;
 let unCount = 0;
+
+const rawAmountToBn = (
+  value: string | number | BigNumber | null | undefined,
+) => {
+  if (BigNumber.isBigNumber(value)) {
+    return value;
+  }
+  return new BigNumber(value || 0);
+};
 
 export const MiniSignTx = ({
   txs,
@@ -208,7 +218,9 @@ export const MiniSignTx = ({
   const [drawerVisible, setDrawerVisible] = useState(false);
   // const scrollRefSize = useSize(scrollRef);
   // const scrollInfo = useScroll(scrollRef);
-  if (!chain) throw new Error('No support chain found');
+  if (!chain) {
+    throw new Error('No support chain found');
+  }
   const [support1559, setSupport1559] = useState(chain.eip['1559']);
   const [footerShowShadow, setFooterShowShadow] = useState(false);
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
@@ -247,8 +259,9 @@ export const MiniSignTx = ({
   });
 
   let updateNonce = true;
-  if (isCancel || isSpeedUp || (nonce && from === to) || nonceChanged)
+  if (isCancel || isSpeedUp || (nonce && from === to) || nonceChanged) {
     updateNonce = false;
+  }
 
   // const [tx, setTx] = useState<Tx>({
   //   chainId,
@@ -264,17 +277,25 @@ export const MiniSignTx = ({
   const [gasLimit, setGasLimit] = useState<string | undefined>(undefined);
   const [maxPriorityFee, setMaxPriorityFee] = useState(0);
   const [nativeTokenBalance, setNativeTokenBalance] = useState('0x0');
+  const [gasToken, setGasToken] = useState<GasTokenInfo | undefined>(undefined);
+  const checkTxValueInBalance = useMemo(
+    () => !isTempoChain(chain?.serverId),
+    [chain?.serverId],
+  );
   const [engineResults, setEngineResults] = useState<Result[]>([]);
   const securityLevel = useMemo(() => {
     const enableResults = engineResults.filter(result => {
       return result.enable && !currentTx.processedRules.includes(result.id);
     });
-    if (enableResults.some(result => result.level === Level.FORBIDDEN))
+    if (enableResults.some(result => result.level === Level.FORBIDDEN)) {
       return Level.FORBIDDEN;
-    if (enableResults.some(result => result.level === Level.DANGER))
+    }
+    if (enableResults.some(result => result.level === Level.DANGER)) {
       return Level.DANGER;
-    if (enableResults.some(result => result.level === Level.WARNING))
+    }
+    if (enableResults.some(result => result.level === Level.WARNING)) {
       return Level.WARNING;
+    }
     return undefined;
   }, [engineResults, currentTx]);
 
@@ -293,15 +314,25 @@ export const MiniSignTx = ({
         isSpeedUp: false,
         isGnosisAccount: false,
         nativeTokenBalance: balance,
+        gasTokenDecimals: gasToken?.decimals || 18,
+        checkTxValueInBalance,
       });
+      const txValueRaw = checkTxValueInBalance
+        ? rawAmountToBn(item.tx.value || 0)
+        : new BigNumber(0);
       balance = new BigNumber(balance)
-        .minus(new BigNumber(item.tx.value || 0))
-        .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
+        .minus(txValueRaw)
+        .minus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0))
         .toFixed();
       return result;
     });
     return _.flatten(res);
-  }, [txsResult, nativeTokenBalance]);
+  }, [
+    txsResult,
+    nativeTokenBalance,
+    gasToken?.decimals,
+    checkTxValueInBalance,
+  ]);
 
   const totalGasCost = useMemo(() => {
     return txsResult.reduce(
@@ -541,6 +572,7 @@ export const MiniSignTx = ({
             tx,
             gasLimit: item.gasLimit,
             account,
+            gasTokenDecimals: gasToken?.decimals || 18,
           }),
         };
       }),
@@ -652,13 +684,14 @@ export const MiniSignTx = ({
         // ),
         false,
       );
-      const balance = await getNativeTokenBalance({
+      const balanceInfo = await getGasTokenBalance({
         chainId,
         address: currentAccount.address,
         account,
       });
 
-      setNativeTokenBalance(balance);
+      setNativeTokenBalance(balanceInfo.rawBalance);
+      setGasToken(balanceInfo.token);
 
       // stats.report('createTransaction', {
       //   type: currentAccount.brandName,
@@ -786,6 +819,7 @@ export const MiniSignTx = ({
               tx,
               gasLimit: item.gasLimit,
               account,
+              gasTokenDecimals: gasToken?.decimals || 18,
             }),
           };
         }),
@@ -811,10 +845,15 @@ export const MiniSignTx = ({
               isSpeedUp: isSpeedUp,
               isGnosisAccount: false,
               nativeTokenBalance: balance,
+              gasTokenDecimals: gasToken?.decimals || 18,
+              checkTxValueInBalance,
             });
+            const txValueRaw = checkTxValueInBalance
+              ? rawAmountToBn(item.tx.value || 0)
+              : new BigNumber(0);
             balance = new BigNumber(balance)
-              .minus(new BigNumber(item.tx.value || 0))
-              .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
+              .minus(txValueRaw)
+              .minus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0))
               .toFixed();
             return result;
           });
@@ -940,6 +979,8 @@ export const MiniSignTx = ({
               explainTx: preExecResult,
               needRatio,
               account,
+              gasTokenDecimals: gasToken?.decimals || 18,
+              checkTxValueInBalance,
             });
             gasLimit = _gasLimit;
             recommendGasLimitRatio = _recommendGasLimitRatio;
@@ -954,6 +995,7 @@ export const MiniSignTx = ({
             tx,
             gasLimit,
             account,
+            gasTokenDecimals: gasToken?.decimals || 18,
           });
 
           tx.gas = gasLimit;
@@ -1058,6 +1100,7 @@ export const MiniSignTx = ({
             tx: item.tx,
             gasLimit: item.gasLimit,
             account,
+            gasTokenDecimals: gasToken?.decimals || 18,
           }),
         ),
       );
@@ -1079,7 +1122,7 @@ export const MiniSignTx = ({
       );
       return totalCost;
     },
-    [account, chainId, txsResult],
+    [account, chainId, txsResult, gasToken?.decimals],
   );
 
   const disabledProcess =
@@ -1151,6 +1194,7 @@ export const MiniSignTx = ({
               errors={checkErrors}
               engineResults={engineResults}
               nativeTokenBalance={nativeTokenBalance}
+              gasToken={gasToken}
               gasPriceMedian={gasPriceMedian}
               gas={totalGasCost}
               gasCalcMethod={gasCalcMethod}

@@ -3,6 +3,11 @@ import { DEX_ENUM, DEX_SUPPORT_CHAINS } from '@rabby-wallet/rabby-swap';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { findChainByEnum } from '@/utils/chain';
+import {
+  TEMPO_CHAIN_SERVER_ID,
+  TEMPO_FEE_TOKEN_DECIMALS,
+  TEMPO_PATH_USD_TOKEN,
+} from '@/constant/tempo';
 
 const LogoParaswap = require('@/assets/icons/swap/paraswap.png');
 const Logo0X = require('@/assets/icons/swap/0xswap.png');
@@ -92,6 +97,26 @@ export const DEX_WITH_WRAP = {
 
 export const getChainDefaultToken = (chain: CHAINS_ENUM) => {
   const chainInfo = findChainByEnum(chain) || CHAINS[chain];
+
+  if ((chainInfo.serverId || '').toLowerCase() === TEMPO_CHAIN_SERVER_ID) {
+    return {
+      id: TEMPO_PATH_USD_TOKEN,
+      decimals: TEMPO_FEE_TOKEN_DECIMALS,
+      logo_url: '',
+      symbol: 'pathUSD',
+      display_symbol: 'pathUSD',
+      optimized_symbol: 'pathUSD',
+      is_core: true,
+      is_verified: true,
+      is_wallet: true,
+      amount: 0,
+      price: 0,
+      name: 'pathUSD',
+      chain: chainInfo.serverId,
+      time_at: 0,
+    } as TokenItem;
+  }
+
   return {
     id: chainInfo.nativeTokenAddress,
     decimals: chainInfo.nativeTokenDecimals,
