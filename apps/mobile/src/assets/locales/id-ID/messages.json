@@ -949,7 +949,8 @@
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "Transaksi mungkin akan terfront-run karena toleransi slippage yang tinggi",
       "selectChainModalTitle": "Pilih Rantai",
       "results": "Hasil",
-      "approve": "Setujui"
+      "approve": "Setujui",
+      "market-closed": "Pasar tidak buka: Penempatan pesanan tidak didukung."
     },
     "bridge": {
       "showMore": {
@@ -1009,8 +1010,8 @@
         "beReturnFailed": "Jembatan gagal. Aset Anda telah dikembalikan."
       },
       "gasXUsd": "Gas: {{gasUsd}}",
-      "formChangedTitle": "Form Diubah",
-      "formChangedAmount": "Jumlahnya telah berubah, mungkin disebabkan oleh pengisian otomatis kata sandi dari keyboard sistem. Silakan tinjau dan masukkan jumlah yang benar."
+      "formChangedAmount": "Jumlahnya telah berubah, kemungkinan disebabkan oleh pengisian otomatis kata sandi dari keyboard sistem. Silakan tinjau dan masukkan kembali jumlah yang benar.",
+      "formChangedTitle": "Form Diubah"
     },
     "manageAddress": {
       "cancel": "Batal",
@@ -2060,6 +2061,9 @@
       "globalSearch": {
         "placeHolder": "Cari Dapp/Token",
         "iosPlaceHolder": "Cari Website/Token"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
       }
     },
     "setting": {
@@ -2357,7 +2361,9 @@
         "learnBtn": "Pelajari tentang Perps",
         "depositBtn": "Setor",
         "loginDesc": "Masuk dengan alamat Anda dan setorkan dana untuk mulai trading perps",
-        "loginBtn": "Masuk ke Trading Perps"
+        "loginBtn": "Masuk ke Trading Perps",
+        "learnMore": "Pelajari Selengkapnya",
+        "addFunds": "Tambahkan Dana"
       },
       "PerpsGuidePopup": {
         "step3Title": "Pendek",
@@ -2422,7 +2428,11 @@
         "closedPnl": "Closed PNL",
         "perps": "Perpetual Contracts",
         "sizeTips": "Nilai total atau jumlah perdagangan Anda, ditentukan oleh margin dan leverage.",
-        "gotItBtn": "Saya mengerti"
+        "gotItBtn": "Saya mengerti",
+        "feeRabby": "Rabby Wallet",
+        "feeTitle": "Biaya",
+        "feeHyperliquid": "Hyperliquid",
+        "feeDesc": "Ketika pengguna melakukan perdagangan, baik <1>biaya perdagangan</1> maupun <2>biaya pembuat</2> berlaku."
       },
       "PerpsAutoCloseModal": {
         "stopLossTipsLong": "Harga stop loss harus lebih rendah dari harga saat ini",
@@ -2442,7 +2452,8 @@
         "goSwapDesc": "Hanya USDC di Arbitrum yang didukung untuk deposit langsung. Silakan tukar token Anda saat ini dengan USDC sebelum melakukan deposit.",
         "directTag": "Setoran Langsung",
         "swapBtn": "Tukar",
-        "goBridgeDesc": "Hanya USDC di Arbitrum yang didukung untuk deposit langsung. Silakan jembatani token Anda saat ini ke USDC di Arbitrum sebelum melakukan deposit."
+        "goBridgeDesc": "Hanya USDC di Arbitrum yang didukung untuk deposit langsung. Silakan jembatani token Anda saat ini ke USDC di Arbitrum sebelum melakukan deposit.",
+        "directDepositFast": "Cepat, 0 Slippage"
       },
       "history": {
         "status": {
@@ -2464,7 +2475,10 @@
         "closeShort": "Tutup Short"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Pilih Token untuk Setor"
+        "title": "Pilih Token untuk Setor",
+        "noTokens": "Tidak ada token",
+        "token": "Token",
+        "balance": "Saldo"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "Keluar",
@@ -2566,7 +2580,8 @@
         "positionValue": "Nilai Posisi",
         "settings": "Pengaturan",
         "marginMode": "Mode Margin",
-        "fundingTipsBold": "Ini menunjukkan total pendanaan Anda yang diselesaikan sejak posisi dibuka. Nilai <bold>Hijau (positif)</bold> berarti Anda telah menghasilkan dari trader lain, sedangkan nilai <bold>Merah (negatif)</bold> adalah biaya pendanaan yang telah Anda bayar kepada mereka."
+        "fundingTipsBold": "Ini menunjukkan total pendanaan Anda yang diselesaikan sejak posisi dibuka. Nilai <bold>Hijau (positif)</bold> berarti Anda telah menghasilkan dari trader lain, sedangkan nilai <bold>Merah (negatif)</bold> adalah biaya pendanaan yang telah Anda bayar kepada mereka.",
+        "crossTips": "Dalam mode Cross Margin, harga likuidasi untuk satu posisi adalah estimasi hanya untuk referensi."
       },
       "PerpsInfo": {
         "openInterestTips": "Total posisi terbuka dari semua pengguna pada kontrak ini.",
@@ -2697,6 +2712,9 @@
         "isolatedDesc": "Setiap posisi menggunakan margin-nya sendiri. Kerugian dibatasi pada posisi tersebut, tetapi dapat dilikuidasi dengan lebih mudah.",
         "crossDesc": "Semua posisi berbagi margin yang sama. Hal ini mengurangi kemungkinan satu posisi dilikuidasi, tetapi semua dana cross-margin dapat hilang dalam pergerakan pasar yang ekstrem.",
         "crossTitle": "Margin Silang"
+      },
+      "guideEntry": {
+        "gotIt": "Diambil!"
       }
     },
     "devUIBuiltInPages": {
@@ -3018,14 +3036,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "Nama"
+        "name": "Nama",
+        "tokenAndName": "Token/Nama"
       },
       "tabs": {
         "stock": "Stok",
         "memecoin": "Memecoin",
         "watchlist": "Daftar Pantauan",
         "commodities": "Komoditas"
-      }
+      },
+      "marketNotOpenTooltip": "Pasar belum dibuka",
+      "noOpen": "Tidak Terbuka"
     }
   },
   "component": {

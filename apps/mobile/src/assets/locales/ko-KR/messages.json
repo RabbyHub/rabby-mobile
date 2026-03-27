@@ -721,7 +721,8 @@
       "historyTitle": "스왑 기록",
       "selectChainModalTitle": "체인을 선택하십시오",
       "results": "결과",
-      "approve": "승인"
+      "approve": "승인",
+      "market-closed": "시장 오픈 안됨: 주문 입력이 지원되지 않습니다."
     },
     "activities": {
       "signedTx": {
@@ -882,8 +883,8 @@
         "completed": "완료됨"
       },
       "gasXUsd": "가스: {{gasUsd}}",
-      "formChangedTitle": "양식이 변경되었습니다",
-      "formChangedAmount": "금액이 변경되었습니다. 시스템 키보드에서 비밀번호 자동 채우기 때문에 발생했을 수 있습니다. 올바른 금액을 검토하고 다시 입력해 주십시오."
+      "formChangedTitle": "양식 변경됨",
+      "formChangedAmount": "금액이 변경되었습니다. 시스템 키보드의 비밀번호 자동 완성으로 인한 것일 수 있습니다. 올바른 금액을 다시 확인하고 입력해 주세요."
     },
     "manageAddress": {
       "confirm": "확인",
@@ -1617,6 +1618,9 @@
       "globalSearch": {
         "iosPlaceHolder": "웹사이트/토큰 검색",
         "placeHolder": "Dapp/토큰 검색"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "토큰/FDV"
       }
     },
     "receiveAddressList": {
@@ -2358,7 +2362,9 @@
         "depositBtn": "입금",
         "learnBtn": "Perps에 대해 알아보기",
         "loginDesc": "주소로 로그인하고 자금을 입금하여 영구 계약 거래를 시작하세요.",
-        "title": "Perps 거래하기"
+        "title": "Perps 거래하기",
+        "learnMore": "더 알아보기",
+        "addFunds": "자금 추가"
       },
       "PerpsGuidePopup": {
         "step1Title": "마스터 영구선물 계약",
@@ -2423,7 +2429,11 @@
         "fee": "수수료",
         "gotItBtn": "알겠습니다",
         "perps": "영구 계약",
-        "sizeTips": "거래의 총 가치 또는 수량으로, 마진과 레버리지에 의해 설정됩니다."
+        "sizeTips": "거래의 총 가치 또는 수량으로, 마진과 레버리지에 의해 설정됩니다.",
+        "feeTitle": "수수료",
+        "feeRabby": "래비 월렛",
+        "feeHyperliquid": "하이퍼리퀴드",
+        "feeDesc": "사용자가 거래를 할 때, <1>거래 수수료</1>와 <2>빌더 수수료</2>가 모두 적용됩니다."
       },
       "PerpsAutoCloseModal": {
         "loss": "손실",
@@ -2443,7 +2453,8 @@
         "bridgeBtn": "브릿지",
         "swapBtn": "스왑",
         "goSwapDesc": "현재 직접 입금은 Arbitrum에서 USDC만 지원됩니다. 입금하기 전에 현재 토큰을 USDC로 교환해 주세요.",
-        "goBridgeDesc": "Arbitrum에서 직접 입금을 지원하는 것은 USDC만 가능합니다. 입금 전에 현재 토큰을 Arbitrum의 USDC로 브릿징해 주세요."
+        "goBridgeDesc": "Arbitrum에서 직접 입금을 지원하는 것은 USDC만 가능합니다. 입금 전에 현재 토큰을 Arbitrum의 USDC로 브릿징해 주세요.",
+        "directDepositFast": "빠르고, 슬리피지가 0"
       },
       "history": {
         "status": {
@@ -2465,7 +2476,10 @@
         "closeShortSl": "숏 청산 손절매"
       },
       "PerpsSelectTokenPopup": {
-        "title": "토큰 선택하여 입금"
+        "title": "토큰 선택하여 입금",
+        "balance": "잔고",
+        "noTokens": "토큰 없음",
+        "token": "토큰"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "로그아웃",
@@ -2567,7 +2581,8 @@
         "positionValue": "포지션 가치",
         "currentPrice": "현재 가격",
         "settings": "설정",
-        "fundingTipsBold": "이것은 포지션이 열린 이후로 정산된 총 자금을 보여줍니다. <bold>녹색(양수)</bold> 값은 다른 트레이더로부터 수익을 얻었다는 뜻이며, <bold>빨강(음수)</bold> 값은 그들에게 지급한 자금 비용입니다."
+        "fundingTipsBold": "이것은 포지션이 열린 이후로 정산된 총 자금을 보여줍니다. <bold>녹색(양수)</bold> 값은 다른 트레이더로부터 수익을 얻었다는 뜻이며, <bold>빨강(음수)</bold> 값은 그들에게 지급한 자금 비용입니다.",
+        "crossTips": "크로스 마진 모드에서는 단일 포지션의 청산 가격이 참고용으로만 제공되는 추정값입니다."
       },
       "PerpsInfo": {
         "title": "정보",
@@ -2698,6 +2713,9 @@
         "isolatedTitle": "격리 마진",
         "crossDesc": "모든 포지션은 동일한 마진을 공유합니다. 이렇게 하면 단일 포지션이 청산될 가능성이 줄어들지만 극단적인 시장 움직임에서 모든 크로스 마진 자금이 손실될 수 있습니다.",
         "isolatedDesc": "각 포지션은 자체 마진을 사용합니다. 손실은 해당 포지션에 한정되지만 더 쉽게 청산될 수 있습니다."
+      },
+      "guideEntry": {
+        "gotIt": "알겠어요"
       }
     },
     "devUIBuiltInPages": {
@@ -3019,14 +3037,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "이름"
+        "name": "이름",
+        "tokenAndName": "토큰/이름"
       },
       "tabs": {
         "watchlist": "관심 목록",
         "commodities": "수출품",
         "stock": "주식",
         "memecoin": "메모코인"
-      }
+      },
+      "noOpen": "열지 않음",
+      "marketNotOpenTooltip": "시장이 열리지 않음"
     }
   },
   "global": {

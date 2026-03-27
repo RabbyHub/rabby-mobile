@@ -895,7 +895,8 @@
       "swapped": "スワップ完了",
       "selectChainModalTitle": "チェーンを選択します",
       "results": "結果",
-      "approve": "承認"
+      "approve": "承認",
+      "market-closed": "マーケットはオープンしていません：注文の配置はサポートされていません。"
     },
     "signTypedData": {
       "createKey": {
@@ -1137,7 +1138,7 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "フォームが変更されました",
-      "formChangedAmount": "金額が変更されました。これは、システムキーボードからのパスワード自動入力が原因の可能性があります。正しい金額を確認し、再入力してください。"
+      "formChangedAmount": "金額が変更されました。これは、システムキーボードからのパスワード自動入力が原因の可能性があります。正しい金額を確認して再入力してください。"
     },
     "dashboard": {
       "hd": {
@@ -2022,6 +2023,9 @@
       "globalSearch": {
         "iosPlaceHolder": "ウェブサイト/トークンを検索",
         "placeHolder": "Dapp/トークンを検索"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "トークン/FDV"
       }
     },
     "createPassword": {
@@ -2410,7 +2414,9 @@
         "loginBtn": "Trading Perpsにログイン",
         "title": "永続契約を取引する",
         "loginDesc": "アドレスでログインし、資金を入金してperpsの取引を開始してください。",
-        "learnBtn": "Perpsについて学ぶ"
+        "learnBtn": "Perpsについて学ぶ",
+        "learnMore": "もっと学ぶ",
+        "addFunds": "資金を追加"
       },
       "PerpsGuidePopup": {
         "step5Title": "清算",
@@ -2475,7 +2481,11 @@
         "gotItBtn": "わかった",
         "perps": "パープス",
         "sizeTips": "あなたの取引の総価値または数量は、マージンとレバレッジによって設定されます。",
-        "provider": "プロバイダー"
+        "provider": "プロバイダー",
+        "feeTitle": "手数料",
+        "feeHyperliquid": "ハイパーリキッド",
+        "feeRabby": "Rabbyウォレット",
+        "feeDesc": "ユーザーが取引を行うと、<1>取引手数料</1>と<2>ビルダーフィー</2>が適用されます。"
       },
       "PerpsAutoCloseModal": {
         "takeProfit": "利確",
@@ -2495,7 +2505,8 @@
         "directTag": "直接入金",
         "bridgeBtn": "ブリッジ",
         "goSwapDesc": "Arbitrum上では、直接入金がサポートされているのはUSDCのみです。入金する前に、現在のトークンをUSDCにスワップしてください。",
-        "goBridgeDesc": "Arbitrumでの直接入金はUSDCのみサポートされています。入金する前に、現在のトークンをArbitrumのUSDCにブリッジしてください。"
+        "goBridgeDesc": "Arbitrumでの直接入金はUSDCのみサポートされています。入金する前に、現在のトークンをArbitrumのUSDCにブリッジしてください。",
+        "directDepositFast": "速い、スリッページなし"
       },
       "history": {
         "status": {
@@ -2517,7 +2528,10 @@
         "closeShort": "ショートをクローズ"
       },
       "PerpsSelectTokenPopup": {
-        "title": "入金するトークンを選択してください"
+        "title": "入金するトークンを選択してください",
+        "balance": "残高",
+        "token": "トークン",
+        "noTokens": "トークンがありません"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "ログアウト",
@@ -2619,7 +2633,8 @@
         "details": "詳細情報",
         "settings": "設定",
         "unrealizedPnl": "未実現PNL",
-        "fundingTipsBold": "これは、ポジションがオープンして以来、あなたの合計資金調達が決済されたことを示しています。<bold>緑（プラス）</bold>の値は、他のトレーダーから得た利益を意味し、<bold>赤（マイナス）</bold>の値は、彼らに支払った資金調達コストを示しています。"
+        "fundingTipsBold": "これは、ポジションがオープンして以来、あなたの合計資金調達が決済されたことを示しています。<bold>緑（プラス）</bold>の値は、他のトレーダーから得た利益を意味し、<bold>赤（マイナス）</bold>の値は、彼らに支払った資金調達コストを示しています。",
+        "crossTips": "クロスマージンモードでは、単一ポジションの清算価格は参考のための推定値です。"
       },
       "PerpsInfo": {
         "funding": "資金調達",
@@ -2750,6 +2765,9 @@
         "isolatedTitle": "アイソレーテッドマージン",
         "isolatedDesc": "各ポジションはそれぞれ独自のマージンを使用します。損失はそのポジションに限定されますが、より簡単に清算される可能性があります。",
         "crossDesc": "すべてのポジションは同じマージンを共有しています。これにより、単一のポジションが清算される可能性が低くなりますが、極端な市場の動きではすべてのクロスマージン資金を失う可能性があります。"
+      },
+      "guideEntry": {
+        "gotIt": "わかった"
       }
     },
     "devUIBuiltInPages": {
@@ -3071,14 +3089,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "名前"
+        "name": "名前",
+        "tokenAndName": "トークン/名前"
       },
       "tabs": {
         "watchlist": "ウォッチリスト",
         "commodities": "商品",
         "stock": "在庫",
         "memecoin": "メモコイン"
-      }
+      },
+      "noOpen": "開いていません",
+      "marketNotOpenTooltip": "マーケットはオープンしていません"
     }
   },
   "global": {

@@ -1257,7 +1257,8 @@
       "swapped": "Intercambiado",
       "selectChainModalTitle": "Seleccionar cadena",
       "results": "Resultados",
-      "approve": "Aprobar"
+      "approve": "Aprobar",
+      "market-closed": "Mercado no abierto: La colocación de pedidos no está soportada."
     },
     "nextComponent": {
       "addAddress": {
@@ -1418,7 +1419,7 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Formulario cambiado",
-      "formChangedAmount": "La cantidad ha cambiado, posiblemente debido a la autocompletación de la contraseña por parte del teclado del sistema. Por favor, revise y vuelva a ingresar la cantidad correcta."
+      "formChangedAmount": "La cantidad ha cambiado, posiblemente debido al llenado automático de la contraseña desde el teclado del sistema. Por favor, revisa y vuelve a ingresar la cantidad correcta."
     },
     "newAddress": {
       "Quick": "Rápido",
@@ -1976,6 +1977,9 @@
       "globalSearch": {
         "iosPlaceHolder": "Buscar sitio web/token",
         "placeHolder": "Buscar Dapp/Token"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
       }
     },
     "singleHome": {
@@ -2630,7 +2634,9 @@
         "depositBtn": "Depósito",
         "learnBtn": "Aprende sobre Perps",
         "loginDesc": "Inicia sesión con tu dirección y deposita fondos para empezar a operar con perps.",
-        "loginBtn": "Iniciar sesión en Trading Perps"
+        "loginBtn": "Iniciar sesión en Trading Perps",
+        "learnMore": "Aprender más",
+        "addFunds": "Agregar fondos"
       },
       "PerpsGuidePopup": {
         "step2Title": "Largo",
@@ -2695,7 +2701,11 @@
         "fee": "Tarifa",
         "perps": "Perpetuos",
         "gotItBtn": "Lo tengo.",
-        "sizeTips": "El valor total o cantidad de tu operación, determinado por el margen y el apalancamiento."
+        "sizeTips": "El valor total o cantidad de tu operación, determinado por el margen y el apalancamiento.",
+        "feeTitle": "Tarifa",
+        "feeHyperliquid": "Hyperliquid",
+        "feeDesc": "Cuando los usuarios realizan transacciones, se aplican tanto las <1>comisiones de trading</1> como las <2>comisiones de builder</2>.",
+        "feeRabby": "Rabby Wallet"
       },
       "PerpsAutoCloseModal": {
         "loss": "Pérdida",
@@ -2715,7 +2725,8 @@
         "swapBtn": "Intercambiar",
         "directTag": "Depósito Directo",
         "goSwapDesc": "Solo se admite USDC en Arbitrum para depósitos directos. Por favor, cambia tu token actual a USDC antes de depositar.",
-        "goBridgeDesc": "Solo se admite USDC en Arbitrum para el depósito directo. Por favor, transfiere tu token actual a USDC en Arbitrum antes de depositar."
+        "goBridgeDesc": "Solo se admite USDC en Arbitrum para el depósito directo. Por favor, transfiere tu token actual a USDC en Arbitrum antes de depositar.",
+        "directDepositFast": "Rápido, 0 Deslizamiento"
       },
       "history": {
         "status": {
@@ -2737,7 +2748,10 @@
         "closeShortTp": "Cerrar Corto Tomar Ganancia"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Selecciona el token para depositar"
+        "title": "Selecciona el token para depositar",
+        "token": "Token",
+        "balance": "Saldo",
+        "noTokens": "Sin tokens"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "Cerrar sesión",
@@ -2839,7 +2853,8 @@
         "unrealizedPnl": "PNL no realizado",
         "marginMode": "Modo Margen",
         "realizedPnl": "PNL realizado",
-        "fundingTipsBold": "Esto muestra el financiamiento total que se ha liquidado desde que se abrió la posición. Los valores en <bold>verde (positivo)</bold> significan que has ganado de otros traders, mientras que los valores en <bold>rojo (negativo)</bold> son los costos de financiamiento que les has pagado."
+        "fundingTipsBold": "Esto muestra el financiamiento total que se ha liquidado desde que se abrió la posición. Los valores en <bold>verde (positivo)</bold> significan que has ganado de otros traders, mientras que los valores en <bold>rojo (negativo)</bold> son los costos de financiamiento que les has pagado.",
+        "crossTips": "En el modo de Margen Cruzado, el precio de liquidación para una sola posición es una estimación solo para referencia."
       },
       "PerpsInfo": {
         "openInterestTips": "El total de posiciones pendientes de todos los usuarios en este contrato.",
@@ -2970,6 +2985,9 @@
         "cannotChangeMarginMode": "No se puede cambiar el modo de margen con posiciones abiertas.",
         "isolatedDesc": "Cada posición utiliza su propio margen. Las pérdidas están limitadas a esa posición, pero se puede liquidar más fácilmente.",
         "crossDesc": "Todas las posiciones comparten el mismo margen. Esto reduce la posibilidad de que una sola posición sea liquidada, pero todos los fondos de margen cruzado pueden perderse en movimientos extremos del mercado."
+      },
+      "guideEntry": {
+        "gotIt": "Entendido"
       }
     },
     "devUIBuiltInPages": {
@@ -3291,14 +3309,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "Nombre"
+        "name": "Nombre",
+        "tokenAndName": "Token/Nombre"
       },
       "tabs": {
         "stock": "Acciones",
         "commodities": "Commodities",
         "watchlist": "Lista de seguimiento",
         "memecoin": "Memecoin"
-      }
+      },
+      "marketNotOpenTooltip": "Mercado no abierto",
+      "noOpen": "No Abierto"
     }
   },
   "global": {
