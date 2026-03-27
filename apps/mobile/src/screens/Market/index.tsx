@@ -208,6 +208,7 @@ export default function MarketScreen() {
       <Tabs.Container
         renderTabBar={renderTabBar}
         tabBarHeight={36}
+        lazy
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
         initialTabName={activeTab}

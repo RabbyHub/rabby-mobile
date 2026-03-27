@@ -72,16 +72,8 @@ export const PercentChangeBadge = ({
         </Text>
         {isClosed ? (
           <Tip
-            placement="top"
-            showChildInTooltip={false}
             content={t('page.market.marketNotOpenTooltip')}
-            arrowSize={{ width: 10, height: 4 }}
-            pressableProps={{
-              onPress: ({ event, turnOn }) => {
-                event.stopPropagation();
-                turnOn();
-              },
-            }}>
+            arrowSize={{ width: 10, height: 4 }}>
             <RcIconWarningCircleCC
               width={12}
               height={12}

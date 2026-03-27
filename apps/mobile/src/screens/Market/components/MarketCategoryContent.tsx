@@ -58,15 +58,24 @@ export function MarketCategoryContent({
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const volumeSortAtom = useMemo(
-    () => atomByMMKV<SortState>(`@market.${categoryId}.volumeSort`, 'default'),
+    () =>
+      atomByMMKV<SortState>(`@market.${categoryId}.volumeSort`, 'default', {
+        getOnInit: true,
+      }),
     [categoryId],
   );
   const fdvSortAtom = useMemo(
-    () => atomByMMKV<SortState>(`@market.${categoryId}.fdvSort`, 'default'),
+    () =>
+      atomByMMKV<SortState>(`@market.${categoryId}.fdvSort`, 'default', {
+        getOnInit: true,
+      }),
     [categoryId],
   );
   const changeSortAtom = useMemo(
-    () => atomByMMKV<SortState>(`@market.${categoryId}.changeSort`, 'default'),
+    () =>
+      atomByMMKV<SortState>(`@market.${categoryId}.changeSort`, 'default', {
+        getOnInit: true,
+      }),
     [categoryId],
   );
   const [volumeSort, setVolumeSort] = useAtom(volumeSortAtom);
@@ -116,6 +125,10 @@ export function MarketCategoryContent({
     };
   }, [changeSort, fdvSort, supportedSortFields, volumeSort]);
 
+  const clearCurrentListRealtimePrice = useCallback(() => {
+    setMarketRealtimePrice({});
+  }, [setMarketRealtimePrice]);
+
   const {
     tokenList: list,
     getTokenList,
@@ -123,11 +136,12 @@ export function MarketCategoryContent({
     loadingMore,
     hasMore,
     loadMore,
-  } = useTokenMarketTokenList(categoryId, orderBy, order);
-
-  const clearCurrentListRealtimePrice = useCallback(() => {
-    setMarketRealtimePrice({});
-  }, [setMarketRealtimePrice]);
+  } = useTokenMarketTokenList(
+    categoryId,
+    orderBy,
+    order,
+    clearCurrentListRealtimePrice,
+  );
 
   const handleVolumeSort = useCallback(() => {
     if (!supportedSortFields.has('volume_24h')) {
