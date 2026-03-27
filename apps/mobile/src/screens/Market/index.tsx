@@ -31,6 +31,9 @@ const FIRST_TAB_GAP = 12;
 const marketTabAtom = atomByMMKV<MarketTabKey>(
   '@market.activeTab',
   'watchlist',
+  {
+    getOnInit: true,
+  },
 );
 
 const MARKET_TABS: { id: string; name: string; sort_fields: string[] }[] = [
