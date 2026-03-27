@@ -46,8 +46,8 @@ import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
+import { IconRightCC } from './components/IconRightCC';
 
-import { IconRightCC } from './components/IconRigthCC';
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
 
@@ -522,7 +522,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      width: 90,
+      minWidth: 90,
     },
     marketDataText: {
       color: colors2024['neutral-body'],
@@ -535,7 +535,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: 14,
       height: 14,
       borderRadius: 999,
-      backgroundColor: colors2024['neutral-secondary'],
       alignItems: 'center',
       justifyContent: 'center',
     },
