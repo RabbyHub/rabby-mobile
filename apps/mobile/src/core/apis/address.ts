@@ -87,6 +87,7 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     if (isSameAccount(account, dapp.currentAccount)) {
       dappService.updateDapp({
         ...dapp,
+        origin,
         currentAccount: newCurrentAccount,
       });
       if (dapp?.isConnected) {

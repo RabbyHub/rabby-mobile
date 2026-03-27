@@ -48,7 +48,7 @@ export class DappService extends StoreServiceBase<
 
     Object.keys(this.store.dapps).forEach(origin => {
       const dapp = this.store.dapps[origin];
-      if (dapp && !dapp.origin) {
+      if (dapp && (!dapp.origin || !/^https?:\/\//.test(dapp.origin))) {
         this.store.dapps[origin] = {
           ...dapp,
           origin,
