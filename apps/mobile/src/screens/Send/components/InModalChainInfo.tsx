@@ -48,7 +48,7 @@ export function InnerModalChainInfo({
     enum: chainEnum,
   });
 
-  const modalRef = React.useRef<MODAL_ID>();
+  const modalRef = React.useRef<MODAL_ID>(undefined);
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {

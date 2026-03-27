@@ -8,7 +8,7 @@ import { TextInput } from '@/components/Typography';
 export default function useAutoFocusInput(disableAutoFocus = false) {
   const [isInputInitialized, setIsInputInitialized] = useState(false);
 
-  const inputRef = useRef<TextInput>();
+  const inputRef = useRef<TextInput>(undefined);
   const navigation = useNavigation();
 
   useEffect(() => {

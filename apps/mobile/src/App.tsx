@@ -32,15 +32,15 @@ import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
 import Safe from '@rabby-wallet/gnosis-sdk';
-import { SAFE_API_KEY } from './constant/env';
-Safe.apiKey = SAFE_API_KEY;
-
 import {
   RerenderDetector,
   useRendererDetect,
 } from './components/Perf/PerfDetector';
 import { isEqual } from 'lodash';
 import { svsLayout } from './hooks/useAppLayout';
+import { openapi } from './core/request';
+
+Safe.openapiService = openapi;
 
 BigNumber.config({ EXPONENTIAL_AT: [-20, 100] });
 

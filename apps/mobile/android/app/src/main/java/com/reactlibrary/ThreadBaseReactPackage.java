@@ -4,7 +4,6 @@ import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.devsupport.JSCHeapCapture;
 import com.facebook.react.modules.appstate.AppStateModule;
 import com.facebook.react.modules.core.ExceptionsManagerModule;
 import com.facebook.react.modules.core.TimingModule;
@@ -41,7 +40,6 @@ public class ThreadBaseReactPackage implements ReactPackage {
                 new UIManagerModule(catalystApplicationContext, reactInstanceManager.getOrCreateViewManagers(catalystApplicationContext), -1),
                 new DeviceInfoModule(catalystApplicationContext),
                 new SourceCodeModule(catalystApplicationContext),
-                new JSCHeapCapture(catalystApplicationContext),
 
                 // Main list
                 new IntentModule(catalystApplicationContext),

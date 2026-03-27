@@ -53,7 +53,7 @@ export const SubTable = ({
 }: {
   children: ReactNode;
   style?: ViewStyle;
-  target?: React.RefObject<View>;
+  target?: React.RefObject<View | null>;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [left, setLeft] = React.useState(WIDTH - 100);

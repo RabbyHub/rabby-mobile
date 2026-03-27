@@ -103,7 +103,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
     resetNavigationTo(navigation, 'Home');
   });
 
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   return (
     <View style={[styles.card, style]}>

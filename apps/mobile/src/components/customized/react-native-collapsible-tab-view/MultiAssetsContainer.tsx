@@ -445,7 +445,7 @@ export const MultiAssetsContainer = React.memo(
                         {
                           React.Children.toArray(children)[
                             i
-                          ] as React.ReactElement
+                          ] as React.ReactElement<any>
                         }
                       </Lazy>
                     </TabNameContext.Provider>

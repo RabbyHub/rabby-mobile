@@ -13,7 +13,7 @@ buildscript {
         // Only using Android Support libraries
         supportLibVersion = "34.0.0"
         googlePlayServicesAuthVersion = "20.7.0"
-        kotlinVersion = "1.9.25"
+        kotlinVersion = "2.0.21"
         webkitVersion = "1.5.0"
     }
     repositories {
@@ -23,13 +23,14 @@ buildscript {
         maven { url "https://maven.aliyun.com/repository/central" }
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.2.1")
+        classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("com.google.gms:google-services:4.4.0")
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-        // classpath "org.jetbrains.kotlin:kotlin-gradle-plugin"
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
 }
+
+apply plugin: "com.facebook.react.rootproject"
 
 // plugins {
 //     id 'com.google.gms.google-services' version '4.4.2' apply false
@@ -50,11 +51,6 @@ configurations.all {
             details.useTarget "1.6.0"
         }
     }
-}
-
-ext {
-  // required for react-native-gesture-handler to resolve location of react-native@<=0.78 in node_modules
-  RNGH_REACT_NATIVE_NODE_MODULES_DIR = file("$rootDir/../node_modules/react-native")
 }
 
 // 需要放在最后

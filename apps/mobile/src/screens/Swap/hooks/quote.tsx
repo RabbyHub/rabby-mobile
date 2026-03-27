@@ -2,7 +2,7 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { DEX, ETH_USDT_CONTRACT, SWAP_FEE_ADDRESS } from '@/constant/swap';
 import { getERC20Allowance, getRecommendNonce } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
-import { preferenceService, swapService } from '@/core/services';
+import { swapService } from '@/core/services';
 import { formatUsdValue } from '@/utils/number';
 import { stats } from '@/utils/stats';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
@@ -62,9 +62,9 @@ export const useQuoteMethods = () => {
     },
     [walletOpenapi],
   );
-  const nativeTokenPriceCache = useRef<Promise<TokenItem>>();
-  const recommendNonceTaskCache = useRef<Promise<string>>();
-  const gasMarketTaskCache = useRef<Promise<GasLevel[]>>();
+  const nativeTokenPriceCache = useRef<Promise<TokenItem>>(undefined);
+  const recommendNonceTaskCache = useRef<Promise<string>>(undefined);
+  const gasMarketTaskCache = useRef<Promise<GasLevel[]>>(undefined);
 
   const getSwapList = React.useCallback(
     async (addr: string, start = 0, limit = 5) => {

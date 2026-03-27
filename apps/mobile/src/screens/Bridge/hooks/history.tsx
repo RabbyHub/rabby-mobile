@@ -51,7 +51,7 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     forScene: 'MakeTransactionAbout',
   });
 
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout>(undefined);
   const clearTimer = useMemoizedFn(() => {
     timerRef.current && clearTimeout(timerRef.current);
   });

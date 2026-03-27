@@ -14,9 +14,7 @@ const hitSlop = {
 };
 
 /** @deprecated */
-export const CloudBackupButton: React.FC<
-  NativeStackHeaderRightProps
-> = ({}) => {
+export const CloudBackupButton = ({}: NativeStackHeaderRightProps) => {
   const onPress = React.useCallback(() => {
     navigateDeprecated(RootNames.StackAddress, {
       screen: RootNames.RestoreFromCloud,

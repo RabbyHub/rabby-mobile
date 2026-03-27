@@ -11,7 +11,6 @@ import com.facebook.react.bridge.CatalystInstance;
 import com.facebook.react.bridge.CatalystInstanceImpl;
 import com.facebook.react.bridge.JSBundleLoader;
 import com.facebook.react.bridge.JavaScriptExecutorFactory;
-import com.facebook.react.jscexecutor.JSCExecutorFactory;
 import com.facebook.react.bridge.JavaScriptExecutor;
 import com.facebook.react.bridge.JSExceptionHandler;
 import com.facebook.react.bridge.ReactApplicationContext;

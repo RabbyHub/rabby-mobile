@@ -668,7 +668,9 @@ export const GasAccountDepositWithToken = ({
             disabled={!amountPass}
             title=""
             content={
-              <AddressItem account={depositAccount}>
+              <AddressItem
+                style={styles.accountContainer}
+                account={depositAccount}>
                 {({ WalletIcon, WalletAddress }) => (
                   <View
                     style={{
@@ -683,8 +685,13 @@ export const GasAccountDepositWithToken = ({
                         borderRadius: 8,
                       }}
                     />
-                    <View style={{ gap: 3 }}>
-                      <Text style={styles.walletName}>{aliasName}</Text>
+                    <View style={{ gap: 3, flexShrink: 1 }}>
+                      <Text
+                        style={styles.walletName}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
+                        {aliasName}
+                      </Text>
                       <WalletAddress
                         style={{
                           fontSize: 12,
@@ -1072,9 +1079,12 @@ const getStyles = createGetStyles2024(({ colors, isLight, colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 18,
   },
+  accountContainer: {
+    width: '95%',
+  },
   walletName: {
     color: colors2024['neutral-title-1'],
-
+    flexShrink: 1,
     fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     fontStyle: 'normal',

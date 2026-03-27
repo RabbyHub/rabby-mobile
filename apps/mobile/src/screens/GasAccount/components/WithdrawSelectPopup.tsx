@@ -308,8 +308,8 @@ const RecipientAddressInnerPopup = ({
             onPress={() => {
               setSelectedAddress(item.recharge_addr);
             }}>
-            <AddressItem account={account}>
-              {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+            <AddressItem style={styles.accountContainer} account={account}>
+              {({ WalletIcon, WalletName, WalletBalance }) => (
                 <View style={styles.innerWalletRow}>
                   <WalletIcon
                     style={styles.innerWallet}
@@ -317,7 +317,7 @@ const RecipientAddressInnerPopup = ({
                     height={46}
                     borderRadius={12}
                   />
-                  <View style={{ gap: 4 }}>
+                  <View style={{ gap: 4, flexShrink: 1 }}>
                     <View style={styles.walletNameContainer}>
                       <WalletName style={styles.innerName} />
                       {isSelected ? <RcIconCheck height={20} /> : null}
@@ -337,6 +337,7 @@ const RecipientAddressInnerPopup = ({
       accounts,
       address,
       selectedAddress,
+      styles.accountContainer,
       styles.innerBalance,
       styles.innerName,
       styles.innerRow,
@@ -479,7 +480,10 @@ export const RecipientAddress = ({
         title=""
         content={
           account ? (
-            <AddressItem account={account} fetchAccount={true}>
+            <AddressItem
+              style={styles.outerAccountContainer}
+              account={account}
+              fetchAccount={true}>
               {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
                 <View style={styles.outerWalletRow}>
                   <WalletIcon style={styles.outerWallet} />
@@ -756,5 +760,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 20,
+  },
+  accountContainer: {
+    width: '70%',
+  },
+  outerAccountContainer: {
+    width: '90%',
   },
 }));

@@ -82,7 +82,7 @@ export function ChainInfo({
   });
   const { t } = useTranslation();
 
-  const modalRef = React.useRef<MODAL_ID>();
+  const modalRef = React.useRef<MODAL_ID>(undefined);
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {
