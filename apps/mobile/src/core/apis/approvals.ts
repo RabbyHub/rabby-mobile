@@ -9,7 +9,7 @@ import { TokenSpenderPair } from '@rabby-wallet/biz-utils/dist/isomorphic/permit
 import { approvalUtils, permit2Utils } from '@rabby-wallet/biz-utils';
 import { AbiCoder } from 'web3-eth-abi';
 import { requestETHRpc } from './provider';
-import { isZeroAddress } from '@ethereumjs/util';
+import { isZeroAddress, toChecksumAddress } from '@ethereumjs/util';
 import { decodeAbiParameters } from 'viem';
 import { Account } from '../services/preference';
 
@@ -67,7 +67,7 @@ export async function approveToken({
         stateMutability: 'nonpayable',
         type: 'function',
       },
-      [spender, amount] as any,
+      [toChecksumAddress(spender), amount] as any,
     ),
   };
   if (gasPrice) {
@@ -136,7 +136,7 @@ export async function getNFTApprovedForAll({
   ] as const;
   const data = (abiCoder as unknown as AbiCoder).encodeFunctionCall(
     abi[0] as any,
-    [address, spender],
+    [toChecksumAddress(address), toChecksumAddress(spender)],
   );
 
   const res = await requestETHRpc(
@@ -258,7 +258,7 @@ export async function revokeNFTApprove(
                     stateMutability: 'nonpayable',
                     type: 'function',
                   },
-                  [spender, false] as any,
+                  [toChecksumAddress(spender), false] as any,
                 ),
               },
             ],
@@ -333,7 +333,7 @@ export async function revokeNFTApprove(
                   stateMutability: 'nonpayable',
                   type: 'function',
                 },
-                [spender, false] as any,
+                [toChecksumAddress(spender), false] as any,
               ),
               chainId,
             },
@@ -461,6 +461,10 @@ export async function lockdownPermit2(
   } = input;
 
   const tokenSpenders = JSON.parse(JSON.stringify(_tokenSpenders));
+  tokenSpenders.forEach((item: TokenSpenderPair) => {
+    item.token = toChecksumAddress(item.token);
+    item.spender = toChecksumAddress(item.spender);
+  });
 
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
