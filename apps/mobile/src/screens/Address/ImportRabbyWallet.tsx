@@ -133,6 +133,7 @@ function ImportRabbyWallet(): JSX.Element {
                 components={{
                   clickable: (
                     <Text
+                      key="clickable"
                       style={styles.linkTextHighlight}
                       onPress={handleCreateNewWallet}
                     />

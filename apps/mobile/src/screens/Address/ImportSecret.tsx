@@ -1,12 +1,15 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React, { useMemo, useCallback, useEffect } from 'react';
+import React, {
+  useMemo,
+  useCallback,
+  useEffect,
+  useDeferredValue,
+} from 'react';
 import { useTranslation, Trans } from 'react-i18next';
-import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { useFocusEffect } from '@react-navigation/native';
-import * as import_english from '@scure/bip39/wordlists/english';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -17,7 +20,8 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import * as ethUtil from 'ethereumjs-util';
+import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
+import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import {
@@ -49,12 +53,6 @@ export const ImportSecret = () => {
   const [privateKeyError, setPrivateKeyError] = React.useState<string>();
 
   const scanner = useScanner();
-
-  const formatMnemonics = useMemo(() => {
-    const trimMnemonics = mnemonics?.trim();
-    const splitMnemonics = trimMnemonics.split(/\s+|,|\n/).filter(Boolean);
-    return splitMnemonics.join(' ');
-  }, [mnemonics]);
 
   // Derived values based on active tab
   const inputPlaceholder = useMemo(() => {
@@ -159,90 +157,48 @@ export const ImportSecret = () => {
     });
   }, [navigation, TabToggle]);
 
-  const verifyMnemonics = React.useCallback(() => {
-    try {
-      const splitMnemonics = formatMnemonics.split(' ');
-      const errorList: Array<{ index: number; word: string }> = [];
-      for (let index = 0; index < splitMnemonics.length; index++) {
-        const word = splitMnemonics[index];
-        let v = word?.trim();
-        if (v && !import_english.wordlist.includes(v)) {
-          errorList.push({
-            index,
-            word: v,
-          });
-        }
-      }
-
-      if (errorList.length) {
-        setMnemonicError(
-          `${t('background.error.errorWords', {
-            count: errorList.length,
-          })}: ${errorList.map(i => i.word).join(',')}`,
-        );
-        return false;
-      }
-      if (!HdKeyring.validateMnemonic(formatMnemonics)) {
-        setMnemonicError(t('background.error.invalidMnemonic'));
-        return false;
-      }
-      return true;
-    } catch {
-      setMnemonicError(t('background.error.invalidMnemonic'));
-      return false;
-    }
-  }, [formatMnemonics, t]);
-
-  const verifyPrivateKey = React.useCallback(() => {
-    const privateKeyPrefix = ethUtil.stripHexPrefix(privateKey);
-    const buffer = Buffer.from(privateKeyPrefix, 'hex');
-    try {
-      if (!ethUtil.isValidPrivate(buffer)) {
-        setPrivateKeyError(t('background.error.invalidPrivateKey'));
-        return false;
-      }
-      return true;
-    } catch {
-      setPrivateKeyError(t('background.error.invalidPrivateKey'));
-      return false;
-    }
-  }, [privateKey, t]);
-
   // Handle confirm button - navigate to CreateNewWallet with import data
   const handleConfirm = React.useCallback(async () => {
     if (activeTab === 'seedPhrase') {
-      if (!verifyMnemonics()) {
+      // Clean and validate mnemonic
+      let cleanedMnemonic: string;
+      try {
+        cleanedMnemonic = validateAndCleanMnemonic(mnemonics);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : t('background.error.invalidMnemonic');
+        setMnemonicError(message);
         return;
       }
 
-      // Navigate to CreateNewWallet with import data
+      // Navigate to CreateNewWallet with cleaned import data
       navigation.navigate(RootNames.StackAddress, {
         screen: RootNames.CreateNewWallet,
         params: {
-          seedPhrase: formatMnemonics,
+          seedPhrase: cleanedMnemonic,
         },
       });
     } else {
-      if (!verifyPrivateKey()) {
+      // Clean and validate private key
+      let cleanedPrivateKey: string;
+      try {
+        cleanedPrivateKey = validateAndCleanPrivateKey(privateKey);
+      } catch {
+        setPrivateKeyError(t('background.error.invalidPrivateKey'));
         return;
       }
 
-      // Navigate to CreateNewWallet with import data
+      // Navigate to CreateNewWallet with cleaned import data
       navigation.navigate(RootNames.StackAddress, {
         screen: RootNames.CreateNewWallet,
         params: {
-          privateKey,
+          privateKey: cleanedPrivateKey,
         },
       });
     }
-  }, [
-    activeTab,
-    formatMnemonics,
-    privateKey,
-    verifyMnemonics,
-    verifyPrivateKey,
-    navigation,
-  ]);
+  }, [activeTab, mnemonics, privateKey, navigation, t]);
 
   // Handle scanner result
   React.useEffect(() => {
@@ -264,10 +220,14 @@ export const ImportSecret = () => {
 
   const isConfirmDisabled = React.useMemo(() => {
     if (activeTab === 'seedPhrase') {
-      return !formatMnemonics || !!mnemonicError;
+      return !mnemonics?.trim() || !!mnemonicError;
     }
-    return !privateKey || !!privateKeyError;
-  }, [activeTab, formatMnemonics, mnemonicError, privateKey, privateKeyError]);
+    return !privateKey?.trim() || !!privateKeyError;
+  }, [activeTab, mnemonics, mnemonicError, privateKey, privateKeyError]);
+
+  const deferredHasInputContent = useDeferredValue(
+    activeTab === 'seedPhrase' ? !!mnemonics?.trim() : !!privateKey?.trim(),
+  );
 
   return (
     <FooterButtonScreenContainer
@@ -325,22 +285,25 @@ export const ImportSecret = () => {
           </View>
 
           {/* Create New Wallet Link */}
-          <View style={styles.linkWrapper}>
-            <Text style={styles.linkText}>
-              <Trans
-                i18nKey="page.newUserOnboarding.common.orYouCanCreateNewWallet"
-                t={t}
-                components={{
-                  clickable: (
-                    <Text
-                      style={styles.linkTextHighlight}
-                      onPress={handleCreateNewWallet}
-                    />
-                  ),
-                }}
-              />
-            </Text>
-          </View>
+          {!deferredHasInputContent && (
+            <View style={styles.linkWrapper}>
+              <Text style={styles.linkText}>
+                <Trans
+                  i18nKey="page.newUserOnboarding.common.orYouCanCreateNewWallet"
+                  t={t}
+                  components={{
+                    clickable: (
+                      <Text
+                        key="clickable"
+                        style={styles.linkTextHighlight}
+                        onPress={handleCreateNewWallet}
+                      />
+                    ),
+                  }}
+                />
+              </Text>
+            </View>
+          )}
         </View>
       </TouchableWithoutFeedback>
     </FooterButtonScreenContainer>

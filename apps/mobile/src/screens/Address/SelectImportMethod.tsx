@@ -23,8 +23,9 @@ import HelpSVG from '@/assets2024/icons/common/help.svg';
 // Wallet brand icons
 import MetaMaskSVG from '@/assets/icons/wallet/metamask.svg';
 import CoinbaseSVG from '@/assets/icons/wallet/coinbase.svg';
-import RabbySVG from '@/assets/icons/wallet/zerion.svg';
-import WalletConnectSVG from '@/assets/icons/wallet/walletconnect.svg';
+import GreenDotsSVG from '@/assets2024/icons/wallet/green-dots.svg';
+import PurpleWalletSVG from '@/assets2024/icons/wallet/purple-wallet.svg';
+import OtherWalletSVG from '@/assets2024/icons/wallet/other-wallet.svg';
 
 // Hardware wallet icons
 import LedgerPNG from '@/assets2024/icons/wallet/ledger.png';
@@ -101,12 +102,15 @@ function SelectImportMethod(): JSX.Element {
             style={styles.importItem}
             onPress={handleSeedPhraseOrPrivateKey}>
             <View style={styles.itemContent}>
-              <Text style={styles.itemTitle}>Seed phrase or private key</Text>
+              <Text style={styles.itemTitle}>
+                {t('page.nextComponent.addAddress.seedPhraseOrPrivateKey')}
+              </Text>
               <View style={styles.iconRow}>
                 <MetaMaskSVG width={20} height={20} />
+                <GreenDotsSVG width={20} height={20} />
+                <PurpleWalletSVG width={20} height={20} />
+                <OtherWalletSVG width={20} height={20} />
                 <CoinbaseSVG width={20} height={20} />
-                <RabbySVG width={20} height={20} />
-                <WalletConnectSVG width={20} height={20} />
               </View>
             </View>
             <View style={styles.arrowWrapper}>

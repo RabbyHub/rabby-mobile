@@ -210,10 +210,8 @@ function NewUserGetStarted2024V2(): JSX.Element {
 
         {/* Text Content */}
         <View style={styles.textContent}>
-          <Text style={styles.title}>{'Welcome to\nRabby Wallet'}</Text>
-          <Text style={styles.subtitle}>
-            Your go-to wallet for Ethereum and EVM
-          </Text>
+          <Text style={styles.title}>{t('page.getStart.welcomeTitle')}</Text>
+          <Text style={styles.subtitle}>{t('global.appDescription')}</Text>
         </View>
 
         {/* Spacer to push bottom actions to screen bottom */}
@@ -225,9 +223,7 @@ function NewUserGetStarted2024V2(): JSX.Element {
             <>
               <Button
                 type="primary"
-                title={
-                  t('page.getStart.createNewAddress') || 'Create a new wallet'
-                }
+                title={t('page.getStart.createNewAddress')}
                 disabled={
                   !getStarted.processedInit || getStarted.localHasAccounts
                 }
@@ -238,10 +234,7 @@ function NewUserGetStarted2024V2(): JSX.Element {
                   !getStarted.processedInit || getStarted.localHasAccounts
                 }
                 type="ghost"
-                title={
-                  t('page.getStart.alreadyHaveAddress') ||
-                  'I already have a wallet'
-                }
+                title={t('page.getStart.alreadyHaveAddress')}
                 onPress={handleGoToImport}
                 buttonStyle={styles.secondaryButton}
               />
@@ -253,7 +246,7 @@ function NewUserGetStarted2024V2(): JSX.Element {
                 onPress={handleGoToSyncExtension}>
                 <View style={styles.syncLinkContent}>
                   <Text style={styles.syncLinkText}>
-                    {'I already use Rabby'}
+                    {t('page.getStart.alreadyUseRabby')}
                   </Text>
                   <ChevronRightSmallCC
                     color={colors2024['neutral-secondary']}

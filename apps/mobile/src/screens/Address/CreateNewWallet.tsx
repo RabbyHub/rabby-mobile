@@ -2,6 +2,7 @@ import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 
@@ -80,6 +81,7 @@ const ANIMATION_START_TIMES = {
 export default function CreateNewWalletScreen({ route }: ScreenProps) {
   const { styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   // Convert route params to CreateWalletParams union type
   const rawParams = route.params;
@@ -91,8 +93,11 @@ export default function CreateNewWalletScreen({ route }: ScreenProps) {
       : undefined;
 
   // Use the polymorphic hook for all wallet creation logic
-  const { address, isLoading, isSubmitting, handleSubmit } =
+  const { address, isLoading, isSubmitting, handleSubmit, mode } =
     useCreateWallet(params);
+
+  // Determine if we're in import mode to show balance
+  const isImportMode = mode !== 'create';
 
   // Animation values
   const textProgress = useSharedValue(0);
@@ -195,7 +200,9 @@ export default function CreateNewWalletScreen({ route }: ScreenProps) {
 
           {/* Success Text - fades in */}
           <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
-            <Text style={styles.successText}>Your wallet is ready 🚀</Text>
+            <Text style={styles.successText}>
+              {t('page.newUserOnboarding.walletReady')}
+            </Text>
           </Animated.View>
 
           {/* Address Block - fades in + slides up after delay */}
@@ -209,6 +216,7 @@ export default function CreateNewWalletScreen({ route }: ScreenProps) {
               <AddressCard
                 address={address}
                 brandName={KEYRING_CLASS.MNEMONIC}
+                showBalance={isImportMode}
               />
             )}
           </Animated.View>
@@ -217,7 +225,7 @@ export default function CreateNewWalletScreen({ route }: ScreenProps) {
           <Animated.View style={[styles.formContainer, formAnimatedStyle]}>
             <PasswordForm
               onSubmit={handleSubmit}
-              topTip="Set a password to secure your wallet"
+              topTip={t('page.newUserOnboarding.setPasswordTip')}
               loading={isSubmitting || isLoading}
             />
           </Animated.View>
@@ -259,7 +267,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     addressWrapper: {
       marginTop: 24,
       width: '100%',
-      height: 70,
+      minHeight: 70,
       borderRadius: 20,
       backgroundColor: colors2024['neutral-bg-1'],
     },
