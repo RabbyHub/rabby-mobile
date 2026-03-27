@@ -127,7 +127,7 @@ export const SearchAssets: React.FC<Props> = ({
               data={item}
               style={styles.renderItemWrapper}
               onTokenPress={handleOpenTokenDetail}
-              logoSize={40}
+              logoSize={46}
               decimalPrecision
             />
             {isPined ? <FavoriteTag style={styles.favoriteTag} /> : null}
@@ -273,6 +273,7 @@ export const SearchAssets: React.FC<Props> = ({
         ListHeaderComponent={<SearchTokenHeader />}
         ListEmptyComponent={ListEmptyComponent}
         onScrollBeginDrag={Keyboard.dismiss}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => renderItem({ item })}
         style={styles.list}
       />

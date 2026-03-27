@@ -264,6 +264,7 @@ export const SearchAssetsOnHome: React.FC<Props> = ({
       data={filterTokens}
       ListEmptyComponent={ListEmptyComponent}
       onScrollBeginDrag={Keyboard.dismiss}
+      showsVerticalScrollIndicator={false}
       renderItem={({ item }) => renderItem({ item })}
       style={[
         styles.container,

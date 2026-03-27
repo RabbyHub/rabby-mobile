@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { Pressable, RefreshControl, View, ViewToken } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
@@ -32,6 +32,7 @@ import {
   watchlistTokenSortAtom,
 } from './sort';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { marketRealtimePriceAtom } from '../Market/atom';
 
 const VIEWABILITY_CONFIG = {
   itemVisiblePercentThreshold: 0,
@@ -53,6 +54,7 @@ export function WatchlistContent({
 
   const [tokenSort, setTokenSort] = useAtom(watchlistTokenSortAtom);
   const [changeSort, setChangeSort] = useAtom(watchlistChangeSortAtom);
+  const setMarketRealtimePrice = useSetAtom(marketRealtimePriceAtom);
   const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -123,6 +125,10 @@ export function WatchlistContent({
     [watchlistTokens, tokenSort, changeSort],
   );
 
+  const clearCurrentListRealtimePrice = useCallback(() => {
+    setMarketRealtimePrice({});
+  }, [setMarketRealtimePrice]);
+
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
       const clickAction = getMarketTabClickListAction('watchlist');
@@ -149,6 +155,7 @@ export function WatchlistContent({
   );
 
   const handleTokenSort = useCallback(() => {
+    clearCurrentListRealtimePrice();
     setTokenSort(prev => {
       if (prev === 'default') {
         return 'desc';
@@ -162,9 +169,16 @@ export function WatchlistContent({
       return 'default';
     });
     setChangeSort('default');
-  }, [setChangeSort, setTokenSort]);
+    handleFetchTokens(true);
+  }, [
+    clearCurrentListRealtimePrice,
+    handleFetchTokens,
+    setChangeSort,
+    setTokenSort,
+  ]);
 
   const handleChangeSort = useCallback(() => {
+    clearCurrentListRealtimePrice();
     setChangeSort(prev => {
       if (prev === 'default') {
         return 'desc';
@@ -178,7 +192,13 @@ export function WatchlistContent({
       return 'default';
     });
     setTokenSort('default');
-  }, [setChangeSort, setTokenSort]);
+    handleFetchTokens(true);
+  }, [
+    clearCurrentListRealtimePrice,
+    handleFetchTokens,
+    setChangeSort,
+    setTokenSort,
+  ]);
 
   const renderItem = useCallback(
     ({ item }: { item: TokenDetailWithPriceCurve }) => (

@@ -16,7 +16,6 @@ import { PercentChangeBadge } from '@/screens/Watchlist/components/TokenItem';
 import { isNumber } from 'lodash';
 import { useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
-import { NoOpen } from '@/screens/Watchlist/components/NoOpen';
 
 export const formatPercentageKMB = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -142,7 +141,7 @@ const TokenListItemComponent = ({
         <Text style={styles.priceText}>${formatPrice(displayPrice)}</Text>
         {/* 24小时价格变化,如果市场关闭则显示No Open */}
         {isMarketClosed ? (
-          <NoOpen />
+          <PercentChangeBadge percent={displayPriceChange} isClosed />
         ) : (
           isNumber(displayPriceChange) && (
             <PercentChangeBadge percent={displayPriceChange} />

@@ -55,6 +55,7 @@ export const TokenInfoPopup = () => {
     }
     return formatUsdValue(usdValue);
   }, [usdValue]);
+  console.log('CUSTOM_LOGGER:=>: longPressToken', longPressToken);
 
   return (
     <Modal
@@ -104,6 +105,7 @@ export const TokenInfoPopup = () => {
                 _amountStr: formatAmount(longPressToken.tokenItem?.amount),
                 _tokenId: longPressToken.tokenEntity.id,
                 usd_value: usdValue,
+                fdv: longPressToken.tokenEntity.identity?.fdv,
               } as unknown as AbstractPortfolioToken
             }
             style={{

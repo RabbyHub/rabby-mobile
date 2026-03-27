@@ -564,7 +564,7 @@ export const ExternalTokenRow = memo(
                   <Text style={styles.caValue}>
                     {'CA'}
                     <Text style={styles.caValueText}>
-                      {':'}
+                      {': '}
                       {ellipsisAddress(
                         (data as TokenItemWithEntity)?.identity?.token_id ||
                           data.id,
@@ -1192,7 +1192,7 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 4,
   },
   caValue: {
-    color: ctx.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-title-1'],
     fontSize: 14,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
