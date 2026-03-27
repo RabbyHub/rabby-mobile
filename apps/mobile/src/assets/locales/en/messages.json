@@ -2368,6 +2368,7 @@
     },
     "market": {
       "noOpen": "Not Open",
+      "marketNotOpenTooltip": "Market not open",
       "tokenHeader": {
         "name": "Name",
         "tokenAndName": "Token/Name"

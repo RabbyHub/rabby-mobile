@@ -24,6 +24,8 @@ import {
 import { useTokenMarketTokenList } from '../../Meme/hooks/useTokenMarketTokenList';
 import { matomoRequestEvent } from '@/utils/analytics';
 import WatchListHeader from '../../Watchlist/components/TokenHeader';
+import { marketRealtimePriceAtom } from '../atom';
+import { useSetAtom } from 'jotai';
 
 const isAndroid = Platform.OS === 'android';
 const VIEWABILITY_CONFIG = {
@@ -70,6 +72,7 @@ export function MarketCategoryContent({
   const [volumeSort, setVolumeSort] = useAtom(volumeSortAtom);
   const [fdvSort, setFdvSort] = useAtom(fdvSortAtom);
   const [changeSort, setChangeSort] = useAtom(changeSortAtom);
+  const setMarketRealtimePrice = useSetAtom(marketRealtimePriceAtom);
 
   const supportedSortFields = useMemo(
     () => new Set(sortFields || []),
@@ -122,32 +125,57 @@ export function MarketCategoryContent({
     loadMore,
   } = useTokenMarketTokenList(categoryId, orderBy, order);
 
+  const clearCurrentListRealtimePrice = useCallback(() => {
+    setMarketRealtimePrice({});
+  }, [setMarketRealtimePrice]);
+
   const handleVolumeSort = useCallback(() => {
     if (!supportedSortFields.has('volume_24h')) {
       return;
     }
+    clearCurrentListRealtimePrice();
     setVolumeSort(prev => toggleSort(prev));
     setFdvSort('default');
     setChangeSort('default');
-  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
+  }, [
+    clearCurrentListRealtimePrice,
+    setChangeSort,
+    setFdvSort,
+    setVolumeSort,
+    supportedSortFields,
+  ]);
 
   const handleFdvSort = useCallback(() => {
     if (!supportedSortFields.has('fdv')) {
       return;
     }
+    clearCurrentListRealtimePrice();
     setFdvSort(prev => toggleSort(prev));
     setVolumeSort('default');
     setChangeSort('default');
-  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
+  }, [
+    clearCurrentListRealtimePrice,
+    setChangeSort,
+    setFdvSort,
+    setVolumeSort,
+    supportedSortFields,
+  ]);
 
   const handleChangeSort = useCallback(() => {
     if (!supportedSortFields.has('price_change_24h')) {
       return;
     }
+    clearCurrentListRealtimePrice();
     setChangeSort(prev => toggleSort(prev));
     setVolumeSort('default');
     setFdvSort('default');
-  }, [setChangeSort, setFdvSort, setVolumeSort, supportedSortFields]);
+  }, [
+    clearCurrentListRealtimePrice,
+    setChangeSort,
+    setFdvSort,
+    setVolumeSort,
+    supportedSortFields,
+  ]);
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenMarketTokenItem) => {
