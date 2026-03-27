@@ -51,7 +51,7 @@ interface TokenAmountInputProps {
   token: TokenItem;
   value?: string;
   chainId: string;
-  onChange?(amount: string): void;
+  onChange?: React.ComponentProps<typeof NumericInput>['onChangeText'];
   onTokenChange(token: TokenItem): void;
   handleClickMaxButton?: () => Promise<void> | void;
   /**
@@ -161,7 +161,7 @@ export const TokenAmountInput = React.forwardRef<
               ]}
               value={value}
               onChangeText={(value: string) => {
-                onChange?.(formatSpeicalAmount(value));
+                return onChange?.(formatSpeicalAmount(value));
               }}
               ref={tokenInputRef}
               placeholder="0"

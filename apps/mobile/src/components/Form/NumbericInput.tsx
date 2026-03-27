@@ -18,7 +18,7 @@ type BottomSheetTextInputProps = React.ComponentProps<
 
 type NumericInputProps = Omit<TextInputProps, 'onChangeText'> & {
   value?: string | number;
-  onChangeText?: (value: string) => void;
+  onChangeText?: (value: string) => void | boolean;
   min?: number;
   max?: number;
 };
@@ -65,8 +65,10 @@ export const NumericInput = React.forwardRef<TextInput, NumericInputProps>(
       (newValue: string) => {
         if (ALLOWED_NUMBIC_INPUT.test(newValue)) {
           newValue = correctInputToNumber(newValue, { min, max }).toString();
-          setInternalValue(newValue);
-          onChangeText?.(newValue);
+          const result = onChangeText?.(newValue);
+          if (result !== false) {
+            setInternalValue(newValue);
+          }
         }
       },
       [min, max, onChangeText],
