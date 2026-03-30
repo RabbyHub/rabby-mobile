@@ -201,7 +201,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     SelectedBridgeQuote | undefined
   >();
 
-  const expiredTimer = useRef<NodeJS.Timeout>();
+  const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshPausedRef = useRef(false);
 
   const inSufficient = useMemo(

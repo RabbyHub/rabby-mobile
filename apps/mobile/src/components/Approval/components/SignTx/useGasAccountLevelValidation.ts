@@ -1,7 +1,7 @@
 import { openapi } from '@/core/request';
-import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
-import { SignTxCheckError } from './validation';
+import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { SignTxCheckError } from './calc';
 
 const GAS_ACCOUNT_CHAIN_NOT_SUPPORTED = 4001;
 const GAS_ACCOUNT_BALANCE_NOT_ENOUGH = 4002;

@@ -171,7 +171,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     QuoteProvider | undefined
   >();
 
-  const expiredTimer = useRef<NodeJS.Timeout>();
+  const expiredTimer = useRef<NodeJS.Timeout>(undefined);
   const autoQuoteRefreshPausedRef = useRef(false);
 
   const clearExpiredTimer = useCallback(() => {
