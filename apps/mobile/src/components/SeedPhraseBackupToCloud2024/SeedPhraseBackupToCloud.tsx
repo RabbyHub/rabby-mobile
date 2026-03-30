@@ -120,7 +120,6 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
           });
         }
       } catch (e) {
-        console.log('backup error', e);
         toast.error(t('page.newAddress.seedPhrase.backupFailedTitle'));
       }
     },
