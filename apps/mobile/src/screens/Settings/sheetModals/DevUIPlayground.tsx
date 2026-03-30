@@ -93,7 +93,7 @@ export default function DevUIPlaygroundModal({
         onPress: () => {
           navigation.dispatch(
             StackActions.push(RootNames.StackGetStarted, {
-              screen: RootNames.GetStarted,
+              screen: RootNames.GetStartedScreen2024,
             }),
           );
           // navigation.dispatch(

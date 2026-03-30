@@ -32,6 +32,8 @@ import { Text } from '@/components/Typography';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 type TabType = 'seedPhrase' | 'privateKey';
 
@@ -180,6 +182,9 @@ export const ImportSecret = () => {
           seedPhrase: cleanedMnemonic,
         },
       });
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
+      );
     } else {
       // Clean and validate private key
       let cleanedPrivateKey: string;
@@ -197,6 +202,9 @@ export const ImportSecret = () => {
           privateKey: cleanedPrivateKey,
         },
       });
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
+      );
     }
   }, [activeTab, mnemonics, privateKey, navigation, t]);
 

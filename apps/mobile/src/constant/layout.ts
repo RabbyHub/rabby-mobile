@@ -45,7 +45,7 @@ export const ADDRESS_ENTRY_HEIGHT = 78;
 export const ADDRESS_ENTRY_GAP = 12;
 export const TOGGLE_SPLIT_HEIGHT = 24;
 
-export const FOLD_ASSETS_HEADER_HEIGHT = 46 + 32;
+export const FOLD_ASSETS_HEADER_HEIGHT = 46;
 export const UNFOLD_ASSETS_HEADER_HEIGHT = 161 + 20;
 export const TAB_HEADER_HEIGHT = 36;
 
@@ -215,6 +215,8 @@ export const RootNames = {
   SyncExtensionPassword: 'SyncExtensionPassword',
   SyncExtensionImported: 'SyncExtensionImported',
   SyncExtensionAccountSuccess: 'SyncExtensionAccountSuccess',
+
+  Backup: 'Backup',
 
   /** @deprecated */
   StackMain: 'StackMain',
@@ -467,6 +469,8 @@ function makeScreenSpecConfig() {
       [RootNames.SyncExtensionPassword]: bg1Default2024Conf,
       [RootNames.SyncExtensionImported]: bg1Default2024Conf,
       [RootNames.SyncExtensionAccountSuccess]: bg1Default2024Conf,
+
+      [RootNames.Backup]: bg1Default2024Conf,
 
       // StackMain
 

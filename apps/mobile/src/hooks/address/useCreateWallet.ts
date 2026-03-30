@@ -228,6 +228,7 @@ async function submitCreateWallet(
       },
     ],
     scene: 'memonics',
+    needsBackupReminder: true,
   });
 
   // 7. Show success toast (will appear on Home page after navigation due to delay)

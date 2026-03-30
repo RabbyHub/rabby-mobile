@@ -265,6 +265,11 @@ export type AddressNavigatorParamList = {
     newAccounts: Account[];
   };
   [RootNames.Points]?: {};
+  [RootNames.Backup]?: {
+    address?: string;
+    type?: string;
+    brandName?: string;
+  };
 };
 
 export type AccountNavigatorParamList = {

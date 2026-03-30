@@ -1085,6 +1085,10 @@
         "empty": "No website added to favorites",
         "favorite": "Favorite",
         "search": "Search"
+      },
+      "depositAssets": {
+        "subtitle": "Receive assets to this wallet",
+        "title": "Deposit Assets"
       }
     },
     "copyTrading": {
@@ -1291,6 +1295,7 @@
     },
     "newAddress": {
       "Quick": "Quick",
+      "Done": "Done",
       "whatIsSeedPhrase": {
         "title": "What is a 'Seed phrase'",
         "description1": "A seed phrase is a series of words used to access and control your wallet. You can use it to recover your wallet on any device.",
@@ -3558,5 +3563,9 @@
     "unknownAddressFromTransaction": "The transaction involves an address that is not in your wallet. Please check the transaction history later.",
     "noTransactionOwnerAddress": "The transaction does not belong to any address in your wallet. Please check the transaction history later.",
     "noTransactionDetail": "Transaction details not found. Please check the transaction history later."
+  },
+  "backupReminder": {
+    "title": "You have not backed up your wallet",
+    "action": "Back up now"
   }
 }

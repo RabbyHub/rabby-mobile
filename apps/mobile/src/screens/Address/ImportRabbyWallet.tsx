@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, Pressable, Image } from 'react-native';
+import { View, ScrollView, Pressable, Image, Keyboard } from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -17,6 +17,9 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Trans, useTranslation } from 'react-i18next';
 import { IS_IOS } from '@/core/native/utils';
+import { useSetPasswordFirst } from '@/hooks/useLock';
+import { preferenceService } from '@/core/services';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 
 import HelpSVG from '@/assets2024/icons/common/help.svg';
 import IconSyncExtension from '@/assets2024/icons/common/iconSyncExtension.svg';
@@ -33,16 +36,27 @@ function ImportRabbyWallet(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const handleSyncExtension = React.useCallback(() => {
     navigation.navigate(RootNames.Scanner, { syncExtension: true });
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
+    );
   }, [navigation]);
 
   const handleCloudRestore = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.RestoreFromCloud,
+    Keyboard.dismiss();
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.RESTORE_FROM_CLOUD,
+      shouldRedirect2SetPassword: shouldRedirectToSetPasswordBefore2024,
+      onDone: () => {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal2024(id);
+        }, 0);
+      },
     });
-  }, [navigation]);
+  }, [shouldRedirectToSetPasswordBefore2024]);
 
   const handleCreateNewWallet = React.useCallback(() => {
     navigation.navigate(RootNames.StackAddress, {

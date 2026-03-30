@@ -39,6 +39,7 @@ import ImportRabbyWallet from '../Address/ImportRabbyWallet';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
 import SetPassword2024 from '../Address/SetPassword2024';
 import CreateChooseBackup from '../Address/CreateChooseBackup';
+import Backup from '../Address/Backup';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
 import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
@@ -334,6 +335,19 @@ export function AddressNavigator() {
             headerTitleStyle: styles.headerTitleText,
           });
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.Backup}
+        component={Backup}
+        options={mergeScreenOptions({
+          headerTitle: t('screens.addressStackTitle.ChooseBackup'),
+          title: t('screens.addressStackTitle.ChooseBackup'),
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTintColor: colors2024['neutral-title-1'],
+          headerTitleStyle: styles.headerTitleText,
+        })}
       />
       <AddressStack.Screen
         name={RootNames.AddressDetail}
