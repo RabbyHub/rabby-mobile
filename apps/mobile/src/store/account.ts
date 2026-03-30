@@ -195,6 +195,14 @@ class AccountStore extends BaseStore<AccountStoreState> {
       accountEvents.emit('ACCOUNT_REMOVED', {
         removedAccounts: [account],
       });
+      // Clean up backup reminder from preferenceService
+      const dbId = EntityAccountBase.buildDBId({
+        address: account.address,
+        type: account.type,
+        brandName: account.brandName,
+      });
+      preferenceService.clearNeedsBackupReminder(dbId);
+
       await AccountInfoEntity.deleteByAccount(account);
       await this.fetchNewlyAddedAccounts();
     });
@@ -205,13 +213,27 @@ class AccountStore extends BaseStore<AccountStoreState> {
       }
     });
 
-    accountEvents.on('ACCOUNT_ADDED', async ({ accounts }) => {
-      await AccountInfoEntity.recordNewAccount(accounts);
-      await this.fetchNewlyAddedAccounts();
-      checkAddedAccountsGasAccountIfNeeded(accounts).catch(error => {
-        console.error('checkAddedAccountsGasAccountIfNeeded error', error);
-      });
-    });
+    accountEvents.on(
+      'ACCOUNT_ADDED',
+      async ({ accounts, needsBackupReminder }) => {
+        // Store backup reminder in preferenceService (MMKV) for reliable persistence
+        if (needsBackupReminder) {
+          for (const account of accounts) {
+            const dbId = EntityAccountBase.buildDBId({
+              address: account.address,
+              type: account.type,
+              brandName: account.brandName,
+            });
+            preferenceService.setNeedsBackupReminder(dbId, true);
+          }
+        }
+        await AccountInfoEntity.recordNewAccount(accounts);
+        await this.fetchNewlyAddedAccounts();
+        checkAddedAccountsGasAccountIfNeeded(accounts).catch(error => {
+          console.error('checkAddedAccountsGasAccountIfNeeded error', error);
+        });
+      },
+    );
 
     ormEvents.on('account_info:removed', () => {
       this.fetchNewlyAddedAccounts();
