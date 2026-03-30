@@ -145,7 +145,8 @@
       "deposit": "Depósito",
       "withdraw": "Levantar",
       "loginConfirmModal": {
-        "desc": "Uma vez logado, pode apenas depositar neste endereço."
+        "desc": "Uma vez logado, pode apenas depositar neste endereço.",
+        "title": "Mudar Carteira"
       },
       "loginInTip": {
         "login": "Iniciar sessão GasAccount",
@@ -1048,7 +1049,8 @@
         "WalletConnectTips": "GasAccount não suporta WalletConnect",
         "chainNotSupported": "Esta cadeia não é suportada pelo GasAccount",
         "loginFirst": "Por favor, inicie sessão no GasAccount primeiro.",
-        "customRPC": "Não é suportado ao utilizar RPC personalizado"
+        "customRPC": "Não é suportado ao utilizar RPC personalizado",
+        "notEnough": "Não há gás suficiente. Depósito de gás: ${{usd}}"
       },
       "qrcode": {
         "signWith": "Assinar com {{brand}}",
@@ -1112,7 +1114,8 @@
         "lending": "Empréstimo",
         "predict": "Prever",
         "meme": "Memecoin",
-        "market": "Mercado"
+        "market": "Mercado",
+        "gasDeposit": "Depósito de Gas"
       },
       "swipeUp": {
         "desc": "Deslize para cima para explorar websites",
@@ -2325,7 +2328,17 @@
         "paymentAddress": "Carteira de Pagamento",
         "inSufficientTip1": "Esta carteira não tem tokens suficientes. Por favor, escolha uma carteira diferente.",
         "pay": "Pagar",
-        "applePayFeeDesc1": "Inclui uma taxa da App Store. Sem retiradas."
+        "applePayFeeDesc1": "Inclui uma taxa da App Store. Sem retiradas.",
+        "estReceiveTip": "Serviço processado via {{name}}, pode ter slippage",
+        "fetchQuoteFailed": "Falha ao buscar cotação",
+        "estReceiveLabel": "Est.Receber: {{usd}}",
+        "gasDepositTitle": "Depósito de Gas",
+        "insufficientBalanceLabel": "Saldo Insuficiente",
+        "minAmountRequired": "O montante mínimo de depósito é de $1",
+        "unavailablePaymentWallet": "A carteira de pagamento selecionada não está disponível",
+        "selectToken": "Selecionar Token para Depositar",
+        "suggestedToken": "Tokens Sugeridos",
+        "balanceLabel": "Saldo"
       },
       "paymentAddressPopup": {
         "balance": "Saldo",
@@ -2376,7 +2389,8 @@
         "depositToken": "Depósito com Token",
         "depositTokenDesc": "Sem taxa extra, levantamentos instantâneos",
         "buyWithDesc": "30% taxa, sem levantamentos",
-        "buyWithApple": "Comprar na App Store"
+        "buyWithApple": "Comprar na App Store",
+        "insufficientTokenBalance": "Saldo de Token Insuficiente"
       },
       "gasAccountList": {
         "balance": "Saldo",
@@ -2388,7 +2402,21 @@
       "depositCanceled": "Depósito cancelado",
       "depositSuccess": "Depósito bem-sucedido",
       "loginSuccess": "Login Successful",
-      "withdrawDisabledIAP": "Os levantamentos estão desativados porque o seu saldo inclui fundos fiduciários, que não podem ser levantados. Contacte o suporte para levantar o saldo dos seus tokens."
+      "withdrawDisabledIAP": "Os levantamentos estão desativados porque o seu saldo inclui fundos fiduciários, que não podem ser levantados. Contacte o suporte para levantar o saldo dos seus tokens.",
+      "benefitCard": {
+        "item1": "Sem taxa Rabby",
+        "item2": "Suporta todas as redes",
+        "item3": "Suporta todas as transações",
+        "desc1": "Sem taxas adicionais para pagar gas",
+        "desc2": "",
+        "desc3": "Trocar, Ponte, Enviar, DApps, & mais"
+      },
+      "gasBalance": "Saldo de Gas",
+      "depositWith": "Depósito com",
+      "depositNow": "Deposite agora",
+      "switchAccount": "Mudar Carteira",
+      "depositFailed": "Depósito falhou",
+      "lowBalance": "Você não tem gás suficiente. Deposite gás para garantir que as futuras transações ocorram sem problemas."
     },
     "settingModal": {
       "themeMode": {

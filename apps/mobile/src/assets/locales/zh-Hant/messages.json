@@ -961,7 +961,8 @@
         "lending": "借貸",
         "predict": "預測",
         "meme": "Memecoin",
-        "market": "市場"
+        "market": "市場",
+        "gasDeposit": "Gas Deposit"
       },
       "swipeUp": {
         "descAndroidMore": "點擊探索更多 dApps",
@@ -1121,7 +1122,8 @@
         "chainNotSupported": "GasAccount 不支持該鍊",
         "customRPC": "使用自定義 RPC 時不支持",
         "deposit": "存入",
-        "loginFirst": "請先登入GasAccount"
+        "loginFirst": "請先登入GasAccount",
+        "notEnough": "燃料不足。充值燃料：${{usd}}"
       },
       "qrcode": {
         "qrcodeDesc": "使用您的 {{brand}} 掃描以簽名  \n簽名後，點擊下面的按鈕以接收簽名",
@@ -1858,7 +1860,17 @@
         "paymentAddress": "付款錢包",
         "inSufficientTip1": "這個錢包的代幣不足，請選擇另一個錢包。",
         "pay": "支付",
-        "applePayFeeDesc1": "包括應用商店費用。不允許提款。"
+        "applePayFeeDesc1": "包括應用商店費用。不允許提款。",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "gasDepositTitle": "Gas 存款",
+        "balanceLabel": "餘額",
+        "insufficientBalanceLabel": "餘額不足",
+        "suggestedToken": "建議的代幣",
+        "selectToken": "選擇要存入的 Token",
+        "minAmountRequired": "最低存款金额為 $1",
+        "fetchQuoteFailed": "無法獲取報價",
+        "estReceiveTip": "透過 {{name}} 處理的服務，可能會有滑點",
+        "unavailablePaymentWallet": "所選擇的支付錢包不可用"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
@@ -1906,7 +1918,8 @@
         "depositTokenDesc": "無額外費用，即時提現",
         "title": "存入GasAccount",
         "buyWithDesc": "30% 費用，不可提款",
-        "buyWithApple": "在 App Store 購買"
+        "buyWithApple": "在 App Store 購買",
+        "insufficientTokenBalance": "餘額不足"
       },
       "gasAccountList": {
         "balance": "餘額",
@@ -1918,7 +1931,21 @@
       "depositCanceled": "存款已取消",
       "loginFailed": "登入失敗",
       "loginSuccess": "登入成功",
-      "withdrawDisabledIAP": "提款功能已停用，因為您的餘額包含無法提款的法幣資金。請聯繫客服以提取您的代幣餘額。"
+      "withdrawDisabledIAP": "提款功能已停用，因為您的餘額包含無法提款的法幣資金。請聯繫客服以提取您的代幣餘額。",
+      "benefitCard": {
+        "desc2": "",
+        "item1": "無 Rabby 費用",
+        "desc3": "兑换、桥接、发送、DApps 及更多",
+        "desc1": "不用支付額外的 gas 費用",
+        "item2": "支持所有网络",
+        "item3": "支持所有交易"
+      },
+      "depositWith": "使用進行存款",
+      "switchAccount": "切換錢包",
+      "gasBalance": "Gas 余额",
+      "depositNow": "立即存款",
+      "depositFailed": "存款失敗",
+      "lowBalance": "您沒有足夠的 gas。請存入 gas 以確保未來的交易順利進行。"
     },
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈條",
@@ -3290,7 +3317,8 @@
         "noHistory": "暫無歷史記錄"
       },
       "loginConfirmModal": {
-        "desc": "一旦登錄，您只能在此地址進行充值"
+        "desc": "一旦登錄，您只能在此地址進行充值",
+        "title": "切換錢包"
       },
       "depositPopup": {
         "amount": "金額",

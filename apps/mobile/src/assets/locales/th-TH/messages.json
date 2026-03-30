@@ -164,7 +164,8 @@
       },
       "gasExceed": "ยอดคงเหลือใน GasAccount ไม่เกิน $1000",
       "loginConfirmModal": {
-        "desc": "เมื่อเข้าสู่ระบบแล้ว คุณสามารถฝากได้เฉพาะที่อยู่นี้เท่านั้น"
+        "desc": "เมื่อเข้าสู่ระบบแล้ว คุณสามารถฝากได้เฉพาะที่อยู่นี้เท่านั้น",
+        "title": "เปลี่ยนกระเป๋าเงิน"
       },
       "depositPopup": {
         "title": "ฝากเงิน",
@@ -963,7 +964,8 @@
         "loginFirst": "กรุณาเข้าสู่ระบบ GasAccount ก่อน",
         "deposit": "ฝากเงิน",
         "WalletConnectTips": "GasAccount ไม่รองรับ WalletConnect",
-        "chainNotSupported": "เครือนี้ไม่ได้รับการสนับสนุนโดย GasAccount"
+        "chainNotSupported": "เครือนี้ไม่ได้รับการสนับสนุนโดย GasAccount",
+        "notEnough": "ไม่มีก๊าซเพียงพอ ฝากก๊าซ: ${{usd}}"
       },
       "ledger": {
         "txRejected": "ธุรกรรมถูกปฏิเสธ",
@@ -1022,7 +1024,8 @@
         "lending": "การให้กู้ยืม",
         "predict": "คาดการณ์",
         "meme": "Memecoin",
-        "market": "ตลาด"
+        "market": "ตลาด",
+        "gasDeposit": "เงินฝากแก๊ส"
       },
       "swipeUp": {
         "descAndroid": "คลิกเพื่อสำรวจ dApps",
@@ -2020,7 +2023,17 @@
         "paymentAddress": "กระเป๋าเงินการชำระเงิน",
         "inSufficientTip1": "กระเป๋าเงินนี้มีโทเค็นไม่เพียงพอ กรุณาเลือกกระเป๋าเงินใบอื่น",
         "applePayFeeDesc1": "รวมค่าธรรมเนียม App Store ไม่มีการถอนเงิน。",
-        "pay": "จ่าย"
+        "pay": "จ่าย",
+        "insufficientBalanceLabel": "ยอดเงินไม่เพียงพอ",
+        "balanceLabel": "ยอดเงิน",
+        "gasDepositTitle": "เงินฝาก Gas",
+        "unavailablePaymentWallet": "กระเป๋าเงินที่เลือกสำหรับการชำระเงินไม่สามารถใช้งานได้",
+        "selectToken": "เลือกโทเค็นเพื่อฝากเงิน",
+        "suggestedToken": "โทเค็นที่แนะนำ",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "fetchQuoteFailed": "ไม่สามารถดึงข้อมูลการเสนอราคาได้",
+        "minAmountRequired": "จำนวนเงินฝากขั้นต่ำคือ $1",
+        "estReceiveTip": "บริการที่ดำเนินการผ่าน {{name}} อาจมีการลื่นไถล"
       },
       "paymentAddressPopup": {
         "balance": "ยอดเงิน",
@@ -2071,7 +2084,8 @@
         "depositToken": "ฝากด้วย Token",
         "buyWith": "ซื้อด้วย",
         "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน",
-        "buyWithApple": "ซื้อใน App Store"
+        "buyWithApple": "ซื้อใน App Store",
+        "insufficientTokenBalance": "ยอดคงเหลือโทเค็นไม่เพียงพอ"
       },
       "gasAccountList": {
         "address": "ที่อยู่",
@@ -2083,7 +2097,21 @@
       "depositCanceled": "การฝากถูกยกเลิก",
       "depositSuccess": "ฝากเงินสำเร็จ",
       "loginSuccess": "ล็อกอินสำเร็จ",
-      "withdrawDisabledIAP": "การถอนถูกปิดใช้งานเพราะยอดเงินของคุณมีเงินคำสั่งซึ่งไม่สามารถถอนได้ ติดต่อฝ่ายสนับสนุนเพื่อถอนยอดโทเค็นของคุณ"
+      "withdrawDisabledIAP": "การถอนถูกปิดใช้งานเพราะยอดเงินของคุณมีเงินคำสั่งซึ่งไม่สามารถถอนได้ ติดต่อฝ่ายสนับสนุนเพื่อถอนยอดโทเค็นของคุณ",
+      "benefitCard": {
+        "item1": "ไม่มีค่าธรรมเนียม Rabby",
+        "desc1": "ไม่ต้องจ่ายค่าธรรมเนียมเพิ่มเติมสำหรับการจ่าย gas",
+        "item2": "รองรับทุกเครือข่าย",
+        "desc2": "",
+        "item3": "รองรับการทำธุรกรรมทั้งหมด",
+        "desc3": "สลับ, สะพาน, ส่ง, DApps, & มากกว่า"
+      },
+      "depositWith": "ฝากด้วย",
+      "switchAccount": "เปลี่ยนกระเป๋าเงิน",
+      "depositNow": "ฝากตอนนี้",
+      "gasBalance": "ยอดก๊าซ",
+      "depositFailed": "การถอนเงินล้มเหลว",
+      "lowBalance": "คุณไม่มีแก๊สเพียงพอ ฝากแก๊สเพื่อให้การทำธุรกรรมในอนาคตดำเนินไปอย่างราบรื่น"
     },
     "addChain": {
       "title": "เพิ่มเครือข่ายที่กำหนดเองไปยัง Rabby",

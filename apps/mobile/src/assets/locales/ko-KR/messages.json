@@ -174,7 +174,8 @@
         "WalletConnectTips": "GasAccount에서 WalletConnect는 지원되지 않습니다.",
         "loginFirst": "GasAccount에 먼저 로그인하세요.",
         "customRPC": "사용자 정의 RPC를 사용할 때 지원되지 않음",
-        "chainNotSupported": "이 체인은 GasAccount에서 지원되지 않습니다."
+        "chainNotSupported": "이 체인은 GasAccount에서 지원되지 않습니다.",
+        "notEnough": "가스가 부족합니다. 가스 입금: ${{usd}}"
       },
       "submitTx": "트랜잭션 제출",
       "cancelCurrentConnection": "현재 연결 취소",
@@ -807,7 +808,8 @@
         "lending": "대출",
         "predict": "예측하다",
         "meme": "밈코인",
-        "market": "시장"
+        "market": "시장",
+        "gasDeposit": "가스 예치"
       },
       "swipeUp": {
         "desc": "위로 스와이프하여 웹사이트 탐색하기",
@@ -1490,7 +1492,17 @@
         "paymentAddress": "결제 지갑",
         "inSufficientTip1": "이 지갑에는 충분한 토큰이 없습니다. 다른 지갑을 선택하세요.",
         "pay": "지불하다",
-        "applePayFeeDesc1": "앱 스토어 수수료가 포함되어 있습니다. 출금이 없습니다."
+        "applePayFeeDesc1": "앱 스토어 수수료가 포함되어 있습니다. 출금이 없습니다.",
+        "balanceLabel": "잔액",
+        "gasDepositTitle": "가스 입금",
+        "fetchQuoteFailed": "견적을 가져오는 데 실패했습니다.",
+        "estReceiveTip": "{{name}}를 통해 처리된 서비스는 슬ippage가 있을 수 있습니다.",
+        "selectToken": "토큰 선택하여 입금하기",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "suggestedToken": "제안된 토큰",
+        "insufficientBalanceLabel": "잔액 부족",
+        "unavailablePaymentWallet": "선택한 결제 지갑을 사용할 수 없습니다",
+        "minAmountRequired": "최소 입금 금액은 $1입니다."
       },
       "paymentAddressPopup": {
         "balance": "잔액",
@@ -1541,7 +1553,8 @@
         "buyWithDesc": "30% 수수료, 출금 불가",
         "title": "GasAccount에 입금하기",
         "buyWith": "로 구매하기",
-        "buyWithApple": "앱 스토어에서 구매"
+        "buyWithApple": "앱 스토어에서 구매",
+        "insufficientTokenBalance": "잔액 부족"
       },
       "gasAccountList": {
         "address": "주소",
@@ -1553,7 +1566,21 @@
       "loginFailed": "로그인 실패",
       "depositCanceled": "입금이 취소되었습니다",
       "loginSuccess": "로그인 성공",
-      "withdrawDisabledIAP": "출금이 비활성화되었습니다. 잔고에 출금할 수 없는 법정화폐 자금이 포함되어 있기 때문입니다. 토큰 잔액을 출금하려면 지원팀에 문의하세요."
+      "withdrawDisabledIAP": "출금이 비활성화되었습니다. 잔고에 출금할 수 없는 법정화폐 자금이 포함되어 있기 때문입니다. 토큰 잔액을 출금하려면 지원팀에 문의하세요.",
+      "benefitCard": {
+        "desc2": "",
+        "desc1": "가스에 추가 수수료가 없습니다.",
+        "item2": "모든 네트워크를 지원합니다.",
+        "item3": "모든 거래를 지원합니다.",
+        "item1": "No Rabby Fee",
+        "desc3": "스왑, 브릿지, 보내기, DApps, 및 기타"
+      },
+      "gasBalance": "가스 잔액",
+      "depositNow": "지금 입금하기",
+      "switchAccount": "지갑 전환",
+      "depositFailed": "입금 실패",
+      "depositWith": "입금하기 위해",
+      "lowBalance": "가스가 충분하지 않습니다. 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요."
     },
     "approvalsAddressList": {
       "title": "승인"
@@ -3246,7 +3273,8 @@
       },
       "withdraw": "출금",
       "loginConfirmModal": {
-        "desc": "로그인 후, 이 주소에만 예치할 수 있습니다."
+        "desc": "로그인 후, 이 주소에만 예치할 수 있습니다.",
+        "title": "지갑 전환"
       },
       "gasExceed": "GasAccount 잔액은 $1000을 초과할 수 없습니다.",
       "loginInTip": {
