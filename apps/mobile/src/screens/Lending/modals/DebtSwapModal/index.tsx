@@ -28,7 +28,10 @@ import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -91,6 +94,13 @@ import {
 import BridgeSwitchBtn from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { Text, TextInput } from '@/components/Typography';
 import { stats } from '@/utils/stats';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
+import { Alert } from 'react-native';
+
+/** DebtSwap form snapshot for validation */
+interface DebtSwapFormSnapshot {
+  fromAmount: string;
+}
 
 interface DebtSwapModalProps {
   fromToken: SwappableToken;
@@ -152,6 +162,16 @@ export default function DebtSwapModal({
 
   const quoteExpiredTimerRef = useRef<NodeJS.Timeout>(undefined);
   const enableQuoteAutoRefreshRef = useRef(false);
+
+  // Form snapshot for iOS autofill protection
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<DebtSwapFormSnapshot>({
+      comparers: {
+        fromAmount: createAmountComparer(),
+      },
+    }),
+  );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const { fromBalanceBn, fromBalanceDisplay, fromUsdValue, toUsdValue } =
     useFormatValues({
@@ -237,6 +257,10 @@ export default function DebtSwapModal({
 
   const onInputChange = useCallback(
     (text: string) => {
+      // Ignore changes during authentication (iOS autofill protection)
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       const formatted = formatSpeicalAmount(text);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
@@ -684,6 +708,18 @@ export default function DebtSwapModal({
         return;
       }
 
+      // Check if form values changed during authentication (iOS autofill protection)
+      const formCheck = formValuesRef.current.compare({ fromAmount });
+      if (formCheck.isChanged) {
+        Alert.alert(
+          t('page.Lending.popup.formChangedTitle'),
+          t('page.Lending.popup.formChangedAmount'),
+          [{ text: t('global.ok'), onPress: () => {} }],
+        );
+        formValuesRef.current.clear();
+        return;
+      }
+
       try {
         setIsLoading(true);
         if (!currentTxs.length) {
@@ -769,6 +805,7 @@ export default function DebtSwapModal({
         console.error('debt swap error', error);
       } finally {
         setIsLoading(false);
+        formValuesRef.current.clear();
       }
     },
     [
@@ -1116,6 +1153,7 @@ export default function DebtSwapModal({
         ) : null}
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            ref={directSignBtnRef}
             loading={isLoading}
             loadingType="circle"
             key={`${fromToken.underlyingAddress}-${toToken?.underlyingAddress}-${debouncedFromAmount}`}
@@ -1123,6 +1161,15 @@ export default function DebtSwapModal({
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.debtSwap.button.swap')}
             title={t('page.Lending.debtSwap.button.swap')}
+            onBeforeAuth={() => {
+              formValuesRef.current.save({ fromAmount });
+            }}
+            onCancel={() => {
+              formValuesRef.current.clear();
+            }}
+            onAuthModalDismiss={() => {
+              formValuesRef.current.clear();
+            }}
             onFinished={() => handleSwap()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="primary"

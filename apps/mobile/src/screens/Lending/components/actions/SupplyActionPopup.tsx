@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -20,7 +26,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildSupplyTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -56,6 +65,13 @@ import { ReserveErrorTip } from '../ErrorTip';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
+import { Alert } from 'react-native';
+
+/** Supply form snapshot for validation - only stores amount to detect changes */
+interface SupplyFormSnapshot {
+  amount: string;
+}
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -78,6 +94,16 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const { pools } = usePoolDataProviderContract();
   const { t } = useTranslation();
   const { ctx } = useSignatureStore();
+
+  // Form snapshot for iOS autofill protection
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<SupplyFormSnapshot>({
+      comparers: {
+        amount: createAmountComparer(),
+      },
+    }),
+  );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
@@ -397,6 +423,18 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
 
+      // Check if form values changed during authentication (iOS autofill protection)
+      const formCheck = formValuesRef.current.compare({ amount });
+      if (formCheck.isChanged) {
+        Alert.alert(
+          t('page.Lending.popup.formChangedTitle'),
+          t('page.Lending.popup.formChangedAmount'),
+          [{ text: t('global.ok'), onPress: () => {} }],
+        );
+        formValuesRef.current.clear();
+        return;
+      }
+
       try {
         setIsLoading(true);
         if (!txsForMiniApproval?.length) {
@@ -483,6 +521,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       } catch (error) {
       } finally {
         setIsLoading(false);
+        formValuesRef.current.clear();
       }
     },
     [
@@ -547,7 +586,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       </View>
       <TokenAmountInput
         value={amount}
-        onChange={setAmount}
+        onChange={v => {
+          if (directSignBtnRef.current?.isAuthInProgress()) return;
+          setAmount(v);
+        }}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
           setAmount(supplyAmount.amount || '0');
@@ -587,6 +629,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       <View style={styles.buttonContainer}>
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            ref={directSignBtnRef}
             loading={isLoading}
             loadingType="circle"
             key={`${amount}-${needApprove}`}
@@ -596,6 +639,15 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             title={`${t('page.Lending.supplyDetail.actions')} ${
               reserve.reserve.symbol
             }`}
+            onBeforeAuth={() => {
+              formValuesRef.current.save({ amount: amount || '' });
+            }}
+            onCancel={() => {
+              formValuesRef.current.clear();
+            }}
+            onAuthModalDismiss={() => {
+              formValuesRef.current.clear();
+            }}
             onFinished={() => handleSupply()}
             disabled={
               !amount ||

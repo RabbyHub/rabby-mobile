@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -15,7 +21,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildBorrowTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
@@ -58,6 +67,13 @@ import { formatTokenAmount } from '@/utils/number';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
+import { Alert } from 'react-native';
+
+/** Borrow form snapshot for validation - only stores amount to detect changes */
+interface BorrowFormSnapshot {
+  amount: string;
+}
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -70,6 +86,16 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const { t } = useTranslation();
+
+  // Form snapshot for iOS autofill protection
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<BorrowFormSnapshot>({
+      comparers: {
+        amount: createAmountComparer(),
+      },
+    }),
+  );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -180,6 +206,18 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
 
+      // Check if form values changed during authentication (iOS autofill protection)
+      const formCheck = formValuesRef.current.compare({ amount });
+      if (formCheck.isChanged) {
+        Alert.alert(
+          t('page.Lending.popup.formChangedTitle'),
+          t('page.Lending.popup.formChangedAmount'),
+          [{ text: t('global.ok'), onPress: () => {} }],
+        );
+        formValuesRef.current.clear();
+        return;
+      }
+
       try {
         setIsLoading(true);
         if (!txs?.length) {
@@ -271,6 +309,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       } catch (error) {
       } finally {
         setIsLoading(false);
+        formValuesRef.current.clear();
       }
     },
     [
@@ -399,7 +438,10 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       </View>
       <TokenAmountInput
         value={amount}
-        onChange={setAmount}
+        onChange={v => {
+          if (directSignBtnRef.current?.isAuthInProgress()) return;
+          setAmount(v);
+        }}
         symbol={reserve.reserve.symbol}
         handleClickMaxButton={() => {
           setAmount(availableToBorrow.amount || '0');
@@ -461,6 +503,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            ref={directSignBtnRef}
             loading={isLoading}
             loadingType="circle"
             key={`${amount}`}
@@ -470,6 +513,15 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             title={`${t('page.Lending.borrowDetail.actions')} ${
               reserve.reserve.symbol
             }`}
+            onBeforeAuth={() => {
+              formValuesRef.current.save({ amount: amount || '' });
+            }}
+            onCancel={() => {
+              formValuesRef.current.clear();
+            }}
+            onAuthModalDismiss={() => {
+              formValuesRef.current.clear();
+            }}
             onFinished={() => handleBorrow()}
             disabled={
               !amount ||
