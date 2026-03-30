@@ -87,7 +87,6 @@ export const useGasAccountGoBack = () => {
 export const useGasAccountMethods = () => {
   return {
     login: storeApiGasAccount.loginGasAccount,
-    logout: storeApiGasAccount.logoutGasAccount,
   };
 };
 
@@ -97,14 +96,14 @@ export const useGasAccountLogin = ({
 }: Pick<ReturnType<typeof useGasAccountInfo>, 'loading' | 'value'>) => {
   const { sig, accountId } = useGasAccountSign();
 
-  const { login, logout } = useGasAccountMethods();
+  const { login } = useGasAccountMethods();
 
   const isLogin = useMemo(
     () => (!loading ? !!value?.account?.id : !!sig && !!accountId),
     [sig, accountId, loading, value?.account?.id],
   );
 
-  return { login, logout, isLogin };
+  return { login, isLogin };
 };
 
 export const useGasAccountHistory = () => {

@@ -464,12 +464,12 @@
       "gasAccount": {
         "login": "Masuk",
         "useGasAccount": "Gunakan GasAccount",
-        "notEnough": "GasAccount tidak cukup",
         "customRPC": "Tidak didukung saat menggunakan RPC kustom",
         "chainNotSupported": "Rantai ini tidak didukung oleh GasAccount",
         "deposit": "Setor",
         "WalletConnectTips": "WalletConnect tidak didukung oleh GasAccount",
-        "loginFirst": "Silakan login ke GasAccount terlebih dahulu"
+        "loginFirst": "Silakan login ke GasAccount terlebih dahulu",
+        "notEnough": "Tidak cukup gas. Setor gas: ${{usd}}"
       },
       "qrcode": {
         "sigCompleted": "Transaksi dibuat",
@@ -1032,7 +1032,6 @@
       "services": {
         "swap": "Tukar",
         "send": "Kirim",
-        "gasAccount": "GasAccount",
         "history": "Transaksi",
         "bridge": "Jembatan",
         "receive": "Menerima",
@@ -1049,7 +1048,8 @@
         "lending": "Peminjaman",
         "predict": "Prediksi",
         "meme": "Memecoin",
-        "market": "Pasar"
+        "market": "Pasar",
+        "gasDeposit": "Setoran Gas"
       },
       "swipeUp": {
         "descMore": "Geser ke atas untuk menjelajahi lebih banyak situs web",
@@ -1788,7 +1788,6 @@
         "followingTokenInSufficient": "Saldo token berikut tidak cukup",
         "desc": "Setor ke Akun DeBank L2 Rabby tanpa biaya tambahan—tarik kapan saja.",
         "zeroInvalidAmount": "Jumlah tidak dapat nol",
-        "selectToken": "Pilih Token",
         "googlePayDesc": "Termasuk biaya Google Pay sebesar ${{ amount }}. Tidak ada penarikan.",
         "applePayDesc": "Termasuk biaya Apple Pay sebesar ${{amount}}. Tidak ada penarikan.",
         "googlePayFeeDesc": "Termasuk biaya Google Pay. Tidak ada penarikan.",
@@ -1796,7 +1795,17 @@
         "paymentAddress": "Wallet Pembayaran",
         "inSufficientTip1": "Dompet ini tidak memiliki cukup token Silakan pilih dompet lain",
         "pay": "Bayar",
-        "applePayFeeDesc1": "Termasuk biaya App Store. Tidak ada penarikan."
+        "applePayFeeDesc1": "Termasuk biaya App Store. Tidak ada penarikan.",
+        "balanceLabel": "Saldo",
+        "gasDepositTitle": "Setoran Gas",
+        "insufficientBalanceLabel": "Saldo Tidak Cukup",
+        "selectToken": "Pilih Token untuk Setor",
+        "suggestedToken": "Token yang Disarankan",
+        "minAmountRequired": "Jumlah setoran minimum adalah $1",
+        "fetchQuoteFailed": "Gagal mengambil kutipan",
+        "estReceiveLabel": "Estterima: {{usd}}",
+        "estReceiveTip": "Layanan diproses melalui {{name}}, mungkin mengalami slippage",
+        "unavailablePaymentWallet": "Dompet pembayaran yang dipilih tidak tersedia"
       },
       "paymentAddressPopup": {
         "balance": "Saldo",
@@ -1851,7 +1860,8 @@
         "desc": "Bayar Biaya Gas di Semua Rantai",
         "buyWithDesc": "30% biaya, tidak ada penarikan",
         "depositToken": "Setor dengan Token",
-        "buyWithApple": "Beli di App Store"
+        "buyWithApple": "Beli di App Store",
+        "insufficientTokenBalance": "Saldo Token Tidak Cukup"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount Saldo",
@@ -1868,9 +1878,22 @@
       "depositCanceled": "Deposito Dibatalkan",
       "loginFailed": "Masuk Gagal",
       "loginSuccess": "Login Berhasil",
-      "switchAccount": "Alihkan GasAccount",
       "depositSuccess": "Setoran berhasil",
-      "withdrawDisabledIAP": "Penarikan dinonaktifkan karena saldo Anda mencakup dana fiat, yang tidak dapat ditarik. Hubungi dukungan untuk menarik saldo token Anda."
+      "withdrawDisabledIAP": "Penarikan dinonaktifkan karena saldo Anda mencakup dana fiat, yang tidak dapat ditarik. Hubungi dukungan untuk menarik saldo token Anda.",
+      "benefitCard": {
+        "item2": "Mendukung semua jaringan",
+        "item1": "Tidak Ada Biaya Rabby",
+        "desc3": "Tukar, Jembatan, Kirim, DApps, & lainnya",
+        "item3": "Mendukung semua transaksi",
+        "desc2": "",
+        "desc1": "Tidak ada biaya ekstra untuk membayar gas"
+      },
+      "depositWith": "Setor dengan",
+      "gasBalance": "Saldo Gas",
+      "depositFailed": "Setoran gagal",
+      "lowBalance": "Anda tidak memiliki cukup gas. Deposit gas untuk memastikan transaksi di masa mendatang berjalan lancar.",
+      "switchAccount": "Ganti Dompet",
+      "depositNow": "Deposit Sekarang"
     },
     "tokenDetail": {
       "action": {
@@ -3067,8 +3090,8 @@
         "depositDesc": "di Semua Chain ketika Anda kehabisan gas"
       },
       "loginConfirmModal": {
-        "title": "Pilih Dompet untuk Masuk",
-        "desc": "Setelah login, Anda hanya dapat menyetor di alamat ini."
+        "desc": "Setelah login, Anda hanya dapat menyetor di alamat ini.",
+        "title": "Ganti Dompet"
       },
       "depositPopup": {
         "title": "Setoran",

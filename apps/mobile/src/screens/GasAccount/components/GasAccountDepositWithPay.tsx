@@ -5,6 +5,7 @@ import {
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
+import { pollDepositStatus } from '@/core/apis/gasAccount';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { waitPurchaseUpdated } from '@/utils/iap';
@@ -12,36 +13,43 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import * as Sentry from '@sentry/react-native';
 import { useRequest } from 'ahooks';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
 import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useGasAccountInfoV2 } from '../hooks';
 import { gasAccountProducts } from '@/constant/iap';
 import { Text } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
+import { GasAccountTopUpWaitCallback } from './topUpContinuation';
 
 interface Props {
   visible?: boolean;
   onDeposit?(): void;
+  onClose?(): void;
+  onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
-  gasAccountAddress: string;
+  gasAccountAddress?: string;
+  onEnsureGasAccountAddress?(): Promise<string>;
 }
 
 export const GasAccountDepositWithPay: React.FC<Props> = ({
   visible,
   onDeposit,
+  onClose,
+  onWaitDepositResult,
   gasAccountAddress,
   minDepositPrice = 0,
+  onEnsureGasAccountAddress,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
-
-  const { data: gasAccountInfo } = useGasAccountInfoV2({
-    address: gasAccountAddress,
-  });
+  const pollCancelRef = useRef<(() => void) | null>(null);
+  const [resolvedGasAccountAddress, setResolvedGasAccountAddress] = useState<
+    string | undefined
+  >(gasAccountAddress);
 
   const products = useMemo(() => {
     const res = gasAccountProducts
@@ -54,19 +62,47 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   }, [minDepositPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
+  const { data: gasAccountInfo, runAsync: fetchGasAccountInfo } = useRequest(
+    async (address: string) => {
+      return openapi.getGasAccountInfoV2({ id: address });
+    },
+    {
+      manual: true,
+    },
+  );
+
+  useEffect(() => {
+    if (gasAccountAddress) {
+      setResolvedGasAccountAddress(gasAccountAddress);
+      fetchGasAccountInfo(gasAccountAddress);
+    }
+  }, [fetchGasAccountInfo, gasAccountAddress]);
+
   const {
     runAsync: handleDeposit,
     loading: isPurchasing,
     cancel,
   } = useRequest(
     async (product: (typeof products)[0]) => {
+      let targetGasAccountAddress =
+        resolvedGasAccountAddress || gasAccountAddress;
+
+      if (!targetGasAccountAddress) {
+        targetGasAccountAddress = await onEnsureGasAccountAddress?.();
+        if (!targetGasAccountAddress) {
+          throw new Error('get pay info failed');
+        }
+        setResolvedGasAccountAddress(targetGasAccountAddress);
+        await fetchGasAccountInfo(targetGasAccountAddress);
+      }
+
       const data = await openapi.createGasAccountPayInfo({
-        id: gasAccountAddress,
+        id: targetGasAccountAddress,
       });
       if (!data.account?.uuid) {
         throw new Error('get pay info failed');
       }
-      await Promise.all([
+      const [purchase] = await Promise.all([
         waitPurchaseUpdated(),
         requestPurchase(
           Platform.select({
@@ -76,17 +112,48 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
             },
             android: {
               skus: [product.id],
-              obfuscatedAccountIdAndroid: gasAccountAddress,
+              obfuscatedAccountIdAndroid: targetGasAccountAddress,
             },
           })!,
         ),
       ]);
+
+      if (onWaitDepositResult) {
+        const transactionId = Platform.select({
+          ios: purchase.transactionId || '',
+          android: purchase.purchaseToken || '',
+        })!;
+
+        const { promise: pollPromise, cancel } = pollDepositStatus({
+          params: {
+            transaction_id: transactionId,
+            product_id: product.id,
+            device_type: IS_ANDROID ? 'android' : 'ios',
+          },
+        });
+        pollCancelRef.current = cancel;
+        const success = await pollPromise;
+        pollCancelRef.current = null;
+
+        if (success) {
+          await onWaitDepositResult({
+            type: 'pay',
+          });
+          onDeposit?.();
+          onClose?.();
+        } else {
+          toast.info(t('page.gasAccount.depositFailed'), {
+            position: toast.positions.CENTER,
+          });
+          onClose?.();
+        }
+        return;
+      }
+
+      onDeposit?.();
     },
     {
       manual: true,
-      onSuccess() {
-        onDeposit?.();
-      },
       onError(e: any) {
         console.error(e);
         Sentry.captureException(e);
@@ -109,6 +176,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   useEffect(() => {
     if (!visible) {
       cancel();
+      pollCancelRef.current?.();
     }
   }, [cancel, visible]);
 
@@ -152,7 +220,9 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
         <Button
           type="primary"
           onPress={() => {
-            handleDeposit(selectedProduct);
+            if (selectedProduct) {
+              handleDeposit(selectedProduct);
+            }
           }}
           buttonStyle={styles.depositWithPayBtn}
           titleStyle={styles.btnTitle}

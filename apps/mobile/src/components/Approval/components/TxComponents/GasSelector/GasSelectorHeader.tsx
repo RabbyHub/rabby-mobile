@@ -68,9 +68,9 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { Account } from '@/core/services/preference';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import {
-  useGetShowMoreGasSelectVisible,
-  useSetGasInfoByUI,
-} from '@/screens/Bridge/components/ShowMoreGasModal';
+  useMiniSignGasPanelController,
+  useMiniSignGasPanelState,
+} from '@/components2024/MiniSignV2';
 import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
 import { GasTokenInfo } from '@/utils/tempo';
 export interface GasSelectorResponse extends GasLevel {
@@ -96,7 +96,7 @@ interface GasSelectorProps {
   chainId: number;
   onChange(gas: GasSelectorResponse): void;
   isReady: boolean;
-  recommendGasLimit: number | string | BigNumber;
+  recommendGasLimit?: number | string | BigNumber;
   recommendNonce: number | string | BigNumber;
   nonce: string;
   disableNonce: boolean;
@@ -448,7 +448,9 @@ export const GasSelectorHeader = ({
     ],
   );
 
-  const outGasModalIsOpen = useGetShowMoreGasSelectVisible();
+  const outGasModalIsOpen = useMiniSignGasPanelState(
+    state => state.showMoreVisible,
+  );
   const gasAccountStateInit = useRef(false);
 
   useDebounce(
@@ -916,7 +918,7 @@ export const GasSelectorHeader = ({
     return v;
   }, [hasFee, hasTip, fixedMode]);
 
-  const setGasInfoByUI = useSetGasInfoByUI();
+  const gasPanelController = useMiniSignGasPanelController();
 
   useThrottleEffect(
     () => {
@@ -927,10 +929,10 @@ export const GasSelectorHeader = ({
         !selectedGas ||
         !directSubmit
       ) {
-        setGasInfoByUI(undefined);
+        gasPanelController.setGasInfo(undefined);
         return;
       }
-      setGasInfoByUI({
+      gasPanelController.setGasInfo({
         externalPanelSelection,
         handleClickEdit,
         // gasList,
@@ -963,7 +965,7 @@ export const GasSelectorHeader = ({
       gasNormalUsd,
       gasFastUsd,
       gasAccountCost?.gas_account_cost,
-      setGasInfoByUI,
+      gasPanelController,
     ],
     {
       wait: 16,

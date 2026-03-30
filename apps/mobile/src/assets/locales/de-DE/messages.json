@@ -268,8 +268,8 @@
       },
       "withdraw": "Abheben",
       "loginConfirmModal": {
-        "title": "Wallet zum Anmelden auswählen",
-        "desc": "Sobald Sie sich eingeloggt haben, können Sie es nur an dieser Adresse einzahlen."
+        "desc": "Sobald Sie sich eingeloggt haben, können Sie es nur an dieser Adresse einzahlen.",
+        "title": "Wallet wechseln"
       },
       "gasExceed": "GasAccount-Guthaben darf $1000 nicht überschreiten",
       "depositPopup": {
@@ -1048,10 +1048,10 @@
         "login": "Einloggen",
         "chainNotSupported": "Diese Chain wird von GasAccount nicht unterstützt.",
         "customRPC": "Nicht unterstützt bei Verwendung von benutzerdefiniertem RPC",
-        "notEnough": "GasAccount ist nicht genug",
         "deposit": "Einzahlung",
         "WalletConnectTips": "WalletConnect wird von GasAccount nicht unterstützt",
-        "loginFirst": "Bitte melden Sie sich zuerst bei GasAccount an."
+        "loginFirst": "Bitte melden Sie sich zuerst bei GasAccount an.",
+        "notEnough": "Nicht genug Gas. Gas einzahlen: ${{usd}}"
       },
       "ledger": {
         "txRejected": "Transaktion abgelehnt",
@@ -1202,7 +1202,6 @@
         "dapps": "Dapps",
         "send": "Senden",
         "swap": "Tauschen",
-        "gasAccount": "GasAccount",
         "queue": "Warteschlange",
         "search": "Token suchen",
         "copyTrading": "Copy Trading",
@@ -1212,7 +1211,8 @@
         "lending": "Kredite",
         "predict": "Vorhersagen",
         "meme": "Memecoin",
-        "market": "Markt"
+        "market": "Markt",
+        "gasDeposit": "Gas Einzahlung"
       },
       "swipeUp": {
         "descAndroidMore": "Klicken Sie, um weitere dApps zu erkunden",
@@ -2084,7 +2084,6 @@
       },
       "depositPopup": {
         "token": "Token",
-        "selectToken": "Token auswählen",
         "amount": "Betrag",
         "zeroInvalidAmount": "Der Betrag darf nicht null sein",
         "followingTokenInSufficient": "Das folgende Token-Guthaben ist unzureichend",
@@ -2098,7 +2097,17 @@
         "paymentAddress": "Zahlungs-Wallet",
         "inSufficientTip1": "Diese Wallet hat nicht genügend Tokens. Bitte wählen Sie eine andere Wallet.",
         "pay": "Zahlen",
-        "applePayFeeDesc1": "Beinhaltet eine Gebühr für den App Store. Keine Abhebungen."
+        "applePayFeeDesc1": "Beinhaltet eine Gebühr für den App Store. Keine Abhebungen.",
+        "suggestedToken": "Vorgeschlagene Token",
+        "balanceLabel": "Kontostand",
+        "gasDepositTitle": "Gas Einzahlung",
+        "unavailablePaymentWallet": "Die ausgewählte Zahlungsmethode ist nicht verfügbar.",
+        "selectToken": "Token zum Einzahlen auswählen",
+        "insufficientBalanceLabel": "Unzureichendes Guthaben",
+        "estReceiveLabel": "Est. Erhalten: {{usd}}",
+        "estReceiveTip": "Der über {{name}} verarbeitete Service kann Slippage aufweisen.",
+        "fetchQuoteFailed": "Fehler beim Abrufen des Angebots",
+        "minAmountRequired": "Der Mindestbetrag für die Einzahlung beträgt 1 $."
       },
       "paymentAddressPopup": {
         "confirm": "Bestätigen",
@@ -2149,7 +2158,8 @@
         "desc": "Zahlen Sie Gasgebühren auf allen Chains",
         "buyWithDesc": "30 % Gebühr, keine Abhebungen",
         "depositTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen",
-        "buyWithApple": "Im App Store kaufen"
+        "buyWithApple": "Im App Store kaufen",
+        "insufficientTokenBalance": "Unzureichendes Token-Guthaben"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount-Guthaben",
@@ -2159,10 +2169,23 @@
       },
       "depositSuccess": "Einzahlung erfolgreich",
       "loginFailed": "Anmeldung fehlgeschlagen",
-      "switchAccount": "Wechsel GasAccount",
       "loginSuccess": "Anmeldung erfolgreich",
       "depositCanceled": "Einzahlung Abgebrochen",
-      "withdrawDisabledIAP": "Abhebungen sind deaktiviert, da Ihr Guthaben Fiat-Funds enthält, die nicht abgehoben werden können. Kontaktieren Sie den Support, um Ihr Token-Guthaben abzuheben."
+      "withdrawDisabledIAP": "Abhebungen sind deaktiviert, da Ihr Guthaben Fiat-Funds enthält, die nicht abgehoben werden können. Kontaktieren Sie den Support, um Ihr Token-Guthaben abzuheben.",
+      "benefitCard": {
+        "item2": "Unterstützt alle Netzwerke",
+        "item3": "Unterstützt alle Transaktionen",
+        "item1": "Keine Rabby Gebühr",
+        "desc2": "",
+        "desc1": "Keine zusätzlichen Gebühren für Gas zu zahlen",
+        "desc3": "Tauschen, Brücke, Senden, DApps und mehr"
+      },
+      "depositFailed": "Einzahlung fehlgeschlagen",
+      "depositWith": "Bei einlegen mit",
+      "depositNow": "Jetzt einzahlen",
+      "gasBalance": "Gas-Balance",
+      "switchAccount": "Wechseln Sie das Wallet",
+      "lowBalance": "Sie haben nicht genügend Gas. Tätigen Sie eine Gas-Einzahlung, um sicherzustellen, dass zukünftige Transaktionen reibungslos verlaufen."
     },
     "search": {
       "sectionHeader": {

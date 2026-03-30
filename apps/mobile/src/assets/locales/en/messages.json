@@ -474,13 +474,13 @@
       },
       "gasAccount": {
         "customRPC": "Not supported when using custom RPC",
-        "notEnough": "GasAccount is not enough",
         "useGasAccount": "Use GasAccount",
         "WalletConnectTips": "WalletConnect is not supported by GasAccount",
         "chainNotSupported": "This chain is not supported by GasAccount",
         "loginFirst": "Please log in to GasAccount first",
         "login": "Log in",
-        "deposit": "Deposit"
+        "deposit": "Deposit",
+        "notEnough": "Not enough gas.Deposit gas: ${{usd}}"
       },
       "beginSigning": "Start Signing",
       "ledgerSign": "Sign",
@@ -1040,7 +1040,7 @@
         "send": "Send",
         "history": "Transactions",
         "receive": "Receive",
-        "gasAccount": "GasAccount",
+        "gasDeposit": "Gas Deposit",
         "approvals": "Approvals",
         "dapps": "Dapps",
         "more": "More",
@@ -1826,6 +1826,8 @@
     },
     "gasAccount": {
       "deposit": "Deposit",
+      "depositNow": "Deposit Now",
+      "depositWith": "Deposit with",
       "withdraw": "Withdraw",
       "noBalance": "No balance",
       "gasExceed": "GasAccount balance cannot exceed $1000",
@@ -1849,10 +1851,10 @@
         "desc": "Make a deposit to Rabby's DeBank L2 Account with no extra fees—withdraw anytime.",
         "zeroInvalidAmount": "The amount cannot be zero",
         "invalidAmount": "Must be under 500",
+        "suggestedToken": "Suggested Tokens",
         "amount": "Amount",
         "token": "Token",
         "paymentAddress": "Payment Wallet",
-        "selectToken": "Select Token",
         "inSufficientTip1": "This wallet doesn't have enough tokens Please choose a different wallet",
         "followingTokenInSufficient": "The following token balance is insufficient",
         "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
@@ -1860,7 +1862,16 @@
         "googlePayFeeDesc": "Includes a Google Pay fee. No withdrawals",
         "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals",
         "applePayFeeDesc1": "Includes an App Store fee. No withdrawals",
-        "pay": "Pay"
+        "pay": "Pay",
+        "selectToken": "Select Token to Deposit",
+        "gasDepositTitle": "Gas Deposit",
+        "balanceLabel": "Balance",
+        "insufficientBalanceLabel": "Insufficient Balance",
+        "fetchQuoteFailed": "Failed to fetch quote",
+        "minAmountRequired": "Minimum deposit amount is $1",
+        "unavailablePaymentWallet": "Selected payment wallet is unavailable",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "estReceiveTip": "Service processed via {{name}}, may have slippage"
       },
       "paymentAddressPopup": {
         "title": "Select Payment Wallet",
@@ -1915,9 +1926,9 @@
         "depositTokenDesc": "No extra fee, instant withdrawals",
         "buyWith": "Buy with",
         "buyWithDesc": "30% fee, no withdrawals",
-        "buyWithApple": "Buy in App Store"
+        "buyWithApple": "Buy in App Store",
+        "insufficientTokenBalance": "Insufficient Token Balance"
       },
-      "switchAccount": "Switch GasAccount",
       "gasAccountList": {
         "address": "Address",
         "balance": "Balance",
@@ -1928,7 +1939,19 @@
       "loginFailed": "Login Failed",
       "depositCanceled": "Deposit Canceled",
       "loginSuccess": "Login Successful",
-      "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
+      "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance",
+      "benefitCard": {
+        "item1": "No Rabby Fee",
+        "desc1": "No extra fees to pay gas",
+        "item2": "Supports all networks",
+        "desc2": "Automatic gas payments on XX+ networks",
+        "desc3": "Swap, Bridge, Send, DApps, & more",
+        "item3": "Supports all transactions"
+      },
+      "gasBalance": "Gas Balance",
+      "lowBalance": "You don't have enough gas. Deposit gas to ensure future transactions go smoothly.",
+      "switchAccount": "Switch Wallet",
+      "depositFailed": "Deposit failed"
     },
     "tokenDetail": {
       "headerBalanceText": "Balance",
@@ -3126,8 +3149,8 @@
         "desc4": "GasAccount requires no contract approvals or permissions. You deposit to Rabby’s GasAccount address, and Rabby sends gas to your address when needed. Fully secure by design."
       },
       "loginConfirmModal": {
-        "title": "Select Wallet to Login",
-        "desc": "Once login, you can only deposit it at this address"
+        "desc": "Once login, you can only deposit it at this address",
+        "title": "Switch Wallet"
       },
       "depositPopup": {
         "title": "Deposit",

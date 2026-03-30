@@ -711,7 +711,7 @@ export const HomeOverview = React.memo(() => {
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
-          title: t('page.home.services.gasAccount'),
+          title: t('page.home.services.gasDeposit'),
           icon: RcIconGasAccountCC,
           showGiftIcon: isEligible,
         },

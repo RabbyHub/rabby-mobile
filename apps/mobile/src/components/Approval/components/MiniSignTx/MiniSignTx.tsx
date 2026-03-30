@@ -80,6 +80,10 @@ import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
 import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
 import BalanceChange from '../TxComponents/BalanceChange';
+import {
+  buildTopUpResumedTxs,
+  GasAccountTopUpResult,
+} from '@/screens/GasAccount/components/topUpContinuation';
 import { GasTokenInfo, isTempoChain } from '@/utils/tempo';
 
 let count = 1;
@@ -1080,6 +1084,36 @@ export const MiniSignTx = ({
     }
   }, [inited, prepareTxs, txs]);
 
+  const handleTopUpWaitResult = useMemoizedFn(
+    async (result: GasAccountTopUpResult) => {
+      const patchCalcItems = <
+        T extends {
+          tx: Tx;
+        },
+      >(
+        items: T[],
+      ) => {
+        const nextTxs = buildTopUpResumedTxs({
+          txs: items.map(item => item.tx),
+          originalAccountAddress: currentAccount.address,
+          originalChainServerId: chain.serverId,
+          topUpResult: result,
+        });
+
+        return items.map((item, index) => ({
+          ...item,
+          tx: nextTxs[index] || item.tx,
+        }));
+      };
+
+      setTxsResult(prev => patchCalcItems(prev));
+      setInitdTxs(prev => patchCalcItems(prev));
+      await gasAccountCostFn();
+
+      setGasMethod('gasAccount');
+    },
+  );
+
   useEffect(() => {
     if (isGnosisAccount) {
       handleIsGnosisAccountChange();
@@ -1218,8 +1252,8 @@ export const MiniSignTx = ({
           toast2024.success(t('page.gasAccount.depositSuccess'), {
             position: toast2024.positions.CENTER,
           });
-          gasAccountCostFn();
         }}
+        onWaitDepositResult={handleTopUpWaitResult}
         gasAccountAddress={gasAccountAddress}
         isGasAccountLogin={isGasAccountLogin}
         isWalletConnect={

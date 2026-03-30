@@ -36,6 +36,7 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
+import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -66,8 +67,10 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasAccountCanPay?: boolean;
   noCustomRPC?: boolean;
   canGotoUseGasAccount?: boolean;
+  disableGasAccountDeposit?: boolean;
   rejectApproval?(): void;
   onDeposit?(): void;
+  onWaitDepositResult?: GasAccountTopUpWaitCallback;
   gasAccountAddress?: string;
   canDepositUseGasAccount?: boolean;
   isFirstGasCostLoading?: boolean;
@@ -228,10 +231,12 @@ export const MiniFooterBar: React.FC<Props> = ({
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
+  disableGasAccountDeposit = false,
   canDepositUseGasAccount,
   task,
   rejectApproval,
   onDeposit,
+  onWaitDepositResult,
   gasAccountAddress,
   isFirstGasCostLoading,
   isFirstGasLessLoading,
@@ -370,12 +375,18 @@ export const MiniFooterBar: React.FC<Props> = ({
                   account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                   <GasLessNotEnough
                     canGotoUseGasAccount={canGotoUseGasAccount}
-                    canDepositUseGasAccount={canDepositUseGasAccount}
+                    canDepositUseGasAccount={
+                      disableGasAccountDeposit ? false : canDepositUseGasAccount
+                    }
                     onChangeGasAccount={onChangeGasAccount}
                     gasAccountAddress={gasAccountAddress!}
                     gasAccountCost={gasAccountCost}
                     onDeposit={() => {
                       onDeposit?.();
+                      onChangeGasAccount?.();
+                    }}
+                    onWaitDepositResult={async result => {
+                      await onWaitDepositResult?.(result);
                       onChangeGasAccount?.();
                     }}
                     onGotoGasAccount={() => {
@@ -399,6 +410,8 @@ export const MiniFooterBar: React.FC<Props> = ({
                     isWalletConnect={isWalletConnect}
                     noCustomRPC={noCustomRPC}
                     onDeposit={onDeposit}
+                    onWaitDepositResult={onWaitDepositResult}
+                    disableDepositAction={disableGasAccountDeposit}
                     onGotoGasAccount={() => {
                       rejectApproval?.();
                       navigateDeprecated(RootNames.StackTransaction, {

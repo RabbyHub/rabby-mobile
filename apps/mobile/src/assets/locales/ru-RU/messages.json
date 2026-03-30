@@ -316,7 +316,7 @@
         "customRPC": "Не поддерживается при использовании пользовательского RPC",
         "useGasAccount": "Используйте GasAccount",
         "loginFirst": "Пожалуйста, сначала войдите в GasAccount.",
-        "notEnough": "GasAccount не хватает"
+        "notEnough": "Недостаточно газа. Пополните газ: ${{usd}}"
       },
       "gasless": {
         "notEnough": "Gas баланса недостаточно",
@@ -1013,7 +1013,6 @@
     "home": {
       "services": {
         "receive": "Получить",
-        "gasAccount": "GasAccount",
         "approvals": "Одобрения",
         "dapps": "Dapps",
         "swap": "Swap",
@@ -1031,7 +1030,8 @@
         "lending": "Кредитование",
         "predict": "Предсказать",
         "meme": "Мемкоин",
-        "market": "Рынок"
+        "market": "Рынок",
+        "gasDeposit": "Газовый депозит"
       },
       "swipeUp": {
         "descAndroidMore": "Нажмите, чтобы узнать больше о dApps",
@@ -1935,7 +1935,6 @@
       },
       "depositPopup": {
         "amount": "Сумма",
-        "selectToken": "Выбрать Token",
         "followingTokenInSufficient": "Следующего баланса токена недостаточно",
         "token": "Токен",
         "title": "Депозит",
@@ -1949,7 +1948,17 @@
         "paymentAddress": "Платежный кошелек",
         "inSufficientTip1": "Этот кошелек не имеет достаточно токенов. Пожалуйста, выберите другой кошелек.",
         "pay": "Оплатить",
-        "applePayFeeDesc1": "Включает плату за приложение. Выводы не производятся."
+        "applePayFeeDesc1": "Включает плату за приложение. Выводы не производятся.",
+        "balanceLabel": "Баланс",
+        "gasDepositTitle": "Газовый депозит",
+        "unavailablePaymentWallet": "Выбранный платежный кошелек недоступен",
+        "minAmountRequired": "Минимальная сумма депозита составляет 1 $.",
+        "suggestedToken": "Предложенные токены",
+        "insufficientBalanceLabel": "Недостаточно средств",
+        "estReceiveTip": "Сервис, обработанный через {{name}}, может иметь проскальзывание.",
+        "fetchQuoteFailed": "Не удалось получить котировку",
+        "selectToken": "Выберите токен для депозита",
+        "estReceiveLabel": "Est.Receive: {{usd}}"
       },
       "paymentAddressPopup": {
         "confirm": "Подтвердить",
@@ -2000,7 +2009,8 @@
         "depositToken": "Депозит с Token",
         "buyWithDesc": "30% комиссия, без выводов",
         "depositTokenDesc": "Без дополнительных комиссий, мгновенные выводы",
-        "buyWithApple": "Купить в App Store"
+        "buyWithApple": "Купить в App Store",
+        "insufficientTokenBalance": "Недостаточно токенов на балансе"
       },
       "gasAccountList": {
         "gasAccountBalance": "Баланс GasAccount",
@@ -2012,8 +2022,21 @@
       "loginFailed": "Ошибка входа",
       "depositCanceled": "Депозит отменен",
       "loginSuccess": "Вход выполнен успешно",
-      "switchAccount": "Переключить GasAccount",
-      "withdrawDisabledIAP": "Выводы отключены, потому что ваш баланс включает фиатные средства, которые не могут быть выведены. Свяжитесь с поддержкой для вывода баланса ваших токенов."
+      "withdrawDisabledIAP": "Выводы отключены, потому что ваш баланс включает фиатные средства, которые не могут быть выведены. Свяжитесь с поддержкой для вывода баланса ваших токенов.",
+      "benefitCard": {
+        "item1": "Без комиссии Rabby",
+        "item3": "Поддерживает все транзакции",
+        "item2": "Поддерживает все сети",
+        "desc1": "Нет дополнительных сборов за оплату газа",
+        "desc3": "Обмен, Мост, Отправить, DApps и многое другое",
+        "desc2": ""
+      },
+      "depositNow": "Депозит сейчас",
+      "gasBalance": "Баланс Gas",
+      "switchAccount": "Переключить кошелек",
+      "depositFailed": "Ошибка при депозите",
+      "lowBalance": "У вас недостаточно газа. Внесите газ, чтобы обеспечитьSmooth будущие транзакции.",
+      "depositWith": "Депозит с"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Не поддерживается в этой сети",
@@ -3295,8 +3318,8 @@
         "depositDesc": "на всех цепях, когда у вас закончился Gas"
       },
       "loginConfirmModal": {
-        "title": "Выберите кошелек для входа",
-        "desc": "После входа в систему вы можете только внести депозит по этому адресу."
+        "desc": "После входа в систему вы можете только внести депозит по этому адресу.",
+        "title": "Переключить кошелек"
       },
       "withdrawPopup": {
         "title": "Вывести средства",

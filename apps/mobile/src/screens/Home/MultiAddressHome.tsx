@@ -1,6 +1,7 @@
 import { RootNames } from '@/constant/layout';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { trackGasAccountActiveStatusOncePerDay } from '@/utils/gasAccountAnalytics';
+import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
@@ -88,6 +89,14 @@ function MultiAddressHome(): JSX.Element {
         subscription.remove();
       };
     }, [trackGasAccountActive]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      autoLoginGasAccountIfNeeded().catch(error => {
+        console.error('autoLoginGasAccountIfNeeded error', error);
+      });
+    }, []),
   );
 
   useEffect(() => {

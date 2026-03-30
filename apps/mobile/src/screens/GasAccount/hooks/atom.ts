@@ -1,4 +1,3 @@
-import { toast } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { sendRequest } from '@/core/apis/provider';
 import { openapi } from '@/core/request';
@@ -11,6 +10,7 @@ import { GasAccountServiceStore } from '@/core/services/gasAccount';
 import { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
 import {
+  makeAvoidParallelAsyncFunc,
   resolveValFromUpdater,
   runIIFEFunc,
   UpdaterOrPartials,
@@ -20,6 +20,7 @@ import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
 import { sendPersonalMessage } from '@/utils/sendPersonalMessage';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { GasAccountBridgeToken } from '@rabby-wallet/rabby-api/dist/types';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import pRetry from 'p-retry';
 import { useCallback } from 'react';
@@ -52,6 +53,7 @@ runIIFEFunc(() => {
       sigState: {
         ...data,
       },
+      pendingHardwareAccount: data.pendingHardwareAccount,
     });
   });
 });
@@ -62,13 +64,31 @@ type GasAccountRefresherState = {
 };
 
 type GasAccountVisibleState = {
-  logoutVisible: boolean;
   loginVisible: boolean;
   switchVisible: boolean;
 };
 
+export type GasAccountBridgeSupportTokenList = {
+  hyperliquid_tokens: GasAccountBridgeToken[];
+  wallet_tokens: GasAccountBridgeToken[];
+};
+
+type OpenApiWithGasAccountBridgeSupportTokenList = typeof openapi & {
+  getGasAccountBridgeSupportTokenList?: () => Promise<
+    Partial<GasAccountBridgeSupportTokenList> | undefined
+  >;
+};
+
+type AccountWithBalanceItem = {
+  address: string;
+  type: string;
+  brandName: string;
+};
+
 type GasAccountState = GasAccountRefresherState & {
   sigState?: Partial<GasAccountServiceStore>;
+  pendingHardwareAccount?: GasAccountServiceStore['pendingHardwareAccount'];
+  accountsWithGasAccountBalance: AccountWithBalanceItem[];
 } & GasAccountVisibleState;
 
 function setRefreshIdFor(
@@ -99,16 +119,74 @@ function setVisibleFor(
   });
 }
 
-const gasAccountStore = zCreate<GasAccountState>(() => ({
+export const gasAccountStore = zCreate<GasAccountState>(() => ({
   refreshGasBalance: 0,
   refreshGasAccountHistory: 0,
   sigState: {
     ...(gasAccountService.getGasAccountData() as GasAccountServiceStore),
   },
-  logoutVisible: false,
+  pendingHardwareAccount: gasAccountService.getPendingHardwareAccount(),
   loginVisible: false,
   switchVisible: false,
+  accountsWithGasAccountBalance:
+    gasAccountService.getAccountsWithGasAccountBalance(),
 }));
+
+type GasAccountDepositState = {
+  bridgeSupportTokenList: GasAccountBridgeSupportTokenList;
+  bridgeSupportUpdatedAt: number;
+  bridgeSupportLoading: boolean;
+};
+
+const EMPTY_GAS_ACCOUNT_BRIDGE_SUPPORT_TOKEN_LIST: GasAccountBridgeSupportTokenList =
+  {
+    hyperliquid_tokens: [],
+    wallet_tokens: [],
+  };
+const GAS_ACCOUNT_BRIDGE_SUPPORT_CACHE_TTL = 60 * 1000;
+const gasAccountDepositOpenapi =
+  openapi as OpenApiWithGasAccountBridgeSupportTokenList;
+
+export const gasAccountDepositStore = zCreate<GasAccountDepositState>(() => ({
+  bridgeSupportTokenList: EMPTY_GAS_ACCOUNT_BRIDGE_SUPPORT_TOKEN_LIST,
+  bridgeSupportUpdatedAt: 0,
+  bridgeSupportLoading: false,
+}));
+
+const fetchGasAccountBridgeSupportTokenList = makeAvoidParallelAsyncFunc(
+  async (force = false) => {
+    const { bridgeSupportTokenList, bridgeSupportUpdatedAt } =
+      gasAccountDepositStore.getState();
+    const now = Date.now();
+    const isFresh =
+      bridgeSupportUpdatedAt > 0 &&
+      now - bridgeSupportUpdatedAt < GAS_ACCOUNT_BRIDGE_SUPPORT_CACHE_TTL;
+
+    if (!force && isFresh) {
+      return bridgeSupportTokenList;
+    }
+
+    gasAccountDepositStore.setState({ bridgeSupportLoading: true });
+    try {
+      const result =
+        (await gasAccountDepositOpenapi.getGasAccountBridgeSupportTokenList?.()) ||
+        EMPTY_GAS_ACCOUNT_BRIDGE_SUPPORT_TOKEN_LIST;
+      const normalized: GasAccountBridgeSupportTokenList = {
+        hyperliquid_tokens: result.hyperliquid_tokens || [],
+        wallet_tokens: result.wallet_tokens || [],
+      };
+
+      gasAccountDepositStore.setState({
+        bridgeSupportTokenList: normalized,
+        bridgeSupportUpdatedAt: Date.now(),
+      });
+
+      return normalized;
+    } finally {
+      gasAccountDepositStore.setState({ bridgeSupportLoading: false });
+    }
+  },
+);
 
 function setGasAccountSigState(
   valOrFunc: UpdaterOrPartials<GasAccountState['sigState']>,
@@ -213,15 +291,29 @@ export const storeApiGasAccount = {
   getSigState() {
     return gasAccountStore.getState().sigState;
   },
-  fetchGasAccountInfo,
-  setLogoutVisible(valOrFunc: UpdaterOrPartials<boolean>) {
-    setVisibleFor('logoutVisible', valOrFunc);
+  getPendingHardwareAccount() {
+    return gasAccountStore.getState().pendingHardwareAccount;
   },
+  fetchGasAccountInfo,
   setLoginVisible(valOrFunc: UpdaterOrPartials<boolean>) {
     setVisibleFor('loginVisible', valOrFunc);
   },
   setSwitchVisible(valOrFunc: UpdaterOrPartials<boolean>) {
     setVisibleFor('switchVisible', valOrFunc);
+  },
+  setAccountsWithGasAccountBalance(accounts: AccountWithBalanceItem[]) {
+    gasAccountService.setAccountsWithGasAccountBalance(accounts);
+    gasAccountStore.setState({ accountsWithGasAccountBalance: accounts });
+  },
+  setPendingHardwareAccount(
+    account?: GasAccountServiceStore['pendingHardwareAccount'],
+  ) {
+    gasAccountService.setPendingHardwareAccount(account);
+    gasAccountStore.setState({ pendingHardwareAccount: account });
+  },
+  clearPendingHardwareAccount() {
+    gasAccountService.clearPendingHardwareAccount();
+    gasAccountStore.setState({ pendingHardwareAccount: undefined });
   },
 
   loginGasAccount: async (selectAccount: Account) => {
@@ -270,35 +362,23 @@ export const storeApiGasAccount = {
         handleGasAccountLoginSuccess(signature, account);
         storeApiGasAccount.setGasAccount(signature, account);
         gasAccountService.setHasClaimedGift(true);
-        // setLoginVisible(false);
+        storeApiGasAccount.clearPendingHardwareAccount();
       } else {
         throw new Error('Login failed');
       }
     }
     return signature;
   },
-
-  logoutGasAccount: async () => {
-    const { sig, accountId } = storeApiGasAccount.getSigState() || {};
-    if (sig && accountId) {
-      const result = await openapi.logoutGasAccount({
-        sig,
-        account_id: accountId,
-      });
-      if (result.success) {
-        storeApiGasAccount.setGasAccount();
-        storeApiGasAccount.setLogoutVisible(false);
-        // gotoDashboard();
-      } else {
-        toast.show('please retry');
-      }
-    }
-  },
 };
 
-export const useGasAccountLogoutVisible = () => {
-  const isVisible = gasAccountStore(s => s.logoutVisible);
-  return [isVisible, storeApiGasAccount.setLogoutVisible] as const;
+export const storeApiGasAccountDeposit = {
+  fetchBridgeSupportTokenList: fetchGasAccountBridgeSupportTokenList,
+  getBridgeSupportTokenList() {
+    return gasAccountDepositStore.getState().bridgeSupportTokenList;
+  },
+  getBridgeSupportUpdatedAt() {
+    return gasAccountDepositStore.getState().bridgeSupportUpdatedAt;
+  },
 };
 
 export const useGasAccountLoginVisible = () => {
@@ -307,6 +387,22 @@ export const useGasAccountLoginVisible = () => {
     setVisibleFor('loginVisible', valOrFunc);
   }, []);
   return [isVisible, setIsVisible] as const;
+};
+
+export const useAccountsWithGasAccountBalance = () => {
+  return gasAccountStore(s => s.accountsWithGasAccountBalance);
+};
+
+export const usePendingHardwareAccount = () => {
+  return gasAccountStore(s => s.pendingHardwareAccount);
+};
+
+export const useGasAccountBridgeSupportTokenList = () => {
+  return gasAccountDepositStore(s => s.bridgeSupportTokenList);
+};
+
+export const useGasAccountBridgeSupportLoading = () => {
+  return gasAccountDepositStore(s => s.bridgeSupportLoading);
 };
 
 export const useGasAccountSwitchVisible = () => {

@@ -10,8 +10,9 @@ import { GasAccountDepositWithPay } from './GasAccountDepositWithPay';
 import { GasAccountDepositWithTokenAlertModal } from './GasAccountDepositWithTokenAlertModal';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
+import { GasAccountDepositPopup } from './GasAccountDepositPopup';
 
-export const GasAccountDepositTipPopup: React.FC<{
+export const GasAccountDepositTipPopupOld: React.FC<{
   type?: 'token' | 'pay';
   visible?: boolean;
   gasAccountAddress: string;
@@ -104,6 +105,8 @@ export const GasAccountDepositTipPopup: React.FC<{
     </>
   );
 };
+
+export const GasAccountDepositTipPopup = GasAccountDepositPopup;
 
 const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   popup: {

@@ -36,10 +36,11 @@ import { BridgeSlippage } from '@/screens/Bridge/components/BridgeSlippage';
 import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
 import { WarningText } from '@/screens/Bridge/components/WarningText';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -121,7 +122,6 @@ export default function RepayWithCollateral({
   const { chainEnum, chainInfo, selectedMarketData, isMainnet } =
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
-  const { ctx } = useSignatureStore();
   const { refresh } = useRefreshHistoryId();
 
   const [selectedCollateralToken, setSelectedCollateralToken] = useState<
@@ -417,11 +417,14 @@ export default function RepayWithCollateral({
     openDirect,
     prefetch: prefetchMiniSigner,
     close: closeMiniSigner,
+    instance,
   } = useMiniSigner({
     account: currentAccount!,
     chainServerId: chainInfo?.serverId || '',
     autoResetGasStoreOnChainChange: true,
   });
+
+  const { ctx } = useSignatureStoreOf(instance);
   const collateralNotEnough = useMemo(() => {
     if (!selectedCollateralToken) {
       return false;
@@ -922,7 +925,7 @@ export default function RepayWithCollateral({
   }, [canRepay, collateralNotEnough, isLiquidatable, isRisky, riskChecked]);
 
   return (
-    <>
+    <SignatureInstanceProvider instance={instance}>
       <BottomSheetScrollView
         showsVerticalScrollIndicator
         persistentScrollbar
@@ -1205,7 +1208,7 @@ export default function RepayWithCollateral({
           />
         )}
       </View>
-    </>
+    </SignatureInstanceProvider>
   );
 }
 

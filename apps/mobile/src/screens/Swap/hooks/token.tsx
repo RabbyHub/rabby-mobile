@@ -30,6 +30,7 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { Account } from '@/core/services/preference';
 import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
+import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
 
 export const enableInsufficientQuote = true;
 
@@ -171,12 +172,25 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   >();
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
+  const autoQuoteRefreshPausedRef = useRef(false);
 
   const clearExpiredTimer = useCallback(() => {
     if (expiredTimer.current) {
       clearTimeout(expiredTimer.current);
     }
   }, []);
+
+  const setAutoQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      autoQuoteRefreshPausedRef.current = paused;
+      if (paused) {
+        clearExpiredTimer();
+        return;
+      }
+      setRefreshId(e => e + 1);
+    },
+    [clearExpiredTimer, setRefreshId],
+  );
 
   useEffect(() => {
     return () => {
@@ -207,11 +221,23 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         return p;
       });
 
-      expiredTimer.current = setTimeout(() => {
-        if (enableRefreshRef.current) {
-          setRefreshId(e => e + 1);
-        }
-      }, 1000 * 20);
+      if (
+        shouldScheduleQuotePolling({
+          enabled: enableRefreshRef.current,
+          paused: autoQuoteRefreshPausedRef.current,
+        })
+      ) {
+        expiredTimer.current = setTimeout(() => {
+          if (
+            shouldScheduleQuotePolling({
+              enabled: enableRefreshRef.current,
+              paused: autoQuoteRefreshPausedRef.current,
+            })
+          ) {
+            setRefreshId(e => e + 1);
+          }
+        }, 1000 * 20);
+      }
     },
     [setRefreshId],
   );
@@ -985,6 +1011,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     setLowCreditVisible,
 
     clearExpiredTimer,
+    setAutoQuoteRefreshPaused,
 
     finishedQuotes,
     autoSuggestSlippage,

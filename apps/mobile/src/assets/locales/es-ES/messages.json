@@ -170,7 +170,7 @@
       },
       "loginConfirmModal": {
         "desc": "Una vez que inicie sesión, solo puede depositarlo en esta dirección.",
-        "title": "Selecciona una cartera para iniciar sesión"
+        "title": "Cambiar Cartera"
       },
       "withdrawPopup": {
         "title": "Retirar",
@@ -870,9 +870,9 @@
         "loginFirst": "Por favor, inicie sesión en GasAccount primero.",
         "useGasAccount": "Usar GasAccount",
         "WalletConnectTips": "GasAccount no es compatible con WalletConnect.",
-        "notEnough": "GasAccount no es suficiente",
         "customRPC": "No compatible con el uso de RPC personalizado",
-        "login": "Iniciar sesión"
+        "login": "Iniciar sesión",
+        "notEnough": "No hay suficiente gas. Depositar gas: ${{usd}}"
       },
       "processRiskAlert": "Por favor, procesa la alerta antes de firmar",
       "gasless": {
@@ -1105,7 +1105,6 @@
         "approvals": "Aprobaciones",
         "websites": "Sitios web",
         "history": "Historial",
-        "gasAccount": "GasAccount",
         "queue": "Cola",
         "search": "Buscar Token",
         "copyTrading": "Copy Trading",
@@ -1115,7 +1114,8 @@
         "lending": "Préstamo",
         "predict": "Predecir",
         "meme": "Memecoin",
-        "market": "Mercado"
+        "market": "Mercado",
+        "gasDeposit": "Depósito de Gas"
       },
       "swipeUp": {
         "descAndroidMore": "Haz clic para explorar más dApps",
@@ -2225,7 +2225,6 @@
         "amount": "Cantidad",
         "invalidAmount": "Debe estar por debajo de 500",
         "title": "Depósito",
-        "selectToken": "Seleccionar Token",
         "followingTokenInSufficient": "El saldo de los siguientes tokens es insuficiente",
         "zeroInvalidAmount": "El importe no puede ser cero",
         "desc": "Haz un depósito en la cuenta de DeBank L2 de Rabby sin tarifas adicionales: retira en cualquier momento.",
@@ -2236,7 +2235,17 @@
         "inSufficientTip1": "Esta wallet no tiene suficientes tokens. Por favor, elige una wallet diferente.",
         "paymentAddress": "Billetera de Pago",
         "pay": "Pagar",
-        "applePayFeeDesc1": "Incluye una tarifa de la App Store. No se permiten retiros."
+        "applePayFeeDesc1": "Incluye una tarifa de la App Store. No se permiten retiros.",
+        "balanceLabel": "Saldo",
+        "insufficientBalanceLabel": "Saldo insuficiente",
+        "suggestedToken": "Tokens Sugeridos",
+        "gasDepositTitle": "Depósito de Gas",
+        "minAmountRequired": "El monto mínimo de depósito es $1",
+        "estReceiveLabel": "Est. Recibir: {{usd}}",
+        "fetchQuoteFailed": "Error al obtener la cotización",
+        "selectToken": "Seleccionar Token para Depositar",
+        "unavailablePaymentWallet": "La billetera de pago seleccionada no está disponible",
+        "estReceiveTip": "El servicio procesado a través de {{name}} puede tener deslizamiento."
       },
       "paymentAddressPopup": {
         "confirm": "Confirmar",
@@ -2287,7 +2296,8 @@
         "buyWithDesc": "30% de comisión, sin retiradas",
         "depositToken": "Depósito con Token",
         "depositTokenDesc": "Sin tarifas adicionales, retiros instantáneos",
-        "buyWithApple": "Comprar en la App Store"
+        "buyWithApple": "Comprar en la App Store",
+        "insufficientTokenBalance": "Saldo de token insuficiente"
       },
       "gasAccountList": {
         "address": "Dirección",
@@ -2297,10 +2307,23 @@
       },
       "depositSuccess": "Depósito exitoso",
       "loginFailed": "Error de inicio de sesión",
-      "switchAccount": "Cambiar GasAccount",
       "depositCanceled": "Depósito Cancelado",
       "loginSuccess": "Inicio de sesión exitoso",
-      "withdrawDisabledIAP": "Los retiros están deshabilitados porque tu saldo incluye fondos fiduciarios, los cuales no pueden ser retirados. Contacta con soporte para retirar el saldo de tus tokens."
+      "withdrawDisabledIAP": "Los retiros están deshabilitados porque tu saldo incluye fondos fiduciarios, los cuales no pueden ser retirados. Contacta con soporte para retirar el saldo de tus tokens.",
+      "benefitCard": {
+        "desc2": "",
+        "desc1": "Sin tarifas extra para pagar gas",
+        "item3": "Admite todas las transacciones",
+        "item1": "Sin tarifa de Rabby",
+        "desc3": "Intercambiar, Puente, Enviar, DApps, y más",
+        "item2": "Soporta todas las redes"
+      },
+      "gasBalance": "Saldo de Gas",
+      "depositFailed": "Depósito fallido",
+      "depositWith": "Depositar con",
+      "depositNow": "Depositar ahora",
+      "lowBalance": "No tienes suficiente gas. Deposita gas para asegurar que las futuras transacciones transcurran sin problemas.",
+      "switchAccount": "Cambiar Wallet"
     },
     "settingModal": {
       "themeMode": {

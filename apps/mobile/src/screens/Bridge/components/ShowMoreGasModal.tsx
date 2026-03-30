@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,52 +16,10 @@ import BigNumber from 'bignumber.js';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { formatGasHeaderUsdValue } from '@/utils/number';
 import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
-import { signatureStore, useSignatureStore } from '@/components2024/MiniSignV2';
+import type { SignatureFlowState } from '@/components2024/MiniSignV2';
+import type { MiniSignGasPanelInfo } from '@/components2024/MiniSignV2/state/useMiniSignGasPanel';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { Text } from '@/components/Typography';
-
-const showMoreGasSelectModalVisibleAtom = atom(false);
-
-export const useGetShowMoreGasSelectVisible = () =>
-  useAtomValue(showMoreGasSelectModalVisibleAtom);
-const useSetShowMoreGasSelectVisible = () =>
-  useSetAtom(showMoreGasSelectModalVisibleAtom);
-const gasInfoByUIAtom = atom<
-  | {
-      externalPanelSelection: (gas: GasLevel) => void;
-      handleClickEdit: () => void;
-      gasCostUsdStr: string;
-      gasUsdList: {
-        slow: string;
-        normal: string;
-        fast: string;
-      };
-      gasIsNotEnough: {
-        slow: boolean;
-        normal: boolean;
-        fast: boolean;
-      };
-      gasAccountIsNotEnough: {
-        slow: [boolean, string];
-        normal: [boolean, string];
-        fast: [boolean, string];
-      };
-      gasAccountCost?: {
-        total_cost: number;
-        tx_cost: number;
-        gas_cost: number;
-        estimate_tx_cost: number;
-      };
-    }
-  | undefined
->(undefined);
-
-export const [useGetGasInfoByUI, useSetGasInfoByUI] = [
-  () => useAtomValue(gasInfoByUIAtom),
-  () => useSetAtom(gasInfoByUIAtom),
-];
 
 const GasMethod = (props: {
   active: boolean;
@@ -102,15 +60,21 @@ const GasMethod = (props: {
 export default function ShowMoreGasSelectModal({
   visible,
   onCancel,
-  onConfirm,
+  onConfirm: _onConfirm,
   layout,
   chainId,
+  ctx,
+  gasInfo,
+  onChangeGasMethod,
 }: {
   visible: boolean;
   onCancel: () => void;
   onConfirm: () => void;
   layout: { x: number; y: number; width: number; height: number };
   chainId?: number;
+  ctx?: SignatureFlowState['ctx'];
+  gasInfo?: MiniSignGasPanelInfo;
+  onChangeGasMethod: (method: 'native' | 'gasAccount') => void | Promise<void>;
 }) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -118,17 +82,6 @@ export default function ShowMoreGasSelectModal({
   const { height, width } = useWindowDimensions();
 
   const fixedMode = useMiniSignFixedMode(chainId);
-
-  const state = useSignatureStore();
-  const { ctx, config, status } = state;
-  const gasInfoByUI = useGetGasInfoByUI();
-  const setGasInfoByUI = useSetGasInfoByUI();
-
-  useEffect(() => {
-    if (['idle', 'prefetching'].includes(status) || !ctx?.txsCalc?.length) {
-      setGasInfoByUI(undefined);
-    }
-  }, [setGasInfoByUI, status, ctx?.txsCalc?.length]);
 
   const calcGasAccountUsd = useCallback(n => {
     const v = Number(n);
@@ -140,32 +93,6 @@ export default function ShowMoreGasSelectModal({
 
   // const hasCustomRpc = !ctx?.noCustomRPC;
 
-  const setVisible = useSetShowMoreGasSelectVisible();
-
-  const handleChangeGasMethod = useCallback(
-    async (method: 'native' | 'gasAccount') => {
-      try {
-        signatureStore.setGasMethod(method);
-      } catch (error) {
-        console.error('Gas method change error:', error);
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    setVisible(false);
-    return () => {
-      setVisible(false);
-    };
-  }, [setVisible]);
-
-  useEffect(() => {
-    if (visible) {
-      setVisible(true);
-    }
-  }, [visible, setVisible]);
-
   const {
     externalPanelSelection,
     handleClickEdit,
@@ -174,7 +101,7 @@ export default function ShowMoreGasSelectModal({
     gasIsNotEnough,
     gasAccountIsNotEnough,
     gasAccountCost,
-  } = gasInfoByUI || {};
+  } = gasInfo || {};
   const gasAccountErrorMsg = (ctx?.gasAccount as any)?.err_msg as string;
   const gasAccountError =
     !!gasAccountErrorMsg &&
@@ -201,7 +128,7 @@ export default function ShowMoreGasSelectModal({
         <View style={styles.header}>
           <GasMethod
             active={ctx.gasMethod === 'native'}
-            onChange={() => handleChangeGasMethod?.('native')}
+            onChange={() => onChangeGasMethod('native')}
             ActiveComponent={IconGasTokenActive}
             BlurComponent={IconGasTokenCC}
             title={'Use Gas token'}
@@ -209,7 +136,7 @@ export default function ShowMoreGasSelectModal({
 
           <GasMethod
             active={ctx.gasMethod === 'gasAccount'}
-            onChange={() => handleChangeGasMethod?.('gasAccount')}
+            onChange={() => onChangeGasMethod('gasAccount')}
             ActiveComponent={IconGasAccountActive}
             BlurComponent={IconGasAccountCC}
             title={'Use Gasaccount'}

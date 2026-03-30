@@ -24,6 +24,8 @@ import { GasLessConfig } from './GasLessComponents';
 import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Text } from '@/components/Typography';
+import { shouldUseLegacyApprovalFooterAutoSwitch } from '../TxComponents/GasSelector/approvalGasDisplay';
+import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   isSwap?: boolean;
@@ -56,8 +58,10 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   noCustomRPC?: boolean;
   canGotoUseGasAccount?: boolean;
   canDepositUseGasAccount?: boolean;
+  disableGasAccountDeposit?: boolean;
   rejectApproval?(): void;
   onDeposit?(): void;
+  onWaitDepositResult?: GasAccountTopUpWaitCallback;
   gasAccountAddress?: string;
   isFirstGasCostLoading?: boolean;
   isFirstGasLessLoading?: boolean;
@@ -208,8 +212,10 @@ export const FooterBar: React.FC<Props> = ({
   noCustomRPC,
   canGotoUseGasAccount,
   canDepositUseGasAccount,
+  disableGasAccountDeposit = false,
   rejectApproval,
   onDeposit,
+  onWaitDepositResult,
   gasAccountAddress,
   isFirstGasCostLoading,
   isFirstGasLessLoading,
@@ -292,6 +298,9 @@ export const FooterBar: React.FC<Props> = ({
 
   const isSetGasMethodRef = useRef(false);
   useEffect(() => {
+    if (!shouldUseLegacyApprovalFooterAutoSwitch()) {
+      return;
+    }
     if (isSetGasMethodRef.current) {
       return;
     }
@@ -347,12 +356,18 @@ export const FooterBar: React.FC<Props> = ({
                 account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                 <GasLessNotEnough
                   canGotoUseGasAccount={canGotoUseGasAccount}
-                  canDepositUseGasAccount={canDepositUseGasAccount}
+                  canDepositUseGasAccount={
+                    disableGasAccountDeposit ? false : canDepositUseGasAccount
+                  }
                   onChangeGasAccount={onChangeGasAccount}
                   gasAccountAddress={gasAccountAddress!}
                   gasAccountCost={gasAccountCost}
                   onDeposit={() => {
                     onDeposit?.();
+                    onChangeGasAccount?.();
+                  }}
+                  onWaitDepositResult={async result => {
+                    await onWaitDepositResult?.(result);
                     onChangeGasAccount?.();
                   }}
                   onGotoGasAccount={() => {
@@ -376,6 +391,8 @@ export const FooterBar: React.FC<Props> = ({
                   isWalletConnect={isWalletConnect}
                   noCustomRPC={noCustomRPC}
                   onDeposit={onDeposit}
+                  onWaitDepositResult={onWaitDepositResult}
+                  disableDepositAction={disableGasAccountDeposit}
                   onGotoGasAccount={() => {
                     rejectApproval?.();
                     navigateDeprecated(RootNames.StackTransaction, {

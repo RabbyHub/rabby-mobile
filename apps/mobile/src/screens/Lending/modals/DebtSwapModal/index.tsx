@@ -38,10 +38,11 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import { formatSpeicalAmount, formatTokenAmount } from '@/utils/number';
 import { WarningText } from '@/screens/Bridge/components/WarningText';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -115,7 +116,6 @@ export default function DebtSwapModal({
 
   const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
-  const { ctx } = useSignatureStore();
   const { refresh } = useRefreshHistoryId();
   const { iUserSummary } = useLendingSummary();
 
@@ -420,11 +420,14 @@ export default function DebtSwapModal({
     openDirect,
     prefetch: prefetchMiniSigner,
     close: closeMiniSigner,
+    instance,
   } = useMiniSigner({
     account: currentAccount!,
     chainServerId: chainInfo?.serverId || '',
     autoResetGasStoreOnChainChange: true,
   });
+
+  const { ctx } = useSignatureStoreOf(instance);
 
   const buildDebtSwapTxs = useCallback(async (): Promise<Tx[]> => {
     if (
@@ -836,313 +839,317 @@ export default function DebtSwapModal({
   }, [canSwap, isExceedMaxLtvAfterSwap, isLiquidatable, isRisky, riskChecked]);
 
   return (
-    <AutoLockView style={styles.container}>
-      <BottomSheetScrollView
-        showsVerticalScrollIndicator
-        persistentScrollbar
-        style={styles.scrollableBlock}
-        contentContainerStyle={[styles.contentContainer]}>
-        <BottomSheetHandlableView>
-          <View style={styles.header}>
-            <Text style={styles.titleText}>
-              {t('page.Lending.debtSwap.title')}
-            </Text>
-          </View>
-        </BottomSheetHandlableView>
-
-        <Text style={styles.sectionTitle}>
-          {t('page.Lending.debtSwap.actions.amount')}
-        </Text>
-        <View style={styles.content}>
-          {/* From Token */}
-          <View style={styles.tokenContainer}>
-            <View style={styles.tokenHeader}>
-              <Text style={styles.label}>
-                {t('page.Lending.debtSwap.actions.borrowed')}
+    <SignatureInstanceProvider instance={instance}>
+      <AutoLockView style={styles.container}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator
+          persistentScrollbar
+          style={styles.scrollableBlock}
+          contentContainerStyle={[styles.contentContainer]}>
+          <BottomSheetHandlableView>
+            <View style={styles.header}>
+              <Text style={styles.titleText}>
+                {t('page.Lending.debtSwap.title')}
               </Text>
-              <View style={styles.sliderContainer}>
-                <DebtSwapModalSlider
-                  fromToken={fromToken}
-                  slider={slider}
-                  onChangeSlider={onChangeSlider}
-                />
-                <Text style={styles.sliderValue}>{slider}%</Text>
-              </View>
             </View>
+          </BottomSheetHandlableView>
 
-            <View style={styles.tokenBody}>
-              <TextInput
-                style={styles.amountInput}
-                value={fromAmount}
-                onChangeText={onInputChange}
-                placeholder="0"
-                keyboardType="numeric"
-                textAlign="left"
-                numberOfLines={1}
-                multiline={false}
-                spellCheck={false}
-                inputMode="decimal"
-                scrollEnabled={true}
-                placeholderTextColor={colors2024['neutral-info']}
-              />
-              {slider !== 100 && (
-                <Pressable
-                  style={styles.maxButtonWrapper}
-                  onPress={() => onChangeSlider(100)}>
-                  <Text style={styles.maxButtonText}>MAX</Text>
-                </Pressable>
-              )}
-              <View style={styles.divider} />
-              <View style={styles.tokenInfo}>
-                <TokenIcon
-                  size={26}
-                  chainSize={12}
-                  chain={chainEnum}
-                  tokenSymbol={fromToken.symbol}
+          <Text style={styles.sectionTitle}>
+            {t('page.Lending.debtSwap.actions.amount')}
+          </Text>
+          <View style={styles.content}>
+            {/* From Token */}
+            <View style={styles.tokenContainer}>
+              <View style={styles.tokenHeader}>
+                <Text style={styles.label}>
+                  {t('page.Lending.debtSwap.actions.borrowed')}
+                </Text>
+                <View style={styles.sliderContainer}>
+                  <DebtSwapModalSlider
+                    fromToken={fromToken}
+                    slider={slider}
+                    onChangeSlider={onChangeSlider}
+                  />
+                  <Text style={styles.sliderValue}>{slider}%</Text>
+                </View>
+              </View>
+
+              <View style={styles.tokenBody}>
+                <TextInput
+                  style={styles.amountInput}
+                  value={fromAmount}
+                  onChangeText={onInputChange}
+                  placeholder="0"
+                  keyboardType="numeric"
+                  textAlign="left"
+                  numberOfLines={1}
+                  multiline={false}
+                  spellCheck={false}
+                  inputMode="decimal"
+                  scrollEnabled={true}
+                  placeholderTextColor={colors2024['neutral-info']}
                 />
-                <View style={styles.tokenDetails}>
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={styles.tokenSymbol}>
-                    {fromToken.symbol}
+                {slider !== 100 && (
+                  <Pressable
+                    style={styles.maxButtonWrapper}
+                    onPress={() => onChangeSlider(100)}>
+                    <Text style={styles.maxButtonText}>MAX</Text>
+                  </Pressable>
+                )}
+                <View style={styles.divider} />
+                <View style={styles.tokenInfo}>
+                  <TokenIcon
+                    size={26}
+                    chainSize={12}
+                    chain={chainEnum}
+                    tokenSymbol={fromToken.symbol}
+                  />
+                  <View style={styles.tokenDetails}>
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={styles.tokenSymbol}>
+                      {fromToken.symbol}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.usdValueRow}>
+                <Text style={styles.usdValue}>{fromUsdValue}</Text>
+                <View style={styles.balanceRow}>
+                  <Text style={styles.balanceText}>
+                    {t('page.Lending.debtSwap.borrowBalance')}{' '}
+                    {fromBalanceDisplay}
                   </Text>
                 </View>
               </View>
             </View>
 
-            <View style={styles.usdValueRow}>
-              <Text style={styles.usdValue}>{fromUsdValue}</Text>
-              <View style={styles.balanceRow}>
-                <Text style={styles.balanceText}>
-                  {t('page.Lending.debtSwap.borrowBalance')}{' '}
-                  {fromBalanceDisplay}
-                </Text>
+            {/* Arrow Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <View style={styles.arrowContainer}>
+                <BridgeSwitchBtn
+                  style={styles.arrowWrapper}
+                  loading={isQuoteLoading}
+                />
               </View>
             </View>
-          </View>
 
-          {/* Arrow Divider */}
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <View style={styles.arrowContainer}>
-              <BridgeSwitchBtn
-                style={styles.arrowWrapper}
+            {/* To Token */}
+            <Pressable
+              style={styles.tokenContainer}
+              onPress={handleOpenTokenSelect}>
+              <View style={styles.tokenHeader}>
+                <Text style={styles.label}>
+                  {t('page.Lending.debtSwap.actions.swapTo')}
+                </Text>
+              </View>
+
+              <View style={styles.tokenBody}>
+                <Text
+                  style={[
+                    styles.amountDisplay,
+                    !toAmount && styles.amountDisplayPlaceholder,
+                    isQuoteLoading && styles.loadingOpacity,
+                  ]}>
+                  {toAmount ? formatTokenAmount(toAmount) : '0'}
+                </Text>
+                <View
+                  style={[
+                    styles.tokenInfo,
+                    !toToken && styles.placeholderTokenInfo,
+                  ]}>
+                  {toToken ? (
+                    <>
+                      <TokenIcon
+                        size={26}
+                        chainSize={12}
+                        chain={chainEnum}
+                        tokenSymbol={toToken.symbol}
+                      />
+                      <View style={styles.tokenDetails}>
+                        <Text style={styles.tokenSymbol}>{toToken.symbol}</Text>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.selectTokenText}>
+                        {t('page.Lending.debtSwap.actions.select')}
+                      </Text>
+                    </>
+                  )}
+                  <RcIconSwapBottomArrow />
+                </View>
+              </View>
+
+              {toToken && (
+                <View style={styles.usdValueRow}>
+                  <Text
+                    style={[
+                      styles.usdValue,
+                      isQuoteLoading && styles.loadingOpacity,
+                    ]}>
+                    {toUsdValue}
+                  </Text>
+                  <View style={styles.balanceRow}>
+                    <RcIconWalletCC
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-foot']}
+                    />
+                    <Text style={styles.balanceText}>
+                      {formatTokenAmount(
+                        toDisplayReserve?.variableBorrows || '0',
+                      )}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </Pressable>
+          </View>
+          {noQuote && !isQuoteLoading && (
+            <Text style={styles.errorText}>
+              {t('page.swap.no-quote-found')}
+            </Text>
+          )}
+
+          {canSwap && !noQuote && (
+            <View style={styles.slippageContainer}>
+              <BridgeSlippage
+                value={slippage}
+                displaySlippage={displaySlippage}
+                onChange={setSlippage}
+                autoSlippage={autoSlippage}
+                isCustomSlippage={isCustomSlippage}
+                setAutoSlippage={setAutoSlippage}
+                setIsCustomSlippage={setIsCustomSlippage}
+                type="swap"
                 loading={isQuoteLoading}
               />
             </View>
-          </View>
-
-          {/* To Token */}
-          <Pressable
-            style={styles.tokenContainer}
-            onPress={handleOpenTokenSelect}>
-            <View style={styles.tokenHeader}>
-              <Text style={styles.label}>
-                {t('page.Lending.debtSwap.actions.swapTo')}
-              </Text>
-            </View>
-
-            <View style={styles.tokenBody}>
-              <Text
-                style={[
-                  styles.amountDisplay,
-                  !toAmount && styles.amountDisplayPlaceholder,
-                  isQuoteLoading && styles.loadingOpacity,
-                ]}>
-                {toAmount ? formatTokenAmount(toAmount) : '0'}
-              </Text>
-              <View
-                style={[
-                  styles.tokenInfo,
-                  !toToken && styles.placeholderTokenInfo,
-                ]}>
-                {toToken ? (
-                  <>
-                    <TokenIcon
-                      size={26}
-                      chainSize={12}
-                      chain={chainEnum}
-                      tokenSymbol={toToken.symbol}
-                    />
-                    <View style={styles.tokenDetails}>
-                      <Text style={styles.tokenSymbol}>{toToken.symbol}</Text>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.selectTokenText}>
-                      {t('page.Lending.debtSwap.actions.select')}
-                    </Text>
-                  </>
-                )}
-                <RcIconSwapBottomArrow />
-              </View>
-            </View>
-
-            {toToken && (
-              <View style={styles.usdValueRow}>
-                <Text
-                  style={[
-                    styles.usdValue,
-                    isQuoteLoading && styles.loadingOpacity,
-                  ]}>
-                  {toUsdValue}
-                </Text>
-                <View style={styles.balanceRow}>
-                  <RcIconWalletCC
-                    width={16}
-                    height={16}
-                    color={colors2024['neutral-foot']}
-                  />
-                  <Text style={styles.balanceText}>
-                    {formatTokenAmount(
-                      toDisplayReserve?.variableBorrows || '0',
-                    )}
+          )}
+          {canSwap &&
+            !noQuote &&
+            priceImpactData.showWarning &&
+            !isQuoteLoading && (
+              <View style={styles.priceImpactContainer}>
+                <View style={styles.priceImpactRow}>
+                  <Text style={styles.priceImpactText}>
+                    {t('page.bridge.price-impact')}
                   </Text>
+                  <View style={styles.priceImpactDiffBox}>
+                    <Text style={styles.priceImpactLossAmount}>
+                      {(priceImpactData.lostValue * 100).toFixed(1)}%
+                    </Text>
+                    <RcIconBluePolygon color={colors2024['orange-default']} />
+                  </View>
                 </View>
+
+                <WarningText>
+                  <Text>
+                    {t('page.Lending.debtSwap.priceImpactTips', {
+                      lostValue: `${(priceImpactData.lostValue * 100).toFixed(
+                        1,
+                      )}%`,
+                    })}
+                  </Text>
+                </WarningText>
               </View>
             )}
-          </Pressable>
-        </View>
-        {noQuote && !isQuoteLoading && (
-          <Text style={styles.errorText}>{t('page.swap.no-quote-found')}</Text>
-        )}
-
-        {canSwap && !noQuote && (
-          <View style={styles.slippageContainer}>
-            <BridgeSlippage
-              value={slippage}
-              displaySlippage={displaySlippage}
-              onChange={setSlippage}
-              autoSlippage={autoSlippage}
-              isCustomSlippage={isCustomSlippage}
-              setAutoSlippage={setAutoSlippage}
-              setIsCustomSlippage={setIsCustomSlippage}
-              type="swap"
-              loading={isQuoteLoading}
-            />
-          </View>
-        )}
-        {canSwap &&
-          !noQuote &&
-          priceImpactData.showWarning &&
-          !isQuoteLoading && (
-            <View style={styles.priceImpactContainer}>
-              <View style={styles.priceImpactRow}>
-                <Text style={styles.priceImpactText}>
-                  {t('page.bridge.price-impact')}
-                </Text>
-                <View style={styles.priceImpactDiffBox}>
-                  <Text style={styles.priceImpactLossAmount}>
-                    {(priceImpactData.lostValue * 100).toFixed(1)}%
-                  </Text>
-                  <RcIconBluePolygon color={colors2024['orange-default']} />
-                </View>
-              </View>
-
-              <WarningText>
-                <Text>
-                  {t('page.Lending.debtSwap.priceImpactTips', {
-                    lostValue: `${(priceImpactData.lostValue * 100).toFixed(
-                      1,
-                    )}%`,
-                  })}
-                </Text>
-              </WarningText>
+          {canShowDirectSubmit && canSwap && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+              />
             </View>
           )}
-        {canShowDirectSubmit && canSwap && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={false}
-              openShowMore={noop}
-              chainServeId={chainInfo?.serverId || ''}
+          {noQuote && !isQuoteLoading ? null : (
+            <DebtSwapModalOverview
+              fromToken={fromToken}
+              toToken={toToken}
+              chainEnum={chainEnum}
+              fromAmount={debouncedFromAmount}
+              currentToAmount={toDisplayReserve?.variableBorrows || '0'}
+              toAmount={toAmountAfterSlippage}
+              fromBalanceBn={fromBalanceBn.toString()}
+              isQuoteLoading={isQuoteLoading}
+              currentHF={currentHF}
+              afterHF={afterSwapInfo?.hfAfterSwap.toString()}
+              showHF={isHFLow || isLiquidatable}
             />
-          </View>
-        )}
-        {noQuote && !isQuoteLoading ? null : (
-          <DebtSwapModalOverview
-            fromToken={fromToken}
-            toToken={toToken}
-            chainEnum={chainEnum}
-            fromAmount={debouncedFromAmount}
-            currentToAmount={toDisplayReserve?.variableBorrows || '0'}
-            toAmount={toAmountAfterSlippage}
-            fromBalanceBn={fromBalanceBn.toString()}
-            isQuoteLoading={isQuoteLoading}
-            currentHF={currentHF}
-            afterHF={afterSwapInfo?.hfAfterSwap.toString()}
-            showHF={isHFLow || isLiquidatable}
-          />
-        )}
-      </BottomSheetScrollView>
+          )}
+        </BottomSheetScrollView>
 
-      <View
-        style={[
-          styles.buttonContainer,
-          {
-            height:
-              BOTTOM_SIZE.BUTTON +
-              (isLiquidatable || isExceedMaxLtvAfterSwap
-                ? BOTTOM_SIZE.TIPS
-                : isRisky
-                ? BOTTOM_SIZE.CHECKBOX
-                : 0),
-          },
-        ]}>
-        {isExceedMaxLtvAfterSwap ? (
-          <View style={styles.riskContainer}>
-            <Text style={styles.dangerWarningText}>
-              {t('page.Lending.debtSwap.maxLtvWarning')}
-            </Text>
-          </View>
-        ) : isLiquidatable ? (
-          <View style={styles.riskContainer}>
-            <Text style={styles.dangerWarningText}>
-              {t('page.Lending.debtSwap.lpDangerWarning')}
-            </Text>
-          </View>
-        ) : isRisky ? (
-          <Pressable
-            style={styles.riskContainer}
-            onPress={() => {
-              setRiskChecked(!riskChecked);
-            }}>
-            <CheckBoxRect checked={riskChecked} size={16} />
-            <Text style={styles.warningText}>{riskDesc}</Text>
-          </Pressable>
-        ) : null}
-        {canShowDirectSubmit ? (
-          <DirectSignBtn
-            loading={isLoading}
-            loadingType="circle"
-            key={`${fromToken.underlyingAddress}-${toToken?.underlyingAddress}-${debouncedFromAmount}`}
-            showTextOnLoading
-            wrapperStyle={styles.directSignBtn}
-            authTitle={t('page.Lending.debtSwap.button.swap')}
-            title={t('page.Lending.debtSwap.button.swap')}
-            onFinished={() => handleSwap()}
-            disabled={buttonDisabled || !!ctx?.disabledProcess}
-            type="primary"
-            syncUnlockTime
-            account={currentAccount}
-            showHardWalletProcess
-          />
-        ) : (
-          <Button
-            loadingType="circle"
-            showTextOnLoading
-            containerStyle={styles.fullWidthButton}
-            onPress={() => handleSwap()}
-            title={t('page.Lending.debtSwap.button.swap')}
-            loading={isLoading}
-            disabled={buttonDisabled}
-          />
-        )}
-      </View>
-    </AutoLockView>
+        <View
+          style={[
+            styles.buttonContainer,
+            {
+              height:
+                BOTTOM_SIZE.BUTTON +
+                (isLiquidatable || isExceedMaxLtvAfterSwap
+                  ? BOTTOM_SIZE.TIPS
+                  : isRisky
+                  ? BOTTOM_SIZE.CHECKBOX
+                  : 0),
+            },
+          ]}>
+          {isExceedMaxLtvAfterSwap ? (
+            <View style={styles.riskContainer}>
+              <Text style={styles.dangerWarningText}>
+                {t('page.Lending.debtSwap.maxLtvWarning')}
+              </Text>
+            </View>
+          ) : isLiquidatable ? (
+            <View style={styles.riskContainer}>
+              <Text style={styles.dangerWarningText}>
+                {t('page.Lending.debtSwap.lpDangerWarning')}
+              </Text>
+            </View>
+          ) : isRisky ? (
+            <Pressable
+              style={styles.riskContainer}
+              onPress={() => {
+                setRiskChecked(!riskChecked);
+              }}>
+              <CheckBoxRect checked={riskChecked} size={16} />
+              <Text style={styles.warningText}>{riskDesc}</Text>
+            </Pressable>
+          ) : null}
+          {canShowDirectSubmit ? (
+            <DirectSignBtn
+              loading={isLoading}
+              loadingType="circle"
+              key={`${fromToken.underlyingAddress}-${toToken?.underlyingAddress}-${debouncedFromAmount}`}
+              showTextOnLoading
+              wrapperStyle={styles.directSignBtn}
+              authTitle={t('page.Lending.debtSwap.button.swap')}
+              title={t('page.Lending.debtSwap.button.swap')}
+              onFinished={() => handleSwap()}
+              disabled={buttonDisabled || !!ctx?.disabledProcess}
+              type="primary"
+              syncUnlockTime
+              account={currentAccount}
+              showHardWalletProcess
+            />
+          ) : (
+            <Button
+              loadingType="circle"
+              showTextOnLoading
+              containerStyle={styles.fullWidthButton}
+              onPress={() => handleSwap()}
+              title={t('page.Lending.debtSwap.button.swap')}
+              loading={isLoading}
+              disabled={buttonDisabled}
+            />
+          )}
+        </View>
+      </AutoLockView>
+    </SignatureInstanceProvider>
   );
 }
 

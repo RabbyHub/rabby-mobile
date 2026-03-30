@@ -667,7 +667,11 @@ export function useSendTokenForm({
     });
   }, [loadGasListAndResolve]);
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance: miniSignInstance,
+  } = useMiniSigner({
     account: currentAccount || fallbackAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
@@ -1998,6 +2002,7 @@ export function useSendTokenForm({
     whitelist,
     whitelistEnabled,
     computed,
+    miniSignInstance,
   };
 }
 export function useSendTokenFormikContext() {
