@@ -1866,7 +1866,9 @@
         "insufficientBalanceLabel": "Insufficient Balance",
         "fetchQuoteFailed": "Failed to fetch quote",
         "minAmountRequired": "Minimum deposit amount is $1",
-        "unavailablePaymentWallet": "Selected payment wallet is unavailable"
+        "unavailablePaymentWallet": "Selected payment wallet is unavailable",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "estReceiveTip": "Service processed via {{name}}, may have slippage"
       },
       "paymentAddressPopup": {
         "title": "Select Payment Wallet",

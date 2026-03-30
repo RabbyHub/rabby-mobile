@@ -716,10 +716,10 @@ const GasAccountDepositTokenFormInner: React.FC<{
   ]);
 
   const estReceiveLabel = t('page.gasAccount.depositPopup.estReceiveLabel', {
-    defaultValue: 'Est.Receive',
+    usd: estReceiveUsdValue,
   });
   const estReceiveTip = t('page.gasAccount.depositPopup.estReceiveTip', {
-    defaultValue: 'Service processed via LiFi, may have slippage',
+    name: bridgeQuote?.bridge_id,
   });
 
   let bottomContent: React.ReactNode = null;
@@ -746,9 +746,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     } else {
       bottomContent = (
         <View style={styles.estimateRow}>
-          <Text style={styles.estimateText}>
-            {estReceiveLabel}: {estReceiveUsdValue}
-          </Text>
+          <Text style={styles.estimateText}>{estReceiveLabel}</Text>
           {selectedToken.gasAccountDepositType === 'bridge' ? (
             <Tip
               placement="top"
@@ -756,9 +754,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
               onClose={() => setShowEstimateTip(false)}
               content={
                 <View style={styles.tipContent}>
-                  <Text style={styles.tipTitle}>
-                    {`Est.Receive: ${estReceiveUsdValue}`}
-                  </Text>
+                  <Text style={styles.tipDesc}>{estReceiveLabel}</Text>
                   <Text style={styles.tipDesc}>{estReceiveTip}</Text>
                 </View>
               }
@@ -1075,7 +1071,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-black'],
     borderRadius: 8,
     padding: 0,
-    width: 220,
+    width: 300,
   },
   tipTooltipStyle: {
     shadowColor: 'rgba(0, 0, 0, 0.06)',
