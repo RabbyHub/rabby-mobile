@@ -2,8 +2,8 @@ import React, {
   useCallback,
   useMemo,
   useState,
-  forwardRef,
   useImperativeHandle,
+  type Ref,
 } from 'react';
 import {
   useReadBridgeHistoryRedDot,
@@ -49,12 +49,13 @@ export interface BridgeHeaderRef {
   openHistory: () => void;
 }
 
-export const BridgeHeader = forwardRef<
-  BridgeHeaderRef,
-  {
-    clearBridgeHistoryRedDot: () => number;
-  }
->(({ clearBridgeHistoryRedDot }, ref) => {
+export const BridgeHeader = ({
+  clearBridgeHistoryRedDot,
+  ref,
+}: {
+  clearBridgeHistoryRedDot: () => number;
+  ref?: Ref<BridgeHeaderRef>;
+}) => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
 
   const feePopupVisible = useSettingVisible();
@@ -112,4 +113,4 @@ export const BridgeHeader = forwardRef<
       />
     </>
   );
-});
+};
