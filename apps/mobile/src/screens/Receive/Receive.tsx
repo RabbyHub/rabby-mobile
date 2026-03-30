@@ -1,7 +1,6 @@
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum, findChainByID } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';
@@ -9,7 +8,6 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { Button } from '@/components2024/Button';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useRoute } from '@react-navigation/native';
 import React, {
@@ -38,6 +36,8 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
+import { BackupReminderCard } from '@/components2024/BackupReminderCard';
+import { useBackupReminder } from '@/hooks/account';
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
@@ -98,6 +98,9 @@ function ReceiveScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const [showName, setShowName] = useState(true);
+
+  // Backup reminder logic
+  const needsBackupReminder = useBackupReminder(account);
 
   const headerTitle = useMemo(
     () => (
@@ -290,6 +293,14 @@ function ReceiveScreen(): JSX.Element {
       footerBottomOffset={56}>
       <View style={styles.container}>
         <View style={styles.receiveContainer}>
+          {/* Backup Reminder Card */}
+          <BackupReminderCard
+            visible={needsBackupReminder}
+            account={account}
+            style={styles.backupReminderCard}
+          />
+
+          {/* Original QR Card */}
           <View style={styles.qrCard}>
             <Text style={styles.qrCardHeader}>
               {t('page.receive.newTitle')}
@@ -374,7 +385,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
   },
   screen: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-0'],
   },
   container: {
     flex: 1,
@@ -387,16 +398,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 24,
     width: '100%',
   },
+  // Backup Reminder Card styles
+  backupReminderCard: {
+    marginHorizontal: 0,
+    marginBottom: 16,
+    width: '100%',
+  },
+  // Original QR Card styles
   qrCard: {
     alignItems: 'center',
     borderRadius: 30,
-    width: 320,
+    width: '100%',
     paddingTop: 23,
     paddingBottom: 35,
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 30,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
     marginBottom: 48,
   },
   qrCardHeader: {
@@ -488,7 +504,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingLeft: 12,
     paddingRight: 6,
     backgroundColor: colors2024['neutral-bg-2'],
-    // borderRadius: 100,
     alignItems: 'center',
     marginBottom: 20,
     width: 'auto',

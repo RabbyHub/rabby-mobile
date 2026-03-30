@@ -33,7 +33,11 @@ export const connectFeService = async (data: { pushToken: string }) => {
 
   const connectURL = getFeServiceURL();
   if (!connectURL) {
-    // console.error('[connectFeService] No push server URL configured');
+    if (__DEV__) {
+      console.warn('[connectFeService] No push server URL configured');
+    } else {
+      console.error('[connectFeService] No push server URL configured');
+    }
     return;
   }
 

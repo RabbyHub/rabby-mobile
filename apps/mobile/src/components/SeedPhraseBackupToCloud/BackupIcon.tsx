@@ -130,6 +130,9 @@ export const BackupIcon: React.FC<Props> = ({
           status === 'downloading' ||
           status === 'loading') && (
           <View style={styles.progress}>
+            {/* FIXME: MaterialIndicator from react-native-indicators causes React warning
+                about spreading 'key' prop. This is a known issue with the library and React 18+.
+                Consider creating a wrapper that filters out 'key' from props. */}
             <MaterialIndicator
               color={colors['blue-default']}
               size={100}

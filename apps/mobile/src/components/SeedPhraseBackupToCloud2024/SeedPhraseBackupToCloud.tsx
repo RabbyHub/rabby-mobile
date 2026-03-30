@@ -15,17 +15,27 @@ import { replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
+
 interface Props {
   onDone: () => void;
   delaySetPassword?: boolean;
+  /** Seed phrase for existing user backup (from authentication) */
+  seedPhraseData?: string;
+  /** Skip keyring creation after backup (for existing user flow) */
+  skipKeyringCreation?: boolean;
 }
 
 export const SeedPhraseBackupToCloud: React.FC<Props> = ({
-  onDone, // close modal
+  onDone,
   delaySetPassword,
+  seedPhraseData: externalSeedPhrase,
+  skipKeyringCreation = false,
 }) => {
-  const { seedPharseData, addressList, confirmPassword } =
-    useCreateAddressProc();
+  const createAddressProc = useCreateAddressProc();
+
+  const { seedPharseData, addressList, confirmPassword } = createAddressProc;
+
+  const isExistingUserBackup = externalSeedPhrase !== undefined;
 
   const {
     seedPhrase,
@@ -33,23 +43,35 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
     address,
     accountsToCreate = [],
   } = useMemo(() => {
+    // For existing user backup, use the provided seed phrase
+    if (isExistingUserBackup) {
+      return {
+        seedPhrase: externalSeedPhrase,
+        alias: '',
+        address: '',
+        accountsToCreate: [] as never[],
+      };
+    }
+    // For new user flow, use data from createAddressProc
     return {
       seedPhrase: seedPharseData,
-      alias: addressList?.[0].aliasName || '',
-      address: addressList?.[0].address || '',
+      alias: addressList?.[0]?.aliasName || '',
+      address: addressList?.[0]?.address || '',
       accountsToCreate: addressList || [],
     };
-  }, [seedPharseData, addressList]);
+  }, [externalSeedPhrase, isExistingUserBackup, seedPharseData, addressList]);
+
   const { t } = useTranslation();
+
   const handleUpload = React.useCallback(
-    async password => {
+    async (password: string) => {
       if (!password) {
         toast.show('must have password');
         return;
       }
 
       try {
-        if (delaySetPassword) {
+        if (!isExistingUserBackup && delaySetPassword) {
           const res = await confirmPassword();
           if (!res) {
             return; // error set password
@@ -66,29 +88,37 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         toast.success('Backup Successful');
 
         onDone();
-        const mnemonics = seedPhrase;
-        const passphrase = '';
-        await addKeyringAndactiveAndPersistAccounts(
-          mnemonics,
-          passphrase,
-          accountsToCreate,
-          true,
-        );
-        keyringService.removePreMnemonics();
-        replaceToFirst(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess2024,
-          params: {
-            type: KEYRING_TYPE.HdKeyring,
-            brandName: KEYRING_CLASS.MNEMONIC,
-            isFirstImport: true,
-            isFirstCreate: true,
-            address: [address],
+
+        // Only create keyring for new user flow (not for existing user backup)
+        if (
+          !isExistingUserBackup &&
+          !skipKeyringCreation &&
+          !delaySetPassword
+        ) {
+          const mnemonics = seedPhrase;
+          const passphrase = '';
+          await addKeyringAndactiveAndPersistAccounts(
             mnemonics,
             passphrase,
-            isExistedKR: false,
-            alias,
-          },
-        });
+            accountsToCreate,
+            true,
+          );
+          keyringService.removePreMnemonics();
+          replaceToFirst(RootNames.StackAddress, {
+            screen: RootNames.ImportSuccess2024,
+            params: {
+              type: KEYRING_TYPE.HdKeyring,
+              brandName: KEYRING_CLASS.MNEMONIC,
+              isFirstImport: true,
+              isFirstCreate: true,
+              address: [address],
+              mnemonics,
+              passphrase,
+              isExistedKR: false,
+              alias,
+            },
+          });
+        }
       } catch (e) {
         console.log('backup error', e);
         toast.error(t('page.newAddress.seedPhrase.backupFailedTitle'));
@@ -102,6 +132,8 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
       alias,
       accountsToCreate,
       confirmPassword,
+      isExistingUserBackup,
+      skipKeyringCreation,
       delaySetPassword,
     ],
   );
@@ -109,7 +141,6 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
   React.useEffect(() => {
     detectCloudIsAvailable().then(isAvailable => {
       if (!isAvailable) {
-        // setStep('backup_not_available');
         toast.error(
           t('page.newAddress.seedPhrase.backupErrorCloudNotAvailable'),
         );

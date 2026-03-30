@@ -40,7 +40,25 @@
       "createNewAddress": "Create New Wallet",
       "alreadyHaveAddress": "I already have a wallet",
       "goToHome": "Go to Home",
-      "sync": "Scan to Sync Rabby Extension Wallet"
+      "sync": "Scan to Sync Rabby Extension Wallet",
+      "welcomeTitle": "Welcome to\nRabby Wallet",
+      "alreadyUseRabby": "I already use Rabby"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Restore your Rabby wallet",
+        "subtitle": "Welcome back! 🎉\nChoose a method to quickly restore your wallet."
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "Or you can <clickable>create a new wallet</clickable>"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "Enter your seed phrase",
+        "privateKeyPlaceholder": "Enter your private key"
+      },
+      "createWalletError": "Failed to create wallet",
+      "walletReady": "Your wallet is ready 🚀",
+      "setPasswordTip": "Set a password to secure your wallet"
     },
     "transactions": {
       "title": "Transactions",
@@ -1067,6 +1085,10 @@
         "empty": "No website added to favorites",
         "favorite": "Favorite",
         "search": "Search"
+      },
+      "depositAssets": {
+        "subtitle": "Receive assets to this wallet",
+        "title": "Deposit Assets"
       }
     },
     "copyTrading": {
@@ -1216,7 +1238,8 @@
         "importAddress": "Import Wallet",
         "hardwareWallet": "Hardware Wallet",
         "selectAddMethod": "Select Add Method",
-        "syncRabbyExtension": "Sync Rabby Extension"
+        "syncRabbyExtension": "Sync Rabby Extension",
+        "seedPhraseOrPrivateKey": "Seed phrase or private key"
       },
       "multiAddressHome": {
         "pin": "Pin",
@@ -1272,6 +1295,7 @@
     },
     "newAddress": {
       "Quick": "Quick",
+      "Done": "Done",
       "whatIsSeedPhrase": {
         "title": "What is a 'Seed phrase'",
         "description1": "A seed phrase is a series of words used to access and control your wallet. You can use it to recover your wallet on any device.",
@@ -3408,6 +3432,8 @@
     "addButton": "Add",
     "closeButton": "Close",
     "Deleted": "Deleted",
+    "Created": "Created",
+    "Imported": "Imported",
     "nonce": "nonce",
     "Balance": "Balance",
     "Done": "Done",
@@ -3560,5 +3586,9 @@
     "unknownAddressFromTransaction": "The transaction involves an address that is not in your wallet. Please check the transaction history later.",
     "noTransactionOwnerAddress": "The transaction does not belong to any address in your wallet. Please check the transaction history later.",
     "noTransactionDetail": "Transaction details not found. Please check the transaction history later."
+  },
+  "backupReminder": {
+    "title": "You have not backed up your wallet",
+    "action": "Back up now"
   }
 }

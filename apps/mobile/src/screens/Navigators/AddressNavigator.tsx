@@ -30,11 +30,16 @@ import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
 import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
+import { ImportSecret } from '../Address/ImportSecret';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
+import CreateNewWallet from '../Address/CreateNewWallet';
+import SelectImportMethod from '../Address/SelectImportMethod';
+import ImportRabbyWallet from '../Address/ImportRabbyWallet';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
 import SetPassword2024 from '../Address/SetPassword2024';
 import CreateChooseBackup from '../Address/CreateChooseBackup';
+import Backup from '../Address/Backup';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
 import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
@@ -256,6 +261,37 @@ export function AddressNavigator() {
         })}
       />
       <AddressStack.Screen
+        name={RootNames.CreateNewWallet}
+        component={CreateNewWallet}
+        options={mergeScreenOptions({
+          headerShown: false,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.SelectImportMethod}
+        component={SelectImportMethod}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: 'Select import method',
+            title: 'Select import method',
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
+          },
+        ])}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportRabbyWallet}
+        component={ImportRabbyWallet}
+        options={mergeScreenOptions2024([
+          {
+            headerTitle: t('page.newUserOnboarding.restoreWallet.title'),
+            title: t('page.newUserOnboarding.restoreWallet.title'),
+            headerTintColor: colors2024['neutral-title-1'],
+            headerTitleStyle: styles.headerTitleText,
+          },
+        ])}
+      />
+      <AddressStack.Screen
         name={RootNames.CreateNewAddress}
         component={CreateNewAddress}
         options={mergeScreenOptions({
@@ -299,6 +335,19 @@ export function AddressNavigator() {
             headerTitleStyle: styles.headerTitleText,
           });
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.Backup}
+        component={Backup}
+        options={mergeScreenOptions({
+          headerTitle: t('screens.addressStackTitle.ChooseBackup'),
+          title: t('screens.addressStackTitle.ChooseBackup'),
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTintColor: colors2024['neutral-title-1'],
+          headerTitleStyle: styles.headerTitleText,
+        })}
       />
       <AddressStack.Screen
         name={RootNames.AddressDetail}
@@ -363,6 +412,15 @@ export function AddressNavigator() {
         options={{
           headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
           title: t('screens.addressStackTitle.ImportMnemonic'),
+          headerTitleStyle: styles.headerTitleText,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportSecret}
+        component={ImportSecret}
+        options={{
+          headerTitle: 'Import Secret',
+          title: 'Import Secret',
           headerTitleStyle: styles.headerTitleText,
         }}
       />

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Dimensions, View } from 'react-native';
+import { Dimensions } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -20,11 +20,9 @@ import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import {
   useSingleHomeAccount,
   useSingleHomeHasNoData,
-  useSingleHomeNoAssetsValueOnChain,
 } from './hooks/singleHome';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
-import { isDirectlySignableAccount } from '@/core/apis/account';
 import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 
 const ScreenWidth = Dimensions.get('window').width;
@@ -98,11 +96,7 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
 
   if (!currentAccount) return null;
   if (accountToShowReceiveTip) {
-    return (
-      <ReceiveOnNoAssets.BgWrapper isForSingle>
-        <ReceiveOnNoAssets account={accountToShowReceiveTip} isForSingle />
-      </ReceiveOnNoAssets.BgWrapper>
-    );
+    return <ReceiveOnNoAssets account={accountToShowReceiveTip} />;
   }
 
   return (

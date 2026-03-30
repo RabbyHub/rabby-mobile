@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TouchableOpacity as RNTouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
@@ -14,7 +14,7 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAccountHomeShowReceiveTip } from '@/screens/Address/components/MultiAssets/hooks';
-import { ReceiveOnNoAssets } from './ReceiveOnNoAssets';
+import { DepositAssetsCard } from './DepositAssetsCard';
 
 export function HomeCenterArea() {
   const { styles, colors2024 } = useTheme2024({
@@ -69,12 +69,7 @@ export function HomeCenterArea() {
       )}
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
-        <ReceiveOnNoAssets.BgWrapper isForSingle={false}>
-          <ReceiveOnNoAssets
-            account={accountToShowReceiveTip}
-            isForSingle={false}
-          />
-        </ReceiveOnNoAssets.BgWrapper>
+        <DepositAssetsCard account={accountToShowReceiveTip} />
       )}
 
       {blocksVisibility.tipScreenshot && <TipFeedbackByScreenshot />}

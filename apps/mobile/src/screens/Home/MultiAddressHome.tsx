@@ -32,8 +32,7 @@ const detectHasAccounts = async () => {
   if (!hasAccountsInKeyring) {
     result.redirectAction = () => {
       const navigation = getReadyNavigationInstance();
-      navigation &&
-        resetNavigationTo(navigation, RootNames.GetStartedScreen2024);
+      navigation && resetNavigationTo(navigation, 'GetStarted');
     };
   }
 

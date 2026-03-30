@@ -139,12 +139,12 @@ export function setupAutoLockChecker() {
   }
   autoLockTimerRef.timer = setInterval(() => {
     const unlockExpire = autoLockTimerRef.foregroundExpire;
-    console.debug(
-      '[autoLock] app to foreground unlockExpire, AppState.isAvailable, AppState.currentState',
-      unlockExpire,
-      AppState.isAvailable,
-      AppState.currentState,
-    );
+    // console.debug(
+    //   '[autoLock] app to foreground unlockExpire, AppState.isAvailable, AppState.currentState',
+    //   unlockExpire,
+    //   AppState.isAvailable,
+    //   AppState.currentState,
+    // );
     if (!AppState.isAvailable || AppState.currentState === 'active') {
       checkExpire(unlockExpire, 'foreground');
     }

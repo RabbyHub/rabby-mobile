@@ -1,4 +1,9 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 
 import { KeyringAccount, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
@@ -6,6 +11,14 @@ import { Account, IPinAddress } from '@/core/services/preference';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
+import {
+  accountEvents,
+  KeyringAccountWithAlias,
+} from '@/core/apis/account';
+import {
+  resolveValFromUpdater,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
 import balanceStore from '@/store/balance';
 import accountStore, {
   NEWLY_ADDED_ACCOUNT_DURATION,
@@ -16,6 +29,9 @@ import { UpdaterOrPartials } from '@/core/utils/store';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { preferenceService } from '@/core/services';
 import { EntityAccountBase } from '@/databases/entities/base';
+import { ormEvents } from '@/databases/entities/_helpers';
+import { InteractionManager } from 'react-native';
+import { appServiceEvents } from '@/core/services/_utils';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -39,6 +55,80 @@ export function useIsNewlyAddedAccount(account: KeyringAccount) {
   };
 }
 
+/**
+ * Gets the current backup reminder snapshot for an account.
+ * @param dbId - The account's database ID
+ * @returns Whether the account needs backup reminder
+ */
+export function getBackupReminderSnapshot(dbId: string | undefined): boolean {
+  if (!dbId) return false;
+  return preferenceService.getNeedsBackupReminder(dbId);
+}
+
+/**
+ * Subscribe function for backup reminder changes.
+ * Subscribes to all backup reminder changes (not specific to an account).
+ * @param listener - The callback to call when any backup reminder changes
+ * @returns An unsubscribe function
+ */
+const subscribeBackupReminderStore = (listener: () => void) => {
+  // Subscribe to all backup reminder changes
+  const { remove } = appServiceEvents.subscribe(
+    'backupReminderChanged',
+    listener,
+  );
+  return remove;
+};
+
+/**
+ * hook for checking if current account needs backup reminder.
+ * Returns true only for accounts created via "Create New Wallet" that haven't been backed up yet.
+ * Uses preferenceService (MMKV) for reliable persistence across app restarts.
+ */
+export function useBackupReminder(account: KeyringAccount | null | undefined) {
+  const dbId = useMemo(() => {
+    if (!account?.address) return '';
+    return EntityAccountBase.buildDBId({
+      address: account.address,
+      type: account.type,
+      brandName: account.brandName,
+    });
+  }, [account?.address, account?.type, account?.brandName]);
+
+  const getSnapshot = useCallback(
+    () => getBackupReminderSnapshot(dbId),
+    [dbId],
+  );
+
+  const needsBackupReminder = useSyncExternalStore(
+    subscribeBackupReminderStore,
+    getSnapshot,
+  );
+
+  return needsBackupReminder;
+}
+
+export async function setAccountNeedsBackupReminder(
+  account: KeyringAccount,
+  needsReminder: boolean,
+) {
+  const dbId = EntityAccountBase.buildDBId({
+    address: account.address,
+    type: account.type,
+    brandName: account.brandName,
+  });
+  preferenceService.setNeedsBackupReminder(dbId, needsReminder);
+}
+
+export async function clearAccountBackupReminder(account: KeyringAccount) {
+  const dbId = EntityAccountBase.buildDBId({
+    address: account.address,
+    type: account.type,
+    brandName: account.brandName,
+  });
+  preferenceService.clearNeedsBackupReminder(dbId);
+}
+
 export function useDevNewlyAddedAccounts() {
   const newlyAddedAccounts = useAccountStore(s => s.newlyAddedAccounts);
   return {
@@ -51,6 +141,99 @@ export function useDevNewlyAddedAccounts() {
 
 export function startManageAccountStoreLifecycle() {
   accountStore.startLifecycle();
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', () => {
+    fetchAndSet();
+  });
+
+  keyringService.on('newAccount', (account: Account) => {
+    fetchAndSet();
+  });
+  // removedAccount
+  keyringService.on('removedAccount', async (account: Account) => {
+    fetchAndSet();
+
+    accountEvents.emit('ACCOUNT_REMOVED', {
+      removedAccounts: [account],
+    });
+
+    // Clean up backup reminder from preferenceService
+    const dbId = EntityAccountBase.buildDBId({
+      address: account.address,
+      type: account.type,
+      brandName: account.brandName,
+    });
+    preferenceService.clearNeedsBackupReminder(dbId);
+
+    await AccountInfoEntity.deleteByAccount(account);
+    await fetchNewlyAddedAccounts();
+  });
+
+  keyringService.store.subscribe(state => {
+    if (state.booted && state.vault) {
+      fetchAndSet();
+    }
+  });
+
+  accountEvents.on(
+    'ACCOUNT_ADDED',
+    async ({ accounts, scene, needsBackupReminder }) => {
+      // Store backup reminder in preferenceService (MMKV) for reliable persistence
+      if (needsBackupReminder) {
+        for (const account of accounts) {
+          const dbId = EntityAccountBase.buildDBId({
+            address: account.address,
+            type: account.type,
+            brandName: account.brandName,
+          });
+          preferenceService.setNeedsBackupReminder(dbId, true);
+        }
+      }
+      await AccountInfoEntity.recordNewAccount(accounts);
+      await fetchNewlyAddedAccounts();
+    },
+  );
+
+  ormEvents.on(`account_info:removed`, () => {
+    fetchNewlyAddedAccounts();
+  });
+
+  fetchNewlyAddedAccounts();
+  setInterval(() => {
+    InteractionManager.runAfterInteractions(() => {
+      fetchNewlyAddedAccounts();
+    });
+  }, 10 * 1e3);
+
+  setInterval(() => {
+    InteractionManager.runAfterInteractions(() => {
+      AccountInfoEntity.trimExpiredAccounts(NEWLY_ADDED_ACCOUNT_DURATION);
+    });
+  }, 60 * 1e3);
+}
+
+// 简单打个补丁先避免 balance 和 evmBalance 变化触发 ACCOUNTS_MAYBE_CHANGED
+// TODO: 彻底解决这个问题
+const stripAccountsForDiff = (accounts: KeyringAccountWithAlias[]) =>
+  accounts.map(account => {
+    const { balance, evmBalance, ...rest } = account;
+    return rest;
+  });
+function setAccounts(valOrFunc: UpdaterOrPartials<Store['accounts']>) {
+  zAccountStore.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev.accounts,
+      valOrFunc,
+      {
+        strict: true,
+      },
+    );
+
+    if (changed) {
+      return { ...prev, accounts: newVal };
+    }
+
+    return prev;
+  });
 }
 
 export function setCurrentAccount(

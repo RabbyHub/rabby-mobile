@@ -1,21 +1,20 @@
 import React, { useCallback } from 'react';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { KeyringAccountWithAlias, useBackupReminder } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
-import { apiMnemonic, apiPrivateKey } from '@/core/apis';
+import { apiPrivateKey } from '@/core/apis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '../Card';
 import { Item } from './Item';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '../GlobalBottomSheetModal';
-import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
+import { BackupBadge } from './BackupBadge';
+import ArrowSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { Text } from '@/components/Typography';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -24,10 +23,11 @@ interface AddressInfoProps {
 
 export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   const { account, onCancel } = props;
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
+  const needsBackupReminder = useBackupReminder(account);
 
   const handlePressBackupPrivateKey = useCallback(() => {
     let data = '';
@@ -62,49 +62,17 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   }, [account.address, account.type, invokeEnterPassphrase, onCancel, t]);
 
   const handlePressBackupSeedPhrase = useCallback(() => {
-    let data = '';
-
-    AuthenticationModal2024.show({
-      confirmText: t('global.confirm'),
-      cancelText: t('global.Cancel'),
-      title: t('page.addressDetail.backup-seed-phrase'),
-      validationHandler: async (password: string) => {
-        data = await apiMnemonic.getMnemonics(password, account.address);
-
-        if (account.type === KEYRING_TYPE.HdKeyring) {
-          await invokeEnterPassphrase(account.address);
-        }
-      },
-      onFinished(ctx) {
-        if (ctx.hasSetupCustomPassword && !data) {
-          return;
-        }
-        onCancel();
-        // navigateDeprecated(RootNames.StackAddress, {
-        //   screen: RootNames.BackupMnemonic,
-        //   params: {
-        //     data,
-        //   },
-        // });
-
-        const id = createGlobalBottomSheetModal2024({
-          name: MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP,
-          bottomSheetModalProps: {
-            enableContentPanningGesture: false,
-            enablePanDownToClose: true,
-          },
-          preventScreenshotOnModalOpen: false,
-          readMode: true,
-          seedPhraseData: data,
-          // screenshotReportFreeBeforeModalClose: true,
-          // delaySetPassword: state?.delaySetPassword,
-          onDone: () => {
-            removeGlobalBottomSheetModal2024(id);
-          },
-        });
+    // Navigate to Backup screen directly
+    // The Backup screen will handle authentication internally when user selects an option
+    navigateDeprecated(RootNames.StackAddress, {
+      screen: RootNames.Backup,
+      params: {
+        address: account.address,
+        type: account.type,
+        brandName: account.brandName,
       },
     });
-  }, [account.address, account.type, invokeEnterPassphrase, onCancel, t]);
+  }, [account.address, account.type, account.brandName]);
 
   if (
     account.type !== KEYRING_TYPE.HdKeyring &&
@@ -116,11 +84,21 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   return (
     <Card style={styles.card}>
       {account.type === KEYRING_TYPE.HdKeyring && (
-        <Item
-          label={t('page.addressDetail.backup-seed-phrase')}
-          showArrow
-          onPress={handlePressBackupSeedPhrase}
-        />
+        <TouchableOpacity
+          style={styles.itemRow}
+          onPress={handlePressBackupSeedPhrase}>
+          <Text style={styles.labelText}>
+            {t('page.addressDetail.backup-seed-phrase')}
+          </Text>
+          <View style={styles.valueView}>
+            {needsBackupReminder && <BackupBadge />}
+            <ArrowSVG
+              color={colors2024['neutral-foot']}
+              width={16}
+              height={16}
+            />
+          </View>
+        </TouchableOpacity>
       )}
 
       {(account.type === KEYRING_TYPE.SimpleKeyring ||
@@ -140,5 +118,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 24,
     marginHorizontal: 16,
     width: 'auto',
+  },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  labelText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 20,
+  },
+  valueView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
 }));
