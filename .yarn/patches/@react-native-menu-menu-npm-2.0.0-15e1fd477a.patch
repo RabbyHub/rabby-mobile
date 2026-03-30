@@ -1,15 +1,16 @@
 diff --git a/android/src/main/java/com/reactnativemenu/MenuView.kt b/android/src/main/java/com/reactnativemenu/MenuView.kt
-index 17ed7c6491b60e87fe829fb3f8841424617b4cfb..a2f48374c6e7ca039709793bd8531626e75a964c 100644
+index c45f5cc8ee16db610686fe5b6bef9f3372c6944b..e11b5ade970552c232ba5795c0348c04bb9ef753 100644
 --- a/android/src/main/java/com/reactnativemenu/MenuView.kt
 +++ b/android/src/main/java/com/reactnativemenu/MenuView.kt
-@@ -22,13 +22,14 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+@@ -22,6 +22,7 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
    private val mPopupMenu: PopupMenu = PopupMenu(context, this)
    private var mIsMenuDisplayed = false
    private var mIsOnLongPress = false
 +  private var mIsSuppressNativeLongPress = false
    private var mGestureDetector: GestureDetector
    private var mHitSlopRect: Rect? = null
- 
+     set(value) {
+@@ -33,7 +34,7 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
    init {
      mGestureDetector = GestureDetector(mContext, object : GestureDetector.SimpleOnGestureListener() {
        override fun onLongPress(e: MotionEvent) {
@@ -18,7 +19,7 @@ index 17ed7c6491b60e87fe829fb3f8841424617b4cfb..a2f48374c6e7ca039709793bd8531626
            return
          }
          prepareMenu()
-@@ -90,6 +91,10 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+@@ -89,6 +90,10 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
      mIsAnchoredToRight = isAnchoredToRight
    }
  
@@ -30,7 +31,7 @@ index 17ed7c6491b60e87fe829fb3f8841424617b4cfb..a2f48374c6e7ca039709793bd8531626
      mIsOnLongPress = isLongPress
    }
 diff --git a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
-index 4731e1a1528a2de495cc2ae3156c813b64ec6832..88b2f85423565413dac5a542b1cfc57108bd0a36 100644
+index e4d2743bd6a038b769c3cf34c68297a1fc44d109..d4af54d3dee026b003d1d04cfbe3a1bb056ce39c 100644
 --- a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
 +++ b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
 @@ -30,6 +30,11 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {

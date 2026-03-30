@@ -18,6 +18,7 @@ import CustomLabel from '../TokenDetail/components/CustomLabel';
 import { DynamicCustomMaterialTabBar } from '../TokenDetail/components/CustomTabBar';
 import { WatchlistContent } from '../Watchlist/WatchlistContent';
 import { MarketCategoryContent } from './components/MarketCategoryContent';
+import { useMarketVisibleTokenPriceRefresh } from './hooks/useMarketVisibleTokenPriceRefresh';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 
@@ -30,9 +31,17 @@ const FIRST_TAB_GAP = 12;
 const marketTabAtom = atomByMMKV<MarketTabKey>(
   '@market.activeTab',
   'watchlist',
+  {
+    getOnInit: true,
+  },
 );
 
 const MARKET_TABS: { id: string; name: string; sort_fields: string[] }[] = [
+  {
+    id: 'hot',
+    name: 'Top',
+    sort_fields: ['fdv', 'price_change_24h'],
+  },
   {
     id: 'meme',
     name: 'Memecoin',
@@ -62,9 +71,12 @@ export default function MarketScreen() {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const [storedActiveTab, setStoredActiveTab] = useAtom(marketTabAtom);
-  const activeTab = VALID_MARKET_TABS.has(storedActiveTab)
-    ? storedActiveTab
-    : 'watchlist';
+  const activeTab = useMemo(
+    () =>
+      VALID_MARKET_TABS.has(storedActiveTab) ? storedActiveTab : 'watchlist',
+    [storedActiveTab],
+  );
+  const handleVisibleUuidsChange = useMarketVisibleTokenPriceRefresh(activeTab);
 
   const renderHeaderRight = useCallback(
     () => (
@@ -199,6 +211,7 @@ export default function MarketScreen() {
       <Tabs.Container
         renderTabBar={renderTabBar}
         tabBarHeight={36}
+        lazy
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
         initialTabName={activeTab}
@@ -206,7 +219,10 @@ export default function MarketScreen() {
           setStoredActiveTab(tabName);
         }}>
         <Tabs.Tab label={renderWatchlistLabel} name="watchlist">
-          <WatchlistContent />
+          <WatchlistContent
+            onVisibleUuidsChange={handleVisibleUuidsChange}
+            visibleUuidsTabId="watchlist"
+          />
         </Tabs.Tab>
         {
           MARKET_TABS.map(category => {
@@ -229,11 +245,12 @@ export default function MarketScreen() {
                     categoryId={category.id}
                     sortFields={category.sort_fields}
                     headerSpacerHeight={0}
+                    onVisibleUuidsChange={handleVisibleUuidsChange}
                   />
                 </View>
               </Tabs.Tab>
             );
-          }) as unknown as React.ReactElement
+          }) as unknown as React.ReactElement<any>
         }
       </Tabs.Container>
     </NormalScreenContainer2024>

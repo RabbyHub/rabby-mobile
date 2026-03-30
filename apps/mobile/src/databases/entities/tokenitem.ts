@@ -14,6 +14,7 @@ import {
   columnConverter,
   badRealTransformer,
   correctBadRealOnSql,
+  nullableJsonTransformer,
 } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
@@ -108,6 +109,21 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   // protocol_id
   @Column('text', { default: '' })
   protocol_id: TokenItem['protocol_id'] = '';
+  // launchpad
+  @Column('text', {
+    nullable: true,
+    transformer: nullableJsonTransformer,
+  })
+  launchpad: TokenItem['launchpad'] = null;
+  // asset
+  @Column('text', {
+    nullable: true,
+    transformer: nullableJsonTransformer,
+  })
+  asset: TokenItem['asset'] = null;
+  // market_status
+  @Column('text', { default: '' })
+  market_status: TokenItem['market_status'] = '';
   // raw_amount
   @Column({
     type: 'text',
@@ -187,6 +203,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.cex_ids = columnConverter.jsonObjToString(input.cex_ids || []);
     e.fdv = input.fdv ?? 0;
     e.protocol_id = input.protocol_id ?? '';
+    e.launchpad = input.launchpad ?? null;
+    e.asset = input.asset ?? null;
+    e.market_status = input.market_status ?? '';
 
     e.makeDbId();
   }

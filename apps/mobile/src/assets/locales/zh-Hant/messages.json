@@ -1084,7 +1084,9 @@
         "receivedDifferentTokenFromSource": "橋接失敗。源鏈上返回了不同的代幣。",
         "fromFailed": "交易未成功。請再試一次。"
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "表單已更改",
+      "formChangedAmount": "金額已變更，可能是由於系統鍵盤的密碼自動填充。請檢查並重新輸入正確的金額。"
     },
     "signFooterBar": {
       "importedByLedger": "透過 Ledger 匯入",

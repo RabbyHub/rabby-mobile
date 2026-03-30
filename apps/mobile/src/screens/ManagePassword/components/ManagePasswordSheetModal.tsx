@@ -228,7 +228,7 @@ const CancelPasswordSheetModal = (props: Props) => {
           <View style={styles.btnGap} />
           <Button
             disabled={shouldDisabled}
-            onPress={formik.handleSubmit}
+            onPress={() => formik.handleSubmit()}
             title={'Confirm'}
             type="clear"
             buttonStyle={[styles.buttonStyle]}
@@ -395,7 +395,7 @@ export const ResetPasswordAndKeyringsSheetModal = (props: Props) => {
           <View style={styles.btnGap} />
           <Button
             disabled={shouldDisabled}
-            onPress={formik.handleSubmit}
+            onPress={() => formik.handleSubmit()}
             title={'Confirm'}
             type="clear"
             buttonStyle={[styles.buttonStyle]}

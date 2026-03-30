@@ -10,13 +10,13 @@ import { openapi } from '@/core/request';
 import useDebounce from 'react-use/lib/useDebounce';
 import { swapService } from '@/core/services';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { getChainDefaultToken, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwapSettings } from './settings';
 import { QuoteProvider, TDexQuoteData, useQuoteMethods } from './quote';
 import { stats } from '@/utils/stats';
 import { formatSpeicalAmount } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, isTokenMarketClosed } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
 import { findChainByEnum } from '@/utils/chain';
 import { getSwapAutoSlippageValue, useSlippageStore } from './slippage';
@@ -469,6 +469,14 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const inSufficientCanGetQuote = enableInsufficientQuote
     ? true
     : !inSufficient;
+  const quoteBlockedByClosedMarket = useMemo(
+    () => isTokenMarketClosed(payToken) || isTokenMarketClosed(receiveToken),
+    [payToken, receiveToken],
+  );
+  const canRequestQuote = useMemo(
+    () => inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
+    [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
+  );
 
   useEffect(() => {
     if (autoSlippage) {
@@ -519,7 +527,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         chain &&
         Number(payAmount) > 0 &&
         feeRate &&
-        inSufficientCanGetQuote &&
+        canRequestQuote &&
         !isDraggingSlider
       ) {
         setTokenRefreshId(e => e + 1);
@@ -605,7 +613,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
-      inSufficientCanGetQuote
+      canRequestQuote
     ) {
       setFinishedQuotes(0);
       setQuoteLoading(true);
@@ -617,7 +625,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       setQuoteLoading(false);
     }
   }, [
-    inSufficientCanGetQuote,
+    canRequestQuote,
     refreshId,
     userAddress,
     payToken?.id,
@@ -641,13 +649,13 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
-      inSufficientCanGetQuote
+      canRequestQuote
     ) {
       return true;
     }
     return false;
   }, [
-    inSufficientCanGetQuote,
+    canRequestQuote,
     chain,
     feeRate,
     payAmount,
@@ -794,12 +802,12 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   }, [payAmount, setActiveProvider]);
 
   useEffect(() => {
-    if (!inSufficientCanGetQuote) {
+    if (!canRequestQuote) {
       clearTimeout(expiredTimer.current);
       setQuotesList([]);
       setActiveProvider(undefined);
     }
-  }, [inSufficientCanGetQuote, setActiveProvider]);
+  }, [canRequestQuote, setActiveProvider]);
 
   const search = {};
   const [searchObj] = useState<{
@@ -966,6 +974,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     wrapTokenSymbol,
     inSufficient,
     inSufficientCanGetQuote,
+    quoteBlockedByClosedMarket,
     slippageChanged,
     setSlippageChanged,
     slippageState,
@@ -1008,26 +1017,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     autoSuggestSlippage,
   };
 };
-
-function getChainDefaultToken(chain: CHAINS_ENUM) {
-  const chainInfo = findChainByEnum(chain) || CHAINS[chain];
-  return {
-    id: chainInfo.nativeTokenAddress,
-    decimals: chainInfo.nativeTokenDecimals,
-    logo_url: chainInfo.nativeTokenLogo,
-    symbol: chainInfo.nativeTokenSymbol,
-    display_symbol: chainInfo.nativeTokenSymbol,
-    optimized_symbol: chainInfo.nativeTokenSymbol,
-    is_core: true,
-    is_verified: true,
-    is_wallet: true,
-    amount: 0,
-    price: 0,
-    name: chainInfo.nativeTokenSymbol,
-    chain: chainInfo.serverId,
-    time_at: 0,
-  } as TokenItem;
-}
 
 function tokenAmountBn(token: TokenItem) {
   return new BigNumber(token?.raw_amount_hex_str || 0, 16).div(

@@ -145,7 +145,7 @@ const parseCandles = (data: CandleSnapshot): CandleBar[] => {
 
 export const PerpsChart: React.FC<{
   marketName: string;
-  coinNameRef: React.RefObject<string>;
+  coinNameRef: React.RefObject<string | null>;
   markPrice: number;
   currentAssetCtx?: MarketData;
   selectedInterval: CANDLE_MENU_KEY_V2;
@@ -464,9 +464,9 @@ export const PerpsChart: React.FC<{
           style={isReady ? null : styles.opacity0}
           ref={chartWebViewRef}
           height={Dimensions.get('screen').width - 128}
-          backGroundColor={
-            isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2']
-          }
+          // backGroundColor={
+          //   isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2']
+          // }
           onChartReady={handleChartReady}
         />
       </View>
@@ -500,16 +500,16 @@ export const PerpsChart: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   chart: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    paddingVertical: 24,
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-1']
+    //   : colors2024['neutral-bg-2'],
+    // paddingVertical: 24,
     borderRadius: 20,
     // paddingHorizontal: 16,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingRight: 4,
+    // paddingHorizontal: 16,
+    // paddingRight: 4,
     position: 'relative',
   },
   menu: {
@@ -543,13 +543,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 9,
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
   },
   priceText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 40,
-    lineHeight: 48,
+    lineHeight: 40,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },

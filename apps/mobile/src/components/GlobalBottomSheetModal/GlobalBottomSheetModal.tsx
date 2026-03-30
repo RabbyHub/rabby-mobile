@@ -28,7 +28,7 @@ type ModalData = {
   snapPoints: (string | number)[] | undefined;
   params: CreateParams;
   id: string;
-  ref: React.RefObject<AppBottomSheetModal>;
+  ref: React.RefObject<AppBottomSheetModal | null>;
 };
 
 export const GlobalBottomSheetModal = () => {

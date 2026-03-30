@@ -9,7 +9,12 @@ import { Alert, LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Sentry from '@sentry/react-native';
 import * as Yup from 'yup';
-import { intToHex } from '@ethereumjs/util';
+import {
+  intToHex,
+  isValidAddress,
+  toChecksumAddress,
+  zeroAddress,
+} from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
 import {
@@ -29,8 +34,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { openapi } from '@/core/request';
-import { TFunction } from 'i18next';
-import { isValidAddress } from '@ethereumjs/util';
+import i18next, { TFunction } from 'i18next';
 import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -49,7 +53,6 @@ import {
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
-import { zeroAddress } from '@ethereumjs/util';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { getChainListFromAtom, useFindChain } from '@/hooks/useFindChain';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
@@ -100,6 +103,11 @@ import {
 import { jotaiStore } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { TextInput } from '@/components/Typography';
+import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { createAmountComparer, FormValuesOnSubmit } from '@/utils/form';
+import { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeContent';
+import { toast } from '@/components2024/Toast';
+import { getChainDefaultToken } from '@/constant/swap';
 
 function makeDefaultToken(): TokenItemWithEntity & {
   tokenId?: string;
@@ -557,6 +565,8 @@ export function useSendTokenForm({
 
       if (!isValidAddress(to)) {
         to = dataInput[1][0] = '0x0000000000000000000000000000000000000000';
+      } else {
+        dataInput[1][0] = toChecksumAddress(to);
       }
 
       const params: Record<string, any> = {
@@ -825,6 +835,15 @@ export function useSendTokenForm({
     ],
   );
 
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<BridgeFormSnapshot>({
+      comparers: {
+        amount: createAmountComparer(),
+      },
+    }),
+  );
+
   const handleFieldChange = useCallback(
     <T extends keyof FormSendToken>(
       f: T,
@@ -834,10 +853,15 @@ export function useSendTokenForm({
         __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__?: boolean;
       },
     ) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       formik.setFieldValue(f, value);
       setFormValues(prev => ({ ...prev, [f]: value }));
 
       const nextVal = { ...formik.values, [f]: value };
+      formValuesRef.current.save({ amount: nextVal.amount });
+
       const { __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__ = false } =
         options || {};
       if (!__NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__) {
@@ -971,6 +995,32 @@ export function useSendTokenForm({
     }: FormSendToken & {
       isForceSignTx?: boolean;
     }) => {
+      const snapshot = formValuesRef.current.getSnapshot();
+
+      if (!snapshot) {
+        toast.info(i18next.t('page.bridge.formChangedAmount'));
+        return;
+      }
+
+      // Check if amount changed during authentication
+      const comparison = formValuesRef.current.compare({
+        amount: amount || '',
+      });
+
+      // If amount changed during authentication, close modal and alert user
+      if (comparison.isChanged) {
+        formValuesRef.current.clear();
+        Alert.alert(
+          i18next.t('page.bridge.formChangedTitle') || 'Form Changed',
+          i18next.t('page.bridge.formChangedAmount'),
+          [{ text: i18next.t('global.ok') || 'OK' }],
+        );
+        return;
+      }
+
+      // Clear snapshot after validation
+      formValuesRef.current.clear();
+
       sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
       putScreenState({ isSubmitLoading: true });
       const chain = findChain({
@@ -1670,31 +1720,19 @@ export function useSendTokenForm({
       putScreenState(prev => ({ ...prev, clickedMax: false }));
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;
+      const defaultToken = {
+        ...getChainDefaultToken(val),
+        cex_ids: [],
+      } as TokenItem;
       setRouteParams(pre => ({
         ...pre,
         chainEnum: val,
-        tokenId: chain.nativeTokenAddress,
+        tokenId: defaultToken.id,
       }));
 
       putChainToken({
         chainEnum: val,
-        currentToken: {
-          id: chain.nativeTokenAddress,
-          decimals: chain.nativeTokenDecimals,
-          logo_url: chain.nativeTokenLogo,
-          symbol: chain.nativeTokenSymbol,
-          display_symbol: chain.nativeTokenSymbol,
-          optimized_symbol: chain.nativeTokenSymbol,
-          is_core: true,
-          is_verified: true,
-          is_wallet: true,
-          cex_ids: [],
-          amount: 0,
-          price: 0,
-          name: chain.nativeTokenSymbol,
-          chain: chain.serverId,
-          time_at: 0,
-        },
+        currentToken: defaultToken,
       });
       putScreenState({ estimatedGas: 0 });
 
@@ -1702,7 +1740,7 @@ export function useSendTokenForm({
       try {
         if (currentAccount?.address) {
           nextToken = await loadCurrentToken(
-            chain.nativeTokenAddress,
+            defaultToken.id,
             chain.serverId,
             currentAccount?.address,
           );
@@ -1840,7 +1878,7 @@ export function useSendTokenForm({
     );
   });
 
-  const prepareRef = useRef<Promise<Tx | void>>();
+  const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
 
   const isFocused = useIsFocused();
@@ -1938,6 +1976,9 @@ export function useSendTokenForm({
     checkCexSupport,
     handleCurrentTokenChange,
 
+    directSignBtnRef,
+    formValuesRef,
+
     handleGasLevelChanged,
     handleClickMaxButton,
     handleIgnoreGasFeeChange,
@@ -2013,6 +2054,8 @@ type InternalContext = {
     fetchContactAccounts: () => void;
     disableItemCheck: ITokenCheck;
   };
+  directSignBtnRef: React.RefObject<DirectSignBtnMethods>;
+  formValuesRef: React.MutableRefObject<FormValuesOnSubmit<BridgeFormSnapshot>>;
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
     checkCexSupport: (token: TokenItem) => void;
@@ -2033,6 +2076,7 @@ type InternalContext = {
     setSlider: (v: number) => void;
     onBottomAreaLayout: (layout: LayoutChangeEvent) => void;
     onGasInfoDebouncedLoaded: () => void;
+    // isAuthInProgress?: () => boolean;
   };
 };
 const SendTokenInternalContext = React.createContext<InternalContext>({
@@ -2066,6 +2110,8 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
       simpleReason: '',
     }),
   },
+  directSignBtnRef: React.createRef<DirectSignBtnMethods>(),
+  formValuesRef: { current: null } as any,
   callbacks: {
     handleCurrentTokenChange: () => {},
     checkCexSupport: () => {},
@@ -2077,6 +2123,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     setSlider: () => {},
     onBottomAreaLayout: () => {},
     onGasInfoDebouncedLoaded: () => {},
+    // isAuthInProgress: () => false,
   },
 });
 
@@ -2106,7 +2153,9 @@ export function subscribeEvent<T extends SendTokenEvents>(
 
   return dispose;
 }
-export function useInputBlurOnEvents(inputRef: React.RefObject<TextInput>) {
+export function useInputBlurOnEvents(
+  inputRef: React.RefObject<TextInput | null>,
+) {
   const { events } = useSendTokenInternalContext();
   useEffect(() => {
     const disposeRets = [] as Function[];

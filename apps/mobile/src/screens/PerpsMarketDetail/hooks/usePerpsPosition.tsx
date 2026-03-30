@@ -255,6 +255,7 @@ export const usePerpsPosition = () => {
       midPx: string;
       tpTriggerPx?: string;
       slTriggerPx?: string;
+      isAddingPosition?: boolean;
     }) => {
       try {
         const sdk = apisPerps.getPerpsSDK();
@@ -268,11 +269,13 @@ export const usePerpsPosition = () => {
           tpTriggerPx,
           slTriggerPx,
         } = params;
-        await sdk.exchange?.updateLeverage({
-          coin,
-          leverage,
-          isCross: marginMode === 'cross',
-        });
+        if (!params.isAddingPosition) {
+          await sdk.exchange?.updateLeverage({
+            coin,
+            leverage,
+            isCross: marginMode === 'cross',
+          });
+        }
 
         const promises = [
           sdk.exchange?.marketOrderOpen({

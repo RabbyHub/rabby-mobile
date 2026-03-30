@@ -1000,7 +1000,9 @@
         "receivedDifferentTokenFromSource": "La passerelle a échoué. Un jeton différent a été renvoyé sur la chaîne source.",
         "beReturnFailed": "Le pont a échoué. Vos actifs ont été retournés."
       },
-      "gasXUsd": "Gas : {{gasUsd}}"
+      "gasXUsd": "Gas : {{gasUsd}}",
+      "formChangedTitle": "Formulaire modifié",
+      "formChangedAmount": "Le montant a changé, probablement en raison du remplissage automatique du mot de passe par le clavier système. Veuillez vérifier et saisir à nouveau le montant correct."
     },
     "dashboard": {
       "hd": {

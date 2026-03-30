@@ -6,7 +6,7 @@ import { BackHandler } from 'react-native';
  * @platform android
  */
 export function useHandleBackPressClosable(
-  requestBackOrRef: (() => boolean) | React.RefObject<boolean>,
+  requestBackOrRef: (() => boolean) | React.RefObject<boolean | null>,
   {
     autoEffectEnabled = false,
   }: {

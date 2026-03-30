@@ -18,7 +18,7 @@ $RNGoogleMobileAdsAsStaticFramework = true
 $RNAdMobAsStaticFramework = true
 # $NotifeeExtension = true
 
-platform :ios, '15.1'
+platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
 # ⬇️ uncomment wanted permissions

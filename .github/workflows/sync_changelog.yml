@@ -1,6 +1,9 @@
 name: Sync Changelog
 
 on:
+  push:
+    branches:
+      - publish/*
   workflow_dispatch:
 
 defaults:

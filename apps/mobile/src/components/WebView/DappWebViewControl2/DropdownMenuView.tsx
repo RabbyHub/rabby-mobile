@@ -21,7 +21,7 @@ type Props = {
     iosMenuTitle?: string;
     menuActions: MenuAction[];
   };
-  children: React.ReactElement;
+  children: React.ReactElement<any>;
 } & DropdownMenuContentProps;
 
 export const DropdownMenuView: React.FC<Props> = ({

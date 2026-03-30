@@ -77,7 +77,7 @@ export function ChainInfo2024({
     enum: chainEnum,
   });
 
-  const modalRef = React.useRef<MODAL_ID>();
+  const modalRef = React.useRef<MODAL_ID>(undefined);
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {

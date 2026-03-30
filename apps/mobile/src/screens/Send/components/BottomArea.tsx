@@ -21,7 +21,10 @@ import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
@@ -50,6 +53,8 @@ export default function BottomArea({ account }: { account: Account | null }) {
       toAddressInContactBook,
       toAddrCex,
     },
+    directSignBtnRef,
+    formValuesRef,
     callbacks: {
       handleIgnoreGasFeeChange,
       onBottomAreaLayout,
@@ -213,6 +218,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
       />
       {canShowDirectSign ? (
         <DirectSignBtn
+          ref={directSignBtnRef}
           // refresh  risk check
           key={screenState?.buildTxsCount + ''}
           showTextOnLoading
@@ -222,6 +228,19 @@ export default function BottomArea({ account }: { account: Account | null }) {
           onFinished={p => {
             handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
             handleSubmit();
+          }}
+          onBeforeAuth={() => {
+            // Disable input during authentication to prevent autofill
+            // Save amount snapshot before authentication starts
+            formValuesRef.current.save({
+              amount: formValues.amount || '',
+            });
+          }}
+          onCancel={() => {
+            formValuesRef.current.clear();
+          }}
+          onAuthModalDismiss={() => {
+            formValuesRef.current.clear();
           }}
           disabled={
             disableSubmitDueToBasic || !canDirectSign || isDirectSigning
@@ -239,7 +258,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
-          onPress={handleSubmit}
+          onPress={() => handleSubmit()}
         />
       )}
 

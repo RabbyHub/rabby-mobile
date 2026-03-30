@@ -100,6 +100,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
+import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -253,6 +254,9 @@ function SendScreen({
     checkCexSupport,
     loadCurrentToken,
     handleCurrentTokenChange,
+
+    directSignBtnRef,
+    formValuesRef,
 
     whitelistEnabled,
     computed: {
@@ -561,6 +565,8 @@ function SendScreen({
             disableItemCheck,
           },
 
+          directSignBtnRef,
+          formValuesRef,
           callbacks: {
             handleCurrentTokenChange,
             handleFieldChange,

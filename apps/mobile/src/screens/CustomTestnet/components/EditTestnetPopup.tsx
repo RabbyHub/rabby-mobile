@@ -168,8 +168,8 @@ export const EditCustomTestnetPopup = React.forwardRef<
           snapPoints={['80%']}
           ref={modalRef}
           onDismiss={onCancel}
+          keyboardBehavior="interactive"
           keyboardBlurBehavior="restore"
-          // android_keyboardInputMode="adjustPan"
           android_keyboardInputMode="adjustPan"
           enableDynamicSizing={false}
           enableHandlePanningGesture

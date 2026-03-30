@@ -997,6 +997,8 @@
       "no-route-found": "No route found",
       "bridged": "Bridged",
       "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "Form Changed",
+      "formChangedAmount": "The amount has changed, possibly due to password autofill from the system keyboard. Please review and re-enter the correct amount.",
       "pendingItem": {
         "pending": "Pending",
         "completed": "Completed",

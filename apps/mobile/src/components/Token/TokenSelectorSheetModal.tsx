@@ -317,7 +317,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       };
     });
 
-    const initialRouteRef = useRef<string | undefined>();
+    const initialRouteRef = useRef<string | undefined>(undefined);
     useEffect(() => {
       if (!initialRouteRef.current && visible) {
         initialRouteRef.current = getLatestNavigationName();
@@ -356,6 +356,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         onLpTokenChange?.(false);
         onFavoriteFilterChange?.('all');
         setQuery('');
+        inputRef.current?.clear();
       }
     }, [onFavoriteFilterChange, onLpTokenChange, visible]);
 
@@ -604,6 +605,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         decimalPrecision
                         data={token}
                         logoSize={40}
+                        rightInfoMode="balance"
                         touchable={false}
                         style={[
                           (disabled || lightDisable) &&
@@ -1024,7 +1026,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   searchPlaceholder ||
                   t('component.TokenSelector.searchPlaceHolder2')
                 }
-                value={query}
                 onChangeText={v => {
                   handleQueryChange(v);
                 }}

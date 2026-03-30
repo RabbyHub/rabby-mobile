@@ -879,7 +879,9 @@
         "failed": "실패했습니다",
         "completed": "완료됨"
       },
-      "gasXUsd": "가스: {{gasUsd}}"
+      "gasXUsd": "가스: {{gasUsd}}",
+      "formChangedTitle": "양식이 변경되었습니다",
+      "formChangedAmount": "금액이 변경되었습니다. 시스템 키보드에서 비밀번호 자동 채우기 때문에 발생했을 수 있습니다. 올바른 금액을 검토하고 다시 입력해 주십시오."
     },
     "manageAddress": {
       "confirm": "확인",

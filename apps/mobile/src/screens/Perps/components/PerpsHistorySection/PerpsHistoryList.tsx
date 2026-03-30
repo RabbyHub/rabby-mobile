@@ -23,8 +23,8 @@ import { PerpsHistoryItem } from './PerpsHistoryItem';
 import { Text } from '@/components/Typography';
 
 export const PerpsHistoryList: React.FC<{
-  ListHeaderComponent?: React.ReactElement;
-  ListFooterComponent?: React.ReactElement;
+  ListHeaderComponent?: React.ReactElement<any>;
+  ListFooterComponent?: React.ReactElement<any>;
   marketDataMap: MarketDataMap;
   historyList?: (AccountHistoryItem | WsFill)[];
   style?: StyleProp<ViewStyle>;

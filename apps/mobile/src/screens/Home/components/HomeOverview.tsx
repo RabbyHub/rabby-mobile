@@ -1,3 +1,4 @@
+import { apisPerps } from '@/core/apis';
 import RcIconDoubleArrowCC from '@/assets2024/icons/common/double-arrow-cc.svg';
 import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
@@ -8,9 +9,6 @@ import RcIconPointsCC from '@/assets2024/icons/home/IconPointsCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
-import RcIconPolymarketCC from '@/assets2024/icons/home/IconPredictCC.svg';
-import RcIconOpinionCC from '@/assets2024/icons/home/IconOpinionCC.svg';
-import RcIconProbableCC from '@/assets2024/icons/home/IconProbableCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 
 import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
@@ -139,7 +137,6 @@ import {
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
-import { PredictBadge } from './PredicBadge';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 import { useMemoizedFn } from 'ahooks';
@@ -620,11 +617,8 @@ export const HomeOverview = React.memo(() => {
   const sortedAccounts = useSortAddressList(accounts);
   useSubscribePosition(sortedAccounts);
 
-  const {
-    lending: lendingDappId,
-    perps: perpsDappId,
-    prediction: predictionDappId,
-  } = useInnerDappSelection();
+  const { lending: lendingDappId, perps: perpsDappId } =
+    useInnerDappSelection();
 
   const perpsIcon =
     (
@@ -644,14 +638,6 @@ export const HomeOverview = React.memo(() => {
       } as const
     )[lendingDappId] ?? RcIconLending;
 
-  const predictionIcon =
-    (
-      {
-        polymarket: RcIconPolymarketCC,
-        opinion: RcIconOpinionCC,
-        probable: RcIconProbableCC,
-      } as const
-    )[predictionDappId] ?? RcIconPolymarketCC;
   const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
 
   useFocusEffect(
@@ -694,11 +680,6 @@ export const HomeOverview = React.memo(() => {
           title: t('page.home.services.lending'),
           icon: lendingIcon,
           color: colors2024['brand-default-icon'],
-        },
-        {
-          key: MultiHomeFeatTitle.Predict,
-          title: t('page.home.services.predict'),
-          icon: predictionIcon,
         },
         {
           key: MultiHomeFeatTitle.Points,
@@ -751,7 +732,6 @@ export const HomeOverview = React.memo(() => {
       t,
       perpsIcon,
       lendingIcon,
-      predictionIcon,
       colors2024,
       historyCount?.fail,
       historyCount?.success,
@@ -799,8 +779,8 @@ export const HomeOverview = React.memo(() => {
       }
       triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
-        refresh24hAssets({ balanceAccounts });
-        refreshDayCurve({ balanceAccounts });
+        refresh24hAssets({ balanceAccounts, reason: 'manual_refresh' });
+        refreshDayCurve({ balanceAccounts, reason: 'manual_refresh' });
       });
       triggerUpdateAlert();
       // // leave here to measure perf impact
@@ -817,8 +797,16 @@ export const HomeOverview = React.memo(() => {
     return Promise.all([
       // force update balance from server api
       triggerUpdate(true).then(balanceAccounts => {
-        refresh24hAssets({ force: true, balanceAccounts });
-        refreshDayCurve({ force: true, balanceAccounts });
+        refresh24hAssets({
+          force: true,
+          balanceAccounts,
+          reason: 'manual_refresh',
+        });
+        refreshDayCurve({
+          force: true,
+          balanceAccounts,
+          reason: 'manual_refresh',
+        });
       }),
       checkAddressesEligibility(true),
     ]).finally(() => {
@@ -917,6 +905,7 @@ export const HomeOverview = React.memo(() => {
         case MultiHomeFeatTitle.Ecosystem:
           break;
         case MultiHomeFeatTitle.Perps:
+          apisPerps.setHasShownPerpsGuidePopup(true);
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.Perps,
             params: {},
@@ -934,13 +923,6 @@ export const HomeOverview = React.memo(() => {
             params: {},
           });
           break;
-        case MultiHomeFeatTitle.Predict:
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Prediction,
-            params: {},
-          });
-          break;
-
         default:
           break;
       }
@@ -963,10 +945,6 @@ export const HomeOverview = React.memo(() => {
 
       if (el.key === MultiHomeFeatTitle.Perps) {
         return <PerpsPnl />;
-      }
-
-      if (el.key === MultiHomeFeatTitle.Predict) {
-        return <PredictBadge />;
       }
 
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {

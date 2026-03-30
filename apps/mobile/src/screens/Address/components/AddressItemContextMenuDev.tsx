@@ -17,7 +17,7 @@ const MenuIcons = {
 };
 interface Props {
   account: KeyringAccountWithAlias;
-  children: React.ReactElement;
+  children: React.ReactElement<any>;
   preViewBorderRadius?: number;
   actions: 'dev:removeAddedRecord'[];
 }

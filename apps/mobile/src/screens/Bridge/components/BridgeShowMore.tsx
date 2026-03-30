@@ -25,7 +25,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
-import { findChainByServerID } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { noop } from 'lodash';
 import { WarningText } from './WarningText';
 import {
@@ -50,6 +50,7 @@ import { checkGasAndNonce } from '@/utils/transaction';
 import { intToHex } from '@/utils/number';
 import _ from 'lodash';
 import { openapi } from '@/core/request';
+import { isTempoChain } from '@/utils/tempo';
 
 const RABBY_FEE = '0.25%';
 
@@ -410,6 +411,15 @@ const BridgeShowMore = ({
   );
 };
 
+const rawAmountToBn = (
+  value: string | number | BigNumber | null | undefined,
+) => {
+  if (BigNumber.isBigNumber(value)) {
+    return value;
+  }
+  return new BigNumber(value || 0);
+};
+
 export const DirectSignGasInfo = ({
   supportDirectSign,
   loading,
@@ -497,6 +507,16 @@ export const DirectSignGasInfo = ({
     !!ctx?.gasAccount.is_gas_account &&
     !(ctx?.gasAccount as any).err_msg;
 
+  const chain = findChain({ id: ctx?.chainId })!;
+
+  const gasToken = ctx?.gasToken || {
+    tokenId: chain?.nativeTokenAddress || '',
+    symbol: chain?.nativeTokenSymbol || '',
+    decimals: chain?.nativeTokenDecimals || 18,
+    logoUrl: chain?.nativeTokenLogo || '',
+  };
+  const checkTxValueInBalance = !isTempoChain(chain?.serverId);
+
   const handleToggleGasless = value => {
     instance.toggleGasless(value);
   };
@@ -575,6 +595,7 @@ export const DirectSignGasInfo = ({
               gasLimit: item.gasLimit,
               account: currentAccount,
               preparedL1Fee: item.L1feeCache,
+              gasTokenDecimals: gasToken.decimals || 18,
             }),
           };
         }),
@@ -600,10 +621,15 @@ export const DirectSignGasInfo = ({
               isSpeedUp,
               isGnosisAccount: false,
               nativeTokenBalance: balance,
+              gasTokenDecimals: gasToken.decimals || 18,
+              checkTxValueInBalance,
             });
+            const txValueRaw = checkTxValueInBalance
+              ? rawAmountToBn(item.tx.value || 0)
+              : new BigNumber(0);
             balance = new BigNumber(balance)
-              .minus(new BigNumber(item.tx.value || 0))
-              .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
+              .minus(txValueRaw)
+              .minus(new BigNumber(item.gasCost.maxGasCostRawAmount || 0))
               .toFixed();
             return result;
           });

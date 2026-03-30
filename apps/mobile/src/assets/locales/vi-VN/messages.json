@@ -1053,7 +1053,9 @@
         "longTimeNoReceive": "Mạng đang bận. Điều này có thể mất nhiều thời gian hơn bình thường. Vui lòng chờ đợi kiên nhẫn.",
         "BridgeStatusUnavailable": "Trạng thái Bridge không khả dụng. Vui lòng kiểm tra lịch sử giao dịch của bạn để xác nhận rằng các khoản tiền đã đến."
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "Biểu mẫu đã thay đổi",
+      "formChangedAmount": "Số tiền đã thay đổi, có thể do hệ thống bàn phím tự động điền mật khẩu. Vui lòng kiểm tra và nhập lại số tiền chính xác."
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",

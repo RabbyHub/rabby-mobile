@@ -73,7 +73,7 @@ export const ImportSuccessScreen2024 = () => {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
   const modalRef =
-    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
   const { t } = useTranslation();
 
   const route =

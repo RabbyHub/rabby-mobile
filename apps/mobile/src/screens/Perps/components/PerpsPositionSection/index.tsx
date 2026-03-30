@@ -78,7 +78,10 @@ export const PerpsPositionSection: React.FC<{
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{t('page.perps.positions')}</Text>
+        <View style={styles.sectionTitleRow}>
+          <View style={styles.sectionTitleBar} />
+          <Text style={styles.sectionTitle}>{t('page.perps.positions')}</Text>
+        </View>
         <TouchableOpacity
           onPress={() => {
             handleCloseAll();
@@ -124,6 +127,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sectionTitleBar: {
+    width: 4,
+    height: 20,
+    borderRadius: 100,
+    backgroundColor: '#50D2C1',
+  },
   sectionTitle: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
@@ -139,10 +153,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   sectionActionText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
+    fontWeight: '700',
+    color: colors2024['neutral-secondary'],
     textAlign: 'right',
   },
   sectionActionIcon: {

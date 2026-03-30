@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Image, ImageSourcePropType, ImageProps } from 'react-native';
 
-import type { ColorValue } from 'react-native/Libraries/StyleSheet/StyleSheet';
+import type { ColorValue } from 'react-native';
 
 import type { SvgProps } from 'react-native-svg';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';

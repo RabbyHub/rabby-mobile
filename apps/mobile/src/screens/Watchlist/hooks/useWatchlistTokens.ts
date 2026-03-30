@@ -21,7 +21,7 @@ const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
 
 export const watchlistTokensAtom = atom<TokenDetailWithPriceCurve[]>([]);
 
-export const useWatchlistTokens = () => {
+export const useWatchlistTokens = (onBeforeRefresh?: () => void) => {
   const [data, setData] = useAtom(watchlistTokensAtom);
   const [hasData, setHasData] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,6 +48,9 @@ export const useWatchlistTokens = () => {
         let needFetchKeys = allKeys;
         if (!force) {
           needFetchKeys = allKeys.filter(key => !cacheRef.current.has(key));
+        }
+        if (force || needFetchKeys.length > 0) {
+          onBeforeRefresh?.();
         }
         // 分批请求未缓存的token
         let newTokenDetails: TokenDetailWithPriceCurve[] = [];
@@ -90,7 +93,7 @@ export const useWatchlistTokens = () => {
         return [];
       }
     },
-    [noData],
+    [noData, onBeforeRefresh],
   );
 
   const handleFetchTokens = useCallback(

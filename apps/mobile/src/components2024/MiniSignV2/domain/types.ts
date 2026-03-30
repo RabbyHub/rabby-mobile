@@ -12,6 +12,7 @@ import type {
   ParsedTransactionActionData,
 } from '@rabby-wallet/rabby-action';
 import { Account } from '@/core/services/preference';
+import type { GasTokenInfo } from '@/utils/tempo';
 
 export type CalcItem = {
   tx: Tx;
@@ -22,6 +23,8 @@ export type CalcItem = {
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
     maxGasCostAmount: BigNumber;
+    gasCostRawAmount?: BigNumber;
+    maxGasCostRawAmount?: BigNumber;
   };
   preExecResult: ExplainTxResponse;
   hash?: string;
@@ -71,6 +74,7 @@ export type PreparedContext = {
   txsCalc: CalcItem[];
   nativeTokenPrice?: number;
   nativeTokenBalance: string;
+  gasToken?: GasTokenInfo;
   checkErrors?: {
     code: number;
     msg: string;
@@ -85,6 +89,8 @@ export type PreparedContext = {
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
     maxGasCostAmount: BigNumber;
+    gasCostRawAmount: BigNumber;
+    maxGasCostRawAmount: BigNumber;
   };
   gasPriceMedian?: number;
 };

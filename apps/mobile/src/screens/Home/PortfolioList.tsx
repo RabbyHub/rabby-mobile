@@ -33,7 +33,6 @@ import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
 import { getItemId } from './utils/listRenderId';
 import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
-import { PerpsSingleAssetPosition } from '../Perps/components/PerpsMultiAssetPosition';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { getAllDefiCount } from './utils/converAssets';
 import useProtocols, {
@@ -318,9 +317,6 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
-        ListHeaderComponent={
-          <PerpsSingleAssetPosition account={currentAccount} />
-        }
         showsVerticalScrollIndicator={showScrollIndicator}
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}

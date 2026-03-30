@@ -87,7 +87,7 @@ export class AppScreenshotFS {
       path: input.startsWith('file://') || input.startsWith('/') ? input : '',
       base64: () =>
         input.startsWith('data:image/') && input.indexOf('base64,') > -1
-          ? input.split(',')[1]
+          ? input.split(',')[1] ?? ''
           : '',
     };
 
@@ -130,7 +130,7 @@ export class AppScreenshotFS {
       uri: `data:image/jpeg;base64,${base64}`,
       type: 'image/jpeg',
       name: 'screenshot.jpg',
-    });
+    } as unknown as Blob);
 
     return fetch(url, {
       method: 'POST',

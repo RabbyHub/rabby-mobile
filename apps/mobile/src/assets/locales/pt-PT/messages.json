@@ -1199,7 +1199,9 @@
         "queued": "Em fila",
         "BridgeStatusUnavailable": "Estado da bridge indisponível. Por favor, verifique o seu histórico de transações para confirmar que os fundos chegaram."
       },
-      "gasXUsd": "Gas: {{gasUsd}}"
+      "gasXUsd": "Gas: {{gasUsd}}",
+      "formChangedTitle": "Formulário Alterado",
+      "formChangedAmount": "O montante foi alterado, possivelmente devido ao preenchimento automático da palavra-passe pelo teclado do sistema. Por favor, reveja e insira novamente o montante correto."
     },
     "dashboard": {
       "home": {

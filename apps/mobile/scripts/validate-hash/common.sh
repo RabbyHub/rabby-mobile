@@ -90,14 +90,9 @@ setup_environment() {
   echo "export RABBY_MOBILE_FE_SERVICE_URL=\"\"" >> ios/.xcode.env.local
 
   rm -f .env.hashing && cp .env .env.hashing;
-  local apiKey="";
-  if [ -z $RABBY_MOBILE_SAFE_API_KEY ] && [ ! -z $MOBILE_SAFE_API_KEY ]; then
-    export RABBY_MOBILE_SAFE_API_KEY=$MOBILE_SAFE_API_KEY
-  fi
 
   local env_file=".env.hashing"
   local sensitive_vars=(
-    "RABBY_MOBILE_SAFE_API_KEY" "$RABBY_MOBILE_SAFE_API_KEY"
     "RABBY_MOBILE_KR_PWD" "$RABBY_MOBILE_KR_PWD"
     "RABBY_MOBILE_BUILD_CHANNEL" "appstore"
     "RABBY_MOBILE_FE_SERVICE_URL" ""

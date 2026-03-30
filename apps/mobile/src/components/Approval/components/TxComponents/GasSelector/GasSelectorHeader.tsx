@@ -72,6 +72,7 @@ import {
   useMiniSignGasPanelState,
 } from '@/components2024/MiniSignV2';
 import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
+import { GasTokenInfo } from '@/utils/tempo';
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
   nonce: number;
@@ -120,6 +121,7 @@ interface GasSelectorProps {
   }[];
   engineResults?: Result[];
   nativeTokenBalance: string;
+  gasToken?: GasTokenInfo;
   gasPriceMedian: number | null;
   pushType?: TxPushType;
   isDisabledGasPopup?: boolean;
@@ -190,6 +192,7 @@ export const GasSelectorHeader = ({
   disabled,
   engineResults = [],
   nativeTokenBalance,
+  gasToken,
   gasPriceMedian,
   isCancel,
   isSpeedUp,
@@ -244,6 +247,16 @@ export const GasSelectorHeader = ({
   const chain = useFindChain({
     id: chainId,
   })!;
+  const resolvedGasToken = useMemo(
+    () =>
+      gasToken || {
+        tokenId: chain.nativeTokenAddress,
+        symbol: chain.nativeTokenSymbol,
+        decimals: chain.nativeTokenDecimals || 18,
+        logoUrl: chain.nativeTokenLogo,
+      },
+    [gasToken, chain],
+  );
   const hasCustomPriorityFee = useRef(false);
   const [customGasEstimated, setCustomGasEstimated] = useState<number>(0);
 
@@ -868,9 +881,9 @@ export const GasSelectorHeader = ({
       new BigNumber(modalExplainGas.gasCostAmount).toString(10),
       6,
       true,
-    )} ${chain?.nativeTokenSymbol}`;
+    )} ${resolvedGasToken.symbol}`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalExplainGas?.gasCostAmount]);
+  }, [modalExplainGas?.gasCostAmount, resolvedGasToken.symbol]);
 
   const [isGasHovering, setIsGasHovering] = useState(false);
 
@@ -1002,7 +1015,7 @@ export const GasSelectorHeader = ({
                 ActiveComponent={RcIconGasActive}
                 BlurComponent={RcIconGasBlurCC}
                 tips={t('page.signTx.nativeTokenForGas', {
-                  tokenName: chain.nativeTokenSymbol,
+                  tokenName: resolvedGasToken.symbol,
                   chainName: chain.name,
                 })}
               />
@@ -1278,9 +1291,11 @@ export const GasSelectorHeader = ({
                   {gasCostUsdStr}
                 </Text>
                 <View style={styles.gasSelectorModalUsdWrap}>
-                  {chain.nativeTokenLogo ? (
+                  {resolvedGasToken.logoUrl || chain.nativeTokenLogo ? (
                     <Image
-                      source={{ uri: chain.nativeTokenLogo }}
+                      source={{
+                        uri: resolvedGasToken.logoUrl || chain.nativeTokenLogo,
+                      }}
                       width={16}
                       height={16}
                       style={StyleSheet.flatten({ borderRadius: 16 })}
@@ -1339,11 +1354,17 @@ export const GasSelectorHeader = ({
                   </Text>
                   <Text style={styles.gasPriceDescBoldText}>
                     {formatTokenAmount(
-                      new BigNumber(nativeTokenBalance).div(1e18).toFixed(),
+                      new BigNumber(nativeTokenBalance)
+                        .div(
+                          new BigNumber(10).pow(
+                            resolvedGasToken.decimals || 18,
+                          ),
+                        )
+                        .toFixed(),
                       4,
                       true,
                     )}{' '}
-                    {chain.nativeTokenSymbol}
+                    {resolvedGasToken.symbol}
                   </Text>
                 </Text>
               </View>

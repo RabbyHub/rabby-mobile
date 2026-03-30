@@ -56,7 +56,10 @@ import { transactionHistoryService } from '@/core/services/shared';
 import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useMiniSigner } from '@/hooks/useSigner';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
@@ -65,6 +68,14 @@ import {
 } from '@/components2024/MiniSignV2';
 import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
+import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
+import { Alert } from 'react-native';
+
+/** Bridge form snapshot for validation - only stores amount to detect changes */
+export interface BridgeFormSnapshot {
+  amount: string;
+}
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -185,6 +196,9 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   btnTitle: {
     color: colors['neutral-title-2'],
   },
+  marketClosedTip: {
+    marginHorizontal: 24,
+  },
 }));
 
 export const BridgeContent = ({ isForMultipleAddress = false }) => {
@@ -208,6 +222,15 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+
+  // Form values snapshot for validation before transaction - only tracks amount
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<BridgeFormSnapshot>({
+      comparers: {
+        amount: createAmountComparer(),
+      },
+    }),
+  );
 
   const quoteVisible = useQuoteVisible();
 
@@ -282,6 +305,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     isMaxRef,
     payTokenIsNativeToken,
     inSufficientCanGetQuote,
+    quoteBlockedByClosedMarket,
     slider,
     onChangeSlider,
   } = useBridge(isForMultipleAddress);
@@ -376,6 +400,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         };
         await bridgeToken(
           {
+            approveId: selectedBridgeQuote.approve_contract_id,
             to: tx.to,
             value: tx.value,
             data: tx.data,
@@ -487,6 +512,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
         return buildBridgeToken(
           {
+            approveId: selectedBridgeQuote.approve_contract_id,
             to: tx.to,
             value: tx.value,
             data: tx.data,
@@ -621,6 +647,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const [miniSignLoading, setMiniSignLoading] = useState(false);
 
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+
   useEffect(() => {
     if (!isFocused) {
       closeMiniSigner();
@@ -656,6 +684,47 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   );
 
   const handleBridge = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
+    const snapshot = formValuesRef.current.getSnapshot();
+
+    if (!snapshot) {
+      toast.info(t('page.bridge.formChangedAmount'));
+      return;
+    }
+
+    // Check if amount changed during authentication
+    const comparison = formValuesRef.current.compare({ amount: amount || '' });
+
+    // If amount changed during authentication, close modal and alert user
+    if (comparison.isChanged) {
+      formValuesRef.current.clear();
+      closeMiniSigner();
+      Alert.alert(
+        t('page.bridge.formChangedTitle') || 'Form Changed',
+        t('page.bridge.formChangedAmount'),
+        [{ text: t('global.ok') || 'OK' }],
+      );
+      refresh(e => e + 1);
+      mutateTxs([]);
+      return;
+    }
+
+    // Clear snapshot after validation
+    formValuesRef.current.clear();
+
+    // // leave here for debug __DEV__ mode: don't actually submit, just console.debug and clear form
+    // if (__DEV__) {
+    //   console.debug('[Bridge] DEV mode - Skipping actual transaction submission');
+    //   console.debug('[Bridge] Amount:', amount);
+    //   console.debug('[Bridge] fromToken:', fromToken?.id);
+    //   console.debug('[Bridge] toToken:', toToken?.id);
+
+    //   // Still clear the form as if transaction was submitted
+    //   handleAmountChange('');
+    //   refresh(e => e + 1);
+    //   mutateTxs([]);
+    //   return;
+    // }
+
     if (canUseMiniTx && canShowDirectSubmit) {
       try {
         if (miniSignLoading) {
@@ -748,11 +817,14 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const noQuote =
     inSufficientCanGetQuote &&
+    !quoteBlockedByClosedMarket &&
     !!fromToken &&
     !!toToken &&
     Number(amount) > 0 &&
     !quoteLoading &&
     !quoteList?.length;
+  const showClosedMarketTip =
+    (!!fromToken || !!toToken) && quoteBlockedByClosedMarket;
 
   const btnDisabled =
     inSufficient ||
@@ -804,6 +876,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       return;
     }
     if (selectedBridgeQuote?.shouldTwoStepApprove) {
+      // Save amount snapshot before showing approval modal
+      formValuesRef.current.save({
+        amount: amount || '',
+      });
       setTwoStepApproveModalVisible(true);
       return;
     }
@@ -886,7 +962,10 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 }}
                 onChangeChain={switchFromChain}
                 value={amount}
-                onInputChange={handleAmountChange}
+                onInputChange={value => {
+                  if (directSignBtnRef.current?.isAuthInProgress()) return;
+                  handleAmountChange(value);
+                }}
                 excludeChains={toChain ? [toChain] : undefined}
               />
               <BridgeToken
@@ -965,7 +1044,6 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                   setAutoSlippage={setAutoSlippage}
                   setIsCustomSlippage={setIsCustomSlippage}
                   type="bridge"
-                  onDepositPopupVisibleChange={setAutoQuoteRefreshPaused}
                   isBestQuote={
                     !!bestQuoteId &&
                     !!selectedBridgeQuote &&

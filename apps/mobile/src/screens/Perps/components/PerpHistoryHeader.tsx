@@ -41,7 +41,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   },
 }));
 
-export const PerpHeader: React.FC<{
+export const PerpHistoryHeader: React.FC<{
   localLoadingHistory: AccountHistoryItem[];
 }> = ({ localLoadingHistory }) => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
@@ -64,9 +64,7 @@ export const PerpHeader: React.FC<{
           <PendingTx number={loadingNumber} onClick={openHistory} />
         ) : (
           <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
-            <RcIconSwapHistory color={'#fff'} width={24} height={24} />
-            {/* not very accurate */}
-            {/* {Boolean(showRedDot) && <View style={styles.greenDot} />} */}
+            <RcIconSwapHistory color={colors2024['neutral-title-1']} />
           </TouchableOpacity>
         )}
       </View>

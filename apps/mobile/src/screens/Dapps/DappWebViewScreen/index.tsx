@@ -205,7 +205,6 @@ export function DappWebViewStubScreen() {
                 ref={inst => {
                   if (isActiveDapp) {
                     globalSetActiveDappState({ dappOrigin: dappInfo.origin });
-                    // @ts-expect-error
                     activeDappWebViewControlRef.current = inst;
                     globalSetActiveDappState({
                       dappOrigin: dappInfo.origin,

@@ -536,7 +536,6 @@ function DefaultBeforeNode({
   // const secondaryIndicatorAbsLayout = useValueFromSharedValue(
   //   svSecondaryIndicatorAbsLayout,
   // );
-
   return (
     <View style={styles.container}>
       {/* <Text style={styles.text}>Dev only: Render Node Here</Text> */}
@@ -548,7 +547,7 @@ function DefaultBeforeNode({
             {
               height: secondaryIndicatorAbsLayout.height,
               width: Math.max(
-                secondaryIndicatorAbsLayout.width,
+                secondaryIndicatorAbsLayout.width ?? 0,
                 getHomeTabIndicatorWidth(Dimensions.get('window').width),
               ),
               borderRadius: 12,

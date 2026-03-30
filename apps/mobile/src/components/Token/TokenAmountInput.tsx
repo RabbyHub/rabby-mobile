@@ -25,7 +25,7 @@ function useLoadTokenList({
   ref,
 }: {
   onTokenChange?: TokenAmountInputProps['onTokenChange'];
-  ref?: React.RefObject<TextInput> | null;
+  ref?: React.RefObject<TextInput | null> | null;
 } = {}) {
   const internalInputRef = useRef<TextInput>(null);
   const tokenInputRef = ref || internalInputRef;
@@ -51,7 +51,7 @@ interface TokenAmountInputProps {
   token: TokenItem;
   value?: string;
   chainId: string;
-  onChange?(amount: string): void;
+  onChange?: React.ComponentProps<typeof NumericInput>['onChangeText'];
   onTokenChange(token: TokenItem): void;
   handleClickMaxButton?: () => Promise<void> | void;
   /**
@@ -103,7 +103,7 @@ export const TokenAmountInput = React.forwardRef<
     const { tokenInputRef, tokenSelectorVisible, handleCurrentTokenChange } =
       useLoadTokenList({
         onTokenChange,
-        ref: ref as React.RefObject<TextInput>,
+        ref: ref as React.RefObject<TextInput | null>,
       });
 
     useLayoutEffect(() => {
@@ -161,7 +161,7 @@ export const TokenAmountInput = React.forwardRef<
               ]}
               value={value}
               onChangeText={(value: string) => {
-                onChange?.(formatSpeicalAmount(value));
+                return onChange?.(formatSpeicalAmount(value));
               }}
               ref={tokenInputRef}
               placeholder="0"
