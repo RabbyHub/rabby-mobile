@@ -2049,7 +2049,7 @@ type InternalContext = {
     fetchContactAccounts: () => void;
     disableItemCheck: ITokenCheck;
   };
-  directSignBtnRef: React.RefObject<DirectSignBtnMethods>;
+  directSignBtnRef: React.RefObject<DirectSignBtnMethods | null>;
   formValuesRef: React.MutableRefObject<FormValuesOnSubmit<BridgeFormSnapshot>>;
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
