@@ -1220,7 +1220,8 @@
       "swapped": "已交換",
       "selectChainModalTitle": "選擇鏈",
       "results": "結果",
-      "approve": "批准"
+      "approve": "批准",
+      "market-closed": "市場尚未開放：不支持下單。"
     },
     "signText": {
       "title": "簽署文本",
@@ -1797,6 +1798,9 @@
       "globalSearch": {
         "iosPlaceHolder": "搜尋網站/代幣",
         "placeHolder": "搜尋 Dapp/Token"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
       }
     },
     "customRpc": {
@@ -2527,7 +2531,9 @@
         "loginDesc": "使用您的地址登录并存入资金以开始交易永续合约",
         "title": "交易永续合约",
         "loginBtn": "登錄以交易永續合約",
-        "depositBtn": "存款"
+        "depositBtn": "存款",
+        "addFunds": "添加資金",
+        "learnMore": "瞭解更多"
       },
       "PerpsGuidePopup": {
         "step3Title": "做空",
@@ -2592,7 +2598,11 @@
         "perps": "永续合约",
         "provider": "提供者",
         "gotItBtn": "我明白了",
-        "sizeTips": "您交易的总值或数量，由保证金和杠杆设定。"
+        "sizeTips": "您交易的总值或数量，由保证金和杠杆设定。",
+        "feeRabby": "Rabby Wallet",
+        "feeHyperliquid": "Hyperliquid",
+        "feeDesc": "當用戶進行交易時，會收取<1>交易費用</1>和<2>建設者費用</2>。",
+        "feeTitle": "費用"
       },
       "PerpsAutoCloseModal": {
         "loss": "損失",
@@ -2612,7 +2622,8 @@
         "swapBtn": "交換",
         "bridgeBtn": "橋接",
         "goSwapDesc": "只有 Arbitrum 上的 USDC 受到直接存款支持。在存款之前，请将您当前的代币交换为 USDC。",
-        "goBridgeDesc": "僅支援在 Arbitrum 上的 USDC 進行直接存款。請在存款前將您當前的代幣橋接到 Arbitrum 上的 USDC。"
+        "goBridgeDesc": "僅支援在 Arbitrum 上的 USDC 進行直接存款。請在存款前將您當前的代幣橋接到 Arbitrum 上的 USDC。",
+        "directDepositFast": "快速，0 滑點"
       },
       "history": {
         "status": {
@@ -2634,7 +2645,10 @@
         "closeLong": "平掉多头"
       },
       "PerpsSelectTokenPopup": {
-        "title": "選擇要存入的 Token"
+        "title": "選擇要存入的 Token",
+        "token": "代幣",
+        "balance": "餘額",
+        "noTokens": "沒有代幣"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "登出",
@@ -2736,7 +2750,8 @@
         "positionValue": "持倉價值",
         "realizedPnl": "已实现盈虧",
         "details": "詳情",
-        "fundingTipsBold": "這顯示自從該持倉開設以來您總共的資金結算。<bold>綠色（正向）</bold>值意味著您從其他交易者那裡賺取了利益，而<bold>紅色（負向）</bold>值則是您支付給他們的資金成本。"
+        "fundingTipsBold": "這顯示自從該持倉開設以來您總共的資金結算。<bold>綠色（正向）</bold>值意味著您從其他交易者那裡賺取了利益，而<bold>紅色（負向）</bold>值則是您支付給他們的資金成本。",
+        "crossTips": "在跨保证金模式下，单个头寸的强制平仓价格仅供参考。"
       },
       "PerpsInfo": {
         "funding": "資金負擔",
@@ -2867,6 +2882,9 @@
         "cannotChangeMarginMode": "無法在有未平倉位的情況下更改保證金模式",
         "isolatedDesc": "每个头寸使用自己的保证金。损失仅限于该头寸，但可以更容易地被平仓。",
         "crossDesc": "所有头寸共享相同的保证金。这降低了单一头寸被强制平仓的几率，但在极端市场波动中，所有的交叉保证金资金都有可能损失。"
+      },
+      "guideEntry": {
+        "gotIt": "了解了"
       }
     },
     "devUIBuiltInPages": {
@@ -3188,14 +3206,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "名稱"
+        "name": "名稱",
+        "tokenAndName": "Token/Name"
       },
       "tabs": {
         "stock": "庫存",
         "memecoin": "Memecoin",
         "commodities": "商品",
         "watchlist": "關注列表"
-      }
+      },
+      "noOpen": "未開放",
+      "marketNotOpenTooltip": "市場未開放"
     }
   },
   "component": {

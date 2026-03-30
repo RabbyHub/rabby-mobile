@@ -1303,7 +1303,8 @@
       "historyTitle": "Tauschhistorie",
       "selectChainModalTitle": "Kette auswählen",
       "results": "Ergebnisse",
-      "approve": "Genehmigen"
+      "approve": "Genehmigen",
+      "market-closed": "Markt nicht geöffnet: Auftragsplatzierung wird nicht unterstützt."
     },
     "bridge": {
       "liquidity": "Liquidität",
@@ -1364,7 +1365,7 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Formular geändert",
-      "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der Passwort-Autofill-Funktion der Systemtastatur. Bitte überprüfen Sie und geben Sie den korrekten Betrag erneut ein."
+      "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der automatischen Passwortausfüllung durch die Systemtastatur. Bitte überprüfen Sie den Betrag und geben Sie den richtigen Betrag erneut ein."
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -2194,6 +2195,9 @@
       "globalSearch": {
         "iosPlaceHolder": "Website/Token suchen",
         "placeHolder": "Suche Dapp/Token"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
       }
     },
     "tokenDetail": {
@@ -2727,7 +2731,9 @@
         "title": "Perps traden",
         "depositBtn": "Einzahlen",
         "loginDesc": "Melden Sie sich mit Ihrer Adresse an und hinterlegen Sie Gelder, um mit dem Handel von perps zu beginnen.",
-        "learnBtn": "Lerne mehr über Perps"
+        "learnBtn": "Lerne mehr über Perps",
+        "learnMore": "Erfahren Sie mehr",
+        "addFunds": "Gelder hinzufügen"
       },
       "PerpsGuidePopup": {
         "step1Title": "Master Perpetual Futures",
@@ -2792,7 +2798,11 @@
         "tradeValue": "Handelswert",
         "perps": "Perps",
         "gotItBtn": "Ich habe es verstanden.",
-        "sizeTips": "Der Gesamtwert oder die Menge Ihres Handels, festgelegt durch Margin und Hebel."
+        "sizeTips": "Der Gesamtwert oder die Menge Ihres Handels, festgelegt durch Margin und Hebel.",
+        "feeHyperliquid": "Hyperliquid",
+        "feeTitle": "Gebühr",
+        "feeRabby": "Rabby Wallet",
+        "feeDesc": "Wenn Benutzer Trades platzieren, gelten sowohl <1>Handelsgebühren</1> als auch <2>Builder-Gebühren</2>."
       },
       "PerpsAutoCloseModal": {
         "loss": "Verlust",
@@ -2812,7 +2822,8 @@
         "directTag": "Direkte Einzahlung",
         "bridgeBtn": "Brücke",
         "goSwapDesc": "Nur USDC auf Arbitrum wird für direkte Einzahlungen unterstützt. Bitte tauschen Sie Ihren aktuellen Token gegen USDC, bevor Sie eine Einzahlung vornehmen.",
-        "goBridgeDesc": "Nur USDC auf Arbitrum wird für direkte Einzahlungen unterstützt. Bitte überbrücken Sie Ihr aktuelles Token zu USDC auf Arbitrum, bevor Sie einzahlen."
+        "goBridgeDesc": "Nur USDC auf Arbitrum wird für direkte Einzahlungen unterstützt. Bitte überbrücken Sie Ihr aktuelles Token zu USDC auf Arbitrum, bevor Sie einzahlen.",
+        "directDepositFast": "Schnell, 0 Slippage"
       },
       "history": {
         "status": {
@@ -2834,7 +2845,10 @@
         "closeLongSl": "Close Long Stop-Loss"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Token auswählen, um einzuzahlen"
+        "title": "Token auswählen, um einzuzahlen",
+        "balance": "Guthaben",
+        "token": "Token",
+        "noTokens": "Keine Tokens"
       },
       "PerpsAccountLogoutPopup": {
         "logout": "Ausloggen",
@@ -2936,7 +2950,8 @@
         "unrealizedPnl": "Unrealisierter PNL",
         "details": "Details",
         "realizedPnl": "Realisiertes PNL",
-        "fundingTipsBold": "Dies zeigt Ihre gesamte Finanzierung an, die seit der Eröffnung der Position abgewickelt wurde. <bold>Grüne (positive)</bold> Werte bedeuten, dass Sie von anderen Händlern verdient haben, während <bold>Rote (negative)</bold> Werte die Finanzierungskosten sind, die Sie an sie gezahlt haben."
+        "fundingTipsBold": "Dies zeigt Ihre gesamte Finanzierung an, die seit der Eröffnung der Position abgewickelt wurde. <bold>Grüne (positive)</bold> Werte bedeuten, dass Sie von anderen Händlern verdient haben, während <bold>Rote (negative)</bold> Werte die Finanzierungskosten sind, die Sie an sie gezahlt haben.",
+        "crossTips": "Im Cross-Margin-Modus ist der liquidationspreis für eine einzelne Position nur eine Schätzung zur Referenz."
       },
       "PerpsInfo": {
         "funding": "Finanzierung",
@@ -3067,6 +3082,9 @@
         "cannotChangeMarginMode": "Kann den Margin-Modus mit offenen Positionen nicht ändern",
         "isolatedDesc": "Jede Position verwendet ihren eigenen Margin. Verluste sind auf diese Position begrenzt, aber sie kann leichter liquidiert werden.",
         "crossDesc": "Alle Positionen teilen sich die gleiche Marge. Dies verringert die Wahrscheinlichkeit, dass eine einzelne Position liquidiert wird, aber alle Cross-Margin-Fonds können in extremen Marktbewegungen verloren gehen."
+      },
+      "guideEntry": {
+        "gotIt": "Verstanden"
       }
     },
     "devUIBuiltInPages": {
@@ -3388,14 +3406,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "Name"
+        "name": "Name",
+        "tokenAndName": "Token/Name"
       },
       "tabs": {
         "watchlist": "Beobachtungsliste",
         "memecoin": "Memecoin",
         "stock": "Bestand",
         "commodities": "Rohstoffe"
-      }
+      },
+      "noOpen": "Nicht geöffnet",
+      "marketNotOpenTooltip": "Markt nicht geöffnet"
     }
   },
   "constant": {

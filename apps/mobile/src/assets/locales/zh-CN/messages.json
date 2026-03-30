@@ -1116,7 +1116,8 @@
       "historyTitle": "Swap 历史记录",
       "selectChainModalTitle": "选择链",
       "results": "结果",
-      "approve": "批准"
+      "approve": "批准",
+      "market-closed": "市场未开放：不支持下单。"
     },
     "dashboard": {
       "home": {
@@ -1956,6 +1957,9 @@
       "globalSearch": {
         "placeHolder": "搜索 Dapp/Token",
         "iosPlaceHolder": "搜索网站/Token"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
       }
     },
     "receiveAddressList": {
@@ -2482,7 +2486,9 @@
         "title": "交易永续合约",
         "loginBtn": "登录交易永续合约",
         "learnBtn": "了解永续合约",
-        "loginDesc": "使用您的地址登录并存入资金以开始交易永续合约"
+        "loginDesc": "使用您的地址登录并存入资金以开始交易永续合约",
+        "learnMore": "了解更多",
+        "addFunds": "添加资金"
       },
       "PerpsGuidePopup": {
         "step5Title": "清算",
@@ -2547,7 +2553,11 @@
         "provider": "提供者",
         "gotItBtn": "我明白了",
         "sizeTips": "您的交易的总价值或数量，由保证金和杠杆设置。",
-        "perps": "永续合约"
+        "perps": "永续合约",
+        "feeHyperliquid": "Hyperliquid",
+        "feeRabby": "Rabby 钱包",
+        "feeDesc": "当用户进行交易时，适用<1>交易费用</1>和<2>构建者费用</2>。",
+        "feeTitle": "费用"
       },
       "PerpsAutoCloseModal": {
         "takeProfit": "止盈",
@@ -2567,7 +2577,8 @@
         "directTag": "直接存款",
         "bridgeBtn": "桥接",
         "goBridgeDesc": "仅支持在 Arbitrum 上直接存入 USDC。请在存入之前将您当前的代币桥接到 Arbitrum 上的 USDC。",
-        "goSwapDesc": "仅支持在 Arbitrum 上直接存入 USDC。在存入之前，请将您当前的代币兑换为 USDC。"
+        "goSwapDesc": "仅支持在 Arbitrum 上直接存入 USDC。在存入之前，请将您当前的代币兑换为 USDC。",
+        "directDepositFast": "快速，0 滑点"
       },
       "history": {
         "status": {
@@ -2589,7 +2600,10 @@
         "closeLong": "平仓做多"
       },
       "PerpsSelectTokenPopup": {
-        "title": "选择要存入的 Token"
+        "title": "选择要存入的 Token",
+        "token": "代币",
+        "balance": "余额",
+        "noTokens": "没有代币"
       },
       "PerpsAccountLogoutPopup": {
         "title": "登出当前地址",
@@ -2691,7 +2705,8 @@
         "positionValue": "仓位价值",
         "settings": "设置",
         "realizedPnl": "实现的PNL",
-        "fundingTipsBold": "这显示了自该头寸开启以来您总共结算的资金。<bold>绿色（正数）</bold>值意味着您从其他交易者那里获利，而<bold>红色（负数）</bold>值是您支付给他们的资金成本。"
+        "fundingTipsBold": "这显示了自该头寸开启以来您总共结算的资金。<bold>绿色（正数）</bold>值意味着您从其他交易者那里获利，而<bold>红色（负数）</bold>值是您支付给他们的资金成本。",
+        "crossTips": "在交叉保证金模式下，单一头寸的平仓价格仅供参考，实际情况可能有所不同。"
       },
       "PerpsInfo": {
         "title": "信息",
@@ -2822,6 +2837,9 @@
         "crossTitle": "全仓保证金",
         "isolatedDesc": "每个头寸使用自己的保证金。损失仅限于该头寸，但它更容易被清算。",
         "crossDesc": "所有头寸共享相同的保证金。这降低了单个头寸被清算的机会，但在极端市场波动中，所有全仓保证金资金可能会全部亏损。"
+      },
+      "guideEntry": {
+        "gotIt": "明白了"
       }
     },
     "selectAccountSheetModal": {
@@ -3140,14 +3158,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "名称"
+        "name": "名称",
+        "tokenAndName": "Token/Name"
       },
       "tabs": {
         "stock": "库存",
         "watchlist": "观察列表",
         "memecoin": "Memecoin",
         "commodities": "商品"
-      }
+      },
+      "noOpen": "未开启",
+      "marketNotOpenTooltip": "市场尚未开放"
     }
   },
   "component": {

@@ -949,7 +949,8 @@
       "no-transaction-records": "Hiçbir işlem kaydı yok",
       "historyTitle": "Takasa geçmişi",
       "results": "Sonuçlar",
-      "approve": "Onayla"
+      "approve": "Onayla",
+      "market-closed": "Pazar açılmadı: Sipariş verme desteklenmiyor."
     },
     "bridge": {
       "showMore": {
@@ -1010,7 +1011,7 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Form Değiştirildi",
-      "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurmasından dolayı. Lütfen kontrol edin ve doğru miktarı tekrar girin."
+      "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurma nedeniyle. Lütfen kontrol edin ve doğru miktarı yeniden girin."
     },
     "manageAddress": {
       "watch-address": "Adres İzle",
@@ -2060,6 +2061,9 @@
       "globalSearch": {
         "iosPlaceHolder": "Websites/Token Araştırın",
         "placeHolder": "Dapp/Tokene Araştırın"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
       }
     },
     "setting": {
@@ -2357,7 +2361,9 @@
         "available": "Mevcut",
         "withdrawBtn": "Çekilme",
         "loginDesc": "Adresinizle giriş yapın ve perps ticaretine başlamak için fon yatırın.",
-        "learnBtn": "Perps hakkında bilgi edinin"
+        "learnBtn": "Perps hakkında bilgi edinin",
+        "learnMore": "Daha Fazla Bilgi Edinin",
+        "addFunds": "Fon ekle"
       },
       "PerpsGuidePopup": {
         "step4Title": "Kaldıraç Ayarlama",
@@ -2422,7 +2428,11 @@
         "closedPnl": "Kapanmış PNL",
         "gotItBtn": "Tamamdır",
         "perps": "Perps",
-        "sizeTips": "Ticaretinizin toplam değeri veya miktarı, teminat ve kaldıraç tarafından belirlenir."
+        "sizeTips": "Ticaretinizin toplam değeri veya miktarı, teminat ve kaldıraç tarafından belirlenir.",
+        "feeRabby": "Rabby Cüzdan",
+        "feeHyperliquid": "Hyperliquid",
+        "feeTitle": "Ücret",
+        "feeDesc": "Kullanıcılar işlemlerini gerçekleştirdiğinde, hem <1>trading fees</1> hem de <2>builder fees</2> uygulanır."
       },
       "PerpsAutoCloseModal": {
         "profit": "Kar Sırası",
@@ -2442,7 +2452,8 @@
         "bridgeBtn": "Köprü",
         "goSwapDesc": "Arbitrum'da yalnızca USDC doğrudan yatırma için desteklenmektedir. Lütfen mevcut token'ınızı yatırmadan önce USDC ile değiştirin.",
         "directTag": "Doğrudan Depozito",
-        "goBridgeDesc": "Sadece Arbitrum'daki USDC doğrudan depozitolar için desteklenmektedir. Lütfen mevcut token'inizi Arbitrum'daki USDC'ye köprüleyin ve ardından depozito yapın."
+        "goBridgeDesc": "Sadece Arbitrum'daki USDC doğrudan depozitolar için desteklenmektedir. Lütfen mevcut token'inizi Arbitrum'daki USDC'ye köprüleyin ve ardından depozito yapın.",
+        "directDepositFast": "Hızlı, 0 Kayma"
       },
       "history": {
         "status": {
@@ -2464,7 +2475,10 @@
         "closeShortTp": "Kapat Kısa Kar Al"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Token Yatırmak İçin Seçin"
+        "title": "Token Yatırmak İçin Seçin",
+        "noTokens": "Hiçbir token yok",
+        "balance": "Bakiyeniz",
+        "token": "Token"
       },
       "PerpsAccountLogoutPopup": {
         "title": "Mevcut Adresten Çıkış Yap",
@@ -2566,7 +2580,8 @@
         "unrealizedPnl": "Gerçekleşmemiş PNL",
         "details": "Ayrıntılar",
         "realizedPnl": "Gerçekleşen PNL",
-        "fundingTipsBold": "Bu, pozisyon açıldığından bu yana hesaplanan toplam fonlamanızı gösterir. <bold>Yeşil (pozitif)</bold> değerler, diğer yatırımcılardan kazandığınızı, <bold>Kırmızı (negatif)</bold> değerler ise onlara ödediğiniz fonlama maliyetleridir."
+        "fundingTipsBold": "Bu, pozisyon açıldığından bu yana hesaplanan toplam fonlamanızı gösterir. <bold>Yeşil (pozitif)</bold> değerler, diğer yatırımcılardan kazandığınızı, <bold>Kırmızı (negatif)</bold> değerler ise onlara ödediğiniz fonlama maliyetleridir.",
+        "crossTips": "Cross Margin modunda, tek bir pozisyon için likidasyon fiyatı sadece referans amaçlı bir tahmindir."
       },
       "PerpsInfo": {
         "24Vol": "24s Hacim",
@@ -2697,6 +2712,9 @@
         "cannotChangeMarginMode": "Açık pozisyonlar varken Margin Modu değiştirilemez.",
         "isolatedDesc": "Her pozisyon kendi marjını kullanır. Kayıplar o pozisyonla sınırlıdır, ancak tasfiye edilmesi daha kolaydır.",
         "crossDesc": "Tüm pozisyonlar aynı marjı paylaşır. Bu, tek bir pozisyonun likide olma şansını azaltır, ancak aşırı piyasa hareketlerinde tüm çapraz marj fonları kaybedilebilir."
+      },
+      "guideEntry": {
+        "gotIt": "Tamamdır"
       }
     },
     "devUIBuiltInPages": {
@@ -3018,14 +3036,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "Adı"
+        "name": "Adı",
+        "tokenAndName": "Token/İsim"
       },
       "tabs": {
         "commodities": "Emtia",
         "watchlist": "İzleme Listesi",
         "stock": "Hisse",
         "memecoin": "Memecoin"
-      }
+      },
+      "noOpen": "Açık Değil",
+      "marketNotOpenTooltip": "Pazar açık değil"
     }
   },
   "component": {
