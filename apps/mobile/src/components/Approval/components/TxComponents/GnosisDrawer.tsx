@@ -16,8 +16,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FlatList } from 'react-native-gesture-handler';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+// import { FlatList } from 'react-native-gesture-handler';
+import { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Text } from '@/components/Typography';
 
 interface GnosisDrawerProps {
@@ -145,66 +145,64 @@ export const GnosisDrawer = ({
       ref={modalRef}
       onDismiss={() => onCancel?.()}
       snapPoints={[440]}>
-      <BottomSheetView>
-        <View
-          style={[
-            styles.gnosisDrawerContainer,
-            {
-              paddingBottom: bottom || 20,
-            },
-          ]}>
-          <Text style={styles.title}>
-            {safeInfo.threshold - signatures.length > 0
-              ? t('page.signTx.moreSafeSigNeeded', {
-                  0: safeInfo.threshold - signatures.length,
-                })
-              : t('page.signTx.enoughSafeSigCollected')}
-          </Text>
-          <FlatList
-            data={ownerAccounts}
-            renderItem={item => {
-              const owner = item.item;
-              return (
-                <AddressItem
-                  key={owner.address}
-                  account={owner}
-                  signed={
-                    !!signatures.find(sig =>
-                      isSameAddress(sig.signer, owner.address),
-                    )
-                  }
-                  onSelect={handleSelectAccount}
-                  checked={
-                    checkedAccount
-                      ? isSameAddress(owner.address, checkedAccount.address)
-                      : false
-                  }
-                />
-              );
-            }}
-            style={styles.list}
+      <View
+        style={[
+          styles.gnosisDrawerContainer,
+          {
+            paddingBottom: bottom || 20,
+          },
+        ]}>
+        <Text style={styles.title}>
+          {safeInfo.threshold - signatures.length > 0
+            ? t('page.signTx.moreSafeSigNeeded', {
+                0: safeInfo.threshold - signatures.length,
+              })
+            : t('page.signTx.enoughSafeSigCollected')}
+        </Text>
+        <BottomSheetFlatList
+          data={ownerAccounts}
+          renderItem={item => {
+            const owner = item.item;
+            return (
+              <AddressItem
+                key={owner.address}
+                account={owner}
+                signed={
+                  !!signatures.find(sig =>
+                    isSameAddress(sig.signer, owner.address),
+                  )
+                }
+                onSelect={handleSelectAccount}
+                checked={
+                  checkedAccount
+                    ? isSameAddress(owner.address, checkedAccount.address)
+                    : false
+                }
+              />
+            );
+          }}
+          style={styles.list}
+        />
+        <View style={styles.footer}>
+          <Button
+            onPress={onCancel}
+            title={t('global.backButton')}
+            containerStyle={styles.buttonContainer}
           />
-          <View style={styles.footer}>
-            <Button
-              onPress={onCancel}
-              title={t('global.backButton')}
-              containerStyle={styles.buttonContainer}
-            />
-            <Button
-              onPress={handleConfirm}
-              disabled={!checkedAccount}
-              title={
-                isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  t('global.proceedButton')
-                )
-              }
-              containerStyle={styles.buttonContainer}
-            />
-          </View>
+          <Button
+            onPress={handleConfirm}
+            disabled={!checkedAccount}
+            title={
+              isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                t('global.proceedButton')
+              )
+            }
+            containerStyle={styles.buttonContainer}
+          />
         </View>
-      </BottomSheetView>
+      </View>
     </AppBottomSheetModal>
   );
 };
