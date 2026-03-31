@@ -14,7 +14,6 @@ import { SignMainnetShowMoreGasModal } from './SignMainnetShowMoreGasModal';
 import { SignMainnetCustomGasSheet } from './SignMainnetCustomGasSheet';
 import {
   isApprovalGasMethodNotEnough,
-  getApprovalGasMethodLabel,
   resolveApprovalGasMethod,
 } from './approvalGasDisplay';
 import { formatGasHeaderUsdValue } from '@/utils/number';
@@ -368,7 +367,7 @@ export const SignMainnetHeaderContent = ({
         empty={isHeaderError}
         emptyText={t('page.signTx.failToFetchGasCost')}
         chainId={chainId}
-        label={`Gas Fee · ${getApprovalGasMethodLabel(displayGasMethod)}`}
+        label={t('page.transactions.detail.GasFee')}
         levelText={t(getGasLevelI18nKey(selectedGas?.level || 'normal'))}
         valueText={summary.primaryText}
         textColor={textColor}

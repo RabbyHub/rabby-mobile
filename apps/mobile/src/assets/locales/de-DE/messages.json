@@ -1050,8 +1050,7 @@
         "customRPC": "Nicht unterstützt bei Verwendung von benutzerdefiniertem RPC",
         "deposit": "Einzahlung",
         "WalletConnectTips": "WalletConnect wird von GasAccount nicht unterstützt",
-        "loginFirst": "Bitte melden Sie sich zuerst bei GasAccount an.",
-        "notEnough": "Nicht genug Gas. Gas einzahlen: ${{usd}}"
+        "loginFirst": "Bitte melden Sie sich zuerst bei GasAccount an."
       },
       "ledger": {
         "txRejected": "Transaktion abgelehnt",

@@ -330,7 +330,7 @@ export default function TransactionNavigator() {
         name={RootNames.GasAccount}
         component={GasAccountScreen}
         options={mergeScreenOptions({
-          title: 'GasAccount',
+          title: 'Gas Deposit',
           ...headerPresets.withBgCard2_2024,
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {

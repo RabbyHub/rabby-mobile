@@ -27,7 +27,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { Keyboard, Platform, View } from 'react-native';
 import useDebounce from 'react-use/lib/useDebounce';
 import { AssetAvatar, Tip } from '@/components';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -411,8 +411,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
     ],
   );
 
-  console.log('setBridgeQuote', { bridgeQuoteError, bridgeQuote });
-
   useEffect(() => {
     if (
       !isBridgeDeposit ||
@@ -485,6 +483,8 @@ const GasAccountDepositTokenFormInner: React.FC<{
       return;
     }
 
+    debugger;
+    Keyboard.dismiss();
     setLoading(true);
     try {
       await ensureGasAccountLogin(selectedOwnerAccount);
@@ -602,6 +602,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
             usedNonce,
           });
           await onDeposit?.();
+          onClose?.();
         } else {
           toast.info(
             t('page.gasAccount.depositFailed', {
@@ -721,6 +722,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const estReceiveTip = t('page.gasAccount.depositPopup.estReceiveTip', {
     name: bridgeQuote?.bridge_id,
   });
+  const isInteractionLocked = loading;
 
   let bottomContent: React.ReactNode = null;
   if (amountValidation.errorMessage) {
@@ -805,25 +807,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
             </View>
 
             <View style={styles.inputContainer}>
-              {/* <BottomSheetTextInput
-                keyboardType="numeric"
-                // inputMode="decimal"
-                style={[
-                  styles.input,
-                  amountValidation.errorMessage ? styles.inputError : null,
-                ]}
-                autoFocus
-                textAlignVertical="center"
-                placeholder="$0"
-                placeholderTextColor={colors2024['neutral-info']}
-                value={usdValue}
-                onChangeText={text => {
-                  console.log('setUsdValue 1 text', text);
-
-                  setUsdValue(text);
-                }}
-                numberOfLines={1} */}
-
               <BottomSheetTextInput
                 keyboardType="numeric"
                 style={[
@@ -832,6 +815,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
                     ? styles.inputError
                     : null,
                 ]}
+                editable={!isInteractionLocked}
                 textAlignVertical="center"
                 placeholder="$0"
                 value={displayedValue}
@@ -847,7 +831,11 @@ const GasAccountDepositTokenFormInner: React.FC<{
               )}
               <View style={styles.inputDivider} />
               <CustomTouchableOpacity
+                disabled={isInteractionLocked}
                 onPress={() => {
+                  if (isInteractionLocked) {
+                    return;
+                  }
                   setTokenPickerVisible(true);
                 }}>
                 <View style={styles.tokenContainer}>
@@ -1006,11 +994,11 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   maxButtonWrapper: {
     padding: 4,
-    backgroundColor: 'rgba(80, 210, 193, 0.12)',
+    backgroundColor: ctx.colors2024['brand-light-1'],
     borderRadius: 8,
   },
   maxButtonText: {
-    color: '#50D2C1',
+    color: ctx.colors2024['brand-default'],
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 18,

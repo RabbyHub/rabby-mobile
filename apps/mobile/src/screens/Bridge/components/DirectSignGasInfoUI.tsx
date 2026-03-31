@@ -72,15 +72,30 @@ export const DirectSignGasInfoUI = ({
     [onOpenChange],
   );
 
-  const openModal = useCallback(() => {
-    triggerRef.current?.measureInWindow((x, y, width, height) => {
-      setLayout({ x, y, width, height });
-      setModalVisible(true);
+  const measureTrigger = useCallback((afterMeasure?: () => void) => {
+    if (!triggerRef.current) {
+      afterMeasure?.();
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      triggerRef.current?.measureInWindow((x, y, width, height) => {
+        setLayout({ x, y, width, height });
+        afterMeasure?.();
+      });
     });
+  }, []);
+
+  const openModal = useCallback(() => {
     if (!triggerRef.current) {
       setModalVisible(true);
+      return;
     }
-  }, [setModalVisible]);
+
+    measureTrigger(() => {
+      setModalVisible(true);
+    });
+  }, [measureTrigger, setModalVisible]);
 
   useEffect(() => {
     if (
@@ -109,9 +124,7 @@ export const DirectSignGasInfoUI = ({
               openModal();
             }}
             onLayout={() => {
-              triggerRef.current?.measureInWindow((x, y, width, height) => {
-                setLayout({ x, y, width, height });
-              });
+              measureTrigger();
             }}>
             <View style={styles.quoteContainer}>
               <Text

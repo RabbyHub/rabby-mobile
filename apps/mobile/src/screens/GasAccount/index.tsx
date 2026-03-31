@@ -289,11 +289,11 @@ export const GasAccountScreen = () => {
           gasAccountAddress={gasAccount?.account?.id}
           onEnsurePayGasAccountAddress={ensurePayGasAccountAddress}
           onDeposit={async () => {
-            await runFetchGasAccountInfo();
             setDepositState({
               isOpen: false,
             });
             refreshHistory();
+            await runFetchGasAccountInfo();
             toast.success(t('page.gasAccount.depositSuccess'), {
               position: toast.positions.CENTER,
             });

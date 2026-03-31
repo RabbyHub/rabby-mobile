@@ -8,8 +8,10 @@ import RcIconGasAccountLogo from './gas-account-logo.svg';
 import RcIconSwitchCC from './switch-cc.svg';
 import RcIconLogoutCC from './logout-cc.svg';
 import RcIconWithdrawCC from './withdraw-cc.svg';
+import RcIconApple from './apple.svg';
 
 export {
+  RcIconApple,
   RcIconApplePayCC,
   RcIconBenefitNetworks,
   RcIconBenefitNoFee,

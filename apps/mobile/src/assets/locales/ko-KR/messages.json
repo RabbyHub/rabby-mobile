@@ -174,8 +174,7 @@
         "WalletConnectTips": "GasAccount에서 WalletConnect는 지원되지 않습니다.",
         "loginFirst": "GasAccount에 먼저 로그인하세요.",
         "customRPC": "사용자 정의 RPC를 사용할 때 지원되지 않음",
-        "chainNotSupported": "이 체인은 GasAccount에서 지원되지 않습니다.",
-        "notEnough": "가스가 부족합니다. 가스 입금: ${{usd}}"
+        "chainNotSupported": "이 체인은 GasAccount에서 지원되지 않습니다."
       },
       "submitTx": "트랜잭션 제출",
       "cancelCurrentConnection": "현재 연결 취소",

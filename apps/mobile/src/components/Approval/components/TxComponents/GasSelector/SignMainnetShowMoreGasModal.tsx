@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import React from 'react';
-import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SvgProps } from 'react-native-svg';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
@@ -11,6 +11,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { SwapModal } from '@/screens/Swap/components/Modal';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { calcMaxPriorityFee } from '@/utils/transaction';
+import { getAnchoredPopoverPosition } from '@/utils/anchoredPopover';
 import IconGasTokenCC from '@/assets2024/icons/gas-account/gas-token-cc.svg';
 import IconGasAccountCC from '@/assets2024/icons/gas-account/gas-account-cc.svg';
 import IconGasTokenActive from '@/assets2024/icons/gas-account/gas-token-active.svg';
@@ -105,10 +106,62 @@ export const SignMainnetShowMoreGasModal = ({
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { height, width } = useWindowDimensions();
   const currentGasMethod = gasMethod ?? 'native';
   const gasAccountChainSupported =
     !!gasAccountCost && !gasAccountCost.chain_not_support;
+  const overlayRef = React.useRef<View>(null);
+  const [overlayRect, setOverlayRect] = React.useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+  const [contentSize, setContentSize] = React.useState({
+    width: 0,
+    height: 0,
+  });
+
+  const measureOverlay = React.useCallback(() => {
+    requestAnimationFrame(() => {
+      overlayRef.current?.measureInWindow((x, y, width, height) => {
+        setOverlayRect({ x, y, width, height });
+      });
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    measureOverlay();
+  }, [
+    layout.height,
+    layout.width,
+    layout.x,
+    layout.y,
+    measureOverlay,
+    visible,
+  ]);
+
+  const position = React.useMemo(() => {
+    if (
+      !layout.width ||
+      !layout.height ||
+      !overlayRect.width ||
+      !overlayRect.height ||
+      !contentSize.width ||
+      !contentSize.height
+    ) {
+      return null;
+    }
+
+    return getAnchoredPopoverPosition({
+      anchorRect: layout,
+      overlayRect,
+      contentSize,
+    });
+  }, [contentSize, layout, overlayRect]);
 
   if (!visible) {
     return null;
@@ -141,127 +194,141 @@ export const SignMainnetShowMoreGasModal = ({
       overlayStyle={styles.overlay}
       overlayClose>
       <View
-        style={[
-          styles.container,
-          layout.width && layout.height ? styles.anchoredContainer : null,
-          layout.width && layout.height
-            ? {
-                right: width - (layout.x + layout.width),
-                bottom: height - layout.y + 10,
+        ref={overlayRef}
+        pointerEvents="box-none"
+        style={styles.overlayContent}
+        onLayout={measureOverlay}>
+        <View
+          onLayout={event => {
+            const { width, height } = event.nativeEvent.layout;
+            setContentSize({ width, height });
+          }}
+          style={[
+            styles.container,
+            styles.anchoredContainer,
+            position
+              ? {
+                  left: position.left,
+                  top: position.top,
+                }
+              : styles.hiddenUntilMeasured,
+          ]}>
+          {shouldHideApprovalGasMethodTabs() ? null : (
+            <View style={styles.header}>
+              <GasMethod
+                active={currentGasMethod === 'native'}
+                onChange={() => onChangeGasMethod?.('native')}
+                ActiveComponent={IconGasTokenActive}
+                BlurComponent={IconGasTokenCC}
+                title={'Use Gas token'}
+              />
+              <GasMethod
+                active={currentGasMethod === 'gasAccount'}
+                onChange={() => onChangeGasMethod?.('gasAccount')}
+                ActiveComponent={IconGasAccountActive}
+                BlurComponent={IconGasAccountCC}
+                title={'Use Gasaccount'}
+              />
+            </View>
+          )}
+          <View>
+            {gasList.map(gas => {
+              const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
+              const levelTitle = t(getGasLevelI18nKey(gas.level));
+              const isActive = selectedGas?.level === gas.level;
+              const isCustom = gas.level === 'custom';
+              const levelNativeInsufficient = isCustom
+                ? false
+                : !!levelState[gas.level]?.nativeNotEnough;
+              const displayMethod = resolveApprovalGasLevelMethod({
+                isCustom,
+                currentGasMethod,
+                nativeTokenInsufficient: levelNativeInsufficient,
+                gasAccountChainSupported: !!gasAccountChainSupported,
+              });
+              const isRowLoading = !!levelState[gas.level]?.loading;
+
+              let costUsd =
+                displayMethod === 'native'
+                  ? levelState[gas.level]?.nativeUsd
+                  : levelState[gas.level]?.gasAccount?.[1];
+
+              const isNotEnough = resolveApprovalDisplayedGasLevelNotEnough({
+                isActive,
+                displayMethod,
+                nativeTokenInsufficient: !!nativeTokenInsufficient,
+                gasAccountBalanceEnough: gasAccountCost?.balance_is_enough,
+                levelNativeInsufficient: levelState[gas.level]?.nativeNotEnough,
+                levelGasAccountNotEnough:
+                  levelState[gas.level]?.gasAccount?.[0],
+              });
+
+              costUsd = isActive
+                ? displayMethod === 'gasAccount'
+                  ? calcGasAccountUsd(
+                      (gasAccountCost?.gas_account_cost.estimate_tx_cost || 0) +
+                        (gasAccountCost?.gas_account_cost.gas_cost || 0),
+                    )
+                  : selectedGasCostUsdStr
+                : costUsd;
+
+              if (!costUsd) {
+                costUsd = isActive ? selectedGasCostUsdStr : '-';
               }
-            : null,
-        ]}>
-        {shouldHideApprovalGasMethodTabs() ? null : (
-          <View style={styles.header}>
-            <GasMethod
-              active={currentGasMethod === 'native'}
-              onChange={() => onChangeGasMethod?.('native')}
-              ActiveComponent={IconGasTokenActive}
-              BlurComponent={IconGasTokenCC}
-              title={'Use Gas token'}
-            />
-            <GasMethod
-              active={currentGasMethod === 'gasAccount'}
-              onChange={() => onChangeGasMethod?.('gasAccount')}
-              ActiveComponent={IconGasAccountActive}
-              BlurComponent={IconGasAccountCC}
-              title={'Use Gasaccount'}
-            />
-          </View>
-        )}
-        <View>
-          {gasList.map(gas => {
-            const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
-            const levelTitle = t(getGasLevelI18nKey(gas.level));
-            const isActive = selectedGas?.level === gas.level;
-            const isCustom = gas.level === 'custom';
-            const levelNativeInsufficient = isCustom
-              ? false
-              : !!levelState[gas.level]?.nativeNotEnough;
-            const displayMethod = resolveApprovalGasLevelMethod({
-              isCustom,
-              currentGasMethod,
-              nativeTokenInsufficient: levelNativeInsufficient,
-              gasAccountChainSupported: !!gasAccountChainSupported,
-            });
-            const isRowLoading = !!levelState[gas.level]?.loading;
 
-            let costUsd =
-              displayMethod === 'native'
-                ? levelState[gas.level]?.nativeUsd
-                : levelState[gas.level]?.gasAccount?.[1];
+              return (
+                <TouchableOpacity
+                  key={gas.level}
+                  style={[
+                    styles.gasLevel,
+                    !isActive && styles.gasLevelInactive,
+                  ]}
+                  onPress={() => {
+                    if (shouldHideApprovalGasMethodTabs()) {
+                      onChangeGasMethod?.(displayMethod);
+                    }
+                    handleSelectGas(gas);
+                    onClose();
+                  }}>
+                  <View style={styles.levelRow}>
+                    <Text style={styles.level}>{levelTitle}</Text>
+                    {!isCustom && (
+                      <Text style={styles.gwei}> ({gwei} Gwei) </Text>
+                    )}
+                    {isActive && <IconGasLevelChecked />}
+                  </View>
 
-            const isNotEnough = resolveApprovalDisplayedGasLevelNotEnough({
-              isActive,
-              displayMethod,
-              nativeTokenInsufficient: !!nativeTokenInsufficient,
-              gasAccountBalanceEnough: gasAccountCost?.balance_is_enough,
-              levelNativeInsufficient: levelState[gas.level]?.nativeNotEnough,
-              levelGasAccountNotEnough: levelState[gas.level]?.gasAccount?.[0],
-            });
-
-            costUsd = isActive
-              ? displayMethod === 'gasAccount'
-                ? calcGasAccountUsd(
-                    (gasAccountCost?.gas_account_cost.estimate_tx_cost || 0) +
-                      (gasAccountCost?.gas_account_cost.gas_cost || 0),
-                  )
-                : selectedGasCostUsdStr
-              : costUsd;
-
-            if (!costUsd) {
-              costUsd = isActive ? selectedGasCostUsdStr : '-';
-            }
-
-            return (
-              <TouchableOpacity
-                key={gas.level}
-                style={[styles.gasLevel, !isActive && styles.gasLevelInactive]}
-                onPress={() => {
-                  if (shouldHideApprovalGasMethodTabs()) {
-                    onChangeGasMethod?.(displayMethod);
-                  }
-                  handleSelectGas(gas);
-                  onClose();
-                }}>
-                <View style={styles.levelRow}>
-                  <Text style={styles.level}>{levelTitle}</Text>
-                  {!isCustom && (
-                    <Text style={styles.gwei}> ({gwei} Gwei) </Text>
+                  {isCustom ? (
+                    <>
+                      {isActive ? (
+                        <Text
+                          style={[
+                            styles.usd,
+                            styles.customActiveUsd,
+                            isNotEnough && { color: colors2024['red-default'] },
+                          ]}>
+                          {costUsd}
+                        </Text>
+                      ) : null}
+                      <IconGasCustomRightArrowCC
+                        color={colors2024['neutral-foot']}
+                      />
+                    </>
+                  ) : isRowLoading ? (
+                    <CustomSkeleton style={styles.rowSkeleton} />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.usd,
+                        isNotEnough && { color: colors2024['red-default'] },
+                      ]}>
+                      {costUsd}
+                    </Text>
                   )}
-                  {isActive && <IconGasLevelChecked />}
-                </View>
-
-                {isCustom ? (
-                  <>
-                    {isActive ? (
-                      <Text
-                        style={[
-                          styles.usd,
-                          styles.customActiveUsd,
-                          isNotEnough && { color: colors2024['red-default'] },
-                        ]}>
-                        {costUsd}
-                      </Text>
-                    ) : null}
-                    <IconGasCustomRightArrowCC
-                      color={colors2024['neutral-foot']}
-                    />
-                  </>
-                ) : isRowLoading ? (
-                  <CustomSkeleton style={styles.rowSkeleton} />
-                ) : (
-                  <Text
-                    style={[
-                      styles.usd,
-                      isNotEnough && { color: colors2024['red-default'] },
-                    ]}>
-                    {costUsd}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            );
-          })}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       </View>
     </SwapModal>
@@ -271,6 +338,13 @@ export const SignMainnetShowMoreGasModal = ({
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   overlay: {
     backgroundColor: 'transparent',
+  },
+  overlayContent: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   gasHeaderItem: {
     flexDirection: 'row',
@@ -315,6 +389,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   anchoredContainer: {
     position: 'absolute',
+  },
+  hiddenUntilMeasured: {
+    opacity: 0,
   },
   header: {
     padding: 2,

@@ -34,6 +34,7 @@ import {
   GasAccountTopUpResult,
 } from '@/screens/GasAccount/components/topUpContinuation';
 import { isTempoChain } from '@/utils/tempo';
+import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
 
 const rawAmountToBn = (
   value: string | number | BigNumber | null | undefined,
@@ -470,7 +471,7 @@ const MiniSignTxV2 = ({
                 ) : null}
               </View>
             ) : null}
-            <GasSelectorHeader
+            <SignMainnetGasSelectorHeader
               fixedMode
               defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
               tx={txs[0]!}

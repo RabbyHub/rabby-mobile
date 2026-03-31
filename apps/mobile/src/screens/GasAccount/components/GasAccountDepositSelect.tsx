@@ -1,4 +1,5 @@
 import {
+  RcIconApple,
   RcIconApplePayCC,
   RcIconGooglePayCC,
 } from '@/assets2024/icons/gas-account';
@@ -61,7 +62,7 @@ export const GasAccountDepositSelect: React.FC<{
       contentContainerStyle={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
-          {t('page.gasAccount.depositSelectPopup.title')}
+          {t('page.gasAccount.depositPopup.gasDepositTitle')}
         </Text>
         {/* <Text style={styles.description}>
           {t('page.gasAccount.depositSelectPopup.desc')}
@@ -121,7 +122,12 @@ export const GasAccountDepositSelect: React.FC<{
                 {Platform.OS === 'android' ? (
                   <RcIconGooglePayCC />
                 ) : (
-                  <RcIconApplePayCC />
+                  <>
+                    <RcIconApple />
+                    <Text style={styles.btnTitle}>
+                      {t('page.gasAccount.depositSelectPopup.appStore')}
+                    </Text>
+                  </>
                 )}
               </View>
             </View>

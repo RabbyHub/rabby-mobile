@@ -11,6 +11,8 @@ import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { GasAccountDepositTipPopup } from '@/screens/GasAccount/components/GasAccountDepositTipPopup';
 import { Text } from '@/components/Typography';
 import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { formatUsdValue } from '@/utils/number';
 
 export const GasLessNotEnough: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -39,6 +41,8 @@ export const GasLessNotEnough: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
+
+  const { value: gasAccountInfo } = useGasAccountInfo();
 
   useEffect(() => {
     return () => {
@@ -74,7 +78,7 @@ export const GasLessNotEnough: React.FC<{
             ]}>
             {canDepositUseGasAccount
               ? t('page.signFooterBar.gasAccount.notEnough', {
-                  usd: gasAccountCost?.gas_account_cost?.total_cost,
+                  usd: formatUsdValue(gasAccountInfo?.account?.balance || 0),
                 })
               : t('page.signFooterBar.gasless.notEnough')}
           </Text>

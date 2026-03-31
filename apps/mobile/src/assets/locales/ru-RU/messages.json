@@ -315,8 +315,7 @@
         "deposit": "Депозит",
         "customRPC": "Не поддерживается при использовании пользовательского RPC",
         "useGasAccount": "Используйте GasAccount",
-        "loginFirst": "Пожалуйста, сначала войдите в GasAccount.",
-        "notEnough": "Недостаточно газа. Пополните газ: ${{usd}}"
+        "loginFirst": "Пожалуйста, сначала войдите в GasAccount."
       },
       "gasless": {
         "notEnough": "Gas баланса недостаточно",

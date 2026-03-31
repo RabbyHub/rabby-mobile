@@ -1121,9 +1121,7 @@
         "WalletConnectTips": "GasAccount 不支援 WalletConnect",
         "chainNotSupported": "GasAccount 不支持該鍊",
         "customRPC": "使用自定義 RPC 時不支持",
-        "deposit": "存入",
-        "loginFirst": "請先登入GasAccount",
-        "notEnough": "燃料不足。充值燃料：${{usd}}"
+        "loginFirst": "請先登入GasAccount"
       },
       "qrcode": {
         "qrcodeDesc": "使用您的 {{brand}} 掃描以簽名  \n簽名後，點擊下面的按鈕以接收簽名",

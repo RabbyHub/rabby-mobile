@@ -809,13 +809,11 @@
       "blockDappFromSendingRequests": "阻止 Dapp 发送请求 1 分钟",
       "gasAccount": {
         "useGasAccount": "使用 GasAccount",
-        "deposit": "存入",
         "login": "登录",
         "loginFirst": "请先登录GasAccount",
         "chainNotSupported": "GasAccount 不支持该链",
         "customRPC": "使用自定义 RPC 时不支持",
-        "WalletConnectTips": "GasAccount 不支持 WalletConnect",
-        "notEnough": "燃料不足。存入燃料：${{usd}}"
+        "WalletConnectTips": "GasAccount 不支持 WalletConnect"
       },
       "qrcode": {
         "misMatchSignId": "交易数据不一致。请检查交易详情。",

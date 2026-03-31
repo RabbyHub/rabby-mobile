@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { Platform, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
+import { formatUsdValue } from '@/utils/number';
 
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -41,6 +43,7 @@ export const GasAccountTips: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
+  const { value: gasAccountInfo } = useGasAccountInfo();
 
   const [tip, btnText] = useMemo(() => {
     if (!noCustomRPC) {
@@ -58,7 +61,7 @@ export const GasAccountTips: React.FC<{
       ) {
         return [
           t('page.signFooterBar.gasAccount.notEnough', {
-            usd: gasAccountCost?.gas_account_cost?.total_cost,
+            usd: formatUsdValue(gasAccountInfo?.account.balance || 0),
           }),
           disableDepositAction
             ? null
@@ -78,11 +81,8 @@ export const GasAccountTips: React.FC<{
     }
     if (!gasAccountCost?.balance_is_enough) {
       return [
-        // inShowMore
-        //   ? t('page.signFooterBar.gasless.notEnough')
-        //   : t('page.signFooterBar.gasAccount.notEnough'),
         t('page.signFooterBar.gasAccount.notEnough', {
-          usd: gasAccountCost?.gas_account_cost?.total_cost,
+          usd: formatUsdValue(gasAccountInfo?.account.balance || 0),
         }),
         disableDepositAction
           ? null
@@ -91,15 +91,14 @@ export const GasAccountTips: React.FC<{
     }
     return [null, null];
   }, [
-    // inShowMore,
     noCustomRPC,
     isWalletConnect,
+    gasAccountCost?.err_msg,
     gasAccountCost?.chain_not_support,
     gasAccountCost?.balance_is_enough,
-    gasAccountCost?.gas_account_cost?.total_cost,
-    gasAccountCost?.err_msg,
-    disableDepositAction,
     t,
+    gasAccountInfo?.account?.balance,
+    disableDepositAction,
   ]);
 
   useEffect(() => {
