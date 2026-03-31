@@ -12,7 +12,6 @@ import {
   validateFormikSchema,
 } from '@/utils/patch';
 import { CheckBoxRect } from '@/components2024/CheckBox';
-import TouchableText from '@/components/Touchable/TouchableText';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { useBiometrics } from '@/hooks/biometrics';
 import { Text } from '@/components/Typography';
@@ -256,32 +255,26 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
         <View style={styles.agreementCheckbox}>
           <CheckBoxRect checked={formik.values.checked} />
         </View>
-        <View style={styles.agreementTextWrapper}>
-          <Text style={styles.agreementText}>
-            {t('page.createPassword.agreeToTerms')}{' '}
-          </Text>
-          <TouchableText
+        <Text style={styles.agreementText}>
+          {t('page.createPassword.agreeToTerms')}{' '}
+          <Text
             style={styles.userAgreementTouchText}
-            touchableProps={{ style: styles.userAgreementTouchable }}
             onPress={evt => {
               evt.stopPropagation();
               viewTermsOfUse();
             }}>
             {t('page.createPassword.termOfUse')}
-          </TouchableText>
-          <Text style={styles.agreementText}>
-            {' ' + t('page.createPassword.and') + ' '}
-          </Text>
-          <TouchableText
+          </Text>{' '}
+          {t('page.createPassword.and')}{' '}
+          <Text
             style={styles.userAgreementTouchText}
-            touchableProps={{ style: styles.userAgreementTouchable }}
             onPress={evt => {
               evt.stopPropagation();
               viewPrivacyPolicy();
             }}>
             {t('page.createPassword.PrivacyPolicy')}
-          </TouchableText>
-        </View>
+          </Text>
+        </Text>
       </TouchableOpacity>
 
       <Button
@@ -348,15 +341,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: 24,
   },
   agreementCheckbox: {
     marginRight: 6,
-  },
-  agreementTextWrapper: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
   },
   agreementText: {
     fontSize: 14,
@@ -371,9 +359,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['brand-default'],
-  },
-  userAgreementTouchable: {
-    padding: 0,
   },
   spacer: {
     flex: 1,

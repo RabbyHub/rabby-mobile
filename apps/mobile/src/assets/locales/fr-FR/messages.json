@@ -3362,6 +3362,8 @@
     "ok": "OK",
     "Cancel": "Annuler",
     "Deleted": "supprimé",
+    "WalletCreated": "Wallet créé",
+    "WalletImported": "Wallet importé",
     "addButton": "Ajouter",
     "Balance": "Solde",
     "appName": "Rabby Wallet",

@@ -235,7 +235,7 @@ async function submitCreateWallet(
   // 7. Show success toast (will appear on Home page after navigation due to delay)
   toast.success(
     i18n.t('page.importSuccess.success', {
-      type: i18n.t('global.Created'),
+      type: i18n.t('global.WalletCreated'),
     }),
     {
       delay: 500,
@@ -348,7 +348,7 @@ async function submitImportSeedPhrase(
   // 9. Show success toast (will appear on Home page after navigation due to delay)
   toast.success(
     i18n.t('page.importSuccess.success', {
-      type: i18n.t('global.Imported'),
+      type: i18n.t('global.WalletImported'),
     }),
     {
       delay: 500,
