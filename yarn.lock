@@ -31752,7 +31752,7 @@ __metadata:
     lint-staged: ^15.2.0
     postcss: ^8.5.6
     react: 19.1.4
-    react-dom: ^19.1.1
+    react-dom: 19.1.4
     tailwindcss: ^4.1.14
     tinycolor2: ^1.6.0
     typescript: ~5.8.3
@@ -35515,6 +35515,17 @@ __metadata:
   bin:
     react-devtools: bin.js
   checksum: a9be872f22fa538062abcd9394127b1b5f453d47b570161918ccae03e9a94adfc736a2a4c1fbdd55ae8409abfa367403c1e1b8f571162a9c67fdcb64ceecedc3
+  languageName: node
+  linkType: hard
+
+"react-dom@npm:19.1.4":
+  version: 19.1.4
+  resolution: "react-dom@npm:19.1.4"
+  dependencies:
+    scheduler: ^0.26.0
+  peerDependencies:
+    react: ^19.1.4
+  checksum: 7b2c9d0bbea29cafc30f29c8061f90609fbc085cb17ddfcbec8e50cbf71bb80d4012d48b934ac622c884678545eb5bace37917f58c52bc50b228133ed6d0ea28
   languageName: node
   linkType: hard
 
