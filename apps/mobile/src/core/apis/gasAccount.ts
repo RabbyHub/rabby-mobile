@@ -24,8 +24,8 @@ const getGasAccountBridgeRawAmount = ({
   token: GasAccountBridgeToken;
   usdValue: number;
 }) => {
-  const fromTokenAmount = usdValue / token.price;
-  return new BigNumber(fromTokenAmount)
+  return new BigNumber(usdValue)
+    .div(token.price)
     .times(10 ** token.decimals)
     .toFixed(0, BigNumber.ROUND_DOWN);
 };

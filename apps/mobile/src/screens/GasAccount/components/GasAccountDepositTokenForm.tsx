@@ -483,7 +483,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
       return;
     }
 
-    debugger;
     Keyboard.dismiss();
     setLoading(true);
     try {

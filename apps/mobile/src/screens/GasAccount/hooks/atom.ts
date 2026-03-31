@@ -217,29 +217,33 @@ export const useGasAccountHistoryRefresh = () => {
   return { refreshId, refresh };
 };
 
+const cleanupGasAccountAfterDeletedAddress = async (address: string) => {
+  const restAddresses = await keyringService.getAllAddresses();
+  const gasAccount =
+    gasAccountService.getGasAccountData() as GasAccountServiceStore;
+  if (gasAccount?.account?.address) {
+    // check if there is another type address in wallet
+    const stillHasAddr = restAddresses.some(item => {
+      return (
+        isSameAddress(item.address, gasAccount.account!.address) &&
+        item.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
+      // if there is no another type address then reset signature
+      gasAccountService.setGasAccountSig();
+      eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
+    }
+  }
+};
+
 const syncDeleteGasAccount = async ({
   address,
   type,
   brandName: _brandName,
 }: KeyringEventAccount) => {
   if (type !== KEYRING_TYPE.WatchAddressKeyring) {
-    const restAddresses = await keyringService.getAllAddresses();
-    const gasAccount =
-      gasAccountService.getGasAccountData() as GasAccountServiceStore;
-    if (gasAccount?.account?.address) {
-      // check if there is another type address in wallet
-      const stillHasAddr = restAddresses.some(item => {
-        return (
-          isSameAddress(item.address, gasAccount.account!.address) &&
-          item.type !== KEYRING_TYPE.WatchAddressKeyring
-        );
-      });
-      if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
-        // if there is no another type address then reset signature
-        gasAccountService.setGasAccountSig();
-        eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
-      }
-    }
+    // cleanupGasAccountAfterDeletedAddress(address);
     const perpsAccount = await perpsService.getCurrentAccount();
     if (
       isSameAddress(perpsAccount?.address || '', address) &&
