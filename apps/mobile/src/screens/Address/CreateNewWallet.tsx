@@ -86,10 +86,10 @@ export default function CreateNewWalletScreen({ route }: ScreenProps) {
   // Convert route params to CreateWalletParams union type
   const rawParams = route.params;
   const params =
-    rawParams && 'seedPhrase' in rawParams
-      ? { seedPhrase: rawParams.seedPhrase }
-      : rawParams && 'privateKey' in rawParams
-      ? { privateKey: rawParams.privateKey }
+    rawParams && 'seedPhraseVaultId' in rawParams
+      ? { seedPhraseVaultId: rawParams.seedPhraseVaultId }
+      : rawParams && 'privateKeyVaultId' in rawParams
+      ? { privateKeyVaultId: rawParams.privateKeyVaultId }
       : undefined;
 
   // Use the polymorphic hook for all wallet creation logic
