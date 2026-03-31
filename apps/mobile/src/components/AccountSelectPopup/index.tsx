@@ -88,6 +88,9 @@ export const AccountSelectPopup = ({
         <Text style={styles.title}>{title}</Text>
         <BottomSheetFlatList
           data={accounts}
+          keyExtractor={item =>
+            `${item.address}-${item.type}-${item.brandName}`
+          }
           renderItem={item => {
             const account = item.item;
             const checked = checkedAccount
