@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -38,12 +38,6 @@ type ScreenProps = CompositeScreenProps<
   >,
   NativeStackScreenProps<RootStackParamsList>
 >;
-
-const DisMissKBWrapper = ({ children }: { children: React.ReactNode }) => (
-  <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-    {children}
-  </TouchableWithoutFeedback>
-);
 
 // Custom cubic-bezier from Figma: [0.42, 0, 0.58, 1]
 const customEase = Easing.bezier(0.42, 0, 0.58, 1);
@@ -185,66 +179,66 @@ export default function CreateNewWalletScreen({ route }: ScreenProps) {
   });
 
   return (
-    <DisMissKBWrapper>
-      <View style={styles.container}>
-        <View style={[styles.content, { marginTop: top }]}>
-          {/* Lottie Animation - always visible */}
-          <View style={styles.lottieContainer}>
-            <Lottie
-              source={AnimationCreateSuccess}
-              style={styles.lottie}
-              loop={false}
-              autoPlay
-            />
-          </View>
-
-          {/* Success Text - fades in */}
-          <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
-            <Text style={styles.successText}>
-              {t('page.newUserOnboarding.walletReady')}
-            </Text>
-          </Animated.View>
-
-          {/* Address Block - fades in + slides up after delay */}
-          <Animated.View
-            style={[
-              styles.addressWrapper,
-              styles.shadowContainer,
-              addressAnimatedStyle,
-            ]}>
-            {address && (
-              <AddressCard
-                address={address}
-                brandName={KEYRING_CLASS.MNEMONIC}
-                showBalance={isImportMode}
-              />
-            )}
-          </Animated.View>
-
-          {/* Password Form - fades in + slides up after 350ms */}
-          <Animated.View style={[styles.formContainer, formAnimatedStyle]}>
-            <PasswordForm
-              onSubmit={handleSubmit}
-              topTip={t('page.newUserOnboarding.setPasswordTip')}
-              loading={isSubmitting || isLoading}
-            />
-          </Animated.View>
-        </View>
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={[styles.scrollContent, { paddingTop: top }]}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}>
+      {/* Lottie Animation - always visible */}
+      <View style={styles.lottieContainer}>
+        <Lottie
+          source={AnimationCreateSuccess}
+          style={styles.lottie}
+          loop={false}
+          autoPlay
+        />
       </View>
-    </DisMissKBWrapper>
+
+      {/* Success Text - fades in */}
+      <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
+        <Text style={styles.successText}>
+          {t('page.newUserOnboarding.walletReady')}
+        </Text>
+      </Animated.View>
+
+      {/* Address Block - fades in + slides up after delay */}
+      <Animated.View
+        style={[
+          styles.addressWrapper,
+          styles.shadowContainer,
+          addressAnimatedStyle,
+        ]}>
+        {address && (
+          <AddressCard
+            address={address}
+            brandName={KEYRING_CLASS.MNEMONIC}
+            showBalance={isImportMode}
+          />
+        )}
+      </Animated.View>
+
+      {/* Password Form - fades in + slides up after 350ms */}
+      <Animated.View style={[styles.formContainer, formAnimatedStyle]}>
+        <PasswordForm
+          onSubmit={handleSubmit}
+          topTip={t('page.newUserOnboarding.setPasswordTip')}
+          loading={isSubmitting || isLoading}
+        />
+      </Animated.View>
+    </ScrollView>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
-    container: {
+    scrollView: {
       flex: 1,
       backgroundColor: colors2024['neutral-bg-1'],
     },
-    content: {
-      flex: 1,
+    scrollContent: {
       alignItems: 'center',
       paddingHorizontal: 24,
+      flexGrow: 1,
     },
     lottieContainer: {
       marginBottom: -32,
@@ -284,11 +278,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       // Shadow for Android
       elevation: 8,
     },
-    // Password form container - fills remaining space
+    // Password form container - fills remaining space if available
     formContainer: {
       marginTop: 42,
       width: '100%',
-      flex: 1,
+      flexGrow: 1,
     },
   };
 });
