@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { View, StyleProp, ViewStyle, ActivityIndicator } from 'react-native';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,13 +8,14 @@ import { formatNetworth } from '@/utils/math';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import balanceStore from '@/store/balance';
 
-// Balance component that handles its own data fetching
+// Balance component that handles its own data fetching with loading and error states
 interface BalanceProps {
   address: string;
 }
 
 const Balance: React.FC<BalanceProps> = ({ address }) => {
   const { styles } = useTheme2024({ getStyle });
+
   const balance = balanceStore(s => s.balanceMap[address.toLowerCase()]);
 
   // Fetch balance on mount if not available
@@ -25,23 +26,17 @@ const Balance: React.FC<BalanceProps> = ({ address }) => {
   }, [address, balance]);
 
   if (!balance) {
-    return null;
+    return (
+      <View style={styles.balanceLoadingContainer}>
+        <ActivityIndicator size="small" color={styles.balanceLoading.color} />
+      </View>
+    );
   }
 
   return (
     <Text style={styles.balanceText}>
       {formatNetworth(balance.totalBalance)}
     </Text>
-  );
-};
-
-// Suspense fallback for balance loading
-const BalanceFallback: React.FC = () => {
-  const { styles } = useTheme2024({ getStyle });
-  return (
-    <View style={styles.balanceLoadingContainer}>
-      <ActivityIndicator size="small" color={styles.balanceLoading.color} />
-    </View>
   );
 };
 
@@ -109,11 +104,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
             </Text>
           ) : null}
           <Text style={styles.addressText}>{displayAddress}</Text>
-          {showBalance && (
-            <Suspense fallback={<BalanceFallback />}>
-              <Balance address={address} />
-            </Suspense>
-          )}
+          {showBalance && <Balance address={address} />}
         </View>
       </View>
     </View>
