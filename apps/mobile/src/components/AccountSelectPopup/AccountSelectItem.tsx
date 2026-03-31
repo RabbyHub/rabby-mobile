@@ -84,7 +84,9 @@ export const AccountSelectItem = ({
         />
       </View>
       <View style={styles.main}>
-        <Text style={styles.aliasName}>{account.aliasName}</Text>
+        <Text style={styles.aliasName} numberOfLines={1}>
+          {account.aliasName}
+        </Text>
         <AddressViewer
           addressStyle={styles.address}
           address={account.address}
