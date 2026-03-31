@@ -995,7 +995,8 @@
       "swapped": "Đã trao đổi",
       "selectChainModalTitle": "Chọn Chuỗi",
       "results": "Kết quả",
-      "approve": "Phê duyệt"
+      "approve": "Phê duyệt",
+      "market-closed": "Thị trường chưa mở: Việc đặt lệnh không được hỗ trợ."
     },
     "bridge": {
       "for-available-quote": "để có báo giá khả dụng",
@@ -1056,7 +1057,7 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Biểu mẫu đã thay đổi",
-      "formChangedAmount": "Số tiền đã thay đổi, có thể do hệ thống bàn phím tự động điền mật khẩu. Vui lòng kiểm tra và nhập lại số tiền chính xác."
+      "formChangedAmount": "Số tiền đã thay đổi, có thể do hệ thống bàn phím tự động điền mật khẩu. Vui lòng xem lại và nhập lại số tiền chính xác."
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",
@@ -1704,6 +1705,9 @@
       "globalSearch": {
         "iosPlaceHolder": "Tìm kiếm Website/Token",
         "placeHolder": "Tìm kiếm Dapp/Token"
+      },
+      "tokenHeader": {
+        "tokenAndFdv": "Token/FDV"
       }
     },
     "sign": {
@@ -2493,7 +2497,9 @@
         "withdrawBtn": "Rút tiền",
         "learnBtn": "Tìm hiểu về Perps",
         "loginBtn": "Đăng nhập vào Trading Perps",
-        "loginDesc": "Đăng nhập bằng địa chỉ của bạn và gửi tiền để bắt đầu giao dịch perps"
+        "loginDesc": "Đăng nhập bằng địa chỉ của bạn và gửi tiền để bắt đầu giao dịch perps",
+        "addFunds": "Thêm Quỹ",
+        "learnMore": "Tìm Hiểu Thêm"
       },
       "PerpsGuidePopup": {
         "step5Title": "Giải chấp",
@@ -2558,7 +2564,11 @@
         "price": "Giá",
         "gotItBtn": "Tôi hiểu rồi",
         "perps": "Perps",
-        "sizeTips": "Giá trị hoặc số lượng tổng thể của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy."
+        "sizeTips": "Giá trị hoặc số lượng tổng thể của giao dịch của bạn, được xác định bởi ký quỹ và đòn bẩy.",
+        "feeHyperliquid": "Hyperliquid",
+        "feeRabby": "Rabby Wallet",
+        "feeTitle": "Phí",
+        "feeDesc": "Khi người dùng thực hiện giao dịch, cả <1>phí giao dịch</1> và <2>phí người xây dựng</2> đều được áp dụng."
       },
       "PerpsAutoCloseModal": {
         "profit": "Lợi nhuận",
@@ -2578,7 +2588,8 @@
         "directTag": "Gửi tiền trực tiếp",
         "swapBtn": "Hoán đổi",
         "goSwapDesc": "Chỉ USDC trên Arbitrum được hỗ trợ cho việc nạp thẳng. Vui lòng hoán đổi token hiện tại của bạn sang USDC trước khi nạp.",
-        "goBridgeDesc": "Chỉ USDC trên Arbitrum được hỗ trợ để gửi trực tiếp. Vui lòng chuyển token hiện tại của bạn thành USDC trên Arbitrum trước khi gửi."
+        "goBridgeDesc": "Chỉ USDC trên Arbitrum được hỗ trợ để gửi trực tiếp. Vui lòng chuyển token hiện tại của bạn thành USDC trên Arbitrum trước khi gửi.",
+        "directDepositFast": "Nhanh, 0 Slippage"
       },
       "history": {
         "status": {
@@ -2600,7 +2611,10 @@
         "closeShort": "Đóng Short"
       },
       "PerpsSelectTokenPopup": {
-        "title": "Chọn Token để Gửi"
+        "title": "Chọn Token để Gửi",
+        "token": "Token",
+        "balance": "Số dư",
+        "noTokens": "Không có token"
       },
       "PerpsAccountLogoutPopup": {
         "title": "Đăng xuất Địa chỉ Hiện tại",
@@ -2702,7 +2716,8 @@
         "settings": "Cài đặt",
         "unrealizedPnl": "Lợi nhuận chưa thực hiện",
         "marginMode": "Chế độ ký quỹ",
-        "fundingTipsBold": "Điều này cho thấy tổng số tiền tài trợ của bạn đã được thanh toán kể từ khi vị trí được mở. Các giá trị <bold>Xanh (dương)</bold> có nghĩa là bạn đã kiếm được từ các nhà giao dịch khác, trong khi các giá trị <bold>Đỏ (âm)</bold> là chi phí tài trợ mà bạn đã trả cho họ."
+        "fundingTipsBold": "Điều này cho thấy tổng số tiền tài trợ của bạn đã được thanh toán kể từ khi vị trí được mở. Các giá trị <bold>Xanh (dương)</bold> có nghĩa là bạn đã kiếm được từ các nhà giao dịch khác, trong khi các giá trị <bold>Đỏ (âm)</bold> là chi phí tài trợ mà bạn đã trả cho họ.",
+        "crossTips": "Trong chế độ Cross Margin, giá thanh lý cho một vị trí đơn lẻ chỉ là một ước tính để tham khảo."
       },
       "PerpsInfo": {
         "title": "Thông tin",
@@ -2833,6 +2848,9 @@
         "cannotChangeMarginMode": "Không thể thay đổi Chế độ Margin khi có các vị thế mở.",
         "isolatedDesc": "Mỗi vị trí sử dụng margin riêng của nó. Lỗ được giới hạn trong vị trí đó, nhưng nó có thể bị thanh lý dễ dàng hơn.",
         "crossDesc": "Tất cả các vị trí đều chia sẻ cùng một ký quỹ. Điều này giảm thiểu khả năng một vị trí duy nhất bị thanh lý, nhưng tất cả các quỹ ký quỹ chéo có thể bị mất trong những biến động thị trường cực đoan."
+      },
+      "guideEntry": {
+        "gotIt": "Được rồi"
       }
     },
     "devUIBuiltInPages": {
@@ -3154,14 +3172,17 @@
     },
     "market": {
       "tokenHeader": {
-        "name": "Tên"
+        "name": "Tên",
+        "tokenAndName": "Token/Tên"
       },
       "tabs": {
         "watchlist": "Danh sách theo dõi",
         "commodities": "Hàng hóa",
         "memecoin": "Memecoin",
         "stock": "Cổ phiếu"
-      }
+      },
+      "marketNotOpenTooltip": "Thị trường chưa mở",
+      "noOpen": "Không mở"
     }
   },
   "component": {
