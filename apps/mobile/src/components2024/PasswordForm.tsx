@@ -159,10 +159,10 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
     [formik.values, yupSchema],
   );
 
-  const shouldDisabled =
-    !formik.values.checked ||
-    !!getFormikErrorsCount(validationErrors) ||
-    disabled;
+  const isFormValueValid =
+    formik.values.checked && !getFormikErrorsCount(validationErrors);
+
+  const shouldDisabled = !isFormValueValid || disabled;
 
   return (
     <View style={styles.container}>
@@ -216,7 +216,7 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
             formik.values.confirmPassword && formik.errors.confirmPassword,
           )}
           tipText={
-            formik.values.confirmPassword
+            formik.values.confirmPassword && !formik.errors.password
               ? formik.errors.confirmPassword ||
                 t('page.nextComponent.createNewAddress.confirmPasswordTips')
               : undefined
