@@ -3577,15 +3577,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bgd-labs/aave-address-book@npm:4.36.0":
-  version: 4.36.0
-  resolution: "@bgd-labs/aave-address-book@npm:4.36.0"
-  peerDependencies:
-    viem: ^2.23.5
-  checksum: 53dc1bcbeeb34f28b9db0f18e911b8f795d92ea7ba230bfaca71f18da20da8b3ab257cd3ac945adaf6ae1669fa33b39bd466f39570ee9a3a71e74703ea117544
-  languageName: node
-  linkType: hard
-
 "@cnakazawa/watch@npm:^1.0.3":
   version: 1.0.4
   resolution: "@cnakazawa/watch@npm:1.0.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40cnakazawa%2Fwatch%2F-%2Fwatch-1.0.4.tgz"
@@ -35075,7 +35066,6 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
-    "@bgd-labs/aave-address-book": 4.36.0
     "@craftzdog/react-native-buffer": ^6.0.5
     "@debank/common": 0.3.60
     "@debank/festats": 1.0.4
