@@ -6,7 +6,6 @@ import {
   AaveV3BNB,
   AaveV3Celo,
   AaveV3Ethereum,
-  AaveV3EthereumEtherFi,
   AaveV3EthereumLido,
   AaveV3Gnosis,
   AaveV3InkWhitelabel,
@@ -22,6 +21,7 @@ import {
   AaveV3Mantle,
   AaveV3XLayer,
   GhoMantle,
+  AaveV3MegaEth,
 } from '@aave-dao/aave-address-book';
 import { ReactNode } from 'react';
 
@@ -91,6 +91,7 @@ export enum CustomMarket {
   proto_ink_v3 = 'proto_ink_v3',
   proto_xlayer_v3 = 'proto_xlayer_v3',
   proto_mantle_v3 = 'proto_mantle_v3',
+  proto_megaeth_v3 = 'proto_megaeth_v3',
 }
 
 export const marketsData: {
@@ -405,6 +406,23 @@ export const marketsData: {
       // COLLECTOR: AaveV3InkWhitelabel.COLLECTOR,
     },
   },
+  [CustomMarket.proto_megaeth_v3]: {
+    marketTitle: 'MegaETH',
+    market: CustomMarket.proto_megaeth_v3,
+    chainId: 4326 as ChainId,
+    v3: true,
+    logo: '/icons/networks/megaeth.svg',
+    addresses: {
+      LENDING_POOL_ADDRESS_PROVIDER: AaveV3MegaEth.POOL_ADDRESSES_PROVIDER,
+      LENDING_POOL: AaveV3MegaEth.POOL,
+      WETH_GATEWAY: AaveV3MegaEth.WETH_GATEWAY,
+      WALLET_BALANCE_PROVIDER: AaveV3MegaEth.WALLET_BALANCE_PROVIDER,
+      UI_POOL_DATA_PROVIDER: AaveV3MegaEth.UI_POOL_DATA_PROVIDER,
+      UI_INCENTIVE_DATA_PROVIDER: AaveV3MegaEth.UI_INCENTIVE_DATA_PROVIDER,
+      COLLECTOR: AaveV3MegaEth.COLLECTOR,
+      L2_ENCODER: AaveV3MegaEth.L2_ENCODER,
+    },
+  },
   [CustomMarket.proto_xlayer_v3]: {
     marketTitle: 'X Layer',
     market: CustomMarket.proto_xlayer_v3,
@@ -581,11 +599,6 @@ export const getMarketLogo = (market: CustomMarket) => {
   if (market === CustomMarket.proto_lido_v3) {
     return {
       uri: 'https://static-assets.rabby.io/files/a6dc7573-a15d-4cce-9993-ee9e07204f51.png',
-    };
-  }
-  if (market === CustomMarket.proto_etherfi_v3) {
-    return {
-      uri: 'https://static.debank.com/image/hyper_liquid/logo_url/ETHFI/7bd4fb9d6be05e869a6ffb0f1f5422d4.png',
     };
   }
   if (market === CustomMarket.proto_horizon_v3) {
