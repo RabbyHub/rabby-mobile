@@ -16,7 +16,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   GetDevUriFn,
-  useDevServerHostAvailable,
+  useDevServerHostAvailableForLocalWebView,
 } from '@/core/utils/devServerSettings';
 import {
   FALLBACK_HTML,
@@ -86,7 +86,7 @@ export const LocalWebView = React.forwardRef<LocalWebView, LocalWebViewProps>(
       webviewSize || {};
 
     const { devServerMobileLocalPagesAvailable, devServerHost, devUri } =
-      useDevServerHostAvailable({
+      useDevServerHostAvailableForLocalWebView({
         autoDetectHost: true,
         devUri: useCallback<GetDevUriFn>(
           ctx => {
