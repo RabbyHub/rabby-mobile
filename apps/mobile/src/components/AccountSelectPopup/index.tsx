@@ -109,7 +109,9 @@ export const AccountSelectPopup = ({
           ListEmptyComponent={
             <View style={styles.empty}>
               <RcIconEmptyCC color={themeColors['neutral-foot']} />
-              <Text style={styles.emptyText}>No available address</Text>
+              <Text style={styles.emptyText}>
+                {t('component.AccountSelectPopup.noAvailableAddress')}
+              </Text>
             </View>
           }
         />
