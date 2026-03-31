@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View, Pressable } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -15,7 +21,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildRepayTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -172,6 +181,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const afterHF = useMemo(() => {
     if (!amount || isZeroAmount(amount)) {
@@ -576,6 +586,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   const handleChangeAmount = useCallback(
     (value: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) return;
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 还清所有债务
@@ -712,6 +723,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       <View style={styles.buttonContainer}>
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            ref={directSignBtnRef}
             type="aave"
             iconColor={
               isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
