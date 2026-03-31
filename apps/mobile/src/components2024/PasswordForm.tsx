@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import * as Yup from 'yup';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
 import { Button } from '@/components2024/Button';
-import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
+import {
+  getFormikErrorsCount,
+  useAppFormik,
+  validateFormikSchema,
+} from '@/utils/patch';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
@@ -149,9 +153,15 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
     formik.handleSubmit();
   }, [formik]);
 
+  // Memoize validation to avoid calling validateFormValues on every render
+  const validationErrors = useMemo(
+    () => validateFormikSchema(formik.values, yupSchema),
+    [formik.values, yupSchema],
+  );
+
   const shouldDisabled =
     !formik.values.checked ||
-    !!getFormikErrorsCount(formik.validateFormValues()) ||
+    !!getFormikErrorsCount(validationErrors) ||
     disabled;
 
   return (
