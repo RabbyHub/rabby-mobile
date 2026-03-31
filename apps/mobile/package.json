@@ -51,7 +51,8 @@
     "@gorhom/bottom-sheet": "patch:@gorhom/bottom-sheet@npm:5.2.8#../../.yarn/patches/@gorhom-bottom-sheet-npm-5.2.8-1ad4b8f529.patch"
   },
   "dependencies": {
-    "@aave/contract-helpers": "1.36.1",
+    "@aave-dao/aave-address-book": "4.47.14",
+    "@aave/contract-helpers": "1.37.1",
     "@aave/math-utils": "1.36.1",
     "@bgd-labs/aave-address-book": "4.36.0",
     "@craftzdog/react-native-buffer": "^6.0.5",
