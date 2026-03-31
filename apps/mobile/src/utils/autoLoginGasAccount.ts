@@ -39,11 +39,15 @@ async function findAccountsWithBalance<T extends KeyringAccount>(
 ) {
   if (!accounts.length) return [] as T[];
 
-  const results = await Promise.all(
+  const resultsArr = await Promise.allSettled(
     accounts.map(account =>
       openapi.getGasAccountInfoV2({ id: account.address }).catch(() => null),
     ),
   );
+
+  const results = resultsArr
+    .filter(e => e.status === 'fulfilled')
+    .map(e => e.value);
 
   const matched: T[] = [];
   for (let i = 0; i < results.length; i++) {
