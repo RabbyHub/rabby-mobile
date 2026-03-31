@@ -36,6 +36,9 @@ import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import * as SecretVault from '@/core/utils/secretVault';
 
+/** Toast position at the top of screen */
+const TOAST_POSITION_TOP = 30;
+
 type TabType = 'seedPhrase' | 'privateKey';
 
 type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'StackAddress'>;
@@ -83,7 +86,10 @@ export const ImportSecret = () => {
         setMnemonics(text);
         isNewlyInputTextSameWithContentFromClipboard(text).then(isSame => {
           if (isSame) {
-            onPastedSensitiveData({ type: 'seedPhrase' });
+            onPastedSensitiveData({
+              type: 'seedPhrase',
+              toastOptions: { position: TOAST_POSITION_TOP },
+            });
           }
         });
       } else {
@@ -91,7 +97,10 @@ export const ImportSecret = () => {
         setPrivateKey(text);
         isNewlyInputTextSameWithContentFromClipboard(text).then(isSame => {
           if (isSame) {
-            onPastedSensitiveData({ type: 'privateKey' });
+            onPastedSensitiveData({
+              type: 'privateKey',
+              toastOptions: { position: TOAST_POSITION_TOP },
+            });
           }
         });
       }
@@ -105,11 +114,17 @@ export const ImportSecret = () => {
       if (activeTab === 'seedPhrase') {
         setMnemonicError(undefined);
         setMnemonics(text);
-        onPastedSensitiveData({ type: 'seedPhrase' });
+        onPastedSensitiveData({
+          type: 'seedPhrase',
+          toastOptions: { position: TOAST_POSITION_TOP },
+        });
       } else {
         setPrivateKeyError(undefined);
         setPrivateKey(text);
-        onPastedSensitiveData({ type: 'privateKey' });
+        onPastedSensitiveData({
+          type: 'privateKey',
+          toastOptions: { position: TOAST_POSITION_TOP },
+        });
       }
     },
     [activeTab],
