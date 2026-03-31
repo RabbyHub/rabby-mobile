@@ -193,10 +193,6 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
             ? t('page.gasAccount.depositPayPopup.titleAndroid')
             : t('page.gasAccount.depositPayPopup.titleApple')}
         </Text>
-        <Text style={styles.description}>
-          {t('page.gasAccount.depositPayPopup.balance')}
-          {formatUsdValue(gasAccountInfo?.account?.balance || 0)}
-        </Text>
 
         <Text style={styles.tokenLabel}>
           {t('page.gasAccount.depositPopup.amount')}
@@ -214,6 +210,21 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
             </CustomTouchableOpacity>
           ))}
         </View>
+        {minDepositPrice ? (
+          <Text style={styles.tips}>
+            {t('page.gasAccount.depositPayPopup.topUpPayTips', {
+              topUpUsd: formatUsdValue(minDepositPrice),
+              balance: formatUsdValue(
+                selectedProduct?.price
+                  ? new BigNumber(selectedProduct?.price)
+                      .plus(gasAccountInfo?.account?.balance || 0)
+                      .minus(minDepositPrice)
+                      .toFixed()
+                  : gasAccountInfo?.account?.balance || 0,
+              ),
+            })}
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.btnContainer}>
@@ -238,15 +249,16 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
                     {t('page.gasAccount.depositPopup.pay')}
                   </Text>
                 )}
+                <Text style={styles.btnTitle}>${selectedProduct?.total}</Text>
               </View>
-              <Text style={styles.btnDesc}>
-                {Platform.OS === 'ios'
-                  ? t('page.gasAccount.depositPopup.applePayFeeDesc1')
-                  : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
-              </Text>
             </View>
           }
         />
+        <Text style={[styles.tips, styles.feeTips]}>
+          {Platform.OS === 'ios'
+            ? t('page.gasAccount.depositPopup.applePayFeeDesc1')
+            : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
+        </Text>
       </View>
     </KeyboardAwareScrollView>
   );
@@ -267,19 +279,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontStyle: 'normal',
     fontWeight: '800',
     color: colors2024['neutral-title-1'],
-    marginBottom: 12,
+    marginBottom: 24,
     textAlign: 'center',
   },
-  description: {
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    color: colors2024['neutral-secondary'],
-    marginBottom: 18,
-  },
+
   amountSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -360,14 +363,18 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-InvertHighlight'],
   },
-
-  btnDesc: {
+  tips: {
+    marginTop: 2,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontStyle: 'normal',
     fontWeight: '400',
-    color: colors2024['neutral-InvertHighlight'],
-    opacity: 0.6,
+    color: colors2024['neutral-secondary'],
+  },
+
+  feeTips: {
+    marginTop: 8,
+    textAlign: 'center',
   },
 }));

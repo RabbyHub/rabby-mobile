@@ -498,7 +498,7 @@
         "loginFirst": "Please log in to GasAccount first",
         "login": "Log in",
         "deposit": "Deposit",
-        "notEnough": "Not enough gas.Deposit gas: ${{usd}}"
+        "notEnough": "Not enough gas. Gas Balance: {{usd}}"
       },
       "beginSigning": "Start Signing",
       "ledgerSign": "Sign",
@@ -1948,7 +1948,8 @@
         "balance": "Current GasAccount Balance: ",
         "depositFailed": "Deposit Failed",
         "depositCanceled": "Deposit Canceled",
-        "titleApple": "Buy in App Store"
+        "titleApple": "Buy in App Store",
+        "topUpPayTips": "Gas required: {{topUpUsd}}, Gas remaining: {{balance}}"
       },
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",
@@ -1958,7 +1959,8 @@
         "buyWith": "Buy with",
         "buyWithDesc": "30% fee, no withdrawals",
         "buyWithApple": "Buy in App Store",
-        "insufficientTokenBalance": "Insufficient Token Balance"
+        "insufficientTokenBalance": "Insufficient Token Balance",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "address": "Address",

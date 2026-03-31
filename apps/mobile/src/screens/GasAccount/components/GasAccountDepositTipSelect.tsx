@@ -29,7 +29,7 @@ export const GasAccountDepositTipSelect: React.FC<{
       contentContainerStyle={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
-          {t('page.gasAccount.depositSelectPopup.title')}
+          {t('page.gasAccount.depositPopup.gasDepositTitle')}
         </Text>
         <Text style={styles.description}>
           {t('page.gasAccount.depositSelectPopup.desc')}

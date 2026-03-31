@@ -468,8 +468,7 @@
         "chainNotSupported": "Bu zincir GasAccount tarafından desteklenmiyor.",
         "useGasAccount": "GasAccount'u kullanın",
         "WalletConnectTips": "WalletConnect, GasAccount tarafından desteklenmiyor.",
-        "loginFirst": "Lütfen önce GasAccount'a giriş yapın.",
-        "notEnough": "Yeterli gaz yok. Gaz yatır: ${{usd}}"
+        "loginFirst": "Lütfen önce GasAccount'a giriş yapın."
       },
       "qrcode": {
         "txFailed": "Oluşturma başarısız oldu",

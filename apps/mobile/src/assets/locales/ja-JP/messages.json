@@ -617,8 +617,7 @@
         "WalletConnectTips": "GasAccountではWalletConnectはサポートされていません。",
         "loginFirst": "最初にGasAccountにログインしてください。",
         "customRPC": "カスタムRPCを使用する場合はサポートされていません。",
-        "chainNotSupported": "このチェーンはGasAccountにサポートされていません。",
-        "notEnough": "ガスが不足しています。ガスを入金してください: ${{usd}}"
+        "chainNotSupported": "このチェーンはGasAccountにサポートされていません。"
       },
       "gasless": {
         "notEnough": "Gas残高が不足しています",

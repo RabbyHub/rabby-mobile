@@ -468,8 +468,7 @@
         "chainNotSupported": "Rantai ini tidak didukung oleh GasAccount",
         "deposit": "Setor",
         "WalletConnectTips": "WalletConnect tidak didukung oleh GasAccount",
-        "loginFirst": "Silakan login ke GasAccount terlebih dahulu",
-        "notEnough": "Tidak cukup gas. Setor gas: ${{usd}}"
+        "loginFirst": "Silakan login ke GasAccount terlebih dahulu"
       },
       "qrcode": {
         "sigCompleted": "Transaksi dibuat",

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SwapModal } from '@/screens/Swap/components/Modal';
@@ -11,10 +11,10 @@ import IconGasTokenActive from '@/assets2024/icons/gas-account/gas-token-active.
 import IconGasAccountActive from '@/assets2024/icons/gas-account/gas-account-active.svg';
 import IconGasCustomRightArrowCC from '@/assets2024/icons/gas-account/right-arrow-cc.svg';
 import IconGasLevelChecked from '@/assets2024/icons/gas-account/check.svg';
-
 import BigNumber from 'bignumber.js';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { formatGasHeaderUsdValue } from '@/utils/number';
+import { getAnchoredPopoverPosition } from '@/utils/anchoredPopover';
 import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 import type { SignatureFlowState } from '@/components2024/MiniSignV2';
 import type { MiniSignGasPanelInfo } from '@/components2024/MiniSignV2/state/useMiniSignGasPanel';
@@ -34,21 +34,15 @@ const GasMethod = (props: {
     <TouchableOpacity
       style={[
         styles.gasHeaderItem,
-        {
-          backgroundColor: active ? colors2024['brand-default'] : 'transparent',
-        },
+        active ? styles.gasHeaderItemActive : styles.gasHeaderItemInactive,
       ]}
       onPress={onChange}>
       <ActiveComponent
-        style={{
-          display: active ? 'flex' : 'none',
-        }}
+        style={active ? styles.iconVisible : styles.iconHidden}
       />
       <BlurComponent
         color={colors2024['neutral-foot']}
-        style={{
-          display: active ? 'none' : 'flex',
-        }}
+        style={active ? styles.iconHidden : styles.iconVisible}
       />
       <Text style={active ? styles.activeText : styles.inactiveText}>
         {title}
@@ -78,10 +72,41 @@ export default function ShowMoreGasSelectModal({
 }) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-
-  const { height, width } = useWindowDimensions();
-
   const fixedMode = useMiniSignFixedMode(chainId);
+  const overlayRef = React.useRef<View>(null);
+  const [overlayRect, setOverlayRect] = React.useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+  const [contentSize, setContentSize] = React.useState({
+    width: 0,
+    height: 0,
+  });
+
+  const measureOverlay = React.useCallback(() => {
+    requestAnimationFrame(() => {
+      overlayRef.current?.measureInWindow((x, y, width, height) => {
+        setOverlayRect({ x, y, width, height });
+      });
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    measureOverlay();
+  }, [
+    layout.height,
+    layout.width,
+    layout.x,
+    layout.y,
+    measureOverlay,
+    visible,
+  ]);
 
   const calcGasAccountUsd = useCallback(n => {
     const v = Number(n);
@@ -90,8 +115,6 @@ export default function ShowMoreGasSelectModal({
     }
     return formatGasHeaderUsdValue(n || '0');
   }, []);
-
-  // const hasCustomRpc = !ctx?.noCustomRPC;
 
   const {
     externalPanelSelection,
@@ -108,7 +131,28 @@ export default function ShowMoreGasSelectModal({
     gasAccountErrorMsg?.toLowerCase() !==
       GAS_ACCOUNT_INSUFFICIENT_TIP.toLowerCase();
 
-  if (!ctx?.txsCalc?.length) return null;
+  const position = React.useMemo(() => {
+    if (
+      !layout.width ||
+      !layout.height ||
+      !overlayRect.width ||
+      !overlayRect.height ||
+      !contentSize.width ||
+      !contentSize.height
+    ) {
+      return null;
+    }
+
+    return getAnchoredPopoverPosition({
+      anchorRect: layout,
+      overlayRect,
+      contentSize,
+    });
+  }, [contentSize, layout, overlayRect]);
+
+  if (!ctx?.txsCalc?.length) {
+    return null;
+  }
 
   return (
     <SwapModal
@@ -117,136 +161,143 @@ export default function ShowMoreGasSelectModal({
       overlayStyle={styles.overlay}
       overlayClose>
       <View
-        style={[
-          styles.container,
-          {
-            position: 'absolute',
-            right: width - (layout.x + layout.width),
-            bottom: height - layout.y + 10,
-          },
-        ]}>
-        <View style={styles.header}>
-          <GasMethod
-            active={ctx.gasMethod === 'native'}
-            onChange={() => onChangeGasMethod('native')}
-            ActiveComponent={IconGasTokenActive}
-            BlurComponent={IconGasTokenCC}
-            title={'Use Gas token'}
-          />
+        ref={overlayRef}
+        pointerEvents="box-none"
+        style={styles.overlayContent}
+        onLayout={measureOverlay}>
+        <View
+          onLayout={event => {
+            const { width, height } = event.nativeEvent.layout;
+            setContentSize({ width, height });
+          }}
+          style={[
+            styles.container,
+            styles.anchoredContainer,
+            position
+              ? {
+                  left: position.left,
+                  top: position.top,
+                }
+              : styles.hiddenUntilMeasured,
+          ]}>
+          <View style={styles.header}>
+            <GasMethod
+              active={ctx.gasMethod === 'native'}
+              onChange={() => onChangeGasMethod('native')}
+              ActiveComponent={IconGasTokenActive}
+              BlurComponent={IconGasTokenCC}
+              title={'Use Gas token'}
+            />
+            <GasMethod
+              active={ctx.gasMethod === 'gasAccount'}
+              onChange={() => onChangeGasMethod('gasAccount')}
+              ActiveComponent={IconGasAccountActive}
+              BlurComponent={IconGasAccountCC}
+              title={'Use Gasaccount'}
+            />
+          </View>
+          <View>
+            {ctx.gasList?.map(gas => {
+              const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
+              const levelTitle = t(getGasLevelI18nKey(gas.level));
+              const isActive = ctx.selectedGas?.level === gas.level;
+              const isCustom = gas.level === 'custom';
+              let costUsd =
+                ctx.gasMethod === 'native'
+                  ? gasUsdList?.[gas.level]
+                  : gasAccountIsNotEnough?.[gas.level]?.[1];
 
-          <GasMethod
-            active={ctx.gasMethod === 'gasAccount'}
-            onChange={() => onChangeGasMethod('gasAccount')}
-            ActiveComponent={IconGasAccountActive}
-            BlurComponent={IconGasAccountCC}
-            title={'Use Gasaccount'}
-          />
-        </View>
-        <View>
-          {ctx?.gasList?.map(gas => {
-            const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
-            const levelTitle = t(getGasLevelI18nKey(gas.level));
-            const isActive = ctx.selectedGas?.level === gas.level;
-            const isCustom = gas.level === 'custom';
-            let costUsd =
-              ctx.gasMethod === 'native'
-                ? gasUsdList?.[gas.level]
-                : gasAccountIsNotEnough?.[gas.level]?.[1];
+              const isNotEnough =
+                ctx.gasMethod === 'native'
+                  ? gasIsNotEnough?.[gas.level]
+                  : gasAccountIsNotEnough?.[gas.level]?.[0];
 
-            const isNotEnough =
-              ctx.gasMethod === 'native'
-                ? gasIsNotEnough?.[gas.level]
-                : gasAccountIsNotEnough?.[gas.level]?.[0];
+              const errorOnGasAccount =
+                ctx.gasMethod === 'gasAccount' && !!gasAccountError;
 
-            const isGasAccountLoading =
-              !isActive &&
-              ctx.gasMethod === 'gasAccount' &&
-              (gasAccountIsNotEnough?.[gas.level]?.[1] === '' ||
-                gasAccountIsNotEnough?.[gas.level]?.[1] === 0);
+              costUsd = isActive
+                ? ctx.gasMethod === 'gasAccount'
+                  ? calcGasAccountUsd(
+                      (gasAccountCost?.estimate_tx_cost || 0) +
+                        (gasAccountCost?.gas_cost || 0),
+                    )
+                  : gasCostUsdStr
+                : costUsd;
 
-            const errorOnGasAccount =
-              ctx.gasMethod === 'gasAccount' && !!gasAccountError;
-
-            costUsd = isActive
-              ? ctx.gasMethod === 'gasAccount'
-                ? calcGasAccountUsd(
-                    (gasAccountCost?.estimate_tx_cost || 0) +
-                      (gasAccountCost?.gas_cost || 0),
-                  )
-                : gasCostUsdStr
-              : costUsd;
-
-            return (
-              <TouchableOpacity
-                key={gas.level}
-                style={[
-                  styles.gasLevel,
-                  !isActive && {
-                    borderColor: 'transparent',
-                    backgroundColor: 'transparent',
-                  },
-                ]}
-                onPress={() => {
-                  externalPanelSelection?.(gas);
-                  if (gas.level === 'custom') {
-                    handleClickEdit?.();
-                  }
-                  onCancel();
-                }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={styles.level}>{levelTitle}</Text>
-                  {isCustom && fixedMode ? (
-                    <Text style={styles.fixedMode}>Fixed mode</Text>
-                  ) : null}
-                  {!isCustom && (
-                    <Text style={styles.gwei}> ({gwei} Gwei) </Text>
-                  )}
-                  {isActive && <IconGasLevelChecked />}
-                </View>
-
-                {isCustom ? (
-                  <>
-                    {isActive ? (
-                      <Text
-                        style={[
-                          styles.usd,
-                          {
-                            marginLeft: 'auto',
-                          },
-                          (isNotEnough || errorOnGasAccount) && {
-                            color: colors2024['red-default'],
-                          },
-                        ]}>
-                        {costUsd}
-                      </Text>
+              return (
+                <TouchableOpacity
+                  key={gas.level}
+                  style={[
+                    styles.gasLevel,
+                    !isActive && styles.gasLevelInactive,
+                  ]}
+                  onPress={() => {
+                    externalPanelSelection?.(gas);
+                    if (gas.level === 'custom') {
+                      handleClickEdit?.();
+                    }
+                    onCancel();
+                  }}>
+                  <View style={styles.levelRow}>
+                    <Text style={styles.level}>{levelTitle}</Text>
+                    {isCustom && fixedMode ? (
+                      <Text style={styles.fixedMode}>Fixed mode</Text>
                     ) : null}
-                    <IconGasCustomRightArrowCC
-                      color={colors2024['neutral-foot']}
-                    />
-                  </>
-                ) : (
-                  <Text
-                    style={[
-                      styles.usd,
-                      (isNotEnough || errorOnGasAccount) && {
-                        color: colors2024['red-default'],
-                      },
-                    ]}>
-                    {costUsd}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            );
-          })}
+                    {!isCustom && (
+                      <Text style={styles.gwei}> ({gwei} Gwei) </Text>
+                    )}
+                    {isActive && <IconGasLevelChecked />}
+                  </View>
+
+                  {isCustom ? (
+                    <>
+                      {isActive ? (
+                        <Text
+                          style={[
+                            styles.usd,
+                            styles.customActiveUsd,
+                            (isNotEnough || errorOnGasAccount) && {
+                              color: colors2024['red-default'],
+                            },
+                          ]}>
+                          {costUsd}
+                        </Text>
+                      ) : null}
+                      <IconGasCustomRightArrowCC
+                        color={colors2024['neutral-foot']}
+                      />
+                    </>
+                  ) : (
+                    <Text
+                      style={[
+                        styles.usd,
+                        (isNotEnough || errorOnGasAccount) && {
+                          color: colors2024['red-default'],
+                        },
+                      ]}>
+                      {costUsd}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       </View>
     </SwapModal>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   overlay: {
     backgroundColor: 'transparent',
+  },
+  overlayContent: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   gasHeaderItem: {
     flexDirection: 'row',
@@ -254,12 +305,22 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
-    // backgroundColor: active ? colors2024['brand-default'] : 'transparent',
     paddingVertical: 2,
     paddingHorizontal: 8,
     gap: 2,
   },
-
+  gasHeaderItemActive: {
+    backgroundColor: colors2024['brand-default'],
+  },
+  gasHeaderItemInactive: {
+    backgroundColor: 'transparent',
+  },
+  iconVisible: {
+    display: 'flex',
+  },
+  iconHidden: {
+    display: 'none',
+  },
   inactiveText: {
     color: colors2024['neutral-foot'],
     fontSize: 12,
@@ -274,7 +335,6 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '400',
     lineHeight: 16,
   },
-
   container: {
     padding: 12,
     paddingBottom: 4,
@@ -283,14 +343,18 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
-    // box-shadow: 2px 4px 25.4px 15px rgba(0, 0, 0, 0.03);
     shadowColor: 'rgba(0, 0, 0, 0.13)',
     shadowOpacity: 1,
     shadowRadius: 25.4,
     shadowOffset: { width: 2, height: 4 },
     elevation: 25.4,
   },
-
+  anchoredContainer: {
+    position: 'absolute',
+  },
+  hiddenUntilMeasured: {
+    opacity: 0,
+  },
   header: {
     padding: 2,
     borderRadius: 6,
@@ -303,7 +367,6 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     marginBottom: 16,
   },
   gasLevel: {
-    display: 'flex',
     flexDirection: 'row',
     paddingVertical: 14,
     paddingHorizontal: 12,
@@ -315,8 +378,15 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderColor: colors2024['brand-default'],
     backgroundColor: colors2024['brand-light-1'],
   },
+  gasLevelInactive: {
+    borderColor: 'transparent',
+    backgroundColor: 'transparent',
+  },
+  levelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   fixedMode: {
-    // padding: '1 4',
     color: colors2024['brand-default'],
     paddingVertical: 1,
     paddingHorizontal: 4,
@@ -353,5 +423,8 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 16,
+  },
+  customActiveUsd: {
+    marginLeft: 'auto',
   },
 }));

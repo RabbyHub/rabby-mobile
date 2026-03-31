@@ -871,8 +871,7 @@
         "useGasAccount": "Usar GasAccount",
         "WalletConnectTips": "GasAccount no es compatible con WalletConnect.",
         "customRPC": "No compatible con el uso de RPC personalizado",
-        "login": "Iniciar sesión",
-        "notEnough": "No hay suficiente gas. Depositar gas: ${{usd}}"
+        "login": "Iniciar sesión"
       },
       "processRiskAlert": "Por favor, procesa la alerta antes de firmar",
       "gasless": {

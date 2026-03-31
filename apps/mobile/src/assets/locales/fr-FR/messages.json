@@ -605,8 +605,7 @@
         "customRPC": "Non pris en charge lors de l'utilisation de RPC personnalisé",
         "login": "Se connecter",
         "chainNotSupported": "Cette chaîne n'est pas prise en charge par GasAccount.",
-        "WalletConnectTips": "GasAccount ne prend pas en charge WalletConnect.",
-        "notEnough": "Pas assez de gas. Déposez du gas : ${{usd}}"
+        "WalletConnectTips": "GasAccount ne prend pas en charge WalletConnect."
       },
       "cancelAll": "Annuler toutes les {{count}} demandes de Dapp",
       "ledger": {

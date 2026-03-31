@@ -1051,8 +1051,7 @@
         "WalletConnectTips": "GasAccount não suporta WalletConnect",
         "chainNotSupported": "Esta cadeia não é suportada pelo GasAccount",
         "loginFirst": "Por favor, inicie sessão no GasAccount primeiro.",
-        "customRPC": "Não é suportado ao utilizar RPC personalizado",
-        "notEnough": "Não há gás suficiente. Depósito de gás: ${{usd}}"
+        "customRPC": "Não é suportado ao utilizar RPC personalizado"
       },
       "qrcode": {
         "signWith": "Assinar com {{brand}}",

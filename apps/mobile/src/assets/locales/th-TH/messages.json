@@ -964,8 +964,7 @@
         "loginFirst": "กรุณาเข้าสู่ระบบ GasAccount ก่อน",
         "deposit": "ฝากเงิน",
         "WalletConnectTips": "GasAccount ไม่รองรับ WalletConnect",
-        "chainNotSupported": "เครือนี้ไม่ได้รับการสนับสนุนโดย GasAccount",
-        "notEnough": "ไม่มีก๊าซเพียงพอ ฝากก๊าซ: ${{usd}}"
+        "chainNotSupported": "เครือนี้ไม่ได้รับการสนับสนุนโดย GasAccount"
       },
       "ledger": {
         "txRejected": "ธุรกรรมถูกปฏิเสธ",

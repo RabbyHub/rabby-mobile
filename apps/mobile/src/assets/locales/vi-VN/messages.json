@@ -347,8 +347,7 @@
         "login": "Đăng nhập",
         "deposit": "Deposit",
         "loginFirst": "Vui lòng đăng nhập vào GasAccount trước tiên",
-        "customRPC": "Không được hỗ trợ khi sử dụng RPC tùy chỉnh",
-        "notEnough": "Không đủ gas. Nạp gas: ${{usd}}"
+        "customRPC": "Không được hỗ trợ khi sử dụng RPC tùy chỉnh"
       },
       "cancelAll": "Hủy tất cả {{count}} yêu cầu từ Dapp",
       "ledger": {
