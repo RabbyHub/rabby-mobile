@@ -426,7 +426,7 @@ export const marketsData: {
   [CustomMarket.proto_xlayer_v3]: {
     marketTitle: 'X Layer',
     market: CustomMarket.proto_xlayer_v3,
-    chainId: ChainId.xlayer,
+    chainId: 196 as ChainId,
     v3: true,
     addresses: {
       LENDING_POOL_ADDRESS_PROVIDER: AaveV3XLayer.POOL_ADDRESSES_PROVIDER,
@@ -441,7 +441,7 @@ export const marketsData: {
   [CustomMarket.proto_mantle_v3]: {
     marketTitle: 'Mantle',
     market: CustomMarket.proto_mantle_v3,
-    chainId: ChainId.mantle,
+    chainId: 5000 as ChainId,
     v3: true,
     enabledFeatures: {
       incentives: true,
