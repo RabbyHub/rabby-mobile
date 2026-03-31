@@ -33,9 +33,9 @@ import { NextInput } from '@/components2024/Form/Input';
 import { Text } from '@/components/Typography';
 
 const SIZES = {
-  /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
-  inputAndBioAreaHeight: 128,
-  inputHeight: 48,
+  /* input height from Figma: 56px */
+  inputAndBioAreaHeight: 102 /* 56px input + 46px padding bottom */,
+  inputHeight: 56,
   inputBioButtonHeight: 48,
   bioAuthContainerHeight: 64,
   bioAuthButtonSize: 48,
@@ -55,6 +55,7 @@ export interface AuthenticationModalProps extends ValidationBehaviorProps {
     | Exclude<apisLock.UIAuthType, 'none'>[]
     | (apisLock.UIAuthType & 'none')[];
   tryBiometricsFirst?: boolean;
+  hideCancelButton?: boolean;
 }
 
 function BioButton({
@@ -95,6 +96,8 @@ function FooterButtonGroup({
   bioActive,
   style,
   disabled,
+  hideCancelButton,
+  confirmButtonText,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
@@ -102,6 +105,8 @@ function FooterButtonGroup({
   bioActive?: boolean;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  hideCancelButton?: boolean;
+  confirmButtonText?: string;
 }) {
   const { t } = useTranslation();
   const { styles: footerStyles } = useTheme2024({
@@ -118,16 +123,23 @@ function FooterButtonGroup({
   }, [authState.authType]);
 
   return (
-    <View style={StyleSheet.flatten([footerStyles.buttonGroup, style])}>
-      <Button
-        title={t('global.Cancel')}
-        containerStyle={footerStyles.btnContainer}
-        type="ghost"
-        onPress={onCancel ?? noop}
-      />
+    <View
+      style={StyleSheet.flatten([
+        footerStyles.buttonGroup,
+        style,
+        hideCancelButton && footerStyles.singleButtonGroup,
+      ])}>
+      {!hideCancelButton && (
+        <Button
+          title={t('global.Cancel')}
+          containerStyle={footerStyles.btnContainer}
+          type="ghost"
+          onPress={onCancel ?? noop}
+        />
+      )}
       {showConfirm && (
         <>
-          <View style={footerStyles.btnGap} />
+          {!hideCancelButton && <View style={footerStyles.btnGap} />}
           <Button
             icon={ctx =>
               authState.authType !== 'biometrics' ? null : (
@@ -137,8 +149,11 @@ function FooterButtonGroup({
                 />
               )
             }
-            title={t('global.Confirm')}
-            containerStyle={footerStyles.btnContainer}
+            title={confirmButtonText || t('global.Confirm')}
+            containerStyle={StyleSheet.flatten([
+              footerStyles.btnContainer,
+              hideCancelButton && footerStyles.fullWidthBtnContainer,
+            ])}
             onPress={onConfirm}
             disabled={disabled}
           />
@@ -151,20 +166,29 @@ function FooterButtonGroup({
 const getFooterStyle = createGetStyles2024(() => {
   return {
     buttonGroup: {
-      paddingHorizontal: 20,
+      paddingHorizontal: 24,
       paddingVertical: 20,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
 
+    singleButtonGroup: {
+      paddingHorizontal: 24,
+    },
+
     btnContainer: {
       flex: 1,
-      height: 50,
+      height: 56,
+    },
+
+    fullWidthBtnContainer: {
+      flex: 1,
+      height: 56,
     },
 
     btnGap: {
-      width: 13,
+      width: 12,
     },
   };
 });
@@ -175,6 +199,8 @@ const DFLT_VALIDATE = async (password: string) => {
 
 export const AuthenticationModal2024 = ({
   title,
+  confirmText,
+  hideCancelButton,
   onFinished,
   validationHandler = DFLT_VALIDATE,
   description,
@@ -449,6 +475,8 @@ export const AuthenticationModal2024 = ({
         onCancel={$createParams.onCancel ?? noop}
         onConfirm={handleConfirm}
         disabled={hasCheckFailed}
+        hideCancelButton={hideCancelButton}
+        confirmButtonText={confirmText}
       />
     </AutoLockView>
   );
@@ -463,6 +491,8 @@ AuthenticationModal2024.show = async (
     closeDuration = IS_IOS ? 0 : 300,
     onCancel,
     onDismiss,
+    confirmText,
+    hideCancelButton,
     ...props
   } = showConfig;
   let disableValidation = showConfig.disableValidation;
@@ -481,6 +511,8 @@ AuthenticationModal2024.show = async (
       onDismiss,
     },
     ...props,
+    confirmText,
+    hideCancelButton,
     onCancel: () => {
       try {
         onCancel?.();
@@ -511,14 +543,14 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => {
       fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
       paddingTop: 12,
-      marginBottom: 16,
+      marginBottom: 13,
       textAlign: 'center',
     },
     description: {
-      color: colors['neutral-body'],
-      fontSize: 14,
-      lineHeight: 20,
-      marginBottom: 16,
+      color: colors2024['neutral-secondary'],
+      fontSize: 17,
+      lineHeight: 22,
+      marginBottom: 19,
       textAlign: 'center',
     },
     checklist: {
@@ -526,19 +558,19 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => {
       marginBottom: 24,
     },
     main: {
-      paddingHorizontal: 20,
+      paddingHorizontal: 24,
       minHeight: 40,
       // ...makeDebugBorder(),
     },
     descWrapper: {
-      marginTop: 16,
+      marginTop: 0,
     },
     inputAndBioArea: {
       // ...makeDebugBorder(),
     },
     inputAreaWithPwd: {
-      paddingTop: 24,
-      paddingBottom: 24,
+      paddingTop: 0,
+      paddingBottom: 46,
       height: SIZES.inputAndBioAreaHeight,
     },
     inputAreaWithBio: {

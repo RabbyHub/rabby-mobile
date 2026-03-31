@@ -3368,6 +3368,8 @@
     "unknownNFT": "NFT desconocido",
     "backButton": "Atrás",
     "Deleted": "eliminado",
+    "WalletCreated": "Wallet creado",
+    "WalletImported": "Wallet importado",
     "Done": "Hecho",
     "time": {
       "mins": "{{t}} mins",

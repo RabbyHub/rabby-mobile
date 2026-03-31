@@ -3130,6 +3130,8 @@
     "cancel": "キャンセル",
     "unknownNFT": "Unknown NFT",
     "Deleted": "削除されました",
+    "WalletCreated": "ウォレット作成",
+    "WalletImported": "ウォレットインポート",
     "cancelButton": "キャンセル",
     "pin": "Pin",
     "nonce": "nonce",

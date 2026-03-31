@@ -77,6 +77,8 @@
     },
     "assets": "tài sản",
     "Deleted": "đã xóa",
+    "WalletCreated": "Đã tạo Wallet",
+    "WalletImported": "Đã nhập Wallet",
     "themeMode": {
       "option_Light": "Nhẹ",
       "option_System": "Hệ thống",

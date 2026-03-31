@@ -9,7 +9,7 @@ import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createGetStyles2024 } from '@/utils/styles';
 import Lottie from 'lottie-react-native';
-import AnimationCreateSuccess from '@/assets2024/animations/animation-create-success.json';
+import AnimationCreateSuccess from '@/assets2024/animations/animation-create-success.min.json';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -86,10 +86,10 @@ export default function CreateNewWalletScreen({ route }: ScreenProps) {
   // Convert route params to CreateWalletParams union type
   const rawParams = route.params;
   const params =
-    rawParams && 'seedPhrase' in rawParams
-      ? { seedPhrase: rawParams.seedPhrase }
-      : rawParams && 'privateKey' in rawParams
-      ? { privateKey: rawParams.privateKey }
+    rawParams && 'seedPhraseVaultId' in rawParams
+      ? { seedPhraseVaultId: rawParams.seedPhraseVaultId }
+      : rawParams && 'privateKeyVaultId' in rawParams
+      ? { privateKeyVaultId: rawParams.privateKeyVaultId }
       : undefined;
 
   // Use the polymorphic hook for all wallet creation logic

@@ -71,7 +71,7 @@ function SelectImportMethod(): JSX.Element {
       name: MODAL_NAMES.DESCRIPTION,
       bottomSheetModalProps: {
         enableDismissOnClose: true,
-        snapPoints: ['40%'],
+        snapPoints: ['45%'],
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
       },

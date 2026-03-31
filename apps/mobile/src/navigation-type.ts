@@ -165,8 +165,8 @@ export type AddressNavigatorParamList = {
     isFirstCreate?: boolean;
   };
   [RootNames.CreateNewWallet]?:
-    | { seedPhrase: string }
-    | { privateKey: string }
+    | { seedPhraseVaultId: string }
+    | { privateKeyVaultId: string }
     | undefined;
   [RootNames.SelectImportMethod]?: {};
   [RootNames.ImportRabbyWallet]?: {};

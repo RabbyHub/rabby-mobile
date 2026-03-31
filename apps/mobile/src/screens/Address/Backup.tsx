@@ -24,6 +24,7 @@ import { clearAccountBackupReminder } from '@/hooks/account';
 import { AddressNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { checkCloudBackupExists } from '@/core/utils/cloudBackup';
+import { useBiometricsComputed } from '@/hooks/biometrics';
 
 type BackupScreenRouteProp = RouteProp<
   AddressNavigatorParamList,
@@ -35,6 +36,7 @@ function Backup(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const route = useRoute<BackupScreenRouteProp>();
   const navigation = useNavigation();
+  const bioComputed = useBiometricsComputed();
 
   const { address, type, brandName } = route.params || {};
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
@@ -67,15 +69,37 @@ function Backup(): JSX.Element {
     navigation.goBack();
   }, [address, type, brandName, navigation]);
 
+  // Get auth modal labels based on expected auth type
+  const getAuthModalLabels = React.useCallback(() => {
+    if (bioComputed.isBiometricsEnabled) {
+      if (bioComputed.isFaceID) {
+        return {
+          title: t('page.addressDetail.verify-face-id'),
+          description: t('page.addressDetail.verify-face-id-before-backup'),
+        };
+      }
+      return {
+        title: t('page.addressDetail.verify-fingerprint'),
+        description: t('page.addressDetail.verify-fingerprint-before-backup'),
+      };
+    }
+    return {
+      title: t('page.addressDetail.verify-password'),
+      description: t('page.addressDetail.verify-password-before-backup'),
+    };
+  }, [bioComputed.isBiometricsEnabled, bioComputed.isFaceID, t]);
+
   const handleBackupToCloud = React.useCallback(() => {
     // For cloud backup from AddressDetail, we need to authenticate first to get
     // the seed phrase, then pass it to the cloud backup modal.
     let seedPhraseData = '';
+    const { title, description } = getAuthModalLabels();
 
     AuthenticationModal2024.show({
-      confirmText: t('global.confirm'),
-      cancelText: t('global.Cancel'),
-      title: t('page.addressDetail.backup-seed-phrase'),
+      confirmText: t('page.addressDetail.verify-and-backup'),
+      title,
+      description,
+      hideCancelButton: true,
       validationHandler: async (password: string) => {
         if (!address) return;
         seedPhraseData = await apiMnemonic.getMnemonics(password, address);
@@ -105,15 +129,24 @@ function Backup(): JSX.Element {
         });
       },
     });
-  }, [address, type, t, invokeEnterPassphrase, handleBackupComplete]);
+  }, [
+    address,
+    type,
+    t,
+    invokeEnterPassphrase,
+    handleBackupComplete,
+    getAuthModalLabels,
+  ]);
 
   const handleBackupToPaper = React.useCallback(() => {
     let seedPhraseData = '';
+    const { title, description } = getAuthModalLabels();
 
     AuthenticationModal2024.show({
-      confirmText: t('global.confirm'),
-      cancelText: t('global.Cancel'),
-      title: t('page.addressDetail.backup-seed-phrase'),
+      confirmText: t('page.addressDetail.verify-and-backup'),
+      title,
+      description,
+      hideCancelButton: true,
       validationHandler: async (password: string) => {
         if (!address) return;
         seedPhraseData = await apiMnemonic.getMnemonics(password, address);
@@ -143,12 +176,19 @@ function Backup(): JSX.Element {
         });
       },
     });
-  }, [address, type, t, invokeEnterPassphrase, handleBackupComplete]);
+  }, [
+    address,
+    type,
+    t,
+    invokeEnterPassphrase,
+    handleBackupComplete,
+    getAuthModalLabels,
+  ]);
 
   return (
     <NormalScreenContainer
       overwriteStyle={{
-        backgroundColor: colors2024['neutral-bg-1'],
+        backgroundColor: colors2024['neutral-bg-0'],
       }}>
       <View style={styles.container}>
         {/* Cloud Backup Card */}

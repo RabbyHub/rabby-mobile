@@ -34,6 +34,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import * as SecretVault from '@/core/utils/secretVault';
+
+/** Toast position at the top of screen */
+const TOAST_POSITION_TOP = 30;
 
 type TabType = 'seedPhrase' | 'privateKey';
 
@@ -82,7 +86,10 @@ export const ImportSecret = () => {
         setMnemonics(text);
         isNewlyInputTextSameWithContentFromClipboard(text).then(isSame => {
           if (isSame) {
-            onPastedSensitiveData({ type: 'seedPhrase' });
+            onPastedSensitiveData({
+              type: 'seedPhrase',
+              toastOptions: { position: TOAST_POSITION_TOP },
+            });
           }
         });
       } else {
@@ -90,7 +97,10 @@ export const ImportSecret = () => {
         setPrivateKey(text);
         isNewlyInputTextSameWithContentFromClipboard(text).then(isSame => {
           if (isSame) {
-            onPastedSensitiveData({ type: 'privateKey' });
+            onPastedSensitiveData({
+              type: 'privateKey',
+              toastOptions: { position: TOAST_POSITION_TOP },
+            });
           }
         });
       }
@@ -104,11 +114,17 @@ export const ImportSecret = () => {
       if (activeTab === 'seedPhrase') {
         setMnemonicError(undefined);
         setMnemonics(text);
-        onPastedSensitiveData({ type: 'seedPhrase' });
+        onPastedSensitiveData({
+          type: 'seedPhrase',
+          toastOptions: { position: TOAST_POSITION_TOP },
+        });
       } else {
         setPrivateKeyError(undefined);
         setPrivateKey(text);
-        onPastedSensitiveData({ type: 'privateKey' });
+        onPastedSensitiveData({
+          type: 'privateKey',
+          toastOptions: { position: TOAST_POSITION_TOP },
+        });
       }
     },
     [activeTab],
@@ -175,11 +191,12 @@ export const ImportSecret = () => {
         return;
       }
 
-      // Navigate to CreateNewWallet with cleaned import data
+      // Store in SecretVault and pass only the vault ID
+      const vaultId = SecretVault.store(cleanedMnemonic);
       navigation.navigate(RootNames.StackAddress, {
         screen: RootNames.CreateNewWallet,
         params: {
-          seedPhrase: cleanedMnemonic,
+          seedPhraseVaultId: vaultId,
         },
       });
       preferenceService.setReportActionTs(
@@ -195,11 +212,12 @@ export const ImportSecret = () => {
         return;
       }
 
-      // Navigate to CreateNewWallet with cleaned import data
+      // Store in SecretVault and pass only the vault ID
+      const vaultId = SecretVault.store(cleanedPrivateKey);
       navigation.navigate(RootNames.StackAddress, {
         screen: RootNames.CreateNewWallet,
         params: {
-          privateKey: cleanedPrivateKey,
+          privateKeyVaultId: vaultId,
         },
       });
       preferenceService.setReportActionTs(
