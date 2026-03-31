@@ -155,6 +155,7 @@ const TOKEN_ICON_MAP_PNG: Record<string, string> = {
   XSOL: 'https://static-assets.rabby.io/files/209b00d8-62c1-4279-ac3e-4a2525a10f4a.png',
   XBTC: 'https://static-assets.rabby.io/files/54e7b4ae-0500-4af1-98dd-39d05dd1c749.png',
   WOKB: 'https://static-assets.rabby.io/files/d778b00a-cce5-4aff-923d-66c20be58a76.png',
+  OKB: 'https://static-assets.rabby.io/files/d778b00a-cce5-4aff-923d-66c20be58a76.png',
   XOKSOL:
     'https://static-assets.rabby.io/files/7230471b-b061-4634-b89c-0d8d21295853.png',
   XETH: 'https://static-assets.rabby.io/files/2314631a-f53b-4b34-8ac0-d99ec1feb1ee.png',
@@ -164,6 +165,7 @@ const TOKEN_ICON_MAP_PNG: Record<string, string> = {
   SOLVBTC:
     'https://static-assets.rabby.io/files/6bb7c716-247e-4978-9aea-61d96cce0d6d.png',
   EURM: 'https://static-assets.rabby.io/files/a41592dd-f2a6-4288-92b6-a8b934829a35.png',
+  MNT: 'https://static-assets.rabby.io/files/296c598e-dad4-47cf-b023-9f5047ac044b.png',
 };
 
 /**
