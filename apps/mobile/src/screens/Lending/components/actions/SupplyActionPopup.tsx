@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -20,7 +26,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildSupplyTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -82,6 +91,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
   }, [reserve.underlyingAsset]);
@@ -554,7 +564,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         </View>
         <TokenAmountInput
           value={amount}
-          onChange={setAmount}
+          onChange={v => {
+            if (directSignBtnRef.current?.isAuthInProgress()) return;
+            setAmount(v);
+          }}
           symbol={reserve.reserve.symbol}
           handleClickMaxButton={() => {
             setAmount(supplyAmount.amount || '0');
@@ -594,6 +607,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         <View style={styles.buttonContainer}>
           {canShowDirectSubmit ? (
             <DirectSignBtn
+              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
               key={`${amount}-${needApprove}`}

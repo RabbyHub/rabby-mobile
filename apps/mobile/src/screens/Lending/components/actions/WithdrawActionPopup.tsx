@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -16,7 +22,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildWithdrawTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
@@ -113,6 +122,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
   const {
     openDirect,
     prefetch: prefetchMiniSigner,
@@ -368,6 +378,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   const handleChangeAmount = useCallback(
     (value: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) return;
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 提取所有资产
@@ -494,6 +505,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           )}
           {canShowDirectSubmit ? (
             <DirectSignBtn
+              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
               key={`${amount}`}

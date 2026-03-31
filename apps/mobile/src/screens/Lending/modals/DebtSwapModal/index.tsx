@@ -28,7 +28,10 @@ import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -203,6 +206,7 @@ export default function DebtSwapModal({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const clearQuoteExpiredTimer = useCallback(() => {
     if (quoteExpiredTimerRef.current) {
@@ -237,6 +241,7 @@ export default function DebtSwapModal({
 
   const onInputChange = useCallback(
     (text: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) return;
       const formatted = formatSpeicalAmount(text);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
@@ -1122,6 +1127,7 @@ export default function DebtSwapModal({
           ) : null}
           {canShowDirectSubmit ? (
             <DirectSignBtn
+              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
               key={`${fromToken.underlyingAddress}-${toToken?.underlyingAddress}-${debouncedFromAmount}`}
