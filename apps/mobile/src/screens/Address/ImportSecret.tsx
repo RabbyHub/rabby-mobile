@@ -34,6 +34,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import * as SecretVault from '@/core/utils/secretVault';
 
 type TabType = 'seedPhrase' | 'privateKey';
 
@@ -175,11 +176,12 @@ export const ImportSecret = () => {
         return;
       }
 
-      // Navigate to CreateNewWallet with cleaned import data
+      // Store in SecretVault and pass only the vault ID
+      const vaultId = SecretVault.store(cleanedMnemonic);
       navigation.navigate(RootNames.StackAddress, {
         screen: RootNames.CreateNewWallet,
         params: {
-          seedPhrase: cleanedMnemonic,
+          seedPhraseVaultId: vaultId,
         },
       });
       preferenceService.setReportActionTs(
@@ -195,11 +197,12 @@ export const ImportSecret = () => {
         return;
       }
 
-      // Navigate to CreateNewWallet with cleaned import data
+      // Store in SecretVault and pass only the vault ID
+      const vaultId = SecretVault.store(cleanedPrivateKey);
       navigation.navigate(RootNames.StackAddress, {
         screen: RootNames.CreateNewWallet,
         params: {
-          privateKey: cleanedPrivateKey,
+          privateKeyVaultId: vaultId,
         },
       });
       preferenceService.setReportActionTs(

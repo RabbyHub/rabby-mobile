@@ -19,6 +19,7 @@ import { useBiometrics } from '@/hooks/biometrics';
 import { toast } from '@/components2024/Toast';
 import { PasswordFormValues } from '@/components2024/PasswordForm';
 import i18n from '@/utils/i18n';
+import * as SecretVault from '@/core/utils/secretVault';
 
 // ============ Types ============
 
@@ -38,8 +39,8 @@ export type WalletCreationResult = {
 
 /** Params for wallet creation - union type for type safety */
 export type CreateWalletParams =
-  | { seedPhrase: string; privateKey?: never }
-  | { privateKey: string; seedPhrase?: never }
+  | { seedPhraseVaultId: string; privateKeyVaultId?: never }
+  | { privateKeyVaultId: string; seedPhraseVaultId?: never }
   | undefined;
 
 export type UseCreateWalletResult = {
@@ -503,10 +504,10 @@ async function submitWalletCreation(
  * Derives mode from params.
  */
 function deriveMode(params?: CreateWalletParams): WalletCreationMode {
-  if (params?.seedPhrase) {
+  if (params?.seedPhraseVaultId) {
     return 'importSeedPhrase';
   }
-  if (params?.privateKey) {
+  if (params?.privateKeyVaultId) {
     return 'importPrivateKey';
   }
   return 'create';
@@ -531,14 +532,26 @@ export function useCreateWallet(
   // Generate/derive address data based on mode (gateway logic in hook)
   const { value: walletData, loading: isLoading } =
     useAsync(async (): Promise<WalletCreationResult> => {
-      if (mode === 'importSeedPhrase' && params?.seedPhrase) {
-        return importFromSeedPhrase(params.seedPhrase);
+      if (mode === 'importSeedPhrase' && params?.seedPhraseVaultId) {
+        const seedPhrase = SecretVault.retrieve(params.seedPhraseVaultId);
+        if (!seedPhrase) {
+          throw new Error(
+            'Seed phrase vault expired or invalid. Please try importing again.',
+          );
+        }
+        return importFromSeedPhrase(seedPhrase);
       }
-      if (mode === 'importPrivateKey' && params?.privateKey) {
-        return importFromPrivateKey(params.privateKey);
+      if (mode === 'importPrivateKey' && params?.privateKeyVaultId) {
+        const privateKey = SecretVault.retrieve(params.privateKeyVaultId);
+        if (!privateKey) {
+          throw new Error(
+            'Private key vault expired or invalid. Please try importing again.',
+          );
+        }
+        return importFromPrivateKey(privateKey);
       }
       return createNewWallet();
-    }, [mode, params?.seedPhrase, params?.privateKey]);
+    }, [mode, params?.seedPhraseVaultId, params?.privateKeyVaultId]);
 
   const handleSubmit = async (formValues: PasswordFormValues) => {
     if (!walletData) return;
