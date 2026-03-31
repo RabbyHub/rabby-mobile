@@ -5,5 +5,4 @@ yarn.lock linguist-generated=false
 /.yarn/releases/** binary
 /.yarn/plugins/** binary
 
-# Animation files as binary
-apps/mobile/src/assets2024/animations/animation-create-success.json binary
+*.min.json binary

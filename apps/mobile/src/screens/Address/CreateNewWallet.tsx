@@ -9,7 +9,7 @@ import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createGetStyles2024 } from '@/utils/styles';
 import Lottie from 'lottie-react-native';
-import AnimationCreateSuccess from '@/assets2024/animations/animation-create-success.json';
+import AnimationCreateSuccess from '@/assets2024/animations/animation-create-success.min.json';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
