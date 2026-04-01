@@ -6,8 +6,6 @@ const PngHyperliquid = require('@/assets2024/icons/perps/hyperliquid.jpg');
 const PngAster = require('@/assets2024/icons/perps/aster.jpg');
 const PngLighter = require('@/assets2024/icons/perps/lighter.png');
 const PngAave = require('@/assets2024/icons/lending/aave.jpg');
-const PngSpark = require('@/assets2024/icons/lending/spark.jpg');
-const PngVenus = require('@/assets2024/icons/lending/venus.jpg');
 
 export type DappSelectItem = {
   id: string;
@@ -58,22 +56,6 @@ const LENDING: DappSelectItem[] = [
     url: 'https://app.aave.com',
     themeColor: 'rgba(11, 11, 11, 0.06)',
     extraInfo: 'TVL: $27.925b',
-  },
-  {
-    id: 'spark',
-    name: 'Spark',
-    icon: PngSpark,
-    url: 'https://app.spark.fi/my-portfolio',
-    themeColor: 'rgba(252, 105, 137, 0.08)',
-    extraInfo: 'TVL: $5.246b',
-  },
-  {
-    id: 'venus',
-    name: 'Venus',
-    icon: PngVenus,
-    url: 'https://venus.io',
-    themeColor: 'rgba(58, 121, 253, 0.08)',
-    extraInfo: 'TVL: $1.226b',
   },
 ];
 

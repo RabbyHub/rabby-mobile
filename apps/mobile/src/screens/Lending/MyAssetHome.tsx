@@ -32,7 +32,6 @@ import {
 import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
 import { DisableBorrowTip } from './components/DisableBorrowTip';
-import { LendingHeader } from './components/Header';
 
 type MyAssetItem =
   | {
@@ -197,26 +196,13 @@ const MyAssetHome: React.FC = () => {
     [styles.item],
   );
 
-  React.useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handlePendingClear = useCallback(() => {
-    setTimeout(() => {
-      fetchData(true);
-    }, 200);
-  }, [fetchData]);
-
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        <View style={styles.headerLeft}>
-          <ChainSelector />
-        </View>
-        <LendingHeader onPendingClear={handlePendingClear} />
+        <ChainSelector />
       </View>
     );
-  }, [styles.headerContainer, styles.headerLeft, handlePendingClear]);
+  }, [styles.headerContainer]);
 
   const renderEmpty = useCallback(() => {
     if (loading) {
@@ -304,11 +290,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
       : colors2024['neutral-bg-1'],
   },
   headerContainer: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  headerLeft: {
-    flex: 1,
+    //flexDirection: 'row',
+    //gap: 16,
   },
   listContentContainer: {
     paddingVertical: 8,
