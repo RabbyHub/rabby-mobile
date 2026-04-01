@@ -28,19 +28,25 @@ export function HomeCenterArea() {
   const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
 
   const { blocksVisibility, noBetweenContent, onlyOneContent } = useMemo(() => {
+    const hasOfflineChainData = !!(
+      offlineChainData.displayWillClosedChain &&
+      offlineChainData.offlineChainInfo
+    );
+
     const blocks = {
       soloAccountToShowReceiveTip: false as boolean,
       rateGuideOnHome: false as boolean,
-      offlineChainData: !!(
-        offlineChainData.displayWillClosedChain &&
-        offlineChainData.offlineChainInfo
-      ),
+      offlineChainData: false as boolean,
       tipScreenshot: false as boolean,
     };
 
-    if (accountToShowReceiveTip) blocks.soloAccountToShowReceiveTip = true;
-    else if (!viewedScreenShotReportTip) blocks.tipScreenshot = true;
-    else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
+    if (accountToShowReceiveTip) {
+      blocks.soloAccountToShowReceiveTip = true;
+    } else {
+      if (hasOfflineChainData) blocks.offlineChainData = true;
+      if (!viewedScreenShotReportTip) blocks.tipScreenshot = true;
+      else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
+    }
 
     const visibleEls = Object.values(blocks);
     const hasBetweenContent = visibleEls.some(Boolean);
