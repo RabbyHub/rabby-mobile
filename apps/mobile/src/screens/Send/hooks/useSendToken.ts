@@ -217,6 +217,7 @@ export const apiSendToken = {
   setCurrentToken,
 
   putScreenState,
+  markBalanceLoading,
   resetScreenState,
 };
 
@@ -270,6 +271,8 @@ export type SendScreenState = {
   clickedMax: boolean;
   balanceError: string | null;
   balanceWarn: string | null;
+  showBalanceLoading: boolean;
+  balanceLoadedKey: string | null;
   isLoading: boolean;
   isSubmitLoading: boolean;
   estimatedGas: number;
@@ -318,6 +321,8 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   balanceError: null,
   balanceWarn: null,
+  showBalanceLoading: false,
+  balanceLoadedKey: null,
   isLoading: false,
   isSubmitLoading: false,
 
@@ -370,6 +375,37 @@ function putScreenState(
       ...patch,
     };
   });
+}
+
+function makeBalanceLoadKey(
+  chainId: string,
+  currentAddress: string,
+  tokenId: string,
+) {
+  return [
+    currentAddress.toLowerCase(),
+    chainId.toLowerCase(),
+    tokenId.toLowerCase(),
+  ].join('__');
+}
+
+function markBalanceLoading(input: {
+  chainId: string;
+  currentAddress: string;
+  tokenId: string;
+}) {
+  const nextKey = makeBalanceLoadKey(
+    input.chainId,
+    input.currentAddress,
+    input.tokenId,
+  );
+
+  putScreenState(prev => ({
+    isLoading: true,
+    showBalanceLoading: prev.balanceLoadedKey !== nextKey,
+  }));
+
+  return nextKey;
 }
 
 function resetScreenState() {
@@ -1328,13 +1364,14 @@ export function useSendTokenForm({
     [formik.values.to, currentAccount],
   );
 
-  const loadCurrentToken = useCallback(
+  const loadCurrentToken = useMemoizedFn(
     async (
       id: string,
       chainId: string,
       currentAddress: string,
       disableBalanceCheck?: boolean,
     ) => {
+      const balanceLoadedKey = makeBalanceLoadKey(chainId, currentAddress, id);
       const chain = findChain({
         serverId: chainId,
       });
@@ -1361,7 +1398,11 @@ export function useSendTokenForm({
           },
         }));
       }
-      putScreenState({ isLoading: false });
+      putScreenState({
+        isLoading: false,
+        showBalanceLoading: false,
+        balanceLoadedKey,
+      });
 
       if (
         !disableBalanceCheck &&
@@ -1381,7 +1422,6 @@ export function useSendTokenForm({
 
       return result;
     },
-    [formValues.amount, estimateGasOnChain, t],
   );
 
   const couldReserveGas = isNativeToken && !screenState.isGnosisSafe;
@@ -1637,8 +1677,14 @@ export function useSendTokenForm({
       putScreenState({
         balanceError: null,
         balanceWarn: null,
-        isLoading: true,
       });
+      if (currentAccount) {
+        apiSendToken.markBalanceLoading({
+          tokenId: token.id,
+          chainId: token.chain,
+          currentAddress: currentAccount.address,
+        });
+      }
 
       if (currentAccount) {
         await loadCurrentToken(
