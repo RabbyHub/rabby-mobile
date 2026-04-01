@@ -78,7 +78,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: 164,
     },
     textBox: {
-      backgroundColor: 'rgba(224, 229, 236, 0.5)', // bg-5 with 50% opacity
+      backgroundColor: colors2024['neutral-bg-5'] + '80', // 50% opacity
       borderRadius: 12,
       marginVertical: 12,
       marginHorizontal: 16,

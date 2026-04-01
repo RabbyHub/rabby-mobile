@@ -24,13 +24,13 @@ const INIT_FORM_DATA = __DEV__
       password: APP_TEST_PWD,
       confirmPassword: APP_TEST_PWD,
       checked: true,
-      enableBiometrics: true,
+      enableBiometrics: false,
     }
   : {
       password: '',
       confirmPassword: '',
       checked: true,
-      enableBiometrics: true,
+      enableBiometrics: false,
     };
 
 export interface PasswordFormValues {
