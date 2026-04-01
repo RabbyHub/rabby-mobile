@@ -23,6 +23,7 @@ export const GasAccountDepositPopup: React.FC<{
   onClose?(): void;
   onDeposit?(): void;
   minDepositPrice?: number;
+  disableL2Deposit?: boolean;
   /**
    * When provided, after the deposit tx is sent the form will poll
    * `openapi.getGasAccountBridgeStatus` and wait for the deposit to
@@ -35,8 +36,10 @@ export const GasAccountDepositPopup: React.FC<{
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
+  const disableL2Deposit = props.disableL2Deposit ?? false;
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [step, setStep] = useState<'token' | 'pay' | undefined>(props.type);
+
   // Track whether we're transitioning to token step so we don't
   // fire onClose when the outer modal is dismissed intentionally.
   const isTransitioningToTokenRef = useRef(false);
@@ -121,6 +124,7 @@ export const GasAccountDepositPopup: React.FC<{
               <GasAccountDepositSelect
                 onSelect={handleSelect}
                 minDepositPrice={props.minDepositPrice}
+                disableL2Deposit={disableL2Deposit}
               />
             </BottomSheetScrollView>
           )}
@@ -133,6 +137,7 @@ export const GasAccountDepositPopup: React.FC<{
           onClose={props.onClose}
           onWaitDepositResult={props.onWaitDepositResult}
           minDepositPrice={props.minDepositPrice}
+          disableL2Deposit={disableL2Deposit}
         />
       ) : null}
     </>

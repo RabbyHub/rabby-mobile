@@ -294,7 +294,7 @@ export const GasAccountScreen = () => {
             });
             refreshHistory();
             await runFetchGasAccountInfo();
-            toast.success(t('page.gasAccount.depositSuccess'), {
+            toast.success(t('page.gasAccount.depositSubmitted'), {
               position: toast.positions.CENTER,
             });
           }}

@@ -17,7 +17,8 @@ import { Text } from '@/components/Typography';
 export const GasAccountDepositSelect: React.FC<{
   onSelect(type: 'token' | 'pay'): void;
   minDepositPrice?: number;
-}> = ({ onSelect, minDepositPrice }) => {
+  disableL2Deposit?: boolean;
+}> = ({ onSelect, minDepositPrice, disableL2Deposit }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
@@ -27,7 +28,9 @@ export const GasAccountDepositSelect: React.FC<{
     isCheckingAvailability,
     checkIsExpireAndUpdate,
     refreshBridgeSupportTokenList,
-  } = useGasAccountDepositAvailableTokens(minDepositPrice);
+  } = useGasAccountDepositAvailableTokens(minDepositPrice, {
+    disableL2Deposit,
+  });
   const [showDisabledTip, setShowDisabledTip] = useState(false);
 
   useEffect(() => {

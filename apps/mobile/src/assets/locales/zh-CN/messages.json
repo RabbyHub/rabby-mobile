@@ -867,7 +867,7 @@
         "predict": "预测",
         "meme": "Memecoin",
         "market": "市场",
-        "gasDeposit": "燃气存款"
+        "gasDeposit": "Gas 充值"
       },
       "swipeUp": {
         "descAndroid": "点击探索 dApps",
@@ -1867,7 +1867,7 @@
         "balanceLabel": "余额",
         "fetchQuoteFailed": "获取报价失败",
         "selectToken": "选择要存入的 Token",
-        "gasDepositTitle": "Gas Deposit",
+        "gasDepositTitle": "Gas 充值",
         "estReceiveLabel": "预计收款：{{usd}}",
         "insufficientBalanceLabel": "余额不足",
         "minAmountRequired": "最低存款金额为 $1",
@@ -1919,7 +1919,7 @@
         "title": "存入GasAccount",
         "buyWithDesc": "30% 手续费，不可提款",
         "desc": "在所有链上支付 Gas 费用",
-        "depositToken": "使用 Token 存款",
+        "depositToken": "使用 Token 充值",
         "buyWithApple": "在应用商店购买",
         "insufficientTokenBalance": "余额不足"
       },
@@ -1944,7 +1944,7 @@
       },
       "depositNow": "立即存款",
       "switchAccount": "切换钱包",
-      "depositWith": "使用存款",
+      "depositWith": "充值",
       "depositFailed": "存款失败",
       "lowBalance": "您没有足够的 gas。请存入 gas 以确保未来交易顺利进行。",
       "gasBalance": "Gas 余额"

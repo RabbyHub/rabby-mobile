@@ -17,7 +17,7 @@ export const GasAccountBadge: React.FC<{}> = () => {
     }, [runFetchGasAccountInfo]),
   );
 
-  if (loading) {
+  if (!value && loading) {
     return (
       <CustomSkeleton width={50} height={18} style={{ borderRadius: 8 }} />
     );
@@ -29,7 +29,7 @@ export const GasAccountBadge: React.FC<{}> = () => {
     value?.account?.balance < 0.1
   ) {
     return (
-      <Text style={styles.text}>
+      <Text style={styles.invalidText}>
         {formatUsdValue(value?.account?.balance || 0)}
       </Text>
     );

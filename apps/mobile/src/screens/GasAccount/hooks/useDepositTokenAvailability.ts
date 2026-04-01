@@ -23,7 +23,11 @@ export const getAvailableGasAccountDepositTokens = (
   tokens: ITokenItem[],
   bridgeSupportTokens: GasAccountBridgeSupportTokenList,
   minDepositPrice = 1,
+  options?: {
+    disableL2Deposit?: boolean;
+  },
 ) => {
+  const disableL2Deposit = options?.disableL2Deposit ?? false;
   const minDepositUsd = Math.max(1, Number(minDepositPrice || 0));
   const withBalance = tokens.filter(token =>
     tokenAmountBn(token).times(token.price).gte(minDepositUsd),
@@ -54,7 +58,7 @@ export const getAvailableGasAccountDepositTokens = (
       }
 
       const supportKey = `${token.chain}:${tokenId}`;
-      if (walletTokenSet.has(supportKey)) {
+      if (!disableL2Deposit && walletTokenSet.has(supportKey)) {
         return {
           ...token,
           gasAccountDepositType: 'direct',
@@ -73,7 +77,12 @@ export const getAvailableGasAccountDepositTokens = (
     .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
 };
 
-export const useGasAccountDepositAvailableTokens = (minDepositPrice = 1) => {
+export const useGasAccountDepositAvailableTokens = (
+  minDepositPrice = 1,
+  options?: {
+    disableL2Deposit?: boolean;
+  },
+) => {
   const { tokens, isLoading, checkIsExpireAndUpdate } = useSelectTokens({
     currentAccount: undefined,
   });
@@ -86,8 +95,9 @@ export const useGasAccountDepositAvailableTokens = (minDepositPrice = 1) => {
         tokens,
         bridgeSupportTokens,
         minDepositPrice,
+        options,
       ),
-    [bridgeSupportTokens, minDepositPrice, tokens],
+    [bridgeSupportTokens, minDepositPrice, options, tokens],
   );
 
   return {

@@ -83,6 +83,7 @@ export const GasAccountDepositTokenForm: React.FC<{
   onDeposit?(): Promise<void> | void;
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
+  disableL2Deposit?: boolean;
 }> = props => {
   const { accounts } = useAccounts({ disableAutoFetch: true });
   const myAccounts = useMemo(
@@ -94,7 +95,9 @@ export const GasAccountDepositTokenForm: React.FC<{
     isCheckingAvailability,
     checkIsExpireAndUpdate,
     refreshBridgeSupportTokenList,
-  } = useGasAccountDepositAvailableTokens(props.minDepositPrice);
+  } = useGasAccountDepositAvailableTokens(props.minDepositPrice, {
+    disableL2Deposit: props.disableL2Deposit,
+  });
 
   const refreshAvailableTokens = useCallback(() => {
     return Promise.allSettled([
@@ -132,6 +135,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onDeposit?(): Promise<void> | void;
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
+  disableL2Deposit?: boolean;
   myAccounts: DepositAccount[];
   availableTokens: GasAccountAvailableToken[];
   isCheckingAvailability: boolean;
@@ -142,6 +146,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onDeposit,
   onWaitDepositResult,
   minDepositPrice,
+  disableL2Deposit,
   myAccounts,
   availableTokens,
   isCheckingAvailability,
@@ -160,7 +165,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     value: usdValue,
     displayedValue,
     onChangeText: setUsdValue,
-  } = useUsdInput();
+  } = useUsdInput({ maxDecimals: 4 });
   const didInitRef = useRef(false);
 
   const [_selectedToken, setSelectedToken] = useState<
@@ -257,7 +262,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
       didInitSelectedTokenRef.current = true;
       setSelectedToken(prev => {
         if (!prev) {
-          return availableTokens[0];
+          return (
+            availableTokens?.find(e => e.chain !== 'eth') || availableTokens[0]
+          );
         }
 
         return prev;
