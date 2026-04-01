@@ -254,7 +254,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 20,
-    elevation: 4,
   },
   cardContent: {
     flexDirection: 'row',
