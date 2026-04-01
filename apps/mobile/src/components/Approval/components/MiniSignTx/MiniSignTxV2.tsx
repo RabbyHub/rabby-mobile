@@ -412,6 +412,7 @@ const MiniSignTxV2 = ({
     !ctx?.txsCalc?.length ||
     !!ctx.checkErrors?.some(e => e.level === 'forbidden');
   const nativeTokenInsufficient = !!ctx.checkErrors?.some(e => e.code === 3001);
+  console.log('instance', { instance, gasMethod });
 
   if (synGasHeaderInfo) {
     return null;

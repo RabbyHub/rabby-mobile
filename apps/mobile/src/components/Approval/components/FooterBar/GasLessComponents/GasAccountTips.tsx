@@ -5,7 +5,7 @@ import { GasAccountDepositWithTokenAlertModal } from '@/screens/GasAccount/compo
 import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
@@ -101,13 +101,6 @@ export const GasAccountTips: React.FC<{
     gasAccountInfo?.account?.balance,
     disableDepositAction,
   ]);
-
-  useEffect(() => {
-    return () => {
-      setTipPopupVisible(false);
-      onDepositPopupVisibleChange?.(false);
-    };
-  }, [onDepositPopupVisibleChange]);
 
   if (
     !isWalletConnect &&

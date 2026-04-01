@@ -2,6 +2,7 @@ import React, {
   Dispatch,
   SetStateAction,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -51,6 +52,10 @@ import { intToHex } from '@/utils/number';
 import _ from 'lodash';
 import { openapi } from '@/core/request';
 import { isTempoChain } from '@/utils/tempo';
+import {
+  buildTopUpResumedTxs,
+  GasAccountTopUpResult,
+} from '@/screens/GasAccount/components/topUpContinuation';
 
 const RABBY_FEE = '0.25%';
 
@@ -681,11 +686,47 @@ export const DirectSignGasInfo = ({
     [instance],
   );
 
+  const handleTopUpWaitResult = useMemoizedFn(
+    async (result: GasAccountTopUpResult) => {
+      if (!ctx || !config || !ctx.txs.length) {
+        return;
+      }
+
+      const nextTxs = buildTopUpResumedTxs({
+        txs: ctx.txs,
+        originalAccountAddress: config.account.address,
+        originalChainServerId: chain.serverId,
+        topUpResult: result,
+      });
+
+      instance.replaceTxs(nextTxs);
+      instance.setGasMethod('gasAccount');
+      handleGasChange(ctx?.selectedGas);
+    },
+  );
+
   const handleCancel = () => {
     instance.close();
   };
 
   const showGasFeeTooHighTips = ctx?.gasFeeTooHigh && !loading && !noQuote;
+
+  useEffect(() => {
+    if (
+      showGasLess &&
+      !payGasByGasAccount &&
+      !canUseGasLess &&
+      canGotoUseGasAccount
+    ) {
+      handleChangeGasMethod('gasAccount');
+    }
+  }, [
+    canGotoUseGasAccount,
+    canUseGasLess,
+    handleChangeGasMethod,
+    payGasByGasAccount,
+    showGasLess,
+  ]);
 
   if (!supportDirectSign) {
     return null;
@@ -712,11 +753,11 @@ export const DirectSignGasInfo = ({
           gasAccountAddress={accountId || config?.account.address || ''}
           gasAccountCost={ctx?.gasAccount as any}
           onDepositPopupVisibleChange={onDepositPopupVisibleChange}
+          onWaitDepositResult={handleTopUpWaitResult}
           onDeposit={() => {
             // onDeposit?.();
-            handleGasChange(ctx?.selectedGas);
-
-            handleChangeGasMethod('gasAccount');
+            // handleGasChange(ctx?.selectedGas);
+            // handleChangeGasMethod('gasAccount');
           }}
           onGotoGasAccount={() => {
             handleCancel?.();
@@ -737,11 +778,11 @@ export const DirectSignGasInfo = ({
           isWalletConnect={false}
           noCustomRPC={noCustomRPC}
           onDepositPopupVisibleChange={onDepositPopupVisibleChange}
+          onWaitDepositResult={handleTopUpWaitResult}
           onDeposit={() => {
-            // onDeposit?.();
-            handleGasChange(ctx?.selectedGas);
-
-            handleChangeGasMethod('gasAccount');
+            //   // onDeposit?.();
+            //   handleGasChange(ctx?.selectedGas);
+            // handleChangeGasMethod('gasAccount');
           }}
           onGotoGasAccount={() => {
             handleCancel?.();

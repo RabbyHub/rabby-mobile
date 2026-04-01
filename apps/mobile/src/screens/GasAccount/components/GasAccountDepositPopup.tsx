@@ -39,6 +39,9 @@ export const GasAccountDepositPopup: React.FC<{
   const disableL2Deposit = props.disableL2Deposit ?? false;
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [step, setStep] = useState<'token' | 'pay' | undefined>(props.type);
+  const resetStep = useCallback(() => {
+    setStep(props.type);
+  }, [props.type]);
 
   // Track whether we're transitioning to token step so we don't
   // fire onClose when the outer modal is dismissed intentionally.
@@ -46,13 +49,19 @@ export const GasAccountDepositPopup: React.FC<{
   const showSelectSheet = props.visible && step !== 'token';
   const showTokenForm = props.visible && step === 'token';
 
+  const handleClose = useCallback(() => {
+    resetStep();
+    props?.onClose?.();
+  }, [props, resetStep]);
+
   useEffect(() => {
     if (!props?.visible) {
       modalRef.current?.close();
+      resetStep();
     } else {
       modalRef.current?.present();
     }
-  }, [props?.visible]);
+  }, [props?.visible, resetStep]);
 
   useEffect(() => {
     if (props.visible) {
@@ -81,8 +90,8 @@ export const GasAccountDepositPopup: React.FC<{
       isTransitioningToTokenRef.current = false;
       return;
     }
-    props?.onClose?.();
-  }, [props]);
+    handleClose();
+  }, [handleClose]);
 
   const snapPoints = useMemo(() => {
     if (step === 'pay') {
@@ -113,7 +122,7 @@ export const GasAccountDepositPopup: React.FC<{
                 minDepositPrice={props.minDepositPrice}
                 visible={props.visible}
                 onDeposit={props.onDeposit}
-                onClose={props.onClose}
+                onClose={handleClose}
                 onWaitDepositResult={props.onWaitDepositResult}
                 gasAccountAddress={props.gasAccountAddress}
                 onEnsureGasAccountAddress={props.onEnsurePayGasAccountAddress}
@@ -134,7 +143,7 @@ export const GasAccountDepositPopup: React.FC<{
         <GasAccountDepositTokenForm
           visible={showTokenForm}
           onDeposit={props.onDeposit}
-          onClose={props.onClose}
+          onClose={handleClose}
           onWaitDepositResult={props.onWaitDepositResult}
           minDepositPrice={props.minDepositPrice}
           disableL2Deposit={disableL2Deposit}

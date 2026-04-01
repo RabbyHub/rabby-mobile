@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
 
@@ -44,13 +44,6 @@ export const GasLessNotEnough: React.FC<{
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
 
   const { value: gasAccountInfo } = useGasAccountInfo();
-
-  useEffect(() => {
-    return () => {
-      setTipPopupVisible(false);
-      onDepositPopupVisibleChange?.(false);
-    };
-  }, [onDepositPopupVisibleChange]);
 
   return (
     <>
