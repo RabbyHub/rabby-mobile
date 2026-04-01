@@ -9758,9 +9758,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.74":
-  version: 0.0.74
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.74"
+"@rabby-wallet/rabby-swap@npm:0.0.75-beta.0":
+  version: 0.0.75-beta.0
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.75-beta.0"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
