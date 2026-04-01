@@ -66,7 +66,7 @@ const HeroIllustration = ({
   );
 };
 
-function NewUserGetStarted2024V2(): JSX.Element {
+function NewUserGetStartedScreen() {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
@@ -190,7 +190,7 @@ function NewUserGetStarted2024V2(): JSX.Element {
       />
 
       {/* Header with logo - positioned right next to status bar, horizontally centered */}
-      <View style={[styles.logoWrapper, { top: top + 12 }]}>
+      <View style={[styles.logoWrapper, { top: top + 6 }]}>
         <Image
           source={isLight ? logoLight : logoDark}
           style={styles.logoImage}
@@ -377,4 +377,4 @@ const getStyle = createGetStyles2024(ctx => ({
   },
 }));
 
-export default NewUserGetStarted2024V2;
+export default NewUserGetStartedScreen;

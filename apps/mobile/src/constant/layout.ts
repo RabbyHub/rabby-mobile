@@ -340,6 +340,7 @@ function makeScreenSpecConfig() {
       },
 
       // StackGetStarted
+      [RootNames.GetStarted]: bg1DefaultConf,
       [RootNames.GetStartedScreen2024]: bg1DefaultConf,
       [RootNames.CreateSelectMethod]: bg1Default2024Conf,
       // StackRoot
@@ -368,7 +369,6 @@ function makeScreenSpecConfig() {
       [RootNames.CustomTestnet]: bg1Default2024Conf,
       [RootNames.CustomRPC]: bg1Default2024Conf,
       [RootNames.SetBiometricsAuthentication]: bg1DefaultConf,
-      [RootNames.GetStarted]: bg1Default2024Conf,
       [RootNames.ProviderControllerTester]: bg1Default2024Conf,
 
       // StackTestkits

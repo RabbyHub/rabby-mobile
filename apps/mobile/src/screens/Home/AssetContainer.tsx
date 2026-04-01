@@ -146,9 +146,6 @@ const getStyles = createGetStyles2024(ctx => ({
     // paddingHorizontal: 16,
     zIndex: 1,
   },
-  bgContainer: {
-    // backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
   rowWrap: {
     paddingHorizontal: 16,
   },

@@ -54,7 +54,7 @@ export function ReceiveOnNoAssets({ account }: { account?: Account | null }) {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       flex: 1,
@@ -66,7 +66,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       padding: 16,
       paddingVertical: 24,
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
@@ -90,7 +92,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 8,
       borderWidth: 1,
       borderColor: colors2024['neutral-line'],
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       overflow: 'hidden',
     },
     btnCopyAddress: {
