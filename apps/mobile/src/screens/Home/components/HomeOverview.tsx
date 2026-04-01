@@ -181,7 +181,9 @@ function getIsAtBottom(scrollY: number, translateY = 0) {
   const ret = {
     isAtBottom: false,
   };
-  if (!scrollViewContentHeight || !scrollViewLayoutHeight) ret;
+  if (!scrollViewContentHeight || !scrollViewLayoutHeight) {
+    ret;
+  }
 
   const scrollOffset = Math.max(
     0,
@@ -261,7 +263,9 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
 
   useEffect(() => {
     const remove = balanceStore.subscribe(async (cur, prev) => {
-      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) return;
+      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) {
+        return;
+      }
       const { top10Addresses } = await getTop10MyAccounts();
       const isTop10BalanceLoading = cur.getIsTop10BalanceLoading(
         top10Addresses,
@@ -617,17 +621,7 @@ export const HomeOverview = React.memo(() => {
   const sortedAccounts = useSortAddressList(accounts);
   useSubscribePosition(sortedAccounts);
 
-  const { lending: lendingDappId, perps: perpsDappId } =
-    useInnerDappSelection();
-
-  const perpsIcon =
-    (
-      {
-        aster: RcIconAsterCC,
-        lighter: RcIconLighterCC,
-        hyperliquid: RcIconPerps,
-      } as const
-    )[perpsDappId] ?? RcIconPerps;
+  const { lending: lendingDappId } = useInnerDappSelection();
 
   const lendingIcon =
     (
@@ -642,7 +636,9 @@ export const HomeOverview = React.memo(() => {
 
   useFocusEffect(
     React.useCallback(() => {
-      if (!couldDoRefresh()) return;
+      if (!couldDoRefresh()) {
+        return;
+      }
       checkAddressesEligibility();
     }, [checkAddressesEligibility]),
   );
@@ -673,7 +669,7 @@ export const HomeOverview = React.memo(() => {
         {
           key: MultiHomeFeatTitle.Perps,
           title: t('page.home.services.perps'),
-          icon: perpsIcon,
+          icon: RcIconPerps,
         },
         {
           key: MultiHomeFeatTitle.Lending,
@@ -730,7 +726,6 @@ export const HomeOverview = React.memo(() => {
       }[],
     [
       t,
-      perpsIcon,
       lendingIcon,
       colors2024,
       historyCount?.fail,
@@ -754,7 +749,9 @@ export const HomeOverview = React.memo(() => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) return;
+      if (!couldDoRefresh()) {
+        return;
+      }
       refreshSuccessAndFailList();
     }, []),
   );
@@ -772,7 +769,9 @@ export const HomeOverview = React.memo(() => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) return;
+      if (!couldDoRefresh()) {
+        return;
+      }
       const forceFirstTime = isFirstTriggerRef.current;
       if (isFirstTriggerRef.current) {
         isFirstTriggerRef.current = false;
@@ -790,7 +789,9 @@ export const HomeOverview = React.memo(() => {
   );
 
   const onRefresh = useCallback(async () => {
-    if (!couldDoRefresh()) return;
+    if (!couldDoRefresh()) {
+      return;
+    }
 
     refreshETHStatus();
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
@@ -834,7 +835,9 @@ export const HomeOverview = React.memo(() => {
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
-      if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
+      if (!apisHomeTabIndex.isHomeAtFirstTab()) {
+        return;
+      }
       if (isTabsSwiping.value) {
         return;
       }

@@ -19,6 +19,7 @@ import { PerpsDepositPopup } from './components/PerpsDepositPopup';
 import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
 import RcIconBackTopCC from '@/assets2024/icons/perps/IconBackTopCC.svg';
 import { usePerpsPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -83,6 +84,7 @@ export const PerpsOriginScreen = () => {
     favoriteMarkets,
   } = usePerpsState();
   const { handleClosePosition } = usePerpsPosition();
+  const { isUnifiedAccount } = usePerpsAccount();
 
   const [popupState, setPopupState] = usePerpsPopupState();
 
@@ -523,8 +525,9 @@ export const PerpsOriginScreen = () => {
       />
       <PerpsWithdrawPopup
         visible={popupState.isShowWithdrawPopup}
-        onWithdraw={async v => {
-          await handleWithdraw(v);
+        marketDataMap={marketDataMap}
+        onWithdraw={async (amount, isHypeWithdraw) => {
+          await handleWithdraw(amount, isHypeWithdraw, isUnifiedAccount);
           setPopupState(prev => ({
             ...prev,
             isShowWithdrawPopup: false,
