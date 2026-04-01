@@ -106,6 +106,7 @@ export const GasLessNotEnough: React.FC<{
         ) : null}
       </View>
       <GasAccountDepositTipPopup
+        disableL2Deposit
         gasAccountAddress={gasAccountAddress}
         visible={tipPopupVisible}
         onClose={() => {

@@ -151,6 +151,7 @@ export const GasAccountTips: React.FC<{
         </TouchableOpacity>
       ) : null}
       <GasAccountDepositTipPopup
+        disableL2Deposit
         gasAccountAddress={gasAccountAddress}
         visible={
           // !isWalletConnect && isGasAccountLogin ? tipPopupVisible : false

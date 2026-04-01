@@ -1,20 +1,39 @@
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useState } from 'react';
 
-export const useUsdInput = () => {
+type UseUsdInputOptions = {
+  maxDecimals?: number;
+};
+
+const isWithinDecimalLimit = (value: string, maxDecimals?: number) => {
+  if (maxDecimals === undefined || !value.includes('.')) {
+    return true;
+  }
+
+  const [, decimalPart = ''] = value.split('.');
+  return decimalPart.length <= maxDecimals;
+};
+
+export const useUsdInput = (options?: UseUsdInputOptions) => {
   const [input, setInput] = useState('');
 
-  const onChangeText = useCallback((v: string) => {
-    // Replace comma with dot for decimal point
-    const normalizedValue = v.replace(/,/g, '.');
-    const value = normalizedValue.startsWith('$')
-      ? normalizedValue.slice(1)
-      : normalizedValue;
+  const onChangeText = useCallback(
+    (v: string) => {
+      // Replace comma with dot for decimal point
+      const normalizedValue = v.replace(/,/g, '.');
+      const value = normalizedValue.startsWith('$')
+        ? normalizedValue.slice(1)
+        : normalizedValue;
 
-    if (/^\d*\.?\d*$/.test(value) || value === '') {
-      setInput(value);
-    }
-  }, []);
+      if (
+        (/^\d*\.?\d*$/.test(value) || value === '') &&
+        isWithinDecimalLimit(value, options?.maxDecimals)
+      ) {
+        setInput(value);
+      }
+    },
+    [options?.maxDecimals],
+  );
 
   return {
     value: input.replace(/^\$/, ''),
