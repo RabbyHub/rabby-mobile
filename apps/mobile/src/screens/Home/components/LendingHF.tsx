@@ -1,19 +1,21 @@
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { useTheme2024 } from '@/hooks/theme';
+import { useCurrency } from '@/hooks/useCurrency';
 import { apisLending, useLendingHF } from '@/screens/Lending/hooks';
 import { getHealthStatusColor } from '@/screens/Lending/utils';
-import { formatNetworth, formatNum } from '@/utils/math';
+import { formatNum } from '@/utils/math';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect } from 'react';
 import { Text } from '@/components/Typography';
 
 const NetWorthBadge: React.FC<{ netWorth: string }> = ({ netWorth }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { formatCurrentCurrency } = useCurrency();
   if (Number(netWorth) <= 0) {
     return null;
   }
   return (
-    <Text style={styles.netWorthText}>{formatNetworth(Number(netWorth))}</Text>
+    <Text style={styles.netWorthText}>{formatCurrentCurrency(netWorth)}</Text>
   );
 };
 
