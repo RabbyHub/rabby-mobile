@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Platform } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { View } from 'react-native';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,45 +11,36 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import { useFetchLendingData } from './hooks';
-import { LendingHeader } from './components/Header';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { LendingNativeHeader } from './components/LendingHeaderTitle';
 import { useInitOpenDetail } from './hooks/useInitOpenDetail';
 import MyAssetHome from './MyAssetHome';
-const isAndroid = Platform.OS === 'android';
 
 function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { fetchData } = useFetchLendingData();
+  const { finalSceneCurrentAccount } = useSceneAccountInfo({
+    forScene: 'Lending',
+  });
   useInitOpenDetail();
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const Header = React.useCallback(
-    () => (
-      <LendingHeader
-        onPendingClear={() => {
-          setTimeout(() => {
-            fetchData(true);
-          }, 200);
-        }}
-      />
-    ),
-    [fetchData],
-  );
-
-  useEffect(() => {
-    setNavigationOptions({
-      headerRight: Header,
-    });
-  }, [Header, setNavigationOptions]);
+  const handlePendingClear = useCallback(() => {
+    setTimeout(() => {
+      fetchData(true);
+    }, 200);
+  }, [fetchData]);
 
   return (
     <NormalScreenContainer2024
       type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={styles.overwriteStyle}>
+      <LendingNativeHeader
+        account={finalSceneCurrentAccount}
+        onPendingClear={handlePendingClear}
+      />
       <AccountSwitcherModal forScene="Lending" inScreen />
       <View style={styles.container}>
         <MyAssetHome />
@@ -85,9 +76,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
-  },
-  header: {
-    height: isAndroid ? 46 : 44,
   },
   container: {
     flex: 1,
