@@ -217,22 +217,27 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={styles.tokenInfo}>
-            <TokenIcon
-              size={46}
-              chainSize={0}
-              tokenSymbol={reserve.reserve.symbol}
-              chain={reserve.chain}
-            />
-            <View style={styles.symbolArea}>
-              <Text
-                style={styles.symbol}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {reserve.reserve.symbol}
-              </Text>
-              <View style={styles.apyTag}>
-                <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+            <View style={styles.tokenInfoContainer}>
+              <TokenIcon
+                size={28}
+                chainSize={0}
+                tokenSymbol={reserve.reserve.symbol}
+                chain={reserve.chain}
+              />
+              <View style={styles.symbolArea}>
+                <Text
+                  style={styles.symbol}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {reserve.reserve.symbol}
+                </Text>
+                <View style={styles.borrowedBadge}>
+                  <Text style={styles.borrowedBadgeText}>Borrowed</Text>
+                </View>
               </View>
+            </View>
+            <View style={styles.apyTag}>
+              <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
             </View>
           </View>
           <View style={styles.amountArea}>
@@ -274,12 +279,6 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
           </TouchableOpacity>
         </View>
       </View>
-
-      {isBorrowed ? (
-        <View style={styles.borrowedBadge}>
-          <Text style={styles.borrowedBadgeText}>Borrowed</Text>
-        </View>
-      ) : null}
     </View>
   );
 };
@@ -289,8 +288,7 @@ export default BorrowItem;
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     borderRadius: 16,
-    paddingTop: 40,
-    paddingBottom: 12,
+    paddingVertical: 14,
     paddingHorizontal: 0,
     marginTop: 12,
     backgroundColor: isLight
@@ -323,10 +321,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
   },
   tokenInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     gap: 8,
     flexShrink: 1,
+  },
+  tokenInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   symbolArea: {
     flexDirection: 'row',
@@ -337,13 +340,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   symbol: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   apyTag: {
     paddingHorizontal: 4,
-    paddingVertical: 2,
+    paddingVertical: 1,
     borderRadius: 4,
     backgroundColor: colors2024['red-light-1'],
   },
@@ -357,6 +360,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   amountArea: {
     alignItems: 'flex-end',
     justifyContent: 'center',
+    gap: 5,
   },
   amountUsd: {
     fontSize: 16,
@@ -366,7 +370,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   amountToken: {
-    marginTop: 2,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
@@ -374,7 +377,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   buttonRow: {
-    marginTop: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -425,19 +427,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   borrowedBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,
-    backgroundColor: colors2024['red-default'],
+    width: 'auto',
+    backgroundColor: colors2024['red-light-1'],
   },
   borrowedBadgeText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: colors2024['neutral-InvertHighlight'],
+    color: colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
   },
 }));

@@ -22,8 +22,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   return {
     container: {
       borderRadius: 16,
-      paddingHorizontal: 22,
-      paddingVertical: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 13,
       backgroundColor: colors2024['neutral-bg-5'],
       flexDirection: 'row',
       justifyContent: 'space-between',
