@@ -133,7 +133,8 @@ const MyAssetHome: React.FC = () => {
 
   const handleOpenSupplyList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.LENDING_SUPPLY_LIST,
+      name: MODAL_NAMES.LENDING_TOKEN_LIST,
+      initialTab: 'supply',
       onCancel: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
@@ -151,7 +152,8 @@ const MyAssetHome: React.FC = () => {
 
   const handleOpenBorrowList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.LENDING_BORROW_LIST,
+      name: MODAL_NAMES.LENDING_TOKEN_LIST,
+      initialTab: 'borrow',
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',

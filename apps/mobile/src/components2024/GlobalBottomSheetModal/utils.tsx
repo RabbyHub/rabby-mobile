@@ -62,6 +62,7 @@ import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/Sele
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
 import LendingSupplyList from '@/screens/Lending/components/popups/SupplyList';
 import LendingBorrowList from '@/screens/Lending/components/popups/BorrowList';
+import LendingTokenList from '@/screens/Lending/components/popups/LendingTokenList';
 import DebtTokenSelectModal from '@/screens/Lending/components/DebtTokenSelect';
 import DebtSwapModal from '@/screens/Lending/modals/DebtSwapModal';
 import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
@@ -342,6 +343,11 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.LENDING_BORROW_LIST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: LendingBorrowList,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.LENDING_TOKEN_LIST]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: LendingTokenList,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
