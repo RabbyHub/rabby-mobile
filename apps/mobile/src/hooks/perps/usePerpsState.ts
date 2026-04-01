@@ -1,6 +1,8 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import {
   DELETE_AGENT_EMPTY_ADDRESS,
+  HYPE_EVM_BRIDGE_ADDRESS,
+  HYPE_SEND_ASSET_TOKEN,
   PERPS_AGENT_NAME,
   PERPS_BUILD_FEE,
   PERPS_BUILD_FEE_RECEIVE_ADDRESS,
@@ -714,7 +716,11 @@ export const usePerpsState = () => {
   });
 
   const handleWithdraw = useMemoizedFn(
-    async (amount: number | string): Promise<boolean> => {
+    async (
+      amount: number | string,
+      isHypeWithdraw = false,
+      isUnifiedAccount = false,
+    ): Promise<boolean> => {
       try {
         const sdk = apisPerps.getPerpsSDK();
 
@@ -726,14 +732,24 @@ export const usePerpsState = () => {
           throw new Error('Hyperliquid no exchange client');
         }
 
+        const time = Date.now();
         const useMiniApprovalSign =
           currentPerpsAccount.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
           currentPerpsAccount.type === KEYRING_CLASS.HARDWARE.LEDGER;
 
-        const action = sdk.exchange.prepareWithdraw({
-          amount: amount.toString(),
-          destination: currentPerpsAccount.address,
-        });
+        const action = isHypeWithdraw
+          ? sdk.exchange.prepareSendAsset({
+              destination: HYPE_EVM_BRIDGE_ADDRESS,
+              amount: amount.toString(),
+              token: HYPE_SEND_ASSET_TOKEN,
+              sourceDex: isUnifiedAccount ? 'spot' : '',
+              destinationDex: 'spot',
+            })
+          : sdk.exchange.prepareWithdraw({
+              amount: amount.toString(),
+              destination: currentPerpsAccount.address,
+            });
+
         let signature = '';
         if (
           currentPerpsAccount.type === KEYRING_CLASS.PRIVATE_KEY ||
@@ -771,19 +787,29 @@ export const usePerpsState = () => {
             account: currentPerpsAccount,
           });
         }
-        const res = await sdk.exchange.sendWithdraw({
-          action: action.message as any,
-          nonce: action.nonce || 0,
-          signature: signature as string,
-        });
+
+        const res = isHypeWithdraw
+          ? await sdk.exchange.sendSendAsset({
+              action: action.message as any,
+              nonce: action.nonce || 0,
+              signature: signature as string,
+            })
+          : await sdk.exchange.sendWithdraw({
+              action: action.message as any,
+              nonce: action.nonce || 0,
+              signature: signature as string,
+            });
+
         setLocalLoadingHistory(
           [
             {
-              time: Date.now(),
+              time,
               hash: res.hash || '',
               type: 'withdraw',
               status: 'pending',
-              usdValue: (+amount - 1).toString(),
+              usdValue: isHypeWithdraw
+                ? amount.toString()
+                : (+amount - 1).toString(),
             },
           ],
           false,

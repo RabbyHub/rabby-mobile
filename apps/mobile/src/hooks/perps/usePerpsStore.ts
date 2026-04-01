@@ -13,7 +13,7 @@ import {
 // import { ApproveSignatures } from '@/background/service/perps';
 import { Account } from '@/core/services/preference';
 import { ApproveSignatures } from '@/core/services/perpsService';
-import { DEFAULT_TOP_ASSET } from '@/constant/perps';
+import { DEFAULT_TOP_ASSET, HYPE_EVM_BRIDGE_ADDRESS } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import {
   formatAllDexsClearinghouseState,
@@ -820,6 +820,18 @@ export const usePerpsStore = () => {
           }
 
           const { destination, usdcValue } = item.delta as any;
+          if (
+            item.delta.type === 'send' &&
+            destination === HYPE_EVM_BRIDGE_ADDRESS
+          ) {
+            return {
+              time: item.time,
+              hash: item.hash,
+              type: 'withdraw' as const,
+              status: 'success' as const,
+              usdValue: usdcValue?.toString() || '0',
+            };
+          }
           if (
             item.delta.type === 'send' &&
             destination === state.currentPerpsAccount?.address
