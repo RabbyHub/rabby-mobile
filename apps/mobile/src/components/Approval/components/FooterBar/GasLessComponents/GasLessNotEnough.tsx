@@ -13,6 +13,7 @@ import { Text } from '@/components/Typography';
 import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { formatUsdValue } from '@/utils/number';
+import { toast } from '@/components2024/Toast';
 
 export const GasLessNotEnough: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -119,6 +120,7 @@ export const GasLessNotEnough: React.FC<{
           onDeposit?.();
         }}
         onWaitDepositResult={async result => {
+          toast.success(t('page.gasAccount.depositSuccess'));
           setTipPopupVisible(false);
           onDepositPopupVisibleChange?.(false);
           await onWaitDepositResult?.(result);

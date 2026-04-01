@@ -1938,6 +1938,7 @@
         "gasAccountBalance": "GasAccount Balance"
       },
       "depositSuccess": "Deposit successful",
+      "depositSubmitted": "Deposit Submitted",
       "loginFailed": "Login Failed",
       "depositCanceled": "Deposit Canceled",
       "loginSuccess": "Login Successful",

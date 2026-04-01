@@ -1942,7 +1942,7 @@
       },
       "depositNow": "立即存款",
       "switchAccount": "切换钱包",
-      "depositWith": "使用存款",
+      "depositWith": "充值",
       "depositFailed": "存款失败",
       "lowBalance": "您没有足够的 gas。请存入 gas 以确保未来交易顺利进行。",
       "gasBalance": "Gas 余额"

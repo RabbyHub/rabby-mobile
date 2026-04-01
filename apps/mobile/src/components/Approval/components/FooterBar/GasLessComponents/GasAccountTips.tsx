@@ -12,6 +12,7 @@ import { Text } from '@/components/Typography';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { formatUsdValue } from '@/utils/number';
+import { toast } from '@/components2024/Toast';
 
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -167,6 +168,7 @@ export const GasAccountTips: React.FC<{
           onDeposit?.();
         }}
         onWaitDepositResult={async result => {
+          toast.success(t('page.gasAccount.depositSuccess'));
           setTipPopupVisible(false);
           onDepositPopupVisibleChange?.(false);
           await onWaitDepositResult?.(result);
