@@ -2,7 +2,10 @@ import { NativeModules } from 'react-native';
 import Reactotron, { ReactotronReactNative } from 'reactotron-react-native';
 import { DEV_SERVER_HOSTNAME as DEV_SERVER_HOSTNAME_ } from '@env';
 import { APP_VERSIONS, isNonPublicProductionEnv } from '@/constant';
-import { getDevServerHost } from '@/core/utils/devServerSettings';
+import {
+  getDevServerHost,
+  DevServerScene,
+} from '@/core/utils/devServerSettings';
 import mmkvPlugin from '@/core/utils/reactotron-plugins/react-native-mmkv';
 import opSQLitePlugin from '@/core/utils/reactotron-plugins/op-sqlite';
 import {
@@ -35,7 +38,7 @@ export async function setupReactotronConnection() {
   }
 
   if (isNonPublicProductionEnv) {
-    persistedHostname = getDevServerHost();
+    persistedHostname = getDevServerHost(DevServerScene.REACTOTRON);
   }
 
   console.debug(

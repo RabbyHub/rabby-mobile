@@ -25190,7 +25190,7 @@ __metadata:
     less: ^4.4.0
     query-string: ^9.2.2
     react: 19.1.4
-    react-dom: ^19.1.1
+    react-dom: 19.1.4
     typescript: ~5.8.3
     typescript-eslint: ^8.39.1
     vite: ^7.1.2
@@ -31752,7 +31752,7 @@ __metadata:
     lint-staged: ^15.2.0
     postcss: ^8.5.6
     react: 19.1.4
-    react-dom: ^19.1.1
+    react-dom: 19.1.4
     tailwindcss: ^4.1.14
     tinycolor2: ^1.6.0
     typescript: ~5.8.3
@@ -35518,6 +35518,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-dom@npm:19.1.4":
+  version: 19.1.4
+  resolution: "react-dom@npm:19.1.4"
+  dependencies:
+    scheduler: ^0.26.0
+  peerDependencies:
+    react: ^19.1.4
+  checksum: 7b2c9d0bbea29cafc30f29c8061f90609fbc085cb17ddfcbec8e50cbf71bb80d4012d48b934ac622c884678545eb5bace37917f58c52bc50b228133ed6d0ea28
+  languageName: node
+  linkType: hard
+
 "react-dom@npm:^18.2.0":
   version: 18.2.0
   resolution: "react-dom@npm:18.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-dom%2F-%2Freact-dom-18.2.0.tgz"
@@ -35527,17 +35538,6 @@ __metadata:
   peerDependencies:
     react: ^18.2.0
   checksum: 7d323310bea3a91be2965f9468d552f201b1c27891e45ddc2d6b8f717680c95a75ae0bc1e3f5cf41472446a2589a75aed4483aee8169287909fcd59ad149e8cc
-  languageName: node
-  linkType: hard
-
-"react-dom@npm:^19.1.1":
-  version: 19.1.1
-  resolution: "react-dom@npm:19.1.1"
-  dependencies:
-    scheduler: ^0.26.0
-  peerDependencies:
-    react: ^19.1.1
-  checksum: 71d63df955e99bb58470c6ae12ebb82fa80e2a73147c387b73a31c17bcff803ce8aded52ae0c4391c9b413be0aa449249d8be7d063136826d1f0caba9720a907
   languageName: node
   linkType: hard
 
