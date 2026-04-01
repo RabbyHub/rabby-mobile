@@ -62,7 +62,7 @@ export interface AddressCardProps {
    */
   style?: StyleProp<ViewStyle>;
   /**
-   * Optional avatar size (default: 36)
+   * Optional avatar size (default: 36, or 46 when showBalance is true)
    */
   avatarSize?: number;
   /**
@@ -80,12 +80,15 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   aliasName,
   showBalance = false,
   style,
-  avatarSize = 36,
+  avatarSize,
   avatarBorderRadius = 12,
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
   const displayAddress = ellipsisAddress(address);
+
+  // Default avatar size is 36, but 46 when showing balance
+  const effectiveAvatarSize = avatarSize ?? (showBalance ? 46 : 36);
 
   return (
     <View style={[styles.container, style]}>
@@ -93,8 +96,8 @@ export const AddressCard: React.FC<AddressCardProps> = ({
         <WalletIcon
           type={brandName}
           address={address}
-          width={avatarSize}
-          height={avatarSize}
+          width={effectiveAvatarSize}
+          height={effectiveAvatarSize}
           borderRadius={avatarBorderRadius}
         />
         <View style={styles.textContainer}>
@@ -111,12 +114,14 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
     minHeight: 70,
     borderRadius: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
   },

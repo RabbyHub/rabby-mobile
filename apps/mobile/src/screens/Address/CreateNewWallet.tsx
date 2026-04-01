@@ -241,11 +241,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flexGrow: 1,
     },
     lottieContainer: {
+      width: 210,
+      height: 190,
       marginBottom: -32,
+      marginTop: -12,
     },
     lottie: {
-      width: 180,
-      height: 173,
+      width: '100%',
+      height: '100%',
     },
     textContainer: {
       alignItems: 'center',
@@ -275,8 +278,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       },
       shadowOpacity: 0.06,
       shadowRadius: 43.3,
-      // Shadow for Android
-      elevation: 8,
     },
     // Password form container - fills remaining space if available
     formContainer: {

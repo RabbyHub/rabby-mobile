@@ -343,7 +343,7 @@ export function AddressNavigator() {
           headerTitle: t('screens.addressStackTitle.ChooseBackup'),
           title: t('screens.addressStackTitle.ChooseBackup'),
           headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
+            backgroundColor: colors2024['neutral-bg-0'],
           },
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,

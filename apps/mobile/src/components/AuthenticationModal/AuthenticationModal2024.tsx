@@ -426,7 +426,9 @@ export const AuthenticationModal2024 = ({
               <View style={styles.inputWrapper}>
                 <NextInput.Password
                   as={'BottomSheetTextInput'}
-                  fieldName={t('page.whitelist.confirmPassword')}
+                  fieldName={t(
+                    'component.AuthenticationModal.passwordPlaceholder',
+                  )}
                   containerStyle={Object.assign(
                     {},
                     error

@@ -14,7 +14,7 @@ import RcIconArrow from '@/assets/icons/home/setting.svg';
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
 export function DepositAssetsCard({ account }: { account?: Account | null }) {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useNavigation<HomeProps['navigation']>();
 
@@ -49,14 +49,19 @@ export function DepositAssetsCard({ account }: { account?: Account | null }) {
               {t('page.home.depositAssets.subtitle')}
             </Text>
           </View>
-          <RcIconArrow width={26} height={26} style={styles.settingIcon} />
+          <RcIconArrow
+            width={26}
+            height={26}
+            style={styles.settingIcon}
+            color={colors2024['neutral-title-1']}
+          />
         </View>
       </View>
     </Pressable>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       width: '100%',
@@ -65,7 +70,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     card: {
       width: '100%',
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       overflow: 'hidden',
       shadowColor: 'rgba(55, 56, 63, 0.02)',
       shadowOffset: { width: 0, height: 14 },
@@ -78,7 +85,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: 164,
     },
     textBox: {
-      backgroundColor: colors2024['neutral-bg-5'] + '80', // 50% opacity
+      backgroundColor: colors2024['neutral-bg-5'],
       borderRadius: 12,
       marginVertical: 12,
       marginHorizontal: 16,
