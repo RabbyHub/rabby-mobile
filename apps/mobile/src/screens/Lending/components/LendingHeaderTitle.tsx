@@ -43,29 +43,31 @@ const LendingHeaderContent: React.FC<{
 
         <View style={styles.headerRight}>
           {account ? (
-            <TouchableOpacity
-              style={styles.accountSelector}
-              onPress={() => {
-                toggleSceneVisible('Lending', !isVisible);
-              }}>
-              <WalletIcon
-                width={18}
-                height={18}
-                type={account.brandName}
-                address={account.address}
-              />
-              <Text style={styles.accountName} numberOfLines={1}>
-                {alias || ellipsisAddress(account.address)}
-              </Text>
-              <CaretArrowIconCC
-                dir="down"
-                style={isVisible ? styles.reverseCaret : null}
-                width={18}
-                height={18}
-                bgColor={colors2024['neutral-bg-5']}
-                lineColor={colors2024['neutral-title-1']}
-              />
-            </TouchableOpacity>
+            <View style={styles.accountSelectorContainer}>
+              <TouchableOpacity
+                style={styles.accountSelector}
+                onPress={() => {
+                  toggleSceneVisible('Lending', !isVisible);
+                }}>
+                <WalletIcon
+                  width={18}
+                  height={18}
+                  type={account.brandName}
+                  address={account.address}
+                />
+                <Text style={styles.accountName} numberOfLines={1}>
+                  {alias || ellipsisAddress(account.address)}
+                </Text>
+                <CaretArrowIconCC
+                  dir="down"
+                  style={isVisible ? styles.reverseCaret : null}
+                  width={18}
+                  height={18}
+                  bgColor={colors2024['neutral-bg-5']}
+                  lineColor={colors2024['neutral-title-1']}
+                />
+              </TouchableOpacity>
+            </View>
           ) : null}
           <LendingHistoryHeader onPendingClear={onPendingClear} />
         </View>
@@ -127,7 +129,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
     gap: 12,
+  },
+  accountSelectorContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   accountSelector: {
     flexDirection: 'row',
@@ -139,7 +147,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 6,
-    maxWidth: 160,
+    marginLeft: 'auto',
   },
   accountName: {
     fontFamily: 'SF Pro Rounded',

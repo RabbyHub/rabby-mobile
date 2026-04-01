@@ -307,7 +307,7 @@ export const MODAL_CONFIGS = {
     Component: SupplyActionPopup,
   },
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {
-    snapPoints: [734],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: WithdrawActionPopup,
   },
   [MODAL_NAMES.BORROW_ACTION_DETAIL]: {
