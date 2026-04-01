@@ -457,15 +457,19 @@ function SendScreen({
       apiSendToken.putScreenState({
         balanceError: null,
         balanceWarn: null,
-        isLoading: true,
       });
-      const tokenItem = await loadCurrentToken(
+      apiSendToken.markBalanceLoading({
+        tokenId: currentToken.id,
+        chainId: currentToken.chain,
+        currentAddress: currentAccount.address,
+      });
+      await loadCurrentToken(
         currentToken.id,
         currentToken.chain,
         currentAccount.address,
       );
     })();
-  }, [loadCurrentToken, currentAccount?.address]);
+  }, [currentAccount?.address, loadCurrentToken]);
 
   useEffect(() => {
     if (!currentAccount) {
