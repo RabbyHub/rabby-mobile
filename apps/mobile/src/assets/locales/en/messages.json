@@ -2895,6 +2895,8 @@
         "swapDebt": "Swap",
         "borrowed": "Borrowed",
         "approveAndBorrow": "Approve and Borrow",
+        "noSupplyPrefix": "No supply: ",
+        "noSupplyDesc": "To borrow you need to supply assets as collateral.",
         "almostReachedWarning": "Protocol borrow cap is at 100% for this asset. Further borrowing unavailable.",
         "almostReachedError": "Maximum amount available to borrow is limited because protocol borrow cap is nearly reached."
       },

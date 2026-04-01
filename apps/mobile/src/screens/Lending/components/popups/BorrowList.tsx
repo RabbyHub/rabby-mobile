@@ -591,8 +591,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   availableCard: {
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
     marginTop: 8,

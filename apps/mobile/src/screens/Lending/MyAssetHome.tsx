@@ -31,7 +31,6 @@ import {
 } from './hooks';
 import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
-import { DisableBorrowTip } from './components/DisableBorrowTip';
 
 type MyAssetItem =
   | {
@@ -211,13 +210,6 @@ const MyAssetHome: React.FC = () => {
     return <EmptyItem />;
   }, [loading]);
 
-  const disableBorrowButton = useMemo(() => {
-    return (
-      !iUserSummary?.availableBorrowsUSD ||
-      iUserSummary?.availableBorrowsUSD === '0'
-    );
-  }, [iUserSummary?.availableBorrowsUSD]);
-
   return (
     <View style={styles.container}>
       <FlatList
@@ -264,16 +256,14 @@ const MyAssetHome: React.FC = () => {
           />
         </View>
         <View style={styles.actionBtnContainer}>
-          <DisableBorrowTip showTip={disableBorrowButton}>
-            <Button
-              type="aave"
-              containerStyle={styles.actionButton}
-              titleStyle={styles.actionPrimaryTitle}
-              title={t('page.Lending.borrowDetail.actions')}
-              disabled={loading || disableBorrowButton}
-              onPress={handleOpenBorrowList}
-            />
-          </DisableBorrowTip>
+          <Button
+            type="aave"
+            containerStyle={styles.actionButton}
+            titleStyle={styles.actionPrimaryTitle}
+            title={t('page.Lending.borrowDetail.actions')}
+            disabled={loading}
+            onPress={handleOpenBorrowList}
+          />
         </View>
       </View>
     </View>

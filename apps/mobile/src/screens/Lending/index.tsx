@@ -12,7 +12,6 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { useFetchLendingData } from './hooks';
 import { LendingNativeHeader } from './components/LendingHeaderTitle';
-import { useInitOpenDetail } from './hooks/useInitOpenDetail';
 import MyAssetHome from './MyAssetHome';
 
 function DashBoardScreen(): JSX.Element {
@@ -21,7 +20,6 @@ function DashBoardScreen(): JSX.Element {
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  useInitOpenDetail();
 
   useEffect(() => {
     fetchData();

@@ -50,8 +50,6 @@ import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 import { AddressHightDesc } from '../AddressHightDesc';
 import SelectLendingChain from '@/screens/Lending/ChainSelector/SelectLendingChain';
-import { SupplyDetailPopup } from '@/screens/Lending/components/SupplyDetailPopup';
-import { BorrowDetailPopup } from '@/screens/Lending/components/BorrowDetailPopup';
 import { SupplyActionPopup } from '@/screens/Lending/components/actions/SupplyActionPopup';
 import { WithdrawActionPopup } from '@/screens/Lending/components/actions/WithdrawActionPopup';
 import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowActionPopup';
@@ -303,16 +301,8 @@ export const MODAL_CONFIGS = {
     snapPoints: undefined,
     Component: BatchRevokeErrorReason,
   },
-  [MODAL_NAMES.SUPPLY_DETAIL]: {
-    snapPoints: [606],
-    Component: SupplyDetailPopup,
-  },
-  [MODAL_NAMES.BORROW_DETAIL]: {
-    snapPoints: ['85%'],
-    Component: BorrowDetailPopup,
-  },
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
-    snapPoints: [686],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: SupplyActionPopup,
   },
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {
@@ -320,7 +310,7 @@ export const MODAL_CONFIGS = {
     Component: WithdrawActionPopup,
   },
   [MODAL_NAMES.BORROW_ACTION_DETAIL]: {
-    snapPoints: [686],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: BorrowActionPopup,
   },
   [MODAL_NAMES.REPAY_ACTION_DETAIL]: {
