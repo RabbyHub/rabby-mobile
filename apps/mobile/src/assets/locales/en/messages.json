@@ -37,7 +37,7 @@
       }
     },
     "getStart": {
-      "createNewAddress": "Create a New Wallet",
+      "createNewAddress": "Create a new wallet",
       "alreadyHaveAddress": "I already have a wallet",
       "goToHome": "Go to Home",
       "sync": "Scan to Sync Rabby Extension Wallet",
@@ -3194,7 +3194,7 @@
       }
     },
     "AuthenticationModal": {
-      "passwordPlaceholder": "Enter the Password to Confirm"
+      "passwordPlaceholder": "Enter password"
     },
     "Contact": {
       "EditModal": {
@@ -3423,6 +3423,7 @@
     "nonce": "nonce",
     "Balance": "Balance",
     "Done": "Done",
+    "SavedSeedPhrase": "I've saved the seed phrase",
     "Nonce": "Nonce",
     "Edit": "Edit",
     "cancel": "Cancel",
