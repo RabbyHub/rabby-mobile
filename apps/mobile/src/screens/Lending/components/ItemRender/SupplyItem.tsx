@@ -185,8 +185,8 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
                       {t('page.Lending.supplyDetail.supplied')}
                     </Text>
                   </View>
+                  {isIsolated ? <IsolatedTag /> : null}
                 </View>
-                {isIsolated ? <IsolatedTag /> : null}
               </View>
             </View>
             <View style={styles.apyTag}>

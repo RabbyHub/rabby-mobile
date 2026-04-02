@@ -449,21 +449,19 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         {showBorrowToCapTip && <BorrowToCapTip />}
         {hasNoSupply && (
           <View style={styles.noSupplyMessageContainer}>
-            <RcIconWarningCircleCC
-              width={18}
-              height={18}
-              color={colors2024['red-default']}
-            />
-            <View style={styles.noSupplyMessageContent}>
-              <Text style={styles.noSupplyMessageText}>
-                <Text style={styles.noSupplyMessagePrefix}>
-                  {t('page.Lending.borrowDetail.noSupplyPrefix')}
-                </Text>
-                <Text style={styles.noSupplyMessageDesc}>
-                  {t('page.Lending.borrowDetail.noSupplyDesc')}
-                </Text>
+            <View style={styles.noSupplyMessageHeader}>
+              <RcIconWarningCircleCC
+                width={18}
+                height={18}
+                color={colors2024['red-default']}
+              />
+              <Text style={styles.noSupplyMessagePrefix}>
+                {t('page.Lending.borrowDetail.noSupplyPrefix')}
               </Text>
             </View>
+            <Text style={styles.noSupplyMessageDesc}>
+              {t('page.Lending.borrowDetail.noSupplyDesc')}
+            </Text>
           </View>
         )}
       </BottomSheetScrollView>
@@ -502,9 +500,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             showTextOnLoading
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.borrowDetail.actions')}
-            title={`${t('page.Lending.borrowDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.borrowDetail.actions')}
             onFinished={() => handleBorrow()}
             disabled={
               hasNoSupply ||
@@ -531,9 +527,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
             onPress={() => handleBorrow()}
-            title={`${t('page.Lending.borrowDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.borrowDetail.actions')}
             loading={isLoading}
             disabled={
               hasNoSupply ||
@@ -725,25 +719,25 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   noSupplyMessageContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: 4,
     backgroundColor: ctx.colors2024['red-light-1'],
     padding: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
     marginTop: 18,
     width: '100%',
   },
-  noSupplyMessageContent: {
-    flex: 1,
-    justifyContent: 'center',
+  noSupplyMessageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  noSupplyMessageText: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: ctx.colors2024['red-default'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'left',
+  noSupplyMessageContent: {
+    flexDirection: 'column',
+    display: 'flex',
+    gap: 8,
   },
   noSupplyMessagePrefix: {
     fontSize: 14,
@@ -758,6 +752,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '500',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
+    marginLeft: 2,
   },
   errorMessageContainer: {
     flexDirection: 'row',

@@ -114,7 +114,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tabItemActive: {
     backgroundColor: isLight
-      ? colors2024['neutral-body']
+      ? '#131416'
       : colors2024['neutral-InvertHighlight'],
   },
   tabText: {

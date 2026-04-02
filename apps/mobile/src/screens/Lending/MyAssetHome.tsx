@@ -304,7 +304,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     gap: 12,
     paddingTop: 12,
     paddingHorizontal: 16,
-    paddingBottom: 34,
+    paddingBottom: 48,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   actionBtnContainer: {
