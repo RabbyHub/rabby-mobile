@@ -2,7 +2,7 @@ name: Type Check & Test
 
 on:
   push:
-    branches: [ develop, feat/type* ]
+    branches: [ develop, feat/type*, build/* ]
   pull_request:
     branches: [ develop ]
   schedule:
@@ -29,6 +29,7 @@ jobs:
     #   - mobile
     env:
       NODE_OPTIONS: '--max_old_space_size=4096'
+      YARN_ENABLE_HARDENED_MODE: '0'
 
     steps:
       - name: Checkout git repo
@@ -50,4 +51,3 @@ jobs:
           yarn install --immutable;
           time yarn typecheck;
           time yarn test;
-
