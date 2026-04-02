@@ -103,11 +103,6 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  walletIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-  },
   optionList: {
     minWidth: 220,
     display: 'flex',

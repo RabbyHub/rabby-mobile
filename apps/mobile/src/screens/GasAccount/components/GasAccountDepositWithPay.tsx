@@ -1,7 +1,4 @@
-import {
-  RcIconApplePayCC,
-  RcIconGooglePayCC,
-} from '@/assets2024/icons/gas-account';
+import { RcIconGooglePayCC } from '@/assets2024/icons/gas-account';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
@@ -126,14 +123,15 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
           android: purchase.purchaseToken || '',
         })!;
 
-        const { promise: pollPromise, cancel } = pollDepositStatus({
-          params: {
-            transaction_id: transactionId,
-            product_id: product.id,
-            device_type: IS_ANDROID ? 'android' : 'ios',
-          },
-        });
-        pollCancelRef.current = cancel;
+        const { promise: pollPromise, cancel: cancelPolling } =
+          pollDepositStatus({
+            params: {
+              transaction_id: transactionId,
+              product_id: product.id,
+              device_type: IS_ANDROID ? 'android' : 'ios',
+            },
+          });
+        pollCancelRef.current = cancelPolling;
         const success = await pollPromise;
         pollCancelRef.current = null;
 
@@ -188,7 +186,6 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       enableOnAndroid
       scrollEnabled={false}
       keyboardOpeningTime={0}
-      // style={styles.container}
       contentContainerStyle={StyleSheet.flatten([
         styles.container,
         { paddingBottom: Math.max(bottom, 36) },

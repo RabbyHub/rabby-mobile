@@ -16,10 +16,7 @@ export const useGasAccountInfo = () => {
   const value = snapshot.accountInfo;
   const loading = snapshot.status === 'refreshing' && !snapshot.accountInfo;
   const runFetchGasAccountInfo = useCallback(() => {
-    return storeApiGasAccount.refreshSnapshot({
-      reason: 'manual',
-      force: true,
-    });
+    return storeApiGasAccount.refreshSnapshot();
   }, []);
 
   useEffect(() => {
@@ -44,15 +41,10 @@ export const useGasAccountInfo = () => {
 };
 
 export const useGasAccountInfoV2 = ({ address }: { address: string }) => {
-  return useRequest(
-    async () => {
-      return openapi.getGasAccountInfoV2({ id: address });
-    },
-    {
-      refreshDeps: [address],
-      cacheKey: `gas-account-info-v2-${address}`,
-    },
-  );
+  return useRequest(() => openapi.getGasAccountInfoV2({ id: address }), {
+    refreshDeps: [address],
+    cacheKey: `gas-account-info-v2-${address}`,
+  });
 };
 
 export const useGasAccountGoBack = () => {
@@ -101,6 +93,18 @@ export const useGasAccountHistory = () => {
   const history = gasAccountStore(s => s.history);
   useEffect(() => {
     if (!sig || !accountId) {
+      const shouldClearHistory =
+        history.status !== 'ready' ||
+        history.totalCount > 0 ||
+        history.list.length > 0 ||
+        history.rechargeList.length > 0 ||
+        history.withdrawList.length > 0;
+
+      if (shouldClearHistory) {
+        storeApiGasAccount.refreshHistory().catch(error => {
+          console.error('useGasAccountHistory clear error', error);
+        });
+      }
       return;
     }
 
@@ -110,7 +114,7 @@ export const useGasAccountHistory = () => {
       !history.rechargeList.length &&
       !history.withdrawList.length
     ) {
-      storeApiGasAccount.refreshHistory('screen_initial').catch(error => {
+      storeApiGasAccount.refreshHistory().catch(error => {
         console.error('useGasAccountHistory refresh error', error);
       });
     }
@@ -118,6 +122,7 @@ export const useGasAccountHistory = () => {
     accountId,
     history.list.length,
     history.rechargeList.length,
+    history.totalCount,
     history.status,
     history.withdrawList.length,
     sig,
@@ -134,7 +139,7 @@ export const useGasAccountHistory = () => {
       hasSomePending
     ) {
       timer = setTimeout(() => {
-        storeApiGasAccount.refreshHistory('pending_poll').catch(error => {
+        storeApiGasAccount.refreshHistory().catch(error => {
           console.error('pending history refresh error', error);
         });
       }, 2000);

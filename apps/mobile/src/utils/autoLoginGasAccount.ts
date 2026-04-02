@@ -37,20 +37,18 @@ function toGasAccountBalanceAccounts<T extends KeyringAccount>(
 async function findAccountsWithBalance<T extends KeyringAccount>(
   accounts: T[],
 ) {
-  if (!accounts.length) return [] as T[];
+  if (!accounts.length) {
+    return [] as T[];
+  }
 
-  const resultsArr = await Promise.allSettled(
+  const results = await Promise.all(
     accounts.map(account =>
       openapi.getGasAccountInfoV2({ id: account.address }).catch(() => null),
     ),
   );
 
-  const results = resultsArr
-    .filter(e => e.status === 'fulfilled')
-    .map(e => e.value);
-
   const matched: T[] = [];
-  for (let i = 0; i < results.length; i++) {
+  for (let i = 0; i < accounts.length; i++) {
     const info = results[i];
     const account = accounts[i];
     if (account && info?.account && Number(info.account.balance || 0) > 0) {
@@ -82,6 +80,29 @@ function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
   storeApiGasAccount.setAccountsWithGasAccountBalance(merged);
 }
 
+async function tryLoginFirstDirectAccount(directWithBalance: KeyringAccount[]) {
+  const firstDirectAccount = directWithBalance[0];
+  if (!firstDirectAccount) {
+    return false;
+  }
+
+  await storeApiGasAccount.loginGasAccount(firstDirectAccount as Account);
+  storeApiGasAccount.clearPendingHardwareAccount();
+  return true;
+}
+
+function setPendingHardwareAccount(account?: KeyringAccount) {
+  if (!account) {
+    return;
+  }
+
+  storeApiGasAccount.setPendingHardwareAccount({
+    address: account.address,
+    type: account.type,
+    brandName: account.brandName,
+  });
+}
+
 export const refreshAccountsWithGasAccountBalance = makeAvoidParallelAsyncFunc(
   async () => {
     try {
@@ -103,7 +124,9 @@ export const refreshAccountsWithGasAccountBalance = makeAvoidParallelAsyncFunc(
 );
 
 export async function autoLoginGasAccountIfNeeded() {
-  if (hasAttemptedAutoLogin) return;
+  if (hasAttemptedAutoLogin) {
+    return;
+  }
 
   const { sig } = storeApiGasAccount.getSigState() || {};
   if (sig) {
@@ -115,37 +138,27 @@ export async function autoLoginGasAccountIfNeeded() {
 
   try {
     const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
-    if (!sortedAccounts.length) return;
+    if (!sortedAccounts.length) {
+      return;
+    }
 
     const directlySignable = filterDirectlySignableAccounts(sortedAccounts);
     const hardware = sortedAccounts.filter(isHardwareAccount);
 
-    // Check directly signable accounts first
     const directWithBalance = await findAccountsWithBalance(directlySignable);
     const hwWithBalance = await findAccountsWithBalance(hardware);
 
-    // Record all accounts with balance
     const allWithBalance = toGasAccountBalanceAccounts([
       ...directWithBalance,
       ...hwWithBalance,
     ]);
     storeApiGasAccount.setAccountsWithGasAccountBalance(allWithBalance);
 
-    if (directWithBalance.length > 0) {
-      // Auto-login with the first directly signable account
-      await storeApiGasAccount.loginGasAccount(directWithBalance[0] as Account);
-      storeApiGasAccount.clearPendingHardwareAccount();
+    if (await tryLoginFirstDirectAccount(directWithBalance)) {
       return;
     }
 
-    if (hwWithBalance[0]) {
-      // Don't auto-login hardware wallets, just mark
-      storeApiGasAccount.setPendingHardwareAccount({
-        address: hwWithBalance[0].address,
-        type: hwWithBalance[0].type,
-        brandName: hwWithBalance[0].brandName,
-      });
-    }
+    setPendingHardwareAccount(hwWithBalance[0]);
   } catch (error) {
     console.error('autoLoginGasAccountIfNeeded error', error);
   }
@@ -172,18 +185,10 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
       toGasAccountBalanceAccounts([...directWithBalance, ...hwWithBalance]),
     );
 
-    if (directWithBalance.length > 0) {
-      await storeApiGasAccount.loginGasAccount(directWithBalance[0] as Account);
-      storeApiGasAccount.clearPendingHardwareAccount();
+    if (await tryLoginFirstDirectAccount(directWithBalance)) {
       return;
     }
 
-    if (hwWithBalance[0]) {
-      storeApiGasAccount.setPendingHardwareAccount({
-        address: hwWithBalance[0].address,
-        type: hwWithBalance[0].type,
-        brandName: hwWithBalance[0].brandName,
-      });
-    }
+    setPendingHardwareAccount(hwWithBalance[0]);
   },
 );

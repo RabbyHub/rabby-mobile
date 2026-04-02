@@ -8,8 +8,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GasAccountDepositTipSelect } from './GasAccountDepositTipSelect';
 import { GasAccountDepositWithPay } from './GasAccountDepositWithPay';
 import { GasAccountDepositWithTokenAlertModal } from './GasAccountDepositWithTokenAlertModal';
-import { toast } from '@/components2024/Toast';
-import { useTranslation } from 'react-i18next';
 import { GasAccountDepositPopup } from './GasAccountDepositPopup';
 
 export const GasAccountDepositTipPopupOld: React.FC<{
@@ -27,7 +25,6 @@ export const GasAccountDepositTipPopupOld: React.FC<{
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [step, setStep] = useState<'token' | 'pay' | undefined>(props.type);
   const [isShowAlertModal, setIsShowAlertModal] = useState(false);
-  const { t } = useTranslation();
 
   const handleSelect = useMemoizedFn((type: 'token' | 'pay') => {
     if (type === 'pay') {
@@ -67,9 +64,6 @@ export const GasAccountDepositTipPopupOld: React.FC<{
         snapPoints={snapPoints}
         onDismiss={() => {
           props.onClose?.();
-          // toast.error(t('page.gasAccount.depositCanceled'), {
-          //   position: toast.positions.CENTER,
-          // });
         }}
         ref={modalRef}
         keyboardBehavior="interactive"
@@ -108,7 +102,7 @@ export const GasAccountDepositTipPopupOld: React.FC<{
 
 export const GasAccountDepositTipPopup = GasAccountDepositPopup;
 
-const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyles = createGetStyles2024(() => ({
   popup: {
     margin: 0,
     height: '100%',

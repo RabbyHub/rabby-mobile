@@ -15,7 +15,6 @@ import React, { ReactNode, useMemo } from 'react';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { GasAccountBalance } from './GasAccountBalance';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
-import { trigger } from 'react-native-haptic-feedback';
 import { Text } from '@/components/Typography';
 import {
   storeApiGasAccount,
@@ -54,7 +53,6 @@ export const SelectGasAccountList = ({
 
   const _list = useSortAddressList(filterAccounts);
 
-  // Use cached gas-account-balance address list for initial filter
   const cachedAccountsWithGasAccountBalance =
     useAccountsWithGasAccountBalance();
 
@@ -105,7 +103,6 @@ export const SelectGasAccountList = ({
       return _list;
     }
 
-    // Filter to only show accounts with balance
     const balanceAddresses = gasAccountBalanceDict
       ? new Set(
           Object.entries(gasAccountBalanceDict)
@@ -150,7 +147,7 @@ export const SelectGasAccountList = ({
             onChange?.(item);
           }}>
           <AddressItem account={item} fetchAccount={false}>
-            {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+            {({ WalletIcon, WalletName, WalletBalance }) => (
               <View style={styles.itemInner}>
                 <WalletIcon width={46} height={46} borderRadius={12} />
                 <View style={styles.itemContent}>
@@ -161,7 +158,7 @@ export const SelectGasAccountList = ({
 
                   <WalletBalance style={styles.walletBalance} />
                 </View>
-                <View style={{ marginLeft: 'auto' }}>
+                <View style={styles.balanceWrapper}>
                   {isGasAccount ? (
                     <GasAccountBalance
                       account={
@@ -187,14 +184,6 @@ export const SelectGasAccountList = ({
           return renderItem({ item });
         })}
       </View>
-      {/* <BottomSheetFlatList
-        style={{ flex: 1, width: '100%' }}
-        contentContainerStyle={styles.containerHorizontal}
-        data={list}
-        keyExtractor={(item, index) => item.type + item.address + index}
-        renderItem={renderItem}
-        // extraData={tmpSelectAccount}
-      /> */}
       {listFooter}
     </View>
   );
@@ -239,6 +228,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
+  },
+  balanceWrapper: {
+    marginLeft: 'auto',
   },
 
   itemContent: {

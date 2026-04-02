@@ -39,7 +39,7 @@ export const GasAccountBalanceCard: React.FC<GasAccountBalanceCardProps> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     width: '100%',
     minHeight: 106,

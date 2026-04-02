@@ -21,7 +21,6 @@ import { View } from 'react-native';
 import { GasAccountDepositPopup } from './components/GasAccountDepositPopup';
 import { GasAccountLoginPopup } from './components/GasAccountLoginPopup';
 import { GasAccountHeader } from './components/HeaderRight';
-import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrModal';
 import { WithDrawPopup } from './components/WithDrawPopup';
 import { useGasAccountInfo, useGasAccountLogin } from './hooks';
 import {
@@ -47,18 +46,12 @@ export const GasAccountScreen = () => {
   });
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [loginVisible, setLoginVisible] = useGasAccountLoginVisible();
-
-  const [switchAddrVisible, setSwitchAddrVisible] = useState(false);
   const [emptyStateLoading, setEmptyStateLoading] = useState(false);
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyles,
   });
-  const {
-    value: gasAccount,
-    loading,
-    runFetchGasAccountInfo,
-  } = useGasAccountInfo();
+  const { value: gasAccount, runFetchGasAccountInfo } = useGasAccountInfo();
   const historyState = useGasAccountHistory();
   const { myTop10Addresses } = useAccountInfo();
 
@@ -92,21 +85,20 @@ export const GasAccountScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      storeApiGasAccount.markSnapshotDirty('gasaccount_screen_focus');
-      storeApiGasAccount
-        .refreshSnapshot({
-          reason: 'gasaccount_screen_focus',
-          force: true,
-        })
-        .catch(error => {
-          console.error(
-            'refreshSnapshot on GasAccountScreen focus error',
-            error,
-          );
-        });
+      storeApiGasAccount.setHistoryRefreshEnabled(true);
+      storeApiGasAccount.refreshSnapshot().catch(error => {
+        console.error('refreshSnapshot on GasAccountScreen focus error', error);
+      });
+      storeApiGasAccount.refreshHistory().catch(error => {
+        console.error('refreshHistory on GasAccountScreen focus error', error);
+      });
       refreshAccountsWithGasAccountBalance().catch(error => {
         console.error('refreshAccountsWithGasAccountBalance error', error);
       });
+
+      return () => {
+        storeApiGasAccount.setHistoryRefreshEnabled(false);
+      };
     }, []),
   );
 
@@ -117,9 +109,7 @@ export const GasAccountScreen = () => {
           ? useTokenList.getState().batchGetTokenList(myTop10Addresses)
           : Promise.resolve(),
         storeApiGasAccountDeposit.fetchBridgeSupportTokenList(),
-      ]).catch(error => {
-        console.error('prefetchGasAccountDepositData error', error);
-      });
+      ]);
     }, [myTop10Addresses]),
   );
 
@@ -166,7 +156,7 @@ export const GasAccountScreen = () => {
       try {
         await claimGift(currentEligibleAddress.address);
         await runFetchGasAccountInfo();
-        await storeApiGasAccount.refreshHistory('claim_gift');
+        await storeApiGasAccount.refreshHistory();
       } catch (error) {
         console.error('handleEmptyStatePrimaryPress claimGift error', error);
         toast.error(t('page.gasAccount.loginFailed'));
@@ -195,7 +185,7 @@ export const GasAccountScreen = () => {
 
     await login(targetAccount);
     const latest = await runFetchGasAccountInfo();
-    await storeApiGasAccount.refreshHistory('login');
+    await storeApiGasAccount.refreshHistory();
     return latest?.account?.id || targetAccount.address;
   });
 
@@ -209,7 +199,7 @@ export const GasAccountScreen = () => {
       try {
         await login(pendingHardwareAccount as Account);
         await runFetchGasAccountInfo();
-        await storeApiGasAccount.refreshHistory('login');
+        await storeApiGasAccount.refreshHistory();
         toast.success(t('page.gasAccount.loginSuccess'));
       } catch (error) {
         console.error('handleOldUserStatePrimaryPress error', error);
@@ -228,7 +218,6 @@ export const GasAccountScreen = () => {
       colors: [
         'rgba(68, 94, 255, 0.20)',
         'rgba(68, 94, 255, 0.00)',
-        // colors2024['neutral-bg-0'],
         isLight ? colors2024['neutral-bg-0'] : colors2024['neutral-bg-1'],
       ],
       locations: [0, 0.1829, 1],
@@ -264,10 +253,7 @@ export const GasAccountScreen = () => {
   ]);
 
   return (
-    <NormalScreenContainer
-      type="linear"
-      // overwriteStyle={styles.container}
-      linearProp={linearProp}>
+    <NormalScreenContainer type="linear" linearProp={linearProp}>
       {showEmptyState ? (
         <GasAccountEmptyState
           primaryLoading={emptyStateLoading}
@@ -301,7 +287,7 @@ export const GasAccountScreen = () => {
             setDepositState({
               isOpen: false,
             });
-            await storeApiGasAccount.refreshHistory('deposit_submitted');
+            await storeApiGasAccount.refreshHistory();
             await runFetchGasAccountInfo();
             toast.success(t('page.gasAccount.depositSubmitted'), {
               position: toast.positions.CENTER,
@@ -328,14 +314,10 @@ export const GasAccountScreen = () => {
           setLoginVisible(false);
         }}
         onLogin={async () => {
+          await storeApiGasAccount.refreshHistory();
           await runFetchGasAccountInfo();
           setLoginVisible(false);
         }}
-      />
-
-      <SwitchLoginAddrBeforeDepositModal
-        visible={switchAddrVisible}
-        onCancel={() => setSwitchAddrVisible(false)}
       />
     </NormalScreenContainer>
   );

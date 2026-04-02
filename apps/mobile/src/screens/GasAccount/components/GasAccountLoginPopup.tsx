@@ -74,7 +74,7 @@ const GasAccountLoginContent: React.FC<{
       colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
       locations={[0.0745, 0.2242]}
       start={{ x: 0, y: 0 }}
-      style={{ width: '100%', height: '100%', paddingBottom: 44 }}
+      style={styles.loginGradient}
       end={{ x: 0, y: 1 }}>
       <View style={styles.loginConfirmContainer}>
         <View style={styles.handleView}>
@@ -109,7 +109,7 @@ export const GasAccountLoginPopup: React.FC<{
   onClose?(): void;
   onLogin?(): void;
 }> = ({ visible, onClose, onLogin }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
@@ -121,14 +121,10 @@ export const GasAccountLoginPopup: React.FC<{
   }, [visible]);
 
   const { height } = useWindowDimensions();
-  const maxHeight = useMemo(() => {
-    return height - 200;
-  }, [height]);
+  const maxHeight = height - 200;
 
   return (
     <AppBottomSheetModal
-      // enableContentPanningGesture={false} // has scorll list
-      // snapPoints={[Math.min(height - 200, 652)]}
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
@@ -146,11 +142,14 @@ export const GasAccountLoginPopup: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
+  loginGradient: {
+    width: '100%',
+    height: '100%',
+    paddingBottom: 44,
+  },
   popup: {
-    // justifyContent: 'flex-end',
     margin: 0,
     height: '100%',
-    // paddingVertical: 10,
     minHeight: 364,
   },
   handleStyle: {

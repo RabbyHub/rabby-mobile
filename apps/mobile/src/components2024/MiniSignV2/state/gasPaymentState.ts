@@ -16,16 +16,16 @@ export const isMiniSignGasAccountChainSupported = (
 export const normalizeMiniSignGasState = <T extends MiniSignGasState>(
   state: T,
 ): T => {
-  const nextGasMethod =
-    state.gasMethod === 'gasAccount' &&
-    (!state.isGasNotEnough || !isMiniSignGasAccountChainSupported(state))
-      ? 'native'
-      : state.gasMethod ?? 'native';
+  const currentGasMethod = state.gasMethod ?? 'native';
+  const shouldFallbackToNative =
+    currentGasMethod === 'gasAccount' &&
+    (!state.isGasNotEnough || !isMiniSignGasAccountChainSupported(state));
+  const nextGasMethod = shouldFallbackToNative ? 'native' : currentGasMethod;
   const nextUseGasless =
     nextGasMethod === 'gasAccount' ? false : !!state.useGasless;
 
   if (
-    nextGasMethod === (state.gasMethod ?? 'native') &&
+    nextGasMethod === currentGasMethod &&
     nextUseGasless === !!state.useGasless
   ) {
     return state;
