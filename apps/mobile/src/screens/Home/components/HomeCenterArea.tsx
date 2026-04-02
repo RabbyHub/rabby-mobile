@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
@@ -17,11 +18,12 @@ import { useAccountHomeShowReceiveTip } from '@/screens/Address/components/Multi
 import { DepositAssetsCard } from './DepositAssetsCard';
 
 export function HomeCenterArea() {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
 
-  const { accountToShowReceiveTip } = useAccountHomeShowReceiveTip();
+  const { accountToShowReceiveTip, isLoadingAccountToShowReceiveTip } =
+    useAccountHomeShowReceiveTip();
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
 
@@ -39,6 +41,16 @@ export function HomeCenterArea() {
       offlineChainData: false as boolean,
       tipScreenshot: false as boolean,
     };
+
+    // Wait for account check to complete before deciding what to show
+    if (isLoadingAccountToShowReceiveTip) {
+      // Show nothing while loading to prevent flickering
+      return {
+        blocksVisibility: blocks,
+        noBetweenContent: true,
+        onlyOneContent: false,
+      };
+    }
 
     if (accountToShowReceiveTip) {
       blocks.soloAccountToShowReceiveTip = true;
@@ -60,6 +72,7 @@ export function HomeCenterArea() {
     offlineChainData,
     accountToShowReceiveTip,
     viewedScreenShotReportTip,
+    isLoadingAccountToShowReceiveTip,
   ]);
 
   return (
@@ -71,24 +84,33 @@ export function HomeCenterArea() {
         onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
       ]}>
       {blocksVisibility.offlineChainData && (
-        <OfflineChainNotify data={offlineChainData} />
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <OfflineChainNotify data={offlineChainData} />
+        </Animated.View>
       )}
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
-        <DepositAssetsCard account={accountToShowReceiveTip} />
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <DepositAssetsCard account={accountToShowReceiveTip} />
+        </Animated.View>
       )}
 
-      {blocksVisibility.tipScreenshot && <TipFeedbackByScreenshot />}
+      {blocksVisibility.tipScreenshot && (
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <TipFeedbackByScreenshot />
+        </Animated.View>
+      )}
 
       {blocksVisibility.rateGuideOnHome && (
-        <View
+        <Animated.View
+          entering={FadeInUp.duration(200)}
           style={{
             paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
           }}>
           <RateModalTriggerOnHome /* totalBalanceText={combineData.netWorth} */
           />
           <RateModal /* totalBalanceText={combineData.netWorth} */ />
-        </View>
+        </Animated.View>
       )}
     </View>
   );

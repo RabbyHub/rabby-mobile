@@ -46,7 +46,7 @@ const HeroIllustration = ({
 
   // Height includes status bar area for seamless extension behind status bar
   // On short screens, the container shrinks and image crops from top
-  const heroHeight = 368 + topInset;
+  const heroHeight = 370 + topInset;
 
   return (
     <View style={[styles.heroContainer, { height: heroHeight }]}>
