@@ -24,6 +24,7 @@ import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { TmpHomeRefresher } from './components/TmpHomeRefresher';
+import { storeApiGasAccount } from '../GasAccount/hooks/atom';
 
 const detectHasAccounts = async () => {
   const result = { redirectAction: null as Function | null };
@@ -92,6 +93,9 @@ function MultiAddressHome(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      storeApiGasAccount.scheduleSnapshotRefresh({
+        reason: 'home_focus',
+      });
       autoLoginGasAccountIfNeeded().catch(error => {
         console.error('autoLoginGasAccountIfNeeded error', error);
       });

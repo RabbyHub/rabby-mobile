@@ -670,6 +670,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     };
     hasCustomRPC();
   }, [chain?.enum, t]);
+
   const [gasLessConfig, setGasLessConfig] = useState<GasLessConfig | undefined>(
     undefined,
   );

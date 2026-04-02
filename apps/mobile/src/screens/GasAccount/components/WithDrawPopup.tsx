@@ -7,11 +7,7 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  useGasAccountHistoryRefresh,
-  useGasAccountSign,
-  useGasBalanceRefresh,
-} from '../hooks/atom';
+import { storeApiGasAccount, useGasAccountSign } from '../hooks/atom';
 import { toast } from '@/components2024/Toast';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Button } from '@/components2024/Button';
@@ -42,10 +38,6 @@ const WithDrawInitContent = ({
   const [loading, setLoading] = useState(false);
   const [showGiftInfo, setShowGiftInfo] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-
-  const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
-
-  const { refresh: refreshGasAccountHistory } = useGasAccountHistoryRefresh();
 
   const [chain, setChain] = useState<RechargeChainItem>();
 
@@ -94,8 +86,14 @@ const WithDrawInitContent = ({
       if (!res.success) {
         throw new Error(res?.msg || 'withdraw failed');
       }
-      refreshGasAccountHistory();
-      refreshGasAccountBalance();
+      storeApiGasAccount.markSnapshotDirty('withdraw');
+      await Promise.all([
+        storeApiGasAccount.refreshHistory('withdraw'),
+        storeApiGasAccount.refreshSnapshot({
+          reason: 'withdraw',
+          force: true,
+        }),
+      ]);
       onClose();
       onAfterConfirm?.();
     } catch (error) {
@@ -113,8 +111,6 @@ const WithDrawInitContent = ({
     chain,
     onClose,
     onAfterConfirm,
-    refreshGasAccountHistory,
-    refreshGasAccountBalance,
   ]);
 
   const BalanceSuffix = useMemo(() => {

@@ -41,85 +41,31 @@ export const resolveSignMainnetGasLevelFetchMode = ({
   return isModalOpen ? ('open' as const) : ('idle' as const);
 };
 
-const isSignMainnetSupportedGasLevel = (
-  level?: string | null,
-): level is SignMainnetSupportedGasLevel =>
-  !!level &&
-  SIGN_MAINNET_SUPPORTED_GAS_LEVELS.includes(
-    level as SignMainnetSupportedGasLevel,
-  );
-
-export const buildCurrentLevelGasState = ({
-  selectedGasLevel,
-  displayGasMethod,
-  selectedGasCostUsd,
-  nativeTokenInsufficient,
-  gasAccountBalanceEnough,
-  selectedGasAccountCostUsd,
-}: {
-  selectedGasLevel?: string | null;
-  displayGasMethod: 'native' | 'gasAccount';
-  selectedGasCostUsd: string;
-  nativeTokenInsufficient: boolean;
-  gasAccountBalanceEnough?: boolean;
-  selectedGasAccountCostUsd?: string;
-}): SignMainnetGasLevelState => {
-  if (!isSignMainnetSupportedGasLevel(selectedGasLevel)) {
-    return {};
-  }
-
-  return {
-    [selectedGasLevel]: {
-      nativeUsd: displayGasMethod === 'native' ? selectedGasCostUsd : undefined,
-      nativeNotEnough: nativeTokenInsufficient,
-      gasAccount:
-        selectedGasAccountCostUsd && gasAccountBalanceEnough !== undefined
-          ? [!gasAccountBalanceEnough, selectedGasAccountCostUsd]
-          : undefined,
-      loading: false,
-    },
-  };
-};
-
-export const mergeCurrentLevelGasState = ({
-  prevState,
-  currentLevelState,
-}: {
-  prevState: SignMainnetGasLevelState;
-  currentLevelState: SignMainnetGasLevelState;
-}): SignMainnetGasLevelState => ({
-  ...prevState,
-  ...currentLevelState,
-});
-
 export const resolveSignMainnetGasLevelFetchNeeds = ({
-  isCurrentLevel,
   gasAccountChainSupported,
-  hasCurrentGasAccountCost,
 }: {
-  isCurrentLevel: boolean;
   gasAccountChainSupported: boolean;
-  hasCurrentGasAccountCost: boolean;
 }) => ({
-  needsNative: !isCurrentLevel,
-  needsGasAccount:
-    gasAccountChainSupported && (!isCurrentLevel || !hasCurrentGasAccountCost),
+  needsNative: true,
+  needsGasAccount: gasAccountChainSupported,
 });
 
 export const shouldFetchSignMainnetGasLevel = ({
   state,
   needsNative,
   needsGasAccount,
+  hasActiveRequest = false,
 }: {
   state?: SignMainnetGasLevelState[SignMainnetSupportedGasLevel];
   needsNative: boolean;
   needsGasAccount: boolean;
+  hasActiveRequest?: boolean;
 }) => {
   const hasNativeData =
     state?.nativeUsd !== undefined && state?.nativeNotEnough !== undefined;
   const hasGasAccountData = state?.gasAccount !== undefined;
 
-  if (state?.loading) {
+  if (state?.loading && hasActiveRequest) {
     return false;
   }
 

@@ -69,8 +69,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 36,
+    paddingBottom: 48,
   },
   topContent: {
     flex: 1,
@@ -100,7 +99,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   primaryButton: {
     width: 345,
     alignSelf: 'center',
-    height: 52,
+    height: 56,
     borderRadius: 12,
     marginTop: 4,
     shadowColor: '#7084ff',
@@ -114,7 +113,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   primaryButtonText: {
     color: colors2024['neutral-InvertHighlight'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: '700',
     lineHeight: 22,
   },

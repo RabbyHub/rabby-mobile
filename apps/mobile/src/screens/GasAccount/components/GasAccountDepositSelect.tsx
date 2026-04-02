@@ -20,7 +20,7 @@ export const GasAccountDepositSelect: React.FC<{
   disableL2Deposit?: boolean;
 }> = ({ onSelect, minDepositPrice, disableL2Deposit }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyles,
   });
   const {
@@ -119,15 +119,19 @@ export const GasAccountDepositSelect: React.FC<{
           title={
             <View style={styles.depositWithTitle}>
               <View style={styles.depositWithPayRow}>
-                <Text style={styles.btnTitle}>
+                <Text style={[styles.btnTitle, styles.payTitle]}>
                   {t('page.gasAccount.depositWith')}
                 </Text>
                 {Platform.OS === 'android' ? (
-                  <RcIconGooglePayCC />
+                  <RcIconGooglePayCC
+                    color={isLight ? colors2024['neutral-title-1'] : '#000'}
+                  />
                 ) : (
                   <>
-                    <RcIconApple />
-                    <Text style={styles.btnTitle}>
+                    <RcIconApple
+                      color={isLight ? colors2024['neutral-title-1'] : '#000'}
+                    />
+                    <Text style={[styles.btnTitle, styles.payTitle]}>
                       {t('page.gasAccount.depositSelectPopup.appStore')}
                     </Text>
                   </>
@@ -145,6 +149,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
     flex: 1,
+    paddingBottom: 48,
   },
   containerHorizontal: {
     paddingHorizontal: 20,
@@ -230,7 +235,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
           backgroundColor: '#000',
         }
       : {
-          backgroundColor: colors2024['neutral-bg-2'],
+          backgroundColor: '#fff',
           borderWidth: 1,
           borderColor: colors2024['neutral-line'],
         }),
@@ -255,6 +260,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     color: colors2024['neutral-InvertHighlight'],
+  },
+
+  payTitle: {
+    color: isLight ? colors2024['neutral-title-1'] : '#000',
   },
 
   btnDesc: {

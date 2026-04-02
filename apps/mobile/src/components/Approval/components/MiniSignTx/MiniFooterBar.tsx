@@ -28,6 +28,10 @@ import {
   eventBus,
 } from '@/utils/events';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
+import {
+  shouldAutoSwitchToGasAccountFromGasless,
+  shouldShowGasLessNotEnough,
+} from '../FooterBar/gasLessDecision';
 import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
 import RcCheckSecurity from '@/assets2024/icons/common/check-security.svg';
 import RcCheckSecurityDark from '@/assets2024/icons/common/check-security-dark.svg';
@@ -290,7 +294,14 @@ export const MiniFooterBar: React.FC<Props> = ({
     if (!isFirstGasCostLoading && !isFirstGasLessLoading) {
       isSetGasMethodRef.current = true;
 
-      if (showGasLess && !canUseGasLess && canGotoUseGasAccount) {
+      if (
+        shouldAutoSwitchToGasAccountFromGasless({
+          showGasLess,
+          isGasNotEnough: !!isGasNotEnough,
+          canUseGasLess,
+          canGotoUseGasAccount: !!canGotoUseGasAccount,
+        })
+      ) {
         onChangeGasAccount?.();
       }
 
@@ -306,6 +317,7 @@ export const MiniFooterBar: React.FC<Props> = ({
 
       if (
         showGasLess &&
+        isGasNotEnough &&
         directSubmit &&
         (canGotoUseGasAccount || (isSimpleOrHdKeyring && otherGasAccountError))
       ) {
@@ -320,6 +332,7 @@ export const MiniFooterBar: React.FC<Props> = ({
     directSubmit,
     canGotoUseGasAccount,
     canUseGasLess,
+    isGasNotEnough,
     isFirstGasCostLoading,
     isFirstGasLessLoading,
     onChangeGasAccount,
@@ -360,8 +373,12 @@ export const MiniFooterBar: React.FC<Props> = ({
         <View>
           {!isInited ? null : (
             <>
-              {showGasLess &&
-              !payGasByGasAccount &&
+              {shouldShowGasLessNotEnough({
+                showGasLess,
+                isGasNotEnough: !!isGasNotEnough,
+                payGasByGasAccount,
+                canUseGasLess,
+              }) &&
               (!securityLevel || !hasUnProcessSecurityResult) ? (
                 canUseGasLess ? (
                   <GasLessActivityToSign

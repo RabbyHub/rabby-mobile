@@ -261,6 +261,7 @@ export const FooterBar: React.FC<Props> = ({
     });
     return map;
   }, [engineResults]);
+  const currentSelectionGasNotEnough = !!props.isGasNotEnough;
 
   const payGasByGasAccount = gasMethod === 'gasAccount';
 
@@ -307,13 +308,19 @@ export const FooterBar: React.FC<Props> = ({
     if (!isFirstGasCostLoading && !isFirstGasLessLoading) {
       isSetGasMethodRef.current = true;
 
-      if (showGasLess && !canUseGasLess && canGotoUseGasAccount) {
+      if (
+        showGasLess &&
+        currentSelectionGasNotEnough &&
+        !canUseGasLess &&
+        canGotoUseGasAccount
+      ) {
         onChangeGasAccount?.();
       }
     }
   }, [
     canGotoUseGasAccount,
     canUseGasLess,
+    currentSelectionGasNotEnough,
     isFirstGasCostLoading,
     isFirstGasLessLoading,
     onChangeGasAccount,
@@ -352,7 +359,8 @@ export const FooterBar: React.FC<Props> = ({
                   }}
                   gasLessConfig={gasLessConfig}
                 />
-              ) : isWatchAddr ||
+              ) : !currentSelectionGasNotEnough ||
+                isWatchAddr ||
                 account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                 <GasLessNotEnough
                   canGotoUseGasAccount={canGotoUseGasAccount}

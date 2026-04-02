@@ -20,6 +20,7 @@ import IconGasCustomRightArrowCC from '@/assets2024/icons/gas-account/right-arro
 import IconGasLevelChecked from '@/assets2024/icons/gas-account/check.svg';
 import { calcGasAccountUsd } from './directSignSummary';
 import {
+  resolveApprovalGasMethod,
   resolveApprovalDisplayedGasLevelNotEnough,
   resolveApprovalGasLevelMethod,
   shouldHideApprovalGasMethodTabs,
@@ -240,12 +241,18 @@ export const SignMainnetShowMoreGasModal = ({
               const levelNativeInsufficient = isCustom
                 ? false
                 : !!levelState[gas.level]?.nativeNotEnough;
-              const displayMethod = resolveApprovalGasLevelMethod({
-                isCustom,
-                currentGasMethod,
-                nativeTokenInsufficient: levelNativeInsufficient,
-                gasAccountChainSupported: !!gasAccountChainSupported,
-              });
+              const displayMethod = isActive
+                ? resolveApprovalGasMethod({
+                    nativeTokenInsufficient: !!nativeTokenInsufficient,
+                    gasAccountChainSupported: !!gasAccountChainSupported,
+                    legacyGasMethod: currentGasMethod,
+                  })
+                : resolveApprovalGasLevelMethod({
+                    isCustom,
+                    currentGasMethod,
+                    nativeTokenInsufficient: levelNativeInsufficient,
+                    gasAccountChainSupported: !!gasAccountChainSupported,
+                  });
               const isRowLoading = !!levelState[gas.level]?.loading;
 
               let costUsd =
@@ -421,6 +428,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   levelRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: 90,
   },
   level: {
     color: colors2024['neutral-title-1'],
