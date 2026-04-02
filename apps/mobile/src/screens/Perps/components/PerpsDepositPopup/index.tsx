@@ -793,38 +793,39 @@ export const PerpsDepositPopup: React.FC<{
 
       if (bridgeQuote?.tx) {
         return (
-          <Tip
-            isVisible={tipVisible}
-            onClose={hideTip}
-            horizontalAdjustment={-15}
-            content={
-              <View style={{ width: 280, padding: 8 }}>
-                <Text style={{ fontSize: 12, color: '#fff' }}>
-                  {t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
-                    number: bridgeQuote?.duration || 0,
+          <View style={{ alignSelf: 'flex-start' }}>
+            <Tip
+              isVisible={tipVisible}
+              onClose={hideTip}
+              content={
+                <View style={{ width: 280, padding: 8 }}>
+                  <Text style={{ fontSize: 12, color: '#fff' }}>
+                    {t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
+                      number: bridgeQuote?.duration || 0,
+                    })}
+                  </Text>
+                </View>
+              }
+              placement="top">
+              <TouchableOpacity
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setTipVisible(true);
+                }}
+                style={styles.estReceiveContainer}>
+                <Text style={styles.estReceiveText}>
+                  {t('page.perps.PerpsDepositPopup.estReceive', {
+                    balance: formatUsdValue(estReceiveUsdValue),
                   })}
                 </Text>
-              </View>
-            }
-            placement="top">
-            <TouchableOpacity
-              onPress={() => {
-                Keyboard.dismiss();
-                setTipVisible(true);
-              }}
-              style={[styles.estReceiveContainer, { alignSelf: 'flex-start' }]}>
-              <Text style={styles.estReceiveText}>
-                {t('page.perps.PerpsDepositPopup.estReceive', {
-                  balance: formatUsdValue(estReceiveUsdValue),
-                })}
-              </Text>
-              <RcIconInfoFill1CC
-                color={colors2024['neutral-info']}
-                width={18}
-                height={18}
-              />
-            </TouchableOpacity>
-          </Tip>
+                <RcIconInfoFill1CC
+                  color={colors2024['neutral-info']}
+                  width={18}
+                  height={18}
+                />
+              </TouchableOpacity>
+            </Tip>
+          </View>
         );
       }
     }
