@@ -44,7 +44,7 @@ export const SyncExtensionPasswordScreen = () => {
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
 
-  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
+  const [biometricsEnabled, setBiometricsEnabled] = useState(true);
 
   const { addWhitelist } = useWhitelist();
 
