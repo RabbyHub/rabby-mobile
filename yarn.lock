@@ -35,13 +35,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aave/math-utils@npm:1.36.1":
-  version: 1.36.1
-  resolution: "@aave/math-utils@npm:1.36.1"
+"@aave/math-utils@npm:1.37.1":
+  version: 1.37.1
+  resolution: "@aave/math-utils@npm:1.37.1"
   peerDependencies:
     bignumber.js: ^9.x
     tslib: ^2.4.x
-  checksum: 2d65de196b231611838f2d491807c047221a328614f4a77afcd895a6ad55e9bfbe1c0cbf05b27033f664133076b669eedf58f4cf8286b465ab34781a262b10f6
+  checksum: 08fe8d4d0bb310b35f1abbbd3e3c8fd8d8979af497533617e8d29c8e3dab6a584ee8ba8a7bbfe6e8febc6bc587a7ab1d83455994b05ea01f7aca024f73841be7
   languageName: node
   linkType: hard
 
@@ -35060,7 +35060,7 @@ __metadata:
   dependencies:
     "@aave-dao/aave-address-book": 4.47.14
     "@aave/contract-helpers": 1.37.1
-    "@aave/math-utils": 1.36.1
+    "@aave/math-utils": 1.37.1
     "@babel/core": ^7.25.2
     "@babel/plugin-proposal-decorators": ^7.25.9
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
