@@ -12,6 +12,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@aave-dao/aave-address-book@npm:4.47.14":
+  version: 4.47.14
+  resolution: "@aave-dao/aave-address-book@npm:4.47.14"
+  peerDependencies:
+    viem: ^2.23.5
+  checksum: 974c038097abed258569f14941e7fffc6c453545e6cb6b78d7caaa78c674a17c477cdc2a69f60264836f254d222b6e24c82f156a051bba3e7cbfa23294fe7e72
+  languageName: node
+  linkType: hard
+
 "@aave/contract-helpers@npm:1.36.1":
   version: 1.36.1
   resolution: "@aave/contract-helpers@npm:1.36.1"
@@ -3565,15 +3574,6 @@ __metadata:
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40bcoe%2Fv8-coverage%2F-%2Fv8-coverage-0.2.3.tgz"
   checksum: 850f9305536d0f2bd13e9e0881cb5f02e4f93fad1189f7b2d4bebf694e3206924eadee1068130d43c11b750efcc9405f88a8e42ef098b6d75239c0f047de1a27
-  languageName: node
-  linkType: hard
-
-"@bgd-labs/aave-address-book@npm:4.36.0":
-  version: 4.36.0
-  resolution: "@bgd-labs/aave-address-book@npm:4.36.0"
-  peerDependencies:
-    viem: ^2.23.5
-  checksum: 53dc1bcbeeb34f28b9db0f18e911b8f795d92ea7ba230bfaca71f18da20da8b3ab257cd3ac945adaf6ae1669fa33b39bd466f39570ee9a3a71e74703ea117544
   languageName: node
   linkType: hard
 
@@ -35058,6 +35058,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
+    "@aave-dao/aave-address-book": 4.47.14
     "@aave/contract-helpers": 1.36.1
     "@aave/math-utils": 1.36.1
     "@babel/core": ^7.25.2
@@ -35065,7 +35066,6 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
-    "@bgd-labs/aave-address-book": 4.36.0
     "@craftzdog/react-native-buffer": ^6.0.5
     "@debank/common": 0.3.60
     "@debank/festats": 1.0.4
