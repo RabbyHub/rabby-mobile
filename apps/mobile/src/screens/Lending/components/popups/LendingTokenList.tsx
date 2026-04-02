@@ -73,10 +73,10 @@ const LendingTokenList: React.FC<
           }}
           ref={pagerRef}
           style={styles.pager}>
-          <View key="supply" style={styles.page}>
+          <View collapsable={false} key="supply" style={styles.page}>
             <LendingSupplyListContent hideHeader />
           </View>
-          <View key="borrow" style={styles.page}>
+          <View collapsable={false} key="borrow" style={styles.page}>
             <LendingBorrowListContent hideHeader />
           </View>
         </PagerView>
