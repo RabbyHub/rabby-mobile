@@ -36,6 +36,10 @@ import {
 import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
 import { GasLessActivityToSign } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessActivityToSign';
 import { GasLessNotEnough } from '@/components/Approval/components/FooterBar/GasLessComponents/GasLessNotEnough';
+import {
+  shouldAutoSwitchToGasAccountFromGasless,
+  shouldShowGasLessNotEnough,
+} from '@/components/Approval/components/FooterBar/gasLessDecision';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
@@ -713,10 +717,13 @@ export const DirectSignGasInfo = ({
 
   useEffect(() => {
     if (
-      showGasLess &&
-      !payGasByGasAccount &&
-      !canUseGasLess &&
-      canGotoUseGasAccount
+      shouldAutoSwitchToGasAccountFromGasless({
+        showGasLess,
+        isGasNotEnough,
+        canUseGasLess,
+        canGotoUseGasAccount: !!canGotoUseGasAccount,
+      }) &&
+      !payGasByGasAccount
     ) {
       handleChangeGasMethod('gasAccount');
     }
@@ -724,6 +731,7 @@ export const DirectSignGasInfo = ({
     canGotoUseGasAccount,
     canUseGasLess,
     handleChangeGasMethod,
+    isGasNotEnough,
     payGasByGasAccount,
     showGasLess,
   ]);
@@ -744,7 +752,12 @@ export const DirectSignGasInfo = ({
         />
       ) : null}
 
-      {showGasLess && !payGasByGasAccount && !canUseGasLess ? (
+      {shouldShowGasLessNotEnough({
+        showGasLess,
+        isGasNotEnough,
+        payGasByGasAccount: !!payGasByGasAccount,
+        canUseGasLess,
+      }) ? (
         <GasLessNotEnough
           inShowMore
           canGotoUseGasAccount={canGotoUseGasAccount}
@@ -831,9 +844,7 @@ export const DirectSignGasInfo = ({
           gasCostUsdStr={formatGasHeaderUsdValue(
             totalGasCost.gasCostUsd.toString(10),
           )}
-          nativeTokenInsufficient={
-            !!ctx?.checkErrors?.some(e => e.code === 3001)
-          }
+          nativeTokenInsufficient={isGasNotEnough}
         />
       ) : (
         <ListItem

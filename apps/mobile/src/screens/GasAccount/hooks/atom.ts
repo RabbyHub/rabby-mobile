@@ -6,7 +6,10 @@ import {
   keyringService,
   perpsService,
 } from '@/core/services';
-import { GasAccountServiceStore } from '@/core/services/gasAccount';
+import {
+  GasAccountRuntimeAccount,
+  GasAccountServiceStore,
+} from '@/core/services/gasAccount';
 import { Account } from '@/core/services/preference';
 import { zCreate } from '@/core/utils/reexports';
 import {
@@ -24,6 +27,22 @@ import { GasAccountBridgeToken } from '@rabby-wallet/rabby-api/dist/types';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import pRetry from 'p-retry';
 import { useCallback } from 'react';
+import {
+  createInitialGasAccountState,
+  failHistoryRefreshState,
+  failSnapshotRefreshState,
+  finishHistoryRefreshState,
+  finishSnapshotRefreshState,
+  GasAccountBalanceAccount,
+  GasAccountSessionAccount,
+  GasAccountState,
+  invalidateSessionState,
+  markSnapshotDirtyState,
+  startHistoryRefreshState,
+  startSnapshotRefreshState,
+  updateDiscoveryState,
+  updateSessionState,
+} from './state';
 
 // const refreshGasBalanceAtom = atom(0);
 // const refreshgasAccountHistoryAtom = atom(0);
@@ -47,21 +66,20 @@ import { useCallback } from 'react';
 
 runIIFEFunc(() => {
   eventBus.on(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, () => {
-    const data =
-      gasAccountService.getGasAccountData() as GasAccountServiceStore;
     gasAccountStore.setState({
-      sigState: {
-        ...data,
+      session: getSessionStateFromService(),
+      discovery: {
+        ...gasAccountStore.getState().discovery,
+        ...getDiscoveryStateFromRuntime(),
       },
-      pendingHardwareAccount: data.pendingHardwareAccount,
+    });
+  });
+  eventBus.on(EVENTS.TX_COMPLETED, () => {
+    storeApiGasAccount.scheduleSnapshotRefresh({
+      reason: 'tx_completed',
     });
   });
 });
-
-type GasAccountRefresherState = {
-  refreshGasBalance: number;
-  refreshGasAccountHistory: number;
-};
 
 type GasAccountVisibleState = {
   loginVisible: boolean;
@@ -79,31 +97,45 @@ type OpenApiWithGasAccountBridgeSupportTokenList = typeof openapi & {
   >;
 };
 
-type AccountWithBalanceItem = {
-  address: string;
-  type: string;
-  brandName: string;
+type GasAccountInfoResponse = Awaited<
+  ReturnType<typeof openapi.getGasAccountInfo>
+>;
+type GasAccountHistoryResponse = Awaited<
+  ReturnType<typeof openapi.getGasAccountHistory>
+>;
+type GasAccountHistoryItem = NonNullable<
+  GasAccountHistoryResponse['history_list']
+>[number];
+type GasAccountPendingHistoryItem = NonNullable<
+  GasAccountHistoryResponse['recharge_list']
+>[number];
+type GasAccountZustandState = GasAccountState<
+  GasAccountInfoResponse,
+  GasAccountHistoryItem,
+  GasAccountPendingHistoryItem
+> &
+  GasAccountVisibleState;
+
+const getSessionStateFromService = () => {
+  const data = gasAccountService.getGasAccountData() as GasAccountServiceStore;
+  const hasSession = !!data.sig && !!data.accountId;
+
+  return {
+    sig: data.sig,
+    accountId: data.accountId,
+    account: data.account as GasAccountSessionAccount | undefined,
+    status: hasSession ? ('logged_in' as const) : ('idle' as const),
+  };
 };
 
-type GasAccountState = GasAccountRefresherState & {
-  sigState?: Partial<GasAccountServiceStore>;
-  pendingHardwareAccount?: GasAccountServiceStore['pendingHardwareAccount'];
-  accountsWithGasAccountBalance: AccountWithBalanceItem[];
-} & GasAccountVisibleState;
-
-function setRefreshIdFor(
-  key: keyof GasAccountRefresherState,
-  valOrFunc: UpdaterOrPartials<number>,
-) {
-  gasAccountStore.setState(prev => {
-    const newVal = resolveValFromUpdater(prev[key], valOrFunc).newVal;
-
-    return {
-      ...prev,
-      [key]: newVal,
-    };
-  });
-}
+const getDiscoveryStateFromRuntime = () => ({
+  pendingHardwareAccount: gasAccountService.getPendingHardwareAccount() as
+    | GasAccountRuntimeAccount
+    | undefined,
+  accountsWithBalance:
+    gasAccountService.getAccountsWithGasAccountBalance() as GasAccountBalanceAccount[],
+  status: 'idle' as const,
+});
 
 function setVisibleFor(
   key: keyof GasAccountVisibleState,
@@ -119,17 +151,17 @@ function setVisibleFor(
   });
 }
 
-export const gasAccountStore = zCreate<GasAccountState>(() => ({
-  refreshGasBalance: 0,
-  refreshGasAccountHistory: 0,
-  sigState: {
-    ...(gasAccountService.getGasAccountData() as GasAccountServiceStore),
-  },
-  pendingHardwareAccount: gasAccountService.getPendingHardwareAccount(),
+export const gasAccountStore = zCreate<GasAccountZustandState>(() => ({
+  ...createInitialGasAccountState<
+    GasAccountInfoResponse,
+    GasAccountHistoryItem,
+    GasAccountPendingHistoryItem
+  >({
+    session: getSessionStateFromService(),
+    discovery: getDiscoveryStateFromRuntime(),
+  }),
   loginVisible: false,
   switchVisible: false,
-  accountsWithGasAccountBalance:
-    gasAccountService.getAccountsWithGasAccountBalance(),
 }));
 
 type GasAccountDepositState = {
@@ -188,35 +220,6 @@ const fetchGasAccountBridgeSupportTokenList = makeAvoidParallelAsyncFunc(
   },
 );
 
-function setGasAccountSigState(
-  valOrFunc: UpdaterOrPartials<GasAccountState['sigState']>,
-) {
-  gasAccountStore.setState(prev => {
-    const newVal = resolveValFromUpdater(prev.sigState || {}, valOrFunc).newVal;
-
-    return {
-      ...prev,
-      sigState: newVal,
-    };
-  });
-}
-
-export const useGasBalanceRefresh = () => {
-  const refreshId = gasAccountStore(s => s.refreshGasBalance);
-  const refresh = useCallback(() => {
-    setRefreshIdFor('refreshGasBalance', e => e + 1);
-  }, []);
-  return { refreshId, refresh };
-};
-
-export const useGasAccountHistoryRefresh = () => {
-  const refreshId = gasAccountStore(s => s.refreshGasAccountHistory);
-  const refresh = useCallback(() => {
-    setRefreshIdFor('refreshGasAccountHistory', e => e + 1);
-  }, []);
-  return { refreshId, refresh };
-};
-
 const cleanupGasAccountAfterDeletedAddress = async (address: string) => {
   const restAddresses = await keyringService.getAllAddresses();
   const gasAccount =
@@ -257,9 +260,7 @@ const syncDeleteGasAccount = async ({
 keyringService.on('removedAccount', syncDeleteGasAccount);
 
 export const useGasAccountSign = () => {
-  // return useAtomValue(gasAccountSigAtom);
-  const sigState = gasAccountStore(s => s.sigState);
-  return sigState || {};
+  return gasAccountStore(s => s.session) || {};
 };
 
 const setGasAccount = (
@@ -267,57 +268,247 @@ const setGasAccount = (
   account?: GasAccountServiceStore['account'],
 ) => {
   gasAccountService.setGasAccountSig(sig, account);
-  setGasAccountSigState({ sig, accountId: account?.address, account: account });
+  if (!sig || !account) {
+    gasAccountService.setCurrentBalanceState();
+    gasAccountStore.setState(prev => invalidateSessionState(prev));
+    return;
+  }
+
+  gasAccountStore.setState(prev =>
+    updateSessionState(prev, {
+      sig,
+      accountId: account.address,
+      account: account as GasAccountSessionAccount,
+      status: 'logged_in',
+    }),
+  );
 };
 
-async function fetchGasAccountInfo() {
-  const { sig, accountId } = gasAccountStore.getState().sigState || {};
+let scheduledSnapshotRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+const SNAPSHOT_REFRESH_DELAY = 1200;
+
+const refreshSnapshot = makeAvoidParallelAsyncFunc(
+  async ({
+    reason = 'manual',
+  }: {
+    reason?: string;
+    force?: boolean;
+  } = {}) => {
+    const { sig, accountId } = gasAccountStore.getState().session;
+
+    if (!sig || !accountId) {
+      gasAccountService.setCurrentBalanceState();
+      return undefined;
+    }
+
+    gasAccountStore.setState(prev => startSnapshotRefreshState(prev, reason));
+
+    try {
+      const result = await openapi.getGasAccountInfo({ sig, id: accountId });
+      if (result.account.id) {
+        gasAccountService.setCurrentBalanceState(
+          accountId,
+          Number(result.account.balance || 0) > 0,
+        );
+        gasAccountStore.setState(prev =>
+          finishSnapshotRefreshState(prev, result),
+        );
+        return result;
+      }
+
+      storeApiGasAccount.invalidateSession();
+      return undefined;
+    } catch (error: any) {
+      gasAccountStore.setState(prev => failSnapshotRefreshState(prev));
+      if (error?.message?.includes?.('gas account verified failed')) {
+        storeApiGasAccount.invalidateSession();
+        return undefined;
+      }
+      throw error;
+    }
+  },
+);
+
+const refreshHistory = makeAvoidParallelAsyncFunc(async (reason = 'manual') => {
+  const { sig, accountId } = gasAccountStore.getState().session;
 
   if (!sig || !accountId) {
-    gasAccountService.setCurrentBalanceState();
+    gasAccountStore.setState(prev =>
+      finishHistoryRefreshState(prev, {
+        list: [],
+        rechargeList: [],
+        withdrawList: [],
+        totalCount: 0,
+      }),
+    );
     return undefined;
   }
-  return openapi.getGasAccountInfo({ sig, id: accountId }).then(e => {
-    if (e.account.id) {
-      gasAccountService.setCurrentBalanceState(
-        accountId,
-        Number(e.account.balance || 0) > 0,
-      );
-      return e;
-    }
-    storeApiGasAccount.setGasAccount();
-    return undefined;
-  });
+
+  gasAccountStore.setState(prev => startHistoryRefreshState(prev, reason));
+
+  try {
+    const data = await openapi.getGasAccountHistory({
+      sig,
+      account_id: accountId,
+      start: 0,
+      limit: 10,
+    });
+
+    gasAccountStore.setState(prev =>
+      finishHistoryRefreshState(prev, {
+        list: data.history_list || [],
+        rechargeList: data.recharge_list || [],
+        withdrawList: data.withdraw_list || [],
+        totalCount: data.pagination.total,
+      }),
+    );
+
+    return data;
+  } catch (error) {
+    gasAccountStore.setState(prev => failHistoryRefreshState(prev));
+    throw error;
+  }
+});
+
+async function loadMoreHistory() {
+  const state = gasAccountStore.getState();
+  const { sig, accountId } = state.session;
+  const { history } = state;
+
+  if (
+    !sig ||
+    !accountId ||
+    history.loadingMore ||
+    history.status === 'refreshing' ||
+    history.totalCount <=
+      history.list.length +
+        history.rechargeList.length +
+        history.withdrawList.length
+  ) {
+    return;
+  }
+
+  gasAccountStore.setState(prev => ({
+    ...prev,
+    history: {
+      ...prev.history,
+      loadingMore: true,
+    },
+  }));
+
+  try {
+    const data = await openapi.getGasAccountHistory({
+      sig,
+      account_id: accountId,
+      start: history.list.length > 1 ? history.list.length : 0,
+      limit: 10,
+    });
+
+    gasAccountStore.setState(prev => ({
+      ...prev,
+      history: {
+        ...prev.history,
+        list: [...prev.history.list, ...(data.history_list || [])],
+        totalCount: data.pagination.total,
+        loadingMore: false,
+        status: 'ready',
+        lastFetchedAt: Date.now(),
+      },
+    }));
+  } catch (error) {
+    gasAccountStore.setState(prev => ({
+      ...prev,
+      history: {
+        ...prev.history,
+        loadingMore: false,
+        status: 'error',
+      },
+    }));
+    throw error;
+  }
 }
 
 export const storeApiGasAccount = {
   setGasAccount,
   getSigState() {
-    return gasAccountStore.getState().sigState;
+    return gasAccountStore.getState().session;
+  },
+  getSession() {
+    return gasAccountStore.getState().session;
   },
   getPendingHardwareAccount() {
-    return gasAccountStore.getState().pendingHardwareAccount;
+    return gasAccountStore.getState().discovery.pendingHardwareAccount;
   },
-  fetchGasAccountInfo,
+  fetchGasAccountInfo: refreshSnapshot,
+  refreshSnapshot,
+  markSnapshotDirty(reason: string) {
+    gasAccountStore.setState(prev => markSnapshotDirtyState(prev, reason));
+  },
+  scheduleSnapshotRefresh({
+    reason = 'scheduled',
+    delay = SNAPSHOT_REFRESH_DELAY,
+  }: {
+    reason?: string;
+    delay?: number;
+  } = {}) {
+    storeApiGasAccount.markSnapshotDirty(reason);
+    if (scheduledSnapshotRefreshTimer) {
+      return;
+    }
+    scheduledSnapshotRefreshTimer = setTimeout(() => {
+      scheduledSnapshotRefreshTimer = null;
+      const snapshot = gasAccountStore.getState().snapshot;
+      if (!snapshot.dirty) {
+        return;
+      }
+      storeApiGasAccount
+        .refreshSnapshot({
+          reason: snapshot.refreshReason || reason,
+          force: true,
+        })
+        .catch(error => {
+          console.error('scheduleSnapshotRefresh error', error);
+        });
+    }, delay);
+  },
+  refreshHistory,
+  loadMoreHistory,
+  invalidateSession() {
+    gasAccountService.setGasAccountSig();
+    gasAccountService.setCurrentBalanceState();
+    gasAccountStore.setState(prev => invalidateSessionState(prev));
+  },
   setLoginVisible(valOrFunc: UpdaterOrPartials<boolean>) {
     setVisibleFor('loginVisible', valOrFunc);
   },
   setSwitchVisible(valOrFunc: UpdaterOrPartials<boolean>) {
     setVisibleFor('switchVisible', valOrFunc);
   },
-  setAccountsWithGasAccountBalance(accounts: AccountWithBalanceItem[]) {
+  setAccountsWithGasAccountBalance(accounts: GasAccountBalanceAccount[]) {
     gasAccountService.setAccountsWithGasAccountBalance(accounts);
-    gasAccountStore.setState({ accountsWithGasAccountBalance: accounts });
+    gasAccountStore.setState(prev =>
+      updateDiscoveryState(prev, {
+        accountsWithBalance: accounts,
+        status: 'ready',
+        lastFetchedAt: Date.now(),
+      }),
+    );
   },
-  setPendingHardwareAccount(
-    account?: GasAccountServiceStore['pendingHardwareAccount'],
-  ) {
+  setPendingHardwareAccount(account?: GasAccountRuntimeAccount) {
     gasAccountService.setPendingHardwareAccount(account);
-    gasAccountStore.setState({ pendingHardwareAccount: account });
+    gasAccountStore.setState(prev =>
+      updateDiscoveryState(prev, {
+        pendingHardwareAccount: account,
+      }),
+    );
   },
   clearPendingHardwareAccount() {
     gasAccountService.clearPendingHardwareAccount();
-    gasAccountStore.setState({ pendingHardwareAccount: undefined });
+    gasAccountStore.setState(prev =>
+      updateDiscoveryState(prev, {
+        pendingHardwareAccount: undefined,
+      }),
+    );
   },
 
   loginGasAccount: async (selectAccount: Account) => {
@@ -325,6 +516,11 @@ export const storeApiGasAccount = {
     if (!account) {
       throw new Error('background.error.noCurrentAccount');
     }
+    gasAccountStore.setState(prev =>
+      updateSessionState(prev, {
+        status: 'logging_in',
+      }),
+    );
     console.debug('selectAccount', account);
     const { text } = await openapi.getGasAccountSignText(account.address);
 
@@ -367,7 +563,13 @@ export const storeApiGasAccount = {
         storeApiGasAccount.setGasAccount(signature, account);
         gasAccountService.setHasClaimedGift(true);
         storeApiGasAccount.clearPendingHardwareAccount();
+        storeApiGasAccount.markSnapshotDirty('login');
       } else {
+        gasAccountStore.setState(prev =>
+          updateSessionState(prev, {
+            status: 'invalid',
+          }),
+        );
         throw new Error('Login failed');
       }
     }
@@ -394,11 +596,11 @@ export const useGasAccountLoginVisible = () => {
 };
 
 export const useAccountsWithGasAccountBalance = () => {
-  return gasAccountStore(s => s.accountsWithGasAccountBalance);
+  return gasAccountStore(s => s.discovery.accountsWithBalance);
 };
 
 export const usePendingHardwareAccount = () => {
-  return gasAccountStore(s => s.pendingHardwareAccount);
+  return gasAccountStore(s => s.discovery.pendingHardwareAccount);
 };
 
 export const useGasAccountBridgeSupportTokenList = () => {

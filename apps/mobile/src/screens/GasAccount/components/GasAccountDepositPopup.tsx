@@ -93,21 +93,22 @@ export const GasAccountDepositPopup: React.FC<{
     handleClose();
   }, [handleClose]);
 
-  const snapPoints = useMemo(() => {
-    if (step === 'pay') {
-      return [355];
-    } else if (step !== 'token') {
-      return [256];
-    } else {
-      return [256];
-    }
-  }, [step]);
+  // const snapPoints = useMemo(() => {
+  //   if (step === 'pay') {
+  //     return [355];
+  //   } else if (step !== 'token') {
+  //     return [256];
+  //   } else {
+  //     return [256];
+  //   }
+  // }, [step]);
 
   return (
     <>
       {showSelectSheet ? (
         <AppBottomSheetModal
-          snapPoints={snapPoints}
+          // snapPoints={snapPoints}
+          enableDynamicSizing
           onDismiss={handleDismiss}
           ref={modalRef}
           keyboardBehavior="interactive"
@@ -157,6 +158,6 @@ const getStyles = createGetStyles2024(() => ({
   popup: {
     margin: 0,
     height: '100%',
-    paddingVertical: 10,
+    // paddingVertical: 10,
   },
 }));

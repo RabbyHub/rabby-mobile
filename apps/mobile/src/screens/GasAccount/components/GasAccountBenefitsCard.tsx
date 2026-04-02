@@ -1,4 +1,4 @@
-import ImgGasAccount from '@/assets2024/images/gasAccount/gasaccount.png';
+import ImgGasAccount from '@/assets2024/images/gasAccount/gasaccount-new.png';
 import {
   RcIconBenefitNetworks,
   RcIconBenefitNoFee,
@@ -99,14 +99,16 @@ export const GasAccountBenefitsCard: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
     paddingTop: 12,
     paddingBottom: 20,
     paddingHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-3'],
     alignItems: 'center',
     overflow: 'hidden',
   },
@@ -127,7 +129,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   heroImage: {
     width: 123,
     height: 99,
-    resizeMode: 'contain',
+    // resizeMode: 'contain',
   },
   header: {
     width: '100%',
@@ -163,7 +165,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 12,
     paddingVertical: 16,
     borderRadius: 12,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-5'],
   },
   iconWrap: {
     width: 40,

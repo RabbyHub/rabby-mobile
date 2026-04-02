@@ -32,6 +32,12 @@ export type GasAccountEligibilityCache = {
   };
 };
 
+export type GasAccountRuntimeAccount = {
+  address: string;
+  type: string;
+  brandName: string;
+};
+
 export type GasAccountServiceStore = {
   accountId?: string;
   sig?: string;
@@ -50,16 +56,6 @@ export type GasAccountServiceStore = {
   currentBalanceAccountId?: string;
   currentHasBalance?: boolean;
   ga4ActiveEventTime?: number;
-  pendingHardwareAccount?: {
-    address: string;
-    type: string;
-    brandName: string;
-  };
-  accountsWithGasAccountBalance?: {
-    address: string;
-    type: string;
-    brandName: string;
-  }[];
 };
 
 const getInitialHasEverLoggedIn = (
@@ -90,6 +86,13 @@ export class GasAccountService {
     currentEligibleAddress: undefined,
     hasEverLoggedIn: false,
     ga4ActiveEventTime: 0,
+  };
+  runtimeState: {
+    pendingHardwareAccount?: GasAccountRuntimeAccount;
+    accountsWithGasAccountBalance: GasAccountRuntimeAccount[];
+  } = {
+    pendingHardwareAccount: undefined,
+    accountsWithGasAccountBalance: [],
   };
 
   constructor(options?: StorageAdapaterOptions) {
@@ -555,32 +558,26 @@ export class GasAccountService {
   }
 
   getPendingHardwareAccount() {
-    return this.store.pendingHardwareAccount;
+    return this.runtimeState.pendingHardwareAccount;
   }
 
-  setPendingHardwareAccount(
-    account?: GasAccountServiceStore['pendingHardwareAccount'],
-  ) {
-    this.store.pendingHardwareAccount = account;
+  setPendingHardwareAccount(account?: GasAccountRuntimeAccount) {
+    this.runtimeState.pendingHardwareAccount = account;
   }
 
   clearPendingHardwareAccount() {
-    this.store.pendingHardwareAccount = undefined;
+    this.runtimeState.pendingHardwareAccount = undefined;
   }
 
   getAccountsWithGasAccountBalance() {
-    return this.store.accountsWithGasAccountBalance || [];
+    return this.runtimeState.accountsWithGasAccountBalance;
   }
 
-  setAccountsWithGasAccountBalance(
-    accounts: NonNullable<
-      GasAccountServiceStore['accountsWithGasAccountBalance']
-    >,
-  ) {
-    this.store.accountsWithGasAccountBalance = accounts;
+  setAccountsWithGasAccountBalance(accounts: GasAccountRuntimeAccount[]) {
+    this.runtimeState.accountsWithGasAccountBalance = accounts;
   }
 
   clearAccountsWithGasAccountBalance() {
-    this.store.accountsWithGasAccountBalance = undefined;
+    this.runtimeState.accountsWithGasAccountBalance = [];
   }
 }

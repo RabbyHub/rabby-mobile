@@ -227,9 +227,7 @@ export const GasAccountDepositTokenPicker: React.FC<{
               resizeMode="contain"
             />
             <Text style={styles.emptyText}>
-              {t('page.gasAccount.depositPopup.noAvailableToken', {
-                defaultValue: 'No available token',
-              })}
+              {t('page.gasAccount.depositPopup.noAvailableToken')}
             </Text>
           </View>
         )}
@@ -238,7 +236,7 @@ export const GasAccountDepositTokenPicker: React.FC<{
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     paddingTop: 18,
@@ -280,7 +278,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     paddingHorizontal: 12,
     paddingVertical: 14,
   },

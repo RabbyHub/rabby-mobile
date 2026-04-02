@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  InteractionManager,
   TouchableOpacity,
   View,
   ViewProps as RNViewProps,
@@ -107,8 +108,32 @@ export const DirectSignGasInfoUI = ({
     }
 
     lastHandledAutoOpenSignalRef.current = autoOpenSignal;
-    openModal();
+    const task = InteractionManager.runAfterInteractions(() => {
+      openModal();
+    });
+
+    return () => {
+      task.cancel();
+    };
   }, [autoOpenSignal, openModal, visible]);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    const task = InteractionManager.runAfterInteractions(() => {
+      measureTrigger(() => {
+        requestAnimationFrame(() => {
+          measureTrigger();
+        });
+      });
+    });
+
+    return () => {
+      task.cancel();
+    };
+  }, [measureTrigger, visible]);
 
   return (
     <View style={style}>

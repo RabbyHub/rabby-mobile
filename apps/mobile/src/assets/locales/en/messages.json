@@ -1871,7 +1871,8 @@
         "minAmountRequired": "Minimum deposit amount is $1",
         "unavailablePaymentWallet": "Selected payment wallet is unavailable",
         "estReceiveLabel": "Est.Receive: {{usd}}",
-        "estReceiveTip": "Service processed via {{name}}, may have slippage"
+        "estReceiveTip": "Service processed via {{name}}, may have slippage",
+        "noAvailableToken": "No available token"
       },
       "paymentAddressPopup": {
         "title": "Select Payment Wallet",

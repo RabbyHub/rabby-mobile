@@ -18,9 +18,7 @@ import {
 } from './approvalGasDisplay';
 import { formatGasHeaderUsdValue } from '@/utils/number';
 import {
-  buildCurrentLevelGasState,
   shouldAutoOpenSignMainnetGasModal,
-  mergeCurrentLevelGasState,
   resolveSignMainnetGasLevelFetchNeeds,
   resolveSignMainnetGasLevelFetchMode,
   shouldFetchSignMainnetGasLevel,
@@ -112,17 +110,6 @@ export const SignMainnetHeaderContent = ({
   });
   const gasAccountChainSupported =
     !!gasAccountCost && !gasAccountCost.chain_not_support;
-  const currentGasAccountCostUsd = useMemo(
-    () =>
-      calcGasAccountUsd(
-        (gasAccountCost?.gas_account_cost.estimate_tx_cost || 0) +
-          (gasAccountCost?.gas_account_cost.gas_cost || 0),
-      ),
-    [
-      gasAccountCost?.gas_account_cost.estimate_tx_cost,
-      gasAccountCost?.gas_account_cost.gas_cost,
-    ],
-  );
   const summary = useMemo(
     () =>
       buildDirectSignSummary({
@@ -158,30 +145,20 @@ export const SignMainnetHeaderContent = ({
   )?.level;
   const gasAccountUsable =
     gasAccountChainSupported && !!gasAccountCost?.balance_is_enough;
-  const seededLevelState = useMemo(
-    () =>
-      buildCurrentLevelGasState({
-        selectedGasLevel: selectedGas?.level,
-        displayGasMethod,
-        selectedGasCostUsd: summary.primaryText,
-        nativeTokenInsufficient: !!nativeTokenInsufficient,
-        gasAccountBalanceEnough: gasAccountCost?.balance_is_enough,
-        selectedGasAccountCostUsd: currentGasAccountCostUsd,
-      }),
-    [
-      currentGasAccountCostUsd,
-      displayGasMethod,
-      gasAccountCost?.balance_is_enough,
-      nativeTokenInsufficient,
-      selectedGas?.level,
-      summary.primaryText,
-    ],
-  );
   const isHeaderLoading = !isReady;
   const isHeaderError = !isHeaderLoading && (!!gas.error || !gas.success);
-  const [levelState, setLevelState] =
-    useState<SignMainnetGasLevelState>(seededLevelState);
+  const [levelState, setLevelState] = useState<SignMainnetGasLevelState>({});
   const levelStateRef = useRef(levelState);
+  const fetchContextIdRef = useRef(0);
+  const levelRequestSeqRef = useRef(0);
+  const activeLevelRequestsRef = useRef<
+    Partial<
+      Record<
+        SignMainnetSupportedGasLevel,
+        { contextId: number; requestId: number }
+      >
+    >
+  >({});
   const fetchMode = resolveSignMainnetGasLevelFetchMode({
     isReady,
     isModalOpen: showMoreOpen,
@@ -194,16 +171,7 @@ export const SignMainnetHeaderContent = ({
   }, [levelState]);
 
   useEffect(() => {
-    setLevelState(prev =>
-      mergeCurrentLevelGasState({
-        prevState: prev,
-        currentLevelState: seededLevelState,
-      }),
-    );
-  }, [seededLevelState]);
-
-  useEffect(() => {
-    let mounted = true;
+    const contextId = ++fetchContextIdRef.current;
 
     if (
       fetchMode === 'idle' ||
@@ -219,9 +187,6 @@ export const SignMainnetHeaderContent = ({
         NonNullable<SignMainnetGasLevelState[SignMainnetSupportedGasLevel]>
       >,
     ) => {
-      if (!mounted) {
-        return;
-      }
       setLevelState(prev => ({
         ...prev,
         [level]: {
@@ -232,24 +197,28 @@ export const SignMainnetHeaderContent = ({
     };
 
     supportedLevels.forEach(gasLevel => {
-      const isCurrentLevel = gasLevel.level === selectedSupportedLevel;
       const { needsNative, needsGasAccount } =
         resolveSignMainnetGasLevelFetchNeeds({
-          isCurrentLevel,
           gasAccountChainSupported,
-          hasCurrentGasAccountCost: !!gasAccountCost,
         });
       const currentLevelState = levelStateRef.current[gasLevel.level];
+      const activeRequest = activeLevelRequestsRef.current[gasLevel.level];
       const shouldFetchLevel = shouldFetchSignMainnetGasLevel({
         state: currentLevelState,
         needsNative,
         needsGasAccount,
+        hasActiveRequest: activeRequest?.contextId === contextId,
       });
 
       if ((!needsNative && !needsGasAccount) || !shouldFetchLevel) {
         return;
       }
 
+      const requestId = ++levelRequestSeqRef.current;
+      activeLevelRequestsRef.current[gasLevel.level] = {
+        contextId,
+        requestId,
+      };
       patchLevelState(gasLevel.level, { loading: true });
 
       const gasChange = {
@@ -293,7 +262,11 @@ export const SignMainnetHeaderContent = ({
           : Promise.resolve({}),
       ])
         .then(([nativePatch, gasAccountPatch]) => {
-          if (!mounted) {
+          const currentRequest = activeLevelRequestsRef.current[gasLevel.level];
+          if (
+            currentRequest?.contextId !== contextId ||
+            currentRequest.requestId !== requestId
+          ) {
             return;
           }
           patchLevelState(gasLevel.level, {
@@ -303,13 +276,17 @@ export const SignMainnetHeaderContent = ({
         })
         .catch(() => {})
         .finally(() => {
+          const currentRequest = activeLevelRequestsRef.current[gasLevel.level];
+          if (
+            currentRequest?.contextId !== contextId ||
+            currentRequest.requestId !== requestId
+          ) {
+            return;
+          }
+          delete activeLevelRequestsRef.current[gasLevel.level];
           patchLevelState(gasLevel.level, { loading: false });
         });
     });
-
-    return () => {
-      mounted = false;
-    };
   }, [
     chainId,
     checkGasLevelIsNotEnough,

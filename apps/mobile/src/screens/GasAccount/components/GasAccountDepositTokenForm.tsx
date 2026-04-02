@@ -39,7 +39,6 @@ import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { useGasAccountMethods } from '@/screens/GasAccount/hooks';
 import {
   storeApiGasAccount,
-  useGasAccountHistoryRefresh,
   useGasAccountSign,
 } from '@/screens/GasAccount/hooks/atom';
 import {
@@ -160,7 +159,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const quoteReqIdRef = useRef(0);
   const { sig, accountId } = useGasAccountSign();
   const { login } = useGasAccountMethods();
-  const { refresh: refreshHistoryList } = useGasAccountHistoryRefresh();
   const {
     value: usdValue,
     displayedValue,
@@ -343,7 +341,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
   useEffect(() => {
     if (visible && !didInitRef.current) {
       didInitRef.current = true;
-      setUsdValue(String(minDepositUsd));
+      setUsdValue(
+        new BigNumber(minDepositUsd).toFixed(4, BigNumber.ROUND_CEIL),
+      );
     }
   }, [minDepositUsd, setUsdValue, visible]);
 
@@ -596,6 +596,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
         pollCancelRef.current = null;
 
         if (success) {
+          storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
           const usedNonce = await fetchTopUpUsedNonce(
             depositTxHash,
             selectedToken.chain,
@@ -618,12 +619,13 @@ const GasAccountDepositTokenFormInner: React.FC<{
           );
         }
 
-        refreshHistoryList();
+        await storeApiGasAccount.refreshHistory('deposit_confirmed');
         onClose?.();
         return;
       }
 
-      refreshHistoryList();
+      storeApiGasAccount.markSnapshotDirty('deposit_submitted');
+      await storeApiGasAccount.refreshHistory('deposit_submitted');
       if (onDeposit) {
         await onDeposit();
       } else {
@@ -665,7 +667,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
     onWaitDepositResult,
     openUI,
     quoteAmountValue,
-    refreshHistoryList,
     resetGasStore,
     selectedOwnerAccount,
     selectedToken,
@@ -722,9 +723,39 @@ const GasAccountDepositTokenFormInner: React.FC<{
     tokenBalanceUsd,
   ]);
 
+  const realGasAccountAddress = accountId || selectedOwnerAccount?.address;
+
+  const { data: gasAccountInfo, runAsync: fetchGasAccountInfo } = useRequest(
+    async (address: string) => {
+      return openapi.getGasAccountInfoV2({ id: address });
+    },
+    {
+      manual: true,
+    },
+  );
+
+  useEffect(() => {
+    if (minDepositPrice && realGasAccountAddress) {
+      fetchGasAccountInfo(realGasAccountAddress);
+    }
+  }, [minDepositPrice, realGasAccountAddress, fetchGasAccountInfo]);
+
   const estReceiveLabel = t('page.gasAccount.depositPopup.estReceiveLabel', {
     usd: estReceiveUsdValue,
   });
+
+  const displayedEstReceiveLabel = minDepositPrice
+    ? t('page.gasAccount.depositPayPopup.topUpPayTips', {
+        topUpUsd: formatUsdValue(minDepositPrice),
+        balance: formatUsdValue(
+          new BigNumber(estReceiveUsdValue.replace('$', ''))
+            .plus(gasAccountInfo?.account?.balance || 0)
+            .minus(minDepositPrice)
+            .toFixed(),
+        ),
+      })
+    : estReceiveLabel;
+
   const estReceiveTip = t('page.gasAccount.depositPopup.estReceiveTip', {
     name: bridgeQuote?.bridge_id,
   });
@@ -754,7 +785,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     } else {
       bottomContent = (
         <View style={styles.estimateRow}>
-          <Text style={styles.estimateText}>{estReceiveLabel}</Text>
+          <Text style={styles.estimateText}>{displayedEstReceiveLabel}</Text>
           {selectedToken.gasAccountDepositType === 'bridge' ? (
             <Tip
               placement="top"
@@ -789,8 +820,8 @@ const GasAccountDepositTokenFormInner: React.FC<{
           linearGradientType: 'bg1',
         })}
         onDismiss={onClose}
-        // enableDynamicSizing
-        snapPoints={[400]}
+        enableDynamicSizing
+        // snapPoints={[400]}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore">
         <BottomSheetView style={styles.container}>
@@ -837,6 +868,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
               )}
               <View style={styles.inputDivider} />
               <CustomTouchableOpacity
+                style={styles.wrapper}
                 disabled={isInteractionLocked}
                 onPress={() => {
                   if (isInteractionLocked) {
@@ -901,9 +933,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-    paddingTop: 18,
+    paddingTop: 10,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 48,
     display: 'flex',
     flexDirection: 'column',
   },
@@ -974,6 +1006,11 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-title-1'],
     marginBottom: 24,
     textAlign: 'center',
+  },
+  wrapper: {
+    backgroundColor: ctx.colors2024['neutral-line'],
+    padding: 4,
+    borderRadius: 100,
   },
   tokenContainer: {
     display: 'flex',

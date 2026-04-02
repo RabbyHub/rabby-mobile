@@ -15,13 +15,16 @@ import * as Sentry from '@sentry/react-native';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { gasAccountProducts } from '@/constant/iap';
 import { Text } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
 import { GasAccountTopUpWaitCallback } from './topUpContinuation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { resolveDepositPayProduct } from './GasAccountDepositAutoFill.utils';
+import BigNumber from 'bignumber.js';
 
 interface Props {
   visible?: boolean;
@@ -43,7 +46,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   onEnsureGasAccountAddress,
 }) => {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
   const pollCancelRef = useRef<(() => void) | null>(null);
@@ -179,6 +182,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       pollCancelRef.current?.();
     }
   }, [cancel, visible]);
+  const { bottom } = useSafeAreaInsets();
 
   return (
     <KeyboardAwareScrollView
@@ -186,7 +190,10 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
       scrollEnabled={false}
       keyboardOpeningTime={0}
       // style={styles.container}
-      contentContainerStyle={styles.container}>
+      contentContainerStyle={StyleSheet.flatten([
+        styles.container,
+        { paddingBottom: Math.max(bottom, 36) },
+      ])}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {Platform.OS === 'android'
@@ -243,7 +250,9 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
             <View style={styles.depositWithTitle}>
               <View style={styles.depositWithPayRow}>
                 {Platform.OS === 'android' ? (
-                  <RcIconGooglePayCC />
+                  <RcIconGooglePayCC
+                    color={colors2024['neutral-InvertHighlight']}
+                  />
                 ) : (
                   <Text style={styles.btnTitle}>
                     {t('page.gasAccount.depositPopup.pay')}
@@ -268,6 +277,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
     flex: 1,
+    paddingBottom: 48,
   },
   containerHorizontal: {
     paddingHorizontal: 20,
@@ -374,7 +384,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   feeTips: {
-    marginTop: 8,
+    marginTop: 20,
     textAlign: 'center',
   },
 }));
