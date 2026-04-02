@@ -34,7 +34,7 @@ import { useCreateWallet } from '@/hooks/address/useCreateWallet';
 type ScreenProps = CompositeScreenProps<
   NativeStackScreenProps<
     AddressNavigatorParamList,
-    typeof RootNames.CreateNewWallet
+    typeof RootNames.SetupWallet
   >,
   NativeStackScreenProps<RootStackParamsList>
 >;
@@ -72,7 +72,7 @@ const ANIMATION_START_TIMES = {
     ANIMATION_CONFIG.DELAY_AFTER_ADDRESS,
 } as const;
 
-export default function CreateNewWalletScreen({ route }: ScreenProps) {
+export default function SetupWalletScreen({ route }: ScreenProps) {
   const { styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -102,7 +102,7 @@ export default function CreateNewWalletScreen({ route }: ScreenProps) {
   useFocusEffect(
     useCallback(() => {
       console.log(
-        '[CreateNewWallet] useFocusEffect triggered - starting animations',
+        '[SetupWallet] useFocusEffect triggered - starting animations',
       );
 
       // Reset values first

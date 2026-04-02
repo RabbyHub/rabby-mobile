@@ -164,7 +164,7 @@ export type AddressNavigatorParamList = {
     accounts?: string[];
     isFirstCreate?: boolean;
   };
-  [RootNames.CreateNewWallet]?:
+  [RootNames.SetupWallet]?:
     | { seedPhraseVaultId: string }
     | { privateKeyVaultId: string }
     | undefined;

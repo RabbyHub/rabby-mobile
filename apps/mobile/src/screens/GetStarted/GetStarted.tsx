@@ -4,7 +4,6 @@ import {
   ScrollView,
   Dimensions,
   Image,
-  StatusBar,
   TouchableOpacity,
 } from 'react-native';
 
@@ -116,7 +115,7 @@ function NewUserGetStartedScreen() {
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
     );
     navigateDeprecated(RootNames.StackAddress, {
-      screen: RootNames.CreateNewWallet,
+      screen: RootNames.SetupWallet,
     });
   }, [getStarted.processedInit, startCreateAddressProc]);
 
@@ -182,13 +181,6 @@ function NewUserGetStartedScreen() {
 
   return (
     <View style={styles.screen}>
-      {/* Status bar with translucent to allow content behind it */}
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle={isLight ? 'dark-content' : 'light-content'}
-      />
-
       {/* Header with logo - positioned right next to status bar, horizontally centered */}
       <View style={[styles.logoWrapper, { top: top + 6 }]}>
         <Image

@@ -33,7 +33,7 @@ import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { ImportSecret } from '../Address/ImportSecret';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
-import CreateNewWallet from '../Address/CreateNewWallet';
+import SetupWallet from '../Address/SetupWallet';
 import SelectImportMethod from '../Address/SelectImportMethod';
 import ImportRabbyWallet from '../Address/ImportRabbyWallet';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
@@ -261,8 +261,8 @@ export function AddressNavigator() {
         })}
       />
       <AddressStack.Screen
-        name={RootNames.CreateNewWallet}
-        component={CreateNewWallet}
+        name={RootNames.SetupWallet}
+        component={SetupWallet}
         options={mergeScreenOptions({
           headerShown: false,
         })}
@@ -272,8 +272,8 @@ export function AddressNavigator() {
         component={SelectImportMethod}
         options={mergeScreenOptions2024([
           {
-            headerTitle: 'Select import method',
-            title: 'Select import method',
+            headerTitle: t('screens.addressStackTitle.ImportMethods'),
+            title: t('screens.addressStackTitle.ImportMethods'),
             headerTintColor: colors2024['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
           },

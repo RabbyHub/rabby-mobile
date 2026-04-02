@@ -7,7 +7,7 @@ import { IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
 import { useLoadLockInfo, usePasswordStatus } from '@/hooks/useLock';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import type { ValidationBehaviorProps } from '@/core/apis/lock';
+import type { UIAuthType, ValidationBehaviorProps } from '@/core/apis/lock';
 
 import {
   GlobalModalViewProps,
@@ -44,8 +44,16 @@ const SIZES = {
 export interface AuthenticationModalProps extends ValidationBehaviorProps {
   confirmText?: string;
   cancelText?: string;
-  title: string;
-  description?: string;
+  /**
+   * Title can be a static string or a callback function that receives
+   * the current auth type (useful when auth mode switches from biometrics to password)
+   */
+  title: string | ((authType: UIAuthType) => string);
+  /**
+   * Description can be a static string or a callback function that receives
+   * the current auth type (useful when auth mode switches from biometrics to password)
+   */
+  description?: string | ((authType: UIAuthType) => string);
   checklist?: string[];
   placeholder?: string;
   onCancel?(): void;
@@ -198,12 +206,12 @@ const DFLT_VALIDATE = async (password: string) => {
 };
 
 export const AuthenticationModal2024 = ({
-  title,
+  title: titleProp,
   confirmText,
   hideCancelButton,
   onFinished,
   validationHandler = DFLT_VALIDATE,
-  description,
+  description: descriptionProp,
   placeholder,
   $createParams,
   checklist,
@@ -263,6 +271,19 @@ export const AuthenticationModal2024 = ({
   if (currentAuthType === 'none' && currentAuthType !== defaultAuthType) {
     setCurrentAuthType(defaultAuthType);
   }
+
+  // Compute title and description based on current auth type
+  const title = React.useMemo(() => {
+    return typeof titleProp === 'function'
+      ? titleProp(currentAuthType || 'password')
+      : titleProp;
+  }, [titleProp, currentAuthType]);
+
+  const description = React.useMemo(() => {
+    return typeof descriptionProp === 'function'
+      ? descriptionProp(currentAuthType || 'password')
+      : descriptionProp;
+  }, [descriptionProp, currentAuthType]);
   const handleSubmitForm = React.useCallback(async () => {
     if (hasCheckFailed) return;
 

@@ -133,7 +133,7 @@ export const ImportSecret = () => {
   // Navigate to CreateNewWallet
   const handleCreateNewWallet = React.useCallback(() => {
     navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.CreateNewWallet,
+      screen: RootNames.SetupWallet,
     });
   }, [navigation]);
 
@@ -194,7 +194,7 @@ export const ImportSecret = () => {
       // Store in SecretVault and pass only the vault ID
       const vaultId = SecretVault.store(cleanedMnemonic);
       navigation.navigate(RootNames.StackAddress, {
-        screen: RootNames.CreateNewWallet,
+        screen: RootNames.SetupWallet,
         params: {
           seedPhraseVaultId: vaultId,
         },
@@ -215,7 +215,7 @@ export const ImportSecret = () => {
       // Store in SecretVault and pass only the vault ID
       const vaultId = SecretVault.store(cleanedPrivateKey);
       navigation.navigate(RootNames.StackAddress, {
-        screen: RootNames.CreateNewWallet,
+        screen: RootNames.SetupWallet,
         params: {
           privateKeyVaultId: vaultId,
         },
