@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { TouchableOpacity as RNTouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
@@ -14,33 +15,50 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAccountHomeShowReceiveTip } from '@/screens/Address/components/MultiAssets/hooks';
-import { ReceiveOnNoAssets } from './ReceiveOnNoAssets';
+import { DepositAssetsCard } from './DepositAssetsCard';
 
 export function HomeCenterArea() {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
 
-  const { accountToShowReceiveTip } = useAccountHomeShowReceiveTip();
+  const { accountToShowReceiveTip, isLoadingAccountToShowReceiveTip } =
+    useAccountHomeShowReceiveTip();
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
 
   const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
 
   const { blocksVisibility, noBetweenContent, onlyOneContent } = useMemo(() => {
+    const hasOfflineChainData = !!(
+      offlineChainData.displayWillClosedChain &&
+      offlineChainData.offlineChainInfo
+    );
+
     const blocks = {
       soloAccountToShowReceiveTip: false as boolean,
       rateGuideOnHome: false as boolean,
-      offlineChainData: !!(
-        offlineChainData.displayWillClosedChain &&
-        offlineChainData.offlineChainInfo
-      ),
+      offlineChainData: false as boolean,
       tipScreenshot: false as boolean,
     };
 
-    if (accountToShowReceiveTip) blocks.soloAccountToShowReceiveTip = true;
-    else if (!viewedScreenShotReportTip) blocks.tipScreenshot = true;
-    else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
+    // Wait for account check to complete before deciding what to show
+    if (isLoadingAccountToShowReceiveTip) {
+      // Show nothing while loading to prevent flickering
+      return {
+        blocksVisibility: blocks,
+        noBetweenContent: true,
+        onlyOneContent: false,
+      };
+    }
+
+    if (accountToShowReceiveTip) {
+      blocks.soloAccountToShowReceiveTip = true;
+    } else {
+      if (hasOfflineChainData) blocks.offlineChainData = true;
+      if (!viewedScreenShotReportTip) blocks.tipScreenshot = true;
+      else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
+    }
 
     const visibleEls = Object.values(blocks);
     const hasBetweenContent = visibleEls.some(Boolean);
@@ -54,6 +72,7 @@ export function HomeCenterArea() {
     offlineChainData,
     accountToShowReceiveTip,
     viewedScreenShotReportTip,
+    isLoadingAccountToShowReceiveTip,
   ]);
 
   return (
@@ -65,29 +84,33 @@ export function HomeCenterArea() {
         onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
       ]}>
       {blocksVisibility.offlineChainData && (
-        <OfflineChainNotify data={offlineChainData} />
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <OfflineChainNotify data={offlineChainData} />
+        </Animated.View>
       )}
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
-        <ReceiveOnNoAssets.BgWrapper isForSingle={false}>
-          <ReceiveOnNoAssets
-            account={accountToShowReceiveTip}
-            isForSingle={false}
-          />
-        </ReceiveOnNoAssets.BgWrapper>
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <DepositAssetsCard account={accountToShowReceiveTip} />
+        </Animated.View>
       )}
 
-      {blocksVisibility.tipScreenshot && <TipFeedbackByScreenshot />}
+      {blocksVisibility.tipScreenshot && (
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <TipFeedbackByScreenshot />
+        </Animated.View>
+      )}
 
       {blocksVisibility.rateGuideOnHome && (
-        <View
+        <Animated.View
+          entering={FadeInUp.duration(200)}
           style={{
             paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
           }}>
           <RateModalTriggerOnHome /* totalBalanceText={combineData.netWorth} */
           />
           <RateModal /* totalBalanceText={combineData.netWorth} */ />
-        </View>
+        </Animated.View>
       )}
     </View>
   );

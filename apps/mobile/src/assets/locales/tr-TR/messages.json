@@ -3352,6 +3352,8 @@
     "appName": "Rabby Cüzdan",
     "refresh": "Yenileştirmek",
     "Deleted": "Silinmiş",
+    "WalletCreated": "Cüzdan oluşturuldu",
+    "WalletImported": "Cüzdan içe aktarıldı",
     "unknownNFT": "Bilinmeyen NFT",
     "appDescription": "Ethereum ve tüm EVM zincirleri için devrim niteliğinde cüzdan",
     "closeButton": "Kapat",

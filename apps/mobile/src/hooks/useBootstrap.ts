@@ -154,7 +154,7 @@ export function subscribeUnlockToFetchAccounts() {
     const accounts = await keyringService.getAllVisibleAccountsArray();
     if (!accounts?.length) {
       replace(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
+        screen: RootNames.GetStarted,
       });
     }
   });

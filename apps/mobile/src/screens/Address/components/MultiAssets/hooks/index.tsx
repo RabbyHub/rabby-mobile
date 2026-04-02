@@ -239,6 +239,7 @@ export function useAccountHomeShowReceiveTip(
 
   return {
     targetAccount,
+    isLoadingAccountToShowReceiveTip: asyncResult.loading,
     accountToShowReceiveTip:
       accountToShowReceiveTip &&
       isAccountToShowReceiveTip(accountToShowReceiveTip)
