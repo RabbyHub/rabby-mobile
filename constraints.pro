@@ -5,9 +5,20 @@
 % True if and only if VersionRange is a value that we would expect to see
 % following a package in a "*dependencies" field within a `package.json`.
 is_valid_version_range(VersionRange) :-
+  VersionRange = '*';
   VersionRange = 'workspace:^';
   VersionRange = 'workspace:~';
+  sub_atom(VersionRange, 0, 6, _, 'patch:');
+  sub_atom(VersionRange, 0, 5, _, 'file:');
+  sub_atom(VersionRange, 0, 4, _, 'git+');
+  sub_atom(VersionRange, 0, 1, _, '^');
+  sub_atom(VersionRange, 0, 1, _, '~');
   parse_version_range(VersionRange, _, _, _, _).
+
+% True if and only if VersionRange uses the Yarn workspace protocol.
+is_workspace_version_range(VersionRange) :-
+  VersionRange = 'workspace:^';
+  VersionRange = 'workspace:~'.
 
 % Succeeds if Number can be unified with Atom converted to a number; throws if
 % not.
@@ -155,13 +166,19 @@ gen_enforced_field(WorkspaceCwd, 'name', WorkspacePackageName) :-
 gen_enforced_field(WorkspaceCwd, 'description', DescriptionWithoutTrailingPeriod) :-
   workspace_field(WorkspaceCwd, 'description', Description),
   atom_length(Description, Length),
-  LengthLessOne is Length - 1,
-  sub_atom(Description, LengthLessOne, 1, 0, LastCharacter),
-  sub_atom(Description, 0, LengthLessOne, 1, DescriptionWithoutPossibleTrailingPeriod),
   (
-    LastCharacter == '.' ->
-      DescriptionWithoutTrailingPeriod = DescriptionWithoutPossibleTrailingPeriod ;
-      DescriptionWithoutTrailingPeriod = Description
+    Length == 0 ->
+      DescriptionWithoutTrailingPeriod = Description ;
+      (
+        LengthLessOne is Length - 1,
+        sub_atom(Description, LengthLessOne, 1, 0, LastCharacter),
+        sub_atom(Description, 0, LengthLessOne, 1, DescriptionWithoutPossibleTrailingPeriod),
+        (
+          LastCharacter == '.' ->
+            DescriptionWithoutTrailingPeriod = DescriptionWithoutPossibleTrailingPeriod ;
+            DescriptionWithoutTrailingPeriod = Description
+        )
+      )
   ).
 
 % All published packages must have the same set of NPM keywords.
@@ -306,11 +323,12 @@ gen_enforced_dependency(WorkspaceCwd, DependencyIdent, 'a range optionally start
 
 % All references to a workspace package must be up to date with the current
 % version of that package.
-gen_enforced_dependency(WorkspaceCwd, DependencyIdent, CorrectDependencyRange, DependencyType) :-
+gen_enforced_dependency(WorkspaceCwd, DependencyIdent, 'workspace:^', DependencyType) :-
   workspace_has_dependency(WorkspaceCwd, DependencyIdent, DependencyRange, DependencyType),
   workspace_ident(OtherWorkspaceCwd, DependencyIdent),
-  workspace_version(OtherWorkspaceCwd, OtherWorkspaceVersion),
-  atomic_list_concat(['^', OtherWorkspaceVersion], CorrectDependencyRange).
+  WorkspaceCwd \= OtherWorkspaceCwd,
+  DependencyType \= 'peerDependencies',
+  DependencyRange \= 'workspace:^'.
 
 % All dependency ranges for a package must be synchronized across the monorepo
 % (the least version range wins), regardless of which "*dependencies" field
@@ -320,6 +338,8 @@ gen_enforced_dependency(WorkspaceCwd, DependencyIdent, OtherDependencyRange, Dep
   workspace_has_dependency(OtherWorkspaceCwd, DependencyIdent, OtherDependencyRange, OtherDependencyType),
   WorkspaceCwd \= OtherWorkspaceCwd,
   DependencyRange \= OtherDependencyRange,
+  \+ is_workspace_version_range(DependencyRange),
+  \+ is_workspace_version_range(OtherDependencyRange),
   npm_version_range_out_of_sync(DependencyRange, OtherDependencyRange).
 
 % If a dependency is listed under "dependencies", it should not be listed under

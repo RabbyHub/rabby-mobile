@@ -89,11 +89,14 @@ jobs:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
           xcode-version: ${{ env.XCODE_VER }}
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies && Build app
         run: |
           cd apps/mobile;
           rm -rf node_modules;
-          yarn install;
+          yarn install --immutable;
           yarn postinstall;
 
           if [ "$INPUT_MOBILE_LOC" != "mobile-local" ]; then
