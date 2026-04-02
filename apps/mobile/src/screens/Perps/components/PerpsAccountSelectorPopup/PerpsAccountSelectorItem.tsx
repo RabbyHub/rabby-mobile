@@ -139,11 +139,9 @@ export const PerpsAccountSelectorItem: React.FC<{
                 {checkIconPosition === 'right' ? statusNode : null}
                 {shouldShowPerpsInfo ? (
                   <View style={styles.perpsInfo}>
-                    {withdrawable > 0 ? (
-                      <Text style={styles.perpsUsdValue}>
-                        {formatUsdValue(withdrawable)}
-                      </Text>
-                    ) : null}
+                    <Text style={styles.perpsUsdValue}>
+                      {formatUsdValue(withdrawable || 0)}
+                    </Text>
                     {positionCount > 0 ? (
                       <Text style={styles.positionCountText}>
                         {positionCount}{' '}
