@@ -139,7 +139,7 @@ const MyAssetHome: React.FC = () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
           backgroundColor: isLight
@@ -155,7 +155,7 @@ const MyAssetHome: React.FC = () => {
       name: MODAL_NAMES.LENDING_TOKEN_LIST,
       initialTab: 'borrow',
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
           backgroundColor: isLight
@@ -304,7 +304,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     gap: 12,
     paddingTop: 12,
     paddingHorizontal: 16,
-    paddingBottom: 34,
+    paddingBottom: 48,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   actionBtnContainer: {

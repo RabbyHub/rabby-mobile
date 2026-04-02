@@ -348,7 +348,9 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.LENDING_TOKEN_LIST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: LendingTokenList,
-    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+    globalModalPropsPreset: getDefaultViewTypePropsPreset({
+      enableContentPanningGesture: false,
+    }),
   },
   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
     snapPoints: ['85%'],

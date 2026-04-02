@@ -25,7 +25,7 @@ interface BorrowItemProps extends RNViewProps {
 }
 
 const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const { selectedMarketData, chainInfo } = useSelectedMarket();
@@ -193,9 +193,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
         enableContentPanningGesture: true,
         rootViewType: 'View',
         handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
+          backgroundColor: colors2024['neutral-bg-1'],
         },
       },
       fromToken: getFromToken(

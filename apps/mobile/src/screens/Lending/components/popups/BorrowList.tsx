@@ -207,14 +207,14 @@ export const LendingBorrowListContent: React.FC<
             iUserSummary?.availableBorrowsUSD === '0') ||
           isInIsolationMode ? (
             <RcIconWarningCircleCC
-              width={14}
-              height={14}
+              width={18}
+              height={18}
               color={
                 isInIsolationMode
                   ? colors2024['orange-default']
                   : colors2024['neutral-info']
               }
-              style={{ position: 'relative', top: 1 }}
+              style={{ position: 'relative', top: 0 }}
             />
           ) : null}
           <Text

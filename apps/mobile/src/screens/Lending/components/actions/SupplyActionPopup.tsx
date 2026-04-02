@@ -565,7 +565,9 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         <TokenAmountInput
           value={amount}
           onChange={v => {
-            if (directSignBtnRef.current?.isAuthInProgress()) return;
+            if (directSignBtnRef.current?.isAuthInProgress()) {
+              return;
+            }
             setAmount(v);
           }}
           symbol={reserve.reserve.symbol}
@@ -607,16 +609,13 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         <View style={styles.buttonContainer}>
           {canShowDirectSubmit ? (
             <DirectSignBtn
-              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
               key={`${amount}-${needApprove}`}
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.supplyDetail.actions')}
-              title={`${t('page.Lending.supplyDetail.actions')} ${
-                reserve.reserve.symbol
-              }`}
+              title={t('page.Lending.supplyDetail.actions')}
               onFinished={() => handleSupply()}
               disabled={
                 !amount ||
@@ -641,9 +640,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
               onPress={() => handleSupply()}
-              title={`${t('page.Lending.supplyDetail.actions')} ${
-                reserve.reserve.symbol
-              }`}
+              title={t('page.Lending.supplyDetail.actions')}
               loading={isLoading}
               disabled={
                 !amount ||
