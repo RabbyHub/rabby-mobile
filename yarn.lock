@@ -21,9 +21,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aave/contract-helpers@npm:1.36.1":
-  version: 1.36.1
-  resolution: "@aave/contract-helpers@npm:1.36.1"
+"@aave/contract-helpers@npm:1.37.1":
+  version: 1.37.1
+  resolution: "@aave/contract-helpers@npm:1.37.1"
   dependencies:
     isomorphic-unfetch: ^3.1.0
   peerDependencies:
@@ -31,7 +31,7 @@ __metadata:
     ethers: ^5.x
     reflect-metadata: ^0.1.x
     tslib: ^2.4.x
-  checksum: bf80cc4aba1633c9a476e827892c1d677867e2e3e2c6fe504bdb5c95123c8140d81f3d6574bbbe0fbca7138c6d34c96d5ab5483f2946e44c3c26010571a74901
+  checksum: 0a0ca5b4c8fa43b96bb9384310e090a6ee95588482b1e79c2d661462742061e14195021cd72119f986d9501484701d56adb11a5e7a81b42df5a379196b29477e
   languageName: node
   linkType: hard
 
@@ -35059,7 +35059,7 @@ __metadata:
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
     "@aave-dao/aave-address-book": 4.47.14
-    "@aave/contract-helpers": 1.36.1
+    "@aave/contract-helpers": 1.37.1
     "@aave/math-utils": 1.36.1
     "@babel/core": ^7.25.2
     "@babel/plugin-proposal-decorators": ^7.25.9
