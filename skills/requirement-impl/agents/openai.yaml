@@ -1,4 +1,0 @@
-interface:
-  display_name: "Requirement Impl"
-  short_description: "Implement repo changes from product requirements"
-  default_prompt: "Use $requirement-impl to extract acceptance criteria from the provided requirement, locate the owning code, implement the change directly, validate it narrowly, and call out any ambiguity."
