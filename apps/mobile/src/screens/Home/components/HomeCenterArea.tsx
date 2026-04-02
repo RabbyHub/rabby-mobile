@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
@@ -83,24 +84,33 @@ export function HomeCenterArea() {
         onlyOneContent ? styles.contentBetweenHeaderAndMatrixOnlyOne : null,
       ]}>
       {blocksVisibility.offlineChainData && (
-        <OfflineChainNotify data={offlineChainData} />
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <OfflineChainNotify data={offlineChainData} />
+        </Animated.View>
       )}
 
       {blocksVisibility.soloAccountToShowReceiveTip && (
-        <DepositAssetsCard account={accountToShowReceiveTip} />
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <DepositAssetsCard account={accountToShowReceiveTip} />
+        </Animated.View>
       )}
 
-      {blocksVisibility.tipScreenshot && <TipFeedbackByScreenshot />}
+      {blocksVisibility.tipScreenshot && (
+        <Animated.View entering={FadeInUp.duration(200)}>
+          <TipFeedbackByScreenshot />
+        </Animated.View>
+      )}
 
       {blocksVisibility.rateGuideOnHome && (
-        <View
+        <Animated.View
+          entering={FadeInUp.duration(200)}
           style={{
             paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL,
           }}>
           <RateModalTriggerOnHome /* totalBalanceText={combineData.netWorth} */
           />
           <RateModal /* totalBalanceText={combineData.netWorth} */ />
-        </View>
+        </Animated.View>
       )}
     </View>
   );
