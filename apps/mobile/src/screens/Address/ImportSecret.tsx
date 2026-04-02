@@ -132,9 +132,7 @@ export const ImportSecret = () => {
 
   // Navigate to CreateNewWallet
   const handleCreateNewWallet = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.SetupWallet,
-    });
+    navigation.navigate(RootNames.SetupWallet);
   }, [navigation]);
 
   // Tab toggle component for header
@@ -193,11 +191,8 @@ export const ImportSecret = () => {
 
       // Store in SecretVault and pass only the vault ID
       const vaultId = SecretVault.store(cleanedMnemonic);
-      navigation.navigate(RootNames.StackAddress, {
-        screen: RootNames.SetupWallet,
-        params: {
-          seedPhraseVaultId: vaultId,
-        },
+      navigation.navigate(RootNames.SetupWallet, {
+        seedPhraseVaultId: vaultId,
       });
       preferenceService.setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
@@ -214,11 +209,8 @@ export const ImportSecret = () => {
 
       // Store in SecretVault and pass only the vault ID
       const vaultId = SecretVault.store(cleanedPrivateKey);
-      navigation.navigate(RootNames.StackAddress, {
-        screen: RootNames.SetupWallet,
-        params: {
-          privateKeyVaultId: vaultId,
-        },
+      navigation.navigate(RootNames.SetupWallet, {
+        privateKeyVaultId: vaultId,
       });
       preferenceService.setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,

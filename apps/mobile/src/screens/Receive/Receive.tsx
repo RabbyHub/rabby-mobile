@@ -301,7 +301,9 @@ function ReceiveScreen(): JSX.Element {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="never"
+          automaticallyAdjustContentInsets={false}>
           <View style={styles.receiveContainer}>
             {/* Backup Reminder Card */}
             <BackupReminderCard
@@ -382,7 +384,7 @@ function ReceiveScreen(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -403,7 +405,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   scrollViewContent: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   receiveContainer: {
     alignItems: 'center',
@@ -416,6 +418,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   backupReminderCard: {
     marginHorizontal: 0,
     marginBottom: 16,
+    marginTop: 8,
     width: '100%',
   },
   // Original QR Card styles
@@ -425,7 +428,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     paddingTop: 23,
     paddingBottom: 35,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     paddingHorizontal: 30,
   },
   qrCardHeader: {

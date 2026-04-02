@@ -53,6 +53,10 @@ export type RootStackParamsList = {
   [RootNames.Unlock]?: {
     disableAutoTriggerUnlock?: boolean;
   };
+  SetupWallet?:
+    | { seedPhraseVaultId: string }
+    | { privateKeyVaultId: string }
+    | undefined;
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
@@ -164,10 +168,6 @@ export type AddressNavigatorParamList = {
     accounts?: string[];
     isFirstCreate?: boolean;
   };
-  [RootNames.SetupWallet]?:
-    | { seedPhraseVaultId: string }
-    | { privateKeyVaultId: string }
-    | undefined;
   [RootNames.SelectImportMethod]?: {};
   [RootNames.ImportRabbyWallet]?: {};
   [RootNames.SetPassword2024]?: {

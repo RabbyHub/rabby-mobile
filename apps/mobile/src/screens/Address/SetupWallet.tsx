@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -23,21 +23,11 @@ import { AddressCard } from '@/components2024/AddressCard';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { PasswordForm } from '@/components2024/PasswordForm';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CompositeScreenProps } from '@react-navigation/native';
-import {
-  RootStackParamsList,
-  AddressNavigatorParamList,
-} from '@/navigation-type';
+import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
-import { useCreateWallet } from '@/hooks/address/useCreateWallet';
+import { useSetupWallet } from '@/hooks/address/useSetupWallet';
 
-type ScreenProps = CompositeScreenProps<
-  NativeStackScreenProps<
-    AddressNavigatorParamList,
-    typeof RootNames.SetupWallet
-  >,
-  NativeStackScreenProps<RootStackParamsList>
->;
+type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'SetupWallet'>;
 
 // Custom cubic-bezier from Figma: [0.42, 0, 0.58, 1]
 const customEase = Easing.bezier(0.42, 0, 0.58, 1);
@@ -72,7 +62,7 @@ const ANIMATION_START_TIMES = {
     ANIMATION_CONFIG.DELAY_AFTER_ADDRESS,
 } as const;
 
-export default function SetupWalletScreen({ route }: ScreenProps) {
+export default function SetupWallet({ route }: ScreenProps) {
   const { styles } = useTheme2024({ getStyle });
   const { top } = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -88,7 +78,7 @@ export default function SetupWalletScreen({ route }: ScreenProps) {
 
   // Use the polymorphic hook for all wallet creation logic
   const { address, isLoading, isSubmitting, handleSubmit, mode } =
-    useCreateWallet(params);
+    useSetupWallet(params);
 
   // Determine if we're in import mode to show balance
   const isImportMode = mode !== 'create';
@@ -179,58 +169,65 @@ export default function SetupWalletScreen({ route }: ScreenProps) {
   });
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={[styles.scrollContent, { paddingTop: top }]}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}>
-      {/* Lottie Animation - always visible */}
-      <View style={styles.lottieContainer}>
-        <Lottie
-          source={AnimationCreateSuccess}
-          style={styles.lottie}
-          loop={false}
-          autoPlay
-        />
-      </View>
-
-      {/* Success Text - fades in */}
-      <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
-        <Text style={styles.successText}>
-          {t('page.newUserOnboarding.walletReady')}
-        </Text>
-      </Animated.View>
-
-      {/* Address Block - fades in + slides up after delay */}
-      <Animated.View
-        style={[
-          styles.addressWrapper,
-          styles.shadowContainer,
-          addressAnimatedStyle,
-        ]}>
-        {address && (
-          <AddressCard
-            address={address}
-            brandName={KEYRING_CLASS.MNEMONIC}
-            showBalance={isImportMode}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.keyboardAvoidingView}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: top }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        {/* Lottie Animation - always visible */}
+        <View style={styles.lottieContainer}>
+          <Lottie
+            source={AnimationCreateSuccess}
+            style={styles.lottie}
+            loop={false}
+            autoPlay
           />
-        )}
-      </Animated.View>
+        </View>
 
-      {/* Password Form - fades in + slides up after 350ms */}
-      <Animated.View style={[styles.formContainer, formAnimatedStyle]}>
-        <PasswordForm
-          onSubmit={handleSubmit}
-          topTip={t('page.newUserOnboarding.setPasswordTip')}
-          loading={isSubmitting || isLoading}
-        />
-      </Animated.View>
-    </ScrollView>
+        {/* Success Text - fades in */}
+        <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
+          <Text style={styles.successText}>
+            {t('page.newUserOnboarding.walletReady')}
+          </Text>
+        </Animated.View>
+
+        {/* Address Block - fades in + slides up after delay */}
+        <Animated.View
+          style={[
+            styles.addressWrapper,
+            styles.shadowContainer,
+            addressAnimatedStyle,
+          ]}>
+          {address && (
+            <AddressCard
+              address={address}
+              brandName={KEYRING_CLASS.MNEMONIC}
+              showBalance={isImportMode}
+            />
+          )}
+        </Animated.View>
+
+        {/* Password Form - fades in + slides up after 350ms */}
+        <Animated.View style={[styles.formContainer, formAnimatedStyle]}>
+          <PasswordForm
+            onSubmit={handleSubmit}
+            topTip={t('page.newUserOnboarding.setPasswordTip')}
+            loading={isSubmitting || isLoading}
+          />
+        </Animated.View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
+    keyboardAvoidingView: {
+      flex: 1,
+    },
     scrollView: {
       flex: 1,
       backgroundColor: colors2024['neutral-bg-1'],

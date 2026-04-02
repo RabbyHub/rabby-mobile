@@ -152,7 +152,7 @@ function FooterButtonGroup({
             icon={ctx =>
               authState.authType !== 'biometrics' ? null : (
                 <BiometricsIcon
-                  size={18}
+                  size={24}
                   color={bioActive ? '#FF2D55' : ctx.titleStyle?.color}
                 />
               )

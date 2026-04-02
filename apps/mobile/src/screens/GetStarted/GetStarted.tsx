@@ -1,11 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  Dimensions,
-  Image,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Dimensions, Image, TouchableOpacity } from 'react-native';
 
 import { RootNames } from '@/constant/layout';
 import { keyringService, preferenceService } from '@/core/services';
@@ -51,11 +45,12 @@ const HeroIllustration = ({
   const { styles } = useTheme2024({ getStyle });
 
   // Height includes status bar area for seamless extension behind status bar
-  const heroHeight = 360 + topInset;
+  // On short screens, the container shrinks and image crops from top
+  const heroHeight = 368 + topInset;
 
   return (
     <View style={[styles.heroContainer, { height: heroHeight }]}>
-      {/* Hero background image - extends behind status bar */}
+      {/* Hero background image - aligned to bottom so top gets cropped */}
       <Image
         source={isLight ? heroBgLight : heroBgDark}
         style={[styles.heroBackground, { height: heroHeight }]}
@@ -114,9 +109,7 @@ function NewUserGetStartedScreen() {
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
     );
-    navigateDeprecated(RootNames.StackAddress, {
-      screen: RootNames.SetupWallet,
-    });
+    navigateDeprecated(RootNames.SetupWallet);
   }, [getStarted.processedInit, startCreateAddressProc]);
 
   const handleGoToImport = useCallback(async () => {
@@ -190,14 +183,8 @@ function NewUserGetStartedScreen() {
         />
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: Math.max(bottom, 16) },
-        ]}
-        showsVerticalScrollIndicator={false}>
-        {/* Hero Illustration - extends behind status bar */}
+      <View style={styles.contentContainer}>
+        {/* Hero Illustration - crops from top on short screens */}
         <HeroIllustration isLight={isLight} topInset={top} />
 
         {/* Text Content */}
@@ -210,7 +197,11 @@ function NewUserGetStartedScreen() {
         <View style={styles.spacer} />
 
         {/* Bottom Actions */}
-        <View style={styles.bottomActions}>
+        <View
+          style={[
+            styles.bottomActions,
+            { paddingBottom: Math.max(bottom, 16) },
+          ]}>
           {!getStarted.localHasAccounts ? (
             <>
               <Button
@@ -275,7 +266,7 @@ function NewUserGetStartedScreen() {
             </TouchableText>
           )}
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -296,21 +287,17 @@ const getStyle = createGetStyles2024(ctx => ({
     width: 142, // ~33px (icon) + 4.27px (gap) + 105px (text) from Figma
     height: 33,
   },
-  scrollView: {
+  contentContainer: {
     flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
   },
   heroContainer: {
     width: SCREEN_WIDTH,
-    position: 'relative',
+    flexShrink: 1,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
   heroBackground: {
-    position: 'absolute',
     width: SCREEN_WIDTH,
-    left: 0,
-    top: 0,
   },
   textContent: {
     alignItems: 'center',
@@ -335,7 +322,7 @@ const getStyle = createGetStyles2024(ctx => ({
   },
   spacer: {
     flex: 1,
-    minHeight: 24,
+    minHeight: 16,
   },
   bottomActions: {
     paddingHorizontal: 24,
