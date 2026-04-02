@@ -23,7 +23,6 @@ import { Text } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
 import { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { resolveDepositPayProduct } from './GasAccountDepositAutoFill.utils';
 import BigNumber from 'bignumber.js';
 
 interface Props {
