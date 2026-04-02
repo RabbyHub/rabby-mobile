@@ -41,7 +41,13 @@ type BorrowListItem =
   | { type: 'reserve'; data: DisplayPoolReserveInfo }
   | { type: 'toggle_fold' };
 
-const LendingBorrowList: React.FC = () => {
+type LendingBorrowListContentProps = {
+  hideHeader?: boolean;
+};
+
+export const LendingBorrowListContent: React.FC<
+  LendingBorrowListContentProps
+> = ({ hideHeader = false }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { reserves } = useLendingRemoteData();
   const { loading } = useLendingIsLoading();
@@ -369,43 +375,47 @@ const LendingBorrowList: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>
-          {t('page.Lending.borrowDetail.actions')}
-        </Text>
-        <NextSearchBar
-          style={styles.searchBar}
-          value={search}
-          onChangeText={setSearch}
-          placeholder={t('component.TokenSelector.searchPlaceHolder2')}
-          returnKeyType="search"
-          inputContainerStyle={{
-            justifyContent: inputNotActiveAndNoQuery ? 'center' : 'flex-start',
-          }}
-          inputStyle={{
-            flex: inputNotActiveAndNoQuery ? 0 : 1,
-          }}
-          placeholderTextColor={colors2024['neutral-secondary']}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          onCancel={() => {
-            setSearch('');
-            setTimeout(() => {
-              inputRef.current?.blur();
-            }, 50);
-          }}
-          ref={inputRef}
-        />
-        {/* for mask touch event in input to emit focus event */}
-        {inputNotActiveAndNoQuery && (
-          <TouchableOpacity
-            style={[styles.absoluteContainer]}
-            onPress={() => {
-              inputRef.current?.focus();
+      {!hideHeader && (
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText}>
+            {t('page.Lending.borrowDetail.actions')}
+          </Text>
+          <NextSearchBar
+            style={styles.searchBar}
+            value={search}
+            onChangeText={setSearch}
+            placeholder={t('component.TokenSelector.searchPlaceHolder2')}
+            returnKeyType="search"
+            inputContainerStyle={{
+              justifyContent: inputNotActiveAndNoQuery
+                ? 'center'
+                : 'flex-start',
             }}
+            inputStyle={{
+              flex: inputNotActiveAndNoQuery ? 0 : 1,
+            }}
+            placeholderTextColor={colors2024['neutral-secondary']}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            onCancel={() => {
+              setSearch('');
+              setTimeout(() => {
+                inputRef.current?.blur();
+              }, 50);
+            }}
+            ref={inputRef}
           />
-        )}
-      </View>
+          {/* for mask touch event in input to emit focus event */}
+          {inputNotActiveAndNoQuery && (
+            <TouchableOpacity
+              style={[styles.absoluteContainer]}
+              onPress={() => {
+                inputRef.current?.focus();
+              }}
+            />
+          )}
+        </View>
+      )}
       <BottomSheetFlatList
         data={loading ? [] : dataList}
         style={styles.list}
@@ -424,6 +434,10 @@ const LendingBorrowList: React.FC = () => {
       />
     </View>
   );
+};
+
+const LendingBorrowList: React.FC = () => {
+  return <LendingBorrowListContent />;
 };
 
 export default LendingBorrowList;
@@ -591,11 +605,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   availableCard: {
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 6,
-    marginTop: 8,
+    marginTop: 0,
     gap: 2,
   },
   availableCardIsolated: {

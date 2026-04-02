@@ -50,8 +50,6 @@ import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 import { AddressHightDesc } from '../AddressHightDesc';
 import SelectLendingChain from '@/screens/Lending/ChainSelector/SelectLendingChain';
-import { SupplyDetailPopup } from '@/screens/Lending/components/SupplyDetailPopup';
-import { BorrowDetailPopup } from '@/screens/Lending/components/BorrowDetailPopup';
 import { SupplyActionPopup } from '@/screens/Lending/components/actions/SupplyActionPopup';
 import { WithdrawActionPopup } from '@/screens/Lending/components/actions/WithdrawActionPopup';
 import { BorrowActionPopup } from '@/screens/Lending/components/actions/BorrowActionPopup';
@@ -64,6 +62,7 @@ import SelectCategoryModal from '@/screens/Lending/components/EmodeCategory/Sele
 import DisableEmodeOverviewModal from '@/screens/Lending/modals/DisableOverViewModal';
 import LendingSupplyList from '@/screens/Lending/components/popups/SupplyList';
 import LendingBorrowList from '@/screens/Lending/components/popups/BorrowList';
+import LendingTokenList from '@/screens/Lending/components/popups/LendingTokenList';
 import DebtTokenSelectModal from '@/screens/Lending/components/DebtTokenSelect';
 import DebtSwapModal from '@/screens/Lending/modals/DebtSwapModal';
 import { SeedPhraseQrCode } from '../AddressDetail/SeedPhraseQrCode';
@@ -303,24 +302,16 @@ export const MODAL_CONFIGS = {
     snapPoints: undefined,
     Component: BatchRevokeErrorReason,
   },
-  [MODAL_NAMES.SUPPLY_DETAIL]: {
-    snapPoints: [606],
-    Component: SupplyDetailPopup,
-  },
-  [MODAL_NAMES.BORROW_DETAIL]: {
-    snapPoints: ['85%'],
-    Component: BorrowDetailPopup,
-  },
   [MODAL_NAMES.SUPPLY_ACTION_DETAIL]: {
-    snapPoints: [686],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: SupplyActionPopup,
   },
   [MODAL_NAMES.WITHDRAW_ACTION_DETAIL]: {
-    snapPoints: [734],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: WithdrawActionPopup,
   },
   [MODAL_NAMES.BORROW_ACTION_DETAIL]: {
-    snapPoints: [686],
+    snapPoints: [MODAL_MAX_HEIGHT],
     Component: BorrowActionPopup,
   },
   [MODAL_NAMES.REPAY_ACTION_DETAIL]: {
@@ -352,6 +343,11 @@ export const MODAL_CONFIGS = {
   [MODAL_NAMES.LENDING_BORROW_LIST]: {
     snapPoints: [MODAL_MAX_HEIGHT],
     Component: LendingBorrowList,
+    globalModalPropsPreset: getDefaultViewTypePropsPreset(),
+  },
+  [MODAL_NAMES.LENDING_TOKEN_LIST]: {
+    snapPoints: [MODAL_MAX_HEIGHT],
+    Component: LendingTokenList,
     globalModalPropsPreset: getDefaultViewTypePropsPreset(),
   },
   [MODAL_NAMES.DEBT_TOKEN_SELECT]: {
