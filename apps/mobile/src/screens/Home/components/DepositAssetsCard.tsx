@@ -9,7 +9,7 @@ import { RootNames } from '@/constant/layout';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
-import RcIconArrow from '@/assets/icons/home/setting.svg';
+import RcIconArrow from '@/assets/icons/home/setting';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -53,7 +53,8 @@ export function DepositAssetsCard({ account }: { account?: Account | null }) {
             width={26}
             height={26}
             style={styles.settingIcon}
-            color={colors2024['neutral-title-1']}
+            color={colors2024['neutral-body']}
+            backgroundColor={colors2024['neutral-line']}
           />
         </View>
       </View>
@@ -85,10 +86,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: 164,
     },
     textBox: {
-      backgroundColor: colors2024['neutral-bg-5'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-5']
+        : colors2024['neutral-bg-1'],
       borderRadius: 12,
-      marginVertical: 12,
-      marginHorizontal: 16,
+      marginVertical: 16,
+      marginHorizontal: 12,
       paddingHorizontal: 16,
       paddingVertical: 12,
       flexDirection: 'row',

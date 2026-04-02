@@ -43,7 +43,7 @@ export type CreateWalletParams =
   | { privateKeyVaultId: string; seedPhraseVaultId?: never }
   | undefined;
 
-export type UseCreateWalletResult = {
+export type UseSetupWalletResult = {
   /** Derived/generated address to display */
   address: string | undefined;
   /** Whether data is being loaded/generated */
@@ -519,9 +519,9 @@ function deriveMode(params?: CreateWalletParams): WalletCreationMode {
  * - Import from seed phrase
  * - Import from private key
  */
-export function useCreateWallet(
+export function useSetupWallet(
   params?: CreateWalletParams,
-): UseCreateWalletResult {
+): UseSetupWalletResult {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toggleBiometrics } = useBiometrics({ autoFetch: true });

@@ -33,7 +33,6 @@ import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { ImportSecret } from '../Address/ImportSecret';
 import { createGetStyles2024 } from '@/utils/styles';
 import CreateNewAddress from '../Address/CreateNewAddress';
-import SetupWallet from '../Address/SetupWallet';
 import SelectImportMethod from '../Address/SelectImportMethod';
 import ImportRabbyWallet from '../Address/ImportRabbyWallet';
 import CreateSelectMethod from '../Address/CreateSelectMethod';
@@ -258,13 +257,6 @@ export function AddressNavigator() {
             backgroundColor: colors2024['neutral-bg-0'],
           },
           headerTitleStyle: styles.headerTitleText,
-        })}
-      />
-      <AddressStack.Screen
-        name={RootNames.SetupWallet}
-        component={SetupWallet}
-        options={mergeScreenOptions({
-          headerShown: false,
         })}
       />
       <AddressStack.Screen

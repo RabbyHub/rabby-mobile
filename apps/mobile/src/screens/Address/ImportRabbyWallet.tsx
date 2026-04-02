@@ -59,9 +59,7 @@ function ImportRabbyWallet(): JSX.Element {
   }, [shouldRedirectToSetPasswordBefore2024]);
 
   const handleCreateNewWallet = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.SetupWallet,
-    });
+    navigation.navigate(RootNames.SetupWallet);
   }, [navigation]);
 
   const handleHelp = React.useCallback(() => {

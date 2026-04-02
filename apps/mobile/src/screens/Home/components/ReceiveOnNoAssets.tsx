@@ -7,7 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Account } from '@/core/services/preference';
 import { RNTouchableOpacity } from '@/components/customized/reexports';
 
-import IconBtnCopyCC from '../icons/btn-copy-cc.svg';
+import IconBtnCopyCC from '@/assets2024/icons/address/mcopy-cc.svg';
 
 import Clipboard from '@react-native-clipboard/clipboard';
 import { touchedFeedback } from '@/utils/touch';
@@ -100,7 +100,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     btnCopyAddress: {
       width: 185,
       borderRadius: 12,
-      backgroundColor: colors2024['neutral-bg-2'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-2']
+        : colors2024['neutral-bg-5'],
       paddingVertical: 14,
       flexDirection: 'row',
       justifyContent: 'center',

@@ -67,6 +67,7 @@ import {
   NotFoundScreen,
   MyBundleScreen,
 } from '@/screens/index.lazy';
+import SetupWallet from '@/screens/Address/SetupWallet';
 import {
   ScannerScreen,
   TokenDetailScreen,
@@ -388,6 +389,11 @@ export default function AppNavigation() {
             <RootStack.Screen
               name={RootNames.StackAddress}
               component={AddressNavigator}
+            />
+            <RootStack.Screen
+              name="SetupWallet"
+              component={SetupWallet}
+              options={{ headerShown: false }}
             />
             <RootStack.Screen
               name={RootNames.StackDapps}

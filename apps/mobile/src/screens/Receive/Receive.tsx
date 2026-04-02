@@ -384,7 +384,7 @@ function ReceiveScreen(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   headerTitle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -428,7 +428,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     paddingTop: 23,
     paddingBottom: 35,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     paddingHorizontal: 30,
   },
   qrCardHeader: {
