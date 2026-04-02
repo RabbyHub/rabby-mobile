@@ -141,24 +141,12 @@ export const GasAccountDepositTokenPicker: React.FC<{
         </CustomTouchableOpacity>
       );
     },
-    [
-      handleSelect,
-      styles.addressText,
-      styles.balanceAmount,
-      styles.balanceUsd,
-      styles.tokenCard,
-      styles.tokenCardLeft,
-      styles.tokenCardRight,
-      styles.tokenInfo,
-      styles.tokenInfoHeading,
-      styles.tokenInfoSubTitle,
-      styles.tokenSymbol,
-    ],
+    [handleSelect, styles],
   );
 
   const loadingList = useMemo(
     () =>
-      Array.from({ length: 6 }).map((_, index) => (
+      Array.from({ length: LOADING_ROW_COUNT }).map((_, index) => (
         <View key={index} style={styles.tokenCard}>
           <View style={styles.tokenCardLeft}>
             <Skeleton circle width={46} height={46} />
@@ -173,12 +161,7 @@ export const GasAccountDepositTokenPicker: React.FC<{
           </View>
         </View>
       )),
-    [
-      styles.skeletonInfo,
-      styles.skeletonRight,
-      styles.tokenCard,
-      styles.tokenCardLeft,
-    ],
+    [styles],
   );
 
   return (

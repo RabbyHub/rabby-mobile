@@ -39,23 +39,22 @@ export const fetchGasAccountBridgeQuote = async ({
   account: Account;
   usdValue: number;
 }) => {
+  const rawAmount = getGasAccountBridgeRawAmount({
+    token,
+    usdValue,
+  });
+
   console.log('fetchGasAccountBridgeQuote', {
     user_addr: account.address,
     from_chain_id: token.chain,
     from_token_id: token.id,
-    from_token_raw_amount: getGasAccountBridgeRawAmount({
-      token,
-      usdValue,
-    }),
+    from_token_raw_amount: rawAmount,
   });
   return openapi.getGasAccountBridgeQuote({
     user_addr: account.address,
     from_chain_id: token.chain,
     from_token_id: token.id,
-    from_token_raw_amount: getGasAccountBridgeRawAmount({
-      token,
-      usdValue,
-    }),
+    from_token_raw_amount: rawAmount,
   });
 };
 
@@ -199,12 +198,12 @@ export const afterTopUpGasAccount = async ({
     gasAccountService.setLastDepositAccount(account);
 
     openapi.rechargeGasAccount({
-      sig: sig!,
-      account_id: accountId!,
+      sig,
+      account_id: accountId,
       tx_id: tx,
       chain_id: chainServerId,
       amount,
-      user_addr: account?.address,
+      user_addr: account.address,
       nonce: nonce! - 1,
     });
   } else {
@@ -215,7 +214,7 @@ export const afterTopUpGasAccount = async ({
             userAddr: account.address,
             gasAccount: accountId,
             chain: chainServerId,
-            amount: amount,
+            amount,
           }),
       ),
     );
@@ -353,37 +352,4 @@ export const buildTopUpGasAccount = async ({
   });
 
   return res?.params?.[0];
-
-  // const chain = findChainByServerID(chainServerId);
-
-  // const nonce = await transactionHistoryService.getNonceByChain(
-  //   account.address,
-  //   chain!.id,
-  // );
-
-  // if (tx) {
-  //   gasAccountService.setLastDepositAccount(account);
-
-  //   openapi.rechargeGasAccount({
-  //     sig: sig!,
-  //     account_id: accountId!,
-  //     tx_id: tx,
-  //     chain_id: chainServerId,
-  //     amount,
-  //     user_addr: account?.address,
-  //     nonce: nonce! - 1,
-  //   });
-  // } else {
-  //   Sentry.captureException(
-  //     new Error(
-  //       'topUp GasAccount tx failed, params: ' +
-  //         JSON.stringify({
-  //           userAddr: account.address,
-  //           gasAccount: accountId,
-  //           chain: chainServerId,
-  //           amount: amount,
-  //         }),
-  //     ),
-  //   );
-  // }
 };

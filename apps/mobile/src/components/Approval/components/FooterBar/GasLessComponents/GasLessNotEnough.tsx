@@ -35,13 +35,16 @@ export const GasLessNotEnough: React.FC<{
   onDeposit,
   onWaitDepositResult,
   onDepositPopupVisibleChange,
-  onGotoGasAccount,
   inShowMore,
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
+  const setDepositPopupVisible = (visible: boolean) => {
+    setTipPopupVisible(visible);
+    onDepositPopupVisibleChange?.(visible);
+  };
 
   const { value: gasAccountInfo } = useGasAccountInfo();
 
@@ -80,10 +83,9 @@ export const GasLessNotEnough: React.FC<{
 
         {canDepositUseGasAccount ? (
           <TouchableOpacity
-            style={[styles.gasAccountBtn]}
+            style={styles.gasAccountBtn}
             onPress={() => {
-              onDepositPopupVisibleChange?.(true);
-              setTipPopupVisible(true);
+              setDepositPopupVisible(true);
             }}>
             <Text style={styles.gasAccountTipBtnText}>
               {t('page.signFooterBar.gasAccount.deposit')}
@@ -91,7 +93,7 @@ export const GasLessNotEnough: React.FC<{
           </TouchableOpacity>
         ) : canGotoUseGasAccount ? (
           <TouchableOpacity
-            style={[styles.gasAccountBtn]}
+            style={styles.gasAccountBtn}
             onPress={onChangeGasAccount}>
             <Text style={styles.gasAccountTipBtnText}>
               {t('page.signFooterBar.gasAccount.useGasAccount')}
@@ -104,24 +106,17 @@ export const GasLessNotEnough: React.FC<{
         gasAccountAddress={gasAccountAddress}
         visible={tipPopupVisible}
         onClose={() => {
-          setTipPopupVisible(false);
-          onDepositPopupVisibleChange?.(false);
+          setDepositPopupVisible(false);
         }}
         onDeposit={() => {
-          setTipPopupVisible(false);
-          onDepositPopupVisibleChange?.(false);
+          setDepositPopupVisible(false);
           onDeposit?.();
         }}
         onWaitDepositResult={async result => {
           toast.success(t('page.gasAccount.depositSuccess'));
-          setTipPopupVisible(false);
-          onDepositPopupVisibleChange?.(false);
+          setDepositPopupVisible(false);
           await onWaitDepositResult?.(result);
         }}
-        // onGotoGasAccount={() => {
-        //   setTipPopupVisible(false);
-        //   onGotoGasAccount?.();
-        // }}
         minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
       />
     </>
@@ -134,7 +129,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      // backgroundColor: colors2024['neutral-bg-4'],
       paddingVertical: 4,
       paddingLeft: 12,
       paddingRight: 5,
@@ -160,7 +154,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderLeftColor: 'transparent',
       borderRightColor: 'transparent',
       borderTopColor: 'transparent',
-      // borderBottomColor: colors2024['neutral-bg-4'],
       alignItems: 'center',
       borderBottomColor: colors2024['red-light-1'],
     },
@@ -169,7 +162,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 14,
       fontStyle: 'normal',
       fontWeight: '500',
-      // color: colors2024['neutral-body'],
       lineHeight: 18,
       color: colors2024['red-default'],
     },

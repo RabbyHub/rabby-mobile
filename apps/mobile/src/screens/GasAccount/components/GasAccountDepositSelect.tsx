@@ -1,8 +1,4 @@
-import {
-  RcIconApple,
-  RcIconApplePayCC,
-  RcIconGooglePayCC,
-} from '@/assets2024/icons/gas-account';
+import { RcIconApple, RcIconGooglePayCC } from '@/assets2024/icons/gas-account';
 import { Tip } from '@/components';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
@@ -37,7 +33,7 @@ export const GasAccountDepositSelect: React.FC<{
     Promise.allSettled([
       checkIsExpireAndUpdate(),
       refreshBridgeSupportTokenList(),
-    ]).catch(() => {});
+    ]);
   }, [checkIsExpireAndUpdate, refreshBridgeSupportTokenList]);
 
   useEffect(() => {
@@ -61,21 +57,16 @@ export const GasAccountDepositSelect: React.FC<{
       enableOnAndroid
       scrollEnabled={false}
       keyboardOpeningTime={0}
-      // style={styles.container}
       contentContainerStyle={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.gasDepositTitle')}
         </Text>
-        {/* <Text style={styles.description}>
-          {t('page.gasAccount.depositSelectPopup.desc')}
-        </Text> */}
       </View>
 
       <View style={styles.accountDepositGroup}>
         <Button
           type="primary"
-          // disabled={tokenDisabled}
           onPress={handlePressDepositToken}
           titleStyle={[styles.btnTitle]}
           buttonStyle={
@@ -101,9 +92,6 @@ export const GasAccountDepositSelect: React.FC<{
                 <Text style={styles.btnTitle}>
                   {t('page.gasAccount.depositSelectPopup.depositToken')}
                 </Text>
-                {/* <Text style={styles.btnDesc}>
-                      {t('page.gasAccount.depositSelectPopup.depositTokenDesc')}
-                    </Text> */}
               </View>
             </Tip>
           }

@@ -18,9 +18,7 @@ export const GasAccountBadge: React.FC<{}> = () => {
   );
 
   if (!value && loading) {
-    return (
-      <CustomSkeleton width={50} height={18} style={{ borderRadius: 8 }} />
-    );
+    return <CustomSkeleton width={50} height={18} style={styles.skeleton} />;
   }
 
   if (
@@ -54,5 +52,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['orange-default'],
+  },
+  skeleton: {
+    borderRadius: 8,
   },
 }));

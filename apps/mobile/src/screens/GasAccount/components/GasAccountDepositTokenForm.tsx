@@ -98,11 +98,11 @@ export const GasAccountDepositTokenForm: React.FC<{
     disableL2Deposit: props.disableL2Deposit,
   });
 
-  const refreshAvailableTokens = useCallback(() => {
-    return Promise.allSettled([
+  const refreshAvailableTokens = useCallback(async () => {
+    await Promise.allSettled([
       checkIsExpireAndUpdate(),
       refreshBridgeSupportTokenList(),
-    ]).then(() => undefined);
+    ]);
   }, [checkIsExpireAndUpdate, refreshBridgeSupportTokenList]);
 
   useEffect(() => {
@@ -134,7 +134,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onDeposit?(): Promise<void> | void;
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
-  disableL2Deposit?: boolean;
   myAccounts: DepositAccount[];
   availableTokens: GasAccountAvailableToken[];
   isCheckingAvailability: boolean;
@@ -145,7 +144,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
   onDeposit,
   onWaitDepositResult,
   minDepositPrice,
-  disableL2Deposit,
   myAccounts,
   availableTokens,
   isCheckingAvailability,
@@ -277,10 +275,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
         !isWatchOrSafeAccount(item),
     );
 
-    if (!matched) {
-      return undefined;
-    }
-
     return (
       matched.find(item =>
         [KEYRING_CLASS.PRIVATE_KEY, KEYRING_CLASS.MNEMONIC].includes(item.type),
@@ -375,11 +369,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
       const requestId = ++quoteReqIdRef.current;
       setQuoteLoading(true);
       resetBridgeQuoteState();
-      console.log('fetchGasAccountBridgeQuote', {
-        selectedToken,
-        selectedOwnerAccount,
-        amountValue,
-      });
 
       fetchGasAccountBridgeQuote({
         token: selectedToken,
@@ -582,8 +571,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
         depositTxHash = lastHash;
       }
 
-      // If caller wants to wait for on-chain confirmation, poll the
-      // backend status endpoint before declaring success.
       if (onWaitDepositResult && depositTxHash) {
         const { promise: pollPromise, cancel } = pollDepositStatus({
           params: {
@@ -609,7 +596,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
             usedNonce,
           });
           await onDeposit?.();
-          onClose?.();
         } else {
           toast.info(
             t('page.gasAccount.depositFailed', {
@@ -619,13 +605,13 @@ const GasAccountDepositTokenFormInner: React.FC<{
           );
         }
 
-        await storeApiGasAccount.refreshHistory('deposit_confirmed');
+        await storeApiGasAccount.refreshHistory();
         onClose?.();
         return;
       }
 
       storeApiGasAccount.markSnapshotDirty('deposit_submitted');
-      await storeApiGasAccount.refreshHistory('deposit_submitted');
+      await storeApiGasAccount.refreshHistory();
       if (onDeposit) {
         await onDeposit();
       } else {
@@ -821,7 +807,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
         })}
         onDismiss={onClose}
         enableDynamicSizing
-        // snapPoints={[400]}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore">
         <BottomSheetView style={styles.container}>

@@ -10,7 +10,7 @@ export const GasAccountCurrentAddress = ({
 }: {
   style?: ViewProps['style'];
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { account } = useGasAccountSign();
 
   if (!account) {
@@ -21,38 +21,14 @@ export const GasAccountCurrentAddress = ({
     <View style={[styles.currentAddressContainer, style]}>
       <AddressItem account={account as any} fetchAccount={false}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: 8,
-              alignItems: 'center',
-            }}>
-            <WalletIcon
-              style={{
-                width: 40,
-                height: 40,
-              }}
-            />
-            <View style={{ gap: 4 }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}>
+          <View style={styles.addressRow}>
+            <WalletIcon style={styles.walletIcon} />
+            <View style={styles.addressTexts}>
+              <View style={styles.nameRow}>
                 <WalletName style={styles.addressText} />
               </View>
 
-              <WalletBalance
-                style={[
-                  styles.addressText,
-                  {
-                    color: colors2024['neutral-title-1'],
-                    fontSize: 16,
-                    lineHeight: 20,
-                    fontWeight: '700',
-                  },
-                ]}
-              />
+              <WalletBalance style={styles.balanceText} />
             </View>
           </View>
         )}
@@ -78,5 +54,28 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
+  },
+  balanceText: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  addressRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  walletIcon: {
+    width: 40,
+    height: 40,
+  },
+  addressTexts: {
+    gap: 4,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 }));

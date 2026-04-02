@@ -129,7 +129,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   heroImage: {
     width: 123,
     height: 99,
-    // resizeMode: 'contain',
   },
   header: {
     width: '100%',

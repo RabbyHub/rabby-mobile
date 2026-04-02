@@ -65,7 +65,10 @@ export const getBumpedNonceAfterTopUp = ({
   originalChainServerId: string;
   topUpResult: GasAccountTopUpResult;
 }) => {
-  if (!currentNonce || topUpResult.type !== 'token' || !topUpResult.usedNonce) {
+  const usedNonce =
+    topUpResult.type === 'token' ? topUpResult.usedNonce : undefined;
+
+  if (!currentNonce || !usedNonce) {
     return currentNonce;
   }
 
@@ -79,7 +82,7 @@ export const getBumpedNonceAfterTopUp = ({
     return currentNonce;
   }
 
-  if (normalizeNonce(currentNonce) !== normalizeNonce(topUpResult.usedNonce)) {
+  if (normalizeNonce(currentNonce) !== normalizeNonce(usedNonce)) {
     return currentNonce;
   }
 
@@ -107,7 +110,10 @@ export const buildTopUpResumedTxs = ({
     return txs;
   }
 
-  if (topUpResult.type !== 'token' || !topUpResult.usedNonce) {
+  const usedNonce =
+    topUpResult.type === 'token' ? topUpResult.usedNonce : undefined;
+
+  if (!usedNonce) {
     return txs;
   }
 
@@ -117,9 +123,7 @@ export const buildTopUpResumedTxs = ({
     return txs;
   }
 
-  if (
-    normalizeNonce(firstExplicitNonce) !== normalizeNonce(topUpResult.usedNonce)
-  ) {
+  if (normalizeNonce(firstExplicitNonce) !== normalizeNonce(usedNonce)) {
     return txs;
   }
 
