@@ -69,12 +69,19 @@ import {
 import { BridgeSlippage } from './BridgeSlippage';
 import { Text } from '@/components/Typography';
 import { MarketClosedTip } from '@/components/Token/MarketClosedTip';
-import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
+import { useBlockSubmitIfFormChangedOnAuth } from '@/hooks/appSettings';
+import {
+  FormAmountMode,
+  FormValuesOnSubmit,
+  createAmountComparer,
+  shouldIgnoreAmountChangeInMaxMode,
+} from '@/utils/form';
 import { Alert } from 'react-native';
 
-/** Bridge form snapshot for validation - only stores amount to detect changes */
+/** Bridge form snapshot for validation during auth */
 export interface BridgeFormSnapshot {
   amount: string;
+  amountMode?: FormAmountMode;
 }
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
@@ -223,7 +230,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     forScene: 'MakeTransactionAbout',
   });
 
-  // Form values snapshot for validation before transaction - only tracks amount
+  // Form values snapshot for validation before auth submission
   const formValuesRef = useRef(
     new FormValuesOnSubmit<BridgeFormSnapshot>({
       comparers: {
@@ -650,6 +657,17 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
+  const { blockSubmitIfFormChangedOnAuth } =
+    useBlockSubmitIfFormChangedOnAuth();
+
+  const buildFormSnapshot = useCallback(
+    (): BridgeFormSnapshot => ({
+      amount: amount || '',
+      amountMode: slider === 100 ? 'max' : 'exact',
+    }),
+    [amount, slider],
+  );
+
   useEffect(() => {
     if (!isFocused) {
       closeMiniSigner();
@@ -686,31 +704,33 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const handleBridge = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
     const snapshot = formValuesRef.current.getSnapshot();
-
-    if (!snapshot) {
-      toast.info(t('page.bridge.formChangedAmount'));
-      return;
-    }
-
-    // Check if amount changed during authentication
-    const comparison = formValuesRef.current.compare({ amount: amount || '' });
-
-    // If amount changed during authentication, close modal and alert user
-    if (comparison.isChanged) {
-      formValuesRef.current.clear();
-      closeMiniSigner();
-      Alert.alert(
-        t('page.bridge.formChangedTitle') || 'Form Changed',
-        t('page.bridge.formChangedAmount'),
-        [{ text: t('global.ok') || 'OK' }],
+    if (snapshot) {
+      const currentValues = buildFormSnapshot();
+      const comparison = formValuesRef.current.compare(currentValues);
+      const shouldIgnoreChange = shouldIgnoreAmountChangeInMaxMode(
+        comparison,
+        snapshot,
+        currentValues,
       );
-      refresh(e => e + 1);
-      mutateTxs([]);
-      return;
-    }
 
-    // Clear snapshot after validation
-    formValuesRef.current.clear();
+      formValuesRef.current.clear();
+
+      if (
+        comparison.isChanged &&
+        !shouldIgnoreChange &&
+        blockSubmitIfFormChangedOnAuth
+      ) {
+        closeMiniSigner();
+        Alert.alert(
+          t('page.bridge.formChangedTitle') || 'Form Changed',
+          t('page.bridge.formChangedAmount'),
+          [{ text: t('global.ok') || 'OK' }],
+        );
+        refresh(e => e + 1);
+        mutateTxs([]);
+        return;
+      }
+    }
 
     // // leave here for debug __DEV__ mode: don't actually submit, just console.debug and clear form
     // if (__DEV__) {
@@ -877,10 +897,6 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       return;
     }
     if (selectedBridgeQuote?.shouldTwoStepApprove) {
-      // Save amount snapshot before showing approval modal
-      formValuesRef.current.save({
-        amount: amount || '',
-      });
       setTwoStepApproveModalVisible(true);
       return;
     }
@@ -1111,6 +1127,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             }>
             {canShowDirectSubmit ? (
               <DirectSignBtn
+                ref={directSignBtnRef}
                 key={`${selectedBridgeQuote?.aggregator.id}-${selectedBridgeQuote?.bridge?.id}-${refreshId}`}
                 authTitle={t('page.whitelist.confirmPassword')}
                 title={t('global.confirm')}
@@ -1121,9 +1138,14 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 syncUnlockTime
                 onBeforeAuth={() => {
                   clearExpiredTimer();
+                  formValuesRef.current.save(buildFormSnapshot());
                 }}
                 onCancel={() => {
+                  formValuesRef.current.clear();
                   refresh(e => e + 1);
+                }}
+                onAuthModalDismiss={() => {
+                  formValuesRef.current.clear();
                 }}
                 account={currentAccount}
                 showHardWalletProcess

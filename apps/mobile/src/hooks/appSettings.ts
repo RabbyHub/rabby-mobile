@@ -20,6 +20,7 @@ type ScreenshotSettings = {
   iosForceAllowScreenRecord: boolean;
   iosForceDisableAlertForSensitiveScene: boolean;
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
+  blockSubmitIfFormChangedOnAuth: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -34,6 +35,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     iosForceDisableAlertForSensitiveScene: isNonPublicProductionEnv,
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
+    blockSubmitIfFormChangedOnAuth: __DEV__,
   },
 );
 
@@ -199,6 +201,30 @@ export function useTimeTipAboutSeedPhraseAndPrivateKey() {
     timeTipAboutSeedPhraseAndPrivateKey: isNonPublicProductionEnv
       ? timeTipAboutSeedPhraseAndPrivateKey
       : 'none',
+  };
+}
+
+export function useBlockSubmitIfFormChangedOnAuth() {
+  const blockSubmitIfFormChangedOnAuth = experimentalSettingsStore(
+    s => s.blockSubmitIfFormChangedOnAuth,
+  );
+
+  const toggleBlockSubmitIfFormChangedOnAuth = useCallback(
+    (nextVal?: boolean) => {
+      setExpSettingData(prev => ({
+        ...prev,
+        blockSubmitIfFormChangedOnAuth:
+          typeof nextVal === 'boolean'
+            ? nextVal
+            : !prev.blockSubmitIfFormChangedOnAuth,
+      }));
+    },
+    [],
+  );
+
+  return {
+    blockSubmitIfFormChangedOnAuth,
+    toggleBlockSubmitIfFormChangedOnAuth,
   };
 }
 
