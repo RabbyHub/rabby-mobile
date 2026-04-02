@@ -17,7 +17,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   GetDevUriFn,
-  useDevServerHostAvailable,
+  useDevServerHostAvailableForLocalWebView,
 } from '@/core/utils/devServerSettings';
 import {
   FALLBACK_HTML,
@@ -83,9 +83,8 @@ export const LocalWebView = ({
   // const { width: viewWidth = '100%', height: viewHeight = 300 } = viewSize || {};
   const { width: webviewWidth = '100%', height: webviewHeight = 300 } =
     webviewSize || {};
-
   const { devServerMobileLocalPagesAvailable, devServerHost, devUri } =
-    useDevServerHostAvailable({
+    useDevServerHostAvailableForLocalWebView({
       autoDetectHost: true,
       devUri: useCallback<GetDevUriFn>(
         ctx => {

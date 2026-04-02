@@ -1,0 +1,25 @@
+diff --git a/package.json b/package.json
+index b6230e4a1506e25174b90377b93453983a0e98ee..9bb2c4c378f84981543d19a760386c1c4df2d586 100644
+--- a/package.json
++++ b/package.json
+@@ -31,6 +31,20 @@
+         "types": "./dist/typings.d.ts",
+         "import": "./dist/lightweight-charts.production.mjs"
+       }
++    },
++    "./standalone": {
++      "development": {
++        "types": "./dist/typings.d.ts",
++        "import": "./dist/lightweight-charts.standalone.development.mjs"
++      },
++      "production": {
++        "types": "./dist/typings.d.ts",
++        "import": "./dist/lightweight-charts.standalone.production.mjs"
++      },
++      "default": {
++        "types": "./dist/typings.d.ts",
++        "import": "./dist/lightweight-charts.standalone.production.mjs"
++      }
+     }
+   },
+   "files": [
