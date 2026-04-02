@@ -89,7 +89,6 @@ export function reportLendingUserStatusOnce({
     return;
   }
 
-  console.log('CUSTOM_LOGGER:=>: lendingUserStatus', lendingUserStatus);
   matomoRequestEvent({
     category: 'Rabby Lending',
     action: 'Lending_UserStatus',
