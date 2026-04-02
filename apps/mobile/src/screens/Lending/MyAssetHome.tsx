@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
+import { useMyAccounts } from '@/hooks/account';
 import { Button } from '@/components2024/Button';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -33,6 +34,11 @@ import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
 import { DisableBorrowTip } from './components/DisableBorrowTip';
 import { LendingHeader } from './components/Header';
+import useProtocolListStore from '@/store/protocols';
+import {
+  getLendingUserStatusLabel,
+  useTrackLendingUserStatusChanges,
+} from '@/utils/analytics0331';
 
 type MyAssetItem =
   | {
@@ -50,12 +56,21 @@ const MyAssetHome: React.FC = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { chainEnum, marketKey } = useSelectedMarket();
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  const protocolMap = useProtocolListStore(state => state.protocolMap);
   const { reserves } = useLendingRemoteData();
   const { loading: isFetching } = useLendingIsLoading();
   const { fetchData } = useFetchLendingData();
   const { displayPoolReserves, iUserSummary, apyInfo } = useLendingSummary();
+  const lendingUserStatus = useMemo(() => {
+    return getLendingUserStatusLabel(
+      accounts.map(account => account.address),
+      protocolMap,
+    );
+  }, [accounts, protocolMap]);
 
   const loading = isFetching || !iUserSummary || !displayPoolReserves;
+  useTrackLendingUserStatusChanges(lendingUserStatus);
 
   const myAssetList: MyAssetItem[] = useMemo(() => {
     const list: MyAssetItem[] = [];
@@ -204,8 +219,30 @@ const MyAssetHome: React.FC = () => {
   const handlePendingClear = useCallback(() => {
     setTimeout(() => {
       fetchData(true);
+      useProtocolListStore
+        .getState()
+        .batchGetProtocols(
+          accounts.map(account => account.address),
+          true,
+        )
+        .catch(error => {
+          console.error('refresh lending protocol status failed', error);
+        });
     }, 200);
-  }, [fetchData]);
+  }, [accounts, fetchData]);
+
+  const handleRefresh = useCallback(() => {
+    fetchData(true);
+    useProtocolListStore
+      .getState()
+      .batchGetProtocols(
+        accounts.map(account => account.address),
+        true,
+      )
+      .catch(error => {
+        console.error('refresh lending protocol status failed', error);
+      });
+  }, [accounts, fetchData]);
 
   const renderHeader = useCallback(() => {
     return (
@@ -259,10 +296,7 @@ const MyAssetHome: React.FC = () => {
           ) : null
         }
         refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
+          <RefreshControl refreshing={false} onRefresh={handleRefresh} />
         }
       />
       <View style={styles.actionBar}>

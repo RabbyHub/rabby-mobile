@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListRenderItem, View, Dimensions } from 'react-native';
 import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
@@ -37,6 +43,7 @@ import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
+import { trackHomeTabViewToken } from '@/utils/analytics0331';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
@@ -98,9 +105,10 @@ export const TokenList = () => {
 
   const { currency } = useCurrency();
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
+  const tokenDisplayModeRef = useRef(tokenDisplayMode);
 
   const getAccountByAddress = useFindAccountByAddress();
-  const { isFocused } = useIsFocusedCurrentTab(TabName.token);
+  const { isFocused, isFocusing } = useIsFocusedCurrentTab(TabName.token);
 
   const emptyResult = useMemo(
     () => ({
@@ -163,6 +171,20 @@ export const TokenList = () => {
   useEffect(() => {
     batchGetTokenList(myTop10Addresses);
   }, [myTop10Addresses]);
+
+  useEffect(() => {
+    tokenDisplayModeRef.current = tokenDisplayMode;
+  }, [tokenDisplayMode]);
+
+  useEffect(() => {
+    if (!isFocusing) {
+      return;
+    }
+
+    trackHomeTabViewToken(tokenDisplayModeRef.current).catch(error => {
+      console.error('trackHomeTabViewToken failed', error);
+    });
+  }, [isFocusing]);
 
   const hasNoAssets =
     tokens.length + foldTokens.length + scamTokens.length === 0 &&

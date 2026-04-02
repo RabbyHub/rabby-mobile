@@ -54,9 +54,10 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   {
     onConfirm?: () => void;
     onCancel?: () => void;
+    onSelectTimeMs?: (ms: number) => void;
   }
 >((props, ref) => {
-  const { onConfirm, onCancel } = props;
+  const { onConfirm, onCancel, onSelectTimeMs } = props;
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: SIZES.FULL_HEIGHT,
@@ -70,10 +71,13 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   const handleConfirm = useCallback(
     (ms: number) => {
       onAutoLockTimeMsChange(ms);
+      if (timeoutMs !== ms) {
+        onSelectTimeMs?.(ms);
+      }
       onConfirm?.();
       sheetModalRef.current?.dismiss();
     },
-    [onConfirm],
+    [onConfirm, onSelectTimeMs, timeoutMs],
   );
 
   useImperativeHandle(
