@@ -301,7 +301,9 @@ function ReceiveScreen(): JSX.Element {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="never"
+          automaticallyAdjustContentInsets={false}>
           <View style={styles.receiveContainer}>
             {/* Backup Reminder Card */}
             <BackupReminderCard
@@ -403,7 +405,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   scrollViewContent: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   receiveContainer: {
     alignItems: 'center',
@@ -416,6 +418,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   backupReminderCard: {
     marginHorizontal: 0,
     marginBottom: 16,
+    marginTop: 8,
     width: '100%',
   },
   // Original QR Card styles
