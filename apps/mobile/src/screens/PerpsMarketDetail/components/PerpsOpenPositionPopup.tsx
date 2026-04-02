@@ -779,7 +779,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           <View style={styles.footer}>
             <Button
               type="hyperliquid"
-              title={t('global.check')}
+              title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.title')}
               disabled={
                 !marginValidation.isValid || leverageRangeValidation.error
               }

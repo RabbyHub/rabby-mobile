@@ -111,43 +111,51 @@ export const PerpsAccountCard: React.FC<{
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.card, styles.balanceCard, { marginTop: 12 }]}>
-          <ImageBackground
-            source={ImgLearnMore}
-            resizeMode="cover"
-            style={styles.learnCardInner}>
-            <TouchableOpacity
-              style={{ position: 'absolute', right: 14, top: 14 }}
-              onPress={() => {
-                setHasClosedLearnMore(true);
-                apisPerps.setHasClosedLearnMoreCard(true);
-              }}>
-              <RcIconCloseCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-secondary']}
-              />
-            </TouchableOpacity>
-            <Text style={styles.learnTitle}>
-              {t('page.perps.PerpsCard.title')}
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                setPopupState(prev => ({
-                  ...prev,
-                  isShowGuidePopup: true,
-                }));
-              }}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 4,
-              }}>
-              <Text style={styles.learnDesc}>
-                {t('page.perps.PerpsCard.learnMore')}
+          <TouchableOpacity
+            onPress={() => {
+              setPopupState(prev => ({
+                ...prev,
+                isShowGuidePopup: true,
+              }));
+            }}>
+            <ImageBackground
+              source={ImgLearnMore}
+              resizeMode="cover"
+              style={styles.learnCardInner}>
+              <TouchableOpacity
+                style={{ position: 'absolute', right: 14, top: 14 }}
+                onPress={() => {
+                  setHasClosedLearnMore(true);
+                  apisPerps.setHasClosedLearnMoreCard(true);
+                }}>
+                <RcIconCloseCC
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-secondary']}
+                />
+              </TouchableOpacity>
+              <Text style={styles.learnTitle}>
+                {t('page.perps.PerpsCard.title')}
               </Text>
-              <RcIconLearnArrow />
-            </TouchableOpacity>
-          </ImageBackground>
+              <TouchableOpacity
+                onPress={() => {
+                  setPopupState(prev => ({
+                    ...prev,
+                    isShowGuidePopup: true,
+                  }));
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginTop: 4,
+                }}>
+                <Text style={styles.learnDesc}>
+                  {t('page.perps.PerpsCard.learnMore')}
+                </Text>
+                <RcIconLearnArrow />
+              </TouchableOpacity>
+            </ImageBackground>
+          </TouchableOpacity>
         </LinearGradient>
       )}
     </>

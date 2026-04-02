@@ -581,7 +581,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    borderTopColor: colors2024['neutral-line'],
+    borderTopColor: colors2024['neutral-bg-5'],
   },
   distanceDot: {
     width: 4,
