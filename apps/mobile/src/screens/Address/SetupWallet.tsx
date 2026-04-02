@@ -24,7 +24,6 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { PasswordForm } from '@/components2024/PasswordForm';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
-import { RootNames } from '@/constant/layout';
 import { useSetupWallet } from '@/hooks/address/useSetupWallet';
 
 type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'SetupWallet'>;
