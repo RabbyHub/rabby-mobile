@@ -454,7 +454,7 @@ export const PerpsChart: React.FC<{
           <View style={styles.skeletonContainer}>
             <Skeleton
               width={'100%'}
-              height={150}
+              height={Dimensions.get('screen').width - 128}
               style={styles.skeleton}
               LinearGradientComponent={LoadingLinear}
             />
@@ -580,6 +580,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
+    // backgroundColor: colors2024['neutral-bg-5'],
   },
   opacity0: {
     opacity: 0,

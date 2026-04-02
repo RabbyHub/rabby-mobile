@@ -49,7 +49,6 @@ export const usePerpsState = () => {
     setUserAccountHistory,
     setUserFills,
     addUserFills,
-    updateUserAccountHistory,
     setPerpFee,
     setMarketData,
     setAccountNeedApproveAgent,
@@ -62,7 +61,6 @@ export const usePerpsState = () => {
     // Effects
     loginPerpsAccount,
     fetchClearinghouseState,
-    fetchUserNonFundingLedgerUpdates,
     fetchPerpPermission,
     refreshData,
     fetchMarketData,
@@ -552,10 +550,10 @@ export const usePerpsState = () => {
           PERPS_AGENT_NAME,
         );
         await loginPerpsAccount(initAccount);
-        fetchMarketData();
 
         // checkIsNeedAutoLoginOut(initAccount.address, agentAddress);
         ensureLoginApproveSign(initAccount, agentAddress);
+        await fetchMarketData();
 
         setInitialized(true);
         return true;

@@ -33,11 +33,7 @@ export const usePerpsDeposit = ({
 }: {
   currentPerpsAccount: Account | null;
 }) => {
-  const {
-    state: perpsState,
-    fetchUserNonFundingLedgerUpdates,
-    setLocalLoadingHistory,
-  } = usePerpsStore();
+  const { state: perpsState, setLocalLoadingHistory } = usePerpsStore();
 
   // const {
   //   sendMiniTransactions,
@@ -199,13 +195,6 @@ export const usePerpsDeposit = ({
         return await handleFullback();
       }
     },
-  );
-
-  useInterval(
-    () => {
-      fetchUserNonFundingLedgerUpdates();
-    },
-    perpsState.localLoadingHistory.length > 0 ? 30 * 1000 : undefined,
   );
 
   return {

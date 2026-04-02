@@ -8,6 +8,7 @@ import {
   MarginSummary,
   OpenOrder,
   UserAbstractionResp,
+  UserNonFundingLedgerUpdates,
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
 // import { ApproveSignatures } from '@/background/service/perps';
@@ -23,7 +24,7 @@ import {
 } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
-import { maxBy, unionBy } from 'lodash';
+import { unionBy } from 'lodash';
 import { zCreate } from '@/core/utils/reexports';
 import {
   resolveValFromUpdater,
@@ -487,20 +488,128 @@ const addUserFills = (payload: {
   }));
 };
 
-// const updateOpenOrders = (payload: OpenOrder[]) => {
-//   setPerpsState(prev => {
-//     const positionAndOpenOrders = prev.positionAndOpenOrders.map(order => {
-//       return {
-//         ...order,
-//         openOrders: payload.filter(item => item.coin === order.position.coin),
-//       };
-//     });
-//     return {
-//       ...prev,
-//       positionAndOpenOrders,
-//     };
-//   });
-// };
+const mapLedgerUpdatesToHistory = (
+  list: UserNonFundingLedgerUpdates[],
+  currentAddress?: string,
+): AccountHistoryItem[] => {
+  return list
+    .filter(item => {
+      return (
+        item.delta.type === 'deposit' ||
+        item.delta.type === 'withdraw' ||
+        item.delta.type === 'send' ||
+        item.delta.type === 'internalTransfer' ||
+        item.delta.type === 'accountClassTransfer'
+      );
+    })
+    .map(item => {
+      if (item.delta.type === 'internalTransfer') {
+        const fee = (item.delta as any).fee as string;
+        const realUsdValue = Number(item.delta.usdc) - Number(fee || '0');
+        return {
+          time: item.time,
+          hash: item.hash,
+          type: 'receive' as const,
+          status: 'success' as const,
+          usdValue: realUsdValue.toString(),
+        };
+      }
+
+      const { destination, usdcValue } = item.delta as any;
+      if (
+        item.delta.type === 'send' &&
+        isSameAddress(destination, HYPE_EVM_BRIDGE_ADDRESS)
+      ) {
+        return {
+          time: item.time,
+          hash: item.hash,
+          type: 'withdraw' as const,
+          status: 'success' as const,
+          usdValue: usdcValue?.toString() || '0',
+        };
+      }
+      if (
+        item.delta.type === 'send' &&
+        currentAddress &&
+        isSameAddress(destination, currentAddress)
+      ) {
+        return {
+          time: item.time,
+          hash: item.hash,
+          type: 'receive' as const,
+          status: 'success' as const,
+          usdValue: usdcValue.toString(),
+        };
+      }
+
+      const type =
+        item.delta.type === 'accountClassTransfer'
+          ? item.delta.toPerp
+            ? 'deposit'
+            : 'withdraw'
+          : item.delta.type;
+
+      return {
+        time: item.time,
+        hash: item.hash,
+        type: type as 'deposit' | 'withdraw',
+        status: 'success' as const,
+        usdValue: item.delta.usdc || (item.delta as any).usdcValue || '0',
+      };
+    });
+};
+
+const fetchUserNonFundingLedgerUpdates = async () => {
+  const sdk = apisPerps.getPerpsSDK();
+  try {
+    const res = await sdk.info.getUserNonFundingLedgerUpdates();
+    const state = perpsStore.getState();
+    const list = mapLedgerUpdatesToHistory(
+      res,
+      state.currentPerpsAccount?.address,
+    );
+
+    setPerpsState(prev => ({
+      ...prev,
+      userAccountHistory: list,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch user non-funding ledger updates:', error);
+  }
+};
+
+const setUserNonFundingLedgerUpdates = (payload: {
+  list: UserNonFundingLedgerUpdates[];
+  isSnapshot?: boolean;
+}) => {
+  const { list, isSnapshot } = payload;
+  const state = perpsStore.getState();
+  const newList = mapLedgerUpdatesToHistory(
+    list,
+    state.currentPerpsAccount?.address,
+  );
+  if (isSnapshot) {
+    fetchUserNonFundingLedgerUpdates();
+    setPerpsState(prev => ({
+      ...prev,
+      userAccountHistory: newList,
+    }));
+    return;
+  }
+
+  let filteredLocalHistory = [...state.localLoadingHistory];
+  newList.forEach(item => {
+    filteredLocalHistory = filteredLocalHistory.filter(i => {
+      return i.type !== item.type;
+    });
+  });
+
+  setPerpsState(prev => ({
+    ...prev,
+    localLoadingHistory: filteredLocalHistory,
+    userAccountHistory: [...newList, ...prev.userAccountHistory],
+  }));
+};
 
 const updateMarketData = (payload: [string, AssetCtx[]][]) => {
   if (payload.length === 0) {
@@ -535,20 +644,6 @@ const subscribeToUserData = (account: Account) => {
   const sdk = apisPerps.getPerpsSDK();
   const address = account.address;
   unsubscribeAll();
-  // const { unsubscribe: unsubscribeWebData2 } = sdk.ws.subscribeToWebData2(
-  //   data => {
-  //     const { clearinghouseState, assetCtxs, openOrders, serverTime, user } =
-  //       data;
-  //     if (!isSameAddress(user, address)) {
-  //       return;
-  //     }
-
-  //     setPositionAndOpenOrders(clearinghouseState, openOrders);
-
-  //     // updateMarketData(assetCtxs);
-  //   },
-  // );
-
   const { unsubscribe: unsubscribeClearinghouseState } =
     sdk.ws.subscribeToAllDexsClearinghouseState(address, data => {
       const { clearinghouseStates, user } = data;
@@ -611,6 +706,19 @@ const subscribeToUserData = (account: Account) => {
     },
   );
 
+  const { unsubscribe: unsubscribeUserNonFundingLedgerUpdates } =
+    sdk.ws.subscribeToUserNonFundingLedgerUpdates(data => {
+      const { nonFundingLedgerUpdates, user, isSnapshot } = data;
+      if (!isSameAddress(user, address)) {
+        return;
+      }
+
+      setUserNonFundingLedgerUpdates({
+        list: nonFundingLedgerUpdates,
+        isSnapshot: isSnapshot || false,
+      });
+    });
+
   setWsSubscriptions(prev => {
     return [
       ...prev,
@@ -620,6 +728,7 @@ const subscribeToUserData = (account: Account) => {
       unsubscribeAllDexsAssetCtxs,
       unsubscribeOpenOrders,
       unsubscribeFills,
+      unsubscribeUserNonFundingLedgerUpdates,
     ];
   });
 };
@@ -644,12 +753,25 @@ export const usePerpsStore = () => {
   // Reducers 转换为 setState 操作
   const setLocalLoadingHistory = useMemoizedFn(
     (payload: AccountHistoryItem[], isReset: boolean = false) => {
-      setPerpsState(prev => ({
-        ...prev,
-        localLoadingHistory: isReset
-          ? payload
-          : [...payload, ...prev.localLoadingHistory],
-      }));
+      setPerpsState(prev => {
+        if (isReset) {
+          return { ...prev, localLoadingHistory: payload };
+        }
+        // If WS already delivered a confirmed entry for this type,
+        // skip adding the pending item (WS arrived before HTTP response)
+        const filtered = payload.filter(item => {
+          return !prev.userAccountHistory.some(
+            h => h.type === item.type && h.time >= item.time,
+          );
+        });
+        if (filtered.length === 0) {
+          return prev;
+        }
+        return {
+          ...prev,
+          localLoadingHistory: [...filtered, ...prev.localLoadingHistory],
+        };
+      });
     },
   );
 
@@ -663,100 +785,20 @@ export const usePerpsStore = () => {
     setPerpsState(prev => ({ ...prev, userFills: payload }));
   });
 
-  const updateUserAccountHistory = useMemoizedFn(
-    (payload: { newHistoryList: AccountHistoryItem[] }) => {
-      if (payload.newHistoryList.length === 0) {
-        return setPerpsState(prev => ({
-          ...prev,
-          localLoadingHistory: [],
-          userAccountHistory: [],
-        }));
-      }
-      const { newHistoryList } = payload;
-      const depositList = newHistoryList.filter(
-        item => item.type === 'deposit',
-      );
-      const withdrawList = newHistoryList.filter(
-        item => item.type === 'withdraw',
-      );
-      const receiveList = newHistoryList.filter(
-        item => item.type === 'receive',
-      );
-      const maxTimeItemDeposit = maxBy(depositList, 'time');
-      const maxTimeItemWithdraw = maxBy(withdrawList, 'time');
-      const maxTimeItemReceive = maxBy(receiveList, 'time');
-      setPerpsState(prev => {
-        // 使用当前userAccountHistory过滤 localLoadingHistory
-        const filteredLocalHistory = state.localLoadingHistory.filter(item => {
-          if (item.type === 'deposit') {
-            return item.time >= (maxTimeItemDeposit?.time || 0);
-          } else if (item.type === 'withdraw') {
-            return item.time >= (maxTimeItemWithdraw?.time || 0);
-          } else {
-            return item.time >= (maxTimeItemReceive?.time || 0);
-          }
-        });
-        return {
-          ...prev,
-          userAccountHistory: newHistoryList,
-          localLoadingHistory: filteredLocalHistory,
-        };
-      });
-    },
-  );
-
   const setPerpFee = useMemoizedFn((payload: number) => {
     setPerpsState(prev => ({ ...prev, perpFee: payload }));
   });
 
-  // const setCurrentClearinghouseState = useMemoizedFn(
-  //   (payload: ClearinghouseState) => {
-  //     setPerpsState(prev => ({ ...prev, currentClearinghouseState: payload }));
-  //   },
-  // );
-
   const setApproveSignatures = useMemoizedFn((payload: ApproveSignatures) => {
     setPerpsState(prev => ({ ...prev, approveSignatures: payload }));
   });
-
-  // Effects 转换为异步函数
-  // const saveApproveSignatures = useMemoizedFn(
-  //   async (payload: {
-  //     approveSignatures: ApproveSignatures;
-  //     address: string;
-  //   }) => {
-  //     setApproveSignatures(payload.approveSignatures);
-  //     apisPerps.setSendApproveAfterDeposit(
-  //       payload.address,
-  //       payload.approveSignatures,
-  //     );
-  //   },
-  // );
-
-  // const fetchPositionAndOpenOrders = useMemoizedFn(async (address?: string) => {
-  //   const sdk = apisPerps.getPerpsSDK();
-  //   try {
-  //     const [clearinghouseState, openOrders] = await Promise.all([
-  //       sdk.info.getClearingHouseState(address),
-  //       sdk.info.getFrontendOpenOrders(address),
-  //     ]);
-
-  //     setPositionAndOpenOrders(clearinghouseState, openOrders);
-  //     setAccountSummary({
-  //       ...clearinghouseState.marginSummary,
-  //       withdrawable: clearinghouseState.withdrawable,
-  //     });
-  //     setCurrentClearinghouseState(clearinghouseState);
-  //   } catch (error: any) {
-  //     console.error('Failed to fetch clearinghouse state:', error);
-  //   }
-  // });
 
   const loginPerpsAccount = useMemoizedFn(async (account: Account) => {
     apisPerps.setPerpsCurrentAccount(account);
     setCurrentPerpsAccount(account);
     refreshData();
     subscribeToUserData(account);
+    fetchUserNonFundingLedgerUpdates();
     fetchPerpPermission(account.address);
     setPerpsState(prev => ({
       ...prev,
@@ -786,85 +828,6 @@ export const usePerpsStore = () => {
     const sdk = apisPerps.getPerpsSDK();
     // const openOrders = await sdk.info.getFrontendOpenOrders();
     // updateOpenOrders(openOrders);
-  });
-
-  const fetchUserNonFundingLedgerUpdates = useMemoizedFn(async () => {
-    const sdk = apisPerps.getPerpsSDK();
-    try {
-      const res = await sdk.info.getUserNonFundingLedgerUpdates();
-
-      const list = res
-        .filter(item => {
-          if (
-            item.delta.type === 'deposit' ||
-            item.delta.type === 'withdraw' ||
-            item.delta.type === 'send' ||
-            item.delta.type === 'internalTransfer' ||
-            item.delta.type === 'accountClassTransfer'
-          ) {
-            return true;
-          }
-          return false;
-        })
-        .map(item => {
-          if (item.delta.type === 'internalTransfer') {
-            const fee = (item.delta as any).fee as string;
-            const realUsdValue = Number(item.delta.usdc) - Number(fee || '0');
-            return {
-              time: item.time,
-              hash: item.hash,
-              type: 'receive' as const,
-              status: 'success' as const,
-              usdValue: realUsdValue.toString(),
-            };
-          }
-
-          const { destination, usdcValue } = item.delta as any;
-          if (
-            item.delta.type === 'send' &&
-            destination === HYPE_EVM_BRIDGE_ADDRESS
-          ) {
-            return {
-              time: item.time,
-              hash: item.hash,
-              type: 'withdraw' as const,
-              status: 'success' as const,
-              usdValue: usdcValue?.toString() || '0',
-            };
-          }
-          if (
-            item.delta.type === 'send' &&
-            destination === state.currentPerpsAccount?.address
-          ) {
-            return {
-              time: item.time,
-              hash: item.hash,
-              type: 'receive' as const,
-              status: 'success' as const,
-              usdValue: usdcValue.toString(),
-            };
-          }
-
-          const type =
-            item.delta.type === 'accountClassTransfer'
-              ? item.delta.toPerp
-                ? 'deposit'
-                : 'withdraw'
-              : item.delta.type;
-
-          return {
-            time: item.time,
-            hash: item.hash,
-            type: type as 'deposit' | 'withdraw',
-            status: 'success' as const,
-            usdValue: item.delta.usdc || (item.delta as any).usdcValue || '0',
-          };
-        });
-
-      updateUserAccountHistory({ newHistoryList: list });
-    } catch (error) {
-      console.error('Failed to fetch user non-funding ledger updates:', error);
-    }
   });
 
   const fetchUserHistoricalOrders = useMemoizedFn(async () => {
@@ -900,7 +863,6 @@ export const usePerpsStore = () => {
   const refreshData = useMemoizedFn(async () => {
     // await fetchPositionAndOpenOrders();
     // await is login is too low
-    await fetchUserNonFundingLedgerUpdates();
     await fetchUserHistoricalOrders();
   });
 
@@ -932,7 +894,6 @@ export const usePerpsStore = () => {
     setUserAccountHistory,
     setUserFills,
     addUserFills,
-    updateUserAccountHistory,
     setPerpFee,
     setMarketData,
     setCurrentPerpsAccount,
@@ -948,7 +909,6 @@ export const usePerpsStore = () => {
     loginPerpsAccount,
     fetchClearinghouseState,
     fetchPositionOpenOrders,
-    fetchUserNonFundingLedgerUpdates,
     fetchUserHistoricalOrders,
     refreshData,
     fetchMarketData,
