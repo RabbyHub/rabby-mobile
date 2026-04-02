@@ -17,11 +17,12 @@ import { useAccountHomeShowReceiveTip } from '@/screens/Address/components/Multi
 import { DepositAssetsCard } from './DepositAssetsCard';
 
 export function HomeCenterArea() {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
 
-  const { accountToShowReceiveTip } = useAccountHomeShowReceiveTip();
+  const { accountToShowReceiveTip, isLoadingAccountToShowReceiveTip } =
+    useAccountHomeShowReceiveTip();
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
 
@@ -39,6 +40,16 @@ export function HomeCenterArea() {
       offlineChainData: false as boolean,
       tipScreenshot: false as boolean,
     };
+
+    // Wait for account check to complete before deciding what to show
+    if (isLoadingAccountToShowReceiveTip) {
+      // Show nothing while loading to prevent flickering
+      return {
+        blocksVisibility: blocks,
+        noBetweenContent: true,
+        onlyOneContent: false,
+      };
+    }
 
     if (accountToShowReceiveTip) {
       blocks.soloAccountToShowReceiveTip = true;
@@ -60,6 +71,7 @@ export function HomeCenterArea() {
     offlineChainData,
     accountToShowReceiveTip,
     viewedScreenShotReportTip,
+    isLoadingAccountToShowReceiveTip,
   ]);
 
   return (
