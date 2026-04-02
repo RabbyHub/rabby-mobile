@@ -3378,6 +3378,9 @@
     },
     "multiAddressModal": {
       "title": "Wallets"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "No available address"
     }
   },
   "native": {
