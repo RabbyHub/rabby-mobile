@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@aave-dao/aave-address-book": "4.47.14",
-    "@aave/contract-helpers": "1.37.1",
+    "@aave/contract-helpers": "1.36.1",
     "@aave/math-utils": "1.36.1",
     "@craftzdog/react-native-buffer": "^6.0.5",
     "@debank/common": "0.3.60",
