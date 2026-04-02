@@ -91,11 +91,12 @@ export async function setEnableTransactionNofification(
     }
 
     if (reqResult !== 'granted') {
-      return;
+      return undefined;
     }
   }
 
   const prevHasSystemPermission = hasSystemPermission;
+  let finalValue: boolean | undefined;
   appNotificationStore.setState(state => {
     let { newVal } = resolveValFromUpdater(
       state.enabledTransactionNofification,
@@ -108,9 +109,12 @@ export async function setEnableTransactionNofification(
       'enabledTransactionNofification',
       newVal,
     );
+    finalValue = newVal;
 
     return { enabledTransactionNofification: newVal };
   });
+
+  return finalValue;
 }
 
 export function useAppHasSystemNotificationPermission(): boolean | null {

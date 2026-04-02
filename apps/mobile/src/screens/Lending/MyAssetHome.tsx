@@ -197,6 +197,20 @@ const MyAssetHome: React.FC = () => {
     [styles.item],
   );
 
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handlePendingClear = useCallback(() => {
+    setTimeout(() => {
+      fetchData(true);
+    }, 200);
+  }, [fetchData]);
+
+  const handleRefresh = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
+
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
@@ -239,10 +253,7 @@ const MyAssetHome: React.FC = () => {
           ) : null
         }
         refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={() => fetchData(true)}
-          />
+          <RefreshControl refreshing={false} onRefresh={handleRefresh} />
         }
       />
       <View style={styles.actionBar}>

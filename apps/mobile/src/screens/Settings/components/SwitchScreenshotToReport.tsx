@@ -11,8 +11,10 @@ import { Text } from '@/components/Typography';
 
 export const SwitchScreenshotToReport = ({
   ref,
+  onToggleSuccess,
   ...props
 }: React.ComponentProps<typeof AppSwitch2024> & {
+  onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
   ref?: Ref<SwitchToggleType>;
 }) => {
   const { isShowFeedbackOnScreenshot, toggleScreenshotToReport } =
@@ -20,7 +22,8 @@ export const SwitchScreenshotToReport = ({
 
   useImperativeHandle(ref, () => ({
     toggle: (enabled?: boolean) => {
-      toggleScreenshotToReport(enabled);
+      const nextEnabled = toggleScreenshotToReport(enabled);
+      onToggleSuccess?.(nextEnabled);
     },
   }));
 
@@ -30,7 +33,10 @@ export const SwitchScreenshotToReport = ({
       circleSize={20}
       value={!!isShowFeedbackOnScreenshot}
       changeValueImmediately={false}
-      onValueChange={toggleScreenshotToReport}
+      onValueChange={enabled => {
+        const nextEnabled = toggleScreenshotToReport(enabled);
+        onToggleSuccess?.(nextEnabled);
+      }}
     />
   );
 };
@@ -51,7 +57,7 @@ export function LabelScreenshotToReport() {
     spinner;
     const diffMs = Math.max(disableScreenshotToReportUntil - Date.now(), 0);
     if (!diffMs || disableScreenshotToReportUntil === Infinity) {
-      return { text: `∞`, mins: 0 };
+      return { text: '∞', mins: 0 };
     }
 
     const timeSpans = getTimeSpanByMs(diffMs);
