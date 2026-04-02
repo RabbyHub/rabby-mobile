@@ -1,7 +1,6 @@
 import { TIME_SETTINGS } from '@/constant/autoLock';
 import { TokenDisplayMode } from '@/core/services/preference';
 import { zustandByMMKV } from '@/core/storage/mmkv';
-import { useMyAccounts } from '@/hooks/account';
 import { useAppNotificationEnabled } from '@/hooks/appNotification';
 import { useAutoLockTime } from '@/hooks/appTimeout';
 import { useBiometrics } from '@/hooks/biometrics';
@@ -16,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import { SupportedLang } from '@/utils/i18n';
-import { IProtocolItem, useProtocolListStore } from '@/store/protocols';
+import { IProtocolItem } from '@/store/protocols';
 import { isAppChain } from '@/screens/Home/utils/appchain';
 import { matomoRequestEvent } from './analytics';
 
@@ -426,8 +425,6 @@ export const useTrack0331HomeActiveSnapshots = () => {
   const { currentLanguage } = useAppLanguage();
   const { currency } = useCurrency();
   const { isShowFeedbackOnScreenshot } = useScreenshotToReportEnabled();
-  const { accounts } = useMyAccounts();
-  const protocolMap = useProtocolListStore(state => state.protocolMap);
 
   const settingsSnapshot = useMemo<SettingsSnapshotPayload>(() => {
     return {
@@ -454,32 +451,14 @@ export const useTrack0331HomeActiveSnapshots = () => {
     txNotificationEnabled,
   ]);
 
-  const lendingUserStatus = useMemo(() => {
-    return getLendingUserStatusLabel(
-      accounts.map(account => account.address),
-      protocolMap,
-    );
-  }, [accounts, protocolMap]);
-
-  const shouldAttemptLendingSnapshotRef = useRef(false);
-
   const trackHomeSnapshots = useCallback(() => {
     trackSettingsSnapshotsOncePerDay(settingsSnapshot).catch(error => {
       console.error('trackSettingsSnapshotsOncePerDay failed', error);
     });
-
-    if (!lendingUserStatus) {
-      return;
-    }
-
-    trackLendingUserStatusOncePerDay(lendingUserStatus).catch(error => {
-      console.error('trackLendingUserStatusOncePerDay failed', error);
-    });
-  }, [lendingUserStatus, settingsSnapshot]);
+  }, [settingsSnapshot]);
 
   useFocusEffect(
     useCallback(() => {
-      shouldAttemptLendingSnapshotRef.current = true;
       trackHomeSnapshots();
 
       const subscription = AppState.addEventListener('change', state => {
@@ -487,31 +466,19 @@ export const useTrack0331HomeActiveSnapshots = () => {
           return;
         }
 
-        shouldAttemptLendingSnapshotRef.current = true;
         trackHomeSnapshots();
       });
 
       return () => {
-        shouldAttemptLendingSnapshotRef.current = false;
         subscription.remove();
       };
     }, [trackHomeSnapshots]),
   );
-
-  useEffect(() => {
-    if (!shouldAttemptLendingSnapshotRef.current || !lendingUserStatus) {
-      return;
-    }
-
-    trackLendingUserStatusOncePerDay(lendingUserStatus).catch(error => {
-      console.error('trackLendingUserStatusOncePerDay failed', error);
-    });
-  }, [lendingUserStatus]);
 };
 
 export const useTrackLendingUserStatusChanges = (label?: string) => {
   const hasInitializedRef = useRef(false);
-  const previousLabelRef = useRef<string | undefined>();
+  const previousLabelRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (!hasInitializedRef.current) {
