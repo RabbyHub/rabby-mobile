@@ -507,6 +507,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           )}
           {canShowDirectSubmit ? (
             <DirectSignBtn
+              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
               key={`${amount}`}
