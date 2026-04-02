@@ -17,6 +17,7 @@ import {
   DEX_ENUM,
   DEX_ROUTER_WHITELIST,
   DEX_SPENDER_WHITELIST,
+  UNI_NATIVE_TO_ADDRESSES,
   WrapTokenAddressMap,
 } from '@rabby-wallet/rabby-swap';
 import {
@@ -743,8 +744,18 @@ interface getTokenParams {
   tokenId: string;
 }
 
-export const getRouter = (dexId: DEX_ENUM, chain: CHAINS_ENUM) => {
+export const getRouter = (
+  dexId: DEX_ENUM,
+  chain: CHAINS_ENUM,
+  payTokenId: string,
+) => {
   const list = DEX_ROUTER_WHITELIST[dexId as keyof typeof DEX_ROUTER_WHITELIST];
+  const payTokenIsNativeToken =
+    findChainByEnum(chain)?.nativeTokenAddress === payTokenId;
+
+  if (dexId === DEX_ENUM.UNI && payTokenIsNativeToken) {
+    return UNI_NATIVE_TO_ADDRESSES[chain];
+  }
   return list[chain as keyof typeof list];
 };
 
@@ -895,7 +906,7 @@ export const verifyRouterAndSpender = (
   if (!dexId || !router || !spender || !payTokenId || !receiveTokenId) {
     return [true, true];
   }
-  const routerWhitelist = getRouter(dexId, chain);
+  const routerWhitelist = getRouter(dexId, chain, payTokenId);
   const spenderWhitelist = getSpender(dexId, chain);
   const isNativeToken = isSameAddress(
     payTokenId,
@@ -947,9 +958,7 @@ export const verifyCalldata = <T extends Parameters<typeof decodeCalldata>[1]>(
       result = true;
     } else {
       result =
-        ((dexId === DEX_ENUM['UNISWAP'] &&
-          isNativeToken(chain.enum, data.fromToken)) ||
-          isSameAddress(callDataResult.fromToken, data.fromToken)) &&
+        isSameAddress(callDataResult.fromToken, data.fromToken) &&
         callDataResult.fromTokenAmount === data.fromTokenAmount &&
         isSameAddress(callDataResult.toToken, data.toToken) &&
         new BigNumber(callDataResult.minReceiveToTokenAmount)
