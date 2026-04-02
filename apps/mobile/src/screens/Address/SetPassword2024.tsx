@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 
 import {
   View,
@@ -24,7 +24,6 @@ import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner2024';
@@ -41,8 +40,6 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { AddressNavigatorParamList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { stats } from '@/utils/stats';
-import { IS_IOS } from '@/core/native/utils';
 import { Text, TextInput } from '@/components/Typography';
 
 const INIT_FORM_DATA = __DEV__
@@ -60,7 +57,7 @@ function useSetupPasswordForm(
   toggleBiometrics: ReturnType<typeof useBiometrics>['toggleBiometrics'],
   finishGoToScreen: (AddressNavigatorParamList['SetPassword2024'] &
     object)['finishGoToScreen'],
-  isBiometricsEnabled: boolean,
+  couldSetupBiometrics: boolean,
   delaySetPassword?: boolean,
   isFirstImportPassword?: boolean,
   isFirstCreate?: boolean,
@@ -87,10 +84,10 @@ function useSetupPasswordForm(
                 t('page.createPassword.confirmError'),
               ),
         }),
-      switch: Yup.boolean().default(isBiometricsEnabled),
+      switch: Yup.boolean().default(couldSetupBiometrics),
       checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
     });
-  }, [t, isBiometricsEnabled]);
+  }, [t, couldSetupBiometrics]);
 
   const navigation = useRabbyAppNavigation();
 
@@ -199,7 +196,7 @@ function MainListBlocks() {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const {
-    computed: { defaultTypeLabel, isBiometricsEnabled, couldSetupBiometrics },
+    computed: { defaultTypeLabel, couldSetupBiometrics },
     fetchBiometrics,
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
@@ -207,7 +204,7 @@ function MainListBlocks() {
   const { formik, shouldDisabled } = useSetupPasswordForm(
     toggleBiometrics,
     state.finishGoToScreen,
-    isBiometricsEnabled,
+    couldSetupBiometrics,
     state.delaySetPassword,
     state.isFirstImportPassword,
     state.isFirstCreate,

@@ -60,7 +60,7 @@ function ImportRabbyWallet(): JSX.Element {
 
   const handleCreateNewWallet = React.useCallback(() => {
     navigation.navigate(RootNames.StackAddress, {
-      screen: RootNames.CreateNewWallet,
+      screen: RootNames.SetupWallet,
     });
   }, [navigation]);
 

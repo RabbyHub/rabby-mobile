@@ -40,7 +40,7 @@ function generateVaultId(): string {
  *
  * @example
  * const vaultId = SecretVault.store(cleanedMnemonic);
- * navigation.navigate('CreateNewWallet', { seedPhraseVaultId: vaultId });
+ * navigation.navigate('SetupWallet', { seedPhraseVaultId: vaultId });
  */
 export function store(secret: string): string {
   const vaultId = generateVaultId();

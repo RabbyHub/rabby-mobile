@@ -69,36 +69,38 @@ function Backup(): JSX.Element {
     navigation.goBack();
   }, [address, type, brandName, navigation]);
 
-  // Get auth modal labels based on expected auth type
-  const getAuthModalLabels = React.useCallback(() => {
-    if (bioComputed.isBiometricsEnabled) {
-      if (bioComputed.isFaceID) {
+  // Get auth modal labels based on actual/current auth type
+  const getAuthModalLabels = React.useCallback(
+    (authType: 'password' | 'biometrics' | 'none') => {
+      if (authType === 'biometrics') {
+        if (bioComputed.isFaceID) {
+          return {
+            title: t('page.addressDetail.verify-face-id'),
+            description: t('page.addressDetail.verify-face-id-before-backup'),
+          };
+        }
         return {
-          title: t('page.addressDetail.verify-face-id'),
-          description: t('page.addressDetail.verify-face-id-before-backup'),
+          title: t('page.addressDetail.verify-fingerprint'),
+          description: t('page.addressDetail.verify-fingerprint-before-backup'),
         };
       }
       return {
-        title: t('page.addressDetail.verify-fingerprint'),
-        description: t('page.addressDetail.verify-fingerprint-before-backup'),
+        title: t('page.addressDetail.verify-password'),
+        description: t('page.addressDetail.verify-password-before-backup'),
       };
-    }
-    return {
-      title: t('page.addressDetail.verify-password'),
-      description: t('page.addressDetail.verify-password-before-backup'),
-    };
-  }, [bioComputed.isBiometricsEnabled, bioComputed.isFaceID, t]);
+    },
+    [bioComputed.isFaceID, t],
+  );
 
   const handleBackupToCloud = React.useCallback(() => {
     // For cloud backup from AddressDetail, we need to authenticate first to get
     // the seed phrase, then pass it to the cloud backup modal.
     let seedPhraseData = '';
-    const { title, description } = getAuthModalLabels();
 
     AuthenticationModal2024.show({
       confirmText: t('page.addressDetail.verify-and-backup'),
-      title,
-      description,
+      title: authType => getAuthModalLabels(authType).title,
+      description: authType => getAuthModalLabels(authType).description,
       hideCancelButton: true,
       validationHandler: async (password: string) => {
         if (!address) return;
@@ -140,12 +142,11 @@ function Backup(): JSX.Element {
 
   const handleBackupToPaper = React.useCallback(() => {
     let seedPhraseData = '';
-    const { title, description } = getAuthModalLabels();
 
     AuthenticationModal2024.show({
       confirmText: t('page.addressDetail.verify-and-backup'),
-      title,
-      description,
+      title: authType => getAuthModalLabels(authType).title,
+      description: authType => getAuthModalLabels(authType).description,
       hideCancelButton: true,
       validationHandler: async (password: string) => {
         if (!address) return;

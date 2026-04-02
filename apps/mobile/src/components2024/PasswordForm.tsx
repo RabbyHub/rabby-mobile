@@ -108,16 +108,14 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
                 t('page.createPassword.confirmError'),
               ),
         }),
-      enableBiometrics: Yup.boolean().default(
-        mergedInitialValues.enableBiometrics,
-      ),
+      enableBiometrics: Yup.boolean().default(couldSetupBiometrics),
       checked: Yup.boolean().default(mergedInitialValues.checked).oneOf([true]),
     });
   }, [
     t,
+    couldSetupBiometrics,
     mergedInitialValues.password,
     mergedInitialValues.confirmPassword,
-    mergedInitialValues.enableBiometrics,
     mergedInitialValues.checked,
   ]);
 
@@ -135,14 +133,6 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
       await onSubmit(values);
     },
   });
-
-  // Initialize biometrics default value once capability is known
-  React.useEffect(() => {
-    if (couldSetupBiometrics) {
-      formik.setFieldValue('enableBiometrics', true, false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [couldSetupBiometrics]);
 
   const handleContinue = useCallback(() => {
     const validationResult = formik.validateFormValues();
