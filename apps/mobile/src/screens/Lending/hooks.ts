@@ -18,9 +18,8 @@ import {
 } from '@aave/math-utils';
 import { ethers } from 'ethers';
 import dayjs from 'dayjs';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { useAtom } from 'jotai';
 import { useCallback, useMemo } from 'react';
-import { InteractionManager, unstable_batchedUpdates } from 'react-native';
 import { BigNumber } from 'bignumber.js';
 import { FormattedReservesAndIncentives, formatUserYield } from './utils/apy';
 import { CustomMarket, MarketDataType, marketsData } from './config/market';
@@ -33,22 +32,12 @@ import {
   storeApiAccountsSwitcher,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
-import {
-  atomByMMKV,
-  makeJotaiJsonStore,
-  makeMMKVStorage,
-  MMKVStorageStrategy,
-} from '@/core/storage/mmkv';
+import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { findChainByID } from '@/utils/chain';
 import { getProvider } from './provider';
 import { fetchIconSymbolAndName, IconSymbolInterface } from './utils/icon';
-import { ExtractAtomValueType, RefLikeObject } from '@/utils/type';
 import { jotaiStore, zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { debounce } from 'lodash';
 import {
@@ -63,6 +52,7 @@ import { nativeToWrapper } from './config/nativeToWrapper';
 
 const marketAtom = atomByMMKV('@lendingMarket', CustomMarket.proto_mainnet_v3, {
   storage: MMKVStorageStrategy.compatString,
+  getOnInit: true,
 });
 
 const getMarketInfo = (market?: CustomMarket) => {

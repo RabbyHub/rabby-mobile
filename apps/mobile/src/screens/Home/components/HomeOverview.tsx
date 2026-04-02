@@ -12,9 +12,7 @@ import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 
 import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
-import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
 import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
-import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -621,16 +619,16 @@ export const HomeOverview = React.memo(() => {
   const sortedAccounts = useSortAddressList(accounts);
   useSubscribePosition(sortedAccounts);
 
-  const { lending: lendingDappId } = useInnerDappSelection();
+  const { perps: perpsDappId } = useInnerDappSelection();
 
-  const lendingIcon =
+  const perpsIcon =
     (
       {
-        spark: RcIconSparkCC,
-        venus: RcIconVenusCC,
-        aave: RcIconLending,
+        aster: RcIconAsterCC,
+        lighter: RcIconLighterCC,
+        hyperliquid: RcIconPerps,
       } as const
-    )[lendingDappId] ?? RcIconLending;
+    )[perpsDappId] ?? RcIconPerps;
 
   const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
 
@@ -674,7 +672,7 @@ export const HomeOverview = React.memo(() => {
         {
           key: MultiHomeFeatTitle.Lending,
           title: t('page.home.services.lending'),
-          icon: lendingIcon,
+          icon: RcIconLending,
           color: colors2024['brand-default-icon'],
         },
         {
@@ -726,7 +724,6 @@ export const HomeOverview = React.memo(() => {
       }[],
     [
       t,
-      lendingIcon,
       colors2024,
       historyCount?.fail,
       historyCount?.success,

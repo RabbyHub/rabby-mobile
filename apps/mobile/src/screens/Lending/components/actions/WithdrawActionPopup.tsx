@@ -494,9 +494,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             showTextOnLoading
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.withdrawDetail.actions')}
-            title={`${t('page.Lending.withdrawDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.withdrawDetail.actions')}
             onFinished={() => handleWithdraw()}
             disabled={
               !amount ||
@@ -522,9 +520,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
             onPress={() => handleWithdraw()}
-            title={`${t('page.Lending.withdrawDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.withdrawDetail.actions')}
             loading={isLoading}
             disabled={
               !amount ||

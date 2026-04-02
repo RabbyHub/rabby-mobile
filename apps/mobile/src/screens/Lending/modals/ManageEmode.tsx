@@ -41,6 +41,7 @@ export const ManageEmodeModal = ({ onClose }: { onClose: () => void }) => {
         {t('page.Lending.manageEmode.guide.description')}
       </Text>
       <Button
+        type="aave"
         containerStyle={styles.button}
         title={t('page.Lending.manageEmode.guide.buttonTitle')}
         onPress={handlePressManageEMode}

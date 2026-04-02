@@ -108,6 +108,7 @@ const EmptyItem = () => {
             <View style={styles.left}>
               <TokenIcon
                 tokenSymbol={item.reserve.symbol}
+                size={36}
                 chainSize={0}
                 chain={chainEnum || CHAINS_ENUM.ETH}
               />
