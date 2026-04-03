@@ -336,7 +336,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     if (visible && !didInitRef.current) {
       didInitRef.current = true;
       setUsdValue(
-        new BigNumber(minDepositUsd).toFixed(4, BigNumber.ROUND_CEIL),
+        new BigNumber(minDepositUsd).toFixed(2, BigNumber.ROUND_CEIL),
       );
     }
   }, [minDepositUsd, setUsdValue, visible]);
