@@ -348,6 +348,32 @@ const DFLT_SEND_STATE: SendScreenState = {
   // toAddrAccountInfo: null,
   toAddrDesc: null,
 };
+
+const DFLT_SEND_SUCCESS_RESET_STATE: Partial<SendScreenState> = {
+  cacheAmount: DFLT_SEND_STATE.cacheAmount,
+  tokenAmountForGas: DFLT_SEND_STATE.tokenAmountForGas,
+  showGasReserved: DFLT_SEND_STATE.showGasReserved,
+  clickedMax: DFLT_SEND_STATE.clickedMax,
+  balanceError: DFLT_SEND_STATE.balanceError,
+  balanceWarn: DFLT_SEND_STATE.balanceWarn,
+  showBalanceLoading: DFLT_SEND_STATE.showBalanceLoading,
+  balanceLoadedKey: DFLT_SEND_STATE.balanceLoadedKey,
+  isLoading: DFLT_SEND_STATE.isLoading,
+  isSubmitLoading: DFLT_SEND_STATE.isSubmitLoading,
+  estimatedGas: DFLT_SEND_STATE.estimatedGas,
+  isEstimatingGas: DFLT_SEND_STATE.isEstimatingGas,
+  reserveGasOpen: DFLT_SEND_STATE.reserveGasOpen,
+  temporaryGrant: DFLT_SEND_STATE.temporaryGrant,
+  gasSelectorVisible: DFLT_SEND_STATE.gasSelectorVisible,
+  selectedGasLevel: DFLT_SEND_STATE.selectedGasLevel,
+  safeInfo: DFLT_SEND_STATE.safeInfo,
+  addressToAddAsContacts: DFLT_SEND_STATE.addressToAddAsContacts,
+  addressToEditAlias: DFLT_SEND_STATE.addressToEditAlias,
+  buildTxsCount: DFLT_SEND_STATE.buildTxsCount,
+  agreeRequiredChecks: {
+    ...DFLT_SEND_STATE.agreeRequiredChecks,
+  },
+};
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 function setSendScreenState(valOrFunc: UpdaterOrPartials<SendScreenState>) {
   return jotaiStore.set(sendTokenScreenStateAtom, prev => {
@@ -703,7 +729,12 @@ export function useSendTokenForm({
     });
   }, [loadGasListAndResolve]);
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    close: closeMiniSigner,
+    resetGasStore,
+  } = useMiniSigner({
     account: currentAccount || fallbackAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
@@ -1923,6 +1954,50 @@ export function useSendTokenForm({
   const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
 
+  const invalidatePreparedTx = useCallback(() => {
+    prepareCountRef.current = 0;
+    prepareRef.current = undefined;
+  }, []);
+
+  const resetAfterSignedSuccess = useCallback(() => {
+    invalidatePreparedTx();
+    closeMiniSigner();
+    resetGasStore();
+    formValuesRef.current.clear();
+    setSlider(0);
+    setIsDraggingSlider(false);
+
+    handleFormValuesChange(
+      {
+        amount: '',
+        messageDataForSendToEoa: '',
+        messageDataForContractCall: '',
+      },
+      {
+        currentPartials: {
+          ...formik.values,
+          amount: '',
+          messageDataForSendToEoa: '',
+          messageDataForContractCall: '',
+        },
+      },
+    );
+
+    putScreenState(prev => ({
+      ...prev,
+      ...DFLT_SEND_SUCCESS_RESET_STATE,
+    }));
+  }, [
+    invalidatePreparedTx,
+    closeMiniSigner,
+    resetGasStore,
+    formValuesRef,
+    setSlider,
+    setIsDraggingSlider,
+    handleFormValuesChange,
+    formik.values,
+  ]);
+
   const isFocused = useIsFocused();
 
   const stableAmountValue = useDebouncedValue(formValues.amount, 300);
@@ -2037,6 +2112,7 @@ export function useSendTokenForm({
     formik,
     formValues,
     resetFormValues,
+    resetAfterSignedSuccess,
     handleFieldChange,
     patchFormValues,
     handleFormValuesChange,
