@@ -46,8 +46,10 @@ export function useCurrentCurrencyVisible() {
 
 export function CurrencySelectorPopup({
   onCancel,
+  onSelectCurrency,
 }: RNViewProps & {
   onCancel?(): void;
+  onSelectCurrency?(item: CurrencyItem): void;
 }) {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -181,7 +183,10 @@ export function CurrencySelectorPopup({
               <TouchableOpacity
                 key={item.code}
                 onPress={() => {
-                  setCurrentCurrency(item.code);
+                  if (!isSelected) {
+                    setCurrentCurrency(item.code);
+                    onSelectCurrency?.(item);
+                  }
                   setIsShowCurrencyPopup(false);
                 }}>
                 <View style={styles.listItem}>

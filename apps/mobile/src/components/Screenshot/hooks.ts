@@ -96,17 +96,22 @@ function setScreenshotFeedback(
 }
 
 const toggleScreenshotToReport = (nextVal?: boolean) => {
+  let finalValue = false;
   setScreenshotFeedback(prev => {
     if (nextVal === undefined) {
       const prevEnabled = !!prev.showFeedbackOnScreenshot_20250923;
       nextVal = !prevEnabled;
     }
 
+    finalValue = !!nextVal;
+
     return {
       ...prev,
       showFeedbackOnScreenshot_20250923: nextVal,
     };
   });
+
+  return finalValue;
 };
 
 const toggleSkipReportIn24Hours = (nextVal: boolean = true) => {

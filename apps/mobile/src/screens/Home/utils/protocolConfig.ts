@@ -15,7 +15,7 @@ import { useSelectedMarket } from '@/screens/Lending/hooks';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { matomoRequestEvent } from '@/utils/analytics';
 
-const keyToMarketKey: Record<string, CustomMarket> = {
+export const keyToMarketKey: Record<string, CustomMarket> = {
   aave3: CustomMarket.proto_mainnet_v3,
   op_aave3: CustomMarket.proto_optimism_v3,
   avax_aave3: CustomMarket.proto_avalanche_v3,

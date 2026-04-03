@@ -52,10 +52,12 @@ const SIZES = {
 export const SelectAutolockTimeBottomSheetModal = ({
   onConfirm,
   onCancel,
+  onSelectTimeMs,
   ref,
 }: {
   onConfirm?: () => void;
   onCancel?: () => void;
+  onSelectTimeMs?: (ms: number) => void;
   ref?: Ref<BottomSheetModal>;
 }) => {
   const sheetModalRef = useRef<BottomSheetModal>(null);
@@ -71,10 +73,13 @@ export const SelectAutolockTimeBottomSheetModal = ({
   const handleConfirm = useCallback(
     (ms: number) => {
       onAutoLockTimeMsChange(ms);
+      if (timeoutMs !== ms) {
+        onSelectTimeMs?.(ms);
+      }
       onConfirm?.();
       sheetModalRef.current?.dismiss();
     },
-    [onConfirm],
+    [onConfirm, onSelectTimeMs, timeoutMs],
   );
 
   useImperativeHandle(
