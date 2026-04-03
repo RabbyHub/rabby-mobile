@@ -68,6 +68,8 @@
     "refresh": "重新整理",
     "Cancel": "取消",
     "Deleted": "刪除",
+    "WalletCreated": "錢包創建",
+    "WalletImported": "錢包導入",
     "folded": "Folded",
     "Balance": "餘額",
     "cancelButton": "取消",

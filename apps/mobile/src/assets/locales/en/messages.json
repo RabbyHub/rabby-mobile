@@ -37,10 +37,28 @@
       }
     },
     "getStart": {
-      "createNewAddress": "Create New Wallet",
+      "createNewAddress": "Create a new wallet",
       "alreadyHaveAddress": "I already have a wallet",
       "goToHome": "Go to Home",
-      "sync": "Scan to Sync Rabby Extension Wallet"
+      "sync": "Scan to Sync Rabby Extension Wallet",
+      "welcomeTitle": "Welcome to\nRabby Wallet",
+      "alreadyUseRabby": "I already use Rabby"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Restore your Rabby wallet",
+        "subtitle": "Welcome back! 🎉\nChoose a method to quickly restore your wallet."
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "Or you can <clickable>create a new wallet</clickable>"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "Enter your seed phrase",
+        "privateKeyPlaceholder": "Enter your private key"
+      },
+      "createWalletError": "Failed to create wallet",
+      "walletReady": "Your wallet is ready 🚀",
+      "setPasswordTip": "Set a password to secure your wallet"
     },
     "transactions": {
       "title": "Transactions",
@@ -1067,6 +1085,10 @@
         "empty": "No website added to favorites",
         "favorite": "Favorite",
         "search": "Search"
+      },
+      "depositAssets": {
+        "subtitle": "Receive assets to this wallet",
+        "title": "Deposit Assets"
       }
     },
     "copyTrading": {
@@ -1216,7 +1238,8 @@
         "importAddress": "Import Wallet",
         "hardwareWallet": "Hardware Wallet",
         "selectAddMethod": "Select Add Method",
-        "syncRabbyExtension": "Sync Rabby Extension"
+        "syncRabbyExtension": "Sync Rabby Extension",
+        "seedPhraseOrPrivateKey": "Seed phrase or private key"
       },
       "multiAddressHome": {
         "pin": "Pin",
@@ -1272,6 +1295,7 @@
     },
     "newAddress": {
       "Quick": "Quick",
+      "Done": "Done",
       "whatIsSeedPhrase": {
         "title": "What is a 'Seed phrase'",
         "description1": "A seed phrase is a series of words used to access and control your wallet. You can use it to recover your wallet on any device.",
@@ -1577,6 +1601,13 @@
       "remove-from-whitelist": "Remove from Whitelist",
       "backup-private-key": "Backup Private Key",
       "backup-seed-phrase": "Backup Seed Phrase",
+      "verify-password": "Verify password",
+      "verify-password-before-backup": "Verify your Rabby password before the backup",
+      "verify-face-id": "Verify Face ID",
+      "verify-face-id-before-backup": "Verify your Face ID before the backup",
+      "verify-fingerprint": "Verify fingerprint",
+      "verify-fingerprint-before-backup": "Verify your fingerprint before the backup",
+      "verify-and-backup": "Verify & back up",
       "delete-address": "Delete wallet",
       "delete-desc-needpassword": "Before you delete, keep the following points in mind to understand how to protect your assets.",
       "delete-desc": "Are you sure you want to delete this wallet?",
@@ -1694,12 +1725,12 @@
     "createPassword": {
       "settingUp": "Setting up password",
       "setUpSuccess": "Setup Password Successfully",
-      "Newpassword": "New password",
+      "Newpassword": "Enter password",
       "and": "and",
       "enable": "Enable {{ bioType }}",
-      "agreeToTerms": "I have read and agree to the",
-      "termOfUse": "Terms of Use",
-      "PrivacyPolicy": "Privacy Policy",
+      "agreeToTerms": "I've read and agree to the",
+      "termOfUse": "terms",
+      "PrivacyPolicy": "privacy policy",
       "phoneNotSupport": "Your phone does not support {{ bioType }}",
       "ConfirmPassword": "Confirm password",
       "biometricsFail": "Enable biometrics fail",
@@ -3165,7 +3196,7 @@
       }
     },
     "AuthenticationModal": {
-      "passwordPlaceholder": "Enter the Password to Confirm"
+      "passwordPlaceholder": "Enter password"
     },
     "Contact": {
       "EditModal": {
@@ -3387,9 +3418,14 @@
     "addButton": "Add",
     "closeButton": "Close",
     "Deleted": "Deleted",
+    "Created": "Created",
+    "Imported": "Imported",
+    "WalletCreated": "Wallet created",
+    "WalletImported": "Wallet imported",
     "nonce": "nonce",
     "Balance": "Balance",
     "Done": "Done",
+    "SavedSeedPhrase": "I've saved the seed phrase",
     "Nonce": "Nonce",
     "Edit": "Edit",
     "cancel": "Cancel",
@@ -3539,5 +3575,9 @@
     "unknownAddressFromTransaction": "The transaction involves an address that is not in your wallet. Please check the transaction history later.",
     "noTransactionOwnerAddress": "The transaction does not belong to any address in your wallet. Please check the transaction history later.",
     "noTransactionDetail": "Transaction details not found. Please check the transaction history later."
+  },
+  "backupReminder": {
+    "title": "You have not backed up your wallet",
+    "action": "Back up now"
   }
 }

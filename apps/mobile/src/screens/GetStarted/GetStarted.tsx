@@ -1,132 +1,159 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Modal,
-  Platform,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Dimensions, Image, TouchableOpacity } from 'react-native';
 
-import { RcIconLogo } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
 import { keyringService, preferenceService } from '@/core/services';
-import { useThemeColors } from '@/hooks/theme';
-import {
-  navigateDeprecated,
-  redirectToAddAddressEntry,
-} from '@/utils/navigation';
-import { Button } from '@rneui/themed';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import axios from 'axios';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native';
-import { APP_VERSIONS } from '@/constant';
+import { useTheme2024 } from '@/hooks/theme';
+import { navigateDeprecated } from '@/utils/navigation';
+import { Button } from '@/components2024/Button';
+import { useMemoizedFn } from 'ahooks';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useAppUnlocked } from '@/hooks/useLock';
-import { Text, TextInput } from '@/components/Typography';
+import { createGetStyles2024 } from '@/utils/styles';
+import TouchableText from '@/components/Touchable/TouchableText';
+import {
+  ProcDataType,
+  useCreateAddressProc,
+  useImportAddressProc,
+} from '@/hooks/address/useNewUser';
+import { isNonPublicProductionEnv } from '@/constant';
+import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Text } from '@/components/Typography';
+import ChevronRightSmallCC from '@/assets/icons/common/right-2-cc.svg';
 
-function GetStartedScreen(): JSX.Element {
-  const colors = useThemeColors();
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-  const styles = getStyles(colors);
-  const [isShowModal, setIsShowModal] = useState(false);
-  const [isFocus, setIsFocus] = useState(false);
-  const [code, setCode] = useState('');
-  const [errMessage, setErrMessage] = useState('');
+// Hero background images
+import heroBgLight from '@/assets/images/get-started/hero-bg-light.png';
+import heroBgDark from '@/assets/images/get-started/hero-bg-dark.png';
 
-  const { runAsync: invite, loading: isInviteLoading } = useRequest(
-    (id: string) => {
-      return axios.get<{ is_valid: boolean; code: number }>(
-        'https://app-api.rabby.io/promotion/invitation',
-        {
-          params: {
-            id,
-          },
-          headers: {
-            'X-Client': 'rabbymobile',
-            'X-Version': APP_VERSIONS.fromJs,
-          },
-        },
-      );
-    },
-    {
-      manual: true,
-    },
+// Logo images
+import logoLight from '@/assets/images/get-started/logo-light.png';
+import logoDark from '@/assets/images/get-started/logo-dark.png';
+
+// Actual image dimensions: 1179 x 1284
+const HERO_IMAGE_ASPECT_RATIO = 1284 / 1179;
+
+// Hero illustration component using PNG background
+const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
+  const { styles } = useTheme2024({ getStyle });
+
+  // Calculate height based on image aspect ratio
+  const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_IMAGE_ASPECT_RATIO);
+
+  return (
+    <View style={[styles.heroContainer, { height: heroHeight }]}>
+      {/* Hero background image - aligned to bottom so top gets cropped */}
+      <Image
+        source={isLight ? heroBgLight : heroBgDark}
+        style={[styles.heroBackground, { height: heroHeight }]}
+        resizeMode="cover"
+      />
+    </View>
   );
+};
 
-  const [isInited, setIsInited] = useState(false);
-  const handleGetStarted = useCallback(async () => {
-    if (!isInited) return;
+function NewUserGetStartedScreen() {
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const navigation = useRabbyAppNavigation();
+
+  const [getStarted, setGetStarted] = useState<{
+    localHasAccounts: boolean;
+    processedInit: boolean;
+  }>({
+    localHasAccounts: false,
+    processedInit: false,
+  });
+
+  const handleGoToHome = useCallback(async () => {
+    if (!getStarted.processedInit) {
+      return;
+    }
     if (!keyringService.isUnlocked()) {
       navigateDeprecated(RootNames.Unlock);
       return;
     }
 
-    redirectToAddAddressEntry();
-    // if (preferenceService.getPreference('isInvited')) {
-    //   navigateDeprecated(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
-    // } else {
-    //   setIsShowModal(true);
-    // }
-  }, [isInited]);
+    navigateDeprecated(RootNames.StackRoot, { screen: RootNames.Home });
+  }, [getStarted.processedInit]);
 
-  const handleInvite = async () => {
-    setErrMessage('');
+  const { startCreateAddressProc, resetCreateAddressProc } =
+    useCreateAddressProc();
+  const { resetImportAddressProc } = useImportAddressProc();
 
-    const INVALID_CODE = 'Invalid invitation code';
-    const INVALID_VERSION = 'Invalid code, Please update to the latest version';
+  useFocusEffect(
+    useCallback(() => {
+      resetCreateAddressProc();
+      resetImportAddressProc();
+    }, [resetCreateAddressProc, resetImportAddressProc]),
+  );
 
-    if (!code?.trim()) {
-      setErrMessage(INVALID_CODE);
+  const handleGoToCreate = useCallback(async () => {
+    if (!getStarted.processedInit) {
       return;
     }
-    try {
-      const { data } = await invite(code?.trim());
-
-      if (data?.is_valid) {
-        preferenceService.setPreference({
-          isInvited: true,
-        });
-        navigateDeprecated(RootNames.StackAddress, {
-          screen: RootNames.ImportNewAddress,
-        });
-        setIsShowModal(false);
-      } else if (+data?.code === 2) {
-        setErrMessage(INVALID_VERSION);
-      } else {
-        setErrMessage(INVALID_CODE);
-      }
-    } catch (e) {
-      setErrMessage(INVALID_CODE);
+    if (!keyringService.isUnlocked()) {
+      navigateDeprecated(RootNames.Unlock);
+      return;
     }
-  };
 
-  useEffect(() => {
-    if (isShowModal) {
-      setCode('');
-      setErrMessage('');
+    startCreateAddressProc(ProcDataType.Seed, '');
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_CREATE_NEW_ADDRESS,
+    );
+    navigateDeprecated(RootNames.SetupWallet);
+  }, [getStarted.processedInit, startCreateAddressProc]);
+
+  const handleGoToImport = useCallback(async () => {
+    if (!getStarted.processedInit) {
+      return;
     }
-  }, [isShowModal]);
+    if (!keyringService.isUnlocked()) {
+      navigateDeprecated(RootNames.Unlock);
+      return;
+    }
 
-  const navigation = useNavigation();
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
+    );
+    navigateDeprecated(RootNames.StackAddress, {
+      screen: RootNames.SelectImportMethod,
+    });
+  }, [getStarted.processedInit]);
+
+  const handleGoToSyncExtension = useCallback(async () => {
+    if (!getStarted.processedInit) {
+      return;
+    }
+    if (!keyringService.isUnlocked()) {
+      navigateDeprecated(RootNames.Unlock);
+      return;
+    }
+
+    navigateDeprecated(RootNames.StackAddress, {
+      screen: RootNames.ImportRabbyWallet,
+    });
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
+    );
+  }, [getStarted.processedInit]);
 
   const initAccounts = useMemoizedFn(async () => {
-    setIsInited(false);
+    setGetStarted(prev => ({ ...prev, processedInit: false }));
     try {
       const accounts = await keyringService.getAllVisibleAccountsArray();
+      setGetStarted(prev => ({ ...prev, localHasAccounts: !!accounts.length }));
       if (accounts?.length) {
-        navigation.dispatch(
-          StackActions.replace(RootNames.StackRoot, {
-            screen: RootNames.Home,
-          }),
-        );
+        resetNavigationTo(navigation, 'Home');
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setIsInited(true);
+      setGetStarted(prev => ({ ...prev, processedInit: true }));
     }
   });
 
@@ -139,292 +166,190 @@ function GetStartedScreen(): JSX.Element {
     }, [isAppUnlocked, initAccounts]),
   );
 
+  const { bottom, top } = useSafeAreaInsets();
+
   return (
     <View style={styles.screen}>
-      <View style={styles.centerWrapper}>
-        {/* top area */}
-        <View style={styles.topArea}>
-          <RcIconLogo />
-          <View style={styles.titleContainer}>
-            <View>
-              <Text style={styles.appName}>Rabby Wallet</Text>
-            </View>
-            {Platform.OS !== 'ios' && (
-              <View style={styles.beta}>
-                <Text style={styles.betaText}>Beta</Text>
-              </View>
-            )}
-          </View>
-
-          <Text style={styles.appDesc}>
-            Your go-to wallet for Ethereum and EVM
-          </Text>
-        </View>
-      </View>
-
-      {/* button area */}
-      <View style={styles.buttonArea}>
-        <Button
-          disabled={!isInited}
-          buttonStyle={styles.buttonStyle}
-          titleStyle={styles.buttonTitleStyle}
-          title="Get Started"
-          onPress={handleGetStarted}
+      {/* Header with logo - positioned right next to status bar, horizontally centered */}
+      <View style={[styles.logoWrapper, { top: top + 6 }]}>
+        <Image
+          source={isLight ? logoLight : logoDark}
+          style={styles.logoImage}
+          resizeMode="contain"
         />
       </View>
 
-      <Modal
-        visible={isShowModal}
-        className="w-[353] max-w-[100%]"
-        onRequestClose={() => {
-          setIsShowModal(false);
-        }}
-        transparent
-        animationType="fade">
-        <TouchableWithoutFeedback
-          onPress={() => {
-            setIsShowModal(false);
-          }}>
-          <View style={styles.overlay}>
-            <View
-              style={styles.modalContent}
-              onStartShouldSetResponder={() => true}>
-              <Text style={styles.modalTitle}>
-                Enter Invite Code to get started
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  isFocus ? styles.inputFocus : null,
-                  errMessage ? styles.inputError : null,
-                ]}
-                onFocus={() => {
-                  setIsFocus(true);
-                }}
-                onBlur={() => {
-                  setIsFocus(false);
-                }}
-                onChangeText={v => {
-                  setCode(v);
-                }}
-                value={code}
+      <View style={styles.contentContainer}>
+        {/* Hero Illustration - crops from top on short screens */}
+        <HeroIllustration isLight={isLight} />
+
+        {/* Text Content */}
+        <View style={styles.textContent}>
+          <Text style={styles.title}>{t('page.getStart.welcomeTitle')}</Text>
+          <Text style={styles.subtitle}>{t('global.appDescription')}</Text>
+        </View>
+
+        {/* Spacer to push bottom actions to screen bottom */}
+        <View style={styles.spacer} />
+
+        {/* Bottom Actions */}
+        <View
+          style={[
+            styles.bottomActions,
+            { paddingBottom: Math.max(bottom, 16) },
+          ]}>
+          {!getStarted.localHasAccounts ? (
+            <>
+              <Button
+                type="primary"
+                title={t('page.getStart.createNewAddress')}
+                disabled={
+                  !getStarted.processedInit || getStarted.localHasAccounts
+                }
+                onPress={handleGoToCreate}
               />
-              <View className="h-[16] mt-[10]">
-                {errMessage ? (
-                  <Text style={styles.errorMsg}>{errMessage}</Text>
-                ) : null}
-              </View>
-              <View style={styles.modalFooter}>
-                <View style={styles.flex1}>
-                  <Button
-                    title="Cancel"
-                    buttonStyle={styles.cancelStyle}
-                    titleStyle={styles.cancelTitleStyle}
-                    onPress={() => {
-                      setIsShowModal(false);
-                    }}
+              <Button
+                disabled={
+                  !getStarted.processedInit || getStarted.localHasAccounts
+                }
+                type="ghost"
+                title={t('page.getStart.alreadyHaveAddress')}
+                onPress={handleGoToImport}
+                buttonStyle={styles.secondaryButton}
+              />
+              <TouchableOpacity
+                style={styles.syncLink}
+                disabled={
+                  !getStarted.processedInit || getStarted.localHasAccounts
+                }
+                onPress={handleGoToSyncExtension}>
+                <View style={styles.syncLinkContent}>
+                  <Text style={styles.syncLinkText}>
+                    {t('page.getStart.alreadyUseRabby')}
+                  </Text>
+                  <ChevronRightSmallCC
+                    color={colors2024['neutral-secondary']}
                   />
                 </View>
-                <View style={styles.flex1}>
-                  <Button
-                    title="Next"
-                    buttonStyle={styles.confirmStyle}
-                    titleStyle={styles.confirmTitleStyle}
-                    loading={isInviteLoading}
-                    onPress={handleInvite}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Button
+              type="primary"
+              title={t('page.getStart.goToHome') || 'Go to Home'}
+              disabled={
+                !getStarted.processedInit || !getStarted.localHasAccounts
+              }
+              onPress={handleGoToHome}
+            />
+          )}
+
+          {isNonPublicProductionEnv && (
+            <TouchableText
+              style={[styles.testLink, { color: colors2024['orange-default'] }]}
+              disabled={
+                !getStarted.processedInit || getStarted.localHasAccounts
+              }
+              onPress={() => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackSettings, {
+                    screen: RootNames.Settings,
+                    params: {},
+                  }),
+                );
+              }}>
+              {'(Test Only) Enter Settings >'}
+            </TouchableText>
+          )}
+        </View>
+      </View>
     </View>
   );
 }
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
-  StyleSheet.create({
-    screen: {
-      backgroundColor: colors['blue-default'],
-      flexDirection: 'column',
-      justifyContent: 'center',
-      height: '100%',
-    },
-    centerWrapper: {
-      paddingHorizontal: 20,
-      minHeight: '80%',
-      height: 350 + 56 + 84,
-      maxHeight: '100%',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flex: 1,
-      // // leave here for debug
-      // borderWidth: 1,
-      // borderColor: 'black',
-    },
-    topArea: {
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      flex: 0,
-    },
-    titleContainer: {
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 8,
-      marginTop: -14,
-    },
-    appName: {
-      color: colors['neutral-title-2'],
-      fontSize: 24,
-      lineHeight: 28,
-      fontWeight: '500',
-    },
-    beta: {
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      borderRadius: 90,
-      paddingVertical: 2,
-      paddingHorizontal: 8,
-      color: 'white',
-      fontSize: 12,
-      fontWeight: '400',
-      marginTop: 3,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    betaText: {
-      display: 'flex',
-      color: colors['neutral-title-2'],
-      fontSize: 12,
-      fontWeight: '400',
-    },
-    appDesc: {
-      color: colors['neutral-title-2'],
-      fontSize: 17,
-      lineHeight: 24,
-      textAlign: 'center',
-      fontWeight: '500',
-      marginTop: 32,
-    },
-    modalTitle: {
-      color: colors['neutral-title-1'],
-      fontSize: 20,
-      lineHeight: 24,
-      fontWeight: '500',
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-    modalFooter: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 26,
-      width: '100%',
-      gap: 10,
-    },
-    flex1: {
-      flex: 1,
-    },
-    errorMsg: {
-      color: colors['red-default'],
-      fontSize: 13,
-      lineHeight: 16,
-    },
-    buttonArea: {
-      flexDirection: 'column',
-      alignItems: 'center',
-      paddingBottom: 80,
-    },
-    buttonStyle: {
-      width: 268,
-      height: 56,
-      borderRadius: 8,
-      backgroundColor: colors['neutral-title2'],
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.11,
-          shadowRadius: 24,
-        },
-        android: {
-          elevation: 24,
-        },
-      }),
-    },
-    buttonTitleStyle: {
-      fontSize: 17,
-      lineHeight: 20,
-      fontWeight: '600',
-      color: colors['blue-default'],
-    },
-    cancelStyle: {
-      backgroundColor: colors['neutral-card-1'],
-      borderColor: colors['blue-default'],
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderRadius: 6,
-      height: 44,
+const getStyle = createGetStyles2024(ctx => ({
+  screen: {
+    flex: 1,
+    backgroundColor: ctx.colors['neutral-card1'],
+  },
+  logoWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: 159,
+    height: 33,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  heroContainer: {
+    width: SCREEN_WIDTH,
+    flexShrink: 1,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  heroBackground: {
+    width: SCREEN_WIDTH,
+  },
+  textContent: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  title: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '800',
+    fontSize: 28,
+    lineHeight: 36,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-title-1'],
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 22,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  spacer: {
+    flex: 1,
+    minHeight: 16,
+  },
+  bottomActions: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    gap: 16,
+  },
+  secondaryButton: {
+    backgroundColor: ctx.colors2024['brand-light-1'],
+    borderWidth: 0,
+  },
+  syncLink: {
+    marginTop: 8,
+  },
+  syncLinkContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  syncLinkText: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 17,
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  testLink: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+}));
 
-      width: '100%',
-    },
-    cancelTitleStyle: {
-      fontSize: 15,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors['blue-default'],
-    },
-    confirmStyle: {
-      backgroundColor: colors['blue-default'],
-      height: 44,
-      borderRadius: 6,
-      width: '100%',
-    },
-    confirmTitleStyle: {
-      fontSize: 15,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors['neutral-title2'],
-    },
-    touchable: {
-      height: '100%',
-      backgroundColor: colors['red-default'],
-    },
-    overlay: {
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      height: '100%',
-      justifyContent: 'center',
-    },
-    modalContent: {
-      borderRadius: 8,
-      backgroundColor: colors['neutral-bg1'],
-      boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
-      marginHorizontal: 20,
-      paddingHorizontal: 20,
-      paddingTop: 24,
-      paddingBottom: 20,
-    },
-    input: {
-      borderColor: colors['neutral-line'],
-      borderWidth: 1,
-      borderStyle: 'solid',
-      backgroundColor: colors['r-neutral-bg1'],
-      height: 52,
-      width: '100%',
-      fontSize: 15,
-      lineHeight: 18,
-      padding: 15,
-      borderRadius: 6,
-    },
-    inputFocus: {
-      borderColor: colors['blue-default'],
-    },
-    inputError: {
-      borderColor: colors['red-default'],
-    },
-  });
-
-export default GetStartedScreen;
+export default NewUserGetStartedScreen;

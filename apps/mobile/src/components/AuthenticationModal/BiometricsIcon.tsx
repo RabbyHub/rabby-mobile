@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
 import { SvgProps } from 'react-native-svg';
 
-import {
-  RcIconKeychainFaceIdCC,
-  RcIconKeychainFingerprintCC,
-} from '@/assets/icons/lock';
+import RcIconKeychainFaceIdCC from '@/assets2024/icons/common/fack_id.svg';
+import RcIconKeychainFingerprintCC from '@/assets2024/icons/common/fingerprint.svg';
 import { ColorOrVariant, pickColorVariants } from '@/core/theme';
 import { useBiometricsComputed } from '@/hooks/biometrics';
 import { useThemeStyles } from '@/hooks/theme';

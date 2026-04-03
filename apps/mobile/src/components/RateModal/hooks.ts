@@ -90,7 +90,7 @@ function userCouldRated(
 //   })
 // })
 
-const rateGuideLastExposureState = zustandByMMKV(
+export const rateGuideLastExposureState = zustandByMMKV(
   '@RateGuideLastExposure',
   getDefaultRateGuideLastExposure(),
   { storage: MMKVStorageStrategy.compatJson },
