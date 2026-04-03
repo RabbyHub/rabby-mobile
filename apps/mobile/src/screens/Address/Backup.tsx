@@ -1,6 +1,6 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -9,8 +9,10 @@ import { Text } from '@/components/Typography';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { RouteProp } from '@react-navigation/native';
 
-import RcIconBackupCloud from '@/assets2024/icons/backup/cloud.svg';
 import RcIconBackupManual from '@/assets2024/icons/backup/manual.svg';
+
+const IconIcloudSrc = require('@/assets2024/icons/common/IconIcloud.png');
+const IconGoogleDriveSrc = require('@/assets2024/icons/common/IconGoogleDrive.png');
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -199,7 +201,10 @@ function Backup(): JSX.Element {
           android_ripple={{ color: colors2024['neutral-line'] }}>
           <View style={styles.cardContent}>
             <View style={styles.iconRow}>
-              <RcIconBackupCloud width={40} height={40} />
+              <Image
+                source={IS_IOS ? IconIcloudSrc : IconGoogleDriveSrc}
+                style={styles.cloudIcon}
+              />
               <Text style={styles.cardTitle}>
                 {IS_IOS
                   ? t('page.newAddress.seedPhrase.icloudBackup')
@@ -275,6 +280,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  cloudIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
   },
   quickBadge: {
     backgroundColor: colors2024['brand-light-1'],

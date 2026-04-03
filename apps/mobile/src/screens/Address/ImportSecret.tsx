@@ -230,12 +230,6 @@ export const ImportSecret = () => {
     }
   }, [scanner, activeTab]);
 
-  useFocusEffect(() => {
-    return () => {
-      // Cleanup if needed
-    };
-  });
-
   const isConfirmDisabled = React.useMemo(() => {
     if (activeTab === 'seedPhrase') {
       return !mnemonics?.trim() || !!mnemonicError;
