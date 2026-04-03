@@ -108,11 +108,17 @@ const EmptyItem = () => {
             <View style={styles.left}>
               <TokenIcon
                 tokenSymbol={item.reserve.symbol}
+                size={36}
                 chainSize={0}
                 chain={chainEnum || CHAINS_ENUM.ETH}
               />
               <View style={styles.symbolContainer}>
-                <Text style={styles.symbol}>{item.reserve.symbol}</Text>
+                <Text
+                  style={styles.symbol}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {item.reserve.symbol}
+                </Text>
               </View>
             </View>
             <Text style={styles.tvl}>
@@ -203,6 +209,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   symbolContainer: {
     gap: 2,
+    flex: 1,
   },
   symbol: {
     fontSize: 16,
