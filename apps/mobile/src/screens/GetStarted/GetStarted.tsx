@@ -280,7 +280,7 @@ const getStyle = createGetStyles2024(ctx => ({
     alignItems: 'center',
   },
   logoImage: {
-    width: 142, // ~33px (icon) + 4.27px (gap) + 105px (text) from Figma
+    width: 159,
     height: 33,
   },
   contentContainer: {
