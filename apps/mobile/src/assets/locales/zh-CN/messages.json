@@ -173,7 +173,7 @@
         "WithdrawnGas": "已提取 Gas",
         "ReceivedGas": "收到 Gas",
         "DepositedGas": "存入 Gas",
-        "LendingBorrow": "借入",
+        "LendingBorrow": "借款",
         "LendingSupply": "存款",
         "LendingRepay": "偿还",
         "LendingWithdraw": "提取",
@@ -2893,10 +2893,10 @@
         "actions": "还款",
         "approveAndRepay": "批准和还款",
         "tabs": {
-          "collateral": "抵押品",
-          "wallet": "钱包余额"
+          "collateral": "抵押品还款",
+          "wallet": "钱包余额还款"
         },
-        "repayWith": "使用还款与"
+        "repayWith": "还款方式"
       },
       "supplyDetail": {
         "actions": "存款",
@@ -2905,7 +2905,7 @@
         "supplyAPY": "存款 APY",
         "unavailable": "不可用",
         "isolatedTips": "您现有的借贷资产不受支持。",
-        "collateralization": "抵押化",
+        "collateralization": "可质押",
         "supplyBalance": "存款余额",
         "enabled": "启用",
         "supplied": "已存款"
@@ -2915,19 +2915,19 @@
         "remainingSupply": "剩余存款"
       },
       "borrowDetail": {
-        "actions": "借入",
+        "actions": "借款",
         "approveAndBorrow": "批准并借入",
         "almostReachedWarning": "该资产的协议借款上限为100%。进一步借款不可用。",
         "almostReachedError": "可借用的最大金额受限，因为协议借款上限几乎已达到。",
         "swapDebt": "交换",
-        "borrowed": "借入"
+        "borrowed": "已借款"
       },
       "popup": {
         "remainingDebt": "剩余债务",
         "title": "交易概览",
         "available": "可用",
         "amount": "金额",
-        "liquidationAt": "清算在 < 1.0"
+        "liquidationAt": "< 1.0时清算"
       },
       "borrowOverview": {
         "title": "借款详情",
@@ -3069,12 +3069,12 @@
           "swapTo": "交换为",
           "select": "选择",
           "amount": "金额",
-          "borrowed": "借入"
+          "borrowed": "已借款"
         },
         "overview": {
           "title": "交易概览",
           "borrowAPY": "借款apy",
-          "borrowValueAfter": "交换后的借用余额"
+          "borrowValueAfter": "交换后的借款余额"
         },
         "button": {
           "swap": "交换"
