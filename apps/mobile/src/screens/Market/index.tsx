@@ -257,69 +257,68 @@ export default function MarketScreen() {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
-  overwriteStyle: {
-    position: 'relative',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-  },
-  container: {
-    flex: 1,
-  },
-  headerRight: {
-    paddingRight: 4,
-    paddingVertical: 4,
-  },
-  tabBarWrap: {
-    shadowColor: 'transparent',
-    shadowOpacity: 0,
-    elevation: 0,
-    borderBottomWidth: 1,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-    borderBottomColor: colors2024['neutral-bg-5'],
-  },
-  tabBar: {
-    height: 36,
-    width: 'auto',
-    flexShrink: 0,
-    flex: 0,
-    paddingHorizontal: 0,
-  },
-  firstTabBar: {
-    marginRight: FIRST_TAB_GAP,
-  },
-  restTabBar: {
-    marginRight: TAB_GAP,
-  },
-  tabsBarContainer: {
-    display: 'flex',
-    paddingLeft: 20,
-    position: 'relative',
-    height: 36,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
-    overflow: 'hidden',
-  },
-  indicator: {
-    backgroundColor: colors2024['neutral-body'],
-    height: 4,
-    borderRadius: 100,
-  },
-  content: {
-    flex: 1,
-  },
-  categoryLabelContainer: {
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  watchlistLabelContainer: {
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
+  const bgColor = isLight
+    ? colors2024['neutral-bg-0']
+    : colors2024['neutral-bg-1'];
+  return {
+    overwriteStyle: {
+      position: 'relative',
+      backgroundColor: bgColor,
+    },
+    container: {
+      flex: 1,
+    },
+    headerRight: {
+      paddingRight: 4,
+      paddingVertical: 4,
+    },
+    tabBarWrap: {
+      shadowColor: 'transparent',
+      shadowOpacity: 0,
+      elevation: 0,
+      borderBottomWidth: 1,
+      backgroundColor: bgColor,
+      borderBottomColor: colors2024['neutral-bg-5'],
+    },
+    tabBar: {
+      height: 36,
+      width: 'auto',
+      flexShrink: 0,
+      flex: 0,
+      paddingHorizontal: 0,
+    },
+    firstTabBar: {
+      marginRight: FIRST_TAB_GAP,
+    },
+    restTabBar: {
+      marginRight: TAB_GAP,
+    },
+    tabsBarContainer: {
+      display: 'flex',
+      paddingLeft: 20,
+      position: 'relative',
+      height: 36,
+      backgroundColor: bgColor,
+      overflow: 'hidden',
+    },
+    indicator: {
+      backgroundColor: colors2024['neutral-body'],
+      height: 4,
+      borderRadius: 100,
+    },
+    content: {
+      flex: 1,
+    },
+    categoryLabelContainer: {
+      height: 36,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    watchlistLabelContainer: {
+      height: 36,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  };
+});
