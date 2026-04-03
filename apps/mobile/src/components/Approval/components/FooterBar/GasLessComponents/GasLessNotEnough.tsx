@@ -11,9 +11,16 @@ import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { GasAccountDepositTipPopup } from '@/screens/GasAccount/components/GasAccountDepositTipPopup';
 import { Text } from '@/components/Typography';
 import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
-import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { formatUsdValue } from '@/utils/number';
 import { toast } from '@/components2024/Toast';
+import { usePendingHardwareGasAccountLogin } from './usePendingHardwareGasAccountLogin';
+import { useGasAccountBalance } from './useGasAccountBalance';
+
+type ActionButton = {
+  text: string;
+  onPress?: () => void;
+  disabled: boolean;
+};
 
 export const GasLessNotEnough: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -24,7 +31,7 @@ export const GasLessNotEnough: React.FC<{
   onDeposit?(): void;
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
-  onGotoGasAccount?(): void;
+  nativeTokenInsufficient?: boolean;
   inShowMore?: boolean;
 }> = ({
   gasAccountCost,
@@ -35,6 +42,7 @@ export const GasLessNotEnough: React.FC<{
   onDeposit,
   onWaitDepositResult,
   onDepositPopupVisibleChange,
+  nativeTokenInsufficient,
   inShowMore,
 }) => {
   const { t } = useTranslation();
@@ -46,7 +54,59 @@ export const GasLessNotEnough: React.FC<{
     onDepositPopupVisibleChange?.(visible);
   };
 
-  const { value: gasAccountInfo } = useGasAccountInfo();
+  const gasAccountBalance = useGasAccountBalance(gasAccountAddress);
+
+  const {
+    shouldSignWithPendingHardware,
+    pendingHardwareAddressLabel,
+    isLoggingPendingHardware,
+    handleSignWithPendingHardware,
+  } = usePendingHardwareGasAccountLogin({
+    enabled: !!nativeTokenInsufficient,
+    gasAccountCost,
+    currentGasAccountAddress: gasAccountAddress,
+    onLoggedIn: onChangeGasAccount,
+  });
+  const signWithHardwareBrand =
+    pendingHardwareAddressLabel || t('page.home.addAddress.hardwareWallet');
+  const signWithHardwareTip = t(
+    'page.signFooterBar.gasAccount.signWithHardwareWalletToUse',
+    {
+      brand: signWithHardwareBrand,
+    },
+  );
+  const notEnoughTip = t('page.signFooterBar.gasAccount.notEnough', {
+    usd: formatUsdValue(gasAccountBalance),
+  });
+  const depositButton: ActionButton = {
+    text: t('page.signFooterBar.gasAccount.deposit'),
+    onPress: () => setDepositPopupVisible(true),
+    disabled: false,
+  };
+  const switchGasAccountButton: ActionButton = {
+    text: t('page.signFooterBar.gasAccount.useGasAccount'),
+    onPress: onChangeGasAccount,
+    disabled: false,
+  };
+
+  const tipText = shouldSignWithPendingHardware
+    ? signWithHardwareTip
+    : canDepositUseGasAccount
+    ? notEnoughTip
+    : t('page.signFooterBar.gasless.notEnough');
+
+  let button: ActionButton | null = null;
+  if (shouldSignWithPendingHardware) {
+    button = {
+      text: t('page.signFooterBar.signAndSubmitButton'),
+      onPress: handleSignWithPendingHardware,
+      disabled: isLoggingPendingHardware,
+    };
+  } else if (canDepositUseGasAccount) {
+    button = depositButton;
+  } else if (canGotoUseGasAccount) {
+    button = switchGasAccountButton;
+  }
 
   return (
     <>
@@ -65,7 +125,7 @@ export const GasLessNotEnough: React.FC<{
             },
           ]}
         />
-        <View>
+        <View style={[styles.textWrap, button && styles.textWrapWithButton]}>
           <Text
             style={[
               styles.text,
@@ -73,31 +133,16 @@ export const GasLessNotEnough: React.FC<{
                 color: colors2024['red-default'],
               },
             ]}>
-            {canDepositUseGasAccount
-              ? t('page.signFooterBar.gasAccount.notEnough', {
-                  usd: formatUsdValue(gasAccountInfo?.account?.balance || 0),
-                })
-              : t('page.signFooterBar.gasless.notEnough')}
+            {tipText}
           </Text>
         </View>
 
-        {canDepositUseGasAccount ? (
+        {button ? (
           <TouchableOpacity
             style={styles.gasAccountBtn}
-            onPress={() => {
-              setDepositPopupVisible(true);
-            }}>
-            <Text style={styles.gasAccountTipBtnText}>
-              {t('page.signFooterBar.gasAccount.deposit')}
-            </Text>
-          </TouchableOpacity>
-        ) : canGotoUseGasAccount ? (
-          <TouchableOpacity
-            style={styles.gasAccountBtn}
-            onPress={onChangeGasAccount}>
-            <Text style={styles.gasAccountTipBtnText}>
-              {t('page.signFooterBar.gasAccount.useGasAccount')}
-            </Text>
+            disabled={button.disabled}
+            onPress={button.onPress}>
+            <Text style={styles.gasAccountTipBtnText}>{button.text}</Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -164,6 +209,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       lineHeight: 18,
       color: colors2024['red-default'],
+      flexShrink: 1,
+    },
+    textWrap: {
+      flex: 1,
+      minWidth: 0,
+    },
+    textWrapWithButton: {
+      marginRight: 12,
     },
 
     gasAccountBtn: {
@@ -173,7 +226,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: 28,
       backgroundColor: colors2024['brand-default'],
       borderRadius: 6,
-      marginLeft: 'auto',
+      flexShrink: 0,
       paddingHorizontal: 12,
     },
     gasAccountTipBtnText: {

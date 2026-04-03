@@ -66,7 +66,6 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasMethod?: 'native' | 'gasAccount';
   gasAccountCost?: GasAccountCheckResult;
   onChangeGasAccount?: () => void;
-  isGasAccountLogin?: boolean;
   isWalletConnect?: boolean;
   gasAccountCanPay?: boolean;
   noCustomRPC?: boolean;
@@ -230,7 +229,6 @@ export const MiniFooterBar: React.FC<Props> = ({
   gasAccountCost,
   gasMethod,
   onChangeGasAccount,
-  isGasAccountLogin,
   isWalletConnect,
   gasAccountCanPay,
   noCustomRPC,
@@ -391,6 +389,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                 ) : isWatchAddr ||
                   account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                   <GasLessNotEnough
+                    nativeTokenInsufficient={isGasNotEnough}
                     canGotoUseGasAccount={canGotoUseGasAccount}
                     canDepositUseGasAccount={
                       disableGasAccountDeposit ? false : canDepositUseGasAccount
@@ -423,9 +422,9 @@ export const MiniFooterBar: React.FC<Props> = ({
                   <GasAccountTips
                     gasAccountAddress={gasAccountAddress!}
                     gasAccountCost={gasAccountCost}
-                    isGasAccountLogin={isGasAccountLogin}
                     isWalletConnect={isWalletConnect}
                     noCustomRPC={noCustomRPC}
+                    nativeTokenInsufficient={isGasNotEnough}
                     onDeposit={onDeposit}
                     onWaitDepositResult={onWaitDepositResult}
                     disableDepositAction={disableGasAccountDeposit}

@@ -1,13 +1,11 @@
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Chain } from '@/constant/chains';
-import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { navigateDeprecated } from '@/utils/navigation';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
@@ -52,7 +50,6 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasMethod?: 'native' | 'gasAccount';
   gasAccountCost?: GasAccountCheckResult;
   onChangeGasAccount?: () => void;
-  isGasAccountLogin?: boolean;
   isWalletConnect?: boolean;
   gasAccountCanPay?: boolean;
   noCustomRPC?: boolean;
@@ -206,14 +203,12 @@ export const FooterBar: React.FC<Props> = ({
   gasAccountCost,
   gasMethod,
   onChangeGasAccount,
-  isGasAccountLogin,
   isWalletConnect,
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
   canDepositUseGasAccount,
   disableGasAccountDeposit = false,
-  rejectApproval,
   onDeposit,
   onWaitDepositResult,
   gasAccountAddress,
@@ -363,6 +358,7 @@ export const FooterBar: React.FC<Props> = ({
                 isWatchAddr ||
                 account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                 <GasLessNotEnough
+                  nativeTokenInsufficient={currentSelectionGasNotEnough}
                   canGotoUseGasAccount={canGotoUseGasAccount}
                   canDepositUseGasAccount={
                     disableGasAccountDeposit ? false : canDepositUseGasAccount
@@ -378,13 +374,6 @@ export const FooterBar: React.FC<Props> = ({
                     await onWaitDepositResult?.(result);
                     onChangeGasAccount?.();
                   }}
-                  onGotoGasAccount={() => {
-                    rejectApproval?.();
-                    navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.GasAccount,
-                      params: {},
-                    });
-                  }}
                 />
               )
             ) : null}
@@ -395,19 +384,12 @@ export const FooterBar: React.FC<Props> = ({
                 <GasAccountTips
                   gasAccountAddress={gasAccountAddress!}
                   gasAccountCost={gasAccountCost}
-                  isGasAccountLogin={isGasAccountLogin}
                   isWalletConnect={isWalletConnect}
                   noCustomRPC={noCustomRPC}
+                  nativeTokenInsufficient={currentSelectionGasNotEnough}
                   onDeposit={onDeposit}
                   onWaitDepositResult={onWaitDepositResult}
                   disableDepositAction={disableGasAccountDeposit}
-                  onGotoGasAccount={() => {
-                    rejectApproval?.();
-                    navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.GasAccount,
-                      params: {},
-                    });
-                  }}
                 />
               )
             ) : null}

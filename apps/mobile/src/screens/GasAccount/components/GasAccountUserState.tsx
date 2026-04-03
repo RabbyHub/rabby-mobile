@@ -12,7 +12,7 @@ import type { useGasAccountHistory } from '../hooks';
 
 type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
 
-export const GasAccountOldUserState: React.FC<{
+export const GasAccountUserState: React.FC<{
   balance?: number | string | null;
   historyState: GasAccountHistoryState;
   onDepositPress?(): void;

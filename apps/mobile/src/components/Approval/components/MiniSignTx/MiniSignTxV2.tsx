@@ -402,7 +402,6 @@ const MiniSignTxV2 = ({
   const checkErrors = ctx.checkErrors || [];
   const engineResults = ctx.engineResults;
   const gasPriceMedian = ctx.gasPriceMedian || null;
-  const isGasAccountLogin = !!sig && !!gasAccountAddress;
   const isWalletConnect = false;
   const isWatchAddr = false;
   const gasLessFailedReason = ctx.gasless?.desc;
@@ -535,7 +534,6 @@ const MiniSignTxV2 = ({
         }}
         onWaitDepositResult={handleTopUpWaitResult}
         gasAccountAddress={gasAccountAddress}
-        isGasAccountLogin={isGasAccountLogin}
         isWalletConnect={isWalletConnect}
         onChangeGasAccount={() => setGasMethod('gasAccount')}
         isWatchAddr={isWatchAddr}

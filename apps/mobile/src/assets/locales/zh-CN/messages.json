@@ -811,6 +811,7 @@
         "useGasAccount": "使用 GasAccount",
         "login": "登录",
         "loginFirst": "请先登录GasAccount",
+        "signWithHardwareWalletToUse": "你需要使用{{brand}}签名后才能使用",
         "chainNotSupported": "GasAccount 不支持该链",
         "customRPC": "使用自定义 RPC 时不支持",
         "WalletConnectTips": "GasAccount 不支持 WalletConnect"

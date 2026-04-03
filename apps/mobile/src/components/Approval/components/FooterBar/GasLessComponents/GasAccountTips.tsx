@@ -4,14 +4,21 @@ import { GasAccountDepositTipPopup } from '@/screens/GasAccount/components/GasAc
 import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
-import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { formatUsdValue } from '@/utils/number';
 import { toast } from '@/components2024/Toast';
+import { usePendingHardwareGasAccountLogin } from './usePendingHardwareGasAccountLogin';
+import { useGasAccountBalance } from './useGasAccountBalance';
+
+type ActionButton = {
+  text: string;
+  onPress: () => void;
+  disabled: boolean;
+};
 
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -20,15 +27,15 @@ export const GasAccountTips: React.FC<{
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
   disableDepositAction?: boolean;
-  isGasAccountLogin?: boolean;
   isWalletConnect?: boolean;
   noCustomRPC?: boolean;
-  onGotoGasAccount?: () => void;
+  nativeTokenInsufficient?: boolean;
   inShowMore?: boolean;
 }> = ({
   gasAccountCost,
   isWalletConnect,
   noCustomRPC,
+  nativeTokenInsufficient,
   onDeposit,
   onWaitDepositResult,
   onDepositPopupVisibleChange,
@@ -41,68 +48,80 @@ export const GasAccountTips: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
-  const { value: gasAccountInfo } = useGasAccountInfo();
+
+  const gasAccountBalance = useGasAccountBalance(gasAccountAddress);
+
+  const {
+    shouldSignWithPendingHardware,
+    pendingHardwareAddressLabel,
+    isLoggingPendingHardware,
+    handleSignWithPendingHardware,
+  } = usePendingHardwareGasAccountLogin({
+    enabled: !!nativeTokenInsufficient,
+    gasAccountCost,
+    currentGasAccountAddress: gasAccountAddress,
+  });
+
   const setDepositPopupVisible = (visible: boolean) => {
     setTipPopupVisible(visible);
     onDepositPopupVisibleChange?.(visible);
   };
 
-  const [tip, btnText] = useMemo(() => {
-    if (!noCustomRPC) {
-      return [t('page.signFooterBar.gasAccount.customRPC'), null];
-    }
-    if (isWalletConnect) {
-      return [t('page.signFooterBar.gasAccount.WalletConnectTips'), null];
-    }
-
-    if (gasAccountCost?.err_msg) {
-      if (
-        !gasAccountCost?.chain_not_support &&
-        gasAccountCost?.err_msg?.toLowerCase() ===
-          GAS_ACCOUNT_INSUFFICIENT_TIP.toLowerCase()
-      ) {
-        return [
-          t('page.signFooterBar.gasAccount.notEnough', {
-            usd: formatUsdValue(gasAccountInfo?.account.balance || 0),
-          }),
-          disableDepositAction
-            ? null
-            : t('page.signFooterBar.gasAccount.deposit'),
-        ];
+  const depositButtonText = disableDepositAction
+    ? null
+    : t('page.signFooterBar.gasAccount.deposit');
+  const notEnoughTipText = t('page.signFooterBar.gasAccount.notEnough', {
+    usd: formatUsdValue(gasAccountBalance),
+  });
+  const depositButton = depositButtonText
+    ? {
+        text: depositButtonText,
+        onPress: () => setDepositPopupVisible(true),
+        disabled: false,
       }
-      return [gasAccountCost.err_msg, null];
+    : null;
+
+  let tip: string | null = null;
+  let button: ActionButton | null = null;
+
+  if (!noCustomRPC) {
+    tip = t('page.signFooterBar.gasAccount.customRPC');
+  } else if (isWalletConnect) {
+    tip = t('page.signFooterBar.gasAccount.WalletConnectTips');
+  } else if (shouldSignWithPendingHardware) {
+    tip = t('page.signFooterBar.gasAccount.signWithHardwareWalletToUse', {
+      brand: pendingHardwareAddressLabel,
+    });
+    button = {
+      text: t('page.signFooterBar.signAndSubmitButton'),
+      onPress: handleSignWithPendingHardware,
+      disabled: isLoggingPendingHardware,
+    };
+  } else if (gasAccountCost?.err_msg) {
+    const isInsufficientError =
+      !gasAccountCost.chain_not_support &&
+      gasAccountCost.err_msg.toLowerCase() ===
+        GAS_ACCOUNT_INSUFFICIENT_TIP.toLowerCase();
+    if (isInsufficientError) {
+      tip = notEnoughTipText;
+      button = depositButton;
+    } else {
+      tip = gasAccountCost.err_msg;
     }
-    if (gasAccountCost?.chain_not_support) {
-      return [t('page.signFooterBar.gasAccount.chainNotSupported'), null];
-    }
-    if (!gasAccountCost?.balance_is_enough) {
-      return [
-        t('page.signFooterBar.gasAccount.notEnough', {
-          usd: formatUsdValue(gasAccountInfo?.account.balance || 0),
-        }),
-        disableDepositAction
-          ? null
-          : t('page.signFooterBar.gasAccount.deposit'),
-      ];
-    }
-    return [null, null];
-  }, [
-    noCustomRPC,
-    isWalletConnect,
-    gasAccountCost?.err_msg,
-    gasAccountCost?.chain_not_support,
-    gasAccountCost?.balance_is_enough,
-    t,
-    gasAccountInfo?.account?.balance,
-    disableDepositAction,
-  ]);
+  } else if (gasAccountCost?.chain_not_support) {
+    tip = t('page.signFooterBar.gasAccount.chainNotSupported');
+  } else if (!gasAccountCost?.balance_is_enough) {
+    tip = notEnoughTipText;
+    button = depositButton;
+  }
 
   if (
     !isWalletConnect &&
     gasAccountCost?.balance_is_enough &&
     !gasAccountCost.chain_not_support &&
     noCustomRPC &&
-    !gasAccountCost?.err_msg
+    !gasAccountCost?.err_msg &&
+    !shouldSignWithPendingHardware
   ) {
     return null;
   }
@@ -116,20 +135,21 @@ export const GasAccountTips: React.FC<{
       <View
         style={[styles.tipTriangle, inShowMore && styles.tipTriangleInShowMore]}
       />
-      <Text
-        style={[
-          styles.text,
-          inShowMore && { color: colors2024['red-default'] },
-        ]}>
-        {tip}
-      </Text>
-      {btnText ? (
+      <View style={[styles.textWrap, button && styles.textWrapWithButton]}>
+        <Text
+          style={[
+            styles.text,
+            inShowMore && { color: colors2024['red-default'] },
+          ]}>
+          {tip}
+        </Text>
+      </View>
+      {button ? (
         <TouchableOpacity
           style={styles.gasAccountBtn}
-          onPress={() => {
-            setDepositPopupVisible(true);
-          }}>
-          <Text style={styles.gasAccountTipBtnText}>{btnText}</Text>
+          disabled={button.disabled}
+          onPress={button.onPress}>
+          <Text style={styles.gasAccountTipBtnText}>{button.text}</Text>
         </TouchableOpacity>
       ) : null}
       <GasAccountDepositTipPopup
@@ -199,6 +219,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       lineHeight: 18,
       color: colors2024['red-default'],
+      flexShrink: 1,
+    },
+    textWrap: {
+      flex: 1,
+      minWidth: 0,
+    },
+    textWrapWithButton: {
+      marginRight: 12,
     },
 
     gasAccountBtn: {
@@ -208,7 +236,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: 28,
       backgroundColor: colors2024['brand-default'],
       borderRadius: 6,
-      marginLeft: 'auto',
+      flexShrink: 0,
       paddingHorizontal: 12,
     },
     gasAccountTipBtnText: {

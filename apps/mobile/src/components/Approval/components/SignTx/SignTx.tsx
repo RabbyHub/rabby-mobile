@@ -556,7 +556,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     gasAccountCost,
     gasMethod,
     setGasMethod,
-    isGasAccountLogin,
     gasAccountCanPay,
     canGotoUseGasAccount,
     canDepositUseGasAccount,
@@ -1999,47 +1998,49 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           <FooterBar
             isSwap={isSwap}
             Header={
-              <SignMainnetGasSelectorHeader
-                tx={tx}
-                gasAccountCost={gasAccountCost}
-                gasMethod={gasMethod}
-                onChangeGasMethod={setGasMethod}
-                pushType={pushInfo.type}
-                disabled={isGnosisAccount || isCoboArugsAccount}
-                isReady={isReady}
-                gasLimit={gasLimit}
-                noUpdate={isCancel || isSpeedUp}
-                gasList={gasList}
-                selectedGas={selectedGas}
-                version={txDetail.pre_exec_version}
-                gas={{
-                  error: txDetail.gas.error,
-                  success: txDetail.gas.success,
-                  gasCostUsd: gasExplainResponse.gasCostUsd,
-                  gasCostAmount: gasExplainResponse.gasCostAmount,
-                }}
-                gasCalcMethod={gasCalcMethod}
-                recommendGasLimit={recommendGasLimit}
-                recommendNonce={recommendNonce}
-                chainId={chainId}
-                onChange={handleGasChange}
-                nonce={realNonce || tx.nonce}
-                disableNonce={isSpeedUp || isCancel}
-                isSpeedUp={isSpeedUp}
-                isCancel={isCancel}
-                is1559={support1559}
-                isHardware={isHardware}
-                manuallyChangeGasLimit={manuallyChangeGasLimit}
-                errors={checkErrors}
-                engineResults={engineResults}
-                nativeTokenBalance={nativeTokenBalance}
-                nativeTokenInsufficient={isGasNotEnough}
-                gasToken={gasToken}
-                gasPriceMedian={gasPriceMedian}
-                account={currentAccount}
-                directSubmit
-                checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
-              />
+              <View style={{ paddingBottom: 12 }}>
+                <SignMainnetGasSelectorHeader
+                  tx={tx}
+                  gasAccountCost={gasAccountCost}
+                  gasMethod={gasMethod}
+                  onChangeGasMethod={setGasMethod}
+                  pushType={pushInfo.type}
+                  disabled={isGnosisAccount || isCoboArugsAccount}
+                  isReady={isReady}
+                  gasLimit={gasLimit}
+                  noUpdate={isCancel || isSpeedUp}
+                  gasList={gasList}
+                  selectedGas={selectedGas}
+                  version={txDetail.pre_exec_version}
+                  gas={{
+                    error: txDetail.gas.error,
+                    success: txDetail.gas.success,
+                    gasCostUsd: gasExplainResponse.gasCostUsd,
+                    gasCostAmount: gasExplainResponse.gasCostAmount,
+                  }}
+                  gasCalcMethod={gasCalcMethod}
+                  recommendGasLimit={recommendGasLimit}
+                  recommendNonce={recommendNonce}
+                  chainId={chainId}
+                  onChange={handleGasChange}
+                  nonce={realNonce || tx.nonce}
+                  disableNonce={isSpeedUp || isCancel}
+                  isSpeedUp={isSpeedUp}
+                  isCancel={isCancel}
+                  is1559={support1559}
+                  isHardware={isHardware}
+                  manuallyChangeGasLimit={manuallyChangeGasLimit}
+                  errors={checkErrors}
+                  engineResults={engineResults}
+                  nativeTokenBalance={nativeTokenBalance}
+                  nativeTokenInsufficient={isGasNotEnough}
+                  gasToken={gasToken}
+                  gasPriceMedian={gasPriceMedian}
+                  account={currentAccount}
+                  directSubmit
+                  checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
+                />
+              </View>
             }
             noCustomRPC={noCustomRPC}
             gasMethod={gasMethod}
@@ -2058,7 +2059,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             }}
             onWaitDepositResult={handleTopUpWaitResult}
             gasAccountAddress={gasAccountAddress}
-            isGasAccountLogin={isGasAccountLogin}
             isWalletConnect={
               currentAccountType === KEYRING_TYPE.WalletConnectKeyring
             }

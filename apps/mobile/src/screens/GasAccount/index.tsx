@@ -34,7 +34,7 @@ import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreen
 import { refreshAccountsWithGasAccountBalance } from '@/utils/autoLoginGasAccount';
 import { GasAccountEmptyState } from './components/GasAccountEmptyState';
 import { getGasAccountEmptyStatePrimaryMode } from './components/GasAccountEmptyState.utils';
-import { GasAccountOldUserState } from './components/GasAccountOldUserState';
+import { GasAccountUserState } from './components/GasAccountUserState';
 import { useGasAccountHistory, useGasAccountMethods } from './hooks';
 
 export const GasAccountScreen = () => {
@@ -269,7 +269,7 @@ export const GasAccountScreen = () => {
           }
         />
       ) : (
-        <GasAccountOldUserState
+        <GasAccountUserState
           balance={gasBalance}
           historyState={historyState}
           onDepositPress={handleOldUserStatePrimaryPress}

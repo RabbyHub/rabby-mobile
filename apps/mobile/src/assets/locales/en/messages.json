@@ -478,6 +478,7 @@
         "WalletConnectTips": "WalletConnect is not supported by GasAccount",
         "chainNotSupported": "This chain is not supported by GasAccount",
         "loginFirst": "Please log in to GasAccount first",
+        "signWithHardwareWalletToUse": "You need to sign with {{brand}} to use",
         "login": "Log in",
         "deposit": "Deposit",
         "notEnough": "Not enough gas. Gas Balance: {{usd}}"

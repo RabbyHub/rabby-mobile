@@ -40,8 +40,6 @@ import {
   shouldAutoSwitchToGasAccountFromGasless,
   shouldShowGasLessNotEnough,
 } from '@/components/Approval/components/FooterBar/gasLessDecision';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
 import { GasAccountTips } from '@/components/Approval/components/FooterBar/GasLessComponents/GasAccountTips';
 import { useMemoizedFn } from 'ahooks';
 import IconBestQuoteTag from '@/assets2024/icons/bridge/IconBestQuoteTag.svg';
@@ -709,10 +707,6 @@ export const DirectSignGasInfo = ({
     },
   );
 
-  const handleCancel = () => {
-    instance.close();
-  };
-
   const showGasFeeTooHighTips = ctx?.gasFeeTooHigh && !loading && !noQuote;
 
   useEffect(() => {
@@ -760,6 +754,7 @@ export const DirectSignGasInfo = ({
       }) ? (
         <GasLessNotEnough
           inShowMore
+          nativeTokenInsufficient={isGasNotEnough}
           canGotoUseGasAccount={canGotoUseGasAccount}
           canDepositUseGasAccount={canDepositUseGasAccount}
           onChangeGasAccount={() => handleChangeGasMethod('gasAccount')}
@@ -772,13 +767,6 @@ export const DirectSignGasInfo = ({
             // handleGasChange(ctx?.selectedGas);
             // handleChangeGasMethod('gasAccount');
           }}
-          onGotoGasAccount={() => {
-            handleCancel?.();
-            navigate(RootNames.StackTransaction, {
-              screen: RootNames.GasAccount,
-              params: {},
-            });
-          }}
         />
       ) : null}
 
@@ -787,22 +775,15 @@ export const DirectSignGasInfo = ({
           inShowMore
           gasAccountAddress={accountId || config?.account.address || ''}
           gasAccountCost={ctx?.gasAccount as any}
-          isGasAccountLogin={false}
           isWalletConnect={false}
           noCustomRPC={noCustomRPC}
+          nativeTokenInsufficient={isGasNotEnough}
           onDepositPopupVisibleChange={onDepositPopupVisibleChange}
           onWaitDepositResult={handleTopUpWaitResult}
           onDeposit={() => {
             //   // onDeposit?.();
             //   handleGasChange(ctx?.selectedGas);
             // handleChangeGasMethod('gasAccount');
-          }}
-          onGotoGasAccount={() => {
-            handleCancel?.();
-            navigate(RootNames.StackTransaction, {
-              screen: RootNames.GasAccount,
-              params: {},
-            });
           }}
         />
       ) : null}

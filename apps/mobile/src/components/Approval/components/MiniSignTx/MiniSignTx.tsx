@@ -399,7 +399,6 @@ export const MiniSignTx = ({
     gasAccountCost,
     gasMethod,
     setGasMethod,
-    isGasAccountLogin,
     gasAccountCanPay,
     canGotoUseGasAccount,
     canDepositUseGasAccount,
@@ -1255,7 +1254,6 @@ export const MiniSignTx = ({
         }}
         onWaitDepositResult={handleTopUpWaitResult}
         gasAccountAddress={gasAccountAddress}
-        isGasAccountLogin={isGasAccountLogin}
         isWalletConnect={
           currentAccountType === KEYRING_TYPE.WalletConnectKeyring
         }
