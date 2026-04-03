@@ -33,7 +33,7 @@ export const keyToMarketKey: Record<string, CustomMarket> = {
   xdai_aave3: CustomMarket.proto_gnosis_v3,
   megaeth_aave3: CustomMarket.proto_megaeth_v3,
   mnt_aave3: CustomMarket.proto_mantle_v3,
-  //TODO：xlayer
+  xlayer_aave3: CustomMarket.proto_xlayer_v3,
 };
 
 export type TonTokenManageAction = (
