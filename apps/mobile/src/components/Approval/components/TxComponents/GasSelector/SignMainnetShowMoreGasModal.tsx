@@ -383,7 +383,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     padding: 12,
-    paddingBottom: 4,
     borderRadius: 12,
     borderWidth: 0.5,
     borderColor: colors2024['neutral-line'],
@@ -428,7 +427,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   levelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 90,
+    paddingRight: 60,
   },
   level: {
     color: colors2024['neutral-title-1'],

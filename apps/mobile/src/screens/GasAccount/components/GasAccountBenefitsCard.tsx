@@ -166,7 +166,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 12,
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-5'],
+      : colors2024['neutral-bg-1'],
   },
   iconWrap: {
     width: 40,

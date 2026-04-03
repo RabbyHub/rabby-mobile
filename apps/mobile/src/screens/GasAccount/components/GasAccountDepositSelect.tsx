@@ -111,14 +111,10 @@ export const GasAccountDepositSelect: React.FC<{
                   {t('page.gasAccount.depositWith')}
                 </Text>
                 {Platform.OS === 'android' ? (
-                  <RcIconGooglePayCC
-                    color={isLight ? colors2024['neutral-title-1'] : '#000'}
-                  />
+                  <RcIconGooglePayCC color={isLight ? '#fff' : '#000'} />
                 ) : (
                   <>
-                    <RcIconApple
-                      color={isLight ? colors2024['neutral-title-1'] : '#000'}
-                    />
+                    <RcIconApple color={isLight ? '#fff' : '#000'} />
                     <Text style={[styles.btnTitle, styles.payTitle]}>
                       {t('page.gasAccount.depositSelectPopup.appStore')}
                     </Text>
@@ -251,7 +247,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   payTitle: {
-    color: isLight ? colors2024['neutral-title-1'] : '#000',
+    color: isLight ? '#fff' : '#000',
   },
 
   btnDesc: {

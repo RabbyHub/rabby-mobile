@@ -42,7 +42,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   onEnsureGasAccountAddress,
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
   });
   const pollCancelRef = useRef<(() => void) | null>(null);
@@ -245,15 +245,16 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
           title={
             <View style={styles.depositWithTitle}>
               <View style={styles.depositWithPayRow}>
-                {Platform.OS === 'android' ? (
-                  <RcIconGooglePayCC
-                    color={colors2024['neutral-InvertHighlight']}
-                  />
+                {/* {Platform.OS === 'android' ? (
+                  <RcIconGooglePayCC color={isLight ? '#fff' : '#000'} />
                 ) : (
                   <Text style={styles.btnTitle}>
                     {t('page.gasAccount.depositPopup.pay')}
                   </Text>
-                )}
+                )} */}
+                <Text style={styles.btnTitle}>
+                  {t('page.gasAccount.depositPopup.pay')}
+                </Text>
                 <Text style={styles.btnTitle}>${selectedProduct?.total}</Text>
               </View>
             </View>
@@ -343,7 +344,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
           backgroundColor: '#000',
         }
       : {
-          backgroundColor: colors2024['neutral-bg-2'],
+          backgroundColor: '#fff',
           borderWidth: 1,
           borderColor: colors2024['neutral-line'],
         }),
@@ -367,7 +368,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 24,
     fontStyle: 'normal',
     fontWeight: '700',
-    color: colors2024['neutral-InvertHighlight'],
+    color: isLight ? '#fff' : '#000',
   },
   tips: {
     marginTop: 2,

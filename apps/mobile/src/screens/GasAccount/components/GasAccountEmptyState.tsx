@@ -6,6 +6,7 @@ import React, { ReactElement } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import { GasAccountBenefitsCard } from './GasAccountBenefitsCard';
 import { GasAccountWarning } from './GasAccountWarning';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const GasAccountEmptyState: React.FC<{
   style?: StyleProp<ViewStyle>;
@@ -27,6 +28,7 @@ export const GasAccountEmptyState: React.FC<{
   warningMessage,
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const { bottom } = useSafeAreaInsets();
 
   return (
     <View style={[styles.container, style]}>
@@ -36,7 +38,11 @@ export const GasAccountEmptyState: React.FC<{
         type={primaryType || 'primary'}
         onPress={onPrimaryPress}
         loading={primaryLoading}
-        containerStyle={[styles.primaryButton, primaryContainerStyle]}
+        containerStyle={[
+          styles.primaryButton,
+          { marginBottom: Math.max(bottom, 48) },
+          primaryContainerStyle,
+        ]}
         title={
           primaryContent || (
             <Text style={styles.primaryButtonText}>
@@ -54,7 +60,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     width: '100%',
     paddingHorizontal: 16,
-    paddingBottom: 20,
     gap: 12,
   },
   warning: {
@@ -68,7 +73,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 56,
     borderRadius: 16,
     marginTop: 'auto',
-    marginBottom: 36,
   },
   primaryButtonText: {
     color: colors2024['neutral-InvertHighlight'],

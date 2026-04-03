@@ -39,15 +39,17 @@ export const GasAccountBalanceCard: React.FC<GasAccountBalanceCardProps> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
-    minHeight: 106,
+    height: 106,
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 20,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     overflow: 'hidden',
     justifyContent: 'space-between',
     alignItems: 'center',
