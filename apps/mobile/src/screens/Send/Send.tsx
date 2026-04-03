@@ -289,7 +289,6 @@ function SendScreen({
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
     account: currentAccount,
   });
-  const isShowLoadingRef = useRef(true);
   const initByCacheFinishedRef = useRef(false);
   const initByCache = useCallback(async () => {
     let targetToken: TokenItem | null = null;
@@ -366,44 +365,39 @@ function SendScreen({
       }
     }
 
-    try {
-      if (navParams?.toAddress && currentAccount?.address) {
-        const res = await getRecommendToken({
-          from: currentAccount?.address,
-          to: navParams?.toAddress || '',
-          tokenId: targetToken.id,
-          chain: targetToken.chain,
-        });
-        if (
-          !lowcaseSame(res.chain, targetToken.chain) ||
-          !lowcaseSame(res.tokenId, targetToken.id)
-        ) {
-          targetToken = {
-            chain: res.chain,
-            id: res.tokenId,
-            ...EMPTY_TOKEN_ITEM,
-          };
-        }
+    if (navParams?.toAddress && currentAccount?.address) {
+      const res = await getRecommendToken({
+        from: currentAccount?.address,
+        to: navParams?.toAddress || '',
+        tokenId: targetToken.id,
+        chain: targetToken.chain,
+      });
+      if (
+        !lowcaseSame(res.chain, targetToken.chain) ||
+        !lowcaseSame(res.tokenId, targetToken.id)
+      ) {
+        targetToken = {
+          chain: res.chain,
+          id: res.tokenId,
+          ...EMPTY_TOKEN_ITEM,
+        };
       }
-      if (latestChainItem && targetToken.chain !== latestChainItem.serverId) {
-        const target = findChainByServerID(targetToken.chain);
-        if (target?.enum) {
-          apiSendToken.setChainEnum(target.enum);
-        }
-      }
-      await Promise.race([
-        currentAccount?.address &&
-          (await loadCurrentToken(
-            targetToken.id,
-            targetToken.chain,
-            currentAccount?.address,
-          )),
-        sleep(5000),
-      ]);
-    } finally {
-      // hideLoading();
-      isShowLoadingRef.current = true;
     }
+    if (latestChainItem && targetToken.chain !== latestChainItem.serverId) {
+      const target = findChainByServerID(targetToken.chain);
+      if (target?.enum) {
+        apiSendToken.setChainEnum(target.enum);
+      }
+    }
+    await Promise.race([
+      currentAccount?.address &&
+        (await loadCurrentToken(
+          targetToken.id,
+          targetToken.chain,
+          currentAccount?.address,
+        )),
+      sleep(5000),
+    ]);
   }, [
     navParams,
     routeParams,
@@ -492,8 +486,21 @@ function SendScreen({
       sendTokenEvents,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
-        isShowLoadingRef.current = false;
-        apiSendToken.resetScreenState();
+        if (!currentAccount?.address) {
+          return;
+        }
+
+        apiSendToken.putScreenState({
+          balanceError: null,
+          balanceWarn: null,
+        });
+        loadCurrentToken(
+          currentToken.id,
+          currentToken.chain,
+          currentAccount.address,
+        ).catch(error => {
+          console.error('SendScreen refresh current token error', error);
+        });
         // navigation.dispatch(
         //   StackActions.replace(RootNames.StackRoot, {
         //     screen: RootNames.Home,
@@ -506,7 +513,13 @@ function SendScreen({
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [sendTokenEvents]);
+  }, [
+    currentAccount?.address,
+    currentToken.chain,
+    currentToken.id,
+    loadCurrentToken,
+    sendTokenEvents,
+  ]);
 
   useLayoutEffect(() => {
     return () => {
