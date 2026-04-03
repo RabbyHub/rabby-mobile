@@ -264,7 +264,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 8,
   },
   marketItem: {
-    backgroundColor: colors2024['neutral-card-1'],
+    // backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
