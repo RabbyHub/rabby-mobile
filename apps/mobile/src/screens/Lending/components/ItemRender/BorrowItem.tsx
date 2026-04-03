@@ -230,7 +230,9 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
                   {reserve.reserve.symbol}
                 </Text>
                 <View style={styles.borrowedBadge}>
-                  <Text style={styles.borrowedBadgeText}>Borrowed</Text>
+                  <Text style={styles.borrowedBadgeText}>
+                    {t('page.Lending.borrowDetail.borrowed')}
+                  </Text>
                 </View>
               </View>
             </View>
