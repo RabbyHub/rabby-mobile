@@ -1,4 +1,4 @@
-import { getDevServerHost } from '../utils/devServerSettings';
+import { getDevServerHost, DevServerScene } from '../utils/devServerSettings';
 import { makeMobileClientPushInfo } from '../apis/device';
 import { RABBY_MOBILE_FE_SERVICE_URL } from '@/constant/env';
 import { isNonPublicProductionEnv } from '@/constant';
@@ -11,7 +11,7 @@ import { AppState } from 'react-native';
 export function getFeServiceURL() {
   if (!isNonPublicProductionEnv) return RABBY_MOBILE_FE_SERVICE_URL || null;
 
-  let connectURL = getDevServerHost();
+  let connectURL = getDevServerHost(DevServerScene.FE_PUSH_SERVICE);
 
   if (!connectURL) {
     connectURL = RABBY_MOBILE_FE_SERVICE_URL || '';
