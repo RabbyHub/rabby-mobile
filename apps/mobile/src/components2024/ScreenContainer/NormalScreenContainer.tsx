@@ -7,10 +7,13 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import React, { useMemo } from 'react';
 import {
   ImageBackground,
+  ImageResizeMode,
+  ImageStyle,
   StyleSheet,
   View,
   ViewProps,
   ImageSourcePropType,
+  StyleProp,
 } from 'react-native';
 import {
   LinearGradientContainer,
@@ -30,6 +33,9 @@ export default function NormalScreenContainer2024<
   type = 'linear',
   linearProp,
   bgImageSource,
+  bgImageResizeMode = 'cover',
+  bgImageHeight,
+  bgImageStyle,
 }: React.PropsWithChildren<
   {
     as?: T;
@@ -42,6 +48,9 @@ export default function NormalScreenContainer2024<
     type?: LinearGradientContainerProps['type'];
     linearProp?: LinearGradientProps;
     bgImageSource?: ImageSourcePropType;
+    bgImageResizeMode?: ImageResizeMode;
+    bgImageHeight?: number;
+    bgImageStyle?: StyleProp<ImageStyle>;
   } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
   const { safeOffHeader, safeTop } = useSafeSizes();
@@ -52,15 +61,12 @@ export default function NormalScreenContainer2024<
       {bgImageSource && (
         <ImageBackground
           source={bgImageSource}
-          resizeMode="cover"
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: safeOffHeader + 150,
-          }}
+          resizeMode={bgImageResizeMode}
+          style={[
+            styles.bgImage,
+            { height: bgImageHeight ?? safeOffHeader + 150 },
+            bgImageStyle,
+          ]}
         />
       )}
 
@@ -82,3 +88,12 @@ export default function NormalScreenContainer2024<
     </LinearGradientContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+  },
+});
