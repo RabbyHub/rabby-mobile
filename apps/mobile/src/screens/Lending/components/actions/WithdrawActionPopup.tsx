@@ -447,7 +447,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
+    <AutoLockView as="View" style={styles.container}>
       <Text style={styles.title}>
         {t('page.Lending.withdrawDetail.actions')} {reserve.reserve.symbol}
       </Text>

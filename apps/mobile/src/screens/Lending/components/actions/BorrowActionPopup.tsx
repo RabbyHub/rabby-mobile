@@ -426,7 +426,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [reserve.reserve.borrowCap, reserve.reserve.totalDebt, t]);
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
+    <AutoLockView as="View" style={styles.container}>
       <Text style={styles.title}>
         {t('page.Lending.borrowDetail.actions')} {reserve.reserve.symbol}
       </Text>
