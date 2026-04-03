@@ -60,6 +60,7 @@ export const HomeTopArea = () => {
 const getStyles = createGetStyles2024(() => ({
   container: {
     position: 'relative',
+    marginBottom: 20,
     // overflow: 'hidden',
     // height: HEADER_TOP_AREA_HEIGHT,
   },

@@ -31,8 +31,6 @@ import {
 } from './hooks';
 import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
-import { DisableBorrowTip } from './components/DisableBorrowTip';
-import { LendingHeader } from './components/Header';
 
 type MyAssetItem =
   | {
@@ -135,12 +133,13 @@ const MyAssetHome: React.FC = () => {
 
   const handleOpenSupplyList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.LENDING_SUPPLY_LIST,
+      name: MODAL_NAMES.LENDING_TOKEN_LIST,
+      initialTab: 'supply',
       onCancel: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
           backgroundColor: isLight
@@ -153,9 +152,10 @@ const MyAssetHome: React.FC = () => {
 
   const handleOpenBorrowList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.LENDING_BORROW_LIST,
+      name: MODAL_NAMES.LENDING_TOKEN_LIST,
+      initialTab: 'borrow',
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
           backgroundColor: isLight
@@ -201,12 +201,6 @@ const MyAssetHome: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const handlePendingClear = useCallback(() => {
-    setTimeout(() => {
-      fetchData(true);
-    }, 200);
-  }, [fetchData]);
-
   const handleRefresh = useCallback(() => {
     fetchData(true);
   }, [fetchData]);
@@ -214,13 +208,10 @@ const MyAssetHome: React.FC = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        <View style={styles.headerLeft}>
-          <ChainSelector />
-        </View>
-        <LendingHeader onPendingClear={handlePendingClear} />
+        <ChainSelector />
       </View>
     );
-  }, [styles.headerContainer, styles.headerLeft, handlePendingClear]);
+  }, [styles.headerContainer]);
 
   const renderEmpty = useCallback(() => {
     if (loading) {
@@ -228,13 +219,6 @@ const MyAssetHome: React.FC = () => {
     }
     return <EmptyItem />;
   }, [loading]);
-
-  const disableBorrowButton = useMemo(() => {
-    return (
-      !iUserSummary?.availableBorrowsUSD ||
-      iUserSummary?.availableBorrowsUSD === '0'
-    );
-  }, [iUserSummary?.availableBorrowsUSD]);
 
   return (
     <View style={styles.container}>
@@ -279,16 +263,14 @@ const MyAssetHome: React.FC = () => {
           />
         </View>
         <View style={styles.actionBtnContainer}>
-          <DisableBorrowTip showTip={disableBorrowButton}>
-            <Button
-              type="aave"
-              containerStyle={styles.actionButton}
-              titleStyle={styles.actionPrimaryTitle}
-              title={t('page.Lending.borrowDetail.actions')}
-              disabled={loading || disableBorrowButton}
-              onPress={handleOpenBorrowList}
-            />
-          </DisableBorrowTip>
+          <Button
+            type="aave"
+            containerStyle={styles.actionButton}
+            titleStyle={styles.actionPrimaryTitle}
+            title={t('page.Lending.borrowDetail.actions')}
+            disabled={loading}
+            onPress={handleOpenBorrowList}
+          />
         </View>
       </View>
     </View>
@@ -305,11 +287,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
       : colors2024['neutral-bg-1'],
   },
   headerContainer: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  headerLeft: {
-    flex: 1,
+    //flexDirection: 'row',
+    //gap: 16,
   },
   listContentContainer: {
     paddingVertical: 8,
@@ -330,7 +309,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     gap: 12,
     paddingTop: 12,
     paddingHorizontal: 16,
-    paddingBottom: 34,
+    paddingBottom: 48,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   actionBtnContainer: {

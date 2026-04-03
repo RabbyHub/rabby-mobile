@@ -1,9 +1,9 @@
 import {
-  forwardRef,
   useRef,
   useMemo,
   useImperativeHandle,
   useCallback,
+  type Ref,
 } from 'react';
 import { View, StyleSheet } from 'react-native';
 
@@ -49,15 +49,17 @@ const SIZES = {
     );
   },
 };
-export const SelectAutolockTimeBottomSheetModal = forwardRef<
-  BottomSheetModal,
-  {
-    onConfirm?: () => void;
-    onCancel?: () => void;
-    onSelectTimeMs?: (ms: number) => void;
-  }
->((props, ref) => {
-  const { onConfirm, onCancel, onSelectTimeMs } = props;
+export const SelectAutolockTimeBottomSheetModal = ({
+  onConfirm,
+  onCancel,
+  onSelectTimeMs,
+  ref,
+}: {
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  onSelectTimeMs?: (ms: number) => void;
+  ref?: Ref<BottomSheetModal>;
+}) => {
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: SIZES.FULL_HEIGHT,
@@ -137,7 +139,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
       </AutoLockView>
     </AppBottomSheetModal>
   );
-});
+};
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {

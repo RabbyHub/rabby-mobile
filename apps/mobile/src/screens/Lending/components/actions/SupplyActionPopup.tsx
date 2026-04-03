@@ -593,9 +593,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             showTextOnLoading
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.supplyDetail.actions')}
-            title={`${t('page.Lending.supplyDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.supplyDetail.actions')}
             onFinished={() => handleSupply()}
             disabled={
               !amount ||
@@ -620,9 +618,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
             onPress={() => handleSupply()}
-            title={`${t('page.Lending.supplyDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.supplyDetail.actions')}
             loading={isLoading}
             disabled={
               !amount ||

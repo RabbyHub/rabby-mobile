@@ -1,24 +1,23 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { groupBy } from 'lodash';
-import type { BasicSafeInfo, SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import { Button } from '@/components/Button';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { Text } from '@/components/Typography';
+import { AppColorsVariants } from '@/constant/theme';
+import { apisSafe } from '@/core/apis/safe';
 import {
   KeyringAccountWithAlias as Account,
   useAccounts,
 } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { AddressItem, ownerPriority } from './DrawerAddressItem';
-import { apisSafe } from '@/core/apis/safe';
-import { useMemoizedFn } from 'ahooks';
-import { Button } from '@/components/Button';
-import { AppColorsVariants } from '@/constant/theme';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import type { BasicSafeInfo, SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import { useMemoizedFn } from 'ahooks';
+import { groupBy } from 'lodash';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FlatList } from 'react-native-gesture-handler';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { Text } from '@/components/Typography';
+import { AddressItem, ownerPriority } from './DrawerAddressItem';
 
 interface GnosisDrawerProps {
   safeInfo: BasicSafeInfo;
@@ -59,12 +58,12 @@ export const GnosisDrawer = ({
       item.address.toLowerCase(),
     );
     const result = Object.keys(groupOwners).map(address => {
-      let target = groupOwners[address][0];
-      if (groupOwners[address].length === 1) {
+      let target = groupOwners?.[address]?.[0];
+      if (groupOwners?.[address]?.length === 1) {
         return target;
       }
       for (let i = 0; i < ownerPriority.length; i++) {
-        const tmp = groupOwners[address].find(
+        const tmp = groupOwners?.[address]?.find(
           account => account.type === ownerPriority[i],
         );
         if (tmp) {
@@ -75,7 +74,7 @@ export const GnosisDrawer = ({
       return target;
     });
     const notInWalletOwners = owners.filter(
-      owner => !result.find(item => isSameAddress(item.address, owner)),
+      owner => !result.find(item => isSameAddress(item?.address || '', owner)),
     );
     setOwnerAccounts([
       ...result,
@@ -145,66 +144,67 @@ export const GnosisDrawer = ({
       ref={modalRef}
       onDismiss={() => onCancel?.()}
       snapPoints={[440]}>
-      <BottomSheetView>
-        <View
-          style={[
-            styles.gnosisDrawerContainer,
-            {
-              paddingBottom: bottom || 20,
-            },
-          ]}>
-          <Text style={styles.title}>
-            {safeInfo.threshold - signatures.length > 0
-              ? t('page.signTx.moreSafeSigNeeded', {
-                  0: safeInfo.threshold - signatures.length,
-                })
-              : t('page.signTx.enoughSafeSigCollected')}
-          </Text>
-          <FlatList
-            data={ownerAccounts}
-            renderItem={item => {
-              const owner = item.item;
-              return (
-                <AddressItem
-                  key={owner.address}
-                  account={owner}
-                  signed={
-                    !!signatures.find(sig =>
-                      isSameAddress(sig.signer, owner.address),
-                    )
-                  }
-                  onSelect={handleSelectAccount}
-                  checked={
-                    checkedAccount
-                      ? isSameAddress(owner.address, checkedAccount.address)
-                      : false
-                  }
-                />
-              );
-            }}
-            style={styles.list}
+      <View
+        style={[
+          styles.gnosisDrawerContainer,
+          {
+            paddingBottom: bottom || 20,
+          },
+        ]}>
+        <Text style={styles.title}>
+          {safeInfo.threshold - signatures.length > 0
+            ? t('page.signTx.moreSafeSigNeeded', {
+                0: safeInfo.threshold - signatures.length,
+              })
+            : t('page.signTx.enoughSafeSigCollected')}
+        </Text>
+        <BottomSheetFlatList
+          data={ownerAccounts}
+          keyExtractor={item =>
+            `${item.address}-${item.type}-${item.brandName}`
+          }
+          renderItem={item => {
+            const owner = item.item;
+            return (
+              <AddressItem
+                key={owner.address}
+                account={owner}
+                signed={
+                  !!signatures.find(sig =>
+                    isSameAddress(sig.signer, owner.address),
+                  )
+                }
+                onSelect={handleSelectAccount}
+                checked={
+                  checkedAccount
+                    ? isSameAddress(owner.address, checkedAccount.address)
+                    : false
+                }
+              />
+            );
+          }}
+          style={styles.list}
+        />
+        <View style={styles.footer}>
+          <Button
+            onPress={onCancel}
+            title={t('global.backButton')}
+            containerStyle={styles.buttonContainer}
           />
-          <View style={styles.footer}>
-            <Button
-              onPress={onCancel}
-              title={t('global.backButton')}
-              containerStyle={styles.buttonContainer}
-            />
-            <Button
-              onPress={handleConfirm}
-              disabled={!checkedAccount}
-              title={
-                isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  t('global.proceedButton')
-                )
-              }
-              containerStyle={styles.buttonContainer}
-            />
-          </View>
+          <Button
+            onPress={handleConfirm}
+            disabled={!checkedAccount}
+            title={
+              isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                t('global.proceedButton')
+              )
+            }
+            containerStyle={styles.buttonContainer}
+          />
         </View>
-      </BottomSheetView>
+      </View>
     </AppBottomSheetModal>
   );
 };

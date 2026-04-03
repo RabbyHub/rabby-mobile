@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type Ref, useImperativeHandle } from 'react';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwitchToggleType } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
@@ -55,19 +55,21 @@ function useToggleBiometricsEnabled() {
   };
 }
 
-export const SwitchBiometricsAuthentication = React.forwardRef<
-  SwitchToggleType,
-  React.ComponentProps<typeof AppSwitch2024> & {
-    onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
-  }
->(({ onToggleSuccess, ...props }, ref) => {
+export const SwitchBiometricsAuthentication = ({
+  ref,
+  onToggleSuccess,
+  ...props
+}: React.ComponentProps<typeof AppSwitch2024> & {
+  onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
+  ref?: Ref<SwitchToggleType>;
+}) => {
   const {
     isBiometricsEnabled,
     couldSetupBiometrics,
     requestToggleBiometricsEnabled,
   } = useToggleBiometricsEnabled();
 
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     toggle: async (enabled?: boolean) => {
       await requestToggleBiometricsEnabled(
         enabled ?? !isBiometricsEnabled,
@@ -90,4 +92,4 @@ export const SwitchBiometricsAuthentication = React.forwardRef<
       }}
     />
   );
-});
+};

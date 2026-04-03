@@ -419,7 +419,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   netWorth: {
     fontSize: 42,
-    lineHeight: 48,
+    lineHeight: 46,
     // textAlign: 'center',
     fontWeight: '900',
     color: colors2024['neutral-title-1'],

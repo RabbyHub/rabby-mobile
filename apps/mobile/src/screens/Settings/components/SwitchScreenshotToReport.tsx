@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type Ref, useImperativeHandle } from 'react';
 
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwitchToggleType } from '@/components';
@@ -9,16 +9,18 @@ import { useTheme2024 } from '@/hooks/theme';
 import { getTimeSpanByMs } from '@/utils/time';
 import { Text } from '@/components/Typography';
 
-export const SwitchScreenshotToReport = React.forwardRef<
-  SwitchToggleType,
-  React.ComponentProps<typeof AppSwitch2024> & {
-    onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
-  }
->(({ onToggleSuccess, ...props }, ref) => {
+export const SwitchScreenshotToReport = ({
+  ref,
+  onToggleSuccess,
+  ...props
+}: React.ComponentProps<typeof AppSwitch2024> & {
+  onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
+  ref?: Ref<SwitchToggleType>;
+}) => {
   const { isShowFeedbackOnScreenshot, toggleScreenshotToReport } =
     useScreenshotToReportEnabled();
 
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     toggle: (enabled?: boolean) => {
       const nextEnabled = toggleScreenshotToReport(enabled);
       onToggleSuccess?.(nextEnabled);
@@ -37,7 +39,7 @@ export const SwitchScreenshotToReport = React.forwardRef<
       }}
     />
   );
-});
+};
 
 export function LabelScreenshotToReport() {
   const { disableScreenshotToReportUntil } = useScreenshotToReportEnabled();

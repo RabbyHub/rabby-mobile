@@ -1,6 +1,7 @@
 import { Button } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -21,12 +22,16 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const FooterButton: React.FC<Props> = ({ onClick, text }) => {
+export const FooterButton: React.FC<Props> = ({
+  onClick: propOnClick,
+  text,
+}) => {
   const [loading, setLoading] = React.useState(false);
+  const onClick = useMemoizedFn(propOnClick);
   const handleClick = React.useCallback(() => {
     onClick();
     setLoading(true);
-  }, []);
+  }, [onClick]);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 

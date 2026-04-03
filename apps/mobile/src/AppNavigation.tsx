@@ -67,6 +67,7 @@ import {
   NotFoundScreen,
   MyBundleScreen,
 } from '@/screens/index.lazy';
+import SetupWallet from '@/screens/Address/SetupWallet';
 import {
   ScannerScreen,
   TokenDetailScreen,
@@ -103,8 +104,7 @@ const RootAnimOptions: React.ComponentProps<
   typeof RootStack.Navigator
 >['screenOptions'] &
   object = {
-  // animation: IS_IOS ? 'slide_from_right' : 'none',
-  animation: __DEV__ ? 'slide_from_right' : 'none',
+  animation: 'none',
   animationDuration: 200,
 };
 
@@ -389,6 +389,11 @@ export default function AppNavigation() {
             <RootStack.Screen
               name={RootNames.StackAddress}
               component={AddressNavigator}
+            />
+            <RootStack.Screen
+              name="SetupWallet"
+              component={SetupWallet}
+              options={{ headerShown: false }}
             />
             <RootStack.Screen
               name={RootNames.StackDapps}

@@ -45,7 +45,7 @@ export const ADDRESS_ENTRY_HEIGHT = 78;
 export const ADDRESS_ENTRY_GAP = 12;
 export const TOGGLE_SPLIT_HEIGHT = 24;
 
-export const FOLD_ASSETS_HEADER_HEIGHT = 46 + 32;
+export const FOLD_ASSETS_HEADER_HEIGHT = 46;
 export const UNFOLD_ASSETS_HEADER_HEIGHT = 161 + 20;
 export const TAB_HEADER_HEIGHT = 36;
 
@@ -109,7 +109,6 @@ export const RootNames = {
   CustomTestnet: 'CustomTestnet',
   CustomRPC: 'CustomRPC',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
-  /** @deprecated */
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
@@ -180,6 +179,9 @@ export const RootNames = {
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
   CreateNewAddress: 'CreateNewAddress',
+  SetupWallet: 'SetupWallet',
+  SelectImportMethod: 'SelectImportMethod',
+  ImportRabbyWallet: 'ImportRabbyWallet',
   SetPassword2024: 'SetPassword2024',
   CreateChooseBackup: 'CreateChooseBackup',
 
@@ -190,6 +192,7 @@ export const RootNames = {
   /** @deprecated */
   ImportMnemonic: 'ImportMnemonic',
   ImportMnemonic2024: 'ImportMnemonic2024',
+  ImportSecret: 'ImportSecret',
   CreateMnemonic: 'CreateMnemonic',
   PreCreateMnemonic: 'PreCreateMnemonic',
   AddMnemonic: 'AddMnemonic',
@@ -212,6 +215,8 @@ export const RootNames = {
   SyncExtensionPassword: 'SyncExtensionPassword',
   SyncExtensionImported: 'SyncExtensionImported',
   SyncExtensionAccountSuccess: 'SyncExtensionAccountSuccess',
+
+  Backup: 'Backup',
 
   /** @deprecated */
   StackMain: 'StackMain',
@@ -335,6 +340,7 @@ function makeScreenSpecConfig() {
       },
 
       // StackGetStarted
+      [RootNames.GetStarted]: bg1DefaultConf,
       [RootNames.GetStartedScreen2024]: bg1DefaultConf,
       [RootNames.CreateSelectMethod]: bg1Default2024Conf,
       // StackRoot
@@ -363,8 +369,6 @@ function makeScreenSpecConfig() {
       [RootNames.CustomTestnet]: bg1Default2024Conf,
       [RootNames.CustomRPC]: bg1Default2024Conf,
       [RootNames.SetBiometricsAuthentication]: bg1DefaultConf,
-      /** @deprecated */
-      [RootNames.GetStarted]: blueLightConf,
       [RootNames.ProviderControllerTester]: bg1Default2024Conf,
 
       // StackTestkits
@@ -426,6 +430,9 @@ function makeScreenSpecConfig() {
       [RootNames.AddressDetail]: bg1Default2024Conf,
       [RootNames.NftDetail]: bg1Default2024Conf,
       [RootNames.CreateNewAddress]: bg1Default2024Conf,
+      [RootNames.SetupWallet]: bg1Default2024Conf,
+      [RootNames.SelectImportMethod]: bg1Default2024Conf,
+      [RootNames.ImportRabbyWallet]: bg1Default2024Conf,
       [RootNames.SetPassword2024]: bg1Default2024Conf,
       [RootNames.CreateChooseBackup]: bg1Default2024Conf,
 
@@ -435,6 +442,7 @@ function makeScreenSpecConfig() {
       [RootNames.ImportPrivateKey2024]: bg1Default2024Conf,
       [RootNames.ImportMnemonic]: bg1Default2024Conf,
       [RootNames.ImportMnemonic2024]: bg1Default2024Conf,
+      [RootNames.ImportSecret]: bg1Default2024Conf,
       [RootNames.CreateMnemonic]: bg1Default2024Conf,
       [RootNames.PreCreateMnemonic]: bg1Default2024Conf,
       [RootNames.AddMnemonic]: bg1Default2024Conf,
@@ -461,6 +469,8 @@ function makeScreenSpecConfig() {
       [RootNames.SyncExtensionPassword]: bg1Default2024Conf,
       [RootNames.SyncExtensionImported]: bg1Default2024Conf,
       [RootNames.SyncExtensionAccountSuccess]: bg1Default2024Conf,
+
+      [RootNames.Backup]: bg1Default2024Conf,
 
       // StackMain
 
