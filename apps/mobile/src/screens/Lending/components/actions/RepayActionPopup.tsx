@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View, Pressable } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -15,7 +21,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildRepayTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -67,6 +76,13 @@ import { IAvailableRepayToken } from '../RepayTokenModal';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
+import { Alert } from 'react-native';
+
+/** Repay form snapshot for validation - only stores amount to detect changes */
+interface RepayFormSnapshot {
+  amount: string;
+}
 
 export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
@@ -162,6 +178,16 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   const { t } = useTranslation();
 
   const { ctx } = useSignatureStore();
+
+  // Form snapshot for iOS autofill protection
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<RepayFormSnapshot>({
+      comparers: {
+        amount: createAmountComparer(),
+      },
+    }),
+  );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -439,6 +465,19 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         return;
       }
 
+      if (canShowDirectSubmit && formValuesRef.current.hasSnapshot()) {
+        const formCheck = formValuesRef.current.compare({ amount });
+        if (formCheck.isChanged) {
+          Alert.alert(
+            t('page.Lending.popup.formChangedTitle'),
+            t('page.Lending.popup.formChangedAmount'),
+            [{ text: t('global.ok'), onPress: () => {} }],
+          );
+          formValuesRef.current.clear();
+          return;
+        }
+      }
+
       try {
         setIsLoading(true);
         if (!txsForMiniApproval?.length) {
@@ -536,6 +575,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
         onClose?.();
       } finally {
         setIsLoading(false);
+        formValuesRef.current.clear();
       }
     },
     [
@@ -571,6 +611,10 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
 
   const handleChangeAmount = useCallback(
     (value: string) => {
+      // Ignore changes during authentication (iOS autofill protection)
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 还清所有债务
@@ -707,6 +751,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
       <View style={styles.buttonContainer}>
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            ref={directSignBtnRef}
             type="aave"
             iconColor={
               isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
@@ -718,6 +763,15 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.repayDetail.actions')}
             title={t('page.Lending.repayDetail.actions')}
+            onBeforeAuth={() => {
+              formValuesRef.current.save({ amount: amount || '' });
+            }}
+            onCancel={() => {
+              formValuesRef.current.clear();
+            }}
+            onAuthModalDismiss={() => {
+              formValuesRef.current.clear();
+            }}
             onFinished={() => handleRepay()}
             disabled={
               !amount ||

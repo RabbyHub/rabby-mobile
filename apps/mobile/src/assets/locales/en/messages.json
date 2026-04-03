@@ -2940,7 +2940,9 @@
         "available": "available",
         "title": "Transaction Overview",
         "liquidationAt": "Liquidation at < 1.0",
-        "remainingDebt": "Remaining debt"
+        "remainingDebt": "Remaining debt",
+        "formChangedTitle": "Form Changed",
+        "formChangedAmount": "The amount has changed, possibly due to password autofill from the system keyboard. Please review and re-enter the correct amount."
       },
       "borrowOverview": {
         "title": "Borrow Details",

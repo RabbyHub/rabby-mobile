@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -16,7 +22,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildWithdrawTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
@@ -55,6 +64,13 @@ import { ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';
 import { isZeroAmount } from '../../utils/number';
 import { Text } from '@/components/Typography';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
+import { Alert } from 'react-native';
+
+/** Withdraw form snapshot for validation - only stores amount to detect changes */
+interface WithdrawFormSnapshot {
+  amount: string;
+}
 
 export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
@@ -68,6 +84,16 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   const [isChecked, setIsChecked] = useState(false);
   const { refresh } = useRefreshHistoryId();
   const { t } = useTranslation();
+
+  // Form snapshot for iOS autofill protection
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<WithdrawFormSnapshot>({
+      comparers: {
+        amount: createAmountComparer(),
+      },
+    }),
+  );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const { formattedPoolReservesAndIncentives, wrapperPoolReserve } =
     useLendingSummary();
@@ -245,6 +271,19 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
 
+      if (canShowDirectSubmit && formValuesRef.current.hasSnapshot()) {
+        const formCheck = formValuesRef.current.compare({ amount });
+        if (formCheck.isChanged) {
+          Alert.alert(
+            t('page.Lending.popup.formChangedTitle'),
+            t('page.Lending.popup.formChangedAmount'),
+            [{ text: t('global.ok'), onPress: () => {} }],
+          );
+          formValuesRef.current.clear();
+          return;
+        }
+      }
+
       try {
         setIsLoading(true);
         if (!withdrawTxs?.length) {
@@ -343,6 +382,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       } catch (error) {
       } finally {
         setIsLoading(false);
+        formValuesRef.current.clear();
       }
     },
     [
@@ -363,6 +403,10 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   const handleChangeAmount = useCallback(
     (value: string) => {
+      // Ignore changes during authentication (iOS autofill protection)
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 提取所有资产
@@ -488,6 +532,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         )}
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            ref={directSignBtnRef}
             loading={isLoading}
             loadingType="circle"
             key={`${amount}`}
@@ -495,6 +540,15 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.withdrawDetail.actions')}
             title={t('page.Lending.withdrawDetail.actions')}
+            onBeforeAuth={() => {
+              formValuesRef.current.save({ amount: amount || '' });
+            }}
+            onCancel={() => {
+              formValuesRef.current.clear();
+            }}
+            onAuthModalDismiss={() => {
+              formValuesRef.current.clear();
+            }}
             onFinished={() => handleWithdraw()}
             disabled={
               !amount ||
