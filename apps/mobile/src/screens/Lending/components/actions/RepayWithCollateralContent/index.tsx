@@ -16,7 +16,7 @@ import { last, noop } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import { apiProvider } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
@@ -28,7 +28,10 @@ import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
@@ -94,11 +97,16 @@ import { DEFAULT_REPAY_WITH_COLLATERAL_SLIPPAGE } from './utils';
 import RepayWithCollateralOverview from './Overview';
 import { Text, TextInput } from '@/components/Typography';
 import { stats } from '@/utils/stats';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
 
 interface RepayWithCollateralProps {
   repayToken: SwappableToken;
   defaultCollateralToken?: SwappableToken;
   onClose?: () => void;
+}
+
+interface RepayWithCollateralFormSnapshot {
+  repayAmount: string;
 }
 
 const BOTTOM_SIZE = {
@@ -157,6 +165,14 @@ export default function RepayWithCollateral({
 
   const quoteExpiredTimerRef = useRef<NodeJS.Timeout>(undefined);
   const enableQuoteAutoRefreshRef = useRef(false);
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<RepayWithCollateralFormSnapshot>({
+      comparers: {
+        repayAmount: createAmountComparer(),
+      },
+    }),
+  );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const {
     collateralUsdValue,
@@ -261,6 +277,9 @@ export default function RepayWithCollateral({
 
   const onInputChange = useCallback(
     (text: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       const formatted = formatSpeicalAmount(text);
       if (!/^\d*(\.\d*)?$/.test(formatted)) {
         return;
@@ -767,6 +786,21 @@ export default function RepayWithCollateral({
         return;
       }
 
+      if (canShowDirectSubmit && formValuesRef.current.hasSnapshot()) {
+        const formCheck = formValuesRef.current.compare({
+          repayAmount: repayAmount || '',
+        });
+        if (formCheck.isChanged) {
+          Alert.alert(
+            t('page.Lending.popup.formChangedTitle'),
+            t('page.Lending.popup.formChangedAmount'),
+            [{ text: t('global.ok'), onPress: () => {} }],
+          );
+          formValuesRef.current.clear();
+          return;
+        }
+      }
+
       try {
         setIsLoading(true);
         if (!currentTxs.length) {
@@ -855,6 +889,7 @@ export default function RepayWithCollateral({
         console.error('repay with collateral error', error);
       } finally {
         setIsLoading(false);
+        formValuesRef.current.clear();
       }
     },
     [
@@ -872,6 +907,7 @@ export default function RepayWithCollateral({
       ctx?.gasFeeTooHigh,
       refresh,
       repayToken.usdPrice,
+      repayAmount,
     ],
   );
 
@@ -954,7 +990,12 @@ export default function RepayWithCollateral({
               {(!repayAmount || BigNumber(repayAmount || '0').lte(0)) && (
                 <Pressable
                   style={styles.maxButtonWrapper}
-                  onPress={() => setRepayAmount(debtBalance.toString(10))}>
+                  onPress={() => {
+                    if (directSignBtnRef.current?.isAuthInProgress()) {
+                      return;
+                    }
+                    setRepayAmount(debtBalance.toString(10));
+                  }}>
                   <Text style={styles.maxButtonText}>MAX</Text>
                 </Pressable>
               )}
@@ -1175,6 +1216,7 @@ export default function RepayWithCollateral({
         ) : null}
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            ref={directSignBtnRef}
             loading={isLoading}
             loadingType="circle"
             key={`${selectedCollateralToken?.underlyingAddress}-${repayToken?.underlyingAddress}-${debouncedRepayAmount}`}
@@ -1182,6 +1224,15 @@ export default function RepayWithCollateral({
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.repayWithCollateral.button.repay')}
             title={t('page.Lending.repayWithCollateral.button.repay')}
+            onBeforeAuth={() => {
+              formValuesRef.current.save({ repayAmount: repayAmount || '' });
+            }}
+            onCancel={() => {
+              formValuesRef.current.clear();
+            }}
+            onAuthModalDismiss={() => {
+              formValuesRef.current.clear();
+            }}
             onFinished={() => handleRepay()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
             type="aave"

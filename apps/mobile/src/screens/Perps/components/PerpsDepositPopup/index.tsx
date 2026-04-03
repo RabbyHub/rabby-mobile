@@ -37,7 +37,13 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Keyboard,
+  Platform,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
 import {
@@ -69,6 +75,7 @@ import useTokenList, {
 } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { toChecksumAddress } from '@ethereumjs/util';
+import { FormValuesOnSubmit, createAmountComparer } from '@/utils/form';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -76,6 +83,10 @@ export interface PerpBridgeHistory {
   from_token_amount: number;
   to_token_amount: number;
   tx: Tx;
+}
+
+interface PerpsDepositFormSnapshot {
+  usdValue: string;
 }
 
 export const PerpsDepositPopup: React.FC<{
@@ -100,6 +111,23 @@ export const PerpsDepositPopup: React.FC<{
     onChangeText: setUsdValue,
     displayedValue: displayedAmount,
   } = useUsdInput();
+  const authInProgressRef = useRef(false);
+  const formValuesRef = useRef(
+    new FormValuesOnSubmit<PerpsDepositFormSnapshot>({
+      comparers: {
+        usdValue: createAmountComparer(),
+      },
+    }),
+  );
+  const setUsdValueSafely = useCallback(
+    (value: string) => {
+      if (authInProgressRef.current) {
+        return;
+      }
+      setUsdValue(value);
+    },
+    [setUsdValue],
+  );
 
   const [isShowTokenPopup, setIsShowTokenPopup] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
@@ -646,7 +674,7 @@ export const PerpsDepositPopup: React.FC<{
             .times(tokenInfo?.price || 0)
             .decimalPlaces(2, BigNumber.ROUND_DOWN)
             .toFixed();
-          setUsdValue(valString);
+          setUsdValueSafely(valString);
           setGasPrice(normalPrice);
           return;
         }
@@ -654,9 +682,9 @@ export const PerpsDepositPopup: React.FC<{
       setGasPrice(0);
       if (isDirectDeposit) {
         // usdc can be view 1:1 in hyper account
-        setUsdValue(tokenAmountBn(tokenInfo).toString());
+        setUsdValueSafely(tokenAmountBn(tokenInfo).toString());
       } else {
-        setUsdValue(
+        setUsdValueSafely(
           tokenAmountBn(tokenInfo)
             ?.times(tokenInfo?.price || 0)
             .decimalPlaces(2, BigNumber.ROUND_DOWN)
@@ -670,7 +698,7 @@ export const PerpsDepositPopup: React.FC<{
     tokenIsNativeToken,
     gasLimit,
     isDirectDeposit,
-    setUsdValue,
+    setUsdValueSafely,
     setGasPrice,
     tokenInfo,
   ]);
@@ -710,7 +738,7 @@ export const PerpsDepositPopup: React.FC<{
     type: 'approveDeposit',
   });
 
-  const { runAsync: handleDeposit, loading } = useRequest(
+  const { runAsync: handleDepositRaw, loading } = useRequest(
     async () => {
       Keyboard.dismiss();
       const value = isDirectDeposit ? usdValue : estReceiveUsdValue.toString();
@@ -738,6 +766,28 @@ export const PerpsDepositPopup: React.FC<{
       manual: true,
     },
   );
+  const handleDepositWithAuthCheck = useMemoizedFn(async () => {
+    try {
+      if (formValuesRef.current.hasSnapshot()) {
+        const formCheck = formValuesRef.current.compare({
+          usdValue: usdValue || '',
+        });
+        if (formCheck.isChanged) {
+          Alert.alert(
+            t('page.bridge.formChangedTitle') || 'Form Changed',
+            t('page.bridge.formChangedAmount'),
+            [{ text: t('global.ok') || 'OK' }],
+          );
+          return;
+        }
+      }
+
+      await handleDepositRaw();
+    } finally {
+      authInProgressRef.current = false;
+      formValuesRef.current.clear();
+    }
+  });
   useEffect(() => {
     if (visible) {
       modalRef.current?.present();
@@ -897,7 +947,7 @@ export const PerpsDepositPopup: React.FC<{
                   placeholder="$0"
                   placeholderTextColor={colors2024['neutral-info']}
                   value={displayedAmount}
-                  onChangeText={setUsdValue}
+                  onChangeText={setUsdValueSafely}
                   numberOfLines={1}
                 />
                 {usdValue ? (
@@ -951,7 +1001,7 @@ export const PerpsDepositPopup: React.FC<{
                       .times(item.value)
                       .decimalPlaces(2, BigNumber.ROUND_DOWN)
                       .toFixed();
-                    setUsdValue(val);
+                    setUsdValueSafely(val);
                   }}>
                   <Text style={styles.quickAmountText}>{item.label}</Text>
                 </TouchableOpacity>
@@ -972,7 +1022,7 @@ export const PerpsDepositPopup: React.FC<{
                   ? t('page.swap.approve')
                   : t('page.perps.PerpsDepositPopup.depositBtn')
               }
-              onFinished={handleDeposit}
+              onFinished={handleDepositWithAuthCheck}
               disabled={
                 !isValidAmount ||
                 Boolean(quoteError) ||
@@ -987,7 +1037,17 @@ export const PerpsDepositPopup: React.FC<{
               }}
               syncUnlockTime
               onBeforeAuth={() => {
+                authInProgressRef.current = true;
+                formValuesRef.current.save({ usdValue: usdValue || '' });
                 Keyboard.dismiss();
+              }}
+              onCancel={() => {
+                authInProgressRef.current = false;
+                formValuesRef.current.clear();
+              }}
+              onAuthModalDismiss={() => {
+                authInProgressRef.current = false;
+                formValuesRef.current.clear();
               }}
             />
           ) : (
@@ -998,7 +1058,7 @@ export const PerpsDepositPopup: React.FC<{
                   ? t('page.swap.approve')
                   : t('page.perps.PerpsDepositPopup.depositBtn')
               }
-              onPress={handleDeposit}
+              onPress={handleDepositRaw}
               disabled={
                 !isValidAmount ||
                 Boolean(quoteError) ||
