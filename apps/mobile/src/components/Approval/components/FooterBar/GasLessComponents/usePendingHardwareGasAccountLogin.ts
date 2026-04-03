@@ -11,6 +11,7 @@ import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTs
 import { ellipsisAddress } from '@/utils/address';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -46,10 +47,10 @@ export const usePendingHardwareGasAccountLogin = ({
   const { data: pendingHardwareGasAccountInfo } = useGasAccountInfoV2({
     address: pendingHardwareAddress,
   });
-  const pendingHardwareBalance = Number(
+  const pendingHardwareBalance = new BigNumber(
     pendingHardwareGasAccountInfo?.account?.balance || 0,
   );
-  const requiredTotalCost = Number(
+  const requiredTotalCost = new BigNumber(
     gasAccountCost?.gas_account_cost?.total_cost || 0,
   );
 
@@ -73,9 +74,9 @@ export const usePendingHardwareGasAccountLogin = ({
     !isSameAddress(pendingHardwareAddress, currentGasAccountAddress);
 
   const hasEnoughPendingHardwareBalance =
-    Number.isFinite(requiredTotalCost) &&
-    requiredTotalCost > 0 &&
-    pendingHardwareBalance > requiredTotalCost;
+    requiredTotalCost.isFinite() &&
+    requiredTotalCost.gt(0) &&
+    pendingHardwareBalance.gte(requiredTotalCost);
 
   const shouldSignWithPendingHardware =
     enabled &&

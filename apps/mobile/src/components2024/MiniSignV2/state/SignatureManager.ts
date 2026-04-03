@@ -58,7 +58,7 @@ let nextInstanceId = 0;
 
 export class SignatureManager {
   public readonly instanceId: string;
-  private signingTxId: string | undefined;
+  private signingTxIds = new Set<string>();
   private state: SignatureFlowState = {
     status: 'idle',
   };
@@ -446,6 +446,13 @@ export class SignatureManager {
         ctx,
         config,
         retry,
+        onSigningTxCreated: signingTxId => {
+          if (!this.isActive(opId, fingerprint)) {
+            transactionHistoryService.removeSigningTx(signingTxId);
+            return;
+          }
+          this.signingTxIds.add(signingTxId);
+        },
         onProgress: nextCtx => {
           if (!this.isActive(opId, fingerprint)) return;
           this.dispatch({ type: 'SEND_PROGRESS', fingerprint, ctx: nextCtx });
@@ -480,15 +487,14 @@ export class SignatureManager {
     }
   }
 
-  public setSigningTxId(id: string | undefined) {
-    this.signingTxId = id;
-  }
-
   private removeSigningTx() {
-    if (this.signingTxId) {
-      transactionHistoryService.removeSigningTx(this.signingTxId);
-      this.signingTxId = undefined;
+    if (!this.signingTxIds.size) {
+      return;
     }
+    for (const signingTxId of this.signingTxIds) {
+      transactionHistoryService.removeSigningTx(signingTxId);
+    }
+    this.signingTxIds.clear();
   }
 
   public reset() {

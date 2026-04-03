@@ -1068,8 +1068,12 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                       selectedBridgeQuote.aggregator.id &&
                     bestQuoteId?.bridgeId === selectedBridgeQuote.bridge_id
                   }
+                  onDepositPopupVisibleChange={setAutoQuoteRefreshPaused}
                 />
               )}
+            {showClosedMarketTip && (
+              <MarketClosedTip style={styles.marketClosedTip} />
+            )}
             {noQuote && (
               <>
                 {recommendFromToken ? (

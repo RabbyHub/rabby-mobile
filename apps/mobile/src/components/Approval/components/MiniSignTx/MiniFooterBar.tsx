@@ -405,13 +405,6 @@ export const MiniFooterBar: React.FC<Props> = ({
                       await onWaitDepositResult?.(result);
                       onChangeGasAccount?.();
                     }}
-                    onGotoGasAccount={() => {
-                      rejectApproval?.();
-                      navigateDeprecated(RootNames.StackTransaction, {
-                        screen: RootNames.GasAccount,
-                        params: {},
-                      });
-                    }}
                   />
                 )
               ) : null}
@@ -428,13 +421,6 @@ export const MiniFooterBar: React.FC<Props> = ({
                     onDeposit={onDeposit}
                     onWaitDepositResult={onWaitDepositResult}
                     disableDepositAction={disableGasAccountDeposit}
-                    onGotoGasAccount={() => {
-                      rejectApproval?.();
-                      navigateDeprecated(RootNames.StackTransaction, {
-                        screen: RootNames.GasAccount,
-                        params: {},
-                      });
-                    }}
                   />
                 )
               ) : null}

@@ -828,6 +828,7 @@ export class SignatureSteps {
     txsCalc: CalcItem[];
     selectedGas: GasLevel | null;
     options: SendOptions;
+    onSigningTxCreated?: (signingTxId: string) => void;
     onSendedTx: (prams: { hash: string; idx: number }) => void;
     account: Account;
     retry?: boolean;
@@ -847,6 +848,7 @@ export class SignatureSteps {
       chainServerId,
       txsCalc,
       options,
+      onSigningTxCreated,
       onSendedTx,
       retry: isRetry,
       account,
@@ -917,6 +919,7 @@ export class SignatureSteps {
           sig,
           account: account,
           preExecResult: txsCalc[i]?.preExecResult,
+          onSigningTxCreated,
         });
         onSendedTx?.({ hash: result.txHash, idx: i });
         txHashes.push({ ...result });
@@ -1092,6 +1095,7 @@ export class SignatureSteps {
     chainServerId: string;
     ctx: SignerCtx;
     config: SignerConfig;
+    onSigningTxCreated?: (signingTxId: string) => void;
     onSendedTx: (prams: { hash: string; idx: number }) => void;
     account: Account;
     retry?: boolean;
@@ -1107,7 +1111,15 @@ export class SignatureSteps {
         };
       }
   > {
-    const { chainServerId, ctx, config, onSendedTx, account, retry } = params;
+    const {
+      chainServerId,
+      ctx,
+      config,
+      onSigningTxCreated,
+      onSendedTx,
+      account,
+      retry,
+    } = params;
     const { txs, txsCalc, selectedGas, gasMethod, useGasless } = ctx;
     const submitGasMode = resolveMiniSignSubmitGasMode({
       gasMethod,
@@ -1126,6 +1138,7 @@ export class SignatureSteps {
           ? 'mev'
           : 'default',
       },
+      onSigningTxCreated,
       onSendedTx,
       retry,
       account,
