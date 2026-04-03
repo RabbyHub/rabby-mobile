@@ -252,8 +252,6 @@ const RecipientAddressInnerPopup = ({
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
-  const [selectedAddress, setSelectedAddress] = React.useState(address);
-
   const tips = React.useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
@@ -286,9 +284,8 @@ const RecipientAddressInnerPopup = ({
       const account = accounts.find(acct =>
         isSameAddress(item.recharge_addr, acct.address),
       );
-
       const isSelected =
-        !!address && isSameAddress(selectedAddress, item.recharge_addr);
+        !!address && isSameAddress(address, item.recharge_addr);
 
       if (!account) {
         return null;
@@ -299,7 +296,7 @@ const RecipientAddressInnerPopup = ({
           <TouchableOpacity
             style={[styles.innerRow, isSelected && styles.innerRowSelected]}
             onPress={() => {
-              setSelectedAddress(item.recharge_addr);
+              onChange?.(item);
             }}>
             <AddressItem style={styles.accountContainer} account={account}>
               {({ WalletIcon, WalletName, WalletBalance }) => (
@@ -326,30 +323,8 @@ const RecipientAddressInnerPopup = ({
         </AddressItemShadowView>
       );
     },
-    [
-      accounts,
-      address,
-      selectedAddress,
-      styles.accountContainer,
-      styles.innerBalance,
-      styles.innerName,
-      styles.innerRow,
-      styles.innerRowSelected,
-      styles.innerWalletInfo,
-      styles.innerWallet,
-      styles.innerWalletRow,
-      styles.limit,
-      styles.shadow,
-      styles.shadowSelected,
-      styles.walletNameContainer,
-    ],
+    [accounts, address, styles, onChange],
   );
-
-  const confirm = React.useCallback(() => {
-    onChange?.(
-      list?.find(item => isSameAddress(item.recharge_addr, selectedAddress))!,
-    );
-  }, [onChange, list, selectedAddress]);
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -368,8 +343,6 @@ const RecipientAddressInnerPopup = ({
 
   return (
     <AppBottomSheetModal
-      // enableContentPanningGesture={false} // has scorll list
-      // snapPoints={[Math.min(height - 200, 652)]}
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
@@ -411,24 +384,6 @@ const RecipientAddressInnerPopup = ({
             ))}
             <View style={styles.floatBottomSpacer} />
           </View>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
-                : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
-            }
-            locations={[0.6393, 1]}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 0, y: 0 }}
-            style={styles.floatBottom}>
-            <Button
-              title={t('global.confirm')}
-              onPress={e => {
-                e.stopPropagation();
-                confirm();
-              }}
-            />
-          </LinearGradient>
         </LinearGradient>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
