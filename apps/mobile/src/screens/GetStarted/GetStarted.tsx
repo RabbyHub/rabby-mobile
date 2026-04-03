@@ -34,19 +34,15 @@ import heroBgDark from '@/assets/images/get-started/hero-bg-dark.png';
 import logoLight from '@/assets/images/get-started/logo-light.png';
 import logoDark from '@/assets/images/get-started/logo-dark.png';
 
+// Actual image dimensions: 1179 x 1284
+const HERO_IMAGE_ASPECT_RATIO = 1284 / 1179;
+
 // Hero illustration component using PNG background
-const HeroIllustration = ({
-  isLight,
-  topInset,
-}: {
-  isLight: boolean;
-  topInset: number;
-}) => {
+const HeroIllustration = ({ isLight }: { isLight: boolean }) => {
   const { styles } = useTheme2024({ getStyle });
 
-  // Height includes status bar area for seamless extension behind status bar
-  // On short screens, the container shrinks and image crops from top
-  const heroHeight = 370 + topInset;
+  // Calculate height based on image aspect ratio
+  const heroHeight = Math.ceil(SCREEN_WIDTH * HERO_IMAGE_ASPECT_RATIO);
 
   return (
     <View style={[styles.heroContainer, { height: heroHeight }]}>
@@ -185,7 +181,7 @@ function NewUserGetStartedScreen() {
 
       <View style={styles.contentContainer}>
         {/* Hero Illustration - crops from top on short screens */}
-        <HeroIllustration isLight={isLight} topInset={top} />
+        <HeroIllustration isLight={isLight} />
 
         {/* Text Content */}
         <View style={styles.textContent}>
