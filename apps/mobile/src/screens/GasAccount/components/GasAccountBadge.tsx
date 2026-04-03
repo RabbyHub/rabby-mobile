@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValue } from '@/utils/number';
-import { useGasAccountInfo } from '../hooks';
+import { useGasAccountBalanceWithPendingHardware } from '../hooks/useGasAccountBalanceWithPendingHardware';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { Text } from '@/components/Typography';
@@ -9,33 +9,43 @@ import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 
 export const GasAccountBadge: React.FC<{}> = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { value, runFetchGasAccountInfo, loading } = useGasAccountInfo();
+  const {
+    isLogin,
+    pendingHardwareAddress,
+    runFetchGasAccountInfo,
+    refreshPendingHardwareGasAccountInfo,
+    displayBalance,
+    isDisplayBalanceLoading,
+  } = useGasAccountBalanceWithPendingHardware();
 
   useFocusEffect(
     useCallback(() => {
-      runFetchGasAccountInfo();
-    }, [runFetchGasAccountInfo]),
+      if (isLogin) {
+        runFetchGasAccountInfo();
+        return;
+      }
+      if (pendingHardwareAddress) {
+        refreshPendingHardwareGasAccountInfo();
+      }
+    }, [
+      isLogin,
+      pendingHardwareAddress,
+      refreshPendingHardwareGasAccountInfo,
+      runFetchGasAccountInfo,
+    ]),
   );
 
-  if (!value && loading) {
+  if (isDisplayBalanceLoading) {
     return <CustomSkeleton width={50} height={18} style={styles.skeleton} />;
   }
 
-  if (
-    !value?.account ||
-    !value?.account?.balance ||
-    value?.account?.balance < 0.1
-  ) {
+  if (displayBalance < 0.1) {
     return (
-      <Text style={styles.invalidText}>
-        {formatUsdValue(value?.account?.balance || 0)}
-      </Text>
+      <Text style={styles.invalidText}>{formatUsdValue(displayBalance)}</Text>
     );
   }
 
-  return (
-    <Text style={styles.text}>{formatUsdValue(value.account.balance)}</Text>
-  );
+  return <Text style={styles.text}>{formatUsdValue(displayBalance)}</Text>;
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({

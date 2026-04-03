@@ -2,6 +2,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Text } from '@/components/Typography';
 import { toast } from '@/components2024/Toast';
 import IconGift from '@/assets2024/icons/gas-account/gift-01.svg';
+import GasHeaderBg from '@/assets2024/images/gasAccount/gas-header-bg.png';
 import {
   filterDirectlySignableAccounts,
   getAccountList,
@@ -9,6 +10,7 @@ import {
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import useTokenList from '@/store/tokens';
@@ -22,12 +24,11 @@ import { GasAccountDepositPopup } from './components/GasAccountDepositPopup';
 import { GasAccountLoginPopup } from './components/GasAccountLoginPopup';
 import { GasAccountHeader } from './components/HeaderRight';
 import { WithDrawPopup } from './components/WithDrawPopup';
-import { useGasAccountInfo, useGasAccountLogin } from './hooks';
+import { useGasAccountBalanceWithPendingHardware } from './hooks/useGasAccountBalanceWithPendingHardware';
 import {
   storeApiGasAccountDeposit,
   storeApiGasAccount,
   useGasAccountLoginVisible,
-  usePendingHardwareAccount,
 } from './hooks/atom';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { refreshAccountsWithGasAccountBalance } from '@/utils/autoLoginGasAccount';
@@ -48,18 +49,25 @@ export const GasAccountScreen = () => {
   const [loginVisible, setLoginVisible] = useGasAccountLoginVisible();
   const [emptyStateLoading, setEmptyStateLoading] = useState(false);
 
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
   });
-  const { value: gasAccount, runFetchGasAccountInfo } = useGasAccountInfo();
+  const { safeOffHeader } = useSafeSizes();
+  const {
+    isLogin,
+    gasAccount,
+    runFetchGasAccountInfo,
+    pendingHardwareAccount,
+    pendingHardwareAddress,
+    refreshPendingHardwareGasAccountInfo,
+    displayBalance: gasBalance,
+  } = useGasAccountBalanceWithPendingHardware();
   const historyState = useGasAccountHistory();
   const { myTop10Addresses } = useAccountInfo();
 
   const { login } = useGasAccountMethods();
   const { claimGift, currentEligibleAddress, checkAddressesEligibility } =
     useGasAccountEligibility();
-
-  const pendingHardwareAccount = usePendingHardwareAccount();
 
   const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
     setDepositState({
@@ -68,7 +76,6 @@ export const GasAccountScreen = () => {
     });
   });
 
-  const { isLogin } = useGasAccountLogin();
   const withdrawable_balance = gasAccount?.account?.withdrawable_balance || 0;
   const nonWithdrawable_balance =
     gasAccount?.account?.non_withdrawable_balance || 0;
@@ -95,11 +102,14 @@ export const GasAccountScreen = () => {
       refreshAccountsWithGasAccountBalance().catch(error => {
         console.error('refreshAccountsWithGasAccountBalance error', error);
       });
+      if (pendingHardwareAddress) {
+        refreshPendingHardwareGasAccountInfo();
+      }
 
       return () => {
         storeApiGasAccount.setHistoryRefreshEnabled(false);
       };
-    }, []),
+    }, [pendingHardwareAddress, refreshPendingHardwareGasAccountInfo]),
   );
 
   useFocusEffect(
@@ -128,7 +138,6 @@ export const GasAccountScreen = () => {
     }, [checkAddressesEligibility, isLogin, pendingHardwareAccount]),
   );
 
-  const gasBalance = Number(gasAccount?.account?.balance || 0);
   const hasHistory = Boolean(
     historyState.txList?.rechargeList.length ||
       historyState.txList?.withdrawList.length ||
@@ -213,19 +222,6 @@ export const GasAccountScreen = () => {
     handleDeposit();
   });
 
-  const linearProp = useMemo(
-    () => ({
-      colors: [
-        'rgba(68, 94, 255, 0.20)',
-        'rgba(68, 94, 255, 0.00)',
-        isLight ? colors2024['neutral-bg-0'] : colors2024['neutral-bg-1'],
-      ],
-      locations: [0, 0.1829, 1],
-      start: { x: 0, y: 0 },
-      end: { x: 0, y: 1 },
-    }),
-    [colors2024, isLight],
-  );
   const emptyStatePrimaryContent = useMemo(() => {
     if (
       emptyStatePrimaryMode !== 'claimGift' ||
@@ -253,7 +249,11 @@ export const GasAccountScreen = () => {
   ]);
 
   return (
-    <NormalScreenContainer type="linear" linearProp={linearProp}>
+    <NormalScreenContainer
+      type={isLight ? 'bg0' : 'bg1'}
+      bgImageSource={GasHeaderBg}
+      bgImageResizeMode="cover"
+      bgImageHeight={safeOffHeader + 64}>
       {showEmptyState ? (
         <GasAccountEmptyState
           primaryLoading={emptyStateLoading}
@@ -399,7 +399,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
   },
   giftPrimaryButtonContainer: {
-    shadowColor: '#7084ff',
+    shadowColor: colors2024['brand-default'],
     shadowOpacity: 0.1,
     shadowRadius: 24,
     shadowOffset: {

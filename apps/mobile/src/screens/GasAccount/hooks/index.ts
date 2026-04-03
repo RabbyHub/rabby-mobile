@@ -40,10 +40,15 @@ export const useGasAccountInfo = () => {
   return { loading, value, runFetchGasAccountInfo };
 };
 
-export const useGasAccountInfoV2 = ({ address }: { address: string }) => {
-  return useRequest(() => openapi.getGasAccountInfoV2({ id: address }), {
-    refreshDeps: [address],
-    cacheKey: `gas-account-info-v2-${address}`,
+export const useGasAccountInfoV2 = ({ address }: { address?: string }) => {
+  const targetAddress = address;
+
+  return useRequest(() => openapi.getGasAccountInfoV2({ id: targetAddress! }), {
+    refreshDeps: [targetAddress],
+    ready: !!targetAddress,
+    ...(targetAddress
+      ? { cacheKey: `gas-account-info-v2-${targetAddress}` }
+      : {}),
   });
 };
 
