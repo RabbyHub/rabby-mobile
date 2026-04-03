@@ -43,10 +43,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 let preCount = 0;
 
-interface LendingHeaderProps {
+interface LendingHistoryHeaderProps {
   onPendingClear?: () => void;
 }
-export const LendingHeader = ({ onPendingClear }: LendingHeaderProps) => {
+export const LendingHistoryHeader = ({
+  onPendingClear,
+}: LendingHistoryHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [pendingCount, setPendingCount] = useState(0);

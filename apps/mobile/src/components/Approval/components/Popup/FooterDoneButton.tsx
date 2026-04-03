@@ -2,7 +2,7 @@ import { Button } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { useInterval } from 'ahooks';
+import { useInterval, useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -24,7 +24,11 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const FooterDoneButton: React.FC<Props> = ({ onDone, hide }) => {
+export const FooterDoneButton: React.FC<Props> = ({
+  onDone: propOnDone,
+  hide,
+}) => {
+  const onDone = useMemoizedFn(propOnDone);
   const [counter, setCounter] = React.useState(0.5);
   const { visible } = useCommonPopupView();
   const colors = useThemeColors();
@@ -38,13 +42,13 @@ export const FooterDoneButton: React.FC<Props> = ({ onDone, hide }) => {
     if (counter <= 0) {
       onDone();
     }
-  }, [counter]);
+  }, [counter, onDone]);
 
   React.useEffect(() => {
     if (!visible) {
       onDone();
     }
-  }, [visible]);
+  }, [visible, onDone]);
 
   if (hide) {
     return null;

@@ -148,7 +148,7 @@ export function redirectToAddAddressEntry(options?: {
     }
     case 'replace':
       replace(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
+        screen: RootNames.GetStarted,
       });
       break;
     case 'resetTo':
@@ -159,7 +159,7 @@ export function redirectToAddAddressEntry(options?: {
             name: RootNames.StackGetStarted,
             state: {
               index: 0,
-              routes: [{ name: RootNames.GetStartedScreen2024 }],
+              routes: [{ name: RootNames.GetStarted }],
             },
           },
         ],
@@ -168,7 +168,7 @@ export function redirectToAddAddressEntry(options?: {
     case 'push':
     default:
       navigateDeprecated(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
+        screen: RootNames.GetStarted,
       });
       break;
   }

@@ -31,6 +31,9 @@ const keyToMarketKey: Record<string, CustomMarket> = {
   sonic_aave3: CustomMarket.proto_sonic_v3,
   celo_aave3: CustomMarket.proto_celo_v3,
   xdai_aave3: CustomMarket.proto_gnosis_v3,
+  megaeth_aave3: CustomMarket.proto_megaeth_v3,
+  mnt_aave3: CustomMarket.proto_mantle_v3,
+  xlayer_aave3: CustomMarket.proto_xlayer_v3,
 };
 
 export type TonTokenManageAction = (

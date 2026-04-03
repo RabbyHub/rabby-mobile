@@ -5,6 +5,7 @@ import React, {
   useLayoutEffect,
   useMemo,
   useRef,
+  type Ref,
 } from 'react';
 import {
   LayoutRectangle,
@@ -217,17 +218,18 @@ function getAnimationLayoutDefaultWidth() {
 export type HomeGuidanceMultipleTabs = {
   play(): void;
 };
-export const HomeGuidanceMultipleTabs = React.forwardRef<
-  HomeGuidanceMultipleTabs,
-  {
-    beforeContentNode?:
-      | React.ReactNode
-      | ((ctx: {
-          // absLayout: AbsLayout;
-          secondaryIndicatorAbsLayout: AbsLayout;
-        }) => React.ReactNode);
-  }
->(({ beforeContentNode: prop_beforeContentNode }, ref) => {
+export const HomeGuidanceMultipleTabs = ({
+  ref,
+  beforeContentNode: prop_beforeContentNode,
+}: {
+  ref?: Ref<HomeGuidanceMultipleTabs>;
+  beforeContentNode?:
+    | React.ReactNode
+    | ((ctx: {
+        // absLayout: AbsLayout;
+        secondaryIndicatorAbsLayout: AbsLayout;
+      }) => React.ReactNode);
+}) => {
   const { styles, reanimatedStyles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -446,7 +448,7 @@ export const HomeGuidanceMultipleTabs = React.forwardRef<
       </Animated.View>
     </Animated.View>
   );
-});
+};
 
 const getStyle = createGetStyles2024(
   {

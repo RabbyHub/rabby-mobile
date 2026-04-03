@@ -3,8 +3,8 @@ import React, {
   useCallback,
   useRef,
   useImperativeHandle,
-  forwardRef,
 } from 'react';
+import type { Ref } from 'react';
 import {
   WebView,
   WebViewMessageEvent,
@@ -30,11 +30,13 @@ interface IMessageData {
 }
 
 // webview docs: https://github.com/react-native-webview/react-native-webview/blob/master/docs/Guide.md#basic-url-source
-const BasicWebView: Parameters<
-  typeof forwardRef<WebView, Omit<WebViewProps, 'source'> & IWebviewProps>
->[0] = (props, ref) => {
-  const { source, onWebviewMessage, isShown = true, ...restProps } = props;
-
+const BasicWebView = ({
+  ref,
+  source,
+  onWebviewMessage,
+  isShown = true,
+  ...restProps
+}: Omit<WebViewProps, 'source'> & IWebviewProps & { ref?: Ref<WebView> }) => {
   const webviewRef = useRef<WebView>(null);
 
   const onMessage = useCallback(
@@ -99,4 +101,4 @@ const getStyle = () =>
     },
   });
 
-export default forwardRef(BasicWebView);
+export default BasicWebView;

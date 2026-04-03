@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import type { Ref } from 'react';
 import WebView, { WebViewProps } from 'react-native-webview';
 
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
@@ -67,225 +68,222 @@ function defaultOnShouldStartLoadWithRequest(
 export type LocalWebView = WebView & {
   sendMessage?: (message: any) => void;
 };
-export const LocalWebView = React.forwardRef<LocalWebView, LocalWebViewProps>(
-  (
-    {
-      entryPath,
-      webviewSize,
-      forceUseLocalResource: prop_forceUseLocalResource = !__DEV__,
-      disableHttpRequest = !__DEV__,
-      i18nTexts = {},
-      ...webviewProps
-    },
-    ref,
-  ) => {
-    const { styles, isLight } = useTheme2024({ getStyle });
-    const { currentLanguage } = useAppLanguage();
-    // const { width: viewWidth = '100%', height: viewHeight = 300 } = viewSize || {};
-    const { width: webviewWidth = '100%', height: webviewHeight = 300 } =
-      webviewSize || {};
 
-    const { devServerMobileLocalPagesAvailable, devServerHost, devUri } =
-      useDevServerHostAvailableForLocalWebView({
-        autoDetectHost: true,
-        devUri: useCallback<GetDevUriFn>(
-          ctx => {
-            return formatDevURI({
-              host: ctx.devServerHost,
-              port: 5173,
-              protocol: 'http:',
-              path: entryPath,
-            });
-          },
-          [entryPath],
-        ),
-      });
+export const LocalWebView = ({
+  ref,
+  entryPath,
+  webviewSize,
+  forceUseLocalResource: prop_forceUseLocalResource = !__DEV__,
+  disableHttpRequest = !__DEV__,
+  i18nTexts = {},
+  ...webviewProps
+}: LocalWebViewProps & { ref?: Ref<LocalWebView> }) => {
+  const { styles, isLight } = useTheme2024({ getStyle });
+  const { currentLanguage } = useAppLanguage();
+  // const { width: viewWidth = '100%', height: viewHeight = 300 } = viewSize || {};
+  const { width: webviewWidth = '100%', height: webviewHeight = 300 } =
+    webviewSize || {};
 
-    const { forceUseLocalResource } = useMemo(() => {
-      if (__DEV__ && !prop_forceUseLocalResource) {
-        if (!devServerHost) {
-          // throw new Error('devServerHost is not set');
-          const errorMsg =
-            'devServerHost is not set, will use local resource fallback';
-          console.warn(errorMsg);
-          return { forceUseLocalResource: true };
-        } else if (!devServerMobileLocalPagesAvailable) {
-          const errorMsg = `Dev server host ${devServerHost} is not reachable, will use local resource fallback`;
-          console.warn(errorMsg);
-          return { forceUseLocalResource: true };
-        }
-      }
-
-      return { forceUseLocalResource: prop_forceUseLocalResource };
-    }, [
-      prop_forceUseLocalResource,
-      devServerHost,
-      devServerMobileLocalPagesAvailable,
-    ]);
-
-    const { webviewSource } = useMemo(() => {
-      const localUri = IS_ANDROID
-        ? refAssetForLocalWebView(
-            stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
-          ).rawPath
-        : refAssetForLocalWebView(
-            stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
-          ).rawPath;
-
-      return {
-        localUri,
-        devUri,
-        webviewSource:
-          __DEV__ && !forceUseLocalResource
-            ? {
-                uri: devUri,
-                baseUrl: getBaseURL(devUri || ''),
-              }
-            : IS_ANDROID
-            ? {
-                uri: localUri,
-                baseUrl: `${stringUtils.ensureSuffix(WEBVIEW_BASEURL, '/')}`,
-              }
-            : {
-                uri: `${WEBVIEW_BASEURL}${stringUtils.ensurePrefix(
-                  entryPath,
-                  '/builtin-pages',
-                )}`,
-                baseUrl: WEBVIEW_BASEURL,
-              },
-      };
-    }, [entryPath, devUri, forceUseLocalResource]);
-
-    const { onShouldStartLoadWithRequest: _onShouldStartLoadWithRequest } =
-      webviewProps;
-    const onShouldStartLoadWithRequest =
-      useCallback<OnShouldStartLoadWithRequest>(
-        request => {
-          const internalAllowed = defaultOnShouldStartLoadWithRequest(
-            request,
-            disableHttpRequest,
-          );
-
-          const externalAllowed =
-            _onShouldStartLoadWithRequest?.(request) !== false;
-
-          return internalAllowed && externalAllowed;
+  const { devServerMobileLocalPagesAvailable, devServerHost, devUri } =
+    useDevServerHostAvailableForLocalWebView({
+      autoDetectHost: true,
+      devUri: useCallback<GetDevUriFn>(
+        ctx => {
+          return formatDevURI({
+            host: ctx.devServerHost,
+            port: 5173,
+            protocol: 'http:',
+            path: entryPath,
+          });
         },
-        [_onShouldStartLoadWithRequest, disableHttpRequest],
-      );
-
-    const webviewRef: React.MutableRefObject<WebView | null> =
-      React.useRef<WebView>(null);
-
-    const deepComparedI18nText = useCreationWithDeepCompare(
-      () => i18nTexts,
-      [i18nTexts],
-    );
-    const runtimeInfo = useCreationWithShallowCompare(() => {
-      return makeRuntimeInfo({
-        baseUrl: webviewSource.baseUrl!,
-        useDevResource: __DEV__ && !forceUseLocalResource,
-        isDark: !isLight,
-        language: currentLanguage,
-        i18nTexts: deepComparedI18nText,
-      });
-    }, [
-      webviewSource.baseUrl,
-      forceUseLocalResource,
-      isLight,
-      currentLanguage,
-      deepComparedI18nText,
-    ]);
-    useEffect(() => {
-      sendMessageToWebview(webviewRef.current, {
-        type: 'GOT_RUNTIME_INFO',
-        info: runtimeInfo,
-      });
-    }, [runtimeInfo]);
-
-    const [windowInfo, setWindowInfo] = useState<{
-      width: number;
-      height: number;
-    } | null>(null);
-    useImperativeHandle(ref, () => {
-      return Object.assign(
-        {
-          sendMessage: (message: any) => {
-            sendMessageToWebview(webviewRef.current, message);
-          },
-        },
-        webviewRef.current as WebView,
-      );
+        [entryPath],
+      ),
     });
-    useEffect(() => {
-      if (!windowInfo) return;
-      sendMessageToWebview(webviewRef.current, {
-        type: 'GOT_WINDOW_INFO',
-        info: { ...windowInfo },
-      });
-    }, [windowInfo]);
 
-    return (
-      <WebView
-        {...(IS_IOS
-          ? getLocalWebViewDefaultProps().iosWebViewProps
-          : getLocalWebViewDefaultProps().androidWebViewProps)}
-        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
-        {...webviewProps}
-        onLayout={event => {
-          const { width, height } = event.nativeEvent.layout;
-          setWindowInfo({ width, height });
-        }}
-        style={[
-          styles.webView,
-          {
-            height: webviewHeight,
-            width: webviewWidth,
-            minHeight: webviewHeight,
-          },
-          webviewProps.style,
-        ]}
-        ref={(instance: WebView) => {
-          webviewRef.current = instance;
-        }}
-        source={{
-          ...webviewProps.source,
-          ...webviewSource,
-        }}
-        injectedJavaScriptObject={{
-          ...webviewProps.injectedJavaScriptObject,
-          ...runtimeInfo,
-        }}
-        onMessage={event => {
-          webviewProps.onMessage?.(event);
-          const parseInfo = stringUtils.safeParseJSON(event.nativeEvent.data);
+  const { forceUseLocalResource } = useMemo(() => {
+    if (__DEV__ && !prop_forceUseLocalResource) {
+      if (!devServerHost) {
+        // throw new Error('devServerHost is not set');
+        const errorMsg =
+          'devServerHost is not set, will use local resource fallback';
+        console.warn(errorMsg);
+        return { forceUseLocalResource: true };
+      } else if (!devServerMobileLocalPagesAvailable) {
+        const errorMsg = `Dev server host ${devServerHost} is not reachable, will use local resource fallback`;
+        console.warn(errorMsg);
+        return { forceUseLocalResource: true };
+      }
+    }
 
-          switch (parseInfo?.type) {
-            case 'GET_RUNTIME_INFO': {
-              sendMessageToWebview(webviewRef.current, {
-                type: 'GOT_RUNTIME_INFO',
-                info: runtimeInfo,
-              });
-              break;
+    return { forceUseLocalResource: prop_forceUseLocalResource };
+  }, [
+    prop_forceUseLocalResource,
+    devServerHost,
+    devServerMobileLocalPagesAvailable,
+  ]);
+
+  const { webviewSource } = useMemo(() => {
+    const localUri = IS_ANDROID
+      ? refAssetForLocalWebView(
+          stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
+        ).rawPath
+      : refAssetForLocalWebView(
+          stringUtils.ensurePrefix(entryPath, '/builtin-pages'),
+        ).rawPath;
+
+    return {
+      localUri,
+      devUri,
+      webviewSource:
+        __DEV__ && !forceUseLocalResource
+          ? {
+              uri: devUri,
+              baseUrl: getBaseURL(devUri || ''),
             }
-            case 'GET_WINDOW_INFO': {
-              if (windowInfo) {
-                sendMessageToWebview(webviewRef.current, {
-                  type: 'GOT_WINDOW_INFO',
-                  info: windowInfo,
-                });
-              }
-              break;
+          : IS_ANDROID
+          ? {
+              uri: localUri,
+              baseUrl: `${stringUtils.ensureSuffix(WEBVIEW_BASEURL, '/')}`,
             }
-            default: {
-              console.warn('Unknown message from WebView', parseInfo);
-            }
-          }
-        }}
-      />
+          : {
+              uri: `${WEBVIEW_BASEURL}${stringUtils.ensurePrefix(
+                entryPath,
+                '/builtin-pages',
+              )}`,
+              baseUrl: WEBVIEW_BASEURL,
+            },
+    };
+  }, [entryPath, devUri, forceUseLocalResource]);
+
+  const { onShouldStartLoadWithRequest: _onShouldStartLoadWithRequest } =
+    webviewProps;
+  const onShouldStartLoadWithRequest =
+    useCallback<OnShouldStartLoadWithRequest>(
+      request => {
+        const internalAllowed = defaultOnShouldStartLoadWithRequest(
+          request,
+          disableHttpRequest,
+        );
+
+        const externalAllowed =
+          _onShouldStartLoadWithRequest?.(request) !== false;
+
+        return internalAllowed && externalAllowed;
+      },
+      [_onShouldStartLoadWithRequest, disableHttpRequest],
     );
-  },
-);
+
+  const webviewRef: React.MutableRefObject<WebView | null> =
+    React.useRef<WebView>(null);
+
+  const deepComparedI18nText = useCreationWithDeepCompare(
+    () => i18nTexts,
+    [i18nTexts],
+  );
+  const runtimeInfo = useCreationWithShallowCompare(() => {
+    return makeRuntimeInfo({
+      baseUrl: webviewSource.baseUrl!,
+      useDevResource: __DEV__ && !forceUseLocalResource,
+      isDark: !isLight,
+      language: currentLanguage,
+      i18nTexts: deepComparedI18nText,
+    });
+  }, [
+    webviewSource.baseUrl,
+    forceUseLocalResource,
+    isLight,
+    currentLanguage,
+    deepComparedI18nText,
+  ]);
+  useEffect(() => {
+    sendMessageToWebview(webviewRef.current, {
+      type: 'GOT_RUNTIME_INFO',
+      info: runtimeInfo,
+    });
+  }, [runtimeInfo]);
+
+  const [windowInfo, setWindowInfo] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  useImperativeHandle(ref, () => {
+    return Object.assign(
+      {
+        sendMessage: (message: any) => {
+          sendMessageToWebview(webviewRef.current, message);
+        },
+      },
+      webviewRef.current as WebView,
+    );
+  });
+  useEffect(() => {
+    if (!windowInfo) return;
+    sendMessageToWebview(webviewRef.current, {
+      type: 'GOT_WINDOW_INFO',
+      info: { ...windowInfo },
+    });
+  }, [windowInfo]);
+
+  return (
+    <WebView
+      {...(IS_IOS
+        ? getLocalWebViewDefaultProps().iosWebViewProps
+        : getLocalWebViewDefaultProps().androidWebViewProps)}
+      onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+      {...webviewProps}
+      onLayout={event => {
+        const { width, height } = event.nativeEvent.layout;
+        setWindowInfo({ width, height });
+      }}
+      style={[
+        styles.webView,
+        {
+          height: webviewHeight,
+          width: webviewWidth,
+          minHeight: webviewHeight,
+        },
+        webviewProps.style,
+      ]}
+      ref={(instance: WebView) => {
+        webviewRef.current = instance;
+      }}
+      source={{
+        ...webviewProps.source,
+        ...webviewSource,
+      }}
+      injectedJavaScriptObject={{
+        ...webviewProps.injectedJavaScriptObject,
+        ...runtimeInfo,
+      }}
+      onMessage={event => {
+        webviewProps.onMessage?.(event);
+        const parseInfo = stringUtils.safeParseJSON(event.nativeEvent.data);
+
+        switch (parseInfo?.type) {
+          case 'GET_RUNTIME_INFO': {
+            sendMessageToWebview(webviewRef.current, {
+              type: 'GOT_RUNTIME_INFO',
+              info: runtimeInfo,
+            });
+            break;
+          }
+          case 'GET_WINDOW_INFO': {
+            if (windowInfo) {
+              sendMessageToWebview(webviewRef.current, {
+                type: 'GOT_WINDOW_INFO',
+                info: windowInfo,
+              });
+            }
+            break;
+          }
+          default: {
+            console.warn('Unknown message from WebView', parseInfo);
+          }
+        }
+      }}
+    />
+  );
+};
 
 const getStyle = createGetStyles2024(ctx => ({
   container: {

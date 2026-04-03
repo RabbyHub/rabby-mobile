@@ -52,6 +52,7 @@ export function makeJsEEClass<
 
 const { EventEmitter: AppServiceEvents } = makeJsEEClass<{
   currentAccountChanged: (account: Account) => void;
+  backupReminderChanged: (dbId: string) => void;
 }>();
 
 export const appServiceEvents = new AppServiceEvents();
