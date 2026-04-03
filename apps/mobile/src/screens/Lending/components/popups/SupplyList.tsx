@@ -626,7 +626,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: 12,
       backgroundColor: colors2024['orange-light-1'],
       borderRadius: 6,
-      marginTop: 8,
+      marginTop: 0,
+      marginBottom: 8,
       gap: 2,
     },
     availableCardHeader: {
