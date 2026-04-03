@@ -2652,8 +2652,8 @@
         "distanceLabel": "平仓距离",
         "subtitle": "实时清算距离 (%)",
         "liqIntro": "清算距离 (%) 表示当前价格与您的清算价格之间的距离。距离越大，说明仓位越安全；距离越小，则表示清算风险越高。",
-        "liqDistanceTipsLong": "下跌 <1>{{distance}}</1> 将触发强平。",
-        "liqDistanceTipsShort": "上涨 <1>{{distance}}</1> 将触发强平。"
+        "liqDistanceTipsLong": "价格下跌 <1>{{distance}}</1> 将触发强平。",
+        "liqDistanceTipsShort": "价格上涨 <1>{{distance}}</1> 将触发强平。"
       },
       "closeAll": "全部关闭",
       "closeAllConfirmMessage": "您所有的未平仓头寸将以市场价格平仓。",
@@ -2731,7 +2731,7 @@
         "rabbyFeeTips": "Rabby 费用：0.04%",
         "fee": "费用：",
         "closeBtn": "关闭 {{direction}}",
-        "closedPnl": "已平仓PNL",
+        "closedPnl": "预计关仓盈亏",
         "amount": "金额",
         "confirm": "确认",
         "receive": "接收",
