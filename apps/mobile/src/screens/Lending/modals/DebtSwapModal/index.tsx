@@ -708,16 +708,17 @@ export default function DebtSwapModal({
         return;
       }
 
-      // Check if form values changed during authentication (iOS autofill protection)
-      const formCheck = formValuesRef.current.compare({ fromAmount });
-      if (formCheck.isChanged) {
-        Alert.alert(
-          t('page.Lending.popup.formChangedTitle'),
-          t('page.Lending.popup.formChangedAmount'),
-          [{ text: t('global.ok'), onPress: () => {} }],
-        );
-        formValuesRef.current.clear();
-        return;
+      if (canShowDirectSubmit && formValuesRef.current.hasSnapshot()) {
+        const formCheck = formValuesRef.current.compare({ fromAmount });
+        if (formCheck.isChanged) {
+          Alert.alert(
+            t('page.Lending.popup.formChangedTitle'),
+            t('page.Lending.popup.formChangedAmount'),
+            [{ text: t('global.ok'), onPress: () => {} }],
+          );
+          formValuesRef.current.clear();
+          return;
+        }
       }
 
       try {

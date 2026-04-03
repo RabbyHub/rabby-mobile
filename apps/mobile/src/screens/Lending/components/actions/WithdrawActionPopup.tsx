@@ -271,16 +271,17 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
 
-      // Check if form values changed during authentication (iOS autofill protection)
-      const formCheck = formValuesRef.current.compare({ amount });
-      if (formCheck.isChanged) {
-        Alert.alert(
-          t('page.Lending.popup.formChangedTitle'),
-          t('page.Lending.popup.formChangedAmount'),
-          [{ text: t('global.ok'), onPress: () => {} }],
-        );
-        formValuesRef.current.clear();
-        return;
+      if (canShowDirectSubmit && formValuesRef.current.hasSnapshot()) {
+        const formCheck = formValuesRef.current.compare({ amount });
+        if (formCheck.isChanged) {
+          Alert.alert(
+            t('page.Lending.popup.formChangedTitle'),
+            t('page.Lending.popup.formChangedAmount'),
+            [{ text: t('global.ok'), onPress: () => {} }],
+          );
+          formValuesRef.current.clear();
+          return;
+        }
       }
 
       try {
