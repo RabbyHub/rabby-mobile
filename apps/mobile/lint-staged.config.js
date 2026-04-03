@@ -54,5 +54,5 @@ module.exports = {
         return 'tsc --project tsconfig.typecheck.temp.json --noEmit';
       }),
   ].filter(Boolean),
-  '*': 'prettier --write --ignore-unknown',
+  '!(*.min.json)': 'prettier --write --ignore-unknown',
 };

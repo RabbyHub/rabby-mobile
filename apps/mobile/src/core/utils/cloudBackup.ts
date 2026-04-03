@@ -8,6 +8,7 @@ import {
 import { appEncryptor } from '../services/shared';
 import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
+import { getMnemonicByAddress } from '../apis/mnemonic';
 import { sortBy } from 'lodash';
 import { devLog } from '@/utils/logger';
 
@@ -288,4 +289,25 @@ export const refreshAccessToken = async () => {
   const accountToken = await (await GoogleSignin.getTokens()).accessToken;
   CloudStorage.setGoogleDriveAccessToken(accountToken);
   return accountToken;
+};
+
+/**
+ * Check if a cloud backup exists for the given address (does not require login)
+ * @param address - The wallet address to check
+ * @returns true if backup exists, false otherwise
+ */
+export const checkCloudBackupExists = async (
+  address: string,
+): Promise<boolean> => {
+  const mnemonic = getMnemonicByAddress(address);
+  if (!mnemonic) return false;
+  // Derive the index-0 address (this is the backup filename)
+  const index0Address = getAddressFromMnemonic(mnemonic, 0);
+  const filePath = `${REMOTE_BACKUP_WALLET_DIR}/${index0Address}`;
+  try {
+    return await CloudStorage.exists(filePath);
+  } catch (error) {
+    console.error('Failed to check cloud backup existence:', error);
+    return false;
+  }
 };

@@ -44,9 +44,13 @@ type SupplyListItem =
   | { type: 'reserve'; data: DisplayPoolReserveInfo }
   | { type: 'toggle_fold' };
 
-const LendingSupplyList: React.FC<
-  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST>
-> = ({}) => {
+type LendingSupplyListContentProps = {
+  hideHeader?: boolean;
+};
+
+export const LendingSupplyListContent: React.FC<
+  LendingSupplyListContentProps
+> = ({ hideHeader = false }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { reserves } = useLendingRemoteData();
@@ -330,43 +334,47 @@ const LendingSupplyList: React.FC<
 
   return (
     <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>
-          {t('page.Lending.supplyDetail.actions')}
-        </Text>
-        <NextSearchBar
-          style={styles.searchBar}
-          value={search}
-          onChangeText={setSearch}
-          inputContainerStyle={{
-            justifyContent: inputNotActiveAndNoQuery ? 'center' : 'flex-start',
-          }}
-          inputStyle={{
-            flex: inputNotActiveAndNoQuery ? 0 : 1,
-          }}
-          placeholder={t('component.TokenSelector.searchPlaceHolder2')}
-          returnKeyType="search"
-          placeholderTextColor={colors2024['neutral-secondary']}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          onCancel={() => {
-            setSearch('');
-            setTimeout(() => {
-              inputRef.current?.blur();
-            }, 50);
-          }}
-          ref={inputRef}
-        />
-        {/* for mask touch event in input to emit focus event */}
-        {inputNotActiveAndNoQuery && (
-          <TouchableOpacity
-            style={[styles.absoluteContainer]}
-            onPress={() => {
-              inputRef.current?.focus();
+      {!hideHeader && (
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText}>
+            {t('page.Lending.supplyDetail.actions')}
+          </Text>
+          <NextSearchBar
+            style={styles.searchBar}
+            value={search}
+            onChangeText={setSearch}
+            inputContainerStyle={{
+              justifyContent: inputNotActiveAndNoQuery
+                ? 'center'
+                : 'flex-start',
             }}
+            inputStyle={{
+              flex: inputNotActiveAndNoQuery ? 0 : 1,
+            }}
+            placeholder={t('component.TokenSelector.searchPlaceHolder2')}
+            returnKeyType="search"
+            placeholderTextColor={colors2024['neutral-secondary']}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            onCancel={() => {
+              setSearch('');
+              setTimeout(() => {
+                inputRef.current?.blur();
+              }, 50);
+            }}
+            ref={inputRef}
           />
-        )}
-      </View>
+          {/* for mask touch event in input to emit focus event */}
+          {inputNotActiveAndNoQuery && (
+            <TouchableOpacity
+              style={[styles.absoluteContainer]}
+              onPress={() => {
+                inputRef.current?.focus();
+              }}
+            />
+          )}
+        </View>
+      )}
       <BottomSheetFlatList
         data={loading ? [] : dataList}
         style={styles.list}
@@ -385,6 +393,12 @@ const LendingSupplyList: React.FC<
       />
     </View>
   );
+};
+
+const LendingSupplyList: React.FC<
+  GlobalModalViewProps<MODAL_NAMES.LENDING_SUPPLY_LIST>
+> = () => {
+  return <LendingSupplyListContent />;
 };
 
 export default LendingSupplyList;
@@ -535,7 +549,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: 16,
+      marginTop: 0,
       marginBottom: 2,
     },
     loading: {
@@ -612,7 +626,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: 12,
       backgroundColor: colors2024['orange-light-1'],
       borderRadius: 6,
-      marginTop: 8,
+      marginTop: 0,
+      marginBottom: 8,
       gap: 2,
     },
     availableCardHeader: {

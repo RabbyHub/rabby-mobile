@@ -3352,6 +3352,8 @@
     "pin": "ปักหมุด",
     "appDescription": "กระเป๋าเงินที่เปลี่ยนเกมสำหรับ Ethereum และทุก EVM chains",
     "Deleted": "ลบแล้ว",
+    "WalletCreated": "สร้าง Wallet แล้ว",
+    "WalletImported": "นำเข้า Wallet แล้ว",
     "Paste": "วาง",
     "Nonce": "Nonce",
     "themeMode": {

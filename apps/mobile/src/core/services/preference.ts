@@ -195,6 +195,12 @@ export interface PreferenceStore {
   };
 
   enabledTransactionNofification?: boolean;
+
+  /**
+   * Map of account dbId to backup reminder state
+   * Stores accounts that need backup reminder (created via "Create New Wallet")
+   */
+  needsBackupReminderMap: Record<string, boolean>;
 }
 
 export interface AddressSortStore {
@@ -281,6 +287,7 @@ export class PreferenceService extends StoreServiceBase<
           lastTime: 0,
         },
         enabledTransactionNofification: false,
+        needsBackupReminderMap: {},
       },
       {
         storageAdapter: options?.storageAdapter,
@@ -370,6 +377,40 @@ export class PreferenceService extends StoreServiceBase<
       };
     } else {
       this.store.safeSelfHostConfirm[networkId] = true;
+    }
+  };
+
+  /**
+   * Check if an account needs backup reminder
+   * @param dbId - The account's _db_id (format: "type:brandName:address")
+   */
+  getNeedsBackupReminder = (dbId: string): boolean => {
+    return this.store.needsBackupReminderMap[dbId] ?? false;
+  };
+
+  /**
+   * Set backup reminder state for an account
+   * @param dbId - The account's _db_id
+   * @param needsReminder - Whether the account needs backup reminder
+   */
+  setNeedsBackupReminder = (dbId: string, needsReminder: boolean) => {
+    this.store.needsBackupReminderMap = {
+      ...this.store.needsBackupReminderMap,
+      [dbId]: needsReminder,
+    };
+    appServiceEvents.emit('backupReminderChanged', dbId);
+  };
+
+  /**
+   * Clear backup reminder for an account (e.g., after successful backup)
+   * @param dbId - The account's _db_id
+   */
+  clearNeedsBackupReminder = (dbId: string) => {
+    if (dbId in this.store.needsBackupReminderMap) {
+      const map = { ...this.store.needsBackupReminderMap };
+      delete map[dbId];
+      this.store.needsBackupReminderMap = map;
+      appServiceEvents.emit('backupReminderChanged', dbId);
     }
   };
 

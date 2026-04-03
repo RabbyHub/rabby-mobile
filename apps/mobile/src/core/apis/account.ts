@@ -453,6 +453,7 @@ export type PerfAccountEventBusListeners = {
   ACCOUNT_ADDED: (ctx: {
     accounts: KeyringEventAccount[];
     scene?: 'privateKey' | 'memonics' | 'hardware' | 'syncExtension';
+    needsBackupReminder?: boolean;
   }) => void;
   ACCOUNT_REMOVED: (ctx: { removedAccounts: KeyringEventAccount[] }) => void;
 };

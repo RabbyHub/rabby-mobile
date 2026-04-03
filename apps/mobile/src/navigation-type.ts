@@ -12,7 +12,6 @@ import type { RootNames } from './constant/layout';
 import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type { Chain, CHAINS_ENUM } from './constant/chains';
 import type {
-  CopyTradeTokenItemV2,
   NFTItem,
   SendAction,
   TokenItem,
@@ -54,6 +53,10 @@ export type RootStackParamsList = {
   [RootNames.Unlock]?: {
     disableAutoTriggerUnlock?: boolean;
   };
+  SetupWallet?:
+    | { seedPhraseVaultId: string }
+    | { privateKeyVaultId: string }
+    | undefined;
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
@@ -165,6 +168,8 @@ export type AddressNavigatorParamList = {
     accounts?: string[];
     isFirstCreate?: boolean;
   };
+  [RootNames.SelectImportMethod]?: {};
+  [RootNames.ImportRabbyWallet]?: {};
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
       | typeof RootNames.CreateSelectMethod
@@ -242,6 +247,7 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportHardwareAddress]?: {};
   [RootNames.ImportMnemonic]?: {};
   [RootNames.ImportMnemonic2024]?: {};
+  [RootNames.ImportSecret]?: {};
   [RootNames.AddMnemonic]?: {};
   [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};
@@ -259,6 +265,11 @@ export type AddressNavigatorParamList = {
     newAccounts: Account[];
   };
   [RootNames.Points]?: {};
+  [RootNames.Backup]?: {
+    address?: string;
+    type?: string;
+    brandName?: string;
+  };
 };
 
 export type AccountNavigatorParamList = {
