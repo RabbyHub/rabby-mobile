@@ -4,6 +4,7 @@ import React, {
   useLayoutEffect,
   useMemo,
   useState,
+  type Ref,
 } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -25,10 +26,11 @@ function useLoadTokenList({
   ref,
 }: {
   onTokenChange?: TokenAmountInputProps['onTokenChange'];
-  ref?: React.RefObject<TextInput | null> | null;
+  ref?: Ref<TextInput>;
 } = {}) {
   const internalInputRef = useRef<TextInput>(null);
-  const tokenInputRef = ref || internalInputRef;
+  const tokenInputRef =
+    ref && typeof ref === 'object' && 'current' in ref ? ref : internalInputRef;
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
 
   const handleCurrentTokenChange = useCallback(
@@ -73,140 +75,136 @@ interface TokenAmountInputProps {
 /**
  * @description like TokenAmountInput on Rabby
  */
-export const TokenAmountInput = React.forwardRef<
-  TextInput,
-  React.PropsWithChildren<RNViewProps & TokenAmountInputProps>
->(
-  (
-    {
-      token,
-      value,
-      onChange,
-      chainId,
+export const TokenAmountInput = ({
+  token,
+  value,
+  onChange,
+  chainId,
+  onTokenChange,
+  amountFocus,
+  inlinePrize,
+  excludeTokens = [],
+  style,
+  handleClickMaxButton,
+  isEstimatingGas,
+  placeholder,
+  disableItemCheck,
+  currentAccount,
+  inSufficient,
+  ref,
+}: React.PropsWithChildren<RNViewProps & TokenAmountInputProps> & {
+  ref?: Ref<TextInput>;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+
+  const { tokenInputRef, tokenSelectorVisible, handleCurrentTokenChange } =
+    useLoadTokenList({
       onTokenChange,
-      amountFocus,
-      inlinePrize,
-      excludeTokens = [],
-      style,
-      handleClickMaxButton,
-      isEstimatingGas,
-      placeholder,
-      disableItemCheck,
-      currentAccount,
-      inSufficient,
-    },
-    ref,
-  ) => {
-    const { styles, colors2024 } = useTheme2024({ getStyle });
-    const { t } = useTranslation();
+      ref,
+    });
 
-    const { tokenInputRef, tokenSelectorVisible, handleCurrentTokenChange } =
-      useLoadTokenList({
-        onTokenChange,
-        ref: ref as React.RefObject<TextInput | null>,
-      });
+  useLayoutEffect(() => {
+    if (amountFocus && !tokenSelectorVisible) {
+      tokenInputRef.current?.focus();
+    }
+  }, [amountFocus, tokenSelectorVisible, tokenInputRef]);
 
-    useLayoutEffect(() => {
-      if (amountFocus && !tokenSelectorVisible) {
-        tokenInputRef.current?.focus();
-      }
-    }, [amountFocus, tokenSelectorVisible, tokenInputRef]);
+  const { valueText } = useMemo(() => {
+    const num = Number(value);
 
-    const { valueText } = useMemo(() => {
-      const num = Number(value);
+    const valueText = num
+      ? `$${splitNumberByStep(((num || 0) * token.price || 0).toFixed(2))}`
+      : '$0';
 
-      const valueText = num
-        ? `$${splitNumberByStep(((num || 0) * token.price || 0).toFixed(2))}`
-        : '$0';
-
-      return {
-        valueNum: num,
-        valueText,
-      };
-    }, [value, token.price]);
-    const Linear = useCallback(() => {
-      return (
-        <LinearGradient
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{ height: '100%' }}
-          colors={[colors2024['neutral-line'], colors2024['neutral-bg-2']]}
-        />
-      );
-    }, [colors2024]);
-
+    return {
+      valueNum: num,
+      valueText,
+    };
+  }, [value, token.price]);
+  const Linear = useCallback(() => {
     return (
-      <View style={[styles.container, style]}>
-        <SilentTouchableView
-          viewStyle={[
-            styles.leftInputContainer,
-            inlinePrize && !!valueText && styles.containerHasInlinePrize,
-          ]}
-          onPress={evt => {
-            evt.stopPropagation();
-            tokenInputRef.current?.focus();
-          }}>
-          {!value && token.amount > 0 && isEstimatingGas ? (
-            <CustomSkeleton
-              animation="wave"
-              LinearGradientComponent={Linear}
-              style={styles.skeleton}
-            />
-          ) : (
-            <NumericInput
-              style={[
-                inlinePrize && !!valueText && styles.inputHasInlinePrize,
-                styles.input,
-              ]}
-              value={value}
-              onChangeText={(value: string) => {
-                return onChange?.(formatSpeicalAmount(value));
-              }}
-              ref={tokenInputRef}
-              placeholder="0"
-              placeholderTextColor={colors2024['neutral-info']}
-              inputMode="decimal"
-              keyboardType="numeric"
-              numberOfLines={1}
-            />
-          )}
-          <View style={styles.inlinePrizeContainer}>
-            <Text
-              style={styles.inlinePrizeText}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {valueText}
-            </Text>
-          </View>
-        </SilentTouchableView>
-        {/* max button */}
-        {!value &&
-          token.amount > 0 &&
-          (isEstimatingGas ? null : (
-            <>
-              <TouchableOpacity
-                disabled={isEstimatingGas}
-                style={styles.maxButtonWrapper}
-                onPress={handleClickMaxButton}>
-                <Text style={styles.maxButtonText}>MAX</Text>
-              </TouchableOpacity>
-            </>
-          ))}
-        {<View style={styles.placeholder} />}
-        <View style={styles.rightToken}>
-          <TokenSelect
-            accountInScreen={currentAccount}
-            chainId={''}
-            token={token}
-            disableItemCheck={disableItemCheck}
-            onTokenChange={handleCurrentTokenChange}
-            type="send"
-            placeholder={placeholder}
-            supportChains={[]}
-            style={{ borderRadius: 100 }}
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{ height: '100%' }}
+        colors={[colors2024['neutral-line'], colors2024['neutral-bg-2']]}
+      />
+    );
+  }, [colors2024]);
+
+  return (
+    <View style={[styles.container, style]}>
+      <SilentTouchableView
+        viewStyle={[
+          styles.leftInputContainer,
+          inlinePrize && !!valueText && styles.containerHasInlinePrize,
+        ]}
+        onPress={evt => {
+          evt.stopPropagation();
+          tokenInputRef.current?.focus();
+        }}>
+        {!value && token.amount > 0 && isEstimatingGas ? (
+          <CustomSkeleton
+            animation="wave"
+            LinearGradientComponent={Linear}
+            style={styles.skeleton}
           />
-          {/* <View style={styles.balanceWrapper}>
+        ) : (
+          <NumericInput
+            style={[
+              inlinePrize && !!valueText && styles.inputHasInlinePrize,
+              styles.input,
+            ]}
+            value={value}
+            onChangeText={(value: string) => {
+              return onChange?.(formatSpeicalAmount(value));
+            }}
+            ref={tokenInputRef}
+            placeholder="0"
+            placeholderTextColor={colors2024['neutral-info']}
+            inputMode="decimal"
+            keyboardType="numeric"
+            numberOfLines={1}
+          />
+        )}
+        <View style={styles.inlinePrizeContainer}>
+          <Text
+            style={styles.inlinePrizeText}
+            ellipsizeMode="tail"
+            numberOfLines={1}>
+            {valueText}
+          </Text>
+        </View>
+      </SilentTouchableView>
+      {/* max button */}
+      {!value &&
+        token.amount > 0 &&
+        (isEstimatingGas ? null : (
+          <>
+            <TouchableOpacity
+              disabled={isEstimatingGas}
+              style={styles.maxButtonWrapper}
+              onPress={handleClickMaxButton}>
+              <Text style={styles.maxButtonText}>MAX</Text>
+            </TouchableOpacity>
+          </>
+        ))}
+      {<View style={styles.placeholder} />}
+      <View style={styles.rightToken}>
+        <TokenSelect
+          accountInScreen={currentAccount}
+          chainId={''}
+          token={token}
+          disableItemCheck={disableItemCheck}
+          onTokenChange={handleCurrentTokenChange}
+          type="send"
+          placeholder={placeholder}
+          supportChains={[]}
+          style={{ borderRadius: 100 }}
+        />
+        {/* <View style={styles.balanceWrapper}>
               <RcIconWalletCC
                 width={16}
                 height={16}
@@ -228,11 +226,10 @@ export const TokenAmountInput = React.forwardRef<
                   : 0}
               </Text>
             </View> */}
-        </View>
       </View>
-    );
-  },
-);
+    </View>
+  );
+};
 
 const PADDING = 12;
 
