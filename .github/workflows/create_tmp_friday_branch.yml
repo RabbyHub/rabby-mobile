@@ -1,0 +1,83 @@
+name: Create Friday Tmp Branch
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 00:10 Asia/Shanghai
+    - cron: '10 16 * * *'
+
+defaults:
+  run:
+    shell: bash -ieol pipefail {0}
+
+concurrency:
+  group: create-friday-tmp-branch
+  cancel-in-progress: false
+
+jobs:
+  create_tmp_branch:
+    name: Create Tmp Branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TZ: Asia/Shanghai
+      BASE_BRANCH: develop
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Prepare branch info
+        id: prepare
+        run: |
+          weekday="$(date +%u)"
+          branch_date="$(date +%Y%m%d)"
+          branch_name="tmp/${branch_date}"
+
+          echo "weekday=${weekday}"
+          echo "branch_name=${branch_name}"
+
+          echo "weekday=${weekday}" >> "$GITHUB_OUTPUT"
+          echo "branch_name=${branch_name}" >> "$GITHUB_OUTPUT"
+
+          if [ "$weekday" != "5" ]; then
+            echo "is_friday=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "is_friday=true" >> "$GITHUB_OUTPUT"
+
+          if git ls-remote --exit-code --heads origin "${branch_name}" >/dev/null 2>&1; then
+            echo "branch_exists=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "branch_exists=false" >> "$GITHUB_OUTPUT"
+
+      - name: Create tmp branch
+        if: steps.prepare.outputs.is_friday == 'true' && steps.prepare.outputs.branch_exists == 'false'
+        env:
+          BRANCH_NAME: ${{ steps.prepare.outputs.branch_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin "${BASE_BRANCH}" --no-tags
+          git switch --detach "origin/${BASE_BRANCH}"
+          git switch -c "${BRANCH_NAME}"
+          git push origin "HEAD:refs/heads/${BRANCH_NAME}"
+
+      - name: Print skip reason
+        if: steps.prepare.outputs.is_friday != 'true' || steps.prepare.outputs.branch_exists == 'true'
+        env:
+          BRANCH_NAME: ${{ steps.prepare.outputs.branch_name }}
+        run: |
+          if [ "${{ steps.prepare.outputs.is_friday }}" != "true" ]; then
+            echo "Today is not Friday in ${TZ}; skip creating tmp branch."
+          else
+            echo "Branch ${BRANCH_NAME} already exists on origin; skip creating it again."
+          fi
