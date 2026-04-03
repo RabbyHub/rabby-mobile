@@ -1,33 +1,53 @@
 import RcIconInfoCC from '@/assets2024/icons/perps/IconInfoCC.svg';
+import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
+import {
+  ARB_USDC_TOKEN_ITEM,
+  HYPE_EVM_BRIDGE_ADDRESS,
+  HYPE_GAS_FEE_IN_HYPE,
+  isHypeWithdrawToken,
+} from '@/constant/perps';
+import { apisPerps } from '@/core/apis';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
-import { AccountSummary } from '@/hooks/perps/usePerpsStore';
+import {
+  AccountSummary,
+  MarketDataMap,
+  perpsStore,
+} from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { Tip } from '@/components/Tip';
 import { useUsdInput } from '@/hooks/useUsdInput';
-import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
+import { formatPerpsUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
+import { ITokenItem } from '@/store/tokens';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
+import { PerpsWithdrawSelectTokenPopup } from './PerpsWithdrawSelectTokenPopup';
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
-  onWithdraw?(v: string): void;
+  onWithdraw?(amount: string, isHypeWithdraw: boolean): void;
   accountSummary?: AccountSummary | null;
-}> = ({ visible, onClose, onWithdraw, accountSummary }) => {
+  marketDataMap?: MarketDataMap;
+}> = ({ visible, onClose, onWithdraw, accountSummary, marketDataMap }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -35,10 +55,54 @@ export const PerpsWithdrawPopup: React.FC<{
   });
 
   const { availableBalance } = usePerpsAccount();
+  const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
   const { t } = useTranslation();
 
   const [tipVisible, setTipVisible] = useState(false);
   const hideTip = useCallback(() => setTipVisible(false), []);
+  const [activationTipVisible, setActivationTipVisible] = useState(false);
+
+  const [selectedToken, setSelectedToken] = useState<ITokenItem>(
+    ARB_USDC_TOKEN_ITEM as ITokenItem,
+  );
+  const [tokenSelectVisible, setTokenSelectVisible] = useState(false);
+  const isHypeWithdraw = isHypeWithdrawToken(selectedToken);
+
+  // Fetch pre-transfer check for HyperEVM activation fee
+  const { data: preTransferCheck } = useRequest(
+    async () => {
+      if (!isHypeWithdraw || !currentPerpsAccount?.address) {
+        return null;
+      }
+      const sdk = apisPerps.getPerpsSDK();
+      return sdk.info.getPreTransferCheck(
+        HYPE_EVM_BRIDGE_ADDRESS,
+        currentPerpsAccount.address,
+      );
+    },
+    { refreshDeps: [isHypeWithdraw, currentPerpsAccount?.address] },
+  );
+  const activationFee = Number(preTransferCheck?.fee || '0');
+
+  // Calculate HyperEVM gas fee in USD
+  const hypeGasFeeUsd = useMemo(() => {
+    const hypePrice = Number(marketDataMap?.HYPE?.markPx || 0);
+    return new BigNumber(HYPE_GAS_FEE_IN_HYPE).times(hypePrice).toNumber();
+  }, [marketDataMap]);
+
+  // Effective balance after subtracting activation fee for HyperEVM
+  const effectiveBalance = useMemo(() => {
+    if (!isHypeWithdraw || activationFee <= 0) {
+      return availableBalance;
+    }
+    return Math.max(
+      0,
+      new BigNumber(availableBalance)
+        .minus(activationFee)
+        .decimalPlaces(6, BigNumber.ROUND_DOWN)
+        .toNumber(),
+    );
+  }, [isHypeWithdraw, availableBalance, activationFee]);
 
   useEffect(() => {
     const sub = Keyboard.addListener(
@@ -48,7 +112,6 @@ export const PerpsWithdrawPopup: React.FC<{
     return () => sub.remove();
   }, [hideTip]);
 
-  // const [amount, setAmount] = React.useState<string>('');
   const {
     value: amount,
     displayedValue: displayedAmount,
@@ -57,7 +120,13 @@ export const PerpsWithdrawPopup: React.FC<{
   const { runAsync: handleWithdraw, loading } = useRequest(
     async () => {
       Keyboard.dismiss();
-      await onWithdraw?.(amount);
+      const withdrawAmount = isHypeWithdraw
+        ? new BigNumber(amount)
+            .minus(hypeGasFeeUsd)
+            .decimalPlaces(6, BigNumber.ROUND_DOWN)
+            .toFixed()
+        : amount;
+      await onWithdraw?.(withdrawAmount, isHypeWithdraw);
     },
     {
       manual: true,
@@ -78,7 +147,7 @@ export const PerpsWithdrawPopup: React.FC<{
       };
     }
 
-    if (amountValue > Number(availableBalance || 0)) {
+    if (amountValue > Number(effectiveBalance || 0)) {
       return {
         isValid: false,
         error: 'insufficient_balance',
@@ -94,7 +163,7 @@ export const PerpsWithdrawPopup: React.FC<{
     }
 
     return { isValid: true, error: null };
-  }, [availableBalance, amount, t]);
+  }, [effectiveBalance, amount, t]);
 
   useEffect(() => {
     if (visible) {
@@ -107,14 +176,16 @@ export const PerpsWithdrawPopup: React.FC<{
   useEffect(() => {
     if (!visible) {
       setAmount('');
+      setSelectedToken(ARB_USDC_TOKEN_ITEM as ITokenItem);
     }
   }, [setAmount, visible]);
+
+  const decimalPlaces = 2;
 
   return (
     <>
       <AppBottomSheetModal
         ref={modalRef}
-        // snapPoints={snapPoints}
         {...makeBottomSheetProps({
           colors: colors2024,
           linearGradientType: 'bg1',
@@ -134,13 +205,41 @@ export const PerpsWithdrawPopup: React.FC<{
               <Text style={styles.formItemLabel}>
                 {t('page.perps.PerpsWithdrawPopup.amount')}
               </Text>
-              <Text style={styles.formItemDesc}>
-                {formatPerpsUsdValue(
-                  availableBalance || 0,
-                  BigNumber.ROUND_DOWN,
-                )}{' '}
-                {t('page.perps.PerpsWithdrawPopup.available')}
-              </Text>
+              <View style={styles.availableRow}>
+                {isHypeWithdraw && activationFee > 0 ? (
+                  <Tip
+                    isVisible={activationTipVisible}
+                    onClose={() => setActivationTipVisible(false)}
+                    content={t(
+                      'page.perps.PerpsWithdrawPopup.hypeActivationFeeTooltip',
+                      {
+                        fee: `$${new BigNumber(activationFee)
+                          .decimalPlaces(decimalPlaces)
+                          .toFixed()}`,
+                      },
+                    )}
+                    placement="top">
+                    <TouchableOpacity
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setActivationTipVisible(true);
+                      }}>
+                      <RcIconInfoCC
+                        color={colors2024['neutral-secondary']}
+                        width={16}
+                        height={16}
+                      />
+                    </TouchableOpacity>
+                  </Tip>
+                ) : null}
+                <Text style={styles.formItemDesc}>
+                  {formatPerpsUsdValue(
+                    effectiveBalance || 0,
+                    BigNumber.ROUND_DOWN,
+                  )}{' '}
+                  {t('page.perps.PerpsWithdrawPopup.available')}
+                </Text>
+              </View>
             </View>
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
@@ -157,21 +256,24 @@ export const PerpsWithdrawPopup: React.FC<{
                   placeholder="$0"
                 />
                 <Text style={styles.tokenAmountHint}>
-                  {amount || '0'} {getTokenSymbol(ARB_USDC_TOKEN_ITEM)}
+                  {amount || '0'} {getTokenSymbol(selectedToken)}
                 </Text>
               </View>
               <View style={styles.divider} />
-              <View style={styles.tokenContainer}>
+              <TouchableOpacity
+                style={styles.tokenContainer}
+                onPress={() => setTokenSelectVisible(true)}>
                 <AssetAvatar
                   size={26}
-                  chain={ARB_USDC_TOKEN_ITEM?.chain}
-                  logo={ARB_USDC_TOKEN_ITEM?.logo_url}
+                  chain={selectedToken?.chain}
+                  logo={selectedToken?.logo_url}
                   chainSize={12}
                 />
                 <Text style={styles.tokenText}>
-                  {getTokenSymbol(ARB_USDC_TOKEN_ITEM)}
+                  {getTokenSymbol(selectedToken)}
                 </Text>
-              </View>
+                <RcIconSwapBottomArrow />
+              </TouchableOpacity>
             </View>
             <View style={styles.quickAmountRow}>
               {[
@@ -183,9 +285,9 @@ export const PerpsWithdrawPopup: React.FC<{
                   key={item.label}
                   style={styles.quickAmountBtn}
                   onPress={() => {
-                    const val = new BigNumber(availableBalance || 0)
+                    const val = new BigNumber(effectiveBalance || 0)
                       .times(item.value)
-                      .decimalPlaces(2, BigNumber.ROUND_DOWN)
+                      .decimalPlaces(decimalPlaces, BigNumber.ROUND_DOWN)
                       .toFixed();
                     setAmount(val);
                   }}>
@@ -196,8 +298,8 @@ export const PerpsWithdrawPopup: React.FC<{
                 style={styles.quickAmountBtn}
                 onPress={() => {
                   setAmount(
-                    new BigNumber(availableBalance || 0)
-                      .decimalPlaces(2, BigNumber.ROUND_DOWN)
+                    new BigNumber(effectiveBalance || 0)
+                      .decimalPlaces(decimalPlaces, BigNumber.ROUND_DOWN)
                       .toFixed(),
                   );
                 }}>
@@ -216,7 +318,11 @@ export const PerpsWithdrawPopup: React.FC<{
               isVisible={tipVisible}
               onClose={hideTip}
               topAdjustment={IS_ANDROID ? -10 : 10}
-              content={t('page.perps.PerpsWithdrawPopup.feeTooltipDesc')}
+              content={
+                isHypeWithdraw
+                  ? t('page.perps.PerpsWithdrawPopup.hypeGasFeeTooltip')
+                  : t('page.perps.PerpsWithdrawPopup.feeTooltipDesc')
+              }
               placement="top">
               <TouchableOpacity
                 onPress={() => {
@@ -224,14 +330,22 @@ export const PerpsWithdrawPopup: React.FC<{
                   setTipVisible(true);
                 }}
                 style={styles.feeContainer}>
-                <Text style={styles.fee}>
-                  {t('page.perps.PerpsWithdrawPopup.feeTip')}
-                </Text>
-                <RcIconInfoCC
-                  color={colors2024['neutral-secondary']}
-                  width={18}
-                  height={18}
-                />
+                <View style={styles.feeRow}>
+                  <Text style={styles.fee}>
+                    {isHypeWithdraw
+                      ? t('page.perps.PerpsWithdrawPopup.hypeFeeTip', {
+                          fee: new BigNumber(hypeGasFeeUsd)
+                            .decimalPlaces(6)
+                            .toFixed(),
+                        })
+                      : t('page.perps.PerpsWithdrawPopup.feeTip')}
+                  </Text>
+                  <RcIconInfoCC
+                    color={colors2024['neutral-secondary']}
+                    width={18}
+                    height={18}
+                  />
+                </View>
               </TouchableOpacity>
             </Tip>
           </View>
@@ -244,6 +358,14 @@ export const PerpsWithdrawPopup: React.FC<{
           />
         </BottomSheetView>
       </AppBottomSheetModal>
+      <PerpsWithdrawSelectTokenPopup
+        visible={tokenSelectVisible}
+        onClose={() => setTokenSelectVisible(false)}
+        onSelect={token => {
+          setSelectedToken(token);
+          setAmount('');
+        }}
+      />
     </>
   );
 };
@@ -251,7 +373,6 @@ export const PerpsWithdrawPopup: React.FC<{
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      // height: '100%',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingBottom: 56,
       paddingHorizontal: 20,
@@ -295,7 +416,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     input: {
       ...(Platform.OS === 'ios' && {
-        fontFamily: 'SF Pro Rounded', // avoid some android phone show number not in center
+        fontFamily: 'SF Pro Rounded',
       }),
       fontSize: 28,
       lineHeight: 36,
@@ -332,13 +453,15 @@ const getStyle = createGetStyles2024(ctx => {
     },
 
     feeContainer: {
+      marginTop: 20,
+      marginBottom: 15,
+    },
+    feeRow: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 7,
-      marginTop: 20,
-      marginBottom: 15,
     },
     fee: {
       fontSize: 14,
@@ -346,6 +469,11 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '400',
       fontFamily: 'SF Pro Rounded',
       color: ctx.colors2024['neutral-secondary'],
+    },
+    availableRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
     },
     divider: {
       width: 1,
@@ -368,10 +496,10 @@ const getStyle = createGetStyles2024(ctx => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+      padding: 4,
+      backgroundColor: ctx.colors2024['neutral-line'],
+      borderRadius: 100,
       gap: 2,
-      // padding: 4,
-      // backgroundColor: ctx.colors2024['neutral-line'],
-      // borderRadius: 100,
     },
     tokenText: {
       fontSize: 16,

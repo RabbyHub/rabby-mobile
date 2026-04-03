@@ -46,5 +46,6 @@ export const usePerpsAccount = () => {
     accountValue,
     availableBalance,
     crossMaintenanceMarginUsed,
+    isUnifiedAccount,
   };
 };

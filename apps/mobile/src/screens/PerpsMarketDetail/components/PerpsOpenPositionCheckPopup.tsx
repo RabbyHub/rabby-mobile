@@ -250,9 +250,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
         <View style={styles.footer}>
           <Button
             type="hyperliquid"
-            title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
-              direction,
-            })}
+            title={
+              direction === 'Long'
+                ? t('page.perpsDetail.action.long')
+                : t('page.perpsDetail.action.short')
+            }
             onPress={async () => {
               setLoading(true);
               await onConfirm?.();

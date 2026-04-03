@@ -77,26 +77,30 @@ const AssetPositionItem = ({
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
 
   const handleHyperliquidPress = useCallback(() => {
-    switchPerpsAccountBeforeNavigate(item.account);
-    matomoRequestEvent({
-      category: 'Rabby Perps',
-      action: 'Perps_CardToPerps',
-    });
-    // navigation.push(RootNames.StackTransaction, {
-    //   screen: RootNames.Perps,
-    //   params: {
-    //     dappId: 'hyperliquid',
-    //     account: item.account,
-    //   },
-    // })
-    navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.PerpsMarketDetail,
-      params: {
-        market: coin,
-        fromSource: 'homePagePositionList',
-        showOpenPosition: false,
-      },
-    });
+    try {
+      switchPerpsAccountBeforeNavigate(item.account);
+      matomoRequestEvent({
+        category: 'Rabby Perps',
+        action: 'Perps_CardToPerps',
+      });
+      // navigation.push(RootNames.StackTransaction, {
+      //   screen: RootNames.Perps,
+      //   params: {
+      //     dappId: 'hyperliquid',
+      //     account: item.account,
+      //   },
+      // })
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.PerpsMarketDetail,
+        params: {
+          market: coin,
+          fromSource: 'homePagePositionList',
+          showOpenPosition: false,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to navigate to Perps screen:', error);
+    }
   }, [item, navigation, coin]);
 
   return (
@@ -581,7 +585,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    borderTopColor: colors2024['neutral-line'],
+    borderTopColor: colors2024['neutral-bg-5'],
   },
   distanceDot: {
     width: 4,

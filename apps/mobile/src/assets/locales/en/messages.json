@@ -2502,11 +2502,15 @@
         "invalidNumber": "Please input a valid number",
         "feeTip": "Fee : $1.00",
         "feeTooltipTitle": "Fee",
-        "feeTooltipDesc": "Withdrawal Fee charged by Hyperliquid: $1"
+        "feeTooltipDesc": "Withdrawal Fee charged by Hyperliquid: $1",
+        "hypeFeeTip": "Fee : ~${{fee}}",
+        "hypeActivationFeeTooltip": "A one-time activation fee of {{fee}} will be charged by Hyperliquid for first HyperEVM withdrawal.",
+        "hypeGasFeeTooltip": "A fee of ~0.00002 HYPE will be charged to withdraw to the EVM",
+        "selectWithdrawToken": "Select token"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Fee",
-        "desc": "Withdrawar Fee charged by Hyperliquid: $1",
+        "desc": "Withdrawal Fee charged by Hyperliquid: $1",
         "btn": "I Got it"
       },
       "historyDetail": {
