@@ -1,5 +1,4 @@
 import { TIME_SETTINGS } from '@/constant/autoLock';
-import { TokenDisplayMode } from '@/core/services/preference';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { useAppNotificationEnabled } from '@/hooks/appNotification';
 import { useAutoLockTime } from '@/hooks/appTimeout';
@@ -9,14 +8,11 @@ import { useAppLanguage } from '@/hooks/lang';
 import { FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT } from '@/components/Screenshot/hooks';
 import { useScreenshotToReportEnabled } from '@/components/Screenshot/hooks';
 import { useFocusEffect } from '@react-navigation/native';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { AppState } from 'react-native';
 
 import { SupportedLang } from '@/utils/i18n';
-import { IProtocolItem } from '@/store/protocols';
-import { isAppChain } from '@/screens/Home/utils/appchain';
 import { matomoRequestEvent } from './analytics';
 
 type SettingsSnapshotPayload = {
@@ -158,20 +154,10 @@ export const reset0331ReportSnapshotTrackedByKeys = (
   }, true);
 };
 
-const AAVE_ORIGIN = (
-  safeGetOrigin('https://app.aave.com') ||
-  safeGetOrigin('app.aave.com') ||
-  'https://app.aave.com'
-).toLowerCase();
-
 const pendingSnapshotTrackKeys = new Set<string>();
 
 const getOnOffLabel = (enabled: boolean) => {
   return enabled ? 'On' : 'Off';
-};
-
-const getTokenSortModeLabel = (mode: TokenDisplayMode) => {
-  return mode;
 };
 
 const getAutoLockTimeLabel = (timeoutMs: number) => {
@@ -317,103 +303,6 @@ export const trackSettingsSnapshotsOncePerDay = async (
   ]);
 };
 
-export const trackHomeTabViewToken = async (mode: TokenDisplayMode) => {
-  return matomoRequestEvent({
-    category: 'HomeTab',
-    action: 'HomeTab_ViewToken',
-    label: getTokenSortModeLabel(mode),
-  });
-};
-
-const isAaveProtocolItem = (protocol: IProtocolItem) => {
-  const origin =
-    safeGetOrigin(protocol.site_url || '') ||
-    safeGetOrigin(`https://${protocol.site_url}`) ||
-    protocol.site_url ||
-    '';
-
-  return !!origin && origin.toLowerCase() === AAVE_ORIGIN;
-};
-
-const hasAavePortfolioData = (protocol: IProtocolItem) => {
-  if (!protocol._portfolios?.length) {
-    return false;
-  }
-
-  return protocol._portfolios.some(portfolio => {
-    if (Number(portfolio.netWorth || 0) !== 0) {
-      return true;
-    }
-
-    return (
-      portfolio._originPortfolio?.asset_token_list?.some(token => {
-        return Number(token.amount || 0) !== 0;
-      }) || false
-    );
-  });
-};
-
-export const getLendingUserStatusLabel = (
-  addresses: string[],
-  protocolMap: Record<string, IProtocolItem[]>,
-) => {
-  if (!addresses.length) {
-    return undefined;
-  }
-
-  const chainSet = new Set<string>();
-  let addressCount = 0;
-
-  Array.from(new Set(addresses.map(address => address.toLowerCase()))).forEach(
-    address => {
-      const aaveProtocols = (protocolMap[address] || []).filter(protocol => {
-        return (
-          !!protocol.chain &&
-          !isAppChain(protocol.chain) &&
-          isAaveProtocolItem(protocol) &&
-          hasAavePortfolioData(protocol)
-        );
-      });
-
-      if (!aaveProtocols.length) {
-        return;
-      }
-
-      addressCount += 1;
-      aaveProtocols.forEach(protocol => {
-        if (protocol.chain) {
-          chainSet.add(protocol.chain);
-        }
-      });
-    },
-  );
-
-  if (!addressCount || !chainSet.size) {
-    return undefined;
-  }
-
-  const chainLabel = chainSet.size > 1 ? 'MC' : 'SC';
-  const addressLabel = addressCount > 1 ? 'MA' : 'SA';
-  return `${chainLabel}_${addressLabel}`;
-};
-
-export const trackLendingUserStatus = async (label: string) => {
-  return matomoRequestEvent({
-    category: 'Rabby Lending',
-    action: 'Lending_UserStatus',
-    label,
-  });
-};
-
-export const trackLendingUserStatusOncePerDay = async (label: string) => {
-  return trackSnapshotEventOncePerDay({
-    trackKey: 'Lending_UserStatus',
-    category: 'Rabby Lending',
-    action: 'Lending_UserStatus',
-    label,
-  });
-};
-
 export const useTrack0331HomeActiveSnapshots = () => {
   const { biometrics } = useBiometrics({ autoFetch: true });
   const {
@@ -474,31 +363,4 @@ export const useTrack0331HomeActiveSnapshots = () => {
       };
     }, [trackHomeSnapshots]),
   );
-};
-
-export const useTrackLendingUserStatusChanges = (label?: string) => {
-  const hasInitializedRef = useRef(false);
-  const previousLabelRef = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (!hasInitializedRef.current) {
-      hasInitializedRef.current = true;
-      previousLabelRef.current = label;
-      return;
-    }
-
-    if (previousLabelRef.current === label) {
-      return;
-    }
-
-    previousLabelRef.current = label;
-
-    if (!label) {
-      return;
-    }
-
-    trackLendingUserStatus(label).catch(error => {
-      console.error('trackLendingUserStatus failed', error);
-    });
-  }, [label]);
 };
