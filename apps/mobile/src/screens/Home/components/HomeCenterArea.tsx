@@ -4,7 +4,10 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
-import { useExposureRateGuide } from '@/components/RateModal/hooks';
+import {
+  useExposureRateGuide,
+  rateGuideLastExposureState,
+} from '@/components/RateModal/hooks';
 import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
 import { useViewedHomeTip } from '@/components/Screenshot/hooks';
 import { ITEM_LAYOUT_PADDING_HORIZONTAL } from '@/constant/home';
@@ -26,6 +29,7 @@ export function HomeCenterArea() {
     useAccountHomeShowReceiveTip();
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
+  const txCount = rateGuideLastExposureState(state => state.txCount);
 
   const { viewedHomeTip: viewedScreenShotReportTip } = useViewedHomeTip();
 
@@ -34,6 +38,8 @@ export function HomeCenterArea() {
       offlineChainData.displayWillClosedChain &&
       offlineChainData.offlineChainInfo
     );
+
+    const hasCompletedTransaction = txCount > 0;
 
     const blocks = {
       soloAccountToShowReceiveTip: false as boolean,
@@ -55,8 +61,10 @@ export function HomeCenterArea() {
     if (accountToShowReceiveTip) {
       blocks.soloAccountToShowReceiveTip = true;
     } else {
-      if (hasOfflineChainData) blocks.offlineChainData = true;
-      if (!viewedScreenShotReportTip) blocks.tipScreenshot = true;
+      if (hasCompletedTransaction && hasOfflineChainData)
+        blocks.offlineChainData = true;
+      if (hasCompletedTransaction && !viewedScreenShotReportTip)
+        blocks.tipScreenshot = true;
       else if (shouldShowRateGuideOnHome) blocks.rateGuideOnHome = true;
     }
 
@@ -73,6 +81,7 @@ export function HomeCenterArea() {
     accountToShowReceiveTip,
     viewedScreenShotReportTip,
     isLoadingAccountToShowReceiveTip,
+    txCount,
   ]);
 
   return (
