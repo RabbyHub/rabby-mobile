@@ -100,6 +100,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -256,6 +257,7 @@ function SendScreen({
 
     directSignBtnRef,
     formValuesRef,
+    resetAfterSignedSuccess,
 
     whitelistEnabled,
     computed: {
@@ -442,28 +444,45 @@ function SendScreen({
     navParams?.toAddress,
   ]);
 
-  useEffect(() => {
-    (async () => {
-      if (!initByCacheFinishedRef.current) return;
-      if (!currentAccount?.address) return;
-      const { currentToken } = getSendChainToken();
+  const refreshCurrentTokenBalance = useCallback(async () => {
+    if (!currentAccount?.address) {
+      return;
+    }
 
-      apiSendToken.putScreenState({
-        balanceError: null,
-        balanceWarn: null,
-      });
-      apiSendToken.markBalanceLoading({
-        tokenId: currentToken.id,
-        chainId: currentToken.chain,
-        currentAddress: currentAccount.address,
-      });
+    apiSendToken.putScreenState({
+      balanceError: null,
+      balanceWarn: null,
+    });
+    apiSendToken.markBalanceLoading({
+      tokenId: currentToken.id,
+      chainId: currentToken.chain,
+      currentAddress: currentAccount.address,
+    });
+
+    try {
       await loadCurrentToken(
         currentToken.id,
         currentToken.chain,
         currentAccount.address,
       );
+    } catch (error) {
+      console.error('SendScreen refresh current token error', error);
+    }
+  }, [
+    currentAccount?.address,
+    currentToken.chain,
+    currentToken.id,
+    loadCurrentToken,
+  ]);
+
+  useEffect(() => {
+    (async () => {
+      if (!initByCacheFinishedRef.current) return;
+      if (!currentAccount?.address) return;
+
+      await refreshCurrentTokenBalance();
     })();
-  }, [currentAccount?.address, loadCurrentToken]);
+  }, [currentAccount?.address, refreshCurrentTokenBalance]);
 
   useEffect(() => {
     if (!currentAccount) {
@@ -486,21 +505,8 @@ function SendScreen({
       sendTokenEvents,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
-        if (!currentAccount?.address) {
-          return;
-        }
-
-        apiSendToken.putScreenState({
-          balanceError: null,
-          balanceWarn: null,
-        });
-        loadCurrentToken(
-          currentToken.id,
-          currentToken.chain,
-          currentAccount.address,
-        ).catch(error => {
-          console.error('SendScreen refresh current token error', error);
-        });
+        resetAfterSignedSuccess();
+        refreshCurrentTokenBalance();
         // navigation.dispatch(
         //   StackActions.replace(RootNames.StackRoot, {
         //     screen: RootNames.Home,
@@ -513,13 +519,28 @@ function SendScreen({
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [
-    currentAccount?.address,
-    currentToken.chain,
-    currentToken.id,
-    loadCurrentToken,
-    sendTokenEvents,
-  ]);
+  }, [refreshCurrentTokenBalance, resetAfterSignedSuccess, sendTokenEvents]);
+
+  useEffect(() => {
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
+      txDetail => {
+        if (!currentAccount?.address) {
+          return;
+        }
+
+        if (!lowcaseSame(txDetail.address, currentAccount.address)) {
+          return;
+        }
+
+        refreshCurrentTokenBalance();
+      };
+
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+    };
+  }, [currentAccount?.address, refreshCurrentTokenBalance]);
 
   useLayoutEffect(() => {
     return () => {
