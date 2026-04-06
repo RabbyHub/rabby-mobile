@@ -1058,27 +1058,29 @@ export function useSendTokenForm({
     }: FormSendToken & {
       isForceSignTx?: boolean;
     }) => {
-      const snapshot = formValuesRef.current.getSnapshot();
+      if (__DEV__) {
+        const snapshot = formValuesRef.current.getSnapshot();
 
-      if (!snapshot) {
-        toast.info(i18next.t('page.bridge.formChangedAmount'));
-        return;
-      }
+        if (!snapshot) {
+          toast.info(i18next.t('page.bridge.formChangedAmount'));
+          return;
+        }
 
-      // Check if amount changed during authentication
-      const comparison = formValuesRef.current.compare({
-        amount: amount || '',
-      });
+        // Check if amount changed during authentication
+        const comparison = formValuesRef.current.compare({
+          amount: amount || '',
+        });
 
-      // If amount changed during authentication, close modal and alert user
-      if (comparison.isChanged) {
-        formValuesRef.current.clear();
-        Alert.alert(
-          i18next.t('page.bridge.formChangedTitle') || 'Form Changed',
-          i18next.t('page.bridge.formChangedAmount'),
-          [{ text: i18next.t('global.ok') || 'OK' }],
-        );
-        return;
+        // If amount changed during authentication, close modal and alert user
+        if (comparison.isChanged) {
+          formValuesRef.current.clear();
+          Alert.alert(
+            i18next.t('page.bridge.formChangedTitle') || 'Form Changed',
+            i18next.t('page.bridge.formChangedAmount'),
+            [{ text: i18next.t('global.ok') || 'OK' }],
+          );
+          return;
+        }
       }
 
       // Clear snapshot after validation

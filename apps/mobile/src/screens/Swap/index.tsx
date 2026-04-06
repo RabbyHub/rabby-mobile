@@ -594,30 +594,32 @@ const Swap = ({
   }, []);
 
   const handleSwap = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    const snapshot = formValuesRef.current.getSnapshot();
+    if (__DEV__) {
+      const snapshot = formValuesRef.current.getSnapshot();
 
-    if (!snapshot) {
-      toast.info(t('page.bridge.formChangedAmount'));
-      return;
-    }
+      if (!snapshot) {
+        toast.info(t('page.bridge.formChangedAmount'));
+        return;
+      }
 
-    // Check if amount changed during authentication
-    const comparison = formValuesRef.current.compare({
-      amount: payAmount || '',
-    });
+      // Check if amount changed during authentication
+      const comparison = formValuesRef.current.compare({
+        amount: payAmount || '',
+      });
 
-    // If amount changed during authentication, close modal and alert user
-    if (comparison.isChanged) {
-      formValuesRef.current.clear();
-      closeMiniSigner();
-      Alert.alert(
-        t('page.bridge.formChangedTitle') || 'Form Changed',
-        t('page.bridge.formChangedAmount'),
-        [{ text: t('global.ok') || 'OK' }],
-      );
-      refresh(e => e + 1);
-      mutateTxs([]);
-      return;
+      // If amount changed during authentication, close modal and alert user
+      if (comparison.isChanged) {
+        formValuesRef.current.clear();
+        closeMiniSigner();
+        Alert.alert(
+          t('page.bridge.formChangedTitle') || 'Form Changed',
+          t('page.bridge.formChangedAmount'),
+          [{ text: t('global.ok') || 'OK' }],
+        );
+        refresh(e => e + 1);
+        mutateTxs([]);
+        return;
+      }
     }
 
     // Clear snapshot after validation
