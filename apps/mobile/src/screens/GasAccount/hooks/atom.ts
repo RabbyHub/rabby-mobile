@@ -498,9 +498,6 @@ async function loadMoreHistory() {
 
 export const storeApiGasAccount = {
   setGasAccount,
-  getSigState() {
-    return gasAccountStore.getState().session;
-  },
   getSession() {
     return gasAccountStore.getState().session;
   },
@@ -512,10 +509,16 @@ export const storeApiGasAccount = {
   markSnapshotDirty(reason: string) {
     gasAccountStore.setState(prev => markSnapshotDirtyState(prev, reason));
   },
-  scheduleSnapshotRefresh(_options?: { reason?: string; delay?: number }) {
-    storeApiGasAccount.refreshSnapshot().catch(error => {
-      console.error('scheduleSnapshotRefresh error', error);
-    });
+  scheduleSnapshotRefresh(options?: { reason?: string; delay?: number }) {
+    const run = () =>
+      storeApiGasAccount.refreshSnapshot().catch(error => {
+        console.error('scheduleSnapshotRefresh error', error);
+      });
+    if (options?.delay && options.delay > 0) {
+      setTimeout(run, options.delay);
+    } else {
+      run();
+    }
   },
   refreshHistory,
   setHistoryRefreshEnabled(enabled: boolean) {

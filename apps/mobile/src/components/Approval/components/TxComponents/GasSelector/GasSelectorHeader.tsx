@@ -386,10 +386,10 @@ export const GasSelectorHeader = ({
   });
 
   const calcGasAccountUsd = useCallback((n: number | string) => {
-    const v = Number(n);
-    if (!Number.isNaN(v) && v < 0.0001) {
-      return `$${n}`;
-    }
+    // const v = Number(n);
+    // if (!Number.isNaN(v) && v < 0.0001) {
+    //   return `$${n}`;
+    // }
     return formatGasHeaderUsdValue(n || '0');
   }, []);
 

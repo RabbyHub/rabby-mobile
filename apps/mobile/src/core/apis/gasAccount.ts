@@ -44,12 +44,6 @@ export const fetchGasAccountBridgeQuote = async ({
     usdValue,
   });
 
-  console.log('fetchGasAccountBridgeQuote', {
-    user_addr: account.address,
-    from_chain_id: token.chain,
-    from_token_id: token.id,
-    from_token_raw_amount: rawAmount,
-  });
   return openapi.getGasAccountBridgeQuote({
     user_addr: account.address,
     from_chain_id: token.chain,

@@ -11,10 +11,10 @@ type BuildDirectSignSummaryParams = {
 };
 
 export const calcGasAccountUsd = (value: number | string) => {
-  const numeric = Number(value);
-  if (!Number.isNaN(numeric) && numeric < 0.0001) {
-    return `$${value}`;
-  }
+  // const numeric = Number(value);
+  // if (!Number.isNaN(numeric) && numeric < 0.0001) {
+  //   return `$${value}`;
+  // }
   return formatGasHeaderUsdValue(value || '0');
 };
 

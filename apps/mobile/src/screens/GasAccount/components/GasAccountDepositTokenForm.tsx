@@ -221,8 +221,8 @@ const GasAccountDepositTokenFormInner: React.FC<{
     if (
       _selectedToken &&
       _tokenInfo &&
-      isSameAddress(_selectedToken?.chain, _tokenInfo?.chain) &&
-      isSameAddress(_selectedToken?.id, _tokenInfo?.id)
+      _selectedToken?.chain === _tokenInfo?.chain &&
+      _selectedToken?.id?.toLowerCase() === _tokenInfo?.id?.toLowerCase()
     ) {
       return { ..._selectedToken, ..._tokenInfo };
     }
@@ -314,23 +314,26 @@ const GasAccountDepositTokenFormInner: React.FC<{
   });
   const balanceText = formatUsdValue(depositMaxUsdValue);
   const balanceDisplayText = formatUsdValue(tokenBalanceUsd);
-  const validationMessages = {
-    unavailablePaymentWallet: t(
-      'page.gasAccount.depositPopup.unavailablePaymentWallet',
-    ),
-    invalidAmount: t('page.gasAccount.depositPopup.invalidAmount'),
-    zeroInvalidAmount: t('page.gasAccount.depositPopup.zeroInvalidAmount'),
-    minAmountRequired: t(
-      'page.gasAccount.depositPopup.minAmountRequired',
-    ).replace('$1', `$${minDepositUsd}`),
-    insufficientTokenBalance: t(
-      'page.gasAccount.depositSelectPopup.insufficientTokenBalance',
-    ),
-    fetchQuoteFailed: t('page.gasAccount.depositPopup.fetchQuoteFailed'),
-    insufficientBalanceLabel: t(
-      'page.gasAccount.depositPopup.insufficientBalanceLabel',
-    ),
-  };
+  const validationMessages = useMemo(
+    () => ({
+      unavailablePaymentWallet: t(
+        'page.gasAccount.depositPopup.unavailablePaymentWallet',
+      ),
+      invalidAmount: t('page.gasAccount.depositPopup.invalidAmount'),
+      zeroInvalidAmount: t('page.gasAccount.depositPopup.zeroInvalidAmount'),
+      minAmountRequired: t(
+        'page.gasAccount.depositPopup.minAmountRequired',
+      ).replace('$1', `$${minDepositUsd}`),
+      insufficientTokenBalance: t(
+        'page.gasAccount.depositSelectPopup.insufficientTokenBalance',
+      ),
+      fetchQuoteFailed: t('page.gasAccount.depositPopup.fetchQuoteFailed'),
+      insufficientBalanceLabel: t(
+        'page.gasAccount.depositPopup.insufficientBalanceLabel',
+      ),
+    }),
+    [t, minDepositUsd],
+  );
 
   useEffect(() => {
     if (visible && !didInitRef.current) {

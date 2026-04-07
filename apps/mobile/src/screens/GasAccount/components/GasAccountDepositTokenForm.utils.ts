@@ -1,11 +1,13 @@
-export interface DepositValidationMessages {
+export type DepositValidationMessages = {
   unavailablePaymentWallet: string;
   invalidAmount: string;
   zeroInvalidAmount: string;
   minAmountRequired: string;
   insufficientTokenBalance: string;
   fetchQuoteFailed: string;
-}
+};
+
+const MAX_DEPOSIT_USD = 500;
 
 export const getDepositAmountValidation = ({
   hasSelectedToken,
@@ -66,7 +68,7 @@ export const getDepositAmountValidation = ({
     };
   }
 
-  if (amountValue > 500) {
+  if (amountValue > MAX_DEPOSIT_USD) {
     return {
       isValid: false,
       errorMessage: messages.invalidAmount,

@@ -13,8 +13,8 @@ import IconGasCustomRightArrowCC from '@/assets2024/icons/gas-account/right-arro
 import IconGasLevelChecked from '@/assets2024/icons/gas-account/check.svg';
 import BigNumber from 'bignumber.js';
 import { getGasLevelI18nKey } from '@/utils/trans';
-import { formatGasHeaderUsdValue } from '@/utils/number';
 import { getAnchoredPopoverPosition } from '@/utils/anchoredPopover';
+import { calcGasAccountUsd } from '@/components/Approval/components/TxComponents/GasSelector/directSignSummary';
 import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 import type { SignatureFlowState } from '@/components2024/MiniSignV2';
 import type { MiniSignGasPanelInfo } from '@/components2024/MiniSignV2/state/useMiniSignGasPanel';
@@ -107,14 +107,6 @@ export default function ShowMoreGasSelectModal({
     measureOverlay,
     visible,
   ]);
-
-  const calcGasAccountUsd = useCallback(n => {
-    const v = Number(n);
-    if (!Number.isNaN(v) && v < 0.0001) {
-      return `$${n}`;
-    }
-    return formatGasHeaderUsdValue(n || '0');
-  }, []);
 
   const {
     externalPanelSelection,

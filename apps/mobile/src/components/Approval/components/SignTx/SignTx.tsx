@@ -72,7 +72,6 @@ import {
   whitelistService,
 } from '@/core/services';
 import { toast } from '@/components2024/Toast';
-import { toast as toast2024 } from '@/components2024/Toast';
 
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import { FooterBar } from '../FooterBar/FooterBar';
@@ -387,8 +386,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     updateNonce = false;
   }
 
-  const getGasPrice = () => {
-    let result = '';
+  const getGasPrice = (): string | undefined => {
+    let result: string | undefined;
     if (maxFeePerGas) {
       result = isHexString(maxFeePerGas)
         ? maxFeePerGas
@@ -397,8 +396,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (gasPrice) {
       result = isHexString(gasPrice) ? gasPrice : intToHex(parseInt(gasPrice));
     }
-    if (Number.isNaN(Number(result))) {
-      result = '';
+    if (!result || !isHexString(result)) {
+      return undefined;
     }
     return result;
   };
@@ -2053,8 +2052,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             disableGasAccountDeposit={isGasAccountTopUpFlow}
             rejectApproval={rejectApproval}
             onDeposit={() => {
-              toast2024.success(t('page.gasAccount.depositSuccess'), {
-                position: toast2024.positions.CENTER,
+              toast.success(t('page.gasAccount.depositSuccess'), {
+                position: toast.positions.CENTER,
               });
             }}
             onWaitDepositResult={handleTopUpWaitResult}

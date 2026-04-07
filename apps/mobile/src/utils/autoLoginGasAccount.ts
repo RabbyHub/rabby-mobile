@@ -11,18 +11,13 @@ import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import type { KeyringEventAccount } from '@rabby-wallet/service-keyring';
+import type { GasAccountBalanceAccount } from '@/screens/GasAccount/hooks/state';
 
 let hasAttemptedAutoLogin = false;
 
 export function resetAutoLoginFlag() {
   hasAttemptedAutoLogin = false;
 }
-
-type GasAccountBalanceAccount = {
-  address: string;
-  type: string;
-  brandName: string;
-};
 
 function toGasAccountBalanceAccounts<T extends KeyringAccount>(
   accounts: T[],
@@ -128,7 +123,7 @@ export async function autoLoginGasAccountIfNeeded() {
     return;
   }
 
-  const { sig } = storeApiGasAccount.getSigState() || {};
+  const { sig } = storeApiGasAccount.getSession() || {};
   if (sig) {
     hasAttemptedAutoLogin = true;
     return;
@@ -145,8 +140,10 @@ export async function autoLoginGasAccountIfNeeded() {
     const directlySignable = filterDirectlySignableAccounts(sortedAccounts);
     const hardware = sortedAccounts.filter(isHardwareAccount);
 
-    const directWithBalance = await findAccountsWithBalance(directlySignable);
-    const hwWithBalance = await findAccountsWithBalance(hardware);
+    const [directWithBalance, hwWithBalance] = await Promise.all([
+      findAccountsWithBalance(directlySignable),
+      findAccountsWithBalance(hardware),
+    ]);
 
     const allWithBalance = toGasAccountBalanceAccounts([
       ...directWithBalance,
@@ -170,7 +167,7 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
       return;
     }
 
-    const { sig } = storeApiGasAccount.getSigState() || {};
+    const { sig } = storeApiGasAccount.getSession() || {};
     if (sig) {
       return;
     }
@@ -178,8 +175,10 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
     const directlySignable = filterDirectlySignableAccounts(accounts);
     const hardware = accounts.filter(isHardwareAccount);
 
-    const directWithBalance = await findAccountsWithBalance(directlySignable);
-    const hwWithBalance = await findAccountsWithBalance(hardware);
+    const [directWithBalance, hwWithBalance] = await Promise.all([
+      findAccountsWithBalance(directlySignable),
+      findAccountsWithBalance(hardware),
+    ]);
 
     mergeAccountsWithGasBalance(
       toGasAccountBalanceAccounts([...directWithBalance, ...hwWithBalance]),
