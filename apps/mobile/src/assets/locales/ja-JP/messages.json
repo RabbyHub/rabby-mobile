@@ -87,7 +87,9 @@
       "goToHome": "ホームに移動",
       "createNewAddress": "新しいウォレットを作成",
       "sync": "Rabby拡張ウォレットを同期するにはスキャンしてください",
-      "alreadyHaveAddress": "私はすでにウォレットを持っています"
+      "alreadyHaveAddress": "私はすでにウォレットを持っています",
+      "welcomeTitle": "Rabby Walletへようこそ",
+      "alreadyUseRabby": "私はすでにRabbyを使用しています。"
     },
     "transactions": {
       "explain": {
@@ -971,6 +973,10 @@
         "search": "検索",
         "emptyAndroid": "お気に入りに追加されたdAppはありません",
         "empty": "お気に入りに追加されたウェブサイトはありません。"
+      },
+      "depositAssets": {
+        "title": "資産を入金する",
+        "subtitle": "このウォレットに資産を受け取る"
       }
     },
     "nextComponent": {
@@ -994,7 +1000,8 @@
         "syncRabbyExtension": "Rabby Extension を同期",
         "createAddress": "ウォレットを作成",
         "importAddress": "ウォレットをインポートする",
-        "selectAddMethod": "メソッドを追加を選択してください"
+        "selectAddMethod": "メソッドを追加を選択してください",
+        "seedPhraseOrPrivateKey": "シードフレーズまたはプライベートキー"
       },
       "createNewAddress": {
         "WriteDownSeedPhrase": "シードフレーズを書き留める",
@@ -1499,7 +1506,8 @@
         "description3": "自分のプライベートキーを決して共有しないでください。アクセスできる人は誰でもあなたの資金を管理できます。",
         "description4": "あなたの秘密鍵はデバイスにローカルに保存されており、パスワードで暗号化されています。あなたにしかアクセスできません。Rabbyはあなたの秘密鍵を取得したりアクセスしたりすることはできません。"
       },
-      "importing": "インポート中..."
+      "importing": "インポート中...",
+      "Done": "完了"
     },
     "sign": {
       "transactionSpeed": "トランザクションスピード"
@@ -1555,7 +1563,14 @@
       },
       "backup": "バックアップ",
       "other": "その他",
-      "basicInfo": "基本情報"
+      "basicInfo": "基本情報",
+      "verify-and-backup": "確認とバックアップ",
+      "verify-fingerprint": "指紋を確認する",
+      "verify-face-id-before-backup": "バックアップの前にFace IDを確認してください。",
+      "verify-password": "パスワードを確認する",
+      "verify-face-id": "フェイス ID を確認する",
+      "verify-fingerprint-before-backup": "バックアップの前に指紋を確認してください",
+      "verify-password-before-backup": "バックアップの前にRabbyのパスワードを確認してください。"
     },
     "gasAccount": {
       "deposit": "入金",
@@ -2474,7 +2489,11 @@
         "feeTooltipTitle": "手数料",
         "invalidNumber": "有効な数値を入力してください",
         "feeTooltipDesc": "Hyperliquidによって請求される出金手数料: $1",
-        "minimumWithdrawSize": "最低出金額は$2です。"
+        "minimumWithdrawSize": "最低出金額は$2です。",
+        "selectWithdrawToken": "トークンを選択してください",
+        "hypeFeeTip": "手数料 : ~${{fee}}",
+        "hypeGasFeeTooltip": "EVMに引き出すために、約0.00002 HYPEの手数料がかかります。",
+        "hypeActivationFeeTooltip": "Hyperliquidは最初のHyperEVMの引き出しに対して、{{fee}}の一時的なアクティベーション手数料を請求します。"
       },
       "PerpsWithdrawFeePopup": {
         "title": "手数料",
@@ -2871,7 +2890,9 @@
         "almostReachedError": "借入可能的最大金额受到限制，因为协议借入上限已接近。",
         "almostReachedWarning": "この資産のプロトコル借入上限は100%です。これ以上の借入はできません。",
         "swapDebt": "スワップ",
-        "borrowed": "借入した"
+        "borrowed": "借入した",
+        "noSupplyDesc": "借りるには、担保として資産を提供する必要があります。",
+        "noSupplyPrefix": "供給なし:"
       },
       "popup": {
         "available": "利用可能",
@@ -3122,6 +3143,22 @@
       },
       "noOpen": "開いていません",
       "marketNotOpenTooltip": "マーケットはオープンしていません"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "subtitle": "お帰りなさい! 🎉  \nウォレットを迅速に復元する方法を選択してください。",
+        "title": "Rabby ウォレットを復元する"
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "または、<clickable>新しいウォレットを作成</clickable>することができます。"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "シードフレーズを入力してください",
+        "privateKeyPlaceholder": "あなたのプライベートキーを入力してください"
+      },
+      "createWalletError": "ウォレットの作成に失敗しました",
+      "walletReady": "あなたのウォレットが準備できました 🚀",
+      "setPasswordTip": "ウォレットを保護するためにパスワードを設定してください。"
     }
   },
   "global": {
@@ -3221,7 +3258,10 @@
     },
     "autolock": {
       "never": "決して"
-    }
+    },
+    "Created": "作成されました",
+    "Imported": "インポートされた",
+    "SavedSeedPhrase": "シードフレーズを保存しました"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -3498,6 +3538,9 @@
     },
     "lpTokenModal": {
       "desc": "これは{{protocolId}}の流動性提供者（LP）トークンです。"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "利用可能なアドレスがありません"
     }
   },
   "common": {
@@ -3519,5 +3562,9 @@
     "noTransactionOwnerAddress": "その取引はあなたのウォレット内のどのアドレスにも属していません。後で取引履歴を確認してください。",
     "unknownAddressFromTransaction": "取引にはあなたのウォレットにないアドレスが含まれています。後で取引履歴を確認してください。",
     "noTransactionDetail": "トランザクションの詳細が見つかりません。後でトランザクション履歴を確認してください。"
+  },
+  "backupReminder": {
+    "title": "ウォレットのバックアップを取っていません。",
+    "action": "今すぐバックアップしてください"
   }
 }

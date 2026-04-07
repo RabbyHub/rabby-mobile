@@ -703,23 +703,22 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   );
 
   const handleBridge = useMemoizedFn(async (p?: { ignoreGasFee?: boolean }) => {
-    const snapshot = formValuesRef.current.getSnapshot();
-    if (snapshot) {
-      const currentValues = buildFormSnapshot();
-      const comparison = formValuesRef.current.compare(currentValues);
-      const shouldIgnoreChange = shouldIgnoreAmountChangeInMaxMode(
-        comparison,
-        snapshot,
-        currentValues,
-      );
+    if (__DEV__) {
+      const snapshot = formValuesRef.current.getSnapshot();
 
-      formValuesRef.current.clear();
+      if (!snapshot) {
+        toast.info(t('page.bridge.formChangedAmount'));
+        return;
+      }
 
-      if (
-        comparison.isChanged &&
-        !shouldIgnoreChange &&
-        blockSubmitIfFormChangedOnAuth
-      ) {
+      // Check if amount changed during authentication
+      const comparison = formValuesRef.current.compare({
+        amount: amount || '',
+      });
+
+      // If amount changed during authentication, close modal and alert user
+      if (comparison.isChanged) {
+        formValuesRef.current.clear();
         closeMiniSigner();
         Alert.alert(
           t('page.bridge.formChangedTitle') || 'Form Changed',
@@ -731,6 +730,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         return;
       }
     }
+
+    // Clear snapshot after validation
+    formValuesRef.current.clear();
 
     // // leave here for debug __DEV__ mode: don't actually submit, just console.debug and clear form
     // if (__DEV__) {

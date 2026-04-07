@@ -285,6 +285,9 @@
     },
     "lpTokenModal": {
       "desc": "นี่คือโทเค็นผู้ให้ความ ликวิดิตี (LP) สำหรับ {{protocolId}}"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "ไม่มีที่อยู่ที่ใช้ได้"
     }
   },
   "page": {
@@ -292,7 +295,9 @@
       "goToHome": "ไปที่หน้าแรก",
       "alreadyHaveAddress": "ฉันมีกระเป๋าเงินแล้ว",
       "sync": "สแกนเพื่อซิงค์กระเป๋าสตางค์ Rabby Extension",
-      "createNewAddress": "สร้างกระเป๋าเงินใหม่"
+      "createNewAddress": "สร้างกระเป๋าเงินใหม่",
+      "welcomeTitle": "ยินดีต้อนรับสู่\nRabby Wallet",
+      "alreadyUseRabby": "ฉัน已经ใช้ Rabby"
     },
     "transactions": {
       "explain": {
@@ -1037,6 +1042,10 @@
         "search": "ค้นหา",
         "emptyAndroid": "ยังไม่มี dApp ที่เพิ่มลงในรายการที่ชื่นชอบ",
         "empty": "ไม่มีเว็บไซต์ที่เพิ่มเข้าสู่รายการโปรด"
+      },
+      "depositAssets": {
+        "title": "ฝากสินทรัพย์",
+        "subtitle": "รับสินทรัพย์ไปยังกระเป๋านี้"
       }
     },
     "gasTopUp": {
@@ -1311,7 +1320,8 @@
         "syncRabbyExtension": "ซิงค์ Rabby Extension",
         "createAddress": "สร้างกระเป๋าเงิน",
         "importAddress": "นำเข้ากระเป๋าเงิน",
-        "selectAddMethod": "เลือกวิธีการเพิ่ม"
+        "selectAddMethod": "เลือกวิธีการเพิ่ม",
+        "seedPhraseOrPrivateKey": "Seed phrase หรือ private key"
       },
       "multiAddressHome": {
         "services": "บริการ",
@@ -1488,7 +1498,14 @@
       },
       "backup": "สำรองข้อมูล",
       "other": "อื่น ๆ",
-      "basicInfo": "ข้อมูลพื้นฐาน"
+      "basicInfo": "ข้อมูลพื้นฐาน",
+      "verify-password-before-backup": "ตรวจสอบรหัสผ่าน Rabby ของคุณก่อนสำรองข้อมูล",
+      "verify-fingerprint": "ตรวจสอบลายนิ้วมือ",
+      "verify-and-backup": "ตรวจสอบ & สำรองข้อมูล",
+      "verify-password": "ตรวจสอบรหัสผ่าน",
+      "verify-face-id": "ตรวจสอบ Face ID",
+      "verify-fingerprint-before-backup": "ยืนยันลายนิ้วมือของคุณก่อนที่จะทำการสำรองข้อมูล",
+      "verify-face-id-before-backup": "ตรวจสอบ Face ID ของคุณก่อนการสำรองข้อมูล"
     },
     "importSafe": {
       "title": "เพิ่มที่อยู่ Safe",
@@ -1769,7 +1786,8 @@
         "description2": "หากคุณสูญเสีย keyring ของคุณ คุณจะไม่สามารถกู้คืนกระเป๋าเงินของคุณได้",
         "ButtonGotIt": "ฉันเข้าใจแล้ว。"
       },
-      "importing": "นำเข้า..."
+      "importing": "นำเข้า...",
+      "Done": "เสร็จเรียบร้อย"
     },
     "safeQueue": {
       "unknownProtocol": "Unknown protocol",
@@ -2679,7 +2697,11 @@
         "withdrawBtn": "ถอนเงิน",
         "minimumWithdrawSize": "จำนวนเงินถอนขั้นต่ำคือ 2 ดอลลาร์",
         "insufficientBalance": "ยอดเงินไม่เพียงพอ",
-        "invalidNumber": "กรุณาใส่หมายเลขที่ถูกต้อง"
+        "invalidNumber": "กรุณาใส่หมายเลขที่ถูกต้อง",
+        "selectWithdrawToken": "เลือกโทเค็น",
+        "hypeGasFeeTooltip": "ค่าธรรมเนียมประมาณ 0.00002 HYPE จะถูกเรียกเก็บเมื่อถอนเข้าสู่ EVM",
+        "hypeFeeTip": "ค่าธรรมเนียม : ~${{fee}}",
+        "hypeActivationFeeTooltip": "ค่าธรรมเนียมการเปิดใช้งานครั้งเดียว {{fee}} จะถูกเรียกเก็บโดย Hyperliquid สำหรับการถอน HyperEVM ครั้งแรก。"
       },
       "PerpsWithdrawFeePopup": {
         "title": "ค่าธรรมเนียม",
@@ -3076,7 +3098,9 @@
         "almostReachedWarning": "โปรโตคอลการกู้ยืมถึงขีดจำกัด 100% สำหรับสินทรัพย์นี้ การกู้ยืมเพิ่มเติมไม่สามารถใช้งานได้。",
         "almostReachedError": "จำนวนสูงสุดที่สามารถยืมได้จะถูกจำกัดเนื่องจากขีดจำกัดการยืมของโปรโตคอลเกือบถึงแล้ว。",
         "swapDebt": "สลับ",
-        "borrowed": "ยืม"
+        "borrowed": "ยืม",
+        "noSupplyPrefix": "ไม่มีการจัดหา:",
+        "noSupplyDesc": "ในการยืม คุณต้องจัดเตรียมสินทรัพย์เป็นหลักประกัน。"
       },
       "popup": {
         "amount": "จำนวน",
@@ -3327,6 +3351,22 @@
       },
       "noOpen": "ยังไม่ได้เปิด",
       "marketNotOpenTooltip": "ตลาดยังไม่เปิด"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "กู้คืนกระเป๋าเงิน Rabby ของคุณ",
+        "subtitle": "ยินดีต้อนรับกลับมา! 🎉  \nเลือกวิธีการเพื่อกู้คืนกระเป๋าเงินของคุณอย่างรวดเร็ว"
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "หรือคุณสามารถ <clickable>สร้างกระเป๋าเงินใหม่</clickable> ได้"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "กรุณาใส่ seed phrase ของคุณ",
+        "privateKeyPlaceholder": "กรอกกุญแจส่วนตัวของคุณ"
+      },
+      "createWalletError": "การสร้างกระเป๋าเงินล้มเหลว",
+      "walletReady": "กระเป๋าเงินของคุณพร้อมแล้ว 🚀",
+      "setPasswordTip": "ตั้งรหัสผ่านเพื่อป้องกันกระเป๋าเงินของคุณ"
     }
   },
   "native": {
@@ -3441,7 +3481,10 @@
     },
     "autolock": {
       "never": "ไม่เคย"
-    }
+    },
+    "Created": "สร้างเสร็จแล้ว",
+    "Imported": "นำเข้า",
+    "SavedSeedPhrase": "ฉันได้บันทึก seed phrase เรียบร้อยแล้ว"
   },
   "background": {
     "transactionWatcher": {
@@ -3519,5 +3562,9 @@
     "noTransactionOwnerAddress": "ธุรกรรมนี้ไม่ได้เป็นของที่อยู่ใดในกระเป๋าสตางค์ของคุณ กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง。",
     "noTransactionDetail": "ไม่พบรายละเอียดธุรกรรม กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง。",
     "unknownAddressFromTransaction": "การทำธุรกรรมเกี่ยวข้องกับที่อยู่ที่ไม่อยู่ในกระเป๋าของคุณ กรุณาตรวจสอบประวัติการทำธุรกรรมในภายหลัง"
+  },
+  "backupReminder": {
+    "action": "สำรองข้อมูลตอนนี้",
+    "title": "คุณยังไม่ได้สำรองข้อมูลกระเป๋าเงินของคุณ"
   }
 }

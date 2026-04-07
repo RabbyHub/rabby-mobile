@@ -27,6 +27,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: 'Setup Ruby & Fastlane'
         uses: heisenberg-2077/setup-ruby@master
         with:
@@ -86,6 +89,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: 'Setup Ruby & Fastlane'
         uses: heisenberg-2077/setup-ruby@master
         with:
@@ -132,6 +138,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Get Hashes from previous jobs
         run: |
           echo "Android Hash: ${{ needs.build-android.outputs.android_hash }}"
@@ -155,7 +164,7 @@ jobs:
         run: |
           cd apps/mobile
 
-          yarn install --frozen-lockfile
+          yarn install --immutable
 
           HASH_A="${{ needs.build-android.outputs.android_hash }}"
           HASH_I="${{ needs.build-ios.outputs.ios_hash }}"

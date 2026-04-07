@@ -142,7 +142,10 @@
     },
     "autolock": {
       "never": "从不"
-    }
+    },
+    "Created": "创建",
+    "SavedSeedPhrase": "我已经保存了种子短语",
+    "Imported": "导入的"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过助记词导入",
@@ -259,7 +262,9 @@
       "goToHome": "前往首页",
       "alreadyHaveAddress": "我已经有一个钱包",
       "sync": "扫描Rabby插件同步钱包",
-      "createNewAddress": "创建新钱包"
+      "createNewAddress": "创建新钱包",
+      "alreadyUseRabby": "我已经在使用 Rabby。",
+      "welcomeTitle": "欢迎来到 Rabby Wallet"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "输入您的助记词"
@@ -881,6 +886,10 @@
         "empty": "没有网站被添加到收藏夹",
         "search": "搜索",
         "emptyAndroid": "没有dApp添加到收藏夹"
+      },
+      "depositAssets": {
+        "subtitle": "将资产接收至此钱包",
+        "title": "存入资产"
       }
     },
     "manageAddress": {
@@ -1234,7 +1243,8 @@
         "syncRabbyExtension": "同步 Rabby 扩展程序",
         "importAddress": "导入钱包",
         "createAddress": "创建钱包",
-        "selectAddMethod": "选择添加方法"
+        "selectAddMethod": "选择添加方法",
+        "seedPhraseOrPrivateKey": "助记词或私钥"
       },
       "rateModalTriggerOnHome": {
         "description": "你如何评价 Rabby Wallet？"
@@ -1541,7 +1551,8 @@
         "description3": "切勿分享您的私钥——任何拥有私钥的人都可以控制您的资金。",
         "title3": "永远不要分享它"
       },
-      "importing": "导入中..."
+      "importing": "导入中...",
+      "Done": "完成"
     },
     "backupPrivateKey": {
       "clickToShowQr": "点击显示私钥二维码",
@@ -1695,7 +1706,14 @@
       },
       "basicInfo": "基本信息",
       "other": "其他",
-      "backup": "备份"
+      "backup": "备份",
+      "verify-and-backup": "验证和备份",
+      "verify-fingerprint": "验证指纹",
+      "verify-face-id": "验证 Face ID",
+      "verify-fingerprint-before-backup": "在备份之前验证您的指纹",
+      "verify-password-before-backup": "在备份之前，请验证您的 Rabby 密码。",
+      "verify-password": "验证密码",
+      "verify-face-id-before-backup": "在备份之前验证您的 Face ID"
     },
     "rabbyPoints": {
       "claimItem": {
@@ -2548,7 +2566,11 @@
         "feeTooltipDesc": "Hyperliquid 收取的提现费用：$1",
         "amount": "数量",
         "feeTip": "费用：$1.00",
-        "invalidNumber": "请输入一个有效的数字"
+        "invalidNumber": "请输入一个有效的数字",
+        "selectWithdrawToken": "选择token",
+        "hypeFeeTip": "费用 : ~${{fee}}",
+        "hypeActivationFeeTooltip": "Hyperliquid 将收取一次性激活费用 {{fee}}，用于首次 HyperEVM 提现。",
+        "hypeGasFeeTooltip": "提取到 EVM 将收取约 0.00002 HYPE 的费用。"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "我明白了",
@@ -2942,7 +2964,9 @@
         "almostReachedWarning": "该资产的协议借款上限为100%。进一步借款不可用。",
         "almostReachedError": "可借用的最大金额受限，因为协议借款上限几乎已达到。",
         "swapDebt": "交换",
-        "borrowed": "已借款"
+        "borrowed": "已借款",
+        "noSupplyDesc": "要借款，您需要提供资产作为抵押。",
+        "noSupplyPrefix": "没有供应："
       },
       "popup": {
         "remainingDebt": "剩余债务",
@@ -3193,6 +3217,22 @@
       },
       "noOpen": "未开启",
       "marketNotOpenTooltip": "市场尚未开放"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "恢复您的 Rabby 钱包",
+        "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。"
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "或者你可以<clickable>创建一个新钱包</clickable>"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "输入您的种子短语",
+        "privateKeyPlaceholder": "输入您的私钥"
+      },
+      "createWalletError": "创建钱包失败",
+      "walletReady": "您的钱包已准备好 🚀",
+      "setPasswordTip": "设置密码以保护您的钱包"
     }
   },
   "component": {
@@ -3450,6 +3490,9 @@
     },
     "lpTokenModal": {
       "desc": "这是 {{protocolId}} 的流动性提供者（LP）代币。"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "没有可用地址"
     }
   },
   "bluetooth": {
@@ -3519,5 +3562,9 @@
     "noTransactionOwnerAddress": "该交易不属于您钱包中的任何地址。请稍后检查交易历史记录。",
     "loadingTransaction": "正在打开交易...",
     "unknownAddressFromTransaction": "交易涉及一个不在您钱包中的地址。请稍后检查交易记录。"
+  },
+  "backupReminder": {
+    "action": "立即备份",
+    "title": "您尚未备份您的钱包"
   }
 }

@@ -35,7 +35,9 @@
       "goToHome": "Ana Sayfaya Git",
       "createNewAddress": "Yeni Cüzdan Oluştur",
       "sync": "Rabby Uzantı Cüzdanını Senkronize Etmek İçin Tara",
-      "alreadyHaveAddress": "Zaten bir cüzdanım var"
+      "alreadyHaveAddress": "Zaten bir cüzdanım var",
+      "alreadyUseRabby": "Zaten Rabby kullanıyorum.",
+      "welcomeTitle": "Rabby Wallet'a hoş geldiniz"
     },
     "transactions": {
       "itemTitle": {
@@ -1061,6 +1063,10 @@
         "favorite": "Favori",
         "emptyAndroid": "Favorilere eklenmiş dApp yok.",
         "empty": "Favorilere eklenmiş hiçbir web sitesi yok."
+      },
+      "depositAssets": {
+        "subtitle": "Bu cüzdana varlık alınız",
+        "title": "Varlıkları Yatırın"
       }
     },
     "dashboard": {
@@ -1146,7 +1152,8 @@
         "hardwareWallet": "Donanım Cüzdanı",
         "importAddress": "Cüzdanı İçe Aktar",
         "createAddress": "Cüzdan Oluştur",
-        "selectAddMethod": "Yöntem Ekle'yi Seçin"
+        "selectAddMethod": "Yöntem Ekle'yi Seçin",
+        "seedPhraseOrPrivateKey": "Seed ifadesi veya özel anahtar"
       },
       "multiAddressHome": {
         "services": "Hizmetler",
@@ -1426,7 +1433,8 @@
         "description1": "Özel anahtar, cüzdanınıza erişmek ve kontrol etmek için kullanılan harf ve rakamlar dizisidir. Cüzdanınızı herhangi bir cihazda kurtarmak için bunu kullanabilirsiniz.",
         "title3": "Asla Paylaşma"
       },
-      "importing": "İçe aktarıyor..."
+      "importing": "İçe aktarıyor...",
+      "Done": "Tamamlandı"
     },
     "unlock": {
       "btn": {
@@ -1566,7 +1574,14 @@
       },
       "other": "Diğer",
       "basicInfo": "Temel Bilgiler",
-      "backup": "Yedekle"
+      "backup": "Yedekle",
+      "verify-fingerprint": "Parmak izini doğrula",
+      "verify-password": "Şifreyi onaylayın",
+      "verify-fingerprint-before-backup": "Yedeklemeden önce parmak izinizi doğrulayın.",
+      "verify-face-id": "Yüz Tanıma Doğrula",
+      "verify-face-id-before-backup": "Yedeklemeden önce Face ID'nizi doğrulayın",
+      "verify-and-backup": "Doğrula ve yedekle",
+      "verify-password-before-backup": "Rabby şifrenizi yedeklemeden önce doğrulayın"
     },
     "customRpc": {
       "EditRPCModal": {
@@ -2421,7 +2436,11 @@
         "feeTip": "Ücret: $1.00",
         "insufficientBalance": "Yetersiz bakiye",
         "feeTooltipDesc": "Hyperliquid tarafından alınan Çekim Ücreti: 1 $",
-        "minimumWithdrawSize": "Minimum çekim tutarı 2 $'dır."
+        "minimumWithdrawSize": "Minimum çekim tutarı 2 $'dır.",
+        "selectWithdrawToken": "Token seçin",
+        "hypeFeeTip": "Ücret : ~${{fee}}",
+        "hypeGasFeeTooltip": "EVM'ye para çekmek için ~0.00002 HYPE ücreti alınacaktır.",
+        "hypeActivationFeeTooltip": "Hyperliquid, ilk HyperEVM çekimi için {{fee}} tutarında bir defaya mahsus aktivasyon ücreti talep edecektir."
       },
       "PerpsWithdrawFeePopup": {
         "title": "Ücret",
@@ -2818,7 +2837,9 @@
         "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
         "almostReachedWarning": "Protokol borç limiti bu varlık için %100'dür. Daha fazla borç alma available değildir.",
         "swapDebt": "Değiştir",
-        "borrowed": "Ödünç Alındı"
+        "borrowed": "Ödünç Alındı",
+        "noSupplyDesc": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
+        "noSupplyPrefix": "Temin yok:"
       },
       "popup": {
         "available": "mevcut",
@@ -3069,6 +3090,22 @@
       },
       "noOpen": "Açık Değil",
       "marketNotOpenTooltip": "Pazar açık değil"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Rabby cüzdanınızı geri yükleyin",
+        "subtitle": "Hoş geldin geri! 🎉  \nCüzdanını hızlıca geri yüklemek için bir yöntem seç."
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "Seed ifadenizi girin",
+        "privateKeyPlaceholder": "Özel anahtarınızı girin"
+      },
+      "createWalletError": "Cüzdan oluşturma başarısız oldu",
+      "walletReady": "Cüzdanınız hazır 🚀",
+      "setPasswordTip": "Cüzdanınızı korumak için bir şifre belirleyin.",
+      "common": {
+        "orYouCanCreateNewWallet": "Ya da <clickable>yeni bir cüzdan oluşturun</clickable> diyebilirsiniz."
+      }
     }
   },
   "component": {
@@ -3326,6 +3363,9 @@
     },
     "lpTokenModal": {
       "desc": "Bu, {{protocolId}} için bir Likidite Sağlayıcı (LP) Token'dır."
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "Mevcut adres yok"
     }
   },
   "native": {
@@ -3440,7 +3480,10 @@
     },
     "autolock": {
       "never": "Asla"
-    }
+    },
+    "Imported": "İçe Aktarıldı",
+    "Created": "Oluşturuldu",
+    "SavedSeedPhrase": "Seed ifrasını kaydettim."
   },
   "background": {
     "error": {
@@ -3518,5 +3561,9 @@
     "unknownAddressFromTransaction": "İşlem, cüzdanınızda bulunmayan bir adresle ilgilidir. Lütfen işlem geçmişini daha sonra kontrol edin.",
     "noTransactionDetail": "İşlem detayları bulunamadı. Lütfen işlem geçmişini daha sonra kontrol edin.",
     "noTransactionOwnerAddress": "İşlem cüzdanınızdaki hiçbir adrese ait değildir. Lütfen işlem geçmişini daha sonra kontrol edin."
+  },
+  "backupReminder": {
+    "action": "Şimdi yedekle",
+    "title": "Cüzdanınızı yedeklemediniz."
   }
 }

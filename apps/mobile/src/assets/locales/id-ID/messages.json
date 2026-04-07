@@ -35,7 +35,9 @@
       "goToHome": "Pergi ke Beranda",
       "createNewAddress": "Buat Dompet Baru",
       "alreadyHaveAddress": "Saya sudah memiliki wallet",
-      "sync": "Pindai untuk Menyinkronkan Dompet Ekstensi Rabby"
+      "sync": "Pindai untuk Menyinkronkan Dompet Ekstensi Rabby",
+      "welcomeTitle": "Selamat datang di\nRabby Wallet",
+      "alreadyUseRabby": "Saya sudah menggunakan Rabby"
     },
     "transactions": {
       "itemTitle": {
@@ -1061,6 +1063,10 @@
         "emptyAndroid": "Tidak ada dApp yang ditambahkan ke favorit",
         "search": "Cari",
         "favorite": "Favorit"
+      },
+      "depositAssets": {
+        "subtitle": "Terima aset ke dompet ini",
+        "title": "Setor Aset"
       }
     },
     "dashboard": {
@@ -1146,7 +1152,8 @@
         "syncRabbyExtension": "Sinkronkan Ekstensi Rabby",
         "importAddress": "Impor Dompet",
         "createAddress": "Buat Dompet",
-        "selectAddMethod": "Pilih Tambah Metode"
+        "selectAddMethod": "Pilih Tambah Metode",
+        "seedPhraseOrPrivateKey": "Seed phrase atau private key"
       },
       "multiAddressHome": {
         "totalBalance": "Total Balance",
@@ -1426,7 +1433,8 @@
         "description3": "Jangan pernah membagikan kunci pribadi Anda—siapa pun yang memiliki akses ke sana dapat mengendalikan dana Anda.",
         "description1": "Sebuah kunci privat adalah sekumpulan huruf dan angka yang digunakan untuk mengakses dan mengontrol dompet Anda. Anda dapat menggunakannya untuk memulihkan dompet Anda di perangkat apa pun."
       },
-      "importing": "Mengimpor..."
+      "importing": "Mengimpor...",
+      "Done": "Selesai"
     },
     "unlock": {
       "btn": {
@@ -1566,7 +1574,14 @@
       },
       "backup": "Cadangan",
       "other": "Lainnya",
-      "basicInfo": "Informasi Dasar"
+      "basicInfo": "Informasi Dasar",
+      "verify-face-id": "Verifikasi Face ID",
+      "verify-password": "Verifikasi kata sandi",
+      "verify-and-backup": "Verifikasi & cadangkan",
+      "verify-fingerprint": "Verifikasi sidik jari",
+      "verify-fingerprint-before-backup": "Verifikasi sidik jari Anda sebelum cadangan",
+      "verify-face-id-before-backup": "Verifikasi Face ID Anda sebelum cadangan",
+      "verify-password-before-backup": "Verifikasi kata sandi Rabby Anda sebelum cadangan"
     },
     "customRpc": {
       "EditRPCModal": {
@@ -2421,7 +2436,11 @@
         "minimumWithdrawSize": "Jumlah penarikan minimum adalah $2",
         "available": "tersedia",
         "feeTooltipDesc": "Biaya Penarikan yang dikenakan oleh Hyperliquid: $1",
-        "withdrawBtn": "Tarik Pulang"
+        "withdrawBtn": "Tarik Pulang",
+        "selectWithdrawToken": "Pilih token",
+        "hypeFeeTip": "Biaya : ~${{fee}}",
+        "hypeActivationFeeTooltip": "Biaya aktivasi satu kali sebesar {{fee}} akan dikenakan oleh Hyperliquid untuk penarikan HyperEVM pertama.",
+        "hypeGasFeeTooltip": "Biaya ~0.00002 HYPE akan dikenakan untuk menarik ke EVM"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Biaya",
@@ -2818,7 +2837,9 @@
         "almostReachedError": "Jumlah maksimum yang tersedia untuk dipinjam terbatas karena batas peminjaman protokol sudah hampir tercapai.",
         "almostReachedWarning": "Batas pinjaman protokol adalah 100% untuk aset ini. Pinjaman lebih lanjut tidak tersedia.",
         "swapDebt": "Tukar",
-        "borrowed": "Dipinjam"
+        "borrowed": "Dipinjam",
+        "noSupplyDesc": "Untuk meminjam, Anda perlu menyediakan aset sebagai jaminan.",
+        "noSupplyPrefix": "Tidak ada pasokan:"
       },
       "popup": {
         "available": "tersedia",
@@ -3069,6 +3090,22 @@
       },
       "marketNotOpenTooltip": "Pasar belum dibuka",
       "noOpen": "Tidak Terbuka"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Pulihkan dompet Rabby Anda",
+        "subtitle": "Selamat datang kembali! 🎉  \nPilih metode untuk dengan cepat memulihkan dompet Anda."
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "Atau Anda bisa <clickable>membuat dompet baru</clickable>"
+      },
+      "importSecret": {
+        "privateKeyPlaceholder": "Masukkan kunci pribadi Anda",
+        "seedPhrasePlaceholder": "Masukkan frasa benih Anda"
+      },
+      "createWalletError": "Gagal membuat dompet",
+      "walletReady": "Dompet Anda sudah siap 🚀",
+      "setPasswordTip": "Atur kata sandi untuk mengamankan dompet Anda"
     }
   },
   "component": {
@@ -3326,6 +3363,9 @@
     },
     "lpTokenModal": {
       "desc": "Ini adalah Token Penyedia Likuiditas (LP) untuk {{protocolId}}"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "Tidak ada alamat yang tersedia"
     }
   },
   "native": {
@@ -3440,7 +3480,10 @@
     },
     "autolock": {
       "never": "Tidak pernah"
-    }
+    },
+    "Imported": "Diimpor ",
+    "Created": "Dibuat",
+    "SavedSeedPhrase": "Saya telah menyimpan seed phrase"
   },
   "background": {
     "error": {
@@ -3518,5 +3561,9 @@
     "noTransactionDetail": "Detail transaksi tidak ditemukan. Silakan periksa riwayat transaksi nanti.",
     "noTransactionOwnerAddress": "Transaksi ini tidak terkait dengan alamat manapun di dompet Anda. Silakan periksa riwayat transaksi nanti.",
     "unknownAddressFromTransaction": "Transaksi melibatkan alamat yang tidak ada di dompet Anda. Silakan periksa riwayat transaksi nanti."
+  },
+  "backupReminder": {
+    "action": "Cadangkan sekarang",
+    "title": "Anda belum mencadangkan dompet Anda"
   }
 }
