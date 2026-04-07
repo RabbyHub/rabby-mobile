@@ -307,7 +307,7 @@ export const ImportSuccessScreen2024 = () => {
         <WalletSuccessCard
           style={{ flex: 1 }}
           title={
-            importAddresses.length === 1
+            onlyFirstAccount
               ? t('page.importSuccess.titleSingle')
               : t('page.importSuccess.titleMultiple', {
                   count: importAddresses.length,
