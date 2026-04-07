@@ -174,7 +174,7 @@ async function submitCreateWallet(
       input: { tipLoading?: boolean } & (T extends true
         ? { validatedPassword: string }
         : { validatedPassword?: undefined }),
-    ) => Promise<void>;
+    ) => Promise<boolean>;
   },
 ): Promise<void> {
   const { address, addressIndex, seedPhrase, accountsToCreate } = walletData;
@@ -270,7 +270,7 @@ async function submitImportSeedPhrase(
       input: { tipLoading?: boolean } & (T extends true
         ? { validatedPassword: string }
         : { validatedPassword?: undefined }),
-    ) => Promise<void>;
+    ) => Promise<boolean>;
   },
 ): Promise<void> {
   const { seedPhrase } = walletData;
@@ -383,7 +383,7 @@ async function submitImportPrivateKey(
       input: { tipLoading?: boolean } & (T extends true
         ? { validatedPassword: string }
         : { validatedPassword?: undefined }),
-    ) => Promise<void>;
+    ) => Promise<boolean>;
   },
 ): Promise<void> {
   const { privateKey } = walletData;
@@ -481,7 +481,7 @@ async function submitWalletCreation(
       input: { tipLoading?: boolean } & (T extends true
         ? { validatedPassword: string }
         : { validatedPassword?: undefined }),
-    ) => Promise<void>;
+    ) => Promise<boolean>;
   },
 ): Promise<void> {
   const { mode } = walletData;
