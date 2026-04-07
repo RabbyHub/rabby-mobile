@@ -306,7 +306,13 @@ export const ImportSuccessScreen2024 = () => {
       <View style={[styles.container, { paddingTop: top }]}>
         <WalletSuccessCard
           style={{ flex: 1 }}
-          title={t('page.syncExtension.importedSuccessfully')}
+          title={
+            importAddresses.length === 1
+              ? t('page.importSuccess.titleSingle')
+              : t('page.importSuccess.titleMultiple', {
+                  count: importAddresses.length,
+                })
+          }
           addresses={addressItems}
         />
       </View>

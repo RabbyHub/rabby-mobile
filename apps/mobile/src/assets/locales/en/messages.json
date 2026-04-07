@@ -471,7 +471,9 @@
       "success": "{{type}} successfully!",
       "importMore": "Import more Wallets",
       "viewAddress": "View Wallet",
-      "addressCount": "{{count}} Addresses"
+      "addressCount": "{{count}} Addresses",
+      "titleSingle": "Your wallet has been imported 🚀",
+      "titleMultiple": "{{count}} Wallets Added 🚀"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Enter your seed phrase, separating each word with a space"
