@@ -120,9 +120,7 @@ function NewUserGetStartedScreen() {
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_HAVE_ADDRESS,
     );
-    navigateDeprecated(RootNames.StackAddress, {
-      screen: RootNames.SelectImportMethod,
-    });
+    navigateDeprecated(RootNames.SelectImportMethod);
   }, [getStarted.processedInit]);
 
   const handleGoToSyncExtension = useCallback(async () => {
@@ -134,9 +132,7 @@ function NewUserGetStartedScreen() {
       return;
     }
 
-    navigateDeprecated(RootNames.StackAddress, {
-      screen: RootNames.ImportRabbyWallet,
-    });
+    navigateDeprecated(RootNames.ImportRabbyWallet);
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
     );

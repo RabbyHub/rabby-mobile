@@ -85,7 +85,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
-  const displayAddress = ellipsisAddress(address);
+  const displayAddress = aliasName || ellipsisAddress(address);
 
   // Default avatar size is 36, but 46 when showing balance
   const effectiveAvatarSize = avatarSize ?? (showBalance ? 46 : 36);
@@ -101,11 +101,6 @@ export const AddressCard: React.FC<AddressCardProps> = ({
           borderRadius={avatarBorderRadius}
         />
         <View style={styles.textContainer}>
-          {aliasName ? (
-            <Text style={styles.aliasText} numberOfLines={1}>
-              {aliasName}
-            </Text>
-          ) : null}
           <Text style={styles.addressText}>{displayAddress}</Text>
           {showBalance && <Balance address={address} />}
         </View>
@@ -136,14 +131,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   textContainer: {
     flex: 1,
     justifyContent: 'center',
-  },
-  aliasText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    fontWeight: '700',
-    lineHeight: 22,
-    color: colors2024['neutral-title-1'],
-    marginBottom: 2,
   },
   addressText: {
     fontFamily: 'SF Pro Rounded',
