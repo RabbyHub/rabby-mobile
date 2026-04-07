@@ -281,6 +281,6 @@
   },
   "op-sqlite": {
     "performanceMode": true,
-    "sqliteFlags": "-DSQLITE_ENABLE_MATH_FUNCTIONS"
+    "sqliteFlags": "-DSQLITE_ENABLE_MATH_FUNCTIONS;-DSQLITE_TEMP_STORE=2"
   }
 }

@@ -81,6 +81,18 @@ export const opSqliteTypeORMDriver = {
         name: options.name,
         encryptionKey: options.encryptionKey || '',
       });
+      if (!isIOS && options.location !== ':memory:') {
+        try {
+          // Avoid Android disk I/O errors from temp-file store on older versions.
+          database.executeSync('PRAGMA temp_store=MEMORY;', []);
+        } catch (e) {
+          console.warn(
+            `[opSqliteTypeORMDriver] Failed to set PRAGMA temp_store=MEMORY: ${String(
+              e,
+            )}`,
+          );
+        }
+      }
 
       if (opSqliteDBRef.current) {
         console.warn(
