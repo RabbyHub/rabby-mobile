@@ -74,40 +74,29 @@ export const PerpsSkeletonLoader: React.FC = () => {
     <View style={styles.container}>
       {/* Account Card Skeleton */}
       <View style={styles.accountCard}>
-        <View style={styles.accountValueRow}>
+        <View style={styles.accountStatsRow}>
           <Skeleton
             animation="wave"
-            width={180}
-            height={32}
+            width={120}
+            height={36}
+            LinearGradientComponent={Linear}
+            style={styles.skeleton}
+          />
+          <Skeleton
+            animation="wave"
+            height={36}
+            width={100}
             LinearGradientComponent={Linear}
             style={styles.skeleton}
           />
         </View>
         <Skeleton
           animation="wave"
-          width={120}
-          height={16}
+          width={80}
+          height={18}
           LinearGradientComponent={Linear}
           style={styles.skeleton}
         />
-        <View style={styles.accountStatsRow}>
-          <View style={styles.statItem}>
-            <Skeleton
-              animation="wave"
-              height={48}
-              LinearGradientComponent={Linear}
-              style={styles.skeleton}
-            />
-          </View>
-          <View style={styles.statItem}>
-            <Skeleton
-              animation="wave"
-              height={48}
-              LinearGradientComponent={Linear}
-              style={styles.skeleton}
-            />
-          </View>
-        </View>
       </View>
 
       {/* Position Section Skeleton */}
@@ -231,7 +220,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 16,
+    // paddingTop: 16,
   },
   skeleton: {
     backgroundColor: 'rgba(190,190,190,0.2)',
@@ -240,18 +229,23 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   accountCard: {
     backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 12,
+    height: 106,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 30,
   },
   accountValueRow: {
     marginTop: 8,
     marginBottom: 8,
   },
   accountStatsRow: {
-    marginTop: 24,
+    // marginTop: 24,
     gap: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 4,
   },
   statItem: {
     flex: 1,
@@ -270,7 +264,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 8,
   },
   marketItem: {
-    backgroundColor: colors2024['neutral-card-1'],
+    // backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,

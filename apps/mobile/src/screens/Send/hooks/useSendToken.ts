@@ -217,6 +217,7 @@ export const apiSendToken = {
   setCurrentToken,
 
   putScreenState,
+  markBalanceLoading,
   resetScreenState,
 };
 
@@ -270,6 +271,8 @@ export type SendScreenState = {
   clickedMax: boolean;
   balanceError: string | null;
   balanceWarn: string | null;
+  showBalanceLoading: boolean;
+  balanceLoadedKey: string | null;
   isLoading: boolean;
   isSubmitLoading: boolean;
   estimatedGas: number;
@@ -318,6 +321,8 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   balanceError: null,
   balanceWarn: null,
+  showBalanceLoading: false,
+  balanceLoadedKey: null,
   isLoading: false,
   isSubmitLoading: false,
 
@@ -342,6 +347,32 @@ const DFLT_SEND_STATE: SendScreenState = {
   },
   // toAddrAccountInfo: null,
   toAddrDesc: null,
+};
+
+const DFLT_SEND_SUCCESS_RESET_STATE: Partial<SendScreenState> = {
+  cacheAmount: DFLT_SEND_STATE.cacheAmount,
+  tokenAmountForGas: DFLT_SEND_STATE.tokenAmountForGas,
+  showGasReserved: DFLT_SEND_STATE.showGasReserved,
+  clickedMax: DFLT_SEND_STATE.clickedMax,
+  balanceError: DFLT_SEND_STATE.balanceError,
+  balanceWarn: DFLT_SEND_STATE.balanceWarn,
+  showBalanceLoading: DFLT_SEND_STATE.showBalanceLoading,
+  balanceLoadedKey: DFLT_SEND_STATE.balanceLoadedKey,
+  isLoading: DFLT_SEND_STATE.isLoading,
+  isSubmitLoading: DFLT_SEND_STATE.isSubmitLoading,
+  estimatedGas: DFLT_SEND_STATE.estimatedGas,
+  isEstimatingGas: DFLT_SEND_STATE.isEstimatingGas,
+  reserveGasOpen: DFLT_SEND_STATE.reserveGasOpen,
+  temporaryGrant: DFLT_SEND_STATE.temporaryGrant,
+  gasSelectorVisible: DFLT_SEND_STATE.gasSelectorVisible,
+  selectedGasLevel: DFLT_SEND_STATE.selectedGasLevel,
+  safeInfo: DFLT_SEND_STATE.safeInfo,
+  addressToAddAsContacts: DFLT_SEND_STATE.addressToAddAsContacts,
+  addressToEditAlias: DFLT_SEND_STATE.addressToEditAlias,
+  buildTxsCount: DFLT_SEND_STATE.buildTxsCount,
+  agreeRequiredChecks: {
+    ...DFLT_SEND_STATE.agreeRequiredChecks,
+  },
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 function setSendScreenState(valOrFunc: UpdaterOrPartials<SendScreenState>) {
@@ -370,6 +401,37 @@ function putScreenState(
       ...patch,
     };
   });
+}
+
+function makeBalanceLoadKey(
+  chainId: string,
+  currentAddress: string,
+  tokenId: string,
+) {
+  return [
+    currentAddress.toLowerCase(),
+    chainId.toLowerCase(),
+    tokenId.toLowerCase(),
+  ].join('__');
+}
+
+function markBalanceLoading(input: {
+  chainId: string;
+  currentAddress: string;
+  tokenId: string;
+}) {
+  const nextKey = makeBalanceLoadKey(
+    input.chainId,
+    input.currentAddress,
+    input.tokenId,
+  );
+
+  putScreenState(prev => ({
+    isLoading: true,
+    showBalanceLoading: prev.balanceLoadedKey !== nextKey,
+  }));
+
+  return nextKey;
 }
 
 function resetScreenState() {
@@ -671,6 +733,8 @@ export function useSendTokenForm({
     openDirect,
     prefetch: prefetchMiniSigner,
     instance: miniSignInstance,
+    close: closeMiniSigner,
+    resetGasStore,
   } = useMiniSigner({
     account: currentAccount || fallbackAccount,
     chainServerId: chainItem?.serverId,
@@ -1328,13 +1392,14 @@ export function useSendTokenForm({
     [formik.values.to, currentAccount],
   );
 
-  const loadCurrentToken = useCallback(
+  const loadCurrentToken = useMemoizedFn(
     async (
       id: string,
       chainId: string,
       currentAddress: string,
       disableBalanceCheck?: boolean,
     ) => {
+      const balanceLoadedKey = makeBalanceLoadKey(chainId, currentAddress, id);
       const chain = findChain({
         serverId: chainId,
       });
@@ -1361,7 +1426,11 @@ export function useSendTokenForm({
           },
         }));
       }
-      putScreenState({ isLoading: false });
+      putScreenState({
+        isLoading: false,
+        showBalanceLoading: false,
+        balanceLoadedKey,
+      });
 
       if (
         !disableBalanceCheck &&
@@ -1381,7 +1450,6 @@ export function useSendTokenForm({
 
       return result;
     },
-    [formValues.amount, estimateGasOnChain, t],
   );
 
   const couldReserveGas = isNativeToken && !screenState.isGnosisSafe;
@@ -1637,8 +1705,14 @@ export function useSendTokenForm({
       putScreenState({
         balanceError: null,
         balanceWarn: null,
-        isLoading: true,
       });
+      if (currentAccount) {
+        apiSendToken.markBalanceLoading({
+          tokenId: token.id,
+          chainId: token.chain,
+          currentAddress: currentAccount.address,
+        });
+      }
 
       if (currentAccount) {
         await loadCurrentToken(
@@ -1881,6 +1955,50 @@ export function useSendTokenForm({
   const prepareRef = useRef<Promise<Tx | void>>(undefined);
   const prepareCountRef = useRef(0);
 
+  const invalidatePreparedTx = useCallback(() => {
+    prepareCountRef.current = 0;
+    prepareRef.current = undefined;
+  }, []);
+
+  const resetAfterSignedSuccess = useCallback(() => {
+    invalidatePreparedTx();
+    closeMiniSigner();
+    resetGasStore();
+    formValuesRef.current.clear();
+    setSlider(0);
+    setIsDraggingSlider(false);
+
+    handleFormValuesChange(
+      {
+        amount: '',
+        messageDataForSendToEoa: '',
+        messageDataForContractCall: '',
+      },
+      {
+        currentPartials: {
+          ...formik.values,
+          amount: '',
+          messageDataForSendToEoa: '',
+          messageDataForContractCall: '',
+        },
+      },
+    );
+
+    putScreenState(prev => ({
+      ...prev,
+      ...DFLT_SEND_SUCCESS_RESET_STATE,
+    }));
+  }, [
+    invalidatePreparedTx,
+    closeMiniSigner,
+    resetGasStore,
+    formValuesRef,
+    setSlider,
+    setIsDraggingSlider,
+    handleFormValuesChange,
+    formik.values,
+  ]);
+
   const isFocused = useIsFocused();
 
   const stableAmountValue = useDebouncedValue(formValues.amount, 300);
@@ -1995,6 +2113,7 @@ export function useSendTokenForm({
     formik,
     formValues,
     resetFormValues,
+    resetAfterSignedSuccess,
     handleFieldChange,
     patchFormValues,
     handleFormValuesChange,

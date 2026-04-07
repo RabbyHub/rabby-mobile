@@ -754,13 +754,15 @@ export const SeedPhrase: React.FC<Props> = ({
         {(!isHidden || readMode) && (
           <>
             <Button
-              disabled={currentSelecting && selectArr.length < 3}
+              disabled={
+                readMode ? isHidden : currentSelecting && selectArr.length < 3
+              }
               containerStyle={styles.btnContainer}
               loading={currentSelecting ? loading : false}
               type="primary"
               title={
                 readMode
-                  ? t('global.Done')
+                  ? t('global.SavedSeedPhrase')
                   : currentSelecting
                   ? t('page.nextComponent.createNewAddress.Verify')
                   : t('global.Confirm')

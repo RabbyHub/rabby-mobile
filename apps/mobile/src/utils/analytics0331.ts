@@ -1,0 +1,366 @@
+import { TIME_SETTINGS } from '@/constant/autoLock';
+import { zustandByMMKV } from '@/core/storage/mmkv';
+import { useAppNotificationEnabled } from '@/hooks/appNotification';
+import { useAutoLockTime } from '@/hooks/appTimeout';
+import { useBiometrics } from '@/hooks/biometrics';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useAppLanguage } from '@/hooks/lang';
+import { FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT } from '@/components/Screenshot/hooks';
+import { useScreenshotToReportEnabled } from '@/components/Screenshot/hooks';
+import { useFocusEffect } from '@react-navigation/native';
+import dayjs from 'dayjs';
+import { useCallback, useMemo } from 'react';
+import { AppState } from 'react-native';
+
+import { SupportedLang } from '@/utils/i18n';
+import { matomoRequestEvent } from './analytics';
+
+type SettingsSnapshotPayload = {
+  biometricsEnabled: boolean;
+  txNotificationEnabled: boolean;
+  autoLockTimeMs: number;
+  currentLanguage: SupportedLang;
+  currencyCode: string;
+  screenshotToBugEnabled: boolean;
+};
+
+type SnapshotTrackedStore = Record<string, number>;
+export type Report0331SnapshotTrackKey =
+  | 'Settings_FaceID'
+  | 'Settings_TxNoti'
+  | 'Settings_LockTime'
+  | 'Settings_Language'
+  | 'Settings_Currency'
+  | 'Settings_SStoBug'
+  | 'Lending_UserStatus';
+
+type Report0331SnapshotScenarioOption = {
+  trackKey: Report0331SnapshotTrackKey;
+  title: string;
+  category: string;
+  action: string;
+  keywords: string[];
+};
+
+export const report0331SnapshotScenarioOptions: Report0331SnapshotScenarioOption[] =
+  [
+    {
+      trackKey: 'Settings_FaceID',
+      title: 'Home Active / Settings Face ID',
+      category: 'Settings Snapshot',
+      action: 'Settings_FaceID',
+      keywords: [
+        'home active',
+        'snapshot',
+        'settings',
+        'face id',
+        'biometrics',
+      ],
+    },
+    {
+      trackKey: 'Settings_TxNoti',
+      title: 'Home Active / Settings Txn Notifications',
+      category: 'Settings Snapshot',
+      action: 'Settings_TxNoti',
+      keywords: ['home active', 'snapshot', 'settings', 'txn', 'notifications'],
+    },
+    {
+      trackKey: 'Settings_LockTime',
+      title: 'Home Active / Settings Auto Lock Time',
+      category: 'Settings Snapshot',
+      action: 'Settings_LockTime',
+      keywords: [
+        'home active',
+        'snapshot',
+        'settings',
+        'auto lock',
+        'lock time',
+      ],
+    },
+    {
+      trackKey: 'Settings_Language',
+      title: 'Home Active / Settings Language',
+      category: 'Settings Snapshot',
+      action: 'Settings_Language',
+      keywords: ['home active', 'snapshot', 'settings', 'language'],
+    },
+    {
+      trackKey: 'Settings_Currency',
+      title: 'Home Active / Settings Currency',
+      category: 'Settings Snapshot',
+      action: 'Settings_Currency',
+      keywords: ['home active', 'snapshot', 'settings', 'currency'],
+    },
+    {
+      trackKey: 'Settings_SStoBug',
+      title: 'Home Active / Settings Screenshot To Report Bug',
+      category: 'Settings Snapshot',
+      action: 'Settings_SStoBug',
+      keywords: [
+        'home active',
+        'snapshot',
+        'settings',
+        'screenshot',
+        'report bug',
+      ],
+    },
+    {
+      trackKey: 'Lending_UserStatus',
+      title: 'Home Active / Rabby Lending User Status',
+      category: 'Rabby Lending',
+      action: 'Lending_UserStatus',
+      keywords: ['home active', 'snapshot', 'lending', 'aave', 'user status'],
+    },
+  ];
+
+const snapshotTrackedStore = zustandByMMKV<SnapshotTrackedStore>(
+  '@0331reportSnapshotTracked',
+  {},
+);
+
+export const useReport0331SnapshotTrackedState = () => {
+  return snapshotTrackedStore(state => state);
+};
+
+export const get0331SnapshotTrackedAt = (key: Report0331SnapshotTrackKey) => {
+  return snapshotTrackedStore.getState()[key] || 0;
+};
+
+export const get0331SnapshotResetAt = (trackedAt?: number) => {
+  if (!trackedAt || trackedAt <= 0) {
+    return 0;
+  }
+
+  return dayjs(trackedAt).utc().startOf('day').add(1, 'day').valueOf();
+};
+
+export const reset0331ReportSnapshotTracked = () => {
+  snapshotTrackedStore.setState({}, true);
+};
+
+export const reset0331ReportSnapshotTrackedByKeys = (
+  keys: readonly Report0331SnapshotTrackKey[],
+) => {
+  if (!keys.length) {
+    return;
+  }
+
+  snapshotTrackedStore.setState(prev => {
+    const next = { ...prev };
+    keys.forEach(key => {
+      delete next[key];
+    });
+    return next;
+  }, true);
+};
+
+const pendingSnapshotTrackKeys = new Set<string>();
+
+const getOnOffLabel = (enabled: boolean) => {
+  return enabled ? 'On' : 'Off';
+};
+
+const getAutoLockTimeLabel = (timeoutMs: number) => {
+  const matched = TIME_SETTINGS.find(item => item.milliseconds === timeoutMs);
+  if (matched) {
+    return matched.key;
+  }
+
+  return `${timeoutMs}ms`;
+};
+
+const getLanguageLabel = (lang: SupportedLang) => {
+  return lang;
+};
+
+const hasTrackedSnapshotToday = (key: string) => {
+  const trackedAt = snapshotTrackedStore.getState()[key] || 0;
+  return dayjs(trackedAt).utc().isSame(dayjs().utc(), 'day');
+};
+
+const markSnapshotTracked = (key: string, timestamp = Date.now()) => {
+  snapshotTrackedStore.setState(prev => ({
+    ...prev,
+    [key]: timestamp,
+  }));
+};
+
+const trackSnapshotEventOncePerDay = async (input: {
+  trackKey: string;
+  category: string;
+  action: string;
+  label?: string;
+}) => {
+  if (
+    pendingSnapshotTrackKeys.has(input.trackKey) ||
+    hasTrackedSnapshotToday(input.trackKey)
+  ) {
+    return false;
+  }
+
+  pendingSnapshotTrackKeys.add(input.trackKey);
+  try {
+    await matomoRequestEvent({
+      category: input.category,
+      action: input.action,
+      label: input.label,
+    });
+    markSnapshotTracked(input.trackKey);
+    return true;
+  } finally {
+    pendingSnapshotTrackKeys.delete(input.trackKey);
+  }
+};
+
+export const trackSettingsFaceId = async (enabled: boolean) => {
+  return matomoRequestEvent({
+    category: 'Settings Snapshot',
+    action: 'Settings_FaceID',
+    label: getOnOffLabel(enabled),
+  });
+};
+
+export const trackSettingsTxNotification = async (enabled: boolean) => {
+  return matomoRequestEvent({
+    category: 'Settings Snapshot',
+    action: 'Settings_TxNoti',
+    label: getOnOffLabel(enabled),
+  });
+};
+
+export const trackSettingsLockTime = async (timeoutMs: number) => {
+  return matomoRequestEvent({
+    category: 'Settings Snapshot',
+    action: 'Settings_LockTime',
+    label: getAutoLockTimeLabel(timeoutMs),
+  });
+};
+
+export const trackSettingsLanguage = async (lang: SupportedLang) => {
+  return matomoRequestEvent({
+    category: 'Settings Snapshot',
+    action: 'Settings_Language',
+    label: getLanguageLabel(lang),
+  });
+};
+
+export const trackSettingsCurrency = async (currencyCode: string) => {
+  return matomoRequestEvent({
+    category: 'Settings Snapshot',
+    action: 'Settings_Currency',
+    label: currencyCode,
+  });
+};
+
+export const trackSettingsScreenshotToBug = async (enabled: boolean) => {
+  return matomoRequestEvent({
+    category: 'Settings Snapshot',
+    action: 'Settings_SStoBug',
+    label: getOnOffLabel(enabled),
+  });
+};
+
+export const trackSettingsSnapshotsOncePerDay = async (
+  payload: SettingsSnapshotPayload,
+) => {
+  await Promise.all([
+    trackSnapshotEventOncePerDay({
+      trackKey: 'Settings_FaceID',
+      category: 'Settings Snapshot',
+      action: 'Settings_FaceID',
+      label: getOnOffLabel(payload.biometricsEnabled),
+    }),
+    trackSnapshotEventOncePerDay({
+      trackKey: 'Settings_TxNoti',
+      category: 'Settings Snapshot',
+      action: 'Settings_TxNoti',
+      label: getOnOffLabel(payload.txNotificationEnabled),
+    }),
+    trackSnapshotEventOncePerDay({
+      trackKey: 'Settings_LockTime',
+      category: 'Settings Snapshot',
+      action: 'Settings_LockTime',
+      label: getAutoLockTimeLabel(payload.autoLockTimeMs),
+    }),
+    trackSnapshotEventOncePerDay({
+      trackKey: 'Settings_Language',
+      category: 'Settings Snapshot',
+      action: 'Settings_Language',
+      label: getLanguageLabel(payload.currentLanguage),
+    }),
+    trackSnapshotEventOncePerDay({
+      trackKey: 'Settings_Currency',
+      category: 'Settings Snapshot',
+      action: 'Settings_Currency',
+      label: payload.currencyCode,
+    }),
+    trackSnapshotEventOncePerDay({
+      trackKey: 'Settings_SStoBug',
+      category: 'Settings Snapshot',
+      action: 'Settings_SStoBug',
+      label: getOnOffLabel(payload.screenshotToBugEnabled),
+    }),
+  ]);
+};
+
+export const useTrack0331HomeActiveSnapshots = () => {
+  const { biometrics } = useBiometrics({ autoFetch: true });
+  const {
+    enabledTransactionNofification,
+    hasSystemPermission,
+    value: txNotificationEnabled,
+  } = useAppNotificationEnabled();
+  const { timeoutMs } = useAutoLockTime();
+  const { currentLanguage } = useAppLanguage();
+  const { currency } = useCurrency();
+  const { isShowFeedbackOnScreenshot } = useScreenshotToReportEnabled();
+
+  const settingsSnapshot = useMemo<SettingsSnapshotPayload>(() => {
+    return {
+      biometricsEnabled: biometrics.authEnabled,
+      txNotificationEnabled:
+        hasSystemPermission === null
+          ? enabledTransactionNofification
+          : txNotificationEnabled,
+      autoLockTimeMs: timeoutMs,
+      currentLanguage,
+      currencyCode: currency.code,
+      screenshotToBugEnabled: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT
+        ? false
+        : isShowFeedbackOnScreenshot,
+    };
+  }, [
+    currency.code,
+    currentLanguage,
+    biometrics.authEnabled,
+    enabledTransactionNofification,
+    hasSystemPermission,
+    isShowFeedbackOnScreenshot,
+    timeoutMs,
+    txNotificationEnabled,
+  ]);
+
+  const trackHomeSnapshots = useCallback(() => {
+    trackSettingsSnapshotsOncePerDay(settingsSnapshot).catch(error => {
+      console.error('trackSettingsSnapshotsOncePerDay failed', error);
+    });
+  }, [settingsSnapshot]);
+
+  useFocusEffect(
+    useCallback(() => {
+      trackHomeSnapshots();
+
+      const subscription = AppState.addEventListener('change', state => {
+        if (state !== 'active') {
+          return;
+        }
+
+        trackHomeSnapshots();
+      });
+
+      return () => {
+        subscription.remove();
+      };
+    }, [trackHomeSnapshots]),
+  );
+};

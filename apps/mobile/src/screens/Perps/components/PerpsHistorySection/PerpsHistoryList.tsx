@@ -35,6 +35,7 @@ export const PerpsHistoryList: React.FC<{
   historyList: list,
   style,
 }) => {
+  console.log('PerpsHistoryList render', list?.[0], list?.[1]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 

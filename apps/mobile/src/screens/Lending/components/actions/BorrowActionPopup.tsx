@@ -104,9 +104,14 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   });
 
   const { ctx } = useSignatureStoreOf(instance);
+  const hasNoSupply = useMemo(() => {
+    return (
+      !userSummary?.totalLiquidityUSD || userSummary.totalLiquidityUSD === '0'
+    );
+  }, [userSummary?.totalLiquidityUSD]);
 
   const afterHF = useMemo(() => {
-    if (!amount || isZeroAmount(amount)) {
+    if (hasNoSupply || !amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item =>
@@ -125,7 +130,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       ).plus(borrowAmountInUsd),
       currentLiquidationThreshold: userSummary.currentLiquidationThreshold,
     }).toString();
-  }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
+  }, [
+    amount,
+    formattedPoolReservesAndIncentives,
+    hasNoSupply,
+    reserve,
+    userSummary,
+  ]);
 
   const isRisky = useMemo(() => {
     if (!afterHF || Number(afterHF) < 0) {
@@ -135,7 +146,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [afterHF]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || isZeroAmount(amount) || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount || hasNoSupply) {
       setTxs([]);
       return;
     }
@@ -184,6 +195,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     chainInfo,
     currentAccount,
     formattedPoolReservesAndIncentives,
+    hasNoSupply,
     pools,
     reserve.underlyingAsset,
     selectedMarketData?.chainId,
@@ -389,11 +401,11 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
   return (
     <SignatureInstanceProvider instance={instance}>
-      <AutoLockView as="BottomSheetView" style={styles.container}>
+      <AutoLockView as="View" style={styles.container}>
         <Text style={styles.title}>
           {t('page.Lending.borrowDetail.actions')} {reserve.reserve.symbol}
         </Text>
-        {errorMessage ? (
+        {hasNoSupply ? null : errorMessage ? (
           <View style={styles.errorMessageContainer}>
             <RcIconWarningCircleCC
               width={15}
@@ -415,10 +427,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         </View>
         <TokenAmountInput
           value={amount}
-          onChange={v => {
-            if (directSignBtnRef.current?.isAuthInProgress()) return;
-            setAmount(v);
-          }}
+          onChange={setAmount}
           symbol={reserve.reserve.symbol}
           handleClickMaxButton={() => {
             setAmount(availableToBorrow.amount || '0');
@@ -439,17 +448,37 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             afterHF={afterHF}
           />
 
-          {canShowDirectSubmit && !!amount && !isZeroAmount(amount) && (
-            <View style={styles.gasPreContainer}>
-              <DirectSignGasInfo
-                supportDirectSign={true}
-                loading={false}
-                openShowMore={noop}
-                chainServeId={chainInfo?.serverId || ''}
-              />
+          {canShowDirectSubmit &&
+            !hasNoSupply &&
+            !!amount &&
+            !isZeroAmount(amount) && (
+              <View style={styles.gasPreContainer}>
+                <DirectSignGasInfo
+                  supportDirectSign={true}
+                  loading={false}
+                  openShowMore={noop}
+                  chainServeId={chainInfo?.serverId || ''}
+                />
+              </View>
+            )}
+          {showBorrowToCapTip && <BorrowToCapTip />}
+          {hasNoSupply && (
+            <View style={styles.noSupplyMessageContainer}>
+              <View style={styles.noSupplyMessageHeader}>
+                <RcIconWarningCircleCC
+                  width={18}
+                  height={18}
+                  color={colors2024['red-default']}
+                />
+                <Text style={styles.noSupplyMessagePrefix}>
+                  {t('page.Lending.borrowDetail.noSupplyPrefix')}
+                </Text>
+              </View>
+              <Text style={styles.noSupplyMessageDesc}>
+                {t('page.Lending.borrowDetail.noSupplyDesc')}
+              </Text>
             </View>
           )}
-          {showBorrowToCapTip && <BorrowToCapTip />}
         </BottomSheetScrollView>
 
         <View style={styles.buttonContainer}>
@@ -480,18 +509,16 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
 
           {canShowDirectSubmit ? (
             <DirectSignBtn
-              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
               key={`${amount}`}
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.borrowDetail.actions')}
-              title={`${t('page.Lending.borrowDetail.actions')} ${
-                reserve.reserve.symbol
-              }`}
+              title={t('page.Lending.borrowDetail.actions')}
               onFinished={() => handleBorrow()}
               disabled={
+                hasNoSupply ||
                 !amount ||
                 isZeroAmount(amount) ||
                 !txs.length ||
@@ -515,11 +542,10 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
               onPress={() => handleBorrow()}
-              title={`${t('page.Lending.borrowDetail.actions')} ${
-                reserve.reserve.symbol
-              }`}
+              title={t('page.Lending.borrowDetail.actions')}
               loading={isLoading}
               disabled={
+                hasNoSupply ||
                 !amount ||
                 isZeroAmount(amount) ||
                 !txs.length ||
@@ -707,6 +733,42 @@ const getStyles = createGetStyles2024(ctx => ({
     flex: 1,
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
+  },
+  noSupplyMessageContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 4,
+    backgroundColor: ctx.colors2024['red-light-1'],
+    padding: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 18,
+    width: '100%',
+  },
+  noSupplyMessageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  noSupplyMessageContent: {
+    flexDirection: 'column',
+    display: 'flex',
+    gap: 8,
+  },
+  noSupplyMessagePrefix: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: ctx.colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  noSupplyMessageDesc: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: ctx.colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 2,
   },
   errorMessageContainer: {
     flexDirection: 'row',

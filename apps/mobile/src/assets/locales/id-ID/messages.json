@@ -3374,6 +3374,8 @@
     "next": "Selanjutnya",
     "Cancel": "Batal",
     "Deleted": "Dihapus",
+    "WalletCreated": "Wallet dibuat",
+    "WalletImported": "Wallet diimpor",
     "unknownNFT": "NFT Tidak Dikenal",
     "confirm": "Konfirmasi",
     "appName": "Rabby Wallet",

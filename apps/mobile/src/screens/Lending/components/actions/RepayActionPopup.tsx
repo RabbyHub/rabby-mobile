@@ -734,9 +734,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             showTextOnLoading
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.repayDetail.actions')}
-            title={`${t('page.Lending.repayDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.repayDetail.actions')}
             onFinished={() => handleRepay()}
             disabled={
               !amount ||
@@ -758,9 +756,7 @@ export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
             onPress={() => handleRepay()}
-            title={`${t('page.Lending.repayDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.repayDetail.actions')}
             loading={isLoading}
             disabled={
               !amount ||

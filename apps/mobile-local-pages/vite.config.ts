@@ -66,7 +66,17 @@ export default defineConfig({
         main: resolve(__dirname, 'pages/index.html'),
         chartDemo: resolve(__dirname, 'pages/chart-demo.html'),
         gasketBlurView: resolve(__dirname, 'pages/gasket-blurview.html'),
+        tradingviewCandleChart: resolve(
+          __dirname,
+          'pages/tradingview-candle-chart.html',
+        ),
       },
+      // external: ['lightweight-charts'],
+      // output: {
+      //   globals: {
+      //     'lightweight-charts': 'LightweightCharts',
+      //   }
+      // }
     },
   },
 });

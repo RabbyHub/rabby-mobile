@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type Ref, useImperativeHandle } from 'react';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { SwitchToggleType } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
@@ -11,7 +11,10 @@ function useToggleBiometricsEnabled() {
   const { t } = useTranslation();
 
   const requestToggleBiometricsEnabled = React.useCallback(
-    async (nextEnabled: boolean) => {
+    async (
+      nextEnabled: boolean,
+      onToggleSuccess?: (enabled: boolean) => void | Promise<void>,
+    ) => {
       AuthenticationModal.show({
         confirmText: t('global.confirm'),
         cancelText: t('global.cancel'),
@@ -31,10 +34,13 @@ function useToggleBiometricsEnabled() {
         //     }),
         authType: nextEnabled ? ['password'] : ['none'],
         async onFinished({ getValidatedPassword }) {
-          await toggleBiometrics(nextEnabled, {
+          const changed = await toggleBiometrics(nextEnabled, {
             validatedPassword: getValidatedPassword(),
             // tipLoading: true,
           });
+          if (changed) {
+            await onToggleSuccess?.(nextEnabled);
+          }
         },
       });
     },
@@ -49,19 +55,26 @@ function useToggleBiometricsEnabled() {
   };
 }
 
-export const SwitchBiometricsAuthentication = React.forwardRef<
-  SwitchToggleType,
-  React.ComponentProps<typeof AppSwitch2024>
->((props, ref) => {
+export const SwitchBiometricsAuthentication = ({
+  ref,
+  onToggleSuccess,
+  ...props
+}: React.ComponentProps<typeof AppSwitch2024> & {
+  onToggleSuccess?: (enabled: boolean) => void | Promise<void>;
+  ref?: Ref<SwitchToggleType>;
+}) => {
   const {
     isBiometricsEnabled,
     couldSetupBiometrics,
     requestToggleBiometricsEnabled,
   } = useToggleBiometricsEnabled();
 
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     toggle: async (enabled?: boolean) => {
-      await requestToggleBiometricsEnabled(enabled ?? !isBiometricsEnabled);
+      await requestToggleBiometricsEnabled(
+        enabled ?? !isBiometricsEnabled,
+        onToggleSuccess,
+      );
     },
   }));
 
@@ -74,7 +87,9 @@ export const SwitchBiometricsAuthentication = React.forwardRef<
       disabled={!hasSetupCustomPassword || !couldSetupBiometrics}
       value={!!isBiometricsEnabled}
       changeValueImmediately={false}
-      onValueChange={requestToggleBiometricsEnabled}
+      onValueChange={enabled => {
+        requestToggleBiometricsEnabled(enabled, onToggleSuccess);
+      }}
     />
   );
-});
+};

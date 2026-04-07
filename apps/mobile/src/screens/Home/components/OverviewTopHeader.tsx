@@ -61,6 +61,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
 import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
+import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -128,6 +129,10 @@ export function TabsTopHeader(): JSX.Element {
     }
     return 'By Address';
   }, [tokenDisplayMode]);
+  useReportTokenTabView({
+    focusedTab,
+    tokenDisplayModeLabel,
+  });
   const handleToggleTokenDisplayMode = useCallback(() => {
     if (tokenDisplayMode === 'byAddress') {
       setTokenDisplayMode('byAsset');

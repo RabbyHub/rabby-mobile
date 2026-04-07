@@ -420,7 +420,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   return (
     <SignatureInstanceProvider instance={instance}>
-      <AutoLockView as="BottomSheetView" style={styles.container}>
+      <AutoLockView as="View" style={styles.container}>
         <Text style={styles.title}>
           {t('page.Lending.withdrawDetail.actions')} {reserve.reserve.symbol}
         </Text>
@@ -505,16 +505,13 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           )}
           {canShowDirectSubmit ? (
             <DirectSignBtn
-              ref={directSignBtnRef}
               loading={isLoading}
               loadingType="circle"
               key={`${amount}`}
               showTextOnLoading
               wrapperStyle={styles.directSignBtn}
               authTitle={t('page.Lending.withdrawDetail.actions')}
-              title={`${t('page.Lending.withdrawDetail.actions')} ${
-                reserve.reserve.symbol
-              }`}
+              title={t('page.Lending.withdrawDetail.actions')}
               onFinished={() => handleWithdraw()}
               disabled={
                 !amount ||
@@ -540,9 +537,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
               showTextOnLoading
               containerStyle={styles.fullWidthButton}
               onPress={() => handleWithdraw()}
-              title={`${t('page.Lending.withdrawDetail.actions')} ${
-                reserve.reserve.symbol
-              }`}
+              title={t('page.Lending.withdrawDetail.actions')}
               loading={isLoading}
               disabled={
                 !amount ||

@@ -1,11 +1,20 @@
 import React, {
   useCallback,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Dimensions,
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -38,7 +47,8 @@ import {
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToggleShowAutoLockCountdown,
 } from '@/hooks/appSettings';
-import { SwitchToggleType } from '@/components';
+import { AppBottomSheetModal, SwitchToggleType } from '@/components';
+import AutoLockView from '@/components/AutoLockView';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   useIsShowFeedbackOnScreenshot,
@@ -46,7 +56,6 @@ import {
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
-import { TouchableOpacity } from 'react-native';
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
 import { SwitchShowFloatingAutoLockCountdown } from '../Settings/components/SwitchFloatingView';
@@ -67,18 +76,283 @@ import {
   useGuidanceShown,
 } from '@/components2024/Animations/hooks';
 import { Button } from '@/components2024/Button';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { NextSearchBar } from '@/components2024/SearchBar';
+import { toast } from '@/components2024/Toast';
 import RNHelpers from '@/core/native/RNHelpers';
 import { keyringService, preferenceService } from '@/core/services';
 import { makeTokenManageSettingMap } from '@/core/_mocks/preferenceMigration';
 import { getKeyring } from '@/core/apis/keyring';
 import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  SharedValue,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useFrameCallback,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { useDappsViewConfig } from '../Dapps/hooks/useDappView';
 import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { getScreenshotFeedbackExtra } from '@/components/Screenshot/utils';
+import {
+  get0331SnapshotResetAt,
+  report0331SnapshotScenarioOptions,
+  reset0331ReportSnapshotTracked,
+  reset0331ReportSnapshotTrackedByKeys,
+  type Report0331SnapshotTrackKey,
+  useReport0331SnapshotTrackedState,
+} from '@/utils/analytics0331';
 import { Text, AnimateableText } from '@/components/Typography';
 
 export const makeNoop = () => () => {};
+
+const ANALYTICS_0331_MODAL_HEIGHT = Math.min(
+  Dimensions.get('window').height - 140,
+  720,
+);
+
+function format0331SnapshotResetRemaining(diffMs: number) {
+  'worklet';
+
+  const totalSeconds = Math.max(Math.ceil(diffMs / 1000), 0);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [
+    hours ? `${hours}h` : '',
+    hours || minutes ? `${minutes}m` : '',
+    `${seconds}s`,
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function use0331SnapshotNowTick(active: boolean) {
+  const svNowTs = useSharedValue(Date.now());
+  const svNowSec = useSharedValue(Math.floor(Date.now() / 1000));
+
+  // Keep countdown text updates on the UI thread without React re-renders.
+  const frameTick = useFrameCallback(() => {
+    'worklet';
+
+    const now = Date.now();
+    const nowSec = Math.floor(now / 1000);
+    if (nowSec === svNowSec.value) {
+      return;
+    }
+
+    svNowSec.value = nowSec;
+    svNowTs.value = now;
+  }, false);
+
+  useEffect(() => {
+    const now = Date.now();
+    svNowTs.value = now;
+    svNowSec.value = Math.floor(now / 1000);
+    frameTick.setActive(active);
+
+    return () => {
+      frameTick.setActive(false);
+    };
+  }, [active, frameTick, svNowSec, svNowTs]);
+
+  return svNowTs;
+}
+
+function SnapshotResetStatusText({
+  resetAt,
+  nowTs,
+}: {
+  resetAt: number;
+  nowTs: SharedValue<number>;
+}) {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+
+  const animatedProps = useAnimatedProps(() => {
+    const remainingMs = Math.max(resetAt - nowTs.value, 0);
+    const text =
+      resetAt > nowTs.value
+        ? `Tracked today · UTC reset in ${format0331SnapshotResetRemaining(
+            remainingMs,
+          )}`
+        : 'Ready to track';
+
+    return {
+      text,
+    };
+  });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const isTrackedToday = resetAt > nowTs.value;
+
+    return {
+      color: isTrackedToday
+        ? colors2024['orange-default']
+        : colors2024['neutral-foot'],
+    };
+  });
+
+  return (
+    <AnimateableText
+      animatedProps={animatedProps}
+      style={[styles.analyticsScenarioMetaText, animatedStyle]}
+    />
+  );
+}
+
+function Reset0331AnalyticsSnapshotModal({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose(): void;
+}) {
+  const modalRef = useRef<AppBottomSheetModal>(null);
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
+  const [searchText, setSearchText] = useState('');
+  const deferredSearchText = useDeferredValue(searchText.trim().toLowerCase());
+  const trackedSnapshotState = useReport0331SnapshotTrackedState();
+  const svNowTs = use0331SnapshotNowTick(visible);
+
+  const filteredScenarioOptions = useMemo(() => {
+    if (!deferredSearchText) {
+      return report0331SnapshotScenarioOptions;
+    }
+
+    return report0331SnapshotScenarioOptions.filter(item => {
+      return [
+        item.title,
+        item.category,
+        item.action,
+        item.trackKey,
+        ...item.keywords,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(deferredSearchText);
+    });
+  }, [deferredSearchText]);
+
+  useEffect(() => {
+    if (visible) {
+      modalRef.current?.present();
+      setSearchText('');
+      return;
+    }
+
+    modalRef.current?.close();
+  }, [visible]);
+
+  const handleDismiss = useCallback(() => {
+    setSearchText('');
+    onClose();
+  }, [onClose]);
+
+  const handleResetAll = useCallback(() => {
+    reset0331ReportSnapshotTracked();
+    toast.success('Reset 0331 snapshot cache done.');
+  }, []);
+
+  const handleResetByKey = useCallback(
+    (trackKey: Report0331SnapshotTrackKey, action: string) => {
+      reset0331ReportSnapshotTrackedByKeys([trackKey]);
+      toast.success(`Reset ${action} snapshot cache.`);
+    },
+    [],
+  );
+
+  return (
+    <AppBottomSheetModal
+      ref={modalRef}
+      index={0}
+      snapPoints={[ANALYTICS_0331_MODAL_HEIGHT]}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}
+      onDismiss={handleDismiss}
+      enableContentPanningGesture
+      enablePanDownToClose>
+      <AutoLockView as="View" style={styles.analyticsModalContainer}>
+        <Text style={styles.analyticsModalTitle}>0331 Snapshot Cache</Text>
+        <Text style={styles.analyticsModalDesc}>
+          Search a home-active scenario and clear its once-per-day dedupe cache.
+          Use Reset All to re-arm every 0331 snapshot at once.
+        </Text>
+
+        <View style={styles.analyticsModalSearch}>
+          <NextSearchBar
+            as="BottomSheetTextInput"
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholder="Search scenario / action / track key"
+          />
+        </View>
+
+        <Button
+          title={'Reset All 0331 Snapshots'}
+          type="ghost"
+          height={48}
+          containerStyle={styles.analyticsModalResetAll}
+          onPress={handleResetAll}
+        />
+
+        <BottomSheetScrollView
+          style={styles.analyticsScenarioList}
+          contentContainerStyle={styles.analyticsScenarioListContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          onStartShouldSetResponder={() => {
+            Keyboard.dismiss();
+            return false;
+          }}>
+          {filteredScenarioOptions.length ? (
+            filteredScenarioOptions.map((item, idx) => {
+              const resetAt = get0331SnapshotResetAt(
+                trackedSnapshotState[item.trackKey],
+              );
+
+              return (
+                <TouchableOpacity
+                  key={item.trackKey}
+                  style={[
+                    styles.analyticsScenarioItem,
+                    idx > 0 && styles.analyticsScenarioItemGap,
+                  ]}
+                  onPress={() => {
+                    handleResetByKey(item.trackKey, item.action);
+                  }}>
+                  <View style={styles.analyticsScenarioTextBlock}>
+                    <Text style={styles.analyticsScenarioTitle}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.analyticsScenarioSubtitle}>
+                      {item.category} · {item.action}
+                    </Text>
+                    <SnapshotResetStatusText
+                      resetAt={resetAt}
+                      nowTs={svNowTs}
+                    />
+                  </View>
+                  <Text style={styles.analyticsScenarioResetText}>Reset</Text>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <View style={styles.analyticsScenarioEmpty}>
+              <Text style={styles.analyticsScenarioEmptyText}>
+                No matching scenario
+              </Text>
+            </View>
+          )}
+        </BottomSheetScrollView>
+      </AutoLockView>
+    </AppBottomSheetModal>
+  );
+}
 
 function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -417,6 +691,7 @@ function DevTestHomeCenterArea() {
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
   const { viewedHomeTip, mockResetViewedHomeTip } = useViewedHomeTip();
   const { multiTabs20251205Viewed } = useGuidanceShown();
+  const [isShow0331SnapshotModal, setIsShow0331SnapshotModal] = useState(false);
 
   useEffect(() => {
     if (mockData.forceShowOffchainNotify) {
@@ -507,6 +782,36 @@ function DevTestHomeCenterArea() {
           }}
         />
       </View>
+
+      <View style={[styles.secondarySectionHeader, { marginTop: 24 }]}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Analytics
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <Button
+          title={'Manage 0331 Home Active Snapshot'}
+          type="ghost"
+          height={48}
+          containerStyle={{ marginTop: 0 }}
+          onPress={() => {
+            setIsShow0331SnapshotModal(true);
+          }}
+        />
+      </View>
+
+      <Reset0331AnalyticsSnapshotModal
+        visible={isShow0331SnapshotModal}
+        onClose={() => {
+          setIsShow0331SnapshotModal(false);
+        }}
+      />
     </View>
   );
 }
@@ -937,6 +1242,94 @@ const getStyles = createGetStyles2024(ctx =>
     btnOnGroup: {
       flexShrink: 1,
       width: '100%',
+    },
+    analyticsModalContainer: {
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingBottom: 0,
+    },
+    analyticsModalTitle: {
+      fontSize: 20,
+      lineHeight: 24,
+      color: ctx.colors2024['neutral-title-1'],
+      textAlign: 'center',
+      marginTop: 6,
+    },
+    analyticsModalDesc: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-body'],
+      marginTop: 12,
+      textAlign: 'center',
+    },
+    analyticsModalSearch: {
+      marginTop: 16,
+    },
+    analyticsModalResetAll: {
+      marginTop: 16,
+    },
+    analyticsScenarioList: {
+      marginTop: 16,
+      width: '100%',
+    },
+    analyticsScenarioListContent: {
+      paddingBottom: 48,
+    },
+    analyticsScenarioItem: {
+      width: '100%',
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      borderRadius: 16,
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    analyticsScenarioItemGap: {
+      marginTop: 12,
+    },
+    analyticsScenarioTextBlock: {
+      flex: 1,
+    },
+    analyticsScenarioTitle: {
+      fontSize: 16,
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    analyticsScenarioSubtitle: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: ctx.colors2024['neutral-body'],
+      marginTop: 4,
+    },
+    analyticsScenarioMetaText: {
+      fontSize: 13,
+      lineHeight: 18,
+      marginTop: 6,
+    },
+    analyticsScenarioResetText: {
+      fontSize: 15,
+      lineHeight: 18,
+      color: ctx.colors2024['blue-default'],
+    },
+    analyticsScenarioEmpty: {
+      width: '100%',
+      paddingHorizontal: 16,
+      paddingVertical: 24,
+      borderRadius: 16,
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-1']
+        : ctx.colors2024['neutral-bg-2'],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    analyticsScenarioEmptyText: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-body'],
     },
   }),
 );

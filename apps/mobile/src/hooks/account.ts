@@ -1,4 +1,9 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 
 import { KeyringAccount, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
@@ -6,16 +11,22 @@ import { Account, IPinAddress } from '@/core/services/preference';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
+import { accountEvents, KeyringAccountWithAlias } from '@/core/apis/account';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import balanceStore from '@/store/balance';
 import accountStore, {
   NEWLY_ADDED_ACCOUNT_DURATION,
   useAccountStore,
 } from '@/store/account';
-import { KeyringAccountWithAlias } from '@/core/apis/account';
-import { UpdaterOrPartials } from '@/core/utils/store';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { preferenceService } from '@/core/services';
+import { keyringService, preferenceService } from '@/core/services';
 import { EntityAccountBase } from '@/databases/entities/base';
+import { ormEvents } from '@/databases/entities/_helpers';
+import { InteractionManager } from 'react-native';
+import { appServiceEvents } from '@/core/services/_utils';
+import { Store } from '@/core/services/hdKeyringService';
+import { perfEvents } from '@/core/utils/perf';
+import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 
 export type { KeyringAccountWithAlias as /** @deprecated */ KeyringAccountWithAlias };
 
@@ -37,6 +48,80 @@ export function useIsNewlyAddedAccount(account: KeyringAccount) {
       !!newlyAddedAccount &&
       Date.now() - newlyAddedAccount.updated_at <= NEWLY_ADDED_ACCOUNT_DURATION,
   };
+}
+
+/**
+ * Gets the current backup reminder snapshot for an account.
+ * @param dbId - The account's database ID
+ * @returns Whether the account needs backup reminder
+ */
+export function getBackupReminderSnapshot(dbId: string | undefined): boolean {
+  if (!dbId) return false;
+  return preferenceService.getNeedsBackupReminder(dbId);
+}
+
+/**
+ * Subscribe function for backup reminder changes.
+ * Subscribes to all backup reminder changes (not specific to an account).
+ * @param listener - The callback to call when any backup reminder changes
+ * @returns An unsubscribe function
+ */
+const subscribeBackupReminderStore = (listener: () => void) => {
+  // Subscribe to all backup reminder changes
+  const { remove } = appServiceEvents.subscribe(
+    'backupReminderChanged',
+    listener,
+  );
+  return remove;
+};
+
+/**
+ * hook for checking if current account needs backup reminder.
+ * Returns true only for accounts created via "Create New Wallet" that haven't been backed up yet.
+ * Uses preferenceService (MMKV) for reliable persistence across app restarts.
+ */
+export function useBackupReminder(account: KeyringAccount | null | undefined) {
+  const dbId = useMemo(() => {
+    if (!account?.address) return '';
+    return EntityAccountBase.buildDBId({
+      address: account.address,
+      type: account.type,
+      brandName: account.brandName,
+    });
+  }, [account?.address, account?.type, account?.brandName]);
+
+  const getSnapshot = useCallback(
+    () => getBackupReminderSnapshot(dbId),
+    [dbId],
+  );
+
+  const needsBackupReminder = useSyncExternalStore(
+    subscribeBackupReminderStore,
+    getSnapshot,
+  );
+
+  return needsBackupReminder;
+}
+
+export async function setAccountNeedsBackupReminder(
+  account: KeyringAccount,
+  needsReminder: boolean,
+) {
+  const dbId = EntityAccountBase.buildDBId({
+    address: account.address,
+    type: account.type,
+    brandName: account.brandName,
+  });
+  preferenceService.setNeedsBackupReminder(dbId, needsReminder);
+}
+
+export async function clearAccountBackupReminder(account: KeyringAccount) {
+  const dbId = EntityAccountBase.buildDBId({
+    address: account.address,
+    type: account.type,
+    brandName: account.brandName,
+  });
+  preferenceService.clearNeedsBackupReminder(dbId);
 }
 
 export function useDevNewlyAddedAccounts() {

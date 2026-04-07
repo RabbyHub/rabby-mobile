@@ -326,6 +326,8 @@
       "hour": "{{t}} hora"
     },
     "Deleted": "deletado",
+    "WalletCreated": "Wallet criado",
+    "WalletImported": "Wallet importado",
     "unknownNFT": "NFT Desconhecido",
     "addButton": "Adicionar",
     "proceedButton": "Prosseguir",

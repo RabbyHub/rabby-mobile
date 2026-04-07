@@ -77,6 +77,8 @@
     },
     "appDescription": "Кошелёк, изменяющий правила игры для Ethereum и всех EVM цепей",
     "Deleted": "Удалено",
+    "WalletCreated": "Кошелёк создан",
+    "WalletImported": "Кошелёк импортирован",
     "themeMode": {
       "option_System": "Система",
       "option_Dark": "Темный",

@@ -12,9 +12,7 @@ import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 
 import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
-import RcIconVenusCC from '@/assets2024/icons/home/IconVenusCC.svg';
 import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
-import RcIconSparkCC from '@/assets2024/icons/home/IconSparkCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -181,7 +179,9 @@ function getIsAtBottom(scrollY: number, translateY = 0) {
   const ret = {
     isAtBottom: false,
   };
-  if (!scrollViewContentHeight || !scrollViewLayoutHeight) ret;
+  if (!scrollViewContentHeight || !scrollViewLayoutHeight) {
+    ret;
+  }
 
   const scrollOffset = Math.max(
     0,
@@ -261,7 +261,9 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
 
   useEffect(() => {
     const remove = balanceStore.subscribe(async (cur, prev) => {
-      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) return;
+      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) {
+        return;
+      }
       const { top10Addresses } = await getTop10MyAccounts();
       const isTop10BalanceLoading = cur.getIsTop10BalanceLoading(
         top10Addresses,
@@ -617,32 +619,13 @@ export const HomeOverview = React.memo(() => {
   const sortedAccounts = useSortAddressList(accounts);
   useSubscribePosition(sortedAccounts);
 
-  const { lending: lendingDappId, perps: perpsDappId } =
-    useInnerDappSelection();
-
-  const perpsIcon =
-    (
-      {
-        aster: RcIconAsterCC,
-        lighter: RcIconLighterCC,
-        hyperliquid: RcIconPerps,
-      } as const
-    )[perpsDappId] ?? RcIconPerps;
-
-  const lendingIcon =
-    (
-      {
-        spark: RcIconSparkCC,
-        venus: RcIconVenusCC,
-        aave: RcIconLending,
-      } as const
-    )[lendingDappId] ?? RcIconLending;
-
   const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
 
   useFocusEffect(
     React.useCallback(() => {
-      if (!couldDoRefresh()) return;
+      if (!couldDoRefresh()) {
+        return;
+      }
       checkAddressesEligibility();
     }, [checkAddressesEligibility]),
   );
@@ -673,12 +656,12 @@ export const HomeOverview = React.memo(() => {
         {
           key: MultiHomeFeatTitle.Perps,
           title: t('page.home.services.perps'),
-          icon: perpsIcon,
+          icon: RcIconPerps,
         },
         {
           key: MultiHomeFeatTitle.Lending,
           title: t('page.home.services.lending'),
-          icon: lendingIcon,
+          icon: RcIconLending,
           color: colors2024['brand-default-icon'],
         },
         {
@@ -730,8 +713,6 @@ export const HomeOverview = React.memo(() => {
       }[],
     [
       t,
-      perpsIcon,
-      lendingIcon,
       colors2024,
       historyCount?.fail,
       historyCount?.success,
@@ -754,7 +735,9 @@ export const HomeOverview = React.memo(() => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) return;
+      if (!couldDoRefresh()) {
+        return;
+      }
       refreshSuccessAndFailList();
     }, []),
   );
@@ -772,7 +755,9 @@ export const HomeOverview = React.memo(() => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!couldDoRefresh()) return;
+      if (!couldDoRefresh()) {
+        return;
+      }
       const forceFirstTime = isFirstTriggerRef.current;
       if (isFirstTriggerRef.current) {
         isFirstTriggerRef.current = false;
@@ -790,7 +775,9 @@ export const HomeOverview = React.memo(() => {
   );
 
   const onRefresh = useCallback(async () => {
-    if (!couldDoRefresh()) return;
+    if (!couldDoRefresh()) {
+      return;
+    }
 
     refreshETHStatus();
     perfEvents.emit('HOME_WILL_BE_REFRESHED_MANUALLY');
@@ -834,7 +821,9 @@ export const HomeOverview = React.memo(() => {
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
-      if (!apisHomeTabIndex.isHomeAtFirstTab()) return;
+      if (!apisHomeTabIndex.isHomeAtFirstTab()) {
+        return;
+      }
       if (isTabsSwiping.value) {
         return;
       }

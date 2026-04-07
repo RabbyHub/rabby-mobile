@@ -31,13 +31,9 @@ import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import LendingHistory from '../Lending/components/LendingHistory';
-import AAVEScreen from '../Lending/Entry';
+import LendingScreen from '../Lending';
 import PredictionScreen from '../Prediction';
-import {
-  LendingScreenWithPreload,
-  PerpsScreenWithPreload,
-  PredictionScreenWithPreload,
-} from '../InnerDapp/InnerDappPreloadScreens';
+import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
 import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 
 const TransactionStack =
@@ -52,8 +48,6 @@ export default function TransactionNavigator() {
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
   const innerDappStrategy = useInnerDappPreloadStrategy();
 
-  const LendingComponent =
-    innerDappStrategy === 'screen' ? LendingScreenWithPreload : AAVEScreen;
   const PredictionComponent =
     innerDappStrategy === 'screen'
       ? PredictionScreenWithPreload
@@ -401,7 +395,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.Lending}
-        component={LendingComponent}
+        component={LendingScreen}
         options={mergeScreenOptions({
           title: t('page.home.services.lending'),
           ...headerPresets.withBgCard1_2024,

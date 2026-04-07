@@ -1,4 +1,5 @@
 import React, { useCallback, useImperativeHandle, useMemo } from 'react';
+import type { Ref } from 'react';
 import {
   TouchableOpacity,
   View,
@@ -40,81 +41,77 @@ type Props = {
 export type CopyAddressIconType = {
   doCopy: CopyHandler;
 };
-export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
-  function (
-    {
-      onToastSuccess: propOnToastSucess,
-      style,
-      // containerStyle,
-      address,
-      color,
-      title,
-      titleStyle,
-      icon,
-    },
-    ref,
-  ) {
-    const { colors } = useThemeStyles(getStyles);
+export const CopyAddressIcon = ({
+  ref,
+  onToastSuccess: propOnToastSucess,
+  style,
+  // containerStyle,
+  address,
+  color,
+  title,
+  titleStyle,
+  icon,
+}: Props & { ref?: Ref<CopyAddressIconType> }) => {
+  const { colors } = useThemeStyles(getStyles);
 
-    const onToastSuccess = useCallback<Props['onToastSuccess'] & object>(
-      ({ address }) => {
-        if (propOnToastSucess) propOnToastSucess({ address });
-        else {
-          toastCopyAddressSuccess(address);
-        }
-      },
-      [propOnToastSucess],
-    );
-
-    const handleCopyAddress = useCallback<CopyHandler>(
-      (evt?) => {
-        if (!address) return null;
-
-        evt?.stopPropagation();
-        Clipboard.setString(address);
-        onToastSuccess({ address });
-      },
-      [address, onToastSuccess],
-    );
-
-    useImperativeHandle(ref, () => ({
-      doCopy: handleCopyAddress,
-    }));
-
-    const iconNode = useMemo(() => {
-      const iconColor = color || colors['neutral-foot'];
-      const defaultNode = <RcIconCopyCC color={iconColor} style={style} />;
-
-      if (!icon) return defaultNode;
-
-      if (typeof icon === 'function') {
-        return icon({
-          defaultNode,
-          iconStyle: style,
-          iconColor: iconColor,
-        });
+  const onToastSuccess = useCallback<Props['onToastSuccess'] & object>(
+    ({ address }) => {
+      if (propOnToastSucess) propOnToastSucess({ address });
+      else {
+        toastCopyAddressSuccess(address);
       }
-    }, [icon, color, colors, style]);
+    },
+    [propOnToastSucess],
+  );
 
-    return (
-      <TouchableOpacity
-        style={StyleSheet.flatten([
-          style,
-          title
-            ? {
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-              }
-            : {},
-        ])}
-        onPress={handleCopyAddress}>
-        {iconNode}
-        {title && <Text style={titleStyle}>{title}</Text>}
-      </TouchableOpacity>
-    );
-  },
-);
+  const handleCopyAddress = useCallback<CopyHandler>(
+    (evt?) => {
+      if (!address) return null;
+
+      evt?.stopPropagation();
+      Clipboard.setString(address);
+      onToastSuccess({ address });
+    },
+    [address, onToastSuccess],
+  );
+
+  useImperativeHandle(ref, () => ({
+    doCopy: handleCopyAddress,
+  }));
+
+  const iconNode = useMemo(() => {
+    const iconColor = color || colors['neutral-foot'];
+    const defaultNode = <RcIconCopyCC color={iconColor} style={style} />;
+
+    if (!icon) return defaultNode;
+
+    if (typeof icon === 'function') {
+      return icon({
+        defaultNode,
+        iconStyle: style,
+        iconColor: iconColor,
+      });
+    }
+  }, [icon, color, colors, style]);
+
+  return (
+    <TouchableOpacity
+      style={StyleSheet.flatten([
+        style,
+        title
+          ? {
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }
+          : {},
+      ])}
+      onPress={handleCopyAddress}>
+      {iconNode}
+      {title && <Text style={titleStyle}>{title}</Text>}
+    </TouchableOpacity>
+  );
+};
 
 export function toastCopyAddressSuccess(
   params: string | { hashLikeString?: string; title?: string },

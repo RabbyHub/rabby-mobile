@@ -4,10 +4,10 @@ import React, {
   useCallback,
   ComponentProps,
   useMemo,
-  forwardRef,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  type Ref,
 } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
@@ -82,361 +82,351 @@ type QueryConditions = {
 export type TokenSelectInst = {
   openTokenModal: (conds?: Partial<QueryConditions>) => void;
 };
-const SwapToTokenSelect = forwardRef<
-  TokenSelectInst,
-  TokenSelectProps & RNViewProps
->(
-  (
-    {
-      token,
-      onChange,
-      onTokenChange,
-      accountInScreen,
-      chainId,
-      excludeTokens = defaultExcludeTokens,
-      type = 'send',
-      placeholder,
-      supportChains,
-      searchPlaceholder,
-      disableItemCheck,
-      style,
+const SwapToTokenSelect = ({
+  token,
+  onChange,
+  onTokenChange,
+  accountInScreen,
+  chainId,
+  excludeTokens = defaultExcludeTokens,
+  type = 'send',
+  placeholder,
+  supportChains,
+  searchPlaceholder,
+  disableItemCheck,
+  style,
+  ref,
+}: TokenSelectProps & RNViewProps & { ref?: Ref<TokenSelectInst> }) => {
+  const [_queryConds, setQueryConds] = useState<QueryConditions>({
+    keyword: '',
+    account: accountInScreen,
+    chainServerId: chainId,
+  });
+
+  const [favoriteFilterValue, setFavoriteFilterValue] =
+    useState<FavoriteFilterType>('all');
+
+  const [_, setLongPressToken] = useLongPressTokenAtom();
+  const queryConds = useDebouncedValue(_queryConds, 250);
+  const currentAccount = queryConds.account;
+
+  const {
+    visible: tokenSelectorVisible,
+    tokenSelectorModalRef,
+    setTokenSelectorVisible,
+  } = useTokenSelectorModalVisible();
+
+  useImperativeHandle(ref, () => ({
+    openTokenModal: conds => {
+      setQueryConds(prev => ({ ...prev, ...conds }));
+      setTokenSelectorVisible(true, { noTriggerRerender: false });
     },
-    ref,
-  ) => {
-    const [_queryConds, setQueryConds] = useState<QueryConditions>({
-      keyword: '',
-      account: accountInScreen,
-      chainServerId: chainId,
+  }));
+
+  const currentAddress = currentAccount?.address;
+  // swap token list
+  const { value: swapTokenList, loading: swapTokenListLoading } =
+    useAsync(async () => {
+      if (!currentAddress || !tokenSelectorVisible) {
+        return [];
+      }
+      if (queryConds.keyword) {
+        const _list = await openapi.searchTokensV2({
+          q: queryConds.keyword,
+          chain_id: queryConds.chainServerId || '',
+        });
+        const list = isAddress(queryConds.keyword, { strict: false })
+          ? _list
+          : _list.filter(scamTokenFilter);
+        let localAmounts: Array<{
+          chain: string;
+          tokenId: string;
+          amount: number;
+        }> = [];
+        if (list.length > 0) {
+          const tokenList = list.map(t => ({
+            chain: t.chain,
+            tokenId: t.id,
+          }));
+          try {
+            localAmounts = await TokenItemEntity.getTokenListAmount({
+              owner_addr: [currentAddress],
+              tokenList,
+            });
+          } catch (error) {
+            console.error('Failed to get local token amounts:', error);
+          }
+        }
+
+        const amountMap = new Map<string, number>();
+        localAmounts.forEach(item => {
+          const key = `${item.chain}-${item.tokenId}`;
+          amountMap.set(key, item.amount);
+        });
+        return list.map(item =>
+          tokenItemToITokenItem(
+            {
+              ...item,
+              amount: amountMap.get(`${item.chain}-${item.id}`) || 0,
+            },
+            '',
+          ),
+        );
+      }
+      const list = await openapi.getSwapTokenList(
+        currentAddress,
+        queryConds.chainServerId ? queryConds.chainServerId : undefined,
+      );
+      return list.map(item => tokenItemToITokenItem(item, ''));
+    }, [
+      queryConds.chainServerId,
+      currentAddress,
+      tokenSelectorVisible,
+      queryConds.keyword,
+    ]);
+
+  const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
+  const pinedQueue = useMemo(
+    () => userTokenSettings.pinedQueue,
+    [userTokenSettings.pinedQueue],
+  );
+
+  const availableToken = useMemo(() => {
+    const _tokens = queryConds.chainServerId
+      ? swapTokenList?.filter(t => t.chain === queryConds.chainServerId)
+      : swapTokenList;
+    return _tokens;
+  }, [queryConds.chainServerId, swapTokenList]);
+
+  const { data: favoriteTokens, loading: favoriteTokensLoading } =
+    useFavoriteTokens({
+      focus: favoriteFilterValue === 'favorite',
+      address: currentAddress,
+      chainId,
     });
 
-    const [favoriteFilterValue, setFavoriteFilterValue] =
-      useState<FavoriteFilterType>('all');
+  const isListLoading = useMemo(() => {
+    return favoriteFilterValue === 'favorite'
+      ? favoriteTokensLoading
+      : swapTokenListLoading;
+  }, [favoriteFilterValue, favoriteTokensLoading, swapTokenListLoading]);
 
-    const [_, setLongPressToken] = useLongPressTokenAtom();
-    const queryConds = useDebouncedValue(_queryConds, 250);
-    const currentAccount = queryConds.account;
-
-    const {
-      visible: tokenSelectorVisible,
-      tokenSelectorModalRef,
-      setTokenSelectorVisible,
-    } = useTokenSelectorModalVisible();
-
-    useImperativeHandle(ref, () => ({
-      openTokenModal: conds => {
-        setQueryConds(prev => ({ ...prev, ...conds }));
-        setTokenSelectorVisible(true, { noTriggerRerender: false });
-      },
-    }));
-
-    const currentAddress = currentAccount?.address;
-    // swap token list
-    const { value: swapTokenList, loading: swapTokenListLoading } =
-      useAsync(async () => {
-        if (!currentAddress || !tokenSelectorVisible) {
-          return [];
-        }
-        if (queryConds.keyword) {
-          const _list = await openapi.searchTokensV2({
-            q: queryConds.keyword,
-            chain_id: queryConds.chainServerId || '',
-          });
-          const list = isAddress(queryConds.keyword, { strict: false })
-            ? _list
-            : _list.filter(scamTokenFilter);
-          let localAmounts: Array<{
-            chain: string;
-            tokenId: string;
-            amount: number;
-          }> = [];
-          if (list.length > 0) {
-            const tokenList = list.map(t => ({
-              chain: t.chain,
-              tokenId: t.id,
-            }));
-            try {
-              localAmounts = await TokenItemEntity.getTokenListAmount({
-                owner_addr: [currentAddress],
-                tokenList,
-              });
-            } catch (error) {
-              console.error('Failed to get local token amounts:', error);
-            }
-          }
-
-          const amountMap = new Map<string, number>();
-          localAmounts.forEach(item => {
-            const key = `${item.chain}-${item.tokenId}`;
-            amountMap.set(key, item.amount);
-          });
-          return list.map(item =>
-            tokenItemToITokenItem(
-              {
-                ...item,
-                amount: amountMap.get(`${item.chain}-${item.id}`) || 0,
-              },
-              '',
-            ),
-          );
-        }
-        const list = await openapi.getSwapTokenList(
-          currentAddress,
-          queryConds.chainServerId ? queryConds.chainServerId : undefined,
-        );
-        return list.map(item => tokenItemToITokenItem(item, ''));
-      }, [
-        queryConds.chainServerId,
-        currentAddress,
-        tokenSelectorVisible,
-        queryConds.keyword,
-      ]);
-
-    const { userTokenSettings, fetchUserTokenSettings } =
-      useUserTokenSettings();
-    const pinedQueue = useMemo(
-      () => userTokenSettings.pinedQueue,
-      [userTokenSettings.pinedQueue],
-    );
-
-    const availableToken = useMemo(() => {
-      const _tokens = queryConds.chainServerId
-        ? swapTokenList?.filter(t => t.chain === queryConds.chainServerId)
-        : swapTokenList;
-      return _tokens;
-    }, [queryConds.chainServerId, swapTokenList]);
-
-    const { data: favoriteTokens, loading: favoriteTokensLoading } =
-      useFavoriteTokens({
-        focus: favoriteFilterValue === 'favorite',
-        address: currentAddress,
-        chainId,
-      });
-
-    const isListLoading = useMemo(() => {
-      return favoriteFilterValue === 'favorite'
-        ? favoriteTokensLoading
-        : swapTokenListLoading;
-    }, [favoriteFilterValue, favoriteTokensLoading, swapTokenListLoading]);
-
-    const handleSearchTokens = useCallback<
-      React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
-    >(
-      async ctx => {
-        setQueryConds(prev => ({
-          ...prev,
-          ...(typeof ctx === 'string'
-            ? { keyword: ctx }
-            : {
-                account: ctx.filterAccountItem ?? null,
-                keyword: ctx.keyword,
-                chainServerId: ctx.chainServerId ?? prev.chainServerId,
-              }),
-        }));
-      },
-      [setQueryConds],
-    );
-
-    const handleCurrentTokenChange = useCallback<
-      React.ComponentProps<typeof TokenSelectorSheetModal>['onConfirm']
-    >(
-      t => {
-        onChange && onChange('');
-        onTokenChange(t);
-        // Close the modal without triggering state update
-        // The state update will be handled by handleTokenSelectorClose (via onCancel)
-        // when the modal finishes closing, which avoids a race condition
-        setTokenSelectorVisible(false, { noTriggerRerender: true });
-      },
-      [onChange, onTokenChange, setTokenSelectorVisible],
-    );
-
-    const handleTokenSelectorClose = useCallback(() => {
-      //FIXME: snap to close will retrigger render
-      setTimeout(() => {
-        setTokenSelectorVisible(false);
-      }, 0);
-    }, [setTokenSelectorVisible]);
-
-    const resetQueryConds = useCallback(() => {
+  const handleSearchTokens = useCallback<
+    React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
+  >(
+    async ctx => {
       setQueryConds(prev => ({
         ...prev,
-        chainServerId: chainId,
-        account: accountInScreen,
+        ...(typeof ctx === 'string'
+          ? { keyword: ctx }
+          : {
+              account: ctx.filterAccountItem ?? null,
+              keyword: ctx.keyword,
+              chainServerId: ctx.chainServerId ?? prev.chainServerId,
+            }),
       }));
-    }, [chainId, accountInScreen]);
+    },
+    [setQueryConds],
+  );
 
-    const handleSelectToken = useCallback(() => {
-      // if (allTokenItems.length > 0) {
-      //   setUpdateNonce(prev => prev + 1);
-      // }
+  const handleCurrentTokenChange = useCallback<
+    React.ComponentProps<typeof TokenSelectorSheetModal>['onConfirm']
+  >(
+    t => {
+      onChange && onChange('');
+      onTokenChange(t);
+      // Close the modal without triggering state update
+      // The state update will be handled by handleTokenSelectorClose (via onCancel)
+      // when the modal finishes closing, which avoids a race condition
+      setTokenSelectorVisible(false, { noTriggerRerender: true });
+    },
+    [onChange, onTokenChange, setTokenSelectorVisible],
+  );
 
-      resetQueryConds();
-      setTokenSelectorVisible(true);
-    }, [resetQueryConds, setTokenSelectorVisible]);
+  const handleTokenSelectorClose = useCallback(() => {
+    //FIXME: snap to close will retrigger render
+    setTimeout(() => {
+      setTokenSelectorVisible(false);
+    }, 0);
+  }, [setTokenSelectorVisible]);
 
-    useEffect(() => {
-      setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
-    }, [chainId]);
+  const resetQueryConds = useCallback(() => {
+    setQueryConds(prev => ({
+      ...prev,
+      chainServerId: chainId,
+      account: accountInScreen,
+    }));
+  }, [chainId, accountInScreen]);
 
-    useLayoutEffect(() => {
-      setQueryConds(prev => ({ ...prev, account: accountInScreen }));
-    }, [accountInScreen]);
+  const handleSelectToken = useCallback(() => {
+    // if (allTokenItems.length > 0) {
+    //   setUpdateNonce(prev => prev + 1);
+    // }
 
-    const { t } = useTranslation();
-    const { styles } = useTheme2024({ getStyle });
+    resetQueryConds();
+    setTokenSelectorVisible(true);
+  }, [resetQueryConds, setTokenSelectorVisible]);
 
-    useFocusEffect(
-      useCallback(() => {
-        (async () => {
-          if (currentAccount?.address) {
-            fetchUserTokenSettings();
-          }
-        })();
-      }, [currentAccount?.address, fetchUserTokenSettings]),
-    );
+  useEffect(() => {
+    setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
+  }, [chainId]);
 
-    const list = useMemo(() => {
-      let filteredTokens = availableToken || [];
+  useLayoutEffect(() => {
+    setQueryConds(prev => ({ ...prev, account: accountInScreen }));
+  }, [accountInScreen]);
 
-      if (favoriteFilterValue === 'favorite') {
-        return favoriteTokens.map(e => ({
-          ...e,
-          isPin: true,
-        }));
-      }
+  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle });
 
-      const tokensWithPinStatus = filteredTokens?.map(e => ({
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        if (currentAccount?.address) {
+          fetchUserTokenSettings();
+        }
+      })();
+    }, [currentAccount?.address, fetchUserTokenSettings]),
+  );
+
+  const list = useMemo(() => {
+    let filteredTokens = availableToken || [];
+
+    if (favoriteFilterValue === 'favorite') {
+      return favoriteTokens.map(e => ({
         ...e,
-        isPin: pinedQueue?.some(
-          x => x.chainId === e.chain && x.tokenId === e.id,
-        ),
-      })) as ITokenItem[];
-
-      return tokensWithPinStatus;
-    }, [availableToken, favoriteFilterValue, favoriteTokens, pinedQueue]);
-
-    const { forScene, ofScreen } = useScreenSceneAccountContext();
-    const allowClearAccountFilter = useMemo(() => {
-      if (
-        queryConds.keyword ||
-        !currentAccount?.type ||
-        isWatchOrSafeAccount(currentAccount?.type)
-      ) {
-        return false;
-      }
-
-      return (
-        forScene === 'MakeTransactionAbout' &&
-        ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
-          (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
-      );
-    }, [queryConds.keyword, currentAccount?.type, forScene, ofScreen, type]);
-
-    const handleTokenChange = useMemoizedFn(async (tokenItem?: TokenItem) => {
-      if (!tokenItem || !tokenItem.id) {
-        return;
-      }
-      const res = await openapi.getTokenEntity(tokenItem.id, tokenItem.chain);
-      setLongPressToken(prev => ({
-        ...prev,
-        tokenEntity: {
-          ...tokenItem,
-          identity: res,
-        },
+        isPin: true,
       }));
-    });
+    }
 
-    const tokenPressRef = useRef<typeof TouchableOpacity & View>(null);
-    const handleLongPressToken = () => {
-      if (!token) {
-        return;
-      }
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
-      handleTokenChange(token);
-      tokenPressRef.current?.measureInWindow((x, y) => {
-        tokenPressRef.current?.measure((_, __, ___, height) => {
-          setLongPressToken(prev => ({
-            ...prev,
-            visible: true,
-            tokenItem: token || null,
-            position: { x, y, height },
-          }));
-        });
-      });
-    };
+    const tokensWithPinStatus = filteredTokens?.map(e => ({
+      ...e,
+      isPin: pinedQueue?.some(x => x.chainId === e.chain && x.tokenId === e.id),
+    })) as ITokenItem[];
 
-    useUnmount(() => {
-      setLongPressToken({
-        visible: false,
-        tokenItem: null,
-        position: { x: 0, y: 0, height: 0 },
-        tokenEntity: null,
-      });
-    });
+    return tokensWithPinStatus;
+  }, [availableToken, favoriteFilterValue, favoriteTokens, pinedQueue]);
+
+  const { forScene, ofScreen } = useScreenSceneAccountContext();
+  const allowClearAccountFilter = useMemo(() => {
+    if (
+      queryConds.keyword ||
+      !currentAccount?.type ||
+      isWatchOrSafeAccount(currentAccount?.type)
+    ) {
+      return false;
+    }
 
     return (
-      <>
-        <TouchableOpacity
-          onPress={handleSelectToken}
-          onLongPress={handleLongPressToken}
-          ref={tokenPressRef}>
-          <View style={[styles.wrapper, style]}>
-            {token ? (
-              <>
-                <View style={styles.token}>
-                  <AssetAvatar
-                    size={26}
-                    chain={token.chain}
-                    logo={token.logo_url}
-                    chainSize={type === 'send' ? 12 : 0}
-                  />
-                  <Text numberOfLines={1} style={styles.tokenSymbol}>
-                    {ellipsisOverflowedText(getTokenSymbol(token), 5)}
-                  </Text>
-                </View>
-                <RcIconSwapBottomArrow />
-              </>
-            ) : (
-              <View style={styles.token}>
-                <Text style={styles.selectText}>{t('page.bridge.Select')}</Text>
-                <RcIconSwapBottomArrow />
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-
-        <TokenSelectorSheetModal
-          searchPlaceholder={searchPlaceholder}
-          ref={tokenSelectorModalRef}
-          visible={tokenSelectorVisible}
-          unshiftList={[]}
-          list={list}
-          onConfirm={handleCurrentTokenChange}
-          onCancel={handleTokenSelectorClose}
-          onSearch={handleSearchTokens}
-          isLoading={isListLoading}
-          showFavoriteFilter
-          favoriteFilterValue={favoriteFilterValue}
-          onFavoriteFilterChange={setFavoriteFilterValue}
-          type="swapTo"
-          disableItemCheck={disableItemCheck}
-          selectToken={token}
-          placeholder={placeholder}
-          displayAccountFilter={allowClearAccountFilter}
-          filterAccount={queryConds.account}
-          chainServerId={queryConds.chainServerId}
-          disabledTips={'Not supported'}
-          supportChains={supportChains}
-          hideChainFilter={true}
-          showTestNetSwitch={false}
-        />
-      </>
+      forScene === 'MakeTransactionAbout' &&
+      ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
+        (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
     );
-  },
-);
+  }, [queryConds.keyword, currentAccount?.type, forScene, ofScreen, type]);
+
+  const handleTokenChange = useMemoizedFn(async (tokenItem?: TokenItem) => {
+    if (!tokenItem || !tokenItem.id) {
+      return;
+    }
+    const res = await openapi.getTokenEntity(tokenItem.id, tokenItem.chain);
+    setLongPressToken(prev => ({
+      ...prev,
+      tokenEntity: {
+        ...tokenItem,
+        identity: res,
+      },
+    }));
+  });
+
+  const tokenPressRef = useRef<typeof TouchableOpacity & View>(null);
+  const handleLongPressToken = () => {
+    if (!token) {
+      return;
+    }
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    handleTokenChange(token);
+    tokenPressRef.current?.measureInWindow((x, y) => {
+      tokenPressRef.current?.measure((_, __, ___, height) => {
+        setLongPressToken(prev => ({
+          ...prev,
+          visible: true,
+          tokenItem: token || null,
+          position: { x, y, height },
+        }));
+      });
+    });
+  };
+
+  useUnmount(() => {
+    setLongPressToken({
+      visible: false,
+      tokenItem: null,
+      position: { x: 0, y: 0, height: 0 },
+      tokenEntity: null,
+    });
+  });
+
+  return (
+    <>
+      <TouchableOpacity
+        onPress={handleSelectToken}
+        onLongPress={handleLongPressToken}
+        ref={tokenPressRef}>
+        <View style={[styles.wrapper, style]}>
+          {token ? (
+            <>
+              <View style={styles.token}>
+                <AssetAvatar
+                  size={26}
+                  chain={token.chain}
+                  logo={token.logo_url}
+                  chainSize={type === 'send' ? 12 : 0}
+                />
+                <Text numberOfLines={1} style={styles.tokenSymbol}>
+                  {ellipsisOverflowedText(getTokenSymbol(token), 5)}
+                </Text>
+              </View>
+              <RcIconSwapBottomArrow />
+            </>
+          ) : (
+            <View style={styles.token}>
+              <Text style={styles.selectText}>{t('page.bridge.Select')}</Text>
+              <RcIconSwapBottomArrow />
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+
+      <TokenSelectorSheetModal
+        searchPlaceholder={searchPlaceholder}
+        ref={tokenSelectorModalRef}
+        visible={tokenSelectorVisible}
+        unshiftList={[]}
+        list={list}
+        onConfirm={handleCurrentTokenChange}
+        onCancel={handleTokenSelectorClose}
+        onSearch={handleSearchTokens}
+        isLoading={isListLoading}
+        showFavoriteFilter
+        favoriteFilterValue={favoriteFilterValue}
+        onFavoriteFilterChange={setFavoriteFilterValue}
+        type="swapTo"
+        disableItemCheck={disableItemCheck}
+        selectToken={token}
+        placeholder={placeholder}
+        displayAccountFilter={allowClearAccountFilter}
+        filterAccount={queryConds.account}
+        chainServerId={queryConds.chainServerId}
+        disabledTips={'Not supported'}
+        supportChains={supportChains}
+        hideChainFilter={true}
+        showTestNetSwitch={false}
+      />
+    </>
+  );
+};
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
     borderRadius: 12,

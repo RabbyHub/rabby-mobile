@@ -18,6 +18,8 @@ import {
 import { useUnmount } from 'ahooks';
 import { HomeTopArea } from './components/HomeTopArea';
 import { HeaderBackPressable } from '@/hooks/navigation';
+import { BackupReminderCard } from '@/components2024/BackupReminderCard';
+import { useBackupReminder } from '@/hooks/account';
 
 function HomeHeader() {
   const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
@@ -75,6 +77,7 @@ function SingleAddressHome(): JSX.Element {
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const { safeTop, topHeight } = useBgSize();
   const { currentAccount } = useSingleHomeAccount();
+  const needsBackupReminder = useBackupReminder(currentAccount);
 
   const { isDecrease } = useSingleHomeIsDecrease();
 
@@ -114,6 +117,10 @@ function SingleAddressHome(): JSX.Element {
 
       <View style={styles.safeView} onTouchStart={handleTouchEnd}>
         <HomeTopArea />
+        <BackupReminderCard
+          visible={needsBackupReminder}
+          account={currentAccount}
+        />
         <AssetContainer onReachTopStatusChange={handleReachTopStatusChange} />
       </View>
       <View style={styles.bottomContainer} onTouchStart={handleTouchEnd}>
