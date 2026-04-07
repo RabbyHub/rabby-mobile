@@ -1,3 +1,15 @@
+def hashcheckDevServerIp = System.getenv("HASHCHECK_REACT_NATIVE_DEV_SERVER_IP") ?: "127.0.0.1"
+def hashcheckDevServerPort = System.getenv("HASHCHECK_REACT_NATIVE_DEV_SERVER_PORT") ?: "8081"
+
+androidComponents {
+    finalizeDsl { ext ->
+        // RN 0.81 injects the host machine IP into react_native_dev_server_ip,
+        // which makes resources.arsc differ across build environments.
+        ext.defaultConfig.resValue("string", "react_native_dev_server_ip", hashcheckDevServerIp)
+        ext.defaultConfig.resValue("integer", "react_native_dev_server_port", hashcheckDevServerPort)
+    }
+}
+
 android {
     println "==> Applying hashcheck.gradle"
 
