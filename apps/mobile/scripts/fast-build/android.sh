@@ -93,7 +93,7 @@ build_js_bundle() {
   cd $project_dir;
   if [ -z "$SKIP_YARN" ]; then
     echo "Installing dependencies..."
-    yarn install --frozen-lockfile;
+    yarn install --immutable;
   else
     echo "Skipping yarn install as per SKIP_YARN flag."
   fi
@@ -225,4 +225,3 @@ case "$command" in
     exit 1
     ;;
 esac
-

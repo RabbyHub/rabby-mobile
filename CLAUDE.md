@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organized as a **Yarn 3 monorepo**. It supports iOS/Android with multiple hardware wallet integrations.
+This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organized as a **Yarn 4 monorepo**. It supports iOS/Android with multiple hardware wallet integrations.
 
 - **Repository**: https://github.com/RabbyHub/rabby-mobile
-- **Package Manager**: Yarn 3.3.0
+- **Package Manager**: Yarn 4.12.0 (via Corepack)
 - **React Native**: 0.81.6
 - **TypeScript**: 5.7.3
 

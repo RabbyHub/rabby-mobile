@@ -26,7 +26,7 @@
     "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
     "lint:misc": "prettier '**/*.json' '**/*.md' '!CHANGELOG.md' '**/*.yml' --ignore-path .gitignore --no-error-on-unmatched-pattern",
     "prepublishOnly": "yarn build:clean && yarn lint && yarn test",
-    "setup": "yarn install && yarn allow-scripts",
+    "setup": "yarn install --immutable && yarn allow-scripts",
     "pretest": "yarn build:test",
     "test": "jest && jest-it-up",
     "test:watch": "yarn test --watch"
