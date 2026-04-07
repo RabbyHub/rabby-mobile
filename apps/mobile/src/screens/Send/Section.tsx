@@ -158,7 +158,7 @@ export function BalanceSection({
         <TouchableOpacity
           style={styles.balanceArea}
           onPress={screenState.isLoading ? noop : handleClickMaxButton}>
-          {screenState.isLoading ? (
+          {screenState.showBalanceLoading ? (
             <Skeleton style={{ width: 100, height: 16 }} />
           ) : (
             <>

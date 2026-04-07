@@ -12,9 +12,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aave/contract-helpers@npm:1.36.1":
-  version: 1.36.1
-  resolution: "@aave/contract-helpers@npm:1.36.1"
+"@aave-dao/aave-address-book@npm:4.47.14":
+  version: 4.47.14
+  resolution: "@aave-dao/aave-address-book@npm:4.47.14"
+  peerDependencies:
+    viem: ^2.23.5
+  checksum: 10/08bd63d23d681abeba2f1fc206bcf7b7704c6e1ab42824442413e025a466f68e68f1b4288e0e44a263cd6ec90ca10b07f9ec09841a73aec7741509a9e82aab1e
+  languageName: node
+  linkType: hard
+
+"@aave/contract-helpers@npm:1.37.1":
+  version: 1.37.1
+  resolution: "@aave/contract-helpers@npm:1.37.1"
   dependencies:
     isomorphic-unfetch: "npm:^3.1.0"
   peerDependencies:
@@ -22,17 +31,17 @@ __metadata:
     ethers: ^5.x
     reflect-metadata: ^0.1.x
     tslib: ^2.4.x
-  checksum: 10/2d7bc422447e7c0621d58263323c34ec620bfb0026b286752720700d9793b4f1146f90068dce60e3af9c2fe4396a5f64f96a5eb3915662aa6908db5eda6340fd
+  checksum: 10/92416750a9ea361bed58d318d9b63331a828d9b14a501572d13e734ef5eaf7d67017bf769a7f77f245bb4b4c48b266dc3501d9076e8f11b29d493cc8e7206c8e
   languageName: node
   linkType: hard
 
-"@aave/math-utils@npm:1.36.1":
-  version: 1.36.1
-  resolution: "@aave/math-utils@npm:1.36.1"
+"@aave/math-utils@npm:1.37.1":
+  version: 1.37.1
+  resolution: "@aave/math-utils@npm:1.37.1"
   peerDependencies:
     bignumber.js: ^9.x
     tslib: ^2.4.x
-  checksum: 10/76be28d0fb680febc042c5ea660b176b5e0e27b8563dcbe41036a933cf16a4667ee8670c4437dc022b63f299578b14c196e1eb21b15854eb02aeacd8c55699d6
+  checksum: 10/fb72133f5d5a778b9b52787f159a00bdda4257343d4d8f9e6230977bbadfefbbcb6cc50c216434ee589c98cf279475b31139bafa958372fe0da12d0e574708f8
   languageName: node
   linkType: hard
 
@@ -3565,15 +3574,6 @@ __metadata:
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40bcoe%2Fv8-coverage%2F-%2Fv8-coverage-0.2.3.tgz"
   checksum: 10/1a1f0e356a3bb30b5f1ced6f79c413e6ebacf130421f15fac5fcd8be5ddf98aedb4404d7f5624e3285b700e041f9ef938321f3ca4d359d5b716f96afa120d88d
-  languageName: node
-  linkType: hard
-
-"@bgd-labs/aave-address-book@npm:4.36.0":
-  version: 4.36.0
-  resolution: "@bgd-labs/aave-address-book@npm:4.36.0"
-  peerDependencies:
-    viem: ^2.23.5
-  checksum: 10/45d24128a71e9b0e2441b10f5831e2a0da487c10444cb17a5ecd8286fbd11ac3130817d4df7345a21cf245d96b3dbbeddf178fcfecffeaf5b89e9b9cec512a95
   languageName: node
   linkType: hard
 
@@ -9096,16 +9096,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.5"
+"@rabby-wallet/hyperliquid-sdk@npm:1.1.6":
+  version: 1.1.6
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.1.6"
   dependencies:
     "@ethereumjs/util": "npm:9.0.0"
     "@metamask/eth-sig-util": "npm:5.1.0"
     "@msgpack/msgpack": "npm:3.1.2"
     "@noble/hashes": "npm:1.8.0"
     ethereum-cryptography: "npm:2.2.1"
-  checksum: 10/6439e2d4ec858862b7a233ccb0ede78b8a476c995d425477717270e8f32255023e61bd4ecabba224e0e7d0753b4fd89f69b2e0e72980365500b601feddb86ecc
+  checksum: 10/f1aae69387e876fca6f1e947d4c977a892ce92a007b243cb30c4f003c752ab9624072691c7f3b81069213d35ef9d7291bfbf5facb7f1d9d2b9e8bd430c82464c
   languageName: node
   linkType: hard
 
@@ -25190,7 +25190,7 @@ __metadata:
     less: "npm:^4.4.0"
     query-string: "npm:^9.2.2"
     react: "npm:19.1.4"
-    react-dom: "npm:^19.1.1"
+    react-dom: "npm:19.1.4"
     typescript: "npm:~5.8.3"
     typescript-eslint: "npm:^8.39.1"
     vite: "npm:^7.1.2"
@@ -30229,12 +30229,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lightweight-charts@npm:5.0.8, lightweight-charts@npm:^5.0.8":
+"lightweight-charts@npm:5.0.8":
   version: 5.0.8
   resolution: "lightweight-charts@npm:5.0.8"
   dependencies:
     fancy-canvas: "npm:2.1.0"
   checksum: 10/979e37f697f6ab7d04aaf8b4a0d964010d06f15966d96287064182e4115cec7e9de4ded1258fcd00df7935fe73e9aa5437f5cf8b43032c84395d4a4b80330df7
+  languageName: node
+  linkType: hard
+
+"lightweight-charts@patch:lightweight-charts@npm%3A5.0.8#./.yarn/patches/lightweight-charts-npm-5.0.8-893c5d8ffa.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 5.0.8
+  resolution: "lightweight-charts@patch:lightweight-charts@npm%3A5.0.8#./.yarn/patches/lightweight-charts-npm-5.0.8-893c5d8ffa.patch::version=5.0.8&hash=bf3e1b&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    fancy-canvas: "npm:2.1.0"
+  checksum: 10/4d52042d7438ea7cb1725e946db9695bf0c8a85737a52a265b3829a9a797558cf751a4af3920c13bf88f572b55500822b4d81a51243f25e4fe88e9bfd19112bb
   languageName: node
   linkType: hard
 
@@ -31752,7 +31761,7 @@ __metadata:
     lint-staged: "npm:^15.2.0"
     postcss: "npm:^8.5.6"
     react: "npm:19.1.4"
-    react-dom: "npm:^19.1.1"
+    react-dom: "npm:19.1.4"
     tailwindcss: "npm:^4.1.14"
     tinycolor2: "npm:^1.6.0"
     typescript: "npm:~5.8.3"
@@ -35058,14 +35067,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
-    "@aave/contract-helpers": "npm:1.36.1"
-    "@aave/math-utils": "npm:1.36.1"
+    "@aave-dao/aave-address-book": "npm:4.47.14"
+    "@aave/contract-helpers": "npm:1.37.1"
+    "@aave/math-utils": "npm:1.37.1"
     "@babel/core": "npm:^7.25.2"
     "@babel/plugin-proposal-decorators": "npm:^7.25.9"
     "@babel/plugin-transform-export-namespace-from": "npm:^7.25.9"
     "@babel/preset-env": "npm:^7.25.3"
     "@babel/runtime": "npm:^7.25.0"
-    "@bgd-labs/aave-address-book": "npm:4.36.0"
     "@craftzdog/react-native-buffer": "npm:^6.0.5"
     "@debank/common": "npm:0.3.60"
     "@debank/festats": "npm:1.0.4"
@@ -35093,7 +35102,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": "npm:*"
     "@rabby-wallet/eth-simple-keyring": "npm:5.1.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.8"
-    "@rabby-wallet/hyperliquid-sdk": "npm:1.1.5"
+    "@rabby-wallet/hyperliquid-sdk": "npm:1.1.6"
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
@@ -35518,6 +35527,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-dom@npm:19.1.4":
+  version: 19.1.4
+  resolution: "react-dom@npm:19.1.4"
+  dependencies:
+    scheduler: "npm:^0.26.0"
+  peerDependencies:
+    react: ^19.1.4
+  checksum: 10/977507ad270e3feac19fccbf8a9a0301e978ca7ceef1812c499899085cdd58207834483fdc9d3ca0bce2c67f48d3406e7da6b234b55e9fbc502c1bb04d141e43
+  languageName: node
+  linkType: hard
+
 "react-dom@npm:^18.2.0":
   version: 18.2.0
   resolution: "react-dom@npm:18.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-dom%2F-%2Freact-dom-18.2.0.tgz"
@@ -35527,17 +35547,6 @@ __metadata:
   peerDependencies:
     react: ^18.2.0
   checksum: 10/ca5e7762ec8c17a472a3605b6f111895c9f87ac7d43a610ab7024f68cd833d08eda0625ce02ec7178cc1f3c957cf0b9273cdc17aa2cd02da87544331c43b1d21
-  languageName: node
-  linkType: hard
-
-"react-dom@npm:^19.1.1":
-  version: 19.1.1
-  resolution: "react-dom@npm:19.1.1"
-  dependencies:
-    scheduler: "npm:^0.26.0"
-  peerDependencies:
-    react: ^19.1.1
-  checksum: 10/9005415d2175b1f1eb4a544ad04afb29691bb7b6dd43bbdaa09932146b310b73bd4552bc772ad78fa481f409eada1560cf887606c83c1a53a922c1e30f1b3a34
   languageName: node
   linkType: hard
 

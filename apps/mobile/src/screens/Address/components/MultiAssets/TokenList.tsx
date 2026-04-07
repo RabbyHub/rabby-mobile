@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListRenderItem, View, Dimensions } from 'react-native';
-import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useShallow } from 'zustand/shallow';
 
 import { ASSETS_ITEM_HEIGHT_NEW, RootNames } from '@/constant/layout';
@@ -14,7 +14,7 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
-import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -24,8 +24,7 @@ import { isTabsSwiping, useAccountInfo } from './hooks';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
-import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
-import { ListRenderFooter } from './RenderRow/Common';
+import { TabName } from './TabsMultiAssets';
 import useTokenList, {
   getMultiAssetsCacheKey,
   ITokenItem,
@@ -35,7 +34,6 @@ import { formatNetworth } from '@/utils/math';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
-import { IS_ANDROID } from '@/core/native/utils';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
 import {
   pulldownRefreshSizes,

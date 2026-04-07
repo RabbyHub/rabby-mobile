@@ -1,0 +1,115 @@
+name: Create Friday Tmp Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name_override:
+        description: Optional branch name override for manual testing or backfill, must start with tmp/
+        required: false
+        type: string
+  schedule:
+    # 00:10 Asia/Shanghai
+    - cron: '10 16 * * *'
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+
+concurrency:
+  group: create-friday-tmp-branch
+  cancel-in-progress: false
+
+jobs:
+  create_tmp_branch:
+    name: Create Tmp Branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TZ: Asia/Shanghai
+      BASE_BRANCH: develop
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Prepare branch info
+        id: prepare
+        env:
+          BRANCH_NAME_OVERRIDE: ${{ github.event.inputs.branch_name_override || '' }}
+        run: |
+          readarray -t friday_info < <(
+            ruby -rdate -e 'today = Date.today; days_until_friday = (5 - today.cwday) % 7; target_friday = today + days_until_friday; puts target_friday.strftime("%Y%m%d"); puts target_friday.iso8601'
+          )
+
+          branch_date="${friday_info[0]}"
+          target_friday="${friday_info[1]}"
+          branch_name="tmp/${branch_date}"
+
+          if [ -n "${BRANCH_NAME_OVERRIDE}" ]; then
+            case "${BRANCH_NAME_OVERRIDE}" in
+              tmp/*)
+                branch_name="${BRANCH_NAME_OVERRIDE}"
+                ;;
+              *)
+                echo "::error::branch_name_override must start with tmp/"
+                exit 1
+                ;;
+            esac
+          fi
+
+          echo "target_friday=${target_friday}"
+          echo "branch_name=${branch_name}"
+
+          echo "target_friday=${target_friday}" >> "$GITHUB_OUTPUT"
+          echo "branch_name=${branch_name}" >> "$GITHUB_OUTPUT"
+          echo "should_create=false" >> "$GITHUB_OUTPUT"
+          echo "branch_exists=false" >> "$GITHUB_OUTPUT"
+          printf 'skip_reason=%s\n' "Branch ${branch_name} already exists on origin; skip creating it again." >> "$GITHUB_OUTPUT"
+          echo "base_sha=" >> "$GITHUB_OUTPUT"
+
+          git fetch origin "${BASE_BRANCH}" --no-tags
+          base_sha="$(git rev-parse FETCH_HEAD)"
+          echo "base_sha=${base_sha}" >> "$GITHUB_OUTPUT"
+
+          if git ls-remote --exit-code --heads origin "${branch_name}" >/dev/null 2>&1; then
+            echo "branch_exists=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_create=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create tmp branch
+        if: steps.prepare.outputs.should_create == 'true'
+        env:
+          BRANCH_NAME: ${{ steps.prepare.outputs.branch_name }}
+          BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ -z "${BASE_SHA}" ]; then
+            echo "::error::Missing base SHA for ${BASE_BRANCH}"
+            exit 1
+          fi
+
+          if git push origin "${BASE_SHA}:refs/heads/${BRANCH_NAME}"; then
+            echo "Created ${BRANCH_NAME} from ${BASE_SHA}."
+            exit 0
+          fi
+
+          if git ls-remote --exit-code --heads origin "${BRANCH_NAME}" >/dev/null 2>&1; then
+            echo "Branch ${BRANCH_NAME} was created during this run; treat as success."
+            exit 0
+          fi
+
+          echo "::error::Failed to create ${BRANCH_NAME} from ${BASE_SHA}"
+          exit 1
+
+      - name: Print skip reason
+        if: steps.prepare.outputs.should_create != 'true'
+        run: |
+          echo "${{ steps.prepare.outputs.skip_reason }}"

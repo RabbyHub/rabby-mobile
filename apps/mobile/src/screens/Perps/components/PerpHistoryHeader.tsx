@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  forwardRef,
-  useImperativeHandle,
-} from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Keyboard, TouchableOpacity, View } from 'react-native';
 // import { RcIconSwapHistory } from '@/assets/icons/swap';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';

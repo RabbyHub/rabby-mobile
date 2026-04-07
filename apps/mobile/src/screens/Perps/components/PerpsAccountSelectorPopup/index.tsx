@@ -14,6 +14,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
 import { getClearinghouseStateByMap } from '@/hooks/perps/usePerpsStore';
+import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
+import { formatSpotState } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 
 export const PerpsAccountSelectorPopup: React.FC<{
@@ -67,18 +69,35 @@ export const PerpsAccountSelectorPopup: React.FC<{
     async () => {
       const list = uniqBy(myAddresses, i => i.address.toLowerCase());
       const res = await Promise.all(
-        list.slice(0, 10).map(item => {
+        list.slice(0, 10).map(async item => {
           try {
-            // const info = await sdk.info.getClearingHouseState(item.address);
-            return {
-              address: item.address,
-              info: getClearinghouseStateByMap(item.address),
-            };
+            const info = getClearinghouseStateByMap(item.address);
+            if (info && Number(info.withdrawable || 0) === 0) {
+              try {
+                const sdk = apisPerps.getPerpsSDK();
+                const userAbstraction = await sdk.info.getUserAbstraction(
+                  item.address,
+                );
+                if (userAbstraction === UserAbstractionResp.unifiedAccount) {
+                  const spotState = await sdk.info.getSpotClearingHouseState(
+                    item.address,
+                  );
+                  const formatted = formatSpotState(spotState);
+                  return {
+                    address: item.address,
+                    info: {
+                      ...info,
+                      withdrawable: formatted.availableToTrade,
+                    },
+                  };
+                }
+              } catch (e) {
+                // unifiedAccount get error，fallback use info
+              }
+            }
+            return { address: item.address, info };
           } catch (e) {
-            return {
-              address: item.address,
-              info: null,
-            };
+            return { address: item.address, info: null };
           }
         }),
       );

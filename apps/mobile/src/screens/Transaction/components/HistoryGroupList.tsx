@@ -4,7 +4,7 @@ import React, {
   useRef,
   useCallback,
   useImperativeHandle,
-  forwardRef,
+  type Ref,
 } from 'react';
 import { FlatList, Platform, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -69,206 +69,200 @@ function markFirstItems(
   return result;
 }
 
-export const HistoryList = forwardRef(
-  (
-    {
-      loading,
-      firstFetchDone,
-      historySuccessList,
-      loadingMore,
-      loadMore,
-      refreshLoading,
-      list,
-      localTxList,
-      onRefresh,
-      onPresssItem,
-      isForMultipleAddress = true,
-      isNeedFetchFromApi,
-      appendBottom,
-      moreLoadingLength = 1,
-      tabList,
-    }: {
-      firstFetchDone?: boolean;
-      historySuccessList?: string[];
-      localTxList?: TransactionGroup[];
-      list: (HistoryDisplayItem | TransactionGroup)[];
-      loading?: boolean;
-      loadingMore?: boolean;
-      refreshLoading?: boolean;
-      isForMultipleAddress?: boolean;
-      onPresssItem?: (data: HistoryDisplayItem) => void;
-      loadMore?: () => void;
-      onRefresh?: () => void;
-      isNeedFetchFromApi?: boolean;
-      appendBottom?: number;
-      moreLoadingLength?: number;
-      tabList?: boolean;
-    },
-    ref,
-  ) => {
-    const flatListRef = useRef<FlatList>(null);
+export const HistoryList = ({
+  loading,
+  firstFetchDone,
+  historySuccessList,
+  loadingMore,
+  loadMore,
+  refreshLoading,
+  list,
+  localTxList,
+  onRefresh,
+  onPresssItem,
+  isForMultipleAddress = true,
+  isNeedFetchFromApi,
+  appendBottom,
+  moreLoadingLength = 1,
+  tabList,
+  ref,
+}: {
+  firstFetchDone?: boolean;
+  historySuccessList?: string[];
+  localTxList?: TransactionGroup[];
+  list: (HistoryDisplayItem | TransactionGroup)[];
+  loading?: boolean;
+  loadingMore?: boolean;
+  refreshLoading?: boolean;
+  isForMultipleAddress?: boolean;
+  onPresssItem?: (data: HistoryDisplayItem) => void;
+  loadMore?: () => void;
+  onRefresh?: () => void;
+  isNeedFetchFromApi?: boolean;
+  appendBottom?: number;
+  moreLoadingLength?: number;
+  tabList?: boolean;
+  ref?: Ref<{ scrollToTop: () => void }>;
+}) => {
+  const flatListRef = useRef<FlatList>(null);
 
-    const scrollToTop = useCallback(() => {
-      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    }, []);
+  const scrollToTop = useCallback(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, []);
 
-    const { getCexInfoByAddress } = useGetCexList();
+  const { getCexInfoByAddress } = useGetCexList();
 
-    useImperativeHandle(ref, () => ({
-      scrollToTop,
-    }));
+  useImperativeHandle(ref, () => ({
+    scrollToTop,
+  }));
 
-    const markedList = useMemo(() => {
-      return markFirstItems(list);
-    }, [list]);
-    const { styles } = useTheme2024({ getStyle });
-    const { t } = useTranslation();
-    const { bottom } = useSafeAreaInsets();
+  const markedList = useMemo(() => {
+    return markFirstItems(list);
+  }, [list]);
+  const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
 
-    const minLocalTxNonceByChain = useMemo(() => {
-      const pendingGroup = localTxList?.filter(i => i.isPending);
-      if (!pendingGroup?.length) {
-        return {};
-      }
-
-      const tempObj: Record<string, number> = {};
-      Object.entries(
-        groupBy(pendingGroup, i => `${i.address}-${i.chainId}`),
-      ).forEach(([key, txs]) => {
-        tempObj[key] = minBy(txs, i => i.nonce)?.nonce || 0;
-      });
-      return tempObj;
-    }, [localTxList]);
-
-    const renderItem = useMemoizedFn(
-      ({ item }: { item: DisplayHistoryItem }) => {
-        if ('project_item' in item.data) {
-          return (
-            <>
-              {item.isDateStart ? (
-                <Text
-                  style={[
-                    styles.date,
-                    !isForMultipleAddress && styles.marginBottom,
-                  ]}>
-                  {formatTimestamp(item.time, t)}
-                </Text>
-              ) : null}
-              <HistoryItem
-                data={item.data}
-                isForMultipleAddress={isForMultipleAddress}
-                getCexInfoByAddress={getCexInfoByAddress}
-                onPress={onPresssItem}
-              />
-            </>
-          );
-        } else {
-          // const canCancel =
-          //   minBy(
-          //     localTxList?.filter(
-          //       i =>
-          //         i.chainId === (item.data as TransactionGroup).chainId &&
-          //         i.isPending,
-          //     ) || [],
-          //     i => i.nonce,
-          //   )?.nonce === item.data.nonce;
-          const canCancel =
-            minLocalTxNonceByChain[
-              `${item.data.address}-${item.data.chainId}`
-            ] === item.data.nonce;
-
-          return (
-            <>
-              {item.isDateStart ? (
-                <Text
-                  style={[
-                    styles.date,
-                    !isForMultipleAddress && styles.marginBottom,
-                  ]}>
-                  {formatTimestamp(item.time, t)}
-                </Text>
-              ) : null}
-              <TransactionItem
-                getCexInfoByAddress={getCexInfoByAddress}
-                isForMultipleAddress={isForMultipleAddress}
-                historySuccessList={historySuccessList}
-                data={item.data}
-                canCancel={canCancel}
-                onRefresh={onRefresh}
-              />
-            </>
-          );
-        }
-      },
-    );
-    const RenderList = useMemo(
-      () => (tabList ? Tabs.FlatList : FlatList),
-      [tabList],
-    );
-
-    if (loading) {
-      return (
-        <View style={styles.skeletonContainer}>
-          {range(0, 8).map(i => {
-            return <SkeletonCard key={i} />;
-          })}
-        </View>
-      );
+  const minLocalTxNonceByChain = useMemo(() => {
+    const pendingGroup = localTxList?.filter(i => i.isPending);
+    if (!pendingGroup?.length) {
+      return {};
     }
 
+    const tempObj: Record<string, number> = {};
+    Object.entries(
+      groupBy(pendingGroup, i => `${i.address}-${i.chainId}`),
+    ).forEach(([key, txs]) => {
+      tempObj[key] = minBy(txs, i => i.nonce)?.nonce || 0;
+    });
+    return tempObj;
+  }, [localTxList]);
+
+  const renderItem = useMemoizedFn(({ item }: { item: DisplayHistoryItem }) => {
+    if ('project_item' in item.data) {
+      return (
+        <>
+          {item.isDateStart ? (
+            <Text
+              style={[
+                styles.date,
+                !isForMultipleAddress && styles.marginBottom,
+              ]}>
+              {formatTimestamp(item.time, t)}
+            </Text>
+          ) : null}
+          <HistoryItem
+            data={item.data}
+            isForMultipleAddress={isForMultipleAddress}
+            getCexInfoByAddress={getCexInfoByAddress}
+            onPress={onPresssItem}
+          />
+        </>
+      );
+    } else {
+      // const canCancel =
+      //   minBy(
+      //     localTxList?.filter(
+      //       i =>
+      //         i.chainId === (item.data as TransactionGroup).chainId &&
+      //         i.isPending,
+      //     ) || [],
+      //     i => i.nonce,
+      //   )?.nonce === item.data.nonce;
+      const canCancel =
+        minLocalTxNonceByChain[`${item.data.address}-${item.data.chainId}`] ===
+        item.data.nonce;
+
+      return (
+        <>
+          {item.isDateStart ? (
+            <Text
+              style={[
+                styles.date,
+                !isForMultipleAddress && styles.marginBottom,
+              ]}>
+              {formatTimestamp(item.time, t)}
+            </Text>
+          ) : null}
+          <TransactionItem
+            getCexInfoByAddress={getCexInfoByAddress}
+            isForMultipleAddress={isForMultipleAddress}
+            historySuccessList={historySuccessList}
+            data={item.data}
+            canCancel={canCancel}
+            onRefresh={onRefresh}
+          />
+        </>
+      );
+    }
+  });
+  const RenderList = useMemo(
+    () => (tabList ? Tabs.FlatList : FlatList),
+    [tabList],
+  );
+
+  if (loading) {
     return (
-      <RenderList
-        ref={flatListRef}
-        data={markedList}
-        renderItem={renderItem}
-        windowSize={5}
-        initialNumToRender={Math.min(markedList.length, 20)}
-        ListEmptyComponent={
-          loading ? null : firstFetchDone ? (
-            <Empty
-              title={
-                isNeedFetchFromApi
-                  ? t('page.activities.signedTx.empty.title')
-                  : t('page.activities.signedTx.empty.titleLastThreeMonths')
-              }
-            />
-          ) : null
-        }
-        style={styles.container}
-        keyExtractor={item =>
-          'id' in item.data
-            ? `${item.data.address}-${item.data.chain}-${item.data.id}`
-            : `${item.data.address}-${item.data.chainId}-${item.data.maxGasTx.hash}`
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        removeClippedSubviews={true}
-        ListFooterComponent={
-          loadingMore ? (
-            <>
-              {range(0, moreLoadingLength).map(i => {
-                return <SkeletonCard key={i} />;
-              })}
-            </>
-          ) : (
-            <View style={{ height: bottom + (appendBottom || 0) }} />
-          )
-        }
-        refreshControl={
-          onRefresh && (
-            <RefreshControl
-              {...(isIOS && {
-                progressViewOffset: -12,
-              })}
-              refreshing={refreshLoading || false}
-              onRefresh={onRefresh}
-            />
-          )
-        }
-      />
+      <View style={styles.skeletonContainer}>
+        {range(0, 8).map(i => {
+          return <SkeletonCard key={i} />;
+        })}
+      </View>
     );
-  },
-);
+  }
+
+  return (
+    <RenderList
+      ref={flatListRef}
+      data={markedList}
+      renderItem={renderItem}
+      windowSize={5}
+      initialNumToRender={Math.min(markedList.length, 20)}
+      ListEmptyComponent={
+        loading ? null : firstFetchDone ? (
+          <Empty
+            title={
+              isNeedFetchFromApi
+                ? t('page.activities.signedTx.empty.title')
+                : t('page.activities.signedTx.empty.titleLastThreeMonths')
+            }
+          />
+        ) : null
+      }
+      style={styles.container}
+      keyExtractor={item =>
+        'id' in item.data
+          ? `${item.data.address}-${item.data.chain}-${item.data.id}`
+          : `${item.data.address}-${item.data.chainId}-${item.data.maxGasTx.hash}`
+      }
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.5}
+      removeClippedSubviews={true}
+      ListFooterComponent={
+        loadingMore ? (
+          <>
+            {range(0, moreLoadingLength).map(i => {
+              return <SkeletonCard key={i} />;
+            })}
+          </>
+        ) : (
+          <View style={{ height: bottom + (appendBottom || 0) }} />
+        )
+      }
+      refreshControl={
+        onRefresh && (
+          <RefreshControl
+            {...(isIOS && {
+              progressViewOffset: -12,
+            })}
+            refreshing={refreshLoading || false}
+            onRefresh={onRefresh}
+          />
+        )
+      }
+    />
+  );
+};
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {

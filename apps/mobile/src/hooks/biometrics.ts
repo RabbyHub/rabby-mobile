@@ -110,6 +110,7 @@ const toggleBiometrics = async <T extends boolean>(
     : { validatedPassword?: undefined }),
 ) => {
   const { validatedPassword, tipLoading } = input;
+  let changed = false;
 
   const hideToast = !tipLoading
     ? null
@@ -123,6 +124,7 @@ const toggleBiometrics = async <T extends boolean>(
   try {
     if (!nextEnabled) {
       await reset();
+      changed = true;
     } else {
       if (!validatedPassword) {
         throw new Error('Validated password is required to enable biometrics.');
@@ -139,6 +141,7 @@ const toggleBiometrics = async <T extends boolean>(
         await reset();
       } else if (requestResult && requestResult.actionSuccess) {
         setBiometrics(prev => ({ ...prev, authEnabled: true }));
+        changed = true;
       }
     }
   } catch (error: any) {
@@ -154,6 +157,8 @@ const toggleBiometrics = async <T extends boolean>(
     hideToast?.();
     await fetchBiometrics();
   }
+
+  return changed && biometricsInfoStore.getState().authEnabled === nextEnabled;
 };
 
 export const storeApisBiometrics = {

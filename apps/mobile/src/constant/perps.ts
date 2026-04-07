@@ -69,6 +69,22 @@ export const HYPE_USDC_TOKEN_ITEM = {
   usd_value: 0,
   cex_ids: [],
 };
+
+export const HYPE_EVM_BRIDGE_ADDRESS =
+  '0x2000000000000000000000000000000000000000';
+export const HYPE_SEND_ASSET_TOKEN = 'USDC';
+export const HYPE_GAS_FEE_IN_HYPE = 0.00002;
+export const WITHDRAW_TOKEN_LIST = [ARB_USDC_TOKEN_ITEM, HYPE_USDC_TOKEN_ITEM];
+
+export const isHypeWithdrawToken = (
+  token: { id?: string; chain?: string } | null | undefined,
+) => {
+  return (
+    token?.id === HYPE_USDC_TOKEN_ID &&
+    token?.chain === HYPE_USDC_TOKEN_SERVER_CHAIN
+  );
+};
+
 export enum CANDLE_MENU_KEY {
   ONE_HOUR = '1H',
   ONE_DAY = '1D',

@@ -16,6 +16,7 @@ import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
 import { useScene24hBalanceLightWeightData } from '@/hooks/useScene24hBalance';
+import { useTrack0331HomeActiveSnapshots } from '@/utils/analytics0331';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import dayjs from 'dayjs';
@@ -31,8 +32,7 @@ const detectHasAccounts = async () => {
   if (!hasAccountsInKeyring) {
     result.redirectAction = () => {
       const navigation = getReadyNavigationInstance();
-      navigation &&
-        resetNavigationTo(navigation, RootNames.GetStartedScreen2024);
+      navigation && resetNavigationTo(navigation, 'GetStarted');
     };
   }
 
@@ -49,6 +49,7 @@ function MultiAddressHome(): JSX.Element {
   useRendererDetect({ name: 'MultiAddressHome' });
 
   useInitDetectDBAssets();
+  useTrack0331HomeActiveSnapshots();
 
   const trackGasAccountActive = useCallback(() => {
     trackGasAccountActiveStatusOncePerDay().catch(error => {

@@ -165,25 +165,32 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={styles.tokenInfo}>
-            <TokenIcon
-              size={46}
-              chainSize={0}
-              tokenSymbol={reserve?.reserve?.symbol || ''}
-              chain={reserve?.chain}
-            />
-            <View style={styles.tokenTextArea}>
-              <View style={styles.symbolArea}>
-                <Text
-                  style={styles.symbol}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {reserve.reserve.symbol}
-                </Text>
-                <View style={styles.apyTag}>
-                  <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
+            <View style={styles.tokenInfoContainer}>
+              <TokenIcon
+                size={28}
+                chainSize={0}
+                tokenSymbol={reserve?.reserve?.symbol || ''}
+                chain={reserve?.chain}
+              />
+              <View style={styles.tokenTextArea}>
+                <View style={styles.symbolArea}>
+                  <Text
+                    style={styles.symbol}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {reserve.reserve.symbol}
+                  </Text>
+                  <View style={styles.suppliedBadge}>
+                    <Text style={styles.suppliedBadgeText}>
+                      {t('page.Lending.supplyDetail.supplied')}
+                    </Text>
+                  </View>
+                  {isIsolated ? <IsolatedTag /> : null}
                 </View>
               </View>
-              {isIsolated ? <IsolatedTag /> : null}
+            </View>
+            <View style={styles.apyTag}>
+              <Text style={styles.apyTagText}>{`Apy ${apyText}`}</Text>
             </View>
           </View>
           <View style={styles.amountArea}>
@@ -225,14 +232,6 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
           </TouchableOpacity>
         </View>
       </View>
-
-      {isSupplied ? (
-        <View style={styles.suppliedBadge}>
-          <Text style={styles.suppliedBadgeText}>
-            {t('page.Lending.supplyDetail.supplied')}
-          </Text>
-        </View>
-      ) : null}
     </View>
   );
 };
@@ -248,8 +247,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       borderRadius: 16,
-      paddingTop: 40,
-      paddingBottom: 12,
+      paddingVertical: 14,
       paddingHorizontal: 0,
       marginTop: 12,
       backgroundColor: cardBgColor,
@@ -289,7 +287,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     content: {
       paddingHorizontal: 14,
-      gap: 12,
+      gap: 10,
     },
     headerRow: {
       flexDirection: 'row',
@@ -297,10 +295,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'space-between',
     },
     tokenInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
       gap: 8,
       flexShrink: 1,
+    },
+    tokenInfoContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
     },
     tokenTextArea: {
       flexDirection: 'column',
@@ -315,13 +318,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     symbol: {
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '800',
+      fontWeight: '700',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
     },
     apyTag: {
       paddingHorizontal: 4,
-      paddingVertical: 2,
+      paddingVertical: 1,
       borderRadius: 4,
       backgroundColor: colors2024['green-light-1'],
     },
@@ -353,6 +356,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     amountArea: {
       alignItems: 'flex-end',
       justifyContent: 'center',
+      gap: 5,
     },
     amountUsd: {
       fontSize: 16,
@@ -362,7 +366,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
     },
     amountToken: {
-      marginTop: 2,
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
@@ -433,19 +436,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
     },
     suppliedBadge: {
-      position: 'absolute',
-      top: 9,
-      left: 9,
       paddingHorizontal: 4,
       paddingVertical: 2,
       borderRadius: 4,
-      backgroundColor: colors2024['green-default'],
+      width: 'auto',
+      backgroundColor: colors2024['green-light-1'],
     },
     suppliedBadgeText: {
       fontSize: 12,
       lineHeight: 16,
       fontWeight: '700',
-      color: colors2024['neutral-InvertHighlight'],
+      color: colors2024['green-default'],
       fontFamily: 'SF Pro Rounded',
     },
   };

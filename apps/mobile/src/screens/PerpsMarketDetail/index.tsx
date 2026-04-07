@@ -12,6 +12,7 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
+import { IS_IOS } from '@/core/native/utils';
 import React, {
   useCallback,
   useEffect,
@@ -122,7 +123,7 @@ export const PerpsMarketDetailScreen = () => {
   // Pre-fetch guide popup status on mount, then use synchronously in beforeRemove
   const hasShownGuideRef = useRef(true);
   useEffect(() => {
-    if (fromSource !== 'homePagePositionList') {
+    if (IS_IOS || fromSource !== 'homePagePositionList') {
       return;
     }
     apisPerps.getHasShownPerpsGuidePopup().then(hasShown => {
@@ -131,8 +132,10 @@ export const PerpsMarketDetailScreen = () => {
   }, [fromSource]);
 
   // Intercept back navigation to show guide popup for homePagePositionList users
+  // iOS: native-stack's swipe-back gesture ignores e.preventDefault() visually
+  // but keeps the route in the stack, causing subsequent pushes to be blocked.
   useEffect(() => {
-    if (fromSource !== 'homePagePositionList') {
+    if (IS_IOS || fromSource !== 'homePagePositionList') {
       return;
     }
     const unsubscribe = navigation.addListener('beforeRemove', e => {
@@ -159,7 +162,6 @@ export const PerpsMarketDetailScreen = () => {
   const [closePositionVisible, setClosePositionVisible] = React.useState(false);
   const [addPositionVisible, setAddPositionVisible] = React.useState(false);
 
-  // 查找当前币种的仓位信息
   const currentPosition = useMemo(() => {
     return positionAndOpenOrders?.find(
       asset => asset.position.coin.toLowerCase() === coin?.toLowerCase(),

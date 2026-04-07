@@ -1,4 +1,4 @@
-import { forwardRef, Ref } from 'react';
+import type { Ref } from 'react';
 import { Platform, View } from 'react-native';
 import { useGetBinaryMode } from '@/hooks/theme';
 import {
@@ -20,18 +20,20 @@ type Props = Omit<BlurViewProps, 'blurType'> & {
  *
  * Blur Effect is only supported on IOS.
  */
-export const BlurView = forwardRef<typeof OriginBlurView, Props>(
-  (props, ref) => {
-    const { blurAmount = 80, blurRadius = 30, ...otherProps } = props;
-    const theme = useGetBinaryMode();
-    return (
-      <Component
-        {...otherProps}
-        blurAmount={blurAmount}
-        blurRadius={blurRadius}
-        ref={ref as any}
-        blurType={theme ?? undefined}
-      />
-    );
-  },
-);
+export const BlurView = ({
+  ref,
+  blurAmount = 80,
+  blurRadius = 30,
+  ...otherProps
+}: Props & { ref?: Ref<typeof OriginBlurView> }) => {
+  const theme = useGetBinaryMode();
+  return (
+    <Component
+      {...otherProps}
+      blurAmount={blurAmount}
+      blurRadius={blurRadius}
+      ref={ref as any}
+      blurType={theme ?? undefined}
+    />
+  );
+};

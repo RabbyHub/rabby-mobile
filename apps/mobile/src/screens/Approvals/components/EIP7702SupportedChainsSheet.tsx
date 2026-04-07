@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useMemo } from 'react';
+import React, { type Ref, useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -25,14 +25,17 @@ type SupportedChainsSheetProps = {
   chains: Array<CHAINS_ENUM | string>;
   title?: string;
   onClose?: () => void;
+  ref?: Ref<BottomSheetModalMethods>;
 };
 
 const FOOTER_HEIGHT = 56;
 
-export const EIP7702SupportedChainsSheet = forwardRef<
-  BottomSheetModalMethods,
-  SupportedChainsSheetProps
->(({ chains, title = 'Supported Chains', onClose }, ref) => {
+export const EIP7702SupportedChainsSheet = ({
+  chains,
+  title = 'Supported Chains',
+  onClose,
+  ref,
+}: SupportedChainsSheetProps) => {
   const { t } = useTranslation();
   const { safeOffBottom } = useSafeSizes();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -102,7 +105,7 @@ export const EIP7702SupportedChainsSheet = forwardRef<
       </View>
     </AppBottomSheetModal>
   );
-});
+};
 
 EIP7702SupportedChainsSheet.displayName = 'EIP7702SupportedChainsSheet';
 

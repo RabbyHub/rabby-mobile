@@ -300,6 +300,9 @@
     },
     "lpTokenModal": {
       "desc": "Este es un Token de Proveedor de Liquidez (LP) para {{protocolId}}"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "No hay dirección disponible"
     }
   },
   "page": {
@@ -307,7 +310,9 @@
       "goToHome": "Ir a Home",
       "alreadyHaveAddress": "Ya tengo una wallet",
       "sync": "Escanee para sincronizar la billetera de extensión Rabby",
-      "createNewAddress": "Crear nueva cartera"
+      "createNewAddress": "Crear nueva cartera",
+      "welcomeTitle": "Bienvenido a  \nRabby Wallet",
+      "alreadyUseRabby": "Ya uso Rabby"
     },
     "transactions": {
       "explain": {
@@ -1128,6 +1133,10 @@
         "emptyAndroid": "No hay dApp añadida a favoritos",
         "search": "Buscar",
         "empty": "Ningún sitio web añadido a favoritos"
+      },
+      "depositAssets": {
+        "subtitle": "Recibe activos en esta wallet",
+        "title": "Depositar activos"
       }
     },
     "dashboard": {
@@ -1266,7 +1275,8 @@
         "syncRabbyExtension": "Sincronizar la extensión Rabby",
         "createAddress": "Crear Wallet",
         "importAddress": "Importar Billetera",
-        "selectAddMethod": "Seleccionar Método de Adición"
+        "selectAddMethod": "Seleccionar Método de Adición",
+        "seedPhraseOrPrivateKey": "Frase semilla o clave privada"
       },
       "createNewAddress": {
         "Continue": "Continuar",
@@ -1633,7 +1643,8 @@
         "description1": "Una clave privada es una cadena de letras y números utilizada para acceder y controlar tu wallet. Puedes usarla para recuperar tu wallet en cualquier dispositivo.",
         "title3": "Nunca lo compartas"
       },
-      "importing": "Importando..."
+      "importing": "Importando...",
+      "Done": "Hecho"
     },
     "switchChain": {
       "requestRabbyToSupport": "Solicitar a Rabby que ofrezca soporte",
@@ -1806,7 +1817,14 @@
       },
       "other": "Otro",
       "basicInfo": "Información básica",
-      "backup": "Copia de seguridad"
+      "backup": "Copia de seguridad",
+      "verify-face-id": "Verificar Face ID",
+      "verify-password": "Verificar contraseña",
+      "verify-face-id-before-backup": "Verifica tu Face ID antes de la copia de seguridad",
+      "verify-and-backup": "Verificar y hacer una copia de seguridad",
+      "verify-fingerprint-before-backup": "Verifica tu huella dactilar antes de la copia de seguridad",
+      "verify-fingerprint": "Verificar huella dactilar",
+      "verify-password-before-backup": "Verifica tu contraseña de Rabby antes de la copia de seguridad."
     },
     "connect": {
       "connectBtn": "Conectar",
@@ -2672,7 +2690,11 @@
         "feeTooltipDesc": "Cargo por Retiro cobrado por Hyperliquid: $1",
         "title": "Retirar",
         "invalidNumber": "Por favor, introduce un número válido",
-        "insufficientBalance": "Saldo insuficiente"
+        "insufficientBalance": "Saldo insuficiente",
+        "selectWithdrawToken": "Seleccionar token",
+        "hypeFeeTip": "Tarifa : ~${{fee}}",
+        "hypeGasFeeTooltip": "Se cobrará una tarifa de ~0.00002 HYPE para retirar a la EVM.",
+        "hypeActivationFeeTooltip": "Se cobrará una tarifa de activación única de {{fee}} por parte de Hyperliquid para el primer retiro de HyperEVM."
       },
       "PerpsWithdrawFeePopup": {
         "btn": "Lo tengo.",
@@ -3069,7 +3091,9 @@
         "almostReachedError": "El monto máximo disponible para pedir prestado está limitado porque se ha alcanzado casi el límite de préstamo del protocolo.",
         "almostReachedWarning": "El límite de préstamo del protocolo está en el 100% para este activo. No se puede realizar más préstamos.",
         "swapDebt": "Intercambiar",
-        "borrowed": "Prestado"
+        "borrowed": "Prestado",
+        "noSupplyPrefix": "Sin suministro:",
+        "noSupplyDesc": "Para pedir prestado, necesitas proporcionar activos como garantía."
       },
       "popup": {
         "amount": "Cantidad",
@@ -3320,6 +3344,22 @@
       },
       "marketNotOpenTooltip": "Mercado no abierto",
       "noOpen": "No Abierto"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Restaura tu billetera Rabby",
+        "subtitle": "¡Bienvenido de nuevo! 🎉  \nElige un método para restaurar rápidamente tu wallet."
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "O puedes <clickable>crear una nueva wallet</clickable>"
+      },
+      "importSecret": {
+        "privateKeyPlaceholder": "Introduce tu clave privada",
+        "seedPhrasePlaceholder": "Introduce tu frase semilla"
+      },
+      "walletReady": "Tu wallet está lista 🚀",
+      "setPasswordTip": "Establece una contraseña para asegurar tu wallet",
+      "createWalletError": "Error al crear la wallet"
     }
   },
   "global": {
@@ -3345,6 +3385,8 @@
     "unknownNFT": "NFT desconocido",
     "backButton": "Atrás",
     "Deleted": "eliminado",
+    "WalletCreated": "Wallet creado",
+    "WalletImported": "Wallet importado",
     "Done": "Hecho",
     "time": {
       "mins": "{{t}} mins",
@@ -3417,7 +3459,10 @@
     },
     "autolock": {
       "never": "Nunca"
-    }
+    },
+    "Imported": "Importado",
+    "Created": "Creado",
+    "SavedSeedPhrase": "He guardado la frase semilla"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -3495,5 +3540,9 @@
     "noTransactionOwnerAddress": "La transacción no pertenece a ninguna dirección en su billetera. Por favor, revise el historial de transacciones más tarde.",
     "noTransactionDetail": "Detalles de la transacción no encontrados. Por favor, verifica el historial de transacciones más tarde.",
     "unknownAddressFromTransaction": "La transacción implica una dirección que no está en tu wallet. Por favor, verifica el historial de transacciones más tarde."
+  },
+  "backupReminder": {
+    "title": "No has respaldado tu wallet.",
+    "action": "Copia de seguridad ahora"
   }
 }

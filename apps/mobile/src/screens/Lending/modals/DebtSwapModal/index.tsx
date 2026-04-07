@@ -1125,7 +1125,7 @@ export default function DebtSwapModal({
             title={t('page.Lending.debtSwap.button.swap')}
             onFinished={() => handleSwap()}
             disabled={buttonDisabled || !!ctx?.disabledProcess}
-            type="primary"
+            type="aave"
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
@@ -1133,6 +1133,7 @@ export default function DebtSwapModal({
         ) : (
           <Button
             loadingType="circle"
+            type="aave"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
             onPress={() => handleSwap()}
@@ -1146,12 +1147,10 @@ export default function DebtSwapModal({
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     height: '100%',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   scrollableBlock: {
     flex: 1,

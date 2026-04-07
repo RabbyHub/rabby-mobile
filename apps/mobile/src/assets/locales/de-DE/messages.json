@@ -49,6 +49,8 @@
     "Paste": "Einfügen",
     "next": "Weiter",
     "Deleted": "Gelöscht",
+    "WalletCreated": "Wallet erstellt",
+    "WalletImported": "Wallet importiert",
     "folded": "Gefaltet",
     "nonce": "Nonce",
     "cancel": "Abbrechen",
@@ -140,7 +142,10 @@
     },
     "autolock": {
       "never": "Nie"
-    }
+    },
+    "Imported": "Importiert",
+    "Created": "Erstellt",
+    "SavedSeedPhrase": "Ich habe den Seed-Phrase gespeichert."
   },
   "component": {
     "accountSwitcher": {
@@ -397,6 +402,9 @@
     },
     "lpTokenModal": {
       "desc": "Dies ist ein Liquiditätsanbieter(LP)-Token für {{protocolId}}."
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "Keine verfügbare Adresse"
     }
   },
   "page": {
@@ -505,7 +513,9 @@
       "goToHome": "Gehe zu Home",
       "sync": "Scannen, um das Rabby Extension Wallet zu synchronisieren",
       "alreadyHaveAddress": "Ich habe bereits eine wallet",
-      "createNewAddress": "Neue Brieftasche erstellen"
+      "createNewAddress": "Neue Brieftasche erstellen",
+      "alreadyUseRabby": "Ich verwende bereits Rabby.",
+      "welcomeTitle": "Willkommen bei  \nRabby Wallet"
     },
     "importSuccess": {
       "addressCount": "{{count}} Adressen",
@@ -1225,6 +1235,10 @@
         "search": "Suche",
         "empty": "Keine Website zu den Favoriten hinzugefügt",
         "emptyAndroid": "Keine dApp zu den Favoriten hinzugefügt"
+      },
+      "depositAssets": {
+        "subtitle": "Vermögen in diese Wallet empfangen",
+        "title": "Vermögenswerte einzahlen"
       }
     },
     "manageAddress": {
@@ -1388,7 +1402,8 @@
         "syncRabbyExtension": "Rabby-Erweiterung synchronisieren",
         "importAddress": "Wallet importieren",
         "createAddress": "Wallet erstellen",
-        "selectAddMethod": "Methode hinzufügen auswählen"
+        "selectAddMethod": "Methode hinzufügen auswählen",
+        "seedPhraseOrPrivateKey": "Seed-Phrase oder privater Schlüssel"
       },
       "createNewAddress": {
         "Continue": "Fortfahren",
@@ -1781,7 +1796,8 @@
         "description1": "Ein privater Schlüssel ist eine Zeichenfolge aus Buchstaben und Zahlen, die verwendet wird, um auf Ihr Wallet zuzugreifen und es zu steuern. Sie können ihn verwenden, um Ihr Wallet auf einem beliebigen Gerät wiederherzustellen.",
         "description3": "Teilen Sie niemals Ihren privaten Schlüssel – jeder, der Zugriff darauf hat, kann Ihre Mittel kontrollieren."
       },
-      "importing": "Importieren..."
+      "importing": "Importieren...",
+      "Done": "Fertig"
     },
     "addressDetail": {
       "address": "Adresse",
@@ -1834,7 +1850,14 @@
       },
       "other": "Andere",
       "backup": "Sicherung",
-      "basicInfo": "Grundinformationen"
+      "basicInfo": "Grundinformationen",
+      "verify-password": "Passwort überprüfen",
+      "verify-face-id-before-backup": "Überprüfen Sie Ihre Face ID vor der Sicherung",
+      "verify-face-id": "Gesichtserkennung überprüfen",
+      "verify-fingerprint": "Fingerabdruck verifizieren",
+      "verify-password-before-backup": "Überprüfen Sie Ihr Rabby-Passwort vor der Sicherung",
+      "verify-and-backup": "Überprüfen & sichern",
+      "verify-fingerprint-before-backup": "Überprüfen Sie Ihren Fingerabdruck vor dem Backup"
     },
     "addToken": {
       "hasAdded": "Dieser Token wurde hinzugefügt.",
@@ -2769,7 +2792,11 @@
         "available": "verfügbar",
         "feeTooltipDesc": "Abhebungsgebühr, die von Hyperliquid erhoben wird: 1 $",
         "insufficientBalance": "Unzureichendes Guthaben",
-        "feeTooltipTitle": "Gebühr"
+        "feeTooltipTitle": "Gebühr",
+        "hypeFeeTip": "Gebühr: ~${{fee}}",
+        "selectWithdrawToken": "Token auswählen",
+        "hypeGasFeeTooltip": "Eine Gebühr von ~0,00002 HYPE wird für Abhebungen auf die EVM erhoben.",
+        "hypeActivationFeeTooltip": "Eine einmalige Aktivierungsgebühr von {{fee}} wird von Hyperliquid für die erste HyperEVM-Abhebung erhoben."
       },
       "PerpsWithdrawFeePopup": {
         "btn": "Ich habe es verstanden",
@@ -3166,7 +3193,9 @@
         "almostReachedWarning": "Der Protokoll-Verleihlimit beträgt 100% für dieses Asset. Weitere Kredite sind nicht verfügbar.",
         "almostReachedError": "Der maximale Betrag, der ausgeliehen werden kann, ist begrenzt, da die Kreditobergrenze des Protokolls nahezu erreicht ist.",
         "swapDebt": "Tausch",
-        "borrowed": "Ausgeliehen"
+        "borrowed": "Ausgeliehen",
+        "noSupplyPrefix": "Keine Versorgung:",
+        "noSupplyDesc": "Um zu leihen, müssen Sie Vermögenswerte als Sicherheiten bereitstellen."
       },
       "popup": {
         "available": "verfügbar",
@@ -3417,6 +3446,22 @@
       },
       "noOpen": "Nicht geöffnet",
       "marketNotOpenTooltip": "Markt nicht geöffnet"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "subtitle": "Willkommen zurück! 🎉  \nWählen Sie eine Methode, um Ihre Wallet schnell wiederherzustellen.",
+        "title": "Stellen Sie Ihre Rabby Wallet wieder her"
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "Oder Sie können <clickable>ein neues Wallet erstellen</clickable>"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "Geben Sie Ihre Seed-Phrase ein",
+        "privateKeyPlaceholder": "Geben Sie Ihren privaten Schlüssel ein"
+      },
+      "createWalletError": "Fehlgeschlagen beim Erstellen der Wallet",
+      "walletReady": "Ihre Wallet ist bereit 🚀",
+      "setPasswordTip": "Setzen Sie ein Passwort, um Ihre Wallet zu sichern."
     }
   },
   "constant": {
@@ -3495,5 +3540,9 @@
     "loadingTransaction": "Transaktion wird geöffnet...",
     "unknownAddressFromTransaction": "Die Transaktion betrifft eine Adresse, die sich nicht in Ihrem Wallet befindet. Bitte überprüfen Sie die Transaktionshistorie später.",
     "noTransactionOwnerAddress": "Die Transaktion gehört zu keiner Adresse in Ihrem Wallet. Bitte überprüfen Sie die Transaktionshistorie später."
+  },
+  "backupReminder": {
+    "action": "Jetzt sichern",
+    "title": "Sie haben Ihre wallet nicht gesichert."
   }
 }

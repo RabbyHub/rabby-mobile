@@ -18,7 +18,6 @@
 		01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */; };
 		01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */; };
 		01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE01E2C3889BB0033D12B /* ScreenShield.swift */; };
-		01BFCA772EA23EA600E71394 /* lightweight-charts.standalone.production.js in Resources */ = {isa = PBXBuildFile; fileRef = 01BFCA762EA23EA600E71394 /* lightweight-charts.standalone.production.js */; };
 		01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */; };
@@ -31,7 +30,6 @@
 		5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */; };
 		61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */; };
-		817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */ = {isa = PBXBuildFile; fileRef = FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		990E38247D624F6B86F999F7 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */; };
 		A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
@@ -73,7 +71,6 @@
 		01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNScreenshotPrevent.h; path = RabbyMobile/RNScreenshotPrevent.h; sourceTree = "<group>"; };
 		01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+ImageEffects.h"; path = "RabbyMobile/UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		01BBE01E2C3889BB0033D12B /* ScreenShield.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ScreenShield.swift; path = RabbyMobile/ScreenShield.swift; sourceTree = "<group>"; };
-		01BFCA762EA23EA600E71394 /* lightweight-charts.standalone.production.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = "lightweight-charts.standalone.production.js"; path = "../assets/custom/lightweight-charts.standalone.production.js"; sourceTree = SOURCE_ROOT; };
 		01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = AppConfig.xcconfig; path = RabbyMobile/AppConfig.xcconfig; sourceTree = "<group>"; };
 		01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileDebug.entitlements; path = RabbyMobile/RabbyMobileDebug.entitlements; sourceTree = "<group>"; };
 		01D49C742CBE7D5E008C5EE2 /* RNTimeChanged.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RNTimeChanged.h; path = RabbyMobile/RNTimeChanged.h; sourceTree = "<group>"; };
@@ -116,7 +113,6 @@
 		DE2ED77CA6BCCFCA3B356774 /* Pods-RabbyMobileNotification.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.regression.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Heavy.otf"; path = "../assets/fonts/SF-Pro-Rounded-Heavy.otf"; sourceTree = "<group>"; };
-		FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "bignumber.js@9.3.1-bignumber.min.js"; path = "../assets/custom/bignumber.js@9.3.1-bignumber.min.js"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -295,8 +291,6 @@
 				A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */,
 				48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */,
 				370EA128F5694C408EE79381 /* vconsole.min.js */,
-				FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */,
-				01BFCA762EA23EA600E71394 /* lightweight-charts.standalone.production.js */,
 				4147B4AD992A4ACA8EA96E3B /* InpageBridgeWeb3.js */,
 				86186D0BE58742E092BA1BF3 /* e1789a3f58159a0b7c06ac86c1596058.min.js */,
 			);
@@ -404,7 +398,6 @@
 				01DBDDA02E86FFF70060C03B /* builtin-pages in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */,
-				01BFCA772EA23EA600E71394 /* lightweight-charts.standalone.production.js in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */,
 				ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */,
@@ -414,7 +407,6 @@
 				0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */,
 				5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */,
 				A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */,
-				817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */,
 				A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */,
 				990E38247D624F6B86F999F7 /* InpageBridgeWeb3.js in Resources */,
 				BA11A04DCA0A4A64A8355C12 /* e1789a3f58159a0b7c06ac86c1596058.min.js in Resources */,
