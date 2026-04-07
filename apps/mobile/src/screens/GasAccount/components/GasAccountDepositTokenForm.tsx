@@ -667,13 +667,12 @@ const GasAccountDepositTokenFormInner: React.FC<{
     !isBridgeDeposit || !amountValidation.isValid || quoteLoading
       ? ''
       : bridgeQuoteError;
-  let estReceiveUsdValue = '$0';
-  if (selectedToken) {
-    estReceiveUsdValue =
-      selectedToken.gasAccountDepositType === 'direct'
-        ? formatUsdValue(amountValue)
-        : formatUsdValue(bridgeQuote?.to_token_amount || 0);
-  }
+  const estReceiveUsdNumber = selectedToken
+    ? selectedToken.gasAccountDepositType === 'direct'
+      ? amountValue
+      : Number(bridgeQuote?.to_token_amount || 0)
+    : 0;
+  const estReceiveUsdValue = formatUsdValue(estReceiveUsdNumber);
   const canSubmit =
     !!selectedToken &&
     !!selectedOwnerAccount &&
@@ -737,7 +736,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     ? t('page.gasAccount.depositPayPopup.topUpPayTips', {
         topUpUsd: formatUsdValue(minDepositPrice),
         balance: formatUsdValue(
-          new BigNumber(estReceiveUsdValue.replace('$', ''))
+          new BigNumber(estReceiveUsdNumber)
             .plus(gasAccountInfo?.account?.balance || 0)
             .minus(minDepositPrice)
             .toFixed(),

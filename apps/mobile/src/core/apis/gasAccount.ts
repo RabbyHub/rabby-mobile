@@ -276,6 +276,7 @@ export const pollDepositStatus = ({
 }): { promise: Promise<boolean>; cancel: () => void } => {
   let cancelled = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let wakeSleep: (() => void) | null = null;
 
   const cancel = () => {
     cancelled = true;
@@ -283,12 +284,19 @@ export const pollDepositStatus = ({
       clearTimeout(timer);
       timer = null;
     }
+    if (wakeSleep) {
+      wakeSleep();
+      wakeSleep = null;
+    }
   };
 
   const promise = (async () => {
     for (let i = 0; i < maxAttempts && !cancelled; i++) {
       try {
         const result = await openapi.getGasAccountBridgeStatus(params);
+        if (cancelled) {
+          return false;
+        }
         if (result.status === 'success') {
           return true;
         }
@@ -302,7 +310,14 @@ export const pollDepositStatus = ({
         break;
       }
       await new Promise<void>(r => {
-        timer = setTimeout(r, intervalMs);
+        wakeSleep = () => {
+          wakeSleep = null;
+          timer = null;
+          r();
+        };
+        timer = setTimeout(() => {
+          wakeSleep?.();
+        }, intervalMs);
       });
     }
     return false;
