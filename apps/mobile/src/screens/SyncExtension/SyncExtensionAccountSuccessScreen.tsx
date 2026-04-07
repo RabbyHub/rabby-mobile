@@ -98,7 +98,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     [sortedList],
   );
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     navigation.reset({
       index: 0,
       routes: [
