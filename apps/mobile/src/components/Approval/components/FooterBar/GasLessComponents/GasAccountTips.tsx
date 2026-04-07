@@ -23,6 +23,7 @@ type ActionButton = {
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
   gasAccountAddress: string;
+  onChangeGasAccount?: () => void;
   onDeposit?(): void;
   onWaitDepositResult?: GasAccountTopUpWaitCallback;
   onDepositPopupVisibleChange?: (visible: boolean) => void;
@@ -37,6 +38,7 @@ export const GasAccountTips: React.FC<{
   noCustomRPC,
   nativeTokenInsufficient,
   onDeposit,
+  onChangeGasAccount,
   onWaitDepositResult,
   onDepositPopupVisibleChange,
   disableDepositAction,
@@ -60,6 +62,7 @@ export const GasAccountTips: React.FC<{
     enabled: !!nativeTokenInsufficient,
     gasAccountCost,
     currentGasAccountAddress: gasAccountAddress,
+    onLoggedIn: onChangeGasAccount,
   });
 
   const setDepositPopupVisible = (visible: boolean) => {

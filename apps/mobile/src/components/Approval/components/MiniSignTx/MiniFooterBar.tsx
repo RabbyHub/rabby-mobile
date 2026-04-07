@@ -415,6 +415,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                   <GasAccountTips
                     gasAccountAddress={gasAccountAddress!}
                     gasAccountCost={gasAccountCost}
+                    onChangeGasAccount={onChangeGasAccount}
                     isWalletConnect={isWalletConnect}
                     noCustomRPC={noCustomRPC}
                     nativeTokenInsufficient={isGasNotEnough}

@@ -688,6 +688,13 @@ export const DirectSignGasInfo = ({
     [instance],
   );
 
+  const handleChangeGasAccount = useMemoizedFn(async () => {
+    await handleChangeGasMethod('gasAccount');
+    if (ctx?.selectedGas) {
+      await handleGasChange(ctx.selectedGas as any);
+    }
+  });
+
   const handleTopUpWaitResult = useMemoizedFn(
     async (result: GasAccountTopUpResult) => {
       if (!ctx || !config || !ctx.txs.length) {
@@ -757,7 +764,7 @@ export const DirectSignGasInfo = ({
           nativeTokenInsufficient={isGasNotEnough}
           canGotoUseGasAccount={canGotoUseGasAccount}
           canDepositUseGasAccount={canDepositUseGasAccount}
-          onChangeGasAccount={() => handleChangeGasMethod('gasAccount')}
+          onChangeGasAccount={handleChangeGasAccount}
           gasAccountAddress={accountId || config?.account.address || ''}
           gasAccountCost={ctx?.gasAccount as any}
           onDepositPopupVisibleChange={onDepositPopupVisibleChange}
@@ -775,6 +782,7 @@ export const DirectSignGasInfo = ({
           inShowMore
           gasAccountAddress={accountId || config?.account.address || ''}
           gasAccountCost={ctx?.gasAccount as any}
+          onChangeGasAccount={handleChangeGasAccount}
           isWalletConnect={false}
           noCustomRPC={noCustomRPC}
           nativeTokenInsufficient={isGasNotEnough}

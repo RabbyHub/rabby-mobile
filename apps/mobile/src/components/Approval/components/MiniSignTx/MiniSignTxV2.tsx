@@ -104,6 +104,13 @@ const MiniSignTxV2 = ({
     [instance],
   );
 
+  const handleChangeGasAccount = useMemoizedFn(async () => {
+    await handleChangeGasMethod('gasAccount');
+    if (ctx?.selectedGas) {
+      await handleGasChange(ctx.selectedGas as any);
+    }
+  });
+
   const handleTopUpWaitResult = useMemoizedFn(
     async (result: GasAccountTopUpResult) => {
       if (!ctx || !config || !ctx.txs.length) {
@@ -411,8 +418,6 @@ const MiniSignTxV2 = ({
     !ctx?.txsCalc?.length ||
     !!ctx.checkErrors?.some(e => e.level === 'forbidden');
   const nativeTokenInsufficient = !!ctx.checkErrors?.some(e => e.code === 3001);
-  console.log('instance', { instance, gasMethod });
-
   if (synGasHeaderInfo) {
     return null;
   }
@@ -535,7 +540,7 @@ const MiniSignTxV2 = ({
         onWaitDepositResult={handleTopUpWaitResult}
         gasAccountAddress={gasAccountAddress}
         isWalletConnect={isWalletConnect}
-        onChangeGasAccount={() => setGasMethod('gasAccount')}
+        onChangeGasAccount={handleChangeGasAccount}
         isWatchAddr={isWatchAddr}
         gasLessConfig={gasLessConfig}
         gasLessFailedReason={gasLessFailedReason}

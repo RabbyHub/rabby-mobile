@@ -384,6 +384,7 @@ export const FooterBar: React.FC<Props> = ({
                 <GasAccountTips
                   gasAccountAddress={gasAccountAddress!}
                   gasAccountCost={gasAccountCost}
+                  onChangeGasAccount={onChangeGasAccount}
                   isWalletConnect={isWalletConnect}
                   noCustomRPC={noCustomRPC}
                   nativeTokenInsufficient={currentSelectionGasNotEnough}
