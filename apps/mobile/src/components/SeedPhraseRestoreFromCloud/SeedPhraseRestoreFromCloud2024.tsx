@@ -53,6 +53,7 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
         setStep('backup_downloading');
         await new Promise(resolve => setTimeout(resolve, 500));
         onDone();
+
         if (
           await shouldRedirect2SetPassword?.({
             backScreen: RootNames.ImportSuccess2024,

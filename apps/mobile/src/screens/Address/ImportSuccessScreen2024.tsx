@@ -9,20 +9,16 @@ import {
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import LinearGradient from 'react-native-linear-gradient';
-import { Skeleton } from '@rneui/themed';
 
 import {
-  Dimensions,
   Keyboard,
   KeyboardAvoidingView,
-  ScrollView,
+  Platform,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
-import { Card } from '@/components2024/Card';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
@@ -31,13 +27,10 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { Button } from '@/components2024/Button';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
 import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
-import Lottie from 'lottie-react-native';
-import AnimationImportSuccess from '@/assets2024/animations/animation-import-success.json';
-import RcIconRightCC from '@/assets2024/icons/common/right-2.svg';
+import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -46,7 +39,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import useBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
-import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import useTokenList from '@/store/tokens';
 import usePortfolioList from '@/store/protocols';
@@ -59,17 +51,16 @@ import {
   accountEvents,
   PerfAccountEventBusListeners,
 } from '@/core/apis/account';
+import {
+  WalletSuccessCard,
+  AddressItem,
+} from '@/components2024/WalletSuccessCard';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
-const DisMissKBWrapper = ({ children }) => (
-  <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-    {children}
-  </TouchableWithoutFeedback>
-);
-
 export const ImportSuccessScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { top, bottom } = useSafeAreaInsets();
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
   const modalRef =
@@ -137,7 +128,6 @@ export const ImportSuccessScreen2024 = () => {
     }
   });
 
-  const { balanceMap, isLoadingByAddress } = useBalanceStore();
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;
@@ -299,93 +289,35 @@ export const ImportSuccessScreen2024 = () => {
     });
   };
 
-  console.log('state', state);
-
-  const Wrapper =
-    importAddresses.length > 1 ? KeyboardAvoidingView : DisMissKBWrapper;
+  const addressItems: AddressItem[] = useMemo(
+    () =>
+      importAddresses.map(item => ({
+        address: item.address,
+        brandName: state?.type || '',
+        showBalance: true,
+      })),
+    [importAddresses, state?.type],
+  );
 
   return (
-    <Wrapper>
-      <View style={styles.container}>
-        <View pointerEvents="none" style={styles.animationLayer}>
-          <Lottie
-            source={AnimationImportSuccess}
-            style={[styles.animationLottie]}
-            // duration={3000}
-            loop={false}
-            autoPlay
-            {...(__DEV__ &&
-              {
-                // duration: 5000,
-                // loop: true,
-              })}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.keyboardAvoidingView}>
+      <View style={[styles.container, { paddingTop: top }]}>
+        <WalletSuccessCard
+          style={{ flex: 1 }}
+          title={t('page.syncExtension.importedSuccessfully')}
+          addresses={addressItems}
+        />
+      </View>
+
+      <View style={[styles.footer, { paddingBottom: bottom + 20 }]}>
+        {state?.supportChainList?.length ? (
+          <GnosisSupportChainList
+            data={state.supportChainList}
+            style={styles.supportChainList}
           />
-        </View>
-        <View style={styles.addressList}>
-          {onlyFirstAccount ? (
-            <View style={styles.itemContainer}>
-              <WalletIcon
-                type={state?.type}
-                address={importAddresses?.[0]?.address}
-                width={100}
-                height={100}
-                style={styles.icon}
-              />
-              <Text style={styles.aliasAddress}>
-                {importAddresses?.[0]?.aliasName || ''}
-              </Text>
-              <Text style={styles.importSuccessText}>
-                {t('page.syncExtension.importedSuccessfully')}
-              </Text>
-              {state?.supportChainList?.length ? (
-                <GnosisSupportChainList
-                  data={state?.supportChainList}
-                  style={{ marginBottom: 12 }}
-                />
-              ) : null}
-            </View>
-          ) : (
-            <View style={styles.scrollList}>
-              <ScrollView
-                scrollEnabled
-                showsVerticalScrollIndicator={false}
-                onResponderRelease={() => Keyboard.dismiss()}
-                keyboardShouldPersistTaps="handled"
-                showsHorizontalScrollIndicator={false}>
-                {importAddresses.map(item => (
-                  <Card key={item.address} style={styles.addressItem}>
-                    <WalletIcon
-                      type={state?.type}
-                      address={item.address}
-                      width={46}
-                      height={46}
-                    />
-                    <View>
-                      <Text style={styles.listInput}>{item.aliasName}</Text>
-                      {isLoadingByAddress[item.address.toLowerCase()] ? (
-                        <Skeleton
-                          circle
-                          width={102}
-                          height={20}
-                          animation="wave"
-                          LinearGradientComponent={LinearGradient}
-                        />
-                      ) : (
-                        <Text style={styles.balance}>
-                          {`$${splitNumberByStep(
-                            balanceMap[
-                              item.address.toLowerCase()
-                            ]?.totalBalance?.toFixed(2) || 0,
-                          )}`}
-                        </Text>
-                      )}
-                    </View>
-                  </Card>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
+        ) : null}
 
         {(state.isFirstImport ||
           state.brandName === KEYRING_TYPE.HdKeyring) && (
@@ -398,7 +330,7 @@ export const ImportSuccessScreen2024 = () => {
             <RcIconRightCC
               width={16}
               height={16}
-              color={colors2024['blue-default']}
+              color={colors2024['neutral-secondary']}
             />
           </TouchableOpacity>
         )}
@@ -411,169 +343,47 @@ export const ImportSuccessScreen2024 = () => {
               ? t('page.importSuccess.viewAddress')
               : t('global.Done')
           }
-          // noShadow={true}
           onPress={handleDone}
         />
       </View>
-    </Wrapper>
+    </KeyboardAvoidingView>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
-  const winLayout = Dimensions.get('window');
-
-  return {
-    container: {
-      width: '100%',
-      height: '100%',
-      position: 'relative',
-      display: 'flex',
-      paddingHorizontal: 20,
-      backgroundColor: colors2024['neutral-bg-1'],
-      marginBottom: 20,
-    },
-    animationLayer: {
-      width: winLayout.width,
-      height: '100%',
-      minHeight: winLayout.height,
-      // ...makeDevOnlyStyle({
-      //   backgroundColor: 'blue',
-      // }),
-      position: 'absolute',
-      zIndex: 999,
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-    },
-    animationLottie: {
-      width: '100%',
-      height: '100%',
-    },
-    addressList: {
-      display: 'flex',
-      justifyContent: 'center',
-      flex: 1,
-      alignItems: 'center',
-    },
-    scrollList: {
-      width: '100%',
-      maxHeight: '60%',
-    },
-    itemContainer: {
-      display: 'flex',
-      alignItems: 'center',
-    },
-    icon: {
-      borderRadius: 24,
-    },
-    addressText: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '400',
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    balance: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    inputContainer: {
-      width: '100%',
-      height: 72,
-      padding: 0,
-      margin: 0,
-      borderWidth: 0,
-      backgroundColor: 'transparent',
-    },
-    aliasAddress: {
-      width: '100%',
-      marginTop: 15,
-      textAlignVertical: 'center',
-      height: 54,
-      padding: 0,
-      fontSize: 36,
-      borderWidth: 0,
-      backgroundColor: 'transparent',
-      lineHeight: 42,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'center',
-    },
-    importSuccessText: {
-      color: colors2024['brand-default'],
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 20,
-      fontStyle: 'normal',
-      fontWeight: '800',
-      lineHeight: 24,
-    },
-    resultTip: {
-      width: '100%',
-      marginTop: 28,
-      fontWeight: '800',
-      fontSize: 20,
-      lineHeight: 24,
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
-      color: colors2024['brand-default'],
-    },
-    btnContainer: {
-      width: '100%',
-      marginBottom: 56,
-    },
-    addressItem: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      gap: 8,
-      marginBottom: 12,
-      height: 78,
-      borderRadius: 20,
-      paddingVertical: 16,
-      paddingHorizontal: 20,
-      width: '100%',
-    },
-    listInput: {
-      width: '100%',
-      textAlignVertical: 'center',
-      padding: 0,
-      fontSize: 16,
-      borderWidth: 0,
-      backgroundColor: 'transparent',
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['neutral-foot'],
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'left',
-      marginBottom: 4,
-    },
-    fire: {
-      width: 134,
-      height: 134,
-      position: 'absolute',
-      bottom: 149,
-      left: '50%',
-      transform: [{ translateX: -50 }],
-    },
-    ledgerButton: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingBottom: 25,
-    },
-    ledgerButtonText: {
-      color: colors2024['brand-default'],
-      fontSize: 17,
-      lineHeight: 22,
-      fontWeight: '700',
-      fontFamily: 'SF Pro Rounded',
-    },
-  };
-});
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: colors2024['neutral-bg-1'],
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  supportChainList: {
+    marginBottom: 12,
+  },
+  ledgerButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  ledgerButtonText: {
+    color: colors2024['neutral-secondary'],
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+  },
+  footer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  btnContainer: {
+    width: '100%',
+  },
+}));

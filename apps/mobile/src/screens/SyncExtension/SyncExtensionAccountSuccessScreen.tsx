@@ -1,13 +1,10 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { ScrollView, View } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import { AddressItemInner2024 } from '../Address/components/AddressItemInner2024';
-import AnimationImportSuccess from '@/assets2024/animations/animation-import-success.json';
-import Lottie from 'lottie-react-native';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
@@ -20,10 +17,16 @@ import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { accountEvents } from '@/core/apis/account';
+import { Button } from '@/components2024/Button';
+import {
+  WalletSuccessCard,
+  AddressItem,
+} from '@/components2024/WalletSuccessCard';
 
 export const SyncExtensionAccountSuccessfulScreen = () => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { top, bottom } = useSafeAreaInsets();
 
   const navigation = useRabbyAppNavigation();
 
@@ -85,6 +88,16 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     balanceAccounts?.length ? balanceAccounts : accounts,
   );
 
+  const addressItems: AddressItem[] = useMemo(
+    () =>
+      sortedList.map(account => ({
+        address: account.address,
+        brandName: account.type,
+        showBalance: true,
+      })),
+    [sortedList],
+  );
+
   const handleConfirm = async () => {
     navigation.reset({
       index: 0,
@@ -109,71 +122,53 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   }, [t]);
 
   return (
-    <FooterButtonScreenContainer
-      as="View"
-      buttonProps={{
-        title: t('global.Done'),
-        onPress: handleConfirm,
-      }}
-      style={styles.screen}
-      footerBottomOffset={56}
-      footerContainerStyle={styles.ph}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {sortedList?.map(e => (
-          <AddressItemInner2024
-            style={styles.account}
-            account={e}
-            key={e.address + e.type}
-            hiddenArrow
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.keyboardAvoidingView}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: top }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        {addressItems.length > 0 && (
+          <WalletSuccessCard
+            title={t('page.syncExtension.importedSuccessfully')}
+            addresses={addressItems}
           />
-        ))}
-        <View style={{ height: 20 }} />
+        )}
+
+        <View style={[styles.footer, { paddingBottom: bottom + 20 }]}>
+          <Button
+            containerStyle={styles.btnContainer}
+            type="primary"
+            title={t('global.Done')}
+            onPress={handleConfirm}
+          />
+        </View>
       </ScrollView>
-      <View pointerEvents="none" style={[styles.animationLayer]}>
-        <Lottie
-          style={styles.animationLottie}
-          source={AnimationImportSuccess}
-          loop={false}
-          autoPlay
-          direction={1}
-        />
-      </View>
-    </FooterButtonScreenContainer>
+    </KeyboardAvoidingView>
   );
 };
 
-const getStyles = createGetStyles2024(ctx => ({
-  screen: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  keyboardAvoidingView: {
+    flex: 1,
   },
-
-  ph: {
-    paddingHorizontal: 20,
+  scrollView: {
+    flex: 1,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
-
   scrollContent: {
-    paddingTop: 36,
+    alignItems: 'center',
     paddingHorizontal: 20,
-    gap: 12,
+    flexGrow: 1,
   },
-
-  animationLayer: {
-    height: '100%',
-    position: 'absolute',
-    zIndex: 999,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  animationLottie: {
+  footer: {
+    marginTop: 'auto',
     width: '100%',
-    height: '100%',
+    alignItems: 'center',
   },
-  account: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: ctx.colors2024['neutral-line'],
+  btnContainer: {
+    width: '100%',
   },
 }));
