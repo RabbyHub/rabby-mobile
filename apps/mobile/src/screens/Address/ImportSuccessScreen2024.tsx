@@ -319,21 +319,22 @@ export const ImportSuccessScreen2024 = () => {
           />
         ) : null}
 
-        {(state.isFirstImport ||
-          state.brandName === KEYRING_TYPE.HdKeyring) && (
-          <TouchableOpacity
-            onPress={handleImportMore}
-            style={styles.ledgerButton}>
-            <Text style={styles.ledgerButtonText}>
-              {t('page.importSuccess.importMore')}
-            </Text>
-            <RcIconRightCC
-              width={16}
-              height={16}
-              color={colors2024['neutral-secondary']}
-            />
-          </TouchableOpacity>
-        )}
+        {state.mnemonics &&
+          (state.isFirstImport ||
+            state.brandName === KEYRING_TYPE.HdKeyring) && (
+            <TouchableOpacity
+              onPress={handleImportMore}
+              style={styles.ledgerButton}>
+              <Text style={styles.ledgerButtonText}>
+                {t('page.importSuccess.importMore')}
+              </Text>
+              <RcIconRightCC
+                width={16}
+                height={16}
+                color={colors2024['neutral-secondary']}
+              />
+            </TouchableOpacity>
+          )}
 
         <Button
           containerStyle={styles.btnContainer}

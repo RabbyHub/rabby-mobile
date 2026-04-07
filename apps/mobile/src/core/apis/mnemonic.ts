@@ -513,7 +513,10 @@ export const addMnemonicKeyringAndGotoSuccessScreen = async (
   });
 };
 
-// TODO: if address is existed, return keyringId
+/**
+ * @deprecated
+ * Do navigation in UI modules
+ */
 export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
   input: string | string[],
   passphrase = '',
@@ -566,7 +569,6 @@ export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
         brandName: KEYRING_CLASS.MNEMONIC,
         isFirstImport: true,
         address: addresses,
-        mnemonics: arr[0],
         passphrase,
         keyringId: currentAddressInfo.keyringId || undefined,
         isExistedKR: currentAddressInfo.isExistedKR,
