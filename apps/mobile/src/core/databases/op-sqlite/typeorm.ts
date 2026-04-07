@@ -11,6 +11,7 @@ import {
 import { getRabbyAppDbDir } from '@/databases/constant';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { OPSQLiteEvents } from './events';
+import { resolveSQLiteConnectionTempStorePolicy } from './policy';
 import {
   BaseEntity,
   DataSource,
@@ -81,9 +82,18 @@ export const opSqliteTypeORMDriver = {
         name: options.name,
         encryptionKey: options.encryptionKey || '',
       });
-      if (!isIOS && options.location !== ':memory:') {
+      const tempStorePolicy = resolveSQLiteConnectionTempStorePolicy();
+
+      if (tempStorePolicy) {
+        console.debug(
+          '[opSqliteTypeORMDriver] sqlite temp-store policy',
+          tempStorePolicy,
+        );
+      }
+
+      if (tempStorePolicy?.shouldApplyMemoryPragma && location !== ':memory:') {
         try {
-          // Avoid Android disk I/O errors from temp-file store on older versions.
+          // Avoid Android temp-file disk I/O errors on affected devices.
           database.executeSync('PRAGMA temp_store=MEMORY;', []);
         } catch (e) {
           console.warn(
@@ -142,11 +152,11 @@ export const opSqliteTypeORMDriver = {
         attach: (
           dbNameToAttach: string,
           alias: string,
-          location: string | undefined,
+          dbLocation: string | undefined,
           callback: () => void,
         ) => {
           // @ts-expect-error In fact, we don't need attach method
-          database.attach(options.name, dbNameToAttach, alias, location);
+          database.attach(options.name, dbNameToAttach, alias, dbLocation);
 
           callback();
         },
