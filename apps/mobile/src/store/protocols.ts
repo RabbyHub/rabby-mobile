@@ -5,6 +5,7 @@ import { AppChainEntity } from '@/databases/entities/appchain';
 import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { formatAppChain } from '@/screens/Home/utils/appchain';
+import { reportLendingUserStatusOnce } from '@/screens/Lending/analytics/userStatus';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 
 /**
@@ -299,6 +300,10 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         set(() => ({
           protocolMap: mergeProtocolMaps(protocolMap, appChainMap),
         }));
+        reportLendingUserStatusOnce({
+          addresses: lowerAddresses,
+          protocolMap,
+        });
         // cache击中，不用走下面流程了
         return;
       }
@@ -319,6 +324,10 @@ export const useProtocolListStore = zCreate<ProtocolListState>(set => ({
         resultMap[lower] = protocols;
       });
       set(() => ({ protocolMap: resultMap }));
+      reportLendingUserStatusOnce({
+        addresses: lowerAddresses,
+        protocolMap: resultMap,
+      });
     } finally {
       set(() => ({ isLoading: false }));
     }

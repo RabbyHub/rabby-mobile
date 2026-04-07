@@ -5,6 +5,7 @@ LLVM_LTO = NO
 DEAD_CODE_STRIPPING = NO
 SWIFT_COMPILATION_MODE = wholemodule
 _EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES
+SENTRY_DISABLE_AUTO_UPLOAD = true
 
 // 针对 C/Objective-C 文件
 OTHER_CFLAGS = $(inherited) -O0 -mllvm -disable-post-ra -fno-common -fno-omit-frame-pointer -fno-inline -fno-align-functions -mllvm -enable-misched=false -mllvm --disable-cgp-gc-opts -fno-stack-protector -fno-optimize-sibling-calls -mllvm -enable-objc-arc-opts=false -mllvm -arm-promote-constant=false -fdebug-compilation-dir=. -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__= -D__TIME__= -D__TIMESTAMP__=

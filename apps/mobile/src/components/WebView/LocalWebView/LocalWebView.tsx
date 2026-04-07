@@ -83,6 +83,7 @@ export const LocalWebView = ({
   // const { width: viewWidth = '100%', height: viewHeight = 300 } = viewSize || {};
   const { width: webviewWidth = '100%', height: webviewHeight = 300 } =
     webviewSize || {};
+
   const { devServerMobileLocalPagesAvailable, devServerHost, devUri } =
     useDevServerHostAvailableForLocalWebView({
       autoDetectHost: true,

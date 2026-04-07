@@ -116,7 +116,7 @@ export const PerpsClosePositionPopup: React.FC<{
         linearGradientType: 'bg1',
       })}
       onDismiss={onCancel}
-      snapPoints={[460]}>
+      snapPoints={[490]}>
       <BottomSheetView>
         <AutoLockView style={[styles.container]}>
           <View>

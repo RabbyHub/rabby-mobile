@@ -44,7 +44,9 @@
       "goToHome": "Accéder à l'accueil",
       "sync": "Scannez pour synchroniser le portefeuille d'extension Rabby",
       "alreadyHaveAddress": "J'ai déjà un wallet",
-      "createNewAddress": "Créer un nouveau portefeuille"
+      "createNewAddress": "Créer un nouveau portefeuille",
+      "alreadyUseRabby": "J'utilise déjà Rabby",
+      "welcomeTitle": "Bienvenue dans\nRabby Wallet"
     },
     "transactions": {
       "explain": {
@@ -943,6 +945,10 @@
         "search": "Recherche",
         "empty": "Aucun site web ajouté aux favoris",
         "emptyAndroid": "Aucun dApp ajouté aux favoris"
+      },
+      "depositAssets": {
+        "title": "Déposer des actifs",
+        "subtitle": "Recevez des actifs dans ce portefeuille"
       }
     },
     "bridge": {
@@ -1078,7 +1084,8 @@
         "syncRabbyExtension": "Synchroniser l'extension Rabby",
         "importAddress": "Importer le portefeuille",
         "createAddress": "Créer un portefeuille",
-        "selectAddMethod": "Sélectionner Ajouter une méthode"
+        "selectAddMethod": "Sélectionner Ajouter une méthode",
+        "seedPhraseOrPrivateKey": "Phrase de secours ou clé privée"
       },
       "createNewAddress": {
         "verificationFailed": "Échec de la vérification",
@@ -1229,7 +1236,14 @@
       },
       "basicInfo": "Informations de base",
       "other": "Autre",
-      "backup": "Sauvegarde"
+      "backup": "Sauvegarde",
+      "verify-face-id": "Vérifier l'ID Face",
+      "verify-and-backup": "Vérifiez et sauvegardez",
+      "verify-face-id-before-backup": "Vérifiez votre Face ID avant la sauvegarde",
+      "verify-fingerprint": "Vérifier l'empreinte digitale",
+      "verify-password-before-backup": "Vérifiez votre mot de passe Rabby avant la sauvegarde",
+      "verify-fingerprint-before-backup": "Vérifiez votre empreinte digitale avant la sauvegarde",
+      "verify-password": "Vérifier le mot de passe"
     },
     "connect": {
       "popularLevelHigh": "Haut",
@@ -1558,7 +1572,8 @@
         "description4": "Votre clé privée est stockée localement sur votre appareil et cryptée avec votre mot de passe. Uniquement vous pouvez y accéder. Rabby ne peut pas récupérer ou accéder à votre clé privée.",
         "title": "Qu'est-ce qu'une clé privée"
       },
-      "importing": "Importation..."
+      "importing": "Importation...",
+      "Done": "Fait"
     },
     "importSafe": {
       "error": {
@@ -2431,7 +2446,11 @@
         "feeTooltipTitle": "Frais",
         "feeTooltipDesc": "Frais de retrait facturés par Hyperliquid : 1 $",
         "insufficientBalance": "Solde insuffisant",
-        "minimumWithdrawSize": "Le montant de retrait minimum est de 2 $."
+        "minimumWithdrawSize": "Le montant de retrait minimum est de 2 $.",
+        "hypeFeeTip": "Frais : ~${{fee}}",
+        "selectWithdrawToken": "Sélectionner un token",
+        "hypeActivationFeeTooltip": "Un frais d'activation unique de {{fee}} sera facturé par Hyperliquid pour le premier retrait HyperEVM.",
+        "hypeGasFeeTooltip": "Des frais d'environ ~0,00002 HYPE seront facturés pour retirer vers l'EVM."
       },
       "PerpsWithdrawFeePopup": {
         "title": "Frais",
@@ -2828,7 +2847,9 @@
         "almostReachedError": "Le montant maximum disponible pour emprunter est limité car le plafond d'emprunt du protocole est presque atteint.",
         "almostReachedWarning": "Le cap d'emprunt du protocole est de 100 % pour cet actif. Emprunts supplémentaires non disponibles.",
         "swapDebt": "Échanger",
-        "borrowed": "Emprunté"
+        "borrowed": "Emprunté",
+        "noSupplyPrefix": "Pas de fourniture:",
+        "noSupplyDesc": "Pour emprunter, vous devez fournir des actifs en tant que garantie."
       },
       "popup": {
         "available": "disponible",
@@ -3079,6 +3100,22 @@
       },
       "marketNotOpenTooltip": "Marché fermé",
       "noOpen": "Non ouvert"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "subtitle": "Bienvenue de nouveau ! 🎉  \nChoisissez une méthode pour restaurer rapidement votre wallet.",
+        "title": " restaurer votre portefeuille Rabby"
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "Ou vous pouvez <clickable>créer un nouveau wallet</clickable>"
+      },
+      "importSecret": {
+        "privateKeyPlaceholder": "Entrez votre private key",
+        "seedPhrasePlaceholder": "Entrez votre phrase secrète"
+      },
+      "walletReady": "Votre portefeuille est prêt 🚀",
+      "setPasswordTip": "Définissez un mot de passe pour sécuriser votre wallet",
+      "createWalletError": "Échec de la création du wallet"
     }
   },
   "native": {
@@ -3371,6 +3408,9 @@
     },
     "lpTokenModal": {
       "desc": "Ceci est un jeton de Fournisseur de Liquidité (LP) pour {{protocolId}}"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "Aucune adresse disponible"
     }
   },
   "global": {
@@ -3470,7 +3510,10 @@
     },
     "autolock": {
       "never": "Jamais"
-    }
+    },
+    "Created": "Créé",
+    "Imported": "Importé",
+    "SavedSeedPhrase": "J'ai enregistré la seed phrase."
   },
   "background": {
     "transactionWatcher": {
@@ -3519,5 +3562,9 @@
     "noTransactionOwnerAddress": "La transaction n'appartient à aucune adresse de votre porte-monnaie. Veuillez vérifier l'historique des transactions plus tard.",
     "noTransactionDetail": "Détails de la transaction non trouvés. Veuillez vérifier l'historique des transactions plus tard.",
     "unknownAddressFromTransaction": "La transaction implique une adresse qui n'est pas dans votre keyring. Veuillez vérifier l'historique des transactions plus tard."
+  },
+  "backupReminder": {
+    "action": "Sauvegarder maintenant",
+    "title": "Vous n'avez pas sauvegardé votre wallet"
   }
 }

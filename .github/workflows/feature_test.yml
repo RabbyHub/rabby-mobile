@@ -127,6 +127,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: '[Linux] Setup Ruby & Fastlane'
         if: runner.os == 'Linux'
         uses: heisenberg-2077/setup-ruby@master
@@ -174,7 +177,7 @@ jobs:
           cd apps/mobile;
           nvm use;
           rm -rf node_modules;
-          yarn install;
+          yarn install --immutable;
           bundle install;
 
           OS_TYPE=$(uname -s);

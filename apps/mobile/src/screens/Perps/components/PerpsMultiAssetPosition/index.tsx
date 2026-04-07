@@ -77,26 +77,30 @@ const AssetPositionItem = ({
   const pnlText = `${isUp ? '+' : '-'}${formatUsdValue(absPnlUsd)}`;
 
   const handleHyperliquidPress = useCallback(() => {
-    switchPerpsAccountBeforeNavigate(item.account);
-    matomoRequestEvent({
-      category: 'Rabby Perps',
-      action: 'Perps_CardToPerps',
-    });
-    // navigation.push(RootNames.StackTransaction, {
-    //   screen: RootNames.Perps,
-    //   params: {
-    //     dappId: 'hyperliquid',
-    //     account: item.account,
-    //   },
-    // })
-    navigation.push(RootNames.StackTransaction, {
-      screen: RootNames.PerpsMarketDetail,
-      params: {
-        market: coin,
-        fromSource: 'homePagePositionList',
-        showOpenPosition: false,
-      },
-    });
+    try {
+      switchPerpsAccountBeforeNavigate(item.account);
+      matomoRequestEvent({
+        category: 'Rabby Perps',
+        action: 'Perps_CardToPerps',
+      });
+      // navigation.push(RootNames.StackTransaction, {
+      //   screen: RootNames.Perps,
+      //   params: {
+      //     dappId: 'hyperliquid',
+      //     account: item.account,
+      //   },
+      // })
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.PerpsMarketDetail,
+        params: {
+          market: coin,
+          fromSource: 'homePagePositionList',
+          showOpenPosition: false,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to navigate to Perps screen:', error);
+    }
   }, [item, navigation, coin]);
 
   return (

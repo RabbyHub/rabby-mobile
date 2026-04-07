@@ -92,7 +92,7 @@ if [ "$CONFIGURATION" == "Debug" ] && [ "$IOS_SKIP_METRO_BUNDLE_ON_DEBUG" == "tr
   exit 0;
 fi
 
-[ -f yarn ] && yarn install;
+[ -f yarn ] && yarn install --immutable;
 [ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;
 echo "[RabbyMobileBuild] customize build environment vars finished."
 
