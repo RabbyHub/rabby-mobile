@@ -255,12 +255,15 @@ const setGasAccount = (
   }
 
   gasAccountStore.setState(prev =>
-    updateSessionState(prev, {
-      sig,
-      accountId: account.address,
-      account: account as GasAccountSessionAccount,
-      status: 'logged_in',
-    }),
+    markSnapshotDirtyState(
+      updateSessionState(prev, {
+        sig,
+        accountId: account.address,
+        account: account as GasAccountSessionAccount,
+        status: 'logged_in',
+      }),
+      'session_changed',
+    ),
   );
 };
 

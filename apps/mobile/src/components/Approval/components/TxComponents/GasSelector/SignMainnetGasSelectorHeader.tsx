@@ -17,6 +17,8 @@ import {
   resolveApprovalGasMethod,
 } from './approvalGasDisplay';
 import { formatGasHeaderUsdValue } from '@/utils/number';
+import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import {
   shouldAutoOpenSignMainnetGasModal,
   resolveSignMainnetGasLevelFetchNeeds,
@@ -165,10 +167,38 @@ export const SignMainnetHeaderContent = ({
     nativeTokenInsufficient: !!nativeTokenInsufficient,
     gasAccountUsable,
   });
+  const { accountId: gasAccountSessionId } = useGasAccountSign();
+  const { value: currentGasAccountInfo } = useGasAccountInfo();
+  const levelFetchContextKey = useMemo(
+    () =>
+      [
+        chainId || 0,
+        gasAccountSessionId || '',
+        currentGasAccountInfo?.account?.balance || '',
+        String(gasLimit || ''),
+        String(nonce || ''),
+        nativeTokenInsufficient ? 1 : 0,
+        gasAccountChainSupported ? 1 : 0,
+      ].join(':'),
+    [
+      chainId,
+      currentGasAccountInfo?.account?.balance,
+      gasAccountChainSupported,
+      gasAccountSessionId,
+      gasLimit,
+      nativeTokenInsufficient,
+      nonce,
+    ],
+  );
 
   useEffect(() => {
     levelStateRef.current = levelState;
   }, [levelState]);
+
+  useEffect(() => {
+    activeLevelRequestsRef.current = {};
+    setLevelState({});
+  }, [levelFetchContextKey]);
 
   useEffect(() => {
     const contextId = ++fetchContextIdRef.current;
@@ -305,6 +335,7 @@ export const SignMainnetHeaderContent = ({
     selectedSupportedLevel,
     showMoreOpen,
     supportedLevels,
+    levelFetchContextKey,
   ]);
 
   useEffect(() => {

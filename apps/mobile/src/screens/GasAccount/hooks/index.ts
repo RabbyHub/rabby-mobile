@@ -9,11 +9,21 @@ import { gasAccountStore, storeApiGasAccount, useGasAccountSign } from './atom';
 import { useRequest } from 'ahooks';
 import { apisHomeTabIndex } from '@/hooks/navigation';
 import { getIsGasAccountLoggedIn } from './loginState';
+import { addressUtils } from '@rabby-wallet/base-utils';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
   const snapshot = gasAccountStore(s => s.snapshot);
   const value = snapshot.accountInfo;
+  const snapshotAccountId = (
+    snapshot.accountInfo as
+      | {
+          account?: {
+            id?: string;
+          };
+        }
+      | undefined
+  )?.account?.id;
   const loading = snapshot.status === 'refreshing' && !snapshot.accountInfo;
   const runFetchGasAccountInfo = useCallback(() => {
     return storeApiGasAccount.refreshSnapshot();
@@ -24,7 +34,12 @@ export const useGasAccountInfo = () => {
       return;
     }
 
-    if (!snapshot.accountInfo || snapshot.dirty) {
+    if (
+      !snapshot.accountInfo ||
+      snapshot.dirty ||
+      (snapshotAccountId &&
+        !addressUtils.isSameAddress(snapshotAccountId, accountId))
+    ) {
       runFetchGasAccountInfo().catch(error => {
         console.error('useGasAccountInfo refresh error', error);
       });
@@ -34,6 +49,7 @@ export const useGasAccountInfo = () => {
     runFetchGasAccountInfo,
     sig,
     snapshot.accountInfo,
+    snapshotAccountId,
     snapshot.dirty,
   ]);
 

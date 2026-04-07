@@ -21,6 +21,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { GasAccountTopUpWaitCallback } from './topUpContinuation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BigNumber from 'bignumber.js';
+import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 
 interface Props {
   visible?: boolean;
@@ -136,6 +137,7 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
         pollCancelRef.current = null;
 
         if (success) {
+          storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
           await onWaitDepositResult({
             type: 'pay',
           });

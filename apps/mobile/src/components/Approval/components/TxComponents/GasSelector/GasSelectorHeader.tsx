@@ -73,6 +73,8 @@ import {
 } from '@/components2024/MiniSignV2';
 import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
 import { GasTokenInfo } from '@/utils/tempo';
+import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
   nonce: number;
@@ -452,6 +454,25 @@ export const GasSelectorHeader = ({
     state => state.showMoreVisible,
   );
   const gasAccountStateInit = useRef(false);
+  const { accountId: gasAccountSessionId } = useGasAccountSign();
+  const { value: currentGasAccountInfo } = useGasAccountInfo();
+  const gasAccountCacheResetKey = useMemo(
+    () =>
+      [
+        gasAccountSessionId || '',
+        currentGasAccountInfo?.account?.balance || '',
+      ].join(':'),
+    [currentGasAccountInfo?.account?.balance, gasAccountSessionId],
+  );
+
+  useEffect(() => {
+    gasAccountStateInit.current = false;
+    setGasAccountIsNotEnough({
+      slow: [false, ''],
+      normal: [false, ''],
+      fast: [false, ''],
+    });
+  }, [gasAccountCacheResetKey]);
 
   useDebounce(
     () => {
@@ -517,6 +538,7 @@ export const GasSelectorHeader = ({
       isCancel,
       isSpeedUp,
       calcGasAccountUsd,
+      gasAccountCacheResetKey,
     ],
   );
 
