@@ -289,8 +289,8 @@ export const ImportSuccessScreen2024 = () => {
   const shouldShowBackupButton = !!state?.showBackup;
   const shouldShowImportMore =
     !shouldShowBackupButton &&
-    !!state?.mnemonics &&
-    (state.isFirstImport || state.brandName === KEYRING_TYPE.HdKeyring);
+    (state.isFirstImport ||
+      (!!state?.mnemonics && state.brandName === KEYRING_TYPE.HdKeyring));
 
   const addressItems: AddressItem[] = useMemo(
     () =>
