@@ -38,7 +38,6 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import useBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
-import { toast } from '@/components2024/Toast';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import useTokenList from '@/store/tokens';
 import usePortfolioList from '@/store/protocols';
@@ -175,19 +174,6 @@ export const ImportSuccessScreen2024 = () => {
     const addresses = Array.isArray(state?.address)
       ? state?.address
       : [state?.address];
-    toast.success(
-      `${t('page.importSuccess.addressCount', { count: addresses.length })} ${t(
-        'page.importSuccess.success',
-        {
-          type: state?.isFirstCreate ? 'Created' : 'Imported',
-        },
-      )}`,
-      {
-        delay: 500,
-        duration: 3000,
-      },
-    );
-
     setImportAddresses(
       addresses.map(address => ({
         address,
