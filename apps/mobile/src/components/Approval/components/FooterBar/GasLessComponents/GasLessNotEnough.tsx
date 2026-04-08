@@ -46,7 +46,7 @@ export const GasLessNotEnough: React.FC<{
   inShowMore,
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
   const setDepositPopupVisible = (visible: boolean) => {
@@ -58,7 +58,7 @@ export const GasLessNotEnough: React.FC<{
 
   const {
     shouldSignWithPendingHardware,
-    pendingHardwareAddressLabel,
+    pendingHardwareBrandLabel,
     isLoggingPendingHardware,
     handleSignWithPendingHardware,
   } = usePendingHardwareGasAccountLogin({
@@ -68,7 +68,7 @@ export const GasLessNotEnough: React.FC<{
     onLoggedIn: onChangeGasAccount,
   });
   const signWithHardwareBrand =
-    pendingHardwareAddressLabel || t('page.home.addAddress.hardwareWallet');
+    pendingHardwareBrandLabel || t('page.home.addAddress.hardwareWallet');
   const signWithHardwareTip = t(
     'page.signFooterBar.gasAccount.signWithHardwareWalletToUse',
     {
@@ -108,30 +108,30 @@ export const GasLessNotEnough: React.FC<{
     button = switchGasAccountButton;
   }
 
+  const useHardwareSignTipStyle = shouldSignWithPendingHardware;
+  const useRedTipStyle = !useHardwareSignTipStyle && !!inShowMore;
+
   return (
     <>
       <View
         style={[
           styles.container,
-          inShowMore && {
-            backgroundColor: colors2024['red-light-1'],
-          },
+          useHardwareSignTipStyle && styles.hardwareSignContainer,
+          useRedTipStyle && styles.redTipContainer,
         ]}>
         <View
           style={[
             styles.tipTriangle,
-            inShowMore && {
-              borderBottomColor: colors2024['red-light-1'],
-            },
+            useRedTipStyle && styles.redTipTriangle,
+            useHardwareSignTipStyle && styles.hardwareSignTipTriangle,
           ]}
         />
         <View style={[styles.textWrap, button && styles.textWrapWithButton]}>
           <Text
             style={[
               styles.text,
-              inShowMore && {
-                color: colors2024['red-default'],
-              },
+              useHardwareSignTipStyle && styles.hardwareSignText,
+              useRedTipStyle && styles.redTipText,
             ]}>
             {tipText}
           </Text>
@@ -217,6 +217,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     textWrapWithButton: {
       marginRight: 12,
+    },
+    redTipContainer: {
+      backgroundColor: colors2024['red-light-1'],
+    },
+    redTipTriangle: {
+      borderBottomColor: colors2024['red-light-1'],
+    },
+    redTipText: {
+      color: colors2024['red-default'],
+    },
+    hardwareSignContainer: {
+      backgroundColor: colors2024['neutral-bg-2'],
+    },
+    hardwareSignText: {
+      color: colors2024['neutral-title-1'],
+    },
+    hardwareSignTipTriangle: {
+      borderBottomColor: colors2024['neutral-bg-2'],
     },
 
     gasAccountBtn: {

@@ -8,12 +8,22 @@ import {
 } from '@/screens/GasAccount/hooks';
 import { usePendingHardwareAccount } from '@/screens/GasAccount/hooks/atom';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
-import { ellipsisAddress } from '@/utils/address';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { BRAND_ALIAS_TYPE_TEXT } from '@rabby-wallet/keyring-utils';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+const getHardwareBrandLabel = (brandName?: string) => {
+  if (!brandName) {
+    return '';
+  }
+  return (
+    BRAND_ALIAS_TYPE_TEXT[brandName as keyof typeof BRAND_ALIAS_TYPE_TEXT] ||
+    brandName
+  );
+};
 
 export const usePendingHardwareGasAccountLogin = ({
   enabled = false,
@@ -85,12 +95,8 @@ export const usePendingHardwareGasAccountLogin = ({
     isInsufficientOnly &&
     isAddressMismatch &&
     hasEnoughPendingHardwareBalance;
-  const pendingHardwareAddressLabel = useMemo(
-    () =>
-      pendingHardwareLoginAccount?.address
-        ? ellipsisAddress(pendingHardwareLoginAccount.address)
-        : '',
-    [pendingHardwareLoginAccount?.address],
+  const pendingHardwareBrandLabel = getHardwareBrandLabel(
+    pendingHardwareLoginAccount?.brandName,
   );
 
   const handleSignWithPendingHardware = useCallback(async () => {
@@ -126,7 +132,7 @@ export const usePendingHardwareGasAccountLogin = ({
 
   return {
     shouldSignWithPendingHardware,
-    pendingHardwareAddressLabel,
+    pendingHardwareBrandLabel,
     isLoggingPendingHardware,
     handleSignWithPendingHardware,
   };
