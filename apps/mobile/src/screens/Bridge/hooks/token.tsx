@@ -186,9 +186,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     [switchToChain],
   );
 
-  if (!toChain && toToken) {
+  useEffect(() => {
+    if (!toChain || !toToken) {
+      return;
+    }
     wrappedSwitchToChain();
-  }
+  }, [toChain, toToken, wrappedSwitchToChain]);
 
   const [amount, setAmount] = useState('');
 

@@ -1,6 +1,6 @@
 import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 export const fixedCustomGasAtom = atomByMMKV(
   'miniSignCustomGas',
@@ -126,13 +126,16 @@ export const useClearMiniGasStateEffect = ({
     return reset;
   }, [reset]);
 
-  const [previousChainServerId, setPreviousChainServerId] =
-    useState(chainServerId);
+  const previousChainServerIdRef = useRef(chainServerId);
 
-  if (previousChainServerId !== chainServerId) {
-    setPreviousChainServerId(chainServerId);
+  useEffect(() => {
+    if (previousChainServerIdRef.current === chainServerId) {
+      return;
+    }
+
+    previousChainServerIdRef.current = chainServerId;
     if (miniGasLevel === 'custom') {
       reset();
     }
-  }
+  }, [chainServerId, miniGasLevel, reset]);
 };

@@ -56,19 +56,20 @@ const WithDrawInitContent = ({
 
   const changeSelectedWithdraw = React.useCallback(
     (item: WithdrawListAddressItem) => {
-      setSelectAddressChainList(pre => {
-        if (pre?.recharge_addr !== item.recharge_addr) {
-          setChain(undefined);
-        }
-        return item;
-      });
+      if (selectAddressChainList?.recharge_addr !== item.recharge_addr) {
+        setChain(undefined);
+      }
+      setSelectAddressChainList(item);
     },
-    [],
+    [selectAddressChainList?.recharge_addr],
   );
 
-  if (!selectAddressChainList && withdrawList?.length) {
+  useEffect(() => {
+    if (selectAddressChainList || !withdrawList?.length) {
+      return;
+    }
     setSelectAddressChainList(withdrawList[0]);
-  }
+  }, [selectAddressChainList, withdrawList]);
 
   const withdraw = React.useCallback(async () => {
     if (!sig || !accountId || loading) {

@@ -921,10 +921,9 @@ runIIFEFunc(fetchMarketData);
 runIIFEFunc(fetchFavoriteMarkets);
 
 export function startSubscribePerpsOnAppState() {
-  const sdk = apisPerps.getPerpsSDK();
   const subscription = AppState.addEventListener('change', nextAppState => {
     // Pass the state string ('active', 'background', 'inactive') directly
-    sdk.ws.handleAppStateChange(nextAppState);
+    apisPerps.getPerpsSDK().ws.handleAppStateChange(nextAppState);
   });
 
   return () => {
@@ -944,9 +943,12 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
   const isMounted = useRef(false);
   const currentHasFetchAddresses = useRef<string[]>([]);
   const hasSelectedDefaultAccount = useRef(false);
+  const top10SubscriptionRef = useRef<(() => void) | null>(null);
+  const top10TimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const addAddressesSubscriptionsRef = useRef<Array<() => void>>([]);
 
   useEffect(() => {
-    eventBus.on(EVENTS.PERPS.LOG_OUT, (account: Account | null) => {
+    const handleLogout = (account: Account | null) => {
       const remainAccounts = top10Accounts.filter(
         item =>
           !(
@@ -955,25 +957,51 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
           ),
       );
       handleSelectDefaultAccount(remainAccounts);
-    });
+    };
+
+    eventBus.on(EVENTS.PERPS.LOG_OUT, handleLogout);
     return () => {
-      eventBus.removeAllListeners(EVENTS.PERPS.LOG_OUT);
+      eventBus.removeListener(EVENTS.PERPS.LOG_OUT, handleLogout);
     };
   }, [top10Accounts]);
 
   useEffect(() => {
-    eventBus.on('PERPS_ADD_ADDRESSES', (addresses: string[]) => {
+    const handleAddAddresses = (addresses: string[]) => {
       const sdk = apisPerps.getPerpsSDK();
-      sdk.ws.subscribeToAllDexsClearinghouseState(addresses, data => {
-        setClearinghouseStateMap({
-          address: data.user,
-          data: formatAllDexsClearinghouseState(data.clearinghouseStates),
-        });
-      });
-    });
+      const { unsubscribe } = sdk.ws.subscribeToAllDexsClearinghouseState(
+        addresses,
+        data => {
+          setClearinghouseStateMap({
+            address: data.user,
+            data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+          });
+        },
+      );
+
+      addAddressesSubscriptionsRef.current.push(unsubscribe);
+    };
+
+    eventBus.on('PERPS_ADD_ADDRESSES', handleAddAddresses);
 
     return () => {
-      eventBus.removeAllListeners('PERPS_ADD_ADDRESSES');
+      eventBus.removeListener('PERPS_ADD_ADDRESSES', handleAddAddresses);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (top10TimeoutRef.current) {
+        clearTimeout(top10TimeoutRef.current);
+        top10TimeoutRef.current = null;
+      }
+
+      top10SubscriptionRef.current?.();
+      top10SubscriptionRef.current = null;
+
+      addAddressesSubscriptionsRef.current.forEach(unsubscribe => {
+        unsubscribe();
+      });
+      addAddressesSubscriptionsRef.current = [];
     };
   }, []);
 
@@ -985,32 +1013,41 @@ export const useSubscribePosition = (sortedAccounts: Account[]) => {
       isMounted.current = true;
       const sdk = apisPerps.getPerpsSDK();
       // maybe websocket is bad, no fetch data
-      let timeout = setTimeout(() => {
+      top10TimeoutRef.current = setTimeout(() => {
+        top10TimeoutRef.current = null;
         if (!hasSelectedDefaultAccount.current) {
           hasSelectedDefaultAccount.current = true;
           handleSelectDefaultAccount(top10Accounts);
         }
       }, 5 * 1000);
       const top10Addresses = top10Accounts.map(item => item.address);
-      sdk.ws.subscribeToAllDexsClearinghouseState(top10Addresses, data => {
-        if (!currentHasFetchAddresses.current.includes(data.user)) {
-          currentHasFetchAddresses.current.push(data.user);
-          if (
-            currentHasFetchAddresses.current.length === top10Addresses.length
-          ) {
-            setIsFetchAllDone(true);
-            clearTimeout(timeout);
-            if (!hasSelectedDefaultAccount.current) {
-              hasSelectedDefaultAccount.current = true;
-              handleSelectDefaultAccount(top10Accounts);
+      const { unsubscribe } = sdk.ws.subscribeToAllDexsClearinghouseState(
+        top10Addresses,
+        data => {
+          if (!currentHasFetchAddresses.current.includes(data.user)) {
+            currentHasFetchAddresses.current.push(data.user);
+            if (
+              currentHasFetchAddresses.current.length === top10Addresses.length
+            ) {
+              setIsFetchAllDone(true);
+              if (top10TimeoutRef.current) {
+                clearTimeout(top10TimeoutRef.current);
+                top10TimeoutRef.current = null;
+              }
+              if (!hasSelectedDefaultAccount.current) {
+                hasSelectedDefaultAccount.current = true;
+                handleSelectDefaultAccount(top10Accounts);
+              }
             }
           }
-        }
-        setClearinghouseStateMap({
-          address: data.user,
-          data: formatAllDexsClearinghouseState(data.clearinghouseStates),
-        });
-      });
+          setClearinghouseStateMap({
+            address: data.user,
+            data: formatAllDexsClearinghouseState(data.clearinghouseStates),
+          });
+        },
+      );
+
+      top10SubscriptionRef.current = unsubscribe;
     }
   }, [top10Accounts]);
 };
