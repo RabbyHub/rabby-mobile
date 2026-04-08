@@ -54,7 +54,7 @@ import { DuplicateAddressModal } from './screens/Address/components/DuplicateAdd
 
 import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
 import { QrCodeModal } from './components2024/QrCodeModal/QrCodeModal';
-import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
+import { FloatingDiagnosticsPanel } from './screens/Settings/components/FloatingDiagnosticsPanel';
 
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 import { toast } from './components2024/Toast';
@@ -499,7 +499,7 @@ export default function AppNavigation() {
       {/** @warning put all business stub components before this modal */}
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />
-      <FloatViewAutoLockCount />
+      <FloatingDiagnosticsPanel />
       <GlobalMiniApproval />
       <GlobalMiniSignTypedDataPortal />
       <GlobalTipsPopup />
