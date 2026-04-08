@@ -31,7 +31,7 @@ export function TipFeedbackByScreenshot({ style }: RNViewProps) {
           ) : (
             <RcBulb style={styles.iconBulb} />
           )}
-          Tips
+          {t('page.nextComponent.homeCenterTipScreenshot.title')}
         </Text>
         <TouchableOpacity
           onPress={() => {
