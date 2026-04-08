@@ -31,6 +31,9 @@ import {
 type GasSelectorHeaderProps = React.ComponentProps<
   typeof import('./GasSelectorHeader').GasSelectorHeader
 >;
+type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
+  freeGasAvailable?: boolean;
+};
 
 export const SignMainnetHeaderContent = ({
   gasList,
@@ -41,6 +44,7 @@ export const SignMainnetHeaderContent = ({
   gasAccountCost,
   gasCostUsdStr,
   nativeTokenInsufficient,
+  freeGasAvailable,
   gasLimit,
   nonce,
   onChange,
@@ -73,6 +77,7 @@ export const SignMainnetHeaderContent = ({
   gasAccountCost?: GasSelectorHeaderProps['gasAccountCost'];
   gasCostUsdStr: string;
   nativeTokenInsufficient?: boolean;
+  freeGasAvailable?: boolean;
   gasLimit: GasSelectorHeaderProps['gasLimit'];
   nonce: GasSelectorHeaderProps['nonce'];
   onChange: GasSelectorHeaderProps['onChange'];
@@ -108,6 +113,7 @@ export const SignMainnetHeaderContent = ({
     nativeTokenInsufficient: !!nativeTokenInsufficient,
     gasAccountChainSupported:
       !!gasAccountCost && !gasAccountCost.chain_not_support,
+    freeGasAvailable,
     legacyGasMethod: gasMethod,
   });
   const gasAccountChainSupported =
@@ -406,6 +412,7 @@ export const SignMainnetHeaderContent = ({
             selectedGasCostUsdStr={gasCostUsdStr}
             gasAccountCost={gasAccountCost}
             nativeTokenInsufficient={nativeTokenInsufficient}
+            freeGasAvailable={freeGasAvailable}
             levelState={levelState}
             onEditCustomGas={() => {
               setCustomVisible(true);
@@ -490,7 +497,9 @@ export const SignMainnetHeaderContent = ({
  * and custom-sheet components, so it no longer depends on legacy bridge atoms
  * or the old GasSelectorHeader runtime behavior.
  */
-export const SignMainnetGasSelectorHeader = (props: GasSelectorHeaderProps) => {
+export const SignMainnetGasSelectorHeader = (
+  props: SignMainnetGasSelectorHeaderProps,
+) => {
   const gasCostUsdStr = formatGasHeaderUsdValue(
     String(props.gas.gasCostUsd || 0),
   );
@@ -505,6 +514,7 @@ export const SignMainnetGasSelectorHeader = (props: GasSelectorHeaderProps) => {
       gasAccountCost={props.gasAccountCost}
       gasCostUsdStr={gasCostUsdStr}
       nativeTokenInsufficient={props.nativeTokenInsufficient}
+      freeGasAvailable={props.freeGasAvailable}
       gasLimit={props.gasLimit}
       nonce={props.nonce}
       onChange={props.onChange}

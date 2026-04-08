@@ -9,6 +9,7 @@ type ResolveApprovalGasMethodParams = {
   mode?: ApprovalGasDisplayMode;
   nativeTokenInsufficient: boolean;
   gasAccountChainSupported: boolean;
+  freeGasAvailable?: boolean;
   legacyGasMethod?: ApprovalGasMethod;
 };
 
@@ -17,6 +18,7 @@ type ResolveApprovalGasLevelMethodParams = {
   isCustom?: boolean;
   nativeTokenInsufficient: boolean;
   gasAccountChainSupported: boolean;
+  freeGasAvailable?: boolean;
   currentGasMethod?: ApprovalGasMethod;
 };
 
@@ -39,6 +41,7 @@ export const resolveApprovalGasMethod = ({
   mode = APPROVAL_GAS_DISPLAY_MODE,
   nativeTokenInsufficient,
   gasAccountChainSupported,
+  freeGasAvailable = false,
   legacyGasMethod = 'native',
 }: ResolveApprovalGasMethodParams): ApprovalGasMethod => {
   if (!isApprovalSmartGasDisplayEnabled(mode)) {
@@ -46,6 +49,10 @@ export const resolveApprovalGasMethod = ({
   }
 
   if (!nativeTokenInsufficient) {
+    return 'native';
+  }
+
+  if (freeGasAvailable && legacyGasMethod !== 'gasAccount') {
     return 'native';
   }
 
@@ -57,6 +64,7 @@ export const resolveApprovalGasLevelMethod = ({
   isCustom = false,
   nativeTokenInsufficient,
   gasAccountChainSupported,
+  freeGasAvailable = false,
   currentGasMethod = 'native',
 }: ResolveApprovalGasLevelMethodParams): ApprovalGasMethod => {
   if (isCustom) {
@@ -67,6 +75,7 @@ export const resolveApprovalGasLevelMethod = ({
     mode,
     nativeTokenInsufficient,
     gasAccountChainSupported,
+    freeGasAvailable,
     legacyGasMethod: currentGasMethod,
   });
 };

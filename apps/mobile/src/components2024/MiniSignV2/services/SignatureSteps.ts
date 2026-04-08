@@ -1002,12 +1002,18 @@ export class SignatureSteps {
         id: prepared.txsCalc[0]?.tx.chainId,
       })!;
       const hasCustomRPC = apiCustomRPC.hasCustomRPC(chain?.enum);
+      const freeGasAvailable = !!prepared.gasless?.is_gasless;
       const gasAccountSupported =
         !!prepared.gasAccount?.balance_is_enough &&
         !prepared.gasAccount.chain_not_support &&
         !!prepared.gasAccount.is_gas_account &&
         !(prepared.gasAccount as any).err_msg;
-      if (prepared.isGasNotEnough && !hasCustomRPC && gasAccountSupported) {
+      if (
+        prepared.isGasNotEnough &&
+        !freeGasAvailable &&
+        !hasCustomRPC &&
+        gasAccountSupported
+      ) {
         switchGasAccount = true;
       }
     }

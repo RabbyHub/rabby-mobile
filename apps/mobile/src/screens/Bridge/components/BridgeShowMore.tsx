@@ -489,14 +489,12 @@ export const DirectSignGasInfo = ({
     !!ctx?.gasAccount.is_gas_account;
 
   const showGasLess = isReady && (isGasNotEnough || !!gasLessConfig);
+  const payGasByGasAccount = ctx?.gasMethod === 'gasAccount';
 
-  const showGasLessToSign =
-    showGasLess && !canGotoUseGasAccount && canUseGasLess;
+  const showGasLessToSign = showGasLess && !payGasByGasAccount && canUseGasLess;
 
   const useGasLess =
     (isGasNotEnough || !!gasLessConfig) && !!canUseGasLess && !!ctx?.useGasless;
-
-  const payGasByGasAccount = ctx?.gasMethod === 'gasAccount';
 
   const canDepositUseGasAccount =
     // isSupportedAddr &&
@@ -834,6 +832,7 @@ export const DirectSignGasInfo = ({
             totalGasCost.gasCostUsd.toString(10),
           )}
           nativeTokenInsufficient={isGasNotEnough}
+          freeGasAvailable={canUseGasLess}
         />
       ) : (
         <ListItem
