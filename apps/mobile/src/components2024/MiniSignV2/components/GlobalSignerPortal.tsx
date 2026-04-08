@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Dimensions, Modal, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { MiniWaiting } from '@/components/Approval/components/MiniSignTx/MiniWaiting';
@@ -14,7 +14,8 @@ import MiniSignTxV2 from '@/components/Approval/components/MiniSignTx/MiniSignTx
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import AutoLockView from '@/components/AutoLockView';
-import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 
 /**
  * Renders the signing UI for a single SignatureManager instance.
@@ -86,10 +87,6 @@ const SignerPortalItem: React.FC = () => {
 
   const showDirectTransparentOverlay =
     ctx?.mode === 'direct' && status !== 'ready' && status !== 'error';
-  useRegisterBlockingModal(
-    MODAL_GATE_IDS.miniSignDirectOverlay,
-    showDirectTransparentOverlay,
-  );
 
   if (!config?.account || state.status === 'idle' || !ctx?.txs.length) {
     return null;
@@ -152,13 +149,14 @@ const SignerPortalItem: React.FC = () => {
         ga={config?.ga}
       />
       {showDirectTransparentOverlay ? (
-        <Modal
+        <TrackedModal
+          modalId={MODAL_GATE_IDS.miniSignDirectOverlay}
           visible={true}
           transparent
           animationType="fade"
           statusBarTranslucent>
           <View style={styles.transparentOverlay} />
-        </Modal>
+        </TrackedModal>
       ) : null}
     </>
   );

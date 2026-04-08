@@ -1,13 +1,8 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
-import {
-  Modal,
-  Pressable,
-  StyleProp,
-  StyleSheet,
-  ViewStyle,
-} from 'react-native';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { Pressable, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 
 export const SwapModal = ({
   visible,
@@ -26,11 +21,9 @@ export const SwapModal = ({
   overlayClose?: boolean;
 }>) => {
   const { styles } = useThemeStyles(getStyles);
-
-  useRegisterBlockingModal(MODAL_GATE_IDS.swapModal, visible);
-
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.swapModal}
       transparent
       animationType="fade"
       onRequestClose={onCancel}
@@ -42,7 +35,7 @@ export const SwapModal = ({
         {children}
         {/* <Inner onCancel={onCancel} onConfirm={onConfirm} /> */}
       </Pressable>
-    </Modal>
+    </TrackedModal>
   );
 };
 

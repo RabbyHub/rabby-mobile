@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -15,7 +15,8 @@ import TouchableView from '../Touchable/TouchableView';
 import { useVerifyByBiometrics } from '@/hooks/biometrics';
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { Text } from '@/components/Typography';
-import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 
 const isIOS = DeviceUtils.isIOS();
 /**
@@ -33,10 +34,12 @@ export default function BiometricsStubModal() {
     abortBiometricsVerification,
   } = useVerifyByBiometrics();
 
-  useRegisterBlockingModal(MODAL_GATE_IDS.biometricsStub, shouldShowStubModal);
-
   return (
-    <Modal visible={shouldShowStubModal} transparent animationType="fade">
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.biometricsStub}
+      visible={shouldShowStubModal}
+      transparent
+      animationType="fade">
       <TouchableOpacity
         style={styles.overlay}
         onPress={() => {
@@ -95,7 +98,7 @@ export default function BiometricsStubModal() {
           </View>
         </TouchableOpacity>
       </TouchableOpacity>
-    </Modal>
+    </TrackedModal>
   );
 }
 

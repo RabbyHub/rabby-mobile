@@ -5,6 +5,7 @@ import { runDevIIFEFunc } from '@/core/utils/store';
 
 type ModalGateState = {
   blockingModalCountMap: Record<string, number>;
+  debugOverlayEnabled: boolean;
 };
 
 export const MODAL_GATE_IDS = {
@@ -19,6 +20,7 @@ export const MODAL_GATE_IDS = {
 
 const modalGateStore = zCreate<ModalGateState>(() => ({
   blockingModalCountMap: {},
+  debugOverlayEnabled: false,
 }));
 
 function markBlockingModalVisible(id: string, visible: boolean) {
@@ -67,7 +69,7 @@ export function hasVisibleBlockingModal(options?: { excludeIds?: string[] }) {
 }
 
 export function useVisibleBlockingModalIds() {
-  return modalGateStore(s => Object.keys(s.blockingModalCountMap));
+  return modalGateStore(s => Object.keys(s.blockingModalCountMap).sort());
 }
 
 export function useRegisterBlockingModal(id: string, visible: boolean) {
@@ -84,8 +86,28 @@ export function useRegisterBlockingModal(id: string, visible: boolean) {
   }, [id, visible]);
 }
 
+export function setModalGateDebugOverlayEnabled(enabled: boolean) {
+  modalGateStore.setState(prev => {
+    if (prev.debugOverlayEnabled === enabled) {
+      return prev;
+    }
+
+    return {
+      ...prev,
+      debugOverlayEnabled: enabled,
+    };
+  });
+}
+
+export function useModalGateDebugOverlayEnabled() {
+  return modalGateStore(s => s.debugOverlayEnabled);
+}
+
 runDevIIFEFunc(() => {
   (globalThis as any).__dumpBlockingModalIds = () => {
     return getVisibleBlockingModalIds();
+  };
+  (globalThis as any).__setModalDebugOverlayEnabled = (enabled: boolean) => {
+    setModalGateDebugOverlayEnabled(!!enabled);
   };
 });

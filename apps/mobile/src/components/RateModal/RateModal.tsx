@@ -2,7 +2,6 @@ import {
   Dimensions,
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -24,7 +23,8 @@ import {
 import { toast } from '@/components2024/Toast';
 import PressableStar from './RateStar';
 import { Text, TextInput } from '@/components/Typography';
-import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 
 const LOGO_SIZE = 67;
 
@@ -72,10 +72,9 @@ export function RateModal() {
     return !wantFeedback || !userFeedback.length;
   }, [wantFeedback, userFeedback]);
 
-  useRegisterBlockingModal(MODAL_GATE_IDS.rateGuide, rateModalShown);
-
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.rateGuide}
       visible={rateModalShown}
       transparent
       animationType="fade"
@@ -244,7 +243,7 @@ export function RateModal() {
           </View>
         </KeyboardAvoidingView>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 }
 

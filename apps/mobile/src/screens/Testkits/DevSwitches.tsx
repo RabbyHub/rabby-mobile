@@ -10,7 +10,6 @@ import {
   Alert,
   Dimensions,
   Keyboard,
-  Modal,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -59,9 +58,11 @@ import {
 } from '@/components/Screenshot/hooks';
 import {
   MODAL_GATE_IDS,
-  useRegisterBlockingModal,
+  setModalGateDebugOverlayEnabled,
+  useModalGateDebugOverlayEnabled,
   useVisibleBlockingModalIds,
 } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
@@ -364,8 +365,8 @@ function Reset0331AnalyticsSnapshotModal({
 function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [debugModalVisible, setDebugModalVisible] = useState(false);
-  useRegisterBlockingModal(MODAL_GATE_IDS.debugReproModalA, debugModalVisible);
   const visibleBlockingModalIds = useVisibleBlockingModalIds();
+  const modalDebugOverlayEnabled = useModalGateDebugOverlayEnabled();
 
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
@@ -485,6 +486,21 @@ function DevSwitchAboutScreenProtection() {
           then close A.
         </Text>
 
+        <TouchableOpacity
+          style={[styles.switchRowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            setModalGateDebugOverlayEnabled(!modalDebugOverlayEnabled);
+          }}>
+          <AppSwitch2024
+            onPress={evt => evt.stopPropagation()}
+            value={modalDebugOverlayEnabled}
+            onValueChange={nextVal => {
+              setModalGateDebugOverlayEnabled(nextVal);
+            }}
+          />
+          <Text style={styles.switchLabel}>Show Modal Debug Overlay</Text>
+        </TouchableOpacity>
+
         <Text
           style={[
             styles.label,
@@ -498,7 +514,8 @@ function DevSwitchAboutScreenProtection() {
         </Text>
       </View>
 
-      <Modal
+      <TrackedModal
+        modalId={MODAL_GATE_IDS.debugReproModalA}
         visible={debugModalVisible}
         transparent
         animationType="fade"
@@ -548,7 +565,7 @@ function DevSwitchAboutScreenProtection() {
             />
           </View>
         </View>
-      </Modal>
+      </TrackedModal>
     </View>
   );
 }
