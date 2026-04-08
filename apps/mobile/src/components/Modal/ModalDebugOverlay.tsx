@@ -9,11 +9,16 @@ import {
 
 export function ModalDebugOverlay() {
   const enabled = useModalGateDebugOverlayEnabled();
-  const visibleModalIds = useVisibleBlockingModalIds();
 
   if (!__DEV__ || !enabled) {
     return null;
   }
+
+  return <ModalDebugOverlayContent />;
+}
+
+function ModalDebugOverlayContent() {
+  const visibleModalIds = useVisibleBlockingModalIds();
 
   return (
     <View pointerEvents="none" style={styles.overlay}>

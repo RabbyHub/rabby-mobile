@@ -56,10 +56,10 @@ import {
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
 import {
+  getVisibleBlockingModalIds,
   MODAL_GATE_IDS,
   setModalGateDebugOverlayEnabled,
   useModalGateDebugOverlayEnabled,
-  useVisibleBlockingModalIds,
 } from '@/utils/modalGate';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
@@ -364,7 +364,6 @@ function Reset0331AnalyticsSnapshotModal({
 function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [debugModalVisible, setDebugModalVisible] = useState(false);
-  const visibleBlockingModalIds = useVisibleBlockingModalIds();
   const modalDebugOverlayEnabled = useModalGateDebugOverlayEnabled();
 
   const { forceAllowScreenshot } = useExpScreenCapture();
@@ -500,16 +499,27 @@ function DevSwitchAboutScreenProtection() {
           <Text style={styles.switchLabel}>Show Modal Debug Overlay</Text>
         </TouchableOpacity>
 
+        <Button
+          title={'Log Blocking Modals'}
+          type="ghost"
+          height={48}
+          containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            console.debug(
+              '[modal-gate] blocking modals snapshot',
+              getVisibleBlockingModalIds(),
+            );
+          }}
+        />
+
         <Text
           style={[
             styles.label,
             styles.devModalHint,
             { color: colors2024['neutral-foot'] },
           ]}>
-          Blocking Modals:{' '}
-          {visibleBlockingModalIds.length
-            ? visibleBlockingModalIds.join(', ')
-            : 'none'}
+          Use the overlay or console snapshot instead of a live list here. This
+          page is already heavy, so the debug signal stays opt-in.
         </Text>
       </View>
 
