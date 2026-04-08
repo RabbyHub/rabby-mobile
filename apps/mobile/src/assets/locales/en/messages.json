@@ -469,7 +469,7 @@
       "addressCount_one": "{{count}} Wallet",
       "addressCount_other": "{{count}} Wallets",
       "success": "{{type}} successfully!",
-      "importMore": "Import more Wallets",
+      "importMore": "Add more wallet from this phrase",
       "viewAddress": "View Wallet",
       "addressCount": "{{count}} Addresses",
       "titleSingle": "Your wallet has been {{status}} 🚀",
