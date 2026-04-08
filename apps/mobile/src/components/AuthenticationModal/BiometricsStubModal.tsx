@@ -15,6 +15,7 @@ import TouchableView from '../Touchable/TouchableView';
 import { useVerifyByBiometrics } from '@/hooks/biometrics';
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { Text } from '@/components/Typography';
+import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
 
 const isIOS = DeviceUtils.isIOS();
 /**
@@ -31,6 +32,8 @@ export default function BiometricsStubModal() {
     verifyByBiometrics,
     abortBiometricsVerification,
   } = useVerifyByBiometrics();
+
+  useRegisterBlockingModal(MODAL_GATE_IDS.biometricsStub, shouldShowStubModal);
 
   return (
     <Modal visible={shouldShowStubModal} transparent animationType="fade">

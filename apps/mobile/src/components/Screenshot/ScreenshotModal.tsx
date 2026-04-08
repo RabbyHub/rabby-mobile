@@ -23,6 +23,7 @@ import { toast } from '@/components2024/Toast';
 
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import { Text } from '@/components/Typography';
+import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
 
 function SwitchTextLine({
   checked,
@@ -107,6 +108,8 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
   } = useSubmitFeedbackOnScreenshot();
 
   const [skipInNext1Day, setSkipInNext1Day] = useState(false);
+
+  useRegisterBlockingModal(MODAL_GATE_IDS.screenshotFeedback, globalModalShown);
 
   useEffect(() => {
     if (globalModalShown) {

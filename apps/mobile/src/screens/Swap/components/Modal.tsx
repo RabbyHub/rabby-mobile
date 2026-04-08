@@ -1,5 +1,6 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
+import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
 import {
   Modal,
   Pressable,
@@ -25,6 +26,9 @@ export const SwapModal = ({
   overlayClose?: boolean;
 }>) => {
   const { styles } = useThemeStyles(getStyles);
+
+  useRegisterBlockingModal(MODAL_GATE_IDS.swapModal, visible);
+
   return (
     <Modal
       transparent
