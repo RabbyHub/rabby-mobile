@@ -5,26 +5,38 @@ if (!hashcheckCMakeScript.exists()) {
     throw new GradleException("==> [Reproducible Build] ERROR: Required script not found at ${hashcheckCMakeScript.absolutePath}. Aborting.")
 }
 
-subprojects { sub ->
-  sub.afterEvaluate { p ->
-    if (p.plugins.hasPlugin('com.android.library') || p.plugins.hasPlugin('com.android.application')) {
-      try {
-        // 我们需要为所有构建类型都应用这个脚本
-        p.android.buildTypes.all { buildType ->
-          def cmakeBlock = buildType.externalNativeBuild.cmake
-          def currentArgs = cmakeBlock.arguments ?: []
+def cmakeArg = "-C${hashcheckCMakeScript.absolutePath}"
 
-          def cmakeArg = "-C${hashcheckCMakeScript.absolutePath}"
-
-          if (!currentArgs.contains(cmakeArg)) {
-            currentArgs.add(cmakeArg)
-            cmakeBlock.arguments = currentArgs
-            println "==> [Reproducible Build] Patched CMake config for project: ${p.name}, buildType: ${buildType.name}"
-          }
+def patchAndroidProject = { p, ext ->
+    try {
+        ext.buildTypes.each { buildType ->
+            def cmakeBlock = buildType.externalNativeBuild?.cmake
+            if (cmakeBlock != null) {
+                def currentArgs = cmakeBlock.arguments ?: []
+                if (!currentArgs.contains(cmakeArg)) {
+                    currentArgs.add(cmakeArg)
+                    cmakeBlock.arguments = currentArgs
+                    println "==> [Reproducible Build] Patched CMake config for project: ${p.path}, buildType: ${buildType.name}"
+                }
+            }
         }
-      } catch (Exception e) {
-        println "==> [Reproducible Build] WARN: Failed to patch ${p.name}: ${e.message}"
-      }
+    } catch (Exception e) {
+        println "==> [Reproducible Build] WARN: Failed to patch ${p.path}: ${e.message}"
     }
-  }
+}
+
+subprojects { sub ->
+    sub.pluginManager.withPlugin('com.android.application') {
+        def androidComponents = sub.extensions.findByName('androidComponents')
+        androidComponents?.finalizeDsl { ext ->
+            patchAndroidProject(sub, ext)
+        }
+    }
+
+    sub.pluginManager.withPlugin('com.android.library') {
+        def androidComponents = sub.extensions.findByName('androidComponents')
+        androidComponents?.finalizeDsl { ext ->
+            patchAndroidProject(sub, ext)
+        }
+    }
 }
