@@ -275,6 +275,21 @@ const createSnapshotRefreshRequestId = () => {
 const isLatestSnapshotRefreshRequest = (requestId: number) =>
   requestId === latestSnapshotRefreshRequestId;
 
+const triggerReLoginAfterInvalidSession = async () => {
+  try {
+    const { autoLoginGasAccountIfNeeded, resetAutoLoginFlag } = await import(
+      '@/utils/autoLoginGasAccount'
+    );
+    resetAutoLoginFlag();
+    await autoLoginGasAccountIfNeeded();
+  } catch (error) {
+    console.error(
+      'autoLoginGasAccountIfNeeded after invalidateSession error',
+      error,
+    );
+  }
+};
+
 const refreshSnapshot = async () => {
   const requestId = createSnapshotRefreshRequestId();
   const { sig, accountId } = gasAccountStore.getState().session;
@@ -310,7 +325,7 @@ const refreshSnapshot = async () => {
       return result;
     }
 
-    storeApiGasAccount.invalidateSession();
+    storeApiGasAccount.invalidateSession({ recheckAccounts: true });
     return undefined;
   } catch (error: any) {
     const latestSession = gasAccountStore.getState().session;
@@ -324,7 +339,7 @@ const refreshSnapshot = async () => {
 
     gasAccountStore.setState(prev => failSnapshotRefreshState(prev));
     if (error?.message?.includes?.('gas account verified failed')) {
-      storeApiGasAccount.invalidateSession();
+      storeApiGasAccount.invalidateSession({ recheckAccounts: true });
       return undefined;
     }
     throw error;
@@ -528,10 +543,13 @@ export const storeApiGasAccount = {
     isGasAccountHistoryRefreshEnabled = enabled;
   },
   loadMoreHistory,
-  invalidateSession() {
+  invalidateSession(options?: { recheckAccounts?: boolean }) {
     gasAccountService.setGasAccountSig();
     gasAccountService.setCurrentBalanceState();
     gasAccountStore.setState(prev => invalidateSessionState(prev));
+    if (options?.recheckAccounts) {
+      triggerReLoginAfterInvalidSession();
+    }
   },
   setLoginVisible(valOrFunc: UpdaterOrPartials<boolean>) {
     setVisibleFor('loginVisible', valOrFunc);

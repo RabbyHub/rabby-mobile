@@ -517,6 +517,7 @@ const MiniSignTxV2 = ({
                 checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
                 account={currentAccount}
                 nativeTokenInsufficient={nativeTokenInsufficient}
+                freeGasAvailable={canUseGasLess}
               />
             </View>
           </View>

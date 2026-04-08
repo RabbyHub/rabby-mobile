@@ -2,6 +2,9 @@ type MiniSignGasState = {
   gasMethod?: 'native' | 'gasAccount';
   useGasless?: boolean;
   isGasNotEnough?: boolean;
+  gasless?: {
+    is_gasless?: boolean;
+  } | null;
   gasAccount?: {
     chain_not_support?: boolean;
   } | null;

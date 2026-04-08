@@ -28,10 +28,7 @@ import {
   eventBus,
 } from '@/utils/events';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
-import {
-  shouldAutoSwitchToGasAccountFromGasless,
-  shouldShowGasLessNotEnough,
-} from '../FooterBar/gasLessDecision';
+import { shouldAutoSwitchToGasAccountFromGasless } from '../FooterBar/gasLessDecision';
 import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
 import RcCheckSecurity from '@/assets2024/icons/common/check-security.svg';
 import RcCheckSecurityDark from '@/assets2024/icons/common/check-security-dark.svg';
@@ -317,6 +314,7 @@ export const MiniFooterBar: React.FC<Props> = ({
         showGasLess &&
         isGasNotEnough &&
         directSubmit &&
+        !canUseGasLess &&
         (canGotoUseGasAccount || (isSimpleOrHdKeyring && otherGasAccountError))
       ) {
         onChangeGasAccount?.();
@@ -371,12 +369,8 @@ export const MiniFooterBar: React.FC<Props> = ({
         <View>
           {!isInited ? null : (
             <>
-              {shouldShowGasLessNotEnough({
-                showGasLess,
-                isGasNotEnough: !!isGasNotEnough,
-                payGasByGasAccount,
-                canUseGasLess,
-              }) &&
+              {showGasLess &&
+              !payGasByGasAccount &&
               (!securityLevel || !hasUnProcessSecurityResult) ? (
                 canUseGasLess ? (
                   <GasLessActivityToSign
