@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Tip } from '@/components/Tip';
@@ -136,6 +136,14 @@ const TokenListItemComponent = ({
               <Text style={styles.tokenName}>
                 {ellipsisOverflowedText(getTokenSymbol(item), 12)}
               </Text>
+              {item.launchpad?.logo ? (
+                <Image
+                  source={{ uri: item.launchpad?.logo }}
+                  style={styles.fourMemeIcon}
+                  width={18}
+                  height={18}
+                />
+              ) : null}
               {isLpToken(item) && (
                 <View style={styles.lpTokenIconContainer}>
                   <LpTokenIcon protocolId={item.protocol_id || ''} />
@@ -143,11 +151,32 @@ const TokenListItemComponent = ({
               )}
             </View>
             {/* FDV */}
-            {!!item.identity?.fdv && (
-              <Text style={styles.tokenFdv}>
-                {formatUsdValueKMB(item.identity.fdv)}
-              </Text>
-            )}
+            <View style={styles.tokenAssetContainer}>
+              {!!item.asset && (
+                <>
+                  {item.asset?.logo ? (
+                    <Image
+                      source={{ uri: item.asset?.logo }}
+                      style={styles.fourMemeIcon}
+                      width={16}
+                      height={16}
+                    />
+                  ) : null}
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.rwaName}>
+                    {item.asset?.name}
+                  </Text>
+                  <Text style={styles.tokenFdvSeparator}>|</Text>
+                </>
+              )}
+              {!!item.identity?.fdv && (
+                <Text numberOfLines={1} style={styles.tokenFdv}>
+                  {formatUsdValueKMB(item.identity?.fdv ?? 0)}
+                </Text>
+              )}
+            </View>
             {/* Chain Logo */}
           </View>
         </View>
@@ -224,6 +253,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  rwaName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+    flexShrink: 1,
   },
   tokenFdv: {
     fontSize: 14,
@@ -325,5 +362,22 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 0,
     flexShrink: 0,
     justifyContent: 'flex-start',
+  },
+  tokenAssetContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+  },
+  tokenFdvSeparator: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors2024['neutral-line'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+  },
+  fourMemeIcon: {
+    width: 14,
+    height: 14,
   },
 }));
