@@ -95,6 +95,7 @@ import DeviceInfo from 'react-native-device-info';
 import { coerceNumber } from './utils/coerce';
 import { useAppCouldRender } from './hooks/useBootstrap';
 import { InnerDappWebViewPreloadEntry } from './components/WebView/InnerDappWebViewPreloadEntry';
+import { ModalDebugOverlay } from './components/Modal/ModalDebugOverlay';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -504,6 +505,7 @@ export default function AppNavigation() {
       <GlobalMiniSignTypedDataPortal />
       <GlobalTipsPopup />
       <GlobalSignerPortal />
+      <ModalDebugOverlay />
     </AutoLockView.ForAppNav>
   );
 }

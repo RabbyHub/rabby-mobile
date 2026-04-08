@@ -5,7 +5,6 @@ import {
   Image,
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -23,7 +22,8 @@ import { toast } from '@/components2024/Toast';
 
 import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import { Text } from '@/components/Typography';
-import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 
 function SwitchTextLine({
   checked,
@@ -109,8 +109,6 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
 
   const [skipInNext1Day, setSkipInNext1Day] = useState(false);
 
-  useRegisterBlockingModal(MODAL_GATE_IDS.screenshotFeedback, globalModalShown);
-
   useEffect(() => {
     if (globalModalShown) {
       setSkipInNext1Day(false);
@@ -122,7 +120,8 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
   }
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.screenshotFeedback}
       visible={globalModalShown}
       transparent
       animationType="fade"
@@ -239,7 +238,7 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
           </View>
         </TouchableOpacity>
       </KeyboardAvoidingView>
-    </Modal>
+    </TrackedModal>
   );
 }
 
