@@ -142,7 +142,10 @@
     },
     "autolock": {
       "never": "Không bao giờ"
-    }
+    },
+    "Created": "Đã tạo",
+    "Imported": "Nhập khẩu",
+    "SavedSeedPhrase": "Tôi đã lưu cụm từ hạt giống."
   },
   "page": {
     "transactions": {
@@ -250,7 +253,9 @@
       "goToHome": "Đi đến Trang chủ",
       "alreadyHaveAddress": "Tôi đã có một ví",
       "createNewAddress": "Tạo Ví Mới",
-      "sync": "Quét để đồng bộ ví Rabby Extension"
+      "sync": "Quét để đồng bộ ví Rabby Extension",
+      "alreadyUseRabby": "Tôi đã sử dụng Rabby.",
+      "welcomeTitle": "Chào mừng bạn đến với  \nRabby Wallet"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Nhập cụm từ khôi phục của bạn"
@@ -342,7 +347,6 @@
       },
       "gasAccount": {
         "WalletConnectTips": "GasAccount không hỗ trợ WalletConnect",
-        "notEnough": "GasAccount không đủ",
         "chainNotSupported": "Chuỗi này không được GasAccount hỗ trợ",
         "useGasAccount": "Sử dụng GasAccount",
         "login": "Đăng nhập",
@@ -1148,7 +1152,8 @@
         "syncRabbyExtension": "Đồng bộ tiện ích mở rộng Rabby",
         "createAddress": "Tạo Ví",
         "importAddress": "Nhập Ví",
-        "selectAddMethod": "Chọn Thêm Phương Thức"
+        "selectAddMethod": "Chọn Thêm Phương Thức",
+        "seedPhraseOrPrivateKey": "Cụm từ hạt giống hoặc khóa riêng"
       },
       "importAddress": {
         "hardWare": "Kết nối ví phần cứng",
@@ -1278,7 +1283,6 @@
         "send": "Gửi",
         "more": "Thêm",
         "dapps": "Dapps",
-        "gasAccount": "GasAccount",
         "bridge": "Bridge",
         "approvals": "Phê duyệt",
         "queue": "Hàng chờ",
@@ -1293,7 +1297,8 @@
         "lending": "Cho vay",
         "predict": "Dự đoán",
         "meme": "Memecoin",
-        "market": "Thị trường"
+        "market": "Thị trường",
+        "gasDeposit": "Tiền gửi Gas"
       },
       "swipeUp": {
         "descMore": "Kéo lên để khám phá thêm nhiều trang web",
@@ -1306,6 +1311,10 @@
         "favorite": "Yêu thích",
         "emptyAndroid": "Không có dApp nào được thêm vào danh sách yêu thích",
         "empty": "Chưa có trang web nào được thêm vào danh sách yêu thích."
+      },
+      "depositAssets": {
+        "subtitle": "Nhận tài sản vào ví này",
+        "title": "Nạp Tài Sản"
       }
     },
     "securityEngine": {
@@ -1562,7 +1571,8 @@
         "description1": "Một khóa riêng là một chuỗi các chữ cái và số được sử dụng để truy cập và kiểm soát ví của bạn. Bạn có thể sử dụng nó để phục hồi ví của mình trên bất kỳ thiết bị nào.",
         "description4": "Khoá riêng của bạn được lưu trữ cục bộ trên thiết bị của bạn và được mã hoá bằng mật khẩu của bạn. Chỉ có bạn mới có thể truy cập nó. Rabby không thể lấy lại hoặc truy cập khoá riêng của bạn."
       },
-      "importing": "Đang nhập..."
+      "importing": "Đang nhập...",
+      "Done": "Xong"
     },
     "addressDetail": {
       "pin-in-list": "Ghim trong Danh sách",
@@ -1615,7 +1625,14 @@
       },
       "backup": "Sao lưu",
       "basicInfo": "Thông tin cơ bản",
-      "other": "Khác"
+      "other": "Khác",
+      "verify-password": "Xác minh mật khẩu",
+      "verify-face-id": "Xác minh Face ID",
+      "verify-fingerprint": "Xác minh vân tay",
+      "verify-and-backup": "Xác minh & sao lưu",
+      "verify-password-before-backup": "Xác thực password Rabby của bạn trước khi sao lưu",
+      "verify-fingerprint-before-backup": "Xác minh dấu vân tay của bạn trước khi sao lưu.",
+      "verify-face-id-before-backup": "Xác minh Face ID của bạn trước khi sao lưu"
     },
     "customRpc": {
       "closed": "Đã đóng",
@@ -1746,7 +1763,6 @@
       },
       "depositPopup": {
         "invalidAmount": "Phải dưới 500",
-        "selectToken": "Chọn Token",
         "zeroInvalidAmount": "Số tiền không thể bằng 0",
         "amount": "Số lượng",
         "token": "Token",
@@ -1760,7 +1776,17 @@
         "paymentAddress": "Ví thanh toán",
         "inSufficientTip1": "Ví dụ này không có đủ token. Vui lòng chọn một ví khác.",
         "pay": "Thanh toán",
-        "applePayFeeDesc1": "Bao gồm phí App Store. Không có rút tiền."
+        "applePayFeeDesc1": "Bao gồm phí App Store. Không có rút tiền.",
+        "insufficientBalanceLabel": "Số dư không đủ",
+        "fetchQuoteFailed": "Không thể lấy báo giá",
+        "suggestedToken": "Token Được Đề Xuất",
+        "selectToken": "Chọn Token để nạp tiền",
+        "minAmountRequired": "Số tiền gửi tối thiểu là 1 đô la",
+        "balanceLabel": "Số dư",
+        "gasDepositTitle": "Tiền gửi Gas",
+        "unavailablePaymentWallet": "Ví wallet đã chọn không khả dụng",
+        "estReceiveTip": "Dịch vụ được xử lý thông qua {{name}}, có thể có độ trượt giá",
+        "estReceiveLabel": "Est. Nhận: {{usd}}"
       },
       "paymentAddressPopup": {
         "confirm": "Xác nhận",
@@ -1811,7 +1837,8 @@
         "buyWithDesc": "30% phí, không rút tiền",
         "depositTokenDesc": "Không có phí bổ sung, rút tiền ngay lập tức",
         "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi",
-        "buyWithApple": "Mua trong App Store"
+        "buyWithApple": "Mua trong App Store",
+        "insufficientTokenBalance": "Số dư Token không đủ"
       },
       "gasAccountList": {
         "balance": "Số dư",
@@ -1821,10 +1848,23 @@
       },
       "depositSuccess": "Nạp tiền thành công",
       "depositCanceled": "Gửi tiền đã hủy",
-      "switchAccount": "Chuyển đổi GasAccount",
       "loginFailed": "Đăng nhập thất bại",
       "loginSuccess": "Đăng nhập thành công",
-      "withdrawDisabledIAP": "Việc rút tiền bị vô hiệu hóa vì số dư của bạn bao gồm tiền fiat, không thể rút được. Liên hệ hỗ trợ để rút số dư token của bạn"
+      "withdrawDisabledIAP": "Việc rút tiền bị vô hiệu hóa vì số dư của bạn bao gồm tiền fiat, không thể rút được. Liên hệ hỗ trợ để rút số dư token của bạn",
+      "benefitCard": {
+        "item2": "Hỗ trợ tất cả các mạng",
+        "item3": "Hỗ trợ tất cả các giao dịch",
+        "desc2": "",
+        "desc1": "Không có phí bổ sung để thanh toán gas",
+        "item1": "Không có phí Rabby",
+        "desc3": "Hoán đổi, Cầu, Gửi, DApps, & nhiều hơn nữa"
+      },
+      "depositNow": "Nạp ngay",
+      "switchAccount": "Chuyển Wallet",
+      "depositFailed": "Nạp tiền không thành công",
+      "depositWith": "Gửi tiền với",
+      "gasBalance": "Số dư Gas",
+      "lowBalance": "Bạn không có đủ gas. Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ."
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",
@@ -2514,7 +2554,11 @@
         "withdrawBtn": "Rút tiền",
         "invalidNumber": "Vui lòng nhập một số hợp lệ",
         "feeTooltipDesc": "Phí rút tiền do Hyperliquid thu: $1",
-        "available": "có sẵn"
+        "available": "có sẵn",
+        "hypeFeeTip": "Phí : ~${{fee}}",
+        "hypeGasFeeTooltip": "Phí khoảng ~0.00002 HYPE sẽ được tính để rút về EVM.",
+        "selectWithdrawToken": "Chọn token",
+        "hypeActivationFeeTooltip": "Một khoản phí kích hoạt một lần là {{fee}} sẽ được Hyperliquid tính cho lần rút HyperEVM đầu tiên."
       },
       "PerpsWithdrawFeePopup": {
         "btn": "Tôi đã hiểu.",
@@ -2911,7 +2955,9 @@
         "almostReachedError": "Số tiền tối đa có sẵn để vay bị giới hạn vì giới hạn vay của giao thức gần đạt.",
         "almostReachedWarning": "Mức giới hạn vay của giao thức cho tài sản này là 100%. Không có khả năng vay thêm.",
         "swapDebt": "Hoán đổi",
-        "borrowed": "Đã vay"
+        "borrowed": "Đã vay",
+        "noSupplyDesc": "Để vay, bạn cần cung cấp tài sản làm tài sản thế chấp.",
+        "noSupplyPrefix": "Không có nguồn cung:"
       },
       "popup": {
         "amount": "Số lượng",
@@ -3162,6 +3208,22 @@
       },
       "marketNotOpenTooltip": "Thị trường chưa mở",
       "noOpen": "Không mở"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Khôi phục ví Rabby của bạn",
+        "subtitle": "Chào mừng bạn trở lại! 🎉  \nChọn một phương pháp để khôi phục ví của bạn nhanh chóng."
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "Hoặc bạn có thể <clickable>tạo một ví mới</clickable>"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "Nhập cụm từ khôi phục của bạn",
+        "privateKeyPlaceholder": "Nhập vào khóa riêng của bạn"
+      },
+      "walletReady": "Ví của bạn đã sẵn sàng 🚀",
+      "setPasswordTip": "Đặt một mật khẩu để bảo vệ ví của bạn",
+      "createWalletError": "Không thể tạo ví"
     }
   },
   "component": {
@@ -3301,8 +3363,8 @@
         "desc": "Gửi tiền vào tài khoản DeBank L2 của Rabby mà không mất phí — rút tiền bất cứ lúc nào."
       },
       "loginConfirmModal": {
-        "title": "Chọn Ví để Đăng Nhập",
-        "desc": "Khi đăng nhập, bạn chỉ có thể gửi tiền vào địa chỉ này."
+        "desc": "Khi đăng nhập, bạn chỉ có thể gửi tiền vào địa chỉ này.",
+        "title": "Chuyển ví"
       },
       "withdrawPopup": {
         "to": "Đến",
@@ -3419,6 +3481,9 @@
     },
     "lpTokenModal": {
       "desc": "Đây là Token Cung Cấp Thanh Khoản (LP) cho {{protocolId}}"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "Không có địa chỉ nào có sẵn"
     }
   },
   "constant": {
@@ -3497,5 +3562,9 @@
     "noTransactionDetail": "Không tìm thấy chi tiết giao dịch. Vui lòng kiểm tra lịch sử giao dịch sau.",
     "noTransactionOwnerAddress": "Giao dịch không thuộc về bất kỳ địa chỉ nào trong ví của bạn. Vui lòng kiểm tra lịch sử giao dịch sau.",
     "unknownAddressFromTransaction": "Giao dịch liên quan đến một địa chỉ không có trong ví của bạn. Vui lòng kiểm tra lịch sử giao dịch sau."
+  },
+  "backupReminder": {
+    "action": "Sao lưu ngay bây giờ",
+    "title": "Bạn chưa sao lưu ví của mình"
   }
 }

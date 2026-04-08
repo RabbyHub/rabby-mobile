@@ -142,14 +142,19 @@
     },
     "autolock": {
       "never": "Никогда"
-    }
+    },
+    "Created": "Создано",
+    "Imported": "Импортировано",
+    "SavedSeedPhrase": "Я сохранил посевную фразу"
   },
   "page": {
     "getStart": {
       "goToHome": "Перейти на главную",
       "createNewAddress": "Создать новый кошелек",
       "alreadyHaveAddress": "У меня уже есть кошелек",
-      "sync": "Сканируйте, чтобы синхронизировать кошелек Rabby Extension"
+      "sync": "Сканируйте, чтобы синхронизировать кошелек Rabby Extension",
+      "welcomeTitle": "Добро пожаловать в\nRabby Wallet",
+      "alreadyUseRabby": "Я уже использую Rabby"
     },
     "transactions": {
       "explain": {
@@ -317,8 +322,7 @@
         "deposit": "Депозит",
         "customRPC": "Не поддерживается при использовании пользовательского RPC",
         "useGasAccount": "Используйте GasAccount",
-        "loginFirst": "Пожалуйста, сначала войдите в GasAccount.",
-        "notEnough": "GasAccount не хватает"
+        "loginFirst": "Пожалуйста, сначала войдите в GasAccount."
       },
       "gasless": {
         "notEnough": "Gas баланса недостаточно",
@@ -1015,7 +1019,6 @@
     "home": {
       "services": {
         "receive": "Получить",
-        "gasAccount": "GasAccount",
         "approvals": "Одобрения",
         "dapps": "Dapps",
         "swap": "Swap",
@@ -1033,7 +1036,8 @@
         "lending": "Кредитование",
         "predict": "Предсказать",
         "meme": "Мемкоин",
-        "market": "Рынок"
+        "market": "Рынок",
+        "gasDeposit": "Газовый депозит"
       },
       "swipeUp": {
         "descAndroidMore": "Нажмите, чтобы узнать больше о dApps",
@@ -1046,6 +1050,10 @@
         "favorite": "Избранное",
         "emptyAndroid": "Нет dApp, добавленных в избранное",
         "empty": "Нет веб-сайта добавленного в избранное"
+      },
+      "depositAssets": {
+        "title": "Внести активы",
+        "subtitle": "Получить активы в этот кошелек"
       }
     },
     "dashboard": {
@@ -1226,7 +1234,8 @@
         "syncRabbyExtension": "Синхронизировать Rabby Extension",
         "createAddress": "Создать кошелек",
         "importAddress": "Импортировать кошелек",
-        "selectAddMethod": "Выберите метод добавления"
+        "selectAddMethod": "Выберите метод добавления",
+        "seedPhraseOrPrivateKey": "Сид-фраза или приватный ключ"
       },
       "rateModalTriggerOnHome": {
         "description": "Как вы оцениваете Rabby Wallet?"
@@ -1475,7 +1484,8 @@
         "description1": "Приватный ключ — это строка букв и цифр, используемая для доступа и управления вашим кошельком. Вы можете использовать его для восстановления вашего кошелька на любом устройстве.",
         "description3": "Никогда не делитесь своим приватным keyring — любой, имеющий к нему доступ, может контролировать ваши средства."
       },
-      "importing": "Импортирование..."
+      "importing": "Импортирование...",
+      "Done": "Готово"
     },
     "switchChain": {
       "requestsReceived": "1 запрос получен",
@@ -1555,7 +1565,14 @@
       },
       "basicInfo": "Основная информация",
       "other": "Другие",
-      "backup": "Резервное копирование"
+      "backup": "Резервное копирование",
+      "verify-password": "Проверить пароль",
+      "verify-face-id": "Проверить Face ID",
+      "verify-password-before-backup": "Проверьте свой пароль Rabby перед резервным копированием.",
+      "verify-face-id-before-backup": "Перед резервным копированием подтвердите свою Face ID",
+      "verify-fingerprint": "Проверить отпечаток пальца",
+      "verify-fingerprint-before-backup": "Проверьте свой отпечаток пальца перед резервным копированием",
+      "verify-and-backup": "Проверить и создать резервную копию"
     },
     "safeQueue": {
       "viewBtn": "Просмотр",
@@ -1937,7 +1954,6 @@
       },
       "depositPopup": {
         "amount": "Сумма",
-        "selectToken": "Выбрать Token",
         "followingTokenInSufficient": "Следующего баланса токена недостаточно",
         "token": "Токен",
         "title": "Депозит",
@@ -1951,7 +1967,17 @@
         "paymentAddress": "Платежный кошелек",
         "inSufficientTip1": "Этот кошелек не имеет достаточно токенов. Пожалуйста, выберите другой кошелек.",
         "pay": "Оплатить",
-        "applePayFeeDesc1": "Включает плату за приложение. Выводы не производятся."
+        "applePayFeeDesc1": "Включает плату за приложение. Выводы не производятся.",
+        "balanceLabel": "Баланс",
+        "gasDepositTitle": "Газовый депозит",
+        "unavailablePaymentWallet": "Выбранный платежный кошелек недоступен",
+        "minAmountRequired": "Минимальная сумма депозита составляет 1 $.",
+        "suggestedToken": "Предложенные токены",
+        "insufficientBalanceLabel": "Недостаточно средств",
+        "estReceiveTip": "Сервис, обработанный через {{name}}, может иметь проскальзывание.",
+        "fetchQuoteFailed": "Не удалось получить котировку",
+        "selectToken": "Выберите токен для депозита",
+        "estReceiveLabel": "Est.Receive: {{usd}}"
       },
       "paymentAddressPopup": {
         "confirm": "Подтвердить",
@@ -2002,7 +2028,8 @@
         "depositToken": "Депозит с Token",
         "buyWithDesc": "30% комиссия, без выводов",
         "depositTokenDesc": "Без дополнительных комиссий, мгновенные выводы",
-        "buyWithApple": "Купить в App Store"
+        "buyWithApple": "Купить в App Store",
+        "insufficientTokenBalance": "Недостаточно токенов на балансе"
       },
       "gasAccountList": {
         "gasAccountBalance": "Баланс GasAccount",
@@ -2014,8 +2041,21 @@
       "loginFailed": "Ошибка входа",
       "depositCanceled": "Депозит отменен",
       "loginSuccess": "Вход выполнен успешно",
-      "switchAccount": "Переключить GasAccount",
-      "withdrawDisabledIAP": "Выводы отключены, потому что ваш баланс включает фиатные средства, которые не могут быть выведены. Свяжитесь с поддержкой для вывода баланса ваших токенов."
+      "withdrawDisabledIAP": "Выводы отключены, потому что ваш баланс включает фиатные средства, которые не могут быть выведены. Свяжитесь с поддержкой для вывода баланса ваших токенов.",
+      "benefitCard": {
+        "item1": "Без комиссии Rabby",
+        "item3": "Поддерживает все транзакции",
+        "item2": "Поддерживает все сети",
+        "desc1": "Нет дополнительных сборов за оплату газа",
+        "desc3": "Обмен, Мост, Отправить, DApps и многое другое",
+        "desc2": ""
+      },
+      "depositNow": "Депозит сейчас",
+      "gasBalance": "Баланс Gas",
+      "switchAccount": "Переключить кошелек",
+      "depositFailed": "Ошибка при депозите",
+      "lowBalance": "У вас недостаточно газа. Внесите газ, чтобы обеспечитьSmooth будущие транзакции.",
+      "depositWith": "Депозит с"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Не поддерживается в этой сети",
@@ -2514,7 +2554,11 @@
         "feeTip": "Комиссия: $1.00",
         "title": "Вывод",
         "feeTooltipDesc": "Комиссия за вывод, взимаемая Hyperliquid: $1",
-        "available": "доступный"
+        "available": "доступный",
+        "hypeFeeTip": "Плата: ~${{fee}}",
+        "hypeGasFeeTooltip": "Комиссия ~0.00002 HYPE будет взиматься за вывод на EVM",
+        "selectWithdrawToken": "Выберите токен",
+        "hypeActivationFeeTooltip": "Одноразовая плата за активацию в размере {{fee}} будет взиматься Hyperliquid за первое снятие HyperEVM."
       },
       "PerpsWithdrawFeePopup": {
         "btn": "Я понял",
@@ -2911,7 +2955,9 @@
         "almostReachedWarning": "Протокол заимствования установлен на 100% для этого актива. Дальнейшее заимствование недоступно.",
         "almostReachedError": "Максимальная сумма, доступная для займа, ограничена, так как лимит заимствования протокола почти достигнут.",
         "swapDebt": "Обмен",
-        "borrowed": "Заемные"
+        "borrowed": "Заемные",
+        "noSupplyPrefix": "Нет предложения:",
+        "noSupplyDesc": "Чтобы заимствовать, вам нужно предоставить активы в качестве залога."
       },
       "popup": {
         "available": "доступный",
@@ -3162,6 +3208,22 @@
       },
       "marketNotOpenTooltip": "Рынок не открыт",
       "noOpen": "Не открыто"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Восстановите свой кошелек Rabby",
+        "subtitle": "Добро пожаловать обратно! 🎉  \nВыберите способ для быстрой восстановления вашего кошелька."
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "Или вы можете <clickable>создать новый кошелек</clickable>"
+      },
+      "importSecret": {
+        "privateKeyPlaceholder": "Введите ваш private key",
+        "seedPhrasePlaceholder": "Введите вашу сид-фразу"
+      },
+      "createWalletError": "Не удалось создать кошелек",
+      "setPasswordTip": "Установите пароль для защиты вашего кошелька",
+      "walletReady": "Ваш кошелек готов 🚀"
     }
   },
   "component": {
@@ -3297,8 +3359,8 @@
         "depositDesc": "на всех цепях, когда у вас закончился Gas"
       },
       "loginConfirmModal": {
-        "title": "Выберите кошелек для входа",
-        "desc": "После входа в систему вы можете только внести депозит по этому адресу."
+        "desc": "После входа в систему вы можете только внести депозит по этому адресу.",
+        "title": "Переключить кошелек"
       },
       "withdrawPopup": {
         "title": "Вывести средства",
@@ -3419,6 +3481,9 @@
     },
     "lpTokenModal": {
       "desc": "Это токен Провайдера Ликвидности (LP) для {{protocolId}}"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "Нет доступного адреса"
     }
   },
   "constant": {
@@ -3497,5 +3562,9 @@
     "loadingTransaction": "Открытие транзакции...",
     "noTransactionDetail": "Детали транзакции не найдены. Пожалуйста, проверьте историю транзакций позже.",
     "unknownAddressFromTransaction": "Транзакция включает адрес, который не находится в вашем кошельке. Пожалуйста, проверьте историю транзакций позже."
+  },
+  "backupReminder": {
+    "title": "Вы не создали резервную копию вашего кошелька",
+    "action": "Сделайте резервную копию сейчас"
   }
 }

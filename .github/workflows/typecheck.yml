@@ -2,7 +2,7 @@ name: Type Check & Test
 
 on:
   push:
-    branches: [ develop, feat/type* ]
+    branches: [ develop, feat/type*, build/* ]
   pull_request:
     branches: [ develop ]
   schedule:
@@ -29,6 +29,7 @@ jobs:
     #   - mobile
     env:
       NODE_OPTIONS: '--max_old_space_size=4096'
+      YARN_ENABLE_HARDENED_MODE: '0'
 
     steps:
       - name: Checkout git repo
@@ -40,12 +41,13 @@ jobs:
         with:
           node-version: 22
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Run Type Check
         run: |
           # yarn config set npmRegistryServer https://registry.npmmirror.com
           cd apps/mobile;
-          yarn install;
+          yarn install --immutable;
           time yarn typecheck;
           time yarn test;
-
-

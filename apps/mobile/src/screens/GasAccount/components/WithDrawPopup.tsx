@@ -7,11 +7,7 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  useGasAccountHistoryRefresh,
-  useGasAccountSign,
-  useGasBalanceRefresh,
-} from '../hooks/atom';
+import { storeApiGasAccount, useGasAccountSign } from '../hooks/atom';
 import { toast } from '@/components2024/Toast';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Button } from '@/components2024/Button';
@@ -42,10 +38,6 @@ const WithDrawInitContent = ({
   const [loading, setLoading] = useState(false);
   const [showGiftInfo, setShowGiftInfo] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-
-  const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
-
-  const { refresh: refreshGasAccountHistory } = useGasAccountHistoryRefresh();
 
   const [chain, setChain] = useState<RechargeChainItem>();
 
@@ -94,8 +86,11 @@ const WithDrawInitContent = ({
       if (!res.success) {
         throw new Error(res?.msg || 'withdraw failed');
       }
-      refreshGasAccountHistory();
-      refreshGasAccountBalance();
+      storeApiGasAccount.markSnapshotDirty('withdraw');
+      await Promise.all([
+        storeApiGasAccount.refreshHistory(),
+        storeApiGasAccount.refreshSnapshot(),
+      ]);
       onClose();
       onAfterConfirm?.();
     } catch (error) {
@@ -113,8 +108,6 @@ const WithDrawInitContent = ({
     chain,
     onClose,
     onAfterConfirm,
-    refreshGasAccountHistory,
-    refreshGasAccountBalance,
   ]);
 
   const BalanceSuffix = useMemo(() => {
@@ -152,7 +145,7 @@ const WithDrawInitContent = ({
       locations={[0.0745, 0.2242]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
-      style={{ flex: 1, position: 'relative' }}>
+      style={styles.screenGradient}>
       <View style={styles.container}>
         <View style={styles.paddingContainer}>
           <Text style={styles.title}>
@@ -175,7 +168,7 @@ const WithDrawInitContent = ({
             ) : null}
           </View>
 
-          <Text style={[styles.label, { marginTop: 0 }]}>
+          <Text style={[styles.label, styles.labelNoMarginTop]}>
             {t('page.gasAccount.withdrawPopup.recipientAddress')}
           </Text>
 
@@ -202,13 +195,7 @@ const WithDrawInitContent = ({
         </View>
         <View style={styles.btnContainer}>
           {!!withdrawBtnDisabledTips && (
-            <View
-              style={[
-                styles.receiveTipsRow,
-                {
-                  marginBottom: 18,
-                },
-              ]}>
+            <View style={[styles.receiveTipsRow, styles.receiveTipsMargin18]}>
               <Text style={[styles.receiveTips, styles.errorTips]}>
                 {withdrawBtnDisabledTips}
               </Text>
@@ -216,13 +203,7 @@ const WithDrawInitContent = ({
           )}
 
           {!withdrawBtnDisabledTips && !!BalanceSuffix && (
-            <View
-              style={[
-                styles.receiveTipsRow,
-                {
-                  marginBottom: 22,
-                },
-              ]}>
+            <View style={[styles.receiveTipsRow, styles.receiveTipsMargin22]}>
               <Text style={styles.receiveTips}>
                 {t('page.gasAccount.withdrawPopup.deductGasFees')}{' '}
                 {` ~$${chain?.withdraw_fee.toFixed(2)}`}
@@ -329,10 +310,13 @@ export const WithDrawPopup = props => {
 };
 
 const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+  screenGradient: {
+    flex: 1,
+    position: 'relative',
+  },
   container: {
     width: '100%',
     flex: 1,
-    // backgroundColor: colors['neutral-bg-1'],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -340,7 +324,6 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
   paddingContainer: {
     width: '100%',
     flex: 1,
-    // backgroundColor: colors['neutral-bg-1'],
     alignItems: 'center',
     paddingHorizontal: 20,
   },
@@ -391,6 +374,9 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 18,
   },
+  labelNoMarginTop: {
+    marginTop: 0,
+  },
   labelContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -422,6 +408,12 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     flexDirection: 'row',
     gap: 2,
     alignItems: 'center',
+  },
+  receiveTipsMargin18: {
+    marginBottom: 18,
+  },
+  receiveTipsMargin22: {
+    marginBottom: 22,
   },
 
   receiveTips: {

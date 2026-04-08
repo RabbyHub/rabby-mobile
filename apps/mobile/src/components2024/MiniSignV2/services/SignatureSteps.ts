@@ -75,6 +75,7 @@ import { t } from 'i18next';
 import miscService from '@/core/services/misc';
 import { requestETHRpc } from '@/core/apis/provider';
 import { isTempoChain } from '@/utils/tempo';
+import { resolveMiniSignSubmitGasMode } from '../state/gasPaymentState';
 
 const rawAmountToBn = (
   value: string | number | BigNumber | null | undefined,
@@ -827,6 +828,7 @@ export class SignatureSteps {
     txsCalc: CalcItem[];
     selectedGas: GasLevel | null;
     options: SendOptions;
+    onSigningTxCreated?: (signingTxId: string) => void;
     onSendedTx: (prams: { hash: string; idx: number }) => void;
     account: Account;
     retry?: boolean;
@@ -846,6 +848,7 @@ export class SignatureSteps {
       chainServerId,
       txsCalc,
       options,
+      onSigningTxCreated,
       onSendedTx,
       retry: isRetry,
       account,
@@ -916,6 +919,7 @@ export class SignatureSteps {
           sig,
           account: account,
           preExecResult: txsCalc[i]?.preExecResult,
+          onSigningTxCreated,
         });
         onSendedTx?.({ hash: result.txHash, idx: i });
         txHashes.push({ ...result });
@@ -1091,6 +1095,7 @@ export class SignatureSteps {
     chainServerId: string;
     ctx: SignerCtx;
     config: SignerConfig;
+    onSigningTxCreated?: (signingTxId: string) => void;
     onSendedTx: (prams: { hash: string; idx: number }) => void;
     account: Account;
     retry?: boolean;
@@ -1106,21 +1111,34 @@ export class SignatureSteps {
         };
       }
   > {
-    const { chainServerId, ctx, config, onSendedTx, account, retry } = params;
+    const {
+      chainServerId,
+      ctx,
+      config,
+      onSigningTxCreated,
+      onSendedTx,
+      account,
+      retry,
+    } = params;
     const { txs, txsCalc, selectedGas, gasMethod, useGasless } = ctx;
+    const submitGasMode = resolveMiniSignSubmitGasMode({
+      gasMethod,
+      useGasless,
+    });
     const res = await SignatureSteps.sendBatch({
       chainServerId,
       txsCalc: txsCalc,
       selectedGas: selectedGas!,
       options: {
-        isGasLess: !!useGasless,
-        isGasAccount: gasMethod === 'gasAccount',
+        isGasLess: submitGasMode === 'gasless',
+        isGasAccount: submitGasMode === 'gasAccount',
         ga: config?.ga,
         session: config?.session,
         pushType: normalizeTxParams(txs[0])?.swapPreferMEVGuarded
           ? 'mev'
           : 'default',
       },
+      onSigningTxCreated,
       onSendedTx,
       retry,
       account,

@@ -62,6 +62,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: '[Android] Setup Ruby & Fastlane'
         if: runner.os == 'Linux'
         uses: heisenberg-2077/setup-ruby@master
@@ -82,7 +85,7 @@ jobs:
         run: |
           yarn --version;
           # yarn setup && yarn postinstall;
-          yarn install;
+          yarn install --immutable;
           yarn postinstall;
           cd apps/mobile;
           yarn postinstall;

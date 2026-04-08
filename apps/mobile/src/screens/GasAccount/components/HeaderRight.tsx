@@ -1,20 +1,25 @@
 import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { Tip } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import {
+  useAccountsWithGasAccountBalance,
   useGasAccountLoginVisible,
-  useGasAccountLogoutVisible,
   useGasAccountSign,
 } from '../hooks/atom';
 import { createGetStyles2024 } from '@/utils/styles';
-import { RcIconLogoutCC, RcIconSwitchCC } from '@/assets2024/icons/gas-account';
+import {
+  RcIconSwitchCC,
+  RcIconWithdrawCC,
+} from '@/assets2024/icons/gas-account';
 import { Text } from '@/components/Typography';
 
-export const GasAccountHeader: React.FC = () => {
+export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
+  showWithdraw: openWithdrawPopup,
+}) => {
   const color = useThemeColors();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -22,70 +27,75 @@ export const GasAccountHeader: React.FC = () => {
   const isDark = useGetBinaryMode() === 'dark';
   const { account } = useGasAccountSign();
 
-  const [, setLogoutVisible] = useGasAccountLogoutVisible();
+  const accountsWithGasAccountBalance = useAccountsWithGasAccountBalance();
+  const showSwitchWallet = accountsWithGasAccountBalance.length > 1;
+
+  const showWithdraw = !!account;
+
   const [, setLoginVisible] = useGasAccountLoginVisible();
 
-  const handleLogout = useCallback(() => {
+  const handleWithdraw = useCallback(() => {
     setVisible(false);
-    setLogoutVisible(true);
-  }, [setLogoutVisible]);
+    openWithdrawPopup();
+  }, [openWithdrawPopup]);
 
   const handleSwitch = useCallback(() => {
     setVisible(false);
     setLoginVisible(true);
   }, [setLoginVisible]);
 
-  return (
-    <Tip
-      hideArrow
-      placement="bottom"
-      contentStyle={[
-        styles.content,
-        isDark && { backgroundColor: color['neutral-bg-1'] },
-      ]}
-      tooltipStyle={styles.tooltipStyle}
-      isVisible={visible}
-      onClose={() => setVisible(false)}
-      content={
-        <View style={styles.optionList}>
-          <CustomTouchableOpacity
-            style={styles.option}
-            onPress={handleSwitch}
-            hitSlop={10}>
-            <RcIconSwitchCC
-              color={colors2024['neutral-body']}
-              style={styles.optionIcon}
-            />
-            <Text style={styles.text}>
-              {t('page.gasAccount.switchAccount')}
-            </Text>
-          </CustomTouchableOpacity>
-          <CustomTouchableOpacity
-            style={styles.option}
-            onPress={handleLogout}
-            hitSlop={10}>
-            <RcIconLogoutCC
-              color={colors2024['neutral-body']}
-              style={styles.optionIcon}
-            />
-            <Text style={styles.text}>{t('page.gasAccount.logout')}</Text>
-          </CustomTouchableOpacity>
-        </View>
-      }>
-      <Pressable
-        style={styles.container}
-        onPress={() => setVisible(true)}
-        hitSlop={10}>
-        {/* <WalletIcon
-          type={account?.brandName as KEYRING_TYPE}
-          width={styles.walletIcon.width}
-          height={styles.walletIcon.height}
-          style={styles.walletIcon}
-        /> */}
-        <RcIconGasAccountHeaderRight />
-      </Pressable>
-    </Tip>
-  );
+  if (showSwitchWallet || account) {
+    return (
+      <Tip
+        hideArrow
+        placement="bottom"
+        contentStyle={[
+          styles.content,
+          isDark && { backgroundColor: color['neutral-bg-1'] },
+        ]}
+        tooltipStyle={styles.tooltipStyle}
+        isVisible={visible}
+        onClose={() => setVisible(false)}
+        content={
+          <View style={styles.optionList}>
+            {showWithdraw ? (
+              <CustomTouchableOpacity
+                style={styles.option}
+                onPress={handleWithdraw}
+                hitSlop={10}>
+                <RcIconWithdrawCC
+                  color={colors2024['neutral-body']}
+                  style={styles.optionIcon}
+                />
+                <Text style={styles.text}>{t('page.gasAccount.withdraw')}</Text>
+              </CustomTouchableOpacity>
+            ) : null}
+            {showSwitchWallet ? (
+              <CustomTouchableOpacity
+                style={styles.option}
+                onPress={handleSwitch}
+                hitSlop={10}>
+                <RcIconSwitchCC
+                  color={colors2024['neutral-body']}
+                  style={styles.optionIcon}
+                />
+                <Text style={styles.text}>
+                  {t('page.gasAccount.switchAccount')}
+                </Text>
+              </CustomTouchableOpacity>
+            ) : null}
+          </View>
+        }>
+        <Pressable
+          style={styles.container}
+          onPress={() => setVisible(true)}
+          hitSlop={10}>
+          <RcIconGasAccountHeaderRight />
+        </Pressable>
+      </Tip>
+    );
+  }
+  return null;
 };
 
 const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
@@ -93,12 +103,8 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  walletIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-  },
   optionList: {
+    minWidth: 220,
     display: 'flex',
     flexDirection: 'column',
     paddingVertical: 16,

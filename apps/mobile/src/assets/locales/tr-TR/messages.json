@@ -35,7 +35,9 @@
       "goToHome": "Ana Sayfaya Git",
       "createNewAddress": "Yeni Cüzdan Oluştur",
       "sync": "Rabby Uzantı Cüzdanını Senkronize Etmek İçin Tara",
-      "alreadyHaveAddress": "Zaten bir cüzdanım var"
+      "alreadyHaveAddress": "Zaten bir cüzdanım var",
+      "alreadyUseRabby": "Zaten Rabby kullanıyorum.",
+      "welcomeTitle": "Rabby Wallet'a hoş geldiniz"
     },
     "transactions": {
       "itemTitle": {
@@ -463,7 +465,6 @@
       },
       "gasAccount": {
         "deposit": "Yatırma",
-        "notEnough": "GasAccount yeterli değil.",
         "login": "Giriş yap",
         "customRPC": "Özel RPC kullanılırken desteklenmiyor.",
         "chainNotSupported": "Bu zincir GasAccount tarafından desteklenmiyor.",
@@ -1031,7 +1032,6 @@
     "home": {
       "services": {
         "history": "İşlemler",
-        "gasAccount": "GasAccount",
         "send": "Gönder",
         "approvals": "Onaylar",
         "bridge": "Köprü",
@@ -1049,7 +1049,8 @@
         "lending": "Kredi verme",
         "predict": "Tahmin Et",
         "meme": "Memecoin",
-        "market": "Pazar"
+        "market": "Pazar",
+        "gasDeposit": "Gaz Dekontörü"
       },
       "swipeUp": {
         "descAndroid": "dApp'leri keşfetmek için tıklayın",
@@ -1062,6 +1063,10 @@
         "favorite": "Favori",
         "emptyAndroid": "Favorilere eklenmiş dApp yok.",
         "empty": "Favorilere eklenmiş hiçbir web sitesi yok."
+      },
+      "depositAssets": {
+        "subtitle": "Bu cüzdana varlık alınız",
+        "title": "Varlıkları Yatırın"
       }
     },
     "dashboard": {
@@ -1147,7 +1152,8 @@
         "hardwareWallet": "Donanım Cüzdanı",
         "importAddress": "Cüzdanı İçe Aktar",
         "createAddress": "Cüzdan Oluştur",
-        "selectAddMethod": "Yöntem Ekle'yi Seçin"
+        "selectAddMethod": "Yöntem Ekle'yi Seçin",
+        "seedPhraseOrPrivateKey": "Seed ifadesi veya özel anahtar"
       },
       "multiAddressHome": {
         "services": "Hizmetler",
@@ -1427,7 +1433,8 @@
         "description1": "Özel anahtar, cüzdanınıza erişmek ve kontrol etmek için kullanılan harf ve rakamlar dizisidir. Cüzdanınızı herhangi bir cihazda kurtarmak için bunu kullanabilirsiniz.",
         "title3": "Asla Paylaşma"
       },
-      "importing": "İçe aktarıyor..."
+      "importing": "İçe aktarıyor...",
+      "Done": "Tamamlandı"
     },
     "unlock": {
       "btn": {
@@ -1567,7 +1574,14 @@
       },
       "other": "Diğer",
       "basicInfo": "Temel Bilgiler",
-      "backup": "Yedekle"
+      "backup": "Yedekle",
+      "verify-fingerprint": "Parmak izini doğrula",
+      "verify-password": "Şifreyi onaylayın",
+      "verify-fingerprint-before-backup": "Yedeklemeden önce parmak izinizi doğrulayın.",
+      "verify-face-id": "Yüz Tanıma Doğrula",
+      "verify-face-id-before-backup": "Yedeklemeden önce Face ID'nizi doğrulayın",
+      "verify-and-backup": "Doğrula ve yedekle",
+      "verify-password-before-backup": "Rabby şifrenizi yedeklemeden önce doğrulayın"
     },
     "customRpc": {
       "EditRPCModal": {
@@ -1784,7 +1798,6 @@
         "token": "Token",
         "amount": "Miktar",
         "invalidAmount": "500'ün altında olmalıdır",
-        "selectToken": "Token Seçin",
         "followingTokenInSufficient": "Aşağıdaki token bakiyesi yetersizdir.",
         "zeroInvalidAmount": "Miktar sıfır olamaz",
         "title": "Hesapla geçme",
@@ -1796,7 +1809,17 @@
         "paymentAddress": "Ödeme Cüzdanı",
         "inSufficientTip1": "Bu cüzdanın yeterli token'i yok. Lütfen farklı bir cüzdan seçin.",
         "pay": "Öde",
-        "applePayFeeDesc1": "Uygulama Mağazası ücreti içerir. Çekim yoktur."
+        "applePayFeeDesc1": "Uygulama Mağazası ücreti içerir. Çekim yoktur.",
+        "insufficientBalanceLabel": "Yetersiz Bakiye",
+        "estReceiveLabel": "Est.Alacak: {{usd}}",
+        "unavailablePaymentWallet": "Seçilen ödeme cüzdanı kullanılamıyor",
+        "balanceLabel": "Bakiye",
+        "gasDepositTitle": "Gaz Yatırma",
+        "suggestedToken": "Önerilen Token'lar",
+        "fetchQuoteFailed": "Alıntı alınamadı",
+        "minAmountRequired": "En az depozit tutarı 1 $'dır.",
+        "estReceiveTip": "{{name}} üzerinden işlenen hizmetin kayma yaşama ihtimali vardır.",
+        "selectToken": "Para Yatırmak İçin Token Seçin"
       },
       "paymentAddressPopup": {
         "confirm": "Onayla",
@@ -1851,7 +1874,8 @@
         "desc": "Tüm Ağırlıklarında Gas Ücretlerini Ödeyin",
         "buyWith": "Alım yapın ile",
         "title": "GasAccount'a Yatır",
-        "buyWithApple": "Uygulama Mağazası'ndan Satın Al"
+        "buyWithApple": "Uygulama Mağazası'ndan Satın Al",
+        "insufficientTokenBalance": "Yetersiz Token Bakiyesi"
       },
       "gasAccountList": {
         "address": "Adres",
@@ -1869,8 +1893,21 @@
       "loginFailed": "Giriş Başarısız",
       "depositCanceled": "Yatırım İptal Edildi",
       "loginSuccess": "Giriş Başarılı",
-      "switchAccount": "GasAccount'ı Değiştir",
-      "withdrawDisabledIAP": "Çekimler devre dışı bırakılmıştır çünkü bakiyeniz çekilemeyen fiat fonları içermektedir. Token bakiyenizi çekmek için destek ile iletişime geçin."
+      "withdrawDisabledIAP": "Çekimler devre dışı bırakılmıştır çünkü bakiyeniz çekilemeyen fiat fonları içermektedir. Token bakiyenizi çekmek için destek ile iletişime geçin.",
+      "benefitCard": {
+        "item2": "Tüm ağları destekler.",
+        "desc1": "Gaz ödemek için ek ücret yoktur.",
+        "item1": "Ücret Yok Rabby",
+        "item3": "Tüm işlemleri destekler",
+        "desc2": "",
+        "desc3": "Değiştir, Köprü, Gönder, DApps ve daha fazlası"
+      },
+      "depositNow": "Şimdi Yatırın",
+      "switchAccount": "Cüzdanı Değiştir",
+      "lowBalance": "Yeterli gazınız yok. Gelecekteki işlemlerin sorunsuz geçmesi için gaz depozitosu yapın.",
+      "gasBalance": "Gaz Bakiyesi",
+      "depositWith": "Deposit with",
+      "depositFailed": "Yatırım başarısız oldu"
     },
     "tokenDetail": {
       "action": {
@@ -2399,7 +2436,11 @@
         "feeTip": "Ücret: $1.00",
         "insufficientBalance": "Yetersiz bakiye",
         "feeTooltipDesc": "Hyperliquid tarafından alınan Çekim Ücreti: 1 $",
-        "minimumWithdrawSize": "Minimum çekim tutarı 2 $'dır."
+        "minimumWithdrawSize": "Minimum çekim tutarı 2 $'dır.",
+        "selectWithdrawToken": "Token seçin",
+        "hypeFeeTip": "Ücret : ~${{fee}}",
+        "hypeGasFeeTooltip": "EVM'ye para çekmek için ~0.00002 HYPE ücreti alınacaktır.",
+        "hypeActivationFeeTooltip": "Hyperliquid, ilk HyperEVM çekimi için {{fee}} tutarında bir defaya mahsus aktivasyon ücreti talep edecektir."
       },
       "PerpsWithdrawFeePopup": {
         "title": "Ücret",
@@ -2796,7 +2837,9 @@
         "almostReachedError": "Maksimum borç alma miktarı, protokol borç limiti neredeyse ulaşıldığı için sınırlıdır.",
         "almostReachedWarning": "Protokol borç limiti bu varlık için %100'dür. Daha fazla borç alma available değildir.",
         "swapDebt": "Değiştir",
-        "borrowed": "Ödünç Alındı"
+        "borrowed": "Ödünç Alındı",
+        "noSupplyDesc": "Borç almak için teminat olarak varlık sağlamanız gerekir.",
+        "noSupplyPrefix": "Temin yok:"
       },
       "popup": {
         "available": "mevcut",
@@ -3047,6 +3090,22 @@
       },
       "noOpen": "Açık Değil",
       "marketNotOpenTooltip": "Pazar açık değil"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "Rabby cüzdanınızı geri yükleyin",
+        "subtitle": "Hoş geldin geri! 🎉  \nCüzdanını hızlıca geri yüklemek için bir yöntem seç."
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "Seed ifadenizi girin",
+        "privateKeyPlaceholder": "Özel anahtarınızı girin"
+      },
+      "createWalletError": "Cüzdan oluşturma başarısız oldu",
+      "walletReady": "Cüzdanınız hazır 🚀",
+      "setPasswordTip": "Cüzdanınızı korumak için bir şifre belirleyin.",
+      "common": {
+        "orYouCanCreateNewWallet": "Ya da <clickable>yeni bir cüzdan oluşturun</clickable> diyebilirsiniz."
+      }
     }
   },
   "component": {
@@ -3068,7 +3127,7 @@
       },
       "loginConfirmModal": {
         "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz.",
-        "title": "Cüzdan Seçin Giriş Yapmak İçin"
+        "title": "Cüzdan Değiştir"
       },
       "depositPopup": {
         "amount": "Miktar",
@@ -3304,6 +3363,9 @@
     },
     "lpTokenModal": {
       "desc": "Bu, {{protocolId}} için bir Likidite Sağlayıcı (LP) Token'dır."
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "Mevcut adres yok"
     }
   },
   "native": {
@@ -3418,7 +3480,10 @@
     },
     "autolock": {
       "never": "Asla"
-    }
+    },
+    "Imported": "İçe Aktarıldı",
+    "Created": "Oluşturuldu",
+    "SavedSeedPhrase": "Seed ifrasını kaydettim."
   },
   "background": {
     "error": {
@@ -3496,5 +3561,9 @@
     "unknownAddressFromTransaction": "İşlem, cüzdanınızda bulunmayan bir adresle ilgilidir. Lütfen işlem geçmişini daha sonra kontrol edin.",
     "noTransactionDetail": "İşlem detayları bulunamadı. Lütfen işlem geçmişini daha sonra kontrol edin.",
     "noTransactionOwnerAddress": "İşlem cüzdanınızdaki hiçbir adrese ait değildir. Lütfen işlem geçmişini daha sonra kontrol edin."
+  },
+  "backupReminder": {
+    "action": "Şimdi yedekle",
+    "title": "Cüzdanınızı yedeklemediniz."
   }
 }

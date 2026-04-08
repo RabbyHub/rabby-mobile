@@ -24,6 +24,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { updateHistoryTimeSingleAddress } from '@/hooks/historyTokenDict';
+import { checkAddedAccountsGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 
 export interface AccountStoreState {
   accounts: KeyringAccountWithAlias[];
@@ -226,6 +227,9 @@ class AccountStore extends BaseStore<AccountStoreState> {
             preferenceService.setNeedsBackupReminder(dbId, true);
           }
         }
+        checkAddedAccountsGasAccountIfNeeded(accounts).catch(error => {
+          console.error('checkAddedAccountsGasAccountIfNeeded error', error);
+        });
         await AccountInfoEntity.recordNewAccount(accounts);
         await this.fetchNewlyAddedAccounts();
       },

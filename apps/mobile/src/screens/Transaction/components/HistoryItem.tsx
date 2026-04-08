@@ -166,10 +166,10 @@ export const HistoryItem = React.memo(
       switch (formatType) {
         case HistoryItemCateType.GAS_RECEIVED:
         case HistoryItemCateType.GAS_WITHDRAW:
-          address = FromText + t('page.home.services.gasAccount');
+          address = FromText + t('page.home.services.gasDeposit');
           break;
         case HistoryItemCateType.GAS_DEPOSIT:
-          address = ToText + t('page.home.services.gasAccount');
+          address = ToText + t('page.home.services.gasDeposit');
           break;
 
         case HistoryItemCateType.Send:

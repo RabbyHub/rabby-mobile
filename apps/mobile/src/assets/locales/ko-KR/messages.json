@@ -136,7 +136,9 @@
       "goToHome": "홈으로 이동",
       "alreadyHaveAddress": "저는 이미 지갑이 있습니다.",
       "sync": "Rabby 확장 지갑 동기화를 위해 스캔하세요",
-      "createNewAddress": "새 지갑 만들기"
+      "createNewAddress": "새 지갑 만들기",
+      "welcomeTitle": "Rabby Wallet에 오신 것을 환영합니다",
+      "alreadyUseRabby": "저는 이미 Rabby를 사용하고 있습니다."
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "니모닉 구문을 입력하세요."
@@ -168,7 +170,6 @@
       "ledgerSign": "서명하기",
       "beginSigning": "서명 프로세스 시작",
       "gasAccount": {
-        "notEnough": "GasAccount는 충분하지 않습니다",
         "deposit": "입금",
         "login": "로그인",
         "useGasAccount": "GasAccount 사용",
@@ -794,7 +795,6 @@
         "send": "보내기",
         "more": "더보기",
         "bridge": "Bridge",
-        "gasAccount": "GasAccount",
         "receive": "받기",
         "queue": "대기열",
         "websites": "웹사이트",
@@ -810,7 +810,8 @@
         "lending": "대출",
         "predict": "예측하다",
         "meme": "밈코인",
-        "market": "시장"
+        "market": "시장",
+        "gasDeposit": "가스 예치"
       },
       "swipeUp": {
         "desc": "위로 스와이프하여 웹사이트 탐색하기",
@@ -823,6 +824,10 @@
         "favorite": "즐겨찾기",
         "emptyAndroid": "즐겨찾기에 추가된 dApp이 없습니다.",
         "empty": "즐겨찾기에 추가된 웹사이트가 없습니다."
+      },
+      "depositAssets": {
+        "title": "자산 입금",
+        "subtitle": "이 지갑으로 자산을 받으세요"
       }
     },
     "bridge": {
@@ -1055,7 +1060,8 @@
         "syncRabbyExtension": "Rabby Extension 동기화",
         "importAddress": "지갑 가져오기",
         "createAddress": "지갑 생성",
-        "selectAddMethod": "방법 추가 선택"
+        "selectAddMethod": "방법 추가 선택",
+        "seedPhraseOrPrivateKey": "씨드 구문 또는 개인 키"
       },
       "multiAddressHome": {
         "pin": "핀",
@@ -1287,7 +1293,14 @@
       },
       "backup": "백업",
       "other": "기타",
-      "basicInfo": "기본 정보"
+      "basicInfo": "기본 정보",
+      "verify-face-id": "Face ID 확인",
+      "verify-password": "비밀번호 확인",
+      "verify-fingerprint": "지문 확인",
+      "verify-password-before-backup": "백업 전에 Rabby 비밀번호를 확인하세요.",
+      "verify-face-id-before-backup": "백업 전에 Face ID를 확인하세요.",
+      "verify-and-backup": "검증 및 백업",
+      "verify-fingerprint-before-backup": "백업 전에 지문을 확인하세요."
     },
     "customRpc": {
       "opened": "Opened: 열림",
@@ -1481,7 +1494,6 @@
       "depositPopup": {
         "title": "예금",
         "token": "토큰",
-        "selectToken": "토큰 선택",
         "invalidAmount": "500 이하여야 합니다.",
         "zeroInvalidAmount": "금액은 0이 될 수 없습니다.",
         "followingTokenInSufficient": "다음 토큰 잔액이 부족합니다",
@@ -1494,7 +1506,17 @@
         "paymentAddress": "결제 지갑",
         "inSufficientTip1": "이 지갑에는 충분한 토큰이 없습니다. 다른 지갑을 선택하세요.",
         "pay": "지불하다",
-        "applePayFeeDesc1": "앱 스토어 수수료가 포함되어 있습니다. 출금이 없습니다."
+        "applePayFeeDesc1": "앱 스토어 수수료가 포함되어 있습니다. 출금이 없습니다.",
+        "balanceLabel": "잔액",
+        "gasDepositTitle": "가스 입금",
+        "fetchQuoteFailed": "견적을 가져오는 데 실패했습니다.",
+        "estReceiveTip": "{{name}}를 통해 처리된 서비스는 슬ippage가 있을 수 있습니다.",
+        "selectToken": "토큰 선택하여 입금하기",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "suggestedToken": "제안된 토큰",
+        "insufficientBalanceLabel": "잔액 부족",
+        "unavailablePaymentWallet": "선택한 결제 지갑을 사용할 수 없습니다",
+        "minAmountRequired": "최소 입금 금액은 $1입니다."
       },
       "paymentAddressPopup": {
         "balance": "잔액",
@@ -1545,7 +1567,8 @@
         "buyWithDesc": "30% 수수료, 출금 불가",
         "title": "GasAccount에 입금하기",
         "buyWith": "로 구매하기",
-        "buyWithApple": "앱 스토어에서 구매"
+        "buyWithApple": "앱 스토어에서 구매",
+        "insufficientTokenBalance": "잔액 부족"
       },
       "gasAccountList": {
         "address": "주소",
@@ -1555,10 +1578,23 @@
       },
       "depositSuccess": "입금 성공",
       "loginFailed": "로그인 실패",
-      "switchAccount": "GasAccount 전환",
       "depositCanceled": "입금이 취소되었습니다",
       "loginSuccess": "로그인 성공",
-      "withdrawDisabledIAP": "출금이 비활성화되었습니다. 잔고에 출금할 수 없는 법정화폐 자금이 포함되어 있기 때문입니다. 토큰 잔액을 출금하려면 지원팀에 문의하세요."
+      "withdrawDisabledIAP": "출금이 비활성화되었습니다. 잔고에 출금할 수 없는 법정화폐 자금이 포함되어 있기 때문입니다. 토큰 잔액을 출금하려면 지원팀에 문의하세요.",
+      "benefitCard": {
+        "desc2": "",
+        "desc1": "가스에 추가 수수료가 없습니다.",
+        "item2": "모든 네트워크를 지원합니다.",
+        "item3": "모든 거래를 지원합니다.",
+        "item1": "No Rabby Fee",
+        "desc3": "스왑, 브릿지, 보내기, DApps, 및 기타"
+      },
+      "gasBalance": "가스 잔액",
+      "depositNow": "지금 입금하기",
+      "switchAccount": "지갑 전환",
+      "depositFailed": "입금 실패",
+      "depositWith": "입금하기 위해",
+      "lowBalance": "가스가 충분하지 않습니다. 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요."
     },
     "approvalsAddressList": {
       "title": "승인"
@@ -1839,7 +1875,8 @@
         "title": "프라이빗 키란 무엇인가요?",
         "description4": "당신의 개인 키는 장치에 로컬로 저장되며 비밀번호로 암호화됩니다. 오직 당신만이 접근할 수 있습니다. Rabby는 당신의 개인 키를 검색하거나 접근할 수 없습니다."
       },
-      "importing": "가져오는 중..."
+      "importing": "가져오는 중...",
+      "Done": "완료되었습니다"
     },
     "customTestnet": {
       "id": "ID",
@@ -2400,7 +2437,11 @@
         "feeTip": "수수료: $1.00",
         "title": "출금",
         "available": "사용 가능",
-        "minimumWithdrawSize": "최소 인출 금액은 $2입니다."
+        "minimumWithdrawSize": "최소 인출 금액은 $2입니다.",
+        "hypeFeeTip": "수수료 : ~${{fee}}",
+        "hypeGasFeeTooltip": "EVM으로 출금할 때 ~0.00002 HYPE의 수수료가 부과됩니다.",
+        "selectWithdrawToken": "토큰 선택",
+        "hypeActivationFeeTooltip": "HyperEVM 최초 출금 시 Hyperliquid에서 {{fee}}의 일회성 활성화 수수료가 부과됩니다."
       },
       "PerpsWithdrawFeePopup": {
         "btn": "알겠어요",
@@ -2797,7 +2838,9 @@
         "almostReachedWarning": "이 자산에 대한 프로토콜 대출 한도가 100%입니다. 추가 대출이 불가능합니다.",
         "almostReachedError": "대출할 수 있는 최대 금액은 프로토콜 대출 한도가 거의 도달했기 때문에 제한됩니다.",
         "swapDebt": "스왑",
-        "borrowed": "빌린"
+        "borrowed": "빌린",
+        "noSupplyPrefix": "공급 없음:",
+        "noSupplyDesc": "빌리려면 담보로 자산을 제공해야 합니다."
       },
       "popup": {
         "available": "사용 가능",
@@ -3048,6 +3091,22 @@
       },
       "noOpen": "열지 않음",
       "marketNotOpenTooltip": "시장이 열리지 않음"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "subtitle": "환영합니다! 🎉  \n지갑을 빠르게 복원할 방법을 선택하세요.",
+        "title": "Rabby 지갑 복원하기"
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "또는 <clickable>새 지갑을 생성하세요</clickable>"
+      },
+      "importSecret": {
+        "privateKeyPlaceholder": "개인 키를 입력하세요",
+        "seedPhrasePlaceholder": "시드 문구를 입력하세요"
+      },
+      "walletReady": "당신의 지갑이 준비되었습니다 🚀",
+      "createWalletError": "지갑 생성 실패",
+      "setPasswordTip": "지갑을 보호하기 위해 비밀번호를 설정하세요."
     }
   },
   "global": {
@@ -3147,7 +3206,10 @@
     },
     "autolock": {
       "never": "절대"
-    }
+    },
+    "Imported": "가져온",
+    "Created": "생성됨",
+    "SavedSeedPhrase": "나는 시드 구문을 저장했습니다."
   },
   "native": {
     "biometrics": {
@@ -3273,8 +3335,8 @@
       },
       "withdraw": "출금",
       "loginConfirmModal": {
-        "title": "지갑을 선택하여 로그인하세요",
-        "desc": "로그인 후, 이 주소에만 예치할 수 있습니다."
+        "desc": "로그인 후, 이 주소에만 예치할 수 있습니다.",
+        "title": "지갑 전환"
       },
       "gasExceed": "GasAccount 잔액은 $1000을 초과할 수 없습니다.",
       "loginInTip": {
@@ -3419,6 +3481,9 @@
     },
     "lpTokenModal": {
       "desc": "이것은 {{protocolId}}의 유동성 공급자(LP) 토큰입니다."
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "사용 가능한 주소가 없습니다"
     }
   },
   "constant": {
@@ -3497,5 +3562,9 @@
     "noTransactionDetail": "거래 세부정보를 찾을 수 없습니다. 나중에 거래 내역을 확인해 주세요.",
     "unknownAddressFromTransaction": "거래는 귀하의 지갑에 없는 주소와 관련이 있습니다. 나중에 거래 내역을 확인해 주세요.",
     "noTransactionOwnerAddress": "트랜잭션이 귀하의 지갑에 있는 주소와 관련이 없습니다. 나중에 거래 내역을 확인해 주시기 바랍니다."
+  },
+  "backupReminder": {
+    "title": "당신은 지갑을 백업하지 않았습니다",
+    "action": "지금 백업하기"
   }
 }

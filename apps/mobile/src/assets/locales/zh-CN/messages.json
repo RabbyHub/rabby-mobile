@@ -142,7 +142,10 @@
     },
     "autolock": {
       "never": "从不"
-    }
+    },
+    "Created": "创建",
+    "SavedSeedPhrase": "我已经保存了种子短语",
+    "Imported": "导入的"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过助记词导入",
@@ -259,7 +262,9 @@
       "goToHome": "前往首页",
       "alreadyHaveAddress": "我已经有一个钱包",
       "sync": "扫描Rabby插件同步钱包",
-      "createNewAddress": "创建新钱包"
+      "createNewAddress": "创建新钱包",
+      "alreadyUseRabby": "我已经在使用 Rabby。",
+      "welcomeTitle": "欢迎来到 Rabby Wallet"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "输入您的助记词"
@@ -811,11 +816,10 @@
       "blockDappFromSendingRequests": "阻止 Dapp 发送请求 1 分钟",
       "gasAccount": {
         "useGasAccount": "使用 GasAccount",
-        "deposit": "存入",
         "login": "登录",
         "loginFirst": "请先登录GasAccount",
+        "signWithHardwareWalletToUse": "你需要使用{{brand}}签名后才能使用",
         "chainNotSupported": "GasAccount 不支持该链",
-        "notEnough": "GasAccount 不足",
         "customRPC": "使用自定义 RPC 时不支持",
         "WalletConnectTips": "GasAccount 不支持 WalletConnect"
       },
@@ -858,7 +862,6 @@
         "more": "更多",
         "websites": "网站",
         "swap": "交换",
-        "gasAccount": "GasAccount",
         "dapps": "Dapps",
         "approvals": "授权",
         "search": "搜索 Token",
@@ -869,7 +872,8 @@
         "lending": "借贷",
         "predict": "预测",
         "meme": "Memecoin",
-        "market": "市场"
+        "market": "市场",
+        "gasDeposit": "Gas 充值"
       },
       "swipeUp": {
         "descAndroid": "点击探索 dApps",
@@ -882,6 +886,10 @@
         "empty": "没有网站被添加到收藏夹",
         "search": "搜索",
         "emptyAndroid": "没有dApp添加到收藏夹"
+      },
+      "depositAssets": {
+        "subtitle": "将资产接收至此钱包",
+        "title": "存入资产"
       }
     },
     "manageAddress": {
@@ -1235,7 +1243,8 @@
         "syncRabbyExtension": "同步 Rabby 扩展程序",
         "importAddress": "导入钱包",
         "createAddress": "创建钱包",
-        "selectAddMethod": "选择添加方法"
+        "selectAddMethod": "选择添加方法",
+        "seedPhraseOrPrivateKey": "助记词或私钥"
       },
       "rateModalTriggerOnHome": {
         "description": "你如何评价 Rabby Wallet？"
@@ -1542,7 +1551,8 @@
         "description3": "切勿分享您的私钥——任何拥有私钥的人都可以控制您的资金。",
         "title3": "永远不要分享它"
       },
-      "importing": "导入中..."
+      "importing": "导入中...",
+      "Done": "完成"
     },
     "backupPrivateKey": {
       "clickToShowQr": "点击显示私钥二维码",
@@ -1696,7 +1706,14 @@
       },
       "basicInfo": "基本信息",
       "other": "其他",
-      "backup": "备份"
+      "backup": "备份",
+      "verify-and-backup": "验证和备份",
+      "verify-fingerprint": "验证指纹",
+      "verify-face-id": "验证 Face ID",
+      "verify-fingerprint-before-backup": "在备份之前验证您的指纹",
+      "verify-password-before-backup": "在备份之前，请验证您的 Rabby 密码。",
+      "verify-password": "验证密码",
+      "verify-face-id-before-backup": "在备份之前验证您的 Face ID"
     },
     "rabbyPoints": {
       "claimItem": {
@@ -1856,7 +1873,6 @@
         "invalidAmount": "必须在 500 以下",
         "amount": "金额",
         "token": "Token",
-        "selectToken": "选择 Token",
         "followingTokenInSufficient": "以下代币余额不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 手续费。不可提现",
         "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现",
@@ -1865,7 +1881,17 @@
         "inSufficientTip1": "这个钱包没有足够的 tokens，请选择其他钱包。",
         "paymentAddress": "支付钱包",
         "pay": "支付",
-        "applePayFeeDesc1": "包含应用商店费用。无提款。"
+        "applePayFeeDesc1": "包含应用商店费用。无提款。",
+        "unavailablePaymentWallet": "所选支付钱包不可用",
+        "balanceLabel": "余额",
+        "fetchQuoteFailed": "获取报价失败",
+        "selectToken": "选择要存入的 Token",
+        "gasDepositTitle": "Gas 充值",
+        "estReceiveLabel": "预计收款：{{usd}}",
+        "insufficientBalanceLabel": "余额不足",
+        "minAmountRequired": "最低存款金额为 $1",
+        "estReceiveTip": "服务通过 {{name}} 处理，可能会有滑点。",
+        "suggestedToken": "建议的代币"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
@@ -1912,8 +1938,9 @@
         "title": "存入GasAccount",
         "buyWithDesc": "30% 手续费，不可提款",
         "desc": "在所有链上支付 Gas 费用",
-        "depositToken": "使用 Token 存款",
-        "buyWithApple": "在应用商店购买"
+        "depositToken": "使用 Token 充值",
+        "buyWithApple": "在应用商店购买",
+        "insufficientTokenBalance": "余额不足"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 余额",
@@ -1924,9 +1951,22 @@
       "loginFailed": "登录失败",
       "depositSuccess": "存款成功",
       "depositCanceled": "存款已取消",
-      "switchAccount": "切换GasAccount",
       "loginSuccess": "登录成功",
-      "withdrawDisabledIAP": "由于您的余额中包含无法提取的法币资金，因此提款被禁用。请联系支持以提取您的代币余额。"
+      "withdrawDisabledIAP": "由于您的余额中包含无法提取的法币资金，因此提款被禁用。请联系支持以提取您的代币余额。",
+      "benefitCard": {
+        "item3": "支持所有交易",
+        "desc2": "",
+        "desc3": "兑换、桥接、发送、DApps 等更多功能",
+        "item2": "支持所有网络",
+        "item1": "无 Rabby Fee",
+        "desc1": "无需支付额外的 gas 费用"
+      },
+      "depositNow": "立即存款",
+      "switchAccount": "切换钱包",
+      "depositWith": "充值",
+      "depositFailed": "存款失败",
+      "lowBalance": "您没有足够的 gas。请存入 gas 以确保未来交易顺利进行。",
+      "gasBalance": "Gas 余额"
     },
     "search": {
       "header": {
@@ -2526,7 +2566,11 @@
         "feeTooltipDesc": "Hyperliquid 收取的提现费用：$1",
         "amount": "数量",
         "feeTip": "费用：$1.00",
-        "invalidNumber": "请输入一个有效的数字"
+        "invalidNumber": "请输入一个有效的数字",
+        "selectWithdrawToken": "选择token",
+        "hypeFeeTip": "费用 : ~${{fee}}",
+        "hypeActivationFeeTooltip": "Hyperliquid 将收取一次性激活费用 {{fee}}，用于首次 HyperEVM 提现。",
+        "hypeGasFeeTooltip": "提取到 EVM 将收取约 0.00002 HYPE 的费用。"
       },
       "PerpsWithdrawFeePopup": {
         "btn": "我明白了",
@@ -2920,7 +2964,9 @@
         "almostReachedWarning": "该资产的协议借款上限为100%。进一步借款不可用。",
         "almostReachedError": "可借用的最大金额受限，因为协议借款上限几乎已达到。",
         "swapDebt": "交换",
-        "borrowed": "已借款"
+        "borrowed": "已借款",
+        "noSupplyDesc": "要借款，您需要提供资产作为抵押。",
+        "noSupplyPrefix": "没有供应："
       },
       "popup": {
         "remainingDebt": "剩余债务",
@@ -3171,6 +3217,22 @@
       },
       "noOpen": "未开启",
       "marketNotOpenTooltip": "市场尚未开放"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "恢复您的 Rabby 钱包",
+        "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。"
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "或者你可以<clickable>创建一个新钱包</clickable>"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "输入您的种子短语",
+        "privateKeyPlaceholder": "输入您的私钥"
+      },
+      "createWalletError": "创建钱包失败",
+      "walletReady": "您的钱包已准备好 🚀",
+      "setPasswordTip": "设置密码以保护您的钱包"
     }
   },
   "component": {
@@ -3305,8 +3367,8 @@
         "depositTitle": "存入 USDC/USDT 支付 Gas Fees"
       },
       "loginConfirmModal": {
-        "title": "选择钱包登录",
-        "desc": "登录后，您只能在此地址进行存款。"
+        "desc": "登录后，您只能在此地址进行存款。",
+        "title": "切换钱包"
       },
       "depositPopup": {
         "token": "Token",
@@ -3428,6 +3490,9 @@
     },
     "lpTokenModal": {
       "desc": "这是 {{protocolId}} 的流动性提供者（LP）代币。"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "没有可用地址"
     }
   },
   "bluetooth": {
@@ -3497,5 +3562,9 @@
     "noTransactionOwnerAddress": "该交易不属于您钱包中的任何地址。请稍后检查交易历史记录。",
     "loadingTransaction": "正在打开交易...",
     "unknownAddressFromTransaction": "交易涉及一个不在您钱包中的地址。请稍后检查交易记录。"
+  },
+  "backupReminder": {
+    "action": "立即备份",
+    "title": "您尚未备份您的钱包"
   }
 }

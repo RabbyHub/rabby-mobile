@@ -164,8 +164,8 @@
       },
       "gasExceed": "ยอดคงเหลือใน GasAccount ไม่เกิน $1000",
       "loginConfirmModal": {
-        "title": "เลือกกระเป๋าเงินเพื่อเข้าสู่ระบบ",
-        "desc": "เมื่อเข้าสู่ระบบแล้ว คุณสามารถฝากได้เฉพาะที่อยู่นี้เท่านั้น"
+        "desc": "เมื่อเข้าสู่ระบบแล้ว คุณสามารถฝากได้เฉพาะที่อยู่นี้เท่านั้น",
+        "title": "เปลี่ยนกระเป๋าเงิน"
       },
       "depositPopup": {
         "title": "ฝากเงิน",
@@ -285,6 +285,9 @@
     },
     "lpTokenModal": {
       "desc": "นี่คือโทเค็นผู้ให้ความ ликวิดิตี (LP) สำหรับ {{protocolId}}"
+    },
+    "AccountSelectPopup": {
+      "noAvailableAddress": "ไม่มีที่อยู่ที่ใช้ได้"
     }
   },
   "page": {
@@ -292,7 +295,9 @@
       "goToHome": "ไปที่หน้าแรก",
       "alreadyHaveAddress": "ฉันมีกระเป๋าเงินแล้ว",
       "sync": "สแกนเพื่อซิงค์กระเป๋าสตางค์ Rabby Extension",
-      "createNewAddress": "สร้างกระเป๋าเงินใหม่"
+      "createNewAddress": "สร้างกระเป๋าเงินใหม่",
+      "welcomeTitle": "ยินดีต้อนรับสู่\nRabby Wallet",
+      "alreadyUseRabby": "ฉัน已经ใช้ Rabby"
     },
     "transactions": {
       "explain": {
@@ -964,7 +969,6 @@
         "loginFirst": "กรุณาเข้าสู่ระบบ GasAccount ก่อน",
         "deposit": "ฝากเงิน",
         "WalletConnectTips": "GasAccount ไม่รองรับ WalletConnect",
-        "notEnough": "GasAccount ไม่เพียงพอ",
         "chainNotSupported": "เครือนี้ไม่ได้รับการสนับสนุนโดย GasAccount"
       },
       "ledger": {
@@ -1015,7 +1019,6 @@
         "bridge": "Bridge",
         "dapps": "Dapps",
         "websites": "Websites",
-        "gasAccount": "GasAccount",
         "queue": "คิว",
         "search": "ค้นหา Token",
         "copyTrading": "การคัดลอกการซื้อขาย",
@@ -1025,7 +1028,8 @@
         "lending": "การให้กู้ยืม",
         "predict": "คาดการณ์",
         "meme": "Memecoin",
-        "market": "ตลาด"
+        "market": "ตลาด",
+        "gasDeposit": "เงินฝากแก๊ส"
       },
       "swipeUp": {
         "descAndroid": "คลิกเพื่อสำรวจ dApps",
@@ -1038,6 +1042,10 @@
         "search": "ค้นหา",
         "emptyAndroid": "ยังไม่มี dApp ที่เพิ่มลงในรายการที่ชื่นชอบ",
         "empty": "ไม่มีเว็บไซต์ที่เพิ่มเข้าสู่รายการโปรด"
+      },
+      "depositAssets": {
+        "title": "ฝากสินทรัพย์",
+        "subtitle": "รับสินทรัพย์ไปยังกระเป๋านี้"
       }
     },
     "gasTopUp": {
@@ -1312,7 +1320,8 @@
         "syncRabbyExtension": "ซิงค์ Rabby Extension",
         "createAddress": "สร้างกระเป๋าเงิน",
         "importAddress": "นำเข้ากระเป๋าเงิน",
-        "selectAddMethod": "เลือกวิธีการเพิ่ม"
+        "selectAddMethod": "เลือกวิธีการเพิ่ม",
+        "seedPhraseOrPrivateKey": "Seed phrase หรือ private key"
       },
       "multiAddressHome": {
         "services": "บริการ",
@@ -1489,7 +1498,14 @@
       },
       "backup": "สำรองข้อมูล",
       "other": "อื่น ๆ",
-      "basicInfo": "ข้อมูลพื้นฐาน"
+      "basicInfo": "ข้อมูลพื้นฐาน",
+      "verify-password-before-backup": "ตรวจสอบรหัสผ่าน Rabby ของคุณก่อนสำรองข้อมูล",
+      "verify-fingerprint": "ตรวจสอบลายนิ้วมือ",
+      "verify-and-backup": "ตรวจสอบ & สำรองข้อมูล",
+      "verify-password": "ตรวจสอบรหัสผ่าน",
+      "verify-face-id": "ตรวจสอบ Face ID",
+      "verify-fingerprint-before-backup": "ยืนยันลายนิ้วมือของคุณก่อนที่จะทำการสำรองข้อมูล",
+      "verify-face-id-before-backup": "ตรวจสอบ Face ID ของคุณก่อนการสำรองข้อมูล"
     },
     "importSafe": {
       "title": "เพิ่มที่อยู่ Safe",
@@ -1770,7 +1786,8 @@
         "description2": "หากคุณสูญเสีย keyring ของคุณ คุณจะไม่สามารถกู้คืนกระเป๋าเงินของคุณได้",
         "ButtonGotIt": "ฉันเข้าใจแล้ว。"
       },
-      "importing": "นำเข้า..."
+      "importing": "นำเข้า...",
+      "Done": "เสร็จเรียบร้อย"
     },
     "safeQueue": {
       "unknownProtocol": "Unknown protocol",
@@ -2019,7 +2036,6 @@
         "invalidAmount": "ต้องต่ำกว่า 500",
         "zeroInvalidAmount": "จำนวนเงินต้องไม่เป็นศูนย์",
         "desc": "ทำการฝากเงินไปยังบัญชี DeBank L2 ของ Rabby ได้โดยไม่มีค่าใช้จ่ายเพิ่มเติม—ถอนเงินได้ทุกเวลา",
-        "selectToken": "เลือกโทเค็น",
         "followingTokenInSufficient": "ยอดคงเหลือโทเค็นต่อไปนี้ไม่เพียงพอ",
         "googlePayDesc": "รวมค่าธรรมเนียม Google Pay ${{ amount }} ไม่สามารถถอนเงินได้",
         "applePayDesc": "รวมค่าธรรมเนียม Apple Pay ${{amount}} ไม่มีการถอนไม่ได้",
@@ -2028,7 +2044,17 @@
         "paymentAddress": "กระเป๋าเงินการชำระเงิน",
         "inSufficientTip1": "กระเป๋าเงินนี้มีโทเค็นไม่เพียงพอ กรุณาเลือกกระเป๋าเงินใบอื่น",
         "applePayFeeDesc1": "รวมค่าธรรมเนียม App Store ไม่มีการถอนเงิน。",
-        "pay": "จ่าย"
+        "pay": "จ่าย",
+        "insufficientBalanceLabel": "ยอดเงินไม่เพียงพอ",
+        "balanceLabel": "ยอดเงิน",
+        "gasDepositTitle": "เงินฝาก Gas",
+        "unavailablePaymentWallet": "กระเป๋าเงินที่เลือกสำหรับการชำระเงินไม่สามารถใช้งานได้",
+        "selectToken": "เลือกโทเค็นเพื่อฝากเงิน",
+        "suggestedToken": "โทเค็นที่แนะนำ",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "fetchQuoteFailed": "ไม่สามารถดึงข้อมูลการเสนอราคาได้",
+        "minAmountRequired": "จำนวนเงินฝากขั้นต่ำคือ $1",
+        "estReceiveTip": "บริการที่ดำเนินการผ่าน {{name}} อาจมีการลื่นไถล"
       },
       "paymentAddressPopup": {
         "balance": "ยอดเงิน",
@@ -2079,7 +2105,8 @@
         "depositToken": "ฝากด้วย Token",
         "buyWith": "ซื้อด้วย",
         "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน",
-        "buyWithApple": "ซื้อใน App Store"
+        "buyWithApple": "ซื้อใน App Store",
+        "insufficientTokenBalance": "ยอดคงเหลือโทเค็นไม่เพียงพอ"
       },
       "gasAccountList": {
         "address": "ที่อยู่",
@@ -2088,11 +2115,24 @@
         "wallet": "กระเป๋าเงิน"
       },
       "loginFailed": "เข้าสู่ระบบล้มเหลว",
-      "switchAccount": "สวิตช์ GasAccount",
       "depositCanceled": "การฝากถูกยกเลิก",
       "depositSuccess": "ฝากเงินสำเร็จ",
       "loginSuccess": "ล็อกอินสำเร็จ",
-      "withdrawDisabledIAP": "การถอนถูกปิดใช้งานเพราะยอดเงินของคุณมีเงินคำสั่งซึ่งไม่สามารถถอนได้ ติดต่อฝ่ายสนับสนุนเพื่อถอนยอดโทเค็นของคุณ"
+      "withdrawDisabledIAP": "การถอนถูกปิดใช้งานเพราะยอดเงินของคุณมีเงินคำสั่งซึ่งไม่สามารถถอนได้ ติดต่อฝ่ายสนับสนุนเพื่อถอนยอดโทเค็นของคุณ",
+      "benefitCard": {
+        "item1": "ไม่มีค่าธรรมเนียม Rabby",
+        "desc1": "ไม่ต้องจ่ายค่าธรรมเนียมเพิ่มเติมสำหรับการจ่าย gas",
+        "item2": "รองรับทุกเครือข่าย",
+        "desc2": "",
+        "item3": "รองรับการทำธุรกรรมทั้งหมด",
+        "desc3": "สลับ, สะพาน, ส่ง, DApps, & มากกว่า"
+      },
+      "depositWith": "ฝากด้วย",
+      "switchAccount": "เปลี่ยนกระเป๋าเงิน",
+      "depositNow": "ฝากตอนนี้",
+      "gasBalance": "ยอดก๊าซ",
+      "depositFailed": "การถอนเงินล้มเหลว",
+      "lowBalance": "คุณไม่มีแก๊สเพียงพอ ฝากแก๊สเพื่อให้การทำธุรกรรมในอนาคตดำเนินไปอย่างราบรื่น"
     },
     "addChain": {
       "title": "เพิ่มเครือข่ายที่กำหนดเองไปยัง Rabby",
@@ -2657,7 +2697,11 @@
         "withdrawBtn": "ถอนเงิน",
         "minimumWithdrawSize": "จำนวนเงินถอนขั้นต่ำคือ 2 ดอลลาร์",
         "insufficientBalance": "ยอดเงินไม่เพียงพอ",
-        "invalidNumber": "กรุณาใส่หมายเลขที่ถูกต้อง"
+        "invalidNumber": "กรุณาใส่หมายเลขที่ถูกต้อง",
+        "selectWithdrawToken": "เลือกโทเค็น",
+        "hypeGasFeeTooltip": "ค่าธรรมเนียมประมาณ 0.00002 HYPE จะถูกเรียกเก็บเมื่อถอนเข้าสู่ EVM",
+        "hypeFeeTip": "ค่าธรรมเนียม : ~${{fee}}",
+        "hypeActivationFeeTooltip": "ค่าธรรมเนียมการเปิดใช้งานครั้งเดียว {{fee}} จะถูกเรียกเก็บโดย Hyperliquid สำหรับการถอน HyperEVM ครั้งแรก。"
       },
       "PerpsWithdrawFeePopup": {
         "title": "ค่าธรรมเนียม",
@@ -3054,7 +3098,9 @@
         "almostReachedWarning": "โปรโตคอลการกู้ยืมถึงขีดจำกัด 100% สำหรับสินทรัพย์นี้ การกู้ยืมเพิ่มเติมไม่สามารถใช้งานได้。",
         "almostReachedError": "จำนวนสูงสุดที่สามารถยืมได้จะถูกจำกัดเนื่องจากขีดจำกัดการยืมของโปรโตคอลเกือบถึงแล้ว。",
         "swapDebt": "สลับ",
-        "borrowed": "ยืม"
+        "borrowed": "ยืม",
+        "noSupplyPrefix": "ไม่มีการจัดหา:",
+        "noSupplyDesc": "ในการยืม คุณต้องจัดเตรียมสินทรัพย์เป็นหลักประกัน。"
       },
       "popup": {
         "amount": "จำนวน",
@@ -3305,6 +3351,22 @@
       },
       "noOpen": "ยังไม่ได้เปิด",
       "marketNotOpenTooltip": "ตลาดยังไม่เปิด"
+    },
+    "newUserOnboarding": {
+      "restoreWallet": {
+        "title": "กู้คืนกระเป๋าเงิน Rabby ของคุณ",
+        "subtitle": "ยินดีต้อนรับกลับมา! 🎉  \nเลือกวิธีการเพื่อกู้คืนกระเป๋าเงินของคุณอย่างรวดเร็ว"
+      },
+      "common": {
+        "orYouCanCreateNewWallet": "หรือคุณสามารถ <clickable>สร้างกระเป๋าเงินใหม่</clickable> ได้"
+      },
+      "importSecret": {
+        "seedPhrasePlaceholder": "กรุณาใส่ seed phrase ของคุณ",
+        "privateKeyPlaceholder": "กรอกกุญแจส่วนตัวของคุณ"
+      },
+      "createWalletError": "การสร้างกระเป๋าเงินล้มเหลว",
+      "walletReady": "กระเป๋าเงินของคุณพร้อมแล้ว 🚀",
+      "setPasswordTip": "ตั้งรหัสผ่านเพื่อป้องกันกระเป๋าเงินของคุณ"
     }
   },
   "native": {
@@ -3419,7 +3481,10 @@
     },
     "autolock": {
       "never": "ไม่เคย"
-    }
+    },
+    "Created": "สร้างเสร็จแล้ว",
+    "Imported": "นำเข้า",
+    "SavedSeedPhrase": "ฉันได้บันทึก seed phrase เรียบร้อยแล้ว"
   },
   "background": {
     "transactionWatcher": {
@@ -3497,5 +3562,9 @@
     "noTransactionOwnerAddress": "ธุรกรรมนี้ไม่ได้เป็นของที่อยู่ใดในกระเป๋าสตางค์ของคุณ กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง。",
     "noTransactionDetail": "ไม่พบรายละเอียดธุรกรรม กรุณาตรวจสอบประวัติธุรกรรมในภายหลัง。",
     "unknownAddressFromTransaction": "การทำธุรกรรมเกี่ยวข้องกับที่อยู่ที่ไม่อยู่ในกระเป๋าของคุณ กรุณาตรวจสอบประวัติการทำธุรกรรมในภายหลัง"
+  },
+  "backupReminder": {
+    "action": "สำรองข้อมูลตอนนี้",
+    "title": "คุณยังไม่ได้สำรองข้อมูลกระเป๋าเงินของคุณ"
   }
 }

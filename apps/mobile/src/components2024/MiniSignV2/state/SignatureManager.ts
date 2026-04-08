@@ -15,7 +15,7 @@ import { SignerConfig } from '../domain/types';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { t } from 'i18next';
-import { useSyncExternalStore } from 'react';
+
 import { apiLedger, apiOneKey } from '@/core/apis';
 import {
   callConnectLedgerModal,
@@ -25,10 +25,8 @@ import {
   callConnectOneKeyModal,
   setOneKeyStatus,
 } from '@/hooks/onekey/useOneKeyStatus';
-import {
-  notificationService,
-  transactionHistoryService,
-} from '@/core/services';
+import { transactionHistoryService } from '@/core/services';
+import { getMiniSignGasPanelController } from './useMiniSignGasPanel';
 
 const ETH_GAS_USD_LIMIT = 15;
 const OTHER_GAS_USD_LIMIT = 5;
@@ -56,7 +54,11 @@ const defaultError = {
 const createErrorMessage = (err: unknown) =>
   err instanceof Error ? err.message : String(err ?? 'Unknown error');
 
-class SignatureManager {
+let nextInstanceId = 0;
+
+export class SignatureManager {
+  public readonly instanceId: string;
+  private signingTxIds = new Set<string>();
   private state: SignatureFlowState = {
     status: 'idle',
   };
@@ -65,10 +67,15 @@ class SignatureManager {
   private seq = 0;
   private pendingCtx = new Map<string, Promise<SignerCtx>>();
   private notifyScheduled = false;
+
   private pendingResult: {
     resolve: (hashes: string[]) => void;
     reject: (reason: any) => void;
   } | null = null;
+
+  constructor(instanceId?: string) {
+    this.instanceId = instanceId ?? `sig-${++nextInstanceId}`;
+  }
 
   private dispatch(action: SignatureAction) {
     const next = signatureReducer(this.state, action);
@@ -290,16 +297,16 @@ class SignatureManager {
     return !disabledProcess;
   }
 
-  public getState() {
+  public getState = () => {
     return this.state;
-  }
+  };
 
-  public subscribe(fn: Subscriber) {
+  public subscribe = (fn: Subscriber) => {
     this.subscribers.push(fn);
     return () => {
       this.subscribers = this.subscribers.filter(e => e !== fn);
     };
-  }
+  };
 
   public prefetch(request: SignatureRequest) {
     this.close();
@@ -393,6 +400,36 @@ class SignatureManager {
     return this.updateGas(gas);
   }
 
+  public replaceTxs(nextTxs: Tx[]) {
+    const { ctx, fingerprint } = this.state;
+    if (!ctx || !fingerprint) return;
+
+    const nextCalc = ctx.txsCalc.map((item, index) => {
+      const nextTx = nextTxs[index];
+      if (!nextTx) {
+        return item;
+      }
+
+      return {
+        ...item,
+        tx: {
+          ...item.tx,
+          nonce: nextTx.nonce ?? item.tx.nonce,
+        },
+      };
+    });
+
+    this.dispatch({
+      type: 'UPDATE_CTX',
+      fingerprint,
+      ctx: {
+        ...ctx,
+        txs: nextTxs,
+        txsCalc: nextCalc,
+      } as SignerCtx,
+    });
+  }
+
   public async send(retry?: boolean) {
     const { ctx, config, fingerprint } = this.state;
     if (!ctx || !config || !fingerprint) {
@@ -409,6 +446,13 @@ class SignatureManager {
         ctx,
         config,
         retry,
+        onSigningTxCreated: signingTxId => {
+          if (!this.isActive(opId, fingerprint)) {
+            transactionHistoryService.removeSigningTx(signingTxId);
+            return;
+          }
+          this.signingTxIds.add(signingTxId);
+        },
         onProgress: nextCtx => {
           if (!this.isActive(opId, fingerprint)) return;
           this.dispatch({ type: 'SEND_PROGRESS', fingerprint, ctx: nextCtx });
@@ -444,16 +488,19 @@ class SignatureManager {
   }
 
   private removeSigningTx() {
-    const signingTxId = notificationService.currentMiniApproval?.signingTxId;
-    if (signingTxId) {
-      transactionHistoryService.removeSigningTx(signingTxId);
-      notificationService.currentMiniApproval = null;
+    if (!this.signingTxIds.size) {
+      return;
     }
+    for (const signingTxId of this.signingTxIds) {
+      transactionHistoryService.removeSigningTx(signingTxId);
+    }
+    this.signingTxIds.clear();
   }
 
   public reset() {
     this.clearRunState();
     this.seq++;
+    getMiniSignGasPanelController(this).reset();
     if (this.pendingResult) {
       this.pendingResult.reject(MINI_SIGN_ERROR.USER_CANCELLED);
       this.pendingResult = null;
@@ -642,17 +689,5 @@ class SignatureManager {
 
 export const signatureManager = new SignatureManager();
 
-export const useSignatureStore = <T = SignatureFlowState>(
-  selector?: (state: SignatureFlowState) => T,
-) =>
-  useSyncExternalStore(
-    signatureManager.subscribe.bind(signatureManager),
-    () => {
-      const snapshot = signatureManager.getState();
-      return (selector ? selector(snapshot) : snapshot) as T;
-    },
-    () => {
-      const snapshot = signatureManager.getState();
-      return (selector ? selector(snapshot) : snapshot) as T;
-    },
-  );
+// Note: useSignatureStore is now defined in useSignatureStore.ts to avoid circular deps
+// Re-exported from state/index.ts for backward compatibility
