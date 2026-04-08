@@ -24,6 +24,11 @@ import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import DeviceUtils from '@/core/utils/device';
 import { perfEvents } from '@/core/utils/perf';
+import {
+  getVisibleBlockingModalIds,
+  hasVisibleBlockingModal,
+  MODAL_GATE_IDS,
+} from '@/utils/modalGate';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
   IS_ANDROID && !DeviceUtils.isGteAndroid(14);
@@ -427,6 +432,22 @@ const setLastScreenshot = (
   image: ImageResolvedAssetSource | null,
   uploadNow = false,
 ) => {
+  if (
+    image &&
+    hasVisibleBlockingModal({
+      excludeIds: [MODAL_GATE_IDS.screenshotFeedback],
+    })
+  ) {
+    __DEV__ &&
+      console.debug(
+        '[modal-gate] skip screenshot feedback modal open, blocking modals:',
+        getVisibleBlockingModalIds({
+          excludeIds: [MODAL_GATE_IDS.screenshotFeedback],
+        }),
+      );
+    return;
+  }
+
   setFeedbackByScreenshot(prev => ({
     ...prev,
     lastScreenshot: image,

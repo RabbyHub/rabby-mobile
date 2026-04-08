@@ -57,6 +57,11 @@ import {
   useScreenshotToReportEnabled,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
+import {
+  MODAL_GATE_IDS,
+  useRegisterBlockingModal,
+  useVisibleBlockingModalIds,
+} from '@/utils/modalGate';
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
@@ -359,6 +364,8 @@ function Reset0331AnalyticsSnapshotModal({
 function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [debugModalVisible, setDebugModalVisible] = useState(false);
+  useRegisterBlockingModal(MODAL_GATE_IDS.debugReproModalA, debugModalVisible);
+  const visibleBlockingModalIds = useVisibleBlockingModalIds();
 
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
@@ -476,6 +483,18 @@ function DevSwitchAboutScreenProtection() {
           ]}>
           iOS repro path: open Modal A, then open screenshot Modal B, close B,
           then close A.
+        </Text>
+
+        <Text
+          style={[
+            styles.label,
+            styles.devModalHint,
+            { color: colors2024['neutral-foot'] },
+          ]}>
+          Blocking Modals:{' '}
+          {visibleBlockingModalIds.length
+            ? visibleBlockingModalIds.join(', ')
+            : 'none'}
         </Text>
       </View>
 
