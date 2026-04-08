@@ -1,5 +1,5 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React from 'react';
+import React, { useRef } from 'react';
 
 import {
   ScrollView,
@@ -9,8 +9,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { RootNames } from '@/constant/layout';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
-import { StackActions, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -18,25 +18,76 @@ import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { SeedPhraseGroup } from './CreateSelectOnCurrentSeed/SeedPhraseGroup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Typography';
+import { apiMnemonic } from '@/core/apis';
+import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
+import { keyringService } from '@/core/services';
+import { ellipsisAddress } from '@/utils/address';
+import { replaceToFirst } from '@/utils/navigation';
+import { toast } from '@/components2024/Toast';
+import { setAccountNeedsBackupReminder } from '@/hooks/account';
 
 function MainListBlocks() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { seedPhraseList, handleAddSeedPhraseAddress2024 } = useSeedPhrase();
-  const navigation = useNavigation();
   const { bottom } = useSafeAreaInsets();
+  const creatingRef = useRef(false);
 
-  const handleCreateNewSeed = React.useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.CreateNewAddress,
-        params: {
-          noSetupPassword: true,
-          useCurrentSeed: false,
+  const handleCreateNewSeed = React.useCallback(async () => {
+    if (creatingRef.current) {
+      return;
+    }
+    creatingRef.current = true;
+    try {
+      const seedPhrase = await apiMnemonic.generatePreMnemonic();
+      const Keyring = keyringService.getKeyringClassForType(
+        KEYRING_CLASS.MNEMONIC,
+      ) as any;
+      const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
+      const accountsToCreate = keyring?.getAddresses(0, 1);
+      const address = accountsToCreate?.[0]?.address;
+
+      await addKeyringAndactiveAndPersistAccounts(
+        seedPhrase,
+        '',
+        accountsToCreate.map((acc: any) => ({
+          address: acc.address,
+          aliasName: '',
+          index: acc.index,
+        })),
+        false,
+      );
+      keyringService.removePreMnemonics();
+
+      await setAccountNeedsBackupReminder(
+        {
+          address,
+          type: KEYRING_TYPE.HdKeyring,
+          brandName: KEYRING_CLASS.MNEMONIC,
         },
-      }),
-    );
-  }, [navigation]);
+        true,
+      );
+
+      replaceToFirst(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess2024,
+        params: {
+          type: KEYRING_TYPE.HdKeyring,
+          brandName: KEYRING_CLASS.MNEMONIC,
+          isFirstCreate: true,
+          address: [address],
+          mnemonics: seedPhrase,
+          passphrase: '',
+          isExistedKR: false,
+          alias: ellipsisAddress(address),
+        },
+      });
+    } catch (e) {
+      console.error('handleCreateNewSeed error', e);
+      toast.show('Failed to create wallet');
+    } finally {
+      creatingRef.current = false;
+    }
+  }, []);
 
   return (
     <TouchableWithoutFeedback
