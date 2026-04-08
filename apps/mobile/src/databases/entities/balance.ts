@@ -71,11 +71,30 @@ export class BalanceEntity extends EntityAddressAssetBase {
     owner_addr: string,
     isCore: boolean,
   ): Promise<EvmTotalBalanceResponse> {
+    const cache = await this.queryBalanceCache(owner_addr, isCore);
+
+    return (
+      cache || {
+        total_usd_value: 0,
+        evm_usd_value: 0,
+        chain_list: [],
+      }
+    );
+  }
+
+  static async queryBalanceCache(
+    owner_addr: string,
+    isCore: boolean,
+  ): Promise<EvmTotalBalanceResponse | null> {
     await prepareAppDataSource();
     const result = await this.getRepository().findOneBy({
       owner_addr,
       isCore,
     });
+
+    if (!result) {
+      return null;
+    }
 
     return {
       total_usd_value: result?.balance || 0,

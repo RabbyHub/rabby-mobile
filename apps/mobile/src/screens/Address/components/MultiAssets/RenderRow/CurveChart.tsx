@@ -249,6 +249,9 @@ const ChartHeader = React.memo(
       const formatLoss = isActiveIndexData
         ? data?.[currentIndex.value]?.isLoss ?? isLoss
         : isLoss;
+      if (!formatChangePercent) {
+        return '';
+      }
       return `${formatLoss ? '-' : '+'}${formatChangePercent}(${
         formatLoss ? '-' : '+'
       }${formatChangeValue})`;
