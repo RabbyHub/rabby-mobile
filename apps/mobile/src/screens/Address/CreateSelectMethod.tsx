@@ -79,6 +79,7 @@ function MainListBlocks() {
           passphrase: '',
           isExistedKR: false,
           alias: ellipsisAddress(address),
+          showBackup: true,
         },
       });
     } catch (e) {

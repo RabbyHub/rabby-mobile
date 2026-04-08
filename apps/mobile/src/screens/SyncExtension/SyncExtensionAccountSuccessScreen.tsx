@@ -4,9 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  apisHomeTabIndex,
+  resetNavigationTo,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { toast } from '@/components2024/Toast';
-import { RootNames } from '@/constant/layout';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useRoute } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
@@ -15,6 +18,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import balanceStore from '@/store/balance';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { apisSingleHome } from '../Home/hooks/singleHome';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { accountEvents } from '@/core/apis/account';
 import { Button } from '@/components2024/Button';
@@ -98,18 +102,14 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     [sortedList],
   );
 
+  const singleAccount = sortedList.length === 1 ? sortedList[0] : null;
+
   const handleConfirm = () => {
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: RootNames.StackRoot,
-          params: {
-            screen: RootNames.Home,
-          },
-        },
-      ],
-    });
+    if (singleAccount) {
+      apisSingleHome.navigateToSingleHome(singleAccount, { replace: true });
+    } else {
+      resetNavigationTo(navigation, 'Home');
+    }
     apisHomeTabIndex.setTabIndex(0);
 
     preferenceService.setReportActionTs(
@@ -141,7 +141,11 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
           <Button
             containerStyle={styles.btnContainer}
             type="primary"
-            title={t('global.Done')}
+            title={
+              singleAccount
+                ? t('page.importSuccess.viewAddress')
+                : t('global.Done')
+            }
             onPress={handleConfirm}
           />
         </View>
