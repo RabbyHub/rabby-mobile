@@ -287,8 +287,6 @@ export function MarketCategoryContent({
         <View style={styles.stickyHeader}>
           {categoryId === 'hot' ? (
             <WatchListHeader
-              tokenSort="default"
-              onTokenSort={handleVolumeSort}
               fdvSort={fdvSort}
               onFdvSort={handleFdvSort}
               showFdvSort={supportedSortFields.has('fdv')}
