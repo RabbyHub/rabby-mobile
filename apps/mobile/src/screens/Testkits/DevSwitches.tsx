@@ -58,8 +58,8 @@ import {
 import {
   getVisibleBlockingModalIds,
   MODAL_GATE_IDS,
-  setModalGateDebugOverlayEnabled,
-  useModalGateDebugOverlayEnabled,
+  setModalGateDiagnosticsEnabled,
+  useModalGateDiagnosticsEnabled,
 } from '@/utils/modalGate';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
@@ -364,7 +364,7 @@ function Reset0331AnalyticsSnapshotModal({
 function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [debugModalVisible, setDebugModalVisible] = useState(false);
-  const modalDebugOverlayEnabled = useModalGateDebugOverlayEnabled();
+  const modalDiagnosticsEnabled = useModalGateDiagnosticsEnabled();
 
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
@@ -487,16 +487,18 @@ function DevSwitchAboutScreenProtection() {
         <TouchableOpacity
           style={[styles.switchRowWrapper, { marginTop: 12 }]}
           onPress={() => {
-            setModalGateDebugOverlayEnabled(!modalDebugOverlayEnabled);
+            setModalGateDiagnosticsEnabled(!modalDiagnosticsEnabled);
           }}>
           <AppSwitch2024
             onPress={evt => evt.stopPropagation()}
-            value={modalDebugOverlayEnabled}
+            value={modalDiagnosticsEnabled}
             onValueChange={nextVal => {
-              setModalGateDebugOverlayEnabled(nextVal);
+              setModalGateDiagnosticsEnabled(nextVal);
             }}
           />
-          <Text style={styles.switchLabel}>Show Modal Debug Overlay</Text>
+          <Text style={styles.switchLabel}>
+            Show Modal Diagnostics in Floating View
+          </Text>
         </TouchableOpacity>
 
         <Button
@@ -518,8 +520,8 @@ function DevSwitchAboutScreenProtection() {
             styles.devModalHint,
             { color: colors2024['neutral-foot'] },
           ]}>
-          Use the overlay or console snapshot instead of a live list here. This
-          page is already heavy, so the debug signal stays opt-in.
+          The floating logo shares the same diagnostics shell as autolock. A
+          badge means blocking modals exist; expand it for the ids.
         </Text>
       </View>
 
@@ -685,7 +687,9 @@ function DevSwitchAboutAutoLock() {
             ref={switchShowFloatingAutoLockCountdownRef}
           />
           <Text style={styles.switchLabel}>
-            {`${showAutoLockCountdown ? 'Show' : 'Hide'} Floating View`}
+            {showAutoLockCountdown
+              ? 'Hide AutoLock Diagnostics in Floating View'
+              : 'Show AutoLock Diagnostics in Floating View'}
           </Text>
         </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>

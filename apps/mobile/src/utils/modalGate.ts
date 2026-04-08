@@ -5,7 +5,7 @@ import { runDevIIFEFunc } from '@/core/utils/store';
 
 type ModalGateState = {
   blockingModalCountMap: Record<string, number>;
-  debugOverlayEnabled: boolean;
+  diagnosticsEnabled: boolean;
 };
 
 export const MODAL_GATE_IDS = {
@@ -20,7 +20,7 @@ export const MODAL_GATE_IDS = {
 
 const modalGateStore = zCreate<ModalGateState>(() => ({
   blockingModalCountMap: {},
-  debugOverlayEnabled: false,
+  diagnosticsEnabled: false,
 }));
 
 function markBlockingModalVisible(id: string, visible: boolean) {
@@ -72,6 +72,44 @@ export function useVisibleBlockingModalIds() {
   return modalGateStore(s => Object.keys(s.blockingModalCountMap).sort());
 }
 
+export type ModalGateDebugSnapshot = {
+  visibleBlockingModalCount: number;
+  visibleBlockingModalIds: string[];
+};
+
+export function getModalGateDebugSnapshot(): ModalGateDebugSnapshot {
+  const visibleBlockingModalIds = getVisibleBlockingModalIds();
+
+  return {
+    visibleBlockingModalCount: visibleBlockingModalIds.length,
+    visibleBlockingModalIds,
+  };
+}
+
+export function subscribeModalGateDebugSnapshot(
+  listener: (snapshot: ModalGateDebugSnapshot) => void,
+) {
+  let prevSnapshotKey: string | null = null;
+
+  const emitSnapshot = () => {
+    const snapshot = getModalGateDebugSnapshot();
+    const nextSnapshotKey = snapshot.visibleBlockingModalIds.join('\n');
+
+    if (nextSnapshotKey === prevSnapshotKey) {
+      return;
+    }
+
+    prevSnapshotKey = nextSnapshotKey;
+    listener(snapshot);
+  };
+
+  emitSnapshot();
+
+  return modalGateStore.subscribe(() => {
+    emitSnapshot();
+  });
+}
+
 export function useRegisterBlockingModal(id: string, visible: boolean) {
   useEffect(() => {
     if (!visible) {
@@ -86,28 +124,37 @@ export function useRegisterBlockingModal(id: string, visible: boolean) {
   }, [id, visible]);
 }
 
-export function setModalGateDebugOverlayEnabled(enabled: boolean) {
+export function setModalGateDiagnosticsEnabled(enabled: boolean) {
   modalGateStore.setState(prev => {
-    if (prev.debugOverlayEnabled === enabled) {
+    if (prev.diagnosticsEnabled === enabled) {
       return prev;
     }
 
     return {
       ...prev,
-      debugOverlayEnabled: enabled,
+      diagnosticsEnabled: enabled,
     };
   });
 }
 
-export function useModalGateDebugOverlayEnabled() {
-  return modalGateStore(s => s.debugOverlayEnabled);
+export function useModalGateDiagnosticsEnabled() {
+  return modalGateStore(s => s.diagnosticsEnabled);
 }
+
+export const setModalGateDebugOverlayEnabled = setModalGateDiagnosticsEnabled;
+export const useModalGateDebugOverlayEnabled = useModalGateDiagnosticsEnabled;
 
 runDevIIFEFunc(() => {
   (globalThis as any).__dumpBlockingModalIds = () => {
     return getVisibleBlockingModalIds();
   };
+  (globalThis as any).__dumpModalGateDebugSnapshot = () => {
+    return getModalGateDebugSnapshot();
+  };
   (globalThis as any).__setModalDebugOverlayEnabled = (enabled: boolean) => {
-    setModalGateDebugOverlayEnabled(!!enabled);
+    setModalGateDiagnosticsEnabled(!!enabled);
+  };
+  (globalThis as any).__setModalDiagnosticsEnabled = (enabled: boolean) => {
+    setModalGateDiagnosticsEnabled(!!enabled);
   };
 });
