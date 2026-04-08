@@ -344,6 +344,8 @@ function getDefaultValue(): FeedbackByScreenshotState {
   };
 }
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
+const DEBUG_SCREENSHOT_DATA_URI =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9s2vNh0AAAAASUVORK5CYII=';
 const feedbackByScreenshotStore = zCreate<FeedbackByScreenshotState>(() => ({
   ...getDefaultValue(),
 }));
@@ -445,6 +447,17 @@ const setLastScreenshot = (
     );
   }
 };
+
+export function debugShowSubmitFeedbackByScreenshotModal() {
+  setLastScreenshot(
+    Image.resolveAssetSource({
+      uri: DEBUG_SCREENSHOT_DATA_URI,
+      width: 1179,
+      height: 2556,
+      scale: 1,
+    }),
+  );
+}
 
 if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
   RNScreenshotPrevent.startScreenCaptureDetection().then(() => {
