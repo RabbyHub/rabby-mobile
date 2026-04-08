@@ -231,6 +231,7 @@ export type AddressNavigatorParamList = {
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
+    showBackup?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};

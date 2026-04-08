@@ -29,6 +29,7 @@ import { getKRCategoryByType } from '@/utils/transaction';
 import { Button } from '@/components2024/Button';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
+import { RootNames } from '@/constant/layout';
 import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
 import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
 import {
@@ -275,14 +276,30 @@ export const ImportSuccessScreen2024 = () => {
     });
   };
 
+  const handleBackupSeedPhrase = React.useCallback(() => {
+    Keyboard.dismiss();
+    const firstAddr = importAddresses[0]?.address;
+    navigation.replace(RootNames.Backup, {
+      address: firstAddr,
+      type: state?.type,
+      brandName: state?.brandName,
+    });
+  }, [navigation, importAddresses, state?.type, state?.brandName]);
+
+  const shouldShowBackupButton = !!state?.showBackup;
+  const shouldShowImportMore =
+    !shouldShowBackupButton &&
+    !!state?.mnemonics &&
+    (state.isFirstImport || state.brandName === KEYRING_TYPE.HdKeyring);
+
   const addressItems: AddressItem[] = useMemo(
     () =>
       importAddresses.map(item => ({
         address: item.address,
         brandName: state?.type || '',
-        showBalance: true,
+        showBalance: !state?.isFirstCreate,
       })),
-    [importAddresses, state?.type],
+    [importAddresses, state?.type, state?.isFirstCreate],
   );
 
   return (
@@ -313,22 +330,20 @@ export const ImportSuccessScreen2024 = () => {
           />
         ) : null}
 
-        {state.mnemonics &&
-          (state.isFirstImport ||
-            state.brandName === KEYRING_TYPE.HdKeyring) && (
-            <TouchableOpacity
-              onPress={handleImportMore}
-              style={styles.ledgerButton}>
-              <Text style={styles.ledgerButtonText}>
-                {t('page.importSuccess.importMore')}
-              </Text>
-              <RcIconRightCC
-                width={16}
-                height={16}
-                color={colors2024['neutral-secondary']}
-              />
-            </TouchableOpacity>
-          )}
+        {shouldShowImportMore && (
+          <TouchableOpacity
+            onPress={handleImportMore}
+            style={styles.ledgerButton}>
+            <Text style={styles.ledgerButtonText}>
+              {t('page.importSuccess.importMore')}
+            </Text>
+            <RcIconRightCC
+              width={16}
+              height={16}
+              color={colors2024['neutral-secondary']}
+            />
+          </TouchableOpacity>
+        )}
 
         <Button
           containerStyle={styles.btnContainer}
@@ -340,6 +355,19 @@ export const ImportSuccessScreen2024 = () => {
           }
           onPress={handleDone}
         />
+
+        {shouldShowBackupButton && (
+          <Button
+            containerStyle={[styles.btnContainer, styles.backupBtnContainer]}
+            type="ghost"
+            buttonStyle={{
+              backgroundColor: colors2024['brand-light-1'],
+              borderWidth: 0,
+            }}
+            title={t('screens.addressStackTitle.BackupSeedPhrase')}
+            onPress={handleBackupSeedPhrase}
+          />
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -380,5 +408,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btnContainer: {
     width: '100%',
+  },
+  backupBtnContainer: {
+    marginTop: 16,
   },
 }));
