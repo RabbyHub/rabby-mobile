@@ -134,9 +134,7 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
           <WalletSuccessCard
             title={
               singleAccount
-                ? t('page.importSuccess.titleSingle', {
-                    status: 'imported',
-                  })
+                ? t('page.importSuccess.titleImported')
                 : t('page.importSuccess.titleMultiple', {
                     count: sortedList.length,
                   })

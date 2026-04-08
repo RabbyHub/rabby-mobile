@@ -472,7 +472,8 @@
       "importMore": "Add more wallet from this phrase",
       "viewAddress": "View Wallet",
       "addressCount": "{{count}} Addresses",
-      "titleSingle": "Your wallet has been {{status}} 🚀",
+      "titleCreated": "Your wallet has been created 🚀",
+      "titleImported": "Your wallet has been imported 🚀",
       "titleMultiple": "{{count}} Wallets Added 🚀"
     },
     "importSeedPhrase": {
@@ -3587,6 +3588,7 @@
   },
   "backupReminder": {
     "title": "You have not backed up your wallet",
-    "action": "Back up now"
+    "action": "Back up now",
+    "badge": "Not backup"
   }
 }
