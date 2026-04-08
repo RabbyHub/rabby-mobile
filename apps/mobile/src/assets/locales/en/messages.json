@@ -472,7 +472,7 @@
       "importMore": "Import more Wallets",
       "viewAddress": "View Wallet",
       "addressCount": "{{count}} Addresses",
-      "titleSingle": "Your wallet has been imported 🚀",
+      "titleSingle": "Your wallet has been {{status}} 🚀",
       "titleMultiple": "{{count}} Wallets Added 🚀"
     },
     "importSeedPhrase": {

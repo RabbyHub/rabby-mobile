@@ -308,7 +308,9 @@ export const ImportSuccessScreen2024 = () => {
           style={{ flex: 1 }}
           title={
             onlyFirstAccount
-              ? t('page.importSuccess.titleSingle')
+              ? t('page.importSuccess.titleSingle', {
+                  status: state?.isFirstCreate ? 'created' : 'imported',
+                })
               : t('page.importSuccess.titleMultiple', {
                   count: importAddresses.length,
                 })
