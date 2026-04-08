@@ -100,7 +100,6 @@ import { coerceNumber } from './utils/coerce';
 import { useAppCouldRender } from './hooks/useBootstrap';
 import { InnerDappWebViewPreloadEntry } from './components/WebView/InnerDappWebViewPreloadEntry';
 import { useTranslation } from 'react-i18next';
-import { ModalDebugOverlay } from './components/Modal/ModalDebugOverlay';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -550,7 +549,6 @@ export default function AppNavigation() {
       <GlobalMiniSignTypedDataPortal />
       <GlobalTipsPopup />
       <GlobalSignerPortal />
-      <ModalDebugOverlay />
     </AutoLockView.ForAppNav>
   );
 }
