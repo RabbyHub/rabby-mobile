@@ -56,12 +56,7 @@ import {
   useScreenshotToReportEnabled,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
-import {
-  getVisibleBlockingModalIds,
-  MODAL_GATE_IDS,
-  setModalGateDiagnosticsEnabled,
-  useModalGateDiagnosticsEnabled,
-} from '@/utils/modalGate';
+import { getVisibleBlockingModalIds, MODAL_GATE_IDS } from '@/utils/modalGate';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
@@ -365,7 +360,6 @@ function Reset0331AnalyticsSnapshotModal({
 function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [debugModalVisible, setDebugModalVisible] = useState(false);
-  const modalDiagnosticsEnabled = useModalGateDiagnosticsEnabled();
 
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
@@ -485,23 +479,6 @@ function DevSwitchAboutScreenProtection() {
           then close A.
         </Text>
 
-        <TouchableOpacity
-          style={[styles.switchRowWrapper, { marginTop: 12 }]}
-          onPress={() => {
-            setModalGateDiagnosticsEnabled(!modalDiagnosticsEnabled);
-          }}>
-          <AppSwitch2024
-            onPress={evt => evt.stopPropagation()}
-            value={modalDiagnosticsEnabled}
-            onValueChange={nextVal => {
-              setModalGateDiagnosticsEnabled(nextVal);
-            }}
-          />
-          <Text style={styles.switchLabel}>
-            Show Modal Diagnostics in Floating View
-          </Text>
-        </TouchableOpacity>
-
         <Button
           title={'Log Blocking Modals'}
           type="ghost"
@@ -521,8 +498,9 @@ function DevSwitchAboutScreenProtection() {
             styles.devModalHint,
             { color: colors2024['neutral-foot'] },
           ]}>
-          The floating logo shares the same diagnostics shell as autolock. A
-          badge means blocking modals exist; expand it for the ids.
+          Once the floating diagnostics panel is enabled below, modal
+          diagnostics appear there automatically. A badge means blocking modals
+          exist; expand it for the ids.
         </Text>
       </View>
 
@@ -672,7 +650,7 @@ function DevSwitchAboutAutoLock() {
             styles.secondarySectionTitle,
             { fontSize: 24, marginLeft: 2 },
           ]}>
-          Autolock Countdown
+          Floating Diagnostics
         </Text>
       </View>
 
@@ -689,8 +667,8 @@ function DevSwitchAboutAutoLock() {
           />
           <Text style={styles.switchLabel}>
             {showAutoLockCountdown
-              ? 'Hide AutoLock Diagnostics in Floating View'
-              : 'Show AutoLock Diagnostics in Floating View'}
+              ? 'Hide Floating Diagnostics Panel'
+              : 'Show Floating Diagnostics Panel'}
           </Text>
         </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>
@@ -707,6 +685,14 @@ function DevSwitchAboutAutoLock() {
             style={countdownTextStyles}
           />
         </View>
+        <Text
+          style={[
+            styles.label,
+            styles.devModalHint,
+            { color: colors2024['neutral-foot'] },
+          ]}>
+          The panel shows autolock info together with modal diagnostics.
+        </Text>
       </View>
     </View>
   );

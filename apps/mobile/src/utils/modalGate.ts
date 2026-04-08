@@ -5,7 +5,6 @@ import { runDevIIFEFunc } from '@/core/utils/store';
 
 type ModalGateState = {
   blockingModalCountMap: Record<string, number>;
-  diagnosticsEnabled: boolean;
 };
 
 export const MODAL_GATE_IDS = {
@@ -20,7 +19,6 @@ export const MODAL_GATE_IDS = {
 
 const modalGateStore = zCreate<ModalGateState>(() => ({
   blockingModalCountMap: {},
-  diagnosticsEnabled: false,
 }));
 
 function markBlockingModalVisible(id: string, visible: boolean) {
@@ -124,37 +122,11 @@ export function useRegisterBlockingModal(id: string, visible: boolean) {
   }, [id, visible]);
 }
 
-export function setModalGateDiagnosticsEnabled(enabled: boolean) {
-  modalGateStore.setState(prev => {
-    if (prev.diagnosticsEnabled === enabled) {
-      return prev;
-    }
-
-    return {
-      ...prev,
-      diagnosticsEnabled: enabled,
-    };
-  });
-}
-
-export function useModalGateDiagnosticsEnabled() {
-  return modalGateStore(s => s.diagnosticsEnabled);
-}
-
-export const setModalGateDebugOverlayEnabled = setModalGateDiagnosticsEnabled;
-export const useModalGateDebugOverlayEnabled = useModalGateDiagnosticsEnabled;
-
 runDevIIFEFunc(() => {
   (globalThis as any).__dumpBlockingModalIds = () => {
     return getVisibleBlockingModalIds();
   };
   (globalThis as any).__dumpModalGateDebugSnapshot = () => {
     return getModalGateDebugSnapshot();
-  };
-  (globalThis as any).__setModalDebugOverlayEnabled = (enabled: boolean) => {
-    setModalGateDiagnosticsEnabled(!!enabled);
-  };
-  (globalThis as any).__setModalDiagnosticsEnabled = (enabled: boolean) => {
-    setModalGateDiagnosticsEnabled(!!enabled);
   };
 });
