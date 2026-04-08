@@ -24,7 +24,6 @@ import {
 import { toast } from '@/components2024/Toast';
 import PressableStar from './RateStar';
 import { Text, TextInput } from '@/components/Typography';
-import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
 
 const LOGO_SIZE = 67;
 
@@ -71,8 +70,6 @@ export function RateModal() {
   const disableSubmit = useMemo(() => {
     return !wantFeedback || !userFeedback.length;
   }, [wantFeedback, userFeedback]);
-
-  useRegisterBlockingModal(MODAL_GATE_IDS.rateGuide, rateModalShown);
 
   return (
     <Modal

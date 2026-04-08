@@ -14,7 +14,6 @@ import MiniSignTxV2 from '@/components/Approval/components/MiniSignTx/MiniSignTx
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import AutoLockView from '@/components/AutoLockView';
-import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
 
 /**
  * Renders the signing UI for a single SignatureManager instance.
@@ -84,13 +83,6 @@ const SignerPortalItem: React.FC = () => {
     }
   }, [config?.account, state.status, ctx?.txs.length]);
 
-  const showDirectTransparentOverlay =
-    ctx?.mode === 'direct' && status !== 'ready' && status !== 'error';
-  useRegisterBlockingModal(
-    MODAL_GATE_IDS.miniSignDirectOverlay,
-    showDirectTransparentOverlay,
-  );
-
   if (!config?.account || state.status === 'idle' || !ctx?.txs.length) {
     return null;
   }
@@ -151,7 +143,7 @@ const SignerPortalItem: React.FC = () => {
         account={config?.account}
         ga={config?.ga}
       />
-      {showDirectTransparentOverlay ? (
+      {ctx?.mode === 'direct' && status !== 'ready' && status !== 'error' ? (
         <Modal
           visible={true}
           transparent

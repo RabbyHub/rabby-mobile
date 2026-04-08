@@ -22,7 +22,6 @@ import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
 import { Text } from '@/components/Typography';
 import { useIosForceDisableAlertForSensitiveScene } from '@/hooks/appSettings';
-import { MODAL_GATE_IDS, useRegisterBlockingModal } from '@/utils/modalGate';
 
 const RcTip = makeThemeIconFromCC(RcTipCC, 'orange-default');
 
@@ -37,8 +36,6 @@ export default function SecurityTipStubModal({
   onOk?: ProtectedConf['onOk'];
 }) {
   const { styles } = useThemeStyles(getStyles);
-
-  useRegisterBlockingModal(MODAL_GATE_IDS.securityTip, visible);
 
   const { t } = useTranslation();
 
