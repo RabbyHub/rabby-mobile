@@ -4,6 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
 import WarningIcon from '@/assets2024/icons/common/warning-circle-cc.svg';
+import { useTranslation } from 'react-i18next';
 
 interface BackupBadgeProps {
   onPress?: () => void;
@@ -11,6 +12,7 @@ interface BackupBadgeProps {
 
 export const BackupBadge: React.FC<BackupBadgeProps> = ({ onPress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   const content = (
     <View style={styles.container}>
@@ -19,7 +21,7 @@ export const BackupBadge: React.FC<BackupBadgeProps> = ({ onPress }) => {
         height={18}
         color={colors2024['orange-default']}
       />
-      <Text style={styles.text}>Not backup</Text>
+      <Text style={styles.text}>{t('backupReminder.badge')}</Text>
     </View>
   );
 

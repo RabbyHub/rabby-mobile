@@ -30,7 +30,7 @@ import { Button } from '@/components2024/Button';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RootNames } from '@/constant/layout';
-import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
+import { GnosisSupportChainList } from './components/GnosisSupportChainList';
 import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
@@ -289,8 +289,8 @@ export const ImportSuccessScreen2024 = () => {
   const shouldShowBackupButton = !!state?.showBackup;
   const shouldShowImportMore =
     !shouldShowBackupButton &&
-    !!state?.mnemonics &&
-    (state.isFirstImport || state.brandName === KEYRING_TYPE.HdKeyring);
+    (state.isFirstImport ||
+      (!!state?.mnemonics && state.brandName === KEYRING_TYPE.HdKeyring));
 
   const addressItems: AddressItem[] = useMemo(
     () =>
@@ -311,9 +311,11 @@ export const ImportSuccessScreen2024 = () => {
           style={{ flex: 1 }}
           title={
             onlyFirstAccount
-              ? t('page.importSuccess.titleSingle', {
-                  status: state?.isFirstCreate ? 'created' : 'imported',
-                })
+              ? t(
+                  state?.isFirstCreate
+                    ? 'page.importSuccess.titleCreated'
+                    : 'page.importSuccess.titleImported',
+                )
               : t('page.importSuccess.titleMultiple', {
                   count: importAddresses.length,
                 })
@@ -384,7 +386,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
   },
   supportChainList: {
-    marginBottom: 12,
+    marginBottom: 60,
   },
   ledgerButton: {
     flexDirection: 'row',

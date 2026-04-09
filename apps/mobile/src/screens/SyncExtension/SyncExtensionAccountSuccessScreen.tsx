@@ -132,7 +132,13 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
         showsVerticalScrollIndicator={false}>
         {addressItems.length > 0 && (
           <WalletSuccessCard
-            title={t('page.syncExtension.importedSuccessfully')}
+            title={
+              singleAccount
+                ? t('page.importSuccess.titleImported')
+                : t('page.importSuccess.titleMultiple', {
+                    count: sortedList.length,
+                  })
+            }
             addresses={addressItems}
           />
         )}
