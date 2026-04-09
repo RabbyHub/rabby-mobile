@@ -50,10 +50,9 @@ import {
   getRecommendNonce,
 } from '../SignTx/calc';
 import { normalizeTxParams } from '../SignTx/util';
-import {
-  GasSelectorHeader,
-  GasSelectorResponse,
-} from '../TxComponents/GasSelector/GasSelectorHeader';
+import { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
+import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
+import { useEffectiveApprovalGasMethod } from '../TxComponents/GasSelector/useEffectiveApprovalGasMethod';
 import { MiniFooterBar } from './MiniFooterBar';
 import { MiniWaiting } from './MiniWaiting';
 import { calcGasLimit } from '@/core/apis/transactions';
@@ -412,6 +411,18 @@ export const MiniSignTx = ({
     noCustomRPC,
     isSupportedAddr,
     currentAccount,
+  });
+  const gasAccountChainSupported =
+    !!gasAccountCost && !gasAccountCost.chain_not_support;
+  useEffectiveApprovalGasMethod({
+    isReady,
+    isFirstGasLessLoading,
+    isGasNotEnough: !!isGasNotEnough,
+    gasAccountChainSupported,
+    noCustomRPC,
+    canUseGasLess: !!canUseGasLess,
+    gasMethod,
+    setGasMethod,
   });
 
   useEffect(() => {
@@ -1197,44 +1208,51 @@ export const MiniSignTx = ({
                 ) : null}
               </View>
             ) : null}
-            <GasSelectorHeader
-              fixedMode
-              defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
-              tx={txs[0]}
-              gasAccountCost={gasAccountCost}
-              gasMethod={gasMethod}
-              onChangeGasMethod={setGasMethod}
-              pushType={pushInfo.type}
-              isDisabledGasPopup={task.status !== 'idle'}
-              disabled={false}
-              isReady={isReady}
-              gasLimit={gasLimit}
-              noUpdate={false}
-              gasList={gasList}
-              selectedGas={selectedGas}
-              version={txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0'}
-              recommendGasLimit={recommendGasLimit}
-              recommendNonce={recommendNonce}
-              chainId={chainId}
-              onChange={handleGasChange}
-              nonce={realNonce}
-              disableNonce={true}
-              isSpeedUp={false}
-              isCancel={false}
-              is1559={support1559}
-              isHardware={isHardware}
-              manuallyChangeGasLimit={manuallyChangeGasLimit}
-              errors={checkErrors}
-              engineResults={engineResults}
-              nativeTokenBalance={nativeTokenBalance}
-              gasToken={gasToken}
-              gasPriceMedian={gasPriceMedian}
-              gas={totalGasCost}
-              gasCalcMethod={gasCalcMethod}
-              directSubmit={directSubmit}
-              checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
-              account={currentAccount}
-            />
+            <View style={styles.gasSelectorWrapper}>
+              <SignMainnetGasSelectorHeader
+                fixedMode
+                defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
+                tx={txs[0]}
+                gasAccountCost={gasAccountCost}
+                noCustomRPC={noCustomRPC}
+                gasMethod={gasMethod}
+                onChangeGasMethod={setGasMethod}
+                pushType={pushInfo.type}
+                isDisabledGasPopup={task.status !== 'idle'}
+                disabled={false}
+                isReady={isReady}
+                gasLimit={gasLimit}
+                noUpdate={false}
+                gasList={gasList}
+                selectedGas={selectedGas}
+                version={
+                  txsResult?.[0]?.preExecResult?.pre_exec_version || 'v0'
+                }
+                recommendGasLimit={recommendGasLimit}
+                recommendNonce={recommendNonce}
+                chainId={chainId}
+                onChange={handleGasChange}
+                nonce={realNonce}
+                disableNonce={true}
+                isSpeedUp={false}
+                isCancel={false}
+                is1559={support1559}
+                isHardware={isHardware}
+                manuallyChangeGasLimit={manuallyChangeGasLimit}
+                errors={checkErrors}
+                engineResults={engineResults}
+                nativeTokenBalance={nativeTokenBalance}
+                gasToken={gasToken}
+                gasPriceMedian={gasPriceMedian}
+                gas={totalGasCost}
+                gasCalcMethod={gasCalcMethod}
+                directSubmit={directSubmit}
+                checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
+                account={currentAccount}
+                nativeTokenInsufficient={isGasNotEnough}
+                freeGasAvailable={canUseGasLess}
+              />
+            </View>
           </View>
         }
         isSwap={isSwap}
@@ -1492,6 +1510,10 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+  },
+
+  gasSelectorWrapper: {
+    paddingBottom: 10,
   },
 
   simulateChangeContainer: {

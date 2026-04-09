@@ -107,7 +107,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { GasSelectorResponse } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { SignMainnetGasSelectorHeader } from '../TxComponents/GasSelector/SignMainnetGasSelectorHeader';
-import { resolveApprovalGasMethod } from '../TxComponents/GasSelector/approvalGasDisplay';
+import { useEffectiveApprovalGasMethod } from '../TxComponents/GasSelector/useEffectiveApprovalGasMethod';
 import { SignAdvancedSettings } from '../SignAdvancedSettings';
 import { BroadcastMode } from '../BroadcastMode';
 import { useFindChain } from '@/hooks/useFindChain';
@@ -635,24 +635,16 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     },
   );
 
-  const effectiveApprovalGasMethod = useMemo(
-    () =>
-      resolveApprovalGasMethod({
-        nativeTokenInsufficient: isGasNotEnough,
-        gasAccountChainSupported,
-        legacyGasMethod: gasMethod,
-      }),
-    [gasAccountChainSupported, gasMethod, isGasNotEnough],
-  );
-
-  useEffect(() => {
-    if (!isReady) {
-      return;
-    }
-    if (gasMethod !== effectiveApprovalGasMethod) {
-      setGasMethod(effectiveApprovalGasMethod);
-    }
-  }, [effectiveApprovalGasMethod, gasMethod, isReady, setGasMethod]);
+  useEffectiveApprovalGasMethod({
+    isReady,
+    isFirstGasLessLoading,
+    isGasNotEnough: !!isGasNotEnough,
+    gasAccountChainSupported,
+    noCustomRPC,
+    canUseGasLess: !!canUseGasLess,
+    gasMethod,
+    setGasMethod,
+  });
 
   useEffect(() => {
     const hasCustomRPC = async () => {
@@ -1855,6 +1847,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     return <EIP7702Warning />;
   }
 
+  console.log('SignMainnetHeaderContent signTx render', {
+    gasMethod,
+    isGasLess: gasMethod === 'native' ? useGasLess : false,
+    isGasAccount: gasAccountCanPay,
+  });
+
   return (
     <>
       <View style={styles.wrapper}>
@@ -2001,6 +1999,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 <SignMainnetGasSelectorHeader
                   tx={tx}
                   gasAccountCost={gasAccountCost}
+                  noCustomRPC={noCustomRPC}
                   gasMethod={gasMethod}
                   onChangeGasMethod={setGasMethod}
                   pushType={pushInfo.type}
@@ -2036,6 +2035,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                   gasToken={gasToken}
                   gasPriceMedian={gasPriceMedian}
                   account={currentAccount}
+                  freeGasAvailable={canUseGasLess}
                   directSubmit
                   checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
                 />

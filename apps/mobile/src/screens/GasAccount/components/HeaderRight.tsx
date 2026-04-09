@@ -1,6 +1,6 @@
 import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { Tip } from '@/components';
@@ -16,6 +16,7 @@ import {
   RcIconWithdrawCC,
 } from '@/assets2024/icons/gas-account';
 import { Text } from '@/components/Typography';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
   showWithdraw: openWithdrawPopup,
@@ -28,7 +29,16 @@ export const GasAccountHeader: React.FC<{ showWithdraw: () => void }> = ({
   const { account } = useGasAccountSign();
 
   const accountsWithGasAccountBalance = useAccountsWithGasAccountBalance();
-  const showSwitchWallet = accountsWithGasAccountBalance.length > 1;
+  const showSwitchWallet = useMemo(() => {
+    if (!account?.address) {
+      return accountsWithGasAccountBalance.length > 0;
+    }
+    return accountsWithGasAccountBalance.some(
+      item =>
+        !isSameAddress(item.address, account.address) ||
+        item.type !== account.type,
+    );
+  }, [accountsWithGasAccountBalance, account?.address, account?.type]);
 
   const showWithdraw = !!account;
 

@@ -9,6 +9,8 @@ type ResolveApprovalGasMethodParams = {
   mode?: ApprovalGasDisplayMode;
   nativeTokenInsufficient: boolean;
   gasAccountChainSupported: boolean;
+  noCustomRPC?: boolean;
+  freeGasAvailable?: boolean;
   legacyGasMethod?: ApprovalGasMethod;
 };
 
@@ -17,6 +19,8 @@ type ResolveApprovalGasLevelMethodParams = {
   isCustom?: boolean;
   nativeTokenInsufficient: boolean;
   gasAccountChainSupported: boolean;
+  noCustomRPC?: boolean;
+  freeGasAvailable?: boolean;
   currentGasMethod?: ApprovalGasMethod;
 };
 
@@ -35,21 +39,48 @@ export const shouldUseLegacyApprovalFooterAutoSwitch = (
 export const getApprovalGasMethodLabel = (method: ApprovalGasMethod): string =>
   method === 'gasAccount' ? 'GasAccount' : 'Native';
 
+export type ShouldAutoSwitchToApprovalGasAccountParams = {
+  nativeTokenInsufficient: boolean;
+  gasAccountChainSupported: boolean;
+  freeGasAvailable?: boolean;
+  noCustomRPC?: boolean;
+};
+
+export const shouldAutoSwitchToApprovalGasAccount = ({
+  nativeTokenInsufficient,
+  gasAccountChainSupported,
+  freeGasAvailable = false,
+  noCustomRPC = true,
+}: ShouldAutoSwitchToApprovalGasAccountParams) => {
+  if (!nativeTokenInsufficient) {
+    return false;
+  }
+  if (freeGasAvailable) {
+    return false;
+  }
+  return gasAccountChainSupported && noCustomRPC;
+};
+
 export const resolveApprovalGasMethod = ({
   mode = APPROVAL_GAS_DISPLAY_MODE,
   nativeTokenInsufficient,
   gasAccountChainSupported,
+  noCustomRPC = true,
+  freeGasAvailable = false,
   legacyGasMethod = 'native',
 }: ResolveApprovalGasMethodParams): ApprovalGasMethod => {
   if (!isApprovalSmartGasDisplayEnabled(mode)) {
     return legacyGasMethod;
   }
 
-  if (!nativeTokenInsufficient) {
-    return 'native';
-  }
-
-  return gasAccountChainSupported ? 'gasAccount' : 'native';
+  return shouldAutoSwitchToApprovalGasAccount({
+    nativeTokenInsufficient,
+    gasAccountChainSupported,
+    freeGasAvailable,
+    noCustomRPC,
+  })
+    ? 'gasAccount'
+    : 'native';
 };
 
 export const resolveApprovalGasLevelMethod = ({
@@ -57,6 +88,8 @@ export const resolveApprovalGasLevelMethod = ({
   isCustom = false,
   nativeTokenInsufficient,
   gasAccountChainSupported,
+  noCustomRPC = true,
+  freeGasAvailable = false,
   currentGasMethod = 'native',
 }: ResolveApprovalGasLevelMethodParams): ApprovalGasMethod => {
   if (isCustom) {
@@ -67,6 +100,8 @@ export const resolveApprovalGasLevelMethod = ({
     mode,
     nativeTokenInsufficient,
     gasAccountChainSupported,
+    noCustomRPC,
+    freeGasAvailable,
     legacyGasMethod: currentGasMethod,
   });
 };

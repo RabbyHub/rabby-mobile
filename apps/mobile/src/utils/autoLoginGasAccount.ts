@@ -29,11 +29,31 @@ function toGasAccountBalanceAccounts<T extends KeyringAccount>(
   }));
 }
 
+const hasGasAccountBalance = (
+  info:
+    | Awaited<ReturnType<typeof openapi.getGasAccountInfoV2>>
+    | null
+    | undefined,
+) => !!info?.account && Number(info.account.balance || 0) > 0;
+
 async function findAccountsWithBalance<T extends KeyringAccount>(
   accounts: T[],
-) {
+  options?: { stopOnFirst?: boolean },
+): Promise<T[]> {
   if (!accounts.length) {
-    return [] as T[];
+    return [];
+  }
+
+  if (options?.stopOnFirst) {
+    for (const account of accounts) {
+      const info = await openapi
+        .getGasAccountInfoV2({ id: account.address })
+        .catch(() => null);
+      if (hasGasAccountBalance(info)) {
+        return [account];
+      }
+    }
+    return [];
   }
 
   const results = await Promise.all(
@@ -41,16 +61,16 @@ async function findAccountsWithBalance<T extends KeyringAccount>(
       openapi.getGasAccountInfoV2({ id: account.address }).catch(() => null),
     ),
   );
+  return accounts.filter((_, i) => hasGasAccountBalance(results[i]));
+}
 
-  const matched: T[] = [];
-  for (let i = 0; i < accounts.length; i++) {
-    const info = results[i];
-    const account = accounts[i];
-    if (account && info?.account && Number(info.account.balance || 0) > 0) {
-      matched.push(account);
-    }
-  }
-  return matched;
+async function findFirstAccountWithBalance<T extends KeyringAccount>(
+  accounts: T[],
+): Promise<T | undefined> {
+  const [first] = await findAccountsWithBalance(accounts, {
+    stopOnFirst: true,
+  });
+  return first;
 }
 
 function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
@@ -75,13 +95,12 @@ function mergeAccountsWithGasBalance(nextAccounts: GasAccountBalanceAccount[]) {
   storeApiGasAccount.setAccountsWithGasAccountBalance(merged);
 }
 
-async function tryLoginFirstDirectAccount(directWithBalance: KeyringAccount[]) {
-  const firstDirectAccount = directWithBalance[0];
-  if (!firstDirectAccount) {
+async function loginAutoDetectedAccount(account?: KeyringAccount) {
+  if (!account) {
     return false;
   }
 
-  await storeApiGasAccount.loginGasAccount(firstDirectAccount as Account);
+  await storeApiGasAccount.loginGasAccount(account as Account);
   storeApiGasAccount.clearPendingHardwareAccount();
   return true;
 }
@@ -95,6 +114,15 @@ function setPendingHardwareAccount(account?: KeyringAccount) {
     address: account.address,
     type: account.type,
     brandName: account.brandName,
+  });
+}
+
+function refreshAllAccountsWithBalanceInBackground(logContext: string) {
+  refreshAccountsWithGasAccountBalance().catch(error => {
+    console.error(
+      `${logContext} refreshAccountsWithGasAccountBalance error`,
+      error,
+    );
   });
 }
 
@@ -140,22 +168,15 @@ export async function autoLoginGasAccountIfNeeded() {
     const directlySignable = filterDirectlySignableAccounts(sortedAccounts);
     const hardware = sortedAccounts.filter(isHardwareAccount);
 
-    const [directWithBalance, hwWithBalance] = await Promise.all([
-      findAccountsWithBalance(directlySignable),
-      findAccountsWithBalance(hardware),
-    ]);
-
-    const allWithBalance = toGasAccountBalanceAccounts([
-      ...directWithBalance,
-      ...hwWithBalance,
-    ]);
-    storeApiGasAccount.setAccountsWithGasAccountBalance(allWithBalance);
-
-    if (await tryLoginFirstDirectAccount(directWithBalance)) {
+    const directAccount = await findFirstAccountWithBalance(directlySignable);
+    if (await loginAutoDetectedAccount(directAccount)) {
+      refreshAllAccountsWithBalanceInBackground('after auto login');
       return;
     }
 
-    setPendingHardwareAccount(hwWithBalance[0]);
+    const hardwareAccount = await findFirstAccountWithBalance(hardware);
+    setPendingHardwareAccount(hardwareAccount);
+    refreshAllAccountsWithBalanceInBackground('after auto detect');
   } catch (error) {
     console.error('autoLoginGasAccountIfNeeded error', error);
   }
@@ -184,7 +205,7 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
       toGasAccountBalanceAccounts([...directWithBalance, ...hwWithBalance]),
     );
 
-    if (await tryLoginFirstDirectAccount(directWithBalance)) {
+    if (await loginAutoDetectedAccount(directWithBalance[0])) {
       return;
     }
 

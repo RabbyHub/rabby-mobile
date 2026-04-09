@@ -290,6 +290,9 @@ export class SignatureManager {
       !!canUseGasLess;
 
     if (autoUseGasFreeMethod && state.ctx) {
+      if (state.ctx.gasMethod === 'gasAccount') {
+        state.ctx.gasMethod = 'native';
+      }
       state.ctx.useGasless = true;
       return true;
     }

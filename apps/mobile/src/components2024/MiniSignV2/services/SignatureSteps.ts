@@ -76,6 +76,7 @@ import miscService from '@/core/services/misc';
 import { requestETHRpc } from '@/core/apis/provider';
 import { isTempoChain } from '@/utils/tempo';
 import { resolveMiniSignSubmitGasMode } from '../state/gasPaymentState';
+import { shouldAutoSwitchToApprovalGasAccount } from '@/components/Approval/components/TxComponents/GasSelector/approvalGasDisplay';
 
 const rawAmountToBn = (
   value: string | number | BigNumber | null | undefined,
@@ -998,18 +999,13 @@ export class SignatureSteps {
 
     let switchGasAccount = false;
     if (autoSwitchGasAccount && prepared.txsCalc?.length) {
-      const chain = findChain({
-        id: prepared.txsCalc[0]?.tx.chainId,
-      })!;
-      const hasCustomRPC = apiCustomRPC.hasCustomRPC(chain?.enum);
-      const gasAccountSupported =
-        !!prepared.gasAccount?.balance_is_enough &&
-        !prepared.gasAccount.chain_not_support &&
-        !!prepared.gasAccount.is_gas_account &&
-        !(prepared.gasAccount as any).err_msg;
-      if (prepared.isGasNotEnough && !hasCustomRPC && gasAccountSupported) {
-        switchGasAccount = true;
-      }
+      switchGasAccount = shouldAutoSwitchToApprovalGasAccount({
+        nativeTokenInsufficient: !!prepared.isGasNotEnough,
+        freeGasAvailable: !!prepared.gasless?.is_gasless,
+        gasAccountChainSupported:
+          !!prepared.gasAccount && !prepared.gasAccount.chain_not_support,
+        noCustomRPC: !!prepared.noCustomRPC,
+      });
     }
 
     return SignatureSteps.toCtxFromPrepared({
