@@ -1497,6 +1497,10 @@ export function useSendTokenForm({
   const scrollToBottom = useCallback(() => {
     scrollViewRef.current?.scrollToEnd?.(true);
   }, []);
+  const reloadTxRefreshPausedRef = useRef(false);
+  const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
+    reloadTxRefreshPausedRef.current = paused;
+  }, []);
   const handleMaxInfoChanged = useCallback(
     async (input?: { gasLevel: GasLevel }) => {
       if (!currentAccount) {
@@ -2054,9 +2058,15 @@ export function useSendTokenForm({
 
   useFocusEffect(
     useCallback(() => {
-      eventBus.addListener(EVENTS.RELOAD_TX, refreshCurrentToken);
+      const onReloadTx = () => {
+        if (reloadTxRefreshPausedRef.current) {
+          return;
+        }
+        refreshCurrentToken();
+      };
+      eventBus.addListener(EVENTS.RELOAD_TX, onReloadTx);
       return () => {
-        eventBus.removeListener(EVENTS.RELOAD_TX, refreshCurrentToken);
+        eventBus.removeListener(EVENTS.RELOAD_TX, onReloadTx);
       };
     }, [refreshCurrentToken]),
   );
@@ -2102,6 +2112,7 @@ export function useSendTokenForm({
     handleGasLevelChanged,
     handleClickMaxButton,
     handleIgnoreGasFeeChange,
+    setReloadTxRefreshPaused,
     onBottomAreaLayout,
     scrollViewRef,
     scrollViewStyle,
@@ -2187,6 +2198,7 @@ type InternalContext = {
     handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
     handleClickMaxButton: () => Promise<void> | void;
     handleIgnoreGasFeeChange: (b: boolean) => void;
+    setReloadTxRefreshPaused: (paused: boolean) => void;
     // onGasChange: (input: {
     //   gasLevel: GasLevel;
     //   updateTokenAmount?: boolean;
@@ -2240,6 +2252,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},
     handleIgnoreGasFeeChange: () => {},
+    setReloadTxRefreshPaused: () => {},
     onChangeSlider: () => {},
     setSlider: () => {},
     onBottomAreaLayout: () => {},

@@ -1037,6 +1037,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   useFocusEffect(
     useCallback(() => {
       const refresh = () => {
+        if (autoQuoteRefreshPausedRef.current) {
+          return;
+        }
         setTokenRefreshId(e => e + 1);
       };
       eventBus.addListener(EVENTS.RELOAD_TX, refresh);

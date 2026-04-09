@@ -58,6 +58,7 @@ import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { GasAccountBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { CHAINS_ENUM } from '@debank/common';
 import { GasAccountDepositTokenPicker } from './GasAccountDepositTokenPicker';
 import {
   getBridgeFromTokenAmount,
@@ -693,18 +694,68 @@ const GasAccountDepositTokenFormInner: React.FC<{
     balanceLabel: t('page.gasAccount.depositPopup.balanceLabel'),
     insufficientBalanceLabel: validationMessages.insufficientBalanceLabel,
   });
-  const handleMax = useCallback(() => {
+  const getNativeReserveUsdForBridge = useCallback(
+    async (token: GasAccountAvailableToken) => {
+      const chain = findChainByServerID(token.chain);
+      if (!chain || !isSameAddress(token.id, chain.nativeTokenAddress || '')) {
+        return new BigNumber(0);
+      }
+
+      try {
+        const gasList = await apiProvider.gasMarketV2(
+          {
+            chainId: chain.serverId,
+          },
+          signerAccount,
+        );
+        const normalGasPrice = gasList?.find(
+          item => item.level === 'normal',
+        )?.price;
+
+        if (!normalGasPrice) {
+          return new BigNumber(0);
+        }
+
+        // Align with swap MAX reserve strategy.
+        const reserveGasLimit =
+          chain.enum === CHAINS_ENUM.ETH ? 1000000 : 2000000;
+        const reserveNativeAmount = new BigNumber(reserveGasLimit)
+          .times(normalGasPrice)
+          .div(new BigNumber(10).pow(chain.nativeTokenDecimals || 18));
+        return reserveNativeAmount.times(token.price || 0);
+      } catch (error) {
+        console.error(
+          'GasAccountDepositTokenForm getSwapStyleNativeReserveUsdForBridge error',
+          error,
+        );
+        return new BigNumber(0);
+      }
+    },
+    [signerAccount],
+  );
+
+  const handleMax = useCallback(async () => {
     if (!selectedToken) {
       return;
     }
 
-    setUsdValue(
-      new BigNumber(isBridgeDeposit ? tokenBalanceUsd : directTokenBalance)
-        .decimalPlaces(2, BigNumber.ROUND_DOWN)
-        .toFixed(),
+    const rawMaxValue = new BigNumber(
+      isBridgeDeposit ? tokenBalanceUsd : directTokenBalance,
     );
+    let maxValue = rawMaxValue;
+
+    if (isBridgeDeposit) {
+      const reserveUsd = await getNativeReserveUsdForBridge(selectedToken);
+      if (reserveUsd.gt(0)) {
+        const deducted = rawMaxValue.minus(reserveUsd);
+        maxValue = deducted.lt(0) ? rawMaxValue : deducted;
+      }
+    }
+
+    setUsdValue(maxValue.decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed());
   }, [
     directTokenBalance,
+    getNativeReserveUsdForBridge,
     isBridgeDeposit,
     selectedToken,
     setUsdValue,
@@ -730,6 +781,10 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
   const estReceiveLabel = t('page.gasAccount.depositPopup.estReceiveLabel', {
     usd: estReceiveUsdValue,
+  });
+
+  console.log('gasAccountInfo?.account?.balance', {
+    gasAccountInfo: gasAccountInfo?.account?.balance,
   });
 
   const displayedEstReceiveLabel = minDepositPrice

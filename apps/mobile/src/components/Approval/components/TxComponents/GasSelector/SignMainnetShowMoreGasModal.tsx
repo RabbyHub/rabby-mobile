@@ -112,6 +112,7 @@ export const SignMainnetShowMoreGasModal = ({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const currentGasMethod = gasMethod ?? 'native';
+  const noCustomRPCEnabled = noCustomRPC ?? true;
   const gasAccountChainSupported =
     !!gasAccountCost && !gasAccountCost.chain_not_support;
   const overlayRef = React.useRef<View>(null);
@@ -249,7 +250,7 @@ export const SignMainnetShowMoreGasModal = ({
                 ? resolveApprovalGasMethod({
                     nativeTokenInsufficient: !!nativeTokenInsufficient,
                     gasAccountChainSupported: !!gasAccountChainSupported,
-                    noCustomRPC,
+                    noCustomRPC: noCustomRPCEnabled,
                     freeGasAvailable,
                     legacyGasMethod: currentGasMethod,
                   })
@@ -258,7 +259,7 @@ export const SignMainnetShowMoreGasModal = ({
                     currentGasMethod,
                     nativeTokenInsufficient: levelNativeInsufficient,
                     gasAccountChainSupported: !!gasAccountChainSupported,
-                    noCustomRPC,
+                    noCustomRPC: noCustomRPCEnabled,
                     freeGasAvailable,
                   });
               const isRowLoading = !!levelState[gas.level]?.loading;
