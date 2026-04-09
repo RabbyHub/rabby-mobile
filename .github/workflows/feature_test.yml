@@ -184,6 +184,12 @@ jobs:
           echo "OS_TYPE is $OS_TYPE";
 
           if [ "$OS_TYPE" == "Linux" ]; then
+            if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
+              export RABBY_MOBILE_TURBO_BUILD=true
+              echo "Enable turbo build for Linux regression package"
+            else
+              export RABBY_MOBILE_TURBO_BUILD=false
+            fi
             buildchannel=selfhost-reg ./scripts/deploy-android.sh
           elif [ "$OS_TYPE" == "Darwin" ]; then
             if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then

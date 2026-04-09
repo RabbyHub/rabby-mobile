@@ -40,19 +40,34 @@ prepare_android_build_artifacts() {
   if turbo_build_enabled; then
     turbo_prepare_js_dependencies
     turbo_prepare_ruby_bundle
+    android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key)
+
+    if turbo_android_build_artifacts_ready "$android_build_artifacts_key"; then
+      turbo_log "android build artifacts already up to date"
+      return 0
+    fi
   else
     [ -z "$CI" ] && yarn
   fi
 
   yarn check-nodeengines &&
-    yarn ../mobile-local-pages bundle:all &&
-    yarn link-assets &&
+    yarn ../mobile-local-pages make-theme &&
+    yarn ../mobile-local-pages build --mode android &&
+    yarn react-native-asset &&
+    sh ./scripts/fns.sh reset_builtin_assets &&
     yarn buildworker:prod:android
+  prepare_status=$?
+
+  if [ $prepare_status -eq 0 ] && turbo_build_enabled; then
+    turbo_mark_android_build_artifacts_ready "$android_build_artifacts_key"
+  fi
+
+  return $prepare_status
 }
 
 build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
-  prepare_android_build_artifacts;
+  prepare_android_build_artifacts || return $?
   if [ $RABBY_HOST_OS != "Windows" ]; then
     if [ "$USE_RESIGN_APK" == "true" ]; then
       echo "[deploy-android] try to resign template.apk to get the new one."
@@ -88,7 +103,7 @@ build_selfhost() {
 build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
   if turbo_build_enabled; then
-    prepare_android_build_artifacts
+    prepare_android_build_artifacts || return $?
   else
     yarn &&
       yarn check-nodeengines &&
