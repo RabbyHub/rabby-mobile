@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Modal } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { GasAccountCurrentAddress } from './GasAccountLogoutPopup';
@@ -7,6 +7,8 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { Button } from '@/components';
 import { Text } from '@/components/Typography';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 interface SwitchLoginAddrBeforeDepositModalProps {
   visible: boolean;
@@ -21,7 +23,8 @@ export const SwitchLoginAddrBeforeDepositModal: React.FC<
   const { t } = useTranslation();
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.gasAccountSwitchLoginAddress}
       transparent={true}
       visible={visible}
       animationType="fade"
@@ -46,7 +49,7 @@ export const SwitchLoginAddrBeforeDepositModal: React.FC<
           />
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 

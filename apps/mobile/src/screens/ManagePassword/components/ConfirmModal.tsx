@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { Button } from '@/components';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { createGetStyles } from '@/utils/styles';
 import { Text } from '@/components/Typography';
 
 const LAYOUTS = {
@@ -121,7 +123,8 @@ export function ConfirmSetPasswordModal({
   const { t } = useTranslation();
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.confirmSetPassword}
       transparent
       animationType="fade"
       onRequestClose={onCancel}
@@ -167,6 +170,6 @@ export function ConfirmSetPasswordModal({
         </View>
         {children}
       </View>
-    </Modal>
+    </TrackedModal>
   );
 }
