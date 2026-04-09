@@ -9,7 +9,6 @@ import {
   resetNavigationTo,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { toast } from '@/components2024/Toast';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useRoute } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
@@ -117,10 +116,6 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     );
   };
 
-  useEffect(() => {
-    toast.success(t('page.syncExtension.importedSuccessfully'));
-  }, [t]);
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -177,6 +172,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 'auto',
     width: '100%',
     alignItems: 'center',
+    paddingTop: 16,
   },
   btnContainer: {
     width: '100%',
