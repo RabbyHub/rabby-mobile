@@ -4,6 +4,7 @@ script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
+. $script_dir/turbo-build/_fns.sh --source-only
 
 export buildchannel="appstore";
 export BUILD_TARGET_PLATFORM="ios";
@@ -54,15 +55,28 @@ build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
-  yarn;
+  if turbo_build_enabled; then
+    turbo_prepare_js_dependencies;
+  else
+    yarn;
+  fi
   yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:ios;
   yarn syncrnversion;
-  cd $project_dir/ios;
-  bundle install;
-  [ ! -z $CI ] && bundle exec pod cache clean --all;
-  bundle exec pod install --repo-update;
-  cd $project_dir;
-  bundle exec fastlane ios appstore;
+  if turbo_build_enabled; then
+    turbo_prepare_ruby_bundle;
+    turbo_prepare_cocoapods;
+  else
+    cd $project_dir/ios;
+    bundle install;
+    [ ! -z $CI ] && bundle exec pod cache clean --all;
+    bundle exec pod install --repo-update;
+    cd $project_dir;
+  fi
+  if turbo_build_enabled; then
+    turbo_bundle_exec exec fastlane ios appstore;
+  else
+    bundle exec fastlane ios appstore;
+  fi
 }
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then

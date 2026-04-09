@@ -4,6 +4,7 @@ script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
+. $script_dir/turbo-build/_fns.sh --source-only
 
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
@@ -54,13 +55,26 @@ build_adhoc() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
-  [ -z "$CI" ] && yarn;
+  if turbo_build_enabled; then
+    turbo_prepare_js_dependencies;
+  else
+    [ -z "$CI" ] && yarn;
+  fi
   yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:ios;
   yarn syncrnversion;
-  cd $project_dir/ios;
-  bundle install && bundle exec pod install --repo-update;
-  cd $project_dir;
-  bundle exec fastlane ios adhoc;
+  if turbo_build_enabled; then
+    turbo_prepare_ruby_bundle;
+    turbo_prepare_cocoapods;
+  else
+    cd $project_dir/ios;
+    bundle install && bundle exec pod install --repo-update;
+    cd $project_dir;
+  fi
+  if turbo_build_enabled; then
+    turbo_bundle_exec exec fastlane ios adhoc;
+  else
+    bundle exec fastlane ios adhoc;
+  fi
 }
 
 [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
@@ -118,4 +132,3 @@ if [ -z $CI ]; then
 fi
 
 echo "[deploy-ios-adhoc] finish sync."
-

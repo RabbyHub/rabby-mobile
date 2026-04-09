@@ -1,5 +1,9 @@
 require 'base64'
 
+def turbo_build_enabled?
+  ENV['RABBY_MOBILE_TURBO_BUILD'] == 'true'
+end
+
 platform :ios do
   private_lane :prepare_apple_sign do |opts|
     # setup_ci
@@ -50,7 +54,7 @@ platform :ios do
       output_directory: "./ios/Package/adhoc",
       build_path: "./ios/Package/adhoc",
       destination: "generic/platform=iOS",
-      clean: true,
+      clean: !turbo_build_enabled?,
       ## if you wanna output log to stdout, uncomment below 2 lines
       # xcodebuild_formatter: '',
       # suppress_xcode_output: false,
@@ -112,7 +116,7 @@ platform :ios do
         build_path: "./ios/Package/appstore",
         destination: "generic/platform=iOS",
         skip_profile_detection: true,
-        clean: true,
+        clean: !turbo_build_enabled?,
         ## if you wanna output log to stdout, uncomment below 2 lines
         # xcodebuild_formatter: '',
         # suppress_xcode_output: false,
@@ -191,7 +195,7 @@ platform :android do
   desc "Release for the Android selfhost"
   lane :selfhost do
     write_key_store
-    use_cache = ENV['RABBY_MOBILE_GRADLE_USE_CACHE'] == 'true' ? 'true' : 'false'
+    use_cache = (ENV['RABBY_MOBILE_GRADLE_USE_CACHE'] == 'true' || turbo_build_enabled?) ? 'true' : 'false'
     build_channel = ENV['buildchannel'] || 'selfhost-reg'
     if build_channel == 'selfhost-reg'
       if use_cache == 'true'
@@ -213,7 +217,16 @@ platform :android do
   desc "Release for the Android playstore"
   lane :playstore do
     write_key_store
-    gradle(task: 'clean', project_dir: './android')
-    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'])
+    use_cache = turbo_build_enabled?
+    if use_cache
+      UI.message("Using Gradle cache for playstore build")
+    else
+      gradle(task: 'clean', project_dir: './android')
+    end
+    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'], properties: {
+      "org.gradle.configuration-cache"=>use_cache ? 'true' : 'false',
+      "org.gradle.caching"=>use_cache ? 'true' : 'false',
+      "org.gradle.parallel"=>use_cache ? 'true' : 'false',
+    })
   end
 end

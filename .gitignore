@@ -47,3 +47,4 @@ CLAUDE*.local.md
 .codex
 
 .agents
+.turbo-build
