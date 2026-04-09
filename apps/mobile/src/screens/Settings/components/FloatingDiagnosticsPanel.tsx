@@ -42,6 +42,9 @@ const VERTICAL_EDGE_PADDING = 40;
 const HORIZONTAL_EDGE_PADDING = 0;
 const SIDE_LEFT = 0;
 const SIDE_RIGHT = 1;
+const MODAL_SUMMARY_TEXT_MUTED_COLOR = colord('#ffffff')
+  .alpha(0.74)
+  .toRgbString();
 
 function syncModalDebugSnapshot(snapshot: ModalGateDebugSnapshot) {
   const visibleBlockingModalCount = snapshot.visibleBlockingModalCount;
@@ -129,16 +132,30 @@ function getPanelHeight(options: { showAutoLockCountdown: boolean }) {
   return PANEL_HEIGHT_MODAL_ONLY;
 }
 
+type FloatingDiagnosticsPanelState = Pick<
+  ReturnType<typeof useFloatingView>,
+  'collapsed' | 'toggleCollapsed' | 'showAutoLockCountdown'
+>;
+
 export function FloatingDiagnosticsPanel() {
+  const floatingView = useFloatingView();
+
+  if (!NEED_DEVSETTINGBLOCKS || !floatingView.shouldShow) {
+    return null;
+  }
+
+  return <FloatingDiagnosticsPanelContent floatingView={floatingView} />;
+}
+
+function FloatingDiagnosticsPanelContent({
+  floatingView,
+}: {
+  floatingView: FloatingDiagnosticsPanelState;
+}) {
   const { styles } = useThemeStyles(getFloatingDiagnosticsPanelStyles);
   const { devNeedCountdown, countdownTextStyles, countdownTextProps } =
     useAutoLockCountDown();
-  const {
-    collapsed,
-    toggleCollapsed,
-    shouldShow: shouldShowFloatingView,
-    showAutoLockCountdown,
-  } = useFloatingView();
+  const { collapsed, toggleCollapsed, showAutoLockCountdown } = floatingView;
 
   const dockSide = useSharedValue(SIDE_RIGHT);
   const isDragging = useSharedValue(0);
@@ -148,7 +165,6 @@ export function FloatingDiagnosticsPanel() {
   const dragStartLeft = useSharedValue(dragHandleLeft.value);
   const dragStartTop = useSharedValue(handleTop.value);
 
-  const shouldShow = shouldShowFloatingView;
   const panelHeight = React.useMemo(() => {
     if (collapsed) {
       return HANDLE_SIZE;
@@ -228,9 +244,7 @@ export function FloatingDiagnosticsPanel() {
 
   const modalSummaryTextStyles = useAnimatedStyle(() => {
     return {
-      color: modalDebugCount.value
-        ? '#FFB648'
-        : colord('#ffffff').alpha(0.74).toRgbString(),
+      color: modalDebugCount.value ? '#FFB648' : MODAL_SUMMARY_TEXT_MUTED_COLOR,
     };
   });
 
@@ -374,14 +388,6 @@ export function FloatingDiagnosticsPanel() {
 
     handleTop.value = Math.min(Math.max(handleTop.value, minTop), maxTop);
   }, [handleTop]);
-
-  if (!NEED_DEVSETTINGBLOCKS) {
-    return null;
-  }
-
-  if (!shouldShow) {
-    return null;
-  }
 
   return (
     <GestureHandlerRootView pointerEvents="box-none" style={styles.portal}>
