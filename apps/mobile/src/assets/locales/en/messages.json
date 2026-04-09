@@ -2436,6 +2436,7 @@
       "marketNotOpenTooltip": "Market not open",
       "tokenHeader": {
         "name": "Name",
+        "token": "Token",
         "tokenAndName": "Token/Name"
       },
       "tabs": {
