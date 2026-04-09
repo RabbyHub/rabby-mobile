@@ -1017,6 +1017,7 @@
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
       "best": "Best",
+      "best-subtitle": "Considering total cost and speed of delivering the best quote",
       "no-route-found": "No route found",
       "bridged": "Bridged",
       "gasXUsd": "Gas: {{gasUsd}}",

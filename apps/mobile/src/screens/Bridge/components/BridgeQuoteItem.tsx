@@ -19,8 +19,8 @@ interface QuoteItemProps extends SelectedBridgeQuote {
   payToken: TokenItem;
   receiveToken: TokenItem;
   isBestQuote?: boolean;
+  isTopAmount?: boolean;
   bestQuoteUsd: string;
-  sortIncludeGasFee: boolean;
   setSelectedBridgeQuote?: (quote?: SelectedBridgeQuote) => void;
   onlyShow?: boolean;
   loading?: boolean;
@@ -31,11 +31,30 @@ interface QuoteItemProps extends SelectedBridgeQuote {
 export const bridgeQuoteEstimatedValueBn = (
   quote: SelectedBridgeQuote,
   receiveToken: TokenItem,
-  sortIncludeGasFee: boolean,
 ) => {
   return new BigNumber(quote.to_token_amount)
     .times(receiveToken.price || 1)
-    .minus(sortIncludeGasFee ? quote.gas_fee.usd_value : 0);
+    .minus(quote.gas_fee.usd_value);
+};
+
+/**
+ * Best 评分公式：score = amount_usd - gas_fee_usd - time_cost_usd
+ * 耗时成本每分钟 = amount_usd / 100K，上限 1 美金
+ */
+export const bridgeQuoteScore = (
+  quote: SelectedBridgeQuote,
+  receiveToken: TokenItem,
+) => {
+  const amountUsd = new BigNumber(quote.to_token_amount).times(
+    receiveToken.price || 1,
+  );
+  const gasFeeUsd = new BigNumber(quote.gas_fee.usd_value);
+  const durationMinutes = Math.ceil(quote.duration / 60);
+  const timeCostUsd = BigNumber.min(
+    amountUsd.div(100000).times(durationMinutes),
+    1,
+  );
+  return amountUsd.minus(gasFeeUsd).minus(timeCostUsd);
 };
 
 export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
@@ -44,23 +63,29 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
   const { t } = useTranslation();
   const openBridgeQuote = useSetQuoteVisible();
 
-  const diffPercent = React.useMemo(() => {
-    if (props.onlyShow || props.isBestQuote) {
-      return '';
+  const { isTopAmount, diffPercent } = React.useMemo(() => {
+    if (props.onlyShow) {
+      return { isTopAmount: false, diffPercent: '' };
+    }
+    if (props.isTopAmount) {
+      return { isTopAmount: true, diffPercent: '0.00%' };
     }
 
-    const percent = bridgeQuoteEstimatedValueBn(
-      props,
-      props.receiveToken,
-      props.sortIncludeGasFee,
-    )
-      .minus(props.bestQuoteUsd)
-      .div(props.bestQuoteUsd)
+    const currentUsd = bridgeQuoteEstimatedValueBn(props, props.receiveToken);
+    const bestUsd = new BigNumber(props.bestQuoteUsd);
+
+    if (bestUsd.isZero()) {
+      return { isTopAmount: true, diffPercent: '0.00%' };
+    }
+
+    const percent = currentUsd
+      .minus(bestUsd)
+      .div(bestUsd)
       .abs()
       .times(100)
       .toFixed(2, 1)
       .toString();
-    return `-${percent}%`;
+    return { isTopAmount: false, diffPercent: `-${percent}%` };
   }, [props]);
 
   const handleClick = async () => {
@@ -129,8 +154,14 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
                   color={colors2024['neutral-foot']}
                   style={styles.icon}
                 />
-                {/* <Image source={RcIconLock} style={styles.icon} /> */}
               </Tip>
+            )}
+            {!props.onlyShow && props.isBestQuote && (
+              <View style={styles.bestInlineTag}>
+                <Text style={styles.bestInlineTagText}>
+                  {t('page.bridge.best')}
+                </Text>
+              </View>
             )}
           </View>
           <View style={styles.rightSection}>
@@ -182,13 +213,13 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
           <View
             style={[
               styles.badge,
-              props.isBestQuote ? styles.bestBadge : styles.diffBadge,
+              isTopAmount ? styles.bestBadge : styles.diffBadge,
             ]}>
             <Text
               style={
-                props.isBestQuote ? styles.bestQuoteText : styles.otherQuoteText
+                isTopAmount ? styles.bestQuoteText : styles.otherQuoteText
               }>
-              {props.isBestQuote ? t('page.bridge.best') : diffPercent}
+              {diffPercent}
             </Text>
           </View>
         )}
@@ -224,7 +255,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
-    borderColor: colors2024['brand-default'],
+    borderColor: colors2024['brand-light-2'],
   },
   normal: {
     backgroundColor: isLight
@@ -272,10 +303,10 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   tokenAmount: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
     flexShrink: 1,
   },
   bottomRow: {
@@ -312,10 +343,10 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     textAlign: 'right',
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '400',
-    lineHeight: 28,
+    lineHeight: 16,
   },
 
   infoIcon: {
@@ -334,7 +365,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     paddingVertical: 4,
   },
   bestBadge: {
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: colors2024['green-light-1'],
   },
   diffBadge: {
     backgroundColor: colors2024['red-light-1'],
@@ -345,7 +376,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     lineHeight: 16,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-    color: colors2024['brand-default'],
+    color: colors2024['green-default'],
   },
   otherQuoteText: {
     fontSize: 12,
@@ -353,5 +384,20 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     color: colors2024['red-default'],
+  },
+  bestInlineTag: {
+    backgroundColor: colors2024['brand-default'],
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bestInlineTagText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    color: colors2024['neutral-InvertHighlight'],
   },
 }));
