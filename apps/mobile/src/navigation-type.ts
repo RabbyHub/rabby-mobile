@@ -77,8 +77,15 @@ export type RootStackParamsList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
   [RootNames.SelectImportMethod]?: {};
-  [RootNames.ImportRabbyWallet]?: {};
-  [RootNames.ImportSecret]?: {};
+  [RootNames.ImportRabbyWallet]?: {
+    flow?: 'onboarding' | 'in_app';
+  };
+  [RootNames.ImportSecret]?: {
+    initialTab?: 'seedPhrase' | 'privateKey';
+    flow?: 'onboarding' | 'in_app';
+  };
+  [RootNames.SelectAddMethod]?: {};
+  [RootNames.MoreImportMethods]?: {};
   [RootNames.Backup]?: {
     address?: string;
     type?: string;

@@ -22,7 +22,8 @@ export function makeBottomSheetProps({
 
   const { handleBgColor } = (() => {
     switch (createParams?.name) {
-      case MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY: {
+      case MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY:
+      case MODAL_NAMES.IMPORT_MORE_ADDRESS: {
         return {
           // neutral-bg-0 only for light theme
           handleBgColor: colors['neutral-bg-0'] || colors['neutral-bg-1'],

@@ -6,10 +6,9 @@ import React, {
   useDeferredValue,
 } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
-import { navigateDeprecated } from '@/utils/navigation';
+import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useScanner } from '../Scanner/ScannerScreen';
-import { useFocusEffect } from '@react-navigation/native';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -21,7 +20,10 @@ import {
   View,
 } from 'react-native';
 import { validateAndCleanPrivateKey } from '@/core/apis/privateKey';
+import { apiPrivateKey, apiMnemonic } from '@/core/apis';
 import { validateAndCleanMnemonic } from '@/core/apis/mnemonic';
+import { requestKeyring } from '@/core/apis/keyring';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import {
@@ -34,6 +36,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
+import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import * as SecretVault from '@/core/utils/secretVault';
 
 /** Toast position at the top of screen */
@@ -43,12 +47,19 @@ type TabType = 'seedPhrase' | 'privateKey';
 
 type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'ImportSecret'>;
 
-export const ImportSecret = () => {
+export const ImportSecret = ({ route }: ScreenProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<ScreenProps['navigation']>();
+  const duplicateAddressModal = useDuplicateAddressModal();
+  const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
-  const [activeTab, setActiveTab] = React.useState<TabType>('seedPhrase');
+  const { initialTab, flow } = route.params ?? {};
+  const isInAppFlow = flow === 'in_app';
+
+  const [activeTab, setActiveTab] = React.useState<TabType>(
+    initialTab ?? 'seedPhrase',
+  );
 
   // Seed phrase state
   const [mnemonics, setMnemonics] = React.useState<string>('');
@@ -173,7 +184,7 @@ export const ImportSecret = () => {
     });
   }, [navigation, TabToggle]);
 
-  // Handle confirm button - navigate to CreateNewWallet with import data
+  // Handle confirm button - navigate based on flow type
   const handleConfirm = React.useCallback(async () => {
     if (activeTab === 'seedPhrase') {
       // Clean and validate mnemonic
@@ -189,11 +200,82 @@ export const ImportSecret = () => {
         return;
       }
 
-      // Store in SecretVault and pass only the vault ID
-      const vaultId = SecretVault.store(cleanedMnemonic);
-      navigation.navigate(RootNames.SetupWallet, {
-        seedPhraseVaultId: vaultId,
-      });
+      if (isInAppFlow) {
+        // Import directly and navigate to success screen
+        try {
+          const { keyringId, isExistedKR } =
+            await apiMnemonic.generateKeyringWithMnemonic(
+              cleanedMnemonic,
+              '',
+              true,
+            );
+          const firstAddress = await requestKeyring(
+            KEYRING_TYPE.HdKeyring,
+            'getAddresses',
+            keyringId ?? null,
+            0,
+            1,
+          );
+          try {
+            const importedAccounts = await requestKeyring(
+              KEYRING_TYPE.HdKeyring,
+              'getAccounts',
+              keyringId ?? null,
+            );
+            if (
+              !importedAccounts ||
+              (importedAccounts?.length < 1 && !!firstAddress?.length)
+            ) {
+              await new Promise(resolve => setTimeout(resolve, 1));
+              await apiMnemonic.activeAndPersistAccountsByMnemonics(
+                cleanedMnemonic,
+                '',
+                firstAddress as any,
+                true,
+              );
+              return replaceToFirst(RootNames.StackAddress, {
+                screen: RootNames.ImportSuccess2024,
+                params: {
+                  type: KEYRING_TYPE.HdKeyring,
+                  brandName: KEYRING_CLASS.MNEMONIC,
+                  isFirstImport: true,
+                  address: [firstAddress?.[0].address],
+                  mnemonics: cleanedMnemonic,
+                  passphrase: '',
+                  keyringId: keyringId || undefined,
+                  isExistedKR,
+                },
+              });
+            }
+          } catch (error) {
+            console.log('error', error);
+          }
+          // If account already exists, show import more popup
+          showImportMorePopup({
+            type: KEYRING_TYPE.HdKeyring,
+            brandName: KEYRING_CLASS.MNEMONIC,
+            mnemonics: cleanedMnemonic,
+            passphrase: '',
+            keyringId: keyringId || undefined,
+          });
+        } catch (error) {
+          if ((error as any)?.name === 'DuplicateAccountError') {
+            duplicateAddressModal.show({
+              address: (error as any).message,
+              brandName: KEYRING_CLASS.MNEMONIC,
+              type: KEYRING_TYPE.HdKeyring,
+            });
+          } else {
+            console.error(error);
+          }
+        }
+      } else {
+        // Onboarding flow: store in SecretVault and navigate to SetupWallet
+        const vaultId = SecretVault.store(cleanedMnemonic);
+        navigation.navigate(RootNames.SetupWallet, {
+          seedPhraseVaultId: vaultId,
+        });
+      }
       preferenceService.setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
       );
@@ -207,16 +289,52 @@ export const ImportSecret = () => {
         return;
       }
 
-      // Store in SecretVault and pass only the vault ID
-      const vaultId = SecretVault.store(cleanedPrivateKey);
-      navigation.navigate(RootNames.SetupWallet, {
-        privateKeyVaultId: vaultId,
-      });
+      if (isInAppFlow) {
+        // Import directly and navigate to success screen
+        try {
+          const [account] = await apiPrivateKey.importPrivateKey(
+            cleanedPrivateKey,
+          );
+          replaceToFirst(RootNames.StackAddress, {
+            screen: RootNames.ImportSuccess2024,
+            params: {
+              type: KEYRING_TYPE.SimpleKeyring,
+              brandName: KEYRING_CLASS.PRIVATE_KEY,
+              address: account?.address,
+            },
+          });
+        } catch (error) {
+          if ((error as any)?.name === 'DuplicateAccountError') {
+            duplicateAddressModal.show({
+              address: (error as any).message,
+              brandName: KEYRING_CLASS.PRIVATE_KEY,
+              type: KEYRING_TYPE.SimpleKeyring,
+            });
+          } else {
+            console.error(error);
+          }
+        }
+      } else {
+        // Onboarding flow: store in SecretVault and navigate to SetupWallet
+        const vaultId = SecretVault.store(cleanedPrivateKey);
+        navigation.navigate(RootNames.SetupWallet, {
+          privateKeyVaultId: vaultId,
+        });
+      }
       preferenceService.setReportActionTs(
         REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
       );
     }
-  }, [activeTab, mnemonics, privateKey, navigation, t]);
+  }, [
+    activeTab,
+    mnemonics,
+    privateKey,
+    navigation,
+    t,
+    isInAppFlow,
+    duplicateAddressModal,
+    showImportMorePopup,
+  ]);
 
   // Handle scanner result
   React.useEffect(() => {
@@ -296,8 +414,8 @@ export const ImportSecret = () => {
             </View>
           </View>
 
-          {/* Create New Wallet Link */}
-          {!deferredHasInputContent && (
+          {/* Create New Wallet Link - hidden for in_app flow */}
+          {!isInAppFlow && !deferredHasInputContent && (
             <View style={styles.linkWrapper}>
               <Text style={styles.linkText}>
                 <Trans
