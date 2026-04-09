@@ -21,7 +21,7 @@
     "build:watch": "yarn run build --watch",
     "changelog:validate": "yarn workspaces foreach --parallel --interlaced --verbose run changelog:validate",
     "child-workspace-package-names-as-json": "ts-node scripts/child-workspace-package-names-as-json.ts",
-    "postinstall": "yarn build && yarn apps/mobile postinstall",
+    "postinstall": "yarn build && RABBY_MOBILE_SKIP_BUILD_DEPS=1 yarn apps/mobile postinstall",
     "install-husky": "husky install",
     "typecheck": "yarn workspace rabby-mobile typecheck",
     "lint": "yarn lint:eslint && yarn lint:misc --check && yarn constraints",
