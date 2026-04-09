@@ -296,15 +296,47 @@ export const requestBindDevice = async (pushToken: string) => {
   });
 };
 
-export async function startBindPushServerOnDemand(pushToken: string) {
-  perfEvents.on('USER_MANUALLY_UNLOCK', () => {
-    requestBindDevice(pushToken);
-  });
+const requestBindDeviceIfEnabled = makeAvoidParallelAsyncFunc(
+  async (pushToken: string) => {
+    if (!pushToken) {
+      console.debug(
+        '[notifications] Skip binding device because push token is empty',
+      );
+      return null;
+    }
 
-  accountEvents.addListener('ACCOUNT_ADDED', () =>
-    requestBindDevice(pushToken),
-  );
-  accountEvents.addListener('ACCOUNT_REMOVED', () =>
-    requestBindDevice(pushToken),
-  );
+    const { enabled, appEnabled, hasPermission } =
+      await checkIfEnabledNotificationWithPermission();
+    if (!enabled) {
+      console.debug(
+        '[notifications] Skip binding device because notifications are disabled',
+        {
+          appEnabled,
+          hasPermission,
+        },
+      );
+      return null;
+    }
+
+    return requestBindDevice(pushToken);
+  },
+);
+
+export async function startBindPushServerOnDemand(pushToken: string) {
+  const bindWhenAllowed = () => {
+    requestBindDeviceIfEnabled(pushToken).catch(error => {
+      console.error('[notifications] Failed to bind device:', error);
+    });
+  };
+
+  perfEvents.on('USER_MANUALLY_UNLOCK', bindWhenAllowed);
+
+  accountEvents.addListener('ACCOUNT_ADDED', bindWhenAllowed);
+  accountEvents.addListener('ACCOUNT_REMOVED', bindWhenAllowed);
+
+  perfEvents.subscribe('PREFERENCE_UPDATED', ctx => {
+    if (ctx.key === 'enabledTransactionNofification' && ctx.value) {
+      bindWhenAllowed();
+    }
+  });
 }
