@@ -783,6 +783,10 @@ const GasAccountDepositTokenFormInner: React.FC<{
     usd: estReceiveUsdValue,
   });
 
+  console.log('gasAccountInfo?.account?.balance', {
+    gasAccountInfo: gasAccountInfo?.account?.balance,
+  });
+
   const displayedEstReceiveLabel = minDepositPrice
     ? t('page.gasAccount.depositPayPopup.topUpPayTips', {
         topUpUsd: formatUsdValue(minDepositPrice),

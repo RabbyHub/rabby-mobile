@@ -294,6 +294,7 @@ export const pollDepositStatus = ({
     for (let i = 0; i < maxAttempts && !cancelled; i++) {
       try {
         const result = await openapi.getGasAccountBridgeStatus(params);
+        console.log('pollDepositStatus', { attempt: i + 1, result });
         if (cancelled) {
           return false;
         }
