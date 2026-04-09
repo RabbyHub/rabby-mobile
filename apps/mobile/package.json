@@ -19,7 +19,7 @@
     "vbundle:android": "react-native-bundle-visualizer --platform=android --entry-file=./index.js",
     "vbundle:ios": "react-native-bundle-visualizer --platform=ios --entry-file=./index.js",
     "ensure-git-hooks": "yarn ../../ install-husky",
-    "postinstall": "yarn build:deps && yarn build-inpage",
+    "postinstall": "sh ./scripts/run-postinstall.sh",
     "ios": "react-native run-ios",
     "link-assets": "react-native-asset && sh ./scripts/fns.sh reset_builtin_assets && sh ./scripts/fns.sh build_worker_if_not_exist",
     "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
