@@ -73,6 +73,7 @@ export const SignMainnetShowMoreGasModal = ({
   selectedGasCostUsdStr,
   gasAccountCost,
   nativeTokenInsufficient,
+  noCustomRPC,
   freeGasAvailable,
   levelState,
   onEditCustomGas,
@@ -103,6 +104,7 @@ export const SignMainnetShowMoreGasModal = ({
     chain_not_support: boolean;
   };
   nativeTokenInsufficient?: boolean;
+  noCustomRPC?: boolean;
   freeGasAvailable?: boolean;
   levelState: SignMainnetGasLevelState;
   onEditCustomGas?: () => void;
@@ -247,6 +249,7 @@ export const SignMainnetShowMoreGasModal = ({
                 ? resolveApprovalGasMethod({
                     nativeTokenInsufficient: !!nativeTokenInsufficient,
                     gasAccountChainSupported: !!gasAccountChainSupported,
+                    noCustomRPC,
                     freeGasAvailable,
                     legacyGasMethod: currentGasMethod,
                   })
@@ -255,6 +258,7 @@ export const SignMainnetShowMoreGasModal = ({
                     currentGasMethod,
                     nativeTokenInsufficient: levelNativeInsufficient,
                     gasAccountChainSupported: !!gasAccountChainSupported,
+                    noCustomRPC,
                     freeGasAvailable,
                   });
               const isRowLoading = !!levelState[gas.level]?.loading;

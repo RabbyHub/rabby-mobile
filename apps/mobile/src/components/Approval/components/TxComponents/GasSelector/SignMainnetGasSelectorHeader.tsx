@@ -33,6 +33,7 @@ type GasSelectorHeaderProps = React.ComponentProps<
 >;
 type SignMainnetGasSelectorHeaderProps = GasSelectorHeaderProps & {
   freeGasAvailable?: boolean;
+  noCustomRPC?: boolean;
 };
 
 export const SignMainnetHeaderContent = ({
@@ -44,6 +45,7 @@ export const SignMainnetHeaderContent = ({
   gasAccountCost,
   gasCostUsdStr,
   nativeTokenInsufficient,
+  noCustomRPC,
   freeGasAvailable,
   gasLimit,
   nonce,
@@ -77,6 +79,7 @@ export const SignMainnetHeaderContent = ({
   gasAccountCost?: GasSelectorHeaderProps['gasAccountCost'];
   gasCostUsdStr: string;
   nativeTokenInsufficient?: boolean;
+  noCustomRPC?: boolean;
   freeGasAvailable?: boolean;
   gasLimit: GasSelectorHeaderProps['gasLimit'];
   nonce: GasSelectorHeaderProps['nonce'];
@@ -113,11 +116,13 @@ export const SignMainnetHeaderContent = ({
     nativeTokenInsufficient: !!nativeTokenInsufficient,
     gasAccountChainSupported:
       !!gasAccountCost && !gasAccountCost.chain_not_support,
+    noCustomRPC,
     freeGasAvailable,
     legacyGasMethod: gasMethod,
   });
   const gasAccountChainSupported =
     !!gasAccountCost && !gasAccountCost.chain_not_support;
+  const gasAccountMethodSupported = gasAccountChainSupported && !!noCustomRPC;
   const summary = useMemo(
     () =>
       buildDirectSignSummary({
@@ -152,7 +157,7 @@ export const SignMainnetHeaderContent = ({
     gasLevel => gasLevel.level === selectedGas?.level,
   )?.level;
   const gasAccountUsable =
-    gasAccountChainSupported && !!gasAccountCost?.balance_is_enough;
+    gasAccountMethodSupported && !!gasAccountCost?.balance_is_enough;
   const isHeaderLoading = !isReady;
   const isHeaderError = !isHeaderLoading && (!!gas.error || !gas.success);
   const [levelState, setLevelState] = useState<SignMainnetGasLevelState>({});
@@ -184,12 +189,12 @@ export const SignMainnetHeaderContent = ({
         String(gasLimit || ''),
         String(nonce || ''),
         nativeTokenInsufficient ? 1 : 0,
-        gasAccountChainSupported ? 1 : 0,
+        gasAccountMethodSupported ? 1 : 0,
       ].join(':'),
     [
       chainId,
       currentGasAccountInfo?.account?.balance,
-      gasAccountChainSupported,
+      gasAccountMethodSupported,
       gasAccountSessionId,
       gasLimit,
       nativeTokenInsufficient,
@@ -235,7 +240,7 @@ export const SignMainnetHeaderContent = ({
     supportedLevels.forEach(gasLevel => {
       const { needsNative, needsGasAccount } =
         resolveSignMainnetGasLevelFetchNeeds({
-          gasAccountChainSupported,
+          gasAccountChainSupported: gasAccountMethodSupported,
         });
       const currentLevelState = levelStateRef.current[gasLevel.level];
       const activeRequest = activeLevelRequestsRef.current[gasLevel.level];
@@ -327,7 +332,7 @@ export const SignMainnetHeaderContent = ({
     chainId,
     checkGasLevelIsNotEnough,
     fetchMode,
-    gasAccountChainSupported,
+    gasAccountMethodSupported,
     gasAccountCost,
     gasAccountUsable,
     gasCalcMethod,
@@ -353,7 +358,7 @@ export const SignMainnetHeaderContent = ({
         selectedSupportedLevel,
         nativeTokenInsufficient: !!nativeTokenInsufficient,
         gasAccountUsable,
-        gasAccountChainSupported,
+        gasAccountChainSupported: gasAccountMethodSupported,
         levelState,
       })
     ) {
@@ -364,13 +369,18 @@ export const SignMainnetHeaderContent = ({
     setAutoOpenSignal(signal => signal + 1);
   }, [
     fetchMode,
-    gasAccountChainSupported,
+    gasAccountMethodSupported,
     gasAccountUsable,
     levelState,
     nativeTokenInsufficient,
     selectedSupportedLevel,
     showMoreOpen,
   ]);
+
+  console.log('SignMainnetHeaderContent', {
+    displayGasMethod,
+    levelState,
+  });
 
   return (
     <>
@@ -412,6 +422,7 @@ export const SignMainnetHeaderContent = ({
             selectedGasCostUsdStr={gasCostUsdStr}
             gasAccountCost={gasAccountCost}
             nativeTokenInsufficient={nativeTokenInsufficient}
+            noCustomRPC={noCustomRPC}
             freeGasAvailable={freeGasAvailable}
             levelState={levelState}
             onEditCustomGas={() => {
@@ -514,6 +525,7 @@ export const SignMainnetGasSelectorHeader = (
       gasAccountCost={props.gasAccountCost}
       gasCostUsdStr={gasCostUsdStr}
       nativeTokenInsufficient={props.nativeTokenInsufficient}
+      noCustomRPC={props.noCustomRPC}
       freeGasAvailable={props.freeGasAvailable}
       gasLimit={props.gasLimit}
       nonce={props.nonce}

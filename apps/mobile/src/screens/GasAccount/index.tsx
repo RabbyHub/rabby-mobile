@@ -186,7 +186,8 @@ export const GasAccountScreen = () => {
     const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
     const directlySignableAccounts =
       filterDirectlySignableAccounts(sortedAccounts);
-    const targetAccount = directlySignableAccounts[0] as Account | undefined;
+    const targetAccount =
+      directlySignableAccounts[0] || (sortedAccounts[0] as Account | undefined);
 
     if (!targetAccount) {
       throw new Error('No directly signable account available');
