@@ -104,6 +104,8 @@ import {
   useReport0331SnapshotTrackedState,
 } from '@/utils/analytics0331';
 import { Text, AnimateableText } from '@/components/Typography';
+import { useAppLogFileSwitch } from '@/utils/logging/settings';
+import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
 
 export const makeNoop = () => () => {};
 
@@ -405,8 +407,8 @@ function DevSwitchAboutScreenProtection() {
           />
           <Text style={styles.switchLabel}>
             {forceAllowScreenshot
-              ? `Force Allow Capture`
-              : `Disallow Capture Sensitive Scene`}
+              ? 'Force Allow Capture'
+              : 'Disallow Capture Sensitive Scene'}
           </Text>
         </TouchableOpacity>
 
@@ -425,8 +427,8 @@ function DevSwitchAboutScreenProtection() {
             />
             <Text style={styles.switchLabel}>
               {iosForceDisableAlertForSensitiveScene
-                ? `Force Disable Alert for Sensitive Scene`
-                : `Alert for Sensitive Scene when screen recording/screenshot`}
+                ? 'Force Disable Alert for Sensitive Scene'
+                : 'Alert for Sensitive Scene when screen recording/screenshot'}
             </Text>
           </TouchableOpacity>
         )}
@@ -526,6 +528,108 @@ function DevSwitchAboutExpData() {
           </View>
         </View>
       </View>
+    </View>
+  );
+}
+
+function DevSwitchAboutAppLogging() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { canToggle, isForcedOn, effectiveEnabled, onToggle } =
+    useAppLogFileSwitch();
+  const [snapshot, setSnapshot] = useState(() => logger.getState());
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
+  const refreshSnapshot = useCallback(() => {
+    setSnapshot(logger.getState());
+  }, []);
+
+  useEffect(() => {
+    refreshSnapshot();
+  }, [effectiveEnabled, refreshSnapshot]);
+
+  const statusText = canToggle
+    ? effectiveEnabled
+      ? 'Regression build writes app logs into applogs zip archives'
+      : 'Regression build skips file logging'
+    : isForcedOn
+    ? 'Production always writes app logs to disk'
+    : 'Development skips file logging';
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          App File Logs
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        disabled={!canToggle}
+        onPress={() => {
+          if (!canToggle) {
+            return;
+          }
+          onToggle();
+          refreshSnapshot();
+        }}>
+        <AppSwitch2024
+          value={effectiveEnabled}
+          disabled={!canToggle}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={nextValue => {
+            onToggle(nextValue);
+            refreshSnapshot();
+          }}
+        />
+        <Text style={styles.switchLabel}>{statusText}</Text>
+      </TouchableOpacity>
+
+      <Text
+        style={[styles.label, { marginTop: 12 }]}
+        numberOfLines={2}
+        ellipsizeMode="middle">
+        Root: {APP_LOG_ROOT_PATH}
+      </Text>
+      <Text
+        style={[styles.label, { marginTop: 4 }]}
+        numberOfLines={2}
+        ellipsizeMode="middle">
+        Active archive: {snapshot.activeArchiveTempPath || 'none'}
+      </Text>
+
+      <Button
+        title={isFinalizing ? 'Finalizing...' : 'Finalize Current Log Zip'}
+        type="ghost"
+        height={48}
+        containerStyle={{ marginTop: 12 }}
+        disabled={isFinalizing}
+        onPress={async () => {
+          setIsFinalizing(true);
+          try {
+            const finalPath = await logger.finalizeArchive();
+            refreshSnapshot();
+            toast.success(
+              finalPath
+                ? `Log zip ready: ${finalPath.split('/').pop()}`
+                : 'No active log zip',
+            );
+          } catch (error) {
+            toast.error(String(error));
+          } finally {
+            setIsFinalizing(false);
+          }
+        }}
+      />
     </View>
   );
 }
@@ -997,8 +1101,8 @@ function DevMock() {
             Alert.alert(
               'Mock done',
               [
-                `Address-indexed assets data has been mocked.`,
-                `Restart the app to trigger the migrations.`,
+                'Address-indexed assets data has been mocked.',
+                'Restart the app to trigger the migrations.',
               ].join('\n'),
               [
                 { text: 'OK', onPress: makeNoop },
@@ -1047,7 +1151,7 @@ function DevMock() {
         /> */}
 
         <Button
-          title={`Log Feedback Extra`}
+          title={'Log Feedback Extra'}
           type="ghost"
           height={48}
           containerStyle={{ marginTop: 12 }}
@@ -1085,6 +1189,7 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Security</Text>
         <DevSwitchAboutScreenProtection />
+        <DevSwitchAboutAppLogging />
         <DevSwitchAboutExpData />
         <DevSwitchAboutAutoLock />
 
