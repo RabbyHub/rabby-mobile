@@ -30,7 +30,7 @@ import { Button } from '@/components2024/Button';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RootNames } from '@/constant/layout';
-import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
+import { GnosisSupportChainList } from './components/GnosisSupportChainList';
 import RcIconRightCC from '@/assets/icons/common/right-2-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
@@ -386,7 +386,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
   },
   supportChainList: {
-    marginBottom: 12,
+    marginBottom: 60,
   },
   ledgerButton: {
     flexDirection: 'row',

@@ -68,7 +68,7 @@ export const useSeedPhrase = () => {
       for (let i = 0; i < MAX_ACCOUNT_COUNT; i++) {
         const res = await api?.getAddresses(i, i + 1);
         const idx = accounts.findIndex(item => item === res?.[0].address);
-        if (idx === -1) {
+        if (idx === -1 && res) {
           accountsToCreate = res;
           newAddress = res?.[0]?.address;
           break;

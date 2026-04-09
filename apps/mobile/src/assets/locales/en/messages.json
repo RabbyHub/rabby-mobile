@@ -1757,7 +1757,9 @@
         "required": "Please input address"
       },
       "loading": "Searching the deployed chain of this address",
-      "gnosisChainDesc": "This address was found deployed on {{count}} chains"
+      "gnosisChainDesc": "This address was found deployed on {{count}} chains",
+      "gnosisChainPillDesc": "- Your wallet is deployed on these chains -",
+      "gnosisChainScrollDesc": "- This wallet was found deployed on {{count}} chains -"
     },
     "rabbyPoints": {
       "__skip_translation": ["titleWithStar", "ClaimComing"],
