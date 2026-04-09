@@ -57,14 +57,36 @@ build_adhoc() {
   sh ./ios/patches/override-xcconfig-release.sh;
   if turbo_build_enabled; then
     turbo_prepare_js_dependencies;
+    ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)
   else
     [ -z "$CI" ] && yarn;
   fi
-  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all && yarn link-assets && yarn buildworker:prod:ios;
-  yarn syncrnversion;
+
+  if turbo_build_enabled && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then
+    turbo_log "ios build artifacts already up to date"
+  else
+    yarn check-nodeengines &&
+      yarn ../mobile-local-pages make-theme &&
+      yarn ../mobile-local-pages build --mode ios &&
+      yarn react-native-asset &&
+      sh ./scripts/fns.sh reset_builtin_assets &&
+      yarn buildworker:prod:ios &&
+      yarn syncrnversion
+    prepare_status=$?
+
+    if [ $prepare_status -ne 0 ]; then
+      return $prepare_status
+    fi
+
+    if turbo_build_enabled; then
+      turbo_mark_ios_build_artifacts_ready "$ios_build_artifacts_key"
+    fi
+  fi
+
   if turbo_build_enabled; then
     turbo_prepare_ruby_bundle;
     turbo_prepare_cocoapods;
+    turbo_prepare_ios_derived_data;
   else
     cd $project_dir/ios;
     bundle install && bundle exec pod install --repo-update;

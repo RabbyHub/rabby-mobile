@@ -341,6 +341,8 @@ turbo_project_ruby_target() {
 }
 
 turbo_bundle_with_project_ruby() {
+  tb_work_dir="$1"
+  shift
   tb_ruby_target=$(turbo_project_ruby_target) || return 1
   tb_app_config="$RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG"
   tb_path="$RABBY_MOBILE_TURBO_BUNDLE_PATH"
@@ -348,14 +350,14 @@ turbo_bundle_with_project_ruby() {
 
   bash -lc '
     set -e
-    project_dir="$1"
+    work_dir="$1"
     ruby_target="$2"
     bundle_app_config="$3"
     bundle_path="$4"
     bundle_force_ruby_platform="$5"
     shift 5
 
-    cd "$project_dir"
+    cd "$work_dir"
     . "$HOME/.rvm/scripts/rvm"
     rvm use "$ruby_target" >/dev/null
 
@@ -364,16 +366,17 @@ turbo_bundle_with_project_ruby() {
       BUNDLE_PATH="$bundle_path" \
       BUNDLE_FORCE_RUBY_PLATFORM="$bundle_force_ruby_platform" \
       bundle "$@"
-  ' bash "$project_dir" "$tb_ruby_target" "$tb_app_config" "$tb_path" "$tb_force_ruby_platform" "$@"
+  ' bash "$tb_work_dir" "$tb_ruby_target" "$tb_app_config" "$tb_path" "$tb_force_ruby_platform" "$@"
 }
 
 turbo_bundle_exec() {
   tb_app_config="$RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG"
   tb_path="$RABBY_MOBILE_TURBO_BUNDLE_PATH"
   tb_force_ruby_platform="$RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM"
+  tb_work_dir=$(pwd -P)
 
   if [ -f "$project_dir/.ruby-version" ] && [ -s "$HOME/.rvm/scripts/rvm" ]; then
-    turbo_bundle_with_project_ruby "$@"
+    turbo_bundle_with_project_ruby "$tb_work_dir" "$@"
     return $?
   fi
 
@@ -780,6 +783,10 @@ turbo_android_build_artifacts_stamp_file() {
   printf '%s\n' "$RABBY_MOBILE_TURBO_WORK_ROOT/android-build-artifacts.current-key"
 }
 
+turbo_ios_build_artifacts_stamp_file() {
+  printf '%s\n' "$RABBY_MOBILE_TURBO_WORK_ROOT/ios-build-artifacts.current-key"
+}
+
 turbo_dir_has_files() {
   dir_path="$1"
   [ -d "$dir_path" ] || return 1
@@ -839,6 +846,67 @@ turbo_mark_android_build_artifacts_ready() {
   printf '%s' "$key" >"$stamp_file"
 }
 
+turbo_compute_ios_build_artifacts_key() {
+  repo_root="$RABBY_MOBILE_REPO_ROOT"
+  files_hash=$(
+    turbo_hash_git_files "$repo_root" \
+      package.json \
+      yarn.lock \
+      .yarn/patches \
+      apps/mobile/package.json \
+      apps/mobile/babel.config.js \
+      apps/mobile/metro.config.js \
+      apps/mobile/react-native.config.js \
+      apps/mobile/tsconfig.worker.json \
+      apps/mobile/scripts/fns.sh \
+      apps/mobile/ios/link-assets-manifest.json \
+      apps/mobile/assets/fonts \
+      apps/mobile/assets/custom \
+      apps/mobile/worker-src \
+      apps/mobile-local-pages \
+      packages/base-utils
+  )
+
+  printf '%s\n' \
+    "platform=$(turbo_platform_fingerprint)" \
+    "node=$(node -v 2>/dev/null)" \
+    "files=$files_hash" \
+    | turbo_sha256 | awk '{print $1}'
+}
+
+turbo_ios_build_artifacts_ready() {
+  key="$1"
+  stamp_file=$(turbo_ios_build_artifacts_stamp_file)
+  ios_resources_dir="$project_dir/ios/RabbyMobile/Resources"
+  local_pages_output_dir="$project_dir/assets/ios/builtin-pages"
+  worker_bundle="$project_dir/assets/ios/threads/worker.thread.jsbundle"
+
+  [ -f "$stamp_file" ] || return 1
+  [ "$(cat "$stamp_file" 2>/dev/null)" = "$key" ] || return 1
+  [ -f "$worker_bundle" ] || return 1
+  turbo_dir_has_files "$ios_resources_dir" || return 1
+  turbo_dir_has_files "$local_pages_output_dir" || return 1
+}
+
+turbo_mark_ios_build_artifacts_ready() {
+  key="$1"
+  stamp_file=$(turbo_ios_build_artifacts_stamp_file)
+  mkdir -p "$(dirname "$stamp_file")"
+  printf '%s' "$key" >"$stamp_file"
+}
+
+turbo_cocoapods_ready() {
+  podfile_lock="$project_dir/ios/Podfile.lock"
+  pods_manifest_lock="$project_dir/ios/Pods/Manifest.lock"
+  xcworkspace_data="$project_dir/ios/RabbyMobile.xcworkspace/contents.xcworkspacedata"
+
+  [ -d "$project_dir/ios/Pods" ] || return 1
+  [ -f "$podfile_lock" ] || return 1
+  [ -f "$pods_manifest_lock" ] || return 1
+  [ -f "$xcworkspace_data" ] || return 1
+  cmp -s "$podfile_lock" "$pods_manifest_lock"
+}
+
 turbo_gradle_wrapper_version() {
   wrapper_properties="$project_dir/android/gradle/wrapper/gradle-wrapper.properties"
 
@@ -878,6 +946,38 @@ turbo_gradle_state_paths() {
 turbo_gradle_local_home_dir() {
   key="$1"
   printf '%s/.turbo-build/gradle-user-home\n' "$(turbo_local_layer_dir gradle-home "$key")"
+}
+
+turbo_compute_ios_derived_data_key() {
+  repo_root="$RABBY_MOBILE_REPO_ROOT"
+  files_hash=$(
+    turbo_hash_git_files "$repo_root" \
+      apps/mobile/ios/Podfile \
+      apps/mobile/ios/Podfile.lock \
+      apps/mobile/ios/RabbyMobile.xcodeproj/project.pbxproj \
+      apps/mobile/ios/RabbyMobile/Info.plist \
+      apps/mobile/package.json \
+      yarn.lock
+  )
+
+  printf '%s\n' \
+    "platform=$(turbo_platform_fingerprint)" \
+    "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
+    "files=$files_hash" \
+    | turbo_sha256 | awk '{print $1}'
+}
+
+turbo_ios_derived_data_dir() {
+  key="$1"
+  printf '%s/ios-derived-data/%s\n' "$RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT" "$key"
+}
+
+turbo_prepare_ios_derived_data() {
+  turbo_init_env
+  key=$(turbo_compute_ios_derived_data_key)
+  derived_data_dir=$(turbo_ios_derived_data_dir "$key")
+  mkdir -p "$derived_data_dir"
+  export RABBY_MOBILE_TURBO_IOS_DERIVED_DATA_PATH="$derived_data_dir"
 }
 
 turbo_use_gradle_home_cache_key() {
@@ -1053,11 +1153,22 @@ turbo_prepare_cocoapods() {
   cache_key=$(turbo_compute_cocoapods_cache_key)
 
   if turbo_build_enabled; then
+    if turbo_cocoapods_ready; then
+      turbo_log "cocoapods already up to date"
+      return 0
+    fi
+
     turbo_restore_layer cocoapods "$cache_key" apps/mobile/ios/Pods || true
-    (cd "$project_dir/ios" && turbo_bundle_exec exec pod install)
+
+    if turbo_cocoapods_ready; then
+      turbo_log "cocoapods restored and already up to date"
+      return 0
+    fi
+
+    (cd "$project_dir/ios" && turbo_bundle_exec exec pod install) || return $?
     turbo_save_layer cocoapods "$cache_key" apps/mobile/ios/Pods
   else
-    (cd "$project_dir/ios" && bundle exec pod install --repo-update)
+    (cd "$project_dir/ios" && bundle exec pod install --repo-update) || return $?
   fi
 }
 

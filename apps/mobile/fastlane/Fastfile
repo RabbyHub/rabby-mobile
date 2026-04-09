@@ -4,6 +4,13 @@ def turbo_build_enabled?
   ENV['RABBY_MOBILE_TURBO_BUILD'] == 'true'
 end
 
+def turbo_ios_derived_data_path
+  path = ENV['RABBY_MOBILE_TURBO_IOS_DERIVED_DATA_PATH']
+  return path unless path.nil? || path.empty?
+
+  './ios/DerivedData'
+end
+
 platform :ios do
   private_lane :prepare_apple_sign do |opts|
     # setup_ci
@@ -53,6 +60,7 @@ platform :ios do
       configuration: 'Regression',
       output_directory: "./ios/Package/adhoc",
       build_path: "./ios/Package/adhoc",
+      derived_data_path: turbo_build_enabled? ? turbo_ios_derived_data_path : nil,
       destination: "generic/platform=iOS",
       clean: !turbo_build_enabled?,
       ## if you wanna output log to stdout, uncomment below 2 lines
@@ -116,7 +124,7 @@ platform :ios do
         build_path: "./ios/Package/appstore",
         destination: "generic/platform=iOS",
         skip_profile_detection: true,
-        clean: !turbo_build_enabled?,
+        clean: true,
         ## if you wanna output log to stdout, uncomment below 2 lines
         # xcodebuild_formatter: '',
         # suppress_xcode_output: false,
