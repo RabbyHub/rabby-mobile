@@ -1883,7 +1883,7 @@
         "inSufficientTip1": "这个钱包没有足够的 tokens，请选择其他钱包。",
         "paymentAddress": "支付钱包",
         "pay": "支付",
-        "applePayFeeDesc1": "包含应用商店费用。无提款。",
+        "applePayFeeDesc1": "包含应用商店费用。不支持提款。",
         "unavailablePaymentWallet": "所选支付钱包不可用",
         "balanceLabel": "余额",
         "fetchQuoteFailed": "获取报价失败",
