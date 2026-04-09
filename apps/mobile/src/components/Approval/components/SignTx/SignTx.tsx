@@ -640,6 +640,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     isFirstGasLessLoading,
     isGasNotEnough: !!isGasNotEnough,
     gasAccountChainSupported,
+    noCustomRPC,
     canUseGasLess: !!canUseGasLess,
     gasMethod,
     setGasMethod,
@@ -1846,6 +1847,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     return <EIP7702Warning />;
   }
 
+  console.log('SignMainnetHeaderContent signTx render', {
+    gasMethod,
+    isGasLess: gasMethod === 'native' ? useGasLess : false,
+    isGasAccount: gasAccountCanPay,
+  });
+
   return (
     <>
       <View style={styles.wrapper}>
@@ -1992,6 +1999,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 <SignMainnetGasSelectorHeader
                   tx={tx}
                   gasAccountCost={gasAccountCost}
+                  noCustomRPC={noCustomRPC}
                   gasMethod={gasMethod}
                   onChangeGasMethod={setGasMethod}
                   pushType={pushInfo.type}

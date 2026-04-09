@@ -419,6 +419,7 @@ export const MiniSignTx = ({
     isFirstGasLessLoading,
     isGasNotEnough: !!isGasNotEnough,
     gasAccountChainSupported,
+    noCustomRPC,
     canUseGasLess: !!canUseGasLess,
     gasMethod,
     setGasMethod,
@@ -1213,6 +1214,7 @@ export const MiniSignTx = ({
                 defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
                 tx={txs[0]}
                 gasAccountCost={gasAccountCost}
+                noCustomRPC={noCustomRPC}
                 gasMethod={gasMethod}
                 onChangeGasMethod={setGasMethod}
                 pushType={pushInfo.type}

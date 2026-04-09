@@ -422,6 +422,11 @@ const MiniSignTxV2 = ({
     return null;
   }
 
+  console.log('SignMainnetHeaderContent  tx render', {
+    ctx,
+    gasMethod,
+  });
+
   return (
     <View style={showCheckSecurity ? styles.wrapper : undefined}>
       {showCheckSecurity ? (
@@ -482,6 +487,7 @@ const MiniSignTxV2 = ({
                 defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
                 tx={txs[0]!}
                 gasAccountCost={gasAccountCost}
+                noCustomRPC={noCustomRPC}
                 gasMethod={gasMethod}
                 onChangeGasMethod={setGasMethod}
                 pushType={pushType}
