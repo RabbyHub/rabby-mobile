@@ -26,6 +26,23 @@ turbo_default_global_gradle_home() {
   printf '%s\n' "${RABBY_MOBILE_GLOBAL_GRADLE_HOME:-$HOME/.gradle}"
 }
 
+turbo_should_prepare_gradle_env() {
+  case "${BUILD_TARGET_PLATFORM:-}" in
+    android)
+      return 0
+      ;;
+  esac
+
+  case "${RABBY_MOBILE_TURBO_ENABLE_GRADLE_ENV:-false}" in
+    true|1|yes|on)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 turbo_cache_mode() {
   case "${RABBY_MOBILE_TURBO_CACHE_MODE:-local-first}" in
     remote-first|l2-first|remote|l2)
@@ -160,6 +177,10 @@ turbo_prepare_gradle_proxy_env() {
 }
 
 turbo_should_write_gradle_proxy_properties() {
+  if ! turbo_should_prepare_gradle_env; then
+    return 1
+  fi
+
   if turbo_build_enabled; then
     return 0
   fi
@@ -264,12 +285,17 @@ turbo_init_env() {
     export RABBY_MOBILE_TURBO_BUNDLE_PATH="${RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT}/vendor/bundle"
     export RABBY_MOBILE_TURBO_BUNDLE_APP_CONFIG="${RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT}/bundle-config"
     export RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM="${RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM:-1}"
-    export GRADLE_USER_HOME="${RABBY_MOBILE_TURBO_GRADLE_HOME_OVERRIDE:-${RABBY_MOBILE_TURBO_WORK_ROOT}/gradle-user-home}"
-  else
-    export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$(turbo_default_global_gradle_home)}"
   fi
 
-  turbo_prepare_gradle_proxy_env
+  if turbo_should_prepare_gradle_env; then
+    if turbo_build_enabled; then
+      export GRADLE_USER_HOME="${RABBY_MOBILE_TURBO_GRADLE_HOME_OVERRIDE:-${RABBY_MOBILE_TURBO_WORK_ROOT}/gradle-user-home}"
+    else
+      export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$(turbo_default_global_gradle_home)}"
+    fi
+
+    turbo_prepare_gradle_proxy_env
+  fi
 }
 
 turbo_seed_gradle_wrapper_from_global() {

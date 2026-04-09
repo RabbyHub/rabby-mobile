@@ -16,6 +16,14 @@ const {
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
+const escapePathForRegex = value =>
+  value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
+const turboBuildBlockList = new RegExp(
+  [
+    `${escapePathForRegex(path.resolve(projectRoot, '.turbo-build'))}\\/.*`,
+    `${escapePathForRegex(path.resolve(workspaceRoot, '.turbo-build'))}\\/.*`,
+  ].join('|'),
+);
 
 const LOG_FILE = path.join(__dirname, 'jsModuleId.log');
 
@@ -141,6 +149,7 @@ const config = {
       'webview.injected.ts',
       'webview.injected.tsx',
     ],
+    blockList: turboBuildBlockList,
     enableGlobalPackages: true,
     extraNodeModules: {
       ...require('node-libs-react-native'),

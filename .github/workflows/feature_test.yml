@@ -201,6 +201,9 @@ jobs:
           if [ "$OS_TYPE" == "Linux" ]; then
             if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
               export RABBY_MOBILE_TURBO_BUILD=true
+              export RABBY_MOBILE_TURBO_REMOTE_SYNC=false
+              export RABBY_MOBILE_METRO_MAX_WORKERS=2
+              export RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE=4096
               echo "Enable turbo build for Linux regression package"
             else
               export RABBY_MOBILE_TURBO_BUILD=false
