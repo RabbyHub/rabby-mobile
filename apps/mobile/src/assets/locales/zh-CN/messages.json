@@ -935,7 +935,7 @@
       },
       "bridgeFrom": "跨链自",
       "best": "最优",
-      "best-subtitle": "综合考虑总成本和速度提供最优报价",
+      "best-subtitle": "综合考虑总成本（包括Gas费用）和速度提供最优报价",
       "no-route-found": "未找到路线",
       "via-bridge": "通过 {{bridge}}",
       "history": "跨链历史",
