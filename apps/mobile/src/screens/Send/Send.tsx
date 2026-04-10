@@ -516,7 +516,7 @@ function SendScreen({
           currentToken,
           currentTokenBalance: balanceNumText,
         },
-        events: sendTokenEvents,
+        sendTokenEvents,
         formik,
         slider,
         fns: {

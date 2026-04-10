@@ -2187,7 +2187,7 @@ type InternalContext = {
   };
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
-  events: EventEmitter;
+  sendTokenEvents: EventEmitter;
   slider: number;
   fns: {
     // putScreenState: (
@@ -2243,7 +2243,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   },
 
   formik: null as any,
-  events: null as any,
+  sendTokenEvents: null as any,
   slider: 0,
   fns: {
     // putScreenState: () => { },
@@ -2300,11 +2300,11 @@ export function subscribeEvent<T extends SendTokenEvents>(
 export function useInputBlurOnEvents(
   inputRef: React.RefObject<TextInput | null>,
 ) {
-  const { events } = useSendTokenInternalContext();
+  const { sendTokenEvents } = useSendTokenInternalContext();
   useEffect(() => {
     const disposeRets = [] as Function[];
     subscribeEvent(
-      events,
+      sendTokenEvents,
       SendTokenEvents.ON_PRESS_DISMISS,
       () => {
         inputRef.current?.blur();
@@ -2313,7 +2313,7 @@ export function useInputBlurOnEvents(
     );
 
     subscribeEvent(
-      events,
+      sendTokenEvents,
       SendTokenEvents.ON_SEND,
       () => {
         inputRef.current?.blur();
@@ -2324,5 +2324,5 @@ export function useInputBlurOnEvents(
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [events, inputRef]);
+  }, [sendTokenEvents, inputRef]);
 }

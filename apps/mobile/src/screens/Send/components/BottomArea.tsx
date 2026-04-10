@@ -54,7 +54,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     },
     directSignBtnRef,
     formValuesRef,
-    events,
+    sendTokenEvents,
     callbacks: {
       handleIgnoreGasFeeChange,
       onBottomAreaLayout,
@@ -120,7 +120,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
   useEffect(() => {
     const disposeRets = [] as Function[];
     subscribeEvent(
-      events,
+      sendTokenEvents,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
         fetchRisks();
@@ -134,7 +134,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [events, fetchRisks]);
+  }, [fetchRisks, sendTokenEvents]);
 
   const { mostImportantRisks, hasRiskForToAddress, hasRiskForToken } =
     React.useMemo(() => {
