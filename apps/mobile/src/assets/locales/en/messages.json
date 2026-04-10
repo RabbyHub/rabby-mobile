@@ -1017,6 +1017,7 @@
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
       "best": "Best",
+      "best-subtitle": "Considering total cost (including Gas fees) and speed of delivering the best quote",
       "no-route-found": "No route found",
       "bridged": "Bridged",
       "gasXUsd": "Gas: {{gasUsd}}",
@@ -1957,7 +1958,7 @@
         "depositFailed": "Deposit Failed",
         "depositCanceled": "Deposit Canceled",
         "titleApple": "Buy in App Store",
-        "topUpPayTips": "Gas required: {{topUpUsd}}, Gas remaining: {{balance}}"
+        "topUpPayTips": "Gas required: {{topUpUsd}}, Gas remaining est: {{balance}}"
       },
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",
@@ -1983,6 +1984,8 @@
       "loginSuccess": "Login Successful",
       "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance",
       "benefitCard": {
+        "title": "Pay Gas Fees on All chains",
+        "subtitle": "when you're out of gas",
         "item1": "No Rabby Fee",
         "desc1": "No extra fees to pay gas",
         "item2": "Supports all networks",
@@ -2174,6 +2177,7 @@
     },
     "search": {
       "tokenHeader": {
+        "token": "Token",
         "tokenAndFdv": "Token/FDV"
       },
       "sectionHeader": {

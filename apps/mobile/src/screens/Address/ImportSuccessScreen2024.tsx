@@ -58,6 +58,17 @@ import {
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
+const HARDWARE_KEYRING_TYPES = [
+  KEYRING_TYPE.LedgerKeyring,
+  KEYRING_TYPE.KeystoneKeyring,
+  KEYRING_TYPE.OneKeyKeyring,
+  KEYRING_TYPE.TrezorKeyring,
+];
+
+function isHardwareWallet(type: string) {
+  return HARDWARE_KEYRING_TYPES.includes(type as KEYRING_TYPE);
+}
+
 export const ImportSuccessScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { top, bottom } = useSafeAreaInsets();
@@ -289,7 +300,8 @@ export const ImportSuccessScreen2024 = () => {
   const shouldShowBackupButton = !!state?.showBackup;
   const shouldShowImportMore =
     !shouldShowBackupButton &&
-    (state.isFirstImport ||
+    (isHardwareWallet(state.type) ||
+      state.isFirstImport ||
       (!!state?.mnemonics && state.brandName === KEYRING_TYPE.HdKeyring));
 
   const addressItems: AddressItem[] = useMemo(

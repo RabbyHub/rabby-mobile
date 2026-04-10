@@ -58,6 +58,7 @@ import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { GasAccountBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { CHAINS_ENUM } from '@debank/common';
 import { GasAccountDepositTokenPicker } from './GasAccountDepositTokenPicker';
 import {
   getBridgeFromTokenAmount,
@@ -370,8 +371,8 @@ const GasAccountDepositTokenFormInner: React.FC<{
       }
 
       const requestId = ++quoteReqIdRef.current;
-      setQuoteLoading(true);
       resetBridgeQuoteState();
+      setQuoteLoading(true);
 
       fetchGasAccountBridgeQuote({
         token: selectedToken,
@@ -394,7 +395,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
           setBridgeQuoteError(validationMessages.fetchQuoteFailed);
         })
         .finally(() => {
-          setQuoteLoading(false);
+          if (quoteReqIdRef.current === requestId) {
+            setQuoteLoading(false);
+          }
         });
     },
     300,
@@ -584,28 +587,29 @@ const GasAccountDepositTokenFormInner: React.FC<{
         pollCancelRef.current = cancel;
         const success = await pollPromise;
         pollCancelRef.current = null;
-
-        if (success) {
-          storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
-          const usedNonce = await fetchTopUpUsedNonce(
-            depositTxHash,
-            selectedToken.chain,
-            selectedOwnerAccount,
-          );
-          await onWaitDepositResult({
-            type: 'token',
-            ownerAddress: selectedOwnerAccount.address,
-            chainServerId: selectedToken.chain,
-            usedNonce,
-          });
-          await onDeposit?.();
-        } else {
-          toast.info(
-            t('page.gasAccount.depositFailed', {
-              defaultValue: 'Deposit failed',
-            }),
-            { position: toast.positions.CENTER },
-          );
+        if (success !== 'cancel') {
+          if (success) {
+            storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
+            const usedNonce = await fetchTopUpUsedNonce(
+              depositTxHash,
+              selectedToken.chain,
+              selectedOwnerAccount,
+            );
+            await onWaitDepositResult({
+              type: 'token',
+              ownerAddress: selectedOwnerAccount.address,
+              chainServerId: selectedToken.chain,
+              usedNonce,
+            });
+            await onDeposit?.();
+          } else {
+            toast.info(
+              t('page.gasAccount.depositFailed', {
+                defaultValue: 'Deposit failed',
+              }),
+              { position: toast.positions.CENTER },
+            );
+          }
         }
 
         await storeApiGasAccount.refreshHistory();
@@ -693,18 +697,68 @@ const GasAccountDepositTokenFormInner: React.FC<{
     balanceLabel: t('page.gasAccount.depositPopup.balanceLabel'),
     insufficientBalanceLabel: validationMessages.insufficientBalanceLabel,
   });
-  const handleMax = useCallback(() => {
+  const getNativeReserveUsdForBridge = useCallback(
+    async (token: GasAccountAvailableToken) => {
+      const chain = findChainByServerID(token.chain);
+      if (!chain || !isSameAddress(token.id, chain.nativeTokenAddress || '')) {
+        return new BigNumber(0);
+      }
+
+      try {
+        const gasList = await apiProvider.gasMarketV2(
+          {
+            chainId: chain.serverId,
+          },
+          signerAccount,
+        );
+        const normalGasPrice = gasList?.find(
+          item => item.level === 'normal',
+        )?.price;
+
+        if (!normalGasPrice) {
+          return new BigNumber(0);
+        }
+
+        // Align with swap MAX reserve strategy.
+        const reserveGasLimit =
+          chain.enum === CHAINS_ENUM.ETH ? 1000000 : 2000000;
+        const reserveNativeAmount = new BigNumber(reserveGasLimit)
+          .times(normalGasPrice)
+          .div(new BigNumber(10).pow(chain.nativeTokenDecimals || 18));
+        return reserveNativeAmount.times(token.price || 0);
+      } catch (error) {
+        console.error(
+          'GasAccountDepositTokenForm getSwapStyleNativeReserveUsdForBridge error',
+          error,
+        );
+        return new BigNumber(0);
+      }
+    },
+    [signerAccount],
+  );
+
+  const handleMax = useCallback(async () => {
     if (!selectedToken) {
       return;
     }
 
-    setUsdValue(
-      new BigNumber(isBridgeDeposit ? tokenBalanceUsd : directTokenBalance)
-        .decimalPlaces(2, BigNumber.ROUND_DOWN)
-        .toFixed(),
+    const rawMaxValue = new BigNumber(
+      isBridgeDeposit ? tokenBalanceUsd : directTokenBalance,
     );
+    let maxValue = rawMaxValue;
+
+    if (isBridgeDeposit) {
+      const reserveUsd = await getNativeReserveUsdForBridge(selectedToken);
+      if (reserveUsd.gt(0)) {
+        const deducted = rawMaxValue.minus(reserveUsd);
+        maxValue = deducted.lt(0) ? rawMaxValue : deducted;
+      }
+    }
+
+    setUsdValue(maxValue.decimalPlaces(2, BigNumber.ROUND_DOWN).toFixed());
   }, [
     directTokenBalance,
+    getNativeReserveUsdForBridge,
     isBridgeDeposit,
     selectedToken,
     setUsdValue,
@@ -732,14 +786,25 @@ const GasAccountDepositTokenFormInner: React.FC<{
     usd: estReceiveUsdValue,
   });
 
+  console.log('gasAccountInfo?.account?.balance', {
+    gasAccountInfo: gasAccountInfo?.account?.balance,
+  });
+
+  const estReceiveUsdNumberBN = useMemo(
+    () =>
+      minDepositPrice
+        ? new BigNumber(estReceiveUsdNumber)
+            .plus(gasAccountInfo?.account?.balance || 0)
+            .minus(minDepositPrice)
+        : new BigNumber(estReceiveUsdNumber),
+    [estReceiveUsdNumber, gasAccountInfo?.account?.balance, minDepositPrice],
+  );
+
   const displayedEstReceiveLabel = minDepositPrice
     ? t('page.gasAccount.depositPayPopup.topUpPayTips', {
         topUpUsd: formatUsdValue(minDepositPrice),
         balance: formatUsdValue(
-          new BigNumber(estReceiveUsdNumber)
-            .plus(gasAccountInfo?.account?.balance || 0)
-            .minus(minDepositPrice)
-            .toFixed(),
+          estReceiveUsdNumberBN.lt(0) ? 0 : estReceiveUsdNumberBN.toFixed(),
         ),
       })
     : estReceiveLabel;
@@ -755,7 +820,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
       <Text style={styles.errorText}>{amountValidation.errorMessage}</Text>
     );
   } else if (selectedToken && amountValidation.isValid) {
-    if (
+    if (selectedToken.gasAccountDepositType === 'bridge' && quoteError) {
+      bottomContent = <Text style={styles.errorText}>{quoteError}</Text>;
+    } else if (
       selectedToken.gasAccountDepositType === 'bridge' &&
       (quoteLoading || quoteAmountValue !== amountValue)
     ) {
@@ -768,8 +835,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
           style={styles.skeleton}
         />
       );
-    } else if (selectedToken.gasAccountDepositType === 'bridge' && quoteError) {
-      bottomContent = <Text style={styles.errorText}>{quoteError}</Text>;
     } else {
       bottomContent = (
         <View style={styles.estimateRow}>
@@ -1089,7 +1154,6 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-black'],
     borderRadius: 8,
     padding: 0,
-    width: 300,
   },
   tipTooltipStyle: {
     shadowColor: 'rgba(0, 0, 0, 0.06)',

@@ -149,7 +149,7 @@ const getStyles = createGetStyles2024(ctx => ({
     left: '0%',
     top: '150%',
     alignItems: 'center',
-    maxWidth: '20%',
+    maxWidth: 80,
   },
   liquidationMarker: {
     position: 'absolute',
@@ -169,11 +169,12 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   liquidationText: {
     fontSize: 14,
-    lineHeight: 14,
+    lineHeight: 16,
     fontWeight: '500',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
+    height: 36,
   },
   riskyTextContainer: {
     flexDirection: 'row',

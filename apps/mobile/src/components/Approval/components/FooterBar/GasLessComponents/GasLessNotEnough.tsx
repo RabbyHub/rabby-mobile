@@ -15,6 +15,7 @@ import { formatUsdValue } from '@/utils/number';
 import { toast } from '@/components2024/Toast';
 import { usePendingHardwareGasAccountLogin } from './usePendingHardwareGasAccountLogin';
 import { useGasAccountBalance } from './useGasAccountBalance';
+import { setGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 type ActionButton = {
   text: string;
@@ -50,6 +51,7 @@ export const GasLessNotEnough: React.FC<{
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
   const setDepositPopupVisible = (visible: boolean) => {
+    setGasAccountDepositFlowActive(visible);
     setTipPopupVisible(visible);
     onDepositPopupVisibleChange?.(visible);
   };

@@ -112,17 +112,19 @@ export const SignMainnetHeaderContent = ({
   const [showMoreOpen, setShowMoreOpen] = useState(false);
   const [autoOpenSignal, setAutoOpenSignal] = useState(0);
   const hasOpenedOnceRef = useRef(false);
+  const noCustomRPCEnabled = noCustomRPC ?? true;
   const displayGasMethod = resolveApprovalGasMethod({
     nativeTokenInsufficient: !!nativeTokenInsufficient,
     gasAccountChainSupported:
       !!gasAccountCost && !gasAccountCost.chain_not_support,
-    noCustomRPC,
+    noCustomRPC: noCustomRPCEnabled,
     freeGasAvailable,
     legacyGasMethod: gasMethod,
   });
   const gasAccountChainSupported =
     !!gasAccountCost && !gasAccountCost.chain_not_support;
-  const gasAccountMethodSupported = gasAccountChainSupported && !!noCustomRPC;
+  const gasAccountMethodSupported =
+    gasAccountChainSupported && noCustomRPCEnabled;
   const summary = useMemo(
     () =>
       buildDirectSignSummary({
@@ -422,7 +424,7 @@ export const SignMainnetHeaderContent = ({
             selectedGasCostUsdStr={gasCostUsdStr}
             gasAccountCost={gasAccountCost}
             nativeTokenInsufficient={nativeTokenInsufficient}
-            noCustomRPC={noCustomRPC}
+            noCustomRPC={noCustomRPCEnabled}
             freeGasAvailable={freeGasAvailable}
             levelState={levelState}
             onEditCustomGas={() => {

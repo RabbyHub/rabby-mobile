@@ -8,6 +8,7 @@ import { GasAccountDepositSelect } from './GasAccountDepositSelect';
 import { GasAccountDepositTokenForm } from './GasAccountDepositTokenForm';
 import { GasAccountDepositWithPay } from './GasAccountDepositWithPay';
 import { GasAccountTopUpWaitCallback } from './topUpContinuation';
+import { setGasAccountDepositFlowActive } from '../utils/depositFlowRuntime';
 
 export const GasAccountDepositPopup: React.FC<{
   type?: 'token' | 'pay';
@@ -60,12 +61,18 @@ export const GasAccountDepositPopup: React.FC<{
   }, [onClose, resetStep]);
 
   useEffect(() => {
+    setGasAccountDepositFlowActive(!!visible);
+
     if (!visible) {
       modalRef.current?.close();
       resetStep();
     } else {
       modalRef.current?.present();
     }
+
+    return () => {
+      setGasAccountDepositFlowActive(false);
+    };
   }, [resetStep, visible]);
 
   useEffect(() => {

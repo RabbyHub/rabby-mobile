@@ -24,6 +24,9 @@ const getGasAccountBridgeRawAmount = ({
   token: GasAccountBridgeToken;
   usdValue: number;
 }) => {
+  if (!token.price || token.price <= 0) {
+    throw new Error('Invalid token price');
+  }
   return new BigNumber(usdValue)
     .div(token.price)
     .times(10 ** token.decimals)
@@ -273,7 +276,7 @@ export const pollDepositStatus = ({
   params: BridgeStatusParams;
   intervalMs?: number;
   maxAttempts?: number;
-}): { promise: Promise<boolean>; cancel: () => void } => {
+}): { promise: Promise<boolean | 'cancel'>; cancel: () => void } => {
   let cancelled = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let wakeSleep: (() => void) | null = null;
@@ -294,8 +297,9 @@ export const pollDepositStatus = ({
     for (let i = 0; i < maxAttempts && !cancelled; i++) {
       try {
         const result = await openapi.getGasAccountBridgeStatus(params);
+        console.debug('pollDepositStatus result', { attempt: i + 1, result });
         if (cancelled) {
-          return false;
+          return 'cancel';
         }
         if (result.status === 'success') {
           return true;
@@ -320,7 +324,7 @@ export const pollDepositStatus = ({
         }, intervalMs);
       });
     }
-    return false;
+    return 'cancel';
   })();
 
   return { promise, cancel };

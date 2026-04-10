@@ -59,11 +59,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import {
-  useFocusEffect,
-  useIsFocused,
-  useRoute,
-} from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import {
@@ -71,7 +67,6 @@ import {
   makeAccountObject,
 } from '@/utils/account';
 import { usePollSendPendingCount } from './useSendPendingCount';
-import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { useMemoizedFn } from 'ahooks';
 import {
   useRecentSendToHistoryFor,
@@ -103,6 +98,7 @@ import {
 import { jotaiStore } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { TextInput } from '@/components/Typography';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 import { createAmountComparer, FormValuesOnSubmit } from '@/utils/form';
 import { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeContent';
@@ -1497,6 +1493,10 @@ export function useSendTokenForm({
   const scrollToBottom = useCallback(() => {
     scrollViewRef.current?.scrollToEnd?.(true);
   }, []);
+  const reloadTxRefreshPausedRef = useRef(false);
+  const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
+    reloadTxRefreshPausedRef.current = paused;
+  }, []);
   const handleMaxInfoChanged = useCallback(
     async (input?: { gasLevel: GasLevel }) => {
       if (!currentAccount) {
@@ -1861,17 +1861,27 @@ export function useSendTokenForm({
     useRecentSendToHistoryFor(formValues.to);
 
   useEffect(() => {
-    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
-      txDetail => {
+    const disposeRets = [] as Function[];
+    subscribeEvent(
+      sendTokenEventsRef.current,
+      SendTokenEvents.ON_SIGNED_SUCCESS,
+      () => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
         reFetch();
         setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
           reFetch();
         }, 5000);
-      };
-    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      },
+      { disposeRets },
+    );
 
     return () => {
-      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      disposeRets.forEach(dispose => dispose());
     };
   }, [reFetch]);
 
@@ -1946,12 +1956,30 @@ export function useSendTokenForm({
     formik.resetForm();
   }, [setFormValues, formik]);
 
-  const refreshCurrentToken = useMemoizedFn(async () => {
-    return loadCurrentToken(
-      currentToken.id,
-      currentToken.chain,
-      currentAccount!.address,
-    );
+  const refreshCurrentTokenBalance = useMemoizedFn(async () => {
+    if (!currentAccount?.address) {
+      return;
+    }
+
+    putScreenState({
+      balanceError: null,
+      balanceWarn: null,
+    });
+    markBalanceLoading({
+      tokenId: currentToken.id,
+      chainId: currentToken.chain,
+      currentAddress: currentAccount.address,
+    });
+
+    try {
+      await loadCurrentToken(
+        currentToken.id,
+        currentToken.chain,
+        currentAccount.address,
+      );
+    } catch (error) {
+      console.error('SendScreen refresh current token error', error);
+    }
   });
 
   const prepareRef = useRef<Promise<Tx | void>>(undefined);
@@ -2000,6 +2028,23 @@ export function useSendTokenForm({
     handleFormValuesChange,
     formik.values,
   ]);
+
+  useEffect(() => {
+    const disposeRets = [] as Function[];
+    subscribeEvent(
+      sendTokenEventsRef.current,
+      SendTokenEvents.ON_SIGNED_SUCCESS,
+      () => {
+        resetAfterSignedSuccess();
+        refreshCurrentTokenBalance();
+      },
+      { disposeRets },
+    );
+
+    return () => {
+      disposeRets.forEach(dispose => dispose());
+    };
+  }, [refreshCurrentTokenBalance, resetAfterSignedSuccess]);
 
   const isFocused = useIsFocused();
 
@@ -2052,15 +2097,6 @@ export function useSendTokenForm({
     prepareDirectSubmitMiniTx,
   ]);
 
-  useFocusEffect(
-    useCallback(() => {
-      eventBus.addListener(EVENTS.RELOAD_TX, refreshCurrentToken);
-      return () => {
-        eventBus.removeListener(EVENTS.RELOAD_TX, refreshCurrentToken);
-      };
-    }, [refreshCurrentToken]),
-  );
-
   const svBottomAreaHeight = useSharedValue(220);
   useAnimatedReaction(
     () => {
@@ -2093,6 +2129,7 @@ export function useSendTokenForm({
 
     currentToken,
     loadCurrentToken,
+    refreshCurrentTokenBalance,
     checkCexSupport,
     handleCurrentTokenChange,
 
@@ -2102,6 +2139,7 @@ export function useSendTokenForm({
     handleGasLevelChanged,
     handleClickMaxButton,
     handleIgnoreGasFeeChange,
+    setReloadTxRefreshPaused,
     onBottomAreaLayout,
     scrollViewRef,
     scrollViewStyle,
@@ -2115,7 +2153,6 @@ export function useSendTokenForm({
     formik,
     formValues,
     resetFormValues,
-    resetAfterSignedSuccess,
     handleFieldChange,
     patchFormValues,
     handleFormValuesChange,
@@ -2164,7 +2201,7 @@ type InternalContext = {
   };
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
-  events: EventEmitter;
+  sendTokenEvents: EventEmitter;
   slider: number;
   fns: {
     // putScreenState: (
@@ -2187,6 +2224,7 @@ type InternalContext = {
     handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
     handleClickMaxButton: () => Promise<void> | void;
     handleIgnoreGasFeeChange: (b: boolean) => void;
+    setReloadTxRefreshPaused: (paused: boolean) => void;
     // onGasChange: (input: {
     //   gasLevel: GasLevel;
     //   updateTokenAmount?: boolean;
@@ -2220,7 +2258,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   },
 
   formik: null as any,
-  events: null as any,
+  sendTokenEvents: null as any,
   slider: 0,
   fns: {
     // putScreenState: () => { },
@@ -2240,6 +2278,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},
     handleIgnoreGasFeeChange: () => {},
+    setReloadTxRefreshPaused: () => {},
     onChangeSlider: () => {},
     setSlider: () => {},
     onBottomAreaLayout: () => {},
@@ -2277,11 +2316,11 @@ export function subscribeEvent<T extends SendTokenEvents>(
 export function useInputBlurOnEvents(
   inputRef: React.RefObject<TextInput | null>,
 ) {
-  const { events } = useSendTokenInternalContext();
+  const { sendTokenEvents } = useSendTokenInternalContext();
   useEffect(() => {
     const disposeRets = [] as Function[];
     subscribeEvent(
-      events,
+      sendTokenEvents,
       SendTokenEvents.ON_PRESS_DISMISS,
       () => {
         inputRef.current?.blur();
@@ -2290,7 +2329,7 @@ export function useInputBlurOnEvents(
     );
 
     subscribeEvent(
-      events,
+      sendTokenEvents,
       SendTokenEvents.ON_SEND,
       () => {
         inputRef.current?.blur();
@@ -2301,5 +2340,5 @@ export function useInputBlurOnEvents(
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [events, inputRef]);
+  }, [sendTokenEvents, inputRef]);
 }

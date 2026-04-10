@@ -41,7 +41,7 @@ export const PerpsPositionSkeletonLoader: React.FC = () => {
       </View>
       <View style={styles.list}>
         {new Array(6).fill(0).map((_, index) => (
-          <View key={index} style={styles.marketItem}>
+          <View key={index} style={styles.marketItemFromDetail}>
             <View style={styles.marketItemLeft}>
               <Skeleton
                 animation="wave"
@@ -263,8 +263,16 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 6,
     paddingVertical: 8,
   },
+  marketItemFromDetail: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   marketItem: {
-    // backgroundColor: colors2024['neutral-card-1'],
+    backgroundColor: colors2024['neutral-card-1'],
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
