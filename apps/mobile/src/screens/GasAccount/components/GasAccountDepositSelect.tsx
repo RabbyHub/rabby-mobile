@@ -79,14 +79,14 @@ export const GasAccountDepositSelect: React.FC<{
               onClose={() => setShowDisabledTip(false)}
               content={
                 <View style={styles.tipContent}>
-                  <Text style={styles.tipText}>
+                  <Text style={styles.tipText} numberOfLines={1}>
                     {t(
                       'page.gasAccount.depositSelectPopup.insufficientTokenBalance',
                     )}
                   </Text>
                 </View>
               }
-              contentStyle={[styles.tipContentStyle]}
+              contentStyle={styles.tipContentStyle}
               tooltipStyle={styles.tipTooltipStyle}>
               <View style={styles.depositWithTitle}>
                 <Text style={styles.btnTitle}>
@@ -276,7 +276,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-black'],
     borderRadius: 8,
     padding: 0,
-    width: 182,
   },
   tipContent: {
     paddingHorizontal: 12,
