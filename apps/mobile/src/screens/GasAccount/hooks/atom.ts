@@ -200,7 +200,7 @@ const fetchGasAccountBridgeSupportTokenList = makeAvoidParallelAsyncFunc(
   },
 );
 
-const cleanupGasAccountAfterDeletedAddress = async (address: string) => {
+export const cleanupGasAccountAfterDeletedAddress = async (address: string) => {
   const restAddresses = await keyringService.getAllAddresses();
   const gasAccount =
     gasAccountService.getGasAccountData() as GasAccountServiceStore;
@@ -226,6 +226,9 @@ const syncDeleteGasAccount = async ({
   brandName: _brandName,
 }: KeyringEventAccount) => {
   if (type !== KEYRING_TYPE.WatchAddressKeyring) {
+    /**
+     * keep gas account session
+     */
     // cleanupGasAccountAfterDeletedAddress(address);
     const perpsAccount = await perpsService.getCurrentAccount();
     if (
@@ -470,7 +473,7 @@ async function loadMoreHistory() {
     const data = await openapi.getGasAccountHistory({
       sig,
       account_id: accountId,
-      start: history.list.length > 1 ? history.list.length : 0,
+      start: history.list.length > 0 ? history.list.length : 0,
       limit: 10,
     });
 

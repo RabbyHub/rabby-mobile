@@ -1144,7 +1144,6 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-black'],
     borderRadius: 8,
     padding: 0,
-    width: 300,
   },
   tipTooltipStyle: {
     shadowColor: 'rgba(0, 0, 0, 0.06)',

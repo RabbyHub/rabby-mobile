@@ -24,6 +24,9 @@ const getGasAccountBridgeRawAmount = ({
   token: GasAccountBridgeToken;
   usdValue: number;
 }) => {
+  if (!token.price || token.price <= 0) {
+    throw new Error('Invalid token price');
+  }
   return new BigNumber(usdValue)
     .div(token.price)
     .times(10 ** token.decimals)
@@ -294,7 +297,7 @@ export const pollDepositStatus = ({
     for (let i = 0; i < maxAttempts && !cancelled; i++) {
       try {
         const result = await openapi.getGasAccountBridgeStatus(params);
-        console.log('pollDepositStatus', { attempt: i + 1, result });
+        console.debug('pollDepositStatus', { attempt: i + 1, result });
         if (cancelled) {
           return false;
         }
