@@ -22,6 +22,7 @@ import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
@@ -107,8 +108,14 @@ export default function BottomArea({ account }: { account: Account | null }) {
   useEffect(() => {
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
       txDetail => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
         fetchRisks();
         setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
           fetchRisks();
         }, 5000);
       };

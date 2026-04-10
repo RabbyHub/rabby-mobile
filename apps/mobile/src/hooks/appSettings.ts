@@ -20,6 +20,7 @@ type ScreenshotSettings = {
   iosForceAllowScreenRecord: boolean;
   iosForceDisableAlertForSensitiveScene: boolean;
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
+  blockSubmitIfFormChangedOnAuth: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -34,6 +35,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     iosForceDisableAlertForSensitiveScene: isNonPublicProductionEnv,
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
+    blockSubmitIfFormChangedOnAuth: __DEV__,
   },
 );
 
@@ -202,6 +204,30 @@ export function useTimeTipAboutSeedPhraseAndPrivateKey() {
   };
 }
 
+export function useBlockSubmitIfFormChangedOnAuth() {
+  const blockSubmitIfFormChangedOnAuth = experimentalSettingsStore(
+    s => s.blockSubmitIfFormChangedOnAuth,
+  );
+
+  const toggleBlockSubmitIfFormChangedOnAuth = useCallback(
+    (nextVal?: boolean) => {
+      setExpSettingData(prev => ({
+        ...prev,
+        blockSubmitIfFormChangedOnAuth:
+          typeof nextVal === 'boolean'
+            ? nextVal
+            : !prev.blockSubmitIfFormChangedOnAuth,
+      }));
+    },
+    [],
+  );
+
+  return {
+    blockSubmitIfFormChangedOnAuth,
+    toggleBlockSubmitIfFormChangedOnAuth,
+  };
+}
+
 const autoLockState = zCreate<{
   minutes: number;
 }>(() => ({
@@ -293,6 +319,7 @@ export function useFloatingView() {
 
   return {
     collapsed: floatingView.collapsed,
+    showAutoLockCountdown: floatingView.ui_showAutoLockCountdown,
     toggleCollapsed,
     shouldShow: Object.entries(floatingView).some(
       ([k, v]) => k.startsWith('ui_') && v,

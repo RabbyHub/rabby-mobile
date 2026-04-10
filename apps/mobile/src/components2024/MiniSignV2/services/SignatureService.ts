@@ -29,6 +29,7 @@ type SendParams = {
   ctx: SignerCtx;
   config: SignerConfig;
   retry?: boolean;
+  onSigningTxCreated?: (signingTxId: string) => void;
   onProgress?: (ctx: SignerCtx) => void;
 };
 
@@ -72,7 +73,13 @@ export const signatureService = {
       account,
     }),
 
-  send: async ({ ctx, config, retry, onProgress }: SendParams) => {
+  send: async ({
+    ctx,
+    config,
+    retry,
+    onSigningTxCreated,
+    onProgress,
+  }: SendParams) => {
     const chainMeta = findChain({ id: ctx.chainId });
     const chainServerId = (chainMeta as any)?.serverId || '';
     let currentCtx = ctx;
@@ -82,6 +89,7 @@ export const signatureService = {
       config,
       retry,
       account: config.account,
+      onSigningTxCreated,
       onSendedTx: ({ hash, idx }) => {
         if (!onProgress) return;
         const txsCalc = currentCtx.txsCalc.map((item, index) =>

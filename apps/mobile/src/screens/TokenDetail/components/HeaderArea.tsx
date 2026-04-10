@@ -133,6 +133,8 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
+    minWidth: 0,
     gap: 8,
   },
   lpTokenIconContainer: {

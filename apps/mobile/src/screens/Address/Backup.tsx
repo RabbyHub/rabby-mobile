@@ -23,13 +23,13 @@ import { apiMnemonic } from '@/core/apis';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { clearAccountBackupReminder } from '@/hooks/account';
-import { AddressNavigatorParamList } from '@/navigation-type';
+import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { checkCloudBackupExists } from '@/core/utils/cloudBackup';
 import { useBiometricsComputed } from '@/hooks/biometrics';
 
 type BackupScreenRouteProp = RouteProp<
-  AddressNavigatorParamList,
+  RootStackParamsList,
   typeof RootNames.Backup
 >;
 

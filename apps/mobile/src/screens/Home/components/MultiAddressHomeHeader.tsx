@@ -52,6 +52,7 @@ import {
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import balanceStore from '@/store/balance';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
+import { computeBalanceChange } from '@/core/apis/balance';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -71,21 +72,20 @@ function MultiPinnedAddressList({
         const lcAddr = item.address.toLowerCase();
         const address24hBalanceData = multi24hBalance[lcAddr];
         const balanceAccount = balanceMap?.[lcAddr];
+        const canShowChange = !!address24hBalanceData && !!balanceAccount;
         const total_usd_value = address24hBalanceData?.total_usd_value || 0;
-        const assetsChange =
-          (balanceAccount?.evmBalance || 0) - total_usd_value;
-        let changePercent =
-          total_usd_value !== 0
-            ? `${Math.abs((assetsChange * 100) / total_usd_value).toFixed(2)}%`
-            : `${balanceAccount?.evmBalance === 0 ? '0' : '100.00'}%`;
+        const { assetsChange, changePercent } = computeBalanceChange(
+          balanceAccount?.evmBalance || 0,
+          total_usd_value,
+        );
 
         return {
           ...item,
           updateTime: address24hBalanceData?.updateTime,
           balance: balanceAccount?.totalBalance || item.balance || 0,
           evmBalance: balanceAccount?.evmBalance || item.evmBalance || 0,
-          changePercent: address24hBalanceData ? changePercent : undefined,
-          isLoss: address24hBalanceData ? assetsChange < 0 : undefined,
+          changePercent: canShowChange ? changePercent : undefined,
+          isLoss: canShowChange ? assetsChange < 0 : undefined,
         };
       }),
       item => -(item.balance || 0),

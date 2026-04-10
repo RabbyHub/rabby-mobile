@@ -2,15 +2,16 @@ import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
-  Modal,
   Platform,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
 
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -338,7 +339,8 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
           />
         )}
       </TouchableOpacity>
-      <Modal
+      <TrackedModal
+        modalId={MODAL_GATE_IDS.perpsEditTpSlPrice}
         transparent={true}
         visible={modalVisible}
         animationType="fade"
@@ -558,7 +560,7 @@ export const PerpEditTpSlPriceTag: React.FC<Props> = ({
             </TouchableOpacity>
           </TouchableOpacity>
         </KeyboardAvoidingView>
-      </Modal>
+      </TrackedModal>
     </>
   );
 };

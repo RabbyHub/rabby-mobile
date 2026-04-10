@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useRef } from 'react';
 import {
   Alert,
   Dimensions,
   FlatList,
+  Platform,
   ScrollView,
-  StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useSQLiteInfo } from '@/core/databases/hooks';
 import { Button } from '@/components2024/Button';
@@ -34,7 +33,6 @@ import { accountEvents } from '@/core/apis/account';
 import { AddressItemContextMenuDev } from '../Address/components/AddressItemContextMenuDev';
 import { touchedFeedback } from '@/utils/touch';
 import { ALL_ORM_ENTITIES } from '@/databases/entities';
-import { Divider } from '@rneui/base';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Text, AnimateableText } from '@/components/Typography';
 
@@ -59,7 +57,7 @@ function NewlyAddedAccountItem({
 }: {
   item: ReturnType<typeof useDevNewlyAddedAccounts>['newlyAddedAccounts'][0];
 }) {
-  const { styles, colors2024 } = useTheme2024({
+  const { colors2024 } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
@@ -114,7 +112,7 @@ function NewlyAddedAccountItem({
 }
 
 function DevORMEntities() {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
@@ -169,12 +167,43 @@ function DevORMEntities() {
   );
 }
 
+function stringifyInfoValue(value: unknown) {
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+
+  if (value === null || typeof value === 'undefined' || value === '') {
+    return '-';
+  }
+
+  return String(value);
+}
+
+function DevSQLiteInfoItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: unknown;
+}) {
+  return (
+    <View style={{ width: '100%', marginBottom: 8 }}>
+      <Text style={{ width: '100%' }}>
+        {label}: {stringifyInfoValue(value)}
+        {' '.repeat(100)}
+      </Text>
+    </View>
+  );
+}
+
 function DevSQLiteInfo() {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
-  const { sqliteInfo } = useSQLiteInfo({ enableAutoFetch: true });
+  const { sqliteInfo, getSqliteInfo, isLoading } = useSQLiteInfo({
+    enableAutoFetch: true,
+  });
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -183,30 +212,152 @@ function DevSQLiteInfo() {
       </Text>
       <View
         style={[styles.propertyDesc, { marginVertical: 12, flexWrap: 'wrap' }]}>
-        <View style={styles.propertyView}>
-          <Text>
-            version: {sqliteInfo?.version || '-'}
-            {' '.repeat(100)}
-          </Text>
-        </View>
+        <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+          Runtime
+        </Text>
+        <DevSQLiteInfoItem label="version" value={sqliteInfo?.version} />
+        <DevSQLiteInfoItem label="source_id" value={sqliteInfo?.source_id} />
+        <DevSQLiteInfoItem
+          label="thread_safe"
+          value={sqliteInfo?.thread_safe}
+        />
+        <DevSQLiteInfoItem
+          label="temp_store"
+          value={
+            typeof sqliteInfo?.temp_store === 'number'
+              ? `${sqliteInfo.temp_store} (${sqliteInfo.temp_store_label})`
+              : null
+          }
+        />
+        <DevSQLiteInfoItem
+          label="test_db_path"
+          value={sqliteInfo?.test_db_path}
+        />
 
-        <View style={[styles.propertyView]}>
-          <Text style={{ width: '100%' }}>
-            source_id: {sqliteInfo?.source_id || '-'}
-            {' '.repeat(50)}
-          </Text>
-        </View>
+        <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+          Compile options
+        </Text>
+        <DevSQLiteInfoItem
+          label="OMIT_DEPRECATED"
+          value={sqliteInfo?.compile_options?.omit_deprecated}
+        />
+        <DevSQLiteInfoItem
+          label="TEMP_STORE=2"
+          value={sqliteInfo?.compile_options?.temp_store_2}
+        />
+        <DevSQLiteInfoItem
+          label="TEMP_STORE=3"
+          value={sqliteInfo?.compile_options?.temp_store_3}
+        />
 
-        <View style={styles.propertyView}>
-          <Text>
-            thread_safe:{' '}
-            {typeof sqliteInfo?.thread_safe === 'boolean'
-              ? sqliteInfo?.thread_safe + ''
-              : '-'}
-            {' '.repeat(100)}
-          </Text>
-        </View>
+        <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+          Runtime policy
+        </Text>
+        <DevSQLiteInfoItem
+          label="target_temp_store"
+          value={sqliteInfo?.runtime_policy?.targetTempStore}
+        />
+        <DevSQLiteInfoItem
+          label="apply_memory_pragma"
+          value={sqliteInfo?.runtime_policy?.shouldApplyMemoryPragma}
+        />
+        <DevSQLiteInfoItem
+          label="policy_reason"
+          value={sqliteInfo?.runtime_policy?.reason}
+        />
+        <DevSQLiteInfoItem
+          label="platform"
+          value={sqliteInfo?.runtime_policy?.platform}
+        />
+        <DevSQLiteInfoItem
+          label="android_api_level"
+          value={sqliteInfo?.runtime_policy?.androidApiLevel}
+        />
+        <DevSQLiteInfoItem
+          label="system_version"
+          value={sqliteInfo?.runtime_policy?.systemVersion}
+        />
+        <DevSQLiteInfoItem
+          label="manufacturer"
+          value={sqliteInfo?.runtime_policy?.manufacturer}
+        />
+        <DevSQLiteInfoItem
+          label="model"
+          value={sqliteInfo?.runtime_policy?.model}
+        />
+        <DevSQLiteInfoItem
+          label="device_id"
+          value={sqliteInfo?.runtime_policy?.deviceId}
+        />
+        <DevSQLiteInfoItem
+          label="app_db_directory"
+          value={sqliteInfo?.runtime_policy?.appDbDirectory}
+        />
+        <DevSQLiteInfoItem
+          label="candidate_temp_directory"
+          value={sqliteInfo?.runtime_policy?.candidateTempDirectory}
+        />
+
+        {Platform.OS === 'android' && (
+          <>
+            <Text style={[styles.subMarkedTitle, { marginBottom: 12 }]}>
+              Android disk probe
+            </Text>
+            <DevSQLiteInfoItem
+              label="fs_total_space"
+              value={sqliteInfo?.android_disk_probe?.fsInfo?.totalSpace}
+            />
+            <DevSQLiteInfoItem
+              label="fs_free_space"
+              value={sqliteInfo?.android_disk_probe?.fsInfo?.freeSpace}
+            />
+            {sqliteInfo?.android_disk_probe?.probes?.map(probe => {
+              return (
+                <View
+                  key={`${probe.label}-${probe.path || 'null'}`}
+                  style={[
+                    styles.propertyView,
+                    {
+                      width: '100%',
+                      marginBottom: 12,
+                    },
+                  ]}>
+                  <Text style={{ width: '100%', fontWeight: '700' }}>
+                    {probe.label}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    path: {stringifyInfoValue(probe.path)}
+                    {' '.repeat(100)}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    exists: {stringifyInfoValue(probe.exists)}
+                    {' '.repeat(100)}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    can_write: {stringifyInfoValue(probe.canWrite)}
+                    {' '.repeat(100)}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    bytes_written: {stringifyInfoValue(probe.bytesWritten)}
+                    {' '.repeat(100)}
+                  </Text>
+                  <Text style={{ width: '100%' }}>
+                    error: {stringifyInfoValue(probe.error)}
+                    {' '.repeat(100)}
+                  </Text>
+                </View>
+              );
+            })}
+          </>
+        )}
       </View>
+
+      <Button
+        title={isLoading ? 'Refreshing SQLite info...' : 'Refresh SQLite info'}
+        height={48}
+        containerStyle={[styles.rowWrapper, { marginBottom: 12 }]}
+        onPress={() => getSqliteInfo()}
+      />
 
       <Button
         title={'Clear All SQLite and quit'}
@@ -330,7 +481,7 @@ function DevDataAccount() {
 }
 
 function DevDataSQLite() {
-  const { styles, colors2024, colors } = useTheme2024({
+  const { styles, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
