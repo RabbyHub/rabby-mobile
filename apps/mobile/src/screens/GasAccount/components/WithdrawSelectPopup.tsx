@@ -37,6 +37,7 @@ import { Button } from '@/components2024/Button';
 import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { Text } from '@/components/Typography';
+import { formatUsdValue } from '@/utils/number';
 
 const BottomSheetWrapper = (
   props: PropsWithChildren<
@@ -291,10 +292,9 @@ const RecipientAddressInnerPopup = ({
         return null;
       }
       return (
-        <AddressItemShadowView
-          style={[styles.shadow, isSelected && styles.shadowSelected]}>
+        <AddressItemShadowView style={styles.shadowSelected}>
           <TouchableOpacity
-            style={[styles.innerRow, isSelected && styles.innerRowSelected]}
+            style={styles.innerRow}
             onPress={() => {
               onChange?.(item);
             }}>
@@ -318,7 +318,9 @@ const RecipientAddressInnerPopup = ({
                 </View>
               )}
             </AddressItem>
-            <Text style={styles.limit}>{`$${item.total_withdraw_limit}`}</Text>
+            <Text style={styles.limit}>
+              {formatUsdValue(item.total_withdraw_limit)}
+            </Text>
           </TouchableOpacity>
         </AddressItemShadowView>
       );
@@ -614,27 +616,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
 
-  shadow: {
-    marginVertical: 6,
-  },
   shadowSelected: {
-    borderColor: colors2024['brand-light-2'],
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 12,
+    padding: 6,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   innerRow: {
-    // height: 96,
     backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
     padding: 16,
-    // borderWidth: 1,
-    // borderColor: colors2024['neutral-line'],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // marginVertical: 6,
-  },
-  innerRowSelected: {
-    borderColor: colors2024['brand-light-2'],
-    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['neutral-line'],
   },
 
   selected: {
