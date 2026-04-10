@@ -450,7 +450,10 @@
       "addressCount_one": "{{count}} Cüzdan",
       "importMore": "Daha Fazla Cüzdan İçe Aktar",
       "addressCount_other": "{{count}} Cüzdanlar",
-      "viewAddress": "Cüzdanı Görüntüle"
+      "viewAddress": "Cüzdanı Görüntüle",
+      "titleCreated": "Cüzdanınız oluşturuldu 🚀",
+      "titleImported": "Cüzdanınız içe aktarıldı 🚀",
+      "titleMultiple": "{{count}} Cüzdan Eklendi 🚀"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Seed ifrenizi girin, her kelimeyi bir boşlukla ayırın"
@@ -470,7 +473,9 @@
         "chainNotSupported": "Bu zincir GasAccount tarafından desteklenmiyor.",
         "useGasAccount": "GasAccount'u kullanın",
         "WalletConnectTips": "WalletConnect, GasAccount tarafından desteklenmiyor.",
-        "loginFirst": "Lütfen önce GasAccount'a giriş yapın."
+        "loginFirst": "Lütfen önce GasAccount'a giriş yapın.",
+        "signWithHardwareWalletToUse": "{{brand}} ile imzalamak için ihtiyacınız var",
+        "notEnough": "Yetersiz gas. Gas Bakiyesi: {{usd}}"
       },
       "qrcode": {
         "txFailed": "Oluşturma başarısız oldu",
@@ -1012,7 +1017,8 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Form Değiştirildi",
-      "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurma nedeniyle. Lütfen kontrol edin ve doğru miktarı yeniden girin."
+      "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurma nedeniyle. Lütfen kontrol edin ve doğru miktarı yeniden girin.",
+      "best-subtitle": "En iyi teklifi sunma hızı dahil olmak üzere toplam maliyeti (Gas ücretleri dahil) dikkate alarak"
     },
     "manageAddress": {
       "watch-address": "Adres İzle",
@@ -1199,7 +1205,8 @@
         "descriptionIOS": "Eğer Rabby'i beğeniyorsanız, App Store'da vereceğiniz hızlı bir puan çok şey ifade eder."
       },
       "homeCenterTipScreenshot": {
-        "description": "Herhangi bir zamanda bir hatayı hızlı bir şekilde bildirmek için ekran görüntüsü alın."
+        "description": "Herhangi bir zamanda bir hatayı hızlı bir şekilde bildirmek için ekran görüntüsü alın.",
+        "title": "İpuçları"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Sağ kaydırarak tüm varlıkları görüntüleyin."
@@ -1682,7 +1689,9 @@
       },
       "title": "Güvenli adres ekle",
       "loading": "Bu adresin dağıtılmış zincirini arıyor",
-      "gnosisChainDesc": "Bu adres {{count}} zincirinde dağıtılmış olarak bulundu."
+      "gnosisChainDesc": "Bu adres {{count}} zincirinde dağıtılmış olarak bulundu.",
+      "gnosisChainPillDesc": "Cüzdanınız bu zincirlerde dağıtıldı",
+      "gnosisChainScrollDesc": "Bu cüzdan {{count}} zincirde dağıtılmış olarak bulundu"
     },
     "rabbyPoints": {
       "claimItem": {
@@ -1819,7 +1828,8 @@
         "fetchQuoteFailed": "Alıntı alınamadı",
         "minAmountRequired": "En az depozit tutarı 1 $'dır.",
         "estReceiveTip": "{{name}} üzerinden işlenen hizmetin kayma yaşama ihtimali vardır.",
-        "selectToken": "Para Yatırmak İçin Token Seçin"
+        "selectToken": "Para Yatırmak İçin Token Seçin",
+        "noAvailableToken": "Kullanılabilir token yok"
       },
       "paymentAddressPopup": {
         "confirm": "Onayla",
@@ -1865,7 +1875,8 @@
         "depositFailed": "Para Yatırma Başarısız",
         "title": "Apple Pay ile satın al",
         "depositCanceled": "Mevduat İptal Edildi",
-        "titleApple": "Uygulama Mağazası'ndan Satın Al"
+        "titleApple": "Uygulama Mağazası'ndan Satın Al",
+        "topUpPayTips": "Gaz gerekli: {{topUpUsd}}, Kalan gaz tahmini: {{balance}}"
       },
       "depositSelectPopup": {
         "depositTokenDesc": "Ekstra ücret yok, anında çekimler",
@@ -1875,7 +1886,8 @@
         "buyWith": "Alım yapın ile",
         "title": "GasAccount'a Yatır",
         "buyWithApple": "Uygulama Mağazası'ndan Satın Al",
-        "insufficientTokenBalance": "Yetersiz Token Bakiyesi"
+        "insufficientTokenBalance": "Yetersiz Token Bakiyesi",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "address": "Adres",
@@ -1899,15 +1911,18 @@
         "desc1": "Gaz ödemek için ek ücret yoktur.",
         "item1": "Ücret Yok Rabby",
         "item3": "Tüm işlemleri destekler",
-        "desc2": "",
-        "desc3": "Değiştir, Köprü, Gönder, DApps ve daha fazlası"
+        "desc2": "80+ ağda otomatik gas ödemeleri",
+        "desc3": "Değiştir, Köprü, Gönder, DApps ve daha fazlası",
+        "title": "Tüm zincirlerde Gas Ücretlerini Ödeyin",
+        "subtitle": "gasınız bittiğinde"
       },
       "depositNow": "Şimdi Yatırın",
       "switchAccount": "Cüzdanı Değiştir",
       "lowBalance": "Yeterli gazınız yok. Gelecekteki işlemlerin sorunsuz geçmesi için gaz depozitosu yapın.",
       "gasBalance": "Gaz Bakiyesi",
       "depositWith": "Deposit with",
-      "depositFailed": "Yatırım başarısız oldu"
+      "depositFailed": "Yatırım başarısız oldu",
+      "depositSubmitted": "Yatırma Gönderildi"
     },
     "tokenDetail": {
       "action": {
@@ -2100,7 +2115,8 @@
         "placeHolder": "Dapp/Tokene Araştırın"
       },
       "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
+        "tokenAndFdv": "Token/FDV",
+        "token": "Jeton"
       }
     },
     "setting": {
@@ -3080,7 +3096,8 @@
     "market": {
       "tokenHeader": {
         "name": "Adı",
-        "tokenAndName": "Token/İsim"
+        "tokenAndName": "Token/İsim",
+        "token": "Token"
       },
       "tabs": {
         "commodities": "Emtia",
@@ -3564,6 +3581,7 @@
   },
   "backupReminder": {
     "action": "Şimdi yedekle",
-    "title": "Cüzdanınızı yedeklemediniz."
+    "title": "Cüzdanınızı yedeklemediniz.",
+    "badge": "Yedeklenmedi"
   }
 }

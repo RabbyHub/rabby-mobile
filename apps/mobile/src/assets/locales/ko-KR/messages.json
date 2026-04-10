@@ -149,7 +149,10 @@
       "addressCount_other": "{{count}} 지갑",
       "importMore": "더 많은 Wallets 가져오기",
       "addressCount_one": "{{count}} 지갑",
-      "viewAddress": "지갑 보기"
+      "viewAddress": "지갑 보기",
+      "titleCreated": "지갑이 생성되었습니다 🚀",
+      "titleImported": "지갑을 가져왔습니다 🚀",
+      "titleMultiple": "{{count}}개의 지갑이 추가되었습니다 🚀"
     },
     "sendNFT": {
       "sendButton": "보내기",
@@ -176,7 +179,9 @@
         "WalletConnectTips": "GasAccount에서 WalletConnect는 지원되지 않습니다.",
         "loginFirst": "GasAccount에 먼저 로그인하세요.",
         "customRPC": "사용자 정의 RPC를 사용할 때 지원되지 않음",
-        "chainNotSupported": "이 체인은 GasAccount에서 지원되지 않습니다."
+        "chainNotSupported": "이 체인은 GasAccount에서 지원되지 않습니다.",
+        "signWithHardwareWalletToUse": "{{brand}}로 서명해야 사용할 수 있습니다",
+        "notEnough": "Gas가 부족합니다. Gas 잔액: {{usd}}"
       },
       "submitTx": "트랜잭션 제출",
       "cancelCurrentConnection": "현재 연결 취소",
@@ -889,7 +894,8 @@
       },
       "gasXUsd": "가스: {{gasUsd}}",
       "formChangedTitle": "양식 변경됨",
-      "formChangedAmount": "금액이 변경되었습니다. 시스템 키보드의 비밀번호 자동 완성으로 인한 것일 수 있습니다. 올바른 금액을 다시 확인하고 입력해 주세요."
+      "formChangedAmount": "금액이 변경되었습니다. 시스템 키보드의 비밀번호 자동 완성으로 인한 것일 수 있습니다. 올바른 금액을 다시 확인하고 입력해 주세요.",
+      "best-subtitle": "총 비용(Gas 수수료 포함)과 최선의 견적을 제공하는 속도를 고려합니다"
     },
     "manageAddress": {
       "confirm": "확인",
@@ -1133,7 +1139,8 @@
         "descriptionIOS": "Rabby가 마음에 드신다면, App Store에서 간단한 평가를 남겨주시면 큰 도움이 됩니다."
       },
       "homeCenterTipScreenshot": {
-        "description": "언제든지 스크린샷을 찍어 버그를 빠르게 신고하세요."
+        "description": "언제든지 스크린샷을 찍어 버그를 빠르게 신고하세요.",
+        "title": "팁"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "모든 자산을 보려면 오른쪽으로 스와이프하십시오."
@@ -1330,7 +1337,9 @@
       },
       "title": "Safe 주소 추가",
       "loading": "이 주소의 배포된 체인 검색 중",
-      "gnosisChainDesc": "이 주소는 {{count}}개의 체인에 배포된 것으로 확인되었습니다."
+      "gnosisChainDesc": "이 주소는 {{count}}개의 체인에 배포된 것으로 확인되었습니다.",
+      "gnosisChainPillDesc": "귀하의 지갑이 이러한 체인에 배포되어 있습니다",
+      "gnosisChainScrollDesc": "이 지갑이 {{count}}개의 체인에 배포되어 있는 것으로 확인되었습니다"
     },
     "rabbyPoints": {
       "claimItem": {
@@ -1516,7 +1525,8 @@
         "suggestedToken": "제안된 토큰",
         "insufficientBalanceLabel": "잔액 부족",
         "unavailablePaymentWallet": "선택한 결제 지갑을 사용할 수 없습니다",
-        "minAmountRequired": "최소 입금 금액은 $1입니다."
+        "minAmountRequired": "최소 입금 금액은 $1입니다.",
+        "noAvailableToken": "사용 가능한 토큰 없음"
       },
       "paymentAddressPopup": {
         "balance": "잔액",
@@ -1558,7 +1568,8 @@
         "title": "Apple Pay로 구매하기",
         "depositCanceled": "입금 취소됨",
         "balance": "현재 GasAccount 잔액: ",
-        "titleApple": "앱 스토어에서 구매하세요"
+        "titleApple": "앱 스토어에서 구매하세요",
+        "topUpPayTips": "Gas 필요: {{topUpUsd}}, Gas 잔액 예상: {{balance}}"
       },
       "depositSelectPopup": {
         "desc": "모든 체인의 가스 요금 지불",
@@ -1568,7 +1579,8 @@
         "title": "GasAccount에 입금하기",
         "buyWith": "로 구매하기",
         "buyWithApple": "앱 스토어에서 구매",
-        "insufficientTokenBalance": "잔액 부족"
+        "insufficientTokenBalance": "잔액 부족",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "address": "주소",
@@ -1582,19 +1594,22 @@
       "loginSuccess": "로그인 성공",
       "withdrawDisabledIAP": "출금이 비활성화되었습니다. 잔고에 출금할 수 없는 법정화폐 자금이 포함되어 있기 때문입니다. 토큰 잔액을 출금하려면 지원팀에 문의하세요.",
       "benefitCard": {
-        "desc2": "",
+        "desc2": "80개 이상의 네트워크에서 자동 가스 결제",
         "desc1": "가스에 추가 수수료가 없습니다.",
         "item2": "모든 네트워크를 지원합니다.",
         "item3": "모든 거래를 지원합니다.",
         "item1": "No Rabby Fee",
-        "desc3": "스왑, 브릿지, 보내기, DApps, 및 기타"
+        "desc3": "스왑, 브릿지, 보내기, DApps, 및 기타",
+        "title": "모든 체인에서 가스비 결제",
+        "subtitle": "가스가 떨어졌을 때"
       },
       "gasBalance": "가스 잔액",
       "depositNow": "지금 입금하기",
       "switchAccount": "지갑 전환",
       "depositFailed": "입금 실패",
       "depositWith": "입금하기 위해",
-      "lowBalance": "가스가 충분하지 않습니다. 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요."
+      "lowBalance": "가스가 충분하지 않습니다. 향후 거래가 원활하게 진행될 수 있도록 가스를 입금하세요.",
+      "depositSubmitted": "입금 제출됨"
     },
     "approvalsAddressList": {
       "title": "승인"
@@ -1656,7 +1671,8 @@
         "placeHolder": "Dapp/토큰 검색"
       },
       "tokenHeader": {
-        "tokenAndFdv": "토큰/FDV"
+        "tokenAndFdv": "토큰/FDV",
+        "token": "토큰"
       }
     },
     "receiveAddressList": {
@@ -3081,7 +3097,8 @@
     "market": {
       "tokenHeader": {
         "name": "이름",
-        "tokenAndName": "토큰/이름"
+        "tokenAndName": "토큰/이름",
+        "token": "토큰"
       },
       "tabs": {
         "watchlist": "관심 목록",
@@ -3565,6 +3582,7 @@
   },
   "backupReminder": {
     "title": "당신은 지갑을 백업하지 않았습니다",
-    "action": "지금 백업하기"
+    "action": "지금 백업하기",
+    "badge": "백업 안 함"
   }
 }

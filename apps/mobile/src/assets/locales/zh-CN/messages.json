@@ -275,7 +275,10 @@
       "importMore": "导入更多 Wallets",
       "addressCount_other": "{{count}} 个钱包",
       "addressCount_one": "{{count}} 钱包",
-      "viewAddress": "查看钱包"
+      "viewAddress": "查看钱包",
+      "titleCreated": "您的钱包已创建 🚀",
+      "titleImported": "您的钱包已导入 🚀",
+      "titleMultiple": "{{count}} 个钱包已添加 🚀"
     },
     "signTx": {
       "safeAdminSigned": "已签名",
@@ -821,7 +824,9 @@
         "signWithHardwareWalletToUse": "你需要使用{{brand}}签名后才能使用",
         "chainNotSupported": "GasAccount 不支持该链",
         "customRPC": "使用自定义 RPC 时不支持",
-        "WalletConnectTips": "GasAccount 不支持 WalletConnect"
+        "WalletConnectTips": "GasAccount 不支持 WalletConnect",
+        "deposit": "Deposit",
+        "notEnough": "Not enough gas. Gas Balance: {{usd}}"
       },
       "qrcode": {
         "misMatchSignId": "交易数据不一致。请检查交易详情。",
@@ -1340,7 +1345,9 @@
         "invalid": "不是有效的地址",
         "required": "请输入地址"
       },
-      "gnosisChainDesc": "此地址已在 {{count}} 条链上发现部署"
+      "gnosisChainDesc": "此地址已在 {{count}} 条链上发现部署",
+      "gnosisChainPillDesc": "您的钱包部署在这些链上",
+      "gnosisChainScrollDesc": "此钱包在 {{count}} 条链上被发现已部署"
     },
     "newAddress": {
       "Quick": "快速",
@@ -1894,7 +1901,8 @@
         "insufficientBalanceLabel": "余额不足",
         "minAmountRequired": "最低存款金额为 $1",
         "estReceiveTip": "服务通过 {{name}} 处理，可能会有滑点。",
-        "suggestedToken": "建议的代币"
+        "suggestedToken": "建议的代币",
+        "noAvailableToken": "没有可用的代币"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
@@ -1933,7 +1941,8 @@
         "depositFailed": "存款失败",
         "titleAndroid": "使用 Google Pay 购买",
         "balance": "当前 GasAccount 余额：",
-        "titleApple": "在应用商店购买"
+        "titleApple": "在应用商店购买",
+        "topUpPayTips": "需要 Gas：{{topUpUsd}}，Gas 剩余预估：{{balance}}"
       },
       "depositSelectPopup": {
         "depositTokenDesc": "无额外费用，即时提款",
@@ -1943,7 +1952,8 @@
         "desc": "在所有链上支付 Gas 费用",
         "depositToken": "使用 Token 充值",
         "buyWithApple": "在应用商店购买",
-        "insufficientTokenBalance": "余额不足"
+        "insufficientTokenBalance": "余额不足",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 余额",
@@ -1971,7 +1981,8 @@
       "depositWith": "充值",
       "depositFailed": "存款失败",
       "lowBalance": "您没有足够的 gas。请存入 gas 以确保未来交易顺利进行。",
-      "gasBalance": "Gas 余额"
+      "gasBalance": "Gas 余额",
+      "depositSubmitted": "存款已提交"
     },
     "search": {
       "header": {
@@ -2006,7 +2017,8 @@
         "iosPlaceHolder": "搜索网站/Token"
       },
       "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
+        "tokenAndFdv": "Token/FDV",
+        "token": "代币"
       }
     },
     "receiveAddressList": {
@@ -3212,7 +3224,8 @@
     "market": {
       "tokenHeader": {
         "name": "名称",
-        "tokenAndName": "Token/Name"
+        "tokenAndName": "Token/Name",
+        "token": "代币"
       },
       "tabs": {
         "stock": "库存",
@@ -3570,6 +3583,7 @@
   },
   "backupReminder": {
     "action": "立即备份",
-    "title": "您尚未备份您的钱包"
+    "title": "您尚未备份您的钱包",
+    "badge": "未备份"
   }
 }

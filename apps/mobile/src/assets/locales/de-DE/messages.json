@@ -523,7 +523,10 @@
       "addressCount_one": "{{count}} Wallet",
       "importMore": "Importiere mehr Wallets",
       "addressCount_other": "{{count}} Wallets",
-      "viewAddress": "Wallet anzeigen"
+      "viewAddress": "Wallet anzeigen",
+      "titleCreated": "Ihr Wallet wurde erstellt 🚀",
+      "titleImported": "Ihr Wallet wurde importiert 🚀",
+      "titleMultiple": "{{count}} Wallets hinzugefügt 🚀"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Geben Sie Ihre Seed-Phrase ein"
@@ -1060,7 +1063,9 @@
         "customRPC": "Nicht unterstützt bei Verwendung von benutzerdefiniertem RPC",
         "deposit": "Einzahlung",
         "WalletConnectTips": "WalletConnect wird von GasAccount nicht unterstützt",
-        "loginFirst": "Bitte melden Sie sich zuerst bei GasAccount an."
+        "loginFirst": "Bitte melden Sie sich zuerst bei GasAccount an.",
+        "signWithHardwareWalletToUse": "Sie müssen mit {{brand}} signieren, um zu verwenden",
+        "notEnough": "Nicht genug Gas. Gas-Guthaben: {{usd}}"
       },
       "ledger": {
         "txRejected": "Transaktion abgelehnt",
@@ -1378,7 +1383,8 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Formular geändert",
-      "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der automatischen Passwortausfüllung durch die Systemtastatur. Bitte überprüfen Sie den Betrag und geben Sie den richtigen Betrag erneut ein."
+      "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der automatischen Passwortausfüllung durch die Systemtastatur. Bitte überprüfen Sie den Betrag und geben Sie den richtigen Betrag erneut ein.",
+      "best-subtitle": "Den Gesamtpreis (einschließlich Gas-Gebühren) und die Geschwindigkeit der Bereitstellung des besten Angebots berücksichtigen"
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1459,7 +1465,8 @@
         "descriptionIOS": "Wenn dir Rabby gefällt, würde eine kurze Bewertung im App Store sehr viel bedeuten."
       },
       "homeCenterTipScreenshot": {
-        "description": "Machen Sie jederzeit einen Screenshot, um schnell einen Fehler zu melden."
+        "description": "Machen Sie jederzeit einen Screenshot, um schnell einen Fehler zu melden.",
+        "title": "Tipps"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Wischen Sie nach rechts, um alle Vermögenswerte anzuzeigen."
@@ -1932,7 +1939,9 @@
         "invalid": "Keine gültige Adresse"
       },
       "title": "Safe-Adresse hinzufügen",
-      "loading": "Die bereitgestellte Kette dieser Adresse durchsuchen"
+      "loading": "Die bereitgestellte Kette dieser Adresse durchsuchen",
+      "gnosisChainPillDesc": "- Ihre Wallet ist auf diesen Chains eingesetzt -",
+      "gnosisChainScrollDesc": "- Diese Wallet wurde auf {{count}} Chains eingesetzt gefunden -"
     },
     "createPassword": {
       "PrivacyPolicy": "Datenschutzerklärung",
@@ -2129,7 +2138,8 @@
         "estReceiveLabel": "Est. Erhalten: {{usd}}",
         "estReceiveTip": "Der über {{name}} verarbeitete Service kann Slippage aufweisen.",
         "fetchQuoteFailed": "Fehler beim Abrufen des Angebots",
-        "minAmountRequired": "Der Mindestbetrag für die Einzahlung beträgt 1 $."
+        "minAmountRequired": "Der Mindestbetrag für die Einzahlung beträgt 1 $.",
+        "noAvailableToken": "Kein verfügbarer Token"
       },
       "paymentAddressPopup": {
         "confirm": "Bestätigen",
@@ -2171,7 +2181,8 @@
         "depositFailed": "Einzahlung fehlgeschlagen",
         "depositCanceled": "Einzahlung abgebrochen",
         "title": "Mit Apple Pay kaufen",
-        "titleApple": "In App Store kaufen"
+        "titleApple": "In App Store kaufen",
+        "topUpPayTips": "Benötigtes Gas: {{topUpUsd}}, Verbleibendes Gas ca.: {{balance}}"
       },
       "depositSelectPopup": {
         "depositToken": "Mit Token einzahlen",
@@ -2181,7 +2192,8 @@
         "buyWithDesc": "30 % Gebühr, keine Abhebungen",
         "depositTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen",
         "buyWithApple": "Im App Store kaufen",
-        "insufficientTokenBalance": "Unzureichendes Token-Guthaben"
+        "insufficientTokenBalance": "Unzureichendes Token-Guthaben",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount-Guthaben",
@@ -2198,16 +2210,19 @@
         "item2": "Unterstützt alle Netzwerke",
         "item3": "Unterstützt alle Transaktionen",
         "item1": "Keine Rabby Gebühr",
-        "desc2": "",
+        "desc2": "Automatische Gaszahlungen auf über 80 Netzwerken",
         "desc1": "Keine zusätzlichen Gebühren für Gas zu zahlen",
-        "desc3": "Tauschen, Brücke, Senden, DApps und mehr"
+        "desc3": "Tauschen, Brücke, Senden, DApps und mehr",
+        "title": "Gasgebühren auf allen Chains bezahlen",
+        "subtitle": "wenn dir das Gas ausgeht"
       },
       "depositFailed": "Einzahlung fehlgeschlagen",
       "depositWith": "Bei einlegen mit",
       "depositNow": "Jetzt einzahlen",
       "gasBalance": "Gas-Balance",
       "switchAccount": "Wechseln Sie das Wallet",
-      "lowBalance": "Sie haben nicht genügend Gas. Tätigen Sie eine Gas-Einzahlung, um sicherzustellen, dass zukünftige Transaktionen reibungslos verlaufen."
+      "lowBalance": "Sie haben nicht genügend Gas. Tätigen Sie eine Gas-Einzahlung, um sicherzustellen, dass zukünftige Transaktionen reibungslos verlaufen.",
+      "depositSubmitted": "Einzahlung eingereicht"
     },
     "search": {
       "sectionHeader": {
@@ -2242,7 +2257,8 @@
         "placeHolder": "Suche Dapp/Token"
       },
       "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
+        "tokenAndFdv": "Token/FDV",
+        "token": "Token"
       }
     },
     "tokenDetail": {
@@ -3458,7 +3474,8 @@
     "market": {
       "tokenHeader": {
         "name": "Name",
-        "tokenAndName": "Token/Name"
+        "tokenAndName": "Token/Name",
+        "token": "Token"
       },
       "tabs": {
         "watchlist": "Beobachtungsliste",
@@ -3565,6 +3582,7 @@
   },
   "backupReminder": {
     "action": "Jetzt sichern",
-    "title": "Sie haben Ihre wallet nicht gesichert."
+    "title": "Sie haben Ihre wallet nicht gesichert.",
+    "badge": "Kein Backup"
   }
 }

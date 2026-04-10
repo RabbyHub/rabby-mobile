@@ -266,7 +266,10 @@
       "addressCount_one": "{{count}} Ví",
       "importMore": "Nhập thêm Wallets",
       "addressCount_other": "{{count}} Ví",
-      "viewAddress": "Xem Ví"
+      "viewAddress": "Xem Ví",
+      "titleCreated": "Ví của bạn đã được tạo 🚀",
+      "titleImported": "Ví của bạn đã được nhập 🚀",
+      "titleMultiple": "{{count}} Ví đã được thêm 🚀"
     },
     "signTypedData": {
       "verifyAddress": {
@@ -352,7 +355,9 @@
         "login": "Đăng nhập",
         "deposit": "Deposit",
         "loginFirst": "Vui lòng đăng nhập vào GasAccount trước tiên",
-        "customRPC": "Không được hỗ trợ khi sử dụng RPC tùy chỉnh"
+        "customRPC": "Không được hỗ trợ khi sử dụng RPC tùy chỉnh",
+        "signWithHardwareWalletToUse": "Bạn cần ký bằng {{brand}} để sử dụng",
+        "notEnough": "Không đủ gas. Số dư Gas: {{usd}}"
       },
       "cancelAll": "Hủy tất cả {{count}} yêu cầu từ Dapp",
       "ledger": {
@@ -1063,7 +1068,8 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Biểu mẫu đã thay đổi",
-      "formChangedAmount": "Số tiền đã thay đổi, có thể do hệ thống bàn phím tự động điền mật khẩu. Vui lòng xem lại và nhập lại số tiền chính xác."
+      "formChangedAmount": "Số tiền đã thay đổi, có thể do hệ thống bàn phím tự động điền mật khẩu. Vui lòng xem lại và nhập lại số tiền chính xác.",
+      "best-subtitle": "Xem xét tổng chi phí (bao gồm phí Gas) và tốc độ cung cấp báo giá tốt nhất"
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",
@@ -1210,7 +1216,8 @@
         "descriptionIOS": "Nếu bạn thích Rabby, một đánh giá nhanh trên App Store sẽ có ý nghĩa lớn."
       },
       "homeCenterTipScreenshot": {
-        "description": "Chụp màn hình bất cứ lúc nào để nhanh chóng báo cáo lỗi"
+        "description": "Chụp màn hình bất cứ lúc nào để nhanh chóng báo cáo lỗi",
+        "title": "Mẹo"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Kéo sang phải để xem tất cả tài sản"
@@ -1726,7 +1733,8 @@
         "placeHolder": "Tìm kiếm Dapp/Token"
       },
       "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
+        "tokenAndFdv": "Token/FDV",
+        "token": "Token"
       }
     },
     "sign": {
@@ -1786,7 +1794,8 @@
         "gasDepositTitle": "Tiền gửi Gas",
         "unavailablePaymentWallet": "Ví wallet đã chọn không khả dụng",
         "estReceiveTip": "Dịch vụ được xử lý thông qua {{name}}, có thể có độ trượt giá",
-        "estReceiveLabel": "Est. Nhận: {{usd}}"
+        "estReceiveLabel": "Est. Nhận: {{usd}}",
+        "noAvailableToken": "Không có token nào"
       },
       "paymentAddressPopup": {
         "confirm": "Xác nhận",
@@ -1828,7 +1837,8 @@
         "balance": "Số dư GasAccount Hiện Tại: ",
         "title": "Mua với Apple Pay",
         "titleAndroid": "Mua bằng Google Pay",
-        "titleApple": "Mua trong App Store"
+        "titleApple": "Mua trong App Store",
+        "topUpPayTips": "Gas cần thiết: {{topUpUsd}}, Ước tính gas còn lại: {{balance}}"
       },
       "depositSelectPopup": {
         "title": "Nạp vào GasAccount",
@@ -1838,7 +1848,8 @@
         "depositTokenDesc": "Không có phí bổ sung, rút tiền ngay lập tức",
         "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi",
         "buyWithApple": "Mua trong App Store",
-        "insufficientTokenBalance": "Số dư Token không đủ"
+        "insufficientTokenBalance": "Số dư Token không đủ",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "balance": "Số dư",
@@ -1854,17 +1865,20 @@
       "benefitCard": {
         "item2": "Hỗ trợ tất cả các mạng",
         "item3": "Hỗ trợ tất cả các giao dịch",
-        "desc2": "",
+        "desc2": "Thanh toán Gas tự động trên 80+ mạng lưới",
         "desc1": "Không có phí bổ sung để thanh toán gas",
         "item1": "Không có phí Rabby",
-        "desc3": "Hoán đổi, Cầu, Gửi, DApps, & nhiều hơn nữa"
+        "desc3": "Hoán đổi, Cầu, Gửi, DApps, & nhiều hơn nữa",
+        "title": "Thanh toán phí Gas trên tất cả các chain",
+        "subtitle": "khi bạn hết gas"
       },
       "depositNow": "Nạp ngay",
       "switchAccount": "Chuyển Wallet",
       "depositFailed": "Nạp tiền không thành công",
       "depositWith": "Gửi tiền với",
       "gasBalance": "Số dư Gas",
-      "lowBalance": "Bạn không có đủ gas. Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ."
+      "lowBalance": "Bạn không có đủ gas. Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ.",
+      "depositSubmitted": "Đã gửi tiền gửi"
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",
@@ -2037,7 +2051,9 @@
       },
       "loading": "Tìm kiếm chuỗi đã triển khai của địa chỉ này",
       "gnosisChainDesc": "Địa chỉ này được tìm thấy trên {{count}} chuỗi.",
-      "title": "Thêm địa chỉ Safe"
+      "title": "Thêm địa chỉ Safe",
+      "gnosisChainPillDesc": "- Ví của bạn được triển khai trên các chuỗi này -",
+      "gnosisChainScrollDesc": "- Ví này được tìm thấy đã triển khai trên {{count}} chuỗi -"
     },
     "safeQueue": {
       "replaceBtn": "Thay thế",
@@ -3198,7 +3214,8 @@
     "market": {
       "tokenHeader": {
         "name": "Tên",
-        "tokenAndName": "Token/Tên"
+        "tokenAndName": "Token/Tên",
+        "token": "Token"
       },
       "tabs": {
         "watchlist": "Danh sách theo dõi",
@@ -3565,6 +3582,7 @@
   },
   "backupReminder": {
     "action": "Sao lưu ngay bây giờ",
-    "title": "Bạn chưa sao lưu ví của mình"
+    "title": "Bạn chưa sao lưu ví của mình",
+    "badge": "Chưa sao lưu"
   }
 }

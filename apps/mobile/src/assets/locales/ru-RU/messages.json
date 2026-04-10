@@ -263,7 +263,10 @@
       "addressCount_other": "{{count}} Кошельки",
       "addressCount_one": "{{count}} Кошелек",
       "importMore": "Импортировать больше кошельков",
-      "viewAddress": "Просмотр кошелька"
+      "viewAddress": "Просмотр кошелька",
+      "titleCreated": "Ваш кошелёк создан 🚀",
+      "titleImported": "Ваш кошелёк импортирован 🚀",
+      "titleMultiple": "{{count}} кошельков добавлено 🚀"
     },
     "signTypedData": {
       "permit": {
@@ -322,7 +325,9 @@
         "deposit": "Депозит",
         "customRPC": "Не поддерживается при использовании пользовательского RPC",
         "useGasAccount": "Используйте GasAccount",
-        "loginFirst": "Пожалуйста, сначала войдите в GasAccount."
+        "loginFirst": "Пожалуйста, сначала войдите в GasAccount.",
+        "signWithHardwareWalletToUse": "Вам нужно подписать с {{brand}} для использования",
+        "notEnough": "Недостаточно газа. Баланс газа: {{usd}}"
       },
       "gasless": {
         "notEnough": "Gas баланса недостаточно",
@@ -999,7 +1004,8 @@
       },
       "gasXUsd": "Газ: {{gasUsd}}",
       "formChangedTitle": "Форма изменена",
-      "formChangedAmount": "Сумма изменилась, возможно, из-за автозаполнения пароля с клавиатуры системы. Пожалуйста, проверьте и введите правильную сумму."
+      "formChangedAmount": "Сумма изменилась, возможно, из-за автозаполнения пароля с клавиатуры системы. Пожалуйста, проверьте и введите правильную сумму.",
+      "best-subtitle": "Учитывая общую стоимость (включая комиссии Gas) и скорость получения лучшего предложения"
     },
     "manageAddress": {
       "enterThePassphrase": "Введите кодовую фразу",
@@ -1250,7 +1256,8 @@
         "descriptionAndroid": "Если вам нравится Rabby, быстрая оценка в Google Play будет очень важна."
       },
       "homeCenterTipScreenshot": {
-        "description": "Сделайте скриншот в любое время, чтобы быстро сообщить о ошибке."
+        "description": "Сделайте скриншот в любое время, чтобы быстро сообщить о ошибке.",
+        "title": "Советы"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Проведите вправо, чтобы просмотреть все активы."
@@ -1779,7 +1786,9 @@
         "required": "Пожалуйста, введите адрес",
         "invalid": "Недействительный адрес"
       },
-      "gnosisChainDesc": "Этот адрес был найден на {{count}} цепочках."
+      "gnosisChainDesc": "Этот адрес был найден на {{count}} цепочках.",
+      "gnosisChainPillDesc": "- Ваш кошелёк развёрнут в этих сетях -",
+      "gnosisChainScrollDesc": "- Этот кошелёк найден развёрнутым в {{count}} сетях -"
     },
     "sign": {
       "transactionSpeed": "Скорость транзакции"
@@ -1895,7 +1904,8 @@
         "placeHolder": "Поиск Dapp/Token"
       },
       "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
+        "tokenAndFdv": "Token/FDV",
+        "token": "Токен"
       }
     },
     "setting": {
@@ -1977,7 +1987,8 @@
         "estReceiveTip": "Сервис, обработанный через {{name}}, может иметь проскальзывание.",
         "fetchQuoteFailed": "Не удалось получить котировку",
         "selectToken": "Выберите токен для депозита",
-        "estReceiveLabel": "Est.Receive: {{usd}}"
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "noAvailableToken": "Нет доступных токенов"
       },
       "paymentAddressPopup": {
         "confirm": "Подтвердить",
@@ -2019,7 +2030,8 @@
         "title": "Купить с Apple Pay",
         "titleAndroid": "Купить через Google Pay",
         "balance": "Текущий баланс GasAccount: ",
-        "titleApple": "Купить в App Store"
+        "titleApple": "Купить в App Store",
+        "topUpPayTips": "Требуется газ: {{topUpUsd}}, Остаток газа (оценка): {{balance}}"
       },
       "depositSelectPopup": {
         "title": "Депозит на GasAccount",
@@ -2029,7 +2041,8 @@
         "buyWithDesc": "30% комиссия, без выводов",
         "depositTokenDesc": "Без дополнительных комиссий, мгновенные выводы",
         "buyWithApple": "Купить в App Store",
-        "insufficientTokenBalance": "Недостаточно токенов на балансе"
+        "insufficientTokenBalance": "Недостаточно токенов на балансе",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "gasAccountBalance": "Баланс GasAccount",
@@ -2048,14 +2061,17 @@
         "item2": "Поддерживает все сети",
         "desc1": "Нет дополнительных сборов за оплату газа",
         "desc3": "Обмен, Мост, Отправить, DApps и многое другое",
-        "desc2": ""
+        "desc2": "Автоматические платежи за газ более чем на 80+ сетях",
+        "title": "Оплачивайте комиссии за Gas на всех сетях",
+        "subtitle": "когда у вас закончился газ"
       },
       "depositNow": "Депозит сейчас",
       "gasBalance": "Баланс Gas",
       "switchAccount": "Переключить кошелек",
       "depositFailed": "Ошибка при депозите",
       "lowBalance": "У вас недостаточно газа. Внесите газ, чтобы обеспечитьSmooth будущие транзакции.",
-      "depositWith": "Депозит с"
+      "depositWith": "Депозит с",
+      "depositSubmitted": "Депозит отправлен"
     },
     "tokenDetail": {
       "notSupportedOnChain": "Не поддерживается в этой сети",
@@ -3198,7 +3214,8 @@
     "market": {
       "tokenHeader": {
         "name": "Имя",
-        "tokenAndName": "Токен/Имя"
+        "tokenAndName": "Токен/Имя",
+        "token": "Токен"
       },
       "tabs": {
         "commodities": "Товары",
@@ -3565,6 +3582,7 @@
   },
   "backupReminder": {
     "title": "Вы не создали резервную копию вашего кошелька",
-    "action": "Сделайте резервную копию сейчас"
+    "action": "Сделайте резервную копию сейчас",
+    "badge": "Нет резервной копии"
   }
 }

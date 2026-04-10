@@ -538,7 +538,10 @@
       "addressCount_other": "{{count}} กระเป๋าเงิน",
       "addressCount_one": "{{count}} กระเป๋าเงิน",
       "importMore": "นำเข้ากระเป๋าเงินเพิ่มเติม",
-      "viewAddress": "ดูกระเป๋าเงิน"
+      "viewAddress": "ดูกระเป๋าเงิน",
+      "titleCreated": "กระเป๋าของคุณถูกสร้างแล้ว 🚀",
+      "titleImported": "กระเป๋าของคุณถูกนำเข้าแล้ว 🚀",
+      "titleMultiple": "เพิ่ม {{count}} กระเป๋าแล้ว 🚀"
     },
     "sendTokenComponents": {
       "GasReserved": "สำรอง <1>0</1> {{ tokenName }} สำหรับค่าใช้จ่าย gas"
@@ -969,7 +972,9 @@
         "loginFirst": "กรุณาเข้าสู่ระบบ GasAccount ก่อน",
         "deposit": "ฝากเงิน",
         "WalletConnectTips": "GasAccount ไม่รองรับ WalletConnect",
-        "chainNotSupported": "เครือนี้ไม่ได้รับการสนับสนุนโดย GasAccount"
+        "chainNotSupported": "เครือนี้ไม่ได้รับการสนับสนุนโดย GasAccount",
+        "signWithHardwareWalletToUse": "คุณต้องลงนามด้วย {{brand}} เพื่อใช้งาน",
+        "notEnough": "ก๊าซไม่เพียงพอ ยอด Gas: {{usd}}"
       },
       "ledger": {
         "txRejected": "ธุรกรรมถูกปฏิเสธ",
@@ -1182,7 +1187,8 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "ฟอร์มเปลี่ยนแล้ว",
-      "formChangedAmount": "จำนวนได้เปลี่ยนแปลงอาจเป็นผลมาจากการกรอกอัตโนมัติรหัสผ่านจากแป้นพิมพ์ของระบบ กรุณาตรวจสอบและกรอกจำนวนที่ถูกต้องอีกครั้ง。"
+      "formChangedAmount": "จำนวนได้เปลี่ยนแปลงอาจเป็นผลมาจากการกรอกอัตโนมัติรหัสผ่านจากแป้นพิมพ์ของระบบ กรุณาตรวจสอบและกรอกจำนวนที่ถูกต้องอีกครั้ง。",
+      "best-subtitle": "พิจารณาจากต้นทุนรวม (รวมค่า Gas) และความเร็วในการส่งมอบราคาที่ดีที่สุด"
     },
     "dashboard": {
       "home": {
@@ -1393,7 +1399,8 @@
         "feedbackTitle": "มีข้อเสนอแนะไหม? เรากำลังฟังอยู่。"
       },
       "homeCenterTipScreenshot": {
-        "description": "ถ่าย screenshot ได้ตลอดเวลาเพื่อรายงานข้อบกพร่องอย่างรวดเร็ว"
+        "description": "ถ่าย screenshot ได้ตลอดเวลาเพื่อรายงานข้อบกพร่องอย่างรวดเร็ว",
+        "title": "เคล็ดลับ"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "เลื่อนขวาเพื่อดูสินทรัพย์ทั้งหมด"
@@ -1514,7 +1521,9 @@
         "invalid": "ไม่ใช่ที่อยู่ที่ถูกต้อง",
         "required": "กรุณาใส่ที่อยู่"
       },
-      "loading": "กำลังค้นหาสายโซ่ที่ปรับใช้ของที่อยู่นี้"
+      "loading": "กำลังค้นหาสายโซ่ที่ปรับใช้ของที่อยู่นี้",
+      "gnosisChainPillDesc": "- กระเป๋าเงินของคุณถูกติดตั้งบนเครือข่ายเหล่านี้ -",
+      "gnosisChainScrollDesc": "- พบว่ากระเป๋าเงินนี้ถูกติดตั้งบน {{count}} เครือข่าย -"
     },
     "connect": {
       "trusted": "เชื่อถือได้",
@@ -1963,7 +1972,8 @@
         "iosPlaceHolder": "ค้นหาเว็บไซต์/โทเค็น"
       },
       "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
+        "tokenAndFdv": "Token/FDV",
+        "token": "โทเค็น"
       }
     },
     "receiveAddressList": {
@@ -2054,7 +2064,8 @@
         "estReceiveLabel": "Est.Receive: {{usd}}",
         "fetchQuoteFailed": "ไม่สามารถดึงข้อมูลการเสนอราคาได้",
         "minAmountRequired": "จำนวนเงินฝากขั้นต่ำคือ $1",
-        "estReceiveTip": "บริการที่ดำเนินการผ่าน {{name}} อาจมีการลื่นไถล"
+        "estReceiveTip": "บริการที่ดำเนินการผ่าน {{name}} อาจมีการลื่นไถล",
+        "noAvailableToken": "ไม่มีโทเค็นที่พร้อมใช้งาน"
       },
       "paymentAddressPopup": {
         "balance": "ยอดเงิน",
@@ -2096,7 +2107,8 @@
         "balance": "ยอดคงเหลือ GasAccount ปัจจุบัน:",
         "title": "ซื้อด้วย Apple Pay",
         "titleAndroid": "ซื้อด้วย Google Pay",
-        "titleApple": "ซื้อใน App Store"
+        "titleApple": "ซื้อใน App Store",
+        "topUpPayTips": "Gas ที่ต้องการ: {{topUpUsd}}, Gas คงเหลือประมาณ: {{balance}}"
       },
       "depositSelectPopup": {
         "title": "ฝากไปยัง GasAccount",
@@ -2106,7 +2118,8 @@
         "buyWith": "ซื้อด้วย",
         "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน",
         "buyWithApple": "ซื้อใน App Store",
-        "insufficientTokenBalance": "ยอดคงเหลือโทเค็นไม่เพียงพอ"
+        "insufficientTokenBalance": "ยอดคงเหลือโทเค็นไม่เพียงพอ",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "address": "ที่อยู่",
@@ -2123,16 +2136,19 @@
         "item1": "ไม่มีค่าธรรมเนียม Rabby",
         "desc1": "ไม่ต้องจ่ายค่าธรรมเนียมเพิ่มเติมสำหรับการจ่าย gas",
         "item2": "รองรับทุกเครือข่าย",
-        "desc2": "",
+        "desc2": "การชำระค่า Gas อัตโนมัติบน 80+ เครือข่าย",
         "item3": "รองรับการทำธุรกรรมทั้งหมด",
-        "desc3": "สลับ, สะพาน, ส่ง, DApps, & มากกว่า"
+        "desc3": "สลับ, สะพาน, ส่ง, DApps, & มากกว่า",
+        "title": "ชำระค่า Gas บนทุก Chain",
+        "subtitle": "เมื่อคุณหมด Gas"
       },
       "depositWith": "ฝากด้วย",
       "switchAccount": "เปลี่ยนกระเป๋าเงิน",
       "depositNow": "ฝากตอนนี้",
       "gasBalance": "ยอดก๊าซ",
       "depositFailed": "การถอนเงินล้มเหลว",
-      "lowBalance": "คุณไม่มีแก๊สเพียงพอ ฝากแก๊สเพื่อให้การทำธุรกรรมในอนาคตดำเนินไปอย่างราบรื่น"
+      "lowBalance": "คุณไม่มีแก๊สเพียงพอ ฝากแก๊สเพื่อให้การทำธุรกรรมในอนาคตดำเนินไปอย่างราบรื่น",
+      "depositSubmitted": "ฝากเงินเรียบร้อยแล้ว"
     },
     "addChain": {
       "title": "เพิ่มเครือข่ายที่กำหนดเองไปยัง Rabby",
@@ -3341,7 +3357,8 @@
     "market": {
       "tokenHeader": {
         "name": "ชื่อ",
-        "tokenAndName": "Token/ชื่อ"
+        "tokenAndName": "Token/ชื่อ",
+        "token": "โทเค็น"
       },
       "tabs": {
         "commodities": "สินค้าโภคภัณฑ์",
@@ -3565,6 +3582,7 @@
   },
   "backupReminder": {
     "action": "สำรองข้อมูลตอนนี้",
-    "title": "คุณยังไม่ได้สำรองข้อมูลกระเป๋าเงินของคุณ"
+    "title": "คุณยังไม่ได้สำรองข้อมูลกระเป๋าเงินของคุณ",
+    "badge": "ไม่ได้สำรองข้อมูล"
   }
 }
