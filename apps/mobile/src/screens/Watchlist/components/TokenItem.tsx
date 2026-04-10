@@ -116,6 +116,10 @@ const TokenListItemComponent = ({
   const displayPriceChange =
     realtimePrice?.price_24h_change ?? item.price_24h_change;
 
+  const hideSubLine = useMemo(() => {
+    return !item.asset && !item.identity?.fdv;
+  }, [item.asset, item.identity?.fdv]);
+
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
       {/* 左slot */}
@@ -150,33 +154,34 @@ const TokenListItemComponent = ({
                 </View>
               )}
             </View>
-            {/* FDV */}
-            <View style={styles.tokenAssetContainer}>
-              {!!item.asset && (
-                <>
-                  {item.asset?.logo ? (
-                    <Image
-                      source={{ uri: item.asset?.logo }}
-                      style={styles.fourMemeIcon}
-                      width={16}
-                      height={16}
-                    />
-                  ) : null}
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={styles.rwaName}>
-                    {item.asset?.name}
+            {!hideSubLine && (
+              <View style={styles.tokenAssetContainer}>
+                {!!item.asset && (
+                  <>
+                    {item.asset?.logo ? (
+                      <Image
+                        source={{ uri: item.asset?.logo }}
+                        style={styles.fourMemeIcon}
+                        width={16}
+                        height={16}
+                      />
+                    ) : null}
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={styles.rwaName}>
+                      {item.asset?.name}
+                    </Text>
+                    <Text style={styles.tokenFdvSeparator}>|</Text>
+                  </>
+                )}
+                {!!item.identity?.fdv && (
+                  <Text numberOfLines={1} style={styles.tokenFdv}>
+                    {formatUsdValueKMB(item.identity?.fdv ?? 0)}
                   </Text>
-                  <Text style={styles.tokenFdvSeparator}>|</Text>
-                </>
-              )}
-              {!!item.identity?.fdv && (
-                <Text numberOfLines={1} style={styles.tokenFdv}>
-                  {formatUsdValueKMB(item.identity?.fdv ?? 0)}
-                </Text>
-              )}
-            </View>
+                )}
+              </View>
+            )}
             {/* Chain Logo */}
           </View>
         </View>
