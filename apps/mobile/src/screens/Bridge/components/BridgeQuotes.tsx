@@ -11,7 +11,7 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { RcIconRefreshCC } from '@/assets2024/icons/browser';
+import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
 import { BridgeQuoteItem, bridgeQuoteScore } from './BridgeQuoteItem';
 import { QuoteLoading } from './loading';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -45,7 +45,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   },
 
   headerText: {
-    marginTop: 20,
+    marginTop: 14,
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '800',
@@ -54,18 +54,19 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     textAlign: 'center',
   },
   subtitleText: {
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 18,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 16,
   },
   refreshIconBtn: {
     position: 'absolute',
-    top: -10,
-    right: 20,
+    top: -2,
+    right: 24,
   },
   container: {
     flexGrow: 1,

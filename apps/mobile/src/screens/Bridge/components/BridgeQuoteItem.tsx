@@ -234,10 +234,11 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     justifyContent: 'center',
     borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingVertical: 16,
     borderWidth: 1,
     borderColor: 'transparent',
-    height: 92,
+    // height: 82,
+    gap: 2,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -252,9 +253,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     borderWidth: 1,
   },
   active: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['brand-light-1'],
     borderColor: colors2024['brand-light-2'],
   },
   normal: {
@@ -326,7 +325,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontStyle: 'normal',
-    fontWeight: '700',
+    fontWeight: '400',
     lineHeight: 18,
   },
   durationIcon: {
@@ -360,9 +359,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     right: 0,
     borderRadius: 0,
     borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
+    borderBottomRightRadius: 0,
     paddingHorizontal: 6,
-    paddingVertical: 4,
+    paddingVertical: 1,
   },
   bestBadge: {
     backgroundColor: colors2024['green-light-1'],
