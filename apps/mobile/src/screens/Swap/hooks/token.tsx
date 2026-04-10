@@ -31,6 +31,7 @@ import { Account } from '@/core/services/preference';
 import { useAutoSlippageEffect } from './autoSlippageEffect';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 export const enableInsufficientQuote = true;
 
@@ -930,7 +931,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   useFocusEffect(
     useCallback(() => {
       const refresh = () => {
-        if (autoQuoteRefreshPausedRef.current) {
+        if (
+          autoQuoteRefreshPausedRef.current ||
+          isGasAccountDepositFlowActive()
+        ) {
           return;
         }
         setTokenRefreshId(e => e + 1);

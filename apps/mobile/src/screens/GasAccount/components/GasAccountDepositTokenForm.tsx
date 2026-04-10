@@ -585,28 +585,29 @@ const GasAccountDepositTokenFormInner: React.FC<{
         pollCancelRef.current = cancel;
         const success = await pollPromise;
         pollCancelRef.current = null;
-
-        if (success) {
-          storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
-          const usedNonce = await fetchTopUpUsedNonce(
-            depositTxHash,
-            selectedToken.chain,
-            selectedOwnerAccount,
-          );
-          await onWaitDepositResult({
-            type: 'token',
-            ownerAddress: selectedOwnerAccount.address,
-            chainServerId: selectedToken.chain,
-            usedNonce,
-          });
-          await onDeposit?.();
-        } else {
-          toast.info(
-            t('page.gasAccount.depositFailed', {
-              defaultValue: 'Deposit failed',
-            }),
-            { position: toast.positions.CENTER },
-          );
+        if (success !== 'cancel') {
+          if (success) {
+            storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
+            const usedNonce = await fetchTopUpUsedNonce(
+              depositTxHash,
+              selectedToken.chain,
+              selectedOwnerAccount,
+            );
+            await onWaitDepositResult({
+              type: 'token',
+              ownerAddress: selectedOwnerAccount.address,
+              chainServerId: selectedToken.chain,
+              usedNonce,
+            });
+            await onDeposit?.();
+          } else {
+            toast.info(
+              t('page.gasAccount.depositFailed', {
+                defaultValue: 'Deposit failed',
+              }),
+              { position: toast.positions.CENTER },
+            );
+          }
         }
 
         await storeApiGasAccount.refreshHistory();

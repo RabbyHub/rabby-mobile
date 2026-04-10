@@ -13,6 +13,7 @@ import { formatUsdValue } from '@/utils/number';
 import { toast } from '@/components2024/Toast';
 import { usePendingHardwareGasAccountLogin } from './usePendingHardwareGasAccountLogin';
 import { useGasAccountBalance } from './useGasAccountBalance';
+import { setGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 type ActionButton = {
   text: string;
@@ -66,6 +67,7 @@ export const GasAccountTips: React.FC<{
   });
 
   const setDepositPopupVisible = (visible: boolean) => {
+    setGasAccountDepositFlowActive(visible);
     setTipPopupVisible(visible);
     onDepositPopupVisibleChange?.(visible);
   };

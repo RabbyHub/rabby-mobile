@@ -32,6 +32,7 @@ import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 export const enableInsufficientQuote = true;
 
@@ -1036,7 +1037,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   useFocusEffect(
     useCallback(() => {
       const refresh = () => {
-        if (autoQuoteRefreshPausedRef.current) {
+        if (
+          autoQuoteRefreshPausedRef.current ||
+          isGasAccountDepositFlowActive()
+        ) {
           return;
         }
         setTokenRefreshId(e => e + 1);

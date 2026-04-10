@@ -98,6 +98,7 @@ import {
 import { jotaiStore } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { TextInput } from '@/components/Typography';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 import { createAmountComparer, FormValuesOnSubmit } from '@/utils/form';
 import { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeContent';
@@ -1865,8 +1866,14 @@ export function useSendTokenForm({
       sendTokenEventsRef.current,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
         reFetch();
         setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
           reFetch();
         }, 5000);
       },

@@ -32,6 +32,7 @@ import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { Text } from '@/components/Typography';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -123,8 +124,14 @@ export default function BottomArea({ account }: { account: Account | null }) {
       sendTokenEvents,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
         fetchRisks();
         setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
           fetchRisks();
         }, 5000);
       },
