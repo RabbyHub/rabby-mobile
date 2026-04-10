@@ -2175,6 +2175,7 @@
     },
     "search": {
       "tokenHeader": {
+        "token": "Token",
         "tokenAndFdv": "Token/FDV"
       },
       "sectionHeader": {
