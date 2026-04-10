@@ -393,6 +393,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           console.error('getGasAccountBridgeQuote error', error);
           resetBridgeQuoteState();
           setBridgeQuoteError(validationMessages.fetchQuoteFailed);
+          toast.error(validationMessages.fetchQuoteFailed);
         })
         .finally(() => {
           setQuoteLoading(false);
