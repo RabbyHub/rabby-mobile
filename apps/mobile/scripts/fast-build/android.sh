@@ -201,14 +201,31 @@ prepare() {
 
   export reg_apk="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
   export template_apk="$work_dir/template.apk"
-  # rm -f $template_apk;
+  export template_hash_file="$work_dir/template.template-shell-hash"
+
+  revision_hash=$(collect_android_native_entries)
+
+  if [ -f "$template_apk" ]; then
+    cached_template_hash=""
+    if [ -f "$template_hash_file" ]; then
+      cached_template_hash=$(tr -d '\r\n' <"$template_hash_file")
+    fi
+
+    if [ -z "$cached_template_hash" ] || [ "$cached_template_hash" != "$revision_hash" ]; then
+      echo "[prepare] Local template APK is stale for current template shell hash, removing cached template."
+      rm -f "$template_apk" "$template_hash_file"
+    fi
+  fi
 
   if [ ! -f "$template_apk" ]; then
-    revision_hash=$(collect_android_native_entries)
     # allow failed
     download_template_apk_by_hash $revision_hash || {
       echo "Failed to download template APK"
     }
+
+    if [ -f "$template_apk" ]; then
+      printf '%s\n' "$revision_hash" >"$template_hash_file"
+    fi
   fi
 
   if [ ! -f "$template_apk" ] && [ -f "$reg_apk" ]; then
@@ -216,6 +233,7 @@ prepare() {
     read use_reg_apk
     if [ "$use_reg_apk" == "y" ]; then
       cp $reg_apk $template_apk
+      printf '%s\n' "$revision_hash" >"$template_hash_file"
     fi
   fi
 
