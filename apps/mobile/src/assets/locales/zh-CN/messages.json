@@ -816,11 +816,10 @@
       "blockDappFromSendingRequests": "阻止 Dapp 发送请求 1 分钟",
       "gasAccount": {
         "useGasAccount": "使用 GasAccount",
-        "deposit": "存入",
         "login": "登录",
         "loginFirst": "请先登录GasAccount",
+        "signWithHardwareWalletToUse": "你需要使用{{brand}}签名后才能使用",
         "chainNotSupported": "GasAccount 不支持该链",
-        "notEnough": "GasAccount 不足",
         "customRPC": "使用自定义 RPC 时不支持",
         "WalletConnectTips": "GasAccount 不支持 WalletConnect"
       },
@@ -863,7 +862,6 @@
         "more": "更多",
         "websites": "网站",
         "swap": "交换",
-        "gasAccount": "GasAccount",
         "dapps": "Dapps",
         "approvals": "授权",
         "search": "搜索 Token",
@@ -874,7 +872,8 @@
         "lending": "借贷",
         "predict": "预测",
         "meme": "Memecoin",
-        "market": "市场"
+        "market": "市场",
+        "gasDeposit": "Gas 充值"
       },
       "swipeUp": {
         "descAndroid": "点击探索 dApps",
@@ -1874,7 +1873,6 @@
         "invalidAmount": "必须在 500 以下",
         "amount": "金额",
         "token": "Token",
-        "selectToken": "选择 Token",
         "followingTokenInSufficient": "以下代币余额不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 手续费。不可提现",
         "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现",
@@ -1883,7 +1881,17 @@
         "inSufficientTip1": "这个钱包没有足够的 tokens，请选择其他钱包。",
         "paymentAddress": "支付钱包",
         "pay": "支付",
-        "applePayFeeDesc1": "包含应用商店费用。无提款。"
+        "applePayFeeDesc1": "包含应用商店费用。不支持提款。",
+        "unavailablePaymentWallet": "所选支付钱包不可用",
+        "balanceLabel": "余额",
+        "fetchQuoteFailed": "获取报价失败",
+        "selectToken": "选择要存入的 Token",
+        "gasDepositTitle": "Gas 充值",
+        "estReceiveLabel": "预计收款：{{usd}}",
+        "insufficientBalanceLabel": "余额不足",
+        "minAmountRequired": "最低存款金额为 $1",
+        "estReceiveTip": "服务通过 {{name}} 处理，可能会有滑点。",
+        "suggestedToken": "建议的代币"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
@@ -1930,8 +1938,9 @@
         "title": "存入GasAccount",
         "buyWithDesc": "30% 手续费，不可提款",
         "desc": "在所有链上支付 Gas 费用",
-        "depositToken": "使用 Token 存款",
-        "buyWithApple": "在应用商店购买"
+        "depositToken": "使用 Token 充值",
+        "buyWithApple": "在应用商店购买",
+        "insufficientTokenBalance": "余额不足"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 余额",
@@ -1942,9 +1951,24 @@
       "loginFailed": "登录失败",
       "depositSuccess": "存款成功",
       "depositCanceled": "存款已取消",
-      "switchAccount": "切换GasAccount",
       "loginSuccess": "登录成功",
-      "withdrawDisabledIAP": "由于您的余额中包含无法提取的法币资金，因此提款被禁用。请联系支持以提取您的代币余额。"
+      "withdrawDisabledIAP": "由于您的余额中包含无法提取的法币资金，因此提款被禁用。请联系支持以提取您的代币余额。",
+      "benefitCard": {
+        "title": "在所有链上支付 Gas 费用",
+        "subtitle": "当你没有 gas 的时候",
+        "item3": "支持所有交易",
+        "desc2": "80+ 网络上的自动 Gas 支付",
+        "desc3": "兑换、桥接、发送、DApps 等更多功能",
+        "item2": "支持所有网络",
+        "item1": "无 Rabby Fee",
+        "desc1": "无需支付额外的 gas 费用"
+      },
+      "depositNow": "立即存款",
+      "switchAccount": "切换钱包",
+      "depositWith": "充值",
+      "depositFailed": "存款失败",
+      "lowBalance": "您没有足够的 gas。请存入 gas 以确保未来交易顺利进行。",
+      "gasBalance": "Gas 余额"
     },
     "search": {
       "header": {
@@ -3345,8 +3369,8 @@
         "depositTitle": "存入 USDC/USDT 支付 Gas Fees"
       },
       "loginConfirmModal": {
-        "title": "选择钱包登录",
-        "desc": "登录后，您只能在此地址进行存款。"
+        "desc": "登录后，您只能在此地址进行存款。",
+        "title": "切换钱包"
       },
       "depositPopup": {
         "token": "Token",

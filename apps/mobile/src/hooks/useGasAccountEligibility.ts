@@ -1,7 +1,6 @@
-import { useCallback, useState, useRef, useMemo } from 'react';
+import { useCallback } from 'react';
 import { gasAccountService } from '@/core/services/shared';
 import { ClaimedGiftAddress } from '@/core/services/gasAccount';
-import { useGasAccountMethods } from '@/screens/GasAccount/hooks';
 import { useAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { zCreate } from '@/core/utils/reexports';
@@ -81,8 +80,6 @@ const checkAddressesEligibility = makeAvoidParallelAsyncFunc(
       );
       return doReturn(result);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to check eligibility';
       throw err;
     } finally {
       reFetchStatus();
@@ -92,6 +89,7 @@ const checkAddressesEligibility = makeAvoidParallelAsyncFunc(
 
 export const useGasAccountEligibility = () => {
   const { accounts } = useAccounts({ disableAutoFetch: true });
+  const currentEligibleAddress = gasAccountState(s => s.currentEligibleAddress);
 
   const isEligible = gasAccountState(
     s =>
@@ -162,6 +160,7 @@ export const useGasAccountEligibility = () => {
 
   return {
     isEligible,
+    currentEligibleAddress,
     checkAddressesEligibility,
     claimGift,
   };

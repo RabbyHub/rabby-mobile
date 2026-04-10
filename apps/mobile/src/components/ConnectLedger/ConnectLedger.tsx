@@ -147,7 +147,7 @@ export const ConnectLedger: React.FC<{
 
   const handleSelectDevice = React.useCallback(
     async device => {
-      apiLedger.setDeviceId(device.id);
+      await apiLedger.setDeviceId(device.id);
       if (onSelectDevice) {
         onSelectDevice(device);
       } else {

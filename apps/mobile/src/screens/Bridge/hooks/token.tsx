@@ -30,7 +30,9 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
 import { isTokenMarketClosed } from '@/utils/token';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 export const enableInsufficientQuote = true;
 
@@ -201,6 +203,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   >();
 
   const expiredTimer = useRef<NodeJS.Timeout>(undefined);
+  const autoQuoteRefreshPausedRef = useRef(false);
 
   const inSufficient = useMemo(
     () =>
@@ -367,12 +370,40 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         clearTimeout(expiredTimer.current);
       }
 
-      if (!quote?.manualClick && quote) {
+      if (
+        !quote?.manualClick &&
+        quote &&
+        shouldScheduleQuotePolling({
+          enabled: true,
+          paused: autoQuoteRefreshPausedRef.current,
+        })
+      ) {
         expiredTimer.current = setTimeout(() => {
-          setRefreshId(e => e + 1);
+          if (
+            shouldScheduleQuotePolling({
+              enabled: true,
+              paused: autoQuoteRefreshPausedRef.current,
+            })
+          ) {
+            setRefreshId(e => e + 1);
+          }
         }, 1000 * 30);
       }
       setOriSelectedBridgeQuote(quote);
+    },
+    [setRefreshId],
+  );
+
+  const setAutoQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      autoQuoteRefreshPausedRef.current = paused;
+      if (paused) {
+        if (expiredTimer.current) {
+          clearTimeout(expiredTimer.current);
+        }
+        return;
+      }
+      setRefreshId(e => e + 1);
     },
     [setRefreshId],
   );
@@ -1006,6 +1037,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   useFocusEffect(
     useCallback(() => {
       const refresh = () => {
+        if (
+          autoQuoteRefreshPausedRef.current ||
+          isGasAccountDepositFlowActive()
+        ) {
+          return;
+        }
         setTokenRefreshId(e => e + 1);
       };
       eventBus.addListener(EVENTS.RELOAD_TX, refresh);
@@ -1059,6 +1096,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     payTokenIsNativeToken,
 
     setSelectedBridgeQuote,
+    setAutoQuoteRefreshPaused,
     ...slippageObj,
 
     onChangeSlider,

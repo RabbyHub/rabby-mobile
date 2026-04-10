@@ -28,10 +28,11 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
 import { apiProvider } from '@/core/apis';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { last, noop } from 'lodash';
@@ -89,12 +90,16 @@ function ToggleCollateralContent({}: {}) {
   const [isChecked, setIsChecked] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: txs.length ? txs?.[0]?.chainId + '' : '',
     autoResetGasStoreOnChainChange: true,
   });
-  const { ctx } = useSignatureStore();
+  const { ctx } = useSignatureStoreOf(instance);
 
   const afterHF = useMemo(() => {
     if (!currentToggleReserve || !userSummary) {
@@ -460,119 +465,123 @@ function ToggleCollateralContent({}: {}) {
     return null;
   }
   return (
-    <View style={styles.modal}>
-      <View
-        style={styles.overlay}
-        onTouchEnd={() => setIsShowToggleCollateralModal(false)}>
-        <View style={[styles.container]} onTouchEnd={e => e.stopPropagation()}>
-          <View style={styles.closeButton}>
-            <TouchableOpacity
-              onPress={() => setIsShowToggleCollateralModal(false)}>
-              <IconCloseCC
-                width={20}
-                height={20}
-                color={colors2024['neutral-foot']}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            {!!desc && (
-              <View
-                style={[
-                  styles.errorMessageContainer,
-                  {
-                    backgroundColor: cardColors.bgColor,
-                  },
-                ]}>
-                <RcIconWarningCircleCC
-                  width={15}
-                  height={15}
-                  color={cardColors.iconColor}
+    <SignatureInstanceProvider instance={instance}>
+      <View style={styles.modal}>
+        <View
+          style={styles.overlay}
+          onTouchEnd={() => setIsShowToggleCollateralModal(false)}>
+          <View
+            style={[styles.container]}
+            onTouchEnd={e => e.stopPropagation()}>
+            <View style={styles.closeButton}>
+              <TouchableOpacity
+                onPress={() => setIsShowToggleCollateralModal(false)}>
+                <IconCloseCC
+                  width={20}
+                  height={20}
+                  color={colors2024['neutral-foot']}
                 />
-                <Text
+              </TouchableOpacity>
+            </View>
+            <View style={styles.header}>
+              <Text style={styles.title}>{title}</Text>
+              {!!desc && (
+                <View
                   style={[
-                    styles.errorMessage,
+                    styles.errorMessageContainer,
                     {
-                      color: cardColors.textColor,
+                      backgroundColor: cardColors.bgColor,
                     },
                   ]}>
-                  {desc}
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.bodyContainer}>
-            {!!currentToggleReserve && userSummary && (
-              <ToggleCollateralOverView
-                reserve={currentToggleReserve}
-                afterHF={afterHF}
-                userSummary={userSummary}
-              />
-            )}
-            {!!txs.length &&
-              canShowDirectSubmit &&
-              !isRiskToLiquidation &&
-              !isError && (
-                <View style={styles.gasPreContainer}>
-                  <DirectSignGasInfo
-                    supportDirectSign={true}
-                    loading={isLoading}
-                    openShowMore={noop}
-                    chainServeId={chainInfo?.serverId || ''}
+                  <RcIconWarningCircleCC
+                    width={15}
+                    height={15}
+                    color={cardColors.iconColor}
                   />
+                  <Text
+                    style={[
+                      styles.errorMessage,
+                      {
+                        color: cardColors.textColor,
+                      },
+                    ]}>
+                    {desc}
+                  </Text>
                 </View>
               )}
-          </View>
-          {RiskContent}
-          <View style={styles.btnContainer}>
-            {canShowDirectSubmit ? (
-              <DirectSignBtn
-                loading={isLoading}
-                loadingType="circle"
-                key={`${currentToggleReserve?.underlyingAsset}`}
-                showTextOnLoading
-                wrapperStyle={styles.directSignBtn}
-                authTitle={btnTitle}
-                title={btnTitle}
-                titleStyle={styles.directSignBtnTitle}
-                onFinished={() => handleToggleCollateral()}
-                disabled={
-                  !txs.length ||
-                  isLoading ||
-                  !currentAccount ||
-                  !!ctx?.disabledProcess ||
-                  (isRisky && !isChecked) ||
-                  isRiskToLiquidation ||
-                  isError
-                }
-                type="aave"
-                syncUnlockTime
-                account={currentAccount}
-                showHardWalletProcess
-              />
-            ) : (
-              <Button
-                loadingType="circle"
-                showTextOnLoading
-                containerStyle={styles.fullWidthButton}
-                onPress={() => handleToggleCollateral()}
-                title={btnTitle}
-                loading={isLoading}
-                disabled={
-                  !txs.length ||
-                  isLoading ||
-                  !currentAccount ||
-                  (isRisky && !isChecked) ||
-                  isRiskToLiquidation ||
-                  isError
-                }
-              />
-            )}
+            </View>
+            <View style={styles.bodyContainer}>
+              {!!currentToggleReserve && userSummary && (
+                <ToggleCollateralOverView
+                  reserve={currentToggleReserve}
+                  afterHF={afterHF}
+                  userSummary={userSummary}
+                />
+              )}
+              {!!txs.length &&
+                canShowDirectSubmit &&
+                !isRiskToLiquidation &&
+                !isError && (
+                  <View style={styles.gasPreContainer}>
+                    <DirectSignGasInfo
+                      supportDirectSign={true}
+                      loading={isLoading}
+                      openShowMore={noop}
+                      chainServeId={chainInfo?.serverId || ''}
+                    />
+                  </View>
+                )}
+            </View>
+            {RiskContent}
+            <View style={styles.btnContainer}>
+              {canShowDirectSubmit ? (
+                <DirectSignBtn
+                  loading={isLoading}
+                  loadingType="circle"
+                  key={`${currentToggleReserve?.underlyingAsset}`}
+                  showTextOnLoading
+                  wrapperStyle={styles.directSignBtn}
+                  authTitle={btnTitle}
+                  title={btnTitle}
+                  titleStyle={styles.directSignBtnTitle}
+                  onFinished={() => handleToggleCollateral()}
+                  disabled={
+                    !txs.length ||
+                    isLoading ||
+                    !currentAccount ||
+                    !!ctx?.disabledProcess ||
+                    (isRisky && !isChecked) ||
+                    isRiskToLiquidation ||
+                    isError
+                  }
+                  type="aave"
+                  syncUnlockTime
+                  account={currentAccount}
+                  showHardWalletProcess
+                />
+              ) : (
+                <Button
+                  loadingType="circle"
+                  showTextOnLoading
+                  containerStyle={styles.fullWidthButton}
+                  onPress={() => handleToggleCollateral()}
+                  title={btnTitle}
+                  loading={isLoading}
+                  disabled={
+                    !txs.length ||
+                    isLoading ||
+                    !currentAccount ||
+                    (isRisky && !isChecked) ||
+                    isRiskToLiquidation ||
+                    isError
+                  }
+                />
+              )}
+            </View>
           </View>
         </View>
       </View>
-    </View>
+    </SignatureInstanceProvider>
   );
 }
 

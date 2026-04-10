@@ -356,7 +356,7 @@ export const TransactionItem = ({
 
     switch (formatType) {
       case HistoryItemCateType.GAS_DEPOSIT:
-        address = ToText + t('page.home.services.gasAccount');
+        address = ToText + t('page.home.services.gasDeposit');
         break;
       case HistoryItemCateType.Send:
         const acData = data.maxGasTx?.action?.actionData.send;
