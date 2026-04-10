@@ -28,6 +28,7 @@ import {
   eventBus,
 } from '@/utils/events';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
+import { shouldAutoSwitchToGasAccountFromGasless } from '../FooterBar/gasLessDecision';
 import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
 import RcCheckSecurity from '@/assets2024/icons/common/check-security.svg';
 import RcCheckSecurityDark from '@/assets2024/icons/common/check-security-dark.svg';
@@ -36,6 +37,7 @@ import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
+import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -61,13 +63,14 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasMethod?: 'native' | 'gasAccount';
   gasAccountCost?: GasAccountCheckResult;
   onChangeGasAccount?: () => void;
-  isGasAccountLogin?: boolean;
   isWalletConnect?: boolean;
   gasAccountCanPay?: boolean;
   noCustomRPC?: boolean;
   canGotoUseGasAccount?: boolean;
+  disableGasAccountDeposit?: boolean;
   rejectApproval?(): void;
   onDeposit?(): void;
+  onWaitDepositResult?: GasAccountTopUpWaitCallback;
   gasAccountAddress?: string;
   canDepositUseGasAccount?: boolean;
   isFirstGasCostLoading?: boolean;
@@ -223,15 +226,16 @@ export const MiniFooterBar: React.FC<Props> = ({
   gasAccountCost,
   gasMethod,
   onChangeGasAccount,
-  isGasAccountLogin,
   isWalletConnect,
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
+  disableGasAccountDeposit = false,
   canDepositUseGasAccount,
   task,
   rejectApproval,
   onDeposit,
+  onWaitDepositResult,
   gasAccountAddress,
   isFirstGasCostLoading,
   isFirstGasLessLoading,
@@ -285,7 +289,14 @@ export const MiniFooterBar: React.FC<Props> = ({
     if (!isFirstGasCostLoading && !isFirstGasLessLoading) {
       isSetGasMethodRef.current = true;
 
-      if (showGasLess && !canUseGasLess && canGotoUseGasAccount) {
+      if (
+        shouldAutoSwitchToGasAccountFromGasless({
+          showGasLess,
+          isGasNotEnough: !!isGasNotEnough,
+          canUseGasLess,
+          canGotoUseGasAccount: !!canGotoUseGasAccount,
+        })
+      ) {
         onChangeGasAccount?.();
       }
 
@@ -301,7 +312,9 @@ export const MiniFooterBar: React.FC<Props> = ({
 
       if (
         showGasLess &&
+        isGasNotEnough &&
         directSubmit &&
+        !canUseGasLess &&
         (canGotoUseGasAccount || (isSimpleOrHdKeyring && otherGasAccountError))
       ) {
         onChangeGasAccount?.();
@@ -315,6 +328,7 @@ export const MiniFooterBar: React.FC<Props> = ({
     directSubmit,
     canGotoUseGasAccount,
     canUseGasLess,
+    isGasNotEnough,
     isFirstGasCostLoading,
     isFirstGasLessLoading,
     onChangeGasAccount,
@@ -369,8 +383,11 @@ export const MiniFooterBar: React.FC<Props> = ({
                 ) : isWatchAddr ||
                   account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                   <GasLessNotEnough
+                    nativeTokenInsufficient={isGasNotEnough}
                     canGotoUseGasAccount={canGotoUseGasAccount}
-                    canDepositUseGasAccount={canDepositUseGasAccount}
+                    canDepositUseGasAccount={
+                      disableGasAccountDeposit ? false : canDepositUseGasAccount
+                    }
                     onChangeGasAccount={onChangeGasAccount}
                     gasAccountAddress={gasAccountAddress!}
                     gasAccountCost={gasAccountCost}
@@ -378,12 +395,9 @@ export const MiniFooterBar: React.FC<Props> = ({
                       onDeposit?.();
                       onChangeGasAccount?.();
                     }}
-                    onGotoGasAccount={() => {
-                      rejectApproval?.();
-                      navigateDeprecated(RootNames.StackTransaction, {
-                        screen: RootNames.GasAccount,
-                        params: {},
-                      });
+                    onWaitDepositResult={async result => {
+                      await onWaitDepositResult?.(result);
+                      onChangeGasAccount?.();
                     }}
                   />
                 )
@@ -395,17 +409,13 @@ export const MiniFooterBar: React.FC<Props> = ({
                   <GasAccountTips
                     gasAccountAddress={gasAccountAddress!}
                     gasAccountCost={gasAccountCost}
-                    isGasAccountLogin={isGasAccountLogin}
+                    onChangeGasAccount={onChangeGasAccount}
                     isWalletConnect={isWalletConnect}
                     noCustomRPC={noCustomRPC}
+                    nativeTokenInsufficient={isGasNotEnough}
                     onDeposit={onDeposit}
-                    onGotoGasAccount={() => {
-                      rejectApproval?.();
-                      navigateDeprecated(RootNames.StackTransaction, {
-                        screen: RootNames.GasAccount,
-                        params: {},
-                      });
-                    }}
+                    onWaitDepositResult={onWaitDepositResult}
+                    disableDepositAction={disableGasAccountDeposit}
                   />
                 )
               ) : null}

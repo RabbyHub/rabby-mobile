@@ -647,6 +647,7 @@ const PROTECTED_SCREENS: {
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),
   [RootNames.CreateMnemonicVerify]: getProtectedConf(),
   [RootNames.BackupPrivateKey]: getProtectedConf(),
+  [RootNames.ImportSecret]: getProtectedConf(),
 };
 
 function getAtSensitiveScreenInfo(routeName: string | undefined) {

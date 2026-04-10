@@ -147,6 +147,9 @@ export function TabsTopHeader(): JSX.Element {
     return formatSmallCurrencyValue(totalBalance, { currency });
   }, [currency, totalBalance]);
   const changePercent = useMemo(() => {
+    if (!data.changePercent) {
+      return '';
+    }
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
 
@@ -185,17 +188,19 @@ export function TabsTopHeader(): JSX.Element {
           style={styles.leftBox}
           onPress={() => handleSwitchToTokenTab(0)}>
           <Text style={styles.balanceTextBox}>{netWorth}</Text>
-          <Text
-            style={[
-              styles.changePercentText,
-              {
-                color: data.isLoss
-                  ? colors2024['red-default']
-                  : colors2024['green-default'],
-              },
-            ]}>
-            {changePercent}
-          </Text>
+          {changePercent ? (
+            <Text
+              style={[
+                styles.changePercentText,
+                {
+                  color: data.isLoss
+                    ? colors2024['red-default']
+                    : colors2024['green-default'],
+                },
+              ]}>
+              {changePercent}
+            </Text>
+          ) : null}
           {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
           isTop10BalanceLoading ? (
             <LoadingCircle />

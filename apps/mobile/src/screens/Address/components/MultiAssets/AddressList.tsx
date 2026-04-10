@@ -52,6 +52,7 @@ const AddressList = ({
     return myTop10Accounts
       .map(item => {
         const account = balanceMap[item.address.toLowerCase()];
+        const canShowChange = !!account;
 
         const balance = account?.totalBalance || item.balance || 0;
         const evmBalance = account?.evmBalance || item.evmBalance || 0;
@@ -66,8 +67,8 @@ const AddressList = ({
           ...item,
           balance,
           evmBalance,
-          changPercent: changeData ? changePercent : undefined,
-          isLoss: changeData ? assetsChange < 0 : undefined,
+          changPercent: changeData && canShowChange ? changePercent : undefined,
+          isLoss: changeData && canShowChange ? assetsChange < 0 : undefined,
         };
       })
       .sort((a, b) => b.balance - a.balance);

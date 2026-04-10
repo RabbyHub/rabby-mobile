@@ -624,6 +624,7 @@ export const sendTransactionByMiniSignV2 = async ({
   session,
   account: _account,
   preExecResult,
+  onSigningTxCreated,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -637,6 +638,7 @@ export const sendTransactionByMiniSignV2 = async ({
   session?: Parameters<typeof apiProvider.ethSendTransaction>[0]['session'];
   account: Account;
   preExecResult: ExplainTxResponse;
+  onSigningTxCreated?: (signingTxId: string) => void;
 }) => {
   onProgress?.('building');
 
@@ -648,6 +650,7 @@ export const sendTransactionByMiniSignV2 = async ({
   const currentAccount = _account;
 
   const signingTxId = await transactionHistoryService.addSigningTx(tx);
+  onSigningTxCreated?.(signingTxId);
 
   const reportGasLevel = miscService.getCurrentGasLevel() || 'normal';
 

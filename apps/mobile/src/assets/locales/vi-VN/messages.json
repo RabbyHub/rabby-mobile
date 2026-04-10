@@ -347,7 +347,6 @@
       },
       "gasAccount": {
         "WalletConnectTips": "GasAccount không hỗ trợ WalletConnect",
-        "notEnough": "GasAccount không đủ",
         "chainNotSupported": "Chuỗi này không được GasAccount hỗ trợ",
         "useGasAccount": "Sử dụng GasAccount",
         "login": "Đăng nhập",
@@ -1284,7 +1283,6 @@
         "send": "Gửi",
         "more": "Thêm",
         "dapps": "Dapps",
-        "gasAccount": "GasAccount",
         "bridge": "Bridge",
         "approvals": "Phê duyệt",
         "queue": "Hàng chờ",
@@ -1299,7 +1297,8 @@
         "lending": "Cho vay",
         "predict": "Dự đoán",
         "meme": "Memecoin",
-        "market": "Thị trường"
+        "market": "Thị trường",
+        "gasDeposit": "Tiền gửi Gas"
       },
       "swipeUp": {
         "descMore": "Kéo lên để khám phá thêm nhiều trang web",
@@ -1764,7 +1763,6 @@
       },
       "depositPopup": {
         "invalidAmount": "Phải dưới 500",
-        "selectToken": "Chọn Token",
         "zeroInvalidAmount": "Số tiền không thể bằng 0",
         "amount": "Số lượng",
         "token": "Token",
@@ -1778,7 +1776,17 @@
         "paymentAddress": "Ví thanh toán",
         "inSufficientTip1": "Ví dụ này không có đủ token. Vui lòng chọn một ví khác.",
         "pay": "Thanh toán",
-        "applePayFeeDesc1": "Bao gồm phí App Store. Không có rút tiền."
+        "applePayFeeDesc1": "Bao gồm phí App Store. Không có rút tiền.",
+        "insufficientBalanceLabel": "Số dư không đủ",
+        "fetchQuoteFailed": "Không thể lấy báo giá",
+        "suggestedToken": "Token Được Đề Xuất",
+        "selectToken": "Chọn Token để nạp tiền",
+        "minAmountRequired": "Số tiền gửi tối thiểu là 1 đô la",
+        "balanceLabel": "Số dư",
+        "gasDepositTitle": "Tiền gửi Gas",
+        "unavailablePaymentWallet": "Ví wallet đã chọn không khả dụng",
+        "estReceiveTip": "Dịch vụ được xử lý thông qua {{name}}, có thể có độ trượt giá",
+        "estReceiveLabel": "Est. Nhận: {{usd}}"
       },
       "paymentAddressPopup": {
         "confirm": "Xác nhận",
@@ -1829,7 +1837,8 @@
         "buyWithDesc": "30% phí, không rút tiền",
         "depositTokenDesc": "Không có phí bổ sung, rút tiền ngay lập tức",
         "desc": "Trả Phí Gas trên Tất Cả Các Chuỗi",
-        "buyWithApple": "Mua trong App Store"
+        "buyWithApple": "Mua trong App Store",
+        "insufficientTokenBalance": "Số dư Token không đủ"
       },
       "gasAccountList": {
         "balance": "Số dư",
@@ -1839,10 +1848,23 @@
       },
       "depositSuccess": "Nạp tiền thành công",
       "depositCanceled": "Gửi tiền đã hủy",
-      "switchAccount": "Chuyển đổi GasAccount",
       "loginFailed": "Đăng nhập thất bại",
       "loginSuccess": "Đăng nhập thành công",
-      "withdrawDisabledIAP": "Việc rút tiền bị vô hiệu hóa vì số dư của bạn bao gồm tiền fiat, không thể rút được. Liên hệ hỗ trợ để rút số dư token của bạn"
+      "withdrawDisabledIAP": "Việc rút tiền bị vô hiệu hóa vì số dư của bạn bao gồm tiền fiat, không thể rút được. Liên hệ hỗ trợ để rút số dư token của bạn",
+      "benefitCard": {
+        "item2": "Hỗ trợ tất cả các mạng",
+        "item3": "Hỗ trợ tất cả các giao dịch",
+        "desc2": "",
+        "desc1": "Không có phí bổ sung để thanh toán gas",
+        "item1": "Không có phí Rabby",
+        "desc3": "Hoán đổi, Cầu, Gửi, DApps, & nhiều hơn nữa"
+      },
+      "depositNow": "Nạp ngay",
+      "switchAccount": "Chuyển Wallet",
+      "depositFailed": "Nạp tiền không thành công",
+      "depositWith": "Gửi tiền với",
+      "gasBalance": "Số dư Gas",
+      "lowBalance": "Bạn không có đủ gas. Nạp gas để đảm bảo các giao dịch trong tương lai diễn ra suôn sẻ."
     },
     "setting": {
       "aboutUs": "Về Chúng Tôi",
@@ -3341,8 +3363,8 @@
         "desc": "Gửi tiền vào tài khoản DeBank L2 của Rabby mà không mất phí — rút tiền bất cứ lúc nào."
       },
       "loginConfirmModal": {
-        "title": "Chọn Ví để Đăng Nhập",
-        "desc": "Khi đăng nhập, bạn chỉ có thể gửi tiền vào địa chỉ này."
+        "desc": "Khi đăng nhập, bạn chỉ có thể gửi tiền vào địa chỉ này.",
+        "title": "Chuyển ví"
       },
       "withdrawPopup": {
         "to": "Đến",

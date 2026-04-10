@@ -5,6 +5,7 @@ import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 export const ShowMoreOnSend = ({ chainServeId }: { chainServeId: string }) => {
   const {
     computed: { canSubmit, canDirectSign },
+    callbacks: { setReloadTxRefreshPaused },
   } = useSendTokenInternalContext();
 
   if (!canSubmit || !canDirectSign) return null;
@@ -16,6 +17,7 @@ export const ShowMoreOnSend = ({ chainServeId }: { chainServeId: string }) => {
         loading={false}
         openShowMore={() => void 0}
         chainServeId={chainServeId}
+        onDepositPopupVisibleChange={setReloadTxRefreshPaused}
       />
     </View>
   );

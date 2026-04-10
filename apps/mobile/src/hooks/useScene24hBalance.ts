@@ -20,6 +20,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { perfEvents } from '@/core/utils/perf';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
+import balanceStore, { IBalanceData } from '@/store/balance';
 const queues: Record<BalanceScene, PQueue> = {
   Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
 };
@@ -57,6 +58,7 @@ const scene24hBalanceStore = zCreate<Multi24hBalanceState>(() => ({
     Home: computeCombined24hBalanceData({
       addresses: [],
       multi24hBalance: {},
+      balanceMap: {},
       totalEvmBalance: 0,
       totalBalance: 0,
     }),
@@ -161,6 +163,7 @@ function onComputedSceneCombinedData<T extends BalanceScene>(
   const combinedData = computeCombined24hBalanceData({
     addresses,
     multi24hBalance,
+    balanceMap: balanceStore.getState().balanceMap,
     totalEvmBalance: input.totalEvmBalance,
     totalBalance: input.totalBalance,
   });
@@ -248,24 +251,22 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
         sceneLastLoadingRef[scene] = Date.now();
       }
       setSceneLoading(scene, !!force);
-      beforeReturn();
       const nextCheckAddress = new Set([...address]);
       address.forEach(_addr => {
         const addr = _addr.toLowerCase();
         setSceneAddrLoading(scene, addr, true);
         const cacheData = getBalance24hCache(addr);
         const existedData = !!getMulti24hBalanceBy(addr);
-        if (!existedData && cacheData?.data)
+        const shouldHydrateFromCache =
+          !!cacheData?.data && (!existedData || !cacheData.isExpired);
+        if (shouldHydrateFromCache) {
           setMulti24hBalance(addr, {
             ...cacheData.data,
             updateTime: cacheData.updateTime,
           });
+        }
         if (cacheData?.data && !cacheData?.isExpired) {
           nextCheckAddress.delete(addr);
-          setMulti24hBalance(addr, {
-            ...cacheData.data,
-            updateTime: cacheData.updateTime,
-          });
         }
       });
       beforeReturn();
@@ -451,21 +452,37 @@ export function useScene24hBalanceLightWeightData(scene: BalanceScene) {
 function computeCombined24hBalanceData(input: {
   addresses: string[];
   multi24hBalance: Multi24hBalance;
+  balanceMap: Record<string, IBalanceData>;
   totalEvmBalance: number;
   totalBalance: number;
 }) {
-  const { addresses, multi24hBalance, totalEvmBalance, totalBalance } = input;
+  const {
+    addresses,
+    multi24hBalance,
+    balanceMap,
+    totalEvmBalance,
+    totalBalance,
+  } = input;
 
   const list = addresses.map(address => {
     const data = multi24hBalance[address.toLowerCase()];
     return data;
   });
-  const isAllGet = list.length === addresses.length;
+  const hasAll24hBalance = addresses.every(address => {
+    return !!multi24hBalance[address.toLowerCase()];
+  });
+  const hasAllCurrentBalance = addresses.every(address => {
+    return !!balanceMap[address.toLowerCase()];
+  });
+  const canShowChange =
+    addresses.length > 0 && hasAll24hBalance && hasAllCurrentBalance;
   const total24hBalance = list.reduce((res, item) => {
     return res + (item?.total_usd_value || 0);
   }, 0);
-  const assetsChange = (totalEvmBalance || 0) - total24hBalance;
-  const rawNetWorth = isAllGet ? totalBalance || 0 : 0;
+  const assetsChange = canShowChange
+    ? (totalEvmBalance || 0) - total24hBalance
+    : 0;
+  const rawNetWorth = canShowChange ? totalBalance || 0 : 0;
 
   return {
     list,
@@ -473,11 +490,12 @@ function computeCombined24hBalanceData(input: {
     netWorth: formatSmallUsdValue(totalBalance || 0),
     rawChange: assetsChange,
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
-    changePercent:
-      total24hBalance !== 0
+    changePercent: canShowChange
+      ? total24hBalance !== 0
         ? `${Math.abs((assetsChange * 100) / total24hBalance).toFixed(2)}%`
-        : `${totalEvmBalance === 0 ? '0' : '100.00'}%`,
-    isLoss: assetsChange < 0,
+        : `${totalEvmBalance === 0 ? '0' : '100.00'}%`
+      : '',
+    isLoss: canShowChange ? assetsChange < 0 : false,
     isEmptyAssets: total24hBalance === 0 && totalEvmBalance === 0,
   };
 }

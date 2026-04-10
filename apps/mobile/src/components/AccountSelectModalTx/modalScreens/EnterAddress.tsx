@@ -19,7 +19,7 @@ import {
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
-import { openapi } from '@/core/request';
+import { resolveEnsAddressByName } from '@/utils/ens';
 import { debounce, throttle } from 'lodash';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { useAccountSelectModalCtx } from '../hooks';
@@ -50,18 +50,6 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
-const debouncedGetEnsAddress = debounce(
-  (
-    input: string,
-    callback: (result: any) => void,
-    errorCallback: (e: any) => void,
-  ) => {
-    openapi.getEnsAddressByName(input).then(callback).catch(errorCallback);
-  },
-  500,
-  { leading: false, trailing: true },
-);
-
 const ScreenPanelEnterAddress = ({
   onCleanupInput,
   newValue,
@@ -82,6 +70,21 @@ const ScreenPanelEnterAddress = ({
     addr: string;
     name: string;
   }>(null);
+  const debouncedResolveEns = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          callback: (result: { addr: string; name: string } | null) => void,
+        ) => {
+          const result = await resolveEnsAddressByName(value);
+          callback(result);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
 
   const isValidAddr = useMemo(
     () => isValidAddress(input as `0x${string}`),
@@ -209,30 +212,32 @@ const ScreenPanelEnterAddress = ({
   useEffect(() => {
     if (!input) {
       setError(undefined);
+      setEnsResult(null);
       return;
     }
     if (isValidAddress(input as `0x${string}`)) {
       setError(undefined);
+      setEnsResult(null);
+      debouncedResolveEns.cancel();
       return;
     }
 
-    debouncedGetEnsAddress(
-      input,
-      result => {
-        if (result && result.addr) {
-          setEnsResult(result);
-          setError(undefined);
-        } else {
-          setEnsResult(null);
-          setError(INPUT_ERROR.INVALID_ADDRESS);
-        }
-      },
-      () => {
+    debouncedResolveEns(input, result => {
+      if (result && result.addr) {
+        setEnsResult(result);
+        setError(undefined);
+      } else {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      },
-    );
-  }, [input]);
+      }
+    });
+  }, [input, debouncedResolveEns]);
+
+  useEffect(() => {
+    return () => {
+      debouncedResolveEns.cancel();
+    };
+  }, [debouncedResolveEns]);
 
   useEffect(() => {
     if (newValue) {

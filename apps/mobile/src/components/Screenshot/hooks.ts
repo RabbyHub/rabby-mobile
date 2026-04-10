@@ -24,6 +24,11 @@ import { useShallow } from 'zustand/react/shallow';
 import { zCreate } from '@/core/utils/reexports';
 import DeviceUtils from '@/core/utils/device';
 import { perfEvents } from '@/core/utils/perf';
+import {
+  getVisibleBlockingModalIds,
+  hasVisibleBlockingModal,
+  MODAL_GATE_IDS,
+} from '@/utils/modalGate';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
   IS_ANDROID && !DeviceUtils.isGteAndroid(14);
@@ -344,6 +349,8 @@ function getDefaultValue(): FeedbackByScreenshotState {
   };
 }
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
+const DEBUG_SCREENSHOT_DATA_URI =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9s2vNh0AAAAASUVORK5CYII=';
 const feedbackByScreenshotStore = zCreate<FeedbackByScreenshotState>(() => ({
   ...getDefaultValue(),
 }));
@@ -425,6 +432,22 @@ const setLastScreenshot = (
   image: ImageResolvedAssetSource | null,
   uploadNow = false,
 ) => {
+  if (
+    image &&
+    hasVisibleBlockingModal({
+      excludeIds: [MODAL_GATE_IDS.screenshotFeedback],
+    })
+  ) {
+    __DEV__ &&
+      console.debug(
+        '[modal-gate] skip screenshot feedback modal open, blocking modals:',
+        getVisibleBlockingModalIds({
+          excludeIds: [MODAL_GATE_IDS.screenshotFeedback],
+        }),
+      );
+    return;
+  }
+
   setFeedbackByScreenshot(prev => ({
     ...prev,
     lastScreenshot: image,
@@ -445,6 +468,17 @@ const setLastScreenshot = (
     );
   }
 };
+
+export function debugShowSubmitFeedbackByScreenshotModal() {
+  setLastScreenshot(
+    Image.resolveAssetSource({
+      uri: DEBUG_SCREENSHOT_DATA_URI,
+      width: 1179,
+      height: 2556,
+      scale: 1,
+    }),
+  );
+}
 
 if (IS_ANDROID && !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) {
   RNScreenshotPrevent.startScreenCaptureDetection().then(() => {

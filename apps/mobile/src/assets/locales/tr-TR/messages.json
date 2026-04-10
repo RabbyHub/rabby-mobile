@@ -465,7 +465,6 @@
       },
       "gasAccount": {
         "deposit": "Yatırma",
-        "notEnough": "GasAccount yeterli değil.",
         "login": "Giriş yap",
         "customRPC": "Özel RPC kullanılırken desteklenmiyor.",
         "chainNotSupported": "Bu zincir GasAccount tarafından desteklenmiyor.",
@@ -1033,7 +1032,6 @@
     "home": {
       "services": {
         "history": "İşlemler",
-        "gasAccount": "GasAccount",
         "send": "Gönder",
         "approvals": "Onaylar",
         "bridge": "Köprü",
@@ -1051,7 +1049,8 @@
         "lending": "Kredi verme",
         "predict": "Tahmin Et",
         "meme": "Memecoin",
-        "market": "Pazar"
+        "market": "Pazar",
+        "gasDeposit": "Gaz Dekontörü"
       },
       "swipeUp": {
         "descAndroid": "dApp'leri keşfetmek için tıklayın",
@@ -1799,7 +1798,6 @@
         "token": "Token",
         "amount": "Miktar",
         "invalidAmount": "500'ün altında olmalıdır",
-        "selectToken": "Token Seçin",
         "followingTokenInSufficient": "Aşağıdaki token bakiyesi yetersizdir.",
         "zeroInvalidAmount": "Miktar sıfır olamaz",
         "title": "Hesapla geçme",
@@ -1811,7 +1809,17 @@
         "paymentAddress": "Ödeme Cüzdanı",
         "inSufficientTip1": "Bu cüzdanın yeterli token'i yok. Lütfen farklı bir cüzdan seçin.",
         "pay": "Öde",
-        "applePayFeeDesc1": "Uygulama Mağazası ücreti içerir. Çekim yoktur."
+        "applePayFeeDesc1": "Uygulama Mağazası ücreti içerir. Çekim yoktur.",
+        "insufficientBalanceLabel": "Yetersiz Bakiye",
+        "estReceiveLabel": "Est.Alacak: {{usd}}",
+        "unavailablePaymentWallet": "Seçilen ödeme cüzdanı kullanılamıyor",
+        "balanceLabel": "Bakiye",
+        "gasDepositTitle": "Gaz Yatırma",
+        "suggestedToken": "Önerilen Token'lar",
+        "fetchQuoteFailed": "Alıntı alınamadı",
+        "minAmountRequired": "En az depozit tutarı 1 $'dır.",
+        "estReceiveTip": "{{name}} üzerinden işlenen hizmetin kayma yaşama ihtimali vardır.",
+        "selectToken": "Para Yatırmak İçin Token Seçin"
       },
       "paymentAddressPopup": {
         "confirm": "Onayla",
@@ -1866,7 +1874,8 @@
         "desc": "Tüm Ağırlıklarında Gas Ücretlerini Ödeyin",
         "buyWith": "Alım yapın ile",
         "title": "GasAccount'a Yatır",
-        "buyWithApple": "Uygulama Mağazası'ndan Satın Al"
+        "buyWithApple": "Uygulama Mağazası'ndan Satın Al",
+        "insufficientTokenBalance": "Yetersiz Token Bakiyesi"
       },
       "gasAccountList": {
         "address": "Adres",
@@ -1884,8 +1893,21 @@
       "loginFailed": "Giriş Başarısız",
       "depositCanceled": "Yatırım İptal Edildi",
       "loginSuccess": "Giriş Başarılı",
-      "switchAccount": "GasAccount'ı Değiştir",
-      "withdrawDisabledIAP": "Çekimler devre dışı bırakılmıştır çünkü bakiyeniz çekilemeyen fiat fonları içermektedir. Token bakiyenizi çekmek için destek ile iletişime geçin."
+      "withdrawDisabledIAP": "Çekimler devre dışı bırakılmıştır çünkü bakiyeniz çekilemeyen fiat fonları içermektedir. Token bakiyenizi çekmek için destek ile iletişime geçin.",
+      "benefitCard": {
+        "item2": "Tüm ağları destekler.",
+        "desc1": "Gaz ödemek için ek ücret yoktur.",
+        "item1": "Ücret Yok Rabby",
+        "item3": "Tüm işlemleri destekler",
+        "desc2": "",
+        "desc3": "Değiştir, Köprü, Gönder, DApps ve daha fazlası"
+      },
+      "depositNow": "Şimdi Yatırın",
+      "switchAccount": "Cüzdanı Değiştir",
+      "lowBalance": "Yeterli gazınız yok. Gelecekteki işlemlerin sorunsuz geçmesi için gaz depozitosu yapın.",
+      "gasBalance": "Gaz Bakiyesi",
+      "depositWith": "Deposit with",
+      "depositFailed": "Yatırım başarısız oldu"
     },
     "tokenDetail": {
       "action": {
@@ -3105,7 +3127,7 @@
       },
       "loginConfirmModal": {
         "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz.",
-        "title": "Cüzdan Seçin Giriş Yapmak İçin"
+        "title": "Cüzdan Değiştir"
       },
       "depositPopup": {
         "amount": "Miktar",

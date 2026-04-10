@@ -41,7 +41,7 @@ const TOAST_POSITION_TOP = 30;
 
 type TabType = 'seedPhrase' | 'privateKey';
 
-type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'StackAddress'>;
+type ScreenProps = NativeStackScreenProps<RootStackParamsList, 'ImportSecret'>;
 
 export const ImportSecret = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });

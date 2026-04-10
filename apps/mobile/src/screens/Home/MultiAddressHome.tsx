@@ -1,6 +1,7 @@
 import { RootNames } from '@/constant/layout';
 import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
 import { trackGasAccountActiveStatusOncePerDay } from '@/utils/gasAccountAnalytics';
+import { autoLoginGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
@@ -24,6 +25,7 @@ import { setIsFoldMultiChart } from '../Address/components/MultiAssets/RenderRow
 import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAssets';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { TmpHomeRefresher } from './components/TmpHomeRefresher';
+import { storeApiGasAccount } from '../GasAccount/hooks/atom';
 
 const detectHasAccounts = async () => {
   const result = { redirectAction: null as Function | null };
@@ -89,6 +91,17 @@ function MultiAddressHome(): JSX.Element {
         subscription.remove();
       };
     }, [trackGasAccountActive]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      storeApiGasAccount.scheduleSnapshotRefresh({
+        reason: 'home_focus',
+      });
+      autoLoginGasAccountIfNeeded().catch(error => {
+        console.error('autoLoginGasAccountIfNeeded error', error);
+      });
+    }, []),
   );
 
   useEffect(() => {

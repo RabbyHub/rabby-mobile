@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -16,7 +22,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildWithdrawTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
@@ -46,10 +55,11 @@ import { calculateMaxWithdrawAmount } from '../../utils/calculateMaxWithdrawAmou
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
 import { CHAINS_ENUM } from '@debank/common';
 import { ReserveDataHumanized } from '@aave/contract-helpers';
 import { stats } from '@/utils/stats';
@@ -112,12 +122,17 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
-  const { ctx } = useSignatureStore();
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: withdrawTxs.length ? withdrawTxs?.[0]?.chainId + '' : '',
     autoResetGasStoreOnChainChange: true,
   });
+  const { ctx } = useSignatureStoreOf(instance);
 
   const afterHF = useMemo(() => {
     if (!amount || isZeroAmount(amount)) {
@@ -363,6 +378,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
 
   const handleChangeAmount = useCallback(
     (value: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) return;
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 提取所有资产
@@ -403,137 +419,139 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   return (
-    <AutoLockView as="View" style={styles.container}>
-      <Text style={styles.title}>
-        {t('page.Lending.withdrawDetail.actions')} {reserve.reserve.symbol}
-      </Text>
-      <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>
-          {t('page.Lending.popup.amount')}
+    <SignatureInstanceProvider instance={instance}>
+      <AutoLockView as="View" style={styles.container}>
+        <Text style={styles.title}>
+          {t('page.Lending.withdrawDetail.actions')} {reserve.reserve.symbol}
         </Text>
-        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          withdrawAmount.toString() || '0',
-        )}${reserve.reserve.symbol}($${formatAmountValueKMB(
-          BigNumber(withdrawAmount)
-            .multipliedBy(
-              BigNumber(
-                reserve.reserve.formattedPriceInMarketReferenceCurrency,
-              ),
-            )
-            .toString(),
-        )}) ${t('page.Lending.popup.available')}`}</Text>
-      </View>
-      <TokenAmountInput
-        value={amount}
-        onChange={handleChangeAmount}
-        symbol={reserve.reserve.symbol}
-        handleClickMaxButton={() => {
-          handleChangeAmount('-1');
-        }}
-        tokenAmount={withdrawAmount}
-        price={Number(
-          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
-        )}
-        style={styles.amountInput}
-        chain={chainEnum || CHAINS_ENUM.ETH}
-      />
-      <BottomSheetScrollView
-        style={styles.bottomSheetScrollView}
-        contentContainerStyle={styles.transactionContainer}>
-        <WithdrawActionOverView
-          reserve={reserve}
-          userSummary={userSummary}
-          afterHF={afterHF}
-          amount={amount}
-          afterSupply={afterSupply}
+        <View style={styles.amountHeader}>
+          <Text style={styles.amountHeaderTitle}>
+            {t('page.Lending.popup.amount')}
+          </Text>
+          <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
+            withdrawAmount.toString() || '0',
+          )}${reserve.reserve.symbol}($${formatAmountValueKMB(
+            BigNumber(withdrawAmount)
+              .multipliedBy(
+                BigNumber(
+                  reserve.reserve.formattedPriceInMarketReferenceCurrency,
+                ),
+              )
+              .toString(),
+          )}) ${t('page.Lending.popup.available')}`}</Text>
+        </View>
+        <TokenAmountInput
+          value={amount}
+          onChange={handleChangeAmount}
+          symbol={reserve.reserve.symbol}
+          handleClickMaxButton={() => {
+            handleChangeAmount('-1');
+          }}
+          tokenAmount={withdrawAmount}
+          price={Number(
+            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+          )}
+          style={styles.amountInput}
+          chain={chainEnum || CHAINS_ENUM.ETH}
         />
+        <BottomSheetScrollView
+          style={styles.bottomSheetScrollView}
+          contentContainerStyle={styles.transactionContainer}>
+          <WithdrawActionOverView
+            reserve={reserve}
+            userSummary={userSummary}
+            afterHF={afterHF}
+            amount={amount}
+            afterSupply={afterSupply}
+          />
 
-        {canShowDirectSubmit && !!amount && !isZeroAmount(amount) && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={false}
-              openShowMore={noop}
-              chainServeId={chainInfo?.serverId || ''}
-              textColor={colors2024['neutral-title-1']}
-            />
-          </View>
-        )}
-      </BottomSheetScrollView>
-
-      <View style={styles.buttonContainer}>
-        {isRisky && (
-          <>
-            <View style={styles.warningContainer}>
-              <RcIconWarningCircleCC
-                width={15}
-                height={15}
-                color={colors2024['red-default']}
+          {canShowDirectSubmit && !!amount && !isZeroAmount(amount) && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+                textColor={colors2024['neutral-title-1']}
               />
-              <Text style={styles.warningText}>
-                {t('page.Lending.risk.withdrawWarning')}
-              </Text>
             </View>
-            <TouchableOpacity
-              style={styles.checkbox}
-              onPress={() => {
-                setIsChecked(prev => !prev);
-              }}>
-              <CheckBoxRect size={16} checked={isChecked} />
-              <Text style={styles.checkboxText}>
-                {t('page.Lending.risk.checkbox')}
-              </Text>
-            </TouchableOpacity>
-          </>
-        )}
-        {canShowDirectSubmit ? (
-          <DirectSignBtn
-            loading={isLoading}
-            loadingType="circle"
-            key={`${amount}`}
-            showTextOnLoading
-            wrapperStyle={styles.directSignBtn}
-            authTitle={t('page.Lending.withdrawDetail.actions')}
-            title={t('page.Lending.withdrawDetail.actions')}
-            onFinished={() => handleWithdraw()}
-            disabled={
-              !amount ||
-              isZeroAmount(amount) ||
-              !withdrawTxs.length ||
-              isLoading ||
-              !currentAccount ||
-              !!ctx?.disabledProcess ||
-              (isRisky && !isChecked)
-            }
-            type="aave"
-            iconColor={
-              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-            }
-            syncUnlockTime
-            account={currentAccount}
-            showHardWalletProcess
-          />
-        ) : (
-          <Button
-            type="aave"
-            loadingType="circle"
-            showTextOnLoading
-            containerStyle={styles.fullWidthButton}
-            onPress={() => handleWithdraw()}
-            title={t('page.Lending.withdrawDetail.actions')}
-            loading={isLoading}
-            disabled={
-              !amount ||
-              isZeroAmount(amount) ||
-              !withdrawTxs.length ||
-              isLoading ||
-              !currentAccount ||
-              (isRisky && !isChecked)
-            }
-          />
-        )}
-      </View>
-    </AutoLockView>
+          )}
+        </BottomSheetScrollView>
+
+        <View style={styles.buttonContainer}>
+          {isRisky && (
+            <>
+              <View style={styles.warningContainer}>
+                <RcIconWarningCircleCC
+                  width={15}
+                  height={15}
+                  color={colors2024['red-default']}
+                />
+                <Text style={styles.warningText}>
+                  {t('page.Lending.risk.withdrawWarning')}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.checkbox}
+                onPress={() => {
+                  setIsChecked(prev => !prev);
+                }}>
+                <CheckBoxRect size={16} checked={isChecked} />
+                <Text style={styles.checkboxText}>
+                  {t('page.Lending.risk.checkbox')}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+          {canShowDirectSubmit ? (
+            <DirectSignBtn
+              loading={isLoading}
+              loadingType="circle"
+              key={`${amount}`}
+              showTextOnLoading
+              wrapperStyle={styles.directSignBtn}
+              authTitle={t('page.Lending.withdrawDetail.actions')}
+              title={t('page.Lending.withdrawDetail.actions')}
+              onFinished={() => handleWithdraw()}
+              disabled={
+                !amount ||
+                isZeroAmount(amount) ||
+                !withdrawTxs.length ||
+                isLoading ||
+                !currentAccount ||
+                !!ctx?.disabledProcess ||
+                (isRisky && !isChecked)
+              }
+              type="aave"
+              iconColor={
+                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+              }
+              syncUnlockTime
+              account={currentAccount}
+              showHardWalletProcess
+            />
+          ) : (
+            <Button
+              type="aave"
+              loadingType="circle"
+              showTextOnLoading
+              containerStyle={styles.fullWidthButton}
+              onPress={() => handleWithdraw()}
+              title={t('page.Lending.withdrawDetail.actions')}
+              loading={isLoading}
+              disabled={
+                !amount ||
+                isZeroAmount(amount) ||
+                !withdrawTxs.length ||
+                isLoading ||
+                !currentAccount ||
+                (isRisky && !isChecked)
+              }
+            />
+          )}
+        </View>
+      </AutoLockView>
+    </SignatureInstanceProvider>
   );
 };
 const getStyles = createGetStyles2024(ctx => ({

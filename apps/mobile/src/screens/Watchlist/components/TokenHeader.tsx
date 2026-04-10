@@ -9,8 +9,8 @@ import { Text } from '@/components/Typography';
 export type SortState = 'desc' | 'asc' | 'default';
 
 interface TokenHeaderProps {
-  tokenSort: SortState;
-  onTokenSort: () => void;
+  tokenSort?: SortState;
+  onTokenSort?: () => void;
   changeSort: SortState;
   onChangeSort: () => void;
   fdvSort?: SortState;
@@ -91,7 +91,7 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
   const { t } = useTranslation();
 
   const getArrowColor = useCallback(
-    (sort: SortState, direction: 'asc' | 'desc') => {
+    (sort?: SortState, direction?: 'asc' | 'desc') => {
       if (sort === direction) {
         return colors2024['brand-default'];
       }
@@ -101,7 +101,7 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
   );
 
   const getTextStyle = useCallback(
-    (sort: SortState) => {
+    (sort?: SortState) => {
       if (sort === 'default') {
         return styles.headerText;
       }
@@ -111,7 +111,7 @@ const WatchListHeader: React.FC<TokenHeaderProps> = ({
   );
 
   const renderArrows = useCallback(
-    (sort: SortState) => (
+    (sort?: SortState) => (
       <View style={styles.iconWrap}>
         <RcIconArrowDownCC
           style={[styles.icon, styles.iconUp]}

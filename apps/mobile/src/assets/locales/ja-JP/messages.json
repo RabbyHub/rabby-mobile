@@ -617,7 +617,6 @@
         "login": "ログイン",
         "deposit": "入金",
         "WalletConnectTips": "GasAccountではWalletConnectはサポートされていません。",
-        "notEnough": "GasAccountが足りません。",
         "loginFirst": "最初にGasAccountにログインしてください。",
         "customRPC": "カスタムRPCを使用する場合はサポートされていません。",
         "chainNotSupported": "このチェーンはGasAccountにサポートされていません。"
@@ -942,7 +941,6 @@
     },
     "home": {
       "services": {
-        "gasAccount": "GasAccount",
         "dapps": "Dapps",
         "history": "履歴",
         "more": "もっと",
@@ -961,7 +959,8 @@
         "lending": "貸し出し",
         "predict": "予測する",
         "meme": "メモリコイン",
-        "market": "市場"
+        "market": "市場",
+        "gasDeposit": "ガスデポジット"
       },
       "swipeUp": {
         "descAndroidMore": "クリックしてさらに多くのdAppsを探索する",
@@ -1600,7 +1599,6 @@
       },
       "depositPopup": {
         "token": "トークン",
-        "selectToken": "トークンを選択",
         "amount": "量",
         "followingTokenInSufficient": "以下のトークン残高が不十分です",
         "invalidAmount": "500 未満でなければなりません",
@@ -1614,7 +1612,17 @@
         "paymentAddress": "ペイメントウォレット",
         "inSufficientTip1": "このウォレットには十分なトークンがありません。他のウォレットを選んでください。",
         "pay": "支払い",
-        "applePayFeeDesc1": "アプリストア手数料が含まれています。引き出しはできません。"
+        "applePayFeeDesc1": "アプリストア手数料が含まれています。引き出しはできません。",
+        "gasDepositTitle": "ガスデポジット",
+        "balanceLabel": "バランス",
+        "unavailablePaymentWallet": "選択された支払いウォレットは利用できません",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "suggestedToken": "推奨トークン",
+        "minAmountRequired": "最小入金額は$1です。",
+        "fetchQuoteFailed": "見積もりの取得に失敗しました",
+        "insufficientBalanceLabel": "残高不足",
+        "estReceiveTip": "{{name}}を介して処理されたサービスは、スリッippageが発生する可能性があります。",
+        "selectToken": "トークンを選択して入金してください"
       },
       "paymentAddressPopup": {
         "balance": "バランス",
@@ -1665,7 +1673,8 @@
         "buyWithDesc": "30％の手数料、出金不可",
         "desc": "すべてのチェーンでGas手数料を支払う",
         "title": "GasAccountに入金",
-        "buyWithApple": "アプリストアで購入"
+        "buyWithApple": "アプリストアで購入",
+        "insufficientTokenBalance": "トークン残高が不足しています"
       },
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 残高",
@@ -1673,12 +1682,25 @@
         "address": "アドレス",
         "wallet": "ウォレット"
       },
-      "switchAccount": "GasAccount を変更",
       "depositSuccess": "入金が成功しました",
       "depositCanceled": "入金がキャンセルされました",
       "loginFailed": "ログインに失敗しました",
       "loginSuccess": "ログイン成功",
-      "withdrawDisabledIAP": "引き出しは無効になっています。これは、残高に法定通貨が含まれており、これを引き出すことができないためです。トークン残高の引き出しについては、サポートにお問い合わせください。"
+      "withdrawDisabledIAP": "引き出しは無効になっています。これは、残高に法定通貨が含まれており、これを引き出すことができないためです。トークン残高の引き出しについては、サポートにお問い合わせください。",
+      "benefitCard": {
+        "desc1": "ガス料金の追加費用はありません",
+        "item1": "No Rabby Fee",
+        "item3": "すべての取引をサポートしています",
+        "item2": "すべてのネットワークをサポートしています",
+        "desc3": "スワップ、ブリッジ、送信、DApps、その他多数",
+        "desc2": ""
+      },
+      "depositWith": "Deposit with",
+      "depositNow": "今すぐ入金",
+      "switchAccount": "ウォレットを切り替える",
+      "depositFailed": "入金に失敗しました",
+      "gasBalance": "ガス残高",
+      "lowBalance": "ガスが不足しています。今後の取引がスムーズに進むように、ガスを入金してください。"
     },
     "customRpc": {
       "closed": "クローズド",
@@ -3378,8 +3400,8 @@
       "withdraw": "出金",
       "deposit": "入金",
       "loginConfirmModal": {
-        "title": "ウォレットを選択してログイン",
-        "desc": "ログインすると、このアドレスにのみ入金できます。"
+        "desc": "ログインすると、このアドレスにのみ入金できます。",
+        "title": "ウォレットを切り替える"
       },
       "withdrawPopup": {
         "amount": "量",
