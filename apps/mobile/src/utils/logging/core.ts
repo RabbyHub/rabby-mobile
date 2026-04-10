@@ -43,6 +43,7 @@ type AppLoggerOptions = {
   platform?: string;
   writer: RollingZipLogWriter;
   shouldWriteToFile: () => boolean;
+  shouldCaptureConsole?: () => boolean;
   originalConsole?: ConsoleLike;
   sessionId?: string;
   now?: () => Date;
@@ -58,6 +59,7 @@ type LoggerState = RollingZipWriterState & {
   runtimeEnv: string;
   sessionId: string;
   effectiveFileLoggingEnabled: boolean;
+  effectiveConsoleCaptureEnabled: boolean;
 };
 
 const noop = (..._args: unknown[]) => {};
@@ -125,6 +127,7 @@ export class AppLogger {
   private readonly runtimeEnv: string;
   private readonly platform?: string;
   private readonly shouldWriteToFile: () => boolean;
+  private readonly shouldCaptureConsole: () => boolean;
   private readonly now: () => Date;
   private readonly captureInMemory: boolean;
   private readonly onInMemoryLog?: AppLoggerOptions['onInMemoryLog'];
@@ -142,6 +145,8 @@ export class AppLogger {
     this.runtimeEnv = options.runtimeEnv;
     this.platform = options.platform;
     this.shouldWriteToFile = options.shouldWriteToFile;
+    this.shouldCaptureConsole =
+      options.shouldCaptureConsole || options.shouldWriteToFile;
     this.now = options.now || (() => new Date());
     this.captureInMemory = !!options.captureInMemory;
     this.onInMemoryLog = options.onInMemoryLog;
@@ -331,6 +336,11 @@ export class AppLogger {
     this.consoleCaptureInstalled = true;
 
     consoleTarget.log = (...args: unknown[]) => {
+      if (!this.shouldCaptureConsole()) {
+        this.originalConsole.log(...args);
+        return;
+      }
+
       const serializedArgs = this.captureRecord('log', 'console', 'log', args);
       this.originalConsole.log(
         ...this.getConsoleEchoArgs(args, serializedArgs, false),
@@ -338,6 +348,11 @@ export class AppLogger {
     };
 
     consoleTarget.info = (...args: unknown[]) => {
+      if (!this.shouldCaptureConsole()) {
+        this.originalConsole.info(...args);
+        return;
+      }
+
       const serializedArgs = this.captureRecord(
         'info',
         'console',
@@ -350,6 +365,11 @@ export class AppLogger {
     };
 
     consoleTarget.warn = (...args: unknown[]) => {
+      if (!this.shouldCaptureConsole()) {
+        this.originalConsole.warn(...args);
+        return;
+      }
+
       const serializedArgs = this.captureRecord(
         'warn',
         'console',
@@ -362,6 +382,11 @@ export class AppLogger {
     };
 
     consoleTarget.error = (...args: unknown[]) => {
+      if (!this.shouldCaptureConsole()) {
+        this.originalConsole.error(...args);
+        return;
+      }
+
       const serializedArgs = this.captureRecord(
         'error',
         'console',
@@ -374,6 +399,11 @@ export class AppLogger {
     };
 
     consoleTarget.debug = (...args: unknown[]) => {
+      if (!this.shouldCaptureConsole()) {
+        this.originalConsole.debug(...args);
+        return;
+      }
+
       const serializedArgs = this.captureRecord(
         'debug',
         'console',
@@ -386,6 +416,11 @@ export class AppLogger {
     };
 
     consoleTarget.trace = (...args: unknown[]) => {
+      if (!this.shouldCaptureConsole()) {
+        this.originalConsole.trace(...args);
+        return;
+      }
+
       const traceStack = new Error('[console.trace]').stack;
       const serializedArgs = this.captureRecord(
         'trace',
@@ -401,6 +436,12 @@ export class AppLogger {
 
     consoleTarget.time = (label?: string) => {
       const timerLabel = label || 'default';
+
+      if (!this.shouldCaptureConsole()) {
+        this.originalConsole.time(timerLabel);
+        return;
+      }
+
       this.timers.set(timerLabel, this.now().getTime());
 
       this.captureRecord(
@@ -417,6 +458,12 @@ export class AppLogger {
 
     consoleTarget.timeLog = (label?: string, ...args: unknown[]) => {
       const timerLabel = label || 'default';
+
+      if (!this.shouldCaptureConsole()) {
+        this.originalConsole.timeLog(timerLabel, ...args);
+        return;
+      }
+
       const startedAt = this.timers.get(timerLabel);
       const durationMs =
         typeof startedAt === 'number' ? this.now().getTime() - startedAt : null;
@@ -446,6 +493,13 @@ export class AppLogger {
 
     consoleTarget.timeEnd = (label?: string) => {
       const timerLabel = label || 'default';
+
+      if (!this.shouldCaptureConsole()) {
+        this.timers.delete(timerLabel);
+        this.originalConsole.timeEnd(timerLabel);
+        return;
+      }
+
       const startedAt = this.timers.get(timerLabel);
       const durationMs =
         typeof startedAt === 'number' ? this.now().getTime() - startedAt : null;
@@ -472,7 +526,7 @@ export class AppLogger {
     };
 
     consoleTarget.assert = (condition?: boolean, ...args: unknown[]) => {
-      if (condition) {
+      if (!this.shouldCaptureConsole() || condition) {
         this.originalConsole.assert(condition, ...args);
         return;
       }
@@ -528,6 +582,7 @@ export class AppLogger {
       runtimeEnv: this.runtimeEnv,
       sessionId: this.sessionId,
       effectiveFileLoggingEnabled: this.shouldWriteToFile(),
+      effectiveConsoleCaptureEnabled: this.shouldCaptureConsole(),
     };
   }
 }

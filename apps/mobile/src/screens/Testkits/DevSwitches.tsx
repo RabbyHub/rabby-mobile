@@ -534,8 +534,14 @@ function DevSwitchAboutExpData() {
 
 function DevSwitchAboutAppLogging() {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { canToggle, isForcedOn, effectiveEnabled, onToggle } =
-    useAppLogFileSwitch();
+  const {
+    canToggle,
+    effectiveEnabled,
+    isOnlineControlled,
+    localDefaultEnabled,
+    runtimeEnv,
+    onToggle,
+  } = useAppLogFileSwitch();
   const [snapshot, setSnapshot] = useState(() => logger.getState());
   const [isFinalizing, setIsFinalizing] = useState(false);
 
@@ -549,11 +555,17 @@ function DevSwitchAboutAppLogging() {
 
   const statusText = canToggle
     ? effectiveEnabled
-      ? 'Regression build writes app logs into applogs zip archives'
-      : 'Regression build skips file logging'
-    : isForcedOn
-    ? 'Production always writes app logs to disk'
-    : 'Development skips file logging';
+      ? `${
+          runtimeEnv === 'development' ? 'Development' : 'Regression'
+        } build captures console and writes app logs into applogs zip archives`
+      : `${
+          runtimeEnv === 'development' ? 'Development' : 'Regression'
+        } build keeps app logs off until you enable the local switch`
+    : isOnlineControlled
+    ? effectiveEnabled
+      ? 'Production writes app logs because online config enables it'
+      : 'Production skips file logging until online config enables it'
+    : 'App file logging is unavailable';
 
   return (
     <View style={styles.showCaseRowsContainer}>
@@ -596,6 +608,12 @@ function DevSwitchAboutAppLogging() {
 
       <Text
         style={[styles.label, { marginTop: 12 }]}
+        numberOfLines={2}
+        ellipsizeMode="middle">
+        Default: {localDefaultEnabled ? 'ON' : 'OFF'}
+      </Text>
+      <Text
+        style={[styles.label, { marginTop: 4 }]}
         numberOfLines={2}
         ellipsizeMode="middle">
         Root: {APP_LOG_ROOT_PATH}

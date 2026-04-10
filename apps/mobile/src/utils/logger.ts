@@ -4,7 +4,10 @@ import { APP_DOCUMENT_LIKE_PATH } from '@/core/utils/appFS';
 import { APP_RUNTIME_ENV } from '@/constant/env';
 import { AppLogger } from './logging/core';
 import { rnfsLoggingAdapter } from './logging/rnfsAdapter';
-import { getEffectiveFileLoggingEnabled } from './logging/settings';
+import {
+  getEffectiveConsoleCaptureEnabled,
+  getEffectiveFileLoggingEnabled,
+} from './logging/settings';
 import { RollingZipLogWriter } from './logging/rollingZipWriter';
 
 export const APP_LOG_ROOT_PATH = `${APP_DOCUMENT_LIKE_PATH}/applogs`;
@@ -20,6 +23,7 @@ export const logger = new AppLogger({
   platform: Platform.OS,
   writer: logWriter,
   shouldWriteToFile: getEffectiveFileLoggingEnabled,
+  shouldCaptureConsole: getEffectiveConsoleCaptureEnabled,
   captureInMemory: APP_RUNTIME_ENV !== 'production',
   onInMemoryLog(entry) {
     debugLogService.addLog(entry.message, entry.level, entry.data);

@@ -3,22 +3,43 @@ import { AppLogger } from '../core';
 import { MaskedLogValue, serializeLogValue } from '../format';
 import {
   LoggingFileSystemAdapter,
+  LoggingFileSystemEntry,
   RollingZipLogWriter,
 } from '../rollingZipWriter';
 
 class MemoryFS implements LoggingFileSystemAdapter {
-  private readonly files = new Map<string, Buffer>();
+  private readonly files = new Map<
+    string,
+    {
+      contents: Buffer;
+      mtimeMs: number;
+    }
+  >();
+  private clock = 1;
 
   async mkdir(_path: string) {}
 
+  async readFile(path: string, encoding: 'base64') {
+    return this.read(path).toString(encoding);
+  }
+
   async writeFile(path: string, contents: string, encoding: 'base64') {
-    this.files.set(path, Buffer.from(contents, encoding));
+    this.files.set(path, {
+      contents: Buffer.from(contents, encoding),
+      mtimeMs: this.clock++,
+    });
   }
 
   async appendFile(path: string, contents: string, encoding: 'base64') {
-    const current = this.files.get(path) || Buffer.alloc(0);
-    const next = Buffer.concat([current, Buffer.from(contents, encoding)]);
-    this.files.set(path, next);
+    const current = this.files.get(path);
+    const next = Buffer.concat([
+      current?.contents || Buffer.alloc(0),
+      Buffer.from(contents, encoding),
+    ]);
+    this.files.set(path, {
+      contents: next,
+      mtimeMs: this.clock++,
+    });
   }
 
   async moveFile(from: string, to: string) {
@@ -27,8 +48,28 @@ class MemoryFS implements LoggingFileSystemAdapter {
       throw new Error(`File not found: ${from}`);
     }
 
-    this.files.set(to, value);
+    this.files.set(to, {
+      contents: value.contents,
+      mtimeMs: this.clock++,
+    });
     this.files.delete(from);
+  }
+
+  async listFiles(path: string): Promise<LoggingFileSystemEntry[]> {
+    const prefix = `${path.replace(/\/+$/, '')}/`;
+
+    return Array.from(this.files.entries())
+      .filter(([filePath]) => filePath.startsWith(prefix))
+      .map(([filePath, file]) => ({
+        name: filePath.slice(prefix.length),
+        path: filePath,
+        size: file.contents.length,
+        mtimeMs: file.mtimeMs,
+      }));
+  }
+
+  async unlink(path: string) {
+    this.files.delete(path);
   }
 
   has(path: string) {
@@ -41,7 +82,14 @@ class MemoryFS implements LoggingFileSystemAdapter {
       throw new Error(`File not found: ${path}`);
     }
 
-    return value;
+    return value.contents;
+  }
+
+  seedFile(path: string, contents: string, mtimeMs = this.clock++) {
+    this.files.set(path, {
+      contents: Buffer.from(contents),
+      mtimeMs,
+    });
   }
 
   listPaths() {
@@ -122,6 +170,103 @@ describe('rolling zip log writer', () => {
       'line-03\n',
     ]);
   });
+
+  it('prunes the oldest archived zip files before opening a new log file', async () => {
+    const fs = new MemoryFS();
+    fs.seedFile('/applogs/test-log-older.zip', '123', 1);
+    fs.seedFile('/applogs/test-log-newer.zip', '456', 2);
+
+    const writer = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxArchivedBytes: 5,
+      now: makeNowSequence('2026-04-09T13:00:00.000Z'),
+    });
+
+    await writer.writeLine('line-01\n');
+
+    expect(fs.has('/applogs/test-log-older.zip')).toBe(false);
+    expect(fs.has('/applogs/test-log-newer.zip')).toBe(true);
+    expect(fs.listPaths().some(path => path.endsWith('.zip.partial'))).toBe(
+      true,
+    );
+  });
+
+  it('reuses the latest finalized zip and keeps appending to the recent log file', async () => {
+    const fs = new MemoryFS();
+    const seedWriter = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxEntryBytes: 64,
+      now: makeNowSequence(
+        '2026-04-09T14:00:00.000Z',
+        '2026-04-09T14:00:00.001Z',
+      ),
+    });
+
+    await seedWriter.writeLine('line-01\n');
+    const seedArchivePath = await seedWriter.finalizeArchive();
+
+    const writer = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxEntryBytes: 64,
+      now: makeNowSequence(
+        '2026-04-09T14:05:00.000Z',
+        '2026-04-09T14:05:00.001Z',
+      ),
+    });
+
+    await writer.writeLine('line-02\n');
+    const archivePath = await writer.finalizeArchive();
+
+    expect(archivePath).toBe(seedArchivePath);
+
+    const entries = readArchiveEntries(fs, archivePath as string);
+    expect(Object.keys(entries)).toHaveLength(1);
+    expect(Object.values(entries)).toEqual(['line-01\nline-02\n']);
+  });
+
+  it('reuses the latest finalized zip and opens a new log file when the recent one is full', async () => {
+    const fs = new MemoryFS();
+    const seedWriter = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxEntryBytes: 6,
+      now: makeNowSequence(
+        '2026-04-09T14:10:00.000Z',
+        '2026-04-09T14:10:00.001Z',
+      ),
+    });
+
+    await seedWriter.writeLine('12345\n');
+    const seedArchivePath = await seedWriter.finalizeArchive();
+
+    const writer = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'test-log',
+      maxEntryBytes: 6,
+      now: makeNowSequence(
+        '2026-04-09T14:11:00.000Z',
+        '2026-04-09T14:11:00.001Z',
+        '2026-04-09T14:11:00.002Z',
+      ),
+    });
+
+    await writer.writeLine('xx\n');
+    const archivePath = await writer.finalizeArchive();
+
+    expect(archivePath).toBe(seedArchivePath);
+
+    const entries = readArchiveEntries(fs, archivePath as string);
+    expect(Object.keys(entries)).toHaveLength(2);
+    expect(Object.values(entries)).toEqual(['12345\n', 'xx\n']);
+  });
 });
 
 describe('app logger', () => {
@@ -195,5 +340,78 @@ describe('app logger', () => {
     expect(archiveBody).toContain('"accessToken":"*******************"');
     expect(inMemoryEntries).toHaveLength(1);
     expect(inMemoryEntries[0]?.message).toContain('login payload');
+  });
+
+  it('captures console output only after console capture is enabled', async () => {
+    const fs = new MemoryFS();
+    let writeEnabled = false;
+    let consoleCaptureEnabled = false;
+    const writer = new RollingZipLogWriter({
+      fs,
+      rootDir: '/applogs',
+      archivePrefix: 'app-log',
+      now: makeNowSequence(
+        '2026-04-09T12:40:00.000Z',
+        '2026-04-09T12:40:00.100Z',
+        '2026-04-09T12:40:00.200Z',
+      ),
+    });
+    const originalConsole = {
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      log: jest.fn(),
+      debug: jest.fn(),
+      trace: jest.fn(),
+      time: jest.fn(),
+      timeLog: jest.fn(),
+      timeEnd: jest.fn(),
+      assert: jest.fn(),
+    };
+    const consoleTarget = {
+      ...originalConsole,
+    };
+    const logger = new AppLogger({
+      runtimeEnv: 'regression',
+      platform: 'ios',
+      writer,
+      shouldWriteToFile: () => writeEnabled,
+      shouldCaptureConsole: () => consoleCaptureEnabled,
+      sessionId: 'session-console-test',
+      originalConsole,
+    });
+
+    logger.installConsoleCapture(consoleTarget);
+
+    consoleTarget.log('console before enable', { visible: true });
+    await logger.flush();
+
+    expect(originalConsole.log).toHaveBeenNthCalledWith(
+      1,
+      'console before enable',
+      { visible: true },
+    );
+    expect(fs.listPaths().filter(path => path.endsWith('.zip'))).toHaveLength(
+      0,
+    );
+
+    writeEnabled = true;
+    consoleCaptureEnabled = true;
+
+    consoleTarget.log('console after enable', {
+      accessToken: logger.mask('secret-access-token'),
+    });
+
+    await logger.finalizeArchive();
+
+    const savedArchivePath = fs.listPaths().find(path => path.endsWith('.zip'));
+    expect(savedArchivePath).toBeDefined();
+
+    const entries = readArchiveEntries(fs, savedArchivePath as string);
+    const archiveBody = Object.values(entries).join('\n');
+
+    expect(archiveBody).toContain('console after enable');
+    expect(archiveBody).not.toContain('console before enable');
+    expect(archiveBody).not.toContain('secret-access-token');
   });
 });

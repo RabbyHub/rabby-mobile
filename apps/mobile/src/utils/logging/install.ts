@@ -1,4 +1,5 @@
 import { AppState } from 'react-native';
+import { subscribeOnlineConfig } from '@/core/config/online';
 import { logger } from '@/utils/logger';
 import { subscribeAppLogFileSettings } from './settings';
 
@@ -17,6 +18,10 @@ if (
   logger.installConsoleCapture();
 
   subscribeAppLogFileSettings(() => {
+    logger.handlePolicyChange().catch(noop);
+  });
+
+  subscribeOnlineConfig(() => {
     logger.handlePolicyChange().catch(noop);
   });
 

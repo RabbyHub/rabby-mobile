@@ -1,37 +1,93 @@
 import { useCallback } from 'react';
 import { zustandByMMKV } from '@/core/storage/mmkv';
 import { APP_RUNTIME_ENV } from '@/constant/env';
+import { getOnlineConfig } from '@/core/config/online';
+import {
+  APP_FILE_LOGGING_ONLINE_SWITCH,
+  getDefaultLocalAppFileLoggingEnabled,
+  resolveAppFileLoggingEnabled,
+  resolveConsoleCaptureEnabled,
+} from './policy';
 
 type AppLogFileSettings = {
-  regressionFileLoggingEnabled: boolean;
+  developmentFileLoggingEnabled?: boolean;
+  regressionFileLoggingEnabled?: boolean;
+  nonProdFileLoggingEnabled?: boolean;
 };
 
 const appLogFileSettingsStore = zustandByMMKV<AppLogFileSettings>(
   '@AppLogFileSettings',
   {
-    regressionFileLoggingEnabled: true,
+    developmentFileLoggingEnabled:
+      getDefaultLocalAppFileLoggingEnabled('development'),
+    regressionFileLoggingEnabled:
+      getDefaultLocalAppFileLoggingEnabled('regression'),
   },
 );
 
-export function getEffectiveFileLoggingEnabled() {
-  switch (APP_RUNTIME_ENV) {
-    case 'production':
-      return true;
+function getProdOnlineLoggingEnabled() {
+  return !!getOnlineConfig()?.switches?.[APP_FILE_LOGGING_ONLINE_SWITCH];
+}
+
+function resolveLocalFileLoggingEnabled(
+  state: AppLogFileSettings,
+  runtimeEnv = APP_RUNTIME_ENV,
+) {
+  switch (runtimeEnv) {
+    case 'development':
+      if (typeof state.developmentFileLoggingEnabled === 'boolean') {
+        return state.developmentFileLoggingEnabled;
+      }
+
+      if (typeof state.nonProdFileLoggingEnabled === 'boolean') {
+        return state.nonProdFileLoggingEnabled;
+      }
+
+      return getDefaultLocalAppFileLoggingEnabled(runtimeEnv);
     case 'regression':
-      return appLogFileSettingsStore.getState().regressionFileLoggingEnabled;
+      if (typeof state.regressionFileLoggingEnabled === 'boolean') {
+        return state.regressionFileLoggingEnabled;
+      }
+
+      return getDefaultLocalAppFileLoggingEnabled(runtimeEnv);
     default:
-      return false;
+      return getDefaultLocalAppFileLoggingEnabled(runtimeEnv);
   }
 }
 
-export function setRegressionFileLoggingEnabled(nextValue: boolean) {
-  if (APP_RUNTIME_ENV !== 'regression') {
+function getLocalFileLoggingEnabled(runtimeEnv = APP_RUNTIME_ENV) {
+  return resolveLocalFileLoggingEnabled(
+    appLogFileSettingsStore.getState(),
+    runtimeEnv,
+  );
+}
+
+export function getEffectiveFileLoggingEnabled() {
+  return resolveAppFileLoggingEnabled({
+    runtimeEnv: APP_RUNTIME_ENV,
+    localEnabled: getLocalFileLoggingEnabled(),
+    prodOnlineEnabled: getProdOnlineLoggingEnabled(),
+  });
+}
+
+export function getEffectiveConsoleCaptureEnabled() {
+  return resolveConsoleCaptureEnabled({
+    runtimeEnv: APP_RUNTIME_ENV,
+    localEnabled: getLocalFileLoggingEnabled(),
+    prodOnlineEnabled: getProdOnlineLoggingEnabled(),
+  });
+}
+
+export function setLocalFileLoggingEnabled(nextValue: boolean) {
+  if (APP_RUNTIME_ENV === 'production') {
     return getEffectiveFileLoggingEnabled();
   }
 
-  appLogFileSettingsStore.setState({
-    regressionFileLoggingEnabled: nextValue,
-  });
+  appLogFileSettingsStore.setState(
+    APP_RUNTIME_ENV === 'development'
+      ? { developmentFileLoggingEnabled: nextValue }
+      : { regressionFileLoggingEnabled: nextValue },
+  );
 
   return nextValue;
 }
@@ -41,31 +97,35 @@ export function subscribeAppLogFileSettings(listener: () => void) {
 }
 
 export function useAppLogFileSwitch() {
-  const regressionFileLoggingEnabled = appLogFileSettingsStore(
-    state => state.regressionFileLoggingEnabled,
+  const localFileLoggingEnabled = appLogFileSettingsStore(state =>
+    resolveLocalFileLoggingEnabled(state),
   );
 
   const effectiveEnabled = getEffectiveFileLoggingEnabled();
-  const canToggle = APP_RUNTIME_ENV === 'regression';
-  const isForcedOn = APP_RUNTIME_ENV === 'production';
+  const consoleCaptureEnabled = getEffectiveConsoleCaptureEnabled();
+  const localDefaultEnabled =
+    getDefaultLocalAppFileLoggingEnabled(APP_RUNTIME_ENV);
+  const canToggle = APP_RUNTIME_ENV !== 'production';
+  const isOnlineControlled = APP_RUNTIME_ENV === 'production';
 
   const onToggle = useCallback(
     (nextValue?: boolean) => {
       const targetValue =
-        typeof nextValue === 'boolean'
-          ? nextValue
-          : !regressionFileLoggingEnabled;
+        typeof nextValue === 'boolean' ? nextValue : !localFileLoggingEnabled;
 
-      return setRegressionFileLoggingEnabled(targetValue);
+      return setLocalFileLoggingEnabled(targetValue);
     },
-    [regressionFileLoggingEnabled],
+    [localFileLoggingEnabled],
   );
 
   return {
+    runtimeEnv: APP_RUNTIME_ENV,
     canToggle,
-    isForcedOn,
+    isOnlineControlled,
     effectiveEnabled,
-    regressionFileLoggingEnabled,
+    consoleCaptureEnabled,
+    localDefaultEnabled,
+    localFileLoggingEnabled,
     onToggle,
   };
 }

@@ -7,6 +7,9 @@ export const rnfsLoggingAdapter: LoggingFileSystemAdapter = {
       NSURLIsExcludedFromBackupKey: true,
     });
   },
+  readFile(path, encoding) {
+    return RNFS.readFile(path, encoding);
+  },
   writeFile(path, contents, encoding) {
     return RNFS.writeFile(path, contents, encoding);
   },
@@ -15,5 +18,20 @@ export const rnfsLoggingAdapter: LoggingFileSystemAdapter = {
   },
   moveFile(from, to) {
     return RNFS.moveFile(from, to);
+  },
+  async listFiles(path) {
+    const entries = await RNFS.readDir(path);
+
+    return entries
+      .filter(item => item.isFile())
+      .map(item => ({
+        name: item.name,
+        path: item.path,
+        size: item.size,
+        mtimeMs: item.mtime ? item.mtime.getTime() : undefined,
+      }));
+  },
+  unlink(path) {
+    return RNFS.unlink(path);
   },
 };
