@@ -282,9 +282,11 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     flexShrink: 1,
   },
   aggregatorName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors['neutral-title1'],
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    fontWeight: '700',
+    lineHeight: 22,
   },
   bridgeName: {
     color: colors2024['neutral-secondary'],
