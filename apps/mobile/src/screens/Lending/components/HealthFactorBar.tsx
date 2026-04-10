@@ -96,7 +96,7 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
       <View style={styles.liquidationContainer}>
         <View style={styles.liquidationMarker} />
         <Text style={styles.liquidationValue}>1.00</Text>
-        <Text style={styles.liquidationText} numberOfLines={1}>
+        <Text style={styles.liquidationText}>
           {t('page.Lending.lqDescription.desc')}
         </Text>
       </View>
@@ -149,7 +149,7 @@ const getStyles = createGetStyles2024(ctx => ({
     left: '0%',
     top: '150%',
     alignItems: 'center',
-    maxWidth: '20%',
+    maxWidth: 80,
   },
   liquidationMarker: {
     position: 'absolute',
@@ -174,6 +174,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
+    height: 36,
   },
   riskyTextContainer: {
     flexDirection: 'row',
