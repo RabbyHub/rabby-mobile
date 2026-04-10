@@ -216,7 +216,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
 
-  node $script_dir/notify-lark.js "$manifest_plist_url" ios
+  node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
