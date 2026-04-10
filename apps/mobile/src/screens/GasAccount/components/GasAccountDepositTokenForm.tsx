@@ -371,8 +371,8 @@ const GasAccountDepositTokenFormInner: React.FC<{
       }
 
       const requestId = ++quoteReqIdRef.current;
-      setQuoteLoading(true);
       resetBridgeQuoteState();
+      setQuoteLoading(true);
 
       fetchGasAccountBridgeQuote({
         token: selectedToken,
@@ -393,10 +393,11 @@ const GasAccountDepositTokenFormInner: React.FC<{
           console.error('getGasAccountBridgeQuote error', error);
           resetBridgeQuoteState();
           setBridgeQuoteError(validationMessages.fetchQuoteFailed);
-          toast.error(validationMessages.fetchQuoteFailed);
         })
         .finally(() => {
-          setQuoteLoading(false);
+          if (quoteReqIdRef.current === requestId) {
+            setQuoteLoading(false);
+          }
         });
     },
     300,
@@ -819,7 +820,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
       <Text style={styles.errorText}>{amountValidation.errorMessage}</Text>
     );
   } else if (selectedToken && amountValidation.isValid) {
-    if (
+    if (selectedToken.gasAccountDepositType === 'bridge' && quoteError) {
+      bottomContent = <Text style={styles.errorText}>{quoteError}</Text>;
+    } else if (
       selectedToken.gasAccountDepositType === 'bridge' &&
       (quoteLoading || quoteAmountValue !== amountValue)
     ) {
@@ -832,8 +835,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
           style={styles.skeleton}
         />
       );
-    } else if (selectedToken.gasAccountDepositType === 'bridge' && quoteError) {
-      bottomContent = <Text style={styles.errorText}>{quoteError}</Text>;
     } else {
       bottomContent = (
         <View style={styles.estimateRow}>
