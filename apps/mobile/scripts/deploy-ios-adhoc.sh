@@ -4,6 +4,7 @@ script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
+. $script_dir/fast-build/_fns.sh --source-only
 . $script_dir/turbo-build/_fns.sh --source-only
 
 export buildchannel="selfhost-reg";
@@ -55,6 +56,74 @@ build_adhoc() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
+  export ios_archive_path="$project_dir/ios/Package/adhoc/RabbyMobile.xcarchive"
+
+  prepare_ios_build_artifacts;
+  prepare_status=$?
+
+  if [ $prepare_status -ne 0 ]; then
+    return $prepare_status
+  fi
+
+  if ios_fast_build_enabled; then
+    prepare_ios_ruby_bundle;
+    ruby_status=$?
+
+    if [ $ruby_status -ne 0 ]; then
+      return $ruby_status
+    fi
+
+    echo "[deploy-ios-adhoc] trying iOS fast-build from template archive..."
+    CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/ios.sh export
+    fast_build_status=$?
+
+    if [ $fast_build_status -eq 0 ]; then
+      echo "[deploy-ios-adhoc] iOS fast-build succeeded."
+      return 0
+    fi
+
+    echo "[deploy-ios-adhoc] iOS fast-build failed with status $fast_build_status, will fall back to full archive build."
+  fi
+
+  prepare_ios_native_deps;
+  deps_status=$?
+
+  if [ $deps_status -ne 0 ]; then
+    return $deps_status
+  fi
+
+  if turbo_build_enabled; then
+    turbo_prepare_ios_derived_data;
+    turbo_bundle_exec exec fastlane ios adhoc;
+  else
+    project_bundle_exec exec fastlane ios adhoc;
+  fi
+  build_status=$?
+
+  if [ $build_status -eq 0 ] && ios_fast_build_enabled && [ -d "$ios_archive_path" ]; then
+    sh $script_dir/fast-build/ios.sh save-template "$ios_archive_path"
+  fi
+
+  return $build_status
+}
+
+prepare_ios_ruby_bundle() {
+  if turbo_build_enabled; then
+    turbo_prepare_ruby_bundle
+  else
+    cd $project_dir/ios || return 1
+    if ! project_bundle_exec check >/dev/null 2>&1; then
+      project_bundle_exec install
+    else
+      echo "[deploy-ios-adhoc] ruby bundle already satisfied"
+    fi
+    deps_status=$?
+    cd $project_dir || return 1
+    return $deps_status
+  fi
+}
+
+prepare_ios_build_artifacts() {
   if turbo_build_enabled; then
     turbo_prepare_js_dependencies;
     ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)
@@ -64,38 +133,43 @@ build_adhoc() {
 
   if turbo_build_enabled && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then
     turbo_log "ios build artifacts already up to date"
-  else
-    yarn check-nodeengines &&
-      yarn ../mobile-local-pages make-theme &&
-      yarn ../mobile-local-pages build --mode ios &&
-      yarn react-native-asset &&
-      sh ./scripts/fns.sh reset_builtin_assets &&
-      yarn buildworker:prod:ios &&
-      yarn syncrnversion
-    prepare_status=$?
+    return 0
+  fi
 
-    if [ $prepare_status -ne 0 ]; then
-      return $prepare_status
-    fi
+  yarn check-nodeengines &&
+    yarn ../mobile-local-pages make-theme &&
+    yarn ../mobile-local-pages build --mode ios &&
+    yarn react-native-asset &&
+    sh ./scripts/fns.sh reset_builtin_assets &&
+    yarn buildworker:prod:ios &&
+    yarn syncrnversion
+  prepare_status=$?
 
-    if turbo_build_enabled; then
-      turbo_mark_ios_build_artifacts_ready "$ios_build_artifacts_key"
-    fi
+  if [ $prepare_status -ne 0 ]; then
+    return $prepare_status
   fi
 
   if turbo_build_enabled; then
-    turbo_prepare_ruby_bundle;
+    turbo_mark_ios_build_artifacts_ready "$ios_build_artifacts_key"
+  fi
+}
+
+prepare_ios_native_deps() {
+  prepare_ios_ruby_bundle || return $?
+
+  if turbo_build_enabled; then
     turbo_prepare_cocoapods;
-    turbo_prepare_ios_derived_data;
   else
-    cd $project_dir/ios;
-    bundle install && bundle exec pod install --repo-update;
-    cd $project_dir;
-  fi
-  if turbo_build_enabled; then
-    turbo_bundle_exec exec fastlane ios adhoc;
-  else
-    bundle exec fastlane ios adhoc;
+    if turbo_cocoapods_ready; then
+      echo "[deploy-ios-adhoc] cocoapods already up to date"
+      return 0
+    fi
+
+    cd $project_dir/ios || return 1
+    project_bundle_exec exec pod install --repo-update
+    deps_status=$?
+    cd $project_dir || return 1
+    return $deps_status
   fi
 }
 

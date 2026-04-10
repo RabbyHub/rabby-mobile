@@ -21,6 +21,82 @@ fast_build_enabled_value() {
   fi
 }
 
+ios_fast_build_enabled() {
+  case "${RABBY_MOBILE_IOS_FAST_BUILD:-}" in
+    true|1|yes|on)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+ios_fast_build_enabled_value() {
+  if ios_fast_build_enabled; then
+    printf '%s\n' "true"
+  else
+    printf '%s\n' "false"
+  fi
+}
+
+project_ruby_version() {
+  if [ -f "$project_dir/.ruby-version" ]; then
+    tr -d '\r\n' <"$project_dir/.ruby-version"
+  fi
+}
+
+project_ruby_gemset() {
+  if [ -f "$project_dir/.ruby-gemset" ]; then
+    tr -d '\r\n' <"$project_dir/.ruby-gemset"
+  fi
+}
+
+project_ruby_target() {
+  ruby_version=$(project_ruby_version)
+  ruby_gemset=$(project_ruby_gemset)
+
+  if [ -z "$ruby_version" ]; then
+    return 1
+  fi
+
+  if [ -n "$ruby_gemset" ]; then
+    printf '%s@%s\n' "$ruby_version" "$ruby_gemset"
+  else
+    printf '%s\n' "$ruby_version"
+  fi
+}
+
+project_bundle_with_ruby() {
+  pb_work_dir="$1"
+  shift
+  pb_ruby_target=$(project_ruby_target) || return 1
+
+  bash -lc '
+    set -e
+    work_dir="$1"
+    ruby_target="$2"
+    shift 2
+
+    cd "$work_dir"
+    . "$HOME/.rvm/scripts/rvm"
+    rvm use "$ruby_target" >/dev/null
+
+    bundle "$@"
+  ' bash "$pb_work_dir" "$pb_ruby_target" "$@"
+}
+
+project_bundle_exec() {
+  pb_work_dir=$(pwd -P)
+
+  if [ -f "$project_dir/.ruby-version" ] && [ -s "$HOME/.rvm/scripts/rvm" ]; then
+    project_bundle_with_ruby "$pb_work_dir" "$@"
+    return $?
+  fi
+
+  bundle "$@"
+}
+
 normalize_fast_build_scope() {
   case "${RABBY_MOBILE_FAST_BUILD_SCOPE:-bundle-only}" in
     bundle-only|bundle)
@@ -62,6 +138,17 @@ collect_android_native_entries() {
   # echo $native_part_hash;
 
   echo $(cat $script_dir/fast-build/android_native_files_sha256.txt)
+}
+
+collect_ios_template_entries() {
+  if [ -z $script_dir ]; then
+    echo "script_dir is not set, please set it before running this script."
+    exit 1
+  fi
+
+  node $script_dir/fast-build/collect_ios_template_hashes.js calculate_hash >> /dev/null
+
+  echo $(cat $script_dir/fast-build/ios_template_shell_sha256.txt)
 }
 
 download_template_apk_by_hash() {
