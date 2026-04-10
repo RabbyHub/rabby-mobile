@@ -61,7 +61,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     textAlign: 'center',
     marginTop: 8,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   refreshIconBtn: {
     position: 'absolute',
