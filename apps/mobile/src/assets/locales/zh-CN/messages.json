@@ -1957,6 +1957,8 @@
       "loginSuccess": "登录成功",
       "withdrawDisabledIAP": "由于您的余额中包含无法提取的法币资金，因此提款被禁用。请联系支持以提取您的代币余额。",
       "benefitCard": {
+        "title": "在所有链上支付 Gas 费用",
+        "subtitle": "当你没有 gas 的时候",
         "item3": "支持所有交易",
         "desc2": "80+ 网络上的自动 Gas 支付",
         "desc3": "兑换、桥接、发送、DApps 等更多功能",

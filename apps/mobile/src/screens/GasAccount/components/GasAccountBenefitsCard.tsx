@@ -40,13 +40,11 @@ export const GasAccountBenefitsCard: React.FC<{
   subtitle?: string;
   items?: BenefitItem[];
   style?: StyleProp<ViewStyle>;
-}> = ({
-  title = 'Pay Gas Fees on All chains',
-  subtitle = "when you're out of gas",
-  items,
-  style,
-}) => {
+}> = ({ title, subtitle, items, style }) => {
   const { t } = useTranslation();
+  const resolvedTitle = title ?? t('page.gasAccount.benefitCard.title');
+  const resolvedSubtitle =
+    subtitle ?? t('page.gasAccount.benefitCard.subtitle');
   const { styles, isLight } = useTheme2024({ getStyle });
 
   const DEFAULT_ITEMS = React.useMemo(
@@ -81,8 +79,8 @@ export const GasAccountBenefitsCard: React.FC<{
       </View>
 
       <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <Text style={styles.title}>{resolvedTitle}</Text>
+        <Text style={styles.subtitle}>{resolvedSubtitle}</Text>
       </View>
 
       <View style={styles.benefits}>
