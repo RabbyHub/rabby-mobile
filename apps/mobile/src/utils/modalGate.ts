@@ -15,6 +15,8 @@ export const MODAL_GATE_IDS = {
   biometricsStub: 'biometrics-stub',
   miniSignDirectOverlay: 'mini-sign-direct-overlay',
   debugReproModalA: 'debug-repro-modal-a',
+  gasAccountSwitchLoginAddress: 'gas-account-switch-login-address',
+  gasAccountDepositTokenAlert: 'gas-account-deposit-token-alert',
   perpsEditTpSlPrice: 'perps-edit-tp-sl-price',
 } as const;
 
