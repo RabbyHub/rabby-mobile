@@ -37,9 +37,10 @@ export const bridgeQuoteEstimatedValueBn = (
     .minus(quote.gas_fee.usd_value);
 };
 
+const PER_MINUTE_TIME_COST = 20000; // $20k USD per minute time cost
 /**
- * Best 评分公式：score = amount_usd - gas_fee_usd - time_cost_usd
- * 耗时成本每分钟 = amount_usd / 100K，上限 1 美金
+ * Best quote scoring formula: score = amount_usd - gas_fee_usd - time_cost_usd
+ * Time cost per minute = amount_usd / 20K, capped at $1 USD
  */
 export const bridgeQuoteScore = (
   quote: SelectedBridgeQuote,
@@ -51,7 +52,7 @@ export const bridgeQuoteScore = (
   const gasFeeUsd = new BigNumber(quote.gas_fee.usd_value);
   const durationMinutes = Math.ceil(quote.duration / 60);
   const timeCostUsd = BigNumber.min(
-    amountUsd.div(100000).times(durationMinutes),
+    amountUsd.div(PER_MINUTE_TIME_COST).times(durationMinutes),
     1,
   );
   return amountUsd.minus(gasFeeUsd).minus(timeCostUsd);
@@ -273,13 +274,16 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flex: 1,
+    overflow: 'hidden',
+    marginRight: 20,
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     justifyContent: 'flex-end',
-    flexShrink: 1,
+    flexShrink: 0,
   },
   aggregatorName: {
     color: colors2024['neutral-title-1'],
@@ -295,7 +299,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 18,
-    flexShrink: 0,
+    flexShrink: 1,
   },
   icon: {
     width: 16,
@@ -308,7 +312,6 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 18,
-    flexShrink: 1,
   },
   bottomRow: {
     flexDirection: 'row',
