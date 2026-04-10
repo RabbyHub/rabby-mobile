@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. $project_dir/scripts/build-cache/_fns.sh --source-only
+
 turbo_build_enabled() {
   [ "${RABBY_MOBILE_TURBO_BUILD:-false}" = "true" ]
 }
@@ -1199,38 +1201,9 @@ turbo_prepare_cocoapods() {
 }
 
 turbo_restore_gradle_state() {
-  turbo_init_env
-  cache_key=$(turbo_compute_gradle_cache_key)
-
-  if turbo_should_write_gradle_proxy_properties; then
-    turbo_write_gradle_proxy_properties
-  fi
-
-  if turbo_build_enabled; then
-    turbo_use_gradle_home_cache_key "$cache_key"
-
-    if turbo_layer_restore_prefers_remote gradle-home; then
-      turbo_restore_gradle_state_from_remote "$cache_key" || true
-    fi
-
-    if [ -d "$GRADLE_USER_HOME" ]; then
-      turbo_log "restored gradle-home cache from local mirror"
-    else
-      turbo_restore_gradle_state_from_remote "$cache_key" || true
-    fi
-
-    turbo_seed_gradle_wrapper_from_global
-    turbo_seed_gradle_dependency_cache_from_global
-  fi
+  build_cache_restore_android_gradle_state
 }
 
 turbo_save_gradle_state() {
-  turbo_init_env
-  cache_key=$(turbo_compute_gradle_cache_key)
-
-  if turbo_build_enabled; then
-    turbo_use_gradle_home_cache_key "$cache_key"
-    turbo_log "gradle-home cache already materialized in local mirror"
-    turbo_save_gradle_state_to_remote "$cache_key"
-  fi
+  build_cache_save_android_gradle_state
 }

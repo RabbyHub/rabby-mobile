@@ -11,8 +11,9 @@ project_dir=$(dirname $script_dir)
 . $script_dir/fast-build/_fns.sh --source-only
 . $script_dir/turbo-build/_fns.sh --source-only
 
-USE_RESIGN_APK=${USE_RESIGN_APK:-"false"}
-UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${REALLY_UPLOAD:-"false"}}
+export RABBY_MOBILE_ANDROID_FAST_BUILD="${RABBY_MOBILE_ANDROID_FAST_BUILD:-false}"
+FAST_BUILD_ENABLED=$(fast_build_enabled_value)
+UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
 check_build_params;
 check_s3_params;
@@ -69,16 +70,17 @@ build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   prepare_android_build_artifacts || return $?
   if [ $RABBY_HOST_OS != "Windows" ]; then
-    if [ "$USE_RESIGN_APK" == "true" ]; then
-      echo "[deploy-android] try to resign template.apk to get the new one."
+    if [ "$FAST_BUILD_ENABLED" = "true" ]; then
+      echo "[deploy-android] try to fast-build from template.apk."
+      echo "[deploy-android] fast build scope: ${RABBY_MOBILE_FAST_BUILD_SCOPE:-bundle-only}"
       CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/android.sh resign
       if [ $? -eq 0 ]; then
-        echo "[deploy-android] APK resigned successfully."
+        echo "[deploy-android] APK fast-build succeeded."
         android_export_target="$script_dir/.fast-build-work/app-resigned.apk"
         return ;
       fi
-      echo "Failed to resign APK. Will Build it again."
-      USE_RESIGN_APK="false"
+      echo "Failed to fast-build APK. Will build it again."
+      FAST_BUILD_ENABLED="false"
     fi
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
@@ -197,7 +199,7 @@ fi
 
 file_date=$(date -r $android_export_target '+%Y%m%d_%H%M%S')
 version_bundle_name="$file_date-${android_version_name}.${android_version_code}"
-if [ "$USE_RESIGN_APK" == "true" ]; then
+if [ "$FAST_BUILD_ENABLED" = "true" ]; then
   version_bundle_name="${version_bundle_name}-resigned"
   apk_name="rabby-mobile-resigned.apk"
 fi
@@ -236,8 +238,8 @@ print_manual_upload_sentry_sourcemap() {
   fi
 }
 
-# only upload apk as template when it is not resigned
-if [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$USE_RESIGN_APK" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
+# only upload apk as template when it is not fast-built from a template
+if [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
   template_apk_s3_dir=$RABBY_MOBILE_REG_PUB_DEPLOYMENT/.templates/android;
   native_part_hash=$(collect_android_native_entries)
   echo "[deploy-android] will set apk $android_export_target to $template_apk_s3_dir/$native_part_hash.apk"
@@ -276,7 +278,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && node $script_dir/notify-lark.js "$apk_url" android "$USE_RESIGN_APK"
+    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && node $script_dir/notify-lark.js "$apk_url" android "$FAST_BUILD_ENABLED"
   fi
 fi
 

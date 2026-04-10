@@ -254,7 +254,7 @@ jobs:
           CONFIGURATION: release
           TYPE: adhoc
           RABBY_MOBILE_BUILD_ENV: regression
-          USE_RESIGN_APK: ${{ inputs.FAST_BUILD_ON_ANDROID }}
+          RABBY_MOBILE_ANDROID_FAST_BUILD: ${{ inputs.FAST_BUILD_ON_ANDROID }}
           SKIP_NOTIFY_LARK: ${{ inputs.SKIP_NOTIFY_LARK }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}

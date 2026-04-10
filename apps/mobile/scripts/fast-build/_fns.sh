@@ -2,6 +2,42 @@
 
 fbscript_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 
+fast_build_enabled() {
+  case "${RABBY_MOBILE_ANDROID_FAST_BUILD:-}" in
+    true|1|yes|on)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+fast_build_enabled_value() {
+  if fast_build_enabled; then
+    printf '%s\n' "true"
+  else
+    printf '%s\n' "false"
+  fi
+}
+
+normalize_fast_build_scope() {
+  case "${RABBY_MOBILE_FAST_BUILD_SCOPE:-bundle-only}" in
+    bundle-only|bundle)
+      printf '%s\n' "bundle-only"
+      ;;
+    assets-payload|assets)
+      printf '%s\n' "assets-payload"
+      ;;
+    full-payload|full)
+      printf '%s\n' "full-payload"
+      ;;
+    *)
+      printf '%s\n' "bundle-only"
+      ;;
+  esac
+}
+
 find_build_tools_version() {
   local latest_line=$(sdkmanager --list_installed | grep "build-tools" | LC_COLLATE=C sort -rV | head -1)
   # pick first line
