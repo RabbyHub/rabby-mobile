@@ -66,7 +66,7 @@ const HARDWARE_KEYRING_TYPES = [
 ];
 
 function isHardwareWallet(type: string) {
-  return HARDWARE_KEYRING_TYPES.includes(type);
+  return HARDWARE_KEYRING_TYPES.includes(type as KEYRING_TYPE);
 }
 
 export const ImportSuccessScreen2024 = () => {
