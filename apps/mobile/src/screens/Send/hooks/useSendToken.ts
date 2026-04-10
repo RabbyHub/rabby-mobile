@@ -98,6 +98,7 @@ import {
 import { jotaiStore } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { TextInput } from '@/components/Typography';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
 import { createAmountComparer, FormValuesOnSubmit } from '@/utils/form';
 import { BridgeFormSnapshot } from '@/screens/Bridge/components/BridgeContent';
@@ -727,6 +728,7 @@ export function useSendTokenForm({
   const {
     openDirect,
     prefetch: prefetchMiniSigner,
+    instance: miniSignInstance,
     close: closeMiniSigner,
     resetGasStore,
   } = useMiniSigner({
@@ -1491,6 +1493,10 @@ export function useSendTokenForm({
   const scrollToBottom = useCallback(() => {
     scrollViewRef.current?.scrollToEnd?.(true);
   }, []);
+  const reloadTxRefreshPausedRef = useRef(false);
+  const setReloadTxRefreshPaused = useCallback((paused: boolean) => {
+    reloadTxRefreshPausedRef.current = paused;
+  }, []);
   const handleMaxInfoChanged = useCallback(
     async (input?: { gasLevel: GasLevel }) => {
       if (!currentAccount) {
@@ -1860,8 +1866,14 @@ export function useSendTokenForm({
       sendTokenEventsRef.current,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
         reFetch();
         setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
           reFetch();
         }, 5000);
       },
@@ -2127,6 +2139,7 @@ export function useSendTokenForm({
     handleGasLevelChanged,
     handleClickMaxButton,
     handleIgnoreGasFeeChange,
+    setReloadTxRefreshPaused,
     onBottomAreaLayout,
     scrollViewRef,
     scrollViewStyle,
@@ -2147,6 +2160,7 @@ export function useSendTokenForm({
     whitelist,
     whitelistEnabled,
     computed,
+    miniSignInstance,
   };
 }
 export function useSendTokenFormikContext() {
@@ -2210,6 +2224,7 @@ type InternalContext = {
     handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
     handleClickMaxButton: () => Promise<void> | void;
     handleIgnoreGasFeeChange: (b: boolean) => void;
+    setReloadTxRefreshPaused: (paused: boolean) => void;
     // onGasChange: (input: {
     //   gasLevel: GasLevel;
     //   updateTokenAmount?: boolean;
@@ -2263,6 +2278,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     handleGasLevelChanged: () => {},
     handleClickMaxButton: () => {},
     handleIgnoreGasFeeChange: () => {},
+    setReloadTxRefreshPaused: () => {},
     onChangeSlider: () => {},
     setSlider: () => {},
     onBottomAreaLayout: () => {},

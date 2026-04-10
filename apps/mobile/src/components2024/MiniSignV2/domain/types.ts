@@ -42,6 +42,7 @@ export type SecurityResult = {
 
 export type SignerConfig = {
   account: Account;
+  purpose?: 'default' | 'gasAccountTopUp';
   title?: React.ReactNode;
   ga?: Record<string, any>;
   session?: any;

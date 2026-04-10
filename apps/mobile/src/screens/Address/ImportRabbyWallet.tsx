@@ -27,15 +27,15 @@ import IconSyncExtension from '@/assets2024/icons/common/iconSyncExtension.svg';
 const IconIcloudSrc = require('@/assets2024/icons/common/IconIcloud.png');
 const IconGoogleDriveSrc = require('@/assets2024/icons/common/IconGoogleDrive.png');
 
-type CurrentAddressProps = NativeStackScreenProps<
+type ImportRabbyWalletProps = NativeStackScreenProps<
   RootStackParamsList,
-  'StackAddress'
+  'ImportRabbyWallet'
 >;
 
 function ImportRabbyWallet(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
+  const navigation = useNavigation<ImportRabbyWalletProps['navigation']>();
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const handleSyncExtension = React.useCallback(() => {

@@ -8,8 +8,6 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
-import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { useTranslation } from 'react-i18next';
 import { formatUsdValue } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
@@ -19,12 +17,14 @@ import RcIconHistoryLoading from '@/assets/icons/gas-account/IconHistoryLoading.
 import { sinceTime } from '@/utils/time';
 import { useGasAccountHistory } from '../hooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { EmptyHolder } from '@/components/EmptyHolder';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { GiftInfoModal } from './GiftInfoModal';
 import ImgEmpty from '@/assets2024/images/gasAccount/empty.png';
 import ImgEmptyDark from '@/assets2024/images/gasAccount/empty-dark.png';
 import { Text } from '@/components/Typography';
+import { StyleProp, ViewStyle } from 'react-native';
+
+type GasAccountHistoryState = ReturnType<typeof useGasAccountHistory>;
 
 const HistoryItem = ({
   time,
@@ -32,8 +32,6 @@ const HistoryItem = ({
   value = 0,
   sign = '-',
   borderT = false,
-  chainServerId,
-  txId,
   isWithdraw = false,
   source,
   onGiftIconPress,
@@ -41,12 +39,9 @@ const HistoryItem = ({
   time: number;
   value: number;
   sign: string;
-  className?: string;
   isPending?: boolean;
   borderT?: boolean;
   isWithdraw?: boolean;
-  chainServerId?: string;
-  txId?: string;
   source?: string;
   onGiftIconPress?: () => void;
 }) => {
@@ -71,7 +66,6 @@ const HistoryItem = ({
     outputRange: ['0deg', '360deg'],
   });
 
-  // 判断是否显示gift icon
   const showGiftIcon = source === 'gas_account_airdrop';
 
   return (
@@ -80,7 +74,7 @@ const HistoryItem = ({
       style={[
         styles.historyItem,
         borderT && styles.borderTop,
-        isPending && { height: 64 },
+        isPending && styles.pendingHistoryItem,
       ]}>
       <View style={styles.leftContainer}>
         {isPending ? (
@@ -123,7 +117,7 @@ const HistoryItem = ({
   );
 };
 
-const LoadingItem = ({ borderT }) => {
+const LoadingItem = ({ borderT }: { borderT?: boolean }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
@@ -134,17 +128,19 @@ const LoadingItem = ({ borderT }) => {
   );
 };
 
-export const GasAccountHistory = () => {
+export const GasAccountHistory: React.FC<{
+  historyState: GasAccountHistoryState;
+  style?: StyleProp<ViewStyle>;
+  listStyle?: StyleProp<ViewStyle>;
+}> = ({ historyState, style, listStyle }) => {
   const { t } = useTranslation();
-  const { loading, txList, loadingMore, loadMore, noMore } =
-    useGasAccountHistory();
+  const { loading, txList, loadMore, noMore } = historyState;
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const { bottom } = useSafeAreaInsets();
 
   const handleGiftIconPress = useCallback(() => {
-    console.log('Gift icon pressed!');
     setIsModalVisible(true);
   }, []);
 
@@ -171,17 +167,19 @@ export const GasAccountHistory = () => {
     return <LoadingItem borderT />;
   }, [noMore]);
 
+  const sourceByTxKey = useMemo(() => {
+    const map = new Map<string, string | undefined>();
+    txList?.list?.forEach(item => {
+      map.set(`${item.tx_id}-${item.chain_id}`, item.source);
+    });
+    return map;
+  }, [txList?.list]);
+
   const ListHeaderComponent = useCallback(() => {
     return (
       <>
         {!loading &&
           txList?.withdrawList?.map((item, index) => {
-            // 从txList.list中查找对应的item来获取source字段
-            const sourceItem = txList?.list?.find(
-              listItem =>
-                listItem.tx_id === item.tx_id &&
-                listItem.chain_id === item.chain_id,
-            );
             return (
               <HistoryItem
                 isWithdraw={true}
@@ -191,36 +189,22 @@ export const GasAccountHistory = () => {
                 sign={'-'}
                 borderT={!txList.rechargeList.length ? index !== 0 : true}
                 isPending={true}
-                chainServerId={item?.chain_id}
-                txId={item?.tx_id}
-                source={sourceItem?.source}
+                source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
                 onGiftIconPress={handleGiftIconPress}
               />
             );
           })}
         {!loading &&
-          txList?.rechargeList?.map((item, index) => {
-            // 从txList.list中查找对应的item来获取source字段
-            const sourceItem = txList?.list?.find(
-              listItem =>
-                listItem.tx_id === item.tx_id &&
-                listItem.chain_id === item.chain_id,
-            );
+          txList?.rechargeList?.map(item => {
             return (
               <HistoryItem
                 key={item.tx_id + item.chain_id}
                 time={item.create_at}
                 value={item.amount}
                 sign={'+'}
-                borderT={
-                  !txList?.rechargeList.length && !txList?.withdrawList.length
-                    ? index !== 0
-                    : true
-                }
+                borderT={true}
                 isPending={true}
-                chainServerId={item?.chain_id}
-                txId={item?.tx_id}
-                source={sourceItem?.source}
+                source={sourceByTxKey.get(`${item.tx_id}-${item.chain_id}`)}
                 onGiftIconPress={handleGiftIconPress}
               />
             );
@@ -231,8 +215,8 @@ export const GasAccountHistory = () => {
     loading,
     txList?.rechargeList,
     txList?.withdrawList,
-    txList?.list,
     handleGiftIconPress,
+    sourceByTxKey,
   ]);
 
   const renderItem: ListRenderItem<{
@@ -249,7 +233,6 @@ export const GasAccountHistory = () => {
   }> = useCallback(
     ({ item, index }) => (
       <HistoryItem
-        key={item.tx_id + item.chain_id}
         time={item.create_at}
         value={item.usd_value}
         sign={item.history_type === 'recharge' ? '+' : '-'}
@@ -271,7 +254,8 @@ export const GasAccountHistory = () => {
       <View
         style={[
           styles.container,
-          { height: 254 },
+          styles.emptyContainer,
+          style,
           isLight ? styles.containerLight : styles.containerDark,
         ]}>
         <View style={styles.emptyContent}>
@@ -293,7 +277,9 @@ export const GasAccountHistory = () => {
       <FlatList
         style={[
           styles.container,
+          listStyle,
           { marginBottom: bottom },
+          style,
           isLight ? styles.containerLight : styles.containerDark,
         ]}
         data={txList?.list}
@@ -346,6 +332,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 50,
+  },
+  pendingHistoryItem: {
+    height: 64,
   },
   pendingContainer: {
     flexDirection: 'row',
@@ -409,23 +398,12 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     color: colors2024['neutral-title-1'],
   },
-  // loadingItem: {
-  //   paddingHorizontal: 20,
-  //   height: 50,
-
-  //   flexDirection: 'row',
-  //   justifyContent: 'space-between',
-  //   paddingVertical: 12,
-  // },
   skeletonStyle: {
     height: 16,
     borderRadius: 4,
     width: 68,
   },
-  borderTop: {
-    // borderTopWidth: 0.5,
-    // borderTopColor: colors['neutral-card2'],
-  },
+  borderTop: {},
 
   emptyImg: {
     marginTop: 36,
@@ -439,6 +417,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'column',
     alignItems: 'center',
     gap: 6,
+  },
+  emptyContainer: {
+    height: 234,
   },
 
   emptyText: {

@@ -1,14 +1,11 @@
-import { default as RcIconGasDark } from '@/assets/icons/sign/tx/gas-dark.svg';
-import { default as RcIconGasLight } from '@/assets/icons/sign/tx/gas-light.svg';
 import React, { useMemo, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
 
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import Svg, { Path } from 'react-native-svg';
 
-import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import {
   Image,
   ImageBackground,
@@ -17,7 +14,6 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -26,8 +22,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ThemeColors2024 } from '@/constant/theme';
 import { Text } from '@/components/Typography';
-
-const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 
 export type GasLessConfig = {
   button_text: string;
@@ -55,14 +49,7 @@ function FreeGasReady({
 
   if (freeGasText) {
     return (
-      <View
-        style={[
-          styles.securityLevelTip,
-          {
-            position: 'relative',
-            backgroundColor: 'transparent',
-          },
-        ]}>
+      <View style={[styles.securityLevelTip, styles.transparentBg]}>
         <ActivityFreeGasBg
           borderColor={isColorDefined ? color! : colors2024['brand-light-1']}
           style={styles.activityFreeGasBg}
@@ -85,17 +72,11 @@ function FreeGasReady({
     );
   }
   return (
-    <View
-      style={{
-        width: '100%',
-        height: 46,
-        marginTop: -5,
-        marginBottom: 7,
-      }}>
+    <View style={styles.defaultBannerWrap}>
       <ImageBackground
         source={require('@/assets/icons/sign/tx/pay-for-gas-1.png')}
         resizeMode="contain"
-        style={{ width: '100%', height: 46, marginTop: 0 }}
+        style={styles.defaultBanner}
       />
     </View>
   );
@@ -108,7 +89,6 @@ interface ActivityFreeGasBgProps {
   backgroundColor?: string;
   borderWidth?: number;
   style?: ViewStyle;
-  position?: 'left' | 'right';
 }
 
 const ActivityFreeGasBg: React.FC<ActivityFreeGasBgProps> = ({
@@ -118,17 +98,10 @@ const ActivityFreeGasBg: React.FC<ActivityFreeGasBgProps> = ({
   borderColor,
   style,
   backgroundColor = 'none',
-  position = 'right',
 }) => {
   const { width: defaultWidth } = useWindowDimensions();
 
-  // const trianglePosition = useMemo(() => {
-  //   return (defaultWidth - 20 * 2) * (0.25 * (position === 'left' ? 1 : 3));
-  // }, [defaultWidth, position]);
-
-  const trianglePosition = useMemo(() => {
-    return 18;
-  }, []);
+  const trianglePosition = 18;
 
   const width = useMemo(
     () => propsWidth || defaultWidth - 20 * 2,
@@ -255,14 +228,9 @@ export function GasLessActivityToSign({
         <View
           style={[
             styles.securityLevelTip,
-
             isActivityFreeGas && isColorDefined
-              ? {
-                  backgroundColor: 'transparent',
-                }
-              : {
-                  backgroundColor: colors2024['red-light-1'],
-                },
+              ? styles.transparentBg
+              : styles.redLightBg,
           ]}>
           {isActivityFreeGas && isColorDefined ? (
             <ActivityFreeGasBg
@@ -473,5 +441,22 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
+  },
+  transparentBg: {
+    backgroundColor: 'transparent',
+  },
+  redLightBg: {
+    backgroundColor: colors2024['red-light-1'],
+  },
+  defaultBannerWrap: {
+    width: '100%',
+    height: 46,
+    marginTop: -5,
+    marginBottom: 7,
+  },
+  defaultBanner: {
+    width: '100%',
+    height: 46,
+    marginTop: 0,
   },
 }));

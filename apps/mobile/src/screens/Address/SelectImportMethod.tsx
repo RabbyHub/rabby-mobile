@@ -7,7 +7,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { Text } from '@/components/Typography';
 import { Card } from '@/components2024/Card';
 import { RootNames } from '@/constant/layout';
-import { StackActions, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import {
@@ -35,32 +35,24 @@ import TrezorPNG from '@/assets2024/icons/wallet/trezor.png';
 import OneKeyPNG from '@/assets2024/icons/wallet/onekey.png';
 import KeystonePNG from '@/assets2024/icons/wallet/keystone.png';
 
-type CurrentAddressProps = NativeStackScreenProps<
+type SelectImportMethodProps = NativeStackScreenProps<
   RootStackParamsList,
-  'StackAddress'
+  'SelectImportMethod'
 >;
 
 function SelectImportMethod(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
+  const navigation = useNavigation<SelectImportMethodProps['navigation']>();
 
   const handleSeedPhraseOrPrivateKey = React.useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ImportSecret,
-        params: {},
-      }),
-    );
+    navigation.navigate(RootNames.ImportSecret);
   }, [navigation]);
 
   const handleHardwareWallet = React.useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.ImportHardwareAddress,
-        params: {},
-      }),
-    );
+    navigation.navigate(RootNames.StackAddress, {
+      screen: RootNames.ImportHardwareAddress,
+    });
     preferenceService.setReportActionTs(
       REPORT_TIMEOUT_ACTION_KEY.CLICK_CONNECT_HARDWARE,
     );

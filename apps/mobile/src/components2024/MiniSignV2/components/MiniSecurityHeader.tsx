@@ -12,8 +12,8 @@ import type { SecurityResult } from '../domain';
 
 export const MiniSecurityHeader: React.FC<{
   engineResults?: SecurityResult;
-  tx: Tx;
-  txDetail: ExplainTxResponse;
+  tx?: Tx;
+  txDetail?: ExplainTxResponse;
   session?: typeof INTERNAL_REQUEST_SESSION;
   account: Account;
   isReady: boolean;
@@ -25,7 +25,7 @@ export const MiniSecurityHeader: React.FC<{
   account,
   isReady,
 }) => {
-  if (!account) return null;
+  if (!account || !tx || !txDetail) return null;
 
   const {
     parsedTransactionActionData,

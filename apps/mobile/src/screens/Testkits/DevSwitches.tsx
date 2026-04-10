@@ -40,6 +40,7 @@ import {
 } from '@/assets/icons/settings';
 import {
   storeApiExpSettingData,
+  useBlockSubmitIfFormChangedOnAuth,
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
@@ -50,10 +51,13 @@ import { AppBottomSheetModal, SwitchToggleType } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+  debugShowSubmitFeedbackByScreenshotModal,
   useIsShowFeedbackOnScreenshot,
   useScreenshotToReportEnabled,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
+import { getVisibleBlockingModalIds, MODAL_GATE_IDS } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { SwitchAllowScreenshot } from '../Settings/components/SwitchAllowScreenshot';
 import { LabelScreenshotToReport } from '../Settings/components/SwitchScreenshotToReport';
 import { useAutoLockCountDown } from '../Settings/components/LockAbout';
@@ -355,6 +359,7 @@ function Reset0331AnalyticsSnapshotModal({
 
 function DevSwitchAboutScreenProtection() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const [debugModalVisible, setDebugModalVisible] = useState(false);
 
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
@@ -453,7 +458,104 @@ function DevSwitchAboutScreenProtection() {
             </View>
           </View>
         </TouchableOpacity>
+
+        <Button
+          title={'Open Repro Modal A'}
+          type="ghost"
+          height={48}
+          containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            setDebugModalVisible(true);
+          }}
+        />
+
+        <Text
+          style={[
+            styles.label,
+            styles.devModalHint,
+            { color: colors2024['neutral-foot'] },
+          ]}>
+          iOS repro path: open Modal A, then open screenshot Modal B, close B,
+          then close A.
+        </Text>
+
+        <Button
+          title={'Log Blocking Modals'}
+          type="ghost"
+          height={48}
+          containerStyle={[styles.rowWrapper, { marginTop: 12 }]}
+          onPress={() => {
+            console.debug(
+              '[modal-gate] blocking modals snapshot',
+              getVisibleBlockingModalIds(),
+            );
+          }}
+        />
+
+        <Text
+          style={[
+            styles.label,
+            styles.devModalHint,
+            { color: colors2024['neutral-foot'] },
+          ]}>
+          Once the floating diagnostics panel is enabled below, modal
+          diagnostics appear there automatically. A badge means blocking modals
+          exist; expand it for the ids.
+        </Text>
       </View>
+
+      <TrackedModal
+        modalId={MODAL_GATE_IDS.debugReproModalA}
+        visible={debugModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setDebugModalVisible(false);
+        }}>
+        <View style={styles.devModalMask}>
+          <View style={styles.devModalCard}>
+            <Text style={styles.devModalTitle}>Repro Modal A</Text>
+            <Text style={styles.devModalDesc}>
+              Modal B reuses the screenshot feedback RN Modal path with a mock
+              screenshot. The highest-signal path on iOS is: open B, close B,
+              then close A.
+            </Text>
+
+            <Button
+              title={'Open Screenshot Modal B'}
+              type="ghost"
+              height={48}
+              containerStyle={{ marginTop: 12 }}
+              onPress={() => {
+                debugShowSubmitFeedbackByScreenshotModal();
+              }}
+            />
+
+            <Button
+              title={'Close This Modal -> Open Screenshot'}
+              type="ghost"
+              height={48}
+              containerStyle={{ marginTop: 12 }}
+              onPress={() => {
+                setDebugModalVisible(false);
+                setTimeout(() => {
+                  debugShowSubmitFeedbackByScreenshotModal();
+                }, 0);
+              }}
+            />
+
+            <Button
+              title={'Close Modal A'}
+              type="primary"
+              height={48}
+              containerStyle={{ marginTop: 12 }}
+              onPress={() => {
+                setDebugModalVisible(false);
+              }}
+            />
+          </View>
+        </View>
+      </TrackedModal>
     </View>
   );
 }
@@ -548,7 +650,7 @@ function DevSwitchAboutAutoLock() {
             styles.secondarySectionTitle,
             { fontSize: 24, marginLeft: 2 },
           ]}>
-          Autolock Countdown
+          Floating Diagnostics
         </Text>
       </View>
 
@@ -564,7 +666,9 @@ function DevSwitchAboutAutoLock() {
             ref={switchShowFloatingAutoLockCountdownRef}
           />
           <Text style={styles.switchLabel}>
-            {`${showAutoLockCountdown ? 'Show' : 'Hide'} Floating View`}
+            {showAutoLockCountdown
+              ? 'Hide Floating Diagnostics Panel'
+              : 'Show Floating Diagnostics Panel'}
           </Text>
         </TouchableOpacity>
         <View style={[styles.rowWrapper, { marginTop: 12 }]}>
@@ -581,6 +685,14 @@ function DevSwitchAboutAutoLock() {
             style={countdownTextStyles}
           />
         </View>
+        <Text
+          style={[
+            styles.label,
+            styles.devModalHint,
+            { color: colors2024['neutral-foot'] },
+          ]}>
+          The panel shows autolock info together with modal diagnostics.
+        </Text>
       </View>
     </View>
   );
@@ -920,6 +1032,47 @@ function DevSwitchBatchRevoke() {
   );
 }
 
+function DevSwitchSubmitFormGuard() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    blockSubmitIfFormChangedOnAuth,
+    toggleBlockSubmitIfFormChangedOnAuth,
+  } = useBlockSubmitIfFormChangedOnAuth();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Swap / Bridge Submit Guard
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleBlockSubmitIfFormChangedOnAuth();
+          }}>
+          <AppSwitch2024
+            value={blockSubmitIfFormChangedOnAuth}
+            onValueChange={toggleBlockSubmitIfFormChangedOnAuth}
+          />
+          <Text style={styles.switchLabel}>
+            {blockSubmitIfFormChangedOnAuth
+              ? 'Block submit and alert on auth-time form change'
+              : 'Only detect auth-time form change without blocking'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -1096,6 +1249,9 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Batch Revoke</Text>
         <DevSwitchBatchRevoke />
+
+        <Text style={styles.areaTitle}>Swap / Bridge</Text>
+        <DevSwitchSubmitFormGuard />
       </ScrollView>
     </NormalScreenContainer>
   );
@@ -1173,6 +1329,36 @@ const getStyles = createGetStyles2024(ctx =>
     label: {
       fontSize: 16,
       color: ctx.colors2024['neutral-title-1'],
+    },
+    devModalMask: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.48)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+    },
+    devModalCard: {
+      width: '100%',
+      maxWidth: 360,
+      borderRadius: 20,
+      padding: 20,
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
+    },
+    devModalTitle: {
+      color: ctx.colors2024['neutral-title-1'],
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '700',
+    },
+    devModalDesc: {
+      marginTop: 8,
+      color: ctx.colors2024['neutral-foot'],
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    devModalHint: {
+      marginTop: 8,
+      lineHeight: 18,
     },
     labelIcon: { width: 24, height: 24 },
     propertyDesc: {

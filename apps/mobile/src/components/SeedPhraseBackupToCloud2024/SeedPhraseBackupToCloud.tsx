@@ -14,6 +14,7 @@ import { keyringService } from '@/core/services';
 import { replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { IS_IOS } from '@/core/native/utils';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 
 interface Props {
@@ -85,7 +86,11 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         // check if the mnemonic is uploaded successfully
         const files = await getBackupsFromCloud([filename]);
         await decryptFiles({ password, files });
-        toast.success('Backup Successful');
+        toast.success(
+          IS_IOS
+            ? t('page.newAddress.seedPhrase.backupSuccessICloud')
+            : t('page.newAddress.seedPhrase.backupSuccessGDrive'),
+        );
 
         onDone();
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -22,6 +22,8 @@ import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
 import { Text } from '@/components/Typography';
 import { useIosForceDisableAlertForSensitiveScene } from '@/hooks/appSettings';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 
 const RcTip = makeThemeIconFromCC(RcTipCC, 'orange-default');
 
@@ -40,7 +42,11 @@ export default function SecurityTipStubModal({
   const { t } = useTranslation();
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.securityTip}
+      visible={visible}
+      transparent
+      animationType="fade">
       <BlurView style={styles.overlay}>
         <TouchableOpacity
           activeOpacity={1}
@@ -73,7 +79,7 @@ export default function SecurityTipStubModal({
           </View>
         </TouchableOpacity>
       </BlurView>
-    </Modal>
+    </TrackedModal>
   );
 }
 

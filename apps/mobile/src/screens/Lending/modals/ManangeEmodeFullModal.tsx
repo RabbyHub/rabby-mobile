@@ -16,7 +16,10 @@ import { transactionHistoryService } from '@/core/services';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { useSignatureStore } from '@/components2024/MiniSignV2';
+import {
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
@@ -57,7 +60,6 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   const { t } = useTranslation();
   const { emodeEnabled, emodeCategoryId, eModes } = useMode();
   const { chainInfo } = useSelectedMarket();
-  const { ctx } = useSignatureStore();
   const { refresh } = useRefreshHistoryId();
   const [isChecked, setIsChecked] = useState(false);
   const { userReserves, reserves } = useLendingRemoteData();
@@ -91,13 +93,19 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   }, [selectedCategoryId, emodeCategoryId, wantDisableEmode]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: manageEmodeTx?.length
       ? manageEmodeTx?.[0]?.chainId + ''
       : '',
     autoResetGasStoreOnChainChange: true,
   });
+
+  const { ctx } = useSignatureStoreOf(instance);
 
   const newSummary = useMemo(() => {
     return formatUserSummary({
@@ -355,144 +363,146 @@ const ManageEmodeFullModal = ({ onClose }: { onClose: () => void }) => {
   ]);
 
   return (
-    <AutoLockView as="View" style={styles.container}>
-      <BottomSheetScrollView
-        showsVerticalScrollIndicator
-        persistentScrollbar
-        style={styles.scrollableBlock}
-        contentContainerStyle={[styles.contentContainer]}>
-        <Text style={styles.title}>
-          {wantDisableEmode
-            ? t('page.Lending.manageEmode.actions.disable')
-            : t('page.Lending.manageEmode.title')}
-        </Text>
-        {wantDisableEmode ? null : (
-          <Text style={styles.description}>
-            {t('page.Lending.manageEmode.description')}
+    <SignatureInstanceProvider instance={instance}>
+      <AutoLockView as="View" style={styles.container}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator
+          persistentScrollbar
+          style={styles.scrollableBlock}
+          contentContainerStyle={[styles.contentContainer]}>
+          <Text style={styles.title}>
+            {wantDisableEmode
+              ? t('page.Lending.manageEmode.actions.disable')
+              : t('page.Lending.manageEmode.title')}
           </Text>
-        )}
-        <ManageEmodeOverView
-          selectedCategoryId={
-            wantDisableEmode ? emodeCategoryId : selectedCategoryId
-          }
-          newSummary={newSummary}
-          disabled={wantDisableEmode}
-          onSelectCategory={setSelectedCategoryId}
-          isUnAvailable={!isTargetCategoryAvailable && !!selectedCategoryId}
-        />
-        {canShowDirectSubmit &&
-          hasChangeCategory &&
-          !isBlock &&
-          isTargetCategoryAvailable && (
-            <View style={styles.gasPreContainer}>
-              <DirectSignGasInfo
-                supportDirectSign={true}
-                loading={false}
-                openShowMore={noop}
-                chainServeId={chainInfo?.serverId || ''}
-              />
-            </View>
+          {wantDisableEmode ? null : (
+            <Text style={styles.description}>
+              {t('page.Lending.manageEmode.description')}
+            </Text>
           )}
-      </BottomSheetScrollView>
-      <View
-        style={[
-          styles.buttonContainer,
-          {
-            height:
-              BOTTOM_SIZE.BUTTON +
-              (isBlock
-                ? BOTTOM_SIZE.TIPS
-                : isRisky
-                ? BOTTOM_SIZE.CHECKBOX + BOTTOM_SIZE.TIPS
-                : 0),
-          },
-        ]}>
-        {isRisky && (
-          <>
-            <View style={styles.warningContainer}>
-              <RcIconWarningCircleCC
-                width={15}
-                height={15}
-                color={colors2024['red-default']}
-              />
-              <Text style={styles.warningText}>{desc}</Text>
-            </View>
-            {isBlock ? null : (
-              <TouchableOpacity
-                style={styles.checkbox}
-                onPress={() => {
-                  setIsChecked(prev => !prev);
-                }}>
-                <CheckBoxRect size={16} checked={isChecked} />
-                <Text style={styles.checkboxText}>
-                  {t('page.Lending.risk.checkbox')}
-                </Text>
-              </TouchableOpacity>
+          <ManageEmodeOverView
+            selectedCategoryId={
+              wantDisableEmode ? emodeCategoryId : selectedCategoryId
+            }
+            newSummary={newSummary}
+            disabled={wantDisableEmode}
+            onSelectCategory={setSelectedCategoryId}
+            isUnAvailable={!isTargetCategoryAvailable && !!selectedCategoryId}
+          />
+          {canShowDirectSubmit &&
+            hasChangeCategory &&
+            !isBlock &&
+            isTargetCategoryAvailable && (
+              <View style={styles.gasPreContainer}>
+                <DirectSignGasInfo
+                  supportDirectSign={true}
+                  loading={false}
+                  openShowMore={noop}
+                  chainServeId={chainInfo?.serverId || ''}
+                />
+              </View>
             )}
-          </>
-        )}
-        {canShowDirectSubmit ? (
-          <DirectSignBtn
-            loading={isLoading}
-            loadingType="circle"
-            key={wantDisableEmode ? 0 : selectedCategoryId}
-            showTextOnLoading
-            wrapperStyle={styles.directSignBtn}
-            authTitle={
-              wantDisableEmode
-                ? t('page.Lending.manageEmode.actions.disable')
-                : t('page.Lending.manageEmode.actions.enable')
-            }
-            titleStyle={[
-              wantDisableEmode && styles.closeButtonTitle,
-              wantDisableEmode &&
-                disableDirectSignBtn &&
-                styles.disableBtnTitle,
-            ]}
-            buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
-            title={
-              wantDisableEmode
-                ? t('page.Lending.manageEmode.actions.disable')
-                : t('page.Lending.manageEmode.actions.enable')
-            }
-            iconColor={
-              wantDisableEmode
-                ? disableDirectSignBtn
-                  ? colors2024['neutral-info']
-                  : colors2024['neutral-title-1']
-                : undefined
-            }
-            onFinished={() => handlePressManageEMode()}
-            disabled={disableDirectSignBtn}
-            type="primary"
-            syncUnlockTime
-            account={currentAccount}
-            showHardWalletProcess
-          />
-        ) : (
-          <Button
-            loadingType="circle"
-            showTextOnLoading
-            containerStyle={styles.fullWidthButton}
-            onPress={() => handlePressManageEMode()}
-            title={
-              wantDisableEmode
-                ? t('page.Lending.manageEmode.actions.disable')
-                : t('page.Lending.manageEmode.actions.enable')
-            }
-            titleStyle={[
-              wantDisableEmode && styles.closeButtonTitle,
-              wantDisableEmode &&
-                disableFullWidthButton &&
-                styles.disableBtnTitle,
-            ]}
-            buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
-            loading={isLoading}
-            disabled={disableFullWidthButton}
-          />
-        )}
-      </View>
-    </AutoLockView>
+        </BottomSheetScrollView>
+        <View
+          style={[
+            styles.buttonContainer,
+            {
+              height:
+                BOTTOM_SIZE.BUTTON +
+                (isBlock
+                  ? BOTTOM_SIZE.TIPS
+                  : isRisky
+                  ? BOTTOM_SIZE.CHECKBOX + BOTTOM_SIZE.TIPS
+                  : 0),
+            },
+          ]}>
+          {isRisky && (
+            <>
+              <View style={styles.warningContainer}>
+                <RcIconWarningCircleCC
+                  width={15}
+                  height={15}
+                  color={colors2024['red-default']}
+                />
+                <Text style={styles.warningText}>{desc}</Text>
+              </View>
+              {isBlock ? null : (
+                <TouchableOpacity
+                  style={styles.checkbox}
+                  onPress={() => {
+                    setIsChecked(prev => !prev);
+                  }}>
+                  <CheckBoxRect size={16} checked={isChecked} />
+                  <Text style={styles.checkboxText}>
+                    {t('page.Lending.risk.checkbox')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+          {canShowDirectSubmit ? (
+            <DirectSignBtn
+              loading={isLoading}
+              loadingType="circle"
+              key={wantDisableEmode ? 0 : selectedCategoryId}
+              showTextOnLoading
+              wrapperStyle={styles.directSignBtn}
+              authTitle={
+                wantDisableEmode
+                  ? t('page.Lending.manageEmode.actions.disable')
+                  : t('page.Lending.manageEmode.actions.enable')
+              }
+              titleStyle={[
+                wantDisableEmode && styles.closeButtonTitle,
+                wantDisableEmode &&
+                  disableDirectSignBtn &&
+                  styles.disableBtnTitle,
+              ]}
+              buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
+              title={
+                wantDisableEmode
+                  ? t('page.Lending.manageEmode.actions.disable')
+                  : t('page.Lending.manageEmode.actions.enable')
+              }
+              iconColor={
+                wantDisableEmode
+                  ? disableDirectSignBtn
+                    ? colors2024['neutral-info']
+                    : colors2024['neutral-title-1']
+                  : undefined
+              }
+              onFinished={() => handlePressManageEMode()}
+              disabled={disableDirectSignBtn}
+              type="primary"
+              syncUnlockTime
+              account={currentAccount}
+              showHardWalletProcess
+            />
+          ) : (
+            <Button
+              loadingType="circle"
+              showTextOnLoading
+              containerStyle={styles.fullWidthButton}
+              onPress={() => handlePressManageEMode()}
+              title={
+                wantDisableEmode
+                  ? t('page.Lending.manageEmode.actions.disable')
+                  : t('page.Lending.manageEmode.actions.enable')
+              }
+              titleStyle={[
+                wantDisableEmode && styles.closeButtonTitle,
+                wantDisableEmode &&
+                  disableFullWidthButton &&
+                  styles.disableBtnTitle,
+              ]}
+              buttonStyle={wantDisableEmode ? styles.closeButton : undefined}
+              loading={isLoading}
+              disabled={disableFullWidthButton}
+            />
+          )}
+        </View>
+      </AutoLockView>
+    </SignatureInstanceProvider>
   );
 };
 
