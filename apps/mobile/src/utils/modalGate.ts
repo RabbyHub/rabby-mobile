@@ -25,6 +25,7 @@ export const MODAL_GATE_IDS = {
   gasAccountDepositTokenAlert: 'gas-account-deposit-token-alert',
   perpsAgentsLimit: 'perps-agents-limit',
   perpsDepositToken: 'perps-deposit-token',
+  perpsEditTpSlPrice: 'perps-edit-tp-sl-price',
 } as const;
 
 const modalGateStore = zCreate<ModalGateState>(() => ({
