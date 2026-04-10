@@ -788,14 +788,23 @@ const GasAccountDepositTokenFormInner: React.FC<{
     gasAccountInfo: gasAccountInfo?.account?.balance,
   });
 
+  const estReceiveUsdNumberBN = useMemo(
+    () =>
+      minDepositPrice
+        ? new BigNumber(estReceiveUsdNumber)
+            .plus(gasAccountInfo?.account?.balance || 0)
+            .minus(minDepositPrice)
+        : new BigNumber(estReceiveUsdNumber),
+    [estReceiveUsdNumber, gasAccountInfo?.account?.balance, minDepositPrice],
+  );
+
   const displayedEstReceiveLabel = minDepositPrice
     ? t('page.gasAccount.depositPayPopup.topUpPayTips', {
         topUpUsd: formatUsdValue(minDepositPrice),
         balance: formatUsdValue(
-          new BigNumber(estReceiveUsdNumber)
-            .plus(gasAccountInfo?.account?.balance || 0)
-            .minus(minDepositPrice)
-            .toFixed(),
+          estReceiveUsdNumberBN.lt(0)
+            ? new BigNumber(0)
+            : estReceiveUsdNumberBN.toFixed(),
         ),
       })
     : estReceiveLabel;
