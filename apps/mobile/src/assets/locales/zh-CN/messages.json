@@ -166,7 +166,7 @@
         "Approve": "已批准",
         "Default": "交互",
         "Send": "已发送",
-        "Swap": "已交换",
+        "Swap": "已兑换",
         "Bridge": "跨链",
         "Contract": "部署合约",
         "Recieve": "已收到",
@@ -201,7 +201,7 @@
         "ViewOn": "查看",
         "Unknown": "Unknown",
         "Status": "状态",
-        "SwapAgain": "再次交换",
+        "SwapAgain": "再次兑换",
         "Date": "日期",
         "RevokeToken": "撤销 Token",
         "Chain": "链",
@@ -260,11 +260,11 @@
     },
     "getStart": {
       "goToHome": "前往首页",
-      "alreadyHaveAddress": "我已经有一个钱包",
-      "sync": "扫描Rabby插件同步钱包",
+      "alreadyHaveAddress": "我已有一个钱包",
+      "sync": "扫描 Rabby 插件同步钱包",
       "createNewAddress": "创建新钱包",
-      "alreadyUseRabby": "我已经在使用 Rabby。",
-      "welcomeTitle": "欢迎来到 Rabby Wallet"
+      "alreadyUseRabby": "我已有 Rabby 钱包",
+      "welcomeTitle": "欢迎使用 Rabby 钱包"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "输入您的助记词"
@@ -338,7 +338,7 @@
         "receiveAsset": "接收资产"
       },
       "swapAndCross": {
-        "title": "交换 Token 及跨链"
+        "title": "兑换 Token 及跨链"
       },
       "gasLimitEmptyAlert": "请输入 gas limit",
       "safeAddressNotSupportChain": "当前的安全地址不支持 {{0}} 链",
@@ -425,7 +425,7 @@
         "simulationFailed": "交易模拟失败",
         "valueDiff": "价值差异",
         "payToken": "支付",
-        "title": "交换代币",
+        "title": "兑换代币",
         "slippageTolerance": "滑点容忍度",
         "notPaymentAddress": "不是用于支付的钱包"
       },
@@ -660,7 +660,7 @@
     "sendToken": {
       "whitelistAlert__notWhitelisted_tip": "该地址未列入白名单。",
       "Chain": "链",
-      "To": "到",
+      "To": "收款地址",
       "balanceWarn": {
         "gasFeeReservation": "需要预留 Gas 费用"
       },
@@ -719,7 +719,7 @@
         "cancel": "取消",
         "confirm": "继续"
       },
-      "From": "来自",
+      "From": "发送地址",
       "addressDetail": "地址详情",
       "newAmount": "金额",
       "noSupportTokenReason": {
@@ -855,13 +855,14 @@
     "home": {
       "services": {
         "receive": "接收",
-        "history": "历史",
+        "history": "交易历史",
         "queue": "队列",
         "bridge": "跨链",
         "send": "发送",
         "more": "更多",
         "websites": "网站",
-        "swap": "交换",
+        "swap": "兑换",
+        "gasAccount": "GasAccount",
         "dapps": "Dapps",
         "approvals": "授权",
         "search": "搜索 Token",
@@ -882,7 +883,7 @@
         "descMore": "向上滑动以探索更多网站"
       },
       "DappDrawer": {
-        "favorite": "最爱",
+        "favorite": "收藏",
         "empty": "没有网站被添加到收藏夹",
         "search": "搜索",
         "emptyAndroid": "没有dApp添加到收藏夹"
@@ -912,12 +913,12 @@
       "value": "余额",
       "no-quote": "无报价",
       "estimate": "估计：",
-      "bridge-from": "桥接从",
+      "bridge-from": "跨链从",
       "est-receiving": "预计接收：",
       "detail-tx": "详情",
       "liquidity": "流动性",
       "To": "至",
-      "approve-and-bridge": "批准并桥接",
+      "approve-and-bridge": "批准并跨链",
       "for-available-quote": "获取可用报价",
       "From": "来自",
       "the-following-bridge-route-are-found": "找到以下费率",
@@ -932,35 +933,35 @@
         "source": "Bridge Source",
         "signWarning": "我理解警报并希望继续"
       },
-      "bridgeFrom": "桥接自",
+      "bridgeFrom": "跨链自",
       "best": "最优",
       "best-subtitle": "综合考虑总成本（包括Gas费用）和速度提供最优报价",
       "no-route-found": "未找到路线",
       "via-bridge": "通过 {{bridge}}",
-      "history": "桥接历史",
+      "history": "跨链历史",
       "token": "Token",
       "est-difference": "预估差异：",
       "gas-x-price": "Gas 价格：{{price}} Gwei。",
-      "need-to-approve-token-before-bridge": "在桥接之前需要批准代币",
+      "need-to-approve-token-before-bridge": "在跨链之前需要批准代币",
       "price-impact": "价格影响",
-      "bridgeTo": "桥接到",
+      "bridgeTo": "跨链到",
       "loss-tips": "您正在损失 {{usd}}。请尝试不同的金额。",
       "title": "跨链",
       "bridged": "跨链已完成",
       "gasFeeTooHight": "Gas费用高于正常情况。仅在您希望继续时确认。",
       "pendingItem": {
         "pending": "待处理",
-        "swap": "交换",
+        "swap": "兑换",
         "estimatedTime": "预计时间",
-        "bridgeStatus": "桥接状态",
-        "BridgeStatusUnavailable": "桥接状态不可用。请检查您的交易历史以确认资金是否到账。",
+        "bridgeStatus": "跨链状态",
+        "BridgeStatusUnavailable": "跨链状态不可用。请检查您的交易历史以确认资金是否到账。",
         "failed": "失败",
-        "receivedDifferentTokenFromSource": "桥接失败。源链上返回了不同的代币。",
+        "receivedDifferentTokenFromSource": "跨链失败。源链上返回了不同的代币。",
         "fromFailed": "交易未通过。请再试一次。",
         "receivedDifferentTokenNeedSwap": "您收到了不同的代币。您可以将其兑换为您选择的代币。",
         "queued": "排队中",
         "longTimeNoReceive": "网络繁忙。这可能会比平时花费更长的时间。请耐心等待。",
-        "beReturnFailed": "桥接失败。您的资产已被退回。",
+        "beReturnFailed": "跨链失败。您的资产已被退回。",
         "sendingFrom": "从 {{chain}} 发送",
         "completed": "已完成",
         "receivingTo": "在 {{chain}} 上接收"
@@ -1076,7 +1077,7 @@
       "no-quote-found": "未找到报价",
       "to": "至",
       "Completed": "完成",
-      "title": "交换",
+      "title": "兑换",
       "insufficient-balance": "余额不足",
       "fail-to-simulate-transaction": "模拟交易失败",
       "best": "最佳",
@@ -1111,7 +1112,7 @@
       },
       "recommend-slippage": "为了防止抢先交易，我们建议滑点为<2>{{ slippage }}</2>%",
       "pendingTip": "交易已提交。如果交易长时间处于挂起状态，您可以尝试在设置中清除挂起。",
-      "need-to-approve-token-before-swap": "需先批准代币再进行交换",
+      "need-to-approve-token-before-swap": "需先批准代币再进行兑换",
       "low-slippage-may-cause-failed-transactions-due-to-high-volatility": "低滑点可能由于高波动性导致交易失败",
       "rabbyFee": {
         "button": "明白了",
@@ -1123,7 +1124,7 @@
       },
       "directlySwap": "通过智能合约直接包装{{symbol}}代币",
       "gas-fee-too-high": "Gas 费用过高",
-      "swapped": "已交换",
+      "swapped": "已兑换",
       "historyTitle": "Swap 历史记录",
       "selectChainModalTitle": "选择链",
       "results": "结果",
@@ -1165,7 +1166,7 @@
         "enableWhitelistTip": "一旦启用，你只能使用 Rabby 将资产发送到白名单中的地址。"
       },
       "tokenDetail": {
-        "swap": "交换",
+        "swap": "兑换",
         "send": "发送",
         "customized": "定制化",
         "receive": "接收",
@@ -1260,7 +1261,8 @@
         "feedbackTitle": "有反馈吗？我们在倾听。"
       },
       "homeCenterTipScreenshot": {
-        "description": "随时截屏以快速报告错误"
+        "description": "随时截屏以快速报告错误",
+        "title": "小提示"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "向右滑动以查看所有资产"
@@ -1681,7 +1683,7 @@
         "title_one": "{{count}} 钱包",
         "addAddress": "添加钱包",
         "title_zero": "0 钱包",
-        "importWatchAddress": "导入的观察型钱包",
+        "importWatchAddress": "导入的观察钱包",
         "importSafeAddress": "导入的 Safe Wallet",
         "moreWallets": "更多钱包",
         "notIncludedInTotalBalance": "不包括在总余额中",
@@ -1828,7 +1830,7 @@
         "title": "快速从 Chainlist 添加",
         "search": "搜索自定义网络名称或 ID",
         "tips": {
-          "added": "您已经添加了此链条",
+          "added": "您已经添加了此链",
           "supported": "Rabby Wallet 已集成的 Chain"
         }
       },
@@ -1975,7 +1977,7 @@
       "header": {
         "placeHolder": "搜索",
         "searchPlaceHolder": "搜索代币名称 / 地址",
-        "favoriteTitle": "喜欢的代币",
+        "favoriteTitle": "收藏的代币",
         "SearchChain": "搜索链"
       },
       "searchWeb": {
@@ -1989,7 +1991,7 @@
         "Defi": "DeFi",
         "token": "Tokens",
         "NFT": "NFT",
-        "AllChains": "所有链条"
+        "AllChains": "所有链"
       },
       "tokenItem": {
         "verifyDangerTips": "这是一个 scam token",
@@ -1997,7 +1999,7 @@
         "scamWarningTips": "这是一种低质量的代币，可能是骗局。"
       },
       "hotTokenList": {
-        "title": "热"
+        "title": "热门"
       },
       "globalSearch": {
         "placeHolder": "搜索 Dapp/Token",
@@ -2008,7 +2010,7 @@
       }
     },
     "receiveAddressList": {
-      "selectChainTitle": "选择链条",
+      "selectChainTitle": "选择链",
       "title": "选择钱包接收"
     },
     "tokenDetail": {
@@ -2024,7 +2026,7 @@
         "unfold": "展开",
         "excludeBalance": "从余额中排除",
         "fold": "折叠",
-        "less": "更少",
+        "less": "收起",
         "includeBalance": "计入余额",
         "all": "全部",
         "unfavorite": "取消收藏",
@@ -2057,7 +2059,7 @@
       "SupportedExchanges": "支持的交易所",
       "noTransactions": "没有交易",
       "fdvTitle": "什么是 FDV？",
-      "BridgeIssue": "由第三方桥接的代币",
+      "BridgeIssue": "由第三方跨链的代币",
       "fdvContent": "如果最大存款量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大存款量。如果最大存款量为零，FDV = 价格 × 总存款量。如果最大存款量和总存款量均未定义或无穷大，则不显示 FDV。",
       "HoldingValue": "持有价值",
       "Price": "价格",
@@ -2378,7 +2380,7 @@
       "menu": {
         "contentModeDesktop": "请求桌面网站",
         "refresh": "刷新",
-        "favorite": "最喜欢",
+        "favorite": "收藏",
         "disconnect": "断开连接",
         "contentModeMobile": "请求移动站点",
         "clearCache": "清除缓存"
@@ -2624,8 +2626,8 @@
       "PerpsDepositTokenModal": {
         "swapBtn": "兑换",
         "directTag": "直接存款",
-        "bridgeBtn": "桥接",
-        "goBridgeDesc": "仅支持在 Arbitrum 上直接存入 USDC。请在存入之前将您当前的代币桥接到 Arbitrum 上的 USDC。",
+        "bridgeBtn": "跨链",
+        "goBridgeDesc": "仅支持在 Arbitrum 上直接存入 USDC。请在存入之前将您当前的代币跨链到 Arbitrum 上的 USDC。",
         "goSwapDesc": "仅支持在 Arbitrum 上直接存入 USDC。在存入之前，请将您当前的代币兑换为 USDC。",
         "directDepositFast": "快速，0 滑点"
       },
@@ -2966,7 +2968,7 @@
         "approveAndBorrow": "批准并借入",
         "almostReachedWarning": "该资产的协议借款上限为100%。进一步借款不可用。",
         "almostReachedError": "可借用的最大金额受限，因为协议借款上限几乎已达到。",
-        "swapDebt": "交换",
+        "swapDebt": "兑换",
         "borrowed": "已借款",
         "noSupplyDesc": "要借款，您需要提供资产作为抵押。",
         "noSupplyPrefix": "没有供应："
@@ -3114,8 +3116,8 @@
       "disabled": "禁用",
       "debtSwap": {
         "actions": {
-          "title": "债务交换",
-          "swapTo": "交换为",
+          "title": "债务兑换",
+          "swapTo": "兑换为",
           "select": "选择",
           "amount": "金额",
           "borrowed": "已借款"
@@ -3123,17 +3125,17 @@
         "overview": {
           "title": "交易概览",
           "borrowAPY": "借款apy",
-          "borrowValueAfter": "交换后的借款余额"
+          "borrowValueAfter": "兑换后的借款余额"
         },
         "button": {
-          "swap": "交换"
+          "swap": "兑换"
         },
-        "title": "交换借贷头寸",
+        "title": "兑换借贷头寸",
         "borrowBalance": "借款余额",
         "priceImpactTips": "高价格影响（{{lostValue}}）。由于流动性低或订单规模小，此路径可能会返回更多。",
         "lpDangerWarning": "在此交易后，您的健康因子将会非常低，并可能导致清算。请选择其他资产或减少交易金额以确保安全。",
-        "lpRiskWarning": "交换后低健康因子。您的头寸将承受更高的清算风险。",
-        "entryTips": "一键交换你借入的资产，减少步骤和费用。",
+        "lpRiskWarning": "兑换后低健康因子。您的头寸将承受更高的清算风险。",
+        "entryTips": "一键兑换你借入的资产，减少步骤和费用。",
         "maxLtvWarning": "抵押品不足以覆盖新的借款头寸。钱包必须有剩余的借款能力才能执行债务切换。"
       },
       "hfTips": {
@@ -3417,7 +3419,7 @@
     "externalSwapBrideDappPopup": {
       "thirdPartyDappToProceed": "请使用第三方 Dapp 继续操作",
       "chainNotSupported": "在这个链上不支持",
-      "bridgeOnDapp": "在 Dapp 上桥接",
+      "bridgeOnDapp": "在 Dapp 上跨链",
       "swapOnDapp": "在 Dapp 上进行 Swap",
       "noQuotesForChain": "该链尚无可用报价",
       "viewDappOptions": "查看 Dapp 选项",
