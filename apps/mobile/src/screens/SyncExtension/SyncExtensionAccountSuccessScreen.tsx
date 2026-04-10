@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -120,13 +120,10 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.keyboardAvoidingView}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: top }]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
+      <View style={[styles.container, { paddingTop: top }]}>
         {addressItems.length > 0 && (
           <WalletSuccessCard
+            style={styles.card}
             title={
               singleAccount
                 ? t('page.importSuccess.titleImported')
@@ -137,20 +134,20 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
             addresses={addressItems}
           />
         )}
+      </View>
 
-        <View style={[styles.footer, { paddingBottom: bottom + 20 }]}>
-          <Button
-            containerStyle={styles.btnContainer}
-            type="primary"
-            title={
-              singleAccount
-                ? t('page.importSuccess.viewAddress')
-                : t('global.Done')
-            }
-            onPress={handleConfirm}
-          />
-        </View>
-      </ScrollView>
+      <View style={[styles.footer, { paddingBottom: bottom + 20 }]}>
+        <Button
+          containerStyle={styles.btnContainer}
+          type="primary"
+          title={
+            singleAccount
+              ? t('page.importSuccess.viewAddress')
+              : t('global.Done')
+          }
+          onPress={handleConfirm}
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -159,20 +156,21 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   keyboardAvoidingView: {
     flex: 1,
   },
-  scrollView: {
+  container: {
     flex: 1,
     backgroundColor: colors2024['neutral-bg-1'],
-  },
-  scrollContent: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    flexGrow: 1,
+  },
+  card: {
+    flex: 1,
   },
   footer: {
-    marginTop: 'auto',
     width: '100%',
     alignItems: 'center',
+    paddingHorizontal: 20,
     paddingTop: 16,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   btnContainer: {
     width: '100%',
