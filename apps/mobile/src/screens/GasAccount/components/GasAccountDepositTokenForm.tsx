@@ -803,9 +803,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
     ? t('page.gasAccount.depositPayPopup.topUpPayTips', {
         topUpUsd: formatUsdValue(minDepositPrice),
         balance: formatUsdValue(
-          estReceiveUsdNumberBN.lt(0)
-            ? new BigNumber(0)
-            : estReceiveUsdNumberBN.toFixed(),
+          estReceiveUsdNumberBN.lt(0) ? 0 : estReceiveUsdNumberBN.toFixed(),
         ),
       })
     : estReceiveLabel;
