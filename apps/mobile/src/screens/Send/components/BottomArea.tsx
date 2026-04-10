@@ -27,7 +27,6 @@ import {
 } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
 import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
-import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { useSignatureStore } from '@/components2024/MiniSignV2';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
@@ -55,6 +54,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
     },
     directSignBtnRef,
     formValuesRef,
+    events,
     callbacks: {
       handleIgnoreGasFeeChange,
       onBottomAreaLayout,
@@ -118,19 +118,23 @@ export default function BottomArea({ account }: { account: Account | null }) {
   });
 
   useEffect(() => {
-    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
-      txDetail => {
+    const disposeRets = [] as Function[];
+    subscribeEvent(
+      events,
+      SendTokenEvents.ON_SIGNED_SUCCESS,
+      () => {
         fetchRisks();
         setTimeout(() => {
           fetchRisks();
         }, 5000);
-      };
-    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      },
+      { disposeRets },
+    );
 
     return () => {
-      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+      disposeRets.forEach(dispose => dispose());
     };
-  }, [fetchRisks]);
+  }, [events, fetchRisks]);
 
   const { mostImportantRisks, hasRiskForToAddress, hasRiskForToken } =
     React.useMemo(() => {

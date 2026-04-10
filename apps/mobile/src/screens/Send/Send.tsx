@@ -26,7 +26,6 @@ import {
   getSendChainToken,
   SendTokenEvents,
   SendTokenInternalContextProvider,
-  subscribeEvent,
   useSendTokenForm,
   useSendTokenInternalContext,
   useSendTokenScreenChainToken,
@@ -100,7 +99,6 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
-import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 
 const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
   KeyboardAwareScrollView,
@@ -253,11 +251,11 @@ function SendScreen({
 
     checkCexSupport,
     loadCurrentToken,
+    refreshCurrentTokenBalance,
     handleCurrentTokenChange,
 
     directSignBtnRef,
     formValuesRef,
-    resetAfterSignedSuccess,
 
     whitelistEnabled,
     computed: {
@@ -444,37 +442,6 @@ function SendScreen({
     navParams?.toAddress,
   ]);
 
-  const refreshCurrentTokenBalance = useCallback(async () => {
-    if (!currentAccount?.address) {
-      return;
-    }
-
-    apiSendToken.putScreenState({
-      balanceError: null,
-      balanceWarn: null,
-    });
-    apiSendToken.markBalanceLoading({
-      tokenId: currentToken.id,
-      chainId: currentToken.chain,
-      currentAddress: currentAccount.address,
-    });
-
-    try {
-      await loadCurrentToken(
-        currentToken.id,
-        currentToken.chain,
-        currentAccount.address,
-      );
-    } catch (error) {
-      console.error('SendScreen refresh current token error', error);
-    }
-  }, [
-    currentAccount?.address,
-    currentToken.chain,
-    currentToken.id,
-    loadCurrentToken,
-  ]);
-
   useEffect(() => {
     (async () => {
       if (!initByCacheFinishedRef.current) return;
@@ -498,49 +465,6 @@ function SendScreen({
   }, [currentAccount, navigation]);
 
   const { fetchContactAccounts } = useContactAccounts();
-
-  useEffect(() => {
-    const disposeRets = [] as Function[];
-    subscribeEvent(
-      sendTokenEvents,
-      SendTokenEvents.ON_SIGNED_SUCCESS,
-      () => {
-        resetAfterSignedSuccess();
-        refreshCurrentTokenBalance();
-        // navigation.dispatch(
-        //   StackActions.replace(RootNames.StackRoot, {
-        //     screen: RootNames.Home,
-        //   }),
-        // );
-      },
-      { disposeRets },
-    );
-
-    return () => {
-      disposeRets.forEach(dispose => dispose());
-    };
-  }, [refreshCurrentTokenBalance, resetAfterSignedSuccess, sendTokenEvents]);
-
-  useEffect(() => {
-    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
-      txDetail => {
-        if (!currentAccount?.address) {
-          return;
-        }
-
-        if (!lowcaseSame(txDetail.address, currentAccount.address)) {
-          return;
-        }
-
-        refreshCurrentTokenBalance();
-      };
-
-    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
-
-    return () => {
-      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
-    };
-  }, [currentAccount?.address, refreshCurrentTokenBalance]);
 
   useLayoutEffect(() => {
     return () => {
