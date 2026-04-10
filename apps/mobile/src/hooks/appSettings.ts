@@ -319,6 +319,7 @@ export function useFloatingView() {
 
   return {
     collapsed: floatingView.collapsed,
+    showAutoLockCountdown: floatingView.ui_showAutoLockCountdown,
     toggleCollapsed,
     shouldShow: Object.entries(floatingView).some(
       ([k, v]) => k.startsWith('ui_') && v,
