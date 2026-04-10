@@ -331,6 +331,7 @@ export const HistoryItem = React.memo(
                 type={formatType as HistoryItemCateType}
                 tokenChangeData={tokenChangeData}
                 tokenApproveData={tokenApproveData}
+                isFailure={isFailed}
               />
               <View
                 style={[

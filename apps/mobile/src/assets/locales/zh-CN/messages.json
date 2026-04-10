@@ -934,6 +934,7 @@
       },
       "bridgeFrom": "桥接自",
       "best": "最优",
+      "best-subtitle": "综合考虑总成本（包括Gas费用）和速度提供最优报价",
       "no-route-found": "未找到路线",
       "via-bridge": "通过 {{bridge}}",
       "history": "桥接历史",
@@ -2801,7 +2802,7 @@
         "takeProfitWhenPriceAbove": "当价格高于该值时止盈",
         "takeProfitWhenPriceBelow": "当价格低于该值时止盈",
         "stopLossWhen": "止损于",
-        "stopLossWhenPriceAbove": "当价格低于该值时止盈",
+        "stopLossWhenPriceAbove": "当价格高于该值时止损",
         "stopLossWhenPriceBelow": "当价格低于该值时止损",
         "minMargin": "最低保证金为 {{amount}}",
         "maxMargin": "最大保证金为 {{amount}}",
@@ -2837,7 +2838,7 @@
         "noPermission": "在您的地区不支持开仓。",
         "closePosition": "关闭 {{direction}} 仓位",
         "add": "加仓",
-        "close": "关仓"
+        "close": "平仓"
       },
       "PerpsAutoCloseModal": {
         "slPrice": "止损价",
