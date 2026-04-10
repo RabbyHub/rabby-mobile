@@ -3226,11 +3226,11 @@
         "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。"
       },
       "common": {
-        "orYouCanCreateNewWallet": "或者你可以<clickable>创建一个新钱包</clickable>"
+        "orYouCanCreateNewWallet": "没有钱包？立即<clickable>创建新钱包</clickable>"
       },
       "importSecret": {
-        "seedPhrasePlaceholder": "输入您的种子短语",
-        "privateKeyPlaceholder": "输入您的私钥"
+        "seedPhrasePlaceholder": "输入你的助记词",
+        "privateKeyPlaceholder": "输入你的私钥"
       },
       "createWalletError": "创建钱包失败",
       "walletReady": "您的钱包已准备好 🚀",

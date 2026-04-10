@@ -3271,11 +3271,11 @@
         "subtitle": "歡迎回來！🎉  \n選擇一種方法來快速恢復您的錢包。"
       },
       "common": {
-        "orYouCanCreateNewWallet": "或者您可以<cw>創建一個新錢包</cw>"
+        "orYouCanCreateNewWallet": "沒有錢包？立即<cw>創建新錢包</cw>"
       },
       "importSecret": {
-        "privateKeyPlaceholder": "輸入您的私鑰",
-        "seedPhrasePlaceholder": "輸入您的 seed phrase"
+        "privateKeyPlaceholder": "輸入你的私鑰",
+        "seedPhrasePlaceholder": "輸入你的助記詞"
       },
       "createWalletError": "無法創建錢包",
       "setPasswordTip": "設置密碼以保護您的錢包",

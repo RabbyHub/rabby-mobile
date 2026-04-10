@@ -469,9 +469,12 @@
       "addressCount_one": "{{count}} Wallet",
       "addressCount_other": "{{count}} Wallets",
       "success": "{{type}} successfully!",
-      "importMore": "Import more Wallets",
+      "importMore": "Add more wallet from this phrase",
       "viewAddress": "View Wallet",
-      "addressCount": "{{count}} Addresses"
+      "addressCount": "{{count}} Addresses",
+      "titleCreated": "Your wallet has been created 🚀",
+      "titleImported": "Your wallet has been imported 🚀",
+      "titleMultiple": "{{count}} Wallets Added 🚀"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Enter your seed phrase, separating each word with a space"
@@ -1755,7 +1758,9 @@
         "required": "Please input address"
       },
       "loading": "Searching the deployed chain of this address",
-      "gnosisChainDesc": "This address was found deployed on {{count}} chains"
+      "gnosisChainDesc": "This address was found deployed on {{count}} chains",
+      "gnosisChainPillDesc": "- Your wallet is deployed on these chains -",
+      "gnosisChainScrollDesc": "- This wallet was found deployed on {{count}} chains -"
     },
     "rabbyPoints": {
       "__skip_translation": ["titleWithStar", "ClaimComing"],
@@ -3615,6 +3620,7 @@
   },
   "backupReminder": {
     "title": "You have not backed up your wallet",
-    "action": "Back up now"
+    "action": "Back up now",
+    "badge": "Not backup"
   }
 }

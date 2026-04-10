@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
@@ -8,15 +8,22 @@ import IconCreate from '@/assets2024/icons/common/IconCreate.svg';
 import IconSyncRabby from '@/assets2024/icons/common/iconSyncExtension.svg';
 
 import { naviPush } from '@/utils/navigation';
-import { AppRootName, RootNames } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { useSetPasswordFirst } from '@/hooks/useLock';
-import { preferenceService } from '@/core/services';
+import { preferenceService, keyringService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { apiMnemonic } from '@/core/apis';
+import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
+import { ellipsisAddress } from '@/utils/address';
+import { replaceToFirst } from '@/utils/navigation';
+import { toast } from '@/components2024/Toast';
+import { setAccountNeedsBackupReminder } from '@/hooks/account';
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
   shouldRedirectToSetPasswordBefore2024: ReturnType<
@@ -31,6 +38,64 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { seedPhraseList } = useSeedPhrase();
+  const creatingRef = useRef(false);
+
+  const handleCreateNewSeed = React.useCallback(async () => {
+    if (creatingRef.current) {
+      return;
+    }
+    creatingRef.current = true;
+    try {
+      const seedPhrase = await apiMnemonic.generatePreMnemonic();
+      const Keyring = keyringService.getKeyringClassForType(
+        KEYRING_CLASS.MNEMONIC,
+      ) as any;
+      const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
+      const accountsToCreate = keyring?.getAddresses(0, 1);
+      const address = accountsToCreate?.[0]?.address;
+
+      await addKeyringAndactiveAndPersistAccounts(
+        seedPhrase,
+        '',
+        accountsToCreate.map((acc: any) => ({
+          address: acc.address,
+          aliasName: '',
+          index: acc.index,
+        })),
+        false,
+      );
+      keyringService.removePreMnemonics();
+
+      await setAccountNeedsBackupReminder(
+        {
+          address,
+          type: KEYRING_TYPE.HdKeyring,
+          brandName: KEYRING_CLASS.MNEMONIC,
+        },
+        true,
+      );
+
+      replaceToFirst(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess2024,
+        params: {
+          type: KEYRING_TYPE.HdKeyring,
+          brandName: KEYRING_CLASS.MNEMONIC,
+          isFirstCreate: true,
+          address: [address],
+          mnemonics: seedPhrase,
+          passphrase: '',
+          isExistedKR: false,
+          alias: ellipsisAddress(address),
+          showBackup: true,
+        },
+      });
+    } catch (e) {
+      console.error('handleCreateNewSeed error', e);
+      toast.show('Failed to create wallet');
+    } finally {
+      creatingRef.current = false;
+    }
+  }, []);
 
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
@@ -55,15 +120,8 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
                 screen: RootNames.CreateSelectMethod,
               });
             } else {
-              naviPush(RootNames.StackAddress, {
-                screen: RootNames.CreateNewAddress,
-                params: {
-                  noSetupPassword: true,
-                  useCurrentSeed: false,
-                },
-              });
+              await handleCreateNewSeed();
             }
-
             onDone();
           }}
           style={styles.importItem}
