@@ -135,20 +135,20 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
         pollCancelRef.current = cancelPolling;
         const success = await pollPromise;
         pollCancelRef.current = null;
-
-        if (success) {
-          storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
-          await onWaitDepositResult({
-            type: 'pay',
-          });
-          onDeposit?.();
-          onClose?.();
-        } else {
-          toast.info(t('page.gasAccount.depositFailed'), {
-            position: toast.positions.CENTER,
-          });
-          onClose?.();
+        if (success !== 'cancel') {
+          if (success) {
+            storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
+            await onWaitDepositResult({
+              type: 'pay',
+            });
+            onDeposit?.();
+          } else {
+            toast.info(t('page.gasAccount.depositFailed'), {
+              position: toast.positions.CENTER,
+            });
+          }
         }
+        onClose?.();
         return;
       }
 

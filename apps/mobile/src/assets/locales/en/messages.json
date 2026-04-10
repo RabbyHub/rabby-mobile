@@ -1958,7 +1958,7 @@
         "depositFailed": "Deposit Failed",
         "depositCanceled": "Deposit Canceled",
         "titleApple": "Buy in App Store",
-        "topUpPayTips": "Gas required: {{topUpUsd}}, Gas remaining: {{balance}}"
+        "topUpPayTips": "Gas required: {{topUpUsd}}, Gas remaining est: {{balance}}"
       },
       "depositSelectPopup": {
         "title": "Deposit to GasAccount",
