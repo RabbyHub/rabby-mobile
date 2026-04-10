@@ -199,22 +199,15 @@ jobs:
           echo "OS_TYPE is $OS_TYPE";
 
           if [ "$OS_TYPE" == "Linux" ]; then
+            export RABBY_MOBILE_TURBO_BUILD=false
             if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
-              export RABBY_MOBILE_TURBO_BUILD=true
-              export RABBY_MOBILE_TURBO_REMOTE_SYNC=false
-              export RABBY_MOBILE_METRO_MAX_WORKERS=2
-              export RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE=8192
-              echo "Enable turbo build for Linux regression package"
-            else
-              export RABBY_MOBILE_TURBO_BUILD=false
+              echo "Enable Gradle cache for Linux regression package"
             fi
             buildchannel=selfhost-reg ./scripts/deploy-android.sh
           elif [ "$OS_TYPE" == "Darwin" ]; then
+            export RABBY_MOBILE_TURBO_BUILD=false
             if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
-              export RABBY_MOBILE_TURBO_BUILD=true
-              echo "Enable turbo build for iOS regression package"
-            else
-              export RABBY_MOBILE_TURBO_BUILD=false
+              echo "Enable pod cache for iOS regression package"
             fi
             if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
               export SENTRY_DISABLE_AUTO_UPLOAD=true
