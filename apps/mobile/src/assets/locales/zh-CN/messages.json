@@ -2082,7 +2082,7 @@
         "holderSections": {
           "tableHeader": {
             "address": "地址",
-            "position": "位置",
+            "position": "仓位",
             "ratio": "比例"
           },
           "top100HoldersRatio": "前100名持有者比例",
@@ -2097,7 +2097,7 @@
             "volume": "交易量",
             "buy": "购买",
             "address": "地址",
-            "min": "最小值",
+            "min": "分钟",
             "type": "类型",
             "sell": "出售",
             "qnt": "Qnt",
@@ -2117,7 +2117,7 @@
           },
           "actions": {
             "all": "所有",
-            "remove": "删除",
+            "remove": "移除",
             "add": "添加"
           },
           "headers": {
@@ -2126,11 +2126,11 @@
             "value": "价值"
           },
           "dex": "Dex",
-          "pair": "配对",
+          "pair": "币对",
           "amount": "金额",
           "value": "价值"
         },
-        "pools": "池塘"
+        "pools": "池子"
       },
       "headerBalanceText": "余额",
       "price": "价格",
@@ -3007,7 +3007,7 @@
       },
       "lqDescription": {
         "risky": "风险较高",
-        "desc": "清算价值",
+        "desc": "清算值",
         "over3desc": "您的持仓是安全的",
         "over3title": "健康因子 > 3.0：",
         "below1desc": "您的头寸面临清算风险。",

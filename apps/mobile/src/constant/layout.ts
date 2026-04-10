@@ -46,6 +46,7 @@ export const ADDRESS_ENTRY_GAP = 12;
 export const TOGGLE_SPLIT_HEIGHT = 24;
 
 export const FOLD_ASSETS_HEADER_HEIGHT = 46;
+export const FOLD_ASSETS_HEADER_HEIGHT_WITH_PADDING = 46 + 32;
 export const UNFOLD_ASSETS_HEADER_HEIGHT = 161 + 20;
 export const TAB_HEADER_HEIGHT = 36;
 
