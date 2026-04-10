@@ -802,7 +802,7 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: 'Debug Logs Viewer',
+              label: 'App Log Verification',
               icon: RcCode,
               onPress: () => {
                 navigation.dispatch(

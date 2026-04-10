@@ -17,6 +17,7 @@ if (!__DEV__) {
   initSentry();
 }
 
+import './src/utils/logging/install';
 import './global';
 import './src/setup-app';
 if (__DEV__) {

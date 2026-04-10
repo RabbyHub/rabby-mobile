@@ -111,9 +111,4 @@ module.exports = {
     ['@babel/plugin-transform-class-static-block'],
     ['react-native-reanimated/plugin'],
   ],
-  env: {
-    production: {
-      plugins: ['transform-remove-console'],
-    },
-  },
 };
