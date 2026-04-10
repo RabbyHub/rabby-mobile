@@ -3010,7 +3010,7 @@
       },
       "lqDescription": {
         "risky": "风险较高",
-        "desc": "清算价值",
+        "desc": "清算值",
         "over3desc": "您的持仓是安全的",
         "over3title": "健康因子 > 3.0：",
         "below1desc": "您的头寸面临清算风险。",
