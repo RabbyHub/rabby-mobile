@@ -96,7 +96,7 @@ export const HealthFactorBar: React.FC<HealthFactorBarProps> = ({
       <View style={styles.liquidationContainer}>
         <View style={styles.liquidationMarker} />
         <Text style={styles.liquidationValue}>1.00</Text>
-        <Text style={styles.liquidationText}>
+        <Text style={styles.liquidationText} numberOfLines={1}>
           {t('page.Lending.lqDescription.desc')}
         </Text>
       </View>
@@ -169,7 +169,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   liquidationText: {
     fontSize: 14,
-    lineHeight: 14,
+    lineHeight: 16,
     fontWeight: '500',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
