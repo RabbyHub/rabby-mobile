@@ -508,6 +508,7 @@ export const TransactionItem = ({
           type={formatType as HistoryItemCateType}
           tokenChangeData={tokenChangeData}
           tokenApproveData={tokenApproveData}
+          isFailure={isFailed}
         />
         <View style={styles.textBox}>
           <View style={styles.titleBox}>
