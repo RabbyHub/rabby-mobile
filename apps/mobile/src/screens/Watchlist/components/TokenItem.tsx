@@ -137,7 +137,10 @@ const TokenListItemComponent = ({
           <View style={styles.tokenInfo}>
             {/* symbol */}
             <View style={styles.tokenNameContainer}>
-              <Text style={styles.tokenName}>
+              <Text
+                style={styles.tokenName}
+                numberOfLines={1}
+                ellipsizeMode="tail">
                 {ellipsisOverflowedText(getTokenSymbol(item), 12)}
               </Text>
               {item.launchpad?.logo ? (
@@ -280,6 +283,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
+    flexShrink: 1,
+    minWidth: 0,
   },
   chainLogo: {
     borderWidth: 1.5,
@@ -367,6 +372,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 0,
     flexShrink: 0,
     justifyContent: 'flex-start',
+    width: 16,
   },
   tokenAssetContainer: {
     flexDirection: 'row',
@@ -382,7 +388,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
   },
   fourMemeIcon: {
-    width: 14,
-    height: 14,
+    width: 18,
+    height: 18,
+    flexShrink: 0,
   },
 }));
