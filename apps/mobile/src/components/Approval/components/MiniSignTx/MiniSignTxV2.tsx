@@ -627,6 +627,7 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     margin: 0,
     padding: 0,
     borderRadius: 0,
+    marginTop: 0,
   },
 }));
 
