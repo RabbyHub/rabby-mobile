@@ -1,5 +1,5 @@
 import RNFS from 'react-native-fs';
-import { LoggingFileSystemAdapter } from './rollingZipWriter';
+import type { LoggingFileSystemAdapter } from '@rabby-wallet/rabby-logger';
 
 export const rnfsLoggingAdapter: LoggingFileSystemAdapter = {
   mkdir(path) {

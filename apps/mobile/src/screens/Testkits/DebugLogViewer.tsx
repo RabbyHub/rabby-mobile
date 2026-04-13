@@ -769,7 +769,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
           />
           <MetaRow
             label="Current entry size"
-            value={formatBytes(snapshot.loggerState.activeEntryBytes)}
+            value={formatBytes(snapshot.loggerState.activeEntryBytes ?? 0)}
           />
           <MetaRow
             label="Console capture"

@@ -1,7 +1,9 @@
-import { MaskedLogValue } from './logging/format';
+import { MaskedLogValue } from '@rabby-wallet/rabby-logger';
 
 jest.mock('./logger', () => {
-  const { MaskedLogValue: NextMaskedLogValue } = require('./logging/format');
+  const {
+    MaskedLogValue: NextMaskedLogValue,
+  } = require('@rabby-wallet/rabby-logger');
 
   return {
     logger: {

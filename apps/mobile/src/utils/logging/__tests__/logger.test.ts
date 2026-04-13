@@ -1,11 +1,14 @@
 import { strFromU8, unzipSync } from 'fflate';
-import { AppLogger } from '../core';
-import { MaskedLogValue, serializeLogValue } from '../format';
 import {
+  AppLogger,
+  MaskedLogValue,
+  RollingZipLogWriter,
+  serializeLogValue,
+} from '@rabby-wallet/rabby-logger';
+import type {
   LoggingFileSystemAdapter,
   LoggingFileSystemEntry,
-  RollingZipLogWriter,
-} from '../rollingZipWriter';
+} from '@rabby-wallet/rabby-logger';
 
 class MemoryFS implements LoggingFileSystemAdapter {
   private readonly files = new Map<
