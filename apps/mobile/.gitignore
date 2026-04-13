@@ -91,6 +91,7 @@ scripts/tmp
 /src/**/vconsole.min.js
 /android/app/src/main/assets/custom/vconsole.min.js
 /android/app/src/main/assets/custom/*
+/android/app/src/main/assets/modules.json
 /android/app/src/main/assets/fonts/*
 /android/app/src/main/assets/threads/*
 /android/app/src/main/res/font/*.ttf
