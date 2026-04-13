@@ -22,6 +22,7 @@ import { useSingleHomeAddress } from '@/screens/Home/hooks/singleHome';
 import { apisAddressBalance } from './useCurrentBalance';
 import { useMemo } from 'react';
 import { computeBalanceChange } from '@/core/apis/balance';
+import { refreshAddress24hBalance } from '@/store/balance24h';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
 
@@ -91,6 +92,7 @@ export const formChartData = (
     realtimeTimestamp?: number;
     type?: CurveDayType;
     staticBalance?: number | null;
+    baseUsdValue?: number | null;
   },
 ) => {
   const {
@@ -98,9 +100,13 @@ export const formChartData = (
     realtimeTimestamp,
     type = CurveDayType.DAY,
     staticBalance = null,
+    baseUsdValue = null,
   } = options;
   const startData = data[0] || { value: 0, timestamp: 0, usd_value: 0 };
-  const startUsdValue = coerceFloat(startData.usd_value, 0);
+  const startUsdValue =
+    typeof baseUsdValue === 'number'
+      ? coerceFloat(baseUsdValue, 0)
+      : coerceFloat(startData.usd_value, 0);
   const step = type === CurveDayType.DAY ? 30 * 60 : 3 * 60 * 60;
 
   const list =
@@ -199,6 +205,7 @@ function getDefaultCurveState(): CurveState {
       realtimeNetWorth: 0,
       type: CurveDayType.DAY,
       staticBalance: 0,
+      baseUsdValue: 0,
     }),
     isDecrease: false,
   };
@@ -258,6 +265,7 @@ function setCurveData(
     totalEvmBalance?: number;
     totalBalance: number | null;
     loadedFromApi: boolean;
+    baseUsdValue?: number | null;
   },
 ) {
   address = lcAddr(address);
@@ -272,6 +280,7 @@ function setCurveData(
       realtimeTimestamp: new Date().getTime(),
       type: input.days ?? CurveDayType.DAY,
       staticBalance: input.totalBalance ?? 0,
+      baseUsdValue: input.baseUsdValue,
     });
 
     const addrState = (prev[address] = prev[address] || getDefaultCurveState());
@@ -314,7 +323,15 @@ const fetchCurveFor = async (
   }
   try {
     setIsLoadingCurve(addr, true);
-    const curve = await getNetCurve(addr, days, force);
+    const [curve, address24hBalance] = await Promise.all([
+      getNetCurve(addr, days, force),
+      days === CurveDayType.DAY
+        ? refreshAddress24hBalance(addr, force).catch(error => {
+            console.error('Fetch 24h balance error', error);
+            return null;
+          })
+        : Promise.resolve(null),
+    ]);
     const start =
       days === CurveDayType.DAY
         ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
@@ -330,21 +347,31 @@ const fetchCurveFor = async (
       start,
       step,
     );
-    setCurveData(
-      addr,
-      result.map(item => {
-        return {
-          timestamp: dayjs(item.timestamp).unix(),
-          usd_value: item.price,
-        };
-      }),
-      {
-        days,
-        totalEvmBalance: realtimeNetWorth,
-        totalBalance: staticBalance,
-        loadedFromApi: true,
-      },
-    );
+    const baseUsdValue = address24hBalance?.total_usd_value;
+    const normalizedCurve = result.map(item => {
+      return {
+        timestamp: dayjs(item.timestamp).unix(),
+        usd_value: item.price,
+      };
+    });
+    if (
+      days === CurveDayType.DAY &&
+      typeof baseUsdValue === 'number' &&
+      normalizedCurve[0]
+    ) {
+      const firstPoint = normalizedCurve[0];
+      normalizedCurve[0] = {
+        timestamp: firstPoint.timestamp,
+        usd_value: baseUsdValue,
+      };
+    }
+    setCurveData(addr, normalizedCurve, {
+      days,
+      totalEvmBalance: realtimeNetWorth,
+      totalBalance: staticBalance,
+      loadedFromApi: true,
+      baseUsdValue,
+    });
   } catch (error) {
   } finally {
     setIsLoadingCurve(addr, false);

@@ -228,7 +228,6 @@ const balanceStore = zCreate<BalanceState>(set => ({
           address: string;
           isCore: boolean;
           formatBalance: EvmTotalBalanceResponse;
-          appChainUsdValue: number;
         }>(async () => {
           const balance = await openapi.getTotalBalanceV2({
             address,
@@ -251,8 +250,7 @@ const balanceStore = zCreate<BalanceState>(set => ({
             total_usd_value: evmUsdValue + appChainUsdValue,
           };
 
-          syncBalance(address, isCore, formatBalance);
-          return { address, isCore, formatBalance, appChainUsdValue };
+          return { address, isCore, formatBalance };
         }),
       ),
     );
@@ -260,6 +258,11 @@ const balanceStore = zCreate<BalanceState>(set => ({
     const latestBalanceMap: Record<string, IBalanceData> = {};
     const latestChainUSDMap: Record<string, ChainWithBalance[]> = {};
     const finishedLoadingMap: Record<string, boolean> = {};
+    const balancesToPersist: Array<{
+      address: string;
+      isCore: boolean;
+      formatBalance: EvmTotalBalanceResponse;
+    }> = [];
     results.forEach(result => {
       if (result.status !== 'fulfilled') {
         return;
@@ -267,12 +270,17 @@ const balanceStore = zCreate<BalanceState>(set => ({
       if (!result.value) {
         return;
       }
-      const { address, formatBalance } = result.value;
+      const { address, isCore, formatBalance } = result.value;
       latestBalanceMap[address] = {
         totalBalance: formatBalance.total_usd_value,
         evmBalance: formatBalance.evm_usd_value || 0,
       };
       latestChainUSDMap[address] = formatBalance.chain_list;
+      balancesToPersist.push({
+        address,
+        isCore,
+        formatBalance,
+      });
     });
     fetchList.forEach(({ address }) => {
       finishedLoadingMap[address] = false;
@@ -292,6 +300,10 @@ const balanceStore = zCreate<BalanceState>(set => ({
         ...finishedLoadingMap,
       },
     }));
+
+    balancesToPersist.forEach(({ address, isCore, formatBalance }) => {
+      syncBalance(address, isCore, formatBalance);
+    });
   },
 
   async getTotalBalance(address: string, force = false) {
@@ -302,7 +314,6 @@ const balanceStore = zCreate<BalanceState>(set => ({
         [lowerAddress]: true,
       },
     }));
-    const isExpired = await BalanceEntity.isExpired(address, true);
     const addresses = await keyringService.getAllAddresses();
     const filtered = addresses.filter(item =>
       isSameAddress(item.address, address),
@@ -311,9 +322,10 @@ const balanceStore = zCreate<BalanceState>(set => ({
     if (filtered.some(item => CORE_KEYRING_TYPES.includes(item.type as any))) {
       core = true;
     }
+    const isExpired = await BalanceEntity.isExpired(lowerAddress, core);
     try {
       if (!force && !isExpired) {
-        const res = await BalanceEntity.queryBalance(address, core);
+        const res = await BalanceEntity.queryBalance(lowerAddress, core);
         const evmBalance = res.evm_usd_value || 0;
         const appChainUsdValue = useAppChainStore
           .getState()

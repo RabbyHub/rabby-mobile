@@ -51,6 +51,7 @@ import {
   useScene24hBalanceCombinedData,
   useSceneIsLoading,
 } from '@/hooks/useScene24hBalance';
+import { useLoadBalanceFromApiStage } from '@/hooks/useAccountsBalance';
 import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
@@ -98,11 +99,23 @@ export function TabsTopHeader(): JSX.Element {
   });
   const { currency } = useCurrency();
   const { myTop10Addresses } = useAccountInfo();
+  const { loadBalanceFromApiStage } = useLoadBalanceFromApiStage();
   const balanceMap = balanceStore(s => s.balanceMap);
   const isTop10BalanceLoading = balanceStore(s => {
     return s.getIsTop10BalanceLoading(myTop10Addresses, s.isLoadingByAddress)
       .isTop10BalanceLoading;
   });
+  const hasCompleteCurrentBalance = useMemo(() => {
+    if (!myTop10Addresses.length) {
+      return false;
+    }
+    return myTop10Addresses.every(address => {
+      return !!balanceMap[address.toLowerCase()];
+    });
+  }, [balanceMap, myTop10Addresses]);
+  const showBalanceLoadingWithoutLocal =
+    (isTop10BalanceLoading || loadBalanceFromApiStage === 'loading') &&
+    !hasCompleteCurrentBalance;
 
   const totalBalance = useMemo(() => {
     if (!myTop10Addresses.length) {
@@ -187,8 +200,14 @@ export function TabsTopHeader(): JSX.Element {
         <Pressable
           style={styles.leftBox}
           onPress={() => handleSwitchToTokenTab(0)}>
-          <Text style={styles.balanceTextBox}>{netWorth}</Text>
-          {changePercent ? (
+          {showBalanceLoadingWithoutLocal ? (
+            <View style={styles.balanceLoadingBox}>
+              <LoadingCircle />
+            </View>
+          ) : (
+            <Text style={styles.balanceTextBox}>{netWorth}</Text>
+          )}
+          {!showBalanceLoadingWithoutLocal && changePercent ? (
             <Text
               style={[
                 styles.changePercentText,
@@ -321,6 +340,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'left',
     fontFamily: 'SF Pro Rounded',
     // ...makeDebugBorder('green'),
+  },
+  balanceLoadingBox: {
+    minWidth: 24,
+    minHeight: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   changePercentText: {
     fontSize: 16,

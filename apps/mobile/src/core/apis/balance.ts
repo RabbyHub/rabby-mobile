@@ -1,5 +1,5 @@
 import { cached } from '@/utils/cache';
-import { preferenceService, keyringService } from '../services';
+import { keyringService } from '../services';
 import { testOpenapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
@@ -9,6 +9,8 @@ import {
   EvmTotalBalanceResponse,
 } from '@/databases/hooks/balance';
 import balanceStore from '@/store/balance';
+
+const testnetBalanceMemoryCache: Record<string, EvmTotalBalanceResponse> = {};
 
 const getTotalBalanceCached = async (address: string, force?: boolean) => {
   const addresses = await keyringService.getAllAddresses();
@@ -28,7 +30,6 @@ const getTotalBalanceCached = async (address: string, force?: boolean) => {
     },
     force,
   );
-  preferenceService.updateAddressBalance(address, data);
   return data;
 };
 
@@ -43,7 +44,7 @@ const getTestnetTotalBalanceCached = cached(async address => {
     ...testnetData,
     evm_usd_value: testnetData.total_usd_value,
   };
-  preferenceService.updateTestnetAddressBalance(address, formatData);
+  testnetBalanceMemoryCache[address.toLowerCase()] = formatData;
   return formatData;
 }, 5000);
 
@@ -71,7 +72,7 @@ export const getAddressCacheBalanceSync = (
     return null;
   }
   if (isTestnet) {
-    return preferenceService.getTestnetAddressBalance(address);
+    return testnetBalanceMemoryCache[address.toLowerCase()] || null;
   }
   const lowerAddress = address.toLowerCase();
   const state = balanceStore.getState();

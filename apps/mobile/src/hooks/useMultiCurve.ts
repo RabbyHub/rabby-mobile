@@ -68,13 +68,7 @@ function getMultiTimeStamp() {
   return state.timestamps;
 }
 
-const waitQueueFinished = (q: PQueue) => {
-  return new Promise(resolve => {
-    q.on('idle', () => {
-      resolve(null);
-    });
-  });
-};
+const waitQueueFinished = (q: PQueue) => q.onIdle();
 
 const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
   if (!timeStamps.length) {
@@ -208,7 +202,6 @@ const fetchData = makeSWRKeyAsyncFunc(
               start,
               step,
             );
-            setAddrLoading(addr, false);
             setMultiTimeStamp(
               addr,
               result.map(item => {
@@ -221,11 +214,14 @@ const fetchData = makeSWRKeyAsyncFunc(
           } catch (error) {
             console.error('Fetch curve error', error);
           } finally {
+            setAddrLoading(addr, false);
             loadingMapRef[addr] = false;
           }
         });
       });
-      if (queue.size) await waitQueueFinished(queue);
+      if (nextCheckAddress.size) {
+        await waitQueueFinished(queue);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Fetch curve error', error);
@@ -302,7 +298,10 @@ export const refreshDayCurve = makeSWRKeyAsyncFunc(
     reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
   } = {}) => {
     const top10Addresses =
-      addresses || (await getTop10MyAccounts()).top10Addresses;
+      addresses ||
+      (balanceAccounts && Object.keys(balanceAccounts).length
+        ? Object.keys(balanceAccounts)
+        : (await getTop10MyAccounts()).top10Addresses);
     if (reason !== 'balance_changed' || force) {
       try {
         await fetchData(top10Addresses, force);
@@ -314,7 +313,7 @@ export const refreshDayCurve = makeSWRKeyAsyncFunc(
     const multiTimeStamp = getMultiTimeStamp();
     const totals = apisAccountsBalance.computeTotalBalance(
       top10Addresses,
-      balanceAccounts || getBalanceCacheAccounts(),
+      getBalanceCacheAccounts(),
     );
 
     onComputeCombineData({

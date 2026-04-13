@@ -1,38 +1,51 @@
 describe('core/apis/balance', () => {
+  let getAddressBalance: typeof import('./balance').getAddressBalance;
+  let getAddressCacheBalanceSync: typeof import('./balance').getAddressCacheBalanceSync;
   let computeBalanceChange: typeof import('./balance').computeBalanceChange;
+  let mockKeyringService: {
+    getAllAddresses: jest.Mock;
+  };
+  let mockGetTokenSettings: jest.Mock;
+  let mockBatchBalanceWithLocalCache: jest.Mock;
+  let mockIsSameAddress: jest.Mock;
+  let mockTestnetGetTotalBalanceV2: jest.Mock;
 
   beforeEach(() => {
     jest.resetModules();
 
+    mockKeyringService = {
+      getAllAddresses: jest.fn(),
+    };
+    mockGetTokenSettings = jest.fn();
+    mockBatchBalanceWithLocalCache = jest.fn();
+    mockIsSameAddress = jest.fn();
+    mockTestnetGetTotalBalanceV2 = jest.fn();
+
     jest.doMock('@/utils/cache', () => ({
-      cached: (fn: unknown) => fn,
+      cached:
+        (fn: (...args: unknown[]) => unknown) =>
+        (args: unknown[], _key: string, _force: boolean) =>
+          fn(...args),
     }));
     jest.doMock('../services', () => ({
-      preferenceService: {
-        updateAddressBalance: jest.fn(),
-        updateTestnetAddressBalance: jest.fn(),
-        getTestnetAddressBalance: jest.fn(),
-      },
-      keyringService: {
-        getAllAddresses: jest.fn(),
-      },
+      keyringService: mockKeyringService,
     }));
     jest.doMock('../request', () => ({
       testOpenapi: {
-        getTotalBalanceV2: jest.fn(),
+        getTotalBalanceV2: mockTestnetGetTotalBalanceV2,
       },
     }));
     jest.doMock('@rabby-wallet/base-utils/dist/isomorphic/address', () => ({
-      isSameAddress: jest.fn(),
+      isSameAddress: mockIsSameAddress,
     }));
     jest.doMock('@rabby-wallet/keyring-utils', () => ({
       CORE_KEYRING_TYPES: [],
     }));
     jest.doMock('@/utils/getTokenSettings', () => ({
-      getTokenSettings: jest.fn(),
+      getTokenSettings: mockGetTokenSettings,
     }));
     jest.doMock('@/databases/hooks/balance', () => ({
-      batchBalanceWithLocalCache: jest.fn(),
+      batchBalanceWithLocalCache: mockBatchBalanceWithLocalCache,
     }));
     jest.doMock('@/store/balance', () => ({
       __esModule: true,
@@ -44,7 +57,11 @@ describe('core/apis/balance', () => {
       },
     }));
 
-    ({ computeBalanceChange } = require('./balance'));
+    ({
+      getAddressBalance,
+      getAddressCacheBalanceSync,
+      computeBalanceChange,
+    } = require('./balance'));
   });
 
   describe('computeBalanceChange', () => {
@@ -71,6 +88,80 @@ describe('core/apis/balance', () => {
       expect(computeBalanceChange(-1, 0)).toEqual({
         assetsChange: -1,
         changePercent: '100.00%',
+      });
+    });
+  });
+
+  describe('getAddressBalance', () => {
+    it('delegates mainnet address refresh to balanceStore path without writing preference cache again', async () => {
+      mockKeyringService.getAllAddresses.mockResolvedValue([
+        {
+          address: '0xabc',
+          type: 'WatchAddressKeyring',
+        },
+      ]);
+      mockIsSameAddress.mockReturnValue(true);
+      mockGetTokenSettings.mockResolvedValue({
+        included_token_uuids: [],
+        excluded_token_uuids: [],
+        excluded_protocol_ids: [],
+        excluded_chain_ids: [],
+      });
+      mockBatchBalanceWithLocalCache.mockResolvedValue({
+        total_usd_value: 123,
+        evm_usd_value: 120,
+        chain_list: [],
+      });
+
+      const result = await getAddressBalance('0xABC', {
+        force: true,
+        isTestnet: false,
+      });
+
+      expect(result).toEqual({
+        total_usd_value: 123,
+        evm_usd_value: 120,
+        chain_list: [],
+      });
+      expect(mockBatchBalanceWithLocalCache).toHaveBeenCalledWith(
+        {
+          address: '0xABC',
+          isCore: false,
+          included_token_uuids: [],
+          excluded_token_uuids: [],
+          excluded_protocol_ids: [],
+          excluded_chain_ids: [],
+        },
+        true,
+      );
+    });
+
+    it('keeps testnet balance cache in module memory instead of preference store', async () => {
+      mockGetTokenSettings.mockResolvedValue({
+        included_token_uuids: [],
+        excluded_token_uuids: [],
+        excluded_protocol_ids: [],
+        excluded_chain_ids: [],
+      });
+      mockTestnetGetTotalBalanceV2.mockResolvedValue({
+        total_usd_value: 88,
+        chain_list: [],
+      });
+
+      const result = await getAddressBalance('0xABC', {
+        force: true,
+        isTestnet: true,
+      });
+
+      expect(result).toEqual({
+        total_usd_value: 88,
+        evm_usd_value: 88,
+        chain_list: [],
+      });
+      expect(getAddressCacheBalanceSync('0xabc', true)).toEqual({
+        total_usd_value: 88,
+        evm_usd_value: 88,
+        chain_list: [],
       });
     });
   });

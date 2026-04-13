@@ -1,8 +1,3 @@
-import {
-  getBalance24hCache,
-  get24hBalance,
-  IBalance24hData,
-} from '@/utils/24hBalanceCache';
 import { useMemo } from 'react';
 import { formatSmallUsdValue } from '@/hooks/useCurve';
 import PQueue from 'p-queue';
@@ -21,6 +16,12 @@ import { perfEvents } from '@/core/utils/perf';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import balanceStore, { IBalanceData } from '@/store/balance';
+import balance24hStore, {
+  type Address24hBalanceMap,
+  hydrateAddress24hBalanceFromCache,
+  refreshAddress24hBalance,
+  useAddress24hBalanceMap,
+} from '@/store/balance24h';
 const queues: Record<BalanceScene, PQueue> = {
   Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
 };
@@ -28,11 +29,7 @@ const TEN_MINUTES = 10 * 60 * 1000;
 const normalizeAddressesForCompare = (addresses: string[]) =>
   Array.from(new Set(addresses.map(addr => addr.toLowerCase()))).sort();
 
-type Multi24hBalance = {
-  [P: string]: IBalance24hData['data'] & {
-    updateTime: IBalance24hData['updateTime'];
-  };
-};
+type Multi24hBalance = Address24hBalanceMap;
 type BalanceScene = 'Home';
 export type Multi24hBalanceState = {
   addresses: Record<BalanceScene, string[]>;
@@ -40,7 +37,6 @@ export type Multi24hBalanceState = {
     BalanceScene,
     ReturnType<typeof computeCombined24hBalanceData>
   >;
-  multi24hBalance: Multi24hBalance;
   sceneLoading: Record<BalanceScene, boolean>;
   sceneAddrLoading: Record<`${BalanceScene}-${string}`, boolean>;
 };
@@ -53,7 +49,6 @@ const scene24hBalanceStore = zCreate<Multi24hBalanceState>(() => ({
     Home: false,
   },
   sceneAddrLoading: {},
-  multi24hBalance: {},
   combinedData: {
     Home: computeCombined24hBalanceData({
       addresses: [],
@@ -117,36 +112,11 @@ function setSceneAddrLoading<T extends BalanceScene>(
       newVal[key] = loadingVal;
     });
 
-    return newVal;
-  });
-}
-
-function setMulti24hBalance(
-  address: string,
-  valOrFunc: UpdaterOrPartials<
-    Multi24hBalanceState['multi24hBalance'][string] | undefined
-  >,
-) {
-  scene24hBalanceStore.setState(prev => {
-    const { newVal, changed } = resolveValFromUpdater(
-      prev.multi24hBalance[address],
-      valOrFunc,
-      { strict: true },
-    );
-
-    if (!changed || !newVal) {
-      return prev;
-    }
-
     return {
       ...prev,
-      multi24hBalance: { ...prev.multi24hBalance, [address]: newVal },
+      sceneAddrLoading: newVal,
     };
   });
-}
-
-export function getMulti24hBalanceBy(address: string) {
-  return scene24hBalanceStore.getState().multi24hBalance[address];
 }
 
 function onComputedSceneCombinedData<T extends BalanceScene>(
@@ -158,7 +128,7 @@ function onComputedSceneCombinedData<T extends BalanceScene>(
 ) {
   const states = scene24hBalanceStore.getState();
   const addresses = states.addresses[scene];
-  const multi24hBalance = states.multi24hBalance;
+  const multi24hBalance = balance24hStore.getState().balance24hMap;
 
   const combinedData = computeCombined24hBalanceData({
     addresses,
@@ -182,13 +152,7 @@ function onComputedSceneCombinedData<T extends BalanceScene>(
   });
 }
 
-const waitQueueFinished = (q: PQueue) => {
-  return new Promise(resolve => {
-    q.on('idle', () => {
-      resolve(null);
-    });
-  });
-};
+const waitQueueFinished = (q: PQueue) => q.onIdle();
 
 const sceneLastLoadingRef: Record<BalanceScene, number> = {
   Home: 0,
@@ -197,7 +161,6 @@ const sceneLastLoadingRef: Record<BalanceScene, number> = {
 export type FetchTotalBalanceOptions = {
   addresses?: string | string[];
   force?: boolean;
-  totals?: ReturnType<typeof apisAccountsBalance.computeTotalBalance>;
   reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
 };
 const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
@@ -206,7 +169,9 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
     if (!addresses?.length) {
       addresses = (await getTop10MyAccounts()).top10Addresses;
     }
-    const address = Array.isArray(addresses) ? addresses : [addresses];
+    const address = (Array.isArray(addresses) ? addresses : [addresses]).map(
+      item => item.toLowerCase(),
+    );
     const prevAddresses = scene24hBalanceStore.getState().addresses[scene];
     const nextAddressesSorted = [...address].map(i => i.toLowerCase()).sort();
     const prevAddressesSorted = [...prevAddresses]
@@ -216,15 +181,13 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
       nextAddressesSorted.join('|') !== prevAddressesSorted.join('|');
     setSceneAddresses(scene, address);
 
-    const totals =
-      options?.totals ||
-      apisAccountsBalance.computeTotalBalance(
-        address,
-        getBalanceCacheAccounts(),
-      );
     const queue = queues[scene];
 
     function beforeReturn() {
+      const totals = apisAccountsBalance.computeTotalBalance(
+        address,
+        getBalanceCacheAccounts(),
+      );
       onComputedSceneCombinedData(scene, {
         totalEvmBalance: totals.totalEvm,
         totalBalance: totals.total,
@@ -255,20 +218,13 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
       address.forEach(_addr => {
         const addr = _addr.toLowerCase();
         setSceneAddrLoading(scene, addr, true);
-        const cacheData = getBalance24hCache(addr);
-        const existedData = !!getMulti24hBalanceBy(addr);
-        const shouldHydrateFromCache =
-          !!cacheData?.data && (!existedData || !cacheData.isExpired);
-        if (shouldHydrateFromCache) {
-          setMulti24hBalance(addr, {
-            ...cacheData.data,
-            updateTime: cacheData.updateTime,
-          });
-        }
+        const cacheData = hydrateAddress24hBalanceFromCache(addr);
         if (cacheData?.data && !cacheData?.isExpired) {
           nextCheckAddress.delete(addr);
+          setSceneAddrLoading(scene, addr, false);
         }
       });
+      setSceneLoading(scene, force || nextCheckAddress.size > 0);
       beforeReturn();
       queue.clear();
       Array.from(nextCheckAddress).forEach(_addr => {
@@ -276,15 +232,10 @@ const refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
         queue.add(async () => {
           setSceneAddrLoading(scene, addr, true);
           try {
-            const address24hBalance = await get24hBalance(addr, force);
-            setMulti24hBalance(addr, {
-              ...address24hBalance.data,
-              updateTime: address24hBalance.updateTime,
-            });
+            await refreshAddress24hBalance(addr, force);
           } catch (error) {
             console.error('Fetch curve error', error);
           } finally {
-            sceneLastLoadingRef[scene][addr] = false;
             setSceneAddrLoading(scene, addr, false);
           }
         });
@@ -324,7 +275,10 @@ export const refresh24hAssets = async ({
   reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
 } = {}) => {
   const top10Addresses =
-    addresses || (await getTop10MyAccounts()).top10Addresses;
+    addresses ||
+    (balanceAccounts && Object.keys(balanceAccounts).length
+      ? Object.keys(balanceAccounts)
+      : (await getTop10MyAccounts()).top10Addresses);
 
   const lastTop10Addresses = lastTop10AddressesRef.current;
   lastTop10AddressesRef.current = normalizeAddressesForCompare(top10Addresses);
@@ -340,17 +294,26 @@ export const refresh24hAssets = async ({
     addresses: finalTop10Addresses,
     force: force || lastTop10Changed,
     reason,
-    ...(balanceAccounts &&
-      Object.keys(balanceAccounts).length > 0 && {
-        totals: apisAccountsBalance.computeTotalBalance(
-          finalTop10Addresses,
-          balanceAccounts || {},
-        ),
-      }),
   });
 };
 
 export function startProcessScene24hBalanceEvents() {
+  balance24hStore.subscribe(() => {
+    const addresses = scene24hBalanceStore.getState().addresses.Home;
+    if (!addresses.length) {
+      return;
+    }
+
+    const totals = apisAccountsBalance.computeTotalBalance(
+      addresses,
+      getBalanceCacheAccounts(),
+    );
+    onComputedSceneCombinedData('Home', {
+      totalEvmBalance: totals.totalEvm,
+      totalBalance: totals.total,
+    });
+  });
+
   accountsBalanceEvents.on(
     'SELECTION_CHANGED',
     ({ nextAddresses, balance }) => {
@@ -380,13 +343,13 @@ export function useScene24hBalanceCombinedData(scene: BalanceScene) {
 export function useMultiHome24hBalanceCurveChart() {
   const combinedData = scene24hBalanceStore(
     useShallow(s => {
-      const sceneData = s.combinedData['Home'];
+      const homeData = s.combinedData.Home;
 
       return {
-        rawNetWorth: sceneData.rawNetWorth,
-        rawChange: sceneData.rawChange,
-        changePercent: sceneData.changePercent,
-        isLoss: sceneData.isLoss,
+        rawNetWorth: homeData.rawNetWorth,
+        rawChange: homeData.rawChange,
+        changePercent: homeData.changePercent,
+        isLoss: homeData.isLoss,
       };
     }),
   );
@@ -396,7 +359,7 @@ export function useMultiHome24hBalanceCurveChart() {
 
 export function useScene24hBalanceMulti24hBalance(scene: BalanceScene) {
   const addresses = scene24hBalanceStore(s => s.addresses[scene]);
-  const multi24hBalance = scene24hBalanceStore(s => s.multi24hBalance);
+  const multi24hBalance = useAddress24hBalanceMap();
 
   const filteredMulti24hBalance = useMemo(() => {
     const res: Multi24hBalance = {};
@@ -419,34 +382,59 @@ export function useSceneIsLoading(scene: BalanceScene) {
 }
 
 export function useSceneIsLoadingNew(scene: BalanceScene) {
-  const addresses = scene24hBalanceStore(s => s.addresses[scene]);
-  const multi24hBalance = scene24hBalanceStore(s => s.multi24hBalance);
+  const { addresses, sceneLoading, sceneAddrLoading } = scene24hBalanceStore(
+    useShallow(s => ({
+      addresses: s.addresses[scene],
+      sceneLoading: s.sceneLoading[scene],
+      sceneAddrLoading: s.sceneAddrLoading,
+    })),
+  );
+  const multi24hBalance = useAddress24hBalanceMap();
+  const balanceMap = balanceStore(s => s.balanceMap);
 
   const isLoadingNew = useMemo(() => {
     if (addresses.length === 0) {
-      return false;
+      return sceneLoading;
     }
-    return !!addresses?.every(address => {
-      return !multi24hBalance[address.toLowerCase()];
+    const hasAll24hBalance = addresses.every(address => {
+      return !!multi24hBalance[address.toLowerCase()];
     });
-  }, [addresses, multi24hBalance]);
+    const hasAllCurrentBalance = addresses.every(address => {
+      return !!balanceMap[address.toLowerCase()];
+    });
+    const hasAnyAddressLoading = addresses.some(address => {
+      return !!sceneAddrLoading[`${scene}-${address.toLowerCase()}`];
+    });
+
+    return (
+      sceneLoading ||
+      ((!hasAll24hBalance || !hasAllCurrentBalance) && hasAnyAddressLoading)
+    );
+  }, [
+    addresses,
+    balanceMap,
+    multi24hBalance,
+    scene,
+    sceneAddrLoading,
+    sceneLoading,
+  ]);
 
   return { isLoadingNew };
 }
 
 export function useScene24hBalanceLightWeightData(scene: BalanceScene) {
-  const sceneData = scene24hBalanceStore(
+  const lightweightData = scene24hBalanceStore(
     useShallow(s => {
-      const sceneData = s.combinedData[scene];
+      const currentSceneData = s.combinedData[scene];
 
       return {
-        netWorth: sceneData.netWorth,
-        isLoss: sceneData.isLoss,
+        netWorth: currentSceneData.netWorth,
+        isLoss: currentSceneData.isLoss,
       };
     }),
   );
 
-  return sceneData;
+  return lightweightData;
 }
 
 function computeCombined24hBalanceData(input: {

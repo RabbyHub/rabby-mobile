@@ -48,17 +48,37 @@ export const get24hBalance = async (addr: string, force?: boolean) => {
   return res;
 };
 
+export const fetch24hBalance = async (_address: string) => {
+  const address = _address.toLowerCase();
+  const { total_usd_value } = await openapi.get24hTotalBalance(address);
+  return {
+    data: {
+      total_usd_value,
+    },
+    updateTime: Date.now(),
+  };
+};
+
+export const persist24hBalanceCacheAsync = (
+  addr: string,
+  data: IBalance24hData,
+) => {
+  Promise.resolve()
+    .then(() => {
+      setBalance24hCache(addr, data);
+    })
+    .catch(error => {
+      console.error('persist24hBalanceCacheAsync', error);
+    });
+};
+
 const refresh24hBalanceWithCache = async (_address: string, force = false) => {
   const address = _address.toLowerCase();
   const cache = getBalance24hCache(address);
   if (cache && !force && !cache.isExpired) {
     return cache;
   }
-  const { total_usd_value } = await openapi.get24hTotalBalance(address);
-  const data = {
-    total_usd_value: total_usd_value,
-  };
-  const updateTime = Date.now();
+  const { data, updateTime } = await fetch24hBalance(address);
   setBalance24hCache(address, {
     data,
     updateTime,
