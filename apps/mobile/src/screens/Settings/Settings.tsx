@@ -38,6 +38,7 @@ import {
   APP_RUNTIME_ENV,
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
+  IS_CONSOLE_STRIPPED,
   IS_HERMES_ENABLED,
 } from '@/constant/env';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
@@ -208,6 +209,7 @@ function AlertBuildInfo() {
     `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
     '   ',
     `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
+    `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
     `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
   ];
 

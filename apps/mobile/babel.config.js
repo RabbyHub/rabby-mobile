@@ -2,12 +2,14 @@ const child_process = require('child_process');
 const pkg = require('./package.json');
 
 const { version } = pkg;
-const buildEnv = process.env.RABBY_MOBILE_BUILD_ENV;
-const buildChannel =
+const inputBuildEnv = process.env.RABBY_MOBILE_BUILD_ENV;
+const inputBuildChannel =
   process.env.buildchannel || process.env.RABBY_MOBILE_BUILD_CHANNEL;
+const resolvedBuildEnv = inputBuildEnv || 'production';
+const resolvedBuildChannel = inputBuildChannel || 'selfhost-reg';
 const shouldStripConsole =
-  buildEnv === 'production' ||
-  (!buildEnv && ['appstore', 'selfhost'].includes(buildChannel || ''));
+  inputBuildEnv === 'production' ||
+  (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
 
 const buildGitInfo = (function getBuildEnvVars() {
   const NORMAL_GET_GIT_HASH = `git log --format="%H" -n1`;
@@ -37,11 +39,8 @@ const buildGitInfo = (function getBuildEnvVars() {
           .trim();
 
   const BUILD_TIME = new Date().toISOString();
-
-  const buildchannel = process.env.buildchannel || 'selfhost-reg';
-
   const BUILD_GIT_COMMITOR =
-    buildchannel !== 'selfhost-reg'
+    resolvedBuildChannel !== 'selfhost-reg'
       ? ''
       : child_process
           .execSync('git show --quiet --format="%cn"')
@@ -73,12 +72,11 @@ module.exports = {
         'process.env.APP_VERSION': version,
         'process.env.BUILD_TIME':
           process.env.ZERO_AR_DATE || buildGitInfo.BUILD_TIME,
-        'process.env.RABBY_MOBILE_BUILD_ENV':
-          process.env.RABBY_MOBILE_BUILD_ENV || 'production',
-        'process.env.buildchannel':
-          process.env.buildchannel ||
-          process.env.RABBY_MOBILE_BUILD_CHANNEL ||
-          'selfhost-reg',
+        'process.env.RABBY_MOBILE_BUILD_ENV': resolvedBuildEnv,
+        'process.env.RABBY_MOBILE_STRIP_CONSOLE': shouldStripConsole
+          ? 'true'
+          : 'false',
+        'process.env.buildchannel': resolvedBuildChannel,
         'process.env.BUILD_GIT_INFO': JSON.stringify({
           BUILD_GIT_HASH: buildGitInfo.BUILD_GIT_HASH,
           BUILD_GIT_HASH_TIME: buildGitInfo.BUILD_GIT_HASH_TIME,
