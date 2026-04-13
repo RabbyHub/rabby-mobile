@@ -14,11 +14,11 @@ on:
       FAST_BUILD_ON_ANDROID:
         required: false
         type: boolean
-        default: false
+        default: true
       FAST_BUILD_ON_IOS:
         required: false
         type: boolean
-        default: false
+        default: true
       SKIP_NOTIFY_LARK:
         required: false
         type: boolean
