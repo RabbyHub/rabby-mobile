@@ -29,6 +29,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { toast } from '@/components2024/Toast';
 import { APP_RUNTIME_ENV } from '@/constant/env';
 import { getOnlineConfig, subscribeOnlineConfig } from '@/core/config/online';
+import RNHelpers from '@/core/native/RNHelpers';
 import { useTheme2024 } from '@/hooks/theme';
 import { APP_FILE_LOGGING_ONLINE_SWITCH } from '@/utils/logging/policy';
 import {
@@ -550,16 +551,13 @@ export default function DebugLogViewerScreen(): JSX.Element {
         return;
       }
 
-      await Share.share(
-        {
-          title: archive.name,
-          message: archive.path,
-        },
-        {
-          dialogTitle: 'Share app log archive path',
-        },
-      );
-      markInfo(`Android core Share sent the archive path: ${archive.name}`);
+      await RNHelpers.shareFile({
+        filePath: archive.path,
+        mimeType: 'application/zip',
+        title: 'Share app log archive',
+        subject: archive.name,
+      });
+      markSuccess(`Opened Android share sheet: ${archive.name}`);
     },
     [canShareArchive, markInfo, markSuccess],
   );
@@ -690,7 +688,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
           />
           <Text style={styles.sectionHint}>
             {canShareArchive
-              ? 'Non-production builds can share the latest finalized zip directly, or open a picker to choose another finalized zip by time range. Android currently falls back to sharing the archive path.'
+              ? 'Non-production builds can share the latest finalized zip directly, or open a picker to choose another finalized zip by time range.'
               : 'Archive sharing is disabled in production builds even if this page is reachable.'}
           </Text>
         </Section>
