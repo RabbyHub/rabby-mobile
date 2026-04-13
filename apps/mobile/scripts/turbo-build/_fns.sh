@@ -1173,6 +1173,7 @@ turbo_prepare_js_dependencies() {
   else
     if [ -n "$CI" ]; then
       turbo_log "skip extra yarn install in CI; assuming dependencies are already prepared"
+      turbo_prepare_workspace_build
     else
       (cd "$RABBY_MOBILE_REPO_ROOT" && yarn)
     fi
