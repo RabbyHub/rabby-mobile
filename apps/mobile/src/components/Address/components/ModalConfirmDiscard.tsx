@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { Button } from '@/components';
 import { Text } from '@/components/Typography';
 
@@ -19,7 +21,8 @@ export default function ModalConfirmDiscard({
   const { styles } = useThemeStyles(getStyles);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.addressConfirmDiscard}
       transparent
       animationType="fade"
       onRequestClose={onCancel}
@@ -54,7 +57,7 @@ export default function ModalConfirmDiscard({
           </View>
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 }
 
