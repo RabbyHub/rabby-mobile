@@ -2,7 +2,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GasAccountDepositSelect } from './GasAccountDepositSelect';
 import { GasAccountDepositTokenForm } from './GasAccountDepositTokenForm';
@@ -49,12 +49,6 @@ export const GasAccountDepositPopup: React.FC<{
     setStep(type);
   }, [type]);
 
-  // Track whether we're transitioning to token step so we don't
-  // fire onClose when the outer modal is dismissed intentionally.
-  const isTransitioningToTokenRef = useRef(false);
-  const showSelectSheet = visible && step !== 'token';
-  const showTokenForm = visible && step === 'token';
-
   const handleClose = useCallback(() => {
     resetStep();
     onClose?.();
@@ -81,83 +75,54 @@ export const GasAccountDepositPopup: React.FC<{
     }
   }, [type, visible]);
 
-  // Dismiss the outer modal first, then change the step.
-  // This avoids two BottomSheetModal instances fighting for the
-  // react-native-gesture-handler context, which breaks BottomSheetTextInput.
-  const handleSelect = useCallback((nextType: 'token' | 'pay') => {
-    if (nextType === 'token') {
-      isTransitioningToTokenRef.current = true;
-      modalRef.current?.dismiss();
-      // Let the outer modal fully dismiss before the inner modal presents
-      setTimeout(() => {
-        setStep(nextType);
-      }, 100);
-    } else {
-      setStep(nextType);
-    }
-  }, []);
-
-  const handleDismiss = useCallback(() => {
-    if (isTransitioningToTokenRef.current) {
-      isTransitioningToTokenRef.current = false;
-      return;
-    }
-    handleClose();
-  }, [handleClose]);
-
   return (
-    <>
-      {showSelectSheet ? (
-        <AppBottomSheetModal
-          enableDynamicSizing
-          onDismiss={handleDismiss}
-          ref={modalRef}
-          keyboardBehavior="interactive"
-          keyboardBlurBehavior="restore"
-          {...makeBottomSheetProps({
-            linearGradientType: 'bg1',
-            colors: colors2024,
-          })}>
-          {step === 'pay' ? (
-            <BottomSheetScrollView style={styles.popup}>
-              <GasAccountDepositWithPay
-                minDepositPrice={minDepositPrice}
-                visible={visible}
-                onDeposit={onDeposit}
-                onClose={handleClose}
-                onWaitDepositResult={onWaitDepositResult}
-                gasAccountAddress={gasAccountAddress}
-                onEnsureGasAccountAddress={onEnsurePayGasAccountAddress}
-              />
-            </BottomSheetScrollView>
-          ) : (
-            <BottomSheetScrollView style={styles.popup}>
-              <GasAccountDepositSelect
-                onSelect={handleSelect}
-                minDepositPrice={minDepositPrice}
-                disableL2Deposit={disableL2Deposit}
-              />
-            </BottomSheetScrollView>
-          )}
-        </AppBottomSheetModal>
-      ) : null}
-      {showTokenForm ? (
+    <AppBottomSheetModal
+      enableDynamicSizing
+      onDismiss={handleClose}
+      ref={modalRef}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      {...makeBottomSheetProps({
+        linearGradientType: 'bg1',
+        colors: colors2024,
+      })}>
+      {step === 'token' ? (
         <GasAccountDepositTokenForm
-          visible={showTokenForm}
+          key="token"
+          visible={visible}
           onDeposit={onDeposit}
           onClose={handleClose}
           onWaitDepositResult={onWaitDepositResult}
           minDepositPrice={minDepositPrice}
           disableL2Deposit={disableL2Deposit}
         />
-      ) : null}
-    </>
+      ) : step === 'pay' ? (
+        <BottomSheetScrollView key="pay" contentContainerStyle={styles.content}>
+          <GasAccountDepositWithPay
+            minDepositPrice={minDepositPrice}
+            visible={visible}
+            onDeposit={onDeposit}
+            onClose={handleClose}
+            onWaitDepositResult={onWaitDepositResult}
+            gasAccountAddress={gasAccountAddress}
+            onEnsureGasAccountAddress={onEnsurePayGasAccountAddress}
+          />
+        </BottomSheetScrollView>
+      ) : (
+        <BottomSheetView key="select" style={styles.content}>
+          <GasAccountDepositSelect
+            onSelect={setStep}
+            minDepositPrice={minDepositPrice}
+            disableL2Deposit={disableL2Deposit}
+          />
+        </BottomSheetView>
+      )}
+    </AppBottomSheetModal>
   );
 };
 
 const getStyles = createGetStyles2024(() => ({
-  popup: {
+  content: {
     margin: 0,
-    height: '100%',
   },
 }));
