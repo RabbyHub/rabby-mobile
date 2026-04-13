@@ -9,9 +9,10 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useTranslation } from 'react-i18next';
-import { TonManageAction } from '../utils/protocolConfig';
+import { TonManageAction, TonTokenManageAction } from '../utils/protocolConfig';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { Text } from '@/components/Typography';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 // 已支持的模板
 const TemplateDict = {
@@ -37,7 +38,15 @@ const TemplateDict = {
 };
 
 export const MemoItem = memo(
-  ({ item }: { item: IProtocolPortfolio }) => {
+  ({
+    item,
+    currentAccount,
+    tokenManageAction,
+  }: {
+    item: IProtocolPortfolio;
+    currentAccount?: KeyringAccountWithAlias;
+    tokenManageAction?: TonTokenManageAction;
+  }) => {
     const { styles } = useTheme2024({ getStyle: getStyles });
 
     const types = item._originPortfolio.detail_types?.reverse();
@@ -48,6 +57,18 @@ export const MemoItem = memo(
       [type],
     );
 
+    if (type === 'lending') {
+      return (
+        <PortfolioTemplate.Lending
+          name={item.name || ''}
+          data={item}
+          style={styles.detail}
+          currentAccount={currentAccount}
+          onTokenManage={tokenManageAction}
+        />
+      );
+    }
+
     return (
       <PortfolioDetail
         name={item.name || ''}
@@ -56,7 +77,11 @@ export const MemoItem = memo(
       />
     );
   },
-  (prev, next) => prev.item.id === next.item.id,
+  (prev, next) =>
+    prev.item.id === next.item.id &&
+    prev.currentAccount?.address === next.currentAccount?.address &&
+    prev.currentAccount?.type === next.currentAccount?.type &&
+    prev.tokenManageAction === next.tokenManageAction,
 );
 
 export const WrapperDappActionsMemoItem = ({
@@ -69,6 +94,7 @@ export const WrapperDappActionsMemoItem = ({
   onRefresh,
   session,
   manageAction,
+  tokenManageAction,
   disableAction,
   isLast,
 }: {
@@ -81,6 +107,7 @@ export const WrapperDappActionsMemoItem = ({
   onRefresh?: () => Promise<void>;
   session?: React.ComponentProps<typeof DappActions>['session'];
   manageAction?: TonManageAction;
+  tokenManageAction?: TonTokenManageAction;
   disableAction?: boolean;
   isLast?: boolean;
 }) => {
@@ -106,7 +133,11 @@ export const WrapperDappActionsMemoItem = ({
   return (
     <View style={[styles.portfolioCard, isLast && styles.portfolioCardLast]}>
       <View style={styles.portfolioContent}>
-        <MemoItem item={item} />
+        <MemoItem
+          item={item}
+          currentAccount={currentAccount}
+          tokenManageAction={tokenManageAction}
+        />
       </View>
       {!!manageAction && (
         <TouchableOpacity

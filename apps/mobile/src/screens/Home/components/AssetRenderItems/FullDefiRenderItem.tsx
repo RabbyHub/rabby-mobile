@@ -297,6 +297,12 @@ export const FullDefiRenderItem = ({
                   ? config[data.id]?.onManage
                   : undefined
               }
+              tokenManageAction={
+                config?.[data.id]?.showManage &&
+                config[data.id]?.showManage?.(item, account)
+                  ? config[data.id]?.onTokenManage
+                  : undefined
+              }
               key={`${item.id}-${account.address}`}
               session={
                 data?.site_url && data?.logo

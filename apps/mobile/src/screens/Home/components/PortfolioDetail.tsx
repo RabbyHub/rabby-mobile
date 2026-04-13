@@ -1,5 +1,12 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+  StyleProp,
+  TextStyle,
+} from 'react-native';
 import { colord } from 'colord';
 import LinearGradient from 'react-native-linear-gradient';
 import groupBy from 'lodash/groupBy';
@@ -17,6 +24,7 @@ import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { Text } from '@/components/Typography';
+import { useTranslation } from 'react-i18next';
 
 export const PortfolioHeader = ({
   data,
@@ -57,6 +65,8 @@ type TokenItem = {
   tip?: string;
 };
 
+type TokenListActionDirection = 'supply' | 'borrow';
+
 export const TokenList = ({
   name,
   tokens,
@@ -64,6 +74,9 @@ export const TokenList = ({
   nfts,
   fraction,
   headerStyle,
+  nameStyle,
+  isAave3,
+  onTokenAction,
 }: {
   name: string;
   tokens?: PortfolioItemToken[];
@@ -75,10 +88,25 @@ export const TokenList = ({
     shareToken: PortfolioItemToken;
   };
   headerStyle?: StyleProp<ViewStyle>;
+  nameStyle?: StyleProp<TextStyle>;
+  isAave3?: boolean;
+  onTokenAction?: (
+    token: TokenItem,
+    direction: TokenListActionDirection,
+  ) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
 
-  const headers = [name, 'Amount'];
+  const showAave3Action =
+    isAave3 && (name === 'supplied' || name === 'borrowed');
+  const actionDirection: TokenListActionDirection =
+    name === 'borrowed' ? 'borrow' : 'supply';
+  const actionText =
+    actionDirection === 'borrow'
+      ? t('page.Lending.repayDetail.actions')
+      : t('page.Lending.withdrawDetail.actions');
+  const headers = showAave3Action ? [name, 'Amount', ''] : [name, 'Amount'];
 
   const _tokens: TokenItem[] = useMemo(() => {
     return (tokens ?? [])
@@ -164,16 +192,32 @@ export const TokenList = ({
 
   return list.length ? (
     <View style={StyleSheet.flatten([styles.tokenList, style])}>
-      <View style={[styles.tokenRow, styles.tokenRowHeader, headerStyle]}>
+      <View
+        style={[
+          styles.tokenRow,
+          styles.tokenRowHeader,
+          showAave3Action && styles.aave3TokenRow,
+          headerStyle,
+        ]}>
         {headers.map((h, i) => {
           const isLast = i === headers.length - 1;
+          const isName = i === 0;
+          const isAmount = h === 'Amount';
+          const isActionHeader = showAave3Action && isLast;
 
           return (
             <Text
-              key={h}
+              key={`${h}-${i}`}
               style={StyleSheet.flatten([
                 styles.tokenListHeader,
-                isLast && styles.alignRight,
+                showAave3Action && styles.aave3TokenListHeader,
+                showAave3Action && isName && styles.aave3TokenListNameHeader,
+                showAave3Action &&
+                  isAmount &&
+                  styles.aave3TokenListAmountHeader,
+                isActionHeader && styles.aave3ActionHeader,
+                isName && nameStyle,
+                isLast && !isActionHeader && styles.alignRight,
               ])}>
               {h}
             </Text>
@@ -184,14 +228,30 @@ export const TokenList = ({
         const isLast = index === list.length - 1;
         return (
           <View key={l.id} style={isLast ? undefined : styles.itemSeparator}>
-            <View style={[styles.tokenRow, styles.tokenRowToken]} key={l.id}>
-              <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
+            <View
+              style={[
+                styles.tokenRow,
+                styles.tokenRowToken,
+                showAave3Action && styles.aave3TokenRow,
+              ]}
+              key={l.id}>
+              <View
+                style={[
+                  styles.tokenListCol,
+                  styles.tokenListSymbol,
+                  showAave3Action && styles.aave3TokenListSymbol,
+                ]}>
                 <AssetAvatar
                   logo={l._logo}
                   logoStyle={l.isToken ? undefined : styles.nftIcon}
                   size={24}
                 />
-                <Text style={styles.tokenListSymbolText} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.tokenListSymbolText,
+                    showAave3Action && styles.aave3TokenListSymbolText,
+                  ]}
+                  numberOfLines={1}>
                   {l._symbol}
                 </Text>
               </View>
@@ -201,6 +261,7 @@ export const TokenList = ({
                   styles.flexCenter,
                   styles.flexRight,
                   styles.alignRight,
+                  showAave3Action && styles.aave3TokenListAmount,
                 ])}>
                 <Text style={styles.tokenListColText}>{l._netWorthStr}</Text>
                 <Text style={styles.tokenAmountText}>
@@ -216,6 +277,18 @@ export const TokenList = ({
                   </Tip>
                 ) : null}
               </View>
+              {showAave3Action ? (
+                <View style={styles.aave3ActionCell}>
+                  <TouchableOpacity
+                    style={styles.aave3ActionButton}
+                    activeOpacity={0.8}
+                    onPress={() => onTokenAction?.(l, actionDirection)}>
+                    <Text style={styles.aave3ActionButtonText}>
+                      {actionText}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
           </View>
         );
@@ -281,15 +354,16 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   portfolioType: {
     borderRadius: 4,
     paddingHorizontal: 4,
+    paddingVertical: 2,
     height: 20,
-    backgroundColor: colors2024['brand-default'],
+    backgroundColor: colors2024['neutral-line'],
   },
   portfolioTypeText: {
     fontSize: 12,
     fontWeight: '900',
-    color: colors2024['neutral-InvertHighlight'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    lineHeight: 20,
+    lineHeight: 16,
   },
   portfolioDesc: {
     marginLeft: 8,
@@ -319,14 +393,18 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenList: {
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 8,
-    paddingHorizontal: 8,
+    overflow: 'hidden',
     // marginTop: 12,
     marginBottom: 12,
   },
   tokenRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 8,
     // paddingHorizontal: 8,
+  },
+  aave3TokenRow: {
+    paddingHorizontal: 12,
   },
   arrowStyle: {
     marginLeft: -4,
@@ -348,10 +426,27 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexGrow: 1,
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     textTransform: 'capitalize',
+  },
+  aave3TokenListHeader: {
+    flexBasis: 'auto',
+    flexGrow: 0,
+    fontWeight: '500',
+  },
+  aave3TokenListNameHeader: {
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  aave3TokenListAmountHeader: {
+    width: 54,
+    marginRight: 24,
+    textAlign: 'right',
+  },
+  aave3ActionHeader: {
+    width: 65,
   },
   tokenListCol: {
     flexBasis: '35%',
@@ -360,6 +455,19 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
+  },
+  aave3TokenListSymbol: {
+    flexBasis: 'auto',
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  aave3TokenListSymbolText: {
+    lineHeight: 18,
+  },
+  aave3TokenListAmount: {
+    flexBasis: 'auto',
+    flexGrow: 0,
+    marginRight: 24,
   },
   tokenAmountText: {
     color: colors2024['neutral-secondary'],
@@ -403,6 +511,26 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   flexRight: {
     justifyContent: 'flex-end',
+  },
+  aave3ActionCell: {
+    width: 70,
+    alignItems: 'flex-end',
+  },
+  aave3ActionButton: {
+    width: 66,
+    borderRadius: 4,
+    backgroundColor: colors2024['neutral-line'],
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aave3ActionButtonText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
   },
 
   // supplements
