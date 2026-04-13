@@ -88,8 +88,8 @@ check_env_file() {
 check_env_file;
 
 if [ "$CONFIGURATION" == "Debug" ] && [ "$IOS_SKIP_METRO_BUNDLE_ON_DEBUG" == "true" ]; then
-  echo "[RabbyMobileBuild] skip metro bundle on debug build as IOS_SKIP_METRO_BUNDLE_ON_DEBUG is true"
-  exit 0;
+  echo "[RabbyMobileBuild] skip debug bundle while preserving Metro device setup"
+  export SKIP_BUNDLING=1
 fi
 
 [ -f yarn ] && yarn install --immutable;

@@ -76,6 +76,14 @@ export type RootStackParamsList = {
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
+  [RootNames.SelectImportMethod]?: {};
+  [RootNames.ImportRabbyWallet]?: {};
+  [RootNames.ImportSecret]?: {};
+  [RootNames.Backup]?: {
+    address?: string;
+    type?: string;
+    brandName?: string;
+  };
   [RootNames.TokenDetail]: {
     token: ITokenItem;
     fromPortfolio?: boolean;
@@ -168,8 +176,6 @@ export type AddressNavigatorParamList = {
     accounts?: string[];
     isFirstCreate?: boolean;
   };
-  [RootNames.SelectImportMethod]?: {};
-  [RootNames.ImportRabbyWallet]?: {};
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
       | typeof RootNames.CreateSelectMethod
@@ -225,6 +231,7 @@ export type AddressNavigatorParamList = {
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
+    showBackup?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -247,7 +254,6 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportHardwareAddress]?: {};
   [RootNames.ImportMnemonic]?: {};
   [RootNames.ImportMnemonic2024]?: {};
-  [RootNames.ImportSecret]?: {};
   [RootNames.AddMnemonic]?: {};
   [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};
@@ -265,11 +271,6 @@ export type AddressNavigatorParamList = {
     newAccounts: Account[];
   };
   [RootNames.Points]?: {};
-  [RootNames.Backup]?: {
-    address?: string;
-    type?: string;
-    brandName?: string;
-  };
 };
 
 export type AccountNavigatorParamList = {

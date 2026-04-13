@@ -1,31 +1,17 @@
-import { default as RcIconGasDark } from '@/assets/icons/sign/tx/gas-dark.svg';
-import { default as RcIconGasLight } from '@/assets/icons/sign/tx/gas-light.svg';
-import React, { PropsWithChildren, useEffect, useMemo, useState } from 'react';
+import React, { PropsWithChildren, useEffect, useMemo } from 'react';
 
 import { default as RcIconLogo } from '@/assets/icons/sign/tx/rabby.svg';
-import { useTranslation } from 'react-i18next';
 
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import Svg, { Path } from 'react-native-svg';
-
-import { makeThemeIcon } from '@/hooks/makeThemeIcon';
+import { useThemeColors } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
 import { colord } from 'colord';
 import {
   DimensionValue,
-  Image,
-  ImageBackground,
   StyleProp,
   StyleSheet,
   TextStyle,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
   ViewStyle,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { Text } from '@/components/Typography';
 import Animated, {
   Easing,
   interpolate,
@@ -36,8 +22,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-
-const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 
 export const GasLessAnimatedWrapper = (
   props: PropsWithChildren<{
@@ -107,6 +91,13 @@ export const GasLessAnimatedWrapper = (
     () => colord(colors['blue-default']).alpha(0.5).toRgbString(),
     [colors],
   );
+  const buttonBgStyle = useMemo(
+    () => ({
+      backgroundColor:
+        props.type === 'process' ? 'transparent' : colors['blue-default'],
+    }),
+    [colors, props.type],
+  );
 
   const bgStyle = useAnimatedStyle(
     () =>
@@ -170,47 +161,23 @@ export const GasLessAnimatedWrapper = (
     return <>{props.children}</>;
   }
 
-  if (props.showOrigin) {
-    return null;
-  }
-
   return (
     <>
       <Animated.View style={showOriginButtonStyle}>
         {props.children}
       </Animated.View>
-      <Animated.View
-        style={[
-          {
-            overflow: 'hidden',
-            width: '100%',
-          },
-          showAnimatedButtonStyle,
-        ]}>
+      <Animated.View style={[styles.animatedWrap, showAnimatedButtonStyle]}>
         <Animated.View
           style={[
-            {
-              overflow: 'hidden',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRadius: 8,
-              paddingHorizontal: 0,
-              width: '100%',
-              backgroundColor:
-                props.type === 'process'
-                  ? 'transparent'
-                  : colors['blue-default'],
-            },
+            styles.animatedButton,
+            buttonBgStyle,
             props.buttonStyle,
             bgStyle,
           ]}>
           <Animated.View style={blueBgStyle} />
 
           {props?.icon ? (
-            <Animated.View style={{ marginRight: 8 }}>
-              {props?.icon}
-            </Animated.View>
+            <Animated.View style={styles.iconWrap}>{props?.icon}</Animated.View>
           ) : null}
 
           {renderText(props.title, {
@@ -230,3 +197,22 @@ export const GasLessAnimatedWrapper = (
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  animatedWrap: {
+    overflow: 'hidden',
+    width: '100%',
+  },
+  animatedButton: {
+    overflow: 'hidden',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 0,
+    width: '100%',
+  },
+  iconWrap: {
+    marginRight: 8,
+  },
+});

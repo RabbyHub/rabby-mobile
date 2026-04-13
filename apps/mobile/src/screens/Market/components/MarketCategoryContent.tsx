@@ -92,7 +92,9 @@ export function MarketCategoryContent({
       return undefined;
     }
     if (categoryId === 'stock' || categoryId === 'commodities') {
-      return t('page.market.tokenHeader.tokenAndName');
+      return `${t('page.market.tokenHeader.token')}/${t(
+        'page.market.tokenHeader.name',
+      )}`;
     }
     return t('page.market.tokenHeader.name');
   }, [categoryId, t]);
@@ -287,8 +289,6 @@ export function MarketCategoryContent({
         <View style={styles.stickyHeader}>
           {categoryId === 'hot' ? (
             <WatchListHeader
-              tokenSort="default"
-              onTokenSort={handleVolumeSort}
               fdvSort={fdvSort}
               onFdvSort={handleFdvSort}
               showFdvSort={supportedSortFields.has('fdv')}

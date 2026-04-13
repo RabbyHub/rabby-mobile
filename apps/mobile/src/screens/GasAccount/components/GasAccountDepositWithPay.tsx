@@ -1,10 +1,8 @@
-import {
-  RcIconApplePayCC,
-  RcIconGooglePayCC,
-} from '@/assets2024/icons/gas-account';
+import { RcIconGooglePayCC } from '@/assets2024/icons/gas-account';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
+import { pollDepositStatus } from '@/core/apis/gasAccount';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { waitPurchaseUpdated } from '@/utils/iap';
@@ -12,36 +10,46 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import * as Sentry from '@sentry/react-native';
 import { useRequest } from 'ahooks';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { ErrorCode, PurchaseError, requestPurchase } from 'react-native-iap';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useGasAccountInfoV2 } from '../hooks';
 import { gasAccountProducts } from '@/constant/iap';
 import { Text } from '@/components/Typography';
+import { IS_ANDROID } from '@/core/native/utils';
+import { GasAccountTopUpWaitCallback } from './topUpContinuation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BigNumber from 'bignumber.js';
+import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
 
 interface Props {
   visible?: boolean;
   onDeposit?(): void;
+  onClose?(): void;
+  onWaitDepositResult?: GasAccountTopUpWaitCallback;
   minDepositPrice?: number;
-  gasAccountAddress: string;
+  gasAccountAddress?: string;
+  onEnsureGasAccountAddress?(): Promise<string>;
 }
 
 export const GasAccountDepositWithPay: React.FC<Props> = ({
   visible,
   onDeposit,
+  onClose,
+  onWaitDepositResult,
   gasAccountAddress,
   minDepositPrice = 0,
+  onEnsureGasAccountAddress,
 }) => {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({
+  const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
   });
-
-  const { data: gasAccountInfo } = useGasAccountInfoV2({
-    address: gasAccountAddress,
-  });
+  const pollCancelRef = useRef<(() => void) | null>(null);
+  const [resolvedGasAccountAddress, setResolvedGasAccountAddress] = useState<
+    string | undefined
+  >(gasAccountAddress);
 
   const products = useMemo(() => {
     const res = gasAccountProducts
@@ -54,19 +62,47 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   }, [minDepositPrice]);
   const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
+  const { data: gasAccountInfo, runAsync: fetchGasAccountInfo } = useRequest(
+    async (address: string) => {
+      return openapi.getGasAccountInfoV2({ id: address });
+    },
+    {
+      manual: true,
+    },
+  );
+
+  useEffect(() => {
+    if (gasAccountAddress) {
+      setResolvedGasAccountAddress(gasAccountAddress);
+      fetchGasAccountInfo(gasAccountAddress);
+    }
+  }, [fetchGasAccountInfo, gasAccountAddress]);
+
   const {
     runAsync: handleDeposit,
     loading: isPurchasing,
     cancel,
   } = useRequest(
     async (product: (typeof products)[0]) => {
+      let targetGasAccountAddress =
+        resolvedGasAccountAddress || gasAccountAddress;
+
+      if (!targetGasAccountAddress) {
+        targetGasAccountAddress = await onEnsureGasAccountAddress?.();
+        if (!targetGasAccountAddress) {
+          throw new Error('get pay info failed');
+        }
+        setResolvedGasAccountAddress(targetGasAccountAddress);
+        await fetchGasAccountInfo(targetGasAccountAddress);
+      }
+
       const data = await openapi.createGasAccountPayInfo({
-        id: gasAccountAddress,
+        id: targetGasAccountAddress,
       });
       if (!data.account?.uuid) {
         throw new Error('get pay info failed');
       }
-      await Promise.all([
+      const [purchase] = await Promise.all([
         waitPurchaseUpdated(),
         requestPurchase(
           Platform.select({
@@ -76,17 +112,50 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
             },
             android: {
               skus: [product.id],
-              obfuscatedAccountIdAndroid: gasAccountAddress,
+              obfuscatedAccountIdAndroid: targetGasAccountAddress,
             },
           })!,
         ),
       ]);
+
+      if (onWaitDepositResult) {
+        const transactionId = Platform.select({
+          ios: purchase.transactionId || '',
+          android: purchase.purchaseToken || '',
+        })!;
+
+        const { promise: pollPromise, cancel: cancelPolling } =
+          pollDepositStatus({
+            params: {
+              transaction_id: transactionId,
+              product_id: product.id,
+              device_type: IS_ANDROID ? 'android' : 'ios',
+            },
+          });
+        pollCancelRef.current = cancelPolling;
+        const success = await pollPromise;
+        pollCancelRef.current = null;
+        if (success !== 'cancel') {
+          if (success) {
+            storeApiGasAccount.markSnapshotDirty('deposit_confirmed');
+            await onWaitDepositResult({
+              type: 'pay',
+            });
+            onDeposit?.();
+          } else {
+            toast.info(t('page.gasAccount.depositFailed'), {
+              position: toast.positions.CENTER,
+            });
+          }
+        }
+        onClose?.();
+        return;
+      }
+
+      onDeposit?.();
     },
     {
       manual: true,
-      onSuccess() {
-        onDeposit?.();
-      },
       onError(e: any) {
         console.error(e);
         Sentry.captureException(e);
@@ -109,25 +178,25 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   useEffect(() => {
     if (!visible) {
       cancel();
+      pollCancelRef.current?.();
     }
   }, [cancel, visible]);
+  const { bottom } = useSafeAreaInsets();
 
   return (
     <KeyboardAwareScrollView
       enableOnAndroid
       scrollEnabled={false}
       keyboardOpeningTime={0}
-      // style={styles.container}
-      contentContainerStyle={styles.container}>
+      contentContainerStyle={StyleSheet.flatten([
+        styles.container,
+        { paddingBottom: Math.max(bottom, 36) },
+      ])}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {Platform.OS === 'android'
             ? t('page.gasAccount.depositPayPopup.titleAndroid')
             : t('page.gasAccount.depositPayPopup.titleApple')}
-        </Text>
-        <Text style={styles.description}>
-          {t('page.gasAccount.depositPayPopup.balance')}
-          {formatUsdValue(gasAccountInfo?.account?.balance || 0)}
         </Text>
 
         <Text style={styles.tokenLabel}>
@@ -146,13 +215,30 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
             </CustomTouchableOpacity>
           ))}
         </View>
+        {minDepositPrice ? (
+          <Text style={styles.tips}>
+            {t('page.gasAccount.depositPayPopup.topUpPayTips', {
+              topUpUsd: formatUsdValue(minDepositPrice),
+              balance: formatUsdValue(
+                selectedProduct?.price
+                  ? new BigNumber(selectedProduct?.price)
+                      .plus(gasAccountInfo?.account?.balance || 0)
+                      .minus(minDepositPrice)
+                      .toFixed()
+                  : gasAccountInfo?.account?.balance || 0,
+              ),
+            })}
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.btnContainer}>
         <Button
           type="primary"
           onPress={() => {
-            handleDeposit(selectedProduct);
+            if (selectedProduct) {
+              handleDeposit(selectedProduct);
+            }
           }}
           buttonStyle={styles.depositWithPayBtn}
           titleStyle={styles.btnTitle}
@@ -161,22 +247,26 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
           title={
             <View style={styles.depositWithTitle}>
               <View style={styles.depositWithPayRow}>
-                {Platform.OS === 'android' ? (
-                  <RcIconGooglePayCC />
+                {/* {Platform.OS === 'android' ? (
+                  <RcIconGooglePayCC color={isLight ? '#fff' : '#000'} />
                 ) : (
                   <Text style={styles.btnTitle}>
                     {t('page.gasAccount.depositPopup.pay')}
                   </Text>
-                )}
+                )} */}
+                <Text style={styles.btnTitle}>
+                  {t('page.gasAccount.depositPopup.pay')}
+                </Text>
+                <Text style={styles.btnTitle}>${selectedProduct?.total}</Text>
               </View>
-              <Text style={styles.btnDesc}>
-                {Platform.OS === 'ios'
-                  ? t('page.gasAccount.depositPopup.applePayFeeDesc1')
-                  : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
-              </Text>
             </View>
           }
         />
+        <Text style={[styles.tips, styles.feeTips]}>
+          {Platform.OS === 'ios'
+            ? t('page.gasAccount.depositPopup.applePayFeeDesc1')
+            : t('page.gasAccount.depositPopup.googlePayFeeDesc')}
+        </Text>
       </View>
     </KeyboardAwareScrollView>
   );
@@ -186,6 +276,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
     flex: 1,
+    paddingBottom: 48,
   },
   containerHorizontal: {
     paddingHorizontal: 20,
@@ -197,19 +288,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontStyle: 'normal',
     fontWeight: '800',
     color: colors2024['neutral-title-1'],
-    marginBottom: 12,
+    marginBottom: 24,
     textAlign: 'center',
   },
-  description: {
-    textAlign: 'center',
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    color: colors2024['neutral-secondary'],
-    marginBottom: 18,
-  },
+
   amountSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -264,7 +346,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
           backgroundColor: '#000',
         }
       : {
-          backgroundColor: colors2024['neutral-bg-2'],
+          backgroundColor: '#fff',
           borderWidth: 1,
           borderColor: colors2024['neutral-line'],
         }),
@@ -288,16 +370,20 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 24,
     fontStyle: 'normal',
     fontWeight: '700',
-    color: colors2024['neutral-InvertHighlight'],
+    color: isLight ? '#fff' : '#000',
   },
-
-  btnDesc: {
+  tips: {
+    marginTop: 2,
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontStyle: 'normal',
     fontWeight: '400',
-    color: colors2024['neutral-InvertHighlight'],
-    opacity: 0.6,
+    color: colors2024['neutral-secondary'],
+  },
+
+  feeTips: {
+    marginTop: 20,
+    textAlign: 'center',
   },
 }));

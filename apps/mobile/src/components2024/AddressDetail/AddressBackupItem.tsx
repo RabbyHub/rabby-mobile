@@ -64,13 +64,10 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
   const handlePressBackupSeedPhrase = useCallback(() => {
     // Navigate to Backup screen directly
     // The Backup screen will handle authentication internally when user selects an option
-    navigateDeprecated(RootNames.StackAddress, {
-      screen: RootNames.Backup,
-      params: {
-        address: account.address,
-        type: account.type,
-        brandName: account.brandName,
-      },
+    navigateDeprecated(RootNames.Backup, {
+      address: account.address,
+      type: account.type,
+      brandName: account.brandName,
     });
   }, [account.address, account.type, account.brandName]);
 

@@ -68,11 +68,13 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { Account } from '@/core/services/preference';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import {
-  useGetShowMoreGasSelectVisible,
-  useSetGasInfoByUI,
-} from '@/screens/Bridge/components/ShowMoreGasModal';
+  useMiniSignGasPanelController,
+  useMiniSignGasPanelState,
+} from '@/components2024/MiniSignV2';
 import { Text, RNGHTextInput as TextInput } from '@/components/Typography';
 import { GasTokenInfo } from '@/utils/tempo';
+import { useGasAccountSign } from '@/screens/GasAccount/hooks/atom';
+import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
   nonce: number;
@@ -96,7 +98,7 @@ interface GasSelectorProps {
   chainId: number;
   onChange(gas: GasSelectorResponse): void;
   isReady: boolean;
-  recommendGasLimit: number | string | BigNumber;
+  recommendGasLimit?: number | string | BigNumber;
   recommendNonce: number | string | BigNumber;
   nonce: string;
   disableNonce: boolean;
@@ -386,10 +388,10 @@ export const GasSelectorHeader = ({
   });
 
   const calcGasAccountUsd = useCallback((n: number | string) => {
-    const v = Number(n);
-    if (!Number.isNaN(v) && v < 0.0001) {
-      return `$${n}`;
-    }
+    // const v = Number(n);
+    // if (!Number.isNaN(v) && v < 0.0001) {
+    //   return `$${n}`;
+    // }
     return formatGasHeaderUsdValue(n || '0');
   }, []);
 
@@ -448,8 +450,29 @@ export const GasSelectorHeader = ({
     ],
   );
 
-  const outGasModalIsOpen = useGetShowMoreGasSelectVisible();
+  const outGasModalIsOpen = useMiniSignGasPanelState(
+    state => state.showMoreVisible,
+  );
   const gasAccountStateInit = useRef(false);
+  const { accountId: gasAccountSessionId } = useGasAccountSign();
+  const { value: currentGasAccountInfo } = useGasAccountInfo();
+  const gasAccountCacheResetKey = useMemo(
+    () =>
+      [
+        gasAccountSessionId || '',
+        currentGasAccountInfo?.account?.balance || '',
+      ].join(':'),
+    [currentGasAccountInfo?.account?.balance, gasAccountSessionId],
+  );
+
+  useEffect(() => {
+    gasAccountStateInit.current = false;
+    setGasAccountIsNotEnough({
+      slow: [false, ''],
+      normal: [false, ''],
+      fast: [false, ''],
+    });
+  }, [gasAccountCacheResetKey]);
 
   useDebounce(
     () => {
@@ -515,6 +538,7 @@ export const GasSelectorHeader = ({
       isCancel,
       isSpeedUp,
       calcGasAccountUsd,
+      gasAccountCacheResetKey,
     ],
   );
 
@@ -916,7 +940,7 @@ export const GasSelectorHeader = ({
     return v;
   }, [hasFee, hasTip, fixedMode]);
 
-  const setGasInfoByUI = useSetGasInfoByUI();
+  const gasPanelController = useMiniSignGasPanelController();
 
   useThrottleEffect(
     () => {
@@ -927,10 +951,10 @@ export const GasSelectorHeader = ({
         !selectedGas ||
         !directSubmit
       ) {
-        setGasInfoByUI(undefined);
+        gasPanelController.setGasInfo(undefined);
         return;
       }
-      setGasInfoByUI({
+      gasPanelController.setGasInfo({
         externalPanelSelection,
         handleClickEdit,
         // gasList,
@@ -963,7 +987,7 @@ export const GasSelectorHeader = ({
       gasNormalUsd,
       gasFastUsd,
       gasAccountCost?.gas_account_cost,
-      setGasInfoByUI,
+      gasPanelController,
     ],
     {
       wait: 16,

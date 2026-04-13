@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import RcIconSwitch from '@/assets2024/icons/history/IconSwitch.svg';
 import RcIconYes from '@/assets2024/icons/history/IconTxYes.svg';
+import RcIconYesFailure from '@/assets2024/icons/history/IconYesFailure.svg';
 import RcIconNo from '@/assets2024/icons/history/IconTxNo.svg';
 import RcIconNoDark from '@/assets2024/icons/history/IconTxNoDark.svg';
 import { View, ViewStyle } from 'react-native';
@@ -18,6 +19,7 @@ interface ItemIconProps {
   type?: HistoryItemCateType | undefined;
   tokenChangeData: TokenChangeDataItem[];
   tokenApproveData: TokenChangeDataItem[];
+  isFailure?: boolean;
 }
 
 const LEN_ENUM = {
@@ -77,6 +79,7 @@ export const HistoryItemTokenArea = ({
   type,
   tokenChangeData,
   tokenApproveData,
+  isFailure,
 }: ItemIconProps) => {
   const { styles, isLight } = useTheme2024({ getStyle });
 
@@ -129,7 +132,11 @@ export const HistoryItemTokenArea = ({
           <RcIconNoDark style={[styles.image]} />
         );
       } else {
-        return <RcIconYes style={[styles.image]} />;
+        return isFailure ? (
+          <RcIconYesFailure style={[styles.image]} />
+        ) : (
+          <RcIconYes style={[styles.image]} />
+        );
       }
     case LEN_ENUM.THREE:
     default:

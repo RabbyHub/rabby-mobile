@@ -89,6 +89,24 @@ target 'RabbyMobile' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ENV['RABBY_MOBILE_POD_USE_CACHE'] == "true",
     )
+
+    # Fix fmt 11.0.2 compilation error with Xcode 26.4+
+    # https://github.com/expo/expo/issues/44229
+    # https://github.com/facebook/react-native/pull/56099
+    fmt_base = File.join(installer.sandbox.pod_dir('fmt'), 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      content = File.read(fmt_base)
+      patched = content.gsub(
+        /^#\s*define\s+FMT_USE_CONSTEVAL\s+1\b/,
+        '#define FMT_USE_CONSTEVAL 0'
+      )
+      if patched != content
+        File.chmod(0644, fmt_base)
+        File.write(fmt_base, patched)
+        puts 'Patched fmt: FMT_USE_CONSTEVAL=0'
+      end
+    end
+
     # __apply_Xcode_12_5_M1_post_install_workaround(installer)
     patch_build_settings(installer)
 

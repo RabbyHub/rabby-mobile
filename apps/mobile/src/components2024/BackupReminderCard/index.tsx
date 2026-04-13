@@ -46,13 +46,10 @@ export const BackupReminderCard: React.FC<BackupReminderCardProps> = ({
 
   const handlePress = React.useCallback(() => {
     if (account) {
-      navigation.navigate(RootNames.StackAddress, {
-        screen: RootNames.Backup,
-        params: {
-          address: account.address,
-          type: account.type,
-          brandName: account.brandName,
-        },
+      navigation.navigate(RootNames.Backup, {
+        address: account.address,
+        type: account.type,
+        brandName: account.brandName,
       });
     }
   }, [navigation, account]);
