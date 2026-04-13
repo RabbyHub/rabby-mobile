@@ -51,6 +51,7 @@ export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
       },
     });
   };
+
   return (
     <TouchableOpacity onPress={goToHDManager} style={styles.main}>
       <Text style={styles.text}>

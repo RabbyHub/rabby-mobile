@@ -95,25 +95,9 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       if (activeTab === 'seedPhrase') {
         setMnemonicError(undefined);
         setMnemonics(text);
-        isNewlyInputTextSameWithContentFromClipboard(text).then(isSame => {
-          if (isSame) {
-            onPastedSensitiveData({
-              type: 'seedPhrase',
-              toastOptions: { position: TOAST_POSITION_TOP },
-            });
-          }
-        });
       } else {
         setPrivateKeyError(undefined);
         setPrivateKey(text);
-        isNewlyInputTextSameWithContentFromClipboard(text).then(isSame => {
-          if (isSame) {
-            onPastedSensitiveData({
-              type: 'privateKey',
-              toastOptions: { position: TOAST_POSITION_TOP },
-            });
-          }
-        });
       }
     },
     [activeTab],

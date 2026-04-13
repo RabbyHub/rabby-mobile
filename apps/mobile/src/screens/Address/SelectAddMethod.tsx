@@ -32,6 +32,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { replaceToFirst } from '@/utils/navigation';
 import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
+import { useImportAddressProc } from '@/hooks/address/useNewUser';
 
 type SelectAddMethodProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -44,6 +45,7 @@ function SelectAddMethod(): JSX.Element {
   const { t } = useTranslation();
   const navigation = useNavigation<SelectAddMethodProps['navigation']>();
   const { seedPhraseList } = useSeedPhrase();
+  const { setConfirmCB } = useImportAddressProc();
   const creatingRef = useRef(false);
 
   const handleCreateNewSeed = React.useCallback(async () => {
@@ -104,19 +106,29 @@ function SelectAddMethod(): JSX.Element {
   }, []);
 
   const onPressCreateWallet = React.useCallback(async () => {
-    if (
-      await shouldRedirectToSetPasswordBefore2024({
-        backScreen: RootNames.CreateSelectMethod,
-      })
-    ) {
-      return;
-    }
-
     if (seedPhraseList.length > 0) {
+      if (
+        await shouldRedirectToSetPasswordBefore2024({
+          backScreen: RootNames.CreateSelectMethod,
+        })
+      ) {
+        return;
+      }
       navigation.navigate(RootNames.StackAddress, {
         screen: RootNames.CreateSelectMethod,
       });
     } else {
+      setConfirmCB(async () => {
+        await handleCreateNewSeed();
+      });
+      if (
+        await shouldRedirectToSetPasswordBefore2024({
+          backScreen: RootNames.CreateSelectMethod,
+          isFirstImportPassword: true,
+        })
+      ) {
+        return;
+      }
       await handleCreateNewSeed();
     }
   }, [
@@ -124,6 +136,7 @@ function SelectAddMethod(): JSX.Element {
     seedPhraseList.length,
     navigation,
     handleCreateNewSeed,
+    setConfirmCB,
   ]);
 
   const onPressImportSeedPhrase = React.useCallback(() => {

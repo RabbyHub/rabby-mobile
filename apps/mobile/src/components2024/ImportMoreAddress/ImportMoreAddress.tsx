@@ -30,7 +30,7 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 
 import { createGetStyles2024 } from '@/utils/styles';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { AccountListView, ViewAccount } from './AccountListView';
 import SettingSVG from '@/assets2024/icons/common/setting-cc.svg';
 import {
@@ -131,6 +131,17 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const [accounts, setAccounts] = React.useState<ViewAccount[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [setting, setSetting] = useAtom(settingAtom);
+  const { accounts: existedAccounts } = useAccounts();
+  const aliasMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of existedAccounts) {
+      if (a.aliasName && a.address) {
+        map.set(a.address.toLowerCase(), a.aliasName);
+      }
+    }
+    return map;
+  }, [existedAccounts]);
+
   const stoppedRef = React.useRef(true);
   const exitRef = React.useRef(false);
   const startNumberRef = React.useRef((setting?.startNumber || 1) - 1);
@@ -209,13 +220,14 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
                 address: b.address,
                 index: res[idx].index,
                 balance: b.balance,
+                aliasName: aliasMap.get(b.address.toLowerCase()),
               };
             }),
           ];
         });
       }
     },
-    [apiHD, getMnemonicKeyring, params.type],
+    [apiHD, getMnemonicKeyring, params.type, aliasMap],
   );
 
   const handleLoadAddress = React.useCallback(async () => {
@@ -305,6 +317,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             return {
               address,
               index: api?.getInfoByAddress(address)?.index ?? idx,
+              aliasName: aliasMap.get(address.toLowerCase()),
             };
           });
           setCurrentAccounts(_accounts);
@@ -313,11 +326,16 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     } else {
       apiHD?.getCurrentAccounts().then(res => {
         if (res) {
-          setCurrentAccounts(res);
+          setCurrentAccounts(
+            res.map(a => ({
+              ...a,
+              aliasName: a.aliasName || aliasMap.get(a.address.toLowerCase()),
+            })),
+          );
         }
       });
     }
-  }, [apiHD, getMnemonicKeyring, params.type]);
+  }, [apiHD, getMnemonicKeyring, params.type, aliasMap]);
 
   React.useEffect(() => {
     return () => {
