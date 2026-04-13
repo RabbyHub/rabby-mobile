@@ -53,7 +53,7 @@ export default function SetupWallet({ route }: ScreenProps) {
     useSetupWallet(params);
 
   const isImportMode = mode !== 'create';
-  const formProgress = useSharedValue(0);
+  const formProgress = useSharedValue(1);
 
   useFocusEffect(
     useCallback(() => {
@@ -68,6 +68,7 @@ export default function SetupWallet({ route }: ScreenProps) {
 
       return () => {
         cancelAnimation(formProgress);
+        formProgress.value = 1;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
