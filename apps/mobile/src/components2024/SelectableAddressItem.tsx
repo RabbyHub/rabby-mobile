@@ -31,7 +31,10 @@ export const SelectableAddressItem: React.FC<Props> = ({
       {icon}
       <View style={styles.itemInfo}>
         <View style={styles.itemName}>
-          <Text style={styles.itemNameText} numberOfLines={1}>
+          <Text
+            style={styles.itemNameText}
+            numberOfLines={1}
+            ellipsizeMode="tail">
             {title}
           </Text>
           {badge}
@@ -62,9 +65,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
   },
   itemName: {
-    gap: 8,
     flexDirection: 'row',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   itemNameText: {
     fontSize: 14,
@@ -72,6 +75,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-secondary'],
+    marginRight: 8,
+    flexShrink: 1,
   },
   itemBalanceText: {
     fontSize: 14,
