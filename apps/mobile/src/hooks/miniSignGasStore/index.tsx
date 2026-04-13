@@ -1,9 +1,10 @@
 import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import { APP_MMKV_KEYS } from '@/core/storage/mmkvConstants';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
 
 export const fixedCustomGasAtom = atomByMMKV(
-  'miniSignCustomGas',
+  APP_MMKV_KEYS.MINI_SIGN_CUSTOM_GAS,
   {} as {
     [key: number]: number;
   },

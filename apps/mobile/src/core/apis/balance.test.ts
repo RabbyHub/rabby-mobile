@@ -9,6 +9,8 @@ describe('core/apis/balance', () => {
   let mockBatchBalanceWithLocalCache: jest.Mock;
   let mockIsSameAddress: jest.Mock;
   let mockTestnetGetTotalBalanceV2: jest.Mock;
+  let mockGetTestnetAddressBalanceCache: jest.Mock;
+  let mockSetTestnetAddressBalanceCache: jest.Mock;
 
   beforeEach(() => {
     jest.resetModules();
@@ -20,6 +22,8 @@ describe('core/apis/balance', () => {
     mockBatchBalanceWithLocalCache = jest.fn();
     mockIsSameAddress = jest.fn();
     mockTestnetGetTotalBalanceV2 = jest.fn();
+    mockGetTestnetAddressBalanceCache = jest.fn();
+    mockSetTestnetAddressBalanceCache = jest.fn();
 
     jest.doMock('@/utils/cache', () => ({
       cached:
@@ -55,6 +59,12 @@ describe('core/apis/balance', () => {
           chainUSDMap: {},
         })),
       },
+    }));
+    jest.doMock('@/utils/testnetAddressBalanceCache', () => ({
+      getTestnetAddressBalanceCache: (...args: unknown[]) =>
+        mockGetTestnetAddressBalanceCache(...args),
+      setTestnetAddressBalanceCache: (...args: unknown[]) =>
+        mockSetTestnetAddressBalanceCache(...args),
     }));
 
     ({
@@ -136,7 +146,7 @@ describe('core/apis/balance', () => {
       );
     });
 
-    it('keeps testnet balance cache in module memory instead of preference store', async () => {
+    it('persists testnet balance into dedicated cache storage', async () => {
       mockGetTokenSettings.mockResolvedValue({
         included_token_uuids: [],
         excluded_token_uuids: [],
@@ -158,11 +168,26 @@ describe('core/apis/balance', () => {
         evm_usd_value: 88,
         chain_list: [],
       });
-      expect(getAddressCacheBalanceSync('0xabc', true)).toEqual({
+      expect(mockSetTestnetAddressBalanceCache).toHaveBeenCalledWith('0xABC', {
         total_usd_value: 88,
         evm_usd_value: 88,
         chain_list: [],
       });
+    });
+
+    it('reads testnet cached balance from dedicated cache storage', () => {
+      mockGetTestnetAddressBalanceCache.mockReturnValue({
+        total_usd_value: 99,
+        evm_usd_value: 77,
+        chain_list: [],
+      });
+
+      expect(getAddressCacheBalanceSync('0xabc', true)).toEqual({
+        total_usd_value: 99,
+        evm_usd_value: 77,
+        chain_list: [],
+      });
+      expect(mockGetTestnetAddressBalanceCache).toHaveBeenCalledWith('0xabc');
     });
   });
 });

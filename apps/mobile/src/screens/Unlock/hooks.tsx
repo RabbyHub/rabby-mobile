@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { apisLock } from '@/core/apis';
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { useBiometrics } from '@/hooks/biometrics';
 import { toast } from '@/components2024/Toast';
 import { Alert } from 'react-native';
@@ -74,7 +75,7 @@ export function useUnlockApp() {
 }
 
 const hasTipedUserEnableBiometricsStore = zustandByMMKV(
-  '@hasTipedUserEnableBiometrics',
+  APP_MMKV_WEAK_KEYS.HAS_TIPED_USER_ENABLE_BIOMETRICS,
   { hasTipedUserEnableBiometrics: false },
   {
     storage: MMKVStorageStrategy.compatJson,

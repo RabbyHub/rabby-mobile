@@ -9,8 +9,10 @@ import {
   EvmTotalBalanceResponse,
 } from '@/databases/hooks/balance';
 import balanceStore from '@/store/balance';
-
-const testnetBalanceMemoryCache: Record<string, EvmTotalBalanceResponse> = {};
+import {
+  getTestnetAddressBalanceCache,
+  setTestnetAddressBalanceCache,
+} from '@/utils/testnetAddressBalanceCache';
 
 const getTotalBalanceCached = async (address: string, force?: boolean) => {
   const addresses = await keyringService.getAllAddresses();
@@ -44,7 +46,7 @@ const getTestnetTotalBalanceCached = cached(async address => {
     ...testnetData,
     evm_usd_value: testnetData.total_usd_value,
   };
-  testnetBalanceMemoryCache[address.toLowerCase()] = formatData;
+  setTestnetAddressBalanceCache(address, formatData);
   return formatData;
 }, 5000);
 
@@ -72,7 +74,7 @@ export const getAddressCacheBalanceSync = (
     return null;
   }
   if (isTestnet) {
-    return testnetBalanceMemoryCache[address.toLowerCase()] || null;
+    return getTestnetAddressBalanceCache(address);
   }
   const lowerAddress = address.toLowerCase();
   const state = balanceStore.getState();

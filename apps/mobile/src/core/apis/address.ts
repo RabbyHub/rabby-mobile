@@ -16,6 +16,7 @@ import {
 } from '../services';
 import { getKeyring } from './keyring';
 import { BroadcastEvent } from '@/constant/event';
+import { removeTestnetAddressBalanceCache } from '@/utils/testnetAddressBalanceCache';
 
 export async function addWatchAddress(address: string) {
   const keyring = await getKeyring<WatchKeyring>(
@@ -60,6 +61,7 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
 
   const hasSameAddressLeft = await keyringService.hasAddress(account.address);
   if (!hasSameAddressLeft) {
+    removeTestnetAddressBalanceCache(account.address);
     preferenceService.removeAddressAvatar(account.address);
     contactService.removeAlias(account.address);
     whitelistService.removeWhitelist(account.address);
