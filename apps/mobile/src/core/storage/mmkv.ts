@@ -12,7 +12,7 @@ import {
 } from 'jotai/vanilla/utils/atomWithStorage';
 import { type StateStorage } from 'zustand/middleware';
 
-import { MMKV_FILE_NAMES, walkThroughMMKVFiles } from '../utils/appFS';
+import { walkThroughMMKVFiles } from '../utils/appFS';
 import RNHelpers from '../native/RNHelpers';
 import { IS_IOS } from '../native/utils';
 import { runDevIIFEFunc } from '../utils/store';
@@ -23,6 +23,7 @@ import {
   zMutative,
   zPersist,
 } from '../utils/reexports';
+import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from './mmkvConstants';
 // import { lendingCacheStorage } from '@/screens/Lending/hooks';
 
 function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
@@ -150,10 +151,11 @@ const { storage: keyringStorage, mmkv: keyringMMKV } = makeMMKVStorage({
 });
 
 export function normalizeKeyringState() {
-  const legacyData = appStorage.getItem('keyringState');
+  const legacyData = appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
   const result = {
     legacyData,
-    keyringData: keyringStorage.getItem('keyringState') || legacyData,
+    keyringData:
+      keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) || legacyData,
   };
 
   if (legacyData) appMMKV.trim();
@@ -162,10 +164,10 @@ export function normalizeKeyringState() {
   // console.debug('result.keyringData', result.keyringData);
   if (!result.legacyData) return result;
 
-  keyringStorage.setItem('keyringState', result.legacyData);
+  keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, result.legacyData);
   result.keyringData = result.legacyData;
 
-  appStorage.removeItem('keyringState');
+  appStorage.removeItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
   appMMKV.trim();
 
   return result;
@@ -177,8 +179,8 @@ export const appMMKVForDebug = __DEV__
 export { appStorage, keyringStorage };
 
 export const IS_BOOTED_USER =
-  !!appStorage.getItem('keyringState') ||
-  !!keyringStorage.getItem('keyringState');
+  !!appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) ||
+  !!keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
 
 export const enum MMKVStorageStrategy {
   'legacy' = -1,

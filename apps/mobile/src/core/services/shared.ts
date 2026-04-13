@@ -4,6 +4,7 @@ import {
   keyringStorage,
   normalizeKeyringState,
 } from '../storage/mmkv';
+import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
 
 import {
   ContactBookService,
@@ -121,12 +122,12 @@ keyringService.loadStore(keyringState || {});
 keyringService.store.subscribe(value => {
   // // leave here to test migrate legacyData to keyringData
   // if (__DEV__) {
-  //   appStorage.setItem('keyringState', value);
+  //   appStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, value);
   // }
 
   keyringStorage.clearAll();
   // keyringStorage.flushToDisk?.();
-  keyringStorage.setItem('keyringState', value);
+  keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, value);
 });
 
 export const dappService = new DappService({
