@@ -1,4 +1,3 @@
-import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { apiMnemonic } from '@/core/apis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -27,38 +26,28 @@ export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const goToHDManager = async () => {
-    AuthenticationModal.show({
-      confirmText: t('global.Confirm'),
-      cancelText: t('global.Cancel'),
-      title: t('page.addressDetail.manage-seed-phrase'),
-      validationHandler: async (password: string) => {
-        await apiMnemonic.getMnemonics(password, address);
-      },
-      async onFinished() {
-        const passphrase = await invokeEnterPassphrase(address);
-        const mnemonics = await apiMnemonic.getMnemonicByAddress(address)!;
-        const result = await apiMnemonic.generateKeyringWithMnemonic(
-          mnemonics,
-          passphrase,
-        );
-        const keyringId = result.keyringId;
+    const passphrase = await invokeEnterPassphrase(address);
+    const mnemonics = await apiMnemonic.getMnemonicByAddress(address)!;
+    const result = await apiMnemonic.generateKeyringWithMnemonic(
+      mnemonics,
+      passphrase,
+    );
+    const keyringId = result.keyringId;
 
-        const id = createGlobalBottomSheetModal2024({
-          name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
-          params: {
-            type: KEYRING_TYPE.HdKeyring,
-            mnemonics,
-            passphrase,
-            keyringId: keyringId || undefined,
-            isExistedKR: result.isExistedKR,
-            account,
-            brandName: KEYRING_CLASS.MNEMONIC,
-          },
-          onCancel: () => {
-            removeGlobalBottomSheetModal2024(id);
-            onCancel();
-          },
-        });
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
+      params: {
+        type: KEYRING_TYPE.HdKeyring,
+        mnemonics,
+        passphrase,
+        keyringId: keyringId || undefined,
+        isExistedKR: result.isExistedKR,
+        account,
+        brandName: KEYRING_CLASS.MNEMONIC,
+      },
+      onCancel: () => {
+        removeGlobalBottomSheetModal2024(id);
+        onCancel();
       },
     });
   };
