@@ -2,6 +2,12 @@ const child_process = require('child_process');
 const pkg = require('./package.json');
 
 const { version } = pkg;
+const buildEnv = process.env.RABBY_MOBILE_BUILD_ENV;
+const buildChannel =
+  process.env.buildchannel || process.env.RABBY_MOBILE_BUILD_CHANNEL;
+const shouldStripConsole =
+  buildEnv === 'production' ||
+  (!buildEnv && ['appstore', 'selfhost'].includes(buildChannel || ''));
 
 const buildGitInfo = (function getBuildEnvVars() {
   const NORMAL_GET_GIT_HASH = `git log --format="%H" -n1`;
@@ -109,6 +115,7 @@ module.exports = {
     ['nativewind/babel', {}],
     ['@babel/plugin-proposal-decorators', { legacy: true }],
     ['@babel/plugin-transform-class-static-block'],
+    ...(shouldStripConsole ? ['transform-remove-console'] : []),
     ['react-native-reanimated/plugin'],
   ],
 };
