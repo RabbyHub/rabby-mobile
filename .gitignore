@@ -49,3 +49,4 @@ CLAUDE*.local.md
 
 tasks
 .agents
+.turbo-build

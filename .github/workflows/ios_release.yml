@@ -48,10 +48,30 @@ jobs:
       - ${{ matrix.host }}
       - ${{ matrix.machine_loc }}
     env:
+      RABBY_MOBILE_NM_USE_CACHE: 'true'
       XCODE_VER: '26.3'
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Clean git Manually
+        run: |
+          yarn_exclude_args=()
+          if [ "$RABBY_MOBILE_NM_USE_CACHE" = "true" ]; then
+            echo "Keep yarn install outputs";
+            yarn_exclude_args+=(
+              -e node_modules
+              -e 'apps/*/node_modules'
+              -e 'packages/*/node_modules'
+              -e .yarn/install-state.gz
+              -e .yarn/unplugged
+            )
+          fi
+
+          git clean -ffdx "${yarn_exclude_args[@]}";
+          git reset --hard HEAD;
 
       - name: Env Test
         id: env-test
@@ -95,7 +115,6 @@ jobs:
       - name: Install dependencies && Build app
         run: |
           cd apps/mobile;
-          rm -rf node_modules;
           yarn install --immutable;
           yarn postinstall;
 

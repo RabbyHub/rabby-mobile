@@ -14,10 +14,10 @@ const workDir = path.join(scriptDir, '.fast-build-work');
 const repoRoot = path.join(projectDir, '..', '..');
 
 const WORK_FILES = {
-  metadataJson: path.join(workDir, 'android_native_hashes.json'),
-  templateHashTxt: path.join(fscriptDir, 'android_native_files_sha256.txt'),
-  payloadHashTxt: path.join(fscriptDir, 'android_patchable_payload_sha256.txt'),
-  fingerprintTxt: path.join(fscriptDir, 'android_template_fingerprint.txt'),
+  metadataJson: path.join(workDir, 'ios_template_hashes.json'),
+  templateHashTxt: path.join(fscriptDir, 'ios_template_shell_sha256.txt'),
+  payloadHashTxt: path.join(fscriptDir, 'ios_patchable_payload_sha256.txt'),
+  fingerprintTxt: path.join(fscriptDir, 'ios_template_fingerprint.txt'),
 };
 
 const STRUCTURAL_EXCLUDE_PATTERNS = [
@@ -34,21 +34,21 @@ const STRUCTURAL_EXCLUDE_PATTERNS = [
   '**/.vscode/**',
   '**/.git/**',
   '**/__pycache__/**',
+  'apps/mobile/ios/Pods/**',
+  'apps/mobile/ios/build/**',
+  'apps/mobile/ios/Package/**',
+  'apps/mobile/ios/DerivedData/**',
 ];
 
 const TEMPLATE_SHELL_INCLUDE_PATTERNS = [
-  `${projectDir}/android/build.gradle`,
-  `${projectDir}/android/settings.gradle`,
-  `${projectDir}/android/gradle.properties`,
-  `${projectDir}/android/gradle/wrapper/gradle-wrapper.properties`,
-  `${projectDir}/android/*.json`,
-  `${projectDir}/android/app/*.json`,
-  `${projectDir}/android/proguard-rules.pro`,
-  `${projectDir}/android/hashcheck.gradle`,
-  `${projectDir}/android/hashcheck.cmake`,
-  `${projectDir}/android/app/build.gradle`,
-  `${projectDir}/android/app/hashcheck.gradle`,
-  `${projectDir}/android/app/src/**/*`,
+  `${projectDir}/ios/Podfile`,
+  `${projectDir}/ios/Podfile.lock`,
+  `${projectDir}/ios/RabbyMobile.xcodeproj/project.pbxproj`,
+  `${projectDir}/ios/RabbyMobile.xcworkspace/contents.xcworkspacedata`,
+  `${projectDir}/ios/**/*.xcconfig`,
+  `${projectDir}/ios/**/*.entitlements`,
+  `${projectDir}/ios/**/*.plist`,
+  `${projectDir}/ios/patches/phase-bundle-rn.sh`,
   `${projectDir}/fastlane/Fastfile`,
   `${repoRoot}/.yarn/patches/*.patch`,
   `${repoRoot}/package.json`,
@@ -56,13 +56,6 @@ const TEMPLATE_SHELL_INCLUDE_PATTERNS = [
   `${projectDir}/package.json`,
   `${projectDir}/app.json`,
   `${projectDir}/react-native.config.js`,
-];
-
-const TEMPLATE_SHELL_EXCLUDE_PATTERNS = [
-  ...STRUCTURAL_EXCLUDE_PATTERNS,
-  'apps/mobile/android/app/src/main/assets/fonts/**',
-  'apps/mobile/android/app/src/main/assets/custom/**',
-  'apps/mobile/android/app/src/main/assets/threads/**',
 ];
 
 const PATCHABLE_PAYLOAD_INCLUDE_PATTERNS = [
@@ -76,9 +69,10 @@ const PATCHABLE_PAYLOAD_INCLUDE_PATTERNS = [
   `${projectDir}/react-native.config.js`,
   `${projectDir}/tsconfig.worker.json`,
   `${projectDir}/scripts/fns.sh`,
-  `${projectDir}/android/link-assets-manifest.json`,
+  `${projectDir}/ios/link-assets-manifest.json`,
   `${projectDir}/assets/fonts/**/*`,
   `${projectDir}/assets/custom/**/*`,
+  `${projectDir}/assets/ios/**/*`,
   `${projectDir}/worker-src/**/*`,
   `${repoRoot}/apps/mobile-local-pages/**/*`,
   `${repoRoot}/packages/base-utils/**/*`,
@@ -129,15 +123,20 @@ function ensureWorkDir() {
   }
 }
 
-function getGitValue(args, fallback = '') {
+function getCommandValue(command, args, fallback = '', cwd = repoRoot) {
   try {
-    return execFileSync('git', ['-C', repoRoot, ...args], {
+    return execFileSync(command, args, {
+      cwd,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     }).trim();
   } catch {
     return fallback;
   }
+}
+
+function getGitValue(args, fallback = '') {
+  return getCommandValue('git', ['-C', repoRoot, ...args], fallback);
 }
 
 function collectManifest(sectionName, includePatterns, excludePatterns) {
@@ -161,16 +160,18 @@ function collectManifest(sectionName, includePatterns, excludePatterns) {
     })
     .sort((a, b) => a.relpath.localeCompare(b.relpath));
 
-  const canonicalManifest = entries
-    .map(entry => `${entry.relpath}:${entry.hash}`)
-    .join('\n');
+  return entries;
+}
 
-  return {
-    section: sectionName,
-    total_files: entries.length,
-    digest: sha256(Buffer.from(canonicalManifest, 'utf8')),
-    files: entries,
-  };
+function buildCanonicalDigest(entries, salts = {}) {
+  const canonicalLines = entries.map(entry => `${entry.relpath}:${entry.hash}`);
+  Object.keys(salts)
+    .sort()
+    .forEach(key => {
+      canonicalLines.push(`__env__/${key}:${salts[key]}`);
+    });
+
+  return sha256(Buffer.from(canonicalLines.join('\n'), 'utf8'));
 }
 
 function buildTemplateFingerprint(commitDate, templateHash) {
@@ -185,18 +186,14 @@ function writeTextFile(filepath, value) {
 }
 
 function calculateHash() {
-  console.log(
-    'Collecting Android template shell and patchable payload manifests...',
-  );
-
   ensureWorkDir();
 
-  const templateShell = collectManifest(
+  const templateShellFiles = collectManifest(
     'template_shell',
     TEMPLATE_SHELL_INCLUDE_PATTERNS,
-    TEMPLATE_SHELL_EXCLUDE_PATTERNS,
+    STRUCTURAL_EXCLUDE_PATTERNS,
   );
-  const patchablePayload = collectManifest(
+  const payloadFiles = collectManifest(
     'patchable_payload',
     PATCHABLE_PAYLOAD_INCLUDE_PATTERNS,
     PATCHABLE_PAYLOAD_EXCLUDE_PATTERNS,
@@ -204,15 +201,34 @@ function calculateHash() {
 
   const gitHead = getGitValue(['rev-parse', '--short=12', 'HEAD']);
   const commitDate = getGitValue(['show', '-s', '--format=%cs', 'HEAD']);
-  const templateHash = templateShell.digest;
-  const payloadHash = patchablePayload.digest;
+  const xcodeVersion = getCommandValue('xcodebuild', ['-version'], '')
+    .split('\n')
+    .slice(0, 2)
+    .join(' | ');
+  const cocoapodsVersion = getCommandValue(
+    'bundle',
+    ['exec', 'pod', '--version'],
+    '',
+    projectDir,
+  );
+
+  const templateShellSalts = {
+    cocoapods_version: cocoapodsVersion,
+    xcode_version: xcodeVersion,
+  };
+
+  const templateHash = buildCanonicalDigest(
+    templateShellFiles,
+    templateShellSalts,
+  );
+  const payloadHash = buildCanonicalDigest(payloadFiles);
   const templateFingerprint = buildTemplateFingerprint(
     commitDate,
     templateHash,
   );
 
   const metadata = {
-    version: 2,
+    version: 1,
     template_hash: templateHash,
     template_fingerprint: templateFingerprint,
     patchable_payload_hash: payloadHash,
@@ -220,9 +236,22 @@ function calculateHash() {
       head: gitHead,
       commit_date: commitDate,
     },
+    environment: {
+      xcode_version: xcodeVersion,
+      cocoapods_version: cocoapodsVersion,
+    },
     sections: {
-      template_shell: templateShell,
-      patchable_payload: patchablePayload,
+      template_shell: {
+        total_files: templateShellFiles.length,
+        digest: templateHash,
+        salts: templateShellSalts,
+        files: templateShellFiles,
+      },
+      patchable_payload: {
+        total_files: payloadFiles.length,
+        digest: payloadHash,
+        files: payloadFiles,
+      },
     },
   };
 
@@ -238,9 +267,6 @@ function calculateHash() {
   console.log(`Saved template hash to: ${WORK_FILES.templateHashTxt}`);
   console.log(`Saved payload hash to: ${WORK_FILES.payloadHashTxt}`);
   console.log(`Saved template fingerprint to: ${WORK_FILES.fingerprintTxt}`);
-  console.log(`TEMPLATE_HASH="${templateHash}"`);
-  console.log(`PATCHABLE_PAYLOAD_HASH="${payloadHash}"`);
-  console.log(`export TEMPLATE_FINGERPRINT="${templateFingerprint}"`);
 }
 
 const command = process.argv[2];
