@@ -1,6 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
@@ -20,7 +26,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { buildSupplyTx, optimizedPath } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -46,10 +55,11 @@ import wrapperToken from '../../config/wrapperToken';
 import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
 import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
 import { CHAINS_ENUM } from '@debank/common';
 import { ReserveErrorTip } from '../ErrorTip';
@@ -77,11 +87,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     useSelectedMarket();
   const { pools } = usePoolDataProviderContract();
   const { t } = useTranslation();
-  const { ctx } = useSignatureStore();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
   }, [reserve.underlyingAsset]);
@@ -382,13 +392,19 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     return list as Tx[];
   }, [approveTxs, supplyTx]);
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance: miniSignInstance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: txsForMiniApproval.length
       ? txsForMiniApproval?.[0]?.chainId + ''
       : '',
     autoResetGasStoreOnChainChange: true,
   });
+
+  const { ctx } = useSignatureStoreOf(miniSignInstance);
 
   // 执行supply交易
   const handleSupply = useCallback(
@@ -525,112 +541,120 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   const emptyAmount = !supplyAmount.amount || supplyAmount.amount === '0';
 
   return (
-    <AutoLockView as="View" style={styles.container}>
-      <Text style={styles.title}>
-        {t('page.Lending.supplyDetail.actions')} {reserve.reserve.symbol}
-      </Text>
-      <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>
-          {t('page.Lending.popup.amount')}
+    <SignatureInstanceProvider instance={miniSignInstance}>
+      <AutoLockView as="View" style={styles.container}>
+        <Text style={styles.title}>
+          {t('page.Lending.supplyDetail.actions')} {reserve.reserve.symbol}
         </Text>
-        <Text
-          style={[
-            styles.amountValueDescription,
-            emptyAmount && styles.amountValueDescriptionDanger,
-          ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
-          reserve.reserve.symbol
-        }($${
-          supplyAmount.isLteZero
-            ? '0'
-            : formatAmountValueKMB(supplyAmount.usdValue || '0')
-        }) ${t('page.Lending.popup.available')}`}</Text>
-      </View>
-      <TokenAmountInput
-        value={amount}
-        onChange={setAmount}
-        symbol={reserve.reserve.symbol}
-        handleClickMaxButton={() => {
-          setAmount(supplyAmount.amount || '0');
-        }}
-        tokenAmount={Number(supplyAmount.amount || '0')}
-        price={Number(
-          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
-        )}
-        style={styles.amountInput}
-        chain={chainEnum || CHAINS_ENUM.ETH}
-      />
-      <BottomSheetScrollView
-        style={styles.bottomSheetScrollView}
-        contentContainerStyle={styles.transactionContainer}>
-        <SupplyActionOverView
-          reserve={reserve}
-          userSummary={userSummary}
-          afterHF={afterHF}
-          afterAvailable={afterAvailable}
+        <View style={styles.amountHeader}>
+          <Text style={styles.amountHeaderTitle}>
+            {t('page.Lending.popup.amount')}
+          </Text>
+          <Text
+            style={[
+              styles.amountValueDescription,
+              emptyAmount && styles.amountValueDescriptionDanger,
+            ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
+            reserve.reserve.symbol
+          }($${
+            supplyAmount.isLteZero
+              ? '0'
+              : formatAmountValueKMB(supplyAmount.usdValue || '0')
+          }) ${t('page.Lending.popup.available')}`}</Text>
+        </View>
+        <TokenAmountInput
+          value={amount}
+          onChange={v => {
+            if (directSignBtnRef.current?.isAuthInProgress()) return;
+            setAmount(v);
+          }}
+          symbol={reserve.reserve.symbol}
+          handleClickMaxButton={() => {
+            setAmount(supplyAmount.amount || '0');
+          }}
+          tokenAmount={Number(supplyAmount.amount || '0')}
+          price={Number(
+            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+          )}
+          style={styles.amountInput}
+          chain={chainEnum || CHAINS_ENUM.ETH}
         />
+        <BottomSheetScrollView
+          style={styles.bottomSheetScrollView}
+          contentContainerStyle={styles.transactionContainer}>
+          <SupplyActionOverView
+            reserve={reserve}
+            userSummary={userSummary}
+            afterHF={afterHF}
+            afterAvailable={afterAvailable}
+          />
 
-        {!!amount && !isZeroAmount(amount) && canShowDirectSubmit && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={false}
-              openShowMore={noop}
-              chainServeId={chainInfo?.serverId || ''}
-              textColor={colors2024['neutral-title-1']}
+          {!!amount && !isZeroAmount(amount) && canShowDirectSubmit && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+                textColor={colors2024['neutral-title-1']}
+              />
+            </View>
+          )}
+
+          <ReserveErrorTip reserve={reserve} style={{ marginTop: 30 }} />
+        </BottomSheetScrollView>
+
+        <View style={styles.buttonContainer}>
+          {canShowDirectSubmit ? (
+            <DirectSignBtn
+              ref={directSignBtnRef}
+              loading={isLoading}
+              loadingType="circle"
+              key={`${amount}-${needApprove}`}
+              showTextOnLoading
+              wrapperStyle={styles.directSignBtn}
+              authTitle={t('page.Lending.supplyDetail.actions')}
+              title={`${t('page.Lending.supplyDetail.actions')} ${
+                reserve.reserve.symbol
+              }`}
+              onFinished={() => handleSupply()}
+              disabled={
+                !amount ||
+                isZeroAmount(amount) ||
+                !supplyTx ||
+                isLoading ||
+                !currentAccount ||
+                !!ctx?.disabledProcess
+              }
+              type="aave"
+              iconColor={
+                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+              }
+              syncUnlockTime
+              account={currentAccount}
+              showHardWalletProcess
             />
-          </View>
-        )}
-
-        <ReserveErrorTip reserve={reserve} style={{ marginTop: 30 }} />
-      </BottomSheetScrollView>
-
-      <View style={styles.buttonContainer}>
-        {canShowDirectSubmit ? (
-          <DirectSignBtn
-            loading={isLoading}
-            loadingType="circle"
-            key={`${amount}-${needApprove}`}
-            showTextOnLoading
-            wrapperStyle={styles.directSignBtn}
-            authTitle={t('page.Lending.supplyDetail.actions')}
-            title={t('page.Lending.supplyDetail.actions')}
-            onFinished={() => handleSupply()}
-            disabled={
-              !amount ||
-              isZeroAmount(amount) ||
-              !supplyTx ||
-              isLoading ||
-              !currentAccount ||
-              !!ctx?.disabledProcess
-            }
-            type="aave"
-            iconColor={
-              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
-            }
-            syncUnlockTime
-            account={currentAccount}
-            showHardWalletProcess
-          />
-        ) : (
-          <Button
-            type="aave"
-            loadingType="circle"
-            showTextOnLoading
-            containerStyle={styles.fullWidthButton}
-            onPress={() => handleSupply()}
-            title={t('page.Lending.supplyDetail.actions')}
-            loading={isLoading}
-            disabled={
-              !amount ||
-              isZeroAmount(amount) ||
-              !supplyTx ||
-              isLoading ||
-              !currentAccount
-            }
-          />
-        )}
-      </View>
-    </AutoLockView>
+          ) : (
+            <Button
+              type="aave"
+              loadingType="circle"
+              showTextOnLoading
+              containerStyle={styles.fullWidthButton}
+              onPress={() => handleSupply()}
+              title={t('page.Lending.supplyDetail.actions')}
+              loading={isLoading}
+              disabled={
+                !amount ||
+                isZeroAmount(amount) ||
+                !supplyTx ||
+                isLoading ||
+                !currentAccount
+              }
+            />
+          )}
+        </View>
+      </AutoLockView>
+    </SignatureInstanceProvider>
   );
 };
 const getStyles = createGetStyles2024(ctx => ({

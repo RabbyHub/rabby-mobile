@@ -1,5 +1,4 @@
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import i18n from '@/utils/i18n';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -13,6 +12,8 @@ import {
 import { transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import { Account } from '@/core/services/preference';
+import i18n from '@/utils/i18n';
+import { getEIP7702MiniGasLimit } from '@/utils/7702';
 import {
   GasTokenBalanceInfo,
   getTempoFeeTokenInfo,
@@ -366,7 +367,7 @@ export const checkGasAndNonce = ({
   tx: Tx;
   gasLimit: number | string | BigNumber;
   nonce: number | string | BigNumber;
-  gasExplainResponse: ReturnType<typeof useExplainGas>;
+  gasExplainResponse: Awaited<ReturnType<typeof explainGas>>;
   isCancel: boolean;
   isSpeedUp: boolean;
   isGnosisAccount: boolean;
@@ -499,4 +500,161 @@ export const useCheckGasAndNonce = ({
       checkTxValueInBalance,
     ],
   );
+};
+
+export type SignTxCheckError = {
+  code: number;
+  msg: string;
+  level?: 'warn' | 'danger' | 'forbidden';
+};
+
+const toHex = (value: number | string) => {
+  return `0x${new BigNumber(value || 0).integerValue().toString(16)}`;
+};
+
+export const buildGasLevelValidationTx = ({
+  tx,
+  gas,
+  support1559,
+  enable7702,
+}: {
+  tx: Tx;
+  gas: {
+    price: number;
+    gasLimit: number;
+    nonce: number;
+    maxPriorityFee?: number;
+  };
+  support1559: boolean;
+  enable7702: boolean;
+}) => {
+  const nonceHex = toHex(gas.nonce);
+  const gasLimitHex = enable7702
+    ? getEIP7702MiniGasLimit(toHex(gas.gasLimit))
+    : toHex(gas.gasLimit);
+
+  const nextTx = support1559
+    ? ({
+        ...tx,
+        maxFeePerGas: toHex(Math.round(gas.price)),
+        maxPriorityFeePerGas:
+          gas.maxPriorityFee !== undefined && gas.maxPriorityFee < 0
+            ? tx.maxFeePerGas
+            : toHex(Math.round(gas.maxPriorityFee || 0)),
+        gas: gasLimitHex,
+        nonce: nonceHex,
+      } as Tx)
+    : ({
+        ...tx,
+        gasPrice: toHex(Math.round(gas.price)),
+        gas: gasLimitHex,
+        nonce: nonceHex,
+      } as Tx);
+
+  return {
+    tx: nextTx,
+    nonceHex,
+    gasLimitHex,
+    validationGasPrice:
+      nextTx.gasPrice || nextTx.maxFeePerGas || toHex(Math.round(gas.price)),
+  };
+};
+
+export const checkNativeLevelInsufficient = async ({
+  tx,
+  gasPrice,
+  gasUsed,
+  chainId,
+  nativeTokenPrice,
+  gasLimitHex,
+  recommendGasLimitRatio,
+  recommendGasLimit,
+  recommendNonce,
+  nonceHex,
+  isCancel,
+  isSpeedUp,
+  isGnosisAccount,
+  nativeTokenBalance,
+  explainGasFn,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
+  checkTxValueInBalance = true,
+}: {
+  tx: Tx;
+  gasPrice: number;
+  gasUsed: number;
+  chainId: number;
+  nativeTokenPrice: number;
+  gasLimitHex: string;
+  recommendGasLimitRatio: number;
+  recommendGasLimit: number | string | BigNumber;
+  recommendNonce: number | string | BigNumber;
+  nonceHex: string;
+  isCancel: boolean;
+  isSpeedUp: boolean;
+  isGnosisAccount: boolean;
+  nativeTokenBalance: string;
+  gasTokenDecimals?: number;
+  checkTxValueInBalance?: boolean;
+  explainGasFn: (params: {
+    gasUsed: number;
+    gasPrice: number;
+    chainId: number;
+    nativeTokenPrice: number;
+    tx: Tx;
+    gasLimit: string;
+  }) => ReturnType<typeof explainGas>;
+}): Promise<[boolean, number]> => {
+  const gasExplain = await explainGasFn({
+    gasUsed,
+    gasPrice,
+    chainId,
+    nativeTokenPrice,
+    tx,
+    gasLimit: gasLimitHex,
+  });
+
+  return [
+    checkGasAndNonce({
+      recommendGasLimitRatio,
+      recommendGasLimit,
+      recommendNonce,
+      tx,
+      gasLimit: gasLimitHex,
+      nonce: Number(nonceHex),
+      isCancel,
+      gasExplainResponse: gasExplain,
+      isSpeedUp,
+      isGnosisAccount,
+      nativeTokenBalance,
+      gasTokenDecimals,
+      checkTxValueInBalance,
+    }).some(item => item.code === 3001),
+    0,
+  ];
+};
+
+export const checkGasAccountLevelInsufficient = async ({
+  tx,
+  gasLimitHex,
+  validationGasPrice,
+  validateGasAccountLevel,
+}: {
+  tx: Tx;
+  gasLimitHex: string;
+  validationGasPrice: string;
+  validateGasAccountLevel: (txs: Tx[]) => Promise<{
+    valid: boolean;
+    cost: number;
+    errors: SignTxCheckError[];
+  }>;
+}): Promise<[boolean, number]> => {
+  const gasAccountValidation = await validateGasAccountLevel([
+    {
+      ...tx,
+      gas: gasLimitHex,
+      gasPrice: validationGasPrice,
+    } as Tx,
+  ]);
+
+  return [!gasAccountValidation.valid, gasAccountValidation.cost];
 };

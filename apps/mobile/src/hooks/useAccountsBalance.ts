@@ -217,6 +217,12 @@ async function getMatteredAccountsSnapshot() {
   };
 }
 
+async function warmupSelectedAccountsBalance(selectedAccounts: Account[]) {
+  await balanceStore
+    .getState()
+    .hydrateCachedBalancesForAccounts(selectedAccounts);
+}
+
 export function startProcessAccountBalanceEvents() {
   perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
     syncBalanceAccountStore();
@@ -247,6 +253,7 @@ export function startProcessAccountBalanceEvents() {
   const syncSelectionFromAccounts = async () => {
     const { selectedAccounts, selectedAddresses, matteredAccountLength } =
       await getMatteredAccountsSnapshot();
+    await warmupSelectedAccountsBalance(selectedAccounts);
     const nextBalance = buildBalanceAccountsFromList(
       selectedAccounts,
       balanceStore.getState().balanceMap,

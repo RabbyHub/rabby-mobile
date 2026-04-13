@@ -40,6 +40,7 @@ import {
 } from '@/assets/icons/settings';
 import {
   storeApiExpSettingData,
+  useBlockSubmitIfFormChangedOnAuth,
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
@@ -1031,6 +1032,47 @@ function DevSwitchBatchRevoke() {
   );
 }
 
+function DevSwitchSubmitFormGuard() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    blockSubmitIfFormChangedOnAuth,
+    toggleBlockSubmitIfFormChangedOnAuth,
+  } = useBlockSubmitIfFormChangedOnAuth();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Swap / Bridge Submit Guard
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleBlockSubmitIfFormChangedOnAuth();
+          }}>
+          <AppSwitch2024
+            value={blockSubmitIfFormChangedOnAuth}
+            onValueChange={toggleBlockSubmitIfFormChangedOnAuth}
+          />
+          <Text style={styles.switchLabel}>
+            {blockSubmitIfFormChangedOnAuth
+              ? 'Block submit and alert on auth-time form change'
+              : 'Only detect auth-time form change without blocking'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -1207,6 +1249,9 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Batch Revoke</Text>
         <DevSwitchBatchRevoke />
+
+        <Text style={styles.areaTitle}>Swap / Bridge</Text>
+        <DevSwitchSubmitFormGuard />
       </ScrollView>
     </NormalScreenContainer>
   );

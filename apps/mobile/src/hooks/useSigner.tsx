@@ -1,19 +1,19 @@
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 
 import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { omit } from 'lodash';
-import {
-  GasSelectionOptions,
-  signatureStore,
-  SignerConfig,
-} from '@/components2024/MiniSignV2';
+import { GasSelectionOptions, SignerConfig } from '@/components2024/MiniSignV2';
+import { SignatureManager } from '@/components2024/MiniSignV2/state/SignatureManager';
+import { registry } from '@/components2024/MiniSignV2/state/SignatureManagerRegistry';
 import { Account } from '@/core/services/preference';
 import { normalizeTxParams } from '@/components/Approval/components/SignTx/util';
 import {
   useMemoMiniSignGasStore,
   useMiniSignGasStoreOrigin,
 } from './miniSignGasStore';
+
+type GasLevelType = 'normal' | 'slow' | 'fast' | 'custom';
 
 export type SimpleSignConfig = {
   txs?: Tx[];
@@ -25,21 +25,62 @@ export const useMiniSigner = ({
   account,
   chainServerId,
   autoResetGasStoreOnChainChange,
+  isolateGasStore,
 }: {
   account: Account;
   chainServerId?: string;
   autoResetGasStoreOnChainChange?: boolean;
+  /** When true, this signer uses its own isolated gas level/price state instead of global atoms */
+  isolateGasStore?: boolean;
 }) => {
-  const {
-    miniGasLevel,
-    setMiniGasLevel,
-    miniCustomPrice,
-    setMiniCustomPrice,
-    fixedCustomGas,
-    setFixedCustomGas,
-  } = useMiniSignGasStoreOrigin();
+  // Create instance and add to registry during render. Snapshot is updated
+  // synchronously so getSnapshot() sees it immediately; listener notification
+  // is deferred via microtask to avoid "setState during render" warnings.
+  const instanceRef = useRef<SignatureManager | null>(null);
+  if (!instanceRef.current) {
+    instanceRef.current = new SignatureManager();
+    registry.add(instanceRef.current);
+  }
+  const instance = instanceRef.current;
 
-  const { reset: resetGasStore } = useMemoMiniSignGasStore();
+  useEffect(() => {
+    return () => {
+      registry.destroy(instance.instanceId);
+    };
+  }, [instance]);
+
+  // Global gas store (default)
+  const globalGas = useMiniSignGasStoreOrigin();
+  const { reset: resetGlobalGas } = useMemoMiniSignGasStore();
+
+  // Local gas store (only used when isolateGasStore=true)
+  const [localGasLevel, setLocalGasLevel] = useState<GasLevelType>('normal');
+  const [localCustomPrice, setLocalCustomPrice] = useState<
+    Record<number, number>
+  >({});
+
+  // Unified gas state interface
+  const miniGasLevel = isolateGasStore ? localGasLevel : globalGas.miniGasLevel;
+  const miniCustomPrice = isolateGasStore
+    ? localCustomPrice
+    : globalGas.miniCustomPrice;
+  const fixedCustomGas = globalGas.fixedCustomGas; // always global
+  const setMiniGasLevel = isolateGasStore
+    ? setLocalGasLevel
+    : globalGas.setMiniGasLevel;
+  const setMiniCustomPrice = isolateGasStore
+    ? setLocalCustomPrice
+    : globalGas.setMiniCustomPrice;
+  const setFixedCustomGas = globalGas.setFixedCustomGas; // always global
+
+  const resetGasStore = useCallback(() => {
+    if (isolateGasStore) {
+      setLocalGasLevel('normal');
+      setLocalCustomPrice({});
+    } else {
+      resetGlobalGas();
+    }
+  }, [isolateGasStore, resetGlobalGas]);
 
   useEffect(() => {
     resetGasStore();
@@ -66,7 +107,7 @@ export const useMiniSigner = ({
 
   const updateMiniGasStore = useCallback(
     (params: {
-      gasLevel: 'normal' | 'slow' | 'fast' | 'custom';
+      gasLevel: GasLevelType;
       chainId: number;
       customGasPrice?: number;
       fixed?: boolean;
@@ -112,11 +153,6 @@ export const useMiniSigner = ({
     };
     return partial;
   };
-
-  // useEffect(() => {
-  //   signatureStore.close();
-  //   return () => signatureStore.close();
-  // }, []);
 
   const ensureTxs = useMemoizedFn(async (cfg: SimpleSignConfig) => {
     let txs: Tx[] | undefined = cfg.txs;
@@ -176,11 +212,11 @@ export const useMiniSigner = ({
   const prefetch = useMemoizedFn(async (cfg: SimpleSignConfig) => {
     const payload = await prepareSignerPayload(cfg);
     if (!payload) {
-      signatureStore.close();
+      instance.close();
       return;
     }
 
-    await signatureStore.prefetch({
+    await instance.prefetch({
       txs: payload.txs,
       config: payload.signerConfig,
       enableSecurityEngine: cfg.enableSecurityEngine,
@@ -195,7 +231,7 @@ export const useMiniSigner = ({
         throw new Error('No transactions to sign');
       }
 
-      return signatureStore.startUI({
+      return instance.startUI({
         txs: payload.txs,
         config: payload.signerConfig,
         enableSecurityEngine: cfg.enableSecurityEngine,
@@ -210,7 +246,7 @@ export const useMiniSigner = ({
       if (!payload) {
         throw new Error('No transactions to sign');
       }
-      return signatureStore.openDirect({
+      return instance.openDirect({
         txs: payload.txs,
         config: payload.signerConfig,
         enableSecurityEngine: false,
@@ -221,10 +257,10 @@ export const useMiniSigner = ({
 
   const updateConfig = useMemoizedFn((next: Partial<SimpleSignConfig>) => {
     const partial = toPartialSignerConfig(next);
-    signatureStore.updateConfig(partial);
+    instance.updateConfig(partial);
   });
 
-  const close = useMemoizedFn(() => signatureStore.close());
+  const close = useMemoizedFn(() => instance.close());
   return {
     openDirect,
     openUI,
@@ -232,5 +268,7 @@ export const useMiniSigner = ({
     close,
     updateConfig,
     resetGasStore,
+    /** The owned SignatureManager instance — pass to SignatureInstanceProvider */
+    instance,
   } as const;
 };

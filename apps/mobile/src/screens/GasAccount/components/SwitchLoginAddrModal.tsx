@@ -2,9 +2,11 @@ import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { GasAccountCurrentAddress } from './GasAccountLogoutPopup';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { Button } from '@/components';
 import { Text } from '@/components/Typography';
 import { TrackedModal } from '@/components/Modal/TrackedModal';

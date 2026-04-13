@@ -64,6 +64,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { TextInput } from '@/components/Typography';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -231,7 +232,11 @@ export function useSendNFTForm({
 
   const chainItem = findChain({ serverId: nftToken?.chain });
 
-  const { openDirect, prefetch } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch,
+    instance: miniSignInstance,
+  } = useMiniSigner({
     account: currentAccount,
     chainServerId: chainItem?.serverId,
     autoResetGasStoreOnChainChange: true,
@@ -654,8 +659,14 @@ export function useSendNFTForm({
   useEffect(() => {
     const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
       txDetail => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
         reFetch();
         setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
           reFetch();
         }, 5000);
       };
@@ -805,6 +816,7 @@ export function useSendNFTForm({
     whitelist,
     whitelistEnabled,
     computed,
+    miniSignInstance,
   };
 }
 export function useSendNFTFormikContext() {

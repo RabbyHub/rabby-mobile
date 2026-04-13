@@ -158,7 +158,10 @@
       "addressCount_one": "{{count}} Portefeuille",
       "importMore": "Importer plus de Wallets",
       "addressCount_other": "{{count}} Portefeuilles",
-      "viewAddress": "Voir le portefeuille"
+      "viewAddress": "Voir le portefeuille",
+      "titleCreated": "Votre portefeuille a été créé 🚀",
+      "titleImported": "Votre portefeuille a été importé 🚀",
+      "titleMultiple": "{{count}} portefeuille(s) ajouté(s) 🚀"
     },
     "signTx": {
       "crossChain": {
@@ -601,14 +604,15 @@
       },
       "cancelConnection": "Annuler la connexion",
       "gasAccount": {
-        "notEnough": "GasAccount n'est pas suffisant",
         "useGasAccount": "Utiliser GasAccount",
         "loginFirst": "Veuillez d'abord vous connecter à GasAccount.",
         "deposit": "Dépôt",
         "customRPC": "Non pris en charge lors de l'utilisation de RPC personnalisé",
         "login": "Se connecter",
         "chainNotSupported": "Cette chaîne n'est pas prise en charge par GasAccount.",
-        "WalletConnectTips": "GasAccount ne prend pas en charge WalletConnect."
+        "WalletConnectTips": "GasAccount ne prend pas en charge WalletConnect.",
+        "signWithHardwareWalletToUse": "Vous devez signer avec {{brand}} pour utiliser",
+        "notEnough": "Pas assez de gas. Solde de gas : {{usd}}"
       },
       "cancelAll": "Annuler toutes les {{count}} demandes de Dapp",
       "ledger": {
@@ -916,7 +920,6 @@
       "services": {
         "receive": "Recevoir",
         "swap": "Échanger",
-        "gasAccount": "GasAccount",
         "queue": "File d'attente",
         "approvals": "Approbations",
         "dapps": "Dapps",
@@ -933,7 +936,8 @@
         "lending": "Prêt",
         "predict": "Prédire",
         "meme": "Memecoin",
-        "market": "Marché"
+        "market": "Marché",
+        "gasDeposit": "Dépôt de Gas"
       },
       "swipeUp": {
         "descAndroid": "Cliquez pour explorer les dApps",
@@ -1011,7 +1015,8 @@
       },
       "gasXUsd": "Gas : {{gasUsd}}",
       "formChangedTitle": "Forme changée",
-      "formChangedAmount": "Le montant a changé, probablement en raison du remplissage automatique du mot de passe par le clavier système. Veuillez vérifier et saisir à nouveau le montant correct."
+      "formChangedAmount": "Le montant a changé, probablement en raison du remplissage automatique du mot de passe par le clavier système. Veuillez vérifier et saisir à nouveau le montant correct.",
+      "best-subtitle": "En tenant compte du coût total (frais de Gas inclus) et de la rapidité de livraison du meilleur prix"
     },
     "dashboard": {
       "hd": {
@@ -1143,7 +1148,8 @@
         "descriptionIOS": "Si vous aimez Rabby, une évaluation rapide sur l'App Store signifierait beaucoup."
       },
       "homeCenterTipScreenshot": {
-        "description": "Prenez une capture d'écran à tout moment pour signaler rapidement un bug."
+        "description": "Prenez une capture d'écran à tout moment pour signaler rapidement un bug.",
+        "title": "Conseils"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "Glissez à droite pour voir tous les actifs"
@@ -1583,7 +1589,9 @@
       },
       "title": "Ajouter l'adresse Safe",
       "gnosisChainDesc": "Cette adresse a été trouvée déployée sur {{count}} chaînes",
-      "loading": "Recherche de la chaîne déployée de cette adresse"
+      "loading": "Recherche de la chaîne déployée de cette adresse",
+      "gnosisChainPillDesc": "Votre portefeuille est déployé sur ces chaînes",
+      "gnosisChainScrollDesc": "Ce portefeuille a été trouvé déployé sur {{count}} chaînes"
     },
     "customRpc": {
       "opened": "Ouvert",
@@ -1709,7 +1717,8 @@
         "placeHolder": "Rechercher Dapp/Token"
       },
       "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
+        "tokenAndFdv": "Token/FDV",
+        "token": "Jeton"
       }
     },
     "gasAccount": {
@@ -1742,7 +1751,6 @@
         "followingTokenInSufficient": "Le solde du jeton suivant est insuffisant",
         "zeroInvalidAmount": "Le montant ne peut pas être zéro",
         "title": "Dépôt",
-        "selectToken": "Sélectionner le Token",
         "desc": "Effectuez un dépôt sur le compte DeBank L2 de Rabby sans frais supplémentaires - retirez à tout moment.",
         "amount": "Montant",
         "invalidAmount": "Doit être inférieur à 500",
@@ -1753,7 +1761,18 @@
         "paymentAddress": "Portefeuille de paiement",
         "inSufficientTip1": "Ce portefeuille n'a pas assez de tokens. Veuillez choisir un autre portefeuille.",
         "pay": "Payer",
-        "applePayFeeDesc1": "Inclus un frais d'App Store. Aucunes retraits."
+        "applePayFeeDesc1": "Inclus un frais d'App Store. Aucunes retraits.",
+        "insufficientBalanceLabel": "Solde insuffisant",
+        "balanceLabel": "Solde",
+        "gasDepositTitle": "Dépôt de Gaz",
+        "estReceiveLabel": "Est.Receive : {{usd}}",
+        "suggestedToken": "Tokens Suggérés",
+        "fetchQuoteFailed": "Échec de la récupération du devis",
+        "selectToken": "Sélectionner le Token à Déposer",
+        "unavailablePaymentWallet": "Le portefeuille de paiement sélectionné n'est pas disponible",
+        "estReceiveTip": "Service traité via {{name}}, peut avoir du slippage",
+        "minAmountRequired": "Le montant de dépôt minimum est de 1 $.",
+        "noAvailableToken": "Aucun jeton disponible"
       },
       "paymentAddressPopup": {
         "confirm": "Confirmer",
@@ -1795,7 +1814,8 @@
         "depositCanceled": "Dépôt annulé",
         "titleAndroid": "Acheter avec Google Pay",
         "title": "Acheter avec Apple Pay",
-        "titleApple": "Acheter dans l'App Store"
+        "titleApple": "Acheter dans l'App Store",
+        "topUpPayTips": "Gaz requis : {{topUpUsd}}, Solde de gaz restant est. : {{balance}}"
       },
       "depositSelectPopup": {
         "depositTokenDesc": "Pas de frais supplémentaires, retraits instantanés",
@@ -1804,7 +1824,9 @@
         "depositToken": "Dépôt avec Token",
         "title": "Déposer sur GasAccount",
         "buyWith": "Acheter avec",
-        "buyWithApple": "Acheter dans l'App Store"
+        "buyWithApple": "Acheter dans l'App Store",
+        "insufficientTokenBalance": "Solde de jetons insuffisant",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "balance": "Solde",
@@ -1814,10 +1836,26 @@
       },
       "depositCanceled": "Dépôt annulé",
       "depositSuccess": "Dépôt réussi",
-      "switchAccount": "Changer GasAccount",
       "loginFailed": "Échec de la connexion",
       "loginSuccess": "Connexion réussie",
-      "withdrawDisabledIAP": "Les retraits sont désactivés car votre solde inclut des fonds en fiat, qui ne peuvent pas être retirés. Contactez le support pour retirer le solde de vos tokens."
+      "withdrawDisabledIAP": "Les retraits sont désactivés car votre solde inclut des fonds en fiat, qui ne peuvent pas être retirés. Contactez le support pour retirer le solde de vos tokens.",
+      "benefitCard": {
+        "item1": "Pas de frais Rabby",
+        "desc1": "Pas de frais supplémentaires pour payer le gaz",
+        "item2": "Prend en charge tous les réseaux",
+        "desc3": "Échanger, Pont, Envoyer, DApps, & plus",
+        "desc2": "Paiements automatiques de gaz sur plus de 80 réseaux",
+        "item3": "Prend en charge toutes les transactions",
+        "title": "Payer les frais de gaz sur toutes les chaînes",
+        "subtitle": "quand vous n'avez plus de gaz"
+      },
+      "depositNow": "Déposez maintenant",
+      "switchAccount": "Changer de portefeuille",
+      "depositWith": "Dépôt avec",
+      "depositFailed": "Le dépôt a échoué",
+      "gasBalance": "Solde de Gaz",
+      "lowBalance": "Vous n'avez pas assez de gas. Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",
+      "depositSubmitted": "Dépôt soumis"
     },
     "tokenDetail": {
       "relateDefi": "Lié au DeFi",
@@ -3068,7 +3106,8 @@
     "market": {
       "tokenHeader": {
         "name": "Nom",
-        "tokenAndName": "Jeton/Nom"
+        "tokenAndName": "Jeton/Nom",
+        "token": "Jeton"
       },
       "tabs": {
         "watchlist": "Liste de surveillance",
@@ -3225,7 +3264,7 @@
       },
       "loginConfirmModal": {
         "desc": "Une fois connecté, vous ne pouvez le déposer qu'à cette adresse.",
-        "title": "Sélectionner le portefeuille pour se connecter"
+        "title": "Changer de portefeuille"
       },
       "depositPopup": {
         "amount": "Montant",
@@ -3543,6 +3582,7 @@
   },
   "backupReminder": {
     "action": "Sauvegarder maintenant",
-    "title": "Vous n'avez pas sauvegardé votre wallet"
+    "title": "Vous n'avez pas sauvegardé votre wallet",
+    "badge": "Pas de sauvegarde"
   }
 }

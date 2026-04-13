@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Button } from '@/components2024/Button';
 import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { useTheme2024 } from '@/hooks/theme';

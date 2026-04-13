@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Tip } from '@/components/Tip';
@@ -116,6 +116,10 @@ const TokenListItemComponent = ({
   const displayPriceChange =
     realtimePrice?.price_24h_change ?? item.price_24h_change;
 
+  const hideSubLine = useMemo(() => {
+    return !item.asset && !item.identity?.fdv;
+  }, [item.asset, item.identity?.fdv]);
+
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
       {/* 左slot */}
@@ -133,20 +137,53 @@ const TokenListItemComponent = ({
           <View style={styles.tokenInfo}>
             {/* symbol */}
             <View style={styles.tokenNameContainer}>
-              <Text style={styles.tokenName}>
+              <Text
+                style={styles.tokenName}
+                numberOfLines={1}
+                ellipsizeMode="tail">
                 {ellipsisOverflowedText(getTokenSymbol(item), 12)}
               </Text>
+              {item.launchpad?.logo ? (
+                <Image
+                  source={{ uri: item.launchpad?.logo }}
+                  style={styles.fourMemeIcon}
+                  width={18}
+                  height={18}
+                />
+              ) : null}
               {isLpToken(item) && (
                 <View style={styles.lpTokenIconContainer}>
                   <LpTokenIcon protocolId={item.protocol_id || ''} />
                 </View>
               )}
             </View>
-            {/* FDV */}
-            {!!item.identity?.fdv && (
-              <Text style={styles.tokenFdv}>
-                {formatUsdValueKMB(item.identity.fdv)}
-              </Text>
+            {!hideSubLine && (
+              <View style={styles.tokenAssetContainer}>
+                {!!item.asset && (
+                  <>
+                    {item.asset?.logo ? (
+                      <Image
+                        source={{ uri: item.asset?.logo }}
+                        style={styles.fourMemeIcon}
+                        width={16}
+                        height={16}
+                      />
+                    ) : null}
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={styles.rwaName}>
+                      {item.asset?.name}
+                    </Text>
+                    <Text style={styles.tokenFdvSeparator}>|</Text>
+                  </>
+                )}
+                {!!item.identity?.fdv && (
+                  <Text numberOfLines={1} style={styles.tokenFdv}>
+                    {formatUsdValueKMB(item.identity?.fdv ?? 0)}
+                  </Text>
+                )}
+              </View>
             )}
             {/* Chain Logo */}
           </View>
@@ -225,6 +262,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 4,
   },
+  rwaName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+    flexShrink: 1,
+  },
   tokenFdv: {
     fontSize: 14,
     fontWeight: '500',
@@ -238,6 +283,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
+    flexShrink: 1,
+    minWidth: 0,
   },
   chainLogo: {
     borderWidth: 1.5,
@@ -325,5 +372,24 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: 0,
     flexShrink: 0,
     justifyContent: 'flex-start',
+    width: 16,
+  },
+  tokenAssetContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+  },
+  tokenFdvSeparator: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors2024['neutral-line'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+  },
+  fourMemeIcon: {
+    width: 18,
+    height: 18,
+    flexShrink: 0,
   },
 }));

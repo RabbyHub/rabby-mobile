@@ -77,20 +77,14 @@ export const useGasAccountTxsCheck = ({
   const canGotoUseGasAccount =
     isSupportedAddr &&
     noCustomRPC &&
-    gasAccountCost &&
     !!gasAccountCost?.balance_is_enough &&
-    !gasAccountCost.chain_not_support;
-  // &&
-  // !!gasAccountCost.is_gas_account;
+    !gasAccountCost?.chain_not_support;
 
   const canDepositUseGasAccount =
     isSupportedAddr &&
     noCustomRPC &&
-    gasAccountCost &&
     !gasAccountCost?.balance_is_enough &&
-    !gasAccountCost.chain_not_support;
-  // &&
-  // !!gasAccountCost.is_gas_account;
+    !gasAccountCost?.chain_not_support;
 
   return {
     gasAccountCost,

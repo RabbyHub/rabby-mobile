@@ -171,7 +171,7 @@ export const SearchAssets: React.FC<Props> = ({
 
   const ListEmptyComponent = useMemo(
     () =>
-      !loading && (!resultTokens || !resultTokens?.length) ? (
+      !loading && (!filterTokens || !filterTokens?.length) ? (
         <View style={styles.emptyView}>
           {isLight ? (
             <RcIconEmpty style={styles.image} />
@@ -193,7 +193,7 @@ export const SearchAssets: React.FC<Props> = ({
       loading,
       styles.image,
       isLight,
-      resultTokens,
+      filterTokens,
       styles.emptyView,
       styles.emptyText,
       t,
@@ -270,7 +270,9 @@ export const SearchAssets: React.FC<Props> = ({
       <FlatList
         keyExtractor={(_, index) => index.toString()}
         data={filterTokens}
-        ListHeaderComponent={<SearchTokenHeader />}
+        ListHeaderComponent={
+          filterTokens.length > 0 ? <SearchTokenHeader /> : null
+        }
         ListEmptyComponent={ListEmptyComponent}
         onScrollBeginDrag={Keyboard.dismiss}
         showsVerticalScrollIndicator={false}
