@@ -12,7 +12,7 @@ import {
 import { useMemo, useState } from 'react';
 import { ImageStyle, StyleProp, StyleSheet, View } from 'react-native';
 import { Image } from 'react-native';
-import { accountStore } from '@/store/account';
+import { useAccountStore } from '@/store/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 const { isSameAddress } = addressUtils;
@@ -37,16 +37,16 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   address,
 }) => {
   const { isLight } = useTheme2024();
+  const accounts = useAccountStore(s => s.accounts);
   const isWatchAddress = useMemo(() => {
     if (type !== KEYRING_CLASS.WATCH) return undefined;
     if (!address) return true;
-    const accounts = accountStore.getState().accounts;
     return accounts.some(
       a =>
         a.brandName === KEYRING_CLASS.WATCH &&
         isSameAddress(a.address, address),
     );
-  }, [type, address]);
+  }, [type, address, accounts]);
   const avatar = useMemo(
     () => getWalletAvator2024(type, isLight, address, isWatchAddress),
     [type, isLight, address, isWatchAddress],

@@ -1354,7 +1354,7 @@
         "showSeedPhrase": "Show Seed Phrase",
         "backupTips": "Make sure no one else is watching your screen when you back up the seed phrase",
         "pastedAndClear": "Pasted and clipboard cleared",
-        "addMoreWalletTitle": "Add more wallet\nfrom this phrase",
+        "addMoreWalletTitle": "Add more wallets\nfrom this phrase",
         "maxAccountCount": "Maximum 50 addresses each time",
         "createdSuccess": "Your seed phrase has been created",
         "chooseBackupMethodTitle": "Choose a backup method",
