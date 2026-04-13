@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import {
   GasAccountBridgeSupportTokenList,
   storeApiGasAccountDeposit,
-  useGasAccountBridgeSupportLoading,
+  useGasAccountBridgeSupportUpdatedAt,
   useGasAccountBridgeSupportTokenList,
 } from './atom';
 import { useSelectTokens } from '@/screens/Swap/hooks/useSelectTokens';
@@ -83,11 +83,12 @@ export const useGasAccountDepositAvailableTokens = (
     disableL2Deposit?: boolean;
   },
 ) => {
+  const disableL2Deposit = options?.disableL2Deposit ?? false;
   const { tokens, isLoading, checkIsExpireAndUpdate } = useSelectTokens({
     currentAccount: undefined,
   });
   const bridgeSupportTokens = useGasAccountBridgeSupportTokenList();
-  const bridgeSupportLoading = useGasAccountBridgeSupportLoading();
+  const bridgeSupportUpdatedAt = useGasAccountBridgeSupportUpdatedAt();
 
   const availableTokens = useMemo(
     () =>
@@ -95,15 +96,23 @@ export const useGasAccountDepositAvailableTokens = (
         tokens,
         bridgeSupportTokens,
         minDepositPrice,
-        options,
+        { disableL2Deposit },
       ),
-    [bridgeSupportTokens, minDepositPrice, options, tokens],
+    [bridgeSupportTokens, disableL2Deposit, minDepositPrice, tokens],
   );
+  const hasAvailableTokens = availableTokens.length > 0;
+  const hasTokenSnapshot = tokens.length > 0;
+  const tokenDisabled =
+    bridgeSupportUpdatedAt > 0 &&
+    hasTokenSnapshot &&
+    !isLoading &&
+    !hasAvailableTokens;
 
   return {
     availableTokens,
-    hasAvailableTokens: availableTokens.length > 0,
-    isCheckingAvailability: isLoading || bridgeSupportLoading,
+    hasAvailableTokens,
+    isCheckingAvailability: isLoading,
+    tokenDisabled,
     checkIsExpireAndUpdate,
     refreshBridgeSupportTokenList:
       storeApiGasAccountDeposit.fetchBridgeSupportTokenList,

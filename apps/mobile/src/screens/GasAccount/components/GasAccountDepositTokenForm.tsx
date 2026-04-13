@@ -27,18 +27,18 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Platform, View } from 'react-native';
+import { InteractionManager, Keyboard, Platform, View } from 'react-native';
 import useDebounce from 'react-use/lib/useDebounce';
 import { AssetAvatar, Tip } from '@/components';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Text } from '@/components/Typography';
 import { Button } from '@/components2024/Button';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { useGasAccountMethods } from '@/screens/GasAccount/hooks';
 import {
   storeApiGasAccount,
+  useGasAccountBridgeSupportLoading,
+  useGasAccountBridgeSupportUpdatedAt,
   useGasAccountSign,
 } from '@/screens/GasAccount/hooks/atom';
 import {
@@ -98,6 +98,11 @@ export const GasAccountDepositTokenForm: React.FC<{
   } = useGasAccountDepositAvailableTokens(props.minDepositPrice, {
     disableL2Deposit: props.disableL2Deposit,
   });
+  const bridgeSupportLoading = useGasAccountBridgeSupportLoading();
+  const bridgeSupportUpdatedAt = useGasAccountBridgeSupportUpdatedAt();
+  const isTokenListLoading =
+    isCheckingAvailability ||
+    (bridgeSupportUpdatedAt <= 0 && bridgeSupportLoading);
 
   const refreshAvailableTokens = useCallback(async () => {
     await Promise.allSettled([
@@ -106,13 +111,23 @@ export const GasAccountDepositTokenForm: React.FC<{
     ]);
   }, [checkIsExpireAndUpdate, refreshBridgeSupportTokenList]);
 
+  const scheduleRefreshAvailableTokens = useCallback(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      refreshAvailableTokens();
+    });
+
+    return () => {
+      task.cancel();
+    };
+  }, [refreshAvailableTokens]);
+
   useEffect(() => {
     if (!props.visible) {
       return;
     }
 
-    refreshAvailableTokens();
-  }, [props.visible, refreshAvailableTokens]);
+    return scheduleRefreshAvailableTokens();
+  }, [props.visible, scheduleRefreshAvailableTokens]);
 
   if (!myAccounts.length) {
     return null;
@@ -123,8 +138,7 @@ export const GasAccountDepositTokenForm: React.FC<{
       {...props}
       myAccounts={myAccounts}
       availableTokens={availableTokens}
-      isCheckingAvailability={isCheckingAvailability}
-      refreshAvailableTokens={refreshAvailableTokens}
+      isCheckingAvailability={isTokenListLoading}
     />
   );
 };
@@ -138,7 +152,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
   myAccounts: DepositAccount[];
   availableTokens: GasAccountAvailableToken[];
   isCheckingAvailability: boolean;
-  refreshAvailableTokens(): Promise<void>;
 }> = ({
   visible,
   onClose,
@@ -148,13 +161,11 @@ const GasAccountDepositTokenFormInner: React.FC<{
   myAccounts,
   availableTokens,
   isCheckingAvailability,
-  refreshAvailableTokens,
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyles,
   });
-  const modalRef = useRef<AppBottomSheetModal>(null);
   const quoteReqIdRef = useRef(0);
   const { sig, accountId } = useGasAccountSign();
   const { login } = useGasAccountMethods();
@@ -184,14 +195,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
       pollCancelRef.current?.();
     };
   }, []);
-
-  useEffect(() => {
-    if (!tokenPickerVisible) {
-      return;
-    }
-
-    refreshAvailableTokens();
-  }, [refreshAvailableTokens, tokenPickerVisible]);
 
   const { data: _tokenInfo } = useRequest(
     async () => {
@@ -239,13 +242,9 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
   useEffect(() => {
     if (!visible) {
-      modalRef.current?.close();
       setTokenPickerVisible(false);
       resetBridgeQuoteState();
-      return;
     }
-
-    modalRef.current?.present();
   }, [resetBridgeQuoteState, visible]);
 
   const didInitSelectedTokenRef = useRef(false);
@@ -786,10 +785,6 @@ const GasAccountDepositTokenFormInner: React.FC<{
     usd: estReceiveUsdValue,
   });
 
-  console.log('gasAccountInfo?.account?.balance', {
-    gasAccountInfo: gasAccountInfo?.account?.balance,
-  });
-
   const estReceiveUsdNumberBN = useMemo(
     () =>
       minDepositPrice
@@ -815,7 +810,13 @@ const GasAccountDepositTokenFormInner: React.FC<{
   const isInteractionLocked = loading;
 
   let bottomContent: React.ReactNode = null;
-  if (amountValidation.errorMessage) {
+  if (!isCheckingAvailability && !availableTokens.length) {
+    bottomContent = (
+      <Text style={styles.errorText}>
+        {t('page.gasAccount.depositPopup.noAvailableToken')}
+      </Text>
+    );
+  } else if (amountValidation.errorMessage) {
     bottomContent = (
       <Text style={styles.errorText}>{amountValidation.errorMessage}</Text>
     );
@@ -866,105 +867,94 @@ const GasAccountDepositTokenFormInner: React.FC<{
 
   return (
     <>
-      <AppBottomSheetModal
-        ref={modalRef}
-        {...makeBottomSheetProps({
-          colors: colors2024,
-          linearGradientType: 'bg1',
-        })}
-        onDismiss={onClose}
-        enableDynamicSizing
-        keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore">
-        <BottomSheetView style={styles.container}>
-          <Text style={styles.title}>
-            {t('page.gasAccount.depositPopup.gasDepositTitle')}
-          </Text>
+      <BottomSheetView style={styles.container}>
+        <Text style={styles.title}>
+          {t('page.gasAccount.depositPopup.gasDepositTitle')}
+        </Text>
 
-          <View style={styles.formItem}>
-            <View style={styles.formItemLabelRow}>
-              <Text style={styles.formItemLabel}>
-                {t('page.gasAccount.depositPopup.amount')}
-              </Text>
-              <Text
-                style={[
-                  styles.formItemDesc,
-                  balanceCopy.isInsufficient ? styles.formItemDescError : null,
-                ]}>
-                {balanceCopy.copy}
-              </Text>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <BottomSheetTextInput
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  !amountValidation.isValid && usdValue !== ''
-                    ? styles.inputError
-                    : null,
-                ]}
-                editable={!isInteractionLocked}
-                textAlignVertical="center"
-                placeholder="$0"
-                value={displayedValue}
-                onChangeText={setUsdValue}
-                numberOfLines={1}
-              />
-              {!usdValue && (
-                <CustomTouchableOpacity
-                  style={styles.maxButtonWrapper}
-                  onPress={handleMax}>
-                  <Text style={styles.maxButtonText}>MAX</Text>
-                </CustomTouchableOpacity>
-              )}
-              <View style={styles.inputDivider} />
-              <CustomTouchableOpacity
-                style={styles.wrapper}
-                disabled={isInteractionLocked}
-                onPress={() => {
-                  if (isInteractionLocked) {
-                    return;
-                  }
-                  setTokenPickerVisible(true);
-                }}>
-                <View style={styles.tokenContainer}>
-                  {selectedToken ? (
-                    <>
-                      <AssetAvatar
-                        size={26}
-                        chain={selectedToken.chain}
-                        logo={selectedToken.logo_url}
-                        chainSize={12}
-                      />
-                      <Text style={styles.tokenText}>{tokenSymbol}</Text>
-                    </>
-                  ) : (
-                    <Text style={styles.tokenPlaceholder}>
-                      {t('page.gasAccount.depositPopup.selectToken')}
-                    </Text>
-                  )}
-                  <RcIconSwapBottomArrow />
-                </View>
-              </CustomTouchableOpacity>
-            </View>
-
-            <View style={styles.bottomContainer}>{bottomContent}</View>
+        <View style={styles.formItem}>
+          <View style={styles.formItemLabelRow}>
+            <Text style={styles.formItemLabel}>
+              {t('page.gasAccount.depositPopup.amount')}
+            </Text>
+            <Text
+              style={[
+                styles.formItemDesc,
+                balanceCopy.isInsufficient ? styles.formItemDescError : null,
+              ]}>
+              {balanceCopy.copy}
+            </Text>
           </View>
 
-          <Button
-            type="primary"
-            loading={loading}
-            disabled={!canSubmit}
-            onPress={handleSubmit}
-            buttonStyle={styles.depositButton}
-            titleStyle={styles.depositButtonTitle}
-            title={t('page.gasAccount.depositPopup.gasDepositButton', {
-              defaultValue: 'Deposit',
-            })}
-          />
-        </BottomSheetView>
-      </AppBottomSheetModal>
+          <View style={styles.inputContainer}>
+            <BottomSheetTextInput
+              keyboardType="numeric"
+              style={[
+                styles.input,
+                !amountValidation.isValid && usdValue !== ''
+                  ? styles.inputError
+                  : null,
+              ]}
+              editable={!isInteractionLocked}
+              textAlignVertical="center"
+              placeholder="$0"
+              value={displayedValue}
+              onChangeText={setUsdValue}
+              numberOfLines={1}
+            />
+            {!usdValue && (
+              <CustomTouchableOpacity
+                style={styles.maxButtonWrapper}
+                onPress={handleMax}>
+                <Text style={styles.maxButtonText}>MAX</Text>
+              </CustomTouchableOpacity>
+            )}
+            <View style={styles.inputDivider} />
+            <CustomTouchableOpacity
+              style={styles.wrapper}
+              disabled={isInteractionLocked}
+              onPress={() => {
+                if (isInteractionLocked) {
+                  return;
+                }
+                setTokenPickerVisible(true);
+              }}>
+              <View style={styles.tokenContainer}>
+                {selectedToken ? (
+                  <>
+                    <AssetAvatar
+                      size={26}
+                      chain={selectedToken.chain}
+                      logo={selectedToken.logo_url}
+                      chainSize={12}
+                    />
+                    <Text style={styles.tokenText}>{tokenSymbol}</Text>
+                  </>
+                ) : (
+                  <Text style={styles.tokenPlaceholder}>
+                    {t('page.gasAccount.depositPopup.selectToken')}
+                  </Text>
+                )}
+                <RcIconSwapBottomArrow />
+              </View>
+            </CustomTouchableOpacity>
+          </View>
+
+          <View style={styles.bottomContainer}>{bottomContent}</View>
+        </View>
+
+        <Button
+          type="primary"
+          loading={loading}
+          disabled={!canSubmit}
+          onPress={handleSubmit}
+          buttonStyle={styles.depositButton}
+          titleStyle={styles.depositButtonTitle}
+          title={t('page.gasAccount.depositPopup.gasDepositButton', {
+            defaultValue: 'Deposit',
+          })}
+        />
+      </BottomSheetView>
 
       {tokenPickerVisible ? (
         <GasAccountDepositTokenPicker
