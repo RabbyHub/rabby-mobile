@@ -115,7 +115,15 @@ module.exports = {
     ['nativewind/babel', {}],
     ['@babel/plugin-proposal-decorators', { legacy: true }],
     ['@babel/plugin-transform-class-static-block'],
-    ...(shouldStripConsole ? ['transform-remove-console'] : []),
     ['react-native-reanimated/plugin'],
   ],
+  ...(shouldStripConsole
+    ? {
+        env: {
+          production: {
+            plugins: ['transform-remove-console'],
+          },
+        },
+      }
+    : {}),
 };
