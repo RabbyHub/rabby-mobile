@@ -620,6 +620,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderColor: colors2024['neutral-line'],
     borderRadius: 12,
     padding: 6,
+    marginBottom: 12,
     backgroundColor: colors2024['neutral-bg-1'],
   },
   innerRow: {
