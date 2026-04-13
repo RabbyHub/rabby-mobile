@@ -40,7 +40,8 @@ preview-build-message.txt
 .cursor/
 .claude/*.local.*
 .claude/worktrees
-docs
+docs/*
+!docs/mobile-app-log-format.md
 CLAUDE*.local.md
 
 # codex

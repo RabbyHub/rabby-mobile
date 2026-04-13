@@ -9327,6 +9327,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/rabby-logger@npm:0.2.1-alpha":
+  version: 0.2.1-alpha
+  resolution: "@rabby-wallet/rabby-logger@npm:0.2.1-alpha"
+  dependencies:
+    fflate: "npm:^0.8.2"
+  checksum: 10/04570fa027087db0742e675dcac3e5e8556e6e962124e8d607b1d561eea703d6faa4f4d15f9fc1715a0f671fd7ff510999650ccea9241f70d2113ee735b6b033
+  languageName: node
+  linkType: hard
+
 "@rabby-wallet/rabby-security-engine@npm:2.0.12":
   version: 2.0.12
   resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.12"
@@ -24117,7 +24126,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:0.8.2":
+"fflate@npm:0.8.2, fflate@npm:^0.8.2":
   version: 0.8.2
   resolution: "fflate@npm:0.8.2"
   checksum: 10/2bd26ba6d235d428de793c6a0cd1aaa96a06269ebd4e21b46c8fd1bd136abc631acf27e188d47c3936db090bf3e1ede11d15ce9eae9bffdc4bfe1b9dc66ca9cb
@@ -35124,6 +35133,7 @@ __metadata:
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
     "@rabby-wallet/rabby-api": "npm:0.9.59-beta.0"
+    "@rabby-wallet/rabby-logger": "npm:0.2.1-alpha"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
     "@rabby-wallet/rabby-swap": "npm:0.0.74"
