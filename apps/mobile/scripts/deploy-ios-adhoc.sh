@@ -65,13 +65,16 @@ build_adhoc() {
     return $prepare_status
   fi
 
-  if ios_fast_build_enabled; then
-    prepare_ios_ruby_bundle;
-    ruby_status=$?
+  native_deps_prepared=false
 
-    if [ $ruby_status -ne 0 ]; then
-      return $ruby_status
+  if ios_fast_build_enabled; then
+    prepare_ios_native_deps;
+    deps_status=$?
+
+    if [ $deps_status -ne 0 ]; then
+      return $deps_status
     fi
+    native_deps_prepared=true
 
     echo "[deploy-ios-adhoc] trying iOS fast-build from template archive..."
     CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/ios.sh export
@@ -85,11 +88,13 @@ build_adhoc() {
     echo "[deploy-ios-adhoc] iOS fast-build failed with status $fast_build_status, will fall back to full archive build."
   fi
 
-  prepare_ios_native_deps;
-  deps_status=$?
+  if [ "$native_deps_prepared" != "true" ]; then
+    prepare_ios_native_deps;
+    deps_status=$?
 
-  if [ $deps_status -ne 0 ]; then
-    return $deps_status
+    if [ $deps_status -ne 0 ]; then
+      return $deps_status
+    fi
   fi
 
   if turbo_build_enabled; then
