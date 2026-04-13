@@ -32,7 +32,6 @@ export const AccountListView: React.FC<Props> = ({
   handleSelectIndex,
   loading,
   brandName,
-  seedPhraseIndex = 0,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
@@ -40,7 +39,9 @@ export const AccountListView: React.FC<Props> = ({
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Seed Phrase {seedPhraseIndex + 1}</Text>
+        <Text style={styles.headerText}>
+          {t('page.manageAddress.seed-phrase')}
+        </Text>
       </View>
       <FlatList
         style={styles.list}

@@ -478,8 +478,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         <View style={styles.loading}>
           <Text style={styles.loadingText}>
             {!accounts.length
-              ? 'Generating wallets, please wait...'
-              : 'Select addresses to add'}
+              ? t('page.newAddress.generatingWallets')
+              : t('page.newAddress.selectAddressesToAdd')}
           </Text>
         </View>
       </View>

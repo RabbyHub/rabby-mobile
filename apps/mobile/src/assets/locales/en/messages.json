@@ -1335,6 +1335,8 @@
         "cameraTitle": "Please scan the QR code with your camera"
       },
       "createNewAddress": "Create new Wallet",
+      "generatingWallets": "Generating wallets, please wait...",
+      "selectAddressesToAdd": "Select addresses to add",
       "createNewSeedPhrase": "Create New Seed Phrase",
       "seedPhrase": {
         "whatIsASeedPhrase": {
