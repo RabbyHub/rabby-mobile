@@ -1,20 +1,9 @@
 import { TouchableOpacity } from 'react-native';
-import { StackActions, useNavigation } from '@react-navigation/core';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { AppRootName, RootNames } from '@/constant/layout';
-import {
-  shouldRedirectToSetPasswordBefore2024,
-  useSetPasswordFirst,
-} from '@/hooks/useLock';
-import { CurrentAddressProps } from './components/AddressListScreenContainer';
+import { RootNames } from '@/constant/layout';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 

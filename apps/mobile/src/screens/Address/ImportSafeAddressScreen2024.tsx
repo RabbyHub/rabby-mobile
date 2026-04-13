@@ -9,12 +9,11 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Keyboard, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { Spin } from '../TransactionRecord/components/Spin';
-import { Chain } from '@/constant/chains';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
+import { GnosisScrollableChainList } from './components/GnosisScrollableChainList';
 import { createGetStyles2024 } from '@/utils/styles';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { ellipsisAddress } from '@/utils/address';
@@ -115,105 +114,59 @@ export const ImportSafeAddressScreen2024 = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.topContent}>
-            <WalletIcon
-              type={KEYRING_TYPE.GnosisKeyring}
-              width={40}
-              height={40}
-              style={styles.icon}
-            />
-            <View>
-              <NextInput.TextArea
-                style={styles.textContainer}
-                inputStyle={styles.textArea}
-                tipText={''}
-                hasError={!!error}
-                fieldErrorTextStyle={styles.error}
-                containerStyle={Object.assign(
-                  {},
-                  error
-                    ? {}
-                    : {
-                        borderColor: 'transparent',
-                      },
-                )}
-                inputProps={{
-                  placeholder: 'Input safe address',
-                  value: input,
-                  blurOnSubmit: true,
-                  returnKeyType: 'done',
-                  onChangeText: handleChange,
-                }}
-              />
-              {loading ? (
-                <View style={styles.loading}>
-                  <Spin
-                    style={styles.spin}
-                    color={colors2024['neutral-secondary']}
-                  />
-                  <Text style={styles.loadingText}>
-                    {t('page.importSafe.loading')}
-                  </Text>
-                </View>
-              ) : (
-                <>
-                  {error ? (
-                    <Text style={styles.errorMessage}>{error}</Text>
-                  ) : (
-                    !!chainList?.length && (
-                      <GnosisSupportChainList data={chainList} />
-                    )
-                  )}
-                </>
+            <NextInput.TextArea
+              style={styles.textContainer}
+              inputStyle={styles.textArea}
+              tipText={''}
+              hasError={!!error}
+              fieldErrorTextStyle={styles.error}
+              containerStyle={Object.assign(
+                {},
+                error
+                  ? {}
+                  : {
+                      borderColor: 'transparent',
+                    },
               )}
-            </View>
-
+              inputProps={{
+                placeholder: 'Input safe address',
+                value: input,
+                blurOnSubmit: true,
+                returnKeyType: 'done',
+                onChangeText: handleChange,
+              }}
+            />
             <PasteButton
               style={styles.pasteButton}
               onPaste={text => {
                 handleChange(text);
               }}
             />
+            {loading ? (
+              <View style={styles.loading}>
+                <Spin
+                  style={styles.spin}
+                  color={colors2024['neutral-secondary']}
+                />
+                <Text style={styles.loadingText}>
+                  {t('page.importSafe.loading')}
+                </Text>
+              </View>
+            ) : (
+              <>
+                {error ? (
+                  <Text style={styles.errorMessage}>{error}</Text>
+                ) : (
+                  !!chainList?.length && (
+                    <GnosisScrollableChainList data={chainList} />
+                  )
+                )}
+              </>
+            )}
           </View>
         </View>
       </TouchableWithoutFeedback>
     </FooterButtonScreenContainer>
-  );
-};
-
-export const GnosisSupportChainList = ({
-  data,
-  style,
-}: {
-  data: Chain[];
-} & RNViewProps) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const { t } = useTranslation();
-
-  return (
-    <View style={[styles.chainListContainer, style]}>
-      <Text style={styles.chainListDesc}>
-        {t('page.importSafe.gnosisChainDesc', {
-          count: data?.length,
-        })}
-      </Text>
-      <View style={styles.chainList}>
-        {data?.map(chain => {
-          return (
-            <View style={styles.chainListItem} key={chain.id}>
-              <Image
-                source={{
-                  uri: chain.logo,
-                }}
-                alt=""
-                style={styles.chainLogo}
-              />
-              <Text style={styles.chainName}>{chain.name}</Text>
-            </View>
-          );
-        })}
-      </View>
-    </View>
   );
 };
 
@@ -224,7 +177,6 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
     position: 'relative',
     height: '100%',
     width: '100%',
@@ -232,6 +184,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   topContent: {
     alignItems: 'center',
+    width: '100%',
     flexShrink: 0,
   },
   errorMessage: {
@@ -240,20 +193,7 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 12,
     marginBottom: 16,
   },
-  icon: {
-    width: 40,
-    height: 40,
-  },
-  itemAddressWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    columnGap: 4,
-  },
-  qAndASection: {
-    marginBottom: 24,
-  },
   textContainer: {
-    marginTop: 20,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   textArea: {
@@ -265,20 +205,7 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'left',
   },
   pasteButton: {
-    marginTop: 58,
-  },
-  tipWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 4,
-    width: '100%',
-    marginBottom: 28,
-  },
-  tip: {
-    color: ctx.colors2024['neutral-info'],
-    fontWeight: '400',
-    fontSize: 16,
+    marginTop: 20,
   },
   loading: {
     flexDirection: 'row',
@@ -297,51 +224,5 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 14,
     fontWeight: '400',
     lineHeight: 18,
-  },
-  tipIcon: {
-    width: 16,
-    height: 16,
-  },
-  modalNextButtonText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    textAlign: 'center',
-    color: ctx.colors2024['neutral-InvertHighlight'],
-    backgroundColor: ctx.colors2024['brand-default'],
-  },
-  chainListContainer: {
-    marginTop: 12,
-    paddingHorizontal: 4,
-  },
-  chainListDesc: {
-    color: ctx.colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  chainList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  chainListItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  chainLogo: {
-    width: 20,
-    height: 20,
-  },
-  chainName: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: ctx.colors2024['neutral-body'],
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 16,
   },
 }));

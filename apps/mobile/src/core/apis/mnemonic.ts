@@ -23,7 +23,6 @@ import {
   requestKeyring,
 } from './keyring';
 import { throwErrorIfInvalidPwd } from './lock';
-import { accountEvents } from '@/core/apis/account';
 
 /**
  * Formats a mnemonic string by trimming, splitting by whitespace/comma/newline, and rejoining.

@@ -87,12 +87,12 @@ export const AddressItem = (props: AddressItemProps) => {
   }, [account.balance, currency.symbol, currency.usd_rate]);
 
   const WalletIconWrapper = useCallback(
-    (_props: Omit<WalletIconProps, 'type'>) => {
+    (props: Omit<WalletIconProps, 'type'>) => {
       return (
         <WalletIcon
           type={account.brandName}
           address={account.address}
-          {..._props}
+          {...props}
         />
       );
     },

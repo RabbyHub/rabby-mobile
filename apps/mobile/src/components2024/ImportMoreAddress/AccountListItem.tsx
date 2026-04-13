@@ -1,11 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { ellipsisAddress } from '@/utils/address';
-import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { formatUsdValue } from '@/utils/number';
 import { isNumber } from 'lodash';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { CheckBoxRect } from '../CheckBox';
+import { WalletIcon } from '../WalletIcon/WalletIcon';
 import { Text } from '@/components/Typography';
 
 export type ViewAccount = {
@@ -16,6 +16,7 @@ export type ViewAccount = {
 
 export interface Props {
   account: ViewAccount;
+  brandName: string;
   onPress?: () => void;
   isImported?: boolean;
   isSelected?: boolean;
@@ -23,57 +24,83 @@ export interface Props {
 
 export const AccountListItem: React.FC<Props> = ({
   account,
+  brandName,
   onPress,
   isSelected,
   isImported,
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const address = React.useMemo(
-    () => ellipsisAddress(account.address),
-    [account.address],
-  );
 
   return (
-    <View style={styles.root}>
-      <View style={styles.left}>
-        <Text style={styles.addressText}>{address}</Text>
+    <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.7}>
+      <WalletIcon
+        type={brandName}
+        address={account.address}
+        width={46}
+        height={46}
+        style={styles.walletLogo}
+      />
+      <View style={styles.itemInfo}>
+        <View style={styles.itemName}>
+          <Text style={styles.itemNameText} numberOfLines={1}>
+            {brandName} {account.index + 1}
+          </Text>
+          {isImported && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>Imported</Text>
+            </View>
+          )}
+        </View>
         {isNumber(account.balance) && (
-          <Text style={styles.balanceText}>
+          <Text style={styles.itemBalanceText}>
             {formatUsdValue(account.balance)}
           </Text>
         )}
-        {isImported && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Imported</Text>
-          </View>
-        )}
       </View>
-      <TouchableOpacity
-        style={StyleSheet.flatten([
-          {
-            opacity: isImported ? 0.5 : 1,
-          },
-        ])}
-        onPress={onPress}
-        hitSlop={10}>
+      <View style={isImported && styles.checkboxImported}>
         <CheckBoxRect checked={isImported || isSelected} />
-      </TouchableOpacity>
-    </View>
+      </View>
+    </TouchableOpacity>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  root: {
+  item: {
+    padding: 12,
+    backgroundColor: colors2024['neutral-bg-0'],
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 24,
-    paddingRight: 24,
   },
-  left: {
+  checkboxImported: {
+    opacity: 0.5,
+  },
+  walletLogo: {
+    borderRadius: 12,
+  },
+  itemInfo: {
+    marginLeft: 8,
+    gap: 4,
+    flex: 1,
+  },
+  itemName: {
     gap: 8,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  itemNameText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+  },
+  itemBalanceText: {
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-body'],
   },
   badge: {
     paddingHorizontal: 6,
@@ -86,20 +113,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontSize: 12,
     lineHeight: 16,
-    fontFamily: 'SF Pro Rounded',
-  },
-  addressText: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-  },
-  balanceText: {
-    color: colors2024['neutral-secondary'],
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
   },
 }));
