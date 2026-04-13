@@ -4,10 +4,18 @@ import {
   getWalletIcon2024,
   showSubWalletIcon,
 } from '@/utils/walletInfo2024';
-import { KEYRING_TYPE, WALLET_NAME } from '@rabby-wallet/keyring-utils';
+import {
+  KEYRING_TYPE,
+  KEYRING_CLASS,
+  WALLET_NAME,
+} from '@rabby-wallet/keyring-utils';
 import { useMemo, useState } from 'react';
 import { ImageStyle, StyleProp, StyleSheet, View } from 'react-native';
 import { Image } from 'react-native';
+import { accountStore } from '@/store/account';
+import { addressUtils } from '@rabby-wallet/base-utils';
+
+const { isSameAddress } = addressUtils;
 
 type EValue = `${KEYRING_TYPE}`;
 
@@ -29,11 +37,21 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   address,
 }) => {
   const { isLight } = useTheme2024();
-  const avator = useMemo(
-    () => getWalletAvator2024(type, isLight, address),
-    [type, isLight, address],
+  const isWatchAddress = useMemo(() => {
+    if (type !== KEYRING_CLASS.WATCH) return undefined;
+    if (!address) return true;
+    const accounts = accountStore.getState().accounts;
+    return accounts.some(
+      a =>
+        a.brandName === KEYRING_CLASS.WATCH &&
+        isSameAddress(a.address, address),
+    );
+  }, [type, address]);
+  const avatar = useMemo(
+    () => getWalletAvator2024(type, isLight, address, isWatchAddress),
+    [type, isLight, address, isWatchAddress],
   );
-  const Icon = getWalletIcon2024(type, isLight);
+  const Icon = getWalletIcon2024(type, isLight, isWatchAddress);
   const styleProps = style ? StyleSheet.flatten(style) : {};
   const {
     width: styleWidth,
@@ -47,7 +65,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   const subWalletIconBorderWidth = (2 * size) / 40;
   const subWalletIconBorderRadius = (5 * size) / 40;
 
-  if (!avator) {
+  if (!avatar) {
     return (
       <Image
         source={Icon}
@@ -80,7 +98,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
         style,
       ])}>
       <Image
-        source={avator}
+        source={avatar}
         width={width}
         height={height}
         style={StyleSheet.flatten([

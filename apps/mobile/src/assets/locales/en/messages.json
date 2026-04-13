@@ -8,6 +8,7 @@
       "ImportSuccess": "Added successfully",
       "ImportWatchAddress2024": "Add Watch-Only Wallet",
       "ImportMethods": "Select Import Method",
+      "MoreImportMethods": "More Import Methods",
       "ImportSafeAddress2024": "Add Safe Address",
       "CreateSelectMethod": "1. Select Creation Method",
       "CreateNewAddress": "1. Confirm Your Wallet",
@@ -47,7 +48,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "Restore your Rabby wallet",
-        "subtitle": "Welcome back! 🎉\nChoose a method to quickly restore your wallet."
+        "subtitle": "Welcome back! 🎉\nChoose a method to quickly restore your wallet.",
+        "subtitleInApp": "Choose an option below to quickly import your wallets from the Rabby extension or iCloud."
       },
       "common": {
         "orYouCanCreateNewWallet": "Or you can <clickable>create a new wallet</clickable>"
@@ -1244,6 +1246,7 @@
         "hardwareWallet": "Hardware Wallet",
         "selectAddMethod": "Select Add Method",
         "syncRabbyExtension": "Sync Rabby Extension",
+        "restoreRabbyWallet": "Restore Rabby Wallet",
         "seedPhraseOrPrivateKey": "Seed phrase or private key"
       },
       "multiAddressHome": {
@@ -1267,10 +1270,14 @@
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
         "ImportCloud": "Import from {{cloud}}",
+        "ImportFromExtensionOrCloud": "Import from extension or {{cloud}}",
         "safeTitle": "Import Safe Wallet",
         "safe": "Safe",
         "watchOnlyTitle": "Import Watch-Only Wallet",
         "watch": "Watch-Only Wallet",
+        "moreWatchOnlyTitle": "Import Watch-only Address",
+        "moreWatchOnly": "Watch-only Address",
+        "moreSafeTitle": "Import Safe Address",
         "hardWare": "Connect Hardware Wallets",
         "tips": {
           "title": "Is it safe to import into Rabby?",
@@ -1328,6 +1335,8 @@
         "cameraTitle": "Please scan the QR code with your camera"
       },
       "createNewAddress": "Create new Wallet",
+      "generatingWallets": "Generating wallets, please wait...",
+      "selectAddressesToAdd": "Select addresses to add",
       "createNewSeedPhrase": "Create New Seed Phrase",
       "seedPhrase": {
         "whatIsASeedPhrase": {
@@ -1345,6 +1354,7 @@
         "showSeedPhrase": "Show Seed Phrase",
         "backupTips": "Make sure no one else is watching your screen when you back up the seed phrase",
         "pastedAndClear": "Pasted and clipboard cleared",
+        "addMoreWalletTitle": "Add more wallet\nfrom this phrase",
         "maxAccountCount": "Maximum 50 addresses each time",
         "createdSuccess": "Your seed phrase has been created",
         "chooseBackupMethodTitle": "Choose a backup method",

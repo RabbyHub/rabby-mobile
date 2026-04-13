@@ -471,13 +471,15 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             <Text style={styles.nameText}>{params.account.aliasName}</Text>
           </>
         ) : (
-          <Text style={styles.title}>Import more wallets</Text>
+          <Text style={styles.title}>
+            {t('page.newAddress.seedPhrase.addMoreWalletTitle')}
+          </Text>
         )}
         <View style={styles.loading}>
           <Text style={styles.loadingText}>
             {!accounts.length
-              ? 'Generating wallets, please wait...'
-              : 'Select wallets to add'}
+              ? t('page.newAddress.generatingWallets')
+              : t('page.newAddress.selectAddressesToAdd')}
           </Text>
         </View>
       </View>
@@ -487,9 +489,10 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         selectedAccounts={selectedAccounts}
         handleSelectIndex={handleSelectIndex}
         loading={loading}
+        brandName={params.brandName}
       />
       {selectedAccounts.length ? (
-        <View style={styles.footerButton}>
+        <View style={styles.footerContainer}>
           <Button
             type="primary"
             title={t('global.confirm')}
@@ -507,6 +510,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     height: '100%',
     position: 'relative',
+    backgroundColor: colors2024['neutral-bg-0'],
   },
   info: {
     padding: 20,
@@ -522,7 +526,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
@@ -545,11 +549,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     top: 0,
     zIndex: 1,
   },
-  footerButton: {
+  footerContainer: {
     position: 'absolute',
-    bottom: 54,
+    bottom: 0,
     left: 0,
     right: 0,
-    marginHorizontal: 24,
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 35,
   },
 }));
