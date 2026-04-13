@@ -9,8 +9,6 @@ import { createGetStyles } from '@/utils/styles';
 import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { Button } from '@/components';
 import { Text } from '@/components/Typography';
-import { TrackedModal } from '@/components/Modal/TrackedModal';
-import { MODAL_GATE_IDS } from '@/utils/modalGate';
 
 interface SwitchLoginAddrBeforeDepositModalProps {
   visible: boolean;
