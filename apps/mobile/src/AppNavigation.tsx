@@ -54,7 +54,7 @@ import { DuplicateAddressModal } from './screens/Address/components/DuplicateAdd
 
 import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
 import { QrCodeModal } from './components2024/QrCodeModal/QrCodeModal';
-import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
+import { FloatingDiagnosticsPanel } from './screens/Settings/components/FloatingDiagnosticsPanel';
 
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 import { toast } from './components2024/Toast';
@@ -68,6 +68,10 @@ import {
   MyBundleScreen,
 } from '@/screens/index.lazy';
 import SetupWallet from '@/screens/Address/SetupWallet';
+import SelectImportMethod from '@/screens/Address/SelectImportMethod';
+import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
+import { ImportSecret } from '@/screens/Address/ImportSecret';
+import Backup from '@/screens/Address/Backup';
 import {
   ScannerScreen,
   TokenDetailScreen,
@@ -95,6 +99,7 @@ import DeviceInfo from 'react-native-device-info';
 import { coerceNumber } from './utils/coerce';
 import { useAppCouldRender } from './hooks/useBootstrap';
 import { InnerDappWebViewPreloadEntry } from './components/WebView/InnerDappWebViewPreloadEntry';
+import { useTranslation } from 'react-i18next';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -251,8 +256,9 @@ const onStateChange: React.ComponentProps<
 
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
 export default function AppNavigation() {
-  const { mergeScreenOptions } = useStackScreenConfig();
+  const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { binaryTheme: colorScheme } = useAppTheme({ isAppTop: true });
+  const { t } = useTranslation();
 
   const colors = useThemeColors();
 
@@ -396,6 +402,45 @@ export default function AppNavigation() {
               options={{ headerShown: false }}
             />
             <RootStack.Screen
+              name={RootNames.SelectImportMethod}
+              component={SelectImportMethod}
+              options={mergeScreenOptions2024([
+                {
+                  headerShown: true,
+                  headerTitle: t('screens.addressStackTitle.ImportMethods'),
+                },
+              ])}
+            />
+            <RootStack.Screen
+              name={RootNames.ImportRabbyWallet}
+              component={ImportRabbyWallet}
+              options={mergeScreenOptions2024([
+                {
+                  headerShown: true,
+                  headerTitle: t('page.newUserOnboarding.restoreWallet.title'),
+                },
+              ])}
+            />
+            <RootStack.Screen
+              name={RootNames.ImportSecret}
+              component={ImportSecret}
+              options={mergeScreenOptions2024([
+                {
+                  headerShown: true,
+                },
+              ])}
+            />
+            <RootStack.Screen
+              name={RootNames.Backup}
+              component={Backup}
+              options={mergeScreenOptions2024([
+                {
+                  headerShown: true,
+                  headerTitle: t('screens.addressStackTitle.ChooseBackup'),
+                },
+              ])}
+            />
+            <RootStack.Screen
               name={RootNames.StackDapps}
               component={DappsNavigator}
             />
@@ -499,7 +544,7 @@ export default function AppNavigation() {
       {/** @warning put all business stub components before this modal */}
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />
-      <FloatViewAutoLockCount />
+      <FloatingDiagnosticsPanel />
       <GlobalMiniApproval />
       <GlobalMiniSignTypedDataPortal />
       <GlobalTipsPopup />

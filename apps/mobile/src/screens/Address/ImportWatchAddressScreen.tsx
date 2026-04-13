@@ -7,13 +7,14 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
 import { apisAddress } from '@/core/apis';
-import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { resolveEnsAddressByName } from '@/utils/ens';
 import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { debounce } from 'lodash';
 import React, { useEffect, useRef } from 'react';
 import {
   Keyboard,
@@ -61,6 +62,20 @@ export const ImportWatchAddressScreen = () => {
     [colors, safeOffHeader],
   );
   const duplicateAddressModal = useDuplicateAddressModal();
+  const debouncedResolveEns = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          callback: (result: { addr: string; name: string } | null) => void,
+        ) => {
+          const result = await resolveEnsAddressByName(value);
+          callback(result);
+        },
+        300,
+      ),
+    [],
+  );
 
   const handleDone = async () => {
     if (!input) {
@@ -122,29 +137,31 @@ export const ImportWatchAddressScreen = () => {
   useEffect(() => {
     if (!input) {
       setError(undefined);
+      setEnsResult(null);
       return;
     }
     if (isValidHexAddress(input as `0x${string}`)) {
       setError(undefined);
+      setEnsResult(null);
+      debouncedResolveEns.cancel();
       return;
     }
-    openapi
-      .getEnsAddressByName(input)
-      .then(result => {
-        if (result && result.addr) {
-          setEnsResult(result);
-          setError(undefined);
-        } else {
-          setEnsResult(null);
-          setError(INPUT_ERROR.INVALID_ADDRESS);
-        }
-      })
-      .catch(e => {
-        console.log(e);
+    debouncedResolveEns(input, result => {
+      if (result && result.addr) {
+        setEnsResult(result);
+        setError(undefined);
+      } else {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      });
-  }, [input]);
+      }
+    });
+  }, [input, debouncedResolveEns]);
+
+  useEffect(() => {
+    return () => {
+      debouncedResolveEns.cancel();
+    };
+  }, [debouncedResolveEns]);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>

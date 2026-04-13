@@ -265,10 +265,12 @@ export function WatchlistContent({
         {!!list.length && (
           <View style={styles.stickyHeader}>
             <WatchListHeader
-              tokenSort={tokenSort}
-              onTokenSort={handleTokenSort}
+              fdvSort={tokenSort}
+              onFdvSort={handleTokenSort}
               changeSort={changeSort}
               onChangeSort={handleChangeSort}
+              disableLeftSort
+              showFdvSort
             />
           </View>
         )}

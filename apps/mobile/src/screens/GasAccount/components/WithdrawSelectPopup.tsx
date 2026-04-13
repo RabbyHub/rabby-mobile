@@ -36,8 +36,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { Button } from '@/components2024/Button';
 import RcIconCheck from '@/assets/icons/select-chain/icon-checked.svg';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
-import { trigger } from 'react-native-haptic-feedback';
 import { Text } from '@/components/Typography';
+import { formatUsdValue } from '@/utils/number';
 
 const BottomSheetWrapper = (
   props: PropsWithChildren<
@@ -84,6 +84,7 @@ const DestinationChainInner = ({
   const ChainItem = React.useCallback(
     ({ item }: { item: RechargeChainItem }) => {
       const disabled = !item.withdraw_limit;
+      const chainInfo = findChainByServerID(item.chain_id)!;
       return (
         <TouchableOpacity
           disabled={disabled}
@@ -93,13 +94,8 @@ const DestinationChainInner = ({
             onSelect(item);
           }}>
           <View style={styles.chainBox}>
-            <AssetAvatar
-              logo={findChainByServerID(item.chain_id)!.logo}
-              size={24}
-            />
-            <Text style={styles.text}>
-              {findChainByServerID(item.chain_id)!.name}
-            </Text>
+            <AssetAvatar logo={chainInfo.logo} size={24} />
+            <Text style={styles.text}>{chainInfo.name}</Text>
           </View>
 
           <Text style={styles.text}>{`$${item.withdraw_limit}`}</Text>
@@ -189,8 +185,8 @@ export const DestinationChain = ({
   const [visible, setVisible] = React.useState(false);
 
   const handleSelect = React.useCallback(
-    (chain: RechargeChainItem) => {
-      onChainSelect(chain);
+    (selectedChain: RechargeChainItem) => {
+      onChainSelect(selectedChain);
       setVisible(false);
     },
     [onChainSelect],
@@ -199,9 +195,7 @@ export const DestinationChain = ({
   return (
     <>
       <ListItem
-        style={{
-          width: '100%',
-        }}
+        style={styles.fullWidth}
         title=""
         content={
           chain ? (
@@ -259,8 +253,6 @@ const RecipientAddressInnerPopup = ({
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
-  const [selectedAddress, setSelectedAddress] = React.useState(address);
-
   const tips = React.useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.DESCRIPTION,
@@ -293,20 +285,18 @@ const RecipientAddressInnerPopup = ({
       const account = accounts.find(acct =>
         isSameAddress(item.recharge_addr, acct.address),
       );
-
       const isSelected =
-        !!address && isSameAddress(selectedAddress, item.recharge_addr);
+        !!address && isSameAddress(address, item.recharge_addr);
 
       if (!account) {
         return null;
       }
       return (
-        <AddressItemShadowView
-          style={[styles.shadow, isSelected && styles.shadowSelected]}>
+        <AddressItemShadowView style={styles.shadowSelected}>
           <TouchableOpacity
-            style={[styles.innerRow, isSelected && styles.innerRowSelected]}
+            style={styles.innerRow}
             onPress={() => {
-              setSelectedAddress(item.recharge_addr);
+              onChange?.(item);
             }}>
             <AddressItem style={styles.accountContainer} account={account}>
               {({ WalletIcon, WalletName, WalletBalance }) => (
@@ -317,7 +307,7 @@ const RecipientAddressInnerPopup = ({
                     height={46}
                     borderRadius={12}
                   />
-                  <View style={{ gap: 4, flexShrink: 1 }}>
+                  <View style={styles.innerWalletInfo}>
                     <View style={styles.walletNameContainer}>
                       <WalletName style={styles.innerName} />
                       {isSelected ? <RcIconCheck height={20} /> : null}
@@ -328,34 +318,15 @@ const RecipientAddressInnerPopup = ({
                 </View>
               )}
             </AddressItem>
-            <Text style={styles.limit}>{`$${item.total_withdraw_limit}`}</Text>
+            <Text style={styles.limit}>
+              {formatUsdValue(item.total_withdraw_limit)}
+            </Text>
           </TouchableOpacity>
         </AddressItemShadowView>
       );
     },
-    [
-      accounts,
-      address,
-      selectedAddress,
-      styles.accountContainer,
-      styles.innerBalance,
-      styles.innerName,
-      styles.innerRow,
-      styles.innerRowSelected,
-      styles.innerWallet,
-      styles.innerWalletRow,
-      styles.limit,
-      styles.shadow,
-      styles.shadowSelected,
-      styles.walletNameContainer,
-    ],
+    [accounts, address, styles, onChange],
   );
-
-  const confirm = React.useCallback(() => {
-    onChange?.(
-      list?.find(item => isSameAddress(item.recharge_addr, selectedAddress))!,
-    );
-  }, [onChange, list, selectedAddress]);
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -374,8 +345,6 @@ const RecipientAddressInnerPopup = ({
 
   return (
     <AppBottomSheetModal
-      // enableContentPanningGesture={false} // has scorll list
-      // snapPoints={[Math.min(height - 200, 652)]}
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
@@ -384,14 +353,14 @@ const RecipientAddressInnerPopup = ({
       })}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
-      <BottomSheetScrollView style={{ minHeight: 364 }}>
+      <BottomSheetScrollView style={styles.scrollMinHeight}>
         <LinearGradient
           colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
           locations={[0.0745, 0.2242]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={{ flex: 1, paddingHorizontal: 20, position: 'relative' }}>
-          <Text style={[styles.title, { marginTop: 0, marginBottom: 28 }]}>
+          style={styles.contentGradient}>
+          <Text style={[styles.title, styles.contentTitle]}>
             {t('page.gasAccount.withdrawPopup.selectRecipientAddress')}
           </Text>
           <View style={styles.headerRow}>
@@ -411,30 +380,12 @@ const RecipientAddressInnerPopup = ({
               </Pressable>
             </View>
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={styles.flex1}>
             {list?.map(item => (
               <AddrItem item={item} key={item.recharge_addr} />
             ))}
-            <View style={{ height: 130 }} />
+            <View style={styles.floatBottomSpacer} />
           </View>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
-                : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
-            }
-            locations={[0.6393, 1]}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 0, y: 0 }}
-            style={styles.floatBottom}>
-            <Button
-              title={t('global.confirm')}
-              onPress={e => {
-                e.stopPropagation();
-                confirm();
-              }}
-            />
-          </LinearGradient>
         </LinearGradient>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
@@ -474,9 +425,7 @@ export const RecipientAddress = ({
   return (
     <>
       <ListItem
-        style={{
-          width: '100%',
-        }}
+        style={styles.fullWidth}
         title=""
         content={
           account ? (
@@ -484,10 +433,10 @@ export const RecipientAddress = ({
               style={styles.outerAccountContainer}
               account={account}
               fetchAccount={true}>
-              {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (
+              {({ WalletIcon, WalletName, WalletBalance }) => (
                 <View style={styles.outerWalletRow}>
                   <WalletIcon style={styles.outerWallet} />
-                  <View style={{ gap: 4 }}>
+                  <View style={styles.gap4}>
                     <WalletName style={styles.outerName} />
                     <WalletBalance style={styles.outerBalance} />
                   </View>
@@ -496,21 +445,15 @@ export const RecipientAddress = ({
             </AddressItem>
           ) : loading ? (
             <View style={styles.outerWalletRow}>
-              <Skeleton
-                width={30}
-                height={30}
-                style={{
-                  borderRadius: 30,
-                }}
-              />
-              <View style={{ gap: 4 }}>
+              <Skeleton width={30} height={30} style={styles.roundSkeleton} />
+              <View style={styles.gap4}>
                 <Skeleton height={22} width={80} />
 
                 <Skeleton height={16} width={100} />
               </View>
             </View>
           ) : (
-            <View style={{ width: '100%' }}>
+            <View style={styles.fullWidth}>
               <Text style={styles.noRecipientAddress}>
                 {t('page.gasAccount.withdrawPopup.noRecipient')}
               </Text>
@@ -673,27 +616,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 16,
   },
 
-  shadow: {
-    marginVertical: 6,
-  },
   shadowSelected: {
-    borderColor: colors2024['brand-light-2'],
+    borderColor: colors2024['neutral-line'],
+    borderRadius: 12,
+    padding: 6,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   innerRow: {
-    // height: 96,
     backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
     padding: 16,
-    // borderWidth: 1,
-    // borderColor: colors2024['neutral-line'],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // marginVertical: 6,
-  },
-  innerRowSelected: {
-    borderColor: colors2024['brand-light-2'],
-    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['neutral-line'],
   },
 
   selected: {
@@ -763,6 +698,37 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   accountContainer: {
     width: '70%',
+  },
+  fullWidth: {
+    width: '100%',
+  },
+  innerWalletInfo: {
+    gap: 4,
+    flexShrink: 1,
+  },
+  scrollMinHeight: {
+    minHeight: 364,
+  },
+  contentGradient: {
+    flex: 1,
+    paddingHorizontal: 20,
+    position: 'relative',
+  },
+  contentTitle: {
+    marginTop: 0,
+    marginBottom: 28,
+  },
+  flex1: {
+    flex: 1,
+  },
+  floatBottomSpacer: {
+    height: 130,
+  },
+  gap4: {
+    gap: 4,
+  },
+  roundSkeleton: {
+    borderRadius: 30,
   },
   outerAccountContainer: {
     width: '90%',

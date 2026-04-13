@@ -211,7 +211,10 @@
       "addressCount_one": "{{count}} 錢包",
       "importMore": "導入更多錢包",
       "addressCount_other": "{{count}} 個錢包",
-      "viewAddress": "查看錢包"
+      "viewAddress": "查看錢包",
+      "titleCreated": "錢包已創建 🚀",
+      "titleImported": "錢包已導入 🚀",
+      "titleMultiple": "{{count}} 個錢包已添加 🚀"
     },
     "getStart": {
       "goToHome": "前往首頁",
@@ -960,7 +963,6 @@
         "receive": "接收",
         "swap": "交換",
         "history": "歷史",
-        "gasAccount": "GasAccount",
         "search": "搜尋 Token",
         "copyTrading": "複製交易",
         "watchlist": "代幣觀察列表",
@@ -969,7 +971,8 @@
         "lending": "借貸",
         "predict": "預測",
         "meme": "Memecoin",
-        "market": "市場"
+        "market": "市場",
+        "gasDeposit": "Gas Deposit"
       },
       "swipeUp": {
         "descAndroidMore": "點擊探索更多 dApps",
@@ -1098,7 +1101,8 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "表單已更改",
-      "formChangedAmount": "金額已變更，可能是由於系統鍵盤的密碼自動填充。請檢查並重新輸入正確的金額。"
+      "formChangedAmount": "金額已變更，可能是由於系統鍵盤的密碼自動填充。請檢查並重新輸入正確的金額。",
+      "best-subtitle": "考慮總成本（包括 Gas 費用）和提供最佳報價的速度"
     },
     "signFooterBar": {
       "importedByLedger": "透過 Ledger 匯入",
@@ -1132,9 +1136,10 @@
         "WalletConnectTips": "GasAccount 不支援 WalletConnect",
         "chainNotSupported": "GasAccount 不支持該鍊",
         "customRPC": "使用自定義 RPC 時不支持",
-        "notEnough": "GasAccount 不足",
-        "deposit": "存入",
-        "loginFirst": "請先登入GasAccount"
+        "loginFirst": "請先登入GasAccount",
+        "signWithHardwareWalletToUse": "需要使用 {{brand}} 簽署",
+        "deposit": "存款",
+        "notEnough": "Gas 不足。Gas 餘額：{{usd}}"
       },
       "qrcode": {
         "qrcodeDesc": "使用您的 {{brand}} 掃描以簽名  \n簽名後，點擊下面的按鈕以接收簽名",
@@ -1357,7 +1362,8 @@
         "confirmButtonTitleAndroid": "在 Google Play 上评分"
       },
       "homeCenterTipScreenshot": {
-        "description": "隨時截圖以快速報告錯誤"
+        "description": "隨時截圖以快速報告錯誤",
+        "title": "提示"
       },
       "homeGuidanceMultipleTabs": {
         "swipeToViewAllAssets": "向右滑动以查看所有資產"
@@ -1702,7 +1708,9 @@
         "invalid": "不是有效的地址",
         "required": "請輸入地址"
       },
-      "gnosisChainDesc": "此地址已在 {{count}} 條鏈上發現部署"
+      "gnosisChainDesc": "此地址已在 {{count}} 條鏈上發現部署",
+      "gnosisChainPillDesc": "- 您的錢包部署在這些鏈上 -",
+      "gnosisChainScrollDesc": "- 發現此錢包已部署在 {{count}} 條鏈上 -"
     },
     "sign": {
       "transactionSpeed": "交易速度"
@@ -1813,7 +1821,8 @@
         "placeHolder": "搜尋 Dapp/Token"
       },
       "tokenHeader": {
-        "tokenAndFdv": "Token/FDV"
+        "tokenAndFdv": "Token/FDV",
+        "token": "代幣"
       }
     },
     "customRpc": {
@@ -1869,7 +1878,6 @@
         "invalidAmount": "必須少於 500",
         "amount": "Amount",
         "token": "Token",
-        "selectToken": "選擇 Token",
         "followingTokenInSufficient": "以下代幣餘額不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 費用。不提供提款。",
         "googlePayDesc": "包含 ${{ amount }} Google Pay 手續費。不可提款。",
@@ -1878,7 +1886,18 @@
         "paymentAddress": "付款錢包",
         "inSufficientTip1": "這個錢包的代幣不足，請選擇另一個錢包。",
         "pay": "支付",
-        "applePayFeeDesc1": "包括應用商店費用。不允許提款。"
+        "applePayFeeDesc1": "包括應用商店費用。不允許提款。",
+        "estReceiveLabel": "Est.Receive: {{usd}}",
+        "gasDepositTitle": "Gas 存款",
+        "balanceLabel": "餘額",
+        "insufficientBalanceLabel": "餘額不足",
+        "suggestedToken": "建議的代幣",
+        "selectToken": "選擇要存入的 Token",
+        "minAmountRequired": "最低存款金额為 $1",
+        "fetchQuoteFailed": "無法獲取報價",
+        "estReceiveTip": "透過 {{name}} 處理的服務，可能會有滑點",
+        "unavailablePaymentWallet": "所選擇的支付錢包不可用",
+        "noAvailableToken": "暫無可用代幣"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
@@ -1917,7 +1936,8 @@
         "depositFailed": "存款失敗",
         "balance": "當前 GasAccount 餘額：",
         "title": "使用 Apple Pay 購買",
-        "titleApple": "在 App Store 購買"
+        "titleApple": "在 App Store 購買",
+        "topUpPayTips": "所需 Gas：{{topUpUsd}}，預計剩餘 Gas：{{balance}}"
       },
       "depositSelectPopup": {
         "desc": "支付所有鏈上的 Gas 費用",
@@ -1926,7 +1946,9 @@
         "depositTokenDesc": "無額外費用，即時提現",
         "title": "存入GasAccount",
         "buyWithDesc": "30% 費用，不可提款",
-        "buyWithApple": "在 App Store 購買"
+        "buyWithApple": "在 App Store 購買",
+        "insufficientTokenBalance": "餘額不足",
+        "appStore": "App Store"
       },
       "gasAccountList": {
         "balance": "餘額",
@@ -1934,12 +1956,28 @@
         "gasAccountBalance": "GasAccount 餘額",
         "wallet": "錢包"
       },
-      "switchAccount": "切換 GasAccount",
       "depositSuccess": "存款成功",
       "depositCanceled": "存款已取消",
       "loginFailed": "登入失敗",
       "loginSuccess": "登入成功",
-      "withdrawDisabledIAP": "提款功能已停用，因為您的餘額包含無法提款的法幣資金。請聯繫客服以提取您的代幣餘額。"
+      "withdrawDisabledIAP": "提款功能已停用，因為您的餘額包含無法提款的法幣資金。請聯繫客服以提取您的代幣餘額。",
+      "benefitCard": {
+        "desc2": "在 80+ 網路上自動支付 gas",
+        "item1": "無 Rabby 費用",
+        "desc3": "兑换、桥接、发送、DApps 及更多",
+        "desc1": "不用支付額外的 gas 費用",
+        "item2": "支持所有网络",
+        "item3": "支持所有交易",
+        "title": "在所有鏈上支付 Gas 費用",
+        "subtitle": "當你沒有 gas 時"
+      },
+      "depositWith": "使用進行存款",
+      "switchAccount": "切換錢包",
+      "gasBalance": "Gas 余额",
+      "depositNow": "立即存款",
+      "depositFailed": "存款失敗",
+      "lowBalance": "您沒有足夠的 gas。請存入 gas 以確保未來的交易順利進行。",
+      "depositSubmitted": "存款已提交"
     },
     "receiveAddressList": {
       "selectChainTitle": "選擇鏈條",
@@ -2018,16 +2056,16 @@
           "tableHeader": {
             "ratio": "比例",
             "address": "地址",
-            "position": "位置"
+            "position": "倉位"
           },
           "top10HoldersRatio": "前十大持有者比例",
           "top100HoldersRatio": "前 100 名持有者比例"
         },
         "activitySections": {
           "tableHeader": {
-            "min": "min",
+            "min": "分鐘",
             "all": "全部",
-            "volume": "音量",
+            "volume": "交易量",
             "address": "地址",
             "sell": "出售",
             "type": "類型",
@@ -2062,7 +2100,7 @@
           },
           "dex": "Dex",
           "amount": "金額",
-          "pair": "配對",
+          "pair": "幣對",
           "value": "價值"
         },
         "pools": "池子"
@@ -3233,7 +3271,8 @@
     "market": {
       "tokenHeader": {
         "name": "名稱",
-        "tokenAndName": "Token/Name"
+        "tokenAndName": "Token/Name",
+        "token": "代币"
       },
       "tabs": {
         "stock": "庫存",
@@ -3250,11 +3289,11 @@
         "subtitle": "歡迎回來！🎉  \n選擇一種方法來快速恢復您的錢包。"
       },
       "common": {
-        "orYouCanCreateNewWallet": "或者您可以<cw>創建一個新錢包</cw>"
+        "orYouCanCreateNewWallet": "沒有錢包？立即<cw>創建新錢包</cw>"
       },
       "importSecret": {
-        "privateKeyPlaceholder": "輸入您的私鑰",
-        "seedPhrasePlaceholder": "輸入您的 seed phrase"
+        "privateKeyPlaceholder": "輸入你的私鑰",
+        "seedPhrasePlaceholder": "輸入你的助記詞"
       },
       "createWalletError": "無法創建錢包",
       "setPasswordTip": "設置密碼以保護您的錢包",
@@ -3357,8 +3396,8 @@
         "noHistory": "暫無歷史記錄"
       },
       "loginConfirmModal": {
-        "title": "選擇錢包以登入",
-        "desc": "一旦登錄，您只能在此地址進行充值"
+        "desc": "一旦登錄，您只能在此地址進行充值",
+        "title": "切換錢包"
       },
       "depositPopup": {
         "amount": "金額",
@@ -3543,6 +3582,7 @@
   },
   "backupReminder": {
     "action": "立即備份",
-    "title": "您尚未備份您的錢包"
+    "title": "您尚未備份您的錢包",
+    "badge": "未備份"
   }
 }

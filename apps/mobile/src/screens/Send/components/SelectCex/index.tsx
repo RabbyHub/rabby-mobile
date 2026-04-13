@@ -69,6 +69,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     backgroundColor: colors2024['neutral-bg-2'],
     flex: 1,
+    height: '100%',
   },
   scrollView: {
     flexShrink: 1,

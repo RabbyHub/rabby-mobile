@@ -9,6 +9,7 @@ import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
 import { useAppChainStore } from './appchain';
+import type { Account } from '@/core/services/preference';
 
 export interface CURVE_STEP_ITEM {
   timestamp: number;
@@ -25,6 +26,9 @@ interface BalanceState {
   chainUSDMap: Record<string, ChainWithBalance[]>;
   isLoadingByAddress: Record<string, boolean>;
   initStore(): void;
+  hydrateCachedBalancesForAccounts(
+    accounts: Array<Pick<Account, 'address' | 'type'>>,
+  ): Promise<void>;
   batchGetTotalBalance: (
     top10Addresses: string[],
     force?: boolean,
@@ -80,6 +84,69 @@ const balanceStore = zCreate<BalanceState>(set => ({
     }
     // 写入 Store
     set(() => ({ balanceMap, chainUSDMap }));
+  },
+
+  async hydrateCachedBalancesForAccounts(accounts) {
+    if (!accounts.length) {
+      return;
+    }
+
+    const lowerAddresses = Array.from(
+      new Set(accounts.map(item => item.address.toLowerCase())),
+    );
+    const currentBalanceMap = balanceStore.getState().balanceMap;
+    const hasAnyMissingBalance = lowerAddresses.some(address => {
+      return !currentBalanceMap[address];
+    });
+
+    if (!hasAnyMissingBalance) {
+      return;
+    }
+
+    const coreAddressSet = new Set(
+      accounts
+        .filter(item => CORE_KEYRING_TYPES.includes(item.type as any))
+        .map(item => item.address.toLowerCase()),
+    );
+
+    const cacheBalanceMap: Record<string, IBalanceData> = {};
+    const cacheChainUSDMap: Record<string, ChainWithBalance[]> = {};
+
+    for (const address of lowerAddresses) {
+      const cacheBalance = await BalanceEntity.queryBalanceCache(
+        address,
+        coreAddressSet.has(address),
+      );
+
+      if (!cacheBalance) {
+        continue;
+      }
+
+      const appChainUsdValue = useAppChainStore
+        .getState()
+        .getAppChainTotalUsdValue(address);
+
+      cacheBalanceMap[address] = {
+        evmBalance: cacheBalance.evm_usd_value || 0,
+        totalBalance: (cacheBalance.evm_usd_value || 0) + appChainUsdValue,
+      };
+      cacheChainUSDMap[address] = cacheBalance.chain_list;
+    }
+
+    if (!Object.keys(cacheBalanceMap).length) {
+      return;
+    }
+
+    set(state => ({
+      balanceMap: {
+        ...state.balanceMap,
+        ...cacheBalanceMap,
+      },
+      chainUSDMap: {
+        ...state.chainUSDMap,
+        ...cacheChainUSDMap,
+      },
+    }));
   },
 
   async batchGetTotalBalance(top10Addresses: string[], force = false) {

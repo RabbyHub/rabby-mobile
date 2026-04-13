@@ -17,5 +17,6 @@
     "node_modules/dayjs/plugin/updateLocale.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx"
-  ]
+  ],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
