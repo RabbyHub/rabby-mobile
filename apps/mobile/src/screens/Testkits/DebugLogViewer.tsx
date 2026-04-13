@@ -1046,10 +1046,10 @@ const getStyles = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-bg-1'],
     },
     contentContainer: {
-      paddingHorizontal: 20,
-      paddingTop: 20,
+      paddingHorizontal: 16,
+      paddingTop: 16,
       paddingBottom: 40,
-      gap: 16,
+      gap: 14,
     },
     heroCard: {
       padding: 20,

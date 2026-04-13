@@ -38,6 +38,7 @@ import { startComputationThread } from './perfs/thread';
 import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
 import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
 import { startCheckClearAction } from './utils/clipboard';
+import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
 import tokenListStore from './store/tokens';
 import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
@@ -96,6 +97,7 @@ startProcessMultiCurveEvents();
 trimNoLongerSupportsOnUnlock();
 
 startCheckClearAction();
+startSubscribeOpenApiHttpErrorDebugToast();
 
 startCareAppNotificationPermissions();
 startSubscribeRemoteNotification();

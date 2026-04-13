@@ -14,9 +14,11 @@ jest.mock('./logger', () => {
 });
 
 import {
+  buildOpenApiHttpErrorToastMessage,
   buildOpenApiFailurePayload,
   extractOpenApiResponseCode,
   shouldLogOpenApiFailureResponse,
+  shouldToastOpenApiHttpErrorStatus,
 } from './openapiFailureLogging';
 
 describe('openapi failure logging', () => {
@@ -41,6 +43,14 @@ describe('openapi failure logging', () => {
         data: { err_code: 200 },
       }),
     ).toBe(false);
+  });
+
+  it('only toasts for http 4xx and 5xx statuses', () => {
+    expect(shouldToastOpenApiHttpErrorStatus(400)).toBe(true);
+    expect(shouldToastOpenApiHttpErrorStatus(503)).toBe(true);
+    expect(shouldToastOpenApiHttpErrorStatus(200)).toBe(false);
+    expect(shouldToastOpenApiHttpErrorStatus(302)).toBe(false);
+    expect(shouldToastOpenApiHttpErrorStatus(undefined)).toBe(false);
   });
 
   it('extracts normalized api codes from different response shapes', () => {
@@ -96,5 +106,23 @@ describe('openapi failure logging', () => {
       MaskedLogValue,
     );
     expect(payload.response?.apiCode).toBe(503);
+  });
+
+  it('builds a concise toast message for http error responses', () => {
+    expect(
+      buildOpenApiHttpErrorToastMessage({
+        source: 'notificationOpenapi',
+        config: {
+          method: 'post',
+          baseURL: 'https://alpha.rabby.io',
+          url: '/v1/notification/device/heartbeat?foo=bar',
+        },
+        response: {
+          status: 503,
+        } as never,
+      }),
+    ).toBe(
+      '[notificationOpenapi] HTTP 503 POST /v1/notification/device/heartbeat?foo=bar',
+    );
   });
 });

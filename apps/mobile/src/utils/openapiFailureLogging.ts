@@ -1,6 +1,10 @@
 import type { OpenApiService } from '@rabby-wallet/rabby-api';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { logger } from './logger';
+import {
+  openApiDebugEvents,
+  OPENAPI_HTTP_ERROR_DEBUG,
+} from './openapiDebugEvents';
 
 const REQUEST_LOG_META_KEY = '__rabbyOpenApiFailureMeta';
 const REQUEST_INSTRUMENTED_KEY = Symbol('rabbyOpenApiFailureLogging/request');
@@ -262,6 +266,58 @@ export function shouldLogOpenApiFailureResponse(response: {
   return false;
 }
 
+export function shouldToastOpenApiHttpErrorStatus(status?: number) {
+  return typeof status === 'number' && status >= 400 && status < 600;
+}
+
+function toToastUrl(config?: AxiosRequestConfig) {
+  if (!config) {
+    return '[missing-url]';
+  }
+
+  const fullUrl = buildRequestUrl(config);
+
+  try {
+    const url = new URL(fullUrl);
+    const pathWithSearch = `${url.pathname}${url.search}`;
+    return truncateString(pathWithSearch || url.pathname || fullUrl, 160);
+  } catch (_error) {
+    return truncateString(fullUrl, 160);
+  }
+}
+
+export function buildOpenApiHttpErrorToastMessage(args: {
+  source: OpenApiFailureSource;
+  config?: AxiosRequestConfig;
+  response?: AxiosResponse;
+}) {
+  const { source, config, response } = args;
+  const status =
+    typeof response?.status === 'number' ? String(response.status) : 'unknown';
+  const method = String(config?.method || 'GET').toUpperCase();
+  const requestUrl = toToastUrl(config);
+
+  return `[${source}] HTTP ${status} ${method} ${requestUrl}`;
+}
+
+function maybeToastOpenApiHttpError(args: {
+  source: OpenApiFailureSource;
+  config?: AxiosRequestConfig;
+  response?: AxiosResponse;
+}) {
+  if (!shouldToastOpenApiHttpErrorStatus(args.response?.status)) {
+    return;
+  }
+
+  openApiDebugEvents.emit(OPENAPI_HTTP_ERROR_DEBUG, {
+    source: args.source,
+    status: args.response!.status,
+    method: String(args.config?.method || 'GET').toUpperCase(),
+    url: toToastUrl(args.config),
+    message: buildOpenApiHttpErrorToastMessage(args),
+  });
+}
+
 export function buildOpenApiFailurePayload(args: {
   source: OpenApiFailureSource;
   config?: AxiosRequestConfig;
@@ -317,6 +373,7 @@ function logOpenApiFailure(args: {
   response?: AxiosResponse;
   error?: unknown;
 }) {
+  maybeToastOpenApiHttpError(args);
   logger.warn(
     '[openapi] non-200 request detected',
     buildOpenApiFailurePayload(args),
