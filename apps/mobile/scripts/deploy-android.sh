@@ -38,17 +38,16 @@ deployment_local_dir="$script_dir/deployments/android"
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 prepare_android_build_artifacts() {
+  turbo_prepare_js_dependencies
+  turbo_prepare_ruby_bundle
+
   if turbo_build_enabled; then
-    turbo_prepare_js_dependencies
-    turbo_prepare_ruby_bundle
     android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key)
 
     if turbo_android_build_artifacts_ready "$android_build_artifacts_key"; then
       turbo_log "android build artifacts already up to date"
       return 0
     fi
-  else
-    [ -z "$CI" ] && yarn
   fi
 
   yarn check-nodeengines &&
@@ -84,11 +83,7 @@ build_selfhost() {
     fi
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
-    if turbo_build_enabled; then
-      turbo_bundle_exec exec fastlane android selfhost
-    else
-      bundle exec fastlane android selfhost
-    fi
+    turbo_bundle_exec exec fastlane android selfhost
     fastlane_status=$?
     [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
     return $fastlane_status
@@ -116,11 +111,7 @@ build_appstore() {
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
-    if turbo_build_enabled; then
-      turbo_bundle_exec exec fastlane android playstore
-    else
-      bundle exec fastlane android playstore
-    fi
+    turbo_bundle_exec exec fastlane android playstore
     fastlane_status=$?
     [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
     return $fastlane_status

@@ -55,18 +55,28 @@ build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
-  yarn;
+  turbo_prepare_js_dependencies || return $?
   yarn check-nodeengines &&
     yarn ../mobile-local-pages bundle:all &&
     yarn link-assets &&
-    yarn buildworker:prod:ios;
-  yarn syncrnversion;
-  cd $project_dir/ios;
-  bundle install;
-  [ ! -z $CI ] && bundle exec pod cache clean --all;
-  bundle exec pod install --repo-update;
-  cd $project_dir;
-  bundle exec fastlane ios appstore;
+    yarn buildworker:prod:ios &&
+    yarn syncrnversion
+  build_status=$?
+
+  if [ $build_status -ne 0 ]; then
+    return $build_status
+  fi
+
+  turbo_prepare_ruby_bundle || return $?
+
+  if [ ! -z $CI ]; then
+    cd $project_dir/ios || return 1
+    turbo_bundle_exec exec pod cache clean --all || return $?
+    cd $project_dir || return 1
+  fi
+
+  turbo_prepare_cocoapods || return $?
+  turbo_bundle_exec exec fastlane ios appstore
 }
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then

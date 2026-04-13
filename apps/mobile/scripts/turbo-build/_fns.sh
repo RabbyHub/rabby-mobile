@@ -6,6 +6,21 @@ turbo_build_enabled() {
   [ "${RABBY_MOBILE_TURBO_BUILD:-false}" = "true" ]
 }
 
+turbo_stable_env_enabled() {
+  if turbo_build_enabled; then
+    return 0
+  fi
+
+  case "${RABBY_MOBILE_TURBO_STABLE_ENV:-true}" in
+    false|0|no|off)
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
 turbo_default_local_cache_dir() {
   if [ -n "${RABBY_MOBILE_TURBO_LOCAL_CACHE_DIR:-}" ]; then
     printf '%s\n' "$RABBY_MOBILE_TURBO_LOCAL_CACHE_DIR"
@@ -183,7 +198,7 @@ turbo_should_write_gradle_proxy_properties() {
     return 1
   fi
 
-  if turbo_build_enabled; then
+  if turbo_stable_env_enabled; then
     return 0
   fi
 
@@ -277,11 +292,10 @@ turbo_init_env() {
     unset RABBY_MOBILE_TURBO_REMOTE_CACHE_ROOT
   fi
 
-  if turbo_build_enabled; then
+  if turbo_stable_env_enabled; then
     mkdir -p \
       "$RABBY_MOBILE_TURBO_WORK_ROOT" \
-      "$RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT" \
-      "$RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT"
+      "$RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT"
 
     export YARN_CACHE_FOLDER="${RABBY_MOBILE_TURBO_WORK_ROOT}/yarn"
     export RABBY_MOBILE_TURBO_BUNDLE_PATH="${RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT}/vendor/bundle"
@@ -289,14 +303,22 @@ turbo_init_env() {
     export RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM="${RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM:-1}"
   fi
 
+  if turbo_build_enabled; then
+    mkdir -p "$RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT"
+  fi
+
   if turbo_should_prepare_gradle_env; then
-    if turbo_build_enabled; then
+    if turbo_stable_env_enabled; then
       export GRADLE_USER_HOME="${RABBY_MOBILE_TURBO_GRADLE_HOME_OVERRIDE:-${RABBY_MOBILE_TURBO_WORK_ROOT}/gradle-user-home}"
     else
       export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$(turbo_default_global_gradle_home)}"
     fi
 
     turbo_prepare_gradle_proxy_env
+
+    if turbo_should_write_gradle_proxy_properties; then
+      turbo_write_gradle_proxy_properties
+    fi
   fi
 }
 
@@ -1149,7 +1171,11 @@ turbo_prepare_js_dependencies() {
 
     turbo_prepare_workspace_build
   else
-    (cd "$RABBY_MOBILE_REPO_ROOT" && yarn)
+    if [ -n "$CI" ]; then
+      turbo_log "skip extra yarn install in CI; assuming dependencies are already prepared"
+    else
+      (cd "$RABBY_MOBILE_REPO_ROOT" && yarn)
+    fi
   fi
 }
 

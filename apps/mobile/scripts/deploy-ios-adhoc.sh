@@ -94,10 +94,8 @@ build_adhoc() {
 
   if turbo_build_enabled; then
     turbo_prepare_ios_derived_data;
-    turbo_bundle_exec exec fastlane ios adhoc;
-  else
-    project_bundle_exec exec fastlane ios adhoc;
   fi
+  turbo_bundle_exec exec fastlane ios adhoc;
   build_status=$?
 
   if [ $build_status -eq 0 ] && ios_fast_build_enabled && [ -d "$ios_archive_path" ]; then
@@ -108,27 +106,14 @@ build_adhoc() {
 }
 
 prepare_ios_ruby_bundle() {
-  if turbo_build_enabled; then
-    turbo_prepare_ruby_bundle
-  else
-    cd $project_dir/ios || return 1
-    if ! project_bundle_exec check >/dev/null 2>&1; then
-      project_bundle_exec install
-    else
-      echo "[deploy-ios-adhoc] ruby bundle already satisfied"
-    fi
-    deps_status=$?
-    cd $project_dir || return 1
-    return $deps_status
-  fi
+  turbo_prepare_ruby_bundle
 }
 
 prepare_ios_build_artifacts() {
+  turbo_prepare_js_dependencies;
+
   if turbo_build_enabled; then
-    turbo_prepare_js_dependencies;
     ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)
-  else
-    [ -z "$CI" ] && yarn;
   fi
 
   if turbo_build_enabled && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then
@@ -157,20 +142,7 @@ prepare_ios_build_artifacts() {
 prepare_ios_native_deps() {
   prepare_ios_ruby_bundle || return $?
 
-  if turbo_build_enabled; then
-    turbo_prepare_cocoapods;
-  else
-    if turbo_cocoapods_ready; then
-      echo "[deploy-ios-adhoc] cocoapods already up to date"
-      return 0
-    fi
-
-    cd $project_dir/ios || return 1
-    project_bundle_exec exec pod install --repo-update
-    deps_status=$?
-    cd $project_dir || return 1
-    return $deps_status
-  fi
+  turbo_prepare_cocoapods
 }
 
 [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true

@@ -4,6 +4,21 @@ build_cache_enabled() {
   [ "${RABBY_MOBILE_TURBO_BUILD:-false}" = "true" ]
 }
 
+build_cache_stable_env_enabled() {
+  if build_cache_enabled; then
+    return 0
+  fi
+
+  case "${RABBY_MOBILE_TURBO_STABLE_ENV:-true}" in
+    false|0|no|off)
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
 build_cache_log() {
   printf '[build-cache] %s\n' "$*"
 }
@@ -189,7 +204,7 @@ build_cache_should_write_gradle_proxy_properties() {
     return 1
   fi
 
-  if build_cache_enabled; then
+  if build_cache_stable_env_enabled; then
     return 0
   fi
 
@@ -279,15 +294,18 @@ build_cache_init_env() {
     unset RABBY_MOBILE_TURBO_REMOTE_CACHE_ROOT
   fi
 
-  if build_cache_enabled; then
+  if build_cache_stable_env_enabled; then
     mkdir -p \
       "$RABBY_MOBILE_TURBO_WORK_ROOT" \
-      "$RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT" \
-      "$RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT"
+      "$RABBY_MOBILE_TURBO_MOBILE_WORK_ROOT"
+  fi
+
+  if build_cache_enabled; then
+    mkdir -p "$RABBY_MOBILE_TURBO_LOCAL_CACHE_ROOT"
   fi
 
   if build_cache_should_prepare_gradle_env; then
-    if build_cache_enabled; then
+    if build_cache_stable_env_enabled; then
       export GRADLE_USER_HOME="${RABBY_MOBILE_TURBO_GRADLE_HOME_OVERRIDE:-${RABBY_MOBILE_TURBO_WORK_ROOT}/gradle-user-home}"
     else
       export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$(build_cache_default_global_gradle_home)}"
@@ -559,6 +577,10 @@ build_cache_restore_android_gradle_state() {
   fi
 
   if ! build_cache_enabled; then
+    if build_cache_stable_env_enabled; then
+      build_cache_seed_gradle_wrapper_from_global
+      build_cache_seed_gradle_dependency_cache_from_global
+    fi
     return 0
   fi
 
