@@ -1,5 +1,5 @@
 import { OpenApiService } from '@rabby-wallet/rabby-api';
-import { OpenApiStore, openApiStore } from '../services/openapiStore';
+import { OpenApiStore } from '../services/openapiStore';
 import { SignApiPlugin } from '../request';
 import {
   APP_VERSIONS,
@@ -8,12 +8,10 @@ import {
   isNonPublicProductionEnv,
 } from '@/constant';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
-import { ensureDeviceUUID, makeDeviceUUID } from '../apis/device';
-import {
-  TxAllHistoryResult,
-  TxHistoryResult,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { makeDeviceUUID } from '../apis/device';
+import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 import { AppState } from 'react-native';
+import { instrumentOpenApiFailureLogging } from '@/utils/openapiFailureLogging';
 
 export type DeviceActiveStatusResponse = {
   success: boolean;
@@ -34,8 +32,6 @@ export type BindDeviceResponse = {
   added: number;
   removed: number;
 };
-
-type NotifiAppState = 'foreground' | 'background';
 
 class NotificationsOpenApiService extends OpenApiService {
   #getDeviceUUID() {
@@ -112,3 +108,4 @@ export const notificationOpenapi = new NotificationsOpenApiService({
 });
 
 notificationOpenapi.initSync();
+instrumentOpenApiFailureLogging(notificationOpenapi, 'notificationOpenapi');

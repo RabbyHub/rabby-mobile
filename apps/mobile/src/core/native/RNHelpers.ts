@@ -26,6 +26,14 @@ function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
 
 const RNHelpers = Object.freeze({
   ...nativeModule,
+  shareFile: wrapPlatformOnlyMethod({
+    method: nativeModule.shareFile,
+    platform: 'android',
+    fallbackFn: () =>
+      Promise.reject(
+        new Error('RNHelpers.shareFile is only available on Android'),
+      ),
+  }),
   iosExcludeFileFromBackup: wrapPlatformOnlyMethod({
     method: nativeModule.iosExcludeFileFromBackup,
     platform: 'ios',

@@ -196,6 +196,7 @@ export function TestkitsNavigator() {
         component={DebugLogViewer}
         options={{
           headerShown: true,
+          title: 'App Log Verification',
         }}
       />
     </Stack.Navigator>

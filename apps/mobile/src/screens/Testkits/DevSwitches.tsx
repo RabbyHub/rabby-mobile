@@ -18,11 +18,7 @@ import {
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeProdBorder,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { NextInput } from '@/components2024/Form/Input';
 import { RcIconCorrectCC } from '@/assets/icons/common';
@@ -45,6 +41,7 @@ import {
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
   useTimeTipAboutSeedPhraseAndPrivateKey,
+  useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
 } from '@/hooks/appSettings';
 import { AppBottomSheetModal, SwitchToggleType } from '@/components';
@@ -108,6 +105,8 @@ import {
   useReport0331SnapshotTrackedState,
 } from '@/utils/analytics0331';
 import { Text, AnimateableText } from '@/components/Typography';
+import { useAppLogFileSwitch } from '@/utils/logging/settings';
+import { APP_LOG_ROOT_PATH, logger } from '@/utils/logger';
 
 export const makeNoop = () => () => {};
 
@@ -410,8 +409,8 @@ function DevSwitchAboutScreenProtection() {
           />
           <Text style={styles.switchLabel}>
             {forceAllowScreenshot
-              ? `Force Allow Capture`
-              : `Disallow Capture Sensitive Scene`}
+              ? 'Force Allow Capture'
+              : 'Disallow Capture Sensitive Scene'}
           </Text>
         </TouchableOpacity>
 
@@ -430,8 +429,8 @@ function DevSwitchAboutScreenProtection() {
             />
             <Text style={styles.switchLabel}>
               {iosForceDisableAlertForSensitiveScene
-                ? `Force Disable Alert for Sensitive Scene`
-                : `Alert for Sensitive Scene when screen recording/screenshot`}
+                ? 'Force Disable Alert for Sensitive Scene'
+                : 'Alert for Sensitive Scene when screen recording/screenshot'}
             </Text>
           </TouchableOpacity>
         )}
@@ -469,12 +468,7 @@ function DevSwitchAboutScreenProtection() {
           }}
         />
 
-        <Text
-          style={[
-            styles.label,
-            styles.devModalHint,
-            { color: colors2024['neutral-foot'] },
-          ]}>
+        <Text style={[styles.metaLabel, styles.devModalHint]}>
           iOS repro path: open Modal A, then open screenshot Modal B, close B,
           then close A.
         </Text>
@@ -492,12 +486,7 @@ function DevSwitchAboutScreenProtection() {
           }}
         />
 
-        <Text
-          style={[
-            styles.label,
-            styles.devModalHint,
-            { color: colors2024['neutral-foot'] },
-          ]}>
+        <Text style={[styles.metaLabel, styles.devModalHint]}>
           Once the floating diagnostics panel is enabled below, modal
           diagnostics appear there automatically. A badge means blocking modals
           exist; expand it for the ids.
@@ -632,6 +621,168 @@ function DevSwitchAboutExpData() {
   );
 }
 
+function DevSwitchAboutAppLogging() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    canToggle,
+    effectiveEnabled,
+    isOnlineControlled,
+    localDefaultEnabled,
+    runtimeEnv,
+    onToggle,
+  } = useAppLogFileSwitch();
+  const [snapshot, setSnapshot] = useState(() => logger.getState());
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
+  const refreshSnapshot = useCallback(() => {
+    setSnapshot(logger.getState());
+  }, []);
+
+  useEffect(() => {
+    refreshSnapshot();
+  }, [effectiveEnabled, refreshSnapshot]);
+
+  const statusText = canToggle
+    ? effectiveEnabled
+      ? `${
+          runtimeEnv === 'development' ? 'Development' : 'Regression'
+        } build captures console and writes app logs into applogs zip archives`
+      : `${
+          runtimeEnv === 'development' ? 'Development' : 'Regression'
+        } build keeps app logs off until you enable the local switch`
+    : isOnlineControlled
+    ? effectiveEnabled
+      ? 'Production writes app logs because online config enables it'
+      : 'Production skips file logging until online config enables it'
+    : 'App file logging is unavailable';
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          App File Logs
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        disabled={!canToggle}
+        onPress={() => {
+          if (!canToggle) {
+            return;
+          }
+          onToggle();
+          refreshSnapshot();
+        }}>
+        <AppSwitch2024
+          value={effectiveEnabled}
+          disabled={!canToggle}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={nextValue => {
+            onToggle(nextValue);
+            refreshSnapshot();
+          }}
+        />
+        <Text style={styles.switchLabel}>{statusText}</Text>
+      </TouchableOpacity>
+
+      <Text
+        style={[styles.metaLabel, { marginTop: 12 }]}
+        numberOfLines={2}
+        ellipsizeMode="middle">
+        Default: {localDefaultEnabled ? 'ON' : 'OFF'}
+      </Text>
+      <Text
+        style={[styles.metaLabel, { marginTop: 4 }]}
+        numberOfLines={2}
+        ellipsizeMode="middle">
+        Root: {APP_LOG_ROOT_PATH}
+      </Text>
+      <Text
+        style={[styles.metaLabel, { marginTop: 4 }]}
+        numberOfLines={2}
+        ellipsizeMode="middle">
+        Active archive: {snapshot.activeArchiveTempPath || 'none'}
+      </Text>
+
+      <Button
+        title={isFinalizing ? 'Finalizing...' : 'Finalize Current Log Zip'}
+        type="ghost"
+        height={48}
+        containerStyle={{ marginTop: 12 }}
+        disabled={isFinalizing}
+        onPress={async () => {
+          setIsFinalizing(true);
+          try {
+            const finalPath = await logger.finalizeArchive();
+            refreshSnapshot();
+            toast.success(
+              finalPath
+                ? `Log zip ready: ${finalPath.split('/').pop()}`
+                : 'No active log zip',
+            );
+          } catch (error) {
+            toast.error(String(error));
+          } finally {
+            setIsFinalizing(false);
+          }
+        }}
+      />
+    </View>
+  );
+}
+
+function DevSwitchAboutOpenApiDebug() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { toastOpenApiHttpErrorStatus, toggleToastOpenApiHttpErrorStatus } =
+    useToastOpenApiHttpErrorStatus();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <RcCode
+          width={24}
+          height={24}
+          color={styles.secondarySectionTitle.color}
+        />
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          OpenAPI Debug
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.switchRowWrapper}
+        onPress={() => {
+          toggleToastOpenApiHttpErrorStatus();
+        }}>
+        <AppSwitch2024
+          value={toastOpenApiHttpErrorStatus}
+          onPress={evt => evt.stopPropagation()}
+          onValueChange={toggleToastOpenApiHttpErrorStatus}
+        />
+        <Text style={styles.switchLabel}>
+          {toastOpenApiHttpErrorStatus
+            ? 'Toast HTTP 4xx/5xx responses from openapi, testOpenapi, and notificationOpenapi'
+            : 'Keep HTTP 4xx/5xx openapi responses silent and only log them'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 function DevSwitchAboutAutoLock() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -685,12 +836,7 @@ function DevSwitchAboutAutoLock() {
             style={countdownTextStyles}
           />
         </View>
-        <Text
-          style={[
-            styles.label,
-            styles.devModalHint,
-            { color: colors2024['neutral-foot'] },
-          ]}>
+        <Text style={[styles.metaLabel, styles.devModalHint]}>
           The panel shows autolock info together with modal diagnostics.
         </Text>
       </View>
@@ -871,11 +1017,7 @@ function DevTestHomeCenterArea() {
       </View>
 
       <View style={[styles.secondarySectionHeader, { marginTop: 24 }]}>
-        <Text
-          style={[
-            styles.secondarySectionTitle,
-            { fontSize: 24, marginLeft: 2 },
-          ]}>
+        <Text style={[styles.secondarySectionSubTitle, { marginLeft: 2 }]}>
           Home Animations
         </Text>
       </View>
@@ -895,11 +1037,7 @@ function DevTestHomeCenterArea() {
       </View>
 
       <View style={[styles.secondarySectionHeader, { marginTop: 24 }]}>
-        <Text
-          style={[
-            styles.secondarySectionTitle,
-            { fontSize: 24, marginLeft: 2 },
-          ]}>
+        <Text style={[styles.secondarySectionSubTitle, { marginLeft: 2 }]}>
           Analytics
         </Text>
       </View>
@@ -1150,8 +1288,8 @@ function DevMock() {
             Alert.alert(
               'Mock done',
               [
-                `Address-indexed assets data has been mocked.`,
-                `Restart the app to trigger the migrations.`,
+                'Address-indexed assets data has been mocked.',
+                'Restart the app to trigger the migrations.',
               ].join('\n'),
               [
                 { text: 'OK', onPress: makeNoop },
@@ -1200,7 +1338,7 @@ function DevMock() {
         /> */}
 
         <Button
-          title={`Log Feedback Extra`}
+          title={'Log Feedback Extra'}
           type="ghost"
           height={48}
           containerStyle={{ marginTop: 12 }}
@@ -1217,7 +1355,7 @@ function DevMock() {
 }
 
 function DevSwitches(): JSX.Element {
-  const { styles, colors2024, colors } = useTheme2024({
+  const { styles, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
@@ -1233,11 +1371,23 @@ function DevSwitches(): JSX.Element {
         nestedScrollEnabled={false}
         contentContainerStyle={styles.screenScrollableView}
         horizontal={false}>
+        <View style={styles.heroCard}>
+          <Text style={styles.heroEyebrow}>Real Device Test Lab</Text>
+          <Text style={styles.heroTitle}>Regression Switches</Text>
+          <Text style={styles.heroDescription}>
+            This page exposes non-production toggles that help verify app
+            behavior, runtime diagnostics, OpenAPI debugging, and scenario mocks
+            without patching code between runs.
+          </Text>
+        </View>
+
         <Text style={styles.areaTitle}>Mock</Text>
         <DevMock />
 
         <Text style={styles.areaTitle}>Security</Text>
         <DevSwitchAboutScreenProtection />
+        <DevSwitchAboutAppLogging />
+        <DevSwitchAboutOpenApiDebug />
         <DevSwitchAboutExpData />
         <DevSwitchAboutAutoLock />
 
@@ -1261,60 +1411,103 @@ const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
-      backgroundColor: 'black',
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
       height: '100%',
     },
     areaTitle: {
-      fontSize: 36,
-      marginBottom: 12,
-      color: ctx.colors2024['neutral-title-1'],
+      fontSize: 13,
+      fontWeight: '700',
+      color: ctx.colors2024['brand-default'],
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
     },
     screenScrollableView: {
       minHeight: '100%',
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      // marginTop: 12,
-      paddingHorizontal: 12,
-      paddingBottom: 64,
-      // ...makeDebugBorder(),
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 40,
+      gap: 14,
+    },
+    heroCard: {
+      padding: 20,
+      borderRadius: 24,
+      backgroundColor: ctx.colors2024['neutral-card-1'],
+      borderWidth: 1,
+      borderColor: ctx.colors2024['neutral-line'],
+      gap: 8,
+    },
+    heroEyebrow: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: ctx.colors2024['brand-default'],
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    heroTitle: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: ctx.colors2024['neutral-title-1'],
+    },
+    heroDescription: {
+      fontSize: 14,
+      lineHeight: 22,
+      color: ctx.colors2024['neutral-body'],
     },
     showCaseRowsContainer: {
+      width: '100%',
       flexDirection: 'column',
       alignItems: 'flex-start',
       justifyContent: 'flex-start',
-
-      paddingTop: 16,
-      paddingBottom: 12,
-      borderTopWidth: 2,
-      borderStyle: 'dotted',
-      borderTopColor: ctx.colors2024['neutral-foot'],
+      padding: 18,
+      borderRadius: 20,
+      backgroundColor: ctx.colors2024['neutral-card-1'],
+      borderWidth: 1,
+      borderColor: ctx.colors2024['neutral-line'],
+      gap: 12,
     },
     secondarySectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      marginBottom: 12,
+      marginBottom: 0,
     },
     secondarySectionTitle: {
-      color: ctx.colors2024['blue-default'],
+      color: ctx.colors2024['neutral-title-1'],
       textAlign: 'left',
       fontSize: 24,
+      lineHeight: 30,
+      fontWeight: '700',
+    },
+    secondarySectionSubTitle: {
+      color: ctx.colors2024['neutral-title-1'],
+      textAlign: 'left',
+      fontSize: 18,
+      lineHeight: 24,
+      fontWeight: '700',
     },
     secondarySectionContent: {
       flexDirection: 'column',
+      width: '100%',
+      gap: 12,
     },
     switchRowWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
       width: '100%',
+      minWidth: 0,
       gap: 4,
     },
     switchLabel: {
+      flex: 1,
+      flexShrink: 1,
       fontSize: 16,
-      color: ctx.colors2024['neutral-title-1'],
+      lineHeight: 22,
+      color: ctx.colors2024['neutral-body'],
     },
     rowWrapper: {
       flexDirection: 'row',
@@ -1324,11 +1517,18 @@ const getStyles = createGetStyles2024(ctx =>
     },
     rowFieldLabel: {
       fontSize: 16,
-      color: ctx.colors2024['neutral-title-1'],
+      lineHeight: 22,
+      color: ctx.colors2024['neutral-body'],
     },
     label: {
       fontSize: 16,
-      color: ctx.colors2024['neutral-title-1'],
+      lineHeight: 22,
+      color: ctx.colors2024['neutral-body'],
+    },
+    metaLabel: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: ctx.colors2024['neutral-foot'],
     },
     devModalMask: {
       flex: 1,

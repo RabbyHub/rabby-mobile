@@ -30,6 +30,12 @@ interface NativeModulesStatic {
   };
   RNHelpers: NativeModule & {
     forceExitApp(): void;
+    shareFile?(options: {
+      filePath: string;
+      mimeType?: string;
+      title?: string;
+      subject?: string;
+    }): Promise<void>;
     /**
      * @description try to set a file to not be backed up by iCloud
      * @param filePath
