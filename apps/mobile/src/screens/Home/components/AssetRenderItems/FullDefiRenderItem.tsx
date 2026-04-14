@@ -315,7 +315,7 @@ export const FullDefiRenderItem = ({
                   ? config[data.id]?.onTokenManage
                   : undefined
               }
-              key={`${item.id}-${account.address}`}
+              key={`${item.id}-${account.address}-${item.netWorth}`}
               session={
                 data?.site_url && data?.logo
                   ? {

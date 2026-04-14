@@ -70,6 +70,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
+  source,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
@@ -345,6 +346,7 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
           usd_value: usdValue,
           create_at: Date.now(),
           app_version: APP_VERSIONS.fromNative || '0',
+          ...(source ? { source } : {}),
         });
 
         refresh();
@@ -373,12 +375,15 @@ export const WithdrawActionPopup: React.FC<PopupDetailProps> = ({
       openDirect,
       reserve.underlyingAsset,
       reserve.chain,
+      source,
     ],
   );
 
   const handleChangeAmount = useCallback(
     (value: string) => {
-      if (directSignBtnRef.current?.isAuthInProgress()) return;
+      if (directSignBtnRef.current?.isAuthInProgress()) {
+        return;
+      }
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 提取所有资产

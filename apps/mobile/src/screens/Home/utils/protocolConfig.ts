@@ -43,6 +43,12 @@ export const isAave3Portfolio = (project_id?: string) => {
   return !!keyToMarketKey[project_id];
 };
 
+export const marketKeyToProtocolId = (marketKey?: CustomMarket) => {
+  return Object.keys(keyToMarketKey).find(
+    key => keyToMarketKey[key] === marketKey,
+  );
+};
+
 export type TonTokenManageAction = (
   account?: KeyringAccountWithAlias,
   tokenAddress?: string,
@@ -78,6 +84,7 @@ export const useProtocolConfig = () => {
         account?: KeyringAccountWithAlias,
         tokenAddress?: string,
         direction?: 'supply' | 'borrow',
+        source?: string,
       ) => {
         const marketKey = keyToMarketKey[key];
         if (account && marketKey) {
@@ -92,6 +99,7 @@ export const useProtocolConfig = () => {
             account,
             tokenAddress,
             direction,
+            source,
           },
         });
       };
@@ -105,7 +113,7 @@ export const useProtocolConfig = () => {
         },
         onManage: account => openLending(account),
         onTokenManage: (account, tokenAddress, direction) =>
-          openLending(account, tokenAddress, direction),
+          openLending(account, tokenAddress, direction, 'Portfolio Defi'),
       };
     },
     [navigation, setMarketKey, switchSceneCurrentAccount],
