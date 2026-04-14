@@ -4,12 +4,6 @@ import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
 import { dappService, sessionService } from '../services/shared';
-import {
-  allowLinkOpen,
-  getAlertMessage,
-  protocolAllowList,
-  trustedProtocolToDeeplink,
-} from '@/constant/dappView';
 import { createDappBySession } from '../apis/dapp';
 import { useRefState } from '@/hooks/common/useRefState';
 import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
@@ -126,19 +120,30 @@ export function useSetupWebview({
       try {
         fromData =
           typeof fromData === 'string' ? JSON.parse(fromData) : fromData;
-        if (!fromData || (!fromData.type && !fromData.name)) return;
+        if (!fromData || (!fromData.type && !fromData.name)) {
+          return;
+        }
 
         const data = fromData as WebViewDataPayload;
         if (data.name) {
-          const msgOrigin = (data as any).origin;
+          const msgOrigin =
+            typeof (data as any).origin === 'string'
+              ? (data as any).origin
+              : null;
           const bridgeOrigin = currentBridgeRef.current?.origin;
-          // if the bridge origin is null, just ignore the message
-          if (bridgeOrigin == null) {
+          // Ignore bridge messages before either side has a stable origin.
+          if (!msgOrigin || bridgeOrigin == null) {
             return;
           }
 
-          const msgHost = new URL(msgOrigin).host;
-          const bridgeHost = new URL(bridgeOrigin).host;
+          let msgHost = '';
+          let bridgeHost = '';
+          try {
+            msgHost = new URL(msgOrigin).host;
+            bridgeHost = new URL(bridgeOrigin).host;
+          } catch {
+            return;
+          }
           if (msgHost !== bridgeHost) {
             console.warn(
               `[onMessage] host mismatch: msgHost=${msgHost},bridgeHost=${bridgeHost}`,
@@ -171,7 +176,9 @@ export function useSetupWebview({
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
     async ({ nativeEvent }, treatAsReload = false) => {
-      if (onReloadingRef.current) return;
+      if (onReloadingRef.current) {
+        return;
+      }
       onReloadingRef.current = treatAsReload;
 
       try {

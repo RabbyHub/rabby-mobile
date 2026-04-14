@@ -11,13 +11,13 @@ export function getE2ESilentLogsEnabled() {
 
   const raw = appMMKV.getString(EXPERIMENTAL_SETTINGS_KEY);
   if (!raw) {
-    return false;
+    return __DEV__;
   }
 
   try {
     const parsed = JSON.parse(raw);
     return parsed?.[SILENT_DEV_LOGS_KEY] === true;
   } catch {
-    return false;
+    return __DEV__;
   }
 }
