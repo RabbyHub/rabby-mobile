@@ -84,7 +84,7 @@ import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { refreshDayCurve } from '@/hooks/useMultiCurve';
-import { refresh24hAssets } from '@/hooks/useScene24hBalance';
+import { refresh24hAssets } from '@/store/balance24h';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
@@ -140,7 +140,7 @@ import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import {
@@ -260,15 +260,13 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   });
 
   useEffect(() => {
-    const remove = balanceStore.subscribe(async (cur, prev) => {
-      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) {
+    const remove = addressBalanceStore.subscribe(async (cur, prev) => {
+      if (cur.metaMap === prev.metaMap || isEqual(cur.metaMap, prev.metaMap)) {
         return;
       }
       const { top10Addresses } = await getTop10MyAccounts();
-      const isTop10BalanceLoading = cur.getIsTop10BalanceLoading(
-        top10Addresses,
-        cur.isLoadingByAddress,
-      ).isTop10BalanceLoading;
+      const isTop10BalanceLoading =
+        addressBalanceStore.getAddressesFlowState(top10Addresses).isAnyLoading;
 
       if (!isTop10BalanceLoading) {
         runOnUI(setPulldownRefreshStage)({

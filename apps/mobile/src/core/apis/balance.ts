@@ -8,7 +8,7 @@ import {
   batchBalanceWithLocalCache,
   EvmTotalBalanceResponse,
 } from '@/databases/hooks/balance';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import {
   getTestnetAddressBalanceCache,
   setTestnetAddressBalanceCache,
@@ -77,9 +77,8 @@ export const getAddressCacheBalanceSync = (
     return getTestnetAddressBalanceCache(address);
   }
   const lowerAddress = address.toLowerCase();
-  const state = balanceStore.getState();
-  const balance = state.balanceMap[lowerAddress];
-  const chainList = state.chainUSDMap[lowerAddress];
+  const balance = addressBalanceStore.getAddressValue(lowerAddress);
+  const chainList = addressBalanceStore.getAddressChainList(lowerAddress);
   if (!balance) {
     return null;
   }

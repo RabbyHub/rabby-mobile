@@ -40,11 +40,11 @@ import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/
 import { startCheckClearAction } from './utils/clipboard';
 import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
 import tokenListStore from './store/tokens';
-import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
+import { startProcessScene24hBalanceEvents } from './store/balance24h';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 import useProtocolListStore from './store/protocols';
 import { useAppChainStore } from './store/appchain';
-import balanceStore from './store/balance';
+import addressBalanceStore from './store/balance';
 import { apisAutoLock } from './core/apis';
 import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
@@ -102,25 +102,45 @@ startSubscribeOpenApiHttpErrorDebugToast();
 startCareAppNotificationPermissions();
 startSubscribeRemoteNotification();
 
-async function initStores() {
-  console.time('initStore');
+async function initPersistedStores() {
+  console.time('initPersistedStores');
   await useAppChainStore.getState().initStore();
-  await balanceStore.getState().initStore();
+  await addressBalanceStore.initStore();
+  console.timeEnd('initPersistedStores');
+}
+
+async function initUnlockedStores() {
+  console.time('initUnlockedStores');
   await tokenListStore.getState().initStore();
   await nftListStore.getState().initStore();
   await useProtocolListStore.getState().initStore();
-  console.timeEnd('initStore');
+  console.timeEnd('initUnlockedStores');
 }
 
-const initStoresStateRef = {
-  started: false,
+const initPersistedStoresStateRef = {
+  promise: null as Promise<void> | null,
+};
+const startInitPersistedStores = async () => {
+  if (initPersistedStoresStateRef.promise) {
+    return initPersistedStoresStateRef.promise;
+  }
+  const promise = initPersistedStores();
+  initPersistedStoresStateRef.promise = promise;
+  await promise;
+};
+
+const initUnlockedStoresStateRef = {
+  promise: null as Promise<void> | null,
 };
 const startInitStores = async () => {
-  if (initStoresStateRef.started) {
-    return;
+  await startInitPersistedStores();
+
+  if (initUnlockedStoresStateRef.promise) {
+    return initUnlockedStoresStateRef.promise;
   }
-  initStoresStateRef.started = true;
-  await initStores();
+  const promise = initUnlockedStores();
+  initUnlockedStoresStateRef.promise = promise;
+  await promise;
 };
 
 function startInitStoresOnUnlock() {
@@ -138,4 +158,7 @@ function startInitStoresOnUnlock() {
   });
 }
 
+startInitPersistedStores().catch(error => {
+  console.error('startInitPersistedStores::error', error);
+});
 startInitStoresOnUnlock();

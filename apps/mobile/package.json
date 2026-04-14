@@ -9,7 +9,7 @@
   "scripts": {
     "android": "react-native run-android",
     "build-inpage": "sh ./scripts/postinstall.sh",
-    "build:deps": "yarn ../../ build",
+    "build:deps": "yarn ../../ build && yarn workspace @rabby-wallet/rozenite-resource-flow-plugin build",
     "buildworker": "yarn buildworker:clean && tsc --build tsconfig.worker.json --sourceMap false --verbose",
     "buildworker:clean": "rimraf dist-worker '**/*.worker.tsbuildinfo'",
     "buildworker:prod:ios": "react-native bundle --dev false --assets-dest ./ios --entry-file worker-src/worker.thread.ts --platform ios --bundle-output ./assets/ios/threads/worker.thread.jsbundle",
@@ -228,6 +228,7 @@
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
     "@noble/hashes": "^1.4.0",
+    "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^",
     "@react-native-community/cli": "20.0.0",
     "@react-native-community/cli-platform-android": "20.0.0",
     "@react-native-community/cli-platform-ios": "20.0.0",

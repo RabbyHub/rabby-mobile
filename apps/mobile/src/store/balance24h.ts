@@ -1,10 +1,28 @@
-import { zCreate } from '@/core/utils/reexports';
+import { useMemo } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import { getTop10MyAccounts } from '@/core/apis/account';
+import { perfEvents } from '@/core/utils/perf';
+import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
+import {
+  AccountsBalanceState,
+  accountsBalanceEvents,
+  apisAccountsBalance,
+  getBalanceCacheAccounts,
+} from '@/hooks/useAccountsBalance';
+import { formatSmallUsdValue } from '@/hooks/useCurve';
+import { formatUsdValue } from '@/utils/number';
+import { debounce, isEqual } from 'lodash';
+import PQueue from 'p-queue';
+import { useShallow } from 'zustand/react/shallow';
+import { BaseStore } from './_base';
+import { ResourceBaseStore, ResourceFlowState } from './_resourceBase';
+import { ResourceLocalTarget } from './_resourceFlowDebug';
+import addressBalanceStore from './balance';
 import {
   fetch24hBalance,
   getBalance24hCache,
   type IBalance24hData,
-  persist24hBalanceCacheAsync,
+  setBalance24hCache,
 } from '@/utils/24hBalanceCache';
 
 export type Address24hBalanceValue = IBalance24hData['data'] & {
@@ -13,102 +31,975 @@ export type Address24hBalanceValue = IBalance24hData['data'] & {
 
 export type Address24hBalanceMap = Record<string, Address24hBalanceValue>;
 
-type Address24hBalanceState = {
-  balance24hMap: Address24hBalanceMap;
+export type Address24hBalanceSnapshot = {
+  address: string;
+  value?: Address24hBalanceValue;
+  flow: ResourceFlowState;
+  sourceOfCurrentValue?: 'hydrate' | 'remote';
+  persistStatus: ResourceFlowState['persistStatus'];
 };
 
-const balance24hStore = zCreate<Address24hBalanceState>(() => ({
-  balance24hMap: {},
-}));
+export type Address24hChangeFlowState = {
+  address: string;
+  hasValue: boolean;
+  isHydrating: boolean;
+  isFetchingRemote: boolean;
+  isResourceLoading: boolean;
+  isComputing: boolean;
+  isLoading: boolean;
+  isLoadingWithoutValue: boolean;
+  persistStatus: ResourceFlowState['persistStatus'];
+  lastError?: ResourceFlowState['lastError'];
+};
 
-function setAddress24hBalance(
+export type Addresses24hChangeFlowState = {
+  addresses: string[];
+  loadingAddresses: string[];
+  missingAddresses: string[];
+  computingAddresses: string[];
+  hasAnyValue: boolean;
+  isAnyLoading: boolean;
+  isAnyLoadingWithoutValue: boolean;
+  hasAllValues: boolean;
+};
+
+const build24hBalanceLocalTargets = (
   address: string,
-  data: Address24hBalanceValue | undefined,
-) {
-  if (!data) {
-    return;
+): ResourceLocalTarget[] => [
+  {
+    kind: 'mmkv',
+    file: MMKV_FILE_NAMES.BALANCE_24H,
+    key: address,
+  },
+];
+
+class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
+  constructor() {
+    super('address24hBalance');
   }
 
-  const lowerAddress = address.toLowerCase();
-  balance24hStore.setState(prev => ({
-    ...prev,
-    balance24hMap: {
-      ...prev.balance24hMap,
-      [lowerAddress]: data,
+  private normalizeAddress(address?: string) {
+    return address?.toLowerCase();
+  }
+
+  getAddress24hBalance = (address?: string) => {
+    return this.getValue(this.normalizeAddress(address));
+  };
+
+  getAddress24hBalanceMap = () => this.getValueMap();
+
+  getAddress24hBalanceResourceState = (address?: string) => {
+    return this.getMeta(this.normalizeAddress(address));
+  };
+
+  getAddress24hBalanceFlowState = (address?: string) => {
+    return this.getFlowState(this.normalizeAddress(address));
+  };
+
+  useAddress24hBalance = (address?: string) => {
+    const balance24h = this.useValue(this.normalizeAddress(address) || '');
+
+    return { balance24h };
+  };
+
+  useAddress24hBalanceMap = () => this.useValueMap();
+
+  useAddress24hBalanceFlowState = (address?: string) => {
+    return this.useFlowState(this.normalizeAddress(address) || '');
+  };
+
+  useAddresses24hBalanceSnapshots = (addresses: string[]) => {
+    const normalizedAddresses = useMemo(
+      () =>
+        Array.from(new Set(addresses.map(address => address.toLowerCase()))),
+      [addresses],
+    );
+    const snapshots = this.useSnapshots(normalizedAddresses);
+
+    return useMemo(() => {
+      return snapshots.map(snapshot => {
+        return {
+          address: snapshot.resourceKey,
+          value: snapshot.value,
+          flow: snapshot.flow,
+          sourceOfCurrentValue: snapshot.sourceOfCurrentValue,
+          persistStatus: snapshot.persistStatus,
+        } satisfies Address24hBalanceSnapshot;
+      });
+    }, [snapshots]);
+  };
+
+  hydrateAddress24hBalanceFromCache = (address: string) => {
+    const lowerAddress = this.normalizeAddress(address);
+    if (!lowerAddress) {
+      return null;
+    }
+
+    const localTargets = build24hBalanceLocalTargets(lowerAddress);
+    const cacheData = getBalance24hCache(lowerAddress);
+    const existedData = this.getAddress24hBalance(lowerAddress);
+    const shouldHydrateFromCache =
+      !!cacheData?.data && (!existedData || !cacheData.isExpired);
+
+    this.markHydrateStarted(lowerAddress, {
+      localTargets,
+      detail: {
+        source: 'hydrateAddress24hBalanceFromCache',
+        hasMemoryValue: !!existedData,
+        hasCache: !!cacheData?.data,
+        isExpired: !!cacheData?.isExpired,
+      },
+    });
+
+    if (shouldHydrateFromCache) {
+      this.applyHydratedValue(
+        lowerAddress,
+        {
+          ...cacheData.data,
+          updateTime: cacheData.updateTime,
+        },
+        {
+          localTargets,
+          detail: {
+            source: 'hydrateAddress24hBalanceFromCache',
+            updateTime: cacheData.updateTime,
+          },
+        },
+      );
+    } else {
+      this.markHydrateSkipped(lowerAddress, {
+        localTargets,
+        detail: {
+          source: 'hydrateAddress24hBalanceFromCache',
+          hasMemoryValue: !!existedData,
+          hasCache: !!cacheData?.data,
+          isExpired: !!cacheData?.isExpired,
+        },
+      });
+    }
+
+    return cacheData;
+  };
+
+  refreshAddress24hBalance = makeSWRKeyAsyncFunc(
+    async (address: string, force = false) => {
+      const lowerAddress = this.normalizeAddress(address);
+      if (!lowerAddress) {
+        return undefined;
+      }
+
+      const localTargets = build24hBalanceLocalTargets(lowerAddress);
+      let requestId: string | undefined;
+
+      try {
+        const cacheData = this.hydrateAddress24hBalanceFromCache(lowerAddress);
+
+        if (cacheData?.data && !force && !cacheData.isExpired) {
+          return {
+            ...cacheData.data,
+            updateTime: cacheData.updateTime,
+          };
+        }
+
+        requestId = this.startRemoteFetch(lowerAddress, {
+          localTargets,
+          detail: {
+            source: 'refreshAddress24hBalance',
+            force,
+          },
+        });
+        const nextData = await fetch24hBalance(lowerAddress);
+        const normalizedData = {
+          ...nextData.data,
+          updateTime: nextData.updateTime,
+        };
+        const applied = this.applyRemoteValue(
+          lowerAddress,
+          requestId,
+          normalizedData,
+          {
+            localTargets,
+            detail: {
+              source: 'refreshAddress24hBalance',
+              force,
+              totalUsdValue: normalizedData.total_usd_value,
+              updateTime: normalizedData.updateTime,
+            },
+          },
+        );
+
+        if (applied) {
+          this.persistInBackground(
+            lowerAddress,
+            () =>
+              setBalance24hCache(lowerAddress, {
+                data: {
+                  total_usd_value: normalizedData.total_usd_value,
+                },
+                updateTime: normalizedData.updateTime,
+              }),
+            {
+              requestId,
+              localTargets,
+              detail: {
+                source: 'refreshAddress24hBalance',
+                force,
+                totalUsdValue: normalizedData.total_usd_value,
+                updateTime: normalizedData.updateTime,
+              },
+            },
+          );
+        }
+
+        return normalizedData;
+      } catch (error) {
+        this.markError(lowerAddress, requestId ? 'remote' : 'hydrate', error, {
+          requestId,
+          localTargets,
+          detail: {
+            source: 'refreshAddress24hBalance',
+            force,
+          },
+        });
+        throw error;
+      }
     },
-  }));
+    ctx => {
+      const address = ctx.args[0]?.toLowerCase?.() || '';
+      const force = !!ctx.args[1];
+      return `refreshAddress24hBalance-${address}-${
+        force ? 'force' : 'noforce'
+      }`;
+    },
+  );
 }
 
-export function getAddress24hBalance(address: string | undefined) {
-  if (!address) {
-    return undefined;
-  }
+export const balance24hStore = new Address24hBalanceStore();
 
-  return balance24hStore.getState().balance24hMap[address.toLowerCase()];
+export function getAddress24hBalance(address: string | undefined) {
+  return balance24hStore.getAddress24hBalance(address);
+}
+
+export function getAddress24hBalanceMap() {
+  return balance24hStore.getAddress24hBalanceMap();
+}
+
+export function getAddress24hBalanceResourceState(address: string | undefined) {
+  return balance24hStore.getAddress24hBalanceResourceState(address);
+}
+
+export function getAddress24hBalanceFlowState(address: string | undefined) {
+  return balance24hStore.getAddress24hBalanceFlowState(address);
 }
 
 export function hydrateAddress24hBalanceFromCache(address: string) {
-  const lowerAddress = address.toLowerCase();
-  const cacheData = getBalance24hCache(lowerAddress);
-  const existedData = getAddress24hBalance(lowerAddress);
-  const shouldHydrateFromCache =
-    !!cacheData?.data && (!existedData || !cacheData.isExpired);
-
-  if (shouldHydrateFromCache) {
-    setAddress24hBalance(lowerAddress, {
-      ...cacheData.data,
-      updateTime: cacheData.updateTime,
-    });
-  }
-
-  return cacheData;
+  return balance24hStore.hydrateAddress24hBalanceFromCache(address);
 }
 
-export const refreshAddress24hBalance = makeSWRKeyAsyncFunc(
-  async (address: string, force = false) => {
-    const lowerAddress = address.toLowerCase();
-    const cacheData = hydrateAddress24hBalanceFromCache(lowerAddress);
-
-    if (cacheData?.data && !force && !cacheData.isExpired) {
-      return {
-        ...cacheData.data,
-        updateTime: cacheData.updateTime,
-      };
-    }
-
-    const nextData = await fetch24hBalance(lowerAddress);
-    const normalizedData = {
-      ...nextData.data,
-      updateTime: nextData.updateTime,
-    };
-    setAddress24hBalance(lowerAddress, normalizedData);
-    persist24hBalanceCacheAsync(lowerAddress, {
-      data: {
-        total_usd_value: normalizedData.total_usd_value,
-      },
-      updateTime: normalizedData.updateTime,
-    });
-
-    return normalizedData;
-  },
-  ctx => {
-    const address = ctx.args[0]?.toLowerCase?.() || '';
-    const force = !!ctx.args[1];
-    return `refreshAddress24hBalance-${address}-${force ? 'force' : 'noforce'}`;
-  },
-);
+export function refreshAddress24hBalance(address: string, force = false) {
+  return balance24hStore.refreshAddress24hBalance(address, force);
+}
 
 export function useAddress24hBalance(address?: string) {
-  const lowerAddress = address?.toLowerCase() || '';
-  const balance24h = balance24hStore(s =>
-    lowerAddress ? s.balance24hMap[lowerAddress] : undefined,
-  );
-
-  return { balance24h };
+  return balance24hStore.useAddress24hBalance(address);
 }
 
 export function useAddress24hBalanceMap() {
-  return balance24hStore(s => s.balance24hMap);
+  return balance24hStore.useAddress24hBalanceMap();
 }
 
-export default balance24hStore;
+export function useAddress24hBalanceFlowState(address?: string) {
+  return balance24hStore.useAddress24hBalanceFlowState(address);
+}
+
+export function useAddresses24hBalanceSnapshots(addresses: string[]) {
+  return balance24hStore.useAddresses24hBalanceSnapshots(addresses);
+}
+
+function buildAddress24hChangeFlowState(
+  address: string,
+  flow: ResourceFlowState,
+  isComputing: boolean,
+): Address24hChangeFlowState {
+  const isResourceLoading = flow.isLoading;
+  const isLoading = isResourceLoading || isComputing;
+
+  return {
+    address,
+    hasValue: flow.hasValue,
+    isHydrating: flow.isHydrating,
+    isFetchingRemote: flow.isFetchingRemote,
+    isResourceLoading,
+    isComputing,
+    isLoading,
+    isLoadingWithoutValue: !flow.hasValue && isLoading,
+    persistStatus: flow.persistStatus,
+    lastError: flow.lastError,
+  };
+}
+
+export function useAddress24hChangeFlowState(
+  address?: string,
+  options?: {
+    isComputing?: boolean;
+  },
+) {
+  const normalizedAddress = address?.toLowerCase() || '';
+  const flow = useAddress24hBalanceFlowState(normalizedAddress);
+
+  return useMemo(() => {
+    return buildAddress24hChangeFlowState(
+      normalizedAddress,
+      flow,
+      !!options?.isComputing,
+    );
+  }, [flow, normalizedAddress, options?.isComputing]);
+}
+
+export function useAddresses24hChangeFlowState(
+  addresses: string[],
+  options?: {
+    computingAddresses?: string[];
+  },
+) {
+  const normalizedAddresses = useMemo(
+    () => Array.from(new Set(addresses.map(address => address.toLowerCase()))),
+    [addresses],
+  );
+  const computingAddressSet = useMemo(
+    () =>
+      new Set(
+        (options?.computingAddresses || []).map(address =>
+          address.toLowerCase(),
+        ),
+      ),
+    [options?.computingAddresses],
+  );
+  const snapshots = useAddresses24hBalanceSnapshots(normalizedAddresses);
+
+  return useMemo(() => {
+    const states = snapshots.map(snapshot => {
+      return buildAddress24hChangeFlowState(
+        snapshot.address,
+        snapshot.flow,
+        computingAddressSet.has(snapshot.address),
+      );
+    });
+    const loadingAddresses = states
+      .filter(item => item.isLoading)
+      .map(item => item.address);
+    const missingAddresses = states
+      .filter(item => !item.hasValue)
+      .map(item => item.address);
+    const computingAddresses = states
+      .filter(item => item.isComputing)
+      .map(item => item.address);
+
+    return {
+      addresses: normalizedAddresses,
+      loadingAddresses,
+      missingAddresses,
+      computingAddresses,
+      hasAnyValue: states.some(item => item.hasValue),
+      isAnyLoading: loadingAddresses.length > 0,
+      isAnyLoadingWithoutValue: states.some(item => item.isLoadingWithoutValue),
+      hasAllValues:
+        normalizedAddresses.length > 0 && missingAddresses.length === 0,
+    } satisfies Addresses24hChangeFlowState;
+  }, [computingAddressSet, normalizedAddresses, snapshots]);
+}
+
+export type Multi24hBalance = Address24hBalanceMap;
+export type BalanceScene = 'Home';
+
+export type Combined24hBalanceData = ReturnType<
+  typeof computeCombined24hBalanceData
+>;
+
+export type Multi24hBalanceState = {
+  addresses: Record<BalanceScene, string[]>;
+  combinedData: Record<BalanceScene, Combined24hBalanceData>;
+  sceneLoading: Record<BalanceScene, boolean>;
+  sceneComputing: Record<BalanceScene, boolean>;
+  sceneAddrLoading: Record<`${BalanceScene}-${string}`, boolean>;
+};
+
+const TEN_MINUTES = 10 * 60 * 1000;
+
+const normalizeAddressesForCompare = (addresses: string[]) =>
+  Array.from(new Set(addresses.map(addr => addr.toLowerCase()))).sort();
+
+class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
+  private readonly queues: Record<BalanceScene, PQueue> = {
+    Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
+  };
+
+  private readonly sceneLastLoadingRef: Record<BalanceScene, number> = {
+    Home: 0,
+  };
+
+  private readonly lastTop10AddressesRef = {
+    current: null as null | string[],
+  };
+
+  private hasStartedLifecycle = false;
+
+  private readonly debouncedSceneCombinedDataUpdaters: Record<
+    BalanceScene,
+    () => void
+  > = {
+    Home: debounce(() => {
+      this.commitSceneCombinedData('Home');
+    }, 200),
+  };
+
+  constructor() {
+    super({
+      addresses: {
+        Home: [],
+      },
+      sceneLoading: {
+        Home: false,
+      },
+      sceneComputing: {
+        Home: false,
+      },
+      sceneAddrLoading: {},
+      combinedData: {
+        Home: computeCombined24hBalanceData({
+          addresses: [],
+          multi24hBalance: {},
+          balanceMap: {},
+          totalEvmBalance: 0,
+          totalBalance: 0,
+        }),
+      },
+    });
+  }
+
+  private setSceneAddresses<T extends BalanceScene>(
+    scene: T,
+    addresses: string[],
+  ) {
+    const normalizedAddresses = normalizeAddressesForCompare(addresses);
+
+    this.setState(prev => {
+      const prevAddresses = prev.addresses[scene] || [];
+      if (isEqual(prevAddresses, normalizedAddresses)) {
+        return prev;
+      }
+
+      return {
+        addresses: {
+          ...prev.addresses,
+          [scene]: normalizedAddresses,
+        },
+      };
+    });
+  }
+
+  private setSceneLoading<T extends BalanceScene>(
+    scene: T,
+    isLoading: boolean,
+  ) {
+    this.setState(prev => {
+      if (prev.sceneLoading[scene] === isLoading) {
+        return prev;
+      }
+
+      return {
+        sceneLoading: {
+          ...prev.sceneLoading,
+          [scene]: isLoading,
+        },
+      };
+    });
+  }
+
+  private setSceneComputing<T extends BalanceScene>(
+    scene: T,
+    isComputing: boolean,
+  ) {
+    this.setState(prev => {
+      if (prev.sceneComputing[scene] === isComputing) {
+        return prev;
+      }
+
+      return {
+        sceneComputing: {
+          ...prev.sceneComputing,
+          [scene]: isComputing,
+        },
+      };
+    });
+  }
+
+  private setSceneAddrLoading(
+    scene: BalanceScene,
+    addr: string | string[],
+    isLoading: boolean,
+  ) {
+    const addrs = Array.isArray(addr) ? addr : [addr];
+    const normalizedAddrs = addrs.map(item => item.toLowerCase());
+
+    this.setState(prev => {
+      let changed = false;
+      const nextSceneAddrLoading = { ...prev.sceneAddrLoading };
+
+      normalizedAddrs.forEach(address => {
+        const key = `${scene}-${address}` as `${BalanceScene}-${string}`;
+        if (nextSceneAddrLoading[key] !== isLoading) {
+          nextSceneAddrLoading[key] = isLoading;
+          changed = true;
+        }
+      });
+
+      if (!changed) {
+        return prev;
+      }
+
+      return {
+        sceneAddrLoading: nextSceneAddrLoading,
+      };
+    });
+  }
+
+  private commitSceneCombinedData<T extends BalanceScene>(scene: T) {
+    const states = this.getState();
+    const addresses = states.addresses[scene];
+    const multi24hBalance = balance24hStore.getAddress24hBalanceMap();
+    const balanceValueMap = addressBalanceStore.getAddressValueMap();
+
+    const combinedData = computeCombined24hBalanceData({
+      addresses,
+      multi24hBalance,
+      balanceMap: balanceValueMap,
+      totalEvmBalance: 0,
+      totalBalance: 0,
+    });
+
+    this.setState(prev => ({
+      combinedData: {
+        ...prev.combinedData,
+        [scene]: combinedData,
+      },
+    }));
+    this.setSceneComputing(scene, false);
+
+    perfEvents.emit('SCENE_24H_BALANCE_UPDATED', {
+      scene,
+      combinedData,
+    });
+  }
+
+  private scheduleSceneCombinedDataUpdate<T extends BalanceScene>(scene: T) {
+    this.setSceneComputing(scene, true);
+    this.debouncedSceneCombinedDataUpdaters[scene]();
+  }
+
+  private waitQueueFinished = (queue: PQueue) => queue.onIdle();
+
+  refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
+    async (scene: BalanceScene, options?: FetchTotalBalanceOptions) => {
+      let { addresses, force = false, reason } = options || {};
+      if (!addresses?.length) {
+        addresses = (await getTop10MyAccounts()).top10Addresses;
+      }
+
+      const normalizedAddresses = normalizeAddressesForCompare(
+        Array.isArray(addresses) ? addresses : [addresses],
+      );
+      const prevAddresses = this.getState().addresses[scene];
+      const hasAddressSelectionChanged = !isEqual(
+        normalizeAddressesForCompare(prevAddresses),
+        normalizedAddresses,
+      );
+
+      this.setSceneAddresses(scene, normalizedAddresses);
+
+      const beforeReturn = () => {
+        apisAccountsBalance.computeTotalBalance(
+          normalizedAddresses,
+          getBalanceCacheAccounts(),
+        );
+        this.scheduleSceneCombinedDataUpdate(scene);
+      };
+
+      try {
+        if (!normalizedAddresses.length) {
+          this.setSceneLoading(scene, false);
+          this.setSceneComputing(scene, false);
+          return;
+        }
+
+        if (!force) {
+          const now = Date.now();
+          if (
+            !hasAddressSelectionChanged &&
+            reason !== 'selection_changed' &&
+            now - this.sceneLastLoadingRef[scene] < TEN_MINUTES
+          ) {
+            beforeReturn();
+            return;
+          }
+          this.sceneLastLoadingRef[scene] = now;
+        } else {
+          this.sceneLastLoadingRef[scene] = Date.now();
+        }
+
+        this.setSceneLoading(scene, !!force);
+        const nextCheckAddress = new Set([...normalizedAddresses]);
+
+        normalizedAddresses.forEach(address => {
+          this.setSceneAddrLoading(scene, address, true);
+          const cacheData = hydrateAddress24hBalanceFromCache(address);
+          if (cacheData?.data && !cacheData.isExpired) {
+            nextCheckAddress.delete(address);
+            this.setSceneAddrLoading(scene, address, false);
+          }
+        });
+
+        this.setSceneLoading(scene, force || nextCheckAddress.size > 0);
+        beforeReturn();
+
+        const queue = this.queues[scene];
+        queue.clear();
+        Array.from(nextCheckAddress).forEach(address => {
+          queue.add(async () => {
+            this.setSceneAddrLoading(scene, address, true);
+            try {
+              await refreshAddress24hBalance(address, force);
+            } catch (error) {
+              console.error('Fetch curve error', error);
+            } finally {
+              this.setSceneAddrLoading(scene, address, false);
+            }
+          });
+        });
+
+        await this.waitQueueFinished(queue);
+        this.setSceneLoading(scene, false);
+      } catch (error) {
+        console.error('Fetch curve error', error);
+        this.setSceneLoading(scene, false);
+      } finally {
+        beforeReturn();
+      }
+    },
+    ctx => {
+      const scene = ctx.args[0];
+      const { addresses: addrList, force } = ctx.args[1] || {};
+      const addresses = normalizeAddressesForCompare(
+        Array.isArray(addrList) ? addrList : addrList ? [addrList] : [],
+      );
+
+      return `refreshCombinedDataForScene-${scene}-${addresses.join(',')}-${
+        force ? 'force' : 'noforce'
+      }`;
+    },
+  );
+
+  refresh24hAssets = async ({
+    addresses,
+    force = false,
+    balanceAccounts,
+    reason,
+  }: {
+    addresses?: string[];
+    force?: boolean;
+    balanceAccounts?: AccountsBalanceState['balance'];
+    reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
+  } = {}) => {
+    const top10Addresses =
+      addresses ||
+      (balanceAccounts && Object.keys(balanceAccounts).length
+        ? Object.keys(balanceAccounts)
+        : (await getTop10MyAccounts()).top10Addresses);
+
+    const lastTop10Addresses = this.lastTop10AddressesRef.current;
+    this.lastTop10AddressesRef.current =
+      normalizeAddressesForCompare(top10Addresses);
+    const lastTop10Changed = !isEqual(
+      this.lastTop10AddressesRef.current,
+      lastTop10Addresses,
+    );
+    const finalTop10Addresses = lastTop10Changed
+      ? this.lastTop10AddressesRef.current
+      : top10Addresses;
+
+    return this.refreshCombinedDataForScene('Home', {
+      addresses: finalTop10Addresses,
+      force: force || lastTop10Changed,
+      reason,
+    });
+  };
+
+  startProcessScene24hBalanceEvents = () => {
+    if (this.hasStartedLifecycle) {
+      return;
+    }
+    this.hasStartedLifecycle = true;
+
+    balance24hStore.subscribe(() => {
+      const addresses = this.getState().addresses.Home;
+      if (!addresses.length) {
+        return;
+      }
+
+      apisAccountsBalance.computeTotalBalance(
+        addresses,
+        getBalanceCacheAccounts(),
+      );
+      this.scheduleSceneCombinedDataUpdate('Home');
+    });
+
+    addressBalanceStore.subscribe(() => {
+      const addresses = this.getState().addresses.Home;
+      if (!addresses.length) {
+        return;
+      }
+
+      this.scheduleSceneCombinedDataUpdate('Home');
+    });
+
+    accountsBalanceEvents.on(
+      'SELECTION_CHANGED',
+      ({ nextAddresses, balance }) => {
+        this.refresh24hAssets({
+          addresses: nextAddresses,
+          balanceAccounts: balance,
+          reason: 'selection_changed',
+        });
+      },
+    );
+
+    accountsBalanceEvents.on('BALANCE_CHANGED', ({ addresses, balance }) => {
+      this.refresh24hAssets({
+        addresses,
+        balanceAccounts: balance,
+        reason: 'balance_changed',
+      });
+    });
+  };
+
+  useScene24hBalanceCombinedData = (scene: BalanceScene) => {
+    const combinedData = this.useStore(s => s.combinedData[scene]);
+
+    return { combinedData };
+  };
+
+  useMultiHome24hBalanceCurveChart = () => {
+    const combinedData = this.useStore(
+      useShallow(s => {
+        const homeData = s.combinedData.Home;
+
+        return {
+          rawNetWorth: homeData.rawNetWorth,
+          rawChange: homeData.rawChange,
+          changePercent: homeData.changePercent,
+          isLoss: homeData.isLoss,
+        };
+      }),
+    );
+
+    return { combinedData };
+  };
+
+  useScene24hBalanceMulti24hBalance = (scene: BalanceScene) => {
+    const addresses = this.useStore(s => s.addresses[scene]);
+    const multi24hBalance = useAddress24hBalanceMap();
+
+    const filteredMulti24hBalance = useMemo(() => {
+      const result: Multi24hBalance = {};
+      addresses.forEach(address => {
+        const lowerAddress = address.toLowerCase();
+        if (multi24hBalance[lowerAddress]) {
+          result[lowerAddress] = multi24hBalance[lowerAddress];
+        }
+      });
+      return result;
+    }, [addresses, multi24hBalance]);
+
+    return { multi24hBalance: filteredMulti24hBalance };
+  };
+
+  useSceneIsLoading = (scene: BalanceScene) => {
+    const isLoading = this.useStore(
+      useShallow(s => {
+        return s.sceneLoading[scene] || s.sceneComputing[scene];
+      }),
+    );
+
+    return { isLoading };
+  };
+
+  useSceneIsLoadingNew = (scene: BalanceScene) => {
+    const { addresses, sceneLoading, sceneAddrLoading } = this.useStore(
+      useShallow(s => ({
+        addresses: s.addresses[scene],
+        sceneLoading: s.sceneLoading[scene],
+        sceneAddrLoading: s.sceneAddrLoading,
+      })),
+    );
+    const multi24hBalance = useAddress24hBalanceMap();
+    const balanceMap = addressBalanceStore.useAddressValueMap();
+
+    const isLoadingNew = useMemo(() => {
+      if (addresses.length === 0) {
+        return sceneLoading;
+      }
+
+      const hasAnyCurrentBalance = addresses.some(address => {
+        return !!balanceMap[address.toLowerCase()];
+      });
+      const hasAnyComparableBalance = addresses.some(address => {
+        const lowerAddress = address.toLowerCase();
+        return !!multi24hBalance[lowerAddress] && !!balanceMap[lowerAddress];
+      });
+      const hasAnyAddressLoading = addresses.some(address => {
+        return !!sceneAddrLoading[`${scene}-${address.toLowerCase()}`];
+      });
+
+      return (
+        !hasAnyCurrentBalance &&
+        !hasAnyComparableBalance &&
+        (sceneLoading || hasAnyAddressLoading)
+      );
+    }, [
+      addresses,
+      balanceMap,
+      multi24hBalance,
+      scene,
+      sceneAddrLoading,
+      sceneLoading,
+    ]);
+
+    return { isLoadingNew };
+  };
+
+  useSceneChangeLoading = (scene: BalanceScene, addresses: string[]) => {
+    const normalizedAddresses = useMemo(
+      () =>
+        Array.from(new Set(addresses.map(address => address.toLowerCase()))),
+      [addresses],
+    );
+    const { sceneAddresses, sceneComputing } = this.useStore(
+      useShallow(s => ({
+        sceneAddresses: s.addresses[scene],
+        sceneComputing: s.sceneComputing[scene],
+      })),
+    );
+    const changeFlow = useAddresses24hChangeFlowState(normalizedAddresses, {
+      computingAddresses: sceneComputing ? sceneAddresses : [],
+    });
+
+    return {
+      isLoading: changeFlow.isAnyLoading,
+      loadingAddresses: changeFlow.loadingAddresses,
+    };
+  };
+
+  useScene24hBalanceLightWeightData = (scene: BalanceScene) => {
+    const lightweightData = this.useStore(
+      useShallow(s => {
+        const currentSceneData = s.combinedData[scene];
+
+        return {
+          netWorth: currentSceneData.netWorth,
+          isLoss: currentSceneData.isLoss,
+        };
+      }),
+    );
+
+    return lightweightData;
+  };
+}
+
+const scene24hBalanceStore = new Scene24hBalanceStore();
+
+export type FetchTotalBalanceOptions = {
+  addresses?: string | string[];
+  force?: boolean;
+  reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
+};
+
+export const refresh24hAssets = scene24hBalanceStore.refresh24hAssets;
+export const startProcessScene24hBalanceEvents =
+  scene24hBalanceStore.startProcessScene24hBalanceEvents;
+export const useScene24hBalanceCombinedData =
+  scene24hBalanceStore.useScene24hBalanceCombinedData;
+export const useMultiHome24hBalanceCurveChart =
+  scene24hBalanceStore.useMultiHome24hBalanceCurveChart;
+export const useScene24hBalanceMulti24hBalance =
+  scene24hBalanceStore.useScene24hBalanceMulti24hBalance;
+export const useSceneIsLoading = scene24hBalanceStore.useSceneIsLoading;
+export const useSceneIsLoadingNew = scene24hBalanceStore.useSceneIsLoadingNew;
+export const useSceneChangeLoading = scene24hBalanceStore.useSceneChangeLoading;
+export const useScene24hBalanceLightWeightData =
+  scene24hBalanceStore.useScene24hBalanceLightWeightData;
+
+function computeCombined24hBalanceData(input: {
+  addresses: string[];
+  multi24hBalance: Multi24hBalance;
+  balanceMap: Record<
+    string,
+    {
+      evmBalance: number;
+      totalBalance: number;
+    }
+  >;
+  totalEvmBalance: number;
+  totalBalance: number;
+}) {
+  const { addresses, multi24hBalance, balanceMap } = input;
+
+  const availableCurrentAddresses = addresses.filter(address => {
+    return !!balanceMap[address.toLowerCase()];
+  });
+  const comparableAddresses = addresses.filter(address => {
+    const lowerAddress = address.toLowerCase();
+    return !!multi24hBalance[lowerAddress] && !!balanceMap[lowerAddress];
+  });
+  const list = comparableAddresses.map(address => {
+    return multi24hBalance[address.toLowerCase()];
+  });
+  const totalCurrentBalance = availableCurrentAddresses.reduce(
+    (result, address) => {
+      return result + (balanceMap[address.toLowerCase()]?.totalBalance || 0);
+    },
+    0,
+  );
+  const totalComparableEvmBalance = comparableAddresses.reduce(
+    (result, address) => {
+      return result + (balanceMap[address.toLowerCase()]?.evmBalance || 0);
+    },
+    0,
+  );
+  const total24hBalance = list.reduce((result, item) => {
+    return result + (item?.total_usd_value || 0);
+  }, 0);
+  const canShowCurrentBalance = availableCurrentAddresses.length > 0;
+  const canShowChange = comparableAddresses.length > 0;
+  const assetsChange = canShowChange
+    ? totalComparableEvmBalance - total24hBalance
+    : 0;
+  const rawNetWorth = canShowCurrentBalance ? totalCurrentBalance : 0;
+
+  return {
+    list,
+    rawNetWorth,
+    netWorth: formatSmallUsdValue(totalCurrentBalance || 0),
+    rawChange: assetsChange,
+    change: `${formatUsdValue(Math.abs(assetsChange))}`,
+    changePercent: canShowChange
+      ? total24hBalance !== 0
+        ? `${Math.abs((assetsChange * 100) / total24hBalance).toFixed(2)}%`
+        : `${totalComparableEvmBalance === 0 ? '0' : '100.00'}%`
+      : '',
+    isLoss: canShowChange ? assetsChange < 0 : false,
+    isEmptyAssets:
+      canShowCurrentBalance &&
+      totalCurrentBalance === 0 &&
+      (!canShowChange || total24hBalance === 0),
+  };
+}

@@ -48,9 +48,9 @@ import {
   useScene24hBalanceCombinedData,
   useScene24hBalanceMulti24hBalance,
   useSceneIsLoading,
-} from '@/hooks/useScene24hBalance';
+} from '@/store/balance24h';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { computeBalanceChange } from '@/core/apis/balance';
 
@@ -63,7 +63,7 @@ function MultiPinnedAddressList({
 }) {
   const { styles } = useTheme2024({ getStyle });
 
-  const balanceMap = balanceStore(s => s.balanceMap);
+  const balanceMap = addressBalanceStore.useAddressValueMap();
   const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
 
   const addressListData = useMemo(() => {

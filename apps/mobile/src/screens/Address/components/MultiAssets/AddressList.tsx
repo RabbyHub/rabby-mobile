@@ -18,9 +18,9 @@ import { ManageSetting } from '../ManageSetting';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
-import { useScene24hBalanceMulti24hBalance } from '@/hooks/useScene24hBalance';
+import { useScene24hBalanceMulti24hBalance } from '@/store/balance24h';
 import { computeBalanceChange } from '@/core/apis/balance';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { Text } from '@/components/Typography';
 
 const SPACING_HEIGHT = 8;
@@ -44,7 +44,7 @@ const AddressList = ({
   const { myTop10Accounts, myTop10Records, notMatteredAccounts } =
     useAccountInfo();
 
-  const balanceMap = balanceStore(s => s.balanceMap);
+  const balanceMap = addressBalanceStore.useAddressValueMap();
 
   const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
 

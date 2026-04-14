@@ -14,6 +14,7 @@ import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
+import { devLog } from '@/utils/logger';
 import {
   createGetStyles2024,
   makeDebugBorder,
@@ -48,14 +49,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import {
+  useSceneChangeLoading,
   useScene24hBalanceCombinedData,
   useSceneIsLoading,
-} from '@/hooks/useScene24hBalance';
-import { useLoadBalanceFromApiStage } from '@/hooks/useAccountsBalance';
+} from '@/store/balance24h';
+import { balanceAccountsStore } from '@/hooks/useAccountsBalance';
 import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
-import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
+import { useAccountStore } from '@/store/account';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -63,6 +65,7 @@ import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAsset
 import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
+import { useAccountInfo } from '../../Address/components/MultiAssets/hooks';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -78,7 +81,7 @@ export function TabsTopHeader(): JSX.Element {
     apisHomeTabIndex.svTabIndexDecimal,
   );
   const showNetWorth = tabIndexFromSv > 0.7;
-  const { isLoading: loading } = useSceneIsLoading('Home');
+  const { isLoading: scene24hLoading } = useSceneIsLoading('Home');
   const { combinedData: data } = useScene24hBalanceCombinedData('Home');
 
   const { navigation } = useSafeSetNavigationOptions();
@@ -98,34 +101,68 @@ export function TabsTopHeader(): JSX.Element {
     }
   });
   const { currency } = useCurrency();
+  const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
+  const hasFetchedAccounts = useAccountStore(s => s.hasFetchedAccounts);
+  const isFetchingAccounts = useAccountStore(s => s.isFetchingAccounts);
   const { myTop10Addresses } = useAccountInfo();
-  const { loadBalanceFromApiStage } = useLoadBalanceFromApiStage();
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const isTop10BalanceLoading = balanceStore(s => {
-    return s.getIsTop10BalanceLoading(myTop10Addresses, s.isLoadingByAddress)
-      .isTop10BalanceLoading;
-  });
-  const hasCompleteCurrentBalance = useMemo(() => {
-    if (!myTop10Addresses.length) {
-      return false;
-    }
-    return myTop10Addresses.every(address => {
-      return !!balanceMap[address.toLowerCase()];
-    });
-  }, [balanceMap, myTop10Addresses]);
+  const displayAddresses = useMemo(() => {
+    return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
+  }, [myTop10Addresses, selectedAddresses]);
+  const top10BalanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(displayAddresses);
+  const top10BalanceFlow = useMemo(() => {
+    const addresses = top10BalanceSnapshots.map(item => item.address);
+    const loadingAddresses = top10BalanceSnapshots
+      .filter(item => item.flow.isLoading)
+      .map(item => item.address);
+    const missingAddresses = top10BalanceSnapshots
+      .filter(item => !item.flow.hasValue)
+      .map(item => item.address);
+
+    return {
+      addresses,
+      loadingAddresses,
+      missingAddresses,
+      hasAnyValue: top10BalanceSnapshots.some(item => item.flow.hasValue),
+      isAnyLoading: loadingAddresses.length > 0,
+      isAnyLoadingWithoutValue: top10BalanceSnapshots.some(
+        item => item.flow.isLoadingWithoutValue,
+      ),
+      hasAllValues:
+        top10BalanceSnapshots.length > 0 && missingAddresses.length === 0,
+    };
+  }, [top10BalanceSnapshots]);
+  const hasLoadedAllTop10Balances =
+    displayAddresses.length > 0 && top10BalanceFlow.hasAllValues;
+  const isPendingDisplayAddresses =
+    displayAddresses.length === 0 &&
+    (!hasFetchedAccounts || isFetchingAccounts);
   const showBalanceLoadingWithoutLocal =
-    (isTop10BalanceLoading || loadBalanceFromApiStage === 'loading') &&
-    !hasCompleteCurrentBalance;
+    isPendingDisplayAddresses ||
+    (displayAddresses.length > 0 && !hasLoadedAllTop10Balances);
 
   const totalBalance = useMemo(() => {
-    if (!myTop10Addresses.length) {
+    if (!top10BalanceSnapshots.length) {
       return 0;
     }
-    return myTop10Addresses.reduce((acc, address) => {
-      const balance = balanceMap[address.toLowerCase()];
-      return acc + (balance?.totalBalance || 0);
+    return top10BalanceSnapshots.reduce((acc, item) => {
+      return acc + (item.value?.totalBalance || 0);
     }, 0);
-  }, [balanceMap, myTop10Addresses]);
+  }, [top10BalanceSnapshots]);
+  const balanceTraceSnapshot = useMemo(() => {
+    return top10BalanceSnapshots.map(item => {
+      return {
+        address: item.address,
+        hasValue: item.flow.hasValue,
+        sourceOfCurrentValue: item.sourceOfCurrentValue || null,
+        isHydrating: item.flow.isHydrating,
+        isFetchingRemote: item.flow.isFetchingRemote,
+        persistStatus: item.persistStatus,
+        totalBalance: item.value?.totalBalance ?? null,
+        evmBalance: item.value?.evmBalance ?? null,
+      };
+    });
+  }, [top10BalanceSnapshots]);
 
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
@@ -165,15 +202,32 @@ export function TabsTopHeader(): JSX.Element {
     }
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
+  const { isLoading: sceneChangeLoading } = useSceneChangeLoading(
+    'Home',
+    displayAddresses,
+  );
+  const showChangeLoading = useMemo(() => {
+    return (
+      !showBalanceLoadingWithoutLocal &&
+      !changePercent &&
+      sceneChangeLoading &&
+      displayAddresses.length > 0
+    );
+  }, [
+    changePercent,
+    displayAddresses.length,
+    sceneChangeLoading,
+    showBalanceLoadingWithoutLocal,
+  ]);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
-  const previousLoading = usePrevious(loading);
+  const previousLoading = usePrevious(scene24hLoading);
   useEffect(() => {
     if (data.isLoss) {
       return;
     }
-    if (!loading && previousLoading) {
+    if (!scene24hLoading && previousLoading) {
       gasketWebViewRef.current?.sendMessage?.({
         type: 'GASKETVIEW:TOGGLE_LOADING',
         info: {
@@ -181,7 +235,39 @@ export function TabsTopHeader(): JSX.Element {
         },
       });
     }
-  }, [data.isLoss, loading, previousLoading]);
+  }, [data.isLoss, previousLoading, scene24hLoading]);
+
+  useEffect(() => {
+    devLog('HOME_BALANCE_TRACE', {
+      selectedAddresses,
+      myTop10Addresses,
+      displayAddresses,
+      hasFetchedAccounts,
+      isFetchingAccounts,
+      isPendingDisplayAddresses,
+      top10BalanceFlow,
+      showBalanceLoadingWithoutLocal,
+      totalBalance,
+      scene24hLoading,
+      sceneChangeLoading,
+      changePercent,
+      balances: balanceTraceSnapshot,
+    });
+  }, [
+    balanceTraceSnapshot,
+    changePercent,
+    displayAddresses,
+    hasFetchedAccounts,
+    isFetchingAccounts,
+    isPendingDisplayAddresses,
+    myTop10Addresses,
+    sceneChangeLoading,
+    scene24hLoading,
+    selectedAddresses,
+    showBalanceLoadingWithoutLocal,
+    top10BalanceFlow,
+    totalBalance,
+  ]);
 
   const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
 
@@ -220,8 +306,13 @@ export function TabsTopHeader(): JSX.Element {
               {changePercent}
             </Text>
           ) : null}
+          {showChangeLoading ? (
+            <View style={styles.changeLoadingBox}>
+              <LoadingCircle />
+            </View>
+          ) : null}
           {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          isTop10BalanceLoading ? (
+          showBalanceLoadingWithoutLocal ? (
             <LoadingCircle />
           ) : null}
         </Pressable>
@@ -254,7 +345,7 @@ export function TabsTopHeader(): JSX.Element {
             )}
           </TouchableOpacity>
           {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          isTop10BalanceLoading ? (
+          showBalanceLoadingWithoutLocal ? (
             <LoadingCircle />
           ) : null}
         </View>
@@ -353,6 +444,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
+  },
+  changeLoadingBox: {
+    minWidth: 20,
+    minHeight: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   rightArea: {
     flexDirection: 'row',

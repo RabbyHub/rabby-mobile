@@ -54,10 +54,8 @@ describe('core/apis/balance', () => {
     jest.doMock('@/store/balance', () => ({
       __esModule: true,
       default: {
-        getState: jest.fn(() => ({
-          balanceMap: {},
-          chainUSDMap: {},
-        })),
+        getAddressValue: jest.fn(() => undefined),
+        getAddressChainList: jest.fn(() => []),
       },
     }));
     jest.doMock('@/utils/testnetAddressBalanceCache', () => ({

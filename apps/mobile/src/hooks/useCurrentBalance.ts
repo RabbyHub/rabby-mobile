@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { perfEvents } from '@/core/utils/perf';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import balanceStore, { IBalanceData } from '@/store/balance';
+import addressBalanceStore, { IBalanceData } from '@/store/balance';
 
 export type BalanceState = {
   balance: number | null;
@@ -28,9 +28,7 @@ const triggerUpdate = ({
 export const apisAddressBalance = {
   triggerUpdate,
   getBalanceState(address: string) {
-    return mapBalanceState(
-      balanceStore.getState()?.balanceMap?.[address.toLowerCase()],
-    );
+    return mapBalanceState(addressBalanceStore.getAddressValue(address));
   },
 };
 
@@ -44,11 +42,11 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
     try {
       const lowerAddress = address.toLowerCase();
       const prevBalanceState = mapBalanceState(
-        balanceStore.getState().balanceMap[lowerAddress],
+        addressBalanceStore.getAddressValue(lowerAddress),
       );
-      await balanceStore.getState().getTotalBalance(address, force);
+      await addressBalanceStore.getTotalBalance(address, force);
       const nextBalanceState = mapBalanceState(
-        balanceStore.getState().balanceMap[lowerAddress],
+        addressBalanceStore.getAddressValue(lowerAddress),
       );
 
       if (!isBalanceStateEqual(prevBalanceState, nextBalanceState)) {
@@ -86,21 +84,17 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
 );
 
 export function useIsLoadingBalance(address?: string) {
-  const balanceLoading = balanceStore(s => {
-    if (!address) return false;
-    return s.isLoadingByAddress[address.toLowerCase()] || false;
-  });
+  const { isLoadingWithoutValue } =
+    addressBalanceStore.useAddressFlowState(address);
+  const balanceLoading = isLoadingWithoutValue;
 
   return { balanceLoading };
 }
 
 export function useAddressBalance(address?: string) {
-  const balance = balanceStore(s =>
-    address ? s.balanceMap[address.toLowerCase()]?.totalBalance ?? null : null,
-  );
-  const evmBalance = balanceStore(s =>
-    address ? s.balanceMap[address.toLowerCase()]?.evmBalance ?? null : null,
-  );
+  const balanceData = addressBalanceStore.useAddressValue(address);
+  const balance = balanceData?.totalBalance ?? null;
+  const evmBalance = balanceData?.evmBalance ?? null;
 
   return { balance, evmBalance };
 }

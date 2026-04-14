@@ -235,6 +235,7 @@ const mergedConfig = compose(
 module.exports = withRozenite(mergedConfig, {
   enabled: process.env.WITH_ROZENITE !== 'false',
   include: [
+    '@rabby-wallet/rozenite-resource-flow-plugin',
     '@rozenite/react-navigation-plugin',
     '@rozenite/network-activity-plugin',
     '@rozenite/storage-plugin',

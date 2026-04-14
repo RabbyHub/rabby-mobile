@@ -1,18 +1,35 @@
 describe('store/balance24h', () => {
   const mockGetBalance24hCache = jest.fn();
   const mockFetch24hBalance = jest.fn();
-  const mockPersist24hBalanceCacheAsync = jest.fn();
+  const mockSetBalance24hCache = jest.fn();
+  const mockComputeTotalBalance = jest.fn();
+  const mockGetBalanceCacheAccounts = jest.fn();
+  const mockGetTop10MyAccounts = jest.fn();
+  const mockPerfEmit = jest.fn();
+  let mockBalanceValueMap: Record<
+    string,
+    {
+      evmBalance: number;
+      totalBalance: number;
+    }
+  >;
+
+  const flushResourceFlowPersist = async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  };
 
   let balance24hModule: typeof import('./balance24h');
 
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+    mockBalanceValueMap = {};
 
     jest.doMock('@/utils/24hBalanceCache', () => ({
       getBalance24hCache: mockGetBalance24hCache,
       fetch24hBalance: mockFetch24hBalance,
-      persist24hBalanceCacheAsync: mockPersist24hBalanceCacheAsync,
+      setBalance24hCache: mockSetBalance24hCache,
     }));
     jest.doMock('@/core/utils/reexports', () => {
       const { create } = require('zustand');
@@ -20,6 +37,46 @@ describe('store/balance24h', () => {
         zCreate: create,
       };
     });
+    jest.doMock('p-queue', () => {
+      return jest.fn().mockImplementation(() => ({
+        add: (fn: () => Promise<unknown>) => fn(),
+        clear: jest.fn(),
+        onIdle: jest.fn(() => Promise.resolve()),
+      }));
+    });
+    jest.doMock('@/hooks/useCurve', () => ({
+      formatSmallUsdValue: jest.fn(() => '$123'),
+    }));
+    jest.doMock('@/utils/number', () => ({
+      formatUsdValue: jest.fn(() => '$1'),
+    }));
+    jest.doMock('@/hooks/useAccountsBalance', () => ({
+      accountsBalanceEvents: {
+        on: jest.fn(),
+      },
+      apisAccountsBalance: {
+        computeTotalBalance: (...args: unknown[]) =>
+          mockComputeTotalBalance(...args),
+      },
+      getBalanceCacheAccounts: () => mockGetBalanceCacheAccounts(),
+    }));
+    jest.doMock('@/core/apis/account', () => ({
+      getTop10MyAccounts: (...args: unknown[]) =>
+        mockGetTop10MyAccounts(...args),
+    }));
+    jest.doMock('@/core/utils/perf', () => ({
+      perfEvents: {
+        emit: (...args: unknown[]) => mockPerfEmit(...args),
+      },
+    }));
+    jest.doMock('./balance', () => ({
+      __esModule: true,
+      default: {
+        getAddressValueMap: jest.fn(() => mockBalanceValueMap),
+        useAddressValueMap: jest.fn(() => mockBalanceValueMap),
+        subscribe: jest.fn(),
+      },
+    }));
 
     balance24hModule = require('./balance24h');
   });
@@ -59,7 +116,13 @@ describe('store/balance24h', () => {
       updateTime: 456,
     });
     expect(mockFetch24hBalance).not.toHaveBeenCalled();
-    expect(mockPersist24hBalanceCacheAsync).not.toHaveBeenCalled();
+    expect(mockSetBalance24hCache).not.toHaveBeenCalled();
+    expect(
+      balance24hModule.getAddress24hBalanceResourceState('0xabcd'),
+    ).toMatchObject({
+      sourceOfCurrentValue: 'hydrate',
+      hasValue: true,
+    });
   });
 
   it('updates in-memory cache before scheduling persistence when fetching fresh data', async () => {
@@ -72,7 +135,7 @@ describe('store/balance24h', () => {
     let observedValueDuringPersist:
       | ReturnType<typeof balance24hModule.getAddress24hBalance>
       | undefined;
-    mockPersist24hBalanceCacheAsync.mockImplementation((address: string) => {
+    mockSetBalance24hCache.mockImplementation((address: string) => {
       observedValueDuringPersist =
         balance24hModule.getAddress24hBalance(address);
     });
@@ -91,13 +154,23 @@ describe('store/balance24h', () => {
       total_usd_value: 88,
       updateTime: 789,
     });
+
+    await flushResourceFlowPersist();
+
     expect(observedValueDuringPersist).toEqual({
       total_usd_value: 88,
       updateTime: 789,
     });
-    expect(mockPersist24hBalanceCacheAsync).toHaveBeenCalledWith('0xabcd', {
+    expect(mockSetBalance24hCache).toHaveBeenCalledWith('0xabcd', {
       data: { total_usd_value: 88 },
       updateTime: 789,
+    });
+    expect(
+      balance24hModule.getAddress24hBalanceResourceState('0xabcd'),
+    ).toMatchObject({
+      sourceOfCurrentValue: 'remote',
+      persistStatus: 'success',
+      hasValue: true,
     });
   });
 });

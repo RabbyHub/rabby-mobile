@@ -31,11 +31,12 @@ import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { create } from 'zustand';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import {
   useMultiHome24hBalanceCurveChart,
-  useSceneIsLoadingNew,
-} from '@/hooks/useScene24hBalance';
+  useSceneIsLoading,
+} from '@/store/balance24h';
+import { balanceAccountsStore } from '@/hooks/useAccountsBalance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
@@ -137,16 +138,20 @@ export const MultiChart = memo(function MultiChart({
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
   const { matteredAccountCount, myTop10Addresses } = useAccountInfo();
-  const balanceMap = balanceStore(s => s.balanceMap);
+  const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
+  const displayAddresses = useMemo(() => {
+    return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
+  }, [myTop10Addresses, selectedAddresses]);
+  const balanceMap = addressBalanceStore.useAddressValueMap();
   const totalBalance = useMemo(() => {
-    if (!myTop10Addresses.length) {
+    if (!displayAddresses.length) {
       return 0;
     }
-    return myTop10Addresses.reduce((acc, address) => {
+    return displayAddresses.reduce((acc, address) => {
       const balance = balanceMap[address.toLowerCase()];
       return acc + (balance?.totalBalance || 0);
     }, 0);
-  }, [balanceMap, myTop10Addresses]);
+  }, [balanceMap, displayAddresses]);
 
   const { dayCurveData: dayCurveData } = useMultiDayCurve();
 
@@ -211,8 +216,29 @@ const ChartHeader = React.memo(
     const { currency, formatCurrentCurrency } = useCurrency();
     const debouncedRawNetWorth = useDebouncedValue(rawNetWorth, 300);
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
-
-    const { isLoadingNew: loading } = useSceneIsLoadingNew('Home');
+    const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
+    const { myTop10Addresses } = useAccountInfo();
+    const displayAddresses = useMemo(() => {
+      return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
+    }, [myTop10Addresses, selectedAddresses]);
+    const balanceMap = addressBalanceStore.useAddressValueMap();
+    const top10BalanceFlow =
+      addressBalanceStore.useAddressesFlowState(displayAddresses);
+    const { isLoading: scene24hLoading } = useSceneIsLoading('Home');
+    const showNetWorthLoading = useMemo(() => {
+      return (
+        !top10BalanceFlow.hasAnyValue &&
+        top10BalanceFlow.isAnyLoadingWithoutValue
+      );
+    }, [
+      top10BalanceFlow.hasAnyValue,
+      top10BalanceFlow.isAnyLoadingWithoutValue,
+    ]);
+    const showChangeLoading = useMemo(() => {
+      return (
+        showNetWorthLoading || (!Boolean(_changePercent) && scene24hLoading)
+      );
+    }, [_changePercent, scene24hLoading, showNetWorthLoading]);
 
     const netWorth = useMemo(() => {
       return formatSmallCurrencyValue(debouncedRawNetWorth, { currency });
@@ -343,7 +369,7 @@ const ChartHeader = React.memo(
           <AnimateableText
             style={[
               styles.netWorth,
-              loading && styles.hidden,
+              showNetWorthLoading && styles.hidden,
               // 用hide原因是：AnimateableText持续订阅netWorthAnimatedProps的变化，会出现订阅不到值或值不更新的问题
               hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
             ]}
@@ -353,7 +379,10 @@ const ChartHeader = React.memo(
           <Skeleton
             width={181}
             height={44}
-            style={[styles.skeletonNetWorth, !loading && styles.hidden]}
+            style={[
+              styles.skeletonNetWorth,
+              !showNetWorthLoading && styles.hidden,
+            ]}
             LinearGradientComponent={LoadingLinear}
           />
 
@@ -367,7 +396,7 @@ const ChartHeader = React.memo(
             <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
           </View>
         </View>
-        {loading ? (
+        {showChangeLoading ? (
           <Skeleton
             width={100}
             height={22}

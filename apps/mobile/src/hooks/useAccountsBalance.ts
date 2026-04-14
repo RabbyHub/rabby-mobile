@@ -7,7 +7,7 @@ import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { filterOutTop10Accounts, getAccountList } from '@/core/apis/account';
 import { Account } from '@/core/services/preference';
-import balanceStore, { IBalanceData } from '@/store/balance';
+import addressBalanceStore, { IBalanceData } from '@/store/balance';
 import { perfEvents } from '@/core/utils/perf';
 import { makeJsEEClass } from '@/core/services/_utils';
 import accountStore from '@/store/account';
@@ -87,7 +87,7 @@ export const syncBalanceAccountStore = () => {
   if (!state.selectedAddresses.length) return;
   const nextBalance = buildBalanceAccountsFromSelectedState(
     state.balance,
-    balanceStore.getState().balanceMap,
+    addressBalanceStore.getAddressValueMap(),
     state.selectedAddresses,
   );
 
@@ -197,18 +197,27 @@ function buildBalanceAccountsFromSelectedState(
   }, {} as AccountsBalanceState['balance']);
 }
 
+function pickSelectedAccountsFromSortedAccounts(sortedAccounts: Account[]) {
+  const { top10Accounts, top10Addresses } = filterOutTop10Accounts(
+    sortedAccounts,
+    {
+      gatherSameAddress: false,
+    },
+  );
+
+  return {
+    selectedAccounts: unionBy(top10Accounts, account =>
+      account.address.toLowerCase(),
+    ),
+    selectedAddresses: top10Addresses.map(address => address.toLowerCase()),
+  };
+}
+
 async function getMatteredAccountsSnapshot() {
   const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
   const matteredAccountLength = sortedAccounts.length;
-  const { top10Accounts } = filterOutTop10Accounts(sortedAccounts, {
-    gatherSameAddress: false,
-  });
-  const selectedAccounts = unionBy(top10Accounts, account =>
-    account.address.toLowerCase(),
-  );
-  const selectedAddresses = selectedAccounts.map(account =>
-    account.address.toLowerCase(),
-  );
+  const { selectedAccounts, selectedAddresses } =
+    pickSelectedAccountsFromSortedAccounts(sortedAccounts);
 
   return {
     selectedAccounts,
@@ -218,9 +227,7 @@ async function getMatteredAccountsSnapshot() {
 }
 
 async function warmupSelectedAccountsBalance(selectedAccounts: Account[]) {
-  await balanceStore
-    .getState()
-    .hydrateCachedBalancesForAccounts(selectedAccounts);
+  await addressBalanceStore.hydrateCachedBalancesForAccounts(selectedAccounts);
 }
 
 export function startProcessAccountBalanceEvents() {
@@ -228,13 +235,13 @@ export function startProcessAccountBalanceEvents() {
     syncBalanceAccountStore();
   });
 
-  balanceStore.subscribe(state => {
+  addressBalanceStore.subscribe(state => {
     const current = balanceAccountsStore.getState();
     if (!current.selectedAddresses.length) return;
 
     const nextBalance = buildBalanceAccountsFromSelectedState(
       current.balance,
-      state.balanceMap,
+      addressBalanceStore.getAddressValueMap(),
       current.selectedAddresses,
     );
 
@@ -256,7 +263,7 @@ export function startProcessAccountBalanceEvents() {
     await warmupSelectedAccountsBalance(selectedAccounts);
     const nextBalance = buildBalanceAccountsFromList(
       selectedAccounts,
-      balanceStore.getState().balanceMap,
+      addressBalanceStore.getAddressValueMap(),
     );
 
     setAccountsBalanceState(
@@ -309,9 +316,10 @@ export function useBalanceAccounts() {
 }
 
 export function useLoadBalanceFromApiStage() {
-  const isLoading = balanceStore(s =>
-    Object.values(s.isLoadingByAddress).some(Boolean),
-  );
+  const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
+  const balanceFlow =
+    addressBalanceStore.useAddressesFlowState(selectedAddresses);
+  const isLoading = balanceFlow.isAnyLoadingWithoutValue;
   const loadBalanceFromApiStage: LoadBalanceStage = isLoading
     ? 'loading'
     : 'finished';
@@ -350,30 +358,27 @@ export const fetchTotalBalance = makeSWRKeyAsyncFunc(
       let caredAccounts = [] as Account[];
       const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
       caredAccounts = sortedAccounts;
-      const uniqueList = unionBy(caredAccounts, account =>
-        account.address.toLowerCase(),
-      );
-      const selectedAccounts = uniqueList.slice(0, 10);
-      const selectedAddresses = selectedAccounts.map(account =>
-        account.address.toLowerCase(),
-      );
+      const { selectedAccounts, selectedAddresses } =
+        pickSelectedAccountsFromSortedAccounts(caredAccounts);
 
       if (selectedAccounts.length) {
         if (fetchType === 'from_api') {
-          await balanceStore
-            .getState()
-            .batchGetTotalBalance(selectedAddresses, true);
+          await addressBalanceStore.batchGetTotalBalance(
+            selectedAddresses,
+            true,
+          );
         } else {
-          await balanceStore
-            .getState()
-            .batchGetTotalBalance(selectedAddresses, false);
+          await addressBalanceStore.batchGetTotalBalance(
+            selectedAddresses,
+            false,
+          );
         }
       }
 
-      const balanceMap = balanceStore.getState().balanceMap;
+      const balanceValueMap = addressBalanceStore.getAddressValueMap();
       Object.assign(
         retBalances,
-        buildBalanceAccountsFromList(selectedAccounts, balanceMap),
+        buildBalanceAccountsFromList(selectedAccounts, balanceValueMap),
       );
       setAccountsBalanceState(
         {

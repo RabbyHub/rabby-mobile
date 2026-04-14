@@ -13,7 +13,7 @@ import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
 import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { contactService, keyringService, preferenceService } from '../services';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 
 import { getAddressCacheBalance } from './balance';
 import { requestKeyring } from './keyring';
@@ -121,7 +121,7 @@ const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
 async function fetchAllAccountsProcess() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
   try {
-    const balanceMap = balanceStore.getState().balanceMap;
+    const balanceMap = addressBalanceStore.getAddressValueMap();
     nextAccounts = await keyringService
       .getAllVisibleAccountsArray()
       .then(list => {

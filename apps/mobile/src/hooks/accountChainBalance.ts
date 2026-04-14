@@ -11,7 +11,7 @@ import {
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { zCreate } from '@/core/utils/reexports';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
@@ -85,14 +85,12 @@ function getChainListByAddress(address?: string) {
     address?.toLowerCase() ||
     addrMatteredBalancesStore.getState().currentAddress;
   if (!addr) return [];
-  return balanceStore.getState().chainUSDMap[addr] || [];
+  return addressBalanceStore.getAddressChainList(addr);
 }
 
 export function useChainBalances() {
   const currentAddress = addrMatteredBalancesStore(s => s.currentAddress);
-  const chainList = balanceStore(s =>
-    currentAddress ? s.chainUSDMap[currentAddress] : undefined,
-  );
+  const chainList = addressBalanceStore.useAddressChainList(currentAddress);
   const matteredChainBalances = useMemo(
     () => buildMatteredChainBalances(chainList || []),
     [chainList],
@@ -108,7 +106,9 @@ export function useChainBalances() {
 const fetchAllAddressesChainBalance = async (): Promise<{
   matteredChainBalances: MatteredChainBalances;
 }> => {
-  const chainList = mergeChainListsById(balanceStore.getState().chainUSDMap);
+  const chainList = mergeChainListsById(
+    addressBalanceStore.getAddressChainListMap(),
+  );
   const matteredChainBalances = buildMatteredChainBalances(chainList);
   return {
     matteredChainBalances,
@@ -198,7 +198,7 @@ export function useLoadMatteredChainBalances({
 }
 
 export function useMatteredChainBalancesAll() {
-  const chainUSDMap = balanceStore(s => s.chainUSDMap);
+  const chainUSDMap = addressBalanceStore.useAddressChainListMap();
   const matteredChainBalancesAll = useMemo(
     () => buildMatteredChainBalances(mergeChainListsById(chainUSDMap)),
     [chainUSDMap],

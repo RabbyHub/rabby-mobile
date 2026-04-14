@@ -1,6 +1,6 @@
 import { openapi } from '@/core/request';
 import { keyringService } from '@/core/services';
-import { zCreate } from '@/core/utils/reexports';
+import { ORM_TABLE_NAMES } from '@/databases/constant';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { syncBalance } from '@/databases/sync/assets';
@@ -8,8 +8,11 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
-import { useAppChainStore } from './appchain';
+import { useMemo } from 'react';
 import type { Account } from '@/core/services/preference';
+import { ResourceBaseStore, ResourceFlowState } from './_resourceBase';
+import { ResourceLocalTarget } from './_resourceFlowDebug';
+import { useAppChainStore } from './appchain';
 
 export interface CURVE_STEP_ITEM {
   timestamp: number;
@@ -21,72 +24,274 @@ export interface IBalanceData {
   totalBalance: number;
 }
 
-interface BalanceState {
-  balanceMap: Record<string, IBalanceData>;
-  chainUSDMap: Record<string, ChainWithBalance[]>;
-  isLoadingByAddress: Record<string, boolean>;
-  initStore(): void;
-  hydrateCachedBalancesForAccounts(
-    accounts: Array<Pick<Account, 'address' | 'type'>>,
-  ): Promise<void>;
-  batchGetTotalBalance: (
-    top10Addresses: string[],
-    force?: boolean,
-  ) => Promise<void>;
-  getTotalBalance: (address: string, force?: boolean) => Promise<void>;
-  // balance24HMap: Record<string, number>;
-  // isLoadingByAddress: Record<string, boolean>;
-  // curveMap: Record<string, CURVE_STEP_ITEM[]>;
-  // tokenUSDMapByChain: Record<string, Record<string, number>>;
-  // defiUSDMapByChain: Record<string, Record<string, number>>;
-  getIsTop10BalanceLoading: (
-    myTop10Addresses: string[],
-    isLoadingByAddress?: BalanceState['isLoadingByAddress'],
-  ) => {
-    isTop10BalanceLoading: boolean;
-  };
-}
+type AddressBalanceResourceValue = IBalanceData & {
+  chainList: ChainWithBalance[];
+  isCore: boolean;
+};
 
 const getTotalBalanceQueue = new PQueue({
   interval: 1000,
   intervalCap: 10,
 });
 
-const balanceStore = zCreate<BalanceState>(set => ({
-  balanceMap: {},
-  chainUSDMap: {},
-  isLoadingByAddress: {},
-  // balance24HMap: {},
-  // curveMap: {},
-  // tokenUSDMapByChain: {},
-  // defiUSDMapByChain: {},
+const buildBalanceLocalTargets = (address: string): ResourceLocalTarget[] => [
+  {
+    kind: 'sqlite',
+    table: ORM_TABLE_NAMES.cache_balance,
+    where: {
+      owner_addr: address,
+    },
+  },
+];
 
-  async initStore() {
-    // 在 App 启动时执行，初始化冷备数据
-    const balanceMap: Record<string, IBalanceData> = {};
-    const chainUSDMap: Record<string, ChainWithBalance[]> = {};
+const buildPersistedBalanceValue = (
+  balance: EvmTotalBalanceResponse,
+  appChainUsdValue: number,
+  isCore: boolean,
+): AddressBalanceResourceValue => {
+  const evmBalance = balance.evm_usd_value || 0;
 
-    const res = await BalanceEntity.queryAllBalance();
+  return {
+    evmBalance,
+    totalBalance: evmBalance + appChainUsdValue,
+    chainList: balance.chain_list,
+    isCore,
+  };
+};
+
+const buildRemoteBalancePayload = (
+  balance: EvmTotalBalanceResponse,
+  appChainUsdValue: number,
+  isCore: boolean,
+) => {
+  const evmUsdValue = balance.total_usd_value;
+  const formatBalance: EvmTotalBalanceResponse = {
+    ...balance,
+    evm_usd_value: evmUsdValue,
+    total_usd_value: evmUsdValue + appChainUsdValue,
+  };
+
+  return {
+    formatBalance,
+    value: {
+      evmBalance: formatBalance.evm_usd_value || 0,
+      totalBalance: formatBalance.total_usd_value,
+      chainList: formatBalance.chain_list,
+      isCore,
+    } satisfies AddressBalanceResourceValue,
+  };
+};
+
+const getAppChainUsdValue = (address: string) =>
+  useAppChainStore.getState().getAppChainTotalUsdValue(address);
+
+const buildCoreAddressSet = <
+  T extends {
+    address: string;
+    type: string;
+  },
+>(
+  accounts: T[],
+) =>
+  new Set(
+    accounts
+      .filter(item => CORE_KEYRING_TYPES.includes(item.type as any))
+      .map(item => item.address.toLowerCase()),
+  );
+export type AddressBalanceFlowState = ResourceFlowState;
+
+export type AddressBalancesFlowState = {
+  addresses: string[];
+  loadingAddresses: string[];
+  missingAddresses: string[];
+  hasAnyValue: boolean;
+  isAnyLoading: boolean;
+  isAnyLoadingWithoutValue: boolean;
+  hasAllValues: boolean;
+};
+
+export type AddressBalanceSnapshot = {
+  address: string;
+  value?: AddressBalanceResourceValue;
+  flow: ResourceFlowState;
+  sourceOfCurrentValue?: 'hydrate' | 'remote';
+  persistStatus: ResourceFlowState['persistStatus'];
+};
+
+class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue> {
+  constructor() {
+    super('addressBalance');
+  }
+
+  private normalizeAddress(address?: string) {
+    return address?.toLowerCase();
+  }
+
+  private toAddressFlowState(addresses: string[]) {
+    const flow = this.getFamilyFlowState(addresses);
+
+    return {
+      addresses: flow.resourceKeys,
+      loadingAddresses: flow.loadingResourceKeys,
+      missingAddresses: flow.missingResourceKeys,
+      hasAnyValue: flow.hasAnyValue,
+      isAnyLoading: flow.isAnyLoading,
+      isAnyLoadingWithoutValue: flow.isAnyLoadingWithoutValue,
+      hasAllValues: flow.hasAllValues,
+    } satisfies AddressBalancesFlowState;
+  }
+
+  getAddressResourceState = (address?: string) => {
+    return this.getMeta(this.normalizeAddress(address));
+  };
+
+  getAddressValue = (address?: string) => {
+    return this.getValue(this.normalizeAddress(address));
+  };
+
+  getAddressValueMap = () => this.getValueMap();
+
+  getAddressMetaMap = () => this.getMetaMap();
+
+  getAddressChainList = (address?: string) => {
+    return this.getAddressValue(address)?.chainList || [];
+  };
+
+  getAddressChainListMap = () => {
+    const valueMap = this.getAddressValueMap();
+    return Object.keys(valueMap).reduce((acc, address) => {
+      acc[address] = valueMap[address]?.chainList || [];
+      return acc;
+    }, {} as Record<string, ChainWithBalance[]>);
+  };
+
+  useAddressResourceState = (address?: string) => {
+    return this.useMeta(this.normalizeAddress(address) || '');
+  };
+
+  useAddressValue = (address?: string) => {
+    return this.useValue(this.normalizeAddress(address) || '');
+  };
+
+  useAddressValueMap = () => this.useValueMap();
+
+  useAddressMetaMap = () => this.useMetaMap();
+
+  useAddressChainList = (address?: string) => {
+    const value = this.useAddressValue(address);
+
+    return value?.chainList;
+  };
+
+  useAddressChainListMap = () => {
+    const valueMap = this.useAddressValueMap();
+
+    return useMemo(() => {
+      return Object.keys(valueMap).reduce((acc, address) => {
+        acc[address] = valueMap[address]?.chainList || [];
+        return acc;
+      }, {} as Record<string, ChainWithBalance[]>);
+    }, [valueMap]);
+  };
+
+  getAddressFlowState = (address?: string) => {
+    return this.getFlowState(this.normalizeAddress(address));
+  };
+
+  useAddressFlowState = (address?: string) => {
+    return this.useFlowState(this.normalizeAddress(address) || '');
+  };
+
+  useAddressesSnapshot = (addresses: string[]) => {
+    const normalizedAddresses = useMemo(
+      () =>
+        Array.from(new Set(addresses.map(address => address.toLowerCase()))),
+      [addresses],
+    );
+    const snapshots = this.useSnapshots(normalizedAddresses);
+
+    return useMemo(() => {
+      return snapshots.map(snapshot => {
+        return {
+          address: snapshot.resourceKey,
+          value: snapshot.value,
+          flow: snapshot.flow,
+          sourceOfCurrentValue: snapshot.sourceOfCurrentValue,
+          persistStatus: snapshot.persistStatus,
+        } satisfies AddressBalanceSnapshot;
+      });
+    }, [snapshots]);
+  };
+
+  getAddressesFlowState = (addresses: string[]) => {
+    return this.toAddressFlowState(
+      addresses.map(address => address.toLowerCase()),
+    );
+  };
+
+  useAddressesFlowState = (addresses: string[]) => {
+    const normalizedAddresses = useMemo(
+      () =>
+        Array.from(new Set(addresses.map(address => address.toLowerCase()))),
+      [addresses],
+    );
+    const flow = this.useFamilyFlowState(normalizedAddresses);
+
+    return useMemo(() => {
+      return {
+        addresses: flow.resourceKeys,
+        loadingAddresses: flow.loadingResourceKeys,
+        missingAddresses: flow.missingResourceKeys,
+        hasAnyValue: flow.hasAnyValue,
+        isAnyLoading: flow.isAnyLoading,
+        isAnyLoadingWithoutValue: flow.isAnyLoadingWithoutValue,
+        hasAllValues: flow.hasAllValues,
+      } satisfies AddressBalancesFlowState;
+    }, [flow]);
+  };
+  initStore = async () => {
+    const result = await BalanceEntity.queryAllBalance();
     const appChainMap = useAppChainStore.getState().appChainMap;
-    for (const item of res) {
-      const lowerAddr = item.owner_addr.toLowerCase();
-      const evmBalance = item.evm_usd_value || 0;
-      const appChains = appChainMap[lowerAddr] ?? [];
+
+    for (const item of result) {
+      const lowerAddress = item.owner_addr.toLowerCase();
+      const localTargets = buildBalanceLocalTargets(lowerAddress);
+      const appChains = appChainMap[lowerAddress] ?? [];
       const appChainUsdValue = appChains.reduce(
         (acc, appChain) => acc + (appChain.netWorth || 0),
         0,
       );
-      balanceMap[lowerAddr] = {
-        evmBalance,
-        totalBalance: evmBalance + appChainUsdValue,
-      };
-      chainUSDMap[lowerAddr] = item.chain_list;
-    }
-    // 写入 Store
-    set(() => ({ balanceMap, chainUSDMap }));
-  },
+      const value = buildPersistedBalanceValue(
+        {
+          total_usd_value: item.balance || 0,
+          evm_usd_value: item.evm_usd_value || 0,
+          chain_list: item.chain_list,
+        },
+        appChainUsdValue,
+        !!item.isCore,
+      );
 
-  async hydrateCachedBalancesForAccounts(accounts) {
+      this.markHydrateStarted(lowerAddress, {
+        localTargets,
+        detail: {
+          source: 'initStore',
+        },
+      });
+      this.applyHydratedValue(lowerAddress, value, {
+        localTargets,
+        detail: {
+          source: 'initStore',
+          appChainUsdValue,
+          isCore: !!item.isCore,
+          totalBalance: value.totalBalance,
+        },
+      });
+    }
+  };
+
+  hydrateCachedBalancesForAccounts = async (
+    accounts: Array<Pick<Account, 'address' | 'type'>>,
+  ) => {
     if (!accounts.length) {
       return;
     }
@@ -94,323 +299,376 @@ const balanceStore = zCreate<BalanceState>(set => ({
     const lowerAddresses = Array.from(
       new Set(accounts.map(item => item.address.toLowerCase())),
     );
-    const currentBalanceMap = balanceStore.getState().balanceMap;
-    const hasAnyMissingBalance = lowerAddresses.some(address => {
-      return !currentBalanceMap[address];
-    });
+    const currentBalanceMap = this.getAddressValueMap();
+    const hasAnyMissingBalance = lowerAddresses.some(
+      address => !currentBalanceMap[address],
+    );
 
     if (!hasAnyMissingBalance) {
       return;
     }
 
-    const coreAddressSet = new Set(
-      accounts
-        .filter(item => CORE_KEYRING_TYPES.includes(item.type as any))
-        .map(item => item.address.toLowerCase()),
-    );
-
-    const cacheBalanceMap: Record<string, IBalanceData> = {};
-    const cacheChainUSDMap: Record<string, ChainWithBalance[]> = {};
-
+    const coreAddressSet = buildCoreAddressSet(accounts as Account[]);
     for (const address of lowerAddresses) {
+      const localTargets = buildBalanceLocalTargets(address);
+
+      if (currentBalanceMap[address]) {
+        this.markHydrateSkipped(address, {
+          localTargets,
+          detail: {
+            source: 'hydrateCachedBalancesForAccounts',
+            hasMemoryValue: true,
+          },
+        });
+        continue;
+      }
+
+      this.markHydrateStarted(address, {
+        localTargets,
+        detail: {
+          source: 'hydrateCachedBalancesForAccounts',
+        },
+      });
+
       const cacheBalance = await BalanceEntity.queryBalanceCache(
         address,
         coreAddressSet.has(address),
       );
 
       if (!cacheBalance) {
+        this.markHydrateSkipped(address, {
+          localTargets,
+          detail: {
+            source: 'hydrateCachedBalancesForAccounts',
+            hasCache: false,
+          },
+        });
         continue;
       }
 
-      const appChainUsdValue = useAppChainStore
-        .getState()
-        .getAppChainTotalUsdValue(address);
+      const appChainUsdValue = getAppChainUsdValue(address);
+      const value = buildPersistedBalanceValue(
+        cacheBalance,
+        appChainUsdValue,
+        coreAddressSet.has(address),
+      );
 
-      cacheBalanceMap[address] = {
-        evmBalance: cacheBalance.evm_usd_value || 0,
-        totalBalance: (cacheBalance.evm_usd_value || 0) + appChainUsdValue,
-      };
-      cacheChainUSDMap[address] = cacheBalance.chain_list;
+      this.applyHydratedValue(address, value, {
+        localTargets,
+        detail: {
+          source: 'hydrateCachedBalancesForAccounts',
+          appChainUsdValue,
+          isCore: coreAddressSet.has(address),
+          totalBalance: value.totalBalance,
+        },
+      });
     }
+  };
 
-    if (!Object.keys(cacheBalanceMap).length) {
-      return;
-    }
-
-    set(state => ({
-      balanceMap: {
-        ...state.balanceMap,
-        ...cacheBalanceMap,
-      },
-      chainUSDMap: {
-        ...state.chainUSDMap,
-        ...cacheChainUSDMap,
-      },
-    }));
-  },
-
-  async batchGetTotalBalance(top10Addresses: string[], force = false) {
+  batchGetTotalBalance = async (top10Addresses: string[], force = false) => {
     if (!top10Addresses.length) {
-      set(() => ({
-        balanceMap: {},
-        chainUSDMap: {},
-        isLoadingByAddress: {},
-      }));
       return;
     }
+
     const lowerAddresses = Array.from(
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
     const addresses = await keyringService.getAllAddresses();
-    const coreAddressSet = new Set(
-      addresses
-        .filter(item => CORE_KEYRING_TYPES.includes(item.type as any))
-        .map(item => item.address.toLowerCase()),
-    );
+    const coreAddressSet = buildCoreAddressSet(addresses as Account[]);
 
-    const cacheBalanceMap: Record<string, IBalanceData> = {};
-    const cacheChainUSDMap: Record<string, ChainWithBalance[]> = {};
-    const nextLoadingMap: Record<string, boolean> = {};
     const fetchList: Array<{ address: string; isCore: boolean }> = [];
 
     for (const address of lowerAddresses) {
-      const lowerAddress = address.toLowerCase();
-      const isCore = coreAddressSet.has(lowerAddress);
-      if (!force) {
-        const isExpired = await BalanceEntity.isExpired(lowerAddress, isCore);
+      const isCore = coreAddressSet.has(address);
+      const localTargets = buildBalanceLocalTargets(address);
 
+      if (!force) {
+        this.markHydrateStarted(address, {
+          localTargets,
+          detail: {
+            source: 'batchGetTotalBalance',
+            force,
+          },
+        });
+
+        const isExpired = await BalanceEntity.isExpired(address, isCore);
         if (!isExpired) {
-          const res = await BalanceEntity.queryBalance(lowerAddress, isCore);
-          const evmBalance = res.evm_usd_value || 0;
-          const appChainUsdValue = useAppChainStore
-            .getState()
-            .getAppChainTotalUsdValue(lowerAddress);
-          cacheBalanceMap[lowerAddress] = {
-            evmBalance,
-            totalBalance: evmBalance + appChainUsdValue,
-          };
-          cacheChainUSDMap[lowerAddress] = res.chain_list;
-          nextLoadingMap[lowerAddress] = false;
+          const cachedBalance = await BalanceEntity.queryBalance(
+            address,
+            isCore,
+          );
+          const appChainUsdValue = getAppChainUsdValue(address);
+          const value = buildPersistedBalanceValue(
+            cachedBalance,
+            appChainUsdValue,
+            isCore,
+          );
+
+          this.applyHydratedValue(address, value, {
+            localTargets,
+            detail: {
+              source: 'batchGetTotalBalance',
+              force,
+              isCore,
+              appChainUsdValue,
+              totalBalance: value.totalBalance,
+            },
+          });
           continue;
         }
-      }
-      nextLoadingMap[lowerAddress] = true;
-      fetchList.push({ address: lowerAddress, isCore });
-    }
 
-    set(state => ({
-      balanceMap: {
-        ...state.balanceMap,
-        ...cacheBalanceMap,
-      },
-      chainUSDMap: {
-        ...state.chainUSDMap,
-        ...cacheChainUSDMap,
-      },
-      isLoadingByAddress: {
-        ...state.isLoadingByAddress,
-        ...nextLoadingMap,
-      },
-    }));
+        this.markHydrateSkipped(address, {
+          localTargets,
+          detail: {
+            source: 'batchGetTotalBalance',
+            force,
+            isCore,
+            reason: 'expired_or_missing',
+          },
+        });
+      }
+
+      fetchList.push({ address, isCore });
+    }
 
     if (!fetchList.length) {
       return;
     }
-    console.log('updateBalance batchGetTotalBalance');
 
-    // 先批量获取 appchain 数据
     const fetchAddresses = fetchList.map(item => item.address);
     await useAppChainStore.getState().batchGetAppChains(fetchAddresses, force);
 
-    const results = await Promise.allSettled(
-      fetchList.map(({ address, isCore }) =>
-        getTotalBalanceQueue.add<{
-          address: string;
-          isCore: boolean;
-          formatBalance: EvmTotalBalanceResponse;
-        }>(async () => {
-          const balance = await openapi.getTotalBalanceV2({
+    const results = await Promise.all(
+      fetchList.map(async ({ address, isCore }) => {
+        const localTargets = buildBalanceLocalTargets(address);
+        const requestId = this.startRemoteFetch(address, {
+          localTargets,
+          detail: {
+            source: 'batchGetTotalBalance',
+            force,
+            isCore,
+          },
+        });
+
+        try {
+          const queuedBalance = await getTotalBalanceQueue.add(async () => {
+            return openapi.getTotalBalanceV2({
+              address,
+              isCore,
+              included_token_uuids: [],
+              excluded_token_uuids: [],
+              excluded_protocol_ids: [],
+              excluded_chain_ids: [],
+            });
+          });
+          if (!queuedBalance) {
+            throw new Error(
+              'address balance remote task returned empty result',
+            );
+          }
+
+          return {
+            ok: true as const,
             address,
             isCore,
-            included_token_uuids: [],
-            excluded_token_uuids: [],
-            excluded_protocol_ids: [],
-            excluded_chain_ids: [],
-          });
-          console.log('updateBalance batchGetTotalBalance single', address);
-
-          const evmUsdValue = balance.total_usd_value;
-          const appChainUsdValue = useAppChainStore
-            .getState()
-            .getAppChainTotalUsdValue(address);
-
-          const formatBalance: EvmTotalBalanceResponse = {
-            ...balance,
-            evm_usd_value: evmUsdValue,
-            total_usd_value: evmUsdValue + appChainUsdValue,
+            requestId,
+            localTargets,
+            balance: queuedBalance,
           };
-
-          return { address, isCore, formatBalance };
-        }),
-      ),
+        } catch (error) {
+          return {
+            ok: false as const,
+            address,
+            isCore,
+            requestId,
+            localTargets,
+            error,
+          };
+        }
+      }),
     );
 
-    const latestBalanceMap: Record<string, IBalanceData> = {};
-    const latestChainUSDMap: Record<string, ChainWithBalance[]> = {};
-    const finishedLoadingMap: Record<string, boolean> = {};
-    const balancesToPersist: Array<{
-      address: string;
-      isCore: boolean;
-      formatBalance: EvmTotalBalanceResponse;
-    }> = [];
     results.forEach(result => {
-      if (result.status !== 'fulfilled') {
+      if (!result.ok) {
+        this.markError(result.address, 'remote', result.error, {
+          requestId: result.requestId,
+          localTargets: result.localTargets,
+          detail: {
+            source: 'batchGetTotalBalance',
+            force,
+            isCore: result.isCore,
+          },
+        });
         return;
       }
-      if (!result.value) {
+
+      const appChainUsdValue = getAppChainUsdValue(result.address);
+      const { formatBalance, value } = buildRemoteBalancePayload(
+        result.balance,
+        appChainUsdValue,
+        result.isCore,
+      );
+      const applied = this.applyRemoteValue(
+        result.address,
+        result.requestId,
+        value,
+        {
+          localTargets: result.localTargets,
+          detail: {
+            source: 'batchGetTotalBalance',
+            force,
+            isCore: result.isCore,
+            appChainUsdValue,
+            totalBalance: value.totalBalance,
+          },
+        },
+      );
+
+      if (!applied) {
         return;
       }
-      const { address, isCore, formatBalance } = result.value;
-      latestBalanceMap[address] = {
-        totalBalance: formatBalance.total_usd_value,
-        evmBalance: formatBalance.evm_usd_value || 0,
-      };
-      latestChainUSDMap[address] = formatBalance.chain_list;
-      balancesToPersist.push({
-        address,
-        isCore,
-        formatBalance,
-      });
-    });
-    fetchList.forEach(({ address }) => {
-      finishedLoadingMap[address] = false;
-    });
 
-    set(state => ({
-      balanceMap: {
-        ...state.balanceMap,
-        ...latestBalanceMap,
-      },
-      chainUSDMap: {
-        ...state.chainUSDMap,
-        ...latestChainUSDMap,
-      },
-      isLoadingByAddress: {
-        ...state.isLoadingByAddress,
-        ...finishedLoadingMap,
-      },
-    }));
-
-    balancesToPersist.forEach(({ address, isCore, formatBalance }) => {
-      syncBalance(address, isCore, formatBalance);
+      this.persistInBackground(
+        result.address,
+        () => syncBalance(result.address, result.isCore, formatBalance),
+        {
+          requestId: result.requestId,
+          localTargets: result.localTargets,
+          detail: {
+            source: 'batchGetTotalBalance',
+            force,
+            isCore: result.isCore,
+            totalBalance: formatBalance.total_usd_value,
+          },
+        },
+      );
     });
-  },
+  };
 
-  async getTotalBalance(address: string, force = false) {
+  getTotalBalance = async (address: string, force = false) => {
     const lowerAddress = address.toLowerCase();
-    set(state => ({
-      isLoadingByAddress: {
-        ...state.isLoadingByAddress,
-        [lowerAddress]: true,
-      },
-    }));
+
     const addresses = await keyringService.getAllAddresses();
-    const filtered = addresses.filter(item =>
-      isSameAddress(item.address, address),
-    );
-    let core = false;
-    if (filtered.some(item => CORE_KEYRING_TYPES.includes(item.type as any))) {
-      core = true;
-    }
-    const isExpired = await BalanceEntity.isExpired(lowerAddress, core);
+    const isCore = addresses
+      .filter(item => isSameAddress(item.address, address))
+      .some(item => CORE_KEYRING_TYPES.includes(item.type as any));
+    const localTargets = buildBalanceLocalTargets(lowerAddress);
+    let requestId: string | undefined;
+
     try {
-      if (!force && !isExpired) {
-        const res = await BalanceEntity.queryBalance(lowerAddress, core);
-        const evmBalance = res.evm_usd_value || 0;
-        const appChainUsdValue = useAppChainStore
-          .getState()
-          .getAppChainTotalUsdValue(lowerAddress);
-        set(state => ({
-          balanceMap: {
-            ...state.balanceMap,
-            [lowerAddress]: {
-              evmBalance,
-              totalBalance: evmBalance + appChainUsdValue,
+      if (!force) {
+        this.markHydrateStarted(lowerAddress, {
+          localTargets,
+          detail: {
+            source: 'getTotalBalance',
+            force,
+            isCore,
+          },
+        });
+
+        const isExpired = await BalanceEntity.isExpired(lowerAddress, isCore);
+        if (!isExpired) {
+          const cachedBalance = await BalanceEntity.queryBalance(
+            lowerAddress,
+            isCore,
+          );
+          const appChainUsdValue = getAppChainUsdValue(lowerAddress);
+          const value = buildPersistedBalanceValue(
+            cachedBalance,
+            appChainUsdValue,
+            isCore,
+          );
+
+          this.applyHydratedValue(lowerAddress, value, {
+            localTargets,
+            detail: {
+              source: 'getTotalBalance',
+              force,
+              isCore,
+              appChainUsdValue,
+              totalBalance: value.totalBalance,
             },
+          });
+          return;
+        }
+
+        this.markHydrateSkipped(lowerAddress, {
+          localTargets,
+          detail: {
+            source: 'getTotalBalance',
+            force,
+            isCore,
+            reason: 'expired_or_missing',
           },
-          chainUSDMap: {
-            ...state.chainUSDMap,
-            [lowerAddress]: res.chain_list,
-          },
-        }));
-        return;
+        });
       }
 
-      // 获取 appchain 数据
       await useAppChainStore.getState().getAppChains(lowerAddress, force);
-      const appChainUsdValue = useAppChainStore
-        .getState()
-        .getAppChainTotalUsdValue(lowerAddress);
-
+      const appChainUsdValue = getAppChainUsdValue(lowerAddress);
+      requestId = this.startRemoteFetch(lowerAddress, {
+        localTargets,
+        detail: {
+          source: 'getTotalBalance',
+          force,
+          isCore,
+        },
+      });
       const balance = await openapi.getTotalBalanceV2({
         address: lowerAddress,
-        isCore: core,
+        isCore,
         included_token_uuids: [],
         excluded_token_uuids: [],
         excluded_protocol_ids: [],
         excluded_chain_ids: [],
       });
+      const { formatBalance, value } = buildRemoteBalancePayload(
+        balance,
+        appChainUsdValue,
+        isCore,
+      );
+      const applied = this.applyRemoteValue(lowerAddress, requestId, value, {
+        localTargets,
+        detail: {
+          source: 'getTotalBalance',
+          force,
+          isCore,
+          appChainUsdValue,
+          totalBalance: value.totalBalance,
+        },
+      });
 
-      console.log('updateBalance getTotalBalance', lowerAddress);
-      const evmUsdValue = balance.total_usd_value;
-      const formatBalance: EvmTotalBalanceResponse = {
-        ...balance,
-        evm_usd_value: evmUsdValue,
-        total_usd_value: evmUsdValue + appChainUsdValue,
-      };
+      if (!applied) {
+        return;
+      }
 
-      set(state => ({
-        balanceMap: {
-          ...state.balanceMap,
-          [lowerAddress]: {
-            evmBalance: evmUsdValue,
-            totalBalance: evmUsdValue + appChainUsdValue,
+      this.persistInBackground(
+        lowerAddress,
+        () => syncBalance(lowerAddress, isCore, formatBalance),
+        {
+          requestId,
+          localTargets,
+          detail: {
+            source: 'getTotalBalance',
+            force,
+            isCore,
+            totalBalance: formatBalance.total_usd_value,
           },
         },
-        chainUSDMap: {
-          ...state.chainUSDMap,
-          [lowerAddress]: formatBalance.chain_list,
-        },
-      }));
-      syncBalance(lowerAddress, core, formatBalance);
-    } finally {
-      set(state => ({
-        isLoadingByAddress: {
-          ...state.isLoadingByAddress,
-          [lowerAddress]: false,
-        },
-      }));
-    }
-  },
-
-  getIsTop10BalanceLoading(
-    myTop10Addresses: string[],
-    isLoadingByAddress: BalanceState['isLoadingByAddress'] = balanceStore.getState()
-      .isLoadingByAddress,
-  ) {
-    const isTop10BalanceLoading = (() => {
-      if (!myTop10Addresses.length) {
-        return false;
-      }
-      return myTop10Addresses.some(
-        address => isLoadingByAddress[address.toLowerCase()],
       );
-    })();
+    } catch (error) {
+      this.markError(lowerAddress, requestId ? 'remote' : 'hydrate', error, {
+        requestId,
+        localTargets,
+        detail: {
+          source: 'getTotalBalance',
+          force,
+          isCore,
+        },
+      });
+      throw error;
+    }
+  };
+}
 
-    return {
-      isTop10BalanceLoading,
-    };
-  },
-}));
-
-export default balanceStore;
+export const addressBalanceStore = new AddressBalanceStore();
+export default addressBalanceStore;

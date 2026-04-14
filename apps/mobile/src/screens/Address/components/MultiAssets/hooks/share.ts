@@ -8,7 +8,7 @@ import { useAccountInfo } from '../hooks';
 import { useBalanceAccounts } from '@/hooks/useAccountsBalance';
 import { TabName } from '../TabsMultiAssets';
 import { useMyAccounts } from '@/hooks/account';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { findAccountByPriority } from '@/utils/account';
 
 export const useIsFocusedCurrentTab = (tabName: TabName) => {
@@ -55,11 +55,11 @@ export const useCheckIsExpireAndUpdate = ({
   const initRef = useRef(false);
   const { myTop10Addresses } = useAccountInfo();
   const { balanceAccounts } = useBalanceAccounts();
-  const batchGetTotalBalance = balanceStore(s => s.batchGetTotalBalance);
   const { checkIsExpireAndUpdate } = useLoadAssets();
   const triggerUpdate = useCallback(
-    (force?: boolean) => batchGetTotalBalance(myTop10Addresses, force),
-    [batchGetTotalBalance, myTop10Addresses],
+    (force?: boolean) =>
+      addressBalanceStore.batchGetTotalBalance(myTop10Addresses, force),
+    [myTop10Addresses],
   );
 
   useEffect(() => {

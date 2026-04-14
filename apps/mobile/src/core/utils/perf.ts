@@ -3,7 +3,7 @@ import {
   AddressBalanceUpdaterSource,
   BalanceState,
 } from '@/hooks/useCurrentBalance';
-import { Multi24hBalanceState } from '@/hooks/useScene24hBalance';
+import type { Multi24hBalanceState } from '@/store/balance24h';
 import { ContactBookStore } from '@rabby-wallet/service-address';
 import { Account, PreferenceStore } from '../services/preference';
 
