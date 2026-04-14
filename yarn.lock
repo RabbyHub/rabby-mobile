@@ -9319,6 +9319,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/rabby-logger@npm:0.2.1-alpha":
+  version: 0.2.1-alpha
+  resolution: "@rabby-wallet/rabby-logger@npm:0.2.1-alpha"
+  dependencies:
+    fflate: "npm:^0.8.2"
+  checksum: 10/04570fa027087db0742e675dcac3e5e8556e6e962124e8d607b1d561eea703d6faa4f4d15f9fc1715a0f671fd7ff510999650ccea9241f70d2113ee735b6b033
+  languageName: node
+  linkType: hard
+
 "@rabby-wallet/rabby-security-engine@npm:2.0.12":
   version: 2.0.12
   resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.12"
