@@ -57,6 +57,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   checkboxDisabled: {
+    marginLeft: 20,
     opacity: 0.5,
   },
   itemInfo: {
