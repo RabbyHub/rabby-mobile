@@ -69,18 +69,20 @@ describe('store/balance24h scene', () => {
     jest.doMock('@/store/balance', () => ({
       __esModule: true,
       default: {
+        computeTotalBalance: (...args: unknown[]) =>
+          mockComputeTotalBalance(...args),
         getAddressValueMap: jest.fn(() => mockBalanceValueMap),
         useAddressValueMap: jest.fn(() => mockBalanceValueMap),
         subscribe: jest.fn(),
       },
+      balanceAccountsStore: {
+        getState: jest.fn(() => ({
+          balance: mockGetBalanceCacheAccounts(),
+        })),
+      },
       accountsBalanceEvents: {
         on: jest.fn(),
       },
-      apisAccountsBalance: {
-        computeTotalBalance: (...args: unknown[]) =>
-          mockComputeTotalBalance(...args),
-      },
-      getBalanceCacheAccounts: () => mockGetBalanceCacheAccounts(),
     }));
     jest.doMock('@/utils/24hBalanceCache', () => ({
       getBalance24hCache: (...args: unknown[]) =>

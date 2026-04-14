@@ -5,10 +5,9 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import { useAccountInfo } from '../hooks';
-import { useBalanceAccounts } from '@/store/balance';
 import { TabName } from '../TabsMultiAssets';
 import { useMyAccounts } from '@/hooks/account';
-import addressBalanceStore from '@/store/balance';
+import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { findAccountByPriority } from '@/utils/account';
 
 export const useIsFocusedCurrentTab = (tabName: TabName) => {
@@ -54,7 +53,7 @@ export const useCheckIsExpireAndUpdate = ({
 }) => {
   const initRef = useRef(false);
   const { myTop10Addresses } = useAccountInfo();
-  const { balanceAccounts } = useBalanceAccounts();
+  const balanceAccounts = balanceAccountsStore(s => s.balance);
   const { checkIsExpireAndUpdate } = useLoadAssets();
   const triggerUpdate = useCallback(
     (force?: boolean) =>

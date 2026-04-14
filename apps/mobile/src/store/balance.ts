@@ -257,6 +257,39 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }, [snapshots]);
   };
 
+  useAddressesBalanceSummary = (
+    addresses: string[],
+  ): AddressBalancesSummary => {
+    const snapshots = this.useAddressesSnapshot(addresses);
+
+    return useMemo(() => {
+      const loadingAddresses = snapshots
+        .filter(item => item.flow.isLoading)
+        .map(item => item.address);
+      const missingAddresses = snapshots
+        .filter(item => !item.flow.hasValue)
+        .map(item => item.address);
+
+      return {
+        snapshots,
+        flow: {
+          addresses: snapshots.map(item => item.address),
+          loadingAddresses,
+          missingAddresses,
+          hasAnyValue: snapshots.some(item => item.flow.hasValue),
+          isAnyLoading: loadingAddresses.length > 0,
+          isAnyLoadingWithoutValue: snapshots.some(
+            item => item.flow.isLoadingWithoutValue,
+          ),
+          hasAllValues: snapshots.length > 0 && missingAddresses.length === 0,
+        },
+        totalBalance: snapshots.reduce((acc, item) => {
+          return acc + (item.value?.totalBalance || 0);
+        }, 0),
+      } satisfies AddressBalancesSummary;
+    }, [snapshots]);
+  };
+
   getAddressesFlowState = (addresses: string[]) => {
     return this.toAddressFlowState(
       addresses.map(address => address.toLowerCase()),
@@ -752,6 +785,125 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       throw error;
     }
   };
+
+  computeTotalBalance = (
+    addresses: string[],
+    balanceAccounts: AccountsBalanceState['balance'] = balanceAccountsStore.getState()
+      .balance,
+  ) => {
+    let total = 0;
+    let totalEvm = 0;
+
+    addresses.forEach(address => {
+      const account = balanceAccounts[address.toLowerCase()];
+      total += Number(account?.balance) || 0;
+      totalEvm += Number(account?.evmBalance) || 0;
+    });
+
+    return { total, totalEvm };
+  };
+
+  useLoadBalanceFromApiStage = () => {
+    const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
+    const hasResolvedSelection = balanceAccountsStore(
+      s => s.hasResolvedSelection,
+    );
+    const balanceFlow = this.useAddressesFlowState(selectedAddresses);
+    const isLoading =
+      !hasResolvedSelection ||
+      (selectedAddresses.length > 0 && balanceFlow.isAnyLoadingWithoutValue);
+    const loadBalanceFromApiStage: LoadBalanceStage = isLoading
+      ? 'loading'
+      : 'finished';
+
+    return { loadBalanceFromApiStage };
+  };
+
+  fetchTotalBalance = makeSWRKeyAsyncFunc(
+    async (fetchType: 'from_cache' | 'from_api') => {
+      const retBalances = {} as Record<string, BalanceAccountType>;
+      try {
+        console.debug('[perf] fetchTotalBalance:: fetchType', fetchType);
+
+        const { getAccountList } = await import('@/core/apis/account');
+        const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
+        const caredAccounts = sortedAccounts;
+        const { selectedAccounts, selectedAddresses } =
+          await pickSelectedAccountsFromSortedAccounts(caredAccounts);
+
+        if (selectedAccounts.length) {
+          await this.batchGetTotalBalance(
+            selectedAddresses,
+            fetchType === 'from_api',
+            {
+              scene: 'Home',
+              requester: 'fetchTotalBalance',
+              endpoint: 'openapi.getTotalBalanceV2',
+            },
+          );
+        }
+
+        const balanceValueMap = this.getAddressValueMap();
+        Object.assign(
+          retBalances,
+          buildBalanceAccountsFromList(selectedAccounts, balanceValueMap),
+        );
+        setAccountsBalanceState(
+          {
+            balance: retBalances,
+            selectedAddresses,
+            hasResolvedSelection: true,
+            matteredAccountLength: caredAccounts.length,
+          },
+          {
+            source: 'manual_refresh',
+          },
+        );
+      } catch (e) {
+        console.error('fetchTotalBalance  error', e);
+      }
+
+      return retBalances;
+    },
+    ctx => {
+      return `fetchTotalBalance-${ctx.args[0]}`;
+    },
+  );
+
+  useAccountsBalanceTrigger = () => {
+    const lastTimeStamps = useRef<number>(0);
+    const isNeedFetchData = useCallback(() => {
+      const currentTime = Date.now();
+      const diff = currentTime - lastTimeStamps.current;
+      if (diff > CACHE_TIME) {
+        lastTimeStamps.current = currentTime;
+        return true;
+      }
+      return false;
+    }, []);
+
+    const triggerUpdate = useCallback(
+      async (forceFromApi?: boolean) => {
+        const isForceFetchFromApi = isNeedFetchData() || forceFromApi;
+
+        console.debug(
+          '[perf] triggerUpdate fetchTotalBalance',
+          isForceFetchFromApi ? 'from_api' : 'from_cache',
+        );
+        if (forceFromApi) {
+          lastTimeStamps.current = Date.now();
+        }
+        return this.fetchTotalBalance(
+          isForceFetchFromApi ? 'from_api' : 'from_cache',
+        );
+      },
+      [isNeedFetchData],
+    );
+
+    return {
+      triggerUpdate,
+    };
+  };
 }
 
 export interface BalanceAccountType {
@@ -1074,195 +1226,6 @@ export function startProcessAccountBalanceEvents() {
   })().catch(error => {
     console.error('startProcessAccountBalanceEvents error', error);
   });
-}
-
-export function getBalanceCacheAccounts() {
-  return balanceAccountsStore.getState().balance;
-}
-
-export function useBalanceAccounts() {
-  return {
-    balanceAccounts: balanceAccountsStore(s => s.balance),
-  };
-}
-
-export function useLoadBalanceFromApiStage() {
-  const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
-  const hasResolvedSelection = balanceAccountsStore(
-    s => s.hasResolvedSelection,
-  );
-  const balanceFlow =
-    addressBalanceStore.useAddressesFlowState(selectedAddresses);
-  const isLoading =
-    !hasResolvedSelection ||
-    (selectedAddresses.length > 0 && balanceFlow.isAnyLoadingWithoutValue);
-  const loadBalanceFromApiStage: LoadBalanceStage = isLoading
-    ? 'loading'
-    : 'finished';
-
-  return { loadBalanceFromApiStage };
-}
-
-function computeTotalBalance(
-  addresses: string[],
-  balanceAccounts?: AccountsBalanceState['balance'],
-) {
-  let total = 0;
-  let totalEvm = 0;
-  if (!balanceAccounts) {
-    balanceAccounts = balanceAccountsStore.getState().balance;
-  }
-  addresses.forEach(address => {
-    const account = balanceAccounts[address.toLowerCase()];
-    total += Number(account?.balance) || 0;
-    totalEvm += Number(account?.evmBalance) || 0;
-  });
-
-  return { total, totalEvm };
-}
-
-export const apisAccountsBalance = {
-  computeTotalBalance,
-};
-
-export const fetchTotalBalance = makeSWRKeyAsyncFunc(
-  async (fetchType: 'from_cache' | 'from_api') => {
-    const retBalances = {} as Record<string, BalanceAccountType>;
-    try {
-      console.debug('[perf] fetchTotalBalance:: fetchType', fetchType);
-
-      const { getAccountList } = await import('@/core/apis/account');
-      const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
-      const caredAccounts = sortedAccounts;
-      const { selectedAccounts, selectedAddresses } =
-        await pickSelectedAccountsFromSortedAccounts(caredAccounts);
-
-      if (selectedAccounts.length) {
-        await addressBalanceStore.batchGetTotalBalance(
-          selectedAddresses,
-          fetchType === 'from_api',
-          {
-            scene: 'Home',
-            requester: 'fetchTotalBalance',
-            endpoint: 'openapi.getTotalBalanceV2',
-          },
-        );
-      }
-
-      const balanceValueMap = addressBalanceStore.getAddressValueMap();
-      Object.assign(
-        retBalances,
-        buildBalanceAccountsFromList(selectedAccounts, balanceValueMap),
-      );
-      setAccountsBalanceState(
-        {
-          balance: retBalances,
-          selectedAddresses,
-          hasResolvedSelection: true,
-          matteredAccountLength: caredAccounts.length,
-        },
-        {
-          source: 'manual_refresh',
-        },
-      );
-    } catch (e) {
-      console.error('fetchTotalBalance  error', e);
-    }
-
-    return retBalances;
-  },
-  ctx => {
-    return `fetchTotalBalance-${ctx.args[0]}`;
-  },
-);
-
-export function useAccountsBalanceTrigger() {
-  const lastTimeStamps = useRef<number>(0);
-  const isNeedFetchData = useCallback(() => {
-    const currentTime = Date.now();
-    const diff = currentTime - lastTimeStamps.current;
-    if (diff > CACHE_TIME) {
-      lastTimeStamps.current = currentTime;
-      return true;
-    }
-    return false;
-  }, []);
-
-  const triggerUpdate = useCallback(
-    async (forceFromApi?: boolean) => {
-      const isForceFetchFromApi = isNeedFetchData() || forceFromApi;
-
-      console.debug(
-        '[perf] triggerUpdate fetchTotalBalance',
-        isForceFetchFromApi ? 'from_api' : 'from_cache',
-      );
-      if (forceFromApi) {
-        lastTimeStamps.current = Date.now();
-      }
-      return fetchTotalBalance(isForceFetchFromApi ? 'from_api' : 'from_cache');
-    },
-    [isNeedFetchData],
-  );
-
-  return {
-    triggerUpdate,
-  };
-}
-
-export function useAccountsBalance() {
-  const balanceAccounts = balanceAccountsStore(s => s.balance);
-
-  const getTotalBalance = useCallback(
-    (addresses: string[]) => {
-      let total = 0;
-      let totalEvm = 0;
-      addresses.forEach(address => {
-        const account = balanceAccounts[address.toLowerCase()];
-        total += Number(account?.balance) || 0;
-        totalEvm += Number(account?.evmBalance) || 0;
-      });
-      return { total, totalEvm };
-    },
-    [balanceAccounts],
-  );
-
-  return {
-    balanceAccounts,
-    getTotalBalance,
-  };
-}
-
-export function useAddressesBalanceSummary(
-  addresses: string[],
-): AddressBalancesSummary {
-  const snapshots = addressBalanceStore.useAddressesSnapshot(addresses);
-
-  return useMemo(() => {
-    const loadingAddresses = snapshots
-      .filter(item => item.flow.isLoading)
-      .map(item => item.address);
-    const missingAddresses = snapshots
-      .filter(item => !item.flow.hasValue)
-      .map(item => item.address);
-
-    return {
-      snapshots,
-      flow: {
-        addresses: snapshots.map(item => item.address),
-        loadingAddresses,
-        missingAddresses,
-        hasAnyValue: snapshots.some(item => item.flow.hasValue),
-        isAnyLoading: loadingAddresses.length > 0,
-        isAnyLoadingWithoutValue: snapshots.some(
-          item => item.flow.isLoadingWithoutValue,
-        ),
-        hasAllValues: snapshots.length > 0 && missingAddresses.length === 0,
-      },
-      totalBalance: snapshots.reduce((acc, item) => {
-        return acc + (item.value?.totalBalance || 0);
-      }, 0),
-    } satisfies AddressBalancesSummary;
-  }, [snapshots]);
 }
 
 export const addressBalanceStore = new AddressBalanceStore();

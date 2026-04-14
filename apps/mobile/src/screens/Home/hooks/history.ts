@@ -12,7 +12,7 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
-import { getBalanceCacheAccounts } from '@/store/balance';
+import { balanceAccountsStore } from '@/store/balance';
 
 type HomeHistoryState = {
   pendingTxCount: number;
@@ -99,7 +99,7 @@ const timeRef: RefLikeObject<ReturnType<typeof setInterval> | null> = {
 export const resetFetchHistoryTxCount = makeAvoidParallelAsyncFunc(async () => {
   timeRef.current && clearInterval(timeRef.current);
   // TODO: 这里只需要 accounts，不需要 balance 相关信息
-  const balanceAccounts = getBalanceCacheAccounts();
+  const balanceAccounts = balanceAccountsStore.getState().balance;
   const addresses = Object.keys(balanceAccounts);
   if (!addresses.length) {
     return;

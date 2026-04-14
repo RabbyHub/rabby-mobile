@@ -32,10 +32,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { create } from 'zustand';
 import { scene24hBalanceStore } from '@/store/balance24h';
-import {
-  balanceAccountsStore,
-  useAddressesBalanceSummary,
-} from '@/store/balance';
+import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { RNGHPressable } from '@/components/customized/reexports';
@@ -148,7 +145,9 @@ export const MultiChart = memo(function MultiChart({
     return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
   }, [myTop10Addresses, selectedAddresses]);
   const { totalBalance, flow: top10BalanceFlow } =
-    useAddressesBalanceSummary(displayAddresses);
+    addressBalanceStore.useAddressesBalanceSummary(displayAddresses);
+  const { isLoading: sceneChangeLoading } =
+    scene24hBalanceStore.useSceneChangeLoading('Home', displayAddresses);
   const isPendingDisplayAddresses =
     !hasResolvedSelection &&
     displayAddresses.length === 0 &&
@@ -184,6 +183,7 @@ export const MultiChart = memo(function MultiChart({
             hideType={hideType}
             matteredAccountCount={matteredAccountCount}
             showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
+            sceneChangeLoading={sceneChangeLoading}
           />
           <ChartContent
             data={chartsData}
@@ -205,6 +205,7 @@ interface IHeaderProps {
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
   showBalanceLoadingWithoutLocal: boolean;
+  sceneChangeLoading: boolean;
 }
 const ChartHeader = React.memo(
   ({
@@ -216,6 +217,7 @@ const ChartHeader = React.memo(
     data: _data,
     matteredAccountCount,
     showBalanceLoadingWithoutLocal,
+    sceneChangeLoading,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
@@ -224,16 +226,25 @@ const ChartHeader = React.memo(
     const { currentIndex } = LineChart.useChart();
     const { currency, formatCurrentCurrency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
-    const { isLoading: scene24hLoading } =
-      scene24hBalanceStore.useSceneIsLoading('Home');
     const showNetWorthLoading = useMemo(() => {
       return showBalanceLoadingWithoutLocal;
     }, [showBalanceLoadingWithoutLocal]);
+    const changePercent = useDebouncedValue(_changePercent, 300);
+    const shouldWaitDebouncedChange = useMemo(() => {
+      return Boolean(_changePercent) && !Boolean(changePercent);
+    }, [_changePercent, changePercent]);
     const showChangeLoading = useMemo(() => {
       return (
-        showNetWorthLoading || (!Boolean(_changePercent) && scene24hLoading)
+        showNetWorthLoading ||
+        (!Boolean(changePercent) &&
+          (sceneChangeLoading || shouldWaitDebouncedChange))
       );
-    }, [_changePercent, scene24hLoading, showNetWorthLoading]);
+    }, [
+      changePercent,
+      sceneChangeLoading,
+      shouldWaitDebouncedChange,
+      showNetWorthLoading,
+    ]);
 
     const netWorth = useMemo(() => {
       return formatSmallCurrencyValue(rawNetWorth, { currency });
@@ -241,7 +252,6 @@ const ChartHeader = React.memo(
     const change = useMemo(() => {
       return formatCurrentCurrency(Math.abs(debouncedRawChange));
     }, [formatCurrentCurrency, debouncedRawChange]);
-    const changePercent = useDebouncedValue(_changePercent, 300);
 
     const data = useMemo(() => {
       return (

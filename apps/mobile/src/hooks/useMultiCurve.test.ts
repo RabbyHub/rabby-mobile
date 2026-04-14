@@ -38,15 +38,26 @@ describe('hooks/useMultiCurve', () => {
       })),
     }));
     jest.doMock('@/store/balance', () => ({
-      accountsBalanceEvents: {
-        on: jest.fn(),
-      },
-      apisAccountsBalance: {
+      __esModule: true,
+      default: {
         computeTotalBalance: (...args: unknown[]) =>
           mockComputeTotalBalance(...args),
       },
-      fetchTotalBalance: jest.fn(),
-      getBalanceCacheAccounts: () => mockGetBalanceCacheAccounts(),
+      balanceAccountsStore: Object.assign(
+        jest.fn(
+          (selector: (state: { selectedAddresses: string[] }) => unknown) =>
+            selector({ selectedAddresses: [] }),
+        ),
+        {
+          getState: jest.fn(() => ({
+            balance: mockGetBalanceCacheAccounts(),
+            selectedAddresses: [],
+          })),
+        },
+      ),
+      accountsBalanceEvents: {
+        on: jest.fn(),
+      },
     }));
     jest.doMock('@/core/apis/account', () => ({
       accountEvents: {

@@ -61,7 +61,7 @@ import { currencyService } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import { useAccountsBalanceTrigger } from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
@@ -140,7 +140,6 @@ import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
-import addressBalanceStore from '@/store/balance';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import {
@@ -721,7 +720,7 @@ export const HomeOverview = React.memo(() => {
 
   useFetchCexInfo();
 
-  const { triggerUpdate } = useAccountsBalanceTrigger();
+  const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
   const isFirstTriggerRef = useRef(true);
 
   useEffect(() => {

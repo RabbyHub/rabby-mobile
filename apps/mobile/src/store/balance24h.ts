@@ -7,8 +7,7 @@ import { balance24hMMKV } from '@/core/storage/mmkvInstances';
 import {
   AccountsBalanceState,
   accountsBalanceEvents,
-  apisAccountsBalance,
-  getBalanceCacheAccounts,
+  balanceAccountsStore,
 } from './balance';
 import { formatSmallUsdValue } from '@/hooks/useCurve';
 import { formatUsdValue } from '@/utils/number';
@@ -649,9 +648,9 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       this.setSceneAddresses(scene, normalizedAddresses);
 
       const beforeReturn = () => {
-        apisAccountsBalance.computeTotalBalance(
+        addressBalanceStore.computeTotalBalance(
           normalizedAddresses,
-          getBalanceCacheAccounts(),
+          balanceAccountsStore.getState().balance,
         );
         this.scheduleSceneCombinedDataUpdate(scene);
       };
@@ -782,9 +781,9 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         return;
       }
 
-      apisAccountsBalance.computeTotalBalance(
+      addressBalanceStore.computeTotalBalance(
         addresses,
-        getBalanceCacheAccounts(),
+        balanceAccountsStore.getState().balance,
       );
       this.scheduleSceneCombinedDataUpdate('Home');
     });

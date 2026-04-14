@@ -22,7 +22,7 @@ import {
   makeDevOnlyStyle,
 } from '@/utils/styles';
 
-import { useLoadBalanceFromApiStage } from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';
@@ -46,7 +46,6 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { scene24hBalanceStore } from '@/store/balance24h';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import addressBalanceStore from '@/store/balance';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { computeBalanceChange } from '@/core/apis/balance';
 
@@ -143,7 +142,8 @@ export function MultiAddressHomeHeader(
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
-  const { loadBalanceFromApiStage } = useLoadBalanceFromApiStage();
+  const { loadBalanceFromApiStage } =
+    addressBalanceStore.useLoadBalanceFromApiStage();
   const previousLoading = usePrevious(loadBalanceFromApiStage);
   const [isAnimRunning, setIsAnimRunning] = useState(false);
   const animTimerRef = useRef<NodeJS.Timeout | null>(null);

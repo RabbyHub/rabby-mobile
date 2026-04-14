@@ -49,10 +49,7 @@ import Animated, {
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
 import { scene24hBalanceStore } from '@/store/balance24h';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
-import {
-  balanceAccountsStore,
-  useAddressesBalanceSummary,
-} from '@/store/balance';
+import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { useAccountStore } from '@/store/account';
 import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
@@ -114,7 +111,7 @@ export function TabsTopHeader(): JSX.Element {
     snapshots: top10BalanceSnapshots,
     flow: top10BalanceFlow,
     totalBalance,
-  } = useAddressesBalanceSummary(displayAddresses);
+  } = addressBalanceStore.useAddressesBalanceSummary(displayAddresses);
   const isPendingDisplayAddresses =
     !hasResolvedSelection &&
     displayAddresses.length === 0 &&

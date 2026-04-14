@@ -12,10 +12,9 @@ import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import {
   AccountsBalanceState,
   accountsBalanceEvents,
-  apisAccountsBalance,
   balanceAccountsStore,
-  getBalanceCacheAccounts,
 } from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { debounce } from 'lodash';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
@@ -310,9 +309,9 @@ export const refreshDayCurve = makeSWRKeyAsyncFunc(
     }
 
     const multiTimeStamp = getMultiTimeStamp();
-    const totals = apisAccountsBalance.computeTotalBalance(
+    const totals = addressBalanceStore.computeTotalBalance(
       top10Addresses,
-      getBalanceCacheAccounts(),
+      balanceAccountsStore.getState().balance,
     );
 
     onComputeCombineData({
