@@ -132,7 +132,7 @@ export const HomeTopChart = memo(function Chart({
       address: lowerAddress,
       triggered: true,
     };
-    void warmupCurveForAddress(lowerAddress, {
+    warmupCurveForAddress(lowerAddress, {
       realtimeNetWorth: evmBalance,
       staticBalance: balance,
     });
@@ -216,7 +216,10 @@ export const HomeTopChart = memo(function Chart({
                 />
               </LineChart>
             ) : (
-              <CurveLoader style={styles.loading} />
+              <CurveLoader
+                {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
+                style={styles.loading}
+              />
             )}
           </Animated.View>
         </LineChart.Provider>
@@ -404,11 +407,13 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
         />
       </View>
       <Pressable
+        {...makeTestIDProps(E2E_ID.home.singleCurveToggle)}
         hitSlop={20}
         onPress={() => apisSingleHome.setFoldChart(!fold)}
         style={styles.percentChangeContainer}>
         {changeLoading ? (
           <Skeleton
+            {...makeTestIDProps(E2E_ID.home.singleChangeLoading)}
             width={92}
             height={20}
             style={styles.skeletonChange}

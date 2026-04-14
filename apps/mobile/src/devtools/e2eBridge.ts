@@ -17,6 +17,7 @@ import {
 import { formatUsdValue } from '@/utils/number';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
+import { getIsFoldMultiChart } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
 
 type DevtoolsMethod = (...args: unknown[]) => unknown;
 
@@ -224,6 +225,7 @@ function buildSingleHomeSnapshot() {
   const curveList = addressCurve24hStore.getAddressCurve(currentAddress) || [];
   const curveFlow =
     addressCurve24hStore.getAddressCurveFlowState(currentAddress);
+  const isFoldChart = apisSingleHome.getFoldChart();
 
   const initialSelectData = curveList.length
     ? formChartData(curveList, {
@@ -287,6 +289,14 @@ function buildSingleHomeSnapshot() {
       isLoadingChartData,
       changeLoading,
     },
+    curveUiState: {
+      isFolded: isFoldChart,
+      hasCurveData: curveList.length > 0,
+      curvePointCount: curveList.length,
+      isCurveLoading: curveFlow.isLoading,
+      changeLoading,
+      balanceLoadingWithoutLocal,
+    },
     selectData: {
       netWorth: selectData.netWorth,
       rawChange: selectData.rawChange,
@@ -331,6 +341,7 @@ const bridgeMethods = {
       !combined24hData.changePercent &&
       changeSummary.flow.isAnyLoadingWithoutValue &&
       displayAddressesState.displayAddresses.length > 0;
+    const isHomeCurveFolded = getIsFoldMultiChart();
 
     return {
       routeName,
@@ -338,6 +349,16 @@ const bridgeMethods = {
       uiState: {
         showBalanceLoadingWithoutLocal,
         showChangeLoadingWithoutLocal,
+      },
+      curveUiState: {
+        isFolded: isHomeCurveFolded,
+        hasCurveData: sceneCurveState.combinedData.Home.list.length > 0,
+        curvePointCount: sceneCurveState.combinedData.Home.list.length,
+        isCurveLoading:
+          sceneCurveState.sceneLoading.Home ||
+          sceneCurveState.sceneComputing.Home,
+        changeLoading: showChangeLoadingWithoutLocal,
+        balanceLoadingWithoutLocal: showBalanceLoadingWithoutLocal,
       },
       balanceAccountsState: {
         selectedAddresses: balanceAccountsStore.getState().selectedAddresses,

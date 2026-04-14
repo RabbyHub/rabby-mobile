@@ -2,9 +2,9 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import Animated, {
   Easing,
   makeMutable,
@@ -27,13 +27,9 @@ import {
   useMultiDayCurve,
   useMultiCurveIsAnyAddrLoading,
 } from '@/store/curve24h';
-import { ThemeColors2024 } from '@rabby-wallet/base-utils';
-import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
-import { create } from 'zustand';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { RNGHPressable } from '@/components/customized/reexports';
 import { Text, AnimateableText } from '@/components/Typography';
 import { balanceAccountsStore } from '@/store/balance';
 import type { Addresses24hChangeFlowState } from '@/store/balance24h';
@@ -56,6 +52,10 @@ export function setIsFoldMultiChart(valOrFunc: UpdaterOrPartials<boolean>) {
     },
   );
   svIsFoldMultiChart.value = newVal;
+}
+
+export function getIsFoldMultiChart() {
+  return !!svIsFoldMultiChart.value;
 }
 
 const ChartContent = memo(function ChartContent({
@@ -117,7 +117,10 @@ const ChartContent = memo(function ChartContent({
           />
         </LineChart>
       ) : (
-        <CurveLoader style={styles.loading} />
+        <CurveLoader
+          {...makeTestIDProps(E2E_ID.home.portfolioCurveLoading)}
+          style={styles.loading}
+        />
       )}
     </Animated.View>
   );
@@ -219,12 +222,12 @@ const ChartHeader = React.memo(
     }, [showBalanceLoadingWithoutLocal]);
     const changePercent = useDebouncedValue(_changePercent, 300);
     const shouldWaitDebouncedChange = useMemo(() => {
-      return Boolean(_changePercent) && !Boolean(changePercent);
+      return !!_changePercent && !changePercent;
     }, [_changePercent, changePercent]);
     const showChangeLoading = useMemo(() => {
       return (
         showNetWorthLoading ||
-        (!Boolean(changePercent) &&
+        (!changePercent &&
           (sceneChangeFlow.isAnyLoading || shouldWaitDebouncedChange))
       );
     }, [
@@ -394,6 +397,7 @@ const ChartHeader = React.memo(
         </View>
         {showChangeLoading ? (
           <Skeleton
+            {...makeTestIDProps(E2E_ID.home.portfolioChangeLoading)}
             width={100}
             height={22}
             style={styles.skeletonNetWorth}
@@ -401,6 +405,7 @@ const ChartHeader = React.memo(
           />
         ) : (
           <Pressable
+            {...makeTestIDProps(E2E_ID.home.portfolioCurveToggle)}
             onPress={e => {
               e.stopPropagation();
               const nextValue = !svIsFoldMultiChart.value;
@@ -458,7 +463,7 @@ const winWidth = Dimensions.get('window').width;
 const getStyle = createGetStyles2024(
   {
     reanimatedStyles: {
-      charHeader: ({ colors2024, winLayout }) => {
+      charHeader: ({ colors2024: _colors2024, winLayout }) => {
         'worklet';
         return {
           alignContent: 'flex-start',
