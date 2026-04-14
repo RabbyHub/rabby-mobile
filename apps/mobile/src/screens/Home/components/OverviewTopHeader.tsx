@@ -10,7 +10,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -56,7 +55,10 @@ import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAsset
 import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
-import { useHomePortfolioSummary } from '../hooks/useHomePortfolioSummary';
+import {
+  useHomePortfolioRefreshState,
+  useHomePortfolioSummary,
+} from '../hooks/useHomePortfolioSummary';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -73,6 +75,7 @@ export function TabsTopHeader(): JSX.Element {
   );
   const showNetWorth = tabIndexFromSv > 0.7;
   const homePortfolio = useHomePortfolioSummary();
+  const homeRefreshState = useHomePortfolioRefreshState();
   const data = homePortfolio.changeSummary.combinedData;
   const scene24hLoading = homePortfolio.changeSummary.flow.isAnyLoading;
 
@@ -136,6 +139,17 @@ export function TabsTopHeader(): JSX.Element {
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
   const showChangeLoading = homePortfolio.showChangeLoadingWithoutLocal;
+  const showHeaderSideLoadingIndicator = useMemo(() => {
+    return (
+      showBalanceLoadingWithoutLocal ||
+      (homeRefreshState.displayAddresses.length > 0 &&
+        homeRefreshState.isAnyRemoteRefreshing)
+    );
+  }, [
+    homeRefreshState.displayAddresses.length,
+    homeRefreshState.isAnyRemoteRefreshing,
+    showBalanceLoadingWithoutLocal,
+  ]);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
@@ -197,7 +211,7 @@ export function TabsTopHeader(): JSX.Element {
             </View>
           ) : null}
           {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          showBalanceLoadingWithoutLocal ? (
+          showHeaderSideLoadingIndicator ? (
             <LoadingCircle />
           ) : null}
         </Pressable>
@@ -230,7 +244,7 @@ export function TabsTopHeader(): JSX.Element {
             )}
           </TouchableOpacity>
           {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          showBalanceLoadingWithoutLocal ? (
+          showHeaderSideLoadingIndicator ? (
             <LoadingCircle />
           ) : null}
         </View>
