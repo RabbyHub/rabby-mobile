@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
 import addressBalanceStore from '@/store/balance';
-import { useAddresses24hChangeSummary } from '@/store/balance24h';
+import {
+  balance24hStore,
+  useAddresses24hChangeSummary,
+} from '@/store/balance24h';
+import { addressCurve24hStore } from '@/store/curve24h';
 import { useHomeDisplayAddresses } from './useHomeDisplayAddresses';
 
 export function useHomePortfolioSummary() {
@@ -52,6 +56,46 @@ export function useHomePortfolioSummary() {
       isPendingDisplayAddresses,
       showBalanceLoadingWithoutLocal,
       showChangeLoadingWithoutLocal,
+    ],
+  );
+}
+
+export function useHomePortfolioRefreshState() {
+  const { displayAddresses } = useHomeDisplayAddresses();
+  const balanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(displayAddresses);
+  const balance24hSnapshots =
+    balance24hStore.useAddresses24hBalanceSnapshots(displayAddresses);
+  const curveSnapshots = addressCurve24hStore.useSnapshots(displayAddresses);
+
+  const isBalanceFetchingRemote = useMemo(() => {
+    return balanceSnapshots.some(item => item.flow.isFetchingRemote);
+  }, [balanceSnapshots]);
+
+  const is24hChangeFetchingRemote = useMemo(() => {
+    return balance24hSnapshots.some(item => item.flow.isFetchingRemote);
+  }, [balance24hSnapshots]);
+
+  const isCurveFetchingRemote = useMemo(() => {
+    return curveSnapshots.some(item => item.flow.isFetchingRemote);
+  }, [curveSnapshots]);
+
+  return useMemo(
+    () => ({
+      displayAddresses,
+      isBalanceFetchingRemote,
+      is24hChangeFetchingRemote,
+      isCurveFetchingRemote,
+      isAnyRemoteRefreshing:
+        isBalanceFetchingRemote ||
+        is24hChangeFetchingRemote ||
+        isCurveFetchingRemote,
+    }),
+    [
+      displayAddresses,
+      is24hChangeFetchingRemote,
+      isBalanceFetchingRemote,
+      isCurveFetchingRemote,
     ],
   );
 }
