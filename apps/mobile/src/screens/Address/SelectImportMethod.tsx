@@ -18,6 +18,8 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import HelpSVG from '@/assets2024/icons/common/help.svg';
@@ -97,7 +99,8 @@ function SelectImportMethod(): JSX.Element {
           {/* Seed Phrase or Private Key Option */}
           <Card
             style={styles.importItem}
-            onPress={handleSeedPhraseOrPrivateKey}>
+            onPress={handleSeedPhraseOrPrivateKey}
+            {...makeTestIDProps(E2E_ID.onboarding.importMethodPrivateKey)}>
             <View style={styles.itemContent}>
               <Text style={styles.itemTitle}>
                 {t('page.nextComponent.addAddress.seedPhraseOrPrivateKey')}

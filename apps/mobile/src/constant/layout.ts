@@ -82,7 +82,6 @@ export const ScreenColors = {
 
 export const RootNames = {
   StackGetStarted: 'StackGetStarted',
-  GetStartedScreen2024: 'GetStartedScreen2024',
   CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
   StackHomeNonTab: 'StackHomeNonTab',
@@ -117,7 +116,6 @@ export const RootNames = {
 
   /* warning: testkits only ------ start */
   StackTestkits: 'StackTestkits',
-  NewUserGetStarted2024: 'NewUserGetStarted2024',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIAnimatedTextAndView: 'DevUIAnimatedTextAndView',
   DevUIFormShowCase: 'DevUIFormShowCase',
@@ -342,7 +340,6 @@ function makeScreenSpecConfig() {
 
       // StackGetStarted
       [RootNames.GetStarted]: bg1DefaultConf,
-      [RootNames.GetStartedScreen2024]: bg1DefaultConf,
       [RootNames.CreateSelectMethod]: bg1Default2024Conf,
       // StackRoot
       // StackHomeNonTab
@@ -373,7 +370,6 @@ function makeScreenSpecConfig() {
       [RootNames.ProviderControllerTester]: bg1Default2024Conf,
 
       // StackTestkits
-      [RootNames.NewUserGetStarted2024]: bg1DefaultConf,
       [RootNames.DevUIFontShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAnimatedTextAndView]: bg1Default2024Conf,
       [RootNames.DevUIFormShowCase]: bg1Default2024Conf,

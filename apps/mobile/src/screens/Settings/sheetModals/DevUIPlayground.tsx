@@ -1,28 +1,20 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-} from 'react';
-import { View, Alert } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { View } from 'react-native';
 import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 import { RcCode } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
+import { DevTestItem, GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { useAccounts } from '@/hooks/account';
 import { useDevServerModalVisible } from '../Modals/DevModalDevServer';
 import { toast } from '@/components2024/Toast';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -68,41 +60,11 @@ export default function DevUIPlaygroundModal({
 
   const navigation = useRabbyAppNavigation();
 
-  const { accounts } = useAccounts();
-
   const { haventSetDevServer, setDevServerSettingsModalVisible } =
     useDevServerModalVisible();
 
   const Items = (() => {
     const list: DevTestItem[] = [
-      {
-        label: 'New Get Started 2024',
-        icon: <RcCode style={styles.labelIcon} />,
-        disabled: !!accounts.length,
-        onDisabledPress: () => {
-          if (accounts.length) {
-            Alert.alert(
-              'Warning',
-              accounts.length > 1
-                ? `You have ${accounts.length} accounts, please remove them first`
-                : 'You have an account, please remove it first',
-            );
-            return { keepModalVisible: true };
-          }
-        },
-        onPress: () => {
-          navigation.dispatch(
-            StackActions.push(RootNames.StackGetStarted, {
-              screen: RootNames.GetStartedScreen2024,
-            }),
-          );
-          // navigation.dispatch(
-          //   StackActions.push(RootNames.StackTestkits, {
-          //     screen: RootNames.NewUserGetStarted2024,
-          //   }),
-          // );
-        },
-      },
       {
         label: 'Animated View & Text',
         icon: <RcCode style={styles.labelIcon} />,

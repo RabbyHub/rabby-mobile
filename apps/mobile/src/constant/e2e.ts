@@ -1,0 +1,33 @@
+export const E2E_ID = {
+  onboarding: {
+    welcomeImportExisting: 'e2e.onboarding.welcome.import-existing',
+    importMethodPrivateKey: 'e2e.onboarding.import-method.private-key',
+    privateKeyTab: 'e2e.onboarding.private-key.tab',
+    privateKeyInput: 'e2e.onboarding.private-key.input',
+    privateKeySubmit: 'e2e.onboarding.private-key.submit',
+    setPasswordInput: 'e2e.onboarding.set-password.password',
+    setPasswordConfirmInput: 'e2e.onboarding.set-password.confirm-password',
+    setPasswordBiometrics: 'e2e.onboarding.set-password.biometrics',
+    setPasswordBiometricsOn: 'e2e.onboarding.set-password.biometrics.on',
+    setPasswordBiometricsOff: 'e2e.onboarding.set-password.biometrics.off',
+    setPasswordAgreement: 'e2e.onboarding.set-password.agreement',
+    setPasswordSubmit: 'e2e.onboarding.set-password.submit',
+    importSuccessPrimary: 'e2e.onboarding.import-success.primary',
+  },
+  unlock: {
+    passwordInput: 'e2e.unlock.password.input',
+    submit: 'e2e.unlock.submit',
+    switchAuthType: 'e2e.unlock.switch-auth-type',
+    switchAuthTypePassword: 'e2e.unlock.switch-auth-type.password',
+    switchAuthTypeBiometrics: 'e2e.unlock.switch-auth-type.biometrics',
+  },
+  home: {
+    addAddressButton: 'e2e.home.add-address.button',
+    addAddressImportAddress: 'e2e.home.add-address.import-address',
+    importMethodWatchAddress: 'e2e.home.import-method.watch-address',
+    watchAddressInput: 'e2e.home.watch-address.input',
+    watchAddressEnsResult: 'e2e.home.watch-address.ens-result',
+    watchAddressSubmit: 'e2e.home.watch-address.submit',
+    singleAddressBack: 'e2e.home.single-address.back',
+  },
+} as const;

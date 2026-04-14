@@ -133,13 +133,6 @@ export function useInitializeAppOnTop() {
     const onUnlock = async () => {
       apisSafe.syncAllGnosisNetworks();
       doInitializeApis();
-
-      // const accounts = await keyringService.getAllVisibleAccountsArray();
-      // if (!accounts?.length) {
-      //   replace(RootNames.StackGetStarted, {
-      //     screen: RootNames.GetStartedScreen2024,
-      //   });
-      // }
     };
     const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
 
