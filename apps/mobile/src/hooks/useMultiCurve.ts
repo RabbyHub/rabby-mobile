@@ -19,7 +19,7 @@ import {
   apisAccountsBalance,
   fetchTotalBalance,
   getBalanceCacheAccounts,
-} from './useAccountsBalance';
+} from '@/store/balance';
 import { debounce } from 'lodash';
 import { runIIFEFunc } from '@/core/utils/store';
 import { accountEvents, getTop10MyAccounts } from '@/core/apis/account';

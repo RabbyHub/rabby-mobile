@@ -2,7 +2,7 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
-import React, { memo, useCallback, useEffect, useMemo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import Animated, {
@@ -31,17 +31,19 @@ import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { create } from 'zustand';
-import addressBalanceStore from '@/store/balance';
 import {
   useMultiHome24hBalanceCurveChart,
   useSceneIsLoading,
 } from '@/store/balance24h';
-import { balanceAccountsStore } from '@/hooks/useAccountsBalance';
+import {
+  balanceAccountsStore,
+  useAddressesBalanceSummary,
+} from '@/store/balance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { RNGHPressable } from '@/components/customized/reexports';
 import { Text, AnimateableText } from '@/components/Typography';
+import { useAccountStore } from '@/store/account';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -139,19 +141,25 @@ export const MultiChart = memo(function MultiChart({
 
   const { matteredAccountCount, myTop10Addresses } = useAccountInfo();
   const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
+  const hasResolvedSelection = balanceAccountsStore(
+    s => s.hasResolvedSelection,
+  );
+  const hasFetchedAccounts = useAccountStore(s => s.hasFetchedAccounts);
+  const isFetchingAccounts = useAccountStore(s => s.isFetchingAccounts);
   const displayAddresses = useMemo(() => {
     return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
   }, [myTop10Addresses, selectedAddresses]);
-  const balanceMap = addressBalanceStore.useAddressValueMap();
-  const totalBalance = useMemo(() => {
-    if (!displayAddresses.length) {
-      return 0;
-    }
-    return displayAddresses.reduce((acc, address) => {
-      const balance = balanceMap[address.toLowerCase()];
-      return acc + (balance?.totalBalance || 0);
-    }, 0);
-  }, [balanceMap, displayAddresses]);
+  const { totalBalance, flow: top10BalanceFlow } =
+    useAddressesBalanceSummary(displayAddresses);
+  const isPendingDisplayAddresses =
+    !hasResolvedSelection &&
+    displayAddresses.length === 0 &&
+    (!hasFetchedAccounts ||
+      isFetchingAccounts ||
+      myTop10Addresses.length === 0);
+  const showBalanceLoadingWithoutLocal =
+    isPendingDisplayAddresses ||
+    (displayAddresses.length > 0 && !top10BalanceFlow.hasAnyValue);
 
   const { dayCurveData: dayCurveData } = useMultiDayCurve();
 
@@ -177,6 +185,7 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountCount}
+            showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
           />
           <ChartContent
             data={chartsData}
@@ -197,6 +206,7 @@ interface IHeaderProps {
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
+  showBalanceLoadingWithoutLocal: boolean;
 }
 const ChartHeader = React.memo(
   ({
@@ -207,6 +217,7 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
+    showBalanceLoadingWithoutLocal,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
@@ -214,26 +225,11 @@ const ChartHeader = React.memo(
     };
     const { currentIndex } = LineChart.useChart();
     const { currency, formatCurrentCurrency } = useCurrency();
-    const debouncedRawNetWorth = useDebouncedValue(rawNetWorth, 300);
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
-    const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
-    const { myTop10Addresses } = useAccountInfo();
-    const displayAddresses = useMemo(() => {
-      return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
-    }, [myTop10Addresses, selectedAddresses]);
-    const balanceMap = addressBalanceStore.useAddressValueMap();
-    const top10BalanceFlow =
-      addressBalanceStore.useAddressesFlowState(displayAddresses);
     const { isLoading: scene24hLoading } = useSceneIsLoading('Home');
     const showNetWorthLoading = useMemo(() => {
-      return (
-        !top10BalanceFlow.hasAnyValue &&
-        top10BalanceFlow.isAnyLoadingWithoutValue
-      );
-    }, [
-      top10BalanceFlow.hasAnyValue,
-      top10BalanceFlow.isAnyLoadingWithoutValue,
-    ]);
+      return showBalanceLoadingWithoutLocal;
+    }, [showBalanceLoadingWithoutLocal]);
     const showChangeLoading = useMemo(() => {
       return (
         showNetWorthLoading || (!Boolean(_changePercent) && scene24hLoading)
@@ -241,8 +237,8 @@ const ChartHeader = React.memo(
     }, [_changePercent, scene24hLoading, showNetWorthLoading]);
 
     const netWorth = useMemo(() => {
-      return formatSmallCurrencyValue(debouncedRawNetWorth, { currency });
-    }, [debouncedRawNetWorth, currency]);
+      return formatSmallCurrencyValue(rawNetWorth, { currency });
+    }, [currency, rawNetWorth]);
     const change = useMemo(() => {
       return formatCurrentCurrency(Math.abs(debouncedRawChange));
     }, [formatCurrentCurrency, debouncedRawChange]);
@@ -370,7 +366,6 @@ const ChartHeader = React.memo(
             style={[
               styles.netWorth,
               showNetWorthLoading && styles.hidden,
-              // 用hide原因是：AnimateableText持续订阅netWorthAnimatedProps的变化，会出现订阅不到值或值不更新的问题
               hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
             ]}
             animatedProps={netWorthAnimatedProps}

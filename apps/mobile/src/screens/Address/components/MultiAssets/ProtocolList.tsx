@@ -30,7 +30,7 @@ import useProtocols, {
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
 import { useAccountInfo } from './hooks';
-import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+import { useAccountsBalanceTrigger } from '@/store/balance';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';

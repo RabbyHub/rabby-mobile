@@ -37,7 +37,7 @@ describe('hooks/useMultiCurve', () => {
         myTop10Addresses: [],
       })),
     }));
-    jest.doMock('./useAccountsBalance', () => ({
+    jest.doMock('@/store/balance', () => ({
       accountsBalanceEvents: {
         on: jest.fn(),
       },

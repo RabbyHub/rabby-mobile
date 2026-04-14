@@ -8,7 +8,7 @@ import {
   accountsBalanceEvents,
   apisAccountsBalance,
   getBalanceCacheAccounts,
-} from '@/hooks/useAccountsBalance';
+} from './balance';
 import { formatSmallUsdValue } from '@/hooks/useCurve';
 import { formatUsdValue } from '@/utils/number';
 import { debounce, isEqual } from 'lodash';

@@ -59,16 +59,6 @@ describe('store/balance24h scene', () => {
     jest.doMock('@/utils/number', () => ({
       formatUsdValue: jest.fn(() => '$1'),
     }));
-    jest.doMock('@/hooks/useAccountsBalance', () => ({
-      accountsBalanceEvents: {
-        on: jest.fn(),
-      },
-      apisAccountsBalance: {
-        computeTotalBalance: (...args: unknown[]) =>
-          mockComputeTotalBalance(...args),
-      },
-      getBalanceCacheAccounts: () => mockGetBalanceCacheAccounts(),
-    }));
     jest.doMock('@/core/apis/account', () => ({
       getTop10MyAccounts: (...args: unknown[]) =>
         mockGetTop10MyAccounts(...args),
@@ -85,6 +75,14 @@ describe('store/balance24h scene', () => {
         useAddressValueMap: jest.fn(() => mockBalanceValueMap),
         subscribe: jest.fn(),
       },
+      accountsBalanceEvents: {
+        on: jest.fn(),
+      },
+      apisAccountsBalance: {
+        computeTotalBalance: (...args: unknown[]) =>
+          mockComputeTotalBalance(...args),
+      },
+      getBalanceCacheAccounts: () => mockGetBalanceCacheAccounts(),
     }));
     jest.doMock('@/utils/24hBalanceCache', () => ({
       getBalance24hCache: (...args: unknown[]) =>

@@ -44,9 +44,10 @@ import { startProcessScene24hBalanceEvents } from './store/balance24h';
 import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
 import useProtocolListStore from './store/protocols';
 import { useAppChainStore } from './store/appchain';
-import addressBalanceStore from './store/balance';
+import addressBalanceStore, {
+  startProcessAccountBalanceEvents,
+} from './store/balance';
 import { apisAutoLock } from './core/apis';
-import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';

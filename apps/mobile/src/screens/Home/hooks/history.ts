@@ -12,7 +12,7 @@ import {
   UpdaterOrPartials,
 } from '@/core/utils/store';
 import { RefLikeObject } from '@/utils/type';
-import { getBalanceCacheAccounts } from '@/hooks/useAccountsBalance';
+import { getBalanceCacheAccounts } from '@/store/balance';
 
 type HomeHistoryState = {
   pendingTxCount: number;

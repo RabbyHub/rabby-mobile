@@ -22,7 +22,7 @@ import {
   makeDevOnlyStyle,
 } from '@/utils/styles';
 
-import { useLoadBalanceFromApiStage } from '@/hooks/useAccountsBalance';
+import { useLoadBalanceFromApiStage } from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';

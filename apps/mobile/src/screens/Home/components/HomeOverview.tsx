@@ -61,7 +61,7 @@ import { currencyService } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+import { useAccountsBalanceTrigger } from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';

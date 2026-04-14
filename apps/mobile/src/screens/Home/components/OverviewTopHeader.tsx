@@ -14,7 +14,6 @@ import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { devLog } from '@/utils/logger';
 import {
   createGetStyles2024,
   makeDebugBorder,
@@ -53,11 +52,13 @@ import {
   useScene24hBalanceCombinedData,
   useSceneIsLoading,
 } from '@/store/balance24h';
-import { balanceAccountsStore } from '@/hooks/useAccountsBalance';
-import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
-import addressBalanceStore from '@/store/balance';
+import {
+  balanceAccountsStore,
+  useAddressesBalanceSummary,
+} from '@/store/balance';
 import { useAccountStore } from '@/store/account';
+import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -102,68 +103,29 @@ export function TabsTopHeader(): JSX.Element {
   });
   const { currency } = useCurrency();
   const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
+  const hasResolvedSelection = balanceAccountsStore(
+    s => s.hasResolvedSelection,
+  );
   const hasFetchedAccounts = useAccountStore(s => s.hasFetchedAccounts);
   const isFetchingAccounts = useAccountStore(s => s.isFetchingAccounts);
   const { myTop10Addresses } = useAccountInfo();
   const displayAddresses = useMemo(() => {
     return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
   }, [myTop10Addresses, selectedAddresses]);
-  const top10BalanceSnapshots =
-    addressBalanceStore.useAddressesSnapshot(displayAddresses);
-  const top10BalanceFlow = useMemo(() => {
-    const addresses = top10BalanceSnapshots.map(item => item.address);
-    const loadingAddresses = top10BalanceSnapshots
-      .filter(item => item.flow.isLoading)
-      .map(item => item.address);
-    const missingAddresses = top10BalanceSnapshots
-      .filter(item => !item.flow.hasValue)
-      .map(item => item.address);
-
-    return {
-      addresses,
-      loadingAddresses,
-      missingAddresses,
-      hasAnyValue: top10BalanceSnapshots.some(item => item.flow.hasValue),
-      isAnyLoading: loadingAddresses.length > 0,
-      isAnyLoadingWithoutValue: top10BalanceSnapshots.some(
-        item => item.flow.isLoadingWithoutValue,
-      ),
-      hasAllValues:
-        top10BalanceSnapshots.length > 0 && missingAddresses.length === 0,
-    };
-  }, [top10BalanceSnapshots]);
-  const hasLoadedAllTop10Balances =
-    displayAddresses.length > 0 && top10BalanceFlow.hasAllValues;
+  const {
+    snapshots: top10BalanceSnapshots,
+    flow: top10BalanceFlow,
+    totalBalance,
+  } = useAddressesBalanceSummary(displayAddresses);
   const isPendingDisplayAddresses =
+    !hasResolvedSelection &&
     displayAddresses.length === 0 &&
-    (!hasFetchedAccounts || isFetchingAccounts);
+    (!hasFetchedAccounts ||
+      isFetchingAccounts ||
+      myTop10Addresses.length === 0);
   const showBalanceLoadingWithoutLocal =
     isPendingDisplayAddresses ||
-    (displayAddresses.length > 0 && !hasLoadedAllTop10Balances);
-
-  const totalBalance = useMemo(() => {
-    if (!top10BalanceSnapshots.length) {
-      return 0;
-    }
-    return top10BalanceSnapshots.reduce((acc, item) => {
-      return acc + (item.value?.totalBalance || 0);
-    }, 0);
-  }, [top10BalanceSnapshots]);
-  const balanceTraceSnapshot = useMemo(() => {
-    return top10BalanceSnapshots.map(item => {
-      return {
-        address: item.address,
-        hasValue: item.flow.hasValue,
-        sourceOfCurrentValue: item.sourceOfCurrentValue || null,
-        isHydrating: item.flow.isHydrating,
-        isFetchingRemote: item.flow.isFetchingRemote,
-        persistStatus: item.persistStatus,
-        totalBalance: item.value?.totalBalance ?? null,
-        evmBalance: item.value?.evmBalance ?? null,
-      };
-    });
-  }, [top10BalanceSnapshots]);
-
+    (displayAddresses.length > 0 && !top10BalanceFlow.hasAnyValue);
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
 
@@ -236,38 +198,6 @@ export function TabsTopHeader(): JSX.Element {
       });
     }
   }, [data.isLoss, previousLoading, scene24hLoading]);
-
-  useEffect(() => {
-    devLog('HOME_BALANCE_TRACE', {
-      selectedAddresses,
-      myTop10Addresses,
-      displayAddresses,
-      hasFetchedAccounts,
-      isFetchingAccounts,
-      isPendingDisplayAddresses,
-      top10BalanceFlow,
-      showBalanceLoadingWithoutLocal,
-      totalBalance,
-      scene24hLoading,
-      sceneChangeLoading,
-      changePercent,
-      balances: balanceTraceSnapshot,
-    });
-  }, [
-    balanceTraceSnapshot,
-    changePercent,
-    displayAddresses,
-    hasFetchedAccounts,
-    isFetchingAccounts,
-    isPendingDisplayAddresses,
-    myTop10Addresses,
-    sceneChangeLoading,
-    scene24hLoading,
-    selectedAddresses,
-    showBalanceLoadingWithoutLocal,
-    top10BalanceFlow,
-    totalBalance,
-  ]);
 
   const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
 
