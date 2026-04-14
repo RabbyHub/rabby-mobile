@@ -146,8 +146,10 @@ export const MultiChart = memo(function MultiChart({
   }, [myTop10Addresses, selectedAddresses]);
   const { totalBalance, flow: top10BalanceFlow } =
     addressBalanceStore.useAddressesBalanceSummary(displayAddresses);
-  const { isLoading: sceneChangeLoading } =
-    scene24hBalanceStore.useSceneChangeLoading('Home', displayAddresses);
+  const sceneChangeFlow = scene24hBalanceStore.useSceneChangeFlowState(
+    'Home',
+    displayAddresses,
+  );
   const isPendingDisplayAddresses =
     !hasResolvedSelection &&
     displayAddresses.length === 0 &&
@@ -183,7 +185,7 @@ export const MultiChart = memo(function MultiChart({
             hideType={hideType}
             matteredAccountCount={matteredAccountCount}
             showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
-            sceneChangeLoading={sceneChangeLoading}
+            sceneChangeFlow={sceneChangeFlow}
           />
           <ChartContent
             data={chartsData}
@@ -205,7 +207,9 @@ interface IHeaderProps {
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
   showBalanceLoadingWithoutLocal: boolean;
-  sceneChangeLoading: boolean;
+  sceneChangeFlow: ReturnType<
+    typeof scene24hBalanceStore.useSceneChangeFlowState
+  >;
 }
 const ChartHeader = React.memo(
   ({
@@ -217,7 +221,7 @@ const ChartHeader = React.memo(
     data: _data,
     matteredAccountCount,
     showBalanceLoadingWithoutLocal,
-    sceneChangeLoading,
+    sceneChangeFlow,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
@@ -237,11 +241,11 @@ const ChartHeader = React.memo(
       return (
         showNetWorthLoading ||
         (!Boolean(changePercent) &&
-          (sceneChangeLoading || shouldWaitDebouncedChange))
+          (sceneChangeFlow.isAnyLoading || shouldWaitDebouncedChange))
       );
     }, [
       changePercent,
-      sceneChangeLoading,
+      sceneChangeFlow.isAnyLoading,
       shouldWaitDebouncedChange,
       showNetWorthLoading,
     ]);

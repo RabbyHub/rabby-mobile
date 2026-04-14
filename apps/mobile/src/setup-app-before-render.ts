@@ -15,7 +15,6 @@ import {
 } from './hooks/useLock';
 import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
 import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
-import { startSubscribeBalanceUpdated } from './hooks/useCurve';
 import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
 import { startSubscribeOnekeyDevices } from './core/apis/onekey';
 import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
@@ -40,8 +39,13 @@ import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/
 import { startCheckClearAction } from './utils/clipboard';
 import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
 import tokenListStore from './store/tokens';
-import { balance24hStore, scene24hBalanceStore } from './store/balance24h';
 import {
+  balance24hStore,
+  hydrateCachedHome24hBalanceScene,
+  scene24hBalanceStore,
+} from './store/balance24h';
+import {
+  hydrateCachedHomeDayCurve,
   initCurve24hStore,
   startProcessMultiCurveEvents,
 } from './store/curve24h';
@@ -77,7 +81,6 @@ startSubscribeOnekeyDevices();
 startSubscribeTrezorConnectOnUrl();
 
 autoGoogleSignIfPreviousSignedOnBoot();
-startSubscribeBalanceUpdated();
 startSyncDefaultRPCs();
 runIIFEFunc(() => {
   storeApiGasAccount.fetchGasAccountInfo();
@@ -96,6 +99,7 @@ screenshotModalStartSyncNetworth();
 
 startProcessAccountBalanceEvents();
 scene24hBalanceStore.startProcessScene24hBalanceEvents();
+hydrateCachedHome24hBalanceScene();
 startProcessMultiCurveEvents();
 
 trimNoLongerSupportsOnUnlock();
@@ -109,9 +113,13 @@ startSubscribeRemoteNotification();
 async function initPersistedStores() {
   console.time('initPersistedStores');
   await useAppChainStore.getState().initStore();
-  await addressBalanceStore.initStore();
-  await balance24hStore.initStore();
-  await initCurve24hStore();
+  await Promise.all([
+    addressBalanceStore.initStore(),
+    balance24hStore.initStore(),
+    initCurve24hStore(),
+  ]);
+  hydrateCachedHome24hBalanceScene();
+  hydrateCachedHomeDayCurve();
   console.timeEnd('initPersistedStores');
 }
 

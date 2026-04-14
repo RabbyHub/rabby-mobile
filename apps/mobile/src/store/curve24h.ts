@@ -1,73 +1,68 @@
+import { openapi } from '@/core/request';
+import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
+import { dayCurveMMKV } from '@/core/storage/mmkvInstances';
+import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
+import { CurveDayType } from '@/utils/curveDayType';
 import {
   getCurveCache,
-  getNetCurve,
   ITIME_STEP_ITEM,
+  setCurveCache,
 } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
+import { debounce } from 'lodash';
 import dayjs from 'dayjs';
 import PQueue from 'p-queue';
-import { CurveDayType } from '@/utils/curveDayType';
-import { zCreate, zMutative } from '@/core/utils/reexports';
+import { useMemo } from 'react';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import {
-  AccountsBalanceState,
+import addressBalanceStore, {
   accountsBalanceEvents,
   balanceAccountsStore,
 } from '@/store/balance';
-import addressBalanceStore from '@/store/balance';
-import { debounce } from 'lodash';
-import { getTop10MyAccounts } from '@/core/apis/account';
-import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
-import { formChartData } from '@/hooks/useCurve';
-import { dayCurveMMKV } from '@/core/storage/mmkvInstances';
-import { useMemo } from 'react';
+import { BaseStore } from './_base';
+import { ResourceBaseStore } from './_resourceBase';
+import { ResourceLocalTarget } from './_resourceFlowDebug';
+import { combineMultiCurve, CurveList, formChartData } from './curveShared';
 
-const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
-
-type MultiCurveState = {
-  timestamps: Record<string, ITIME_STEP_ITEM[]>;
-  addrLoading: Record<string, boolean>;
-  loading: boolean;
+export type AddressCurveValue = CurveList;
+export type AddressCurveTraceContext = {
+  scene?: string;
+  requester?: string;
+  endpoint?: string;
 };
 
-const multiCurveStore = zCreate(
-  zMutative<MultiCurveState>(() => ({
-    timestamps: {},
-    addrLoading: {},
-    loading: true,
-  })),
-);
+type CurveScene = 'Home';
 
-const curve24hInitStateRef = {
-  promise: null as Promise<void> | null,
+type SceneCurveState = {
+  addresses: Record<CurveScene, string[]>;
+  combinedData: Record<CurveScene, ReturnType<typeof formChartData>>;
+  sceneLoading: Record<CurveScene, boolean>;
+  sceneComputing: Record<CurveScene, boolean>;
 };
 
-/** @deprecated */
-function setLoading(loading: boolean) {
-  multiCurveStore.setState(state => {
-    state.loading = loading;
-  });
-}
+const buildCurveLocalTargets = (address: string): ResourceLocalTarget[] => [
+  {
+    kind: 'mmkv',
+    file: MMKV_FILE_NAMES.DAYCURVE,
+    key: address,
+  },
+];
 
-function setAddrLoading(address: string, loading: boolean) {
-  const lcAddress = address.toLowerCase();
-  multiCurveStore.setState(state => {
-    state.addrLoading[lcAddress] = loading;
-  });
-}
+const buildCurveTraceDetail = (
+  detail: Record<string, unknown>,
+  trace?: AddressCurveTraceContext,
+) => {
+  return {
+    ...detail,
+    scene: trace?.scene,
+    requester: trace?.requester,
+    endpoint: trace?.endpoint,
+  };
+};
 
-function setMultiTimeStamp(address: string, data: ITIME_STEP_ITEM[]) {
-  const lcAddress = address.toLowerCase();
-  multiCurveStore.setState(state => {
-    state.timestamps[lcAddress] = data;
-  });
-}
+const normalizeAddress = (address?: string) => address?.toLowerCase() || '';
 
-function getMultiTimeStamp() {
-  return multiCurveStore.getState().timestamps;
-}
-
-const waitQueueFinished = (q: PQueue) => q.onIdle();
+const normalizeAddresses = (addresses: string[]) =>
+  Array.from(new Set(addresses.map(address => address.toLowerCase())));
 
 function normalizeCurveData(curve: ITIME_STEP_ITEM[]) {
   const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
@@ -91,194 +86,509 @@ function normalizeCurveData(curve: ITIME_STEP_ITEM[]) {
   });
 }
 
-const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
-  if (!timeStamps.length) {
-    return [];
+class AddressCurve24hStore extends ResourceBaseStore<AddressCurveValue> {
+  constructor() {
+    super('addressCurve24h');
   }
 
-  const startTime = timeStamps[0]?.[0]?.timestamp ?? 0;
-  const interval = 30 * 60;
-  const windows: ITIME_STEP_ITEM[] = Array(48)
-    .fill(null)
-    .map((_, index) => ({
-      timestamp: startTime + index * interval,
-      usd_value: 0,
-    }));
-
-  const result = windows.map(window => {
-    const windowStart = window.timestamp;
-    const windowEnd = windowStart + interval;
-    let sum = 0;
-    let count = 0;
-
-    timeStamps.forEach(addressData => {
-      const pointsInWindow = addressData.filter(
-        point => point.timestamp >= windowStart && point.timestamp < windowEnd,
-      );
-
-      if (pointsInWindow.length > 0) {
-        const latestPoint = pointsInWindow.reduce((latest, current) =>
-          current.timestamp > latest.timestamp ? current : latest,
-        );
-        sum += latestPoint.usd_value;
-        count++;
-      }
-    });
-
-    return {
-      timestamp: windowEnd,
-      usd_value: count > 0 ? sum : 0,
-    };
-  });
-
-  const firstPoints = timeStamps.map(data => data[0]);
-  const lastPoints = timeStamps.map(data => data[data.length - 1]);
-
-  const firstSum = firstPoints.reduce(
-    (sum, point) => sum + (point?.usd_value ?? 0),
-    0,
-  );
-  const lastSum = lastPoints.reduce(
-    (sum, point) => sum + (point?.usd_value ?? 0),
-    0,
-  );
-
-  result[0] = {
-    timestamp: startTime,
-    usd_value: firstSum,
+  getAddressCurve = (address?: string) => {
+    return this.getValue(normalizeAddress(address));
   };
 
-  result[result.length - 1] = {
-    timestamp: startTime + (48 - 1) * interval,
-    usd_value: lastSum,
+  getAddressCurveMap = () => this.getValueMap();
+
+  getAddressResourceState = (address?: string) => {
+    return this.getMeta(normalizeAddress(address));
   };
 
-  return result;
-};
+  getAddressCurveFlowState = (address?: string) => {
+    return this.getFlowState(normalizeAddress(address));
+  };
 
-const loadingMapRef: Record<string, boolean> = {};
+  useAddressCurve = (address?: string) => {
+    return this.useValue(normalizeAddress(address));
+  };
 
-const fetchData = makeSWRKeyAsyncFunc(
-  async (addresses: string[], force = false) => {
-    try {
-      if (!addresses.length) {
-        setLoading(false);
+  useAddressCurveMap = () => this.useValueMap();
+
+  useAddressResourceState = (address?: string) => {
+    return this.useMeta(normalizeAddress(address));
+  };
+
+  useAddressCurveFlowState = (address?: string) => {
+    return this.useFlowState(normalizeAddress(address));
+  };
+
+  initStore = async () => {
+    dayCurveMMKV.getAllKeys().forEach(key => {
+      const lowerAddress = normalizeAddress(key);
+      const cacheData = getCurveCache(lowerAddress);
+      if (!cacheData?.data?.length) {
         return;
       }
-      setLoading(!!force);
-      const nextCheckAddress = new Set([...addresses]);
-      if (!force) {
-        addresses.forEach(address => {
-          const addr = address.toLowerCase();
-          setAddrLoading(addr, true);
-          const cacheData = getCurveCache(addr);
-          if (!cacheData?.data || cacheData?.isExpired) {
-            return;
-          }
-          nextCheckAddress.delete(addr);
-          setAddrLoading(addr, false);
-          setMultiTimeStamp(addr, normalizeCurveData(cacheData.data));
-        });
-      }
-      queue.clear();
-      Array.from(nextCheckAddress).forEach(address => {
-        const addr = address.toLowerCase();
-        queue.add(async () => {
-          setAddrLoading(addr, true);
-          try {
-            const curve = await getNetCurve(addr, CurveDayType.DAY, force);
-            setMultiTimeStamp(addr, normalizeCurveData(curve));
-          } catch (error) {
-            console.error('Fetch curve error', error);
-          } finally {
-            setAddrLoading(addr, false);
-            loadingMapRef[addr] = false;
-          }
-        });
+
+      const localTargets = buildCurveLocalTargets(lowerAddress);
+      this.markHydrateStarted(lowerAddress, {
+        localTargets,
+        detail: {
+          source: 'initStore',
+          updateTime: cacheData.updateTime,
+          isExpired: cacheData.isExpired,
+        },
       });
-      if (nextCheckAddress.size) {
-        await waitQueueFinished(queue);
-      }
-      setLoading(false);
-    } catch (error) {
-      console.error('Fetch curve error', error);
-      setLoading(false);
+      this.applyHydratedValue(
+        lowerAddress,
+        normalizeCurveData(cacheData.data),
+        {
+          localTargets,
+          detail: {
+            source: 'initStore',
+            updateTime: cacheData.updateTime,
+            isExpired: cacheData.isExpired,
+          },
+        },
+      );
+    });
+  };
+
+  hydrateAddressCurveFromCache = (address: string) => {
+    const lowerAddress = normalizeAddress(address);
+    if (!lowerAddress) {
+      return null;
     }
 
-    return getMultiTimeStamp();
-  },
-  ctx => {
-    const addresses: string[] = ctx.args[0];
-    const force: boolean = ctx.args[1] || false;
-    return `fetch-multi-curve-${addresses.sort().join(',')}-force-${force}`;
-  },
-);
+    const localTargets = buildCurveLocalTargets(lowerAddress);
+    const cacheData = getCurveCache(lowerAddress);
+    const existedData = this.getAddressCurve(lowerAddress);
+    const shouldHydrate =
+      !!cacheData?.data?.length &&
+      (!existedData?.length || !cacheData.isExpired);
 
-function getDefaultCombineData() {
-  return formChartData([], {
+    this.markHydrateStarted(lowerAddress, {
+      localTargets,
+      detail: {
+        source: 'hydrateAddressCurveFromCache',
+        hasMemoryValue: !!existedData?.length,
+        hasCache: !!cacheData?.data?.length,
+        isExpired: !!cacheData?.isExpired,
+      },
+    });
+
+    if (shouldHydrate && cacheData?.data) {
+      this.applyHydratedValue(
+        lowerAddress,
+        normalizeCurveData(cacheData.data),
+        {
+          localTargets,
+          detail: {
+            source: 'hydrateAddressCurveFromCache',
+            updateTime: cacheData.updateTime,
+          },
+        },
+      );
+    } else {
+      this.markHydrateSkipped(lowerAddress, {
+        localTargets,
+        detail: {
+          source: 'hydrateAddressCurveFromCache',
+          hasMemoryValue: !!existedData?.length,
+          hasCache: !!cacheData?.data?.length,
+          isExpired: !!cacheData?.isExpired,
+        },
+      });
+    }
+
+    return cacheData;
+  };
+
+  refreshAddressCurve = makeSWRKeyAsyncFunc(
+    async (
+      address: string,
+      force = false,
+      trace?: AddressCurveTraceContext,
+    ) => {
+      const lowerAddress = normalizeAddress(address);
+      if (!lowerAddress) {
+        return undefined;
+      }
+
+      const localTargets = buildCurveLocalTargets(lowerAddress);
+      let requestId: string | undefined;
+
+      try {
+        const cacheData = this.hydrateAddressCurveFromCache(lowerAddress);
+
+        if (cacheData?.data?.length && !force && !cacheData.isExpired) {
+          return normalizeCurveData(cacheData.data);
+        }
+
+        requestId = this.startRemoteFetch(lowerAddress, {
+          localTargets,
+          detail: buildCurveTraceDetail(
+            {
+              source: 'refreshAddressCurve',
+              force,
+            },
+            trace,
+          ),
+        });
+
+        const curve = await openapi.getNetCurve(lowerAddress, 1);
+        const normalizedCurve = normalizeCurveData(curve);
+        const updateTime = Date.now();
+        const applied = this.applyRemoteValue(
+          lowerAddress,
+          requestId,
+          normalizedCurve,
+          {
+            localTargets,
+            detail: buildCurveTraceDetail(
+              {
+                source: 'refreshAddressCurve',
+                force,
+                pointCount: curve.length,
+              },
+              trace,
+            ),
+          },
+        );
+
+        if (!applied) {
+          return normalizedCurve;
+        }
+
+        this.persistInBackground(
+          lowerAddress,
+          () =>
+            setCurveCache(lowerAddress, {
+              data: curve,
+              updateTime,
+            }),
+          {
+            requestId,
+            localTargets,
+            detail: buildCurveTraceDetail(
+              {
+                source: 'refreshAddressCurve',
+                force,
+                pointCount: curve.length,
+              },
+              trace,
+            ),
+          },
+        );
+
+        return normalizedCurve;
+      } catch (error) {
+        this.markError(lowerAddress, requestId ? 'remote' : 'hydrate', error, {
+          requestId,
+          localTargets,
+          detail: buildCurveTraceDetail(
+            {
+              source: 'refreshAddressCurve',
+              force,
+            },
+            trace,
+          ),
+        });
+        throw error;
+      }
+    },
+    ctx => {
+      const address = normalizeAddress(ctx.args[0]);
+      const force = !!ctx.args[1];
+      return `refreshAddressCurve-${address}-${force ? 'force' : 'noforce'}`;
+    },
+  );
+
+  warmupAddressCurve = (
+    address: string,
+    options?: {
+      force?: boolean;
+      trace?: AddressCurveTraceContext;
+    },
+  ) => {
+    this.hydrateAddressCurveFromCache(address);
+
+    return this.refreshAddressCurve(
+      address,
+      options?.force ?? true,
+      options?.trace,
+    );
+  };
+}
+
+const sceneQueues: Record<CurveScene, PQueue> = {
+  Home: new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 }),
+};
+
+const getDefaultCombinedCurveData = () =>
+  formChartData([], {
     realtimeNetWorth: 0,
     realtimeTimestamp: 0,
     type: CurveDayType.DAY,
     staticBalance: 0,
   });
-}
 
-const computedStore = zCreate<{
-  combinedData: ReturnType<typeof formChartData>;
-}>(() => ({
-  combinedData: getDefaultCombineData(),
-}));
+class SceneCurve24hStore extends BaseStore<SceneCurveState> {
+  private hasStartedLifecycle = false;
 
-const onComputeCombineData = debounce(
-  (input: {
-    addresses: string[];
-    multiTimeStamp: Record<string, ITIME_STEP_ITEM[]>;
-    totalEvmBalance?: number;
-    totalBalance?: number;
-  }) => {
-    const { addresses, multiTimeStamp, totalEvmBalance, totalBalance } = input;
-    const list: ITIME_STEP_ITEM[][] = [];
-    addresses.forEach(address => {
-      const data = multiTimeStamp[address.toLowerCase()];
+  private readonly debouncedCommitters: Record<CurveScene, () => void> = {
+    Home: debounce(() => {
+      this.commitSceneCombinedData('Home');
+    }, 200),
+  };
 
-      if (data && data.length > 0) {
-        list.push(data);
+  constructor() {
+    super({
+      addresses: {
+        Home: [],
+      },
+      combinedData: {
+        Home: getDefaultCombinedCurveData(),
+      },
+      sceneLoading: {
+        Home: false,
+      },
+      sceneComputing: {
+        Home: false,
+      },
+    });
+  }
+
+  private setSceneAddresses(scene: CurveScene, addresses: string[]) {
+    const normalized = normalizeAddresses(addresses);
+    this.setState(prev => {
+      const prevAddresses = prev.addresses[scene] || [];
+      const isSame =
+        prevAddresses.length === normalized.length &&
+        prevAddresses.every((item, index) => item === normalized[index]);
+
+      if (isSame) {
+        return prev;
       }
-    });
-    const isAllGet = list.length === addresses.length;
-    const result = formChartData(combineMulitCurve(list), {
-      realtimeNetWorth: isAllGet ? totalEvmBalance || 0 : 0,
-      realtimeTimestamp: isAllGet ? new Date().getTime() : 0,
-      type: CurveDayType.DAY,
-      staticBalance: isAllGet ? totalBalance || 0 : 0,
-    });
 
-    computedStore.setState(prev => {
       return {
-        ...prev,
-        combinedData: result,
+        addresses: {
+          ...prev.addresses,
+          [scene]: normalized,
+        },
       };
     });
-  },
-  200,
-);
+  }
+
+  private setSceneLoading(scene: CurveScene, loading: boolean) {
+    this.setState(prev => {
+      if (prev.sceneLoading[scene] === loading) {
+        return prev;
+      }
+
+      return {
+        sceneLoading: {
+          ...prev.sceneLoading,
+          [scene]: loading,
+        },
+      };
+    });
+  }
+
+  private setSceneComputing(scene: CurveScene, computing: boolean) {
+    this.setState(prev => {
+      if (prev.sceneComputing[scene] === computing) {
+        return prev;
+      }
+
+      return {
+        sceneComputing: {
+          ...prev.sceneComputing,
+          [scene]: computing,
+        },
+      };
+    });
+  }
+
+  private commitSceneCombinedData(scene: CurveScene) {
+    const addresses = this.getState().addresses[scene];
+    const curveMap = addressCurve24hStore.getAddressCurveMap();
+    const balanceMap = addressBalanceStore.getAddressValueMap();
+    const curveList = addresses
+      .map(address => curveMap[address.toLowerCase()])
+      .filter((curve): curve is CurveList => !!curve?.length);
+    const hasAllCurves =
+      addresses.length > 0 &&
+      addresses.every(address => !!curveMap[address.toLowerCase()]?.length);
+    const totals = addresses.reduce(
+      (acc, address) => {
+        const balance = balanceMap[address.toLowerCase()];
+        acc.total += balance?.totalBalance || 0;
+        acc.totalEvm += balance?.evmBalance || 0;
+        return acc;
+      },
+      { total: 0, totalEvm: 0 },
+    );
+
+    const combinedData = formChartData(combineMultiCurve(curveList), {
+      realtimeNetWorth: hasAllCurves ? totals.totalEvm : 0,
+      realtimeTimestamp: hasAllCurves ? Date.now() : 0,
+      type: CurveDayType.DAY,
+      staticBalance: hasAllCurves ? totals.total : 0,
+    });
+
+    this.setState(prev => ({
+      combinedData: {
+        ...prev.combinedData,
+        [scene]: combinedData,
+      },
+    }));
+    this.setSceneComputing(scene, false);
+  }
+
+  private scheduleCommit(scene: CurveScene) {
+    this.setSceneComputing(scene, true);
+    this.debouncedCommitters[scene]();
+  }
+
+  hydrateSceneDayCurveFromCache = (scene: CurveScene, addresses: string[]) => {
+    const normalized = normalizeAddresses(addresses);
+    if (!normalized.length) {
+      return;
+    }
+
+    this.setSceneAddresses(scene, normalized);
+    this.setSceneLoading(scene, false);
+    this.scheduleCommit(scene);
+  };
+
+  refreshSceneDayCurve = makeSWRKeyAsyncFunc(
+    async (
+      scene: CurveScene,
+      {
+        addresses = [],
+        force = false,
+        reason,
+      }: {
+        addresses?: string[];
+        force?: boolean;
+        reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
+      } = {},
+    ) => {
+      const normalized = normalizeAddresses(addresses);
+      this.setSceneAddresses(scene, normalized);
+
+      if (!normalized.length) {
+        this.setSceneLoading(scene, false);
+        this.setSceneComputing(scene, false);
+        return;
+      }
+
+      if (reason === 'balance_changed' && !force) {
+        this.scheduleCommit(scene);
+        return;
+      }
+
+      this.setSceneLoading(scene, true);
+
+      normalized.forEach(address => {
+        addressCurve24hStore.hydrateAddressCurveFromCache(address);
+      });
+      this.scheduleCommit(scene);
+
+      const queue = sceneQueues[scene];
+      queue.clear();
+      normalized.forEach(address => {
+        queue.add(async () => {
+          try {
+            await addressCurve24hStore.refreshAddressCurve(address, force, {
+              scene,
+              requester: 'SceneCurve24hStore.refreshSceneDayCurve',
+              endpoint: 'openapi.getNetCurve',
+            });
+          } catch (error) {
+            console.error('refreshSceneDayCurve error', error);
+          }
+        });
+      });
+
+      await queue.onIdle();
+      this.setSceneLoading(scene, false);
+      this.scheduleCommit(scene);
+    },
+    ctx => {
+      const scene = ctx.args[0];
+      const addresses = normalizeAddresses(ctx.args[1]?.addresses || []);
+      const force = !!ctx.args[1]?.force;
+      return `refreshSceneDayCurve-${scene}-${addresses.join(',')}-${
+        force ? 'force' : 'noforce'
+      }`;
+    },
+  );
+
+  useSceneDayCurveData = (scene: CurveScene) => {
+    const dayCurveData = this.useStore(s => s.combinedData[scene]);
+
+    return { dayCurveData };
+  };
+
+  useSceneIsAnyAddrLoading = (scene: CurveScene, addresses: string[]) => {
+    const normalized = useMemo(
+      () => normalizeAddresses(addresses),
+      [addresses],
+    );
+    const flow = addressCurve24hStore.useFamilyFlowState(normalized);
+    const sceneLoading = this.useStore(s => s.sceneLoading[scene]);
+
+    return useMemo(
+      () => ({
+        isAnyAddrLoading: flow.isAnyLoading || sceneLoading,
+      }),
+      [flow.isAnyLoading, sceneLoading],
+    );
+  };
+
+  startLifecycle = () => {
+    if (this.hasStartedLifecycle) {
+      return;
+    }
+    this.hasStartedLifecycle = true;
+
+    addressCurve24hStore.subscribe(() => {
+      const addresses = this.getState().addresses.Home;
+      if (!addresses.length) {
+        return;
+      }
+      this.scheduleCommit('Home');
+    });
+
+    addressBalanceStore.subscribe(() => {
+      const addresses = this.getState().addresses.Home;
+      if (!addresses.length) {
+        return;
+      }
+      this.scheduleCommit('Home');
+    });
+
+    accountsBalanceEvents.on('SELECTION_CHANGED', ({ nextAddresses }) => {
+      refreshDayCurve({
+        addresses: nextAddresses,
+        reason: 'selection_changed',
+      });
+    });
+  };
+}
+
+export const addressCurve24hStore = new AddressCurve24hStore();
+export const sceneCurve24hStore = new SceneCurve24hStore();
+
+const curve24hInitStateRef = {
+  promise: null as Promise<void> | null,
+};
 
 export async function initCurve24hStore() {
   if (curve24hInitStateRef.promise) {
     return curve24hInitStateRef.promise;
   }
 
-  const promise = Promise.resolve().then(() => {
-    dayCurveMMKV.getAllKeys().forEach(key => {
-      const cacheData = getCurveCache(key);
-      if (!cacheData?.data?.length) {
-        return;
-      }
-      setMultiTimeStamp(key, normalizeCurveData(cacheData.data));
-    });
-    setLoading(false);
-  });
-
+  const promise = addressCurve24hStore.initStore();
   curve24hInitStateRef.promise = promise;
   await promise;
 }
@@ -292,72 +602,47 @@ export const refreshDayCurve = makeSWRKeyAsyncFunc(
   }: {
     addresses?: string[];
     force?: boolean;
-    balanceAccounts?: AccountsBalanceState['balance'];
+    balanceAccounts?: Record<string, unknown>;
     reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
   } = {}) => {
-    const top10Addresses =
+    const finalAddresses =
       addresses ||
-      (balanceAccounts && Object.keys(balanceAccounts).length
-        ? Object.keys(balanceAccounts)
-        : (await getTop10MyAccounts()).top10Addresses);
-    if (reason !== 'balance_changed' || force) {
-      try {
-        await fetchData(top10Addresses, force);
-      } catch (error) {
-        console.error('refreshDayCurve fetchData error', error);
-      }
-    }
+      (balanceAccounts ? Object.keys(balanceAccounts) : undefined) ||
+      balanceAccountsStore.getState().selectedAddresses ||
+      [];
 
-    const multiTimeStamp = getMultiTimeStamp();
-    const totals = addressBalanceStore.computeTotalBalance(
-      top10Addresses,
-      balanceAccountsStore.getState().balance,
-    );
-
-    onComputeCombineData({
-      addresses: top10Addresses,
-      multiTimeStamp,
-      totalBalance: totals.total,
-      totalEvmBalance: totals.totalEvm,
+    return sceneCurve24hStore.refreshSceneDayCurve('Home', {
+      addresses: finalAddresses,
+      force,
+      reason,
     });
   },
   ctx => {
-    const force: boolean = ctx.args[0]?.force || false;
-    const addresses = (ctx.args[0]?.addresses ||
-      Object.keys(ctx.args[0]?.balanceAccounts || {})) as string[];
-    return `refresh-multi-day-curve-force-${force}-addrs-${addresses
-      .sort()
-      .join(',')}`;
+    const force = !!ctx.args[0]?.force;
+    const addresses = normalizeAddresses(ctx.args[0]?.addresses || []);
+    return `refreshDayCurve-${addresses.join(',')}-${
+      force ? 'force' : 'noforce'
+    }`;
   },
 );
 
-export function startProcessMultiCurveEvents() {
-  accountsBalanceEvents.on(
-    'SELECTION_CHANGED',
-    ({ nextAddresses, balance }) => {
-      refreshDayCurve({
-        addresses: nextAddresses,
-        balanceAccounts: balance,
-        reason: 'selection_changed',
-      });
-    },
-  );
+export function hydrateCachedHomeDayCurve() {
+  const cachedAddresses = balanceAccountsStore.getState().selectedAddresses;
 
-  accountsBalanceEvents.on('BALANCE_CHANGED', ({ addresses, balance }) => {
-    refreshDayCurve({
-      addresses,
-      balanceAccounts: balance,
-      reason: 'balance_changed',
-    });
-  });
+  sceneCurve24hStore.hydrateSceneDayCurveFromCache('Home', cachedAddresses);
+}
+
+export function startProcessMultiCurveEvents() {
+  sceneCurve24hStore.startLifecycle();
+
+  const cachedAddresses = balanceAccountsStore.getState().selectedAddresses;
+  if (cachedAddresses.length) {
+    sceneCurve24hStore.hydrateSceneDayCurveFromCache('Home', cachedAddresses);
+  }
 }
 
 export const useMultiDayCurve = () => {
-  const dayCurveData = computedStore(state => state.combinedData);
-
-  return {
-    dayCurveData,
-  };
+  return sceneCurve24hStore.useSceneDayCurveData('Home');
 };
 
 export const useMultiCurveIsAnyAddrLoading = () => {
@@ -367,11 +652,5 @@ export const useMultiCurveIsAnyAddrLoading = () => {
     return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
   }, [myTop10Addresses, selectedAddresses]);
 
-  const isAnyAddrLoading = multiCurveStore(s => {
-    return displayAddresses.some(
-      address => s.addrLoading[address.toLowerCase()],
-    );
-  });
-
-  return { isAnyAddrLoading };
+  return sceneCurve24hStore.useSceneIsAnyAddrLoading('Home', displayAddresses);
 };

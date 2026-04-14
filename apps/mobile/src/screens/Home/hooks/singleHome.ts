@@ -10,12 +10,18 @@ import {
   useIsLoadingBalance,
 } from '@/hooks/useCurrentBalance';
 import {
-  loadingCurveState,
   makeDefaultSelectData,
+  useAddressCurveSelectData,
   useIsLoadingCurve,
 } from '@/hooks/useCurve';
+import { addressCurve24hStore } from '@/store/curve24h';
+import {
+  balance24hStore,
+  useAddress24hChangeFlowState,
+} from '@/store/balance24h';
+import { computeCurveBalanceChange } from '@/store/curveShared';
 import { navigateDeprecated } from '@/utils/navigation';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 type SingleHomeState = {
@@ -24,6 +30,31 @@ type SingleHomeState = {
   foldChart: boolean;
   reachTop: boolean;
 };
+
+function shouldKeepPreviousSelectData(
+  prev: ReturnType<typeof makeDefaultSelectData> | null,
+  next: ReturnType<typeof makeDefaultSelectData>,
+  isLoadingCurve: boolean,
+) {
+  if (!prev || !isLoadingCurve) {
+    return false;
+  }
+
+  if (!next.list.length && prev.list.length) {
+    return true;
+  }
+
+  if (!next.changePercent && !!prev.changePercent) {
+    return true;
+  }
+
+  if (next.changePercent === '0%' && prev.changePercent !== '0%') {
+    return true;
+  }
+
+  return false;
+}
+
 function getDefault(): SingleHomeState {
   return {
     currentAccount: null,
@@ -170,22 +201,66 @@ export function useHomeReachTop() {
 
 export function useSingleHomeHasNoData() {
   const { lcAddress } = useSingleHomeAddress();
-  const hasNoData = loadingCurveState(s => {
-    return !s[lcAddress]?.curveList.length && !s[lcAddress]?.loadingCurve;
-  });
+  const curveList = addressCurve24hStore.useAddressCurve(lcAddress) || [];
+  const { isLoadingCurve } = useIsLoadingCurve(lcAddress);
+  const hasNoData = !curveList.length && !isLoadingCurve;
 
   return { hasNoData };
 }
 
 export function useSingleHomeSelectData() {
   const { lcAddress } = useSingleHomeAddress();
+  const { evmBalance, balance } = useAddressBalance(lcAddress);
+  const { balance24h } = balance24hStore.useAddress24hBalance(lcAddress);
+  const { isLoadingCurve } = useIsLoadingCurve(lcAddress);
+  const selectData = useAddressCurveSelectData(lcAddress, {
+    realtimeNetWorth: evmBalance,
+    staticBalance: balance,
+    baseUsdValue: balance24h?.total_usd_value,
+  });
+  const selectDataWithFallback = useMemo(() => {
+    if (selectData.changePercent) {
+      return selectData;
+    }
 
-  const defaultSelectData = useMemo(() => makeDefaultSelectData(), []);
-  const selectData = loadingCurveState(
-    s => (!lcAddress ? null : s[lcAddress]?.selectData) || defaultSelectData,
-  );
+    if (
+      typeof evmBalance !== 'number' ||
+      typeof balance24h?.total_usd_value !== 'number'
+    ) {
+      return selectData;
+    }
 
-  return { selectData };
+    const { assetsChange, changePercent } = computeCurveBalanceChange(
+      evmBalance,
+      balance24h.total_usd_value,
+    );
+
+    return {
+      ...selectData,
+      rawChange: assetsChange,
+      change: '',
+      changePercent,
+      isLoss: assetsChange < 0,
+    };
+  }, [balance24h?.total_usd_value, evmBalance, selectData]);
+  const lastStableSelectDataRef = useRef(selectDataWithFallback);
+  const displaySelectData = useMemo(() => {
+    return shouldKeepPreviousSelectData(
+      lastStableSelectDataRef.current,
+      selectDataWithFallback,
+      isLoadingCurve,
+    )
+      ? lastStableSelectDataRef.current
+      : selectDataWithFallback;
+  }, [isLoadingCurve, selectDataWithFallback]);
+
+  useEffect(() => {
+    if (displaySelectData !== lastStableSelectDataRef.current) {
+      lastStableSelectDataRef.current = displaySelectData;
+    }
+  }, [displaySelectData]);
+
+  return { selectData: displaySelectData };
 }
 
 export function useSingleHomeLoading() {
@@ -214,13 +289,21 @@ export function useSingleHomeHomeTopChart() {
   const { selectData } = useSingleHomeSelectData();
   const { balanceLoading, isLoadingCurve } = useSingleHomeLoading();
   const { evmBalance, balance } = useAddressBalance(lcAddress);
+  const changeFlow = useAddress24hChangeFlowState(lcAddress, {
+    isComputing: isLoadingCurve,
+  });
 
   const balanceLoadingWithoutLocal = balanceLoading && !balance;
   const isLoadingChartData = isLoadingCurve || balanceLoadingWithoutLocal;
+  const changeLoading =
+    !balanceLoadingWithoutLocal &&
+    !selectData.changePercent &&
+    changeFlow.isLoading;
 
   return {
     balanceLoadingWithoutLocal,
     isLoadingChartData,
+    changeLoading,
     selectData,
     balance,
     evmBalance,
@@ -228,17 +311,13 @@ export function useSingleHomeHomeTopChart() {
 }
 
 export function useSingleHomeIsDecrease() {
-  const { lcAddress } = useSingleHomeAddress();
-  const isDecrease = loadingCurveState(s =>
-    !lcAddress ? false : s[lcAddress]?.isDecrease,
-  );
+  const { selectData } = useSingleHomeSelectData();
+  const isDecrease = selectData.isLoss;
   return { isDecrease };
 }
 
 export function useSingleHomeIsLoss() {
-  const { lcAddress } = useSingleHomeAddress();
-  const isLoss = loadingCurveState(s =>
-    !lcAddress ? false : !!s[lcAddress]?.selectData?.isLoss,
-  );
+  const { selectData } = useSingleHomeSelectData();
+  const isLoss = !!selectData.isLoss;
   return { isLoss };
 }

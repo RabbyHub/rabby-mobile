@@ -6,6 +6,8 @@ import { BalanceEntity } from '@/databases/entities/balance';
 import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { syncBalance } from '@/databases/sync/assets';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
+import { appStorage } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   CORE_KEYRING_TYPES,
@@ -952,7 +954,7 @@ const { EventEmitter: AccountsBalanceEE } =
 export const balanceAccountsStore = zCreate(
   zMutative<AccountsBalanceState>(() => ({
     balance: {},
-    selectedAddresses: [],
+    selectedAddresses: getCachedHomeTop10Addresses(),
     hasResolvedSelection: false,
     matteredAccountLength: 0,
   })),
@@ -962,6 +964,32 @@ export const accountsBalanceEvents = new AccountsBalanceEE();
 
 const CACHE_TIME = HOME_REFRESH_INTERVAL;
 let hasStartedAccountBalanceLifecycle = false;
+
+function getCachedHomeTop10Addresses() {
+  const cached = appStorage.getItem(APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES) as
+    | string[]
+    | null;
+  if (!Array.isArray(cached)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      cached
+        .filter(address => typeof address === 'string' && !!address)
+        .map(address => address.toLowerCase()),
+    ),
+  );
+}
+
+function persistCachedHomeTop10Addresses(addresses: string[]) {
+  appStorage.setItem(
+    APP_MMKV_WEAK_KEYS.HOME_TOP10_ADDRESSES,
+    Array.from(
+      new Set(addresses.filter(Boolean).map(address => address.toLowerCase())),
+    ),
+  );
+}
 
 const buildBalanceAccountsFromList = (
   accounts: Account[],
@@ -1040,6 +1068,7 @@ function setAccountsBalanceState(
   );
 
   if (selectionChanged) {
+    persistCachedHomeTop10Addresses(nextState.selectedAddresses);
     accountsBalanceEvents.emit('SELECTION_CHANGED', {
       prevAddresses: prevState.selectedAddresses,
       nextAddresses: nextState.selectedAddresses,
@@ -1230,3 +1259,4 @@ export function startProcessAccountBalanceEvents() {
 
 export const addressBalanceStore = new AddressBalanceStore();
 export default addressBalanceStore;
+export { getCachedHomeTop10Addresses };

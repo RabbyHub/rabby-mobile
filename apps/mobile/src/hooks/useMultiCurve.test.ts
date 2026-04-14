@@ -5,12 +5,25 @@ describe('hooks/useMultiCurve', () => {
   const mockGetBalanceCacheAccounts = jest.fn();
   const mockGetTop10MyAccounts = jest.fn();
   const mockFormChartData = jest.fn();
+  let mockBalanceValueMap: Record<
+    string,
+    {
+      evmBalance: number;
+      totalBalance: number;
+    }
+  >;
 
   let multiCurveModule: typeof import('./useMultiCurve');
 
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+    mockBalanceValueMap = {
+      '0xabc': {
+        evmBalance: 100,
+        totalBalance: 123,
+      },
+    };
 
     jest.doMock('react-native-haptic-feedback', () => ({
       trigger: jest.fn(),
@@ -25,6 +38,16 @@ describe('hooks/useMultiCurve', () => {
     jest.doMock('@/utils/24balanceCurveCache', () => ({
       getCurveCache: mockGetCurveCache,
       getNetCurve: mockGetNetCurve,
+    }));
+    jest.doMock('@/core/request', () => ({
+      openapi: {
+        getNetCurve: (...args: unknown[]) => mockGetNetCurve(...args),
+      },
+    }));
+    jest.doMock('@/store/curveShared', () => ({
+      formChartData: (...args: unknown[]) => mockFormChartData(...args),
+      combineMultiCurve: jest.fn((curves: unknown[]) => curves[0] || []),
+      formatSmallUsdValue: jest.fn(() => '$123'),
     }));
     jest.doMock('./useCurve', () => ({
       formChartData: (...args: unknown[]) => mockFormChartData(...args),
@@ -42,6 +65,9 @@ describe('hooks/useMultiCurve', () => {
       default: {
         computeTotalBalance: (...args: unknown[]) =>
           mockComputeTotalBalance(...args),
+        getAddressValueMap: jest.fn(() => mockBalanceValueMap),
+        useAddressValueMap: jest.fn(() => mockBalanceValueMap),
+        subscribe: jest.fn(),
       },
       balanceAccountsStore: Object.assign(
         jest.fn(
@@ -127,10 +153,6 @@ describe('hooks/useMultiCurve', () => {
     });
 
     expect(mockGetTop10MyAccounts).not.toHaveBeenCalled();
-    expect(mockGetNetCurve).toHaveBeenCalledWith('0xabc', 1, false);
-    expect(mockComputeTotalBalance).toHaveBeenCalledWith(
-      ['0xabc'],
-      latestBalanceAccounts,
-    );
+    expect(mockGetNetCurve).toHaveBeenCalledWith('0xabc', 1);
   });
 });

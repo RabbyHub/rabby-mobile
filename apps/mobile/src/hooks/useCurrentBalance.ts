@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from 'react';
-import { perfEvents } from '@/core/utils/perf';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import addressBalanceStore, { IBalanceData } from '@/store/balance';
 
@@ -40,28 +39,11 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
   async (address: string, options: GetAddressBalanceOptions) => {
     const { force } = options || {};
     try {
-      const lowerAddress = address.toLowerCase();
-      const prevBalanceState = mapBalanceState(
-        addressBalanceStore.getAddressValue(lowerAddress),
-      );
       await addressBalanceStore.getTotalBalance(address, force, {
         scene: options.fromScene,
         requester: 'useCurrentBalance.getAddressBalance',
         endpoint: 'openapi.getTotalBalanceV2',
       });
-      const nextBalanceState = mapBalanceState(
-        addressBalanceStore.getAddressValue(lowerAddress),
-      );
-
-      if (!isBalanceStateEqual(prevBalanceState, nextBalanceState)) {
-        perfEvents.emit('TMP_UPDATED:SINGLE_HOME_BALANCE', {
-          address,
-          newBalance: nextBalanceState,
-          prevBalance: prevBalanceState,
-          force: !!force,
-          fromScene: options.fromScene,
-        });
-      }
     } catch (e) {
       try {
         const { error_code } = JSON.parse((e as Error).message);
@@ -112,18 +94,6 @@ function mapBalanceState(
     evmBalance: balanceData.evmBalance,
     testnetBalance: null,
   };
-}
-
-function isBalanceStateEqual(
-  prevBalance: BalanceState | null,
-  nextBalance: BalanceState | null,
-) {
-  if (!prevBalance && !nextBalance) return true;
-  if (!prevBalance || !nextBalance) return false;
-  return (
-    prevBalance.balance === nextBalance.balance &&
-    prevBalance.evmBalance === nextBalance.evmBalance
-  );
 }
 
 export default function useCurrentBalance(options: {

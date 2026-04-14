@@ -31,4 +31,5 @@ export const APP_MMKV_WEAK_KEYS = {
   HAS_TIPED_USER_ENABLE_BIOMETRICS: '@hasTipedUserEnableBiometrics',
   LENDING_MARKET: '@lendingMarket',
   FAILED_UNLOCK: '@failed_unlock',
+  HOME_TOP10_ADDRESSES: '@homeTop10Addresses',
 } as const;

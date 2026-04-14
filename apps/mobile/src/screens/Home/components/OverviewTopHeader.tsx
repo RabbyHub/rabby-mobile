@@ -159,19 +159,21 @@ export function TabsTopHeader(): JSX.Element {
     }
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
-  const { isLoading: sceneChangeLoading } =
-    scene24hBalanceStore.useSceneChangeLoading('Home', displayAddresses);
+  const sceneChangeFlow = scene24hBalanceStore.useSceneChangeFlowState(
+    'Home',
+    displayAddresses,
+  );
   const showChangeLoading = useMemo(() => {
     return (
       !showBalanceLoadingWithoutLocal &&
       !changePercent &&
-      sceneChangeLoading &&
+      sceneChangeFlow.isAnyLoading &&
       displayAddresses.length > 0
     );
   }, [
     changePercent,
     displayAddresses.length,
-    sceneChangeLoading,
+    sceneChangeFlow.isAnyLoading,
     showBalanceLoadingWithoutLocal,
   ]);
 

@@ -9,7 +9,7 @@ import {
   accountsBalanceEvents,
   balanceAccountsStore,
 } from './balance';
-import { formatSmallUsdValue } from '@/hooks/useCurve';
+import { formatSmallUsdValue } from './curveShared';
 import { formatUsdValue } from '@/utils/number';
 import { debounce, isEqual } from 'lodash';
 import PQueue from 'p-queue';
@@ -67,6 +67,10 @@ export type Addresses24hChangeFlowState = {
   isAnyLoading: boolean;
   isAnyLoadingWithoutValue: boolean;
   hasAllValues: boolean;
+};
+
+export type Scene24hChangeFlowState = Addresses24hChangeFlowState & {
+  isSceneComputing: boolean;
 };
 
 const build24hBalanceLocalTargets = (
@@ -627,6 +631,20 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     this.debouncedSceneCombinedDataUpdaters[scene]();
   }
 
+  hydrateSceneCombinedDataFromCache = (
+    scene: BalanceScene,
+    addresses: string[],
+  ) => {
+    const normalizedAddresses = normalizeAddressesForCompare(addresses);
+    if (!normalizedAddresses.length) {
+      return;
+    }
+
+    this.setSceneAddresses(scene, normalizedAddresses);
+    this.setSceneLoading(scene, false);
+    this.scheduleSceneCombinedDataUpdate(scene);
+  };
+
   private waitQueueFinished = (queue: PQueue) => queue.onIdle();
 
   refreshCombinedDataForScene = makeSWRKeyAsyncFunc(
@@ -818,17 +836,40 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
   };
 
   useScene24hBalanceCombinedData = (scene: BalanceScene) => {
-    const combinedData = this.useStore(s => s.combinedData[scene]);
+    const { addresses: sceneAddresses, combinedData: persistedCombinedData } =
+      this.useStore(
+        useShallow(s => ({
+          addresses: s.addresses[scene],
+          combinedData: s.combinedData[scene],
+        })),
+      );
+    const balanceMap = addressBalanceStore.useAddressValueMap();
+    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
+
+    const combinedData = useMemo(() => {
+      if (!sceneAddresses.length) {
+        return persistedCombinedData;
+      }
+
+      return computeCombined24hBalanceData({
+        addresses: sceneAddresses,
+        multi24hBalance,
+        balanceMap,
+        totalEvmBalance: 0,
+        totalBalance: 0,
+      });
+    }, [balanceMap, multi24hBalance, persistedCombinedData, sceneAddresses]);
 
     return { combinedData };
   };
 
   useMultiHome24hBalanceCurveChart = () => {
-    const combinedData = this.useStore(
+    const homeState = this.useStore(
       useShallow(s => {
         const homeData = s.combinedData.Home;
 
         return {
+          addresses: s.addresses.Home,
           rawNetWorth: homeData.rawNetWorth,
           rawChange: homeData.rawChange,
           changePercent: homeData.changePercent,
@@ -836,6 +877,42 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         };
       }),
     );
+    const balanceMap = addressBalanceStore.useAddressValueMap();
+    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
+
+    const combinedData = useMemo(() => {
+      if (!homeState.addresses.length) {
+        return {
+          rawNetWorth: homeState.rawNetWorth,
+          rawChange: homeState.rawChange,
+          changePercent: homeState.changePercent,
+          isLoss: homeState.isLoss,
+        };
+      }
+
+      const immediateData = computeCombined24hBalanceData({
+        addresses: homeState.addresses,
+        multi24hBalance,
+        balanceMap,
+        totalEvmBalance: 0,
+        totalBalance: 0,
+      });
+
+      return {
+        rawNetWorth: immediateData.rawNetWorth,
+        rawChange: immediateData.rawChange,
+        changePercent: immediateData.changePercent,
+        isLoss: immediateData.isLoss,
+      };
+    }, [
+      balanceMap,
+      homeState.addresses,
+      homeState.changePercent,
+      homeState.isLoss,
+      homeState.rawChange,
+      homeState.rawNetWorth,
+      multi24hBalance,
+    ]);
 
     return { combinedData };
   };
@@ -912,7 +989,10 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     return { isLoadingNew };
   };
 
-  useSceneChangeLoading = (scene: BalanceScene, addresses: string[]) => {
+  useSceneChangeFlowState = (
+    scene: BalanceScene,
+    addresses: string[],
+  ): Scene24hChangeFlowState => {
     const normalizedAddresses = useMemo(
       () =>
         Array.from(new Set(addresses.map(address => address.toLowerCase()))),
@@ -928,29 +1008,71 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       computingAddresses: sceneComputing ? sceneAddresses : [],
     });
 
-    return {
-      isLoading: changeFlow.isAnyLoading,
-      loadingAddresses: changeFlow.loadingAddresses,
-    };
+    return useMemo(
+      () => ({
+        ...changeFlow,
+        isSceneComputing: sceneComputing,
+      }),
+      [changeFlow, sceneComputing],
+    );
   };
 
   useScene24hBalanceLightWeightData = (scene: BalanceScene) => {
-    const lightweightData = this.useStore(
+    const sceneState = this.useStore(
       useShallow(s => {
         const currentSceneData = s.combinedData[scene];
 
         return {
+          addresses: s.addresses[scene],
           netWorth: currentSceneData.netWorth,
           isLoss: currentSceneData.isLoss,
         };
       }),
     );
+    const balanceMap = addressBalanceStore.useAddressValueMap();
+    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
+
+    const lightweightData = useMemo(() => {
+      if (!sceneState.addresses.length) {
+        return {
+          netWorth: sceneState.netWorth,
+          isLoss: sceneState.isLoss,
+        };
+      }
+
+      const immediateData = computeCombined24hBalanceData({
+        addresses: sceneState.addresses,
+        multi24hBalance,
+        balanceMap,
+        totalEvmBalance: 0,
+        totalBalance: 0,
+      });
+
+      return {
+        netWorth: immediateData.netWorth,
+        isLoss: immediateData.isLoss,
+      };
+    }, [
+      balanceMap,
+      multi24hBalance,
+      sceneState.addresses,
+      sceneState.isLoss,
+      sceneState.netWorth,
+    ]);
 
     return lightweightData;
   };
 }
 
 export const scene24hBalanceStore = new Scene24hBalanceStore();
+
+export function hydrateCachedHome24hBalanceScene() {
+  const cachedAddresses = balanceAccountsStore.getState().selectedAddresses;
+  scene24hBalanceStore.hydrateSceneCombinedDataFromCache(
+    'Home',
+    cachedAddresses,
+  );
+}
 
 export type FetchTotalBalanceOptions = {
   addresses?: string | string[];
