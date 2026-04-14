@@ -390,6 +390,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Lending]?: {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';
+    source?: string;
     account?: KeyringAccountWithAlias;
     dappId?: string;
   };

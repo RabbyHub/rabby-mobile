@@ -222,6 +222,7 @@ const MyAssetHome: React.FC = () => {
   React.useEffect(() => {
     const tokenAddress = route.params?.tokenAddress;
     const direction = route.params?.direction;
+    const source = route.params?.source;
     if (!tokenAddress || !direction || loading || !iUserSummary) {
       return;
     }
@@ -262,6 +263,7 @@ const MyAssetHome: React.FC = () => {
           : MODAL_NAMES.REPAY_ACTION_DETAIL,
       reserve,
       userSummary: iUserSummary,
+      source: source === 'Portfolio Defi' ? source : undefined,
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
@@ -279,6 +281,7 @@ const MyAssetHome: React.FC = () => {
     navigation.setParams({
       tokenAddress: undefined,
       direction: undefined,
+      source: undefined,
     });
   }, [
     colors2024,
@@ -288,6 +291,7 @@ const MyAssetHome: React.FC = () => {
     marketKey,
     navigation,
     route.params?.direction,
+    route.params?.source,
     route.params?.tokenAddress,
   ]);
 

@@ -78,6 +78,7 @@ export const useProtocolConfig = () => {
         account?: KeyringAccountWithAlias,
         tokenAddress?: string,
         direction?: 'supply' | 'borrow',
+        source?: string,
       ) => {
         const marketKey = keyToMarketKey[key];
         if (account && marketKey) {
@@ -92,6 +93,7 @@ export const useProtocolConfig = () => {
             account,
             tokenAddress,
             direction,
+            source,
           },
         });
       };
@@ -105,7 +107,7 @@ export const useProtocolConfig = () => {
         },
         onManage: account => openLending(account),
         onTokenManage: (account, tokenAddress, direction) =>
-          openLending(account, tokenAddress, direction),
+          openLending(account, tokenAddress, direction, 'Portfolio Defi'),
       };
     },
     [navigation, setMarketKey, switchSceneCurrentAccount],
