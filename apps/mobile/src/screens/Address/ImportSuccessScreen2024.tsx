@@ -203,7 +203,11 @@ export const ImportSuccessScreen2024 = () => {
       label: state?.brandName,
     });
 
-    addressBalanceStore.batchGetTotalBalance(addresses, true);
+    addressBalanceStore.batchGetTotalBalance(addresses, true, {
+      scene: 'ImportSuccess',
+      requester: 'ImportSuccessScreen2024',
+      endpoint: 'openapi.getTotalBalanceV2',
+    });
     if (
       state.type !== KEYRING_TYPE.WatchAddressKeyring &&
       state.type !== KEYRING_TYPE.GnosisKeyring

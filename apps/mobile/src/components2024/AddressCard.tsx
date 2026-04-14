@@ -21,7 +21,11 @@ const Balance: React.FC<BalanceProps> = ({ address }) => {
   // Fetch balance on mount if not available
   React.useEffect(() => {
     if (!balance && address) {
-      addressBalanceStore.getTotalBalance(address, true);
+      addressBalanceStore.getTotalBalance(address, true, {
+        scene: 'AddressCard',
+        requester: 'AddressCard.Balance',
+        endpoint: 'openapi.getTotalBalanceV2',
+      });
     }
   }, [address, balance]);
 

@@ -1,3 +1,10 @@
+import type { AccountsBalanceState } from '../store/balance';
+
+const flushPendingTimers = async () => {
+  jest.runOnlyPendingTimers();
+  await Promise.resolve();
+};
+
 describe('store/balance24h scene', () => {
   const mockComputeTotalBalance = jest.fn();
   const mockGetBalanceCacheAccounts = jest.fn();
@@ -11,13 +18,6 @@ describe('store/balance24h scene', () => {
     {
       evmBalance: number;
       totalBalance: number;
-    }
-  >;
-  let mockBalance24hValueMap: Record<
-    string,
-    {
-      total_usd_value: number;
-      updateTime: number;
     }
   >;
   let consoleErrorSpy: jest.SpyInstance;
@@ -35,8 +35,6 @@ describe('store/balance24h scene', () => {
         totalBalance: 123,
       },
     };
-    mockBalance24hValueMap = {};
-
     jest.doMock('react-native-haptic-feedback', () => ({
       trigger: jest.fn(),
     }));
@@ -124,7 +122,7 @@ describe('store/balance24h scene', () => {
   });
 
   it('prefers addresses from balanceAccounts during refresh', async () => {
-    const staleBalanceAccounts = {
+    const staleBalanceAccounts: AccountsBalanceState['balance'] = {
       '0xabc': {
         address: '0xabc',
         balance: 0,
@@ -132,8 +130,8 @@ describe('store/balance24h scene', () => {
       },
     };
 
-    await scene24hBalanceModule.refresh24hAssets({
-      balanceAccounts: staleBalanceAccounts as any,
+    await scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
+      balanceAccounts: staleBalanceAccounts,
       reason: 'manual_refresh',
     });
 
@@ -187,11 +185,11 @@ describe('store/balance24h scene', () => {
     });
     mockFetch24hBalance.mockRejectedValueOnce(new Error('network error'));
 
-    await scene24hBalanceModule.refresh24hAssets({
+    await scene24hBalanceModule.scene24hBalanceStore.refresh24hAssets({
       addresses: ['0xabc', '0xdef'],
       reason: 'manual_refresh',
     });
-    await jest.runAllTimersAsync();
+    await flushPendingTimers();
 
     expect(mockPerfEmit).toHaveBeenCalledWith(
       'SCENE_24H_BALANCE_UPDATED',

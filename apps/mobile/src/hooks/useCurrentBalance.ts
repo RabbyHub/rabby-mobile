@@ -44,7 +44,11 @@ const getAddressBalance = makeSWRKeyAsyncFunc(
       const prevBalanceState = mapBalanceState(
         addressBalanceStore.getAddressValue(lowerAddress),
       );
-      await addressBalanceStore.getTotalBalance(address, force);
+      await addressBalanceStore.getTotalBalance(address, force, {
+        scene: options.fromScene,
+        requester: 'useCurrentBalance.getAddressBalance',
+        endpoint: 'openapi.getTotalBalanceV2',
+      });
       const nextBalanceState = mapBalanceState(
         addressBalanceStore.getAddressValue(lowerAddress),
       );

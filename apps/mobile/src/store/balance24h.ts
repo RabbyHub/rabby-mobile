@@ -3,6 +3,7 @@ import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { perfEvents } from '@/core/utils/perf';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
+import { balance24hMMKV } from '@/core/storage/mmkvInstances';
 import {
   AccountsBalanceState,
   accountsBalanceEvents,
@@ -52,6 +53,12 @@ export type Address24hChangeFlowState = {
   lastError?: ResourceFlowState['lastError'];
 };
 
+export type Balance24hTraceContext = {
+  scene?: string;
+  requester?: string;
+  endpoint?: string;
+};
+
 export type Addresses24hChangeFlowState = {
   addresses: string[];
   loadingAddresses: string[];
@@ -72,6 +79,18 @@ const build24hBalanceLocalTargets = (
     key: address,
   },
 ];
+
+const build24hTraceDetail = (
+  detail: Record<string, unknown>,
+  trace?: Balance24hTraceContext,
+) => {
+  return {
+    ...detail,
+    scene: trace?.scene,
+    requester: trace?.requester,
+    endpoint: trace?.endpoint,
+  };
+};
 
 class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   constructor() {
@@ -129,6 +148,45 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
     }, [snapshots]);
   };
 
+  initStore = async () => {
+    balance24hMMKV.getAllKeys().forEach(key => {
+      const lowerAddress = this.normalizeAddress(key);
+      if (!lowerAddress) {
+        return;
+      }
+
+      const localTargets = build24hBalanceLocalTargets(lowerAddress);
+      const cacheData = getBalance24hCache(lowerAddress);
+      if (!cacheData?.data) {
+        return;
+      }
+
+      this.markHydrateStarted(lowerAddress, {
+        localTargets,
+        detail: {
+          source: 'initStore',
+          isExpired: cacheData.isExpired,
+          updateTime: cacheData.updateTime,
+        },
+      });
+      this.applyHydratedValue(
+        lowerAddress,
+        {
+          ...cacheData.data,
+          updateTime: cacheData.updateTime,
+        },
+        {
+          localTargets,
+          detail: {
+            source: 'initStore',
+            isExpired: cacheData.isExpired,
+            updateTime: cacheData.updateTime,
+          },
+        },
+      );
+    });
+  };
+
   hydrateAddress24hBalanceFromCache = (address: string) => {
     const lowerAddress = this.normalizeAddress(address);
     if (!lowerAddress) {
@@ -182,7 +240,7 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   };
 
   refreshAddress24hBalance = makeSWRKeyAsyncFunc(
-    async (address: string, force = false) => {
+    async (address: string, force = false, trace?: Balance24hTraceContext) => {
       const lowerAddress = this.normalizeAddress(address);
       if (!lowerAddress) {
         return undefined;
@@ -203,10 +261,13 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
 
         requestId = this.startRemoteFetch(lowerAddress, {
           localTargets,
-          detail: {
-            source: 'refreshAddress24hBalance',
-            force,
-          },
+          detail: build24hTraceDetail(
+            {
+              source: 'refreshAddress24hBalance',
+              force,
+            },
+            trace,
+          ),
         });
         const nextData = await fetch24hBalance(lowerAddress);
         const normalizedData = {
@@ -219,12 +280,15 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
           normalizedData,
           {
             localTargets,
-            detail: {
-              source: 'refreshAddress24hBalance',
-              force,
-              totalUsdValue: normalizedData.total_usd_value,
-              updateTime: normalizedData.updateTime,
-            },
+            detail: build24hTraceDetail(
+              {
+                source: 'refreshAddress24hBalance',
+                force,
+                totalUsdValue: normalizedData.total_usd_value,
+                updateTime: normalizedData.updateTime,
+              },
+              trace,
+            ),
           },
         );
 
@@ -241,12 +305,15 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
             {
               requestId,
               localTargets,
-              detail: {
-                source: 'refreshAddress24hBalance',
-                force,
-                totalUsdValue: normalizedData.total_usd_value,
-                updateTime: normalizedData.updateTime,
-              },
+              detail: build24hTraceDetail(
+                {
+                  source: 'refreshAddress24hBalance',
+                  force,
+                  totalUsdValue: normalizedData.total_usd_value,
+                  updateTime: normalizedData.updateTime,
+                },
+                trace,
+              ),
             },
           );
         }
@@ -256,10 +323,13 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
         this.markError(lowerAddress, requestId ? 'remote' : 'hydrate', error, {
           requestId,
           localTargets,
-          detail: {
-            source: 'refreshAddress24hBalance',
-            force,
-          },
+          detail: build24hTraceDetail(
+            {
+              source: 'refreshAddress24hBalance',
+              force,
+            },
+            trace,
+          ),
         });
         throw error;
       }
@@ -275,46 +345,6 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
 }
 
 export const balance24hStore = new Address24hBalanceStore();
-
-export function getAddress24hBalance(address: string | undefined) {
-  return balance24hStore.getAddress24hBalance(address);
-}
-
-export function getAddress24hBalanceMap() {
-  return balance24hStore.getAddress24hBalanceMap();
-}
-
-export function getAddress24hBalanceResourceState(address: string | undefined) {
-  return balance24hStore.getAddress24hBalanceResourceState(address);
-}
-
-export function getAddress24hBalanceFlowState(address: string | undefined) {
-  return balance24hStore.getAddress24hBalanceFlowState(address);
-}
-
-export function hydrateAddress24hBalanceFromCache(address: string) {
-  return balance24hStore.hydrateAddress24hBalanceFromCache(address);
-}
-
-export function refreshAddress24hBalance(address: string, force = false) {
-  return balance24hStore.refreshAddress24hBalance(address, force);
-}
-
-export function useAddress24hBalance(address?: string) {
-  return balance24hStore.useAddress24hBalance(address);
-}
-
-export function useAddress24hBalanceMap() {
-  return balance24hStore.useAddress24hBalanceMap();
-}
-
-export function useAddress24hBalanceFlowState(address?: string) {
-  return balance24hStore.useAddress24hBalanceFlowState(address);
-}
-
-export function useAddresses24hBalanceSnapshots(addresses: string[]) {
-  return balance24hStore.useAddresses24hBalanceSnapshots(addresses);
-}
 
 function buildAddress24hChangeFlowState(
   address: string,
@@ -345,7 +375,7 @@ export function useAddress24hChangeFlowState(
   },
 ) {
   const normalizedAddress = address?.toLowerCase() || '';
-  const flow = useAddress24hBalanceFlowState(normalizedAddress);
+  const flow = balance24hStore.useAddress24hBalanceFlowState(normalizedAddress);
 
   return useMemo(() => {
     return buildAddress24hChangeFlowState(
@@ -375,7 +405,8 @@ export function useAddresses24hChangeFlowState(
       ),
     [options?.computingAddresses],
   );
-  const snapshots = useAddresses24hBalanceSnapshots(normalizedAddresses);
+  const snapshots =
+    balance24hStore.useAddresses24hBalanceSnapshots(normalizedAddresses);
 
   return useMemo(() => {
     const states = snapshots.map(snapshot => {
@@ -652,7 +683,8 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
 
         normalizedAddresses.forEach(address => {
           this.setSceneAddrLoading(scene, address, true);
-          const cacheData = hydrateAddress24hBalanceFromCache(address);
+          const cacheData =
+            balance24hStore.hydrateAddress24hBalanceFromCache(address);
           if (cacheData?.data && !cacheData.isExpired) {
             nextCheckAddress.delete(address);
             this.setSceneAddrLoading(scene, address, false);
@@ -668,7 +700,11 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
           queue.add(async () => {
             this.setSceneAddrLoading(scene, address, true);
             try {
-              await refreshAddress24hBalance(address, force);
+              await balance24hStore.refreshAddress24hBalance(address, force, {
+                scene,
+                requester: 'Scene24hBalanceStore.refreshCombinedDataForScene',
+                endpoint: 'openapi.get24hTotalBalance',
+              });
             } catch (error) {
               console.error('Fetch curve error', error);
             } finally {
@@ -807,7 +843,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
 
   useScene24hBalanceMulti24hBalance = (scene: BalanceScene) => {
     const addresses = this.useStore(s => s.addresses[scene]);
-    const multi24hBalance = useAddress24hBalanceMap();
+    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
 
     const filteredMulti24hBalance = useMemo(() => {
       const result: Multi24hBalance = {};
@@ -841,7 +877,7 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         sceneAddrLoading: s.sceneAddrLoading,
       })),
     );
-    const multi24hBalance = useAddress24hBalanceMap();
+    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
     const balanceMap = addressBalanceStore.useAddressValueMap();
 
     const isLoadingNew = useMemo(() => {
@@ -915,28 +951,13 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
   };
 }
 
-const scene24hBalanceStore = new Scene24hBalanceStore();
+export const scene24hBalanceStore = new Scene24hBalanceStore();
 
 export type FetchTotalBalanceOptions = {
   addresses?: string | string[];
   force?: boolean;
   reason?: 'selection_changed' | 'balance_changed' | 'manual_refresh';
 };
-
-export const refresh24hAssets = scene24hBalanceStore.refresh24hAssets;
-export const startProcessScene24hBalanceEvents =
-  scene24hBalanceStore.startProcessScene24hBalanceEvents;
-export const useScene24hBalanceCombinedData =
-  scene24hBalanceStore.useScene24hBalanceCombinedData;
-export const useMultiHome24hBalanceCurveChart =
-  scene24hBalanceStore.useMultiHome24hBalanceCurveChart;
-export const useScene24hBalanceMulti24hBalance =
-  scene24hBalanceStore.useScene24hBalanceMulti24hBalance;
-export const useSceneIsLoading = scene24hBalanceStore.useSceneIsLoading;
-export const useSceneIsLoadingNew = scene24hBalanceStore.useSceneIsLoadingNew;
-export const useSceneChangeLoading = scene24hBalanceStore.useSceneChangeLoading;
-export const useScene24hBalanceLightWeightData =
-  scene24hBalanceStore.useScene24hBalanceLightWeightData;
 
 function computeCombined24hBalanceData(input: {
   addresses: string[];

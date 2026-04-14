@@ -47,11 +47,7 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
-import {
-  useSceneChangeLoading,
-  useScene24hBalanceCombinedData,
-  useSceneIsLoading,
-} from '@/store/balance24h';
+import { scene24hBalanceStore } from '@/store/balance24h';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
 import {
   balanceAccountsStore,
@@ -82,8 +78,10 @@ export function TabsTopHeader(): JSX.Element {
     apisHomeTabIndex.svTabIndexDecimal,
   );
   const showNetWorth = tabIndexFromSv > 0.7;
-  const { isLoading: scene24hLoading } = useSceneIsLoading('Home');
-  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const { isLoading: scene24hLoading } =
+    scene24hBalanceStore.useSceneIsLoading('Home');
+  const { combinedData: data } =
+    scene24hBalanceStore.useScene24hBalanceCombinedData('Home');
 
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
@@ -164,10 +162,8 @@ export function TabsTopHeader(): JSX.Element {
     }
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
-  const { isLoading: sceneChangeLoading } = useSceneChangeLoading(
-    'Home',
-    displayAddresses,
-  );
+  const { isLoading: sceneChangeLoading } =
+    scene24hBalanceStore.useSceneChangeLoading('Home', displayAddresses);
   const showChangeLoading = useMemo(() => {
     return (
       !showBalanceLoadingWithoutLocal &&

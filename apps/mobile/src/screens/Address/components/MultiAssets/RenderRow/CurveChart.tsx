@@ -25,16 +25,13 @@ import {
   refreshDayCurve,
   useMultiDayCurve,
   useMultiCurveIsAnyAddrLoading,
-} from '@/hooks/useMultiCurve';
+} from '@/store/curve24h';
 import { useAccountInfo } from '../hooks';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { create } from 'zustand';
-import {
-  useMultiHome24hBalanceCurveChart,
-  useSceneIsLoading,
-} from '@/store/balance24h';
+import { scene24hBalanceStore } from '@/store/balance24h';
 import {
   balanceAccountsStore,
   useAddressesBalanceSummary,
@@ -135,7 +132,8 @@ export const MultiChart = memo(function MultiChart({
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
 
-  const { combinedData: data } = useMultiHome24hBalanceCurveChart();
+  const { combinedData: data } =
+    scene24hBalanceStore.useMultiHome24hBalanceCurveChart();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
@@ -226,7 +224,8 @@ const ChartHeader = React.memo(
     const { currentIndex } = LineChart.useChart();
     const { currency, formatCurrentCurrency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
-    const { isLoading: scene24hLoading } = useSceneIsLoading('Home');
+    const { isLoading: scene24hLoading } =
+      scene24hBalanceStore.useSceneIsLoading('Home');
     const showNetWorthLoading = useMemo(() => {
       return showBalanceLoadingWithoutLocal;
     }, [showBalanceLoadingWithoutLocal]);

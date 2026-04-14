@@ -83,8 +83,8 @@ import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { refreshDayCurve } from '@/hooks/useMultiCurve';
-import { refresh24hAssets } from '@/store/balance24h';
+import { refreshDayCurve } from '@/store/curve24h';
+import { scene24hBalanceStore } from '@/store/balance24h';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
@@ -762,7 +762,10 @@ export const HomeOverview = React.memo(() => {
       }
       triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
-        refresh24hAssets({ balanceAccounts, reason: 'manual_refresh' });
+        scene24hBalanceStore.refresh24hAssets({
+          balanceAccounts,
+          reason: 'manual_refresh',
+        });
         refreshDayCurve({ balanceAccounts, reason: 'manual_refresh' });
       });
       triggerUpdateAlert();
@@ -782,7 +785,7 @@ export const HomeOverview = React.memo(() => {
     return Promise.all([
       // force update balance from server api
       triggerUpdate(true).then(balanceAccounts => {
-        refresh24hAssets({
+        scene24hBalanceStore.refresh24hAssets({
           force: true,
           balanceAccounts,
           reason: 'manual_refresh',

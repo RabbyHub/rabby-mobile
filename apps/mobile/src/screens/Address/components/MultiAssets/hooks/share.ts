@@ -58,7 +58,11 @@ export const useCheckIsExpireAndUpdate = ({
   const { checkIsExpireAndUpdate } = useLoadAssets();
   const triggerUpdate = useCallback(
     (force?: boolean) =>
-      addressBalanceStore.batchGetTotalBalance(myTop10Addresses, force),
+      addressBalanceStore.batchGetTotalBalance(myTop10Addresses, force, {
+        scene: 'AddressMultiAssets',
+        requester: 'useCheckIsExpireAndUpdate',
+        endpoint: 'openapi.getTotalBalanceV2',
+      }),
     [myTop10Addresses],
   );
 

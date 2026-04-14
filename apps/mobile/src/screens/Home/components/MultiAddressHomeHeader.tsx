@@ -44,11 +44,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  useScene24hBalanceCombinedData,
-  useScene24hBalanceMulti24hBalance,
-  useSceneIsLoading,
-} from '@/store/balance24h';
+import { scene24hBalanceStore } from '@/store/balance24h';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import addressBalanceStore from '@/store/balance';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
@@ -64,7 +60,8 @@ function MultiPinnedAddressList({
   const { styles } = useTheme2024({ getStyle });
 
   const balanceMap = addressBalanceStore.useAddressValueMap();
-  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
+  const { multi24hBalance } =
+    scene24hBalanceStore.useScene24hBalanceMulti24hBalance('Home');
 
   const addressListData = useMemo(() => {
     return sortBy(
@@ -132,7 +129,8 @@ export function MultiAddressHomeHeader(
 ): JSX.Element {
   const { style, onRefresh } = props;
 
-  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const { combinedData: data } =
+    scene24hBalanceStore.useScene24hBalanceCombinedData('Home');
 
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });

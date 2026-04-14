@@ -40,8 +40,11 @@ import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/
 import { startCheckClearAction } from './utils/clipboard';
 import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
 import tokenListStore from './store/tokens';
-import { startProcessScene24hBalanceEvents } from './store/balance24h';
-import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
+import { balance24hStore, scene24hBalanceStore } from './store/balance24h';
+import {
+  initCurve24hStore,
+  startProcessMultiCurveEvents,
+} from './store/curve24h';
 import useProtocolListStore from './store/protocols';
 import { useAppChainStore } from './store/appchain';
 import addressBalanceStore, {
@@ -92,7 +95,7 @@ rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
 startProcessAccountBalanceEvents();
-startProcessScene24hBalanceEvents();
+scene24hBalanceStore.startProcessScene24hBalanceEvents();
 startProcessMultiCurveEvents();
 
 trimNoLongerSupportsOnUnlock();
@@ -107,6 +110,8 @@ async function initPersistedStores() {
   console.time('initPersistedStores');
   await useAppChainStore.getState().initStore();
   await addressBalanceStore.initStore();
+  await balance24hStore.initStore();
+  await initCurve24hStore();
   console.timeEnd('initPersistedStores');
 }
 

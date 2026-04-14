@@ -86,7 +86,10 @@ describe('store/balance24h', () => {
       isExpired: false,
     });
 
-    const result = balance24hModule.hydrateAddress24hBalanceFromCache('0xABCD');
+    const result =
+      balance24hModule.balance24hStore.hydrateAddress24hBalanceFromCache(
+        '0xABCD',
+      );
 
     expect(mockGetBalance24hCache).toHaveBeenCalledWith('0xabcd');
     expect(result).toEqual({
@@ -94,7 +97,9 @@ describe('store/balance24h', () => {
       updateTime: 123,
       isExpired: false,
     });
-    expect(balance24hModule.getAddress24hBalance('0xabcd')).toEqual({
+    expect(
+      balance24hModule.balance24hStore.getAddress24hBalance('0xabcd'),
+    ).toEqual({
       total_usd_value: 12,
       updateTime: 123,
     });
@@ -107,7 +112,8 @@ describe('store/balance24h', () => {
       isExpired: false,
     });
 
-    const result = await balance24hModule.refreshAddress24hBalance('0xABCD');
+    const result =
+      await balance24hModule.balance24hStore.refreshAddress24hBalance('0xABCD');
 
     expect(result).toEqual({
       total_usd_value: 23,
@@ -116,7 +122,9 @@ describe('store/balance24h', () => {
     expect(mockFetch24hBalance).not.toHaveBeenCalled();
     expect(mockSetBalance24hCache).not.toHaveBeenCalled();
     expect(
-      balance24hModule.getAddress24hBalanceResourceState('0xabcd'),
+      balance24hModule.balance24hStore.getAddress24hBalanceResourceState(
+        '0xabcd',
+      ),
     ).toMatchObject({
       sourceOfCurrentValue: 'hydrate',
       hasValue: true,
@@ -131,24 +139,27 @@ describe('store/balance24h', () => {
     });
 
     let observedValueDuringPersist:
-      | ReturnType<typeof balance24hModule.getAddress24hBalance>
+      | ReturnType<typeof balance24hModule.balance24hStore.getAddress24hBalance>
       | undefined;
     mockSetBalance24hCache.mockImplementation((address: string) => {
       observedValueDuringPersist =
-        balance24hModule.getAddress24hBalance(address);
+        balance24hModule.balance24hStore.getAddress24hBalance(address);
     });
 
-    const result = await balance24hModule.refreshAddress24hBalance(
-      '0xABCD',
-      true,
-    );
+    const result =
+      await balance24hModule.balance24hStore.refreshAddress24hBalance(
+        '0xABCD',
+        true,
+      );
 
     expect(mockFetch24hBalance).toHaveBeenCalledWith('0xabcd');
     expect(result).toEqual({
       total_usd_value: 88,
       updateTime: 789,
     });
-    expect(balance24hModule.getAddress24hBalance('0xabcd')).toEqual({
+    expect(
+      balance24hModule.balance24hStore.getAddress24hBalance('0xabcd'),
+    ).toEqual({
       total_usd_value: 88,
       updateTime: 789,
     });
@@ -164,7 +175,9 @@ describe('store/balance24h', () => {
       updateTime: 789,
     });
     expect(
-      balance24hModule.getAddress24hBalanceResourceState('0xabcd'),
+      balance24hModule.balance24hStore.getAddress24hBalanceResourceState(
+        '0xabcd',
+      ),
     ).toMatchObject({
       sourceOfCurrentValue: 'remote',
       persistStatus: 'success',

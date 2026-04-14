@@ -134,6 +134,24 @@ export type AddressBalancesSummary = {
   totalBalance: number;
 };
 
+export type BalanceResourceTraceContext = {
+  scene?: string;
+  requester?: string;
+  endpoint?: string;
+};
+
+const buildBalanceTraceDetail = (
+  detail: Record<string, unknown>,
+  trace?: BalanceResourceTraceContext,
+) => {
+  return {
+    ...detail,
+    scene: trace?.scene,
+    requester: trace?.requester,
+    endpoint: trace?.endpoint,
+  };
+};
+
 class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue> {
   constructor() {
     super('addressBalance');
@@ -381,7 +399,11 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     }
   };
 
-  batchGetTotalBalance = async (top10Addresses: string[], force = false) => {
+  batchGetTotalBalance = async (
+    top10Addresses: string[],
+    force = false,
+    trace?: BalanceResourceTraceContext,
+  ) => {
     if (!top10Addresses.length) {
       return;
     }
@@ -401,10 +423,13 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       if (!force) {
         this.markHydrateStarted(address, {
           localTargets,
-          detail: {
-            source: 'batchGetTotalBalance',
-            force,
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'batchGetTotalBalance',
+              force,
+            },
+            trace,
+          ),
         });
 
         const isExpired = await BalanceEntity.isExpired(address, isCore);
@@ -422,25 +447,31 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
           this.applyHydratedValue(address, value, {
             localTargets,
-            detail: {
-              source: 'batchGetTotalBalance',
-              force,
-              isCore,
-              appChainUsdValue,
-              totalBalance: value.totalBalance,
-            },
+            detail: buildBalanceTraceDetail(
+              {
+                source: 'batchGetTotalBalance',
+                force,
+                isCore,
+                appChainUsdValue,
+                totalBalance: value.totalBalance,
+              },
+              trace,
+            ),
           });
           continue;
         }
 
         this.markHydrateSkipped(address, {
           localTargets,
-          detail: {
-            source: 'batchGetTotalBalance',
-            force,
-            isCore,
-            reason: 'expired_or_missing',
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'batchGetTotalBalance',
+              force,
+              isCore,
+              reason: 'expired_or_missing',
+            },
+            trace,
+          ),
         });
       }
 
@@ -459,11 +490,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         const localTargets = buildBalanceLocalTargets(address);
         const requestId = this.startRemoteFetch(address, {
           localTargets,
-          detail: {
-            source: 'batchGetTotalBalance',
-            force,
-            isCore,
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'batchGetTotalBalance',
+              force,
+              isCore,
+            },
+            trace,
+          ),
         });
 
         try {
@@ -509,11 +543,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         this.markError(result.address, 'remote', result.error, {
           requestId: result.requestId,
           localTargets: result.localTargets,
-          detail: {
-            source: 'batchGetTotalBalance',
-            force,
-            isCore: result.isCore,
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'batchGetTotalBalance',
+              force,
+              isCore: result.isCore,
+            },
+            trace,
+          ),
         });
         return;
       }
@@ -530,13 +567,16 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         value,
         {
           localTargets: result.localTargets,
-          detail: {
-            source: 'batchGetTotalBalance',
-            force,
-            isCore: result.isCore,
-            appChainUsdValue,
-            totalBalance: value.totalBalance,
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'batchGetTotalBalance',
+              force,
+              isCore: result.isCore,
+              appChainUsdValue,
+              totalBalance: value.totalBalance,
+            },
+            trace,
+          ),
         },
       );
 
@@ -550,18 +590,25 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         {
           requestId: result.requestId,
           localTargets: result.localTargets,
-          detail: {
-            source: 'batchGetTotalBalance',
-            force,
-            isCore: result.isCore,
-            totalBalance: formatBalance.total_usd_value,
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'batchGetTotalBalance',
+              force,
+              isCore: result.isCore,
+              totalBalance: formatBalance.total_usd_value,
+            },
+            trace,
+          ),
         },
       );
     });
   };
 
-  getTotalBalance = async (address: string, force = false) => {
+  getTotalBalance = async (
+    address: string,
+    force = false,
+    trace?: BalanceResourceTraceContext,
+  ) => {
     const lowerAddress = address.toLowerCase();
 
     const addresses = await keyringService.getAllAddresses();
@@ -575,11 +622,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       if (!force) {
         this.markHydrateStarted(lowerAddress, {
           localTargets,
-          detail: {
-            source: 'getTotalBalance',
-            force,
-            isCore,
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'getTotalBalance',
+              force,
+              isCore,
+            },
+            trace,
+          ),
         });
 
         const isExpired = await BalanceEntity.isExpired(lowerAddress, isCore);
@@ -597,25 +647,31 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
           this.applyHydratedValue(lowerAddress, value, {
             localTargets,
-            detail: {
-              source: 'getTotalBalance',
-              force,
-              isCore,
-              appChainUsdValue,
-              totalBalance: value.totalBalance,
-            },
+            detail: buildBalanceTraceDetail(
+              {
+                source: 'getTotalBalance',
+                force,
+                isCore,
+                appChainUsdValue,
+                totalBalance: value.totalBalance,
+              },
+              trace,
+            ),
           });
           return;
         }
 
         this.markHydrateSkipped(lowerAddress, {
           localTargets,
-          detail: {
-            source: 'getTotalBalance',
-            force,
-            isCore,
-            reason: 'expired_or_missing',
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'getTotalBalance',
+              force,
+              isCore,
+              reason: 'expired_or_missing',
+            },
+            trace,
+          ),
         });
       }
 
@@ -623,11 +679,14 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       const appChainUsdValue = getAppChainUsdValue(lowerAddress);
       requestId = this.startRemoteFetch(lowerAddress, {
         localTargets,
-        detail: {
-          source: 'getTotalBalance',
-          force,
-          isCore,
-        },
+        detail: buildBalanceTraceDetail(
+          {
+            source: 'getTotalBalance',
+            force,
+            isCore,
+          },
+          trace,
+        ),
       });
       const balance = await openapi.getTotalBalanceV2({
         address: lowerAddress,
@@ -644,13 +703,16 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       );
       const applied = this.applyRemoteValue(lowerAddress, requestId, value, {
         localTargets,
-        detail: {
-          source: 'getTotalBalance',
-          force,
-          isCore,
-          appChainUsdValue,
-          totalBalance: value.totalBalance,
-        },
+        detail: buildBalanceTraceDetail(
+          {
+            source: 'getTotalBalance',
+            force,
+            isCore,
+            appChainUsdValue,
+            totalBalance: value.totalBalance,
+          },
+          trace,
+        ),
       });
 
       if (!applied) {
@@ -663,23 +725,29 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
         {
           requestId,
           localTargets,
-          detail: {
-            source: 'getTotalBalance',
-            force,
-            isCore,
-            totalBalance: formatBalance.total_usd_value,
-          },
+          detail: buildBalanceTraceDetail(
+            {
+              source: 'getTotalBalance',
+              force,
+              isCore,
+              totalBalance: formatBalance.total_usd_value,
+            },
+            trace,
+          ),
         },
       );
     } catch (error) {
       this.markError(lowerAddress, requestId ? 'remote' : 'hydrate', error, {
         requestId,
         localTargets,
-        detail: {
-          source: 'getTotalBalance',
-          force,
-          isCore,
-        },
+        detail: buildBalanceTraceDetail(
+          {
+            source: 'getTotalBalance',
+            force,
+            isCore,
+          },
+          trace,
+        ),
       });
       throw error;
     }
@@ -1073,6 +1141,11 @@ export const fetchTotalBalance = makeSWRKeyAsyncFunc(
         await addressBalanceStore.batchGetTotalBalance(
           selectedAddresses,
           fetchType === 'from_api',
+          {
+            scene: 'Home',
+            requester: 'fetchTotalBalance',
+            endpoint: 'openapi.getTotalBalanceV2',
+          },
         );
       }
 

@@ -26,7 +26,11 @@ export const batchBalanceWithLocalCache = async (
   }
 
   // 通过 addressBalance resource 获取数据（内部已处理缓存和过期逻辑）
-  await addressBalanceStore.getTotalBalance(address, force);
+  await addressBalanceStore.getTotalBalance(address, force, {
+    scene: 'Database',
+    requester: 'batchBalanceWithLocalCache',
+    endpoint: 'openapi.getTotalBalanceV2',
+  });
 
   const balance = addressBalanceStore.getAddressValue(lowerAddress);
   const chainList = addressBalanceStore.getAddressChainList(lowerAddress);

@@ -22,7 +22,7 @@ import { useSingleHomeAddress } from '@/screens/Home/hooks/singleHome';
 import { apisAddressBalance } from './useCurrentBalance';
 import { useMemo } from 'react';
 import { computeBalanceChange } from '@/core/apis/balance';
-import { refreshAddress24hBalance } from '@/store/balance24h';
+import { balance24hStore } from '@/store/balance24h';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
 
@@ -326,10 +326,16 @@ const fetchCurveFor = async (
     const [curve, address24hBalance] = await Promise.all([
       getNetCurve(addr, days, force),
       days === CurveDayType.DAY
-        ? refreshAddress24hBalance(addr, force).catch(error => {
-            console.error('Fetch 24h balance error', error);
-            return null;
-          })
+        ? balance24hStore
+            .refreshAddress24hBalance(addr, force, {
+              scene: 'SingleAddress',
+              requester: 'useCurve.fetchCurveFor',
+              endpoint: 'openapi.get24hTotalBalance',
+            })
+            .catch(error => {
+              console.error('Fetch 24h balance error', error);
+              return null;
+            })
         : Promise.resolve(null),
     ]);
     const start =

@@ -18,7 +18,7 @@ import { ManageSetting } from '../ManageSetting';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
-import { useScene24hBalanceMulti24hBalance } from '@/store/balance24h';
+import { scene24hBalanceStore } from '@/store/balance24h';
 import { computeBalanceChange } from '@/core/apis/balance';
 import addressBalanceStore from '@/store/balance';
 import { Text } from '@/components/Typography';
@@ -46,7 +46,8 @@ const AddressList = ({
 
   const balanceMap = addressBalanceStore.useAddressValueMap();
 
-  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
+  const { multi24hBalance } =
+    scene24hBalanceStore.useScene24hBalanceMulti24hBalance('Home');
 
   const addressListData = useMemo(() => {
     return myTop10Accounts

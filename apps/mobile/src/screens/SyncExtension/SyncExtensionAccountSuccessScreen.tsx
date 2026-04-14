@@ -75,6 +75,11 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
       addressBalanceStore.batchGetTotalBalance(
         accounts.map(account => account.address),
         true,
+        {
+          scene: 'SyncExtension',
+          requester: 'SyncExtensionAccountSuccessfulScreen',
+          endpoint: 'openapi.getTotalBalanceV2',
+        },
       );
       syncMultiAddressesHistory(accounts.slice(0, 5).map(e => e.address));
 

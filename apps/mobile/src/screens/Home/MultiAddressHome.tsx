@@ -16,7 +16,7 @@ import { getReadyNavigationInstance } from '@/utils/navigation';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { HomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { useScene24hBalanceLightWeightData } from '@/store/balance24h';
+import { scene24hBalanceStore } from '@/store/balance24h';
 import { useTrack0331HomeActiveSnapshots } from '@/utils/analytics0331';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
@@ -47,7 +47,8 @@ function MultiAddressHome(): JSX.Element {
   });
   const appThemeConfig = useAppThemeConfig();
 
-  const combinedData = useScene24hBalanceLightWeightData('Home');
+  const combinedData =
+    scene24hBalanceStore.useScene24hBalanceLightWeightData('Home');
   useRendererDetect({ name: 'MultiAddressHome' });
 
   useInitDetectDBAssets();
