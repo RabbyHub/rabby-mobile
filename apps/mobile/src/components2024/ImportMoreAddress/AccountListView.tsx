@@ -23,7 +23,8 @@ export interface Props {
 
 export type { ViewAccount } from './AccountListItem';
 
-const FooterComponent = () => <View style={{ height: 84 }} />;
+const FOOTER_HEIGHT = 120;
+const FooterComponent = () => <View style={{ height: FOOTER_HEIGHT }} />;
 
 export const AccountListView: React.FC<Props> = ({
   accounts,
