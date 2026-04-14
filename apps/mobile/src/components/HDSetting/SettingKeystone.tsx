@@ -18,11 +18,6 @@ import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { Button } from '@/components';
 import { Text } from '@/components/Typography';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -104,7 +99,8 @@ const getStyles = (colors: AppColorsVariants) =>
 export const SettingKeystone: React.FC<{
   onDone: () => void;
   brand: string;
-}> = ({ onDone, brand }) => {
+  onSwitchDevice?: () => void;
+}> = ({ onDone, brand, onSwitchDevice }) => {
   const { t } = useTranslation();
   const [, setLoading] = React.useState(false);
   const [hdPathOptions, setHdPathOptions] = React.useState<
@@ -192,20 +188,8 @@ export const SettingKeystone: React.FC<{
     await apiKeystone.removeAddressAndForgetDevice();
     setVisible(false);
     onDone();
-    // Open the new Connect Keystone flow instead of navigating to the old page
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.CONNECT_KEYSTONE,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-      },
-      onDone: () => {
-        setTimeout(() => {
-          removeGlobalBottomSheetModal2024(id);
-        }, 0);
-      },
-    });
-  }, [onDone]);
+    onSwitchDevice?.();
+  }, [onDone, onSwitchDevice]);
 
   return (
     <MainContainer
