@@ -9,6 +9,7 @@ import {
   type CurvePoint,
   warmupCurveForAddress,
 } from '@/hooks/useCurve';
+import { E2E_ID } from '@/constant/e2e';
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -34,6 +35,7 @@ import {
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -182,6 +184,7 @@ export const HomeTopChart = memo(function Chart({
         <LineChart.Provider data={chartData}>
           {balanceLoadingWithoutLocal ? (
             <Skeleton
+              {...makeTestIDProps(E2E_ID.home.singleBalanceLoading)}
               width={181}
               height={42}
               style={styles.skeleton}
@@ -391,6 +394,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
         <AnimateableText
+          {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
           style={styles.netWorth}
           animatedProps={netWorthAnimatedProps}
         />

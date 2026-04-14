@@ -41,6 +41,26 @@ type RNViewProps = {
   >['accessibilityLabel'];
 };
 
+type RabbyDevToolsBridgeMethodName =
+  | 'ping'
+  | 'getHomePortfolioSnapshot'
+  | 'getSingleHomeSnapshot';
+
+interface RabbyDevToolsBridge {
+  listMethods(): RabbyDevToolsBridgeMethodName[];
+  hasMethod(name: string): boolean;
+  invoke(name: string, ...args: unknown[]): Promise<unknown>;
+  ping(): unknown;
+  getHomePortfolioSnapshot(): unknown;
+  getSingleHomeSnapshot(): unknown;
+}
+
+declare var __RABBY_DEVTOOLS_BRIDGE__: RabbyDevToolsBridge | undefined;
+
+interface GlobalThis {
+  __RABBY_DEVTOOLS_BRIDGE__?: RabbyDevToolsBridge;
+}
+
 declare module '*.webview.injected.ts' {
   const content: string;
   export default content;

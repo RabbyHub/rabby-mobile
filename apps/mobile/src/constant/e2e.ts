@@ -25,9 +25,13 @@ export const E2E_ID = {
     addAddressButton: 'e2e.home.add-address.button',
     addAddressImportAddress: 'e2e.home.add-address.import-address',
     importMethodWatchAddress: 'e2e.home.import-method.watch-address',
+    portfolioBalanceValue: 'e2e.home.portfolio.balance.value',
+    portfolioBalanceLoading: 'e2e.home.portfolio.balance.loading',
     watchAddressInput: 'e2e.home.watch-address.input',
     watchAddressEnsResult: 'e2e.home.watch-address.ens-result',
     watchAddressSubmit: 'e2e.home.watch-address.submit',
+    singleBalanceValue: 'e2e.home.single-address.balance.value',
+    singleBalanceLoading: 'e2e.home.single-address.balance.loading',
     singleAddressBack: 'e2e.home.single-address.back',
   },
 } as const;

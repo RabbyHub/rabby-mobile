@@ -20,6 +20,7 @@ import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';
 import RcIconSmallArrowCC from '@/assets2024/icons/home/IconSmallArrowCC.svg';
+import { E2E_ID } from '@/constant/e2e';
 import Svg, { Path } from 'react-native-svg';
 import {
   refreshDayCurve,
@@ -37,6 +38,7 @@ import { Text, AnimateableText } from '@/components/Typography';
 import { balanceAccountsStore } from '@/store/balance';
 import type { Addresses24hChangeFlowState } from '@/store/balance24h';
 import { useHomePortfolioSummary } from '@/screens/Home/hooks/useHomePortfolioSummary';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -357,16 +359,20 @@ const ChartHeader = React.memo(
     return (
       <Animated.View style={rStyles.charHeader}>
         <View style={styles.netWorthContainer}>
-          <AnimateableText
-            style={[
-              styles.netWorth,
-              showNetWorthLoading && styles.hidden,
-              hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
-            ]}
-            animatedProps={netWorthAnimatedProps}
-          />
+          <View
+            style={showNetWorthLoading ? styles.hidden : undefined}
+            {...makeTestIDProps(E2E_ID.home.portfolioBalanceValue)}>
+            <AnimateableText
+              style={[
+                styles.netWorth,
+                hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
+              ]}
+              animatedProps={netWorthAnimatedProps}
+            />
+          </View>
 
           <Skeleton
+            {...makeTestIDProps(E2E_ID.home.portfolioBalanceLoading)}
             width={181}
             height={44}
             style={[
