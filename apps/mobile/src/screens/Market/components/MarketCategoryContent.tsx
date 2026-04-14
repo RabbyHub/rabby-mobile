@@ -363,10 +363,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexGrow: 1,
   },
   stickyHeader: {
-    paddingTop: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    paddingTop: 14,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   bottomPadding: {
     height: 120,

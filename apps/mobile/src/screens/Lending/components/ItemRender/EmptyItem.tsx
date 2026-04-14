@@ -18,7 +18,6 @@ import { DisplayPoolReserveInfo } from '../../type';
 import { CHAINS_ENUM } from '@debank/common';
 import { useSelectedMarket } from '../../hooks';
 import { API_ETH_MOCK_ADDRESS } from '@aave/contract-helpers';
-import RightArrowCC from '@/assets2024/icons/common/right-cc.svg';
 import { CustomMarket } from '../../config/market';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { Text } from '@/components/Typography';
@@ -108,7 +107,7 @@ const EmptyItem = () => {
             <View style={styles.left}>
               <TokenIcon
                 tokenSymbol={item.reserve.symbol}
-                size={36}
+                size={46}
                 chainSize={0}
                 chain={chainEnum || CHAINS_ENUM.ETH}
               />
@@ -128,11 +127,6 @@ const EmptyItem = () => {
               <Text style={styles.apy}>
                 {formatApy(Number(item.reserve.supplyAPY || '0'))}
               </Text>
-              <RightArrowCC
-                width={14}
-                height={14}
-                color={colors2024['green-default']}
-              />
             </View>
           </TouchableOpacity>
         ))}
@@ -143,28 +137,25 @@ const EmptyItem = () => {
 
 export default EmptyItem;
 
-const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     position: 'relative',
     gap: 12,
     borderRadius: 16,
-    marginTop: 12,
     marginBottom: 120,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   listContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 30,
+    paddingHorizontal: 4,
+    paddingTop: 4,
     paddingBottom: 24,
   },
   listHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    marginBottom: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   headerToken: {
     flex: 1,
@@ -198,8 +189,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    marginTop: 8,
+    paddingVertical: 12,
   },
   left: {
     flex: 1,

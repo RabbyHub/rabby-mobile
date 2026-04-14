@@ -240,6 +240,7 @@ export function WatchlistContent({
             }
             key={item.id}
             item={item}
+            style={styles.tokenItem}
             onPress={() => handleTokenSelect(`${item.chain}:${item.id}`)}
           />
         ))}
@@ -256,6 +257,7 @@ export function WatchlistContent({
       styles.bottomPadding,
       styles.topEmpty,
       watchlistLoading,
+      styles.tokenItem,
     ],
   );
 
@@ -403,10 +405,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexGrow: 1,
   },
   stickyHeader: {
-    paddingTop: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    paddingTop: 14,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   centerEmpty: {
     marginTop: '50%',
@@ -445,5 +445,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   topEmpty: {
     marginTop: 26,
+  },
+  tokenItem: {
+    paddingHorizontal: 12,
   },
 }));
