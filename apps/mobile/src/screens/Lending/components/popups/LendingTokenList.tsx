@@ -91,9 +91,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     width: '100%',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     paddingTop: 12,
   },
   tabBar: {

@@ -15,7 +15,7 @@ import { LendingNativeHeader } from './components/LendingHeaderTitle';
 import MyAssetHome from './MyAssetHome';
 
 function DashBoardScreen(): JSX.Element {
-  const { styles, isLight } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const { fetchData } = useFetchLendingData();
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
@@ -33,7 +33,7 @@ function DashBoardScreen(): JSX.Element {
 
   return (
     <NormalScreenContainer2024
-      type={isLight ? 'bg0' : 'bg1'}
+      type="bg1"
       overwriteStyle={styles.overwriteStyle}>
       <LendingNativeHeader
         account={finalSceneCurrentAccount}
@@ -68,12 +68,10 @@ const ForMultipleAddress = (
   );
 };
 
-const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   overwriteStyle: {
     position: 'relative',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   container: {
     flex: 1,

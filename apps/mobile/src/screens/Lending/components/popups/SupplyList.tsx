@@ -36,7 +36,7 @@ import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Text, TextInput } from '@/components/Typography';
-import { colord } from 'colord';
+//import { colord } from 'colord';
 
 const FOOT_HEIGHT = 86;
 
@@ -289,9 +289,9 @@ export const LendingSupplyListContent: React.FC<
         <TouchableOpacity
           style={[styles.item, isWrapperToken && styles.wrapperToken]}
           onPress={() => handlePressItem(data)}>
-          {isWrapperToken && !search && (
+          {/*{isWrapperToken && !search && (
             <View style={styles.wrapperTokenArrow} />
-          )}
+          )}*/}
           <View style={styles.left}>
             <TokenIcon
               tokenSymbol={data.reserve.symbol}
@@ -325,7 +325,7 @@ export const LendingSupplyListContent: React.FC<
         </TouchableOpacity>
       );
     },
-    [chainEnum, foldHideList, handlePressItem, search, styles, t],
+    [chainEnum, foldHideList, handlePressItem, styles, t],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -407,16 +407,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const cardBgColor = isLight
     ? colors2024['neutral-bg-1']
     : colors2024['neutral-bg-2'];
-  const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
+  //const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
 
   return {
     container: {
       flex: 1,
       paddingHorizontal: 16,
       width: '100%',
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
     },
     titleContainer: {
       paddingTop: 12,
@@ -440,18 +438,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     item: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 14,
+      paddingHorizontal: 4,
+      paddingVertical: 12,
       justifyContent: 'space-between',
-      backgroundColor: cardBgColor,
       borderRadius: 16,
-      marginTop: 8,
       overflow: 'visible',
     },
     wrapperToken: {
-      backgroundColor: wrapperTokenCardBgColor,
-      borderWidth: 1,
-      borderColor: cardBgColor,
+      //backgroundColor: wrapperTokenCardBgColor,
+      //borderWidth: 1,
+      //borderColor: cardBgColor,
     },
     wrapperTokenArrow: {
       position: 'absolute',
@@ -490,7 +486,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
-      textAlign: 'right',
+      textAlign: 'left',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
@@ -512,6 +508,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       maxWidth: 80,
       overflow: 'hidden',
+      textAlign: 'left',
     },
     yourSupplied: {
       fontSize: 16,
@@ -545,7 +542,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     listHeader: {
       paddingVertical: 2,
-      paddingHorizontal: 16,
+      paddingHorizontal: 8,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -577,7 +574,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-secondary'],
       width: 80,
       flex: 0,
-      textAlign: 'right',
+      textAlign: 'left',
+      marginLeft: 8,
     },
     headerApy: {
       fontSize: 14,
@@ -604,17 +602,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       zIndex: 1,
     },
     sectionHeader: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
       marginTop: 8,
+      marginBottom: 8,
       paddingHorizontal: 0,
       paddingLeft: 0,
     },
     buttonHeader: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+      backgroundColor: colors2024['neutral-bg-2'],
     },
     //headerContainer: {
     //  backgroundColor: isLight
