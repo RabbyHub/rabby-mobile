@@ -65,7 +65,7 @@ const VALID_MARKET_TABS = new Set<MarketTabKey>([
 ]);
 
 export default function MarketScreen() {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -200,7 +200,7 @@ export default function MarketScreen() {
 
   return (
     <NormalScreenContainer2024
-      type={isLight ? 'bg0' : 'bg1'}
+      type="bg1"
       overwriteStyle={[
         styles.overwriteStyle,
         {
@@ -257,10 +257,8 @@ export default function MarketScreen() {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const bgColor = isLight
-    ? colors2024['neutral-bg-0']
-    : colors2024['neutral-bg-1'];
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const bgColor = colors2024['neutral-bg-1'];
   return {
     overwriteStyle: {
       position: 'relative',

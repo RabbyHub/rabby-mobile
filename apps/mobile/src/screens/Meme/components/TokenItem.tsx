@@ -172,16 +172,10 @@ export const TokenItemSkeleton = () => {
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
     paddingVertical: 12,
-    paddingLeft: 12,
-    paddingRight: 14,
+    paddingHorizontal: 4,
     gap: 8,
-    marginBottom: 8,
     display: 'flex',
     flexDirection: 'row',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 16,
   },
   tokenLeftSection: {
     justifyContent: 'center',
