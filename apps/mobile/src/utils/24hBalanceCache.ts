@@ -1,5 +1,4 @@
-import { MMKV } from 'react-native-mmkv';
-import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
+import { balance24hMMKV } from '@/core/storage/mmkvInstances';
 import { openapi } from '@/core/request';
 import { computeBalanceChange } from '@/core/apis/balance';
 
@@ -12,10 +11,6 @@ export interface IBalance24hData {
   updateTime: number;
 }
 
-const storage = new MMKV({
-  id: MMKV_FILE_NAMES.BALANCE_24H,
-});
-
 const isExpired = (updateTime: number) => {
   return Date.now() - updateTime > CURE_CACHE_TIME;
 };
@@ -26,7 +21,7 @@ const isLongTimeExpired = (updateTime: number) => {
 
 export const getBalance24hCache = (_address: string) => {
   const address = _address.toLowerCase();
-  const data = storage.getString(address);
+  const data = balance24hMMKV.getString(address);
   if (data) {
     const cache = JSON.parse(data) as IBalance24hData;
     return {
@@ -40,12 +35,36 @@ export const getBalance24hCache = (_address: string) => {
 
 export const setBalance24hCache = (addr: string, data: IBalance24hData) => {
   const address = addr.toLowerCase();
-  storage.set(address, JSON.stringify(data));
+  balance24hMMKV.set(address, JSON.stringify(data));
 };
 
 export const get24hBalance = async (addr: string, force?: boolean) => {
   const res = await refresh24hBalanceWithCache(addr, force);
   return res;
+};
+
+export const fetch24hBalance = async (_address: string) => {
+  const address = _address.toLowerCase();
+  const { total_usd_value } = await openapi.get24hTotalBalance(address);
+  return {
+    data: {
+      total_usd_value,
+    },
+    updateTime: Date.now(),
+  };
+};
+
+export const persist24hBalanceCacheAsync = (
+  addr: string,
+  data: IBalance24hData,
+) => {
+  Promise.resolve()
+    .then(() => {
+      setBalance24hCache(addr, data);
+    })
+    .catch(error => {
+      console.error('persist24hBalanceCacheAsync', error);
+    });
 };
 
 const refresh24hBalanceWithCache = async (_address: string, force = false) => {
@@ -54,11 +73,7 @@ const refresh24hBalanceWithCache = async (_address: string, force = false) => {
   if (cache && !force && !cache.isExpired) {
     return cache;
   }
-  const { total_usd_value } = await openapi.get24hTotalBalance(address);
-  const data = {
-    total_usd_value: total_usd_value,
-  };
-  const updateTime = Date.now();
+  const { data, updateTime } = await fetch24hBalance(address);
   setBalance24hCache(address, {
     data,
     updateTime,
@@ -72,13 +87,13 @@ const refresh24hBalanceWithCache = async (_address: string, force = false) => {
 
 export const delete24hBalanceCache = (_address: string) => {
   const address = _address.toLowerCase();
-  storage.delete(address);
+  balance24hMMKV.delete(address);
 };
 
 // delete all curve cache that is long time expired
 export const deleteLongTime24hBalanceCache = () => {
   try {
-    const keys = storage.getAllKeys();
+    const keys = balance24hMMKV.getAllKeys();
     keys.forEach(key => {
       const cache = getBalance24hCache(key);
       if (cache && isLongTimeExpired(cache.updateTime)) {

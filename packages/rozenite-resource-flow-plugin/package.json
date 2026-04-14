@@ -1,0 +1,34 @@
+{
+  "name": "@rabby-wallet/rozenite-resource-flow-plugin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Resource flow inspector panel for Rabby Mobile via Rozenite.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "react-native": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && node ./scripts/ensure-main.mjs",
+    "dev": "vite build --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@rabby-wallet/base-utils": "workspace:^",
+    "@rozenite/plugin-bridge": "1.6.0"
+  },
+  "devDependencies": {
+    "@rozenite/vite-plugin": "1.6.0",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
+    "react": "19.1.4",
+    "react-dom": "19.1.4",
+    "react-native": "0.81.6",
+    "react-native-web": "^0.21.2",
+    "typescript": "5.7.3",
+    "vite": "^7.3.1"
+  }
+}

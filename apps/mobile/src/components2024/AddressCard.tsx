@@ -6,7 +6,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ellipsisAddress } from '@/utils/address';
 import { formatNetworth } from '@/utils/math';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 
 // Balance component that handles its own data fetching with loading and error states
 interface BalanceProps {
@@ -16,12 +16,16 @@ interface BalanceProps {
 const Balance: React.FC<BalanceProps> = ({ address }) => {
   const { styles } = useTheme2024({ getStyle });
 
-  const balance = balanceStore(s => s.balanceMap[address.toLowerCase()]);
+  const balance = addressBalanceStore.useAddressValue(address);
 
   // Fetch balance on mount if not available
   React.useEffect(() => {
     if (!balance && address) {
-      balanceStore.getState().getTotalBalance(address, true);
+      addressBalanceStore.getTotalBalance(address, true, {
+        scene: 'AddressCard',
+        requester: 'AddressCard.Balance',
+        endpoint: 'openapi.getTotalBalanceV2',
+      });
     }
   }, [address, balance]);
 

@@ -22,7 +22,7 @@ import {
   makeDevOnlyStyle,
 } from '@/utils/styles';
 
-import { useLoadBalanceFromApiStage } from '@/hooks/useAccountsBalance';
+import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 import { BlurShadowView } from '@/components2024/BluerShadow';
@@ -44,15 +44,11 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  useScene24hBalanceCombinedData,
-  useScene24hBalanceMulti24hBalance,
-  useSceneIsLoading,
-} from '@/hooks/useScene24hBalance';
+import { scene24hBalanceStore } from '@/store/balance24h';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import balanceStore from '@/store/balance';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { computeBalanceChange } from '@/core/apis/balance';
+import { useHomePortfolioSummary } from '../hooks/useHomePortfolioSummary';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -63,8 +59,9 @@ function MultiPinnedAddressList({
 }) {
   const { styles } = useTheme2024({ getStyle });
 
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
+  const balanceMap = addressBalanceStore.useAddressValueMap();
+  const { multi24hBalance } =
+    scene24hBalanceStore.useScene24hBalanceMulti24hBalance('Home');
 
   const addressListData = useMemo(() => {
     return sortBy(
@@ -131,8 +128,8 @@ export function MultiAddressHomeHeader(
   } & RNViewProps,
 ): JSX.Element {
   const { style, onRefresh } = props;
-
-  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const { changeSummary } = useHomePortfolioSummary();
+  const data = changeSummary.combinedData;
 
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -145,7 +142,8 @@ export function MultiAddressHomeHeader(
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
-  const { loadBalanceFromApiStage } = useLoadBalanceFromApiStage();
+  const { loadBalanceFromApiStage } =
+    addressBalanceStore.useLoadBalanceFromApiStage();
   const previousLoading = usePrevious(loadBalanceFromApiStage);
   const [isAnimRunning, setIsAnimRunning] = useState(false);
   const animTimerRef = useRef<NodeJS.Timeout | null>(null);

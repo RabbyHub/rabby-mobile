@@ -1,4 +1,5 @@
 import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { cloneDeep } from 'lodash';
@@ -79,10 +80,10 @@ export const AccountSwitcherInfos = {
 // });
 
 export const sceneAccountInfoStore = zustandByMMKV(
-  '@SceneAccounts202512',
+  APP_MMKV_WEAK_KEYS.SCENE_ACCOUNTS,
   AccountSwitcherInfos,
   {
-    legacyAppStoreKey: '@SceneAccounts',
+    legacyAppStoreKey: APP_MMKV_WEAK_KEYS.SCENE_ACCOUNTS_LEGACY,
     storage: MMKVStorageStrategy.compatJson,
   },
 );

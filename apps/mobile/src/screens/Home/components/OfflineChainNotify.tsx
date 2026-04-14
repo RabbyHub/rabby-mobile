@@ -1,7 +1,7 @@
 import { openapi } from '@/core/request';
 import { offlineChainService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -73,8 +73,8 @@ export const useOfflineChain = () => {
     return openapi.getOfflineChainList();
   }, [mockData.forceShowOffchainNotify]);
 
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const chainUSDMap = balanceStore(s => s.chainUSDMap);
+  const balanceMap = addressBalanceStore.useAddressValueMap();
+  const chainUSDMap = addressBalanceStore.useAddressChainListMap();
 
   const list = useMemo(() => {
     const accountChainBalanceList = Object.keys(balanceMap).map(

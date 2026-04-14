@@ -2,7 +2,7 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint, formatSmallCurrencyValue } from '@/hooks/useCurve';
-import React, { memo, useCallback, useEffect, useMemo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { Dimensions, Pressable, useWindowDimensions, View } from 'react-native';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import Animated, {
@@ -25,22 +25,18 @@ import {
   refreshDayCurve,
   useMultiDayCurve,
   useMultiCurveIsAnyAddrLoading,
-} from '@/hooks/useMultiCurve';
-import { useAccountInfo } from '../hooks';
+} from '@/store/curve24h';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { create } from 'zustand';
-import balanceStore from '@/store/balance';
-import {
-  useMultiHome24hBalanceCurveChart,
-  useSceneIsLoadingNew,
-} from '@/hooks/useScene24hBalance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { RNGHPressable } from '@/components/customized/reexports';
 import { Text, AnimateableText } from '@/components/Typography';
+import { balanceAccountsStore } from '@/store/balance';
+import type { Addresses24hChangeFlowState } from '@/store/balance24h';
+import { useHomePortfolioSummary } from '@/screens/Home/hooks/useHomePortfolioSummary';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -63,14 +59,15 @@ export function setIsFoldMultiChart(valOrFunc: UpdaterOrPartials<boolean>) {
 const ChartContent = memo(function ChartContent({
   data: chartsData,
   isLoss,
+  isAnyAddrLoading,
   hideType,
 }: {
   isLoss: boolean;
+  isAnyAddrLoading: boolean;
   hideType: BALANCE_HIDE_TYPE;
   data: CurvePoint[];
 }) {
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
-  const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading();
   const { width: winWidth } = useWindowDimensions();
 
   const pathColor = useMemo(
@@ -131,24 +128,22 @@ export const MultiChart = memo(function MultiChart({
   hideType: BALANCE_HIDE_TYPE;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-
-  const { combinedData: data } = useMultiHome24hBalanceCurveChart();
+  const homePortfolio = useHomePortfolioSummary();
+  const data = homePortfolio.changeSummary.combinedData;
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const { matteredAccountCount, myTop10Addresses } = useAccountInfo();
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const totalBalance = useMemo(() => {
-    if (!myTop10Addresses.length) {
-      return 0;
-    }
-    return myTop10Addresses.reduce((acc, address) => {
-      const balance = balanceMap[address.toLowerCase()];
-      return acc + (balance?.totalBalance || 0);
-    }, 0);
-  }, [balanceMap, myTop10Addresses]);
+  const displayAddresses = homePortfolio.displayAddresses;
+  const totalBalance = homePortfolio.totalBalance;
+  const sceneChangeFlow = homePortfolio.changeSummary.flow;
+  const showBalanceLoadingWithoutLocal =
+    homePortfolio.showBalanceLoadingWithoutLocal;
+  const matteredAccountCount = balanceAccountsStore(
+    s => s.matteredAccountLength,
+  );
+  const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading(displayAddresses);
 
-  const { dayCurveData: dayCurveData } = useMultiDayCurve();
+  const { dayCurveData: dayCurveData } = useMultiDayCurve(displayAddresses);
 
   const chartsData = dayCurveData.list;
 
@@ -172,11 +167,14 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountCount}
+            showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
+            sceneChangeFlow={sceneChangeFlow}
           />
           <ChartContent
             data={chartsData}
             hideType={hideType}
             isLoss={data.isLoss}
+            isAnyAddrLoading={isAnyAddrLoading}
           />
         </LineChart.Provider>
       </View>
@@ -192,6 +190,8 @@ interface IHeaderProps {
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
+  showBalanceLoadingWithoutLocal: boolean;
+  sceneChangeFlow: Addresses24hChangeFlowState;
 }
 const ChartHeader = React.memo(
   ({
@@ -202,6 +202,8 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
+    showBalanceLoadingWithoutLocal,
+    sceneChangeFlow,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
@@ -209,18 +211,33 @@ const ChartHeader = React.memo(
     };
     const { currentIndex } = LineChart.useChart();
     const { currency, formatCurrentCurrency } = useCurrency();
-    const debouncedRawNetWorth = useDebouncedValue(rawNetWorth, 300);
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
-
-    const { isLoadingNew: loading } = useSceneIsLoadingNew('Home');
+    const showNetWorthLoading = useMemo(() => {
+      return showBalanceLoadingWithoutLocal;
+    }, [showBalanceLoadingWithoutLocal]);
+    const changePercent = useDebouncedValue(_changePercent, 300);
+    const shouldWaitDebouncedChange = useMemo(() => {
+      return Boolean(_changePercent) && !Boolean(changePercent);
+    }, [_changePercent, changePercent]);
+    const showChangeLoading = useMemo(() => {
+      return (
+        showNetWorthLoading ||
+        (!Boolean(changePercent) &&
+          (sceneChangeFlow.isAnyLoading || shouldWaitDebouncedChange))
+      );
+    }, [
+      changePercent,
+      sceneChangeFlow.isAnyLoading,
+      shouldWaitDebouncedChange,
+      showNetWorthLoading,
+    ]);
 
     const netWorth = useMemo(() => {
-      return formatSmallCurrencyValue(debouncedRawNetWorth, { currency });
-    }, [debouncedRawNetWorth, currency]);
+      return formatSmallCurrencyValue(rawNetWorth, { currency });
+    }, [currency, rawNetWorth]);
     const change = useMemo(() => {
       return formatCurrentCurrency(Math.abs(debouncedRawChange));
     }, [formatCurrentCurrency, debouncedRawChange]);
-    const changePercent = useDebouncedValue(_changePercent, 300);
 
     const data = useMemo(() => {
       return (
@@ -343,8 +360,7 @@ const ChartHeader = React.memo(
           <AnimateableText
             style={[
               styles.netWorth,
-              loading && styles.hidden,
-              // 用hide原因是：AnimateableText持续订阅netWorthAnimatedProps的变化，会出现订阅不到值或值不更新的问题
+              showNetWorthLoading && styles.hidden,
               hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
             ]}
             animatedProps={netWorthAnimatedProps}
@@ -353,7 +369,10 @@ const ChartHeader = React.memo(
           <Skeleton
             width={181}
             height={44}
-            style={[styles.skeletonNetWorth, !loading && styles.hidden]}
+            style={[
+              styles.skeletonNetWorth,
+              !showNetWorthLoading && styles.hidden,
+            ]}
             LinearGradientComponent={LoadingLinear}
           />
 
@@ -367,7 +386,7 @@ const ChartHeader = React.memo(
             <RcIconSmallArrowCC color={colors2024['neutral-title-1']} />
           </View>
         </View>
-        {loading ? (
+        {showChangeLoading ? (
           <Skeleton
             width={100}
             height={22}

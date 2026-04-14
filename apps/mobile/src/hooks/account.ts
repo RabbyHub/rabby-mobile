@@ -14,7 +14,7 @@ import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { accountEvents, KeyringAccountWithAlias } from '@/core/apis/account';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import accountStore, {
   NEWLY_ADDED_ACCOUNT_DURATION,
   useAccountStore,
@@ -263,7 +263,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 export const usePinnedAccountList = () => {
   const pinAddresses = useAccountStore(s => s.pinnedAddresses);
   const accounts = useAccountStore(s => s.accounts);
-  const balanceMap = balanceStore(s => s.balanceMap);
+  const balanceMap = addressBalanceStore.useAddressValueMap();
 
   const pinnedAccountList = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
