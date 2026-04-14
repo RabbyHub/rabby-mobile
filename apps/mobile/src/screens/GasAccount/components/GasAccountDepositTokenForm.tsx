@@ -572,6 +572,7 @@ const GasAccountDepositTokenFormInner: React.FC<{
           usdValue: amountValue,
           txId: lastHash,
           account: selectedOwnerAccount,
+          scene: onWaitDepositResult ? 'in_tx_flow' : 'recharge',
         });
         depositTxHash = lastHash;
       }
