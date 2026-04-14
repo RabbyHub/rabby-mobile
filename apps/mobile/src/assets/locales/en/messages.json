@@ -471,7 +471,7 @@
       "addressCount_one": "{{count}} Wallet",
       "addressCount_other": "{{count}} Wallets",
       "success": "{{type}} successfully!",
-      "importMore": "Add more wallet from this phrase",
+      "importMore": "Add more wallets from this phrase",
       "viewAddress": "View Wallet",
       "addressCount": "{{count}} Addresses",
       "titleCreated": "Your wallet has been created 🚀",
