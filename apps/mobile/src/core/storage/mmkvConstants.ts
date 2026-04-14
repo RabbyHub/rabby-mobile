@@ -16,6 +16,10 @@ export const APP_MMKV_KEYS = {
   NOTIFICATION: 'notification',
 } as const;
 
+export const KEYCHAIN_MMKV_KEYS = {
+  AUTHENTICATION_TYPE: 'KEYCHAIN_AUTH_TYPES',
+} as const;
+
 export const APP_MMKV_WEAK_KEYS = {
   STORE_MIGRATIONS: '@StoreMigrations',
   SERVICE_MIGRATIONS: '@ServiceMigrations',

@@ -23,6 +23,7 @@ import {
   zMutative,
   zPersist,
 } from '../utils/reexports';
+import { appMMKV, keyringMMKV } from './mmkvInstances';
 import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from './mmkvConstants';
 // import { lendingCacheStorage } from '@/screens/Lending/hooks';
 
@@ -76,8 +77,13 @@ export function getJsonValueStringCompat(
 }
 
 export function makeMMKVStorage(options?: MMKVConfiguration) {
-  const mmkv = new MMKV(options);
+  return makeMMKVStorageByInstance(new MMKV(options), options);
+}
 
+export function makeMMKVStorageByInstance(
+  mmkv: MMKV,
+  options?: MMKVConfiguration,
+) {
   function getItem<T>(key: string): T | null {
     const value = mmkv.getString(key);
 
@@ -140,15 +146,16 @@ export function makeMMKVStorage(options?: MMKVConfiguration) {
 const {
   storage: appStorage,
   methods: appMethods,
-  mmkv: appMMKV,
-} = makeMMKVStorage({
+  mmkv: appMMKVInstance,
+} = makeMMKVStorageByInstance(appMMKV, {
   id: MMKV_FILE_NAMES.DEFAULT,
 });
 
-const { storage: keyringStorage, mmkv: keyringMMKV } = makeMMKVStorage({
-  id: MMKV_FILE_NAMES.KEYRING,
-  encryptionKey: 'keyring',
-});
+const { storage: keyringStorage, mmkv: keyringMMKVInstance } =
+  makeMMKVStorageByInstance(keyringMMKV, {
+    id: MMKV_FILE_NAMES.KEYRING,
+    encryptionKey: 'keyring',
+  });
 
 export function normalizeKeyringState() {
   const legacyData = appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
@@ -158,7 +165,7 @@ export function normalizeKeyringState() {
       keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) || legacyData,
   };
 
-  if (legacyData) appMMKV.trim();
+  if (legacyData) appMMKVInstance.trim();
 
   // console.debug('result.legacyData', result.legacyData);
   // console.debug('result.keyringData', result.keyringData);
@@ -168,15 +175,18 @@ export function normalizeKeyringState() {
   result.keyringData = result.legacyData;
 
   appStorage.removeItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
-  appMMKV.trim();
+  appMMKVInstance.trim();
 
   return result;
 }
 
 export const appMMKVForDebug = __DEV__
-  ? appMMKV
-  : (null as any as typeof appMMKV);
-export { appStorage, keyringStorage };
+  ? appMMKVInstance
+  : (null as any as typeof appMMKVInstance);
+export const keyringMMKVForDebug = __DEV__
+  ? keyringMMKVInstance
+  : (null as any as typeof keyringMMKVInstance);
+export { appStorage, keyringStorage, appMMKVInstance, keyringMMKVInstance };
 
 export const IS_BOOTED_USER =
   !!appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) ||

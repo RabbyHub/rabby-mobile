@@ -7,6 +7,7 @@ import 'react-native-gesture-handler';
  */
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
+import RozeniteDevTools from '@/devtools/RozeniteDevTools';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
 import { withExpoSnack } from 'nativewind';
@@ -107,6 +108,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
       <ThemeProvider theme={rneuiTheme}>
         <SafeAreaProvider>
           <RootSiblingParent>
+            <RozeniteDevTools />
             <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
