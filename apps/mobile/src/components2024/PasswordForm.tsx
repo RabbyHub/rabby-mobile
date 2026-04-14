@@ -18,6 +18,7 @@ import { Text } from '@/components/Typography';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import { useShowUserAgreementLikeModal } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner2024';
 import { APP_TEST_PWD } from '@/constant';
+import { E2E_ID } from '@/constant/e2e';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -169,6 +170,8 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
             inputMode: 'text',
             returnKeyType: 'done',
             placeholder: '',
+            testID: E2E_ID.onboarding.setPasswordInput,
+            accessibilityLabel: E2E_ID.onboarding.setPasswordInput,
             onChangeText(text) {
               formik.setFieldValue('password', text, true);
             },
@@ -197,6 +200,8 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
             returnKeyType: 'done',
             placeholder: '',
             placeholderTextColor: colors2024['neutral-foot'],
+            testID: E2E_ID.onboarding.setPasswordConfirmInput,
+            accessibilityLabel: E2E_ID.onboarding.setPasswordConfirmInput,
             onChangeText(text) {
               formik.setFieldValue('confirmPassword', text, true);
             },
@@ -227,6 +232,12 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
           <AppSwitch2024
             value={formik.values.enableBiometrics}
             disabled={!couldSetupBiometrics}
+            testID={E2E_ID.onboarding.setPasswordBiometrics}
+            accessibilityLabel={
+              formik.values.enableBiometrics
+                ? E2E_ID.onboarding.setPasswordBiometricsOn
+                : E2E_ID.onboarding.setPasswordBiometricsOff
+            }
             onValueChange={async value => {
               formik.setFieldValue('enableBiometrics', value, true);
             }}
@@ -239,6 +250,8 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
 
       <TouchableOpacity
         style={styles.agreementWrapper}
+        testID={E2E_ID.onboarding.setPasswordAgreement}
+        accessibilityLabel={E2E_ID.onboarding.setPasswordAgreement}
         onPress={() => {
           formik.setFieldValue('checked', !formik.values.checked, true);
         }}>
@@ -273,6 +286,8 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
         containerStyle={styles.btnContainer}
         type="primary"
         title={submitButtonTitle || t('global.Done')}
+        testID={E2E_ID.onboarding.setPasswordSubmit}
+        accessibilityLabel={E2E_ID.onboarding.setPasswordSubmit}
         onPress={handleContinue}
       />
     </View>

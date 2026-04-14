@@ -8,6 +8,7 @@ declare module '@env' {
     RABBY_MOBILE_KR_PWD: string;
     RABBY_MOBILE_BUILD_CHANNEL: string;
     RABBY_MOBILE_CODE: string;
+    RABBY_MOBILE_E2E_SILENT_LOGS?: string;
     DEV_CONSOLE_URL: string;
     DEV_SERVER_HOSTNAME?: string;
 
@@ -32,6 +33,12 @@ type RNViewProps = {
     typeof import('react-native').View
   >['style'];
   className?: string;
+  testID?: import('react').ComponentProps<
+    typeof import('react-native').View
+  >['testID'];
+  accessibilityLabel?: import('react').ComponentProps<
+    typeof import('react-native').View
+  >['accessibilityLabel'];
 };
 
 declare module '*.webview.injected.ts' {

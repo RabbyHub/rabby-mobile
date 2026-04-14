@@ -144,11 +144,9 @@ export type BrowserNavigatorParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
-  [RootNames.GetStartedScreen2024]?: {};
 };
 
 type TestKitsNavigatorParamsList = {
-  [RootNames.NewUserGetStarted2024]?: {};
   [RootNames.DevUIFontShowCase]?: {};
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};

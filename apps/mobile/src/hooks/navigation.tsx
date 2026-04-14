@@ -130,20 +130,22 @@ export function navBack() {
 }
 
 export function HeaderBackPressable({
+  tintColor,
   style,
-  ...props
+  ...touchableProps
 }: Pick<NativeStackHeaderLeftProps, 'tintColor'> & RNViewProps) {
   const themeMode = useGetBinaryMode();
   const { colors2024 } = apisTheme.getColors2024(themeMode);
   return (
     <CustomTouchableOpacity
+      {...touchableProps}
       style={[styles.backButtonStyle, style]}
       hitSlop={hitSlop}
       onPress={navBack}>
       <RcIconHeaderBack
         width={24}
         height={24}
-        color={props.tintColor || colors2024['neutral-body']}
+        color={tintColor || colors2024['neutral-body']}
       />
     </CustomTouchableOpacity>
   );

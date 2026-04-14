@@ -47,6 +47,7 @@ import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { IS_IOS } from '@/core/native/utils';
 import { Text } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -141,6 +142,8 @@ function ImportMethods(): JSX.Element {
             <Card
               // hasArrow={state?.isNotNewUserProc}
               style={styles.importItem}
+              testID={E2E_ID.onboarding.importMethodPrivateKey}
+              accessibilityLabel={E2E_ID.onboarding.importMethodPrivateKey}
               onPress={async () => {
                 if (
                   state?.isNotNewUserProc &&
@@ -260,6 +263,8 @@ function ImportMethods(): JSX.Element {
                 <Card
                   // hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
+                  testID={E2E_ID.home.importMethodWatchAddress}
+                  accessibilityLabel={E2E_ID.home.importMethodWatchAddress}
                   onPress={() => {
                     navigation.dispatch(
                       StackActions.push(RootNames.StackAddress, {

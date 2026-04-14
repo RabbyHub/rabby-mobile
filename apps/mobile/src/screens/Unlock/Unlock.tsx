@@ -55,6 +55,7 @@ import { getAddressesForReport } from '@/core/apis/address';
 import { perfEvents } from '@/core/utils/perf';
 import { GetRootScreenRouteProp } from '@/navigation-type';
 import { TextInput } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -366,6 +367,8 @@ export default function UnlockScreen() {
                   secureTextEntry: true,
                   inputMode: 'text',
                   returnKeyType: 'done',
+                  testID: E2E_ID.unlock.passwordInput,
+                  accessibilityLabel: E2E_ID.unlock.passwordInput,
                   placeholderTextColor: colors2024['neutral-foot'],
                   onChangeText(text) {
                     formik.setFieldError('password', undefined);
@@ -388,6 +391,8 @@ export default function UnlockScreen() {
                   loading={isUnlocking}
                   disabled={shouldDisabled}
                   type="primary"
+                  testID={E2E_ID.unlock.submit}
+                  accessibilityLabel={E2E_ID.unlock.submit}
                   buttonStyle={[styles.buttonShadow]}
                   containerStyle={[
                     styles.nextButtonContainer,
@@ -419,6 +424,12 @@ export default function UnlockScreen() {
         <View style={styles.switchingAuthTypeButtonWrapper}>
           <TouchableText
             disabled={shouldDisabled}
+            testID={E2E_ID.unlock.switchAuthType}
+            accessibilityLabel={
+              usingBiometrics
+                ? E2E_ID.unlock.switchAuthTypePassword
+                : E2E_ID.unlock.switchAuthTypeBiometrics
+            }
             style={styles.switchingAuthTypeButton}
             onPress={() => {
               setUsingBiometrics(prev => !prev);

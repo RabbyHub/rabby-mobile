@@ -41,6 +41,7 @@ import { AddressNavigatorParamList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text, TextInput } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -289,6 +290,8 @@ function MainListBlocks() {
                   inputMode: 'text',
                   returnKeyType: 'done',
                   placeholder: '',
+                  testID: E2E_ID.onboarding.setPasswordInput,
+                  accessibilityLabel: E2E_ID.onboarding.setPasswordInput,
                   onChangeText(text) {
                     formik.setFieldValue('password', text, true);
                   },
@@ -322,6 +325,8 @@ function MainListBlocks() {
                   returnKeyType: 'done',
                   placeholder: '',
                   placeholderTextColor: colors2024['neutral-foot'],
+                  testID: E2E_ID.onboarding.setPasswordConfirmInput,
+                  accessibilityLabel: E2E_ID.onboarding.setPasswordConfirmInput,
                   onChangeText(text) {
                     formik.setFieldValue('confirmPassword', text, true);
                   },
@@ -352,6 +357,12 @@ function MainListBlocks() {
               <View style={styles.valueView}>
                 <AppSwitch2024
                   value={formik.values.switch}
+                  testID={E2E_ID.onboarding.setPasswordBiometrics}
+                  accessibilityLabel={
+                    formik.values.switch
+                      ? E2E_ID.onboarding.setPasswordBiometricsOn
+                      : E2E_ID.onboarding.setPasswordBiometricsOff
+                  }
                   onValueChange={async value => {
                     if (!couldSetupBiometrics) {
                       toast.show(
@@ -368,6 +379,8 @@ function MainListBlocks() {
             </View>
             <TouchableOpacity
               style={styles.agreementWrapper}
+              testID={E2E_ID.onboarding.setPasswordAgreement}
+              accessibilityLabel={E2E_ID.onboarding.setPasswordAgreement}
               onPress={() => {
                 formik.setFieldValue('checked', !formik.values.checked, true);
               }}>
@@ -409,6 +422,8 @@ function MainListBlocks() {
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}
           onPress={handleContinue}
+          testID={E2E_ID.onboarding.setPasswordSubmit}
+          accessibilityLabel={E2E_ID.onboarding.setPasswordSubmit}
         />
       </View>
     </TouchableWithoutFeedback>

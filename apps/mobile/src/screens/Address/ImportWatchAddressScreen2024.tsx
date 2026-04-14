@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { ellipsisAddress } from '@/utils/address';
 import { debounce } from 'lodash';
+import { E2E_ID } from '@/constant/e2e';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -161,12 +162,12 @@ export const ImportWatchAddressScreen2024 = () => {
         title: t('global.Confirm'),
         onPress: handleDone,
         disabled: !input || !!error,
+        testID: E2E_ID.home.watchAddressSubmit,
+        accessibilityLabel: E2E_ID.home.watchAddressSubmit,
       }}
       style={styles.screen}
       footerBottomOffset={56}
-      footerContainerStyle={{
-        paddingHorizontal: 20,
-      }}>
+      footerContainerStyle={styles.footerContainer}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.topContent}>
@@ -196,6 +197,8 @@ export const ImportWatchAddressScreen2024 = () => {
                   value: input,
                   blurOnSubmit: true,
                   returnKeyType: 'done',
+                  testID: E2E_ID.home.watchAddressInput,
+                  accessibilityLabel: E2E_ID.home.watchAddressInput,
                   onSubmitEditing: onSubmitEditing,
                   onChangeText: handleSubmit,
                 }}
@@ -221,6 +224,8 @@ export const ImportWatchAddressScreen2024 = () => {
               {!error && ensResult && input !== ensResult.addr && (
                 <TouchableOpacity
                   style={styles.ensResultBox}
+                  testID={E2E_ID.home.watchAddressEnsResult}
+                  accessibilityLabel={E2E_ID.home.watchAddressEnsResult}
                   onPress={() => {
                     Keyboard.dismiss();
                     setInput(ensResult.addr);
@@ -250,6 +255,9 @@ export const ImportWatchAddressScreen2024 = () => {
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  footerContainer: {
+    paddingHorizontal: 20,
   },
   container: {
     display: 'flex',

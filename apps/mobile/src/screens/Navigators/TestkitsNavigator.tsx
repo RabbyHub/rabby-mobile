@@ -4,20 +4,8 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { registerAppScreen } from '@/perfs/apis';
-import {
-  preloadNonProductionScreens,
-  TESTKITS_PRELOAD_SCREENS,
-} from '@/perfs/preloads';
-import { useLayoutEffect } from 'react';
-import { devOnlyDelayNavi } from '../Testkits/testkits-utils';
+import { TESTKITS_PRELOAD_SCREENS } from '@/perfs/preloads';
 import { isNonPublicProductionEnv } from '@/constant';
-
-const GetStartedScreen2024 = registerAppScreen<
-  typeof import('@/screens/GetStarted/NewUserGetStarted2024').default
->({
-  loader: () => import('@/screens/GetStarted/NewUserGetStarted2024'),
-  name: TESTKITS_PRELOAD_SCREENS.NewUserGetStarted2024,
-});
 const DevUIAnimatedTextAndView = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIAnimatedTextAndView').default
 >({
@@ -131,13 +119,6 @@ export function TestkitsNavigator() {
         headerShown: false,
         statusBarBackgroundColor: colors['blue-default'],
       }}>
-      <Stack.Screen
-        name={RootNames.NewUserGetStarted2024}
-        component={GetStartedScreen2024}
-        // options={{
-        //   navigationBarHidden: true,
-        // }}
-      />
       <Stack.Screen
         name={RootNames.DevUIAnimatedTextAndView}
         component={DevUIAnimatedTextAndView}
