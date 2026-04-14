@@ -21,6 +21,7 @@ import { HeaderBackPressable } from '@/hooks/navigation';
 import { BackupReminderCard } from '@/components2024/BackupReminderCard';
 import { useBackupReminder } from '@/hooks/account';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 function HomeHeader() {
   const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
@@ -30,8 +31,7 @@ function HomeHeader() {
       <View style={styles.containerLeft}>
         <HeaderBackPressable
           style={styles.backButton}
-          testID={E2E_ID.home.singleAddressBack}
-          accessibilityLabel={E2E_ID.home.singleAddressBack}
+          {...makeTestIDProps(E2E_ID.home.singleAddressBack)}
         />
         <HomeHeaderArea />
       </View>

@@ -25,6 +25,7 @@ import { replaceToFirst } from '@/utils/navigation';
 import { toast } from '@/components2024/Toast';
 import { setAccountNeedsBackupReminder } from '@/hooks/account';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
   shouldRedirectToSetPasswordBefore2024: ReturnType<
@@ -143,8 +144,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
           style={styles.importItem}
           title={t('page.nextComponent.addAddress.importAddress')}
           Icon={<IconImport style={styles.icon} />}
-          testID={E2E_ID.home.addAddressImportAddress}
-          accessibilityLabel={E2E_ID.home.addAddressImportAddress}
+          {...makeTestIDProps(E2E_ID.home.addAddressImportAddress)}
         />
         <ListItem
           disableArrow={true}

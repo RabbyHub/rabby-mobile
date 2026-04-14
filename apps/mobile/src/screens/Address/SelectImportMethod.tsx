@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import HelpSVG from '@/assets2024/icons/common/help.svg';
@@ -99,8 +100,7 @@ function SelectImportMethod(): JSX.Element {
           <Card
             style={styles.importItem}
             onPress={handleSeedPhraseOrPrivateKey}
-            testID={E2E_ID.onboarding.importMethodPrivateKey}
-            accessibilityLabel={E2E_ID.onboarding.importMethodPrivateKey}>
+            {...makeTestIDProps(E2E_ID.onboarding.importMethodPrivateKey)}>
             <View style={styles.itemContent}>
               <Text style={styles.itemTitle}>
                 {t('page.nextComponent.addAddress.seedPhraseOrPrivateKey')}

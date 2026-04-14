@@ -56,6 +56,7 @@ import {
   AddressItem,
 } from '@/components2024/WalletSuccessCard';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -369,8 +370,7 @@ export const ImportSuccessScreen2024 = () => {
               : t('global.Done')
           }
           onPress={handleDone}
-          testID={E2E_ID.onboarding.importSuccessPrimary}
-          accessibilityLabel={E2E_ID.onboarding.importSuccessPrimary}
+          {...makeTestIDProps(E2E_ID.onboarding.importSuccessPrimary)}
         />
 
         {shouldShowBackupButton && (

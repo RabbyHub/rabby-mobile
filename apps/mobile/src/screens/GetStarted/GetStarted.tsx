@@ -24,6 +24,7 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
 import ChevronRightSmallCC from '@/assets/icons/common/right-2-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -213,8 +214,7 @@ function NewUserGetStartedScreen() {
                 title={t('page.getStart.alreadyHaveAddress')}
                 onPress={handleGoToImport}
                 buttonStyle={styles.secondaryButton}
-                testID={E2E_ID.onboarding.welcomeImportExisting}
-                accessibilityLabel={E2E_ID.onboarding.welcomeImportExisting}
+                {...makeTestIDProps(E2E_ID.onboarding.welcomeImportExisting)}
               />
               <TouchableOpacity
                 style={styles.syncLink}

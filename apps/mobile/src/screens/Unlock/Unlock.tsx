@@ -56,6 +56,7 @@ import { perfEvents } from '@/core/utils/perf';
 import { GetRootScreenRouteProp } from '@/navigation-type';
 import { TextInput } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -367,8 +368,7 @@ export default function UnlockScreen() {
                   secureTextEntry: true,
                   inputMode: 'text',
                   returnKeyType: 'done',
-                  testID: E2E_ID.unlock.passwordInput,
-                  accessibilityLabel: E2E_ID.unlock.passwordInput,
+                  ...makeTestIDProps(E2E_ID.unlock.passwordInput),
                   placeholderTextColor: colors2024['neutral-foot'],
                   onChangeText(text) {
                     formik.setFieldError('password', undefined);
@@ -391,8 +391,7 @@ export default function UnlockScreen() {
                   loading={isUnlocking}
                   disabled={shouldDisabled}
                   type="primary"
-                  testID={E2E_ID.unlock.submit}
-                  accessibilityLabel={E2E_ID.unlock.submit}
+                  {...makeTestIDProps(E2E_ID.unlock.submit)}
                   buttonStyle={[styles.buttonShadow]}
                   containerStyle={[
                     styles.nextButtonContainer,
@@ -424,12 +423,12 @@ export default function UnlockScreen() {
         <View style={styles.switchingAuthTypeButtonWrapper}>
           <TouchableText
             disabled={shouldDisabled}
-            testID={E2E_ID.unlock.switchAuthType}
-            accessibilityLabel={
+            {...makeTestIDProps(
+              E2E_ID.unlock.switchAuthType,
               usingBiometrics
                 ? E2E_ID.unlock.switchAuthTypePassword
-                : E2E_ID.unlock.switchAuthTypeBiometrics
-            }
+                : E2E_ID.unlock.switchAuthTypeBiometrics,
+            )}
             style={styles.switchingAuthTypeButton}
             onPress={() => {
               setUsingBiometrics(prev => !prev);

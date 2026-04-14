@@ -7,6 +7,7 @@ import { RootNames } from '@/constant/layout';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -61,10 +62,9 @@ export const AddressListScreenButton: React.FC<Props> = ({
       style={styles.headerRight}
       hitSlop={hitSlop}
       onPress={onPress}
-      testID={type === 'address' ? E2E_ID.home.addAddressButton : undefined}
-      accessibilityLabel={
-        type === 'address' ? E2E_ID.home.addAddressButton : undefined
-      }>
+      {...makeTestIDProps(
+        type === 'address' ? E2E_ID.home.addAddressButton : null,
+      )}>
       <WalletSVG width={22} height={22} color={colors2024['neutral-title-1']} />
     </TouchableOpacity>
   );
