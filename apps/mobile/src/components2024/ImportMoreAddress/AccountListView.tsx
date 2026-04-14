@@ -23,8 +23,8 @@ export interface Props {
 
 export type { ViewAccount } from './AccountListItem';
 
-const FOOTER_HEIGHT = 120;
-const FooterComponent = () => <View style={{ height: FOOTER_HEIGHT }} />;
+const FOOTER_PADDING = 36;
+const FooterComponent = () => <View style={{ height: 84 }} />;
 
 export const AccountListView: React.FC<Props> = ({
   accounts,
@@ -46,6 +46,11 @@ export const AccountListView: React.FC<Props> = ({
       </View>
       <FlatList
         style={styles.list}
+        contentContainerStyle={
+          selectedAccounts?.length
+            ? { paddingBottom: FOOTER_PADDING }
+            : undefined
+        }
         data={accounts}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item: account }) => {
