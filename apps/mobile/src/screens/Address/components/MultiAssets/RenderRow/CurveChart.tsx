@@ -26,18 +26,17 @@ import {
   useMultiDayCurve,
   useMultiCurveIsAnyAddrLoading,
 } from '@/store/curve24h';
-import { useAccountInfo } from '../hooks';
 import { ThemeColors2024 } from '@rabby-wallet/base-utils';
 import { useIsFocused } from '@react-navigation/native';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { create } from 'zustand';
-import { scene24hBalanceStore } from '@/store/balance24h';
-import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { RNGHPressable } from '@/components/customized/reexports';
 import { Text, AnimateableText } from '@/components/Typography';
-import { useAccountStore } from '@/store/account';
+import { balanceAccountsStore } from '@/store/balance';
+import type { Addresses24hChangeFlowState } from '@/store/balance24h';
+import { useHomePortfolioSummary } from '@/screens/Home/hooks/useHomePortfolioSummary';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedSVG = Animated.createAnimatedComponent(Svg);
@@ -60,14 +59,15 @@ export function setIsFoldMultiChart(valOrFunc: UpdaterOrPartials<boolean>) {
 const ChartContent = memo(function ChartContent({
   data: chartsData,
   isLoss,
+  isAnyAddrLoading,
   hideType,
 }: {
   isLoss: boolean;
+  isAnyAddrLoading: boolean;
   hideType: BALANCE_HIDE_TYPE;
   data: CurvePoint[];
 }) {
   const { styles, colors2024, colors } = useTheme2024({ getStyle });
-  const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading();
   const { width: winWidth } = useWindowDimensions();
 
   const pathColor = useMemo(
@@ -128,39 +128,22 @@ export const MultiChart = memo(function MultiChart({
   hideType: BALANCE_HIDE_TYPE;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-
-  const { combinedData: data } =
-    scene24hBalanceStore.useMultiHome24hBalanceCurveChart();
+  const homePortfolio = useHomePortfolioSummary();
+  const data = homePortfolio.changeSummary.combinedData;
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const { matteredAccountCount, myTop10Addresses } = useAccountInfo();
-  const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
-  const hasResolvedSelection = balanceAccountsStore(
-    s => s.hasResolvedSelection,
-  );
-  const hasFetchedAccounts = useAccountStore(s => s.hasFetchedAccounts);
-  const isFetchingAccounts = useAccountStore(s => s.isFetchingAccounts);
-  const displayAddresses = useMemo(() => {
-    return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
-  }, [myTop10Addresses, selectedAddresses]);
-  const { totalBalance, flow: top10BalanceFlow } =
-    addressBalanceStore.useAddressesBalanceSummary(displayAddresses);
-  const sceneChangeFlow = scene24hBalanceStore.useSceneChangeFlowState(
-    'Home',
-    displayAddresses,
-  );
-  const isPendingDisplayAddresses =
-    !hasResolvedSelection &&
-    displayAddresses.length === 0 &&
-    (!hasFetchedAccounts ||
-      isFetchingAccounts ||
-      myTop10Addresses.length === 0);
+  const displayAddresses = homePortfolio.displayAddresses;
+  const totalBalance = homePortfolio.totalBalance;
+  const sceneChangeFlow = homePortfolio.changeSummary.flow;
   const showBalanceLoadingWithoutLocal =
-    isPendingDisplayAddresses ||
-    (displayAddresses.length > 0 && !top10BalanceFlow.hasAnyValue);
+    homePortfolio.showBalanceLoadingWithoutLocal;
+  const matteredAccountCount = balanceAccountsStore(
+    s => s.matteredAccountLength,
+  );
+  const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading(displayAddresses);
 
-  const { dayCurveData: dayCurveData } = useMultiDayCurve();
+  const { dayCurveData: dayCurveData } = useMultiDayCurve(displayAddresses);
 
   const chartsData = dayCurveData.list;
 
@@ -191,6 +174,7 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             isLoss={data.isLoss}
+            isAnyAddrLoading={isAnyAddrLoading}
           />
         </LineChart.Provider>
       </View>
@@ -207,9 +191,7 @@ interface IHeaderProps {
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
   showBalanceLoadingWithoutLocal: boolean;
-  sceneChangeFlow: ReturnType<
-    typeof scene24hBalanceStore.useSceneChangeFlowState
-  >;
+  sceneChangeFlow: Addresses24hChangeFlowState;
 }
 const ChartHeader = React.memo(
   ({

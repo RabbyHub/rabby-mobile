@@ -13,7 +13,6 @@ import { debounce } from 'lodash';
 import dayjs from 'dayjs';
 import PQueue from 'p-queue';
 import { useMemo } from 'react';
-import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import addressBalanceStore, {
   accountsBalanceEvents,
   balanceAccountsStore,
@@ -63,6 +62,45 @@ const normalizeAddress = (address?: string) => address?.toLowerCase() || '';
 
 const normalizeAddresses = (addresses: string[]) =>
   Array.from(new Set(addresses.map(address => address.toLowerCase())));
+
+const buildCombinedDayCurveData = ({
+  addresses,
+  curveMap,
+  balanceMap,
+}: {
+  addresses: string[];
+  curveMap: Record<string, AddressCurveValue | undefined>;
+  balanceMap: Record<
+    string,
+    {
+      evmBalance: number;
+      totalBalance: number;
+    }
+  >;
+}) => {
+  const curveList = addresses
+    .map(address => curveMap[address.toLowerCase()])
+    .filter((curve): curve is CurveList => !!curve?.length);
+  const hasAllCurves =
+    addresses.length > 0 &&
+    addresses.every(address => !!curveMap[address.toLowerCase()]?.length);
+  const totals = addresses.reduce(
+    (acc, address) => {
+      const balance = balanceMap[address.toLowerCase()];
+      acc.total += balance?.totalBalance || 0;
+      acc.totalEvm += balance?.evmBalance || 0;
+      return acc;
+    },
+    { total: 0, totalEvm: 0 },
+  );
+
+  return formChartData(combineMultiCurve(curveList), {
+    realtimeNetWorth: hasAllCurves ? totals.totalEvm : 0,
+    realtimeTimestamp: hasAllCurves ? Date.now() : 0,
+    type: CurveDayType.DAY,
+    staticBalance: hasAllCurves ? totals.total : 0,
+  });
+};
 
 function normalizeCurveData(curve: ITIME_STEP_ITEM[]) {
   const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
@@ -411,27 +449,10 @@ class SceneCurve24hStore extends BaseStore<SceneCurveState> {
     const addresses = this.getState().addresses[scene];
     const curveMap = addressCurve24hStore.getAddressCurveMap();
     const balanceMap = addressBalanceStore.getAddressValueMap();
-    const curveList = addresses
-      .map(address => curveMap[address.toLowerCase()])
-      .filter((curve): curve is CurveList => !!curve?.length);
-    const hasAllCurves =
-      addresses.length > 0 &&
-      addresses.every(address => !!curveMap[address.toLowerCase()]?.length);
-    const totals = addresses.reduce(
-      (acc, address) => {
-        const balance = balanceMap[address.toLowerCase()];
-        acc.total += balance?.totalBalance || 0;
-        acc.totalEvm += balance?.evmBalance || 0;
-        return acc;
-      },
-      { total: 0, totalEvm: 0 },
-    );
-
-    const combinedData = formChartData(combineMultiCurve(curveList), {
-      realtimeNetWorth: hasAllCurves ? totals.totalEvm : 0,
-      realtimeTimestamp: hasAllCurves ? Date.now() : 0,
-      type: CurveDayType.DAY,
-      staticBalance: hasAllCurves ? totals.total : 0,
+    const combinedData = buildCombinedDayCurveData({
+      addresses,
+      curveMap,
+      balanceMap,
     });
 
     this.setState(prev => ({
@@ -641,16 +662,40 @@ export function startProcessMultiCurveEvents() {
   }
 }
 
-export const useMultiDayCurve = () => {
-  return sceneCurve24hStore.useSceneDayCurveData('Home');
+export const useAddressesDayCurve = (addresses: string[]) => {
+  const normalizedAddresses = useMemo(
+    () => normalizeAddresses(addresses),
+    [addresses],
+  );
+  const curveMap = addressCurve24hStore.useAddressCurveMap();
+  const balanceMap = addressBalanceStore.useAddressValueMap();
+  const flow = addressCurve24hStore.useFamilyFlowState(normalizedAddresses);
+
+  const dayCurveData = useMemo(() => {
+    return buildCombinedDayCurveData({
+      addresses: normalizedAddresses,
+      curveMap,
+      balanceMap,
+    });
+  }, [balanceMap, curveMap, normalizedAddresses]);
+
+  return useMemo(
+    () => ({
+      dayCurveData,
+      isAnyAddrLoading: flow.isAnyLoading,
+    }),
+    [dayCurveData, flow.isAnyLoading],
+  );
 };
 
-export const useMultiCurveIsAnyAddrLoading = () => {
-  const { myTop10Addresses } = useAccountInfo();
-  const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
-  const displayAddresses = useMemo(() => {
-    return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
-  }, [myTop10Addresses, selectedAddresses]);
+export const useMultiDayCurve = (addresses: string[]) => {
+  return useAddressesDayCurve(addresses);
+};
 
-  return sceneCurve24hStore.useSceneIsAnyAddrLoading('Home', displayAddresses);
+export const useMultiCurveIsAnyAddrLoading = (addresses: string[]) => {
+  const { isAnyAddrLoading } = useAddressesDayCurve(addresses);
+
+  return {
+    isAnyAddrLoading,
+  };
 };

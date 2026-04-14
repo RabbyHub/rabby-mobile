@@ -42,8 +42,6 @@ export const connectFeService = async (data: { pushToken: string }) => {
   }
 
   try {
-    console.debug('[connectFeService] connectURL', connectURL);
-
     const { enabled } = await checkIfEnabledNotificationWithPermission();
     const response = await fetch(
       `${connectURL}/v1/api/rabby-mobile-push/connect`,
@@ -66,7 +64,13 @@ export const connectFeService = async (data: { pushToken: string }) => {
     }
 
     const result = await response.json();
-    console.debug('[connectFeService] Token registered:', result);
+    const nextSuccessSignature = JSON.stringify(result ?? null);
+    if (
+      connectFeServiceIntervalRef.lastSuccessSignature !== nextSuccessSignature
+    ) {
+      connectFeServiceIntervalRef.lastSuccessSignature = nextSuccessSignature;
+      console.debug('[connectFeService] Token registered:', result);
+    }
     return result;
   } catch (err) {
     console.error('[connectFeService] Failed to register push token:', err);
@@ -75,10 +79,49 @@ export const connectFeService = async (data: { pushToken: string }) => {
 };
 
 const CONNECT_DURATION_MS = __DEV__ ? 5 * 1000 : 30 * 1000;
+const connectFeServiceIntervalRef = {
+  timer: null as ReturnType<typeof setInterval> | null,
+  pushToken: '',
+  connectURL: '',
+  lastSuccessSignature: '',
+};
 export function startConnectFeServiceInterval(pushToken: string) {
-  connectFeService({ pushToken });
+  if (!pushToken) {
+    if (__DEV__) {
+      console.warn(
+        '[connectFeService] skip startConnectFeServiceInterval because pushToken is empty',
+      );
+    }
+    return;
+  }
 
-  setInterval(async () => {
-    await connectFeService({ pushToken });
+  const connectURL = getFeServiceURL();
+  if (!connectURL) {
+    return;
+  }
+
+  const shouldReuseExistingInterval =
+    connectFeServiceIntervalRef.timer &&
+    connectFeServiceIntervalRef.pushToken === pushToken &&
+    connectFeServiceIntervalRef.connectURL === connectURL;
+  if (shouldReuseExistingInterval) {
+    return;
+  }
+
+  if (connectFeServiceIntervalRef.timer) {
+    clearInterval(connectFeServiceIntervalRef.timer);
+    connectFeServiceIntervalRef.timer = null;
+  }
+
+  connectFeServiceIntervalRef.pushToken = pushToken;
+  connectFeServiceIntervalRef.connectURL = connectURL;
+  connectFeServiceIntervalRef.lastSuccessSignature = '';
+
+  console.debug('[connectFeService] connectURL', connectURL);
+
+  void connectFeService({ pushToken }).catch(() => undefined);
+
+  connectFeServiceIntervalRef.timer = setInterval(() => {
+    void connectFeService({ pushToken }).catch(() => undefined);
   }, CONNECT_DURATION_MS);
 }

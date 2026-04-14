@@ -443,6 +443,13 @@ export function useAddresses24hChangeFlowState(
   }, [computingAddressSet, normalizedAddresses, snapshots]);
 }
 
+export type Addresses24hChangeSummary = {
+  addresses: string[];
+  combinedData: Combined24hBalanceData;
+  flow: Addresses24hChangeFlowState;
+  hasAnyComparableValue: boolean;
+};
+
 export type Multi24hBalance = Address24hBalanceMap;
 export type BalanceScene = 'Home';
 
@@ -457,6 +464,37 @@ export type Multi24hBalanceState = {
   sceneComputing: Record<BalanceScene, boolean>;
   sceneAddrLoading: Record<`${BalanceScene}-${string}`, boolean>;
 };
+
+export function useAddresses24hChangeSummary(
+  addresses: string[],
+): Addresses24hChangeSummary {
+  const normalizedAddresses = useMemo(
+    () => Array.from(new Set(addresses.map(address => address.toLowerCase()))),
+    [addresses],
+  );
+  const balanceMap = addressBalanceStore.useAddressValueMap();
+  const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
+  const flow = useAddresses24hChangeFlowState(normalizedAddresses);
+
+  const combinedData = useMemo(() => {
+    return computeCombined24hBalanceData({
+      addresses: normalizedAddresses,
+      multi24hBalance,
+      balanceMap,
+      totalEvmBalance: 0,
+      totalBalance: 0,
+    });
+  }, [balanceMap, multi24hBalance, normalizedAddresses]);
+
+  return useMemo(() => {
+    return {
+      addresses: normalizedAddresses,
+      combinedData,
+      flow,
+      hasAnyComparableValue: combinedData.list.length > 0,
+    } satisfies Addresses24hChangeSummary;
+  }, [combinedData, flow, normalizedAddresses]);
+}
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
@@ -843,22 +881,10 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
           combinedData: s.combinedData[scene],
         })),
       );
-    const balanceMap = addressBalanceStore.useAddressValueMap();
-    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
-
-    const combinedData = useMemo(() => {
-      if (!sceneAddresses.length) {
-        return persistedCombinedData;
-      }
-
-      return computeCombined24hBalanceData({
-        addresses: sceneAddresses,
-        multi24hBalance,
-        balanceMap,
-        totalEvmBalance: 0,
-        totalBalance: 0,
-      });
-    }, [balanceMap, multi24hBalance, persistedCombinedData, sceneAddresses]);
+    const summary = useAddresses24hChangeSummary(sceneAddresses);
+    const combinedData = sceneAddresses.length
+      ? summary.combinedData
+      : persistedCombinedData;
 
     return { combinedData };
   };
@@ -877,42 +903,21 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         };
       }),
     );
-    const balanceMap = addressBalanceStore.useAddressValueMap();
-    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
+    const summary = useAddresses24hChangeSummary(homeState.addresses);
 
-    const combinedData = useMemo(() => {
-      if (!homeState.addresses.length) {
-        return {
+    const combinedData = homeState.addresses.length
+      ? {
+          rawNetWorth: summary.combinedData.rawNetWorth,
+          rawChange: summary.combinedData.rawChange,
+          changePercent: summary.combinedData.changePercent,
+          isLoss: summary.combinedData.isLoss,
+        }
+      : {
           rawNetWorth: homeState.rawNetWorth,
           rawChange: homeState.rawChange,
           changePercent: homeState.changePercent,
           isLoss: homeState.isLoss,
         };
-      }
-
-      const immediateData = computeCombined24hBalanceData({
-        addresses: homeState.addresses,
-        multi24hBalance,
-        balanceMap,
-        totalEvmBalance: 0,
-        totalBalance: 0,
-      });
-
-      return {
-        rawNetWorth: immediateData.rawNetWorth,
-        rawChange: immediateData.rawChange,
-        changePercent: immediateData.changePercent,
-        isLoss: immediateData.isLoss,
-      };
-    }, [
-      balanceMap,
-      homeState.addresses,
-      homeState.changePercent,
-      homeState.isLoss,
-      homeState.rawChange,
-      homeState.rawNetWorth,
-      multi24hBalance,
-    ]);
 
     return { combinedData };
   };
@@ -1029,36 +1034,17 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         };
       }),
     );
-    const balanceMap = addressBalanceStore.useAddressValueMap();
-    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
+    const summary = useAddresses24hChangeSummary(sceneState.addresses);
 
-    const lightweightData = useMemo(() => {
-      if (!sceneState.addresses.length) {
-        return {
+    const lightweightData = sceneState.addresses.length
+      ? {
+          netWorth: summary.combinedData.netWorth,
+          isLoss: summary.combinedData.isLoss,
+        }
+      : {
           netWorth: sceneState.netWorth,
           isLoss: sceneState.isLoss,
         };
-      }
-
-      const immediateData = computeCombined24hBalanceData({
-        addresses: sceneState.addresses,
-        multi24hBalance,
-        balanceMap,
-        totalEvmBalance: 0,
-        totalBalance: 0,
-      });
-
-      return {
-        netWorth: immediateData.netWorth,
-        isLoss: immediateData.isLoss,
-      };
-    }, [
-      balanceMap,
-      multi24hBalance,
-      sceneState.addresses,
-      sceneState.isLoss,
-      sceneState.netWorth,
-    ]);
 
     return lightweightData;
   };

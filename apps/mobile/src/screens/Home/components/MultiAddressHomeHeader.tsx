@@ -48,6 +48,7 @@ import { scene24hBalanceStore } from '@/store/balance24h';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { computeBalanceChange } from '@/core/apis/balance';
+import { useHomePortfolioSummary } from '../hooks/useHomePortfolioSummary';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -127,9 +128,8 @@ export function MultiAddressHomeHeader(
   } & RNViewProps,
 ): JSX.Element {
   const { style, onRefresh } = props;
-
-  const { combinedData: data } =
-    scene24hBalanceStore.useScene24hBalanceCombinedData('Home');
+  const { changeSummary } = useHomePortfolioSummary();
+  const data = changeSummary.combinedData;
 
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });

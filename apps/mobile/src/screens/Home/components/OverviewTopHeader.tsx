@@ -47,10 +47,7 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
-import { scene24hBalanceStore } from '@/store/balance24h';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
-import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
-import { useAccountStore } from '@/store/account';
 import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
@@ -59,7 +56,7 @@ import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAsset
 import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
-import { useAccountInfo } from '../../Address/components/MultiAssets/hooks';
+import { useHomePortfolioSummary } from '../hooks/useHomePortfolioSummary';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -75,10 +72,9 @@ export function TabsTopHeader(): JSX.Element {
     apisHomeTabIndex.svTabIndexDecimal,
   );
   const showNetWorth = tabIndexFromSv > 0.7;
-  const { isLoading: scene24hLoading } =
-    scene24hBalanceStore.useSceneIsLoading('Home');
-  const { combinedData: data } =
-    scene24hBalanceStore.useScene24hBalanceCombinedData('Home');
+  const homePortfolio = useHomePortfolioSummary();
+  const data = homePortfolio.changeSummary.combinedData;
+  const scene24hLoading = homePortfolio.changeSummary.flow.isAnyLoading;
 
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
@@ -97,30 +93,10 @@ export function TabsTopHeader(): JSX.Element {
     }
   });
   const { currency } = useCurrency();
-  const selectedAddresses = balanceAccountsStore(s => s.selectedAddresses);
-  const hasResolvedSelection = balanceAccountsStore(
-    s => s.hasResolvedSelection,
-  );
-  const hasFetchedAccounts = useAccountStore(s => s.hasFetchedAccounts);
-  const isFetchingAccounts = useAccountStore(s => s.isFetchingAccounts);
-  const { myTop10Addresses } = useAccountInfo();
-  const displayAddresses = useMemo(() => {
-    return selectedAddresses.length ? selectedAddresses : myTop10Addresses;
-  }, [myTop10Addresses, selectedAddresses]);
-  const {
-    snapshots: top10BalanceSnapshots,
-    flow: top10BalanceFlow,
-    totalBalance,
-  } = addressBalanceStore.useAddressesBalanceSummary(displayAddresses);
-  const isPendingDisplayAddresses =
-    !hasResolvedSelection &&
-    displayAddresses.length === 0 &&
-    (!hasFetchedAccounts ||
-      isFetchingAccounts ||
-      myTop10Addresses.length === 0);
+  const totalBalance = homePortfolio.totalBalance;
   const showBalanceLoadingWithoutLocal =
-    isPendingDisplayAddresses ||
-    (displayAddresses.length > 0 && !top10BalanceFlow.hasAnyValue);
+    homePortfolio.showBalanceLoadingWithoutLocal;
+  const displayAddresses = homePortfolio.displayAddresses;
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
 
@@ -159,23 +135,7 @@ export function TabsTopHeader(): JSX.Element {
     }
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
-  const sceneChangeFlow = scene24hBalanceStore.useSceneChangeFlowState(
-    'Home',
-    displayAddresses,
-  );
-  const showChangeLoading = useMemo(() => {
-    return (
-      !showBalanceLoadingWithoutLocal &&
-      !changePercent &&
-      sceneChangeFlow.isAnyLoading &&
-      displayAddresses.length > 0
-    );
-  }, [
-    changePercent,
-    displayAddresses.length,
-    sceneChangeFlow.isAnyLoading,
-    showBalanceLoadingWithoutLocal,
-  ]);
+  const showChangeLoading = homePortfolio.showChangeLoadingWithoutLocal;
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
