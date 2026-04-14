@@ -2,6 +2,7 @@
  * @format
  */
 import 'react-native-gesture-handler';
+import { withOnBootNetworkActivityRecording } from '@rozenite/network-activity-plugin';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -20,6 +21,11 @@ if (!__DEV__) {
 import './src/utils/logging/install';
 import './global';
 import './src/setup-app';
+
+if (__DEV__ && process.env.WITH_ROZENITE !== 'false') {
+  withOnBootNetworkActivityRecording();
+}
+
 if (__DEV__) {
   import('./ReactotronConfig');
 }
