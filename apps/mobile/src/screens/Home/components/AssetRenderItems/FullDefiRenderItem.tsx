@@ -15,7 +15,10 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { AccountOverview } from '../AccountOverview';
-import { useProtocolConfig } from '../../utils/protocolConfig';
+import {
+  isAave3Portfolio,
+  useProtocolConfig,
+} from '../../utils/protocolConfig';
 import JumpIconCC from '@/assets2024/icons/home/jump-cc.svg';
 import { setRefreshHistoryId } from '../../SingleHomeRightArea';
 import { dappService } from '@/core/services';
@@ -148,6 +151,15 @@ export const FullDefiRenderItem = ({
       if (canShowManage && hasHandleManageFunc) {
         result.add('Manage'); // 这里暂时不做 i18n，tag 的空间小，避免其他语种单词过长挤压其他空间
       }
+    }
+
+    const isAave3 = isAave3Portfolio(data?.id);
+    const isLending = data._portfolios.some(
+      item => item.name?.toLowerCase() === 'lending',
+    );
+    // 这个是内置 lending 的withdraw入口，直接跳转到 lending 页面的
+    if (isAave3 && isLending) {
+      result.add('Withdraw');
     }
 
     for (let i = 0; i < data._portfolios.length; i++) {

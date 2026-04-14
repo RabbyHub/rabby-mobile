@@ -442,7 +442,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   aave3TokenListAmountHeader: {
     width: 54,
-    marginRight: 24,
+    marginRight: 30,
     textAlign: 'right',
   },
   aave3ActionHeader: {
@@ -543,23 +543,25 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   supplementField: {
     width: '50%',
-    height: 34,
+    height: 36,
     flexDirection: 'row',
     alignItems: 'center',
   },
   fieldLabel: {
     paddingLeft: 10,
     fontSize: 12,
-    fontWeight: '400',
+    lineHeight: 16,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-secondary'],
   },
   fieldContent: {
     marginLeft: 8,
     fontSize: 12,
-    fontWeight: '400',
+    lineHeight: 16,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['blue-default'],
+    color: colors2024['brand-default'],
   },
   nftIcon: {
     borderRadius: 4,

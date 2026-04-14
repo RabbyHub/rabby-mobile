@@ -9,10 +9,15 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useTranslation } from 'react-i18next';
-import { TonManageAction, TonTokenManageAction } from '../utils/protocolConfig';
+import {
+  isAave3Portfolio,
+  TonManageAction,
+  TonTokenManageAction,
+} from '../utils/protocolConfig';
 import { IProtocolPortfolio } from '@/store/protocols';
 import { Text } from '@/components/Typography';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { AaveManageButton } from './AaveComponents';
 
 // 已支持的模板
 const TemplateDict = {
@@ -127,6 +132,28 @@ export const WrapperDappActionsMemoItem = ({
       ),
     [accounts, address, addressType],
   );
+  const isAave3 = useMemo(
+    () => isAave3Portfolio(item?._originPortfolio?.pool?.project_id),
+    [item?._originPortfolio?.pool?.project_id],
+  );
+  const filteredActions = useMemo(() => {
+    const types = item._originPortfolio.detail_types?.reverse();
+    const type =
+      types?.find(x => (x in TemplateDict ? x : '')) || 'unsupported';
+    const isLending = type === 'lending';
+    return item._originPortfolio.withdraw_actions?.filter(action => {
+      // aave3的仓位走内置操作，不走 internal action
+      if (isAave3 && isLending) {
+        return action.type !== 'withdraw';
+      }
+      return true;
+    });
+  }, [
+    isAave3,
+    item._originPortfolio.detail_types,
+    item._originPortfolio.withdraw_actions,
+  ]);
+
   if (!currentAccount) {
     return null;
   }
@@ -139,19 +166,24 @@ export const WrapperDappActionsMemoItem = ({
           tokenManageAction={tokenManageAction}
         />
       </View>
-      {!!manageAction && (
-        <TouchableOpacity
-          style={[styles.button]}
-          onPress={() => manageAction?.(currentAccount, item)}>
-          <Text style={styles.buttonText}>
-            {t('component.portfolios.manage')}
-          </Text>
-        </TouchableOpacity>
-      )}
+      {!!manageAction &&
+        (isAave3 ? (
+          <AaveManageButton
+            onPress={() => manageAction?.(currentAccount, item)}
+          />
+        ) : (
+          <TouchableOpacity
+            style={[styles.button]}
+            onPress={() => manageAction?.(currentAccount, item)}>
+            <Text style={styles.buttonText}>
+              {t('component.portfolios.manage')}
+            </Text>
+          </TouchableOpacity>
+        ))}
       {!!item._originPortfolio.withdraw_actions?.length &&
         !item?._originPortfolio?.proxy_detail?.proxy_contract_id && (
           <DappActions
-            data={item._originPortfolio.withdraw_actions}
+            data={filteredActions}
             chain={chain}
             protocolLogo={protocolLogo}
             protocolName={protocolName}
