@@ -451,6 +451,25 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
       },
+      ...(params.type === KEYRING_TYPE.KeystoneKeyring
+        ? {
+            onSwitchDevice: () => {
+              onCancel();
+              const connectId = createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.CONNECT_KEYSTONE,
+                bottomSheetModalProps: {
+                  enableContentPanningGesture: true,
+                  enablePanDownToClose: true,
+                },
+                onDone: () => {
+                  setTimeout(() => {
+                    removeGlobalBottomSheetModal2024(connectId);
+                  }, 0);
+                },
+              });
+            },
+          }
+        : {}),
       ...(params.type
         ? {
             keyringId: params.keyringId,
@@ -466,6 +485,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     params.passphrase,
     params.type,
     settingModalName,
+    onCancel,
   ]);
 
   return (
