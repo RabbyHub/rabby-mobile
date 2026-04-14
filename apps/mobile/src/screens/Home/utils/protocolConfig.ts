@@ -43,6 +43,12 @@ export const isAave3Portfolio = (project_id?: string) => {
   return !!keyToMarketKey[project_id];
 };
 
+export const marketKeyToProtocolId = (marketKey?: CustomMarket) => {
+  return Object.keys(keyToMarketKey).find(
+    key => keyToMarketKey[key] === marketKey,
+  );
+};
+
 export type TonTokenManageAction = (
   account?: KeyringAccountWithAlias,
   tokenAddress?: string,
