@@ -48,6 +48,7 @@ export const ImportWatchAddressScreen2024 = () => {
     addr: string;
     name: string;
   }>(null);
+  const latestInputRef = React.useRef<string>('');
 
   const { t } = useTranslation();
   const duplicateAddressModal = useDuplicateAddressModal();
@@ -126,6 +127,7 @@ export const ImportWatchAddressScreen2024 = () => {
   }, [scanner]);
 
   useEffect(() => {
+    latestInputRef.current = input;
     if (!input) {
       setError(undefined);
       setEnsResult(null);
@@ -137,7 +139,12 @@ export const ImportWatchAddressScreen2024 = () => {
       debouncedResolveEns.cancel();
       return;
     }
+    const currentInput = input;
     debouncedResolveEns(input, result => {
+      // Ignore stale results if input has changed
+      if (latestInputRef.current !== currentInput) {
+        return;
+      }
       if (result && result.addr) {
         setEnsResult(result);
         setError(undefined);
