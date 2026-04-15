@@ -12,6 +12,7 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { zCreate } from '@/core/utils/reexports';
 import addressBalanceStore from '@/store/balance';
+import { useAccountStore } from '@/store/account';
 
 type MatteredChainBalances = {
   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
@@ -47,12 +48,16 @@ const DEFAULT_TESTNET_MATTERED_BALANCES: MatteredChainBalances = {};
 function buildMatteredChainBalances(
   chainList: ChainWithBalance[] = [],
 ): MatteredChainBalances {
-  if (!chainList.length) return {};
+  if (!chainList.length) {
+    return {};
+  }
   const totalUsdValue = chainList.reduce(
     (accu, cur) => accu + coerceFloat(cur.usd_value),
     0,
   );
-  if (totalUsdValue <= 0) return {};
+  if (totalUsdValue <= 0) {
+    return {};
+  }
 
   return chainList.reduce((accu, cur) => {
     const curUsdValue = coerceFloat(cur.usd_value);
@@ -84,7 +89,9 @@ function getChainListByAddress(address?: string) {
   const addr =
     address?.toLowerCase() ||
     addrMatteredBalancesStore.getState().currentAddress;
-  if (!addr) return [];
+  if (!addr) {
+    return [];
+  }
   return addressBalanceStore.getAddressChainList(addr);
 }
 
@@ -198,10 +205,23 @@ export function useLoadMatteredChainBalances({
 }
 
 export function useMatteredChainBalancesAll() {
-  const chainUSDMap = addressBalanceStore.useAddressChainListMap();
+  const accounts = useAccountStore(s => s.accounts);
+  const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
+    useMemo(() => {
+      return accounts.map(account => account.address.toLowerCase());
+    }, [accounts]),
+  );
   const matteredChainBalancesAll = useMemo(
-    () => buildMatteredChainBalances(mergeChainListsById(chainUSDMap)),
-    [chainUSDMap],
+    () =>
+      buildMatteredChainBalances(
+        mergeChainListsById(
+          balanceSnapshots.reduce((acc, snapshot) => {
+            acc[snapshot.address] = snapshot.value?.chainList || [];
+            return acc;
+          }, {} as Record<string, ChainWithBalance[]>),
+        ),
+      ),
+    [balanceSnapshots],
   );
 
   return { matteredChainBalancesAll };

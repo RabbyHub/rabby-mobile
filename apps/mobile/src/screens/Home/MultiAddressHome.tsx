@@ -25,7 +25,7 @@ import { TabsMultiAssets } from '../Address/components/MultiAssets/TabsMultiAsse
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { TmpHomeRefresher } from './components/TmpHomeRefresher';
 import { storeApiGasAccount } from '../GasAccount/hooks/atom';
-import { useHomePortfolioSummary } from './hooks/useHomePortfolioSummary';
+import { useHomePortfolioStore } from './hooks/useHomePortfolioSummary';
 
 const detectHasAccounts = async () => {
   const result = { redirectAction: null as Function | null };
@@ -46,8 +46,7 @@ function MultiAddressHome(): JSX.Element {
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
-  const { changeSummary } = useHomePortfolioSummary();
-  const combinedData = changeSummary.combinedData;
+  const isLoss = useHomePortfolioStore(state => state.changeData.isLoss);
   useRendererDetect({ name: 'MultiAddressHome' });
 
   useInitDetectDBAssets();
@@ -154,7 +153,7 @@ function MultiAddressHome(): JSX.Element {
       type="linear"
       noHeader
       bgImageSource={
-        combinedData.isLoss
+        isLoss
           ? require('@/assets2024/singleHome/loss-home.png')
           : require('@/assets2024/singleHome/up-home.png')
       }

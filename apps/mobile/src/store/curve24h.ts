@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import PQueue from 'p-queue';
 import { useMemo } from 'react';
 import addressBalanceStore, {
+  type AddressBalanceSnapshot,
   accountsBalanceEvents,
   balanceAccountsStore,
 } from '@/store/balance';
@@ -103,6 +104,40 @@ const buildCombinedDayCurveData = ({
   });
 };
 
+function buildCurveMapFromSnapshots(
+  snapshots: Array<{
+    resourceKey: string;
+    value?: AddressCurveValue;
+  }>,
+) {
+  return snapshots.reduce((acc, snapshot) => {
+    acc[snapshot.resourceKey] = snapshot.value;
+    return acc;
+  }, {} as Record<string, AddressCurveValue | undefined>);
+}
+
+function buildBalanceMapFromSnapshots(snapshots: AddressBalanceSnapshot[]) {
+  return snapshots.reduce(
+    (acc, snapshot) => {
+      if (snapshot.value) {
+        acc[snapshot.address] = {
+          evmBalance: snapshot.value.evmBalance,
+          totalBalance: snapshot.value.totalBalance,
+        };
+      }
+
+      return acc;
+    },
+    {} as Record<
+      string,
+      {
+        evmBalance: number;
+        totalBalance: number;
+      }
+    >,
+  );
+}
+
 function normalizeCurveData(curve: ITIME_STEP_ITEM[]) {
   const start = dayjs().add(-24, 'hours').add(10, 'minutes').valueOf();
   const step = 5 * 60 * 1000;
@@ -159,8 +194,6 @@ class AddressCurve24hStore extends ResourceBaseStore<AddressCurveValue> {
   useAddressCurve = (address?: string) => {
     return this.useValue(normalizeAddress(address));
   };
-
-  useAddressCurveMap = () => this.useValueMap();
 
   useAddressResourceState = (address?: string) => {
     return this.useMeta(normalizeAddress(address));
@@ -610,19 +643,19 @@ class SceneCurve24hStore extends BaseStore<SceneCurveState> {
       this.scheduleCommit('Home');
     });
 
-    addressBalanceStore.subscribe(() => {
-      const addresses = this.getState().addresses.Home;
-      if (!addresses.length) {
-        return;
-      }
-      this.scheduleCommit('Home');
-    });
-
     accountsBalanceEvents.on('SELECTION_CHANGED', ({ nextAddresses }) => {
       refreshDayCurve({
         addresses: nextAddresses,
         reason: 'selection_changed',
       });
+    });
+
+    accountsBalanceEvents.on('BALANCE_CHANGED', () => {
+      if (!this.getState().addresses.Home.length) {
+        return;
+      }
+
+      this.scheduleCommit('Home');
     });
   };
 }
@@ -697,17 +730,18 @@ export const useAddressesDayCurve = (addresses: string[]) => {
     () => normalizeAddresses(addresses),
     [addresses],
   );
-  const curveMap = addressCurve24hStore.useAddressCurveMap();
-  const balanceMap = addressBalanceStore.useAddressValueMap();
+  const curveSnapshots = addressCurve24hStore.useSnapshots(normalizedAddresses);
+  const balanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(normalizedAddresses);
   const flow = addressCurve24hStore.useFamilyFlowState(normalizedAddresses);
 
   const dayCurveData = useMemo(() => {
     return buildCombinedDayCurveData({
       addresses: normalizedAddresses,
-      curveMap,
-      balanceMap,
+      curveMap: buildCurveMapFromSnapshots(curveSnapshots),
+      balanceMap: buildBalanceMapFromSnapshots(balanceSnapshots),
     });
-  }, [balanceMap, curveMap, normalizedAddresses]);
+  }, [balanceSnapshots, curveSnapshots, normalizedAddresses]);
 
   return useMemo(
     () => ({

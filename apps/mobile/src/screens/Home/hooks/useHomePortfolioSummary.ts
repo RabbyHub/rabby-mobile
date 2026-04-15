@@ -1,101 +1,264 @@
-import { useMemo } from 'react';
-import addressBalanceStore from '@/store/balance';
+import { zCreate } from '@/core/utils/reexports';
+import accountStore from '@/store/account';
+import { balanceAccountsStore } from '@/store/balance';
 import {
-  balance24hStore,
-  useAddresses24hChangeSummary,
+  type Combined24hBalanceData,
+  scene24hBalanceStore,
 } from '@/store/balance24h';
-import { addressCurve24hStore } from '@/store/curve24h';
-import { useHomeDisplayAddresses } from './useHomeDisplayAddresses';
+import { makeDefaultSelectData } from '@/store/curveShared';
+import { sceneCurve24hStore } from '@/store/curve24h';
+import { useShallow } from 'zustand/react/shallow';
 
-export function useHomePortfolioSummary() {
-  const { displayAddresses, isPendingDisplayAddresses } =
-    useHomeDisplayAddresses();
-  const balanceSummary =
-    addressBalanceStore.useAddressesBalanceSummary(displayAddresses);
-  const changeSummary = useAddresses24hChangeSummary(displayAddresses);
+type HomeChangeData = Pick<
+  Combined24hBalanceData,
+  'rawChange' | 'changePercent' | 'isLoss'
+>;
 
-  const showBalanceLoadingWithoutLocal = useMemo(() => {
+type HomePortfolioState = {
+  displayAddresses: string[];
+  hasResolvedSelection: boolean;
+  hasFetchedAccounts: boolean;
+  isFetchingAccounts: boolean;
+  matteredAccountLength: number;
+  isPendingDisplayAddresses: boolean;
+  totalBalance: number;
+  changeData: HomeChangeData;
+  curveList: ReturnType<typeof makeDefaultSelectData>['list'];
+  showBalanceLoadingWithoutLocal: boolean;
+  showChangeLoadingWithoutLocal: boolean;
+  isChangeAnyLoading: boolean;
+  isCurveAnyAddrLoading: boolean;
+  isBalanceFetchingRemote: boolean;
+  is24hChangeFetchingRemote: boolean;
+  isCurveFetchingRemote: boolean;
+  isAnyRemoteRefreshing: boolean;
+};
+
+function pickHomeChangeData(data: Combined24hBalanceData): HomeChangeData {
+  return {
+    rawChange: data.rawChange,
+    changePercent: data.changePercent,
+    isLoss: data.isLoss,
+  };
+}
+
+const EMPTY_HOME_CHANGE_DATA = pickHomeChangeData(
+  scene24hBalanceStore.getState().combinedData.Home,
+);
+const EMPTY_HOME_CURVE_LIST =
+  sceneCurve24hStore.getState().combinedData.Home.list;
+
+function areAddressListsEqual(prev: string[], next: string[]) {
+  if (prev.length !== next.length) {
+    return false;
+  }
+
+  return prev.every((address, index) => address === next[index]);
+}
+
+function getAddressSetSignature(addresses: string[]) {
+  return Array.from(new Set(addresses.map(address => address.toLowerCase())))
+    .sort()
+    .join('|');
+}
+
+function areCurveListsEqual(
+  prev: HomePortfolioState['curveList'],
+  next: HomePortfolioState['curveList'],
+) {
+  if (prev.length !== next.length) {
+    return false;
+  }
+
+  return prev.every((item, index) => {
+    const nextItem = next[index];
+
     return (
-      isPendingDisplayAddresses ||
-      (displayAddresses.length > 0 && !balanceSummary.flow.hasAnyValue)
+      !!nextItem &&
+      item.timestamp === nextItem.timestamp &&
+      item.value === nextItem.value &&
+      item.rawChange === nextItem.rawChange &&
+      item.changePercent === nextItem.changePercent &&
+      item.isLoss === nextItem.isLoss
     );
-  }, [
-    balanceSummary.flow.hasAnyValue,
-    displayAddresses.length,
-    isPendingDisplayAddresses,
-  ]);
+  });
+}
 
-  const showChangeLoadingWithoutLocal = useMemo(() => {
-    return (
-      !showBalanceLoadingWithoutLocal &&
-      !changeSummary.combinedData.changePercent &&
-      changeSummary.flow.isAnyLoadingWithoutValue &&
-      displayAddresses.length > 0
-    );
-  }, [
-    changeSummary.combinedData.changePercent,
-    changeSummary.flow.isAnyLoadingWithoutValue,
-    displayAddresses.length,
-    showBalanceLoadingWithoutLocal,
-  ]);
+function buildInitialState(): HomePortfolioState {
+  return {
+    displayAddresses: [],
+    hasResolvedSelection: false,
+    hasFetchedAccounts: false,
+    isFetchingAccounts: false,
+    matteredAccountLength: 0,
+    isPendingDisplayAddresses: true,
+    totalBalance: 0,
+    changeData: EMPTY_HOME_CHANGE_DATA,
+    curveList: EMPTY_HOME_CURVE_LIST,
+    showBalanceLoadingWithoutLocal: true,
+    showChangeLoadingWithoutLocal: false,
+    isChangeAnyLoading: false,
+    isCurveAnyAddrLoading: false,
+    isBalanceFetchingRemote: false,
+    is24hChangeFetchingRemote: false,
+    isCurveFetchingRemote: false,
+    isAnyRemoteRefreshing: false,
+  };
+}
 
-  return useMemo(
-    () => ({
-      displayAddresses,
-      isPendingDisplayAddresses,
-      balanceSummary,
-      changeSummary,
-      totalBalance: balanceSummary.totalBalance,
-      showBalanceLoadingWithoutLocal,
-      showChangeLoadingWithoutLocal,
-    }),
-    [
-      balanceSummary,
-      changeSummary,
-      displayAddresses,
-      isPendingDisplayAddresses,
-      showBalanceLoadingWithoutLocal,
-      showChangeLoadingWithoutLocal,
-    ],
+function isSameState(prev: HomePortfolioState, next: HomePortfolioState) {
+  return (
+    areAddressListsEqual(prev.displayAddresses, next.displayAddresses) &&
+    prev.hasResolvedSelection === next.hasResolvedSelection &&
+    prev.hasFetchedAccounts === next.hasFetchedAccounts &&
+    prev.isFetchingAccounts === next.isFetchingAccounts &&
+    prev.matteredAccountLength === next.matteredAccountLength &&
+    prev.isPendingDisplayAddresses === next.isPendingDisplayAddresses &&
+    prev.totalBalance === next.totalBalance &&
+    prev.changeData.rawChange === next.changeData.rawChange &&
+    prev.changeData.changePercent === next.changeData.changePercent &&
+    prev.changeData.isLoss === next.changeData.isLoss &&
+    areCurveListsEqual(prev.curveList, next.curveList) &&
+    prev.showBalanceLoadingWithoutLocal ===
+      next.showBalanceLoadingWithoutLocal &&
+    prev.showChangeLoadingWithoutLocal === next.showChangeLoadingWithoutLocal &&
+    prev.isChangeAnyLoading === next.isChangeAnyLoading &&
+    prev.isCurveAnyAddrLoading === next.isCurveAnyAddrLoading &&
+    prev.isBalanceFetchingRemote === next.isBalanceFetchingRemote &&
+    prev.is24hChangeFetchingRemote === next.is24hChangeFetchingRemote &&
+    prev.isCurveFetchingRemote === next.isCurveFetchingRemote &&
+    prev.isAnyRemoteRefreshing === next.isAnyRemoteRefreshing
   );
 }
 
+function buildHomePortfolioState(): HomePortfolioState {
+  const balanceState = balanceAccountsStore.getState();
+  const accountState = accountStore.getState();
+  const displayAddresses = balanceState.selectedAddresses;
+  const scene24hState = scene24hBalanceStore.getState();
+  const sceneCurveState = sceneCurve24hStore.getState();
+  const displayAddressSignature = getAddressSetSignature(displayAddresses);
+  const is24hSceneMatched =
+    getAddressSetSignature(scene24hState.addresses.Home) ===
+    displayAddressSignature;
+  const isCurveSceneMatched =
+    getAddressSetSignature(sceneCurveState.addresses.Home) ===
+    displayAddressSignature;
+
+  const isPendingDisplayAddresses =
+    !balanceState.hasResolvedSelection &&
+    displayAddresses.length === 0 &&
+    (!accountState.hasFetchedAccounts || accountState.isFetchingAccounts);
+  const showBalanceLoadingWithoutLocal =
+    isPendingDisplayAddresses ||
+    (displayAddresses.length > 0 && !balanceState.hasAnyBalanceValue);
+  const scene24hAddrLoading = displayAddresses.some(address => {
+    return !!scene24hState.sceneAddrLoading[`Home-${address.toLowerCase()}`];
+  });
+  const isChangeAnyLoading =
+    !is24hSceneMatched ||
+    scene24hState.sceneLoading.Home ||
+    scene24hState.sceneComputing.Home ||
+    scene24hAddrLoading;
+  const changeData =
+    is24hSceneMatched && scene24hState.addresses.Home.length
+      ? pickHomeChangeData(scene24hState.combinedData.Home)
+      : EMPTY_HOME_CHANGE_DATA;
+  const curveList =
+    isCurveSceneMatched && sceneCurveState.addresses.Home.length
+      ? sceneCurveState.combinedData.Home.list
+      : EMPTY_HOME_CURVE_LIST;
+  const showChangeLoadingWithoutLocal =
+    !showBalanceLoadingWithoutLocal &&
+    !changeData.changePercent &&
+    isChangeAnyLoading &&
+    displayAddresses.length > 0;
+  const isBalanceFetchingRemote = balanceState.isAnyBalanceFetchingRemote;
+  const is24hChangeFetchingRemote =
+    scene24hState.sceneLoading.Home || scene24hAddrLoading;
+  const isCurveFetchingRemote = sceneCurveState.sceneLoading.Home;
+  const isCurveAnyAddrLoading =
+    !isCurveSceneMatched ||
+    sceneCurveState.sceneLoading.Home ||
+    sceneCurveState.sceneComputing.Home;
+
+  return {
+    displayAddresses,
+    hasResolvedSelection: balanceState.hasResolvedSelection,
+    hasFetchedAccounts: accountState.hasFetchedAccounts,
+    isFetchingAccounts: accountState.isFetchingAccounts,
+    matteredAccountLength: balanceState.matteredAccountLength,
+    isPendingDisplayAddresses,
+    totalBalance: balanceState.totalBalance,
+    changeData,
+    curveList,
+    showBalanceLoadingWithoutLocal,
+    showChangeLoadingWithoutLocal,
+    isChangeAnyLoading,
+    isCurveAnyAddrLoading,
+    isBalanceFetchingRemote,
+    is24hChangeFetchingRemote,
+    isCurveFetchingRemote,
+    isAnyRemoteRefreshing:
+      isBalanceFetchingRemote ||
+      is24hChangeFetchingRemote ||
+      isCurveFetchingRemote,
+  };
+}
+
+const homePortfolioStore = zCreate<HomePortfolioState>(() =>
+  buildInitialState(),
+);
+
+let hasStartedHomePortfolioLifecycle = false;
+
+function syncHomePortfolioState() {
+  const nextState = buildHomePortfolioState();
+
+  homePortfolioStore.setState(prev => {
+    if (isSameState(prev, nextState)) {
+      return prev;
+    }
+
+    return nextState;
+  });
+}
+
+function ensureHomePortfolioLifecycle() {
+  if (hasStartedHomePortfolioLifecycle) {
+    return;
+  }
+
+  hasStartedHomePortfolioLifecycle = true;
+
+  balanceAccountsStore.subscribe(syncHomePortfolioState);
+  accountStore.subscribe(syncHomePortfolioState);
+  scene24hBalanceStore.subscribe(syncHomePortfolioState);
+  sceneCurve24hStore.subscribe(syncHomePortfolioState);
+
+  syncHomePortfolioState();
+}
+
+export function useHomePortfolioStore<T>(
+  selector: (state: HomePortfolioState) => T,
+) {
+  ensureHomePortfolioLifecycle();
+
+  return homePortfolioStore(selector);
+}
+
+export function useHomePortfolioSummary() {
+  return useHomePortfolioStore(state => state);
+}
+
 export function useHomePortfolioRefreshState() {
-  const { displayAddresses } = useHomeDisplayAddresses();
-  const balanceSnapshots =
-    addressBalanceStore.useAddressesSnapshot(displayAddresses);
-  const balance24hSnapshots =
-    balance24hStore.useAddresses24hBalanceSnapshots(displayAddresses);
-  const curveSnapshots = addressCurve24hStore.useSnapshots(displayAddresses);
-
-  const isBalanceFetchingRemote = useMemo(() => {
-    return balanceSnapshots.some(item => item.flow.isFetchingRemote);
-  }, [balanceSnapshots]);
-
-  const is24hChangeFetchingRemote = useMemo(() => {
-    return balance24hSnapshots.some(item => item.flow.isFetchingRemote);
-  }, [balance24hSnapshots]);
-
-  const isCurveFetchingRemote = useMemo(() => {
-    return curveSnapshots.some(item => item.flow.isFetchingRemote);
-  }, [curveSnapshots]);
-
-  return useMemo(
-    () => ({
-      displayAddresses,
-      isBalanceFetchingRemote,
-      is24hChangeFetchingRemote,
-      isCurveFetchingRemote,
-      isAnyRemoteRefreshing:
-        isBalanceFetchingRemote ||
-        is24hChangeFetchingRemote ||
-        isCurveFetchingRemote,
-    }),
-    [
-      displayAddresses,
-      is24hChangeFetchingRemote,
-      isBalanceFetchingRemote,
-      isCurveFetchingRemote,
-    ],
+  return useHomePortfolioStore(
+    useShallow(state => ({
+      displayAddresses: state.displayAddresses,
+      isBalanceFetchingRemote: state.isBalanceFetchingRemote,
+      is24hChangeFetchingRemote: state.is24hChangeFetchingRemote,
+      isCurveFetchingRemote: state.isCurveFetchingRemote,
+      isAnyRemoteRefreshing: state.isAnyRemoteRefreshing,
+    })),
   );
 }

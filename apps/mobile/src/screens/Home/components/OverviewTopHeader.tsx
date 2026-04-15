@@ -57,10 +57,8 @@ import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAsset
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
-import {
-  useHomePortfolioRefreshState,
-  useHomePortfolioSummary,
-} from '../hooks/useHomePortfolioSummary';
+import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
+import { useShallow } from 'zustand/react/shallow';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -76,10 +74,25 @@ export function TabsTopHeader(): JSX.Element {
     apisHomeTabIndex.svTabIndexDecimal,
   );
   const showNetWorth = tabIndexFromSv > 0.7;
-  const homePortfolio = useHomePortfolioSummary();
-  const homeRefreshState = useHomePortfolioRefreshState();
-  const data = homePortfolio.changeSummary.combinedData;
-  const scene24hLoading = homePortfolio.changeSummary.flow.isAnyLoading;
+  const {
+    totalBalance,
+    showBalanceLoadingWithoutLocal,
+    showChangeLoadingWithoutLocal,
+    isAnyRemoteRefreshing,
+    isChangeAnyLoading,
+    changeData,
+  } = useHomePortfolioStore(
+    useShallow(state => ({
+      totalBalance: state.totalBalance,
+      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
+      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
+      isAnyRemoteRefreshing: state.isAnyRemoteRefreshing,
+      isChangeAnyLoading: state.isChangeAnyLoading,
+      changeData: state.changeData,
+    })),
+  );
+  const data = changeData;
+  const scene24hLoading = isChangeAnyLoading;
 
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
@@ -98,10 +111,6 @@ export function TabsTopHeader(): JSX.Element {
     }
   });
   const { currency } = useCurrency();
-  const totalBalance = homePortfolio.totalBalance;
-  const showBalanceLoadingWithoutLocal =
-    homePortfolio.showBalanceLoadingWithoutLocal;
-  const displayAddresses = homePortfolio.displayAddresses;
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
 
@@ -140,18 +149,10 @@ export function TabsTopHeader(): JSX.Element {
     }
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
-  const showChangeLoading = homePortfolio.showChangeLoadingWithoutLocal;
+  const showChangeLoading = showChangeLoadingWithoutLocal;
   const showHeaderSideLoadingIndicator = useMemo(() => {
-    return (
-      showBalanceLoadingWithoutLocal ||
-      (homeRefreshState.displayAddresses.length > 0 &&
-        homeRefreshState.isAnyRemoteRefreshing)
-    );
-  }, [
-    homeRefreshState.displayAddresses.length,
-    homeRefreshState.isAnyRemoteRefreshing,
-    showBalanceLoadingWithoutLocal,
-  ]);
+    return showBalanceLoadingWithoutLocal || isAnyRemoteRefreshing;
+  }, [isAnyRemoteRefreshing, showBalanceLoadingWithoutLocal]);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 

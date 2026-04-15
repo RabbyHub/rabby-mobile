@@ -156,10 +156,6 @@ export class ObservableResourceStore<TValue> extends BaseStore<
       return s.valueMap[resourceKey];
     });
 
-  useValueMap = () => this.useStore(s => s.valueMap);
-
-  useMetaMap = () => this.useStore(s => s.metaMap);
-
   useMeta = (resourceKey?: string) =>
     this.useStore(s => {
       if (!resourceKey) {
