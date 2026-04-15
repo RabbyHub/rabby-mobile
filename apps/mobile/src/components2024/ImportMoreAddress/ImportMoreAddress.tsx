@@ -352,19 +352,26 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     }
   }, [apiHD, getMnemonicKeyring, params.type, getAliasByAddress]);
 
+  // HdKeyring init - sets initial HD path
+  React.useEffect(() => {
+    if (params.type === KEYRING_TYPE.HdKeyring) {
+      setSetting({ hdPath: LedgerHDPathType.BIP44, startNumber: 1 });
+    }
+  }, [setSetting, params.type]);
+
+  // initial load
+  React.useEffect(() => {
+    abortLoadRef.current = handleLoadAddress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // cleanup on unmount
   React.useEffect(() => {
     return () => {
       exitRef.current = true;
       abortLoadRef.current?.();
     };
   }, []);
-
-  React.useEffect(() => {
-    if (params.type === KEYRING_TYPE.HdKeyring) {
-      setSetting({ hdPath: LedgerHDPathType.BIP44, startNumber: 1 });
-      handleSettingChange();
-    }
-  }, [setSetting, params.type, handleSettingChange]);
 
   const importToastHiddenRef = React.useRef<() => void>(() => {});
 
