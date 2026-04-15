@@ -1,7 +1,6 @@
 import { IS_E2E_SILENT_LOGS } from '@/constant/env';
-import { appMMKV } from '@/core/storage/mmkvInstances';
+import { storeApiExpSettingData } from '@/hooks/appSettings';
 
-const EXPERIMENTAL_SETTINGS_KEY = '@ExperimentalSettings';
 const SILENT_DEV_LOGS_KEY = 'silenceDevLogsForE2E';
 
 export function getE2ESilentLogsEnabled() {
@@ -9,15 +8,5 @@ export function getE2ESilentLogsEnabled() {
     return true;
   }
 
-  const raw = appMMKV.getString(EXPERIMENTAL_SETTINGS_KEY);
-  if (!raw) {
-    return false;
-  }
-
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed?.[SILENT_DEV_LOGS_KEY] === true;
-  } catch {
-    return false;
-  }
+  return storeApiExpSettingData.get()?.[SILENT_DEV_LOGS_KEY] === true;
 }
