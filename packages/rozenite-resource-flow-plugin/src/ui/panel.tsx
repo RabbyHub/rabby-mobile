@@ -1,105 +1,43 @@
-import { themeColorsNext2024 } from '@rabby-wallet/base-utils/src/isomorphic/theme-colors';
+import 'antd/dist/reset.css';
+
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
+import { Button, ConfigProvider, Empty, Input, Tabs } from 'antd';
+import type { TabsProps } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
+
 import {
   RESOURCE_FLOW_DEVTOOLS_PLUGIN_ID,
   type ResourceFlowDevToolsEventMap,
-  type ResourceFlowResourceSnapshot,
   type ResourceFlowTraceEntry,
 } from '../shared/types';
+import {
+  FamilySummaryContent,
+  ResourceDetailContent,
+  ResourceSidebarContent,
+} from './panel-sections';
+import { usePanelTheme } from './panel-theme';
+import {
+  buildAppChainFamilyStats,
+  buildFamilySummary,
+  getResourceUpdatedAt,
+} from './panel-utils';
 import './globals.css';
 
-const darkTheme = themeColorsNext2024.dark;
-
-const panelThemeStyle = {
-  '--rf-brand': darkTheme['brand-default'],
-  '--rf-brand-soft': darkTheme['brand-light-2'],
-  '--rf-bg': darkTheme['neutral-bg-0'],
-  '--rf-bg-panel': darkTheme['neutral-bg-1'],
-  '--rf-bg-subtle': darkTheme['neutral-bg-2'],
-  '--rf-bg-elevated': darkTheme['neutral-bg-3'],
-  '--rf-line': darkTheme['neutral-line'],
-  '--rf-title': darkTheme['neutral-title-1'],
-  '--rf-body': darkTheme['neutral-body'],
-  '--rf-foot': darkTheme['neutral-foot'],
-  '--rf-green': darkTheme['green-default'],
-  '--rf-orange': darkTheme['orange-default'],
-  '--rf-red': darkTheme['red-default'],
-  '--rf-blue': darkTheme['blue-default'],
-} as React.CSSProperties;
-
-function formatTimestamp(value?: number) {
-  if (!value) {
-    return 'n/a';
-  }
-
-  return new Date(value).toLocaleString();
-}
-
-function toJson(value: unknown) {
-  return JSON.stringify(value ?? null, null, 2);
-}
-
-function getStatusClassName(status?: string) {
-  if (!status) {
-    return '';
-  }
-  if (
-    status === 'success' ||
-    status === 'hydrate_applied' ||
-    status === 'remote_fetch_succeeded' ||
-    status === 'persist_succeeded'
-  ) {
-    return 'is-good';
-  }
-  if (
-    status === 'error' ||
-    status === 'hydrate_failed' ||
-    status === 'remote_fetch_failed' ||
-    status === 'persist_failed'
-  ) {
-    return 'is-bad';
-  }
-  if (
-    status === 'queued' ||
-    status === 'persisting' ||
-    status === 'hydrate_started' ||
-    status === 'remote_fetch_started' ||
-    status === 'persist_enqueued'
-  ) {
-    return 'is-warn';
-  }
-
-  return '';
-}
-
-function getResourceUpdatedAt(resource: ResourceFlowResourceSnapshot) {
-  const meta = resource.meta;
-  return Math.max(
-    meta.lastHydratedAt || 0,
-    meta.lastRemoteAt || 0,
-    meta.lastPersistAt || 0,
-  );
-}
-
-function JsonSection(props: { title: string; value: unknown }) {
-  return (
-    <section className="rf-card rf-card-full">
-      <div className="rf-card-header">{props.title}</div>
-      <div className="rf-card-body">
-        <pre>{toJson(props.value)}</pre>
-      </div>
-    </section>
-  );
-}
+type MainTabKey = 'family' | 'resource';
 
 export default function ResourceFlowPanel() {
   const [entries, setEntries] = useState<ResourceFlowTraceEntry[]>([]);
-  const [resources, setResources] = useState<ResourceFlowResourceSnapshot[]>([]);
+  const [resources, setResources] = useState<
+    ResourceFlowDevToolsEventMap['resource-flow-snapshot']['resources']
+  >([]);
   const [filterText, setFilterText] = useState('');
+  const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
+  const [selectedMainTab, setSelectedMainTab] = useState<MainTabKey>('family');
   const [selectedResourceId, setSelectedResourceId] = useState<string | null>(
     null,
   );
+
+  const { antThemeConfig, panelThemeStyle, themeMode } = usePanelTheme();
 
   const client = useRozeniteDevToolsClient<ResourceFlowDevToolsEventMap>({
     pluginId: RESOURCE_FLOW_DEVTOOLS_PLUGIN_ID,
@@ -133,23 +71,87 @@ export default function ResourceFlowPanel() {
         });
       },
     );
+    const removeSub = client.onMessage(
+      'resource-flow-resource-removed',
+      payload => {
+        setResources(previous => {
+          return previous.filter(item => item.id !== payload.resourceId);
+        });
+      },
+    );
     const clearSub = client.onMessage('resource-flow-traces-cleared', () => {
       setEntries([]);
       setResources([]);
+      setSelectedFamily(null);
       setSelectedResourceId(null);
+      setSelectedMainTab('family');
     });
 
     return () => {
       snapshotSub.remove();
       traceSub.remove();
       resourceSub.remove();
+      removeSub.remove();
       clearSub.remove();
     };
   }, [client]);
 
+  const familyTabs = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    resources.forEach(resource => {
+      counts.set(resource.family, (counts.get(resource.family) || 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .sort((left, right) => {
+        if (right[1] !== left[1]) {
+          return right[1] - left[1];
+        }
+
+        return left[0].localeCompare(right[0]);
+      })
+      .map(([family, count]) => ({
+        family,
+        count,
+      }));
+  }, [resources]);
+
+  useEffect(() => {
+    if (!familyTabs.length) {
+      setSelectedFamily(null);
+      return;
+    }
+
+    if (
+      selectedFamily &&
+      familyTabs.some(item => item.family === selectedFamily)
+    ) {
+      return;
+    }
+
+    setSelectedFamily(familyTabs[0].family);
+  }, [familyTabs, selectedFamily]);
+
+  const familyResources = useMemo(() => {
+    if (!selectedFamily) {
+      return [];
+    }
+
+    return resources.filter(resource => resource.family === selectedFamily);
+  }, [resources, selectedFamily]);
+
+  const familyEntries = useMemo(() => {
+    if (!selectedFamily) {
+      return [];
+    }
+
+    return entries.filter(entry => entry.family === selectedFamily);
+  }, [entries, selectedFamily]);
+
   const filteredResources = useMemo(() => {
     const keyword = filterText.trim().toLowerCase();
-    const sorted = [...resources].sort(
+    const sorted = [...familyResources].sort(
       (left, right) => getResourceUpdatedAt(right) - getResourceUpdatedAt(left),
     );
 
@@ -159,7 +161,6 @@ export default function ResourceFlowPanel() {
 
     return sorted.filter(resource => {
       return [
-        resource.family,
         resource.resourceKey,
         JSON.stringify(resource.meta.localTargets || []),
       ]
@@ -167,7 +168,7 @@ export default function ResourceFlowPanel() {
         .toLowerCase()
         .includes(keyword);
     });
-  }, [filterText, resources]);
+  }, [familyResources, filterText]);
 
   useEffect(() => {
     if (!filteredResources.length) {
@@ -192,215 +193,210 @@ export default function ResourceFlowPanel() {
     [filteredResources, selectedResourceId],
   );
 
+  useEffect(() => {
+    if (selectedMainTab === 'resource' && !selectedResource) {
+      setSelectedMainTab('family');
+    }
+  }, [selectedMainTab, selectedResource]);
+
   const selectedTraces = useMemo(() => {
     if (!selectedResource) {
       return [];
     }
 
     return entries
-      .filter(
-        entry =>
+      .filter(entry => {
+        return (
           entry.family === selectedResource.family &&
-          entry.resourceKey === selectedResource.resourceKey,
-      )
+          entry.resourceKey === selectedResource.resourceKey
+        );
+      })
       .sort((left, right) => right.at - left.at)
       .slice(0, 60);
   }, [entries, selectedResource]);
 
+  const selectedFamilySummary = useMemo(() => {
+    if (!selectedFamily) {
+      return null;
+    }
+
+    return buildFamilySummary(selectedFamily, familyResources, familyEntries);
+  }, [familyEntries, familyResources, selectedFamily]);
+
+  const appChainFamilyStats = useMemo(() => {
+    if (selectedFamily !== 'appchain') {
+      return null;
+    }
+
+    return buildAppChainFamilyStats(familyResources);
+  }, [familyResources, selectedFamily]);
+
+  const familyTabItems = useMemo<TabsProps['items']>(() => {
+    return familyTabs.map(tab => ({
+      key: tab.family,
+      label: (
+        <span className="inline-flex items-center gap-2">
+          <span className="text-xs font-medium">{tab.family}</span>
+          <span className="rounded-full bg-neutral-bg-2 px-2 py-0.5 text-[11px] leading-4 text-neutral-foot">
+            {tab.count}
+          </span>
+        </span>
+      ),
+      children: null,
+    }));
+  }, [familyTabs]);
+
+  const mainTitle = useMemo(() => {
+    if (!selectedFamily) {
+      return 'No family selected';
+    }
+
+    if (selectedMainTab === 'resource' && selectedResource) {
+      return `${selectedFamily} / ${selectedResource.resourceKey}`;
+    }
+
+    return `${selectedFamily} Family`;
+  }, [selectedFamily, selectedMainTab, selectedResource]);
+
+  const mainDescription = useMemo(() => {
+    if (!selectedFamilySummary) {
+      return 'Select a family tab to inspect summary and individual resources.';
+    }
+
+    if (selectedMainTab === 'resource') {
+      if (!selectedResource) {
+        return 'Select a resource from the left list to inspect details.';
+      }
+
+      return `${selectedTraces.length} recent trace(s) for selected resource`;
+    }
+
+    return `${selectedFamilySummary.resourceCount} resource(s), ${selectedFamilySummary.traceCount} trace(s) in current family`;
+  }, [
+    selectedFamilySummary,
+    selectedMainTab,
+    selectedResource,
+    selectedTraces.length,
+  ]);
+
+  const mainTabItems = useMemo<TabsProps['items']>(() => {
+    return [
+      {
+        key: 'family',
+        label: 'Family Summary',
+        children: (
+          <FamilySummaryContent
+            selectedFamilySummary={selectedFamilySummary}
+            appChainFamilyStats={appChainFamilyStats}
+          />
+        ),
+      },
+      {
+        key: 'resource',
+        label: 'Resource Detail',
+        disabled: !selectedResource,
+        children: (
+          <ResourceDetailContent
+            selectedResource={selectedResource}
+            selectedTraces={selectedTraces}
+          />
+        ),
+      },
+    ];
+  }, [
+    appChainFamilyStats,
+    selectedFamilySummary,
+    selectedResource,
+    selectedTraces,
+  ]);
+
   return (
-    <div className="rf-panel" style={panelThemeStyle}>
-      <aside className="rf-sidebar">
-        <div className="rf-section-head">
-          <div className="rf-title-block">
-            <h1>Resource Flow</h1>
-            <p>
-              Inspect remote to memory to persist lifecycle for tracked
-              resources.
-            </p>
-          </div>
-          <div className="rf-toolbar">
-            <input
-              value={filterText}
-              onChange={event => setFilterText(event.target.value)}
-              placeholder="Filter by family, key or target..."
+    <ConfigProvider theme={antThemeConfig}>
+      <div
+        className="rf-panel grid h-full min-h-0 grid-cols-[320px_minmax(0,1fr)] bg-neutral-bg-0 text-neutral-title-1"
+        data-theme={themeMode}
+        style={panelThemeStyle}>
+        <aside className="flex min-h-0 min-w-0 flex-col border-r border-neutral-line bg-neutral-bg-1/95 backdrop-blur-sm">
+          <div className="shrink-0 border-b border-neutral-line px-4 py-4">
+            <div>
+              <h1 className="text-[15px] font-semibold leading-6 text-neutral-title-1">
+                Resource Flow
+              </h1>
+              <p className="mt-1 text-xs leading-5 text-neutral-foot">
+                Inspect tracked resources by family, then drill into memory
+                state, lifecycle traces, and family-level rollups.
+              </p>
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <Input
+                allowClear
+                value={filterText}
+                onChange={event => setFilterText(event.target.value)}
+                placeholder="Filter current family by key or target..."
+              />
+              <Button
+                onClick={() => {
+                  client?.send('resource-flow-request-snapshot', {});
+                }}>
+                Refresh
+              </Button>
+            </div>
+
+            <Tabs
+              activeKey={selectedFamily || undefined}
+              className="rf-ant-tabs rf-family-tabs mt-4"
+              items={familyTabItems}
+              onChange={key => {
+                setSelectedFamily(key);
+                setSelectedMainTab('family');
+              }}
+              size="small"
             />
-            <button
-              type="button"
-              onClick={() =>
-                client?.send('resource-flow-request-snapshot', {})
-              }>
-              Refresh
-            </button>
           </div>
-        </div>
-        <div className="rf-sidebar-scroll">
-          {!filteredResources.length ? (
-            <div className="rf-empty">
-              <div>No tracked resources yet.</div>
-              <div className="rf-empty-sub">
-                Trigger the `balance24h` flow in app, then refresh this panel.
-              </div>
-            </div>
-          ) : (
-            filteredResources.map(resource => {
-              const isActive = resource.id === selectedResourceId;
-              return (
-                <button
-                  key={resource.id}
-                  type="button"
-                  className={`rf-resource-item ${isActive ? 'active' : ''}`}
-                  onClick={() => setSelectedResourceId(resource.id)}>
-                  <div className="rf-resource-head">
-                    <span className="rf-pill rf-pill-brand">
-                      {resource.family}
-                    </span>
-                    <span className="rf-pill">v{resource.meta.version}</span>
-                  </div>
-                  <div className="rf-resource-key">{resource.resourceKey}</div>
-                  <div className="rf-resource-meta">
-                    source={resource.meta.sourceOfCurrentValue || 'n/a'} ·
-                    persist={resource.meta.persistStatus} · updated=
-                    {formatTimestamp(getResourceUpdatedAt(resource))}
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
-      </aside>
 
-      <main className="rf-main">
-        <div className="rf-section-head">
-          <div className="rf-title-block">
-            <h2>
-              {selectedResource
-                ? `${selectedResource.family} / ${selectedResource.resourceKey}`
-                : 'No resource selected'}
+          <div className="rf-scrollbar min-h-0 flex-1 overflow-auto p-3">
+            <ResourceSidebarContent
+              filteredResources={filteredResources}
+              selectedFamily={selectedFamily}
+              selectedResourceId={selectedResourceId}
+              onSelectResource={resourceId => {
+                setSelectedResourceId(resourceId);
+                setSelectedMainTab('resource');
+              }}
+            />
+          </div>
+        </aside>
+
+        <main className="flex min-w-0 min-h-0 flex-col">
+          <div className="border-b border-neutral-line bg-neutral-bg-1/88 px-5 py-4 backdrop-blur-sm">
+            <h2 className="text-[15px] font-semibold leading-6 text-neutral-title-1">
+              {mainTitle}
             </h2>
-            <p>
-              {selectedResource
-                ? `${selectedTraces.length} recent trace(s) for current resource`
-                : 'Select a resource from the list to inspect details.'}
+            <p className="mt-1 text-xs leading-5 text-neutral-foot">
+              {mainDescription}
             </p>
           </div>
-        </div>
 
-        <div className="rf-main-scroll">
-          {!selectedResource ? (
-            <div className="rf-empty">
-              <div>No resource selected.</div>
-              <div className="rf-empty-sub">
-                This panel currently observes the `balance24h` pilot flow.
+          <div className="rf-scrollbar min-h-0 flex-1 overflow-auto px-5 py-5">
+            {!selectedFamily || !selectedFamilySummary ? (
+              <div className="flex min-h-full items-center justify-center">
+                <Empty
+                  description="Once tracked resources arrive, families will appear here."
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
               </div>
-            </div>
-          ) : (
-            <div className="rf-cards">
-              <section className="rf-card">
-                <div className="rf-card-header">Current Meta</div>
-                <div className="rf-card-body">
-                  <div className="rf-kv">
-                    <div className="rf-kv-key">Has Value</div>
-                    <div className="rf-kv-value">
-                      {String(selectedResource.meta.hasValue)}
-                    </div>
-                    <div className="rf-kv-key">Source</div>
-                    <div className="rf-kv-value">
-                      {selectedResource.meta.sourceOfCurrentValue || 'n/a'}
-                    </div>
-                    <div className="rf-kv-key">Version</div>
-                    <div className="rf-kv-value">
-                      {selectedResource.meta.version}
-                    </div>
-                    <div className="rf-kv-key">Hydrating</div>
-                    <div className="rf-kv-value">
-                      {String(selectedResource.meta.isHydrating)}
-                    </div>
-                    <div className="rf-kv-key">Fetching Remote</div>
-                    <div className="rf-kv-value">
-                      {String(selectedResource.meta.isFetchingRemote)}
-                    </div>
-                    <div className="rf-kv-key">Persist Status</div>
-                    <div
-                      className={`rf-kv-value ${getStatusClassName(
-                        selectedResource.meta.persistStatus,
-                      )}`}>
-                      {selectedResource.meta.persistStatus}
-                    </div>
-                    <div className="rf-kv-key">Active Request</div>
-                    <div className="rf-kv-value">
-                      {selectedResource.meta.activeRemoteRequestId || 'n/a'}
-                    </div>
-                    <div className="rf-kv-key">Last Hydrated</div>
-                    <div className="rf-kv-value">
-                      {formatTimestamp(selectedResource.meta.lastHydratedAt)}
-                    </div>
-                    <div className="rf-kv-key">Last Remote</div>
-                    <div className="rf-kv-value">
-                      {formatTimestamp(selectedResource.meta.lastRemoteAt)}
-                    </div>
-                    <div className="rf-kv-key">Last Persist</div>
-                    <div className="rf-kv-value">
-                      {formatTimestamp(selectedResource.meta.lastPersistAt)}
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <JsonSection
-                title="Last Error"
-                value={selectedResource.meta.lastError}
+            ) : (
+              <Tabs
+                activeKey={selectedMainTab}
+                className="rf-ant-tabs rf-main-tabs"
+                items={mainTabItems}
+                onChange={key => setSelectedMainTab(key as MainTabKey)}
               />
-              <JsonSection
-                title="Current Memory Value"
-                value={selectedResource.value}
-              />
-              <JsonSection
-                title="Local Targets"
-                value={selectedResource.meta.localTargets}
-              />
-
-              <section className="rf-card rf-card-full">
-                <div className="rf-card-header">Recent Trace Timeline</div>
-                <div className="rf-card-body">
-                  <div className="rf-trace-list">
-                    {!selectedTraces.length ? (
-                      <div className="rf-empty rf-empty-compact">
-                        <div>No trace yet for this resource.</div>
-                      </div>
-                    ) : (
-                      selectedTraces.map(trace => (
-                        <article key={trace.id} className="rf-trace-item">
-                          <div className="rf-trace-head">
-                            <div
-                              className={`rf-trace-type ${getStatusClassName(
-                                trace.type,
-                              )}`}>
-                              {trace.type}
-                            </div>
-                            <div className="rf-trace-time">
-                              {formatTimestamp(trace.at)}
-                            </div>
-                          </div>
-                          <div className="rf-trace-request">
-                            request={trace.requestId || 'n/a'}
-                          </div>
-                          <pre>
-                            {toJson({
-                              detail: trace.detail || null,
-                              localTargets: trace.localTargets || [],
-                              error: trace.error || null,
-                            })}
-                          </pre>
-                        </article>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </section>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </ConfigProvider>
   );
 }

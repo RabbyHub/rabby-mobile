@@ -12,6 +12,7 @@
     "bundle:ios": "yarn build --mode ios && yarn ../mobile link-assets",
     "dev": "vite --host",
     "lint": "eslint .",
+    "lint-staged": "lint-staged --config ./lint-staged.config.js",
     "lint:commit:fix": "eslint --fix --quiet --ext .js,.ts,.tsx ./src",
     "make-theme": "node ./scripts/make-theme.cjs",
     "preview": "vite preview"

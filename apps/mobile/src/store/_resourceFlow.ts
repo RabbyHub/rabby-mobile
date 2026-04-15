@@ -1,6 +1,7 @@
 import { BaseStore } from './_base';
 import {
   buildResourceFlowResourceId,
+  removeResourceFlowResourceSnapshot,
   recordResourceFlowTrace,
   ResourceLocalTarget,
   serializeResourceFlowError,
@@ -294,9 +295,20 @@ export class ObservableResourceStore<TValue> extends BaseStore<
     resourceKey: string,
     options?: Omit<ResourceLifecycleOptions, 'requestId'>,
   ) => {
-    const localTargets = options?.localTargets || [];
     const requestId = `${this.family}:${resourceKey}:remote:${++this
       .requestSequence}`;
+
+    this.markRemoteFetchStartedWithRequestId(resourceKey, requestId, options);
+
+    return requestId;
+  };
+
+  markRemoteFetchStartedWithRequestId = (
+    resourceKey: string,
+    requestId: string,
+    options?: Omit<ResourceLifecycleOptions, 'requestId'>,
+  ) => {
+    const localTargets = options?.localTargets || [];
 
     this.setState(prev => {
       const prevMeta =
@@ -330,8 +342,6 @@ export class ObservableResourceStore<TValue> extends BaseStore<
       localTargets,
       detail: options?.detail,
     });
-
-    return requestId;
   };
 
   applyRemoteValue = (
@@ -607,6 +617,54 @@ export class ObservableResourceStore<TValue> extends BaseStore<
       .catch(error => {
         this.markError(resourceKey, 'persist', error, options);
       });
+  };
+
+  removeResource = (
+    resourceKey: string,
+    options?: ResourceLifecycleOptions,
+  ) => {
+    const currentState = this.getState();
+
+    if (
+      !(resourceKey in currentState.valueMap) &&
+      !(resourceKey in currentState.metaMap)
+    ) {
+      return false;
+    }
+
+    this.setState(prev => {
+      if (!(resourceKey in prev.valueMap) && !(resourceKey in prev.metaMap)) {
+        return prev;
+      }
+
+      const nextValueMap = {
+        ...prev.valueMap,
+      };
+      const nextMetaMap = {
+        ...prev.metaMap,
+      };
+
+      delete nextValueMap[resourceKey];
+      delete nextMetaMap[resourceKey];
+
+      return {
+        valueMap: nextValueMap,
+        metaMap: nextMetaMap,
+      };
+    });
+
+    removeResourceFlowResourceSnapshot(this.family, resourceKey);
+
+    recordResourceFlowTrace({
+      family: this.family,
+      resourceKey,
+      type: 'resource_removed',
+      requestId: options?.requestId,
+      localTargets: options?.localTargets || [],
+      detail: options?.detail,
+    });
+
+    return true;
   };
 }
 

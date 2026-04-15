@@ -3,6 +3,7 @@ import {
   RESOURCE_FLOW_DEVTOOLS_PLUGIN_ID,
 } from '@rabby-wallet/rozenite-resource-flow-plugin';
 import {
+  RESOURCE_FLOW_RESOURCE_REMOVED,
   getResourceFlowResourceSnapshots,
   getResourceFlowTraceEntries,
   RESOURCE_FLOW_RESOURCE_UPSERTED,
@@ -57,6 +58,14 @@ export function useResourceFlowDevTools() {
         });
       },
     );
+    const removeSub = resourceFlowDebugEvents.subscribe(
+      RESOURCE_FLOW_RESOURCE_REMOVED,
+      resourceId => {
+        client.send('resource-flow-resource-removed', {
+          resourceId,
+        });
+      },
+    );
     const requestSub = client.onMessage(
       'resource-flow-request-snapshot',
       () => {
@@ -68,6 +77,7 @@ export function useResourceFlowDevTools() {
       traceSub.remove();
       clearSub.remove();
       resourceSub.remove();
+      removeSub.remove();
       requestSub.remove();
     };
   }, [client]);

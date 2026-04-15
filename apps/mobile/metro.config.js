@@ -238,10 +238,10 @@ module.exports = rozeniteEnabled
   ? withRozenite(mergedConfig, {
       enabled: true,
       include: [
-        '@rabby-wallet/rozenite-resource-flow-plugin',
         '@rozenite/react-navigation-plugin',
         '@rozenite/network-activity-plugin',
         '@rozenite/storage-plugin',
+        '@rabby-wallet/rozenite-resource-flow-plugin',
       ],
     })
   : mergedConfig;

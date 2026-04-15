@@ -27,7 +27,8 @@ export type ResourceFlowTraceType =
   | 'persist_enqueued'
   | 'persist_started'
   | 'persist_succeeded'
-  | 'persist_failed';
+  | 'persist_failed'
+  | 'resource_removed';
 
 export type ResourceFlowErrorPayload = {
   name?: string;
@@ -84,6 +85,9 @@ export type ResourceFlowDevToolsEventMap = {
   };
   'resource-flow-resource-upserted': {
     resource: ResourceFlowResourceSnapshot;
+  };
+  'resource-flow-resource-removed': {
+    resourceId: string;
   };
   'resource-flow-traces-cleared': Record<string, never>;
 };
