@@ -42,6 +42,10 @@ const multiCurveStore = zCreate(
   })),
 );
 
+export function getMultiCurveState() {
+  return multiCurveStore.getState();
+}
+
 /** @deprecated */
 function setLoading(loading: boolean) {
   multiCurveStore.setState(state => {
@@ -254,6 +258,10 @@ const computedStore = zCreate<{
 }>(() => ({
   combinedData: getDefaultCombineData(),
 }));
+
+export function getMultiCurveCombinedData() {
+  return computedStore.getState().combinedData;
+}
 
 const onComputeCombineData = debounce(
   (input: {
