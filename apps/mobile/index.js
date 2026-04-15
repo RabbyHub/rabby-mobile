@@ -21,7 +21,7 @@ import './src/utils/logging/install';
 import './global';
 import './src/setup-app';
 
-if (__DEV__ && process.env.WITH_ROZENITE !== 'false') {
+if (process.env.WITH_ROZENITE === 'true') {
   const {
     withOnBootNetworkActivityRecording,
   } = require('@rozenite/network-activity-plugin');
