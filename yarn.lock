@@ -11396,7 +11396,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rozenite/metro@npm:^1.6.0":
+"@rozenite/metro@npm:1.6.0":
   version: 1.6.0
   resolution: "@rozenite/metro@npm:1.6.0"
   dependencies:
@@ -11420,7 +11420,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rozenite/network-activity-plugin@npm:^1.6.0":
+"@rozenite/network-activity-plugin@npm:1.6.0":
   version: 1.6.0
   resolution: "@rozenite/network-activity-plugin@npm:1.6.0"
   dependencies:
@@ -11447,7 +11447,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rozenite/react-navigation-plugin@npm:^1.6.0":
+"@rozenite/react-navigation-plugin@npm:1.6.0":
   version: 1.6.0
   resolution: "@rozenite/react-navigation-plugin@npm:1.6.0"
   dependencies:
@@ -11469,7 +11469,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rozenite/storage-plugin@npm:^1.6.0":
+"@rozenite/storage-plugin@npm:1.6.0":
   version: 1.6.0
   resolution: "@rozenite/storage-plugin@npm:1.6.0"
   dependencies:
@@ -36498,10 +36498,10 @@ __metadata:
     "@rematch/core": "npm:^2.2.0"
     "@rneui/base": "npm:^4.0.0-rc.8"
     "@rneui/themed": "npm:^4.0.0-rc.8"
-    "@rozenite/metro": "npm:^1.6.0"
-    "@rozenite/network-activity-plugin": "npm:^1.6.0"
-    "@rozenite/react-navigation-plugin": "npm:^1.6.0"
-    "@rozenite/storage-plugin": "npm:^1.6.0"
+    "@rozenite/metro": "npm:1.6.0"
+    "@rozenite/network-activity-plugin": "npm:1.6.0"
+    "@rozenite/react-navigation-plugin": "npm:1.6.0"
+    "@rozenite/storage-plugin": "npm:1.6.0"
     "@sentry/react-native": "npm:7.3.0"
     "@shopify/flash-list": "npm:2.2.2"
     "@testing-library/react-native": "npm:^13.3.3"
