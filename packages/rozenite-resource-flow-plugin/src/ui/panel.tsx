@@ -1,7 +1,7 @@
 import 'antd/dist/reset.css';
 
 import { useRozeniteDevToolsClient } from '@rozenite/plugin-bridge';
-import { Button, ConfigProvider, Empty, Input, Tabs } from 'antd';
+import { Button, ConfigProvider, Empty, Input, Select, Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -17,6 +17,8 @@ import {
 } from './panel-sections';
 import { usePanelTheme } from './panel-theme';
 import {
+  buildAddressBalanceFamilyStats,
+  buildAddressBalanceResourceBreakdown,
   buildAppChainFamilyStats,
   buildFamilySummary,
   getResourceUpdatedAt,
@@ -24,6 +26,11 @@ import {
 import './globals.css';
 
 type MainTabKey = 'family' | 'resource';
+type FamilyOption = {
+  value: string;
+  label: string;
+  count: number;
+};
 
 export default function ResourceFlowPanel() {
   const [entries, setEntries] = useState<ResourceFlowTraceEntry[]>([]);
@@ -96,7 +103,7 @@ export default function ResourceFlowPanel() {
     };
   }, [client]);
 
-  const familyTabs = useMemo(() => {
+  const familyOptions = useMemo<FamilyOption[]>(() => {
     const counts = new Map<string, number>();
 
     resources.forEach(resource => {
@@ -112,26 +119,27 @@ export default function ResourceFlowPanel() {
         return left[0].localeCompare(right[0]);
       })
       .map(([family, count]) => ({
-        family,
+        value: family,
+        label: family,
         count,
       }));
   }, [resources]);
 
   useEffect(() => {
-    if (!familyTabs.length) {
+    if (!familyOptions.length) {
       setSelectedFamily(null);
       return;
     }
 
     if (
       selectedFamily &&
-      familyTabs.some(item => item.family === selectedFamily)
+      familyOptions.some(item => item.value === selectedFamily)
     ) {
       return;
     }
 
-    setSelectedFamily(familyTabs[0].family);
-  }, [familyTabs, selectedFamily]);
+    setSelectedFamily(familyOptions[0].value);
+  }, [familyOptions, selectedFamily]);
 
   const familyResources = useMemo(() => {
     if (!selectedFamily) {
@@ -231,20 +239,23 @@ export default function ResourceFlowPanel() {
     return buildAppChainFamilyStats(familyResources);
   }, [familyResources, selectedFamily]);
 
-  const familyTabItems = useMemo<TabsProps['items']>(() => {
-    return familyTabs.map(tab => ({
-      key: tab.family,
-      label: (
-        <span className="inline-flex items-center gap-2">
-          <span className="text-xs font-medium">{tab.family}</span>
-          <span className="rounded-full bg-neutral-bg-2 px-2 py-0.5 text-[11px] leading-4 text-neutral-foot">
-            {tab.count}
-          </span>
-        </span>
-      ),
-      children: null,
-    }));
-  }, [familyTabs]);
+  const addressBalanceFamilyStats = useMemo(() => {
+    if (selectedFamily !== 'addressBalance') {
+      return null;
+    }
+
+    return buildAddressBalanceFamilyStats(familyResources, resources);
+  }, [familyResources, resources, selectedFamily]);
+
+  const addressBalanceBreakdown = useMemo(() => {
+    if (!selectedResource || selectedResource.family !== 'addressBalance') {
+      return null;
+    }
+
+    return (
+      buildAddressBalanceResourceBreakdown(selectedResource, resources) || null
+    );
+  }, [resources, selectedResource]);
 
   const mainTitle = useMemo(() => {
     if (!selectedFamily) {
@@ -260,7 +271,7 @@ export default function ResourceFlowPanel() {
 
   const mainDescription = useMemo(() => {
     if (!selectedFamilySummary) {
-      return 'Select a family tab to inspect summary and individual resources.';
+      return 'Select a family from the left to inspect summary and individual resources.';
     }
 
     if (selectedMainTab === 'resource') {
@@ -288,6 +299,7 @@ export default function ResourceFlowPanel() {
           <FamilySummaryContent
             selectedFamilySummary={selectedFamilySummary}
             appChainFamilyStats={appChainFamilyStats}
+            addressBalanceFamilyStats={addressBalanceFamilyStats}
           />
         ),
       },
@@ -299,11 +311,14 @@ export default function ResourceFlowPanel() {
           <ResourceDetailContent
             selectedResource={selectedResource}
             selectedTraces={selectedTraces}
+            addressBalanceBreakdown={addressBalanceBreakdown}
           />
         ),
       },
     ];
   }, [
+    addressBalanceBreakdown,
+    addressBalanceFamilyStats,
     appChainFamilyStats,
     selectedFamilySummary,
     selectedResource,
@@ -318,8 +333,40 @@ export default function ResourceFlowPanel() {
         style={panelThemeStyle}>
         <aside className="flex min-h-0 min-w-0 flex-col border-r border-neutral-line bg-neutral-bg-1/95 backdrop-blur-sm">
           <div className="shrink-0 border-b border-neutral-line px-4 py-4">
+            <Select
+              showSearch
+              className="w-full"
+              value={selectedFamily || undefined}
+              placeholder="Search family..."
+              options={familyOptions}
+              optionFilterProp="label"
+              filterOption={(input, option) => {
+                return String(option?.label || '')
+                  .toLowerCase()
+                  .includes(input.toLowerCase());
+              }}
+              optionRender={option => {
+                const data = option.data as FamilyOption;
+
+                return (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate text-sm text-neutral-title-1">
+                      {data.label}
+                    </span>
+                    <span className="rounded-full bg-neutral-bg-2 px-2 py-0.5 text-[11px] leading-4 text-neutral-foot">
+                      {data.count}
+                    </span>
+                  </div>
+                );
+              }}
+              onChange={value => {
+                setSelectedFamily(value);
+                setSelectedMainTab('family');
+              }}
+            />
+
             <div>
-              <h1 className="text-[15px] font-semibold leading-6 text-neutral-title-1">
+              <h1 className="mt-4 text-[15px] font-semibold leading-6 text-neutral-title-1">
                 Resource Flow
               </h1>
               <p className="mt-1 text-xs leading-5 text-neutral-foot">
@@ -333,7 +380,11 @@ export default function ResourceFlowPanel() {
                 allowClear
                 value={filterText}
                 onChange={event => setFilterText(event.target.value)}
-                placeholder="Filter current family by key or target..."
+                placeholder={
+                  selectedFamily
+                    ? `Filter ${selectedFamily} by key or target...`
+                    : 'Filter resources by key or target...'
+                }
               />
               <Button
                 onClick={() => {
@@ -342,17 +393,6 @@ export default function ResourceFlowPanel() {
                 Refresh
               </Button>
             </div>
-
-            <Tabs
-              activeKey={selectedFamily || undefined}
-              className="rf-ant-tabs rf-family-tabs mt-4"
-              items={familyTabItems}
-              onChange={key => {
-                setSelectedFamily(key);
-                setSelectedMainTab('family');
-              }}
-              size="small"
-            />
           </div>
 
           <div className="rf-scrollbar min-h-0 flex-1 overflow-auto p-3">

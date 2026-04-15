@@ -39,6 +39,7 @@ import {
 import { isEqual } from 'lodash';
 import { svsLayout } from './hooks/useAppLayout';
 import { openapi } from './core/request';
+import { IS_ROZENITE_ENABLED } from './constant/env';
 
 Safe.openapiService = openapi;
 
@@ -58,10 +59,9 @@ const rneuiTheme = createTheme({
 type AppProps = { rabbitCode: string };
 
 const MemoziedAppNav = React.memo(AppNavigation);
-const RozeniteDevTools =
-  process.env.WITH_ROZENITE === 'true'
-    ? require('./devtools/RozeniteDevTools').default
-    : null;
+const RozeniteDevTools = IS_ROZENITE_ENABLED
+  ? require('./devtools/RozeniteDevTools').default
+  : null;
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useInitializeAppOnTop();

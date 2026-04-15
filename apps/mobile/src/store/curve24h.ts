@@ -1,4 +1,5 @@
 import { openapi } from '@/core/request';
+import { keyringService } from '@/core/services';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { dayCurveMMKV } from '@/core/storage/mmkvInstances';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
@@ -128,6 +129,18 @@ class AddressCurve24hStore extends ResourceBaseStore<AddressCurveValue> {
   constructor() {
     super('addressCurve24h');
   }
+
+  removeAddressCurve = (address: string, detail?: Record<string, unknown>) => {
+    const lowerAddress = normalizeAddress(address);
+    if (!lowerAddress) {
+      return false;
+    }
+
+    return this.removeResource(lowerAddress, {
+      localTargets: buildCurveLocalTargets(lowerAddress),
+      detail,
+    });
+  };
 
   getAddressCurve = (address?: string) => {
     return this.getValue(normalizeAddress(address));
@@ -571,6 +584,23 @@ class SceneCurve24hStore extends BaseStore<SceneCurveState> {
       return;
     }
     this.hasStartedLifecycle = true;
+
+    keyringService.on('removedAccount', async account => {
+      const lowerAddress = normalizeAddress(account.address);
+      const addresses = await keyringService.getAllAddresses();
+      const stillExists = addresses.some(item => {
+        return normalizeAddress(item.address) === lowerAddress;
+      });
+
+      if (stillExists) {
+        return;
+      }
+
+      addressCurve24hStore.removeAddressCurve(lowerAddress, {
+        source: 'keyringService.removedAccount',
+        reason: 'address_deleted',
+      });
+    });
 
     addressCurve24hStore.subscribe(() => {
       const addresses = this.getState().addresses.Home;

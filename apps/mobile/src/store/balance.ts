@@ -163,6 +163,21 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     return address?.toLowerCase();
   }
 
+  removeAddressBalance = (
+    address: string,
+    detail?: Record<string, unknown>,
+  ) => {
+    const lowerAddress = this.normalizeAddress(address);
+    if (!lowerAddress) {
+      return false;
+    }
+
+    return this.removeResource(lowerAddress, {
+      localTargets: buildBalanceLocalTargets(lowerAddress),
+      detail,
+    });
+  };
+
   private toAddressFlowState(addresses: string[]) {
     const flow = this.getFamilyFlowState(addresses);
 
@@ -1174,6 +1189,23 @@ export function startProcessAccountBalanceEvents() {
     return;
   }
   hasStartedAccountBalanceLifecycle = true;
+
+  keyringService.on('removedAccount', async account => {
+    const addresses = await keyringService.getAllAddresses();
+    const stillExists = addresses.some(item => {
+      return isSameAddress(item.address, account.address);
+    });
+
+    if (stillExists) {
+      return;
+    }
+
+    addressBalanceStore.removeAddressBalance(account.address, {
+      source: 'keyringService.removedAccount',
+      reason: 'address_deleted',
+    });
+  });
+
   perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
     syncBalanceAccountStore();
   });

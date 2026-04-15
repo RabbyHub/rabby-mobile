@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { getTop10MyAccounts } from '@/core/apis/account';
+import { keyringService } from '@/core/services';
 import { perfEvents } from '@/core/utils/perf';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { balance24hMMKV } from '@/core/storage/mmkvInstances';
@@ -103,6 +104,21 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
   private normalizeAddress(address?: string) {
     return address?.toLowerCase();
   }
+
+  removeAddress24hBalance = (
+    address: string,
+    detail?: Record<string, unknown>,
+  ) => {
+    const lowerAddress = this.normalizeAddress(address);
+    if (!lowerAddress) {
+      return false;
+    }
+
+    return this.removeResource(lowerAddress, {
+      localTargets: build24hBalanceLocalTargets(lowerAddress),
+      detail,
+    });
+  };
 
   getAddress24hBalance = (address?: string) => {
     return this.getValue(this.normalizeAddress(address));
@@ -830,6 +846,23 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       return;
     }
     this.hasStartedLifecycle = true;
+
+    keyringService.on('removedAccount', async account => {
+      const lowerAddress = account.address.toLowerCase();
+      const addresses = await keyringService.getAllAddresses();
+      const stillExists = addresses.some(item => {
+        return item.address.toLowerCase() === lowerAddress;
+      });
+
+      if (stillExists) {
+        return;
+      }
+
+      balance24hStore.removeAddress24hBalance(lowerAddress, {
+        source: 'keyringService.removedAccount',
+        reason: 'address_deleted',
+      });
+    });
 
     balance24hStore.subscribe(() => {
       const addresses = this.getState().addresses.Home;

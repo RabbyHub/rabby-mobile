@@ -1,4 +1,4 @@
-import { Collapse, Descriptions, Empty, Timeline } from 'antd';
+import { Col, Collapse, Descriptions, Empty, Row, Timeline } from 'antd';
 import type { CollapseProps } from 'antd';
 import React, { useMemo } from 'react';
 
@@ -13,14 +13,43 @@ import {
   StatusTag,
   SummaryStat,
 } from './panel-components';
-import type { AppChainFamilyStats, FamilySummary } from './panel-utils';
+import type {
+  AddressBalanceFamilyStats,
+  AddressBalanceResourceBreakdown,
+  AppChainFamilyStats,
+  FamilySummary,
+} from './panel-utils';
 import {
   cn,
   formatLabel,
   formatTimestamp,
+  formatSignedUsd,
   formatUsd,
   getResourceUpdatedAt,
 } from './panel-utils';
+
+function BreakdownMetric(props: {
+  label: string;
+  value: string;
+  tone?: 'success' | 'warning' | 'error';
+}) {
+  return (
+    <div className="rounded-xl border border-neutral-line bg-neutral-bg-2 px-3 py-3">
+      <div className="text-[11px] uppercase tracking-[0.06em] text-neutral-foot">
+        {props.label}
+      </div>
+      <div
+        className={cn(
+          'mt-1 text-sm font-semibold text-neutral-title-1',
+          props.tone === 'success' && 'text-green-default',
+          props.tone === 'warning' && 'text-orange-default',
+          props.tone === 'error' && 'text-red-default',
+        )}>
+        {props.value}
+      </div>
+    </div>
+  );
+}
 
 export function ResourceSidebarContent(props: {
   filteredResources: ResourceFlowResourceSnapshot[];
@@ -58,34 +87,34 @@ export function ResourceSidebarContent(props: {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       {filteredResources.map(resource => {
         const isActive = resource.id === selectedResourceId;
+        const updatedAt = getResourceUpdatedAt(resource);
 
         return (
           <button
             key={resource.id}
             type="button"
             className={cn(
-              'w-full rounded-2xl border p-3 text-left transition',
+              'w-full rounded-xl border px-3 py-2.5 text-left transition',
               isActive
                 ? 'border-brand-default bg-brand-light-1 shadow-[0_10px_30px_-18px_var(--rf-color-brand-default)]'
-                : 'border-transparent bg-transparent hover:border-neutral-line hover:bg-neutral-bg-2',
+                : 'border-transparent bg-transparent hover:border-neutral-line hover:bg-neutral-bg-2/80',
             )}
             onClick={() => onSelectResource(resource.id)}>
-            <div className="flex items-center justify-between gap-3">
-              <StatusTag status={resource.meta.persistStatus} />
-              <span className="text-[11px] text-neutral-foot">
-                v{resource.meta.version}
-              </span>
-            </div>
-            <div className="mt-3 break-all text-sm font-medium text-neutral-title-1">
+            <div className="break-all text-sm font-medium text-neutral-title-1">
               {resource.resourceKey}
             </div>
-            <div className="mt-2 text-xs leading-5 text-neutral-body">
-              source={resource.meta.sourceOfCurrentValue || 'n/a'} · updated=
-              {formatTimestamp(getResourceUpdatedAt(resource))}
+            <div className="mt-1 flex items-center justify-between gap-3 text-[11px] leading-5 text-neutral-foot">
+              <span>{resource.meta.sourceOfCurrentValue || 'n/a'}</span>
+              <span>{formatTimestamp(updatedAt)}</span>
             </div>
+            {resource.meta.lastError ? (
+              <div className="mt-1 line-clamp-1 text-[11px] leading-5 text-red-default">
+                {resource.meta.lastError.message}
+              </div>
+            ) : null}
           </button>
         );
       })}
@@ -96,8 +125,13 @@ export function ResourceSidebarContent(props: {
 export function FamilySummaryContent(props: {
   selectedFamilySummary: FamilySummary | null;
   appChainFamilyStats: AppChainFamilyStats | null;
+  addressBalanceFamilyStats: AddressBalanceFamilyStats | null;
 }) {
-  const { appChainFamilyStats, selectedFamilySummary } = props;
+  const {
+    addressBalanceFamilyStats,
+    appChainFamilyStats,
+    selectedFamilySummary,
+  } = props;
 
   if (!selectedFamilySummary) {
     return (
@@ -223,6 +257,100 @@ export function FamilySummaryContent(props: {
           </PanelCard>
         </>
       ) : null}
+
+      {addressBalanceFamilyStats ? (
+        <>
+          <PanelCard title="AddressBalance Decomposition" className="col-span-full">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <SummaryStat
+                label="Total Balance"
+                value={formatUsd(addressBalanceFamilyStats.totalBalance)}
+              />
+              <SummaryStat
+                label="AppChain Portion"
+                value={formatUsd(addressBalanceFamilyStats.totalAppChainValue)}
+                tone="warning"
+              />
+              <SummaryStat
+                label="Comparable Balance"
+                value={formatUsd(
+                  addressBalanceFamilyStats.totalComparableBalance,
+                )}
+                tone="success"
+              />
+              <SummaryStat
+                label="Recorded EVM"
+                value={formatUsd(
+                  addressBalanceFamilyStats.totalRecordedEvmBalance,
+                )}
+              />
+              <SummaryStat
+                label="Delta Vs EVM"
+                value={formatSignedUsd(addressBalanceFamilyStats.totalEvmDelta)}
+                tone={
+                  Math.abs(addressBalanceFamilyStats.totalEvmDelta) > 0.01
+                    ? 'warning'
+                    : undefined
+                }
+              />
+            </div>
+          </PanelCard>
+
+          <PanelCard title="Per-Address Breakdown" className="col-span-full">
+            {!addressBalanceFamilyStats.addresses.length ? (
+              <Empty
+                description="No address-level balance resources yet."
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            ) : (
+              <div className="space-y-3">
+                {addressBalanceFamilyStats.addresses.map(item => (
+                  <div
+                    key={item.address}
+                    className="rounded-2xl border border-neutral-line bg-neutral-bg-2 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="break-all text-sm font-medium text-neutral-title-1">
+                        {item.address}
+                      </div>
+                      <div className="text-[11px] text-neutral-foot">
+                        appChain source={item.appChainValueSource}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                      <BreakdownMetric
+                        label="Total"
+                        value={formatUsd(item.totalBalance)}
+                      />
+                      <BreakdownMetric
+                        label="AppChain"
+                        value={formatUsd(item.appChainValue)}
+                        tone="warning"
+                      />
+                      <BreakdownMetric
+                        label="Total - AppChain"
+                        value={formatUsd(item.comparableBalance)}
+                        tone="success"
+                      />
+                      <BreakdownMetric
+                        label="Recorded EVM"
+                        value={formatUsd(item.recordedEvmBalance)}
+                      />
+                      <BreakdownMetric
+                        label="Delta"
+                        value={formatSignedUsd(item.evmDelta)}
+                        tone={
+                          Math.abs(item.evmDelta) > 0.01 ? 'warning' : undefined
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </PanelCard>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -230,8 +358,9 @@ export function FamilySummaryContent(props: {
 export function ResourceDetailContent(props: {
   selectedResource: ResourceFlowResourceSnapshot | null;
   selectedTraces: ResourceFlowTraceEntry[];
+  addressBalanceBreakdown: AddressBalanceResourceBreakdown | null;
 }) {
-  const { selectedResource, selectedTraces } = props;
+  const { addressBalanceBreakdown, selectedResource, selectedTraces } = props;
 
   const resourceMetaItems = useMemo(() => {
     if (!selectedResource) {
@@ -242,7 +371,10 @@ export function ResourceDetailContent(props: {
       {
         key: 'resourceKey',
         label: 'Resource Key',
-        children: selectedResource.resourceKey,
+        span: { xs: 1, xl: 2 },
+        children: (
+          <div className="break-all">{selectedResource.resourceKey}</div>
+        ),
       },
       {
         key: 'hasValue',
@@ -342,49 +474,99 @@ export function ResourceDetailContent(props: {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      <PanelCard title="Current Meta" className="col-span-full xl:col-span-1">
-        <Descriptions
-          bordered={false}
-          colon={false}
-          size="small"
-          column={{ xs: 1, xl: 2 }}
-          items={resourceMetaItems}
-        />
-      </PanelCard>
-
-      <JsonCard title="Current Memory Value" value={selectedResource.value} />
-      <JsonCard
-        title="Local Targets"
-        value={selectedResource.meta.localTargets}
-      />
-      <JsonCard title="Last Error" value={selectedResource.meta.lastError} />
-
-      <PanelCard title="Event Timeline" className="col-span-full">
-        {!traceCollapseItems.length ? (
-          <Empty
-            description="No trace yet for this resource."
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
-        ) : (
-          <Timeline
-            className="rf-trace-timeline"
-            items={selectedTraces.map(trace => ({
-              dot: <EventDot status={trace.type} />,
-              children: (
-                <Collapse
-                  ghost
-                  className="rf-event-collapse"
-                  expandIconPosition="end"
-                  items={traceCollapseItems.filter(
-                    item => item?.key === trace.id,
-                  )}
+    <Row gutter={[16, 16]} align="top">
+      <Col xs={24} xxl={14}>
+        <div className="space-y-4">
+          <Row gutter={[16, 16]}>
+            <Col xs={24} xl={addressBalanceBreakdown ? 12 : 24}>
+              <PanelCard title="Current Meta">
+                <Descriptions
+                  bordered={false}
+                  colon={false}
+                  size="small"
+                  column={{ xs: 1, xl: 2 }}
+                  items={resourceMetaItems}
                 />
-              ),
-            }))}
+              </PanelCard>
+            </Col>
+
+            {addressBalanceBreakdown ? (
+              <Col xs={24} xl={12}>
+                <PanelCard title="AddressBalance Decomposition">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <SummaryStat
+                      label="Total Balance"
+                      value={formatUsd(addressBalanceBreakdown.totalBalance)}
+                    />
+                    <SummaryStat
+                      label="AppChain Portion"
+                      value={formatUsd(addressBalanceBreakdown.appChainValue)}
+                      tone="warning"
+                    />
+                    <SummaryStat
+                      label="Comparable Balance"
+                      value={formatUsd(addressBalanceBreakdown.comparableBalance)}
+                      tone="success"
+                    />
+                    <SummaryStat
+                      label="Recorded EVM"
+                      value={formatUsd(addressBalanceBreakdown.recordedEvmBalance)}
+                    />
+                    <SummaryStat
+                      label="Delta Vs EVM"
+                      value={formatSignedUsd(addressBalanceBreakdown.evmDelta)}
+                      tone={
+                        Math.abs(addressBalanceBreakdown.evmDelta) > 0.01
+                          ? 'warning'
+                          : undefined
+                      }
+                    />
+                    <SummaryStat
+                      label="AppChain Source"
+                      value={addressBalanceBreakdown.appChainValueSource}
+                    />
+                  </div>
+                </PanelCard>
+              </Col>
+            ) : null}
+          </Row>
+
+          <JsonCard title="Current Memory Value" value={selectedResource.value} />
+          <JsonCard
+            title="Local Targets"
+            value={selectedResource.meta.localTargets}
           />
-        )}
-      </PanelCard>
-    </div>
+          <JsonCard title="Last Error" value={selectedResource.meta.lastError} />
+        </div>
+      </Col>
+
+      <Col xs={24} xxl={10}>
+        <PanelCard title="Event Timeline">
+          {!traceCollapseItems.length ? (
+            <Empty
+              description="No trace yet for this resource."
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          ) : (
+            <Timeline
+              className="rf-trace-timeline"
+              items={selectedTraces.map(trace => ({
+                dot: <EventDot status={trace.type} />,
+                children: (
+                  <Collapse
+                    ghost
+                    className="rf-event-collapse"
+                    expandIconPosition="end"
+                    items={traceCollapseItems.filter(
+                      item => item?.key === trace.id,
+                    )}
+                  />
+                ),
+              }))}
+            />
+          )}
+        </PanelCard>
+      </Col>
+    </Row>
   );
 }

@@ -32,6 +32,25 @@ export type AppChainFamilyStats = {
   }[];
 };
 
+export type AddressBalanceResourceBreakdown = {
+  address: string;
+  totalBalance: number;
+  recordedEvmBalance: number;
+  appChainValue: number;
+  appChainValueSource: 'resource' | 'inferred';
+  comparableBalance: number;
+  evmDelta: number;
+};
+
+export type AddressBalanceFamilyStats = {
+  totalBalance: number;
+  totalRecordedEvmBalance: number;
+  totalAppChainValue: number;
+  totalComparableBalance: number;
+  totalEvmDelta: number;
+  addresses: AddressBalanceResourceBreakdown[];
+};
+
 export function cn(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(' ');
 }
@@ -51,6 +70,12 @@ export function formatUsd(value: number, compact = false) {
     maximumFractionDigits: compact ? 1 : 2,
     notation: compact ? 'compact' : 'standard',
   }).format(value);
+}
+
+export function formatSignedUsd(value: number, compact = false) {
+  const prefix = value > 0 ? '+' : '';
+
+  return `${prefix}${formatUsd(value, compact)}`;
 }
 
 export function toJson(value: unknown) {
@@ -182,6 +207,96 @@ export function parseAppChainResource(resource: ResourceFlowResourceSnapshot):
   };
 }
 
+export function parseAddressBalanceResource(
+  resource: ResourceFlowResourceSnapshot,
+):
+  | {
+      address: string;
+      totalBalance: number;
+      evmBalance: number;
+    }
+  | undefined {
+  if (resource.family !== 'addressBalance' || !resource.meta.hasValue) {
+    return undefined;
+  }
+
+  if (!resource.value || typeof resource.value !== 'object') {
+    return undefined;
+  }
+
+  const candidate = resource.value as {
+    totalBalance?: unknown;
+    evmBalance?: unknown;
+  };
+
+  if (
+    typeof candidate.totalBalance !== 'number' ||
+    !Number.isFinite(candidate.totalBalance) ||
+    typeof candidate.evmBalance !== 'number' ||
+    !Number.isFinite(candidate.evmBalance)
+  ) {
+    return undefined;
+  }
+
+  return {
+    address: resource.resourceKey.toLowerCase(),
+    totalBalance: candidate.totalBalance,
+    evmBalance: candidate.evmBalance,
+  };
+}
+
+export function buildAppChainTotalsByAddress(
+  resources: ResourceFlowResourceSnapshot[],
+) {
+  const totals = new Map<string, number>();
+
+  resources.forEach(resource => {
+    const parsed = parseAppChainResource(resource);
+
+    if (!parsed) {
+      return;
+    }
+
+    totals.set(
+      parsed.ownerAddr,
+      (totals.get(parsed.ownerAddr) || 0) + parsed.netWorth,
+    );
+  });
+
+  return totals;
+}
+
+function buildAddressBalanceResourceBreakdownFromMap(
+  resource: ResourceFlowResourceSnapshot,
+  appChainTotalsByAddress: Map<string, number>,
+): AddressBalanceResourceBreakdown | undefined {
+  const parsed = parseAddressBalanceResource(resource);
+
+  if (!parsed) {
+    return undefined;
+  }
+
+  const inferredAppChainValue = parsed.totalBalance - parsed.evmBalance;
+  const appChainValueFromResource = appChainTotalsByAddress.get(parsed.address);
+  const hasResourceAppChainValue =
+    typeof appChainValueFromResource === 'number' &&
+    Number.isFinite(appChainValueFromResource);
+  const appChainValue = hasResourceAppChainValue
+    ? appChainValueFromResource
+    : inferredAppChainValue;
+  const comparableBalance = parsed.totalBalance - appChainValue;
+
+  return {
+    address: parsed.address,
+    totalBalance: parsed.totalBalance,
+    recordedEvmBalance: parsed.evmBalance,
+    appChainValue,
+    appChainValueSource: hasResourceAppChainValue ? 'resource' : 'inferred',
+    comparableBalance,
+    evmDelta: comparableBalance - parsed.evmBalance,
+  };
+}
+
 export function buildAppChainFamilyStats(
   resources: ResourceFlowResourceSnapshot[],
 ): AppChainFamilyStats {
@@ -249,5 +364,56 @@ export function buildAppChainFamilyStats(
         ownerCount: item.owners.size,
       }))
       .sort((left, right) => right.totalUsdValue - left.totalUsdValue),
+  };
+}
+
+export function buildAddressBalanceResourceBreakdown(
+  resource: ResourceFlowResourceSnapshot,
+  resources: ResourceFlowResourceSnapshot[],
+) {
+  return buildAddressBalanceResourceBreakdownFromMap(
+    resource,
+    buildAppChainTotalsByAddress(resources),
+  );
+}
+
+export function buildAddressBalanceFamilyStats(
+  addressBalanceResources: ResourceFlowResourceSnapshot[],
+  resources: ResourceFlowResourceSnapshot[],
+): AddressBalanceFamilyStats {
+  const appChainTotalsByAddress = buildAppChainTotalsByAddress(resources);
+  const addresses = addressBalanceResources
+    .map(resource =>
+      buildAddressBalanceResourceBreakdownFromMap(
+        resource,
+        appChainTotalsByAddress,
+      ),
+    )
+    .filter(
+      (
+        item,
+      ): item is NonNullable<
+        ReturnType<typeof buildAddressBalanceResourceBreakdownFromMap>
+      > => !!item,
+    )
+    .sort((left, right) => right.totalBalance - left.totalBalance);
+
+  return {
+    totalBalance: addresses.reduce((total, item) => {
+      return total + item.totalBalance;
+    }, 0),
+    totalRecordedEvmBalance: addresses.reduce((total, item) => {
+      return total + item.recordedEvmBalance;
+    }, 0),
+    totalAppChainValue: addresses.reduce((total, item) => {
+      return total + item.appChainValue;
+    }, 0),
+    totalComparableBalance: addresses.reduce((total, item) => {
+      return total + item.comparableBalance;
+    }, 0),
+    totalEvmDelta: addresses.reduce((total, item) => {
+      return total + item.evmDelta;
+    }, 0),
+    addresses,
   };
 }
