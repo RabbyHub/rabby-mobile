@@ -24,6 +24,7 @@ export interface Props {
 export type { ViewAccount } from './AccountListItem';
 
 const FOOTER_PADDING = 36;
+const LOADING_PLACEHOLDER_HEIGHT = 60;
 const FooterComponent = () => <View style={{ height: 84 }} />;
 
 export const AccountListView: React.FC<Props> = ({
@@ -48,7 +49,10 @@ export const AccountListView: React.FC<Props> = ({
         style={styles.list}
         contentContainerStyle={
           selectedAccounts?.length
-            ? { paddingBottom: FOOTER_PADDING }
+            ? {
+                paddingBottom:
+                  FOOTER_PADDING + (loading ? LOADING_PLACEHOLDER_HEIGHT : 0),
+              }
             : undefined
         }
         data={accounts}

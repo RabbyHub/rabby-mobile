@@ -19,7 +19,6 @@ import {
   apiTrezor,
 } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
-import { replaceToFirst } from '@/utils/navigation';
 
 import { toast } from '@/components2024/Toast';
 import { settingAtom } from '@/components/HDSetting/MainContainer';
