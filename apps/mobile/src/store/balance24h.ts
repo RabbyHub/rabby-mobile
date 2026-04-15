@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { getTop10MyAccounts } from '@/core/apis/account';
+import { keyringService } from '@/core/services';
 import { perfEvents } from '@/core/utils/perf';
 import { MMKV_FILE_NAMES } from '@/core/storage/mmkvConstants';
 import { balance24hMMKV } from '@/core/storage/mmkvInstances';
@@ -17,7 +18,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { BaseStore } from './_base';
 import { ResourceBaseStore, ResourceFlowState } from './_resourceBase';
 import { ResourceLocalTarget } from './_resourceFlowDebug';
-import addressBalanceStore from './balance';
+import addressBalanceStore, { type AddressBalanceSnapshot } from './balance';
 import {
   fetch24hBalance,
   getBalance24hCache,
@@ -73,6 +74,42 @@ export type Scene24hChangeFlowState = Addresses24hChangeFlowState & {
   isSceneComputing: boolean;
 };
 
+function buildAddress24hBalanceMapFromSnapshots(
+  snapshots: Address24hBalanceSnapshot[],
+) {
+  return snapshots.reduce((acc, snapshot) => {
+    if (snapshot.value) {
+      acc[snapshot.address] = snapshot.value;
+    }
+
+    return acc;
+  }, {} as Address24hBalanceMap);
+}
+
+function buildCurrentBalanceMapFromSnapshots(
+  snapshots: AddressBalanceSnapshot[],
+) {
+  return snapshots.reduce(
+    (acc, snapshot) => {
+      if (snapshot.value) {
+        acc[snapshot.address] = {
+          evmBalance: snapshot.value.evmBalance,
+          totalBalance: snapshot.value.totalBalance,
+        };
+      }
+
+      return acc;
+    },
+    {} as Record<
+      string,
+      {
+        evmBalance: number;
+        totalBalance: number;
+      }
+    >,
+  );
+}
+
 const build24hBalanceLocalTargets = (
   address: string,
 ): ResourceLocalTarget[] => [
@@ -104,6 +141,21 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
     return address?.toLowerCase();
   }
 
+  removeAddress24hBalance = (
+    address: string,
+    detail?: Record<string, unknown>,
+  ) => {
+    const lowerAddress = this.normalizeAddress(address);
+    if (!lowerAddress) {
+      return false;
+    }
+
+    return this.removeResource(lowerAddress, {
+      localTargets: build24hBalanceLocalTargets(lowerAddress),
+      detail,
+    });
+  };
+
   getAddress24hBalance = (address?: string) => {
     return this.getValue(this.normalizeAddress(address));
   };
@@ -123,8 +175,6 @@ class Address24hBalanceStore extends ResourceBaseStore<Address24hBalanceValue> {
 
     return { balance24h };
   };
-
-  useAddress24hBalanceMap = () => this.useValueMap();
 
   useAddress24hBalanceFlowState = (address?: string) => {
     return this.useFlowState(this.normalizeAddress(address) || '');
@@ -412,33 +462,50 @@ export function useAddresses24hChangeFlowState(
     balance24hStore.useAddresses24hBalanceSnapshots(normalizedAddresses);
 
   return useMemo(() => {
-    const states = snapshots.map(snapshot => {
-      return buildAddress24hChangeFlowState(
-        snapshot.address,
-        snapshot.flow,
-        computingAddressSet.has(snapshot.address),
-      );
-    });
-    const loadingAddresses = states
-      .filter(item => item.isLoading)
-      .map(item => item.address);
-    const missingAddresses = states
-      .filter(item => !item.hasValue)
-      .map(item => item.address);
-    const computingAddresses = states
-      .filter(item => item.isComputing)
-      .map(item => item.address);
+    const summary = snapshots.reduce(
+      (acc, snapshot) => {
+        const state = buildAddress24hChangeFlowState(
+          snapshot.address,
+          snapshot.flow,
+          computingAddressSet.has(snapshot.address),
+        );
+
+        if (state.isLoading) {
+          acc.loadingAddresses.push(state.address);
+        }
+        if (!state.hasValue) {
+          acc.missingAddresses.push(state.address);
+        } else {
+          acc.hasAnyValue = true;
+        }
+        if (state.isComputing) {
+          acc.computingAddresses.push(state.address);
+        }
+        if (state.isLoadingWithoutValue) {
+          acc.isAnyLoadingWithoutValue = true;
+        }
+
+        return acc;
+      },
+      {
+        loadingAddresses: [] as string[],
+        missingAddresses: [] as string[],
+        computingAddresses: [] as string[],
+        hasAnyValue: false,
+        isAnyLoadingWithoutValue: false,
+      },
+    );
 
     return {
       addresses: normalizedAddresses,
-      loadingAddresses,
-      missingAddresses,
-      computingAddresses,
-      hasAnyValue: states.some(item => item.hasValue),
-      isAnyLoading: loadingAddresses.length > 0,
-      isAnyLoadingWithoutValue: states.some(item => item.isLoadingWithoutValue),
+      loadingAddresses: summary.loadingAddresses,
+      missingAddresses: summary.missingAddresses,
+      computingAddresses: summary.computingAddresses,
+      hasAnyValue: summary.hasAnyValue,
+      isAnyLoading: summary.loadingAddresses.length > 0,
+      isAnyLoadingWithoutValue: summary.isAnyLoadingWithoutValue,
       hasAllValues:
-        normalizedAddresses.length > 0 && missingAddresses.length === 0,
+        normalizedAddresses.length > 0 && summary.missingAddresses.length === 0,
     } satisfies Addresses24hChangeFlowState;
   }, [computingAddressSet, normalizedAddresses, snapshots]);
 }
@@ -472,19 +539,22 @@ export function useAddresses24hChangeSummary(
     () => Array.from(new Set(addresses.map(address => address.toLowerCase()))),
     [addresses],
   );
-  const balanceMap = addressBalanceStore.useAddressValueMap();
-  const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
+  const balanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(normalizedAddresses);
+  const balance24hSnapshots =
+    balance24hStore.useAddresses24hBalanceSnapshots(normalizedAddresses);
   const flow = useAddresses24hChangeFlowState(normalizedAddresses);
 
   const combinedData = useMemo(() => {
     return computeCombined24hBalanceData({
       addresses: normalizedAddresses,
-      multi24hBalance,
-      balanceMap,
+      multi24hBalance:
+        buildAddress24hBalanceMapFromSnapshots(balance24hSnapshots),
+      balanceMap: buildCurrentBalanceMapFromSnapshots(balanceSnapshots),
       totalEvmBalance: 0,
       totalBalance: 0,
     });
-  }, [balanceMap, multi24hBalance, normalizedAddresses]);
+  }, [balance24hSnapshots, balanceSnapshots, normalizedAddresses]);
 
   return useMemo(() => {
     return {
@@ -831,6 +901,23 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     }
     this.hasStartedLifecycle = true;
 
+    keyringService.on('removedAccount', async account => {
+      const lowerAddress = account.address.toLowerCase();
+      const addresses = await keyringService.getAllAddresses();
+      const stillExists = addresses.some(item => {
+        return item.address.toLowerCase() === lowerAddress;
+      });
+
+      if (stillExists) {
+        return;
+      }
+
+      balance24hStore.removeAddress24hBalance(lowerAddress, {
+        source: 'keyringService.removedAccount',
+        reason: 'address_deleted',
+      });
+    });
+
     balance24hStore.subscribe(() => {
       const addresses = this.getState().addresses.Home;
       if (!addresses.length) {
@@ -841,15 +928,6 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         addresses,
         balanceAccountsStore.getState().balance,
       );
-      this.scheduleSceneCombinedDataUpdate('Home');
-    });
-
-    addressBalanceStore.subscribe(() => {
-      const addresses = this.getState().addresses.Home;
-      if (!addresses.length) {
-        return;
-      }
-
       this.scheduleSceneCombinedDataUpdate('Home');
     });
 
@@ -865,6 +943,9 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
     );
 
     accountsBalanceEvents.on('BALANCE_CHANGED', ({ addresses, balance }) => {
+      if (this.getState().addresses.Home.length) {
+        this.scheduleSceneCombinedDataUpdate('Home');
+      }
       this.refresh24hAssets({
         addresses,
         balanceAccounts: balance,
@@ -924,18 +1005,12 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
 
   useScene24hBalanceMulti24hBalance = (scene: BalanceScene) => {
     const addresses = this.useStore(s => s.addresses[scene]);
-    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
+    const balance24hSnapshots =
+      balance24hStore.useAddresses24hBalanceSnapshots(addresses);
 
     const filteredMulti24hBalance = useMemo(() => {
-      const result: Multi24hBalance = {};
-      addresses.forEach(address => {
-        const lowerAddress = address.toLowerCase();
-        if (multi24hBalance[lowerAddress]) {
-          result[lowerAddress] = multi24hBalance[lowerAddress];
-        }
-      });
-      return result;
-    }, [addresses, multi24hBalance]);
+      return buildAddress24hBalanceMapFromSnapshots(balance24hSnapshots);
+    }, [balance24hSnapshots]);
 
     return { multi24hBalance: filteredMulti24hBalance };
   };
@@ -958,13 +1033,19 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
         sceneAddrLoading: s.sceneAddrLoading,
       })),
     );
-    const multi24hBalance = balance24hStore.useAddress24hBalanceMap();
-    const balanceMap = addressBalanceStore.useAddressValueMap();
+    const balance24hSnapshots =
+      balance24hStore.useAddresses24hBalanceSnapshots(addresses);
+    const balanceSnapshots =
+      addressBalanceStore.useAddressesSnapshot(addresses);
 
     const isLoadingNew = useMemo(() => {
       if (addresses.length === 0) {
         return sceneLoading;
       }
+
+      const multi24hBalance =
+        buildAddress24hBalanceMapFromSnapshots(balance24hSnapshots);
+      const balanceMap = buildCurrentBalanceMapFromSnapshots(balanceSnapshots);
 
       const hasAnyCurrentBalance = addresses.some(address => {
         return !!balanceMap[address.toLowerCase()];
@@ -984,8 +1065,8 @@ class Scene24hBalanceStore extends BaseStore<Multi24hBalanceState> {
       );
     }, [
       addresses,
-      balanceMap,
-      multi24hBalance,
+      balance24hSnapshots,
+      balanceSnapshots,
       scene,
       sceneAddrLoading,
       sceneLoading,

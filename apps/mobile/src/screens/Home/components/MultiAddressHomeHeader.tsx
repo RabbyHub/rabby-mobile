@@ -44,11 +44,11 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { scene24hBalanceStore } from '@/store/balance24h';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
 import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { computeBalanceChange } from '@/core/apis/balance';
-import { useHomePortfolioSummary } from '../hooks/useHomePortfolioSummary';
+import { balance24hStore } from '@/store/balance24h';
+import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
 
 function MultiPinnedAddressList({
   pinnedAccountList,
@@ -58,36 +58,53 @@ function MultiPinnedAddressList({
   hideType: BALANCE_HIDE_TYPE;
 }) {
   const { styles } = useTheme2024({ getStyle });
-
-  const balanceMap = addressBalanceStore.useAddressValueMap();
-  const { multi24hBalance } =
-    scene24hBalanceStore.useScene24hBalanceMulti24hBalance('Home');
+  const pinnedAddresses = useMemo(() => {
+    return pinnedAccountList.map(item => item.address.toLowerCase());
+  }, [pinnedAccountList]);
+  const balance24hSnapshots =
+    balance24hStore.useAddresses24hBalanceSnapshots(pinnedAddresses);
 
   const addressListData = useMemo(() => {
+    const multi24hBalance = balance24hSnapshots.reduce(
+      (acc, snapshot) => {
+        if (snapshot.value) {
+          acc[snapshot.address] = snapshot.value;
+        }
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          total_usd_value?: number;
+          updateTime?: number;
+        }
+      >,
+    );
+
     return sortBy(
       pinnedAccountList.map(item => {
         const lcAddr = item.address.toLowerCase();
         const address24hBalanceData = multi24hBalance[lcAddr];
-        const balanceAccount = balanceMap?.[lcAddr];
-        const canShowChange = !!address24hBalanceData && !!balanceAccount;
+        const canShowChange =
+          !!address24hBalanceData && typeof item.evmBalance === 'number';
         const total_usd_value = address24hBalanceData?.total_usd_value || 0;
         const { assetsChange, changePercent } = computeBalanceChange(
-          balanceAccount?.evmBalance || 0,
+          item.evmBalance || 0,
           total_usd_value,
         );
 
         return {
           ...item,
           updateTime: address24hBalanceData?.updateTime,
-          balance: balanceAccount?.totalBalance || item.balance || 0,
-          evmBalance: balanceAccount?.evmBalance || item.evmBalance || 0,
+          balance: item.balance || 0,
+          evmBalance: item.evmBalance || 0,
           changePercent: canShowChange ? changePercent : undefined,
           isLoss: canShowChange ? assetsChange < 0 : undefined,
         };
       }),
       item => -(item.balance || 0),
     ).slice(0, 3);
-  }, [pinnedAccountList, multi24hBalance, balanceMap]);
+  }, [balance24hSnapshots, pinnedAccountList]);
 
   useEffect(() => {
     if (!addressListData?.length) {
@@ -128,8 +145,7 @@ export function MultiAddressHomeHeader(
   } & RNViewProps,
 ): JSX.Element {
   const { style, onRefresh } = props;
-  const { changeSummary } = useHomePortfolioSummary();
-  const data = changeSummary.combinedData;
+  const data = useHomePortfolioStore(state => state.changeData);
 
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });

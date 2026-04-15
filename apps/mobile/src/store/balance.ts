@@ -22,7 +22,11 @@ import { perfEvents } from '@/core/utils/perf';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import { ResourceBaseStore, ResourceFlowState } from './_resourceBase';
+import {
+  ResourceBaseStore,
+  ResourceFlowState,
+  ResourceSnapshot,
+} from './_resourceBase';
 import { ResourceLocalTarget } from './_resourceFlowDebug';
 import { useAppChainStore } from './appchain';
 
@@ -154,6 +158,75 @@ const buildBalanceTraceDetail = (
   };
 };
 
+function normalizeBalanceAddresses(addresses: string[]) {
+  return Array.from(new Set(addresses.map(address => address.toLowerCase())));
+}
+
+function buildAddressBalanceSnapshots(
+  snapshots: ResourceSnapshot<AddressBalanceResourceValue>[],
+) {
+  return snapshots.map(snapshot => {
+    return {
+      address: snapshot.resourceKey,
+      value: snapshot.value,
+      flow: snapshot.flow,
+      sourceOfCurrentValue: snapshot.sourceOfCurrentValue,
+      persistStatus: snapshot.persistStatus,
+    } satisfies AddressBalanceSnapshot;
+  });
+}
+
+function buildAddressBalancesSummary(
+  snapshots: AddressBalanceSnapshot[],
+): AddressBalancesSummary {
+  const summary = snapshots.reduce(
+    (acc, item) => {
+      acc.addresses.push(item.address);
+
+      if (item.flow.isLoading) {
+        acc.loadingAddresses.push(item.address);
+      }
+
+      if (!item.flow.hasValue) {
+        acc.missingAddresses.push(item.address);
+      } else {
+        acc.hasAnyValue = true;
+      }
+
+      if (item.flow.isLoadingWithoutValue) {
+        acc.isAnyLoadingWithoutValue = true;
+      }
+
+      acc.totalBalance += item.value?.totalBalance || 0;
+
+      return acc;
+    },
+    {
+      addresses: [] as string[],
+      loadingAddresses: [] as string[],
+      missingAddresses: [] as string[],
+      hasAnyValue: false,
+      isAnyLoadingWithoutValue: false,
+      totalBalance: 0,
+    },
+  );
+
+  return {
+    snapshots,
+    flow: {
+      addresses: summary.addresses,
+      loadingAddresses: summary.loadingAddresses,
+      missingAddresses: summary.missingAddresses,
+      hasAnyValue: summary.hasAnyValue,
+      isAnyLoading: summary.loadingAddresses.length > 0,
+      isAnyLoadingWithoutValue: summary.isAnyLoadingWithoutValue,
+      hasAllValues:
+        snapshots.length > 0 && summary.missingAddresses.length === 0,
+    },
+    totalBalance: summary.totalBalance,
+  } satisfies AddressBalancesSummary;
+}
+
 class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue> {
   constructor() {
     super('addressBalance');
@@ -162,6 +235,21 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
   private normalizeAddress(address?: string) {
     return address?.toLowerCase();
   }
+
+  removeAddressBalance = (
+    address: string,
+    detail?: Record<string, unknown>,
+  ) => {
+    const lowerAddress = this.normalizeAddress(address);
+    if (!lowerAddress) {
+      return false;
+    }
+
+    return this.removeResource(lowerAddress, {
+      localTargets: buildBalanceLocalTargets(lowerAddress),
+      detail,
+    });
+  };
 
   private toAddressFlowState(addresses: string[]) {
     const flow = this.getFamilyFlowState(addresses);
@@ -209,29 +297,24 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     return this.useValue(this.normalizeAddress(address) || '');
   };
 
-  useAddressValueMap = () => this.useValueMap();
-
-  useAddressMetaMap = () => this.useMetaMap();
-
   useAddressChainList = (address?: string) => {
     const value = this.useAddressValue(address);
 
     return value?.chainList;
   };
 
-  useAddressChainListMap = () => {
-    const valueMap = this.useAddressValueMap();
-
-    return useMemo(() => {
-      return Object.keys(valueMap).reduce((acc, address) => {
-        acc[address] = valueMap[address]?.chainList || [];
-        return acc;
-      }, {} as Record<string, ChainWithBalance[]>);
-    }, [valueMap]);
-  };
-
   getAddressFlowState = (address?: string) => {
     return this.getFlowState(this.normalizeAddress(address));
+  };
+
+  getAddressesSnapshot = (addresses: string[]) => {
+    return buildAddressBalanceSnapshots(
+      this.getSnapshots(normalizeBalanceAddresses(addresses)),
+    );
+  };
+
+  getAddressesBalanceSummary = (addresses: string[]) => {
+    return buildAddressBalancesSummary(this.getAddressesSnapshot(addresses));
   };
 
   useAddressFlowState = (address?: string) => {
@@ -240,22 +323,13 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
 
   useAddressesSnapshot = (addresses: string[]) => {
     const normalizedAddresses = useMemo(
-      () =>
-        Array.from(new Set(addresses.map(address => address.toLowerCase()))),
+      () => normalizeBalanceAddresses(addresses),
       [addresses],
     );
     const snapshots = this.useSnapshots(normalizedAddresses);
 
     return useMemo(() => {
-      return snapshots.map(snapshot => {
-        return {
-          address: snapshot.resourceKey,
-          value: snapshot.value,
-          flow: snapshot.flow,
-          sourceOfCurrentValue: snapshot.sourceOfCurrentValue,
-          persistStatus: snapshot.persistStatus,
-        } satisfies AddressBalanceSnapshot;
-      });
+      return buildAddressBalanceSnapshots(snapshots);
     }, [snapshots]);
   };
 
@@ -265,30 +339,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     const snapshots = this.useAddressesSnapshot(addresses);
 
     return useMemo(() => {
-      const loadingAddresses = snapshots
-        .filter(item => item.flow.isLoading)
-        .map(item => item.address);
-      const missingAddresses = snapshots
-        .filter(item => !item.flow.hasValue)
-        .map(item => item.address);
-
-      return {
-        snapshots,
-        flow: {
-          addresses: snapshots.map(item => item.address),
-          loadingAddresses,
-          missingAddresses,
-          hasAnyValue: snapshots.some(item => item.flow.hasValue),
-          isAnyLoading: loadingAddresses.length > 0,
-          isAnyLoadingWithoutValue: snapshots.some(
-            item => item.flow.isLoadingWithoutValue,
-          ),
-          hasAllValues: snapshots.length > 0 && missingAddresses.length === 0,
-        },
-        totalBalance: snapshots.reduce((acc, item) => {
-          return acc + (item.value?.totalBalance || 0);
-        }, 0),
-      } satisfies AddressBalancesSummary;
+      return buildAddressBalancesSummary(snapshots);
     }, [snapshots]);
   };
 
@@ -810,10 +861,12 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
     const hasResolvedSelection = balanceAccountsStore(
       s => s.hasResolvedSelection,
     );
-    const balanceFlow = this.useAddressesFlowState(selectedAddresses);
+    const isAnyBalanceLoadingWithoutValue = balanceAccountsStore(
+      s => s.isAnyBalanceLoadingWithoutValue,
+    );
     const isLoading =
       !hasResolvedSelection ||
-      (selectedAddresses.length > 0 && balanceFlow.isAnyLoadingWithoutValue);
+      (selectedAddresses.length > 0 && isAnyBalanceLoadingWithoutValue);
     const loadBalanceFromApiStage: LoadBalanceStage = isLoading
       ? 'loading'
       : 'finished';
@@ -856,6 +909,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
             selectedAddresses,
             hasResolvedSelection: true,
             matteredAccountLength: caredAccounts.length,
+            ...buildSelectedBalanceDerivedState(selectedAddresses, retBalances),
           },
           {
             source: 'manual_refresh',
@@ -923,6 +977,11 @@ export type AccountsBalanceState = {
   selectedAddresses: string[];
   hasResolvedSelection: boolean;
   matteredAccountLength: number;
+  totalBalance: number;
+  hasAnyBalanceValue: boolean;
+  isAnyBalanceLoading: boolean;
+  isAnyBalanceLoadingWithoutValue: boolean;
+  isAnyBalanceFetchingRemote: boolean;
 };
 
 export type LoadBalanceStage = 'idle' | 'loading' | 'finished';
@@ -957,6 +1016,11 @@ export const balanceAccountsStore = zCreate(
     selectedAddresses: getCachedHomeTop10Addresses(),
     hasResolvedSelection: false,
     matteredAccountLength: 0,
+    totalBalance: 0,
+    hasAnyBalanceValue: false,
+    isAnyBalanceLoading: false,
+    isAnyBalanceLoadingWithoutValue: false,
+    isAnyBalanceFetchingRemote: false,
   })),
 );
 
@@ -1110,6 +1174,41 @@ function buildBalanceAccountsFromSelectedState(
   }, {} as AccountsBalanceState['balance']);
 }
 
+function buildSelectedBalanceDerivedState(
+  selectedAddresses: string[],
+  balanceAccounts: AccountsBalanceState['balance'],
+) {
+  const snapshots = addressBalanceStore.getAddressesSnapshot(selectedAddresses);
+
+  return snapshots.reduce(
+    (acc, snapshot) => {
+      acc.totalBalance += balanceAccounts[snapshot.address]?.balance || 0;
+
+      if (snapshot.flow.hasValue) {
+        acc.hasAnyBalanceValue = true;
+      }
+      if (snapshot.flow.isLoading) {
+        acc.isAnyBalanceLoading = true;
+      }
+      if (snapshot.flow.isLoadingWithoutValue) {
+        acc.isAnyBalanceLoadingWithoutValue = true;
+      }
+      if (snapshot.flow.isFetchingRemote) {
+        acc.isAnyBalanceFetchingRemote = true;
+      }
+
+      return acc;
+    },
+    {
+      totalBalance: 0,
+      hasAnyBalanceValue: false,
+      isAnyBalanceLoading: false,
+      isAnyBalanceLoadingWithoutValue: false,
+      isAnyBalanceFetchingRemote: false,
+    },
+  );
+}
+
 async function pickSelectedAccountsFromSortedAccounts(
   sortedAccounts: Account[],
 ) {
@@ -1162,6 +1261,7 @@ export const syncBalanceAccountStore = () => {
   setAccountsBalanceState(
     {
       balance: nextBalance,
+      ...buildSelectedBalanceDerivedState(state.selectedAddresses, nextBalance),
     },
     {
       source: 'balance_changed',
@@ -1174,6 +1274,23 @@ export function startProcessAccountBalanceEvents() {
     return;
   }
   hasStartedAccountBalanceLifecycle = true;
+
+  keyringService.on('removedAccount', async account => {
+    const addresses = await keyringService.getAllAddresses();
+    const stillExists = addresses.some(item => {
+      return isSameAddress(item.address, account.address);
+    });
+
+    if (stillExists) {
+      return;
+    }
+
+    addressBalanceStore.removeAddressBalance(account.address, {
+      source: 'keyringService.removedAccount',
+      reason: 'address_deleted',
+    });
+  });
+
   perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
     syncBalanceAccountStore();
   });
@@ -1194,6 +1311,10 @@ export function startProcessAccountBalanceEvents() {
       {
         ...current,
         balance: nextBalance,
+        ...buildSelectedBalanceDerivedState(
+          current.selectedAddresses,
+          nextBalance,
+        ),
       },
       {
         source: 'balance_changed',
@@ -1221,6 +1342,7 @@ export function startProcessAccountBalanceEvents() {
           selectedAddresses,
           hasResolvedSelection: true,
           matteredAccountLength,
+          ...buildSelectedBalanceDerivedState(selectedAddresses, nextBalance),
         }),
         {
           source: 'accounts_changed',

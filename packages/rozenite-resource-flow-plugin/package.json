@@ -18,7 +18,10 @@
   },
   "dependencies": {
     "@rabby-wallet/base-utils": "workspace:^",
-    "@rozenite/plugin-bridge": "1.6.0"
+    "@rozenite/plugin-bridge": "1.6.0",
+    "@tailwindcss/vite": "^4.2.2",
+    "antd": "^6.3.5",
+    "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
     "@rozenite/vite-plugin": "1.6.0",

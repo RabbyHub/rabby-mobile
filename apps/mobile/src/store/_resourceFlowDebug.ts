@@ -25,7 +25,8 @@ export type ResourceFlowTraceType =
   | 'persist_enqueued'
   | 'persist_started'
   | 'persist_succeeded'
-  | 'persist_failed';
+  | 'persist_failed'
+  | 'resource_removed';
 
 export type ResourceFlowErrorPayload = {
   name?: string;
@@ -58,6 +59,7 @@ type ResourceFlowDebugEventBusListeners = {
   RESOURCE_FLOW_RESOURCE_UPSERTED: (
     resource: ResourceFlowResourceSnapshot,
   ) => void;
+  RESOURCE_FLOW_RESOURCE_REMOVED: (resourceId: string) => void;
 };
 
 export type ResourceFlowResourceSnapshot = {
@@ -98,6 +100,7 @@ export const RESOURCE_FLOW_TRACE_ADDED = 'RESOURCE_FLOW_TRACE_ADDED';
 export const RESOURCE_FLOW_TRACE_CLEARED = 'RESOURCE_FLOW_TRACE_CLEARED';
 export const RESOURCE_FLOW_RESOURCE_UPSERTED =
   'RESOURCE_FLOW_RESOURCE_UPSERTED';
+export const RESOURCE_FLOW_RESOURCE_REMOVED = 'RESOURCE_FLOW_RESOURCE_REMOVED';
 
 export const buildResourceFlowResourceId = (
   family: string,
@@ -183,6 +186,32 @@ export const upsertResourceFlowResourceSnapshot = (
   resourceFlowDebugEvents.emit(RESOURCE_FLOW_RESOURCE_UPSERTED, nextResource);
 
   return nextResource;
+};
+
+export const removeResourceFlowResourceSnapshot = (
+  family: string,
+  resourceKey: string,
+) => {
+  const resourceId = buildResourceFlowResourceId(family, resourceKey);
+
+  resourceFlowDebugStore.setState(prev => {
+    if (!prev.resources[resourceId]) {
+      return prev;
+    }
+
+    const nextResources = {
+      ...prev.resources,
+    };
+    delete nextResources[resourceId];
+
+    return {
+      ...prev,
+      resources: nextResources,
+    };
+  });
+  resourceFlowDebugEvents.emit(RESOURCE_FLOW_RESOURCE_REMOVED, resourceId);
+
+  return resourceId;
 };
 
 export const getResourceFlowTraceEntries = () =>

@@ -1,8 +1,22 @@
-const TAILWIND_THEME_V4_FILE = 'src/styles/tailwind-theme-v4.css';
+import path from 'node:path';
 
-const shouldSkipPrettier = file =>
-  file === TAILWIND_THEME_V4_FILE ||
-  file.endsWith(`/${TAILWIND_THEME_V4_FILE}`);
+const TAILWIND_THEME_V4_FILE = 'src/styles/tailwind-theme-v4.css';
+const NORMALIZED_TAILWIND_THEME_V4_FILE = path.posix.normalize(
+  TAILWIND_THEME_V4_FILE,
+);
+
+const normalizeFilePath = file => {
+  return path.posix.normalize(file.split(path.win32.sep).join(path.posix.sep));
+};
+
+const shouldSkipPrettier = file => {
+  const normalizedFile = normalizeFilePath(file);
+
+  return (
+    normalizedFile === NORMALIZED_TAILWIND_THEME_V4_FILE ||
+    normalizedFile.endsWith(`/${NORMALIZED_TAILWIND_THEME_V4_FILE}`)
+  );
+};
 
 export default {
   '*.{,js,jsx}': 'eslint --fix --quiet',
