@@ -232,11 +232,16 @@ const mergedConfig = compose(
   withPackageExportsDisabled,
 )(mergeConfig(defaultConfig, config));
 
-module.exports = withRozenite(mergedConfig, {
-  enabled: process.env.WITH_ROZENITE !== 'false',
-  include: [
-    '@rozenite/react-navigation-plugin',
-    '@rozenite/network-activity-plugin',
-    '@rozenite/storage-plugin',
-  ],
-});
+const rozeniteEnabled =
+  !process.env.RABBY_MOBILE_BUILD_ENV && process.env.WITH_ROZENITE !== 'false';
+
+module.exports = rozeniteEnabled
+  ? withRozenite(mergedConfig, {
+      enabled: true,
+      include: [
+        '@rozenite/react-navigation-plugin',
+        '@rozenite/network-activity-plugin',
+        '@rozenite/storage-plugin',
+      ],
+    })
+  : mergedConfig;
