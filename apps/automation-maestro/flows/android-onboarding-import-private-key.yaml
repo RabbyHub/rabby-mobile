@@ -1,0 +1,9 @@
+appId: ${RABBY_ANDROID_E2E_PACKAGE}
+name: Android onboarding import private key
+tags:
+  - android
+  - maestro
+  - onboarding
+---
+- runFlow: android-onboarding-import-private-key-to-single-home.yaml
+- runFlow: android-single-home-back-to-home.yaml
