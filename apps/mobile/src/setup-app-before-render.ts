@@ -59,7 +59,6 @@ import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';
 import { keyringService } from './core/services';
-import { getE2ESilentLogsEnabled } from './utils/e2eSilentLogs';
 
 startComputationThread();
 startSubscribeLangChange();
@@ -106,9 +105,7 @@ startProcessMultiCurveEvents();
 trimNoLongerSupportsOnUnlock();
 
 startCheckClearAction();
-if (!getE2ESilentLogsEnabled()) {
-  startSubscribeOpenApiHttpErrorDebugToast();
-}
+startSubscribeOpenApiHttpErrorDebugToast();
 
 startCareAppNotificationPermissions();
 startSubscribeRemoteNotification();

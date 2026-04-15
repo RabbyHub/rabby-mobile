@@ -40,7 +40,6 @@ import {
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
-  useSilenceDevLogsForE2E,
   useTimeTipAboutSeedPhraseAndPrivateKey,
   useToastOpenApiHttpErrorStatus,
   useToggleShowAutoLockCountdown,
@@ -784,52 +783,6 @@ function DevSwitchAboutOpenApiDebug() {
   );
 }
 
-function DevSwitchAboutE2EQuietMode() {
-  const { styles } = useTheme2024({ getStyle: getStyles });
-  const { silenceDevLogsForE2E, toggleSilenceDevLogsForE2E } =
-    useSilenceDevLogsForE2E();
-
-  return (
-    <View style={styles.showCaseRowsContainer}>
-      <View style={styles.secondarySectionHeader}>
-        <RcCode
-          width={24}
-          height={24}
-          color={styles.secondarySectionTitle.color}
-        />
-        <Text
-          style={[
-            styles.secondarySectionTitle,
-            { fontSize: 24, marginLeft: 2 },
-          ]}>
-          E2E Quiet Mode
-        </Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.switchRowWrapper}
-        onPress={() => {
-          toggleSilenceDevLogsForE2E();
-        }}>
-        <AppSwitch2024
-          value={silenceDevLogsForE2E}
-          onPress={evt => evt.stopPropagation()}
-          onValueChange={toggleSilenceDevLogsForE2E}
-        />
-        <Text style={styles.switchLabel}>
-          {silenceDevLogsForE2E
-            ? 'Silence dev console, app log capture, OpenAPI debug toast, and some dev warnings on the next app launch.'
-            : 'Keep normal dev diagnostics on. Turn this on before relaunching the app for quieter Maestro/E2E runs.'}
-        </Text>
-      </TouchableOpacity>
-
-      <Text style={styles.metaLabel}>
-        Takes effect after restarting the app. Metro restart is not required.
-      </Text>
-    </View>
-  );
-}
-
 function DevSwitchAboutAutoLock() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -1433,7 +1386,6 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Security</Text>
         <DevSwitchAboutScreenProtection />
-        <DevSwitchAboutE2EQuietMode />
         <DevSwitchAboutAppLogging />
         <DevSwitchAboutOpenApiDebug />
         <DevSwitchAboutExpData />
