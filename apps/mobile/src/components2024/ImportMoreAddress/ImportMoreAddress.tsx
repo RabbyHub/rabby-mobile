@@ -19,6 +19,7 @@ import {
   apiTrezor,
 } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
+import { navigate, replaceToFirst } from '@/utils/navigation';
 
 import { toast } from '@/components2024/Toast';
 import { settingAtom } from '@/components/HDSetting/MainContainer';
@@ -470,17 +471,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         ? {
             onSwitchDevice: () => {
               onCancel();
-              const connectId = createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.CONNECT_KEYSTONE,
-                bottomSheetModalProps: {
-                  enableContentPanningGesture: true,
-                  enablePanDownToClose: true,
-                },
-                onDone: () => {
-                  setTimeout(() => {
-                    removeGlobalBottomSheetModal2024(connectId);
-                  }, 0);
-                },
+              navigate(RootNames.StackAddress, {
+                screen: RootNames.ImportHardwareAddress,
               });
             },
           }
