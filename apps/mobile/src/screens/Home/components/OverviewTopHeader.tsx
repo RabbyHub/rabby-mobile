@@ -31,6 +31,7 @@ import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHe
 import {
   HOME_TOP_HEADER_SIZES,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
@@ -53,7 +54,6 @@ import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
-import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
