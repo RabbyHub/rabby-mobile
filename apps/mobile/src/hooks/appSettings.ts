@@ -22,7 +22,6 @@ type ScreenshotSettings = {
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
-  silenceDevLogsForE2E: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -39,7 +38,6 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: __DEV__,
     toastOpenApiHttpErrorStatus: false,
-    silenceDevLogsForE2E: false,
   },
 );
 
@@ -265,38 +263,6 @@ export function useToastOpenApiHttpErrorStatus() {
       ? toastOpenApiHttpErrorStatus
       : false,
     toggleToastOpenApiHttpErrorStatus,
-  };
-}
-
-export function useSilenceDevLogsForE2E() {
-  const silenceDevLogsForE2E = experimentalSettingsStore(
-    s => s.silenceDevLogsForE2E,
-  );
-
-  const toggleSilenceDevLogsForE2E = useCallback((nextVal?: boolean) => {
-    if (!isNonPublicProductionEnv) {
-      return false;
-    }
-
-    let finalValue = false;
-    setExpSettingData(prev => {
-      finalValue =
-        typeof nextVal === 'boolean' ? nextVal : !prev.silenceDevLogsForE2E;
-
-      return {
-        ...prev,
-        silenceDevLogsForE2E: finalValue,
-      };
-    });
-
-    return finalValue;
-  }, []);
-
-  return {
-    silenceDevLogsForE2E: isNonPublicProductionEnv
-      ? silenceDevLogsForE2E
-      : false,
-    toggleSilenceDevLogsForE2E,
   };
 }
 

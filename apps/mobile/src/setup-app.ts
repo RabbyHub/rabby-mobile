@@ -1,4 +1,3 @@
-import './setup-e2e-silent-logs';
 import '@exodus/patch-broken-hermes-typed-arrays';
 import { setJSExceptionHandler } from 'react-native-exception-handler';
 import { logger } from '@/utils/logger';
