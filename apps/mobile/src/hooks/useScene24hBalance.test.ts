@@ -61,6 +61,12 @@ describe('store/balance24h scene', () => {
       getTop10MyAccounts: (...args: unknown[]) =>
         mockGetTop10MyAccounts(...args),
     }));
+    jest.doMock('@/core/services', () => ({
+      keyringService: {
+        on: jest.fn(),
+        getAllAddresses: jest.fn(async () => []),
+      },
+    }));
     jest.doMock('@/core/utils/perf', () => ({
       perfEvents: {
         emit: (...args: unknown[]) => mockPerfEmit(...args),
