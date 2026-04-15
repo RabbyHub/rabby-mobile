@@ -70,64 +70,64 @@ async function onAddressImported(addresses: KeyringEventAccount[]) {
   // });
 }
 
-export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
-  const { apiHD, hdType, hdBrandName, settingModalName } = React.useMemo(() => {
-    const ret = {
+const useHDConfig = (type: KEYRING_TYPE) =>
+  React.useMemo(() => {
+    const defaults = {
       apiHD: null,
       hdType: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
       hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
       settingModalName: MODAL_NAMES.SETTING_KEYSTONE,
     };
-    switch (params.type) {
-      case KEYRING_TYPE.LedgerKeyring: {
+    switch (type) {
+      case KEYRING_TYPE.LedgerKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: apiLedger,
           hdType: KEYRING_TYPE.LedgerKeyring,
           hdBrandName: KEYRING_CLASS.HARDWARE.LEDGER,
           settingModalName: MODAL_NAMES.SETTING_LEDGER,
         };
-      }
-      case KEYRING_TYPE.OneKeyKeyring: {
+      case KEYRING_TYPE.OneKeyKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: apiOneKey,
           hdType: KEYRING_TYPE.OneKeyKeyring,
           hdBrandName: KEYRING_CLASS.HARDWARE.ONEKEY,
           settingModalName: MODAL_NAMES.SETTING_ONEKEY,
         };
-      }
-      case KEYRING_TYPE.KeystoneKeyring: {
+      case KEYRING_TYPE.KeystoneKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: apiKeystone,
           hdType: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
           hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
           settingModalName: MODAL_NAMES.SETTING_KEYSTONE,
         };
-      }
-      case KEYRING_TYPE.TrezorKeyring: {
+      case KEYRING_TYPE.TrezorKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: apiTrezor,
           hdType: KEYRING_TYPE.TrezorKeyring,
           hdBrandName: KEYRING_CLASS.HARDWARE.TREZOR,
           settingModalName: MODAL_NAMES.SETTING_TREZOR,
         };
-      }
-      case KEYRING_TYPE.HdKeyring: {
+      case KEYRING_TYPE.HdKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: null,
           hdType: KEYRING_TYPE.HdKeyring,
           hdBrandName: KEYRING_CLASS.MNEMONIC,
           settingModalName: MODAL_NAMES.SETTING_HDKEYRING,
         };
-      }
+      default:
+        return defaults;
     }
+  }, [type]);
 
-    return ret;
-  }, [params]);
+export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
+  const { apiHD, hdType, hdBrandName, settingModalName } = useHDConfig(
+    params.type,
+  );
   const [accounts, setAccounts] = React.useState<ViewAccount[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [setting, setSetting] = useAtom(settingAtom);
@@ -301,6 +301,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
   React.useEffect(() => {
     setAccounts([]);
+    setSelectedAccounts([]);
     if (stoppedRef.current) {
       handleLoadAddress();
     } else {
@@ -497,22 +498,9 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         <SettingSVG color={colors2024['neutral-secondary']} />
       </TouchableOpacity>
       <View style={styles.info}>
-        {params.account ? (
-          <>
-            <WalletIcon
-              type={params.type}
-              address={params.account.address}
-              width={91}
-              height={91}
-              borderRadius={25}
-            />
-            <Text style={styles.nameText}>{params.account.aliasName}</Text>
-          </>
-        ) : (
-          <Text style={styles.title}>
-            {t('page.newAddress.seedPhrase.addMoreWalletTitle')}
-          </Text>
-        )}
+        <Text style={styles.title}>
+          {t('page.newAddress.seedPhrase.addMoreWalletTitle')}
+        </Text>
         <View style={styles.loading}>
           <Text style={styles.loadingText}>
             {!accounts.length
