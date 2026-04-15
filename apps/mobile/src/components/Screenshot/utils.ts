@@ -13,6 +13,7 @@ import {
   SceneAccounts,
 } from '@/hooks/sceneAccountInfoAtom';
 import { appJsonStore } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { apisPerps } from '@/core/apis';
 
 function runTryCatch<T extends (...args: any[]) => any>(
@@ -27,7 +28,10 @@ function runTryCatch<T extends (...args: any[]) => any>(
 }
 
 export async function getSceneAddresses() {
-  const zustandStore = appJsonStore.getItem('@SceneAccounts202512', {});
+  const zustandStore = appJsonStore.getItem(
+    APP_MMKV_WEAK_KEYS.SCENE_ACCOUNTS,
+    {},
+  );
 
   const accounts = zustandStore.state as SceneAccounts;
 

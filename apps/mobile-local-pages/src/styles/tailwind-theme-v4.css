@@ -1,3 +1,4 @@
+
 /* this file is genetared automatically, never modify it manually! */
 @import 'tailwindcss';
 
@@ -153,8 +154,7 @@
 }
 
 @layer theme {
-  :root,
-  :host {
+  :root, :host {
     @variant dark {
       --color-brand-default: rgba(112, 132, 255, 1);
       --color-brand-default-light: rgba(112, 132, 255, 0.7);

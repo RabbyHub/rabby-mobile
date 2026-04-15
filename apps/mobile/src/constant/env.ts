@@ -43,6 +43,7 @@ export const IS_CONSOLE_STRIPPED =
 
 export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;
+export const IS_ROZENITE_ENABLED = process.env.WITH_ROZENITE === 'true';
 
 export const RABBY_MOBILE_FE_SERVICE_URL =
   RABBY_MOBILE_FE_SERVICE_URL_ || process.env.RABBY_MOBILE_FE_SERVICE_URL || '';
