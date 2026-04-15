@@ -6,7 +6,6 @@ import {
   Platform,
   UIManager,
 } from 'react-native';
-import { enableLayoutAnimations } from 'react-native-reanimated';
 
 const isTurboModuleEnabled = global.__turboModuleProxy != null;
 
@@ -62,7 +61,16 @@ export const IS_ANDROID = Platform.OS === 'android';
 export const IS_IOS = Platform.OS === 'ios';
 
 if (IS_ANDROID) {
-  enableLayoutAnimations(false);
+  try {
+    (
+      require('react-native-reanimated') as {
+        enableLayoutAnimations?: (enabled: boolean) => void;
+      }
+    ).enableLayoutAnimations?.(false);
+  } catch {
+    // react-native-reanimated is best-effort here; tests and non-native
+    // runtimes may not be able to evaluate it.
+  }
   UIManager.setLayoutAnimationEnabledExperimental &&
     UIManager.setLayoutAnimationEnabledExperimental(false);
 }

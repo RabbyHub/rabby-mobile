@@ -1,8 +1,9 @@
-import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 export const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
 export const ITEM_GRID_GAP = 10;
+export const SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING = !IS_ANDROID;
 
 export const HOME_TOP_HEADER_SIZES = {
   headerHeight: 52,

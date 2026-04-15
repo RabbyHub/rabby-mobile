@@ -9,6 +9,7 @@ describe('store/balance', () => {
   const mockGetAppChainTotalUsdValue = jest.fn();
   const mockBatchGetAppChains = jest.fn();
   const mockGetAppChains = jest.fn();
+  let mockAppStorageState: Record<string, unknown>;
 
   const flushResourceFlowPersist = async () => {
     await Promise.resolve();
@@ -20,6 +21,7 @@ describe('store/balance', () => {
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+    mockAppStorageState = {};
 
     jest.doMock('@/core/request', () => ({
       openapi: {
@@ -33,10 +35,22 @@ describe('store/balance', () => {
           mockKeyringServiceGetAllAddresses(...args),
       },
     }));
+    jest.doMock('@/core/storage/mmkv', () => ({
+      appStorage: {
+        getItem: (key: string) => mockAppStorageState[key] ?? null,
+        setItem: (key: string, value: unknown) => {
+          mockAppStorageState[key] = value;
+        },
+        removeItem: (key: string) => {
+          delete mockAppStorageState[key];
+        },
+      },
+    }));
     jest.doMock('@/core/utils/reexports', () => {
       const { create } = require('zustand');
       return {
         zCreate: create,
+        zMutative: <T>(input: T) => input,
       };
     });
     jest.doMock('@/databases/entities/balance', () => ({
