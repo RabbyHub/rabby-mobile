@@ -10,10 +10,8 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 
-import { WalletIcon } from '../WalletIcon/WalletIcon';
 import { RootNames } from '@/constant/layout';
 import {
-  apiKeyring,
   apiKeystone,
   apiLedger,
   apiMnemonic,
@@ -42,7 +40,6 @@ import { Button } from '../Button';
 import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import i18next from 'i18next';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
-import { accountEvents } from '@/core/apis/account';
 import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
@@ -84,12 +81,6 @@ const useGetAliasByAddress = () => {
 
   return getAliasByAddress;
 };
-
-async function onAddressImported(addresses: KeyringEventAccount[]) {
-  // accountEvents.emit('ACCOUNT_ADDED', {
-  //   accounts: addresses,
-  // });
-}
 
 const useHDConfig = (type: KEYRING_TYPE) =>
   React.useMemo(() => {
