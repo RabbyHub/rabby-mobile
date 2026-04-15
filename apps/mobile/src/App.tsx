@@ -59,7 +59,7 @@ type AppProps = { rabbitCode: string };
 
 const MemoziedAppNav = React.memo(AppNavigation);
 const RozeniteDevTools =
-  __DEV__ && process.env.WITH_ROZENITE !== 'false'
+  process.env.WITH_ROZENITE === 'true'
     ? require('./devtools/RozeniteDevTools').default
     : null;
 

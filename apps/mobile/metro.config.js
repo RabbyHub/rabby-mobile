@@ -232,8 +232,7 @@ const mergedConfig = compose(
   withPackageExportsDisabled,
 )(mergeConfig(defaultConfig, config));
 
-const rozeniteEnabled =
-  !process.env.RABBY_MOBILE_BUILD_ENV && process.env.WITH_ROZENITE !== 'false';
+const rozeniteEnabled = process.env.WITH_ROZENITE === 'true';
 
 module.exports = rozeniteEnabled
   ? withRozenite(mergedConfig, {
