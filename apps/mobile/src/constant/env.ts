@@ -38,9 +38,12 @@ export function getSentryEnv() {
 export const SENTRY_DEBUG = APP_RUNTIME_ENV !== 'production';
 
 export const IS_HERMES_ENABLED = !!(global as any).HermesInternal;
+export const IS_CONSOLE_STRIPPED =
+  process.env.RABBY_MOBILE_STRIP_CONSOLE === 'true';
 
 export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;
+export const IS_ROZENITE_ENABLED = process.env.WITH_ROZENITE === 'true';
 
 export const RABBY_MOBILE_FE_SERVICE_URL =
   RABBY_MOBILE_FE_SERVICE_URL_ || process.env.RABBY_MOBILE_FE_SERVICE_URL || '';

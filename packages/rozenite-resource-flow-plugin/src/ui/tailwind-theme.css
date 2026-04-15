@@ -1,0 +1,54 @@
+@theme inline {
+  --color-brand-default: var(--rf-color-brand-default);
+  --color-brand-default-light: var(--rf-color-brand-default-light);
+  --color-brand-default-icon: var(--rf-color-brand-default-icon);
+  --color-brand-light-1: var(--rf-color-brand-light-1);
+  --color-brand-light-2: var(--rf-color-brand-light-2);
+  --color-brand-disable: var(--rf-color-brand-disable);
+  --color-brand-light-4: var(--rf-color-brand-light-4);
+
+  --color-red-dark: var(--rf-color-red-dark);
+  --color-red-default: var(--rf-color-red-default);
+  --color-red-light-1: var(--rf-color-red-light-1);
+  --color-red-light-2: var(--rf-color-red-light-2);
+  --color-red-disable: var(--rf-color-red-disable);
+  --color-red-light-4: var(--rf-color-red-light-4);
+
+  --color-orange-default: var(--rf-color-orange-default);
+  --color-orange-light-1: var(--rf-color-orange-light-1);
+  --color-orange-light-2: var(--rf-color-orange-light-2);
+  --color-orange-disable: var(--rf-color-orange-disable);
+  --color-orange-light-4: var(--rf-color-orange-light-4);
+
+  --color-green-default: var(--rf-color-green-default);
+  --color-green-default-light: var(--rf-color-green-default-light);
+  --color-green-light-1: var(--rf-color-green-light-1);
+  --color-green-light-2: var(--rf-color-green-light-2);
+  --color-green-disable: var(--rf-color-green-disable);
+  --color-green-light-4: var(--rf-color-green-light-4);
+
+  --color-blue-default: var(--rf-color-blue-default);
+  --color-blue-light-1: var(--rf-color-blue-light-1);
+  --color-blue-light-2: var(--rf-color-blue-light-2);
+  --color-blue-disable: var(--rf-color-blue-disable);
+  --color-blue-light-4: var(--rf-color-blue-light-4);
+
+  --color-neutral-bg-0: var(--rf-color-neutral-bg-0);
+  --color-neutral-bg-1: var(--rf-color-neutral-bg-1);
+  --color-neutral-bg-2: var(--rf-color-neutral-bg-2);
+  --color-neutral-bg-3: var(--rf-color-neutral-bg-3);
+  --color-neutral-bg-4: var(--rf-color-neutral-bg-4);
+  --color-neutral-bg-5: var(--rf-color-neutral-bg-5);
+  --color-neutral-line: var(--rf-color-neutral-line);
+  --color-neutral-title-1: var(--rf-color-neutral-title-1);
+  --color-neutral-title-2: var(--rf-color-neutral-title-2);
+  --color-neutral-card-1: var(--rf-color-neutral-card-1);
+  --color-neutral-card-2: var(--rf-color-neutral-card-2);
+  --color-neutral-body: var(--rf-color-neutral-body);
+  --color-neutral-foot: var(--rf-color-neutral-foot);
+  --color-neutral-secondary: var(--rf-color-neutral-secondary);
+  --color-neutral-info: var(--rf-color-neutral-info);
+  --color-neutral-InvertHighlight: var(--rf-color-neutral-InvertHighlight);
+  --color-neutral-black: var(--rf-color-neutral-black);
+  --color-neutral-bg-gray: var(--rf-color-neutral-bg-gray);
+}

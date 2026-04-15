@@ -1,8 +1,9 @@
 import { appStorage } from '../storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '../storage/mmkvConstants';
 
 // - if failed {limit} times, reject unlock for {duration} seconds
 const MULTIPLE_FAILED_CONF = {
-  key: '@failed_unlock',
+  key: APP_MMKV_WEAK_KEYS.FAILED_UNLOCK,
   limit: __DEV__ ? 5 : 999, // set a very high limit in production to disable the feature temporarily
   duration: __DEV__ ? 6 * 1000 : 5 * 60 * 1000,
 };

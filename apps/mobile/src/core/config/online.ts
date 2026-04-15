@@ -1,8 +1,8 @@
 import { isNonPublicProductionEnv } from '@/constant';
 import axios from 'axios';
-import { Platform } from 'react-native';
 import { merge } from 'lodash';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { APP_FILE_LOGGING_ONLINE_SWITCH } from '@/utils/logging/policy';
 
 function sleep(ms = 0) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -23,6 +23,7 @@ type OnlineConfig = {
     ['20260105.disable_db_prepared_upsert']?: boolean;
     ['20260116.allow_short_auto_lock_time_on_bootstrap']?: boolean;
     ['20260122.enable_db_prepared_upsert']?: boolean;
+    [APP_FILE_LOGGING_ONLINE_SWITCH]?: boolean;
   };
 };
 
@@ -35,11 +36,17 @@ function getDefaultOnlineConfig(): OnlineConfig {
       '20260105.disable_db_prepared_upsert': false,
       '20260116.allow_short_auto_lock_time_on_bootstrap': false,
       '20260122.enable_db_prepared_upsert': false,
+      [APP_FILE_LOGGING_ONLINE_SWITCH]: false,
     },
   };
 }
 
 const configRef = { current: getDefaultOnlineConfig() };
+const listeners = new Set<() => void>();
+
+function notifyOnlineConfigUpdated() {
+  listeners.forEach(listener => listener());
+}
 
 export async function fetchConfigOnBootstrap() {
   // Fetch the configuration from the appropriate URL
@@ -50,6 +57,7 @@ export async function fetchConfigOnBootstrap() {
       : response.data;
 
   configRef.current = merge(configRef.current, json);
+  notifyOnlineConfigUpdated();
 
   return json as Partial<OnlineConfig> | undefined;
 }
@@ -73,6 +81,14 @@ export function startSyncOnlineConfig() {
 
 export function getOnlineConfig() {
   return configRef.current;
+}
+
+export function subscribeOnlineConfig(listener: () => void) {
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 export async function getLatestOnlineConfig() {

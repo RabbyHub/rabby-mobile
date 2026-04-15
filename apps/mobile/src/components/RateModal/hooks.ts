@@ -7,6 +7,7 @@ import {
   MMKVStorageStrategy,
   zustandByMMKV,
 } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
@@ -91,7 +92,7 @@ function userCouldRated(
 // })
 
 export const rateGuideLastExposureState = zustandByMMKV(
-  '@RateGuideLastExposure',
+  APP_MMKV_WEAK_KEYS.RATE_GUIDE_LAST_EXPOSURE,
   getDefaultRateGuideLastExposure(),
   { storage: MMKVStorageStrategy.compatJson },
 );
