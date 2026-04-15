@@ -30,6 +30,7 @@ import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { AccountListView, ViewAccount } from './AccountListView';
+import { LoadingSkeleton } from './LoadingSkeleton';
 import SettingSVG from '@/assets2024/icons/common/setting-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
@@ -203,7 +204,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
       if (res.length) {
         // avoid blocking the UI thread
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 20));
         const balances = await Promise.all(
           res.map(async a => {
             return {
@@ -524,14 +525,18 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           </Text>
         </View>
       </View>
-      <AccountListView
-        accounts={accounts}
-        currentAccounts={currentAccounts}
-        selectedAccounts={selectedAccounts}
-        handleSelectIndex={handleSelectIndex}
-        loading={loading}
-        brandName={params.brandName}
-      />
+      {!accounts.length && loading ? (
+        <LoadingSkeleton />
+      ) : (
+        <AccountListView
+          accounts={accounts}
+          currentAccounts={currentAccounts}
+          selectedAccounts={selectedAccounts}
+          handleSelectIndex={handleSelectIndex}
+          loading={loading}
+          brandName={params.brandName}
+        />
+      )}
       {selectedAccounts.length ? (
         <View style={styles.footerContainer}>
           <Button
