@@ -7,7 +7,6 @@ import 'react-native-gesture-handler';
  */
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
-import RozeniteDevTools from '@/devtools/RozeniteDevTools';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
 import { withExpoSnack } from 'nativewind';
@@ -59,6 +58,10 @@ const rneuiTheme = createTheme({
 type AppProps = { rabbitCode: string };
 
 const MemoziedAppNav = React.memo(AppNavigation);
+const RozeniteDevTools =
+  __DEV__ && process.env.WITH_ROZENITE !== 'false'
+    ? require('./devtools/RozeniteDevTools').default
+    : null;
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useInitializeAppOnTop();
@@ -108,7 +111,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
       <ThemeProvider theme={rneuiTheme}>
         <SafeAreaProvider>
           <RootSiblingParent>
-            <RozeniteDevTools />
+            {RozeniteDevTools ? <RozeniteDevTools /> : null}
             <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
