@@ -14,6 +14,7 @@ import { RcCode } from '@/assets/icons/settings';
 import { DevTestItem, GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
+import { E2E_ID } from '@/constant/e2e';
 import { RootNames } from '@/constant/layout';
 import { useDevServerModalVisible } from '../Modals/DevModalDevServer';
 import { toast } from '@/components2024/Toast';
@@ -94,6 +95,18 @@ export default function DevUIPlaygroundModal({
           navigation.dispatch(
             StackActions.push(RootNames.StackTestkits, {
               screen: RootNames.DevUIAccountShowCase,
+            }),
+          );
+        },
+      },
+      {
+        label: '2024 Components',
+        testID: E2E_ID.playground.components2024Entry,
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIComponents2024ShowCase,
             }),
           );
         },

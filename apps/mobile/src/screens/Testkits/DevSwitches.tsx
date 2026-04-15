@@ -818,8 +818,8 @@ function DevSwitchAboutE2EQuietMode() {
         />
         <Text style={styles.switchLabel}>
           {silenceDevLogsForE2E
-            ? 'Silence dev console, LogBox warnings, app log capture, and OpenAPI debug toast on the next app launch. This is the recommended default for Maestro/E2E.'
-            : 'Keep normal dev diagnostics on. Turn this back on before relaunching the app for Maestro/E2E runs.'}
+            ? 'Silence dev console, app log capture, OpenAPI debug toast, and some dev warnings on the next app launch.'
+            : 'Keep normal dev diagnostics on. Turn this on before relaunching the app for quieter Maestro/E2E runs.'}
         </Text>
       </TouchableOpacity>
 
