@@ -185,14 +185,14 @@ export const QRCodeScanner = (props: QRCodeScannerProps) => {
       <Text
         style={{
           maxWidth: 300,
-          color: colors['neutral-line'],
+          color: '#FFFFFF',
         }}>
         Camera permission is not granted. You can grant it on
         <Text
-          onPress={Linking.openSettings}
-          style={{ color: colors['neutral-line'] }}>
+          onPress={() => Linking.openSettings()}
+          style={{ color: '#FFFFFF' }}>
           {' '}
-          setting
+          Settings
         </Text>
       </Text>
     );
