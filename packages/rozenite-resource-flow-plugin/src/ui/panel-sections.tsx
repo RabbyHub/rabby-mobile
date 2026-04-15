@@ -267,6 +267,12 @@ export function FamilySummaryContent(props: {
                 value={formatUsd(addressBalanceFamilyStats.totalBalance)}
               />
               <SummaryStat
+                label="Recorded EVM"
+                value={formatUsd(
+                  addressBalanceFamilyStats.totalRecordedEvmBalance,
+                )}
+              />
+              <SummaryStat
                 label="AppChain Portion"
                 value={formatUsd(addressBalanceFamilyStats.totalAppChainValue)}
                 tone="warning"
@@ -277,12 +283,6 @@ export function FamilySummaryContent(props: {
                   addressBalanceFamilyStats.totalComparableBalance,
                 )}
                 tone="success"
-              />
-              <SummaryStat
-                label="Recorded EVM"
-                value={formatUsd(
-                  addressBalanceFamilyStats.totalRecordedEvmBalance,
-                )}
               />
               <SummaryStat
                 label="Delta Vs EVM"
@@ -323,6 +323,10 @@ export function FamilySummaryContent(props: {
                         value={formatUsd(item.totalBalance)}
                       />
                       <BreakdownMetric
+                        label="Recorded EVM"
+                        value={formatUsd(item.recordedEvmBalance)}
+                      />
+                      <BreakdownMetric
                         label="AppChain"
                         value={formatUsd(item.appChainValue)}
                         tone="warning"
@@ -331,10 +335,6 @@ export function FamilySummaryContent(props: {
                         label="Total - AppChain"
                         value={formatUsd(item.comparableBalance)}
                         tone="success"
-                      />
-                      <BreakdownMetric
-                        label="Recorded EVM"
-                        value={formatUsd(item.recordedEvmBalance)}
                       />
                       <BreakdownMetric
                         label="Delta"
@@ -499,6 +499,10 @@ export function ResourceDetailContent(props: {
                       value={formatUsd(addressBalanceBreakdown.totalBalance)}
                     />
                     <SummaryStat
+                      label="Recorded EVM"
+                      value={formatUsd(addressBalanceBreakdown.recordedEvmBalance)}
+                    />
+                    <SummaryStat
                       label="AppChain Portion"
                       value={formatUsd(addressBalanceBreakdown.appChainValue)}
                       tone="warning"
@@ -507,10 +511,6 @@ export function ResourceDetailContent(props: {
                       label="Comparable Balance"
                       value={formatUsd(addressBalanceBreakdown.comparableBalance)}
                       tone="success"
-                    />
-                    <SummaryStat
-                      label="Recorded EVM"
-                      value={formatUsd(addressBalanceBreakdown.recordedEvmBalance)}
                     />
                     <SummaryStat
                       label="Delta Vs EVM"
