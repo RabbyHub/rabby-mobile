@@ -7,7 +7,9 @@ const inputBuildChannel =
   process.env.buildchannel || process.env.RABBY_MOBILE_BUILD_CHANNEL;
 const resolvedBuildEnv = inputBuildEnv || 'production';
 const resolvedBuildChannel = inputBuildChannel || 'selfhost-reg';
-const shouldEnableRozenite = process.env.WITH_ROZENITE !== 'false';
+const isDevelopmentBuild = !inputBuildEnv;
+const shouldEnableRozenite =
+  isDevelopmentBuild && process.env.WITH_ROZENITE !== 'false';
 const shouldStripConsole =
   inputBuildEnv === 'production' ||
   (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
