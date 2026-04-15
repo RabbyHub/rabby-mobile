@@ -133,7 +133,10 @@ import {
   WorkletFunction,
 } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import {
+  HOME_TOP_HEADER_SIZES,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+} from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
@@ -148,7 +151,6 @@ import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
-  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
   useIOSPulldownRefreshStates,
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
