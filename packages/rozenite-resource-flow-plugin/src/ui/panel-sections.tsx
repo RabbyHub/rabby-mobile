@@ -1,4 +1,4 @@
-import { Col, Collapse, Descriptions, Empty, Row, Timeline } from 'antd';
+import { Col, Collapse, Empty, Row, Timeline } from 'antd';
 import type { CollapseProps } from 'antd';
 import React, { useMemo } from 'react';
 
@@ -7,6 +7,7 @@ import type {
   ResourceFlowTraceEntry,
 } from '../shared/types';
 import {
+  ChainLogo,
   EventDot,
   JsonCard,
   PanelCard,
@@ -18,11 +19,13 @@ import type {
   AddressBalanceResourceBreakdown,
   AppChainFamilyStats,
   FamilySummary,
+  ResourceTraceSourceInfo,
 } from './panel-utils';
 import {
   cn,
   formatLabel,
   formatTimestamp,
+  parseAppChainResource,
   formatSignedUsd,
   formatUsd,
   getResourceUpdatedAt,
@@ -53,6 +56,7 @@ function BreakdownMetric(props: {
 
 export function ResourceSidebarContent(props: {
   filteredResources: ResourceFlowResourceSnapshot[];
+  resourceTraceSourceInfoById: Record<string, ResourceTraceSourceInfo>;
   selectedFamily: string | null;
   selectedResourceId: string | null;
   onSelectResource: (resourceId: string) => void;
@@ -60,6 +64,7 @@ export function ResourceSidebarContent(props: {
   const {
     filteredResources,
     onSelectResource,
+    resourceTraceSourceInfoById,
     selectedFamily,
     selectedResourceId,
   } = props;
@@ -91,6 +96,11 @@ export function ResourceSidebarContent(props: {
       {filteredResources.map(resource => {
         const isActive = resource.id === selectedResourceId;
         const updatedAt = getResourceUpdatedAt(resource);
+        const traceSourceInfo = resourceTraceSourceInfoById[resource.id];
+        const appChainResource =
+          resource.family === 'appchain'
+            ? parseAppChainResource(resource)
+            : null;
 
         return (
           <button
@@ -103,11 +113,27 @@ export function ResourceSidebarContent(props: {
                 : 'border-transparent bg-transparent hover:border-neutral-line hover:bg-neutral-bg-2/80',
             )}
             onClick={() => onSelectResource(resource.id)}>
-            <div className="break-all text-sm font-medium text-neutral-title-1">
-              {resource.resourceKey}
+            <div className="flex items-start gap-3">
+              {appChainResource ? (
+                <ChainLogo
+                  src={appChainResource.chainLogoUrl}
+                  alt={appChainResource.chainName}
+                />
+              ) : null}
+
+              <div className="min-w-0 flex-1">
+                {appChainResource ? (
+                  <div className="truncate text-xs font-medium uppercase tracking-[0.06em] text-neutral-foot">
+                    {appChainResource.chainName}
+                  </div>
+                ) : null}
+                <div className="break-all text-sm font-medium text-neutral-title-1">
+                  {resource.resourceKey}
+                </div>
+              </div>
             </div>
             <div className="mt-1 flex items-center justify-between gap-3 text-[11px] leading-5 text-neutral-foot">
-              <span>{resource.meta.sourceOfCurrentValue || 'n/a'}</span>
+              <span>{traceSourceInfo?.summary || 'n/a'}</span>
               <span>{formatTimestamp(updatedAt)}</span>
             </div>
             {resource.meta.lastError ? (
@@ -241,11 +267,20 @@ export function FamilySummaryContent(props: {
                   <div
                     key={item.chainId}
                     className="rounded-2xl border border-neutral-line bg-neutral-bg-2 p-4">
-                    <div className="text-sm font-medium text-neutral-title-1">
-                      {item.chainName}
-                    </div>
-                    <div className="mt-1 break-all text-xs text-neutral-foot">
-                      {item.chainId} · {item.ownerCount} owner(s)
+                    <div className="flex items-center gap-3">
+                      <ChainLogo
+                        src={item.chainLogoUrl}
+                        alt={item.chainName}
+                        size={28}
+                      />
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-neutral-title-1">
+                          {item.chainName}
+                        </div>
+                        <div className="mt-1 break-all text-xs text-neutral-foot">
+                          {item.chainId} · {item.ownerCount} owner(s)
+                        </div>
+                      </div>
                     </div>
                     <div className="mt-3 text-right text-sm font-semibold text-brand-default">
                       {formatUsd(item.totalUsdValue)}
@@ -260,7 +295,9 @@ export function FamilySummaryContent(props: {
 
       {addressBalanceFamilyStats ? (
         <>
-          <PanelCard title="AddressBalance Decomposition" className="col-span-full">
+          <PanelCard
+            title="AddressBalance Decomposition"
+            className="col-span-full">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <SummaryStat
                 label="Total Balance"
@@ -359,19 +396,30 @@ export function ResourceDetailContent(props: {
   selectedResource: ResourceFlowResourceSnapshot | null;
   selectedTraces: ResourceFlowTraceEntry[];
   addressBalanceBreakdown: AddressBalanceResourceBreakdown | null;
+  resourceTraceSourceInfo: ResourceTraceSourceInfo | null;
 }) {
-  const { addressBalanceBreakdown, selectedResource, selectedTraces } = props;
+  const {
+    addressBalanceBreakdown,
+    resourceTraceSourceInfo,
+    selectedResource,
+    selectedTraces,
+  } = props;
 
   const resourceMetaItems = useMemo(() => {
     if (!selectedResource) {
       return [];
     }
 
+    const appChainResource =
+      selectedResource.family === 'appchain'
+        ? parseAppChainResource(selectedResource)
+        : null;
+
     return [
       {
         key: 'resourceKey',
         label: 'Resource Key',
-        span: { xs: 1, xl: 2 },
+        fullWidth: true,
         children: (
           <div className="break-all">{selectedResource.resourceKey}</div>
         ),
@@ -385,6 +433,21 @@ export function ResourceDetailContent(props: {
         key: 'source',
         label: 'Source',
         children: selectedResource.meta.sourceOfCurrentValue || 'n/a',
+      },
+      {
+        key: 'traceSource',
+        label: 'Trace Source',
+        children: resourceTraceSourceInfo?.traceSource || 'n/a',
+      },
+      {
+        key: 'endpoint',
+        label: 'Endpoint',
+        fullWidth: true,
+        children: (
+          <div className="break-all">
+            {resourceTraceSourceInfo?.endpoint || 'n/a'}
+          </div>
+        ),
       },
       {
         key: 'version',
@@ -409,7 +472,12 @@ export function ResourceDetailContent(props: {
       {
         key: 'activeRequest',
         label: 'Active Request',
-        children: selectedResource.meta.activeRemoteRequestId || 'n/a',
+        fullWidth: true,
+        children: (
+          <div className="break-all">
+            {selectedResource.meta.activeRemoteRequestId || 'n/a'}
+          </div>
+        ),
       },
       {
         key: 'lastHydrated',
@@ -426,8 +494,34 @@ export function ResourceDetailContent(props: {
         label: 'Last Persist',
         children: formatTimestamp(selectedResource.meta.lastPersistAt),
       },
+      ...(appChainResource
+        ? [
+            {
+              key: 'chain',
+              label: 'Chain',
+              children: (
+                <div className="flex items-center gap-2">
+                  <ChainLogo
+                    src={appChainResource.chainLogoUrl}
+                    alt={appChainResource.chainName}
+                    size={22}
+                  />
+                  <span>{appChainResource.chainName}</span>
+                </div>
+              ),
+            },
+            {
+              key: 'chainId',
+              label: 'Chain Id',
+              fullWidth: true,
+              children: (
+                <div className="break-all">{appChainResource.chainId}</div>
+              ),
+            },
+          ]
+        : []),
     ];
-  }, [selectedResource]);
+  }, [resourceTraceSourceInfo, selectedResource]);
 
   const traceCollapseItems = useMemo<
     NonNullable<CollapseProps['items']>
@@ -480,13 +574,20 @@ export function ResourceDetailContent(props: {
           <Row gutter={[16, 16]}>
             <Col xs={24} xl={addressBalanceBreakdown ? 12 : 24}>
               <PanelCard title="Current Meta">
-                <Descriptions
-                  bordered={false}
-                  colon={false}
-                  size="small"
-                  column={{ xs: 1, xl: 2 }}
-                  items={resourceMetaItems}
-                />
+                <Row gutter={[16, 16]}>
+                  {resourceMetaItems.map(item => (
+                    <Col key={item.key} xs={24} lg={item.fullWidth ? 24 : 12}>
+                      <div className="rounded-xl border border-neutral-line bg-neutral-bg-2 px-3 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.06em] text-neutral-foot">
+                          {item.label}
+                        </div>
+                        <div className="mt-1 text-sm font-medium leading-6 text-neutral-title-1">
+                          {item.children}
+                        </div>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
               </PanelCard>
             </Col>
 
@@ -500,7 +601,9 @@ export function ResourceDetailContent(props: {
                     />
                     <SummaryStat
                       label="Recorded EVM"
-                      value={formatUsd(addressBalanceBreakdown.recordedEvmBalance)}
+                      value={formatUsd(
+                        addressBalanceBreakdown.recordedEvmBalance,
+                      )}
                     />
                     <SummaryStat
                       label="AppChain Portion"
@@ -509,7 +612,9 @@ export function ResourceDetailContent(props: {
                     />
                     <SummaryStat
                       label="Comparable Balance"
-                      value={formatUsd(addressBalanceBreakdown.comparableBalance)}
+                      value={formatUsd(
+                        addressBalanceBreakdown.comparableBalance,
+                      )}
                       tone="success"
                     />
                     <SummaryStat
@@ -531,12 +636,18 @@ export function ResourceDetailContent(props: {
             ) : null}
           </Row>
 
-          <JsonCard title="Current Memory Value" value={selectedResource.value} />
+          <JsonCard
+            title="Current Memory Value"
+            value={selectedResource.value}
+          />
           <JsonCard
             title="Local Targets"
             value={selectedResource.meta.localTargets}
           />
-          <JsonCard title="Last Error" value={selectedResource.meta.lastError} />
+          <JsonCard
+            title="Last Error"
+            value={selectedResource.meta.lastError}
+          />
         </div>
       </Col>
 

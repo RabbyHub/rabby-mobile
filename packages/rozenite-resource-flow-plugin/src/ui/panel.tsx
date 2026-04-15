@@ -21,6 +21,7 @@ import {
   buildAddressBalanceResourceBreakdown,
   buildAppChainFamilyStats,
   buildFamilySummary,
+  getResourceTraceSourceInfo,
   getResourceUpdatedAt,
 } from './panel-utils';
 import './globals.css';
@@ -201,6 +202,14 @@ export default function ResourceFlowPanel() {
     [filteredResources, selectedResourceId],
   );
 
+  const resourceTraceSourceInfoById = useMemo(() => {
+    return Object.fromEntries(
+      resources.map(resource => {
+        return [resource.id, getResourceTraceSourceInfo(resource, entries)];
+      }),
+    );
+  }, [entries, resources]);
+
   useEffect(() => {
     if (selectedMainTab === 'resource' && !selectedResource) {
       setSelectedMainTab('family');
@@ -312,6 +321,11 @@ export default function ResourceFlowPanel() {
             selectedResource={selectedResource}
             selectedTraces={selectedTraces}
             addressBalanceBreakdown={addressBalanceBreakdown}
+            resourceTraceSourceInfo={
+              selectedResource
+                ? resourceTraceSourceInfoById[selectedResource.id] || null
+                : null
+            }
           />
         ),
       },
@@ -346,7 +360,7 @@ export default function ResourceFlowPanel() {
                   .includes(input.toLowerCase());
               }}
               optionRender={option => {
-                const data = option.data as FamilyOption;
+                const data = option.data;
 
                 return (
                   <div className="flex items-center justify-between gap-3">
@@ -398,6 +412,7 @@ export default function ResourceFlowPanel() {
           <div className="rf-scrollbar min-h-0 flex-1 overflow-auto p-3">
             <ResourceSidebarContent
               filteredResources={filteredResources}
+              resourceTraceSourceInfoById={resourceTraceSourceInfoById}
               selectedFamily={selectedFamily}
               selectedResourceId={selectedResourceId}
               onSelectResource={resourceId => {

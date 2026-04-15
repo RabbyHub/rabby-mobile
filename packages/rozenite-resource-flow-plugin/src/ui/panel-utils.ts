@@ -27,6 +27,7 @@ export type AppChainFamilyStats = {
   chainTotals: {
     chainId: string;
     chainName: string;
+    chainLogoUrl?: string;
     totalUsdValue: number;
     ownerCount: number;
   }[];
@@ -49,6 +50,13 @@ export type AddressBalanceFamilyStats = {
   totalComparableBalance: number;
   totalEvmDelta: number;
   addresses: AddressBalanceResourceBreakdown[];
+};
+
+export type ResourceTraceSourceInfo = {
+  sourceOfCurrentValue?: 'hydrate' | 'remote';
+  traceSource?: string;
+  endpoint?: string;
+  summary: string;
 };
 
 export function cn(...parts: (string | false | null | undefined)[]) {
@@ -166,6 +174,7 @@ export function parseAppChainResource(resource: ResourceFlowResourceSnapshot):
       ownerAddr: string;
       chainId: string;
       chainName: string;
+      chainLogoUrl?: string;
       netWorth: number;
     }
   | undefined {
@@ -189,6 +198,7 @@ export function parseAppChainResource(resource: ResourceFlowResourceSnapshot):
 
   const candidate = resource.value as {
     name?: unknown;
+    logo_url?: unknown;
     netWorth?: unknown;
   };
 
@@ -199,6 +209,10 @@ export function parseAppChainResource(resource: ResourceFlowResourceSnapshot):
       typeof candidate.name === 'string' && candidate.name.trim()
         ? candidate.name
         : chainId,
+    chainLogoUrl:
+      typeof candidate.logo_url === 'string' && candidate.logo_url.trim()
+        ? candidate.logo_url
+        : undefined,
     netWorth:
       typeof candidate.netWorth === 'number' &&
       Number.isFinite(candidate.netWorth)
@@ -312,6 +326,7 @@ export function buildAppChainFamilyStats(
     {
       chainId: string;
       chainName: string;
+      chainLogoUrl?: string;
       totalUsdValue: number;
       owners: Set<string>;
     }
@@ -335,10 +350,14 @@ export function buildAppChainFamilyStats(
     const chainEntry = chainTotals.get(parsed.chainId) || {
       chainId: parsed.chainId,
       chainName: parsed.chainName,
+      chainLogoUrl: parsed.chainLogoUrl,
       totalUsdValue: 0,
       owners: new Set<string>(),
     };
     chainEntry.totalUsdValue += parsed.netWorth;
+    if (!chainEntry.chainLogoUrl && parsed.chainLogoUrl) {
+      chainEntry.chainLogoUrl = parsed.chainLogoUrl;
+    }
     chainEntry.owners.add(parsed.ownerAddr);
     chainTotals.set(parsed.chainId, chainEntry);
   });
@@ -360,10 +379,93 @@ export function buildAppChainFamilyStats(
       .map(item => ({
         chainId: item.chainId,
         chainName: item.chainName,
+        chainLogoUrl: item.chainLogoUrl,
         totalUsdValue: item.totalUsdValue,
         ownerCount: item.owners.size,
       }))
       .sort((left, right) => right.totalUsdValue - left.totalUsdValue),
+  };
+}
+
+function getTraceSourceValue(entry?: ResourceFlowTraceEntry) {
+  return typeof entry?.detail?.source === 'string'
+    ? entry.detail.source
+    : undefined;
+}
+
+function getTraceEndpointValue(entry?: ResourceFlowTraceEntry) {
+  return typeof entry?.detail?.endpoint === 'string'
+    ? entry.detail.endpoint
+    : undefined;
+}
+
+function buildTraceSummary(
+  sourceOfCurrentValue: 'hydrate' | 'remote' | undefined,
+  traceSource?: string,
+  endpoint?: string,
+) {
+  const phase = sourceOfCurrentValue || 'n/a';
+  const specific = endpoint || traceSource;
+
+  return specific ? `${phase} · ${specific}` : phase;
+}
+
+export function getResourceTraceSourceInfo(
+  resource: ResourceFlowResourceSnapshot,
+  entries: ResourceFlowTraceEntry[],
+): ResourceTraceSourceInfo {
+  const resourceEntries = entries
+    .filter(entry => {
+      return (
+        entry.family === resource.family &&
+        entry.resourceKey === resource.resourceKey
+      );
+    })
+    .sort((left, right) => right.at - left.at);
+
+  let preferredTypes: ResourceFlowTraceEntry['type'][] = [];
+
+  if (resource.meta.sourceOfCurrentValue === 'remote') {
+    preferredTypes = [
+      'remote_fetch_succeeded',
+      'remote_fetch_started',
+      'remote_fetch_ignored_stale',
+      'remote_fetch_failed',
+    ];
+  } else if (resource.meta.sourceOfCurrentValue === 'hydrate') {
+    preferredTypes = [
+      'hydrate_applied',
+      'hydrate_started',
+      'hydrate_skipped',
+      'hydrate_failed',
+    ];
+  }
+
+  const preferredEntry =
+    preferredTypes
+      .map(type => {
+        return resourceEntries.find(entry => entry.type === type);
+      })
+      .find(Boolean) ||
+    resourceEntries.find(entry => {
+      return (
+        typeof entry.detail?.endpoint === 'string' ||
+        typeof entry.detail?.source === 'string'
+      );
+    });
+
+  const traceSource = getTraceSourceValue(preferredEntry);
+  const endpoint = getTraceEndpointValue(preferredEntry);
+
+  return {
+    sourceOfCurrentValue: resource.meta.sourceOfCurrentValue,
+    traceSource,
+    endpoint,
+    summary: buildTraceSummary(
+      resource.meta.sourceOfCurrentValue,
+      traceSource,
+      endpoint,
+    ),
   };
 }
 
@@ -394,7 +496,7 @@ export function buildAddressBalanceFamilyStats(
         item,
       ): item is NonNullable<
         ReturnType<typeof buildAddressBalanceResourceBreakdownFromMap>
-      > => !!item,
+      > => Boolean(item),
     )
     .sort((left, right) => right.totalBalance - left.totalBalance);
 
