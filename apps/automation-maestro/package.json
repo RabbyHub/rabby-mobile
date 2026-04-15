@@ -1,0 +1,28 @@
+{
+  "name": "automation-maestro",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "run:android-home-add-watch-address": "node src/run-android-home-add-watch-address.mjs",
+    "run:android-home-balance-smoke": "node src/run-android-home-balance-smoke.mjs",
+    "run:android-components2024-showcase-smoke": "node src/run-android-components2024-showcase-smoke.mjs",
+    "run:android-balance-suite": "node src/run-android-balance-suite.mjs",
+    "run:android-onboarding-import-private-key": "node src/run-android-onboarding-import-private-key.mjs",
+    "run:android-onboarding-import-private-keys": "node src/run-android-onboarding-import-private-keys.mjs",
+    "run:android-single-home-balance-smoke": "node src/run-android-single-home-balance-smoke.mjs",
+    "check:android-home-add-watch-address": "maestro check-syntax flows/android-home-add-watch-address.yaml",
+    "check:android-ensure-home-ready": "maestro check-syntax flows/android-ensure-home-ready.yaml",
+    "check:android-home-balance-smoke": "maestro check-syntax flows/android-home-balance-smoke.yaml",
+    "check:android-components2024-showcase-smoke": "maestro check-syntax flows/android-components2024-showcase-smoke.yaml",
+    "check:android-home-toggle-curve": "maestro check-syntax flows/android-home-toggle-curve.yaml",
+    "check:android-onboarding-import-private-key-to-single-home": "maestro check-syntax flows/android-onboarding-import-private-key-to-single-home.yaml",
+    "check:android-unlock": "maestro check-syntax flows/android-unlock.yaml",
+    "check:android-onboarding-import-private-key": "maestro check-syntax flows/android-onboarding-import-private-key.yaml",
+    "check:android-home-import-private-key": "maestro check-syntax flows/android-home-import-private-key.yaml",
+    "check:android-single-home-back-to-home": "maestro check-syntax flows/android-single-home-back-to-home.yaml",
+    "check:android-single-home-toggle-curve": "maestro check-syntax flows/android-single-home-toggle-curve.yaml"
+  }
+}

@@ -1,0 +1,185 @@
+appId: ${RABBY_ANDROID_E2E_PACKAGE}
+name: Android onboarding import private key to single home
+tags:
+  - android
+  - maestro
+  - onboarding
+  - single-home
+env:
+  WELCOME_IMPORT_EXISTING_ID: e2e.onboarding.welcome.import-existing
+  IMPORT_METHOD_PRIVATE_KEY_ID: e2e.onboarding.import-method.private-key
+  PRIVATE_KEY_TAB_ID: e2e.onboarding.private-key.tab
+  PRIVATE_KEY_INPUT_ID: e2e.onboarding.private-key.input
+  PRIVATE_KEY_SUBMIT_ID: e2e.onboarding.private-key.submit
+  SET_PASSWORD_INPUT_ID: e2e.onboarding.set-password.password
+  SET_PASSWORD_CONFIRM_INPUT_ID: e2e.onboarding.set-password.confirm-password
+  SET_PASSWORD_BIOMETRICS_ID: e2e.onboarding.set-password.biometrics
+  SET_PASSWORD_BIOMETRICS_ON_LABEL: e2e.onboarding.set-password.biometrics.on
+  SET_PASSWORD_SUBMIT_ID: e2e.onboarding.set-password.submit
+  SINGLE_HOME_BALANCE_VALUE_ID: e2e.home.single-address.balance.value
+  SINGLE_HOME_BALANCE_LOADING_ID: e2e.home.single-address.balance.loading
+  SINGLE_HOME_CHANGE_LOADING_ID: e2e.home.single-address.change.loading
+  SINGLE_HOME_CURVE_LOADING_ID: e2e.home.single-address.curve.loading
+  SINGLE_HOME_CURVE_TOGGLE_ID: e2e.home.single-address.curve.toggle
+  SINGLE_HOME_BACK_ID: e2e.home.single-address.back
+---
+- runFlow:
+    when:
+      visible:
+        text: "Open debugger to view warnings\\."
+    commands:
+      - tapOn:
+          point: "91%,91%"
+
+- extendedWaitUntil:
+    visible:
+      id: ${WELCOME_IMPORT_EXISTING_ID}
+    timeout: 30000
+
+- assertVisible:
+    id: ${WELCOME_IMPORT_EXISTING_ID}
+
+- tapOn:
+    id: ${WELCOME_IMPORT_EXISTING_ID}
+
+- assertVisible:
+    id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+
+- tapOn:
+    id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+
+- assertVisible:
+    id: ${PRIVATE_KEY_TAB_ID}
+
+- tapOn:
+    id: ${PRIVATE_KEY_TAB_ID}
+
+- assertVisible:
+    id: ${PRIVATE_KEY_INPUT_ID}
+
+- tapOn:
+    id: ${PRIVATE_KEY_INPUT_ID}
+
+- eraseText: 100
+
+- setClipboard: ${RABBY_ANDROID_TEST_PRIVATE_KEY}
+
+- pasteText
+
+- hideKeyboard
+
+- runFlow:
+    when:
+      visible:
+        text: "Open debugger to view warnings\\."
+    commands:
+      - tapOn:
+          point: "91%,91%"
+
+- assertVisible:
+    id: ${PRIVATE_KEY_SUBMIT_ID}
+
+- tapOn:
+    point: "50%,86%"
+
+- extendedWaitUntil:
+    visible:
+      id: ${SET_PASSWORD_INPUT_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${SET_PASSWORD_INPUT_ID}
+
+- tapOn:
+    id: ${SET_PASSWORD_INPUT_ID}
+
+- eraseText: 100
+
+- inputText: ${RABBY_ANDROID_APP_PASSWORD}
+
+- hideKeyboard
+
+- tapOn:
+    point: "50%,24%"
+
+- extendedWaitUntil:
+    visible:
+      id: ${SET_PASSWORD_CONFIRM_INPUT_ID}
+    timeout: 10000
+
+- tapOn:
+    id: ${SET_PASSWORD_CONFIRM_INPUT_ID}
+
+- eraseText: 100
+
+- inputText: ${RABBY_ANDROID_APP_PASSWORD}
+
+- hideKeyboard
+
+- runFlow:
+    when:
+      visible:
+        text: ${SET_PASSWORD_BIOMETRICS_ON_LABEL}
+    commands:
+      - tapOn:
+          id: ${SET_PASSWORD_BIOMETRICS_ID}
+
+- runFlow:
+    when:
+      visible:
+        text: "Open debugger to view warnings\\."
+    commands:
+      - tapOn:
+          point: "91%,91%"
+
+- assertVisible:
+    id: ${SET_PASSWORD_SUBMIT_ID}
+
+- tapOn:
+    point: "50%,95%"
+
+- extendedWaitUntil:
+    notVisible:
+      id: ${SET_PASSWORD_SUBMIT_ID}
+    timeout: 20000
+
+- assertNotVisible:
+    id: ${SET_PASSWORD_SUBMIT_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${SINGLE_HOME_BACK_ID}
+    timeout: 20000
+
+- assertVisible:
+    id: ${SINGLE_HOME_BACK_ID}
+
+- runFlow:
+    when:
+      visible:
+        id: ${SINGLE_HOME_BALANCE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: ${SINGLE_HOME_BALANCE_LOADING_ID}
+          timeout: 30000
+
+- runFlow:
+    when:
+      visible:
+        id: ${SINGLE_HOME_CHANGE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: ${SINGLE_HOME_CHANGE_LOADING_ID}
+          timeout: 30000
+
+- runFlow:
+    when:
+      visible:
+        id: ${SINGLE_HOME_CURVE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: ${SINGLE_HOME_CURVE_LOADING_ID}
+          timeout: 30000

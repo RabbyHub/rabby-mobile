@@ -16818,6 +16818,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"automation-maestro@workspace:apps/automation-maestro":
+  version: 0.0.0-use.local
+  resolution: "automation-maestro@workspace:apps/automation-maestro"
+  languageName: unknown
+  linkType: soft
+
 "autoprefixer@npm:^10.4.13":
   version: 10.4.16
   resolution: "autoprefixer@npm:10.4.16::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fautoprefixer%2F-%2Fautoprefixer-10.4.16.tgz"
