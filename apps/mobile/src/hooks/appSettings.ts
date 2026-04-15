@@ -39,7 +39,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: __DEV__,
     toastOpenApiHttpErrorStatus: false,
-    silenceDevLogsForE2E: __DEV__,
+    silenceDevLogsForE2E: false,
   },
 );
 

@@ -30,6 +30,12 @@ const DevUIAccountShowCase = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevUIAccountShowCase'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIAccountShowCase,
 });
+const DevUIComponents2024ShowCase = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIComponents2024ShowCase').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIComponents2024ShowCase'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIComponents2024ShowCase,
+});
 const DevUIToast = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIToast').default
 >({
@@ -134,6 +140,10 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIAccountShowCase}
         component={DevUIAccountShowCase}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIComponents2024ShowCase}
+        component={DevUIComponents2024ShowCase}
       />
       <Stack.Screen
         name={RootNames.DevUIScreenContainerShowCase}

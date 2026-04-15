@@ -23,6 +23,7 @@ export const E2E_ID = {
   },
   home: {
     addAddressButton: 'e2e.home.add-address.button',
+    settingsButton: 'e2e.home.settings.button',
     addAddressImportAddress: 'e2e.home.add-address.import-address',
     importMethodWatchAddress: 'e2e.home.import-method.watch-address',
     portfolioBalanceValue: 'e2e.home.portfolio.balance.value',
@@ -39,5 +40,32 @@ export const E2E_ID = {
     singleCurveLoading: 'e2e.home.single-address.curve.loading',
     singleCurveToggle: 'e2e.home.single-address.curve.toggle',
     singleAddressBack: 'e2e.home.single-address.back',
+  },
+  settings: {
+    uiPlayground: 'e2e.settings.ui-playground',
+  },
+  playground: {
+    components2024Entry: 'e2e.playground.components2024.entry',
+    components2024Screen: 'e2e.playground.components2024.screen',
+    components2024ButtonPrimary: 'e2e.playground.components2024.button.primary',
+    components2024ButtonLoading: 'e2e.playground.components2024.button.loading',
+    components2024ButtonPressCount:
+      'e2e.playground.components2024.button.press-count',
+    components2024ButtonLoadingState:
+      'e2e.playground.components2024.button.loading-state',
+    components2024CheckboxToggle:
+      'e2e.playground.components2024.checkbox.toggle',
+    components2024CheckboxState: 'e2e.playground.components2024.checkbox.state',
+    components2024RadioAlpha: 'e2e.playground.components2024.radio.alpha',
+    components2024RadioBeta: 'e2e.playground.components2024.radio.beta',
+    components2024RadioState: 'e2e.playground.components2024.radio.state',
+    components2024PillsContainer:
+      'e2e.playground.components2024.pills.container',
+    components2024PillsPortfolio:
+      'e2e.playground.components2024.pills.portfolio',
+    components2024PillsActivity: 'e2e.playground.components2024.pills.activity',
+    components2024PillsState: 'e2e.playground.components2024.pills.state',
+    components2024SearchInput: 'e2e.playground.components2024.search.input',
+    components2024SearchState: 'e2e.playground.components2024.search.state',
   },
 } as const;
