@@ -64,6 +64,27 @@ export interface Props {
   onCancel: () => void;
 }
 
+const useGetAliasByAddress = () => {
+  const { accounts } = useAccounts();
+  const aliasMapRef = React.useRef<Map<string, string>>(new Map());
+
+  React.useEffect(() => {
+    const map = new Map<string, string>();
+    for (const a of accounts) {
+      if (a.aliasName && a.address) {
+        map.set(a.address.toLowerCase(), a.aliasName);
+      }
+    }
+    aliasMapRef.current = map;
+  }, [accounts]);
+
+  const getAliasByAddress = React.useCallback((address: string) => {
+    return aliasMapRef.current.get(address.toLowerCase());
+  }, []);
+
+  return getAliasByAddress;
+};
+
 async function onAddressImported(addresses: KeyringEventAccount[]) {
   // accountEvents.emit('ACCOUNT_ADDED', {
   //   accounts: addresses,
@@ -131,18 +152,9 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const [accounts, setAccounts] = React.useState<ViewAccount[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [setting, setSetting] = useAtom(settingAtom);
-  const { accounts: existedAccounts } = useAccounts();
-  const aliasMap = React.useMemo(() => {
-    const map = new Map<string, string>();
-    for (const a of existedAccounts) {
-      if (a.aliasName && a.address) {
-        map.set(a.address.toLowerCase(), a.aliasName);
-      }
-    }
-    return map;
-  }, [existedAccounts]);
+  const getAliasByAddress = useGetAliasByAddress();
 
-  const stoppedRef = React.useRef(true);
+  const abortLoadRef = React.useRef<(() => void) | null>(null);
   const exitRef = React.useRef(false);
   const startNumberRef = React.useRef((setting?.startNumber || 1) - 1);
   const [currentAccounts, setCurrentAccounts] = React.useState<ViewAccount[]>(
@@ -200,7 +212,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
       if (res.length) {
         // avoid blocking the UI thread
-        await new Promise(resolve => setTimeout(resolve, 1));
+        await new Promise(resolve => setTimeout(resolve, 0));
         const balances = await Promise.all(
           res.map(async a => {
             return {
@@ -209,68 +221,73 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             };
           }),
         );
-        if (stoppedRef.current) {
-          return;
-        }
-        setAccounts(prev => {
-          return [
-            ...prev,
-            ...balances.map((b, idx) => {
-              return {
-                address: b.address,
-                index: res[idx].index,
-                balance: b.balance,
-                aliasName: aliasMap.get(b.address.toLowerCase()),
-              };
-            }),
-          ];
+
+        return balances.map((b, idx) => {
+          return {
+            address: b.address,
+            index: res[idx].index,
+            balance: b.balance,
+            aliasName: getAliasByAddress(b.address),
+          };
         });
       }
     },
-    [apiHD, getMnemonicKeyring, params.type, aliasMap],
+    [apiHD, getMnemonicKeyring, params.type, getAliasByAddress],
   );
 
-  const handleLoadAddress = React.useCallback(async () => {
-    setLoading(true);
-    stoppedRef.current = false;
-    const start = startNumberRef.current;
-    let i = start;
-    // let unknownError = false;
+  const handleLoadAddress = React.useCallback(() => {
+    let isAborted = false;
+    const abort = () => {
+      isAborted = true;
+    };
 
-    try {
-      maxCountRef.current =
-        (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
+    const run = async () => {
+      setLoading(true);
+      const start = startNumberRef.current;
+      let i = start;
 
-      for (; i < start + maxCountRef.current; ) {
-        if (stoppedRef.current) {
-          break;
+      try {
+        maxCountRef.current =
+          (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
+
+        for (; i < start + maxCountRef.current && !isAborted; ) {
+          const nextAccounts = await loadAddress(i);
+          if (nextAccounts) {
+            setAccounts(prev => {
+              return [...prev, ...nextAccounts];
+            });
+          }
+          i += stepCountRef.current;
         }
-        await loadAddress(i);
-        i += stepCountRef.current;
+      } catch (err: any) {
+        const errorCode = ledgerErrorHandler(err);
+        let errMessage = err.message;
+        if (errorCode === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
+          errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
+        } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
+          errMessage = t('page.newAddress.ledger.error.unknown');
+          if (__DEV__) exitRef.current = true;
+        }
+        if (errMessage) {
+          toast.show(errMessage);
+        }
       }
-    } catch (err: any) {
-      const errorCode = ledgerErrorHandler(err);
-      let errMessage = err.message;
-      if (errorCode === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
-        errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
-      } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
-        errMessage = t('page.newAddress.ledger.error.unknown');
-        // unknownError = true;
-        if (__DEV__) exitRef.current = true;
-      }
-      if (errMessage) {
-        toast.show(errMessage);
-      }
-    }
-    stoppedRef.current = true;
-    setLoading(false);
-    if (exitRef.current) {
-      return;
-    }
 
-    if (i !== start + maxCountRef.current) {
-      handleLoadAddress();
-    }
+      if (isAborted) return;
+
+      setLoading(false);
+
+      if (exitRef.current) {
+        return;
+      }
+
+      if (i !== start + maxCountRef.current) {
+        handleLoadAddress();
+      }
+    };
+
+    run();
+    return abort;
   }, [apiHD, loadAddress, t]);
 
   const handleSelectIndex = React.useCallback(
@@ -295,19 +312,16 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     [t],
   );
 
+  const handleSettingChange = React.useCallback(() => {
+    setAccounts([]);
+    setSelectedAccounts([]);
+    abortLoadRef.current?.();
+    abortLoadRef.current = handleLoadAddress();
+  }, [handleLoadAddress]);
+
   React.useEffect(() => {
     startNumberRef.current = (setting?.startNumber || 1) - 1;
   }, [setting?.startNumber]);
-
-  React.useEffect(() => {
-    setAccounts([]);
-    setSelectedAccounts([]);
-    if (stoppedRef.current) {
-      handleLoadAddress();
-    } else {
-      stoppedRef.current = true;
-    }
-  }, [handleLoadAddress, setting]);
 
   React.useEffect(() => {
     if (params.type === KEYRING_TYPE.HdKeyring) {
@@ -318,7 +332,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             return {
               address,
               index: api?.getInfoByAddress(address)?.index ?? idx,
-              aliasName: aliasMap.get(address.toLowerCase()),
+              aliasName: getAliasByAddress(address),
             };
           });
           setCurrentAccounts(_accounts);
@@ -330,26 +344,27 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           setCurrentAccounts(
             res.map(a => ({
               ...a,
-              aliasName: a.aliasName || aliasMap.get(a.address.toLowerCase()),
+              aliasName: a.aliasName || getAliasByAddress(a.address),
             })),
           );
         }
       });
     }
-  }, [apiHD, getMnemonicKeyring, params.type, aliasMap]);
+  }, [apiHD, getMnemonicKeyring, params.type, getAliasByAddress]);
 
   React.useEffect(() => {
     return () => {
       exitRef.current = true;
-      stoppedRef.current = true;
+      abortLoadRef.current?.();
     };
   }, []);
 
   React.useEffect(() => {
     if (params.type === KEYRING_TYPE.HdKeyring) {
       setSetting({ hdPath: LedgerHDPathType.BIP44, startNumber: 1 });
+      handleSettingChange();
     }
-  }, [setSetting, params.type]);
+  }, [setSetting, params.type, handleSettingChange]);
 
   const importToastHiddenRef = React.useRef<() => void>(() => {});
 
@@ -450,6 +465,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       name: settingModalName!,
       brand: params.brandName,
       onDone: () => {
+        handleSettingChange();
         removeGlobalBottomSheetModal2024(id);
       },
       ...(params.type === KEYRING_TYPE.KeystoneKeyring
@@ -487,6 +503,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     params.type,
     settingModalName,
     onCancel,
+    handleSettingChange,
   ]);
 
   return (
