@@ -26,14 +26,17 @@ import {
   refreshDayCurve,
   useMultiDayCurve,
   useMultiCurveIsAnyAddrLoading,
-} from '@/store/curve24h';
+} from '@/hooks/useMultiCurve';
+import { useAccountInfo } from '../hooks';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { Text, AnimateableText } from '@/components/Typography';
-import { balanceAccountsStore } from '@/store/balance';
-import type { Addresses24hChangeFlowState } from '@/store/balance24h';
-import { useHomePortfolioSummary } from '@/screens/Home/hooks/useHomePortfolioSummary';
+import balanceStore from '@/store/balance';
+import {
+  useMultiHome24hBalanceCurveChart,
+  useSceneIsLoadingNew,
+} from '@/hooks/useScene24hBalance';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -133,22 +136,24 @@ export const MultiChart = memo(function MultiChart({
   hideType: BALANCE_HIDE_TYPE;
 } & RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
-  const homePortfolio = useHomePortfolioSummary();
-  const data = homePortfolio.changeSummary.combinedData;
+  const { combinedData: data } = useMultiHome24hBalanceCurveChart();
 
   useRendererDetect({ name: 'MultiAssets-MultiChart' });
 
-  const displayAddresses = homePortfolio.displayAddresses;
-  const totalBalance = homePortfolio.totalBalance;
-  const sceneChangeFlow = homePortfolio.changeSummary.flow;
-  const showBalanceLoadingWithoutLocal =
-    homePortfolio.showBalanceLoadingWithoutLocal;
-  const matteredAccountCount = balanceAccountsStore(
-    s => s.matteredAccountLength,
-  );
-  const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading(displayAddresses);
+  const { matteredAccountCount, myTop10Addresses } = useAccountInfo();
+  const balanceMap = balanceStore(s => s.balanceMap);
+  const totalBalance = useMemo(() => {
+    if (!myTop10Addresses.length) {
+      return 0;
+    }
+    return myTop10Addresses.reduce((acc, address) => {
+      const balance = balanceMap[address.toLowerCase()];
+      return acc + (balance?.totalBalance || 0);
+    }, 0);
+  }, [balanceMap, myTop10Addresses]);
+  const { isAnyAddrLoading } = useMultiCurveIsAnyAddrLoading();
 
-  const { dayCurveData: dayCurveData } = useMultiDayCurve(displayAddresses);
+  const { dayCurveData: dayCurveData } = useMultiDayCurve();
 
   const chartsData = dayCurveData.list;
 
@@ -172,8 +177,6 @@ export const MultiChart = memo(function MultiChart({
             data={chartsData}
             hideType={hideType}
             matteredAccountCount={matteredAccountCount}
-            showBalanceLoadingWithoutLocal={showBalanceLoadingWithoutLocal}
-            sceneChangeFlow={sceneChangeFlow}
           />
           <ChartContent
             data={chartsData}
@@ -195,8 +198,6 @@ interface IHeaderProps {
   data: CurvePoint[];
   hideType: BALANCE_HIDE_TYPE;
   matteredAccountCount?: number;
-  showBalanceLoadingWithoutLocal: boolean;
-  sceneChangeFlow: Addresses24hChangeFlowState;
 }
 const ChartHeader = React.memo(
   ({
@@ -207,8 +208,6 @@ const ChartHeader = React.memo(
     hideType,
     data: _data,
     matteredAccountCount,
-    showBalanceLoadingWithoutLocal,
-    sceneChangeFlow,
   }: IHeaderProps) => {
     const { reanimatedStyles, styles, colors2024 } = useTheme2024({ getStyle });
     const rStyles = {
@@ -217,25 +216,14 @@ const ChartHeader = React.memo(
     const { currentIndex } = LineChart.useChart();
     const { currency, formatCurrentCurrency } = useCurrency();
     const debouncedRawChange = useDebouncedValue(rawChange, 300);
+    const { isLoadingNew: loading } = useSceneIsLoadingNew('Home');
     const showNetWorthLoading = useMemo(() => {
-      return showBalanceLoadingWithoutLocal;
-    }, [showBalanceLoadingWithoutLocal]);
+      return loading;
+    }, [loading]);
     const changePercent = useDebouncedValue(_changePercent, 300);
-    const shouldWaitDebouncedChange = useMemo(() => {
-      return !!_changePercent && !changePercent;
-    }, [_changePercent, changePercent]);
     const showChangeLoading = useMemo(() => {
-      return (
-        showNetWorthLoading ||
-        (!changePercent &&
-          (sceneChangeFlow.isAnyLoading || shouldWaitDebouncedChange))
-      );
-    }, [
-      changePercent,
-      sceneChangeFlow.isAnyLoading,
-      shouldWaitDebouncedChange,
-      showNetWorthLoading,
-    ]);
+      return loading;
+    }, [loading]);
 
     const netWorth = useMemo(() => {
       return formatSmallCurrencyValue(rawNetWorth, { currency });
