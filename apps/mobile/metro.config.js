@@ -241,6 +241,7 @@ module.exports = rozeniteEnabled
         '@rozenite/react-navigation-plugin',
         '@rozenite/network-activity-plugin',
         '@rozenite/storage-plugin',
+        '@rabby-wallet/rozenite-resource-flow-plugin',
       ],
     })
   : mergedConfig;

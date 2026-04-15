@@ -9,6 +9,7 @@ import {
 } from '@rozenite/storage-plugin';
 import { useNetworkActivityDevTools } from '@rozenite/network-activity-plugin';
 import React from 'react';
+import { useResourceFlowDevTools } from './useResourceFlowDevTools';
 
 const rozeniteStorageAdapters = [
   createMMKVStorageAdapter({
@@ -49,6 +50,7 @@ function RozeniteDevToolsEnabled() {
     },
   });
   useRozeniteStoragePlugin({ storages: rozeniteStorageAdapters });
+  useResourceFlowDevTools();
 
   return null;
 }

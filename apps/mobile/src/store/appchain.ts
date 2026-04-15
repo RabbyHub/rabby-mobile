@@ -6,6 +6,7 @@ import {
   PortfolioItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import PQueue from 'p-queue';
+import { appChainResourceStore } from './appchainResource';
 
 /**
  * 用于展示的 AppChain 数据结构
@@ -68,32 +69,28 @@ const toAppChainItem = (item: AppChainItem): IAppChainItem => {
  * 同步 AppChain 数据到数据库
  * 从接口获取数据后，更新数据库
  */
-const syncAppChains = async (
+const persistAppChains = async (
   owner_addr: string,
   appChains: AppChainItem[],
 ): Promise<void> => {
   const syncTimestamp = Date.now();
 
-  try {
-    // 批量保存
-    const entities = appChains.map(item => {
-      const entity = new AppChainEntity();
-      AppChainEntity.fillEntity(entity, owner_addr.toLowerCase(), item);
-      return entity;
-    });
+  // 批量保存
+  const entities = appChains.map(item => {
+    const entity = new AppChainEntity();
+    AppChainEntity.fillEntity(entity, owner_addr.toLowerCase(), item);
+    return entity;
+  });
 
-    if (entities.length > 0) {
-      await AppChainEntity.getRepository().save(entities);
-    }
-
-    // 清理过期数据（在本次同步之前更新的数据）
-    await AppChainEntity.cleanupStaleAppChains(
-      owner_addr.toLowerCase(),
-      syncTimestamp,
-    );
-  } catch (error) {
-    console.error(`Failed to sync appchains for ${owner_addr}:`, error);
+  if (entities.length > 0) {
+    await AppChainEntity.getRepository().save(entities);
   }
+
+  // 清理过期数据（在本次同步之前更新的数据）
+  await AppChainEntity.cleanupStaleAppChains(
+    owner_addr.toLowerCase(),
+    syncTimestamp,
+  );
 };
 
 export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
@@ -125,6 +122,11 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
       }
 
       set({ appChainMap });
+      Object.entries(appChainMap).forEach(([ownerAddr, value]) => {
+        appChainResourceStore.hydrate(ownerAddr, value, {
+          trigger: 'initStore',
+        });
+      });
     } catch (error) {
       console.error('Failed to init appchain store:', error);
     }
@@ -145,13 +147,33 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
     // 检查缓存
     for (const address of lowerAddresses) {
       if (!force) {
+        appChainResourceStore.markHydrateStartedFor(address, {
+          trigger: 'batchGetAppChains',
+          force,
+        });
         const expired = await AppChainEntity.isExpired(address);
         if (!expired) {
           const cached = await AppChainEntity.queryByOwner(address);
-          cacheMap[address] = cached.map(toAppChainItem);
+          const value = cached.map(toAppChainItem);
+          cacheMap[address] = value;
+          appChainResourceStore.hydrate(address, value, {
+            trigger: 'batchGetAppChains',
+            force,
+          });
           nextLoadingMap[address] = false;
           continue;
         }
+        appChainResourceStore.markHydrateSkippedFor(address, {
+          trigger: 'batchGetAppChains',
+          force,
+          reason: 'cache_expired_or_missing',
+        });
+      } else {
+        appChainResourceStore.markHydrateSkippedFor(address, {
+          trigger: 'batchGetAppChains',
+          force,
+          reason: 'force_refresh',
+        });
       }
       nextLoadingMap[address] = true;
       fetchList.push(address);
@@ -180,10 +202,45 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
           address: string;
           appChains: AppChainItem[];
         }>(async () => {
-          const { apps } = await openapi.getAppChainList(address);
-          // 同步到数据库
-          await syncAppChains(address, apps ?? []);
-          return { address, appChains: apps ?? [] };
+          const requestId = appChainResourceStore.startRemoteFetchFor(address, {
+            trigger: 'batchGetAppChains',
+            force,
+          });
+
+          try {
+            const { apps } = await openapi.getAppChainList(address);
+            const appChains = apps ?? [];
+            const value = appChains.map(toAppChainItem);
+            appChainResourceStore.applyRemoteValueFor(
+              address,
+              requestId,
+              value,
+              {
+                trigger: 'batchGetAppChains',
+                force,
+              },
+            );
+            await appChainResourceStore.persistInBackgroundFor(
+              address,
+              () => persistAppChains(address, appChains),
+              {
+                trigger: 'batchGetAppChains',
+                force,
+              },
+            );
+            return { address, appChains };
+          } catch (error) {
+            appChainResourceStore.markRemoteErrorFor(
+              address,
+              requestId,
+              error,
+              {
+                trigger: 'batchGetAppChains',
+                force,
+              },
+            );
+            throw error;
+          }
         }),
       ),
     );
@@ -222,6 +279,7 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
     }
 
     const lowerAddress = address.toLowerCase();
+    let requestId: string | undefined;
 
     set(state => ({
       isLoadingByAddress: {
@@ -233,10 +291,18 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
     try {
       // 检查缓存是否过期
       if (!force) {
+        appChainResourceStore.markHydrateStartedFor(lowerAddress, {
+          trigger: 'getAppChains',
+          force,
+        });
         const expired = await AppChainEntity.isExpired(lowerAddress);
         if (!expired) {
           const cached = await AppChainEntity.queryByOwner(lowerAddress);
           const value = cached.map(toAppChainItem);
+          appChainResourceStore.hydrate(lowerAddress, value, {
+            trigger: 'getAppChains',
+            force,
+          });
           set(state => ({
             appChainMap: {
               ...state.appChainMap,
@@ -245,16 +311,45 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
           }));
           return value;
         }
+        appChainResourceStore.markHydrateSkippedFor(lowerAddress, {
+          trigger: 'getAppChains',
+          force,
+          reason: 'cache_expired_or_missing',
+        });
+      } else {
+        appChainResourceStore.markHydrateSkippedFor(lowerAddress, {
+          trigger: 'getAppChains',
+          force,
+          reason: 'force_refresh',
+        });
       }
 
       // 请求数据
+      requestId = appChainResourceStore.startRemoteFetchFor(lowerAddress, {
+        trigger: 'getAppChains',
+        force,
+      });
       const { apps } = await openapi.getAppChainList(lowerAddress);
       const appChains = apps ?? [];
 
-      // 同步到数据库
-      await syncAppChains(lowerAddress, appChains);
-
       const value = appChains.map(toAppChainItem);
+      appChainResourceStore.applyRemoteValueFor(
+        lowerAddress,
+        requestId,
+        value,
+        {
+          trigger: 'getAppChains',
+          force,
+        },
+      );
+      await appChainResourceStore.persistInBackgroundFor(
+        lowerAddress,
+        () => persistAppChains(lowerAddress, appChains),
+        {
+          trigger: 'getAppChains',
+          force,
+        },
+      );
       // 更新 store
       set(state => ({
         appChainMap: {
@@ -264,6 +359,10 @@ export const useAppChainStore = zCreate<AppChainState>((set, get) => ({
       }));
       return value;
     } catch (error) {
+      appChainResourceStore.markRemoteErrorFor(lowerAddress, requestId, error, {
+        trigger: 'getAppChains',
+        force,
+      });
       console.error(`Failed to get appchains for ${address}:`, error);
     } finally {
       set(state => ({
