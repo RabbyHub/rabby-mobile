@@ -39,6 +39,8 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import * as SecretVault from '@/core/utils/secretVault';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 /** Toast position at the top of screen */
 const TOAST_POSITION_TOP = 30;
@@ -147,7 +149,8 @@ export const ImportSecret = ({ route }: ScreenProps) => {
         </Pressable>
         <Pressable
           style={[styles.tab, activeTab === 'privateKey' && styles.tabActive]}
-          onPress={() => handleTabChange('privateKey')}>
+          onPress={() => handleTabChange('privateKey')}
+          {...makeTestIDProps(E2E_ID.onboarding.privateKeyTab)}>
           <Text
             style={[
               styles.tabText,
@@ -350,6 +353,11 @@ export const ImportSecret = ({ route }: ScreenProps) => {
         title: t('global.Confirm'),
         onPress: handleConfirm,
         disabled: isConfirmDisabled,
+        ...makeTestIDProps(
+          activeTab === 'privateKey'
+            ? E2E_ID.onboarding.privateKeySubmit
+            : null,
+        ),
       }}
       style={styles.screen}
       footerBottomOffset={48}>
@@ -378,6 +386,11 @@ export const ImportSecret = ({ route }: ScreenProps) => {
                   textContentType: 'none',
                   blurOnSubmit: true,
                   returnKeyType: 'done',
+                  ...makeTestIDProps(
+                    activeTab === 'privateKey'
+                      ? E2E_ID.onboarding.privateKeyInput
+                      : null,
+                  ),
                   onChangeText: handleInputChange,
                 }}
                 customIcon={ctx => (

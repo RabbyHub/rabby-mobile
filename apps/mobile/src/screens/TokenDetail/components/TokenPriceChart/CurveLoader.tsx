@@ -1,13 +1,13 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { View, ViewProps } from 'react-native';
 import { LoadingLinear } from './LoadingLinear';
 
-export const CurveLoader = ({ style }: { style?: StyleProp<ViewStyle> }) => {
+export const CurveLoader = ({ style, ...viewProps }: ViewProps) => {
   const { styles } = useTheme2024({ getStyle });
   return (
-    <View style={[styles.wrapper, style]}>
+    <View {...viewProps} style={[styles.wrapper, style]}>
       <Skeleton
         width={'100%'}
         height={80}

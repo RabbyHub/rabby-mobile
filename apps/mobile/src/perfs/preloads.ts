@@ -13,11 +13,11 @@ export async function preloadSettingsScreen() {
 }
 
 export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
-  [RootNames.NewUserGetStarted2024]: 'NewUserGetStarted2024',
   [RootNames.DevUIFontShowCase]: 'DevUIFontShowCase',
   [RootNames.DevUIAnimatedTextAndView]: 'DevUIAnimatedTextAndView',
   [RootNames.DevUIFormShowCase]: 'DevUIFormShowCase',
   [RootNames.DevUIAccountShowCase]: 'DevUIAccountShowCase',
+  [RootNames.DevUIComponents2024ShowCase]: 'DevUIComponents2024ShowCase',
   [RootNames.DevUIScreenContainerShowCase]: 'DevUIScreenContainerShowCase',
   [RootNames.DevUIToast]: 'DevUIToast',
   [RootNames.DevUINotifications]: 'DevUINotifications',

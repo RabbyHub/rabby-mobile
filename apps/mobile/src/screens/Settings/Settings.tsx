@@ -41,6 +41,7 @@ import {
   IS_CONSOLE_STRIPPED,
   IS_HERMES_ENABLED,
 } from '@/constant/env';
+import { E2E_ID } from '@/constant/e2e';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import {
@@ -792,6 +793,7 @@ function DevSettingsBlocks() {
             {
               label: 'UI Playground',
               icon: RcCode,
+              testID: E2E_ID.settings.uiPlayground,
               onPress: () => {
                 setDevUIPlaygroundModalVisible(true);
               },

@@ -4,20 +4,8 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { registerAppScreen } from '@/perfs/apis';
-import {
-  preloadNonProductionScreens,
-  TESTKITS_PRELOAD_SCREENS,
-} from '@/perfs/preloads';
-import { useLayoutEffect } from 'react';
-import { devOnlyDelayNavi } from '../Testkits/testkits-utils';
+import { TESTKITS_PRELOAD_SCREENS } from '@/perfs/preloads';
 import { isNonPublicProductionEnv } from '@/constant';
-
-const GetStartedScreen2024 = registerAppScreen<
-  typeof import('@/screens/GetStarted/NewUserGetStarted2024').default
->({
-  loader: () => import('@/screens/GetStarted/NewUserGetStarted2024'),
-  name: TESTKITS_PRELOAD_SCREENS.NewUserGetStarted2024,
-});
 const DevUIAnimatedTextAndView = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIAnimatedTextAndView').default
 >({
@@ -41,6 +29,12 @@ const DevUIAccountShowCase = registerAppScreen<
 >({
   loader: () => import('@/screens/Testkits/DevUIAccountShowCase'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIAccountShowCase,
+});
+const DevUIComponents2024ShowCase = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIComponents2024ShowCase').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIComponents2024ShowCase'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIComponents2024ShowCase,
 });
 const DevUIToast = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIToast').default
@@ -132,13 +126,6 @@ export function TestkitsNavigator() {
         statusBarBackgroundColor: colors['blue-default'],
       }}>
       <Stack.Screen
-        name={RootNames.NewUserGetStarted2024}
-        component={GetStartedScreen2024}
-        // options={{
-        //   navigationBarHidden: true,
-        // }}
-      />
-      <Stack.Screen
         name={RootNames.DevUIAnimatedTextAndView}
         component={DevUIAnimatedTextAndView}
       />
@@ -153,6 +140,10 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIAccountShowCase}
         component={DevUIAccountShowCase}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIComponents2024ShowCase}
+        component={DevUIComponents2024ShowCase}
       />
       <Stack.Screen
         name={RootNames.DevUIScreenContainerShowCase}

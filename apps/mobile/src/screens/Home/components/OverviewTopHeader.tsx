@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { E2E_ID } from '@/constant/e2e';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -55,6 +56,7 @@ import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAsset
 import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import {
   useHomePortfolioRefreshState,
   useHomePortfolioSummary,
@@ -260,6 +262,7 @@ export function TabsTopHeader(): JSX.Element {
             <AddressListScreenButton type="address" />
             <Pressable
               style={styles.settingEntry}
+              {...makeTestIDProps(E2E_ID.home.settingsButton)}
               onPress={event => {
                 event?.stopPropagation?.();
                 navigation.navigateDeprecated(RootNames.StackSettings, {
