@@ -27,6 +27,8 @@ import {
 } from 'react-native-safe-area-context';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 function GetStartedScreen2024(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -227,6 +229,7 @@ function GetStartedScreen2024(): JSX.Element {
                 type="ghost"
                 title={t('page.getStart.alreadyHaveAddress')}
                 onPress={handleGoToImport}
+                {...makeTestIDProps(E2E_ID.onboarding.welcomeImportExisting)}
               />
               <TouchableText
                 style={styles.touchableText}

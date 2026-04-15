@@ -45,7 +45,9 @@ export const storeApiExpSettingData = {
   set: setExpSettingData,
   get: getExpSettingData,
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
-    if (!__DEV__) return 'pasted';
+    if (!__DEV__) {
+      return 'pasted';
+    }
 
     return experimentalSettingsStore.getState()
       .timeTipAboutSeedPhraseAndPrivateKey;

@@ -2,6 +2,7 @@ import '@exodus/patch-broken-hermes-typed-arrays';
 import { setJSExceptionHandler } from 'react-native-exception-handler';
 import { logger } from '@/utils/logger';
 import './perfs/bundle-splitter-analysis.ts';
+import './devtools/e2eBridge';
 import './databases/orm';
 import './core/services';
 import './core/utils/devServerSettings';

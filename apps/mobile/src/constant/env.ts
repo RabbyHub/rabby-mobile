@@ -1,5 +1,6 @@
 import {
   DEV_CONSOLE_URL as DEV_CONSOLE_URL_,
+  RABBY_MOBILE_E2E_SILENT_LOGS as RABBY_MOBILE_E2E_SILENT_LOGS_,
   RABBY_MOBILE_FE_SERVICE_URL as RABBY_MOBILE_FE_SERVICE_URL_,
 } from '@env';
 
@@ -13,6 +14,9 @@ export type AppBuildChannel = 'selfhost' | 'selfhost-reg' | 'appstore';
 export const BUILD_CHANNEL =
   (process.env.buildchannel as AppBuildChannel) || 'selfhost-reg';
 export const DEV_CONSOLE_URL = DEV_CONSOLE_URL_;
+export const IS_E2E_SILENT_LOGS =
+  RABBY_MOBILE_E2E_SILENT_LOGS_ === 'true' ||
+  process.env.RABBY_MOBILE_E2E_SILENT_LOGS === 'true';
 
 const INPUT_BUILD_GIT_INFO =
   typeof process.env.BUILD_GIT_INFO === 'object'
