@@ -8,6 +8,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSequence,
   Easing,
   withDelay,
   interpolate,
@@ -57,13 +58,17 @@ export default function SetupWallet({ route }: ScreenProps) {
 
   useFocusEffect(
     useCallback(() => {
-      formProgress.value = 0;
-      formProgress.value = withDelay(
-        FORM_DELAY,
-        withTiming(1, {
-          duration: DEFAULT_ANIMATION_CONFIG.DURATION,
-          easing: customEase,
-        }),
+      // Use withSequence so the animation starts atomically:
+      // If it fails to start, formProgress stays at 1 (visible).
+      formProgress.value = withSequence(
+        withTiming(0, { duration: 0 }),
+        withDelay(
+          FORM_DELAY,
+          withTiming(1, {
+            duration: DEFAULT_ANIMATION_CONFIG.DURATION,
+            easing: customEase,
+          }),
+        ),
       );
 
       return () => {
