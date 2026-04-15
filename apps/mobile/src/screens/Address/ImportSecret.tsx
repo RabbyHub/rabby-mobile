@@ -411,6 +411,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
                         key="clickable"
                         style={styles.linkTextHighlight}
                         onPress={handleCreateNewWallet}
+                        suppressHighlighting
                       />
                     ),
                   }}
