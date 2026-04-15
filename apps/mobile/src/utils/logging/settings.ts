@@ -8,7 +8,6 @@ import {
   resolveAppFileLoggingEnabled,
   resolveConsoleCaptureEnabled,
 } from './policy';
-import { getE2ESilentLogsEnabled } from '../e2eSilentLogs';
 
 type AppLogFileSettings = {
   developmentFileLoggingEnabled?: boolean;
@@ -64,10 +63,6 @@ function getLocalFileLoggingEnabled(runtimeEnv = APP_RUNTIME_ENV) {
 }
 
 export function getEffectiveFileLoggingEnabled() {
-  if (getE2ESilentLogsEnabled()) {
-    return false;
-  }
-
   return resolveAppFileLoggingEnabled({
     runtimeEnv: APP_RUNTIME_ENV,
     localEnabled: getLocalFileLoggingEnabled(),
@@ -76,10 +71,6 @@ export function getEffectiveFileLoggingEnabled() {
 }
 
 export function getEffectiveConsoleCaptureEnabled() {
-  if (getE2ESilentLogsEnabled()) {
-    return false;
-  }
-
   return resolveConsoleCaptureEnabled({
     runtimeEnv: APP_RUNTIME_ENV,
     localEnabled: getLocalFileLoggingEnabled(),

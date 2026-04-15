@@ -11379,7 +11379,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rozenite/metro@npm:^1.6.0":
+"@rozenite/metro@npm:1.6.0":
   version: 1.6.0
   resolution: "@rozenite/metro@npm:1.6.0"
   dependencies:
@@ -11403,7 +11403,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rozenite/network-activity-plugin@npm:^1.6.0":
+"@rozenite/network-activity-plugin@npm:1.6.0":
   version: 1.6.0
   resolution: "@rozenite/network-activity-plugin@npm:1.6.0"
   dependencies:
@@ -11430,7 +11430,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rozenite/react-navigation-plugin@npm:^1.6.0":
+"@rozenite/react-navigation-plugin@npm:1.6.0":
   version: 1.6.0
   resolution: "@rozenite/react-navigation-plugin@npm:1.6.0"
   dependencies:
@@ -11452,7 +11452,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rozenite/storage-plugin@npm:^1.6.0":
+"@rozenite/storage-plugin@npm:1.6.0":
   version: 1.6.0
   resolution: "@rozenite/storage-plugin@npm:1.6.0"
   dependencies:
@@ -17512,6 +17512,12 @@ __metadata:
   checksum: 10/0624406cc0295533b38b60ab2e3b028aa7b8225f37e0cde6be3bc5c13a8015c889b192e874fd7660671179cef055f2e258855f372b0e495bd4096cf0b4785c25
   languageName: node
   linkType: hard
+
+"automation-maestro@workspace:apps/automation-maestro":
+  version: 0.0.0-use.local
+  resolution: "automation-maestro@workspace:apps/automation-maestro"
+  languageName: unknown
+  linkType: soft
 
 "autoprefixer@npm:^10.4.13":
   version: 10.4.16
@@ -36475,10 +36481,10 @@ __metadata:
     "@rematch/core": "npm:^2.2.0"
     "@rneui/base": "npm:^4.0.0-rc.8"
     "@rneui/themed": "npm:^4.0.0-rc.8"
-    "@rozenite/metro": "npm:^1.6.0"
-    "@rozenite/network-activity-plugin": "npm:^1.6.0"
-    "@rozenite/react-navigation-plugin": "npm:^1.6.0"
-    "@rozenite/storage-plugin": "npm:^1.6.0"
+    "@rozenite/metro": "npm:1.6.0"
+    "@rozenite/network-activity-plugin": "npm:1.6.0"
+    "@rozenite/react-navigation-plugin": "npm:1.6.0"
+    "@rozenite/storage-plugin": "npm:1.6.0"
     "@sentry/react-native": "npm:7.3.0"
     "@shopify/flash-list": "npm:2.2.2"
     "@testing-library/react-native": "npm:^13.3.3"

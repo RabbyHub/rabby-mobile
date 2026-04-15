@@ -1,0 +1,144 @@
+appId: ${RABBY_ANDROID_E2E_PACKAGE}
+name: Android home add watch address
+tags:
+  - android
+  - maestro
+  - home
+  - watch-address
+env:
+  HOME_ADD_ADDRESS_BUTTON_ID: e2e.home.add-address.button
+  HOME_ADD_ADDRESS_IMPORT_ID: e2e.home.add-address.import-address
+  HOME_IMPORT_METHOD_WATCH_ADDRESS_ID: e2e.home.import-method.watch-address
+  HOME_WATCH_ADDRESS_INPUT_ID: e2e.home.watch-address.input
+  HOME_WATCH_ADDRESS_ENS_RESULT_ID: e2e.home.watch-address.ens-result
+  HOME_WATCH_ADDRESS_SUBMIT_ID: e2e.home.watch-address.submit
+  HOME_PORTFOLIO_BALANCE_VALUE_ID: e2e.home.portfolio.balance.value
+  HOME_PORTFOLIO_BALANCE_LOADING_ID: e2e.home.portfolio.balance.loading
+  SINGLE_HOME_BACK_ID: e2e.home.single-address.back
+  IMPORT_SUCCESS_PRIMARY_ID: e2e.onboarding.import-success.primary
+  WATCH_ADDRESS_QUERY: jjlin.eth
+---
+- runFlow: android-ensure-home-ready.yaml
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+
+- tapOn:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_ADD_ADDRESS_IMPORT_ID}
+    timeout: 10000
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_IMPORT_ID}
+
+- tapOn:
+    id: ${HOME_ADD_ADDRESS_IMPORT_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_IMPORT_METHOD_WATCH_ADDRESS_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${HOME_IMPORT_METHOD_WATCH_ADDRESS_ID}
+
+- tapOn:
+    id: ${HOME_IMPORT_METHOD_WATCH_ADDRESS_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_WATCH_ADDRESS_INPUT_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${HOME_WATCH_ADDRESS_INPUT_ID}
+
+- tapOn:
+    id: ${HOME_WATCH_ADDRESS_INPUT_ID}
+
+- eraseText: 100
+
+- inputText: ${WATCH_ADDRESS_QUERY}
+
+- hideKeyboard
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_WATCH_ADDRESS_ENS_RESULT_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${HOME_WATCH_ADDRESS_ENS_RESULT_ID}
+
+- tapOn:
+    id: ${HOME_WATCH_ADDRESS_ENS_RESULT_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_WATCH_ADDRESS_SUBMIT_ID}
+    timeout: 10000
+
+- assertVisible:
+    id: ${HOME_WATCH_ADDRESS_SUBMIT_ID}
+
+- tapOn:
+    id: ${HOME_WATCH_ADDRESS_SUBMIT_ID}
+
+- runFlow:
+    when:
+      visible:
+        id: ${HOME_WATCH_ADDRESS_SUBMIT_ID}
+    commands:
+      - tapOn:
+          point: "50%,95%"
+
+- extendedWaitUntil:
+    visible:
+      id: ${IMPORT_SUCCESS_PRIMARY_ID}
+    timeout: 20000
+
+- assertVisible:
+    id: ${IMPORT_SUCCESS_PRIMARY_ID}
+
+- tapOn:
+    id: ${IMPORT_SUCCESS_PRIMARY_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${SINGLE_HOME_BACK_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${SINGLE_HOME_BACK_ID}
+
+- tapOn:
+    id: ${SINGLE_HOME_BACK_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+
+- runFlow:
+    when:
+      visible:
+        id: ${HOME_PORTFOLIO_BALANCE_LOADING_ID}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: ${HOME_PORTFOLIO_BALANCE_VALUE_ID}
+          timeout: 20000
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_PORTFOLIO_BALANCE_VALUE_ID}
+    timeout: 20000
+
+- assertVisible:
+    id: ${HOME_PORTFOLIO_BALANCE_VALUE_ID}
