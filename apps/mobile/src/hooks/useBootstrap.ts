@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { atom, useAtom } from 'jotai';
 import {
   customTestnetService,
   keyringService,
@@ -14,18 +13,27 @@ import {
   BROWSER_SCRIPT_BASE,
   JS_GET_WINDOW_INFO_AFTER_LOAD,
   SPA_urlChangeListener,
+  JSBridgeHarden,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
-import { loadSecurityChain, useGlobal } from './global';
-import { useAppUnlocked, useTryUnlockAppWithBuiltinOnTop } from './useLock';
-import { useNavigationReady } from './navigation';
+import { loadSecurityChain } from './global';
+import { getTriedUnlock, storeApiLock } from './useLock';
 import SplashScreen from 'react-native-splash-screen';
-import { useAccounts } from './account';
-import { useLoadLockInfo } from '@/hooks/useLock';
-import { useBiometrics } from './biometrics';
-import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
-import { browserStateAtom } from './browser/useBrowser';
+import { storeApiAccounts } from './account';
+import { storeApisBiometrics } from './biometrics';
+// import { browserStateAtom } from './browser/useBrowser';
 import { apisSafe } from '@/core/apis/safe';
+import { RefLikeObject } from '@/utils/type';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { replace } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { setBrowserState } from './browser/useBrowser';
+import { perfEvents } from '@/core/utils/perf';
 
 const syncCustomTestChainList = () => {
   try {
@@ -35,9 +43,17 @@ const syncCustomTestChainList = () => {
   }
 };
 
-const bootstrapAtom = atom({
+type BootStrapState = {
+  couldRender: boolean;
+};
+const zBootstrapStore = zCreate<BootStrapState>(() => ({
   couldRender: false,
-});
+}));
+function setBootstrap(valOrFunc: UpdaterOrPartials<BootStrapState>) {
+  zBootstrapStore.setState(
+    prev => resolveValFromUpdater(prev, valOrFunc).newVal,
+  );
+}
 
 const DEBUG_IN_PAGE_SCRIPTS = {
   LOAD_BEFORE: __DEV__
@@ -63,42 +79,38 @@ const DEBUG_IN_PAGE_SCRIPTS = {
     : ``,
 };
 
+const apiInitializedRef: RefLikeObject<boolean> = { current: false };
+const doInitializeApis = async () => {
+  if (apiInitializedRef.current) return;
+  apiInitializedRef.current = true;
+
+  try {
+    await initServices();
+    await initApis();
+    syncCustomTestChainList();
+  } catch (error) {
+    console.error('useInitializeAppOnTop::error', error);
+    apiInitializedRef.current = false;
+  }
+};
+
 /**
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
-  const { isAppUnlocked, setAppLock } = useAppUnlocked();
-  const [, setBrowserState] = useAtom(browserStateAtom);
-
-  const apiInitializedRef = React.useRef(false);
-  const doInitializeApis = React.useCallback(async () => {
-    if (apiInitializedRef.current) return;
-    apiInitializedRef.current = true;
-
-    try {
-      await initServices();
-      await initApis();
-      syncCustomTestChainList();
-    } catch (error) {
-      console.error('useInitializeAppOnTop::', error);
-      apiInitializedRef.current = false;
-    }
-  }, []);
-
-  const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   React.useEffect(() => {
     const onUnlock = () => {
       console.debug('useBootstrap::onUnlock');
-      setAppLock(prev => ({ ...prev, appUnlocked: true }));
+      storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: true }));
       sendUserAddressEvent();
 
       doInitializeApis();
-      fetchAccounts();
+      storeApiAccounts.fetchAccounts();
       perpsService.unlockAgentWallets();
     };
     const onLock = () => {
-      setAppLock(prev => ({ ...prev, appUnlocked: false }));
-      fetchAccounts();
+      storeApiLock.setAppLock(prev => ({ ...prev, appUnlocked: false }));
+      storeApiAccounts.fetchAccounts();
       setBrowserState({
         isShowBrowser: false,
         isShowSearch: false,
@@ -108,98 +120,115 @@ export function useInitializeAppOnTop() {
         trigger: '',
       });
     };
-    keyringService.on('unlock', onUnlock);
+    const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
     keyringService.on('lock', onLock);
 
     return () => {
-      keyringService.off('unlock', onUnlock);
+      sub.remove();
       keyringService.off('lock', onLock);
-    };
-  }, [setAppLock, doInitializeApis, fetchAccounts, setBrowserState]);
-
-  const { fetchTop5TokensForAllAccountsOnce } = useFetchTokensForAllAccounts();
-  React.useEffect(() => {
-    const onUnlock = () => {
-      fetchTop5TokensForAllAccountsOnce();
-    };
-    keyringService.on('unlock', onUnlock);
-
-    return () => {
-      keyringService.off('unlock', onUnlock);
-    };
-  }, [fetchTop5TokensForAllAccountsOnce]);
-
-  React.useEffect(() => {
-    const onUnlock = () => {
-      apisSafe.syncAllGnosisNetworks();
-    };
-    keyringService.on('unlock', onUnlock);
-
-    return () => {
-      keyringService.off('unlock', onUnlock);
     };
   }, []);
 
   React.useEffect(() => {
-    if (isAppUnlocked) {
+    const onUnlock = async () => {
+      apisSafe.syncAllGnosisNetworks();
       doInitializeApis();
-    }
-  }, [doInitializeApis, isAppUnlocked]);
+    };
+    const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
 
-  return { isAppUnlocked };
+    return () => {
+      sub.remove();
+    };
+  }, []);
 }
 
-const loadEntryScriptsAtom = atom({
+export function subscribeUnlockToFetchAccounts() {
+  perfEvents.subscribe('USER_MANUALLY_UNLOCK', async () => {
+    const accounts = await keyringService.getAllVisibleAccountsArray();
+    if (!accounts?.length) {
+      replace(RootNames.StackGetStarted, {
+        screen: RootNames.GetStarted,
+      });
+    }
+  });
+}
+
+type LoadEntryScriptsState = {
+  inPageWeb3: string;
+  vConsole: string;
+  fullScript: string;
+};
+const loadEntryScriptsStore = zCreate<LoadEntryScriptsState>(() => ({
   inPageWeb3: '',
   vConsole: '',
-});
-export function useJavaScriptBeforeContentLoaded(options?: {
-  isTop?: boolean;
+  fullScript: '',
+}));
+function setEntryScripts(valOrFunc: UpdaterOrPartials<LoadEntryScriptsState>) {
+  loadEntryScriptsStore.setState(prev => ({
+    ...prev,
+    ...resolveValFromUpdater(prev, valOrFunc, { strict: false }).newVal,
+  }));
+}
+
+export async function loadJavaScriptBeforeContentLoadedOnBoot() {
+  return Promise.allSettled([
+    EntryScriptWeb3.init(),
+    __DEV__ ? EntryScriptVConsole.init() : Promise.resolve(''),
+  ]).then(([reqInPageWeb3, reqVConsole]) => {
+    const inPageWeb3 =
+      reqInPageWeb3.status === 'fulfilled' ? reqInPageWeb3.value : '';
+    const vConsole =
+      reqVConsole.status === 'fulfilled' ? reqVConsole.value : '';
+
+    setEntryScripts(prev => ({
+      ...prev,
+      inPageWeb3,
+      vConsole,
+      fullScript: getFullScript({ inPageWeb3, vConsole }),
+    }));
+  });
+}
+
+function getFullScript({
+  inPageWeb3,
+  vConsole,
+}: {
+  inPageWeb3: string;
+  vConsole: string;
 }) {
-  const [{ couldRender }] = useAtom(bootstrapAtom);
+  return [
+    // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
+    JSBridgeHarden,
+    inPageWeb3,
+    BROWSER_SCRIPT_BASE,
+    __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
+    SPA_urlChangeListener,
+    __DEV__ ? vConsole : '',
+    JS_LOG_ON_MESSAGE,
+    ';true;',
+    // DEBUG_IN_PAGE_SCRIPTS.LOAD_AFTER,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
 
-  const [entryScripts, setEntryScripts] = useAtom(loadEntryScriptsAtom);
-  const { isTop } = options || {};
-
-  React.useEffect(() => {
-    if (!isTop || entryScripts.inPageWeb3) return;
-
-    Promise.allSettled([
-      EntryScriptWeb3.init(),
-      __DEV__ ? EntryScriptVConsole.init() : Promise.resolve(''),
-    ]).then(([reqInPageWeb3, reqVConsole]) => {
-      const inPageWeb3 =
-        reqInPageWeb3.status === 'fulfilled' ? reqInPageWeb3.value : '';
-      const vConsole =
-        reqVConsole.status === 'fulfilled' ? reqVConsole.value : '';
-
-      setEntryScripts(prev => ({ ...prev, inPageWeb3, vConsole }));
-    });
-  }, [isTop, entryScripts.inPageWeb3, setEntryScripts]);
-
-  const fullScript = React.useMemo(() => {
-    return [
-      // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
-      entryScripts.inPageWeb3,
-      BROWSER_SCRIPT_BASE,
-      __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
-      SPA_urlChangeListener,
-      __DEV__ ? entryScripts.vConsole : '',
-      JS_LOG_ON_MESSAGE,
-      ';true;',
-      // DEBUG_IN_PAGE_SCRIPTS.LOAD_AFTER,
-    ]
-      .filter(Boolean)
-      .join('\n');
-  }, [entryScripts.inPageWeb3, entryScripts.vConsole]);
-
-  return {
-    entryScriptWeb3Loaded: [
-      couldRender,
-      !!entryScripts.inPageWeb3,
+export function useJavaScriptBeforeContentLoaded() {
+  const inPageWeb3 = loadEntryScriptsStore(s => s.inPageWeb3);
+  const fullScript = loadEntryScriptsStore(s => s.fullScript);
+  const entryScriptWeb3Loaded = zBootstrapStore(s =>
+    [
+      s.couldRender,
+      !!inPageWeb3,
       // __DEV__ ? !!entryScripts.vConsole : true,
     ].every(x => !!x),
-    entryScripts,
+  );
+
+  return {
+    entryScriptWeb3Loaded,
+    entryScripts: {
+      inPageWeb3,
+      // vConsole
+    },
     fullScript: fullScript,
   };
 }
@@ -212,43 +241,36 @@ const hideSplashScreen = (forceHide = false) => {
   }
 };
 
-// export function useHideSplash() {
-//   React.useEffect(() => {
-//     hideSplashScreen();
-//   }, []);
-// }
+runIIFEFunc(() => {
+  const sub = perfEvents.subscribe('APP_NAVIGATION_READY', () => {
+    hideSplashScreen(true);
+    sub.remove();
+  });
+});
 
 /**
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
-  const [{ couldRender }, setBootstrap] = useAtom(bootstrapAtom);
-  useJavaScriptBeforeContentLoaded({ isTop: true });
-  useGlobal();
-  useLoadLockInfo({ autoFetch: true });
-  const { fetchBiometrics } = useBiometrics({ autoFetch: false });
-
-  const { appNavigationReady } = useNavigationReady();
+  const startedLoadRef = React.useRef(false);
   React.useEffect(() => {
-    if (appNavigationReady) {
-      hideSplashScreen(true);
-    }
-  }, [appNavigationReady]);
+    if (!rabbitCode) return;
+    if (startedLoadRef.current) return;
+    startedLoadRef.current = true;
 
-  const { getTriedUnlock } = useTryUnlockAppWithBuiltinOnTop();
-
-  React.useEffect(() => {
     Promise.allSettled([
       getTriedUnlock(),
       loadSecurityChain({ rabbitCode }),
-      fetchBiometrics(),
+      storeApisBiometrics.fetchBiometrics(),
     ])
       .then(async ([_unlockResult, _securityChain]) => {
+        console.debug('useBootstrapApp::sucess', _unlockResult);
         setBootstrap({ couldRender: true });
       })
       .catch(err => {
-        console.error('useBootstrapApp::', err);
-        setBootstrap({ couldRender: true });
+        startedLoadRef.current = false;
+        console.error('useBootstrapApp::error', err);
+        setBootstrap({ couldRender: false });
       })
       .finally(() => {
         setTimeout(() => {
@@ -258,10 +280,13 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           );
         }, 1e3);
       });
-  }, [getTriedUnlock, setBootstrap, fetchBiometrics, rabbitCode]);
+  }, [rabbitCode]);
+}
+
+export function useAppCouldRender() {
+  const couldRender = zBootstrapStore(s => s.couldRender);
 
   return {
     couldRender,
-    securityChainOnTop: couldRender ? loadSecurityChain({ rabbitCode }) : null,
   };
 }

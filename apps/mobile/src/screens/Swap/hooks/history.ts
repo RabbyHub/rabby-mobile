@@ -221,7 +221,7 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     },
   );
 
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout>(undefined);
 
   const { loading, error, data: value, runAsync } = res;
 

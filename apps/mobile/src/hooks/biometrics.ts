@@ -1,7 +1,6 @@
-import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
 import { BIOMETRY_TYPE } from 'react-native-keychain';
-import { toast, toastLoading } from '@/components/Toast';
+import { toast, toastLoading } from '@/components2024/Toast';
 import { apisKeychain } from '@/core/apis';
 import {
   KEYCHAIN_AUTH_TYPES,
@@ -10,7 +9,6 @@ import {
   parseKeychainError,
 } from '@/core/apis/keychain';
 import { useTranslation } from 'react-i18next';
-import { useAtomCallback } from 'jotai/utils';
 import {
   ValidationBehaviorProps,
   parseValidationBehavior,
@@ -18,22 +16,44 @@ import {
 import { Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
 import { IS_IOS } from '@/core/native/utils';
+import { zCreate } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { useShallow } from 'zustand/react/shallow';
 
-const biometricsInfoAtom = atom({
-  authEnabled: isAuthenticatedByBiometrics(),
-  supportedBiometryType: null as BIOMETRY_TYPE | null,
-});
-biometricsInfoAtom.onMount = setter => {
-  apisKeychain.getSupportedBiometryType().then(supportedType => {
-    setter(prev => ({ ...prev, supportedBiometryType: supportedType }));
-  });
+type BiometricsInfoState = {
+  authEnabled: boolean;
+  supportedBiometryType: BIOMETRY_TYPE | null;
 };
+const biometricsInfoStore = zCreate<BiometricsInfoState>(() => ({
+  authEnabled: isAuthenticatedByBiometrics(),
+  supportedBiometryType: null,
+}));
+export function setBiometrics(
+  valOrFunc: UpdaterOrPartials<BiometricsInfoState>,
+) {
+  biometricsInfoStore.setState(
+    prev => resolveValFromUpdater(prev, valOrFunc).newVal,
+  );
+}
+// iife
+runIIFEFunc(() => {
+  apisKeychain.getSupportedBiometryType().then(supportedType => {
+    setBiometrics(prev => ({ ...prev, supportedBiometryType: supportedType }));
+  });
+});
+
 export function useBiometricsComputed() {
-  const biometrics = useAtomValue(biometricsInfoAtom);
+  const authEnabled = biometricsInfoStore(s => s.authEnabled);
+  const supportedBiometryType = biometricsInfoStore(
+    s => s.supportedBiometryType,
+  );
   const { t } = useTranslation();
 
   const computed = useMemo(() => {
-    const { authEnabled, supportedBiometryType } = biometrics;
     const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
     return {
       isBiometricsEnabled: authEnabled && !!supportedBiometryType,
@@ -47,111 +67,118 @@ export function useBiometricsComputed() {
         : t('page.setting.fingerPrint'),
       isFaceID,
     };
-  }, [biometrics, t]);
+  }, [authEnabled, supportedBiometryType, t]);
 
   return computed;
 }
 
 const isFetchingBiometricsRef = { current: false };
-export function useBiometrics(options?: { autoFetch?: boolean }) {
-  const [biometrics, setBiometrics] = useAtom(biometricsInfoAtom);
+const fetchBiometrics = async () => {
+  if (isFetchingBiometricsRef.current) return;
 
-  const fetchBiometrics = useCallback(async () => {
-    if (isFetchingBiometricsRef.current) return;
-
-    isFetchingBiometricsRef.current = true;
+  isFetchingBiometricsRef.current = true;
+  try {
+    let supportedType = null as null | BIOMETRY_TYPE;
     try {
-      let supportedType = null as null | BIOMETRY_TYPE;
-      try {
-        supportedType = await apisKeychain.getSupportedBiometryType();
-      } catch (error) {
-        console.error(error);
-      }
-      setBiometrics(prev => {
-        // if (prev.authEnabled && !supportedType) {
-        //   toast.info(
-        //     'Biometrics authentication disabled because no valid biometric data found.',
-        //   );
-        // }
-        return {
-          ...prev,
-          supportedBiometryType: supportedType,
-          authEnabled: supportedType ? isAuthenticatedByBiometrics() : false,
-        };
-      });
+      supportedType = await apisKeychain.getSupportedBiometryType();
     } catch (error) {
       console.error(error);
-    } finally {
-      isFetchingBiometricsRef.current = false;
     }
-  }, [setBiometrics]);
-
-  const toggleBiometrics = useCallback(
-    async <T extends boolean>(
-      nextEnabled: T,
-      input: { tipLoading?: boolean } & (T extends true
-        ? { validatedPassword: string }
-        : { validatedPassword?: undefined }),
-    ) => {
-      const { validatedPassword, tipLoading } = input;
-
-      const hideToast = !tipLoading
-        ? null
-        : toastLoading(`${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`);
-
-      const reset = async () => {
-        await apisKeychain.resetGenericPassword();
-        setBiometrics(prev => ({ ...prev, authEnabled: false }));
+    setBiometrics(prev => {
+      // if (prev.authEnabled && !supportedType) {
+      //   toast.info(
+      //     'Biometrics authentication disabled because no valid biometric data found.',
+      //   );
+      // }
+      return {
+        ...prev,
+        supportedBiometryType: supportedType,
+        authEnabled: supportedType ? isAuthenticatedByBiometrics() : false,
       };
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    isFetchingBiometricsRef.current = false;
+  }
+};
 
-      try {
-        if (!nextEnabled) {
-          await reset();
-        } else {
-          if (!validatedPassword) {
-            throw new Error(
-              'Validated password is required to enable biometrics.',
-            );
-          }
+const toggleBiometrics = async <T extends boolean>(
+  nextEnabled: T,
+  input: { tipLoading?: boolean } & (T extends true
+    ? { validatedPassword: string }
+    : { validatedPassword?: undefined }),
+) => {
+  const { validatedPassword, tipLoading } = input;
+  let changed = false;
 
-          await apisKeychain.setGenericPassword(
-            validatedPassword,
-            KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-          );
-          const requestResult = await apisKeychain.requestGenericPassword({
-            purpose: RequestGenericPurpose.VERIFY,
-          });
-          if (!requestResult) {
-            await reset();
-          } else if (requestResult && requestResult.actionSuccess) {
-            setBiometrics(prev => ({ ...prev, authEnabled: true }));
-          }
-        }
-      } catch (error: any) {
-        if (nextEnabled) await reset();
+  const hideToast = !tipLoading
+    ? null
+    : toastLoading(`${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`);
 
-        const parsedInfo = parseKeychainError(error);
-        if (
-          parsedInfo.isCancelledByUser ||
-          (__DEV__ && parsedInfo.sysMessage)
-        ) {
-          toast.show(parsedInfo.sysMessage);
-        } else {
-          toast.show(error?.message);
-        }
-      } finally {
-        hideToast?.();
-        await fetchBiometrics();
+  const reset = async () => {
+    await apisKeychain.resetGenericPassword();
+    setBiometrics(prev => ({ ...prev, authEnabled: false }));
+  };
+
+  try {
+    if (!nextEnabled) {
+      await reset();
+      changed = true;
+    } else {
+      if (!validatedPassword) {
+        throw new Error('Validated password is required to enable biometrics.');
       }
-    },
-    [setBiometrics, fetchBiometrics],
+
+      await apisKeychain.setGenericPassword(
+        validatedPassword,
+        KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+      );
+      const requestResult = await apisKeychain.requestGenericPassword({
+        purpose: RequestGenericPurpose.VERIFY,
+      });
+      if (!requestResult) {
+        await reset();
+      } else if (requestResult && requestResult.actionSuccess) {
+        setBiometrics(prev => ({ ...prev, authEnabled: true }));
+        changed = true;
+      }
+    }
+  } catch (error: any) {
+    if (nextEnabled) await reset();
+
+    const parsedInfo = parseKeychainError(error);
+    if (parsedInfo.isCancelledByUser || (__DEV__ && parsedInfo.sysMessage)) {
+      toast.show(parsedInfo.sysMessage);
+    } else {
+      toast.show(error?.message);
+    }
+  } finally {
+    hideToast?.();
+    await fetchBiometrics();
+  }
+
+  return changed && biometricsInfoStore.getState().authEnabled === nextEnabled;
+};
+
+export const storeApisBiometrics = {
+  fetchBiometrics,
+  toggleBiometrics,
+};
+
+export function useBiometrics(options?: { autoFetch?: boolean }) {
+  const biometrics = biometricsInfoStore(
+    useShallow(s => ({
+      authEnabled: s.authEnabled,
+      supportedBiometryType: s.supportedBiometryType,
+    })),
   );
 
   useEffect(() => {
     if (options?.autoFetch) {
       fetchBiometrics();
     }
-  }, [options?.autoFetch, fetchBiometrics]);
+  }, [options?.autoFetch]);
 
   const computed = useBiometricsComputed();
 
@@ -163,20 +190,27 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
   };
 }
 
-const biometricsStubModalStateAtom = atom<{
+type BiometricsStubModalState = {
   status: 'idle' | 'preparing' | 'processing' | 'success' | 'failed';
   lastStubBehaviors: ValidationBehaviorProps | null;
-}>({
+};
+const biometricsStubModalState = zCreate<BiometricsStubModalState>(() => ({
   status: 'idle',
   lastStubBehaviors: {},
-});
+}));
+export function setBiometricsStubModalState(
+  valOrFunc: UpdaterOrPartials<BiometricsStubModalState>,
+) {
+  biometricsStubModalState.setState(
+    prev => resolveValFromUpdater(prev, valOrFunc).newVal,
+  );
+}
+function getBiometricsStubModalState() {
+  return biometricsStubModalState.getState();
+}
+
 export function useVerifyByBiometrics() {
-  const [{ status: biometricsStatus }, setState] = useAtom(
-    biometricsStubModalStateAtom,
-  );
-  const getAtomValue = useAtomCallback(get =>
-    get(biometricsStubModalStateAtom),
-  );
+  const biometricsStatus = biometricsStubModalState(s => s.status);
   const { t } = useTranslation();
 
   const {
@@ -192,15 +226,15 @@ export function useVerifyByBiometrics() {
         return;
       }
 
-      const atomValue = getAtomValue();
+      const bioStubModalState = getBiometricsStubModalState();
 
-      if (atomValue.status === 'processing') return;
-      setState(prev => ({ ...prev, status: 'processing' }));
+      if (bioStubModalState.status === 'processing') return;
+      setBiometricsStubModalState(prev => ({ ...prev, status: 'processing' }));
 
-      const behaviors = options || { ...atomValue.lastStubBehaviors };
+      const behaviors = options || { ...bioStubModalState.lastStubBehaviors };
       const defaultFinished = () => {
         setTimeout(() => {
-          setState(prev => ({ ...prev, status: 'idle' }));
+          setBiometricsStubModalState(prev => ({ ...prev, status: 'idle' }));
         }, 250);
       };
       const { validationHandler, onFinished = defaultFinished } =
@@ -236,33 +270,32 @@ export function useVerifyByBiometrics() {
 
       try {
         if (!verifyResult || !verifyResult.actionSuccess || !rawPassword) {
-          setState(prev => ({ ...prev, status: 'failed' }));
+          setBiometricsStubModalState(prev => ({ ...prev, status: 'failed' }));
         } else {
           await validationHandler?.(rawPassword);
-          setState(prev => ({ ...prev, status: 'success' }));
+          setBiometricsStubModalState(prev => ({ ...prev, status: 'success' }));
           onFinished?.({ getValidatedPassword: () => rawPassword });
         }
       } catch (error) {
-        setState(prev => ({ ...prev, status: 'failed' }));
+        setBiometricsStubModalState(prev => ({ ...prev, status: 'failed' }));
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isBiometricsEnabled, getAtomValue, setState],
+    [isBiometricsEnabled, t],
   );
 
   const abortBiometricsVerification = useCallback(() => {
-    setState(prev => ({ ...prev, status: 'idle' }));
-  }, [setState]);
+    setBiometricsStubModalState(prev => ({ ...prev, status: 'idle' }));
+  }, []);
 
   const startBiometricsVerification = useCallback(
     (options?: ValidationBehaviorProps) => {
-      setState(prev => ({
+      setBiometricsStubModalState(prev => ({
         ...prev,
         lastStubBehaviors: { ...options },
         status: 'preparing',
       }));
     },
-    [setState],
+    [],
   );
 
   const { isProcessBiometrics, shouldShowStubModal } = useMemo(() => {

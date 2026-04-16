@@ -2,7 +2,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React, { useCallback } from 'react';
 
 import { FooterButton } from '@/components/FooterButton/FooterButton';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { AppColorsVariants } from '@/constant/theme';
 import { apiCustomTestnet } from '@/core/apis';
 import {
@@ -19,7 +19,7 @@ import {
 } from 'ahooks';
 import { sortBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   FlatList,
   TouchableOpacity,
@@ -33,6 +33,7 @@ import {
 import { Empty } from './components/Empty';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import { Text } from '@/components/Typography';
 
 export function CustomTestnetScreen(): JSX.Element {
   const colors = useThemeColors();

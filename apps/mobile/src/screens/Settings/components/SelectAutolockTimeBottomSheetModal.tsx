@@ -1,11 +1,11 @@
 import {
-  forwardRef,
   useRef,
   useMemo,
   useImperativeHandle,
   useCallback,
+  type Ref,
 } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 import { AppBottomSheetModal } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -17,12 +17,13 @@ import { TIME_SETTINGS } from '@/constant/autoLock';
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useAutoLockTimeMs } from '@/hooks/appSettings';
+import { onAutoLockTimeMsChange, useAutoLockTime } from '@/hooks/appTimeout';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { FontWeightEnum } from '@/core/utils/fonts';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
@@ -48,14 +49,17 @@ const SIZES = {
     );
   },
 };
-export const SelectAutolockTimeBottomSheetModal = forwardRef<
-  BottomSheetModal,
-  {
-    onConfirm?: () => void;
-    onCancel?: () => void;
-  }
->((props, ref) => {
-  const { onConfirm, onCancel } = props;
+export const SelectAutolockTimeBottomSheetModal = ({
+  onConfirm,
+  onCancel,
+  onSelectTimeMs,
+  ref,
+}: {
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  onSelectTimeMs?: (ms: number) => void;
+  ref?: Ref<BottomSheetModal>;
+}) => {
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: SIZES.FULL_HEIGHT,
@@ -64,15 +68,18 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
-  const { autoLockMs, onAutoLockTimeMsChange } = useAutoLockTimeMs();
+  const { timeoutMs } = useAutoLockTime();
 
   const handleConfirm = useCallback(
     (ms: number) => {
       onAutoLockTimeMsChange(ms);
+      if (timeoutMs !== ms) {
+        onSelectTimeMs?.(ms);
+      }
       onConfirm?.();
       sheetModalRef.current?.dismiss();
     },
-    [onAutoLockTimeMsChange, onConfirm],
+    [onConfirm, onSelectTimeMs, timeoutMs],
   );
 
   useImperativeHandle(
@@ -109,7 +116,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
           {TIME_SETTINGS.map((item, idx) => {
             const labelText = item.getLabel();
             const itemKey = `timesetting-${labelText}-${item.milliseconds}`;
-            const isSelected = autoLockMs === item.milliseconds;
+            const isSelected = timeoutMs === item.milliseconds;
 
             return (
               <TouchableView
@@ -132,7 +139,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
       </AutoLockView>
     </AppBottomSheetModal>
   );
-});
+};
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
-import { Keyboard, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
 import { SyncExtensionHeader } from './components/Header';
 import { NextInput } from '@/components2024/Form/Input';
 import {
@@ -27,6 +27,7 @@ import { DisplayedKeyring } from '@rabby-wallet/keyring-utils';
 import useAsync from 'react-use/lib/useAsync';
 import { NoNewAddressesModal } from './components/NoNewAddresses';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Text } from '@/components/Typography';
 
 export const SyncExtensionPasswordScreen = () => {
   const { t } = useTranslation();
@@ -43,7 +44,7 @@ export const SyncExtensionPasswordScreen = () => {
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
 
-  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
+  const [biometricsEnabled, setBiometricsEnabled] = useState(true);
 
   const { addWhitelist } = useWhitelist();
 
@@ -211,6 +212,7 @@ export const SyncExtensionPasswordScreen = () => {
             },
           ],
         });
+        apisHomeTabIndex.setTabIndex(0);
       } else {
         setNoAddrVisible(true);
       }

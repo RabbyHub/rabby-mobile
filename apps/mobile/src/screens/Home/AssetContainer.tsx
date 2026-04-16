@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Dimensions, ImageBackground, View } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { Dimensions } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -7,30 +7,23 @@ import {
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { HomeTopArea } from './components/HomeTopArea';
-import { useTranslation } from 'react-i18next';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { useCurve } from '@/hooks/useCurve';
-import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { Account } from '@/core/services/preference';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
-import { CurveDayType } from '@/utils/curveDayType';
 import { PortfolioList } from './PortfolioList';
 import { TokenList } from './TokenList';
 import { NFTList } from './NFTList';
 import { DynamicCustomMaterialTabBar } from './components/Tabs/CustomTabBar';
 import CustomLabel from './components/Tabs/CustomLabel';
-import { ChainSelector } from './components/AssetRenderItems/SectionHeaders';
-import { useChainInfo } from './useChainInfo';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import useCachedValue from '@/hooks/common/useCachedValue';
+import { useAddrChainLength } from './useChainInfo';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import {
+  useSingleHomeAccount,
+  useSingleHomeHasNoData,
+} from './hooks/singleHome';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
+import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
+import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 
 const ScreenWidth = Dimensions.get('window').width;
 export const icons = {
@@ -45,188 +38,40 @@ export const icons = {
 };
 
 interface Props {
-  onRefresh(): void;
-  onUpdateIsDecrease?: (isDecrease: boolean) => void;
   onReachTopStatusChange?: (status: boolean) => void;
-  account: Account;
 }
 const FOOTER_HEIGHT = 56;
 
-export const AssetContainer: React.FC<Props> = ({
-  onRefresh,
-  onUpdateIsDecrease,
-  onReachTopStatusChange,
-  account: currentAccount,
-}) => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+const renderHeader = () => null;
 
-  const chainSelectModalRef = useRef<
-    ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
-  >();
+export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const [selectChainItem, setSelectChainItem] = useState<
-    ChainListItem | undefined
-  >();
+  const { currentAccount } = useSingleHomeAccount();
+  const currentAddress = currentAccount?.address ?? undefined;
+
   const { isDisConnect } = useGlobalStatus();
 
-  const { chainsInfo, updateToken, updatePortfolio, updateNft } =
-    useChainInfo();
-  const handleOnChainClick = useCallback(
-    (clear: boolean) => {
-      if (clear) {
-        setSelectChainItem(undefined);
-        return;
-      }
+  const { chainLength } = useAddrChainLength(currentAddress);
 
-      if (chainSelectModalRef.current) {
-        removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-        chainSelectModalRef.current = undefined;
-      }
-      chainSelectModalRef.current = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
-        value: selectChainItem,
-        bottomSheetModalProps: {
-          enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          rootViewType: 'View',
-          handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        },
-        chainList: chainsInfo.chainAssets,
-        titleText: t('page.receiveAddressList.selectChainTitle'),
-        onChange: (v: ChainListItem) => {
-          setSelectChainItem(v);
-          if (chainSelectModalRef.current) {
-            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-            chainSelectModalRef.current = undefined;
-          }
-        },
-        onClose: () => {
-          if (chainSelectModalRef.current) {
-            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
-            chainSelectModalRef.current = undefined;
-          }
-        },
-      });
-    },
-    [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
-  );
+  useRendererDetect({ name: 'Home::AssetContainer' });
 
-  const { balance, balanceLoading, evmBalance } = useCurrentBalance(
-    currentAccount?.address,
-    {
-      update: true,
-      noNeedBalance: false,
-    },
-  );
-  const {
-    result: curveData,
-    isLoading: isLoadingCurve,
-    refresh: refreshCurve,
-    hasNoData: hasNoCurveData,
-  } = useCurve(
-    currentAccount?.address,
-    0,
-    evmBalance,
-    CurveDayType.DAY,
-    balance,
-  );
+  const { hasNoData: hasNoCurveData } = useSingleHomeHasNoData();
 
-  const isDecrease = useCachedValue(curveData, 'isLoss');
+  const handleRefresh = useCallback(async () => {
+    if (!currentAddress) return;
+    apisAddressBalance.triggerUpdate({
+      address: currentAddress,
+      force: true,
+      fromScene: 'SingleAddressHome',
+    });
+  }, [currentAddress]);
 
-  const handleRefresh = useCallback(
-    async (ignoreLoading?: boolean) => {
-      onRefresh?.();
-      refreshCurve(ignoreLoading);
-    },
-    [onRefresh, refreshCurve],
-  );
-
-  const renderHeader = useCallback(() => {
-    return (
-      <View>
-        <HomeTopArea
-          onUpdateIsDecrease={onUpdateIsDecrease}
-          curveData={curveData}
-          isLoadingCurve={isLoadingCurve || (balanceLoading && !evmBalance)}
-          isDisConnect={isDisConnect}
-          onRefresh={() => handleRefresh(true)}
-        />
-      </View>
-    );
-  }, [
-    evmBalance,
-    balanceLoading,
-    curveData,
-    handleRefresh,
-    isDisConnect,
-    isLoadingCurve,
-    onUpdateIsDecrease,
-  ]);
-
-  const hasNotAssets = useMemo(() => {
-    return chainsInfo.chainLength === 0;
-  }, [chainsInfo.chainLength]);
+  const noAssetsOnAnyChain = chainLength === 0;
 
   const errorNotAssets = useMemo(() => {
-    return isDisConnect && hasNotAssets && hasNoCurveData;
-  }, [hasNoCurveData, hasNotAssets, isDisConnect]);
-
-  const { safeOffHeader } = useSafeSizes();
-
-  const renderTabBar = React.useCallback(
-    (_props: any) => (
-      <DynamicCustomMaterialTabBar
-        materialTabBarProps={{
-          ..._props,
-          tabStyle: styles.tabBar,
-        }}
-        containerStyle={styles.tabsBarContainer}
-        indicatorStyle={styles.indicator}
-        bgComponent={
-          <ImageBackground
-            source={
-              !isDecrease
-                ? require('@/assets2024/singleHome/up.png')
-                : require('@/assets2024/singleHome/loss.png')
-            }
-            resizeMode="cover"
-            style={[
-              styles.bg,
-              {
-                top: 0 - safeOffHeader - 74,
-                height: safeOffHeader + 110,
-              },
-            ]}
-          />
-        }
-        externalContent={
-          <ChainSelector
-            top3Chains={chainsInfo.chainAssets
-              .map(item => item.chain)
-              .slice(0, 3)}
-            onChainClick={handleOnChainClick}
-            chainServerId={selectChainItem?.chain}
-          />
-        }
-      />
-    ),
-    [
-      chainsInfo.chainAssets,
-      handleOnChainClick,
-      isDecrease,
-      safeOffHeader,
-      selectChainItem?.chain,
-      styles.bg,
-      styles.indicator,
-      styles.tabBar,
-      styles.tabsBarContainer,
-    ],
-  );
+    return isDisConnect && noAssetsOnAnyChain && hasNoCurveData;
+  }, [hasNoCurveData, noAssetsOnAnyChain, isDisConnect]);
 
   const renderLabel = useCallback(
     (name: string) =>
@@ -235,56 +80,50 @@ export const AssetContainer: React.FC<Props> = ({
         <CustomLabel index={index} indexDecimal={indexDecimal} text={name} />,
     [],
   );
+  // const { noAssetsValue } = useSingleHomeNoAssetsValueOnChain();
+  const { accountToShowReceiveTip } =
+    useAccountHomeShowReceiveTip(currentAccount);
 
-  if (!currentAccount?.address) {
-    return null;
-  }
   if (errorNotAssets) {
     return (
       <NetWorkError
         hasError={isDisConnect}
-        onRefresh={() => {
-          handleRefresh(true);
-        }}
+        onRefresh={handleRefresh}
         style={styles.netWorkError}
       />
     );
   }
+
+  if (!currentAccount) return null;
+  if (accountToShowReceiveTip) {
+    return <ReceiveOnNoAssets account={accountToShowReceiveTip} />;
+  }
+
   return (
     <Tabs.Container
       containerStyle={styles.container}
-      // minHeaderHeight={ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER}
-      headerHeight={78}
-      // renderTabBar={renderTabBar}
-      tabBarHeight={32}
-      renderTabBar={renderTabBar}
+      headerHeight={0}
       renderHeader={renderHeader}
+      tabBarHeight={32}
+      renderTabBar={DynamicCustomMaterialTabBar}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label={renderLabel('Token')} name="tokens">
         <TokenList
-          chain={selectChainItem?.chain}
-          account={currentAccount}
+          noAssetsOnAnyChain={noAssetsOnAnyChain}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
-          updateToken={updateToken}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
         <PortfolioList
-          chain={selectChainItem?.chain}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
-          account={currentAccount}
-          updatePortfolio={updatePortfolio}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
         <NFTList
-          chain={selectChainItem?.chain}
-          account={currentAccount}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
-          updateNft={updateNft}
         />
       </Tabs.Tab>
     </Tabs.Container>
@@ -306,9 +145,6 @@ const getStyles = createGetStyles2024(ctx => ({
     height: ASSETS_SECTION_HEADER,
     // paddingHorizontal: 16,
     zIndex: 1,
-  },
-  bgContainer: {
-    // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   rowWrap: {
     paddingHorizontal: 16,
@@ -374,28 +210,6 @@ const getStyles = createGetStyles2024(ctx => ({
     height: '100%',
     marginTop: -50,
     backgroundColor: ctx.colors2024['neutral-bg-0'],
-  },
-  tabBar: {
-    height: 32,
-    width: 'auto',
-    flexShrink: 0,
-    flex: 0,
-    paddingHorizontal: 0,
-    // marginRight: 20,
-  },
-  tabsBarContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 16,
-    paddingRight: 16,
-    position: 'relative',
-    height: 36,
-    paddingBottom: 4,
-    overflow: 'hidden',
-  },
-  indicator: {
-    height: 0,
   },
   bg: {
     position: 'absolute',

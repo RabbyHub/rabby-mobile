@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
-  Text,
   View,
   TouchableOpacity,
   ActivityIndicator,
@@ -45,6 +44,7 @@ import { toast } from '@/components2024/Toast';
 import { Skeleton } from '@rneui/themed';
 import { LoadingLinear } from '../TokenPriceChart/LoadingLinear';
 import { sortTokenWithSymbol } from './utils';
+import { Text } from '@/components/Typography';
 
 interface PoolsProps {
   tokenId: string;
@@ -593,7 +593,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    backgroundColor: colors2024['green-light-4'],
+    backgroundColor: colors2024['green-light-1'],
     borderRadius: 6,
     lineHeight: 26,
     height: 26,

@@ -1,17 +1,37 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In, Brackets, Not } from 'typeorm/browser';
+import {
+  Entity,
+  Column,
+  In,
+  Brackets,
+  Not,
+  MoreThan,
+  Raw,
+} from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
   badRealTransformer,
   correctBadRealOnSql,
+  nullableJsonTransformer,
 } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
+import { tokenItemEntityToTokenItem } from '@/utils/token';
+import { ITokenItem } from '@/store/tokens';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
-@Entity('cache_tokenitem')
+const RawAmountTransformer = {
+  to: (val: any) => columnConverter.numberToString(val),
+  from: (val: any) => columnConverter.stringToNumber(val, false),
+};
+
+@ParseEntity()
+@Entity(ORM_TABLE_NAMES.cache_tokenitem)
 export class TokenItemEntity extends EntityAddressAssetBase {
   // content_type
   @Column('text', { default: '' })
@@ -42,11 +62,11 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column('text', { default: '' })
   id: TokenItem['id'] = '';
   // is_core
-  @Column('boolean')
-  is_core: TokenItem['is_core'] = false;
+  @Column('boolean', { nullable: true })
+  is_core: TokenItem['is_core'] | null = null;
   // is_verified
-  @Column('boolean')
-  is_verified: TokenItem['is_verified'] = false;
+  @Column('boolean', { nullable: true })
+  is_verified: TokenItem['is_verified'] | null = null;
   // is_wallet
   @Column('boolean')
   is_wallet: TokenItem['is_wallet'] = false;
@@ -86,22 +106,37 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   // credit_score
   @Column('real', { default: 0 })
   credit_score: TokenItem['credit_score'] = 0;
+  // protocol_id
+  @Column('text', { default: '' })
+  protocol_id: TokenItem['protocol_id'] = '';
+  // launchpad
+  @Column('text', {
+    nullable: true,
+    transformer: nullableJsonTransformer,
+  })
+  launchpad: TokenItem['launchpad'] = null;
+  // asset
+  @Column('text', {
+    nullable: true,
+    transformer: nullableJsonTransformer,
+  })
+  asset: TokenItem['asset'] = null;
+  // market_status
+  @Column('text', { default: '' })
+  market_status: TokenItem['market_status'] = '';
   // raw_amount
   @Column({
     type: 'text',
     default: '',
-    transformer: {
-      to: (val: any) => columnConverter.numberToString(val),
-      from: (val: any) => columnConverter.stringToNumber(val, false),
-    },
+    transformer: RawAmountTransformer,
   })
   raw_amount: TokenItem['raw_amount'] = '';
   // raw_amount_hex_str
   @Column('text', { default: '' })
   raw_amount_hex_str: TokenItem['raw_amount_hex_str'] = '';
   // price_24h_change
-  @Column('real')
-  price_24h_change: TokenItem['price_24h_change'] = 0;
+  @Column('real', { nullable: true })
+  price_24h_change: TokenItem['price_24h_change'] = null;
   // low_credit_score
   @Column('boolean')
   low_credit_score: TokenItem['low_credit_score'] = false;
@@ -131,11 +166,13 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static fillEntity(
     e: TokenItemEntity,
     owner_addr: string,
-    input: TokenItem & { value_24h_change?: string; cex_ids?: string[] },
+    input: (TokenItem | ITokenItem) & {
+      value_24h_change?: string;
+      cex_ids?: string[];
+    },
   ) {
     e.owner_addr = owner_addr;
 
-    // content_type, content, inner_id, amount, chain, decimals, display_symbol, id, is_core, is_verified, is_wallet, is_scam, is_infinity, is_suspicious, logo_url, name, optimized_symbol, price, symbol, time_at, usd_value, raw_amount, raw_amount_hex_str, price_24h_change, low_credit_score
     e.content_type = input.content_type;
     e.content = input.content ?? '';
     e.inner_id = input.inner_id ?? '';
@@ -145,8 +182,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.credit_score = input.credit_score ?? 0;
     e.display_symbol = input.display_symbol ?? '';
     e.id = input.id ?? '';
-    e.is_core = input.is_core ?? false;
-    e.is_verified = input.is_verified ?? false;
+    e.is_core = input.is_core ?? null;
+    e.is_verified = input.is_verified ?? null;
     e.is_wallet = input.is_wallet ?? false;
     e.is_scam = input.is_scam ?? false;
     e.is_infinity = input.is_infinity ?? false;
@@ -160,11 +197,15 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.usd_value = input.usd_value ?? 0;
     e.raw_amount = input.raw_amount;
     e.raw_amount_hex_str = input.raw_amount_hex_str ?? '';
-    e.price_24h_change = input.price_24h_change ?? 0;
+    e.price_24h_change = input.price_24h_change ?? null;
     e.low_credit_score = input.low_credit_score ?? false;
     e.value_24h_change = input.value_24h_change ?? '1';
     e.cex_ids = columnConverter.jsonObjToString(input.cex_ids || []);
     e.fdv = input.fdv ?? 0;
+    e.protocol_id = input.protocol_id ?? '';
+    e.launchpad = input.launchpad ?? null;
+    e.asset = input.asset ?? null;
+    e.market_status = input.market_status ?? '';
 
     e.makeDbId();
   }
@@ -191,13 +232,18 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static async batchQueryTokens(owner_addr: string) {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ owner_addr }))
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+    queryBuilder
+      .where({
+        owner_addr,
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 });
+
+    return (await queryBuilder.getMany()).map(i => ({
+      ...i,
+      cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+    }));
   }
 
   static async batchMultiAddressTokensByIdAndChain(
@@ -232,7 +278,15 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
     const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
 
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
+    const ownerAddrList = [
+      ...new Set(addresses.map(addr => addr.toLowerCase())),
+    ].filter(Boolean);
+    if (!ownerAddrList.length) {
+      return [];
+    }
+    queryBuilder.andWhere('lower(tokenitem.owner_addr) IN (:...addresses)', {
+      addresses: ownerAddrList,
+    });
 
     if (core) {
       queryBuilder.andWhere({ is_core: true });
@@ -241,15 +295,83 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       queryBuilder.take(maxLength);
     }
 
-    const tokens = await queryBuilder.getMany();
+    const tokens = await queryBuilder
+      .andWhere({
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
+      .getMany();
 
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
+  }
+
+  static async getDefaultTokensByAddresses(
+    addresses: string[],
+  ): Promise<Record<string, ITokenItem[]>> {
+    await prepareAppDataSource();
+    const owner_addr_list = [
+      ...new Set(addresses.map(addr => addr.toLowerCase())),
+    ];
+    if (!owner_addr_list.length) {
+      return {};
+    }
+
+    const repo = this.getRepository();
+    const tableName = repo.metadata.tableName;
+    const subQueryColumns = repo.metadata.columns.map(col => {
+      if (['amount', 'price'].includes(col.databaseName)) {
+        return `${correctBadRealOnSql(
+          `tokenitem.${col.databaseName}` as
+            | 'tokenitem.amount'
+            | 'tokenitem.price',
+        )} AS "${col.databaseName}"`;
+      }
+      return `"${col.databaseName}"`;
+    });
+    const outerSelectColumns = repo.metadata.columns.map(
+      col => `"${col.databaseName}"`,
+    );
+    const usdValueOrderExpr = `(${correctBadRealOnSql(
+      'tokenitem.price',
+    )} * ${correctBadRealOnSql('tokenitem.amount')})`;
+
+    const placeholders = owner_addr_list.map(() => '?').join(',');
+    const params: any[] = [...owner_addr_list, EMPTY_TOKEN_ITEM_ID, 20];
+    const sql = `
+      SELECT ${outerSelectColumns.join(', ')}
+      FROM (
+        SELECT ${subQueryColumns.join(', ')},
+               ROW_NUMBER() OVER (PARTITION BY owner_addr ORDER BY ${usdValueOrderExpr} DESC) AS rn
+        FROM "${tableName}" tokenitem
+        WHERE owner_addr IN (${placeholders})
+          AND is_core = 1
+          AND id != ?
+          AND amount > 0
+      ) tokenitem
+      WHERE tokenitem.rn <= ?
+    `;
+
+    const rows = await repo.query(sql, params);
+
+    const result: Record<string, ITokenItem[]> = {};
+    rows.forEach(row => {
+      const key = row.owner_addr;
+      if (!result[key]) {
+        result[key] = [];
+      }
+      result[key].push(tokenItemEntityToTokenItem(row));
+    });
+
+    return result;
   }
 
   /**
@@ -282,7 +404,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const repo = this.getRepository();
     const queryBuilder = repo.createQueryBuilder('tokenitem');
 
-    queryBuilder.where({ id: Not(EMPTY_TOKEN_ITEM_ID) });
+    queryBuilder
+      .where({
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 });
 
     if (addresses) {
       queryBuilder.andWhere({ owner_addr: In(addresses) });
@@ -328,17 +455,19 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .orderBy('tokenitem_token_usd_value', 'DESC');
 
     const tokens = await queryBuilder.getMany();
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
   }
 
   static async queryTokensByOwner(
-    owner_addr: string,
+    owner_addrs: string | string[],
     options?: {
       topCount?: number | false;
       /** @default true */
@@ -358,10 +487,23 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     } = options || {};
     topCount = Math.max(0, topCount || 0);
 
+    const owner_addr_list = [
+      ...new Set(
+        (Array.isArray(owner_addrs) ? owner_addrs : [owner_addrs]).map(addr =>
+          addr.toLowerCase(),
+        ),
+      ),
+    ];
     const repo = this.getRepository();
     const queryBuilder = repo
       .createQueryBuilder('tokenitem')
-      .where({ owner_addr, is_core: true, id: Not(EMPTY_TOKEN_ITEM_ID) })
+      .where({
+        owner_addr: In(owner_addr_list),
+        is_core: true,
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        // amount: Raw(alias => `${alias} > 0`),
+      })
+      .andWhere(`tokenitem.amount > :amount`, { amount: 0 })
       .select([
         // TODO: which need customized sqlite drivers
         // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
@@ -377,7 +519,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     }
 
     if (filter_tokenProportionGte10Percent) {
-      const loggerPrefix = `[queryTokensByOwner::${repo.metadata.tableName}::${owner_addr}]`;
+      const loggerPrefix = `[queryTokensByOwner::${
+        repo.metadata.tableName
+      }::${owner_addr_list.join(',')}]`;
       // notice: result[0]?.total_value maybe null is there's no any record about owner_addr
       const result = await repo
         .query(
@@ -386,7 +530,10 @@ export class TokenItemEntity extends EntityAddressAssetBase {
             'tokenitem.price',
           )} * ${correctBadRealOnSql('tokenitem.amount')} ) AS total_value
         FROM "${repo.metadata.tableName}" "tokenitem"
-        WHERE owner_addr = '${owner_addr}' AND is_core = 1`,
+        WHERE owner_addr IN(${owner_addr_list
+          .map(() => '?')
+          .join(',')}) AND is_core = 1`,
+          owner_addr_list,
         )
         .catch(error => {
           console.error(`${loggerPrefix} error on get total_value`, error);
@@ -419,13 +566,15 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       queryBuilder.take(topCount);
     }
     const tokens = await queryBuilder.getMany();
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    return (
+      tokens
+        // .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+        // .filter(i => i.amount > 0)
+        .map(i => ({
+          ...i,
+          cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+        }))
+    );
   }
 
   static async isExpired(owner_addr: string) {
@@ -535,7 +684,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         .createQueryBuilder()
         .delete()
         .from(TokenItemEntity)
-        .where('owner_addr = :owner_addr', { owner_addr })
+        .where('lower(owner_addr) = lower(:owner_addr)', { owner_addr })
         .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
         .execute();
 

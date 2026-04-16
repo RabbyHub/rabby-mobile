@@ -16,6 +16,7 @@ import { AddressItemContextMenu } from './AddressItemContextMenu';
 import { AddressItemInner2024 } from './AddressItemInner2024';
 import { AddressItemShadowView } from './AddressItemShadowView';
 import { isTabsSwiping } from './MultiAssets/hooks';
+import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 
 const { isSameAddress } = addressUtils;
 
@@ -45,6 +46,9 @@ interface AddressItemProps {
   onSelect?: () => void;
   useLongPressing?: boolean;
   handleGoDetail?: () => void;
+  showMarkIfNewlyAdded?: React.ComponentProps<
+    typeof AddressItemInner2024
+  >['showMarkIfNewlyAdded'];
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
   const {
@@ -57,6 +61,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     isScrolling,
     useLongPressing,
     handleGoDetail,
+    showMarkIfNewlyAdded,
   } = props;
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
@@ -71,12 +76,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     });
     onSelect?.();
     handleGoDetail?.();
-    navigateDeprecated(RootNames.SingleAddressStack, {
-      screen: RootNames.SingleAddressHome,
-      params: {
-        account,
-      },
-    });
+    apisSingleHome.navigateToSingleHome(account);
   }, [account, onSelect, handleGoDetail]);
 
   const isCurrentAccount = React.useMemo(() => {
@@ -109,6 +109,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
           account={account}
           changePercent={changePercent}
           isLoss={isLoss}
+          showMarkIfNewlyAdded={showMarkIfNewlyAdded}
         />
       </TouchableOpacity>
     </AddressItemShadowView>

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { apisKeychain, apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
@@ -32,6 +32,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
+import { Text } from '@/components/Typography';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
@@ -50,6 +51,7 @@ export interface AuthenticationModalProps extends ValidationBehaviorProps {
   checklist?: string[];
   placeholder?: string;
   onCancel?(): void;
+  onDismiss?(): void;
   disableValidation?: boolean;
   authType?:
     | Exclude<apisLock.UIAuthType, 'none'>[]
@@ -511,7 +513,12 @@ AuthenticationModal.show = async (
     closeDuration?: number;
   },
 ) => {
-  const { closeDuration = IS_IOS ? 0 : 300, onCancel, ...props } = showConfig;
+  const {
+    closeDuration = IS_IOS ? 0 : 300,
+    onCancel,
+    onDismiss,
+    ...props
+  } = showConfig;
   let disableValidation = showConfig.disableValidation;
   const lockInfo = await apisLock.getRabbyLockInfo();
   if (!lockInfo.isUseCustomPwd) {
@@ -525,6 +532,7 @@ AuthenticationModal.show = async (
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
+      onDismiss,
     },
     ...props,
     onCancel: () => {

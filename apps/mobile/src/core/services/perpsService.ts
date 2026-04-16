@@ -39,6 +39,15 @@ export interface PerpsServiceStore {
   currentAccount: StoreAccount | null;
   lastUsedAccount: StoreAccount | null;
   hasDoneNewUserProcess: boolean;
+  hasShownPerpsGuidePopup: boolean;
+  hasClosedLearnMoreCard: boolean;
+  inviteConfig: {
+    [address: string]: {
+      lastInvitedAt?: number;
+      lastConnectedAt?: number;
+    };
+  };
+  favoriteMarkets: string[];
 }
 export interface PerpsServiceMemoryState {
   agentWallets: {
@@ -63,9 +72,13 @@ export class PerpsService {
           agentVaults: '',
           agentPreferences: {},
           currentAccount: null,
+          inviteConfig: {},
           // no clear account , just cache for last used
           lastUsedAccount: null,
           hasDoneNewUserProcess: false,
+          hasShownPerpsGuidePopup: false,
+          hasClosedLearnMoreCard: false,
+          favoriteMarkets: [],
         },
       },
       {
@@ -74,6 +87,37 @@ export class PerpsService {
     );
     this.memoryState.agentWallets = {};
   }
+
+  getFavoriteMarkets = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.favoriteMarkets || [];
+  };
+
+  addFavoriteMarket = async (market: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    const normalizedMarket = market.toUpperCase();
+    if (this.store.favoriteMarkets.includes(normalizedMarket)) {
+      return;
+    }
+    this.store.favoriteMarkets = [
+      ...this.store.favoriteMarkets,
+      normalizedMarket,
+    ];
+  };
+
+  removeFavoriteMarket = async (market: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    const normalizedMarket = market.toUpperCase();
+    this.store.favoriteMarkets = this.store.favoriteMarkets.filter(
+      m => m !== normalizedMarket,
+    );
+  };
 
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
     if (!this.store) {
@@ -87,6 +131,34 @@ export class PerpsService {
       throw new Error('PerpsService not initialized');
     }
     return this.store.hasDoneNewUserProcess;
+  };
+
+  setHasShownPerpsGuidePopup = async (value: boolean) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.hasShownPerpsGuidePopup = value;
+  };
+
+  getHasShownPerpsGuidePopup = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.hasShownPerpsGuidePopup;
+  };
+
+  setHasClosedLearnMoreCard = async (value: boolean) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.hasClosedLearnMoreCard = value;
+  };
+
+  getHasClosedLearnMoreCard = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.hasClosedLearnMoreCard;
   };
 
   setSendApproveAfterDeposit = async (
@@ -358,5 +430,40 @@ export class PerpsService {
     }
 
     return preference;
+  };
+
+  getInviteConfig = (address: string) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    return this.store.inviteConfig[address.toLowerCase()];
+  };
+
+  setInviteConfig = (
+    address: string,
+    config: { lastConnectedAt?: number; lastInvitedAt?: number },
+  ) => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.inviteConfig[address.toLowerCase()] = {
+      ...this.store.inviteConfig[address.toLowerCase()],
+      ...config,
+    };
+  };
+
+  // only test use
+  resetStore = async () => {
+    if (!this.store) {
+      throw new Error('PerpsService not initialized');
+    }
+    this.store.agentVaults = '';
+    this.store.agentPreferences = {};
+    this.store.currentAccount = null;
+    this.store.lastUsedAccount = null;
+    this.store.hasShownPerpsGuidePopup = false;
+    this.store.hasClosedLearnMoreCard = false;
+    this.store.hasDoneNewUserProcess = false;
+    this.memoryState.agentWallets = {};
   };
 }

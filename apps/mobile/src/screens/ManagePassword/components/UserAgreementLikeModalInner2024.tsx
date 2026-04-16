@@ -4,15 +4,16 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  MODAL_NAMES,
+  MODAL_ID,
+} from '@/components2024/GlobalBottomSheetModal/types';
 
 export function useShowUserAgreementLikeModal() {
   const openedModalIdRef = React.useRef<MODAL_ID | string>('');
   const viewTermsOfUse = React.useCallback(() => {
     openedModalIdRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.TIP_TERM_OF_USE,
-      title: '',
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
@@ -30,7 +31,6 @@ export function useShowUserAgreementLikeModal() {
   const viewPrivacyPolicy = React.useCallback(() => {
     openedModal2IdRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.TIP_PRIVACY_POLICY,
-      title: '',
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,

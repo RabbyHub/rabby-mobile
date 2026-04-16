@@ -6,10 +6,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -19,7 +19,6 @@ import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { ellipsisAddress } from '@/utils/address';
 import { naviPush } from '@/utils/navigation';
@@ -33,6 +32,7 @@ import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface Props {
   data: TransactionGroup;
@@ -86,7 +86,7 @@ export const RevokeToken: React.FC<Props> = ({
 
   const handleGotoTokenDetail = useMemoizedFn(() => {
     naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(actionData.token),
+      token: tokenItemToITokenItem(actionData.token, ''),
       needUseCacheToken: true,
       isSingleAddress,
       account,
@@ -398,6 +398,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
+    maxWidth: '45%',
   },
   itemAddressText: {
     color: colors2024['neutral-foot'],

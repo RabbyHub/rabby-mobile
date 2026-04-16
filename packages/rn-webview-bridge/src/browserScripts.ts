@@ -18,7 +18,7 @@ export const RABBY_DECLARED_TYPES = {
   GET_HEIGHT: `${RABBY_DECLARED_PREFIX}GET_HEIGHT`,
   GET_WINDOW_INFO_AFTER_LOAD: `${RABBY_DECLARED_PREFIX}GET_WINDOW_INFO_AFTER_LOAD`,
   BROWSER_SCRIPT_ERR_CAPTURED: `${RABBY_DECLARED_PREFIX}BROWSER_SCRIPT_ERR_CAPTURED`,
-}
+};
 /**
  * @tip for WeakSet, reference https://caniuse.com/?search=WeakSet
  * @tip safeJsonStringifyReplacer trim these:
@@ -26,7 +26,7 @@ export const RABBY_DECLARED_TYPES = {
  *  - __react, maybe from rsc hydration
  *  - BigInt, convert to string with 'n' suffix
  */
-export const BROWSER_SCRIPT_BASE = `
+export const BROWSER_SCRIPT_BASE = /* js */`
 ;(function () {
   if (!${objRefs.poster}) {
     ${objRefs.poster} = function (content, pos) {
@@ -100,7 +100,7 @@ export const BROWSER_SCRIPT_BASE = `
 })();
 `;
 
-export const SPA_urlChangeListener = `;(function () {
+export const SPA_urlChangeListener = /* js */`;(function () {
   var __rabbyHistory = window.history;
   var __rabbyPushState = __rabbyHistory.pushState;
   var __rabbyReplaceState = __rabbyHistory.replaceState;
@@ -150,7 +150,7 @@ export const SPA_urlChangeListener = `;(function () {
 })();
 `;
 
-export const JS_GET_WINDOW_INFO_AFTER_LOAD = `
+export const JS_GET_WINDOW_INFO_AFTER_LOAD = /* js */`
   ;(function () {
     setTimeout(function() {
       var info = ${objRefs.getWinInfo}();
@@ -173,7 +173,10 @@ export const JS_GET_WINDOW_INFO_AFTER_LOAD = `
 export const JS_DESELECT_TEXT = `if (window.getSelection) {window.getSelection().removeAllRanges();}
 else if (document.selection) {document.selection.empty();}`;
 
-export const JS_POST_MESSAGE_TO_PROVIDER = (message: string, origin: string) => `(function () {
+export const JS_POST_MESSAGE_TO_PROVIDER = (
+  message: string,
+  origin: string,
+) => /* js */`(function () {
   try {
     window.postMessage(${JSON.stringify(message)}, '${origin}');
   } catch (e) {
@@ -182,8 +185,10 @@ export const JS_POST_MESSAGE_TO_PROVIDER = (message: string, origin: string) => 
   }
 })()`;
 
-export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (message: string, origin: string) =>
-  `(function () {})()`;
+export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (
+  message: string,
+  origin: string,
+) => `(function () {})()`;
 /** Disable sending messages to iframes for now
  *
 `(function () {
@@ -200,3 +205,51 @@ export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (message: string, origin: stri
   }
 })()`;
  */
+
+export const JSBridgeHarden = /* js */`(function () {
+    function safeStartsWith(str, search) {
+        if (typeof str !== 'string' || typeof search !== 'string') {
+            return false;
+        }
+
+        for (let i = 0; i < search.length; i++) {
+          if (str[i] !== search[i]) {
+            return false;
+          }
+        }
+
+        return true;
+    }
+
+    if (window.ReactNativeWebView == null) {
+        return;
+    }
+    const parse = JSON.parse;
+    const realPost = window.ReactNativeWebView.postMessage.bind(window.ReactNativeWebView);
+    function myPostMessage(msg) {
+        try {
+            const json = parse(msg);
+            if (json &&
+                json.name != null &&
+                !(location.origin === json.origin ||
+                    location.origin === json.origin + '/' || safeStartsWith(json.origin, location.origin + '/'))) {
+                console.warn('Origin mismatch in postMessage: expected ' +
+                    location.origin +
+                    ', got ' +
+                    json.origin);
+                return;
+            }
+        }
+        catch (_a) { }
+        return realPost(msg);
+    }
+    window.ReactNativeWebView = new Proxy(window.ReactNativeWebView || {}, {
+        get: function (target, prop) {
+            if (prop === 'postMessage') {
+                return myPostMessage;
+            }
+            const f = Reflect.get(target, prop);
+            return typeof f === 'function' ? f.bind(target) : f;
+        },
+    });
+})();`;

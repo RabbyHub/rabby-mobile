@@ -1,9 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, Text, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
-import { useTranslation } from 'react-i18next';
 
 export type FavoriteFilterType = 'all' | 'favorite';
 
@@ -58,31 +57,15 @@ export default function FavoriteFilterItem({
   style,
 }: FavoriteFilterItemProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
 
   return (
     <View style={[styles.container, style]}>
       <TouchableOpacity
         style={[
           styles.filterButton,
-          value === 'all' && styles.filterButtonActive,
-        ]}
-        onPress={() => onChange('all')}>
-        <Text
-          style={[
-            styles.filterButtonText,
-            value === 'all' && styles.filterButtonTextActive,
-          ]}>
-          {t('component.TokenSelector.favoriteFilter.all')}
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[
-          styles.filterButton,
           value === 'favorite' && styles.filterButtonActive,
         ]}
-        onPress={() => onChange('favorite')}>
+        onPress={() => onChange(value === 'favorite' ? 'all' : 'favorite')}>
         <RcIconFavorite
           width={18}
           height={18}

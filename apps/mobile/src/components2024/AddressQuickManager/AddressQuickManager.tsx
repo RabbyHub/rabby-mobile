@@ -4,7 +4,7 @@ import {
   usePinAddresses,
 } from '@/hooks/account';
 import React, { useCallback } from 'react';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItemInner2024 } from '@/screens/Address/components/AddressItemInner2024';
@@ -29,6 +29,7 @@ import {
 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { toast } from '../Toast';
+import { Text } from '@/components/Typography';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -133,24 +134,6 @@ export const AddressQuickManager: React.FC<Props> = ({
       },
     });
   }, [accounts]);
-
-  // const gotoAddAddress = React.useCallback(() => {
-  //   const id = createGlobalBottomSheetModal2024({
-  //     name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-  //     onDone: () => {
-  //       removeGlobalBottomSheetModal2024(id);
-  //     },
-  //     shouldRedirectToSetPasswordBefore2024,
-  //     navigateTo: (screen: AppRootName, params?: object) => {
-  //       navigation.dispatch(
-  //         StackActions.push(RootNames.StackAddress, {
-  //           screen,
-  //           params,
-  //         }),
-  //       );
-  //     },
-  //   });
-  // }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
   return (
     <View>

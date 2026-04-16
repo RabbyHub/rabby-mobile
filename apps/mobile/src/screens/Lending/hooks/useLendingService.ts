@@ -4,9 +4,10 @@ import type { LendingServiceStore } from '@/core/services/lendingService';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
+import { CustomMarket } from '../config/market';
 
 export const lendingAtom = atom<LendingServiceStore>({
-  lastSelectedChain: CHAINS_ENUM.ETH,
+  lastSelectedChain: CustomMarket.proto_mainnet_v3,
   skipHealthFactorWarning: false,
 });
 lendingAtom.onMount = setter => {
@@ -29,14 +30,14 @@ export const useLendingService = () => {
   const [lendingStore, setLendingStore] = useAtom(lendingAtom);
 
   const lastSelectedChain = useMemo(() => {
-    return lendingStore.lastSelectedChain || CHAINS_ENUM.ETH;
+    return lendingStore.lastSelectedChain || CustomMarket.proto_mainnet_v3;
   }, [lendingStore.lastSelectedChain]);
 
   const skipHealthFactorWarning = useMemo(() => {
     return lendingStore.skipHealthFactorWarning || false;
   }, [lendingStore.skipHealthFactorWarning]);
 
-  const setLastSelectedChain = useMemoizedFn(async (chainId: CHAINS_ENUM) => {
+  const setLastSelectedChain = useMemoizedFn(async (chainId: CustomMarket) => {
     try {
       await lendingService.setLastSelectedChain(chainId);
       setLendingStore(prev => ({

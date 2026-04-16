@@ -1,10 +1,11 @@
-name: Type Check
+name: Type Check & Test
 
 on:
   push:
-    branches: [ develop, feat/type* ]
+    branches: [ develop, feat/type*, build/* ]
   pull_request:
     branches: [ develop ]
+  workflow_dispatch:
   schedule:
     - cron: '30 0 * * 0'
 
@@ -12,9 +13,13 @@ defaults:
   run:
     shell: bash -ieol pipefail {0}
 
+concurrency:
+  group: typecheck-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   type_check:
-    name: Build
+    name: apps/mobile typecheck
     permissions:
       actions: read
       contents: read
@@ -29,22 +34,55 @@ jobs:
     #   - mobile
     env:
       NODE_OPTIONS: '--max_old_space_size=4096'
+      YARN_ENABLE_HARDENED_MODE: '0'
 
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v4
 
-      - name: '[Linux] Setup Nodejs and Yarn'
-        if: runner.os == 'Linux'
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
 
       - name: Run Type Check
-        run: |
-          # yarn config set npmRegistryServer https://registry.npmmirror.com
-          cd apps/mobile;
-          yarn install;
-          time yarn typecheck;
+        run: time yarn workspace rabby-mobile typecheck
 
+  mobile_jest:
+    name: apps/mobile jest
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+    runs-on:
+      - ubuntu-latest
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+      YARN_ENABLE_HARDENED_MODE: '0'
 
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run apps/mobile Jest
+        run: time yarn workspace rabby-mobile test --runInBand

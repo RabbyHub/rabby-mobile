@@ -16,19 +16,21 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { BackupItem, BackupItemSkeleton } from './BackupItem2024';
 import { Button } from '@/components2024/Button';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { IS_IOS } from '@/core/native/utils';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { shouldRedirectToSetPasswordBefore2024 } from '@/hooks/useLock';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 
 export const RestoreFromCloud2024: React.FC<{
   onDone: () => void;
-  shouldRedirect2SetPassword?: () => Promise<boolean>;
+  shouldRedirect2SetPassword?: typeof shouldRedirectToSetPasswordBefore2024;
 }> = ({ onDone, shouldRedirect2SetPassword }) => {
   const [backups, setBackups] = React.useState<BackupData[]>();
   const [loading, setLoading] = React.useState(true);
@@ -67,7 +69,9 @@ export const RestoreFromCloud2024: React.FC<{
           removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
-      files: backups?.filter(item => selectedFilenames.includes(item.filename)),
+      files: (backups || [])?.filter(item =>
+        selectedFilenames.includes(item.filename),
+      ),
     });
   }, [backups, shouldRedirect2SetPassword, onDone, selectedFilenames]);
 

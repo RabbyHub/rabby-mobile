@@ -6,14 +6,13 @@ export interface UIContactBookItem {
   address: string;
 }
 
-export function getAliasName(address: string) {
-  const aliasItem = contactService.getAliasByAddress(address);
+export function getAliasName(
+  ...[address, opts]: Parameters<typeof contactService.getAliasByAddress>
+) {
+  const aliasItem = contactService.getAliasByAddress(address, opts);
 
   return aliasItem?.alias || undefined;
 }
-
-/** @deprected just for migration convenience, use `getAliasName` directly! */
-export const getAlianName = getAliasName;
 
 export function getContactsByAddress(): Record<string, ContactBookItem> {
   const contactsByAddr = contactService.getContactsByMap();

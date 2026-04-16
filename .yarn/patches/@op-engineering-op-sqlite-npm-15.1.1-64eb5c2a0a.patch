@@ -1,0 +1,33 @@
+diff --git a/cpp/OPSqlite.cpp b/cpp/OPSqlite.cpp
+index 33a869788b4d7d9e4d8ab66bc90218858613227e..e1139a4e19d9b030be73b0962817fe5caeed6fdc 100644
+--- a/cpp/OPSqlite.cpp
++++ b/cpp/OPSqlite.cpp
+@@ -47,6 +47,9 @@ void install(jsi::Runtime &rt,
+              const char *base_path, const char *crsqlite_path,
+              const char *sqlite_vec_path) {
+ 
++  // Reset invalidated flag when reinstalling (e.g., after hot reload)
++  invalidated = false;
++
+   _base_path = std::string(base_path);
+   _crsqlite_path = std::string(crsqlite_path);
+   _sqlite_vec_path = std::string(sqlite_vec_path);
+diff --git a/cpp/utils.cpp b/cpp/utils.cpp
+index d3e49ed2b9023fcbad2bd9f1b275e1f7be329f62..8b00e4f45b2f039930eb927593957b4a86d8a8db 100644
+--- a/cpp/utils.cpp
++++ b/cpp/utils.cpp
+@@ -1,4 +1,6 @@
+ #include "utils.hpp"
++
++#include "logs.h"
+ #include "SmartHostObject.h"
+ #include "types.hpp"
+ #ifndef OP_SQLITE_USE_LIBSQL
+@@ -344,6 +346,7 @@ promisify(jsi::Runtime &rt, std::function<std::any()> lambda,
+                  resolve = std::move(resolve), reject = std::move(reject)]() {
+       try {
+         std::any result = lambda();
++        LOGD("[op-sqlite utils.cpp] promisify:: opsqlite::invoker is %p", &opsqlite::invoker);
+ 
+         if (opsqlite::invalidated) {
+           return;

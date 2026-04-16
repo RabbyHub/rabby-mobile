@@ -21,14 +21,13 @@ import {
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, orderBy, debounce } from 'lodash';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { syncSingleAddress } from '@/databases/hooks/history';
 import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
@@ -42,6 +41,7 @@ import {
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { makeTxPageBackgroundColors } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 const _PAGE_COUNT = 200;
 
@@ -61,7 +61,7 @@ const waitQueueFinished = (q: PQueue) => {
 };
 
 function LendingHistory(): JSX.Element {
-  const { top10Addresses, list: accountList } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   // Lending history only shows all accounts, no watch/safe addresses, no token details
@@ -82,9 +82,7 @@ function LendingHistory(): JSX.Element {
     });
   const isSceneUsingAllAccounts = false;
   const [firstFetchDone, setFirstFetchDone] = useState(false);
-  const [historySuccessList, setHistorySuccessList] = useState<string[]>(
-    transactionHistoryService.getSucceedList(),
-  );
+  const [historySuccessList, setHistorySuccessList] = useState<string[]>([]);
 
   const mergeDataWithDeduplication = useMemoizedFn(
     (
@@ -99,10 +97,6 @@ function LendingHistory(): JSX.Element {
         : [...existingData, ...uniqueNewData];
     },
   );
-
-  const { syncTop10History, syncSingleAddress } =
-    useSyncHistoryDB(top10Addresses);
-  const { historyLoading } = useHistoryTokenDict();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
 
@@ -119,7 +113,7 @@ function LendingHistory(): JSX.Element {
     }
     dbFetchLoadingRef.current = true;
     const addresses = isSceneUsingAllAccounts
-      ? top10Addresses.map(i => i.toLowerCase())
+      ? myTop10Addresses.map(i => i.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
     const {
       items: historyList,
@@ -165,7 +159,7 @@ function LendingHistory(): JSX.Element {
   const batchFetchLocalTx = async () => {
     const list: TransactionGroup[] = [];
     const addressList = isSceneUsingAllAccounts
-      ? top10Addresses
+      ? myTop10Addresses
       : [finalSceneCurrentAccount?.address.toLowerCase()];
     for (let i = 0; i < addressList.length; i++) {
       const addr = addressList[i];
@@ -244,16 +238,6 @@ function LendingHistory(): JSX.Element {
   });
 
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
-
-  const refresh = useMemoizedFn(() => {
-    lastMap.current = {};
-    hasMoreMap.current = {};
-    runFetchLocalTx();
-    dbLastCursorRef.current = 0;
-    isSceneUsingAllAccounts
-      ? syncTop10History(true)
-      : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
-  });
 
   useEffect(() => {
     if (dbData.length === 0 && !isSceneUsingAllAccounts && firstFetchDone) {
@@ -345,7 +329,7 @@ function LendingHistory(): JSX.Element {
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
-      <View style={{ paddingTop: 0, position: 'relative' }}>
+      <View style={{ paddingTop: 0, flex: 1, position: 'relative' }}>
         <>
           <HistoryList
             ref={historyListRef}

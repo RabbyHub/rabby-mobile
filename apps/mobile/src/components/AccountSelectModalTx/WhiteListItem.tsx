@@ -6,7 +6,6 @@ import { Card } from '@/components2024/Card';
 import {
   StyleSheet,
   View,
-  Text,
   StyleProp,
   ViewStyle,
   TouchableOpacity,
@@ -35,6 +34,7 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 const SIZES = {
   itemH: 78,

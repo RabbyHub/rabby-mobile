@@ -12,17 +12,11 @@ import BigNumber from 'bignumber.js';
 import { Divider, Slider } from '@rneui/themed';
 
 import TokenSelect, { TokenSelectInst } from './TokenSelect';
+import SwapToTokenSelect from './SwapToTokenSelect';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import Animated, {
@@ -34,6 +28,8 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { Account } from '@/core/services/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import usePrevious from 'react-use/lib/usePrevious';
+import { ITokenItem } from '@/store/tokens';
+import { Text, TextInput } from '@/components/Typography';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -229,22 +225,30 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             flexDirection: 'row',
             gap: 12,
           }}>
-          <TokenSelect
-            ref={openTokenModalRef}
-            token={token}
-            onTokenChange={onTokenSelect}
-            accountInScreen={account}
-            chainId={chainId}
-            type={isFrom ? 'swapFrom' : 'swapTo'}
-            placeholder={t('page.swap.search-by-name-address')}
-            // excludeTokens={excludeTokens}
-            useSwapTokenList={!isFrom}
-            searchPlaceholder={
-              isFrom
-                ? undefined
-                : t('component.TokenSelector.searchPlaceHolder1')
-            }
-          />
+          {isFrom ? (
+            <TokenSelect
+              ref={openTokenModalRef}
+              token={token}
+              onTokenChange={onTokenSelect}
+              accountInScreen={account}
+              chainId={chainId}
+              type={'swapFrom'}
+              placeholder={t('page.swap.search-by-name-address')}
+            />
+          ) : (
+            <SwapToTokenSelect
+              ref={openTokenModalRef}
+              token={token}
+              onTokenChange={onTokenSelect}
+              accountInScreen={account}
+              chainId={chainId}
+              placeholder={t('page.swap.search-by-name-address')}
+              searchPlaceholder={t(
+                'component.TokenSelector.searchPlaceHolder1',
+              )}
+            />
+          )}
+
           <Divider color={colors2024['neutral-line']} />
         </View>
 

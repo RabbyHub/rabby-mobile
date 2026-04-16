@@ -1,0 +1,13 @@
+diff --git a/dist/Slider/Slider.js b/dist/Slider/Slider.js
+index 87dab6d9ed1366f9f3f33f53a2560917e947c0de..bb3f9550d931c6c7b114092f89aef0396c853b2b 100644
+--- a/dist/Slider/Slider.js
++++ b/dist/Slider/Slider.js
+@@ -15,7 +15,7 @@ import { Rect } from './components/Rect';
+ import { SliderThumb } from './components/SliderThumb';
+ const TRACK_SIZE = 4;
+ const THUMB_SIZE = 40;
+-const TRACK_STYLE = Platform.select({ web: 0, default: -1 });
++const TRACK_STYLE = Platform.select({ web: 0, default: 0 });
+ const DEFAULT_ANIMATION_CONFIGS = {
+     spring: {
+         friction: 7,

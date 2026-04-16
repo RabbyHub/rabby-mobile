@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { cloneElement } from 'react';
 import { useApproval } from '@/hooks/useApproval';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,22 +12,25 @@ import {
   MODAL_NAMES,
   RemoveParams,
 } from './types';
-import { MODAL_CONFIGS } from './utils';
+import { MODAL_CONFIGS, ModalComponents } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
-import { useSensitiveGlobalModalsOpened } from './security';
+import { bottomSheetModalSecurityApis } from './security';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeBottomSheetProps } from './utils-help';
+import { storeApiScreenshotReport } from '@/components/Screenshot/hooks';
+import { runIIFEFunc } from '@/core/utils/store';
+import { perfEvents } from '@/core/utils/perf';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
   params: CreateParams;
   id: MODAL_ID;
-  ref: React.RefObject<AppBottomSheetModal>;
+  ref: React.RefObject<AppBottomSheetModal | null>;
 };
 
 let globalRemoveAllModals: ((params?: RemoveParams) => void) | null = null;
@@ -85,9 +88,6 @@ export const GlobalBottomSheetModal2024 = () => {
 
   const [getApproval] = useApproval();
 
-  const { markAtSensitiveModal, removeAtSensitiveModal } =
-    useSensitiveGlobalModalsOpened();
-
   const handleCreate = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.CREATE]
   >(
@@ -132,14 +132,17 @@ export const GlobalBottomSheetModal2024 = () => {
         return [...prev, newModal];
       });
       if (params.preventScreenshotOnModalOpen) {
-        markAtSensitiveModal(id);
+        bottomSheetModalSecurityApis.markAtSensitiveModal(id);
+      }
+      if (params.screenshotReportFreeBeforeModalClose) {
+        storeApiScreenshotReport.markIsScreenshotReportFree(true);
       }
 
       setTimeout(() => {
         handlePresent(id);
       }, 0);
     },
-    [getApproval, handlePresent, markAtSensitiveModal],
+    [getApproval, handlePresent],
   );
 
   const handleRemove = React.useCallback<
@@ -166,11 +169,16 @@ export const GlobalBottomSheetModal2024 = () => {
   >(
     key => {
       globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
-      removeAtSensitiveModal(key);
+      bottomSheetModalSecurityApis.removeAtSensitiveModal(key);
+
+      const params = modals.find(modal => modal.id === key)?.params;
+      if (params?.screenshotReportFreeBeforeModalClose) {
+        storeApiScreenshotReport.markIsScreenshotReportFree(false);
+      }
 
       handleRemove(key);
     },
-    [handleRemove, removeAtSensitiveModal],
+    [handleRemove, modals],
   );
 
   const handleSnapToIndex = React.useCallback<
@@ -218,10 +226,12 @@ export const GlobalBottomSheetModal2024 = () => {
   return (
     <View>
       {modals.map(modal => {
-        const ModalView = MODAL_CONFIGS[modal.params.name].Component;
-
+        const mConfig = MODAL_CONFIGS[modal.params.name];
+        const ModalView = mConfig.Component as React.ComponentType<any>;
         const propsPreset =
-          MODAL_CONFIGS[modal.params.name].globalModalPropsPreset;
+          'globalModalPropsPreset' in mConfig
+            ? mConfig.globalModalPropsPreset
+            : {};
         const finalBottomSheetModalProps: typeof propsPreset & object = {
           ...propsPreset,
           ...modal.params.bottomSheetModalProps,
@@ -236,18 +246,44 @@ export const GlobalBottomSheetModal2024 = () => {
             ? View
             : BottomSheetView;
 
-        override_nested_object_props: {
-          finalBottomSheetModalProps.rootViewStyle = StyleSheet.flatten([
-            propsPreset?.rootViewStyle || {},
-            finalBottomSheetModalProps?.enableDynamicSizing ? {} : { flex: 1 },
-            finalBottomSheetModalProps?.rootViewStyle || {},
-          ]);
-        }
+        finalBottomSheetModalProps.rootViewStyle = StyleSheet.flatten([
+          propsPreset?.rootViewStyle || {},
+          finalBottomSheetModalProps?.enableDynamicSizing
+            ? {}
+            : {
+                flex: 1,
+              },
+          finalBottomSheetModalProps?.rootViewStyle || {},
+        ]);
 
         const modalViewProps = {
           ...modal.params,
           $createParams: modal.params,
         };
+
+        let children = (
+          <RootView
+            // eslint-disable-next-line react-native/no-inline-styles
+            // TODO: need check
+            style={finalBottomSheetModalProps.rootViewStyle}
+            {...panResponder.panHandlers}>
+            <ModalView {...modalViewProps} />
+          </RootView>
+        );
+
+        if (
+          !finalBottomSheetModalProps.enableDynamicSizing &&
+          RootView === BottomSheetView
+        ) {
+          children = (
+            // eslint-disable-next-line react-native/no-inline-styles
+            <View style={{ flex: 1 }}>
+              {cloneElement(children, {
+                style: [children.props.style, { bottom: 0 }],
+              })}
+            </View>
+          );
+        }
 
         return (
           <AppBottomSheetModal
@@ -265,15 +301,7 @@ export const GlobalBottomSheetModal2024 = () => {
             key={modal.id}
             ref={modal.ref}
             name={modal.id}
-            children={
-              <RootView
-                // eslint-disable-next-line react-native/no-inline-styles
-                // TODO: need check
-                style={finalBottomSheetModalProps.rootViewStyle}
-                {...panResponder.panHandlers}>
-                <ModalView {...modalViewProps} />
-              </RootView>
-            }
+            children={children}
             stackBehavior="push"
             {...makeBottomSheetProps({
               createParams: modal.params,
@@ -291,3 +319,9 @@ export const removeAllGlobalBottomSheetModals = (params?: RemoveParams) => {
     globalRemoveAllModals(params);
   }
 };
+
+runIIFEFunc(() => {
+  perfEvents.subscribe('GLOBAL_CLEAR_ALL_COVERED_COMPONENTS', () => {
+    removeAllGlobalBottomSheetModals();
+  });
+});

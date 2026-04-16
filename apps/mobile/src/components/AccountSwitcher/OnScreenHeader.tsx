@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 
 // caret-down-cc.svg
 import { default as RcCaretDownCircleCC } from './icons/caret-down-circle.svg';
@@ -17,6 +17,8 @@ import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
 import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { useRendererDetect } from '../Perf/PerfDetector';
+import { Text } from '@/components/Typography';
 
 export function ScreenHeaderAccountSwitcher({
   titleText = '',
@@ -42,6 +44,8 @@ export function ScreenHeaderAccountSwitcher({
   } = useSceneAccountInfo({
     forScene,
   });
+
+  useRendererDetect({ name: 'ScreenHeaderAccountSwitcher' });
 
   const { preFetchData } = usePreFetchBeforeEnterScene();
 
@@ -83,15 +87,20 @@ export function ScreenHeaderAccountSwitcher({
         }
       }}>
       {titleTextNode}
-      <View style={styles.addressRow}>
+      <View style={styles.wrapperAddressRow}>
         {!isSceneUsingAllAccounts ? (
           !!finalSceneCurrentAccount && (
-            <AddressItem account={finalSceneCurrentAccount}>
+            <AddressItem
+              style={styles.addressItem}
+              account={finalSceneCurrentAccount}>
               {({ WalletIcon, WalletAddress }) => {
                 return (
                   <View style={styles.addressRow}>
                     <WalletIcon style={styles.walletIcon} />
-                    <Text style={styles.address}>
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={styles.address}>
                       {finalSceneCurrentAccount.aliasName ||
                         ellipsisAddress(finalSceneCurrentAccount?.address)}
                     </Text>
@@ -121,6 +130,7 @@ export function ScreenHeaderAccountSwitcher({
   );
 }
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
@@ -129,6 +139,7 @@ const getStyle = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 199,
+      width: SCREEN_WIDTH - 160,
       marginTop: -4,
     },
     titleText: {
@@ -138,9 +149,19 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 20,
       color: ctx.colors2024['neutral-title-1'],
     },
-    addressRow: {
+    wrapperAddressRow: {
       flexDirection: 'row',
       alignItems: 'center',
+      width: '100%',
+      justifyContent: 'center',
+    },
+    addressRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    addressItem: {
+      flexShrink: 1,
     },
     walletIcon: {
       borderRadius: 4,
@@ -149,15 +170,19 @@ const getStyle = createGetStyles2024(ctx => {
       marginRight: 4,
     },
     address: {
+      flexShrink: 1,
       margin: 4,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
       lineHeight: 20,
       fontSize: 16,
+      maxWidth: '90%',
       color: ctx.colors2024['neutral-foot'],
     },
     addressCaretIcon: {
       marginLeft: 4,
+      flexShrink: 0,
+      width: 18,
     },
     reverseCaret: {
       transform: [{ rotate: '180deg' }],

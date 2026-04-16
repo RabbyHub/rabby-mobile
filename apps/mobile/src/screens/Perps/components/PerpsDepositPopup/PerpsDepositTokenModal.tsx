@@ -7,16 +7,17 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { ITokenItem } from '@/store/tokens';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Text, View } from 'react-native';
+import { Modal, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   visible: boolean;
-  token?: AbstractPortfolioToken | null;
+  token?: ITokenItem | null;
   onCancel?: () => void;
   onNavigate?: () => void;
 }
@@ -97,7 +98,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
                       params: {
                         swapAgain: true,
                         chainEnum: findChain({ serverId: token.chain })?.enum,
-                        swapTokenId: [token._tokenId, ARB_USDC_TOKEN_ITEM.id],
+                        swapTokenId: [token.id, ARB_USDC_TOKEN_ITEM.id],
                       },
                     });
                   } else {
@@ -106,7 +107,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
 
                       params: {
                         chainEnum: findChain({ serverId: token.chain })?.enum,
-                        tokenId: token._tokenId,
+                        tokenId: token.id,
                         toChainEnum: findChain({
                           serverId: ARB_USDC_TOKEN_ITEM.chain,
                         })?.enum,

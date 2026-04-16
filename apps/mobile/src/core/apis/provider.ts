@@ -2,7 +2,11 @@ import { ethers } from 'ethers';
 import { cloneDeep, omit } from 'lodash';
 import { Common, Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
-import { bytesToHex, isValidAddress } from '@ethereumjs/util';
+import {
+  bytesToHex,
+  isValidAddress,
+  toChecksumAddress,
+} from '@ethereumjs/util';
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -56,7 +60,7 @@ export { sendRequest } from './sendRequest';
 export const requestETHRpc = <T = any>(
   data: { method: string; params: any },
   chainId: string,
-  account?: Account,
+  account?: Account | null,
 ): Promise<IExtractFromPromise<T>> => {
   return providerController.ethRpc(
     {
@@ -140,6 +144,45 @@ export const opStackL1FeeEstimate = async (
   return res;
 };
 
+// https://docs.citrea.xyz/advanced/fee-model#l1-fee-rate-source
+export const citreaL1FeeEstimate = async (txParams: any) => {
+  try {
+    const chainServerId = findChain({ serverId: 'citrea' })?.serverId;
+
+    if (!chainServerId) {
+      return '0x0';
+    }
+
+    const [diffSizeRes, latestBlock] = await Promise.all([
+      customRPCService.defaultEthRPC({
+        chainServerId,
+        method: 'eth_estimateDiffSize',
+        params: [txParams],
+      }),
+      customRPCService.defaultEthRPC({
+        chainServerId,
+        method: 'eth_getBlockByNumber',
+        params: ['latest', false],
+      }),
+    ]);
+
+    const l1DiffSize = diffSizeRes?.l1DiffSize;
+    const l1FeeRate = latestBlock?.l1FeeRate;
+
+    if (!l1DiffSize || !l1FeeRate) {
+      return '0x0';
+    }
+
+    const l1Fee = new BigNumber(l1DiffSize)
+      .times(l1FeeRate)
+      .integerValue(BigNumber.ROUND_CEIL);
+
+    return `0x${l1Fee.toString(16)}`;
+  } catch {
+    return '0x0';
+  }
+};
+
 export const fetchEstimatedL1Fee = async (
   {
     txParams,
@@ -150,6 +193,9 @@ export const fetchEstimatedL1Fee = async (
   },
   chain = CHAINS_ENUM.OP,
 ): Promise<string> => {
+  if (String(chain).toLowerCase() === 'citrea') {
+    return citreaL1FeeEstimate(txParams);
+  }
   if (OP_STACK_ENUMS.includes(chain)) {
     return opStackL1FeeEstimate(txParams, chain, account);
   } else if (chain === CHAINS_ENUM.SCRL) {
@@ -165,7 +211,7 @@ export const getRecommendNonce = async ({
 }: {
   from: string;
   chainId: number;
-  account: Account;
+  account: Account | null;
 }) => {
   const chain = findChain({
     id: chainId,
@@ -225,7 +271,10 @@ export const getERC20Allowance = async (
       stateMutability: 'view',
       type: 'function',
     },
-    [address || account.address, contractAddress],
+    [
+      toChecksumAddress(address || account.address),
+      toChecksumAddress(contractAddress),
+    ],
   );
 
   const allowance = await requestETHRpc(
@@ -282,7 +331,7 @@ export const generateApproveTokenTx = ({
         stateMutability: 'nonpayable',
         type: 'function',
       },
-      [spender, amount] as any,
+      [toChecksumAddress(spender), amount] as any,
     ),
   };
 };
@@ -323,41 +372,42 @@ type gasMarketV2ParamsV1 = {
 };
 export const gasMarketV2 = async (
   _params: gasMarketV2ParamsV1 | gasMarketV2ParamsV2,
-  account: Account,
+  account: Account | null,
 ) => {
   let chainId: string;
   let tx: Tx | undefined;
   const params = cloneDeep(_params);
 
   if ('tx' in params) {
-    if (params.tx.nonce === undefined) {
+    chainId = params.chain.serverId;
+
+    if (params?.chain && params?.chain.enum === CHAINS_ENUM.LINEA) {
       params.tx.nonce = await getRecommendNonce({
         from: params.tx.from,
         chainId: params.chain.id,
         account,
       });
+      if (params.tx.gasPrice === undefined || params.tx.gasPrice === '') {
+        params.tx.gasPrice = '0x0';
+      }
+      if (params.tx.gas === undefined || params.tx.gas === '') {
+        params.tx.gas = '0x0';
+      }
+      if (params.tx.data === undefined || params.tx.data === '') {
+        params.tx.data = '0x';
+      }
+      chainId = params.chain.serverId;
+      tx = {
+        chainId: params.tx.chainId,
+        data: params.tx.data,
+        from: params.tx.from,
+        gas: params.tx.gas,
+        nonce: params.tx.nonce,
+        to: params.tx.to,
+        value: params.tx.value,
+        gasPrice: params.tx.gasPrice,
+      };
     }
-
-    if (params.tx.gasPrice === undefined || params.tx.gasPrice === '') {
-      params.tx.gasPrice = '0x0';
-    }
-    if (params.tx.gas === undefined || params.tx.gas === '') {
-      params.tx.gas = '0x0';
-    }
-    if (params.tx.data === undefined || params.tx.data === '') {
-      params.tx.data = '0x';
-    }
-    chainId = params.chain.serverId;
-    tx = {
-      chainId: params.tx.chainId,
-      data: params.tx.data,
-      from: params.tx.from,
-      gas: params.tx.gas,
-      nonce: params.tx.nonce,
-      to: params.tx.to,
-      value: params.tx.value,
-      gasPrice: params.tx.gasPrice,
-    };
   } else {
     chainId = params.chainId;
   }

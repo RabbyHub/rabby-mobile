@@ -6,9 +6,10 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, TouchableOpacity, View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import SecurityLevelTag from '../SecurityEngine/SecurityLevelTagNoText';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   ruleResultWrapper: {

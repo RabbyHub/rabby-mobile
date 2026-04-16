@@ -1,16 +1,17 @@
 import React, { useMemo, memo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { colord } from 'colord';
+import { TouchableOpacity, View } from 'react-native';
 
-import { AbstractPortfolio } from '../types';
 import PortfolioTemplate from '../portfolios';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DappActions } from './DappActions';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useTranslation } from 'react-i18next';
+import { TonManageAction } from '../utils/protocolConfig';
+import { IProtocolPortfolio } from '@/store/protocols';
+import { Text } from '@/components/Typography';
 
 // 已支持的模板
 const TemplateDict = {
@@ -36,13 +37,7 @@ const TemplateDict = {
 };
 
 export const MemoItem = memo(
-  ({
-    currentAccount,
-    item,
-  }: {
-    currentAccount?: KeyringAccountWithAlias;
-    item: AbstractPortfolio;
-  }) => {
+  ({ item }: { item: IProtocolPortfolio }) => {
     const { styles } = useTheme2024({ getStyle: getStyles });
 
     const types = item._originPortfolio.detail_types?.reverse();
@@ -55,10 +50,9 @@ export const MemoItem = memo(
 
     return (
       <PortfolioDetail
-        name={item._originPortfolio.name}
+        name={item.name || ''}
         data={item}
         style={styles.detail}
-        currentAccount={currentAccount}
       />
     );
   },
@@ -69,23 +63,29 @@ export const WrapperDappActionsMemoItem = ({
   item,
   chain,
   protocolLogo,
+  protocolName,
   address,
   addressType,
   onRefresh,
   session,
   manageAction,
+  disableAction,
+  isLast,
 }: {
-  item: AbstractPortfolio;
+  item: IProtocolPortfolio;
   chain?: string;
   protocolLogo?: string;
+  protocolName?: string;
   address?: string;
   addressType?: KEYRING_TYPE;
   onRefresh?: () => Promise<void>;
   session?: React.ComponentProps<typeof DappActions>['session'];
-  manageAction?: (account?: KeyringAccountWithAlias) => void;
+  manageAction?: TonManageAction;
+  disableAction?: boolean;
+  isLast?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { colors2024 } = useTheme2024();
+  const { t } = useTranslation();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -104,39 +104,33 @@ export const WrapperDappActionsMemoItem = ({
     return null;
   }
   return (
-    <View style={styles.portfolioCard}>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[
-          colord(colors2024['neutral-line']).alpha(0.2).toRgbString(),
-          colord(colors2024['neutral-line']).alpha(0).toRgbString(),
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.gradientBg}
-      />
+    <View style={[styles.portfolioCard, isLast && styles.portfolioCardLast]}>
       <View style={styles.portfolioContent}>
-        <MemoItem currentAccount={currentAccount} item={item} />
+        <MemoItem item={item} />
       </View>
-
+      {!!manageAction && (
+        <TouchableOpacity
+          style={[styles.button]}
+          onPress={() => manageAction?.(currentAccount, item)}>
+          <Text style={styles.buttonText}>
+            {t('component.portfolios.manage')}
+          </Text>
+        </TouchableOpacity>
+      )}
       {!!item._originPortfolio.withdraw_actions?.length &&
         !item?._originPortfolio?.proxy_detail?.proxy_contract_id && (
           <DappActions
             data={item._originPortfolio.withdraw_actions}
             chain={chain}
             protocolLogo={protocolLogo}
+            protocolName={protocolName}
             currentAccount={currentAccount}
             onRefresh={onRefresh}
             session={session}
+            style={!!manageAction && styles.longMarginTop}
+            disableAction={disableAction}
           />
         )}
-      {!!manageAction && (
-        <TouchableOpacity
-          style={[styles.button]}
-          onPress={() => manageAction(currentAccount)}>
-          <Text style={styles.buttonText}>Manage</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
@@ -144,16 +138,17 @@ export const WrapperDappActionsMemoItem = ({
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   portfolioCard: {
     width: '100%',
-    paddingTop: 12,
-    paddingHorizontal: 4,
-    paddingBottom: 20,
-    borderRadius: 12,
-    // backgroundColor: ctx.colors2024['neutral-bg-5'],
+    // paddingTop: 12,
+    // paddingHorizontal: 4,
     position: 'relative',
     overflow: 'hidden',
+    marginBottom: 24,
+  },
+  portfolioCardLast: {
+    marginBottom: 0,
   },
   portfolioContent: {
-    paddingHorizontal: 8,
+    // paddingHorizontal: 8,
   },
   detail: {
     backgroundColor: 'transparent',
@@ -166,12 +161,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     bottom: 0,
   },
   button: {
-    marginTop: 12,
+    marginTop: 0,
     flex: 1,
-    height: 52,
+    height: 48,
     borderRadius: 12,
-    borderColor: colors2024['brand-default'],
-    borderWidth: 1,
+    backgroundColor: colors2024['brand-light-1'],
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -182,5 +176,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  longMarginTop: {
+    marginTop: 12,
   },
 }));

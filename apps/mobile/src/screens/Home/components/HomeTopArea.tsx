@@ -1,90 +1,54 @@
-import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
-import { formChartData } from '@/hooks/useCurve';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, View } from 'react-native';
+import { View } from 'react-native';
 import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { CenterBg } from './BgComponents';
+import useCurrentBalance, {
+  apisAddressBalance,
+} from '@/hooks/useCurrentBalance';
+import {
+  useHomeReachTop,
+  useSingleHomeAddress,
+  useSingleHomeIsLoss,
+} from '../hooks/singleHome';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 
-export const HomeTopArea = ({
-  onUpdateIsDecrease,
-  curveData,
-  isLoadingCurve,
-  isDisConnect,
-  onRefresh,
-}: {
-  onUpdateIsDecrease?: (status: boolean) => void;
-  curveData?: ReturnType<typeof formChartData>;
-  isLoadingCurve: boolean;
-  isDisConnect: boolean;
-  onRefresh: () => void;
-}) => {
+export const HomeTopArea = () => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const isDecrease = useCachedValue(curveData, 'isLoss');
-  const [fold, setFold] = useState(true);
-  const { safeOffHeader } = useSafeSizes();
+  const { currentAddress } = useSingleHomeAddress();
+  const { isDisConnect } = useGlobalStatus();
+
+  const { isLoss } = useSingleHomeIsLoss();
 
   const pathColor = useMemo(
-    () =>
-      !curveData?.isLoss
-        ? colors2024['green-default']
-        : colors2024['red-default'],
-    [colors2024, curveData?.isLoss],
+    () => (!isLoss ? colors2024['green-default'] : colors2024['red-default']),
+    [colors2024, isLoss],
   );
 
-  useEffect(() => {
-    if (isDecrease !== undefined) {
-      onUpdateIsDecrease?.(isDecrease);
-    }
-  }, [isDecrease, onUpdateIsDecrease]);
+  const { reachTop } = useHomeReachTop();
 
   return (
     <View style={[styles.container]}>
-      <View style={styles.relativeWrapper}>
-        <ImageBackground
-          source={
-            !isDecrease
-              ? require('@/assets2024/singleHome/up.png')
-              : require('@/assets2024/singleHome/loss.png')
-          }
-          resizeMode="cover"
-          style={[
-            styles.bg,
-            {
-              top: 0 - safeOffHeader,
-              height: safeOffHeader + 110,
-            },
-          ]}
-        />
-      </View>
-
+      {reachTop ? null : <CenterBg />}
       <GlobalWarning
         hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
-        onRefresh={onRefresh}
+        onRefresh={() => {
+          if (!currentAddress) return;
+          apisAddressBalance.triggerUpdate({
+            address: currentAddress,
+            force: true,
+            fromScene: 'SingleAddressHome',
+          });
+        }}
       />
 
       <HomeTopChart
-        fold={fold}
-        setFold={setFold}
-        loading={isLoadingCurve}
-        data={
-          curveData || {
-            list: [],
-            rawNetWorth: 0,
-            rawChange: 0,
-            netWorth: '',
-            change: '',
-            changePercent: '',
-            isLoss: false,
-            isEmptyAssets: false,
-          }
-        }
         pathColor={pathColor}
         isNoAssets={false}
         isOffline={false}
@@ -96,6 +60,7 @@ export const HomeTopArea = ({
 const getStyles = createGetStyles2024(() => ({
   container: {
     position: 'relative',
+    marginBottom: 20,
     // overflow: 'hidden',
     // height: HEADER_TOP_AREA_HEIGHT,
   },

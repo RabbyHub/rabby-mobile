@@ -3,22 +3,28 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import { forwardRef, useRef, useMemo, useImperativeHandle } from 'react';
-import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
+import { useRef, useMemo, useImperativeHandle, type Ref } from 'react';
+import { View, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/Typography';
 
-export const ConfirmBottomSheetModal = forwardRef<
-  BottomSheetModal,
-  {
-    height: number;
-    title: React.ReactNode;
-    desc: React.ReactNode;
-    descStyle?: StyleProp<TextStyle>;
-    onConfirm?: () => void;
-    onCancel?: () => void;
-  }
->((props, ref) => {
-  const { height = 0, title, desc, onConfirm, onCancel, descStyle } = props;
+export const ConfirmBottomSheetModal = ({
+  height = 0,
+  title,
+  desc,
+  onConfirm,
+  onCancel,
+  descStyle,
+  ref,
+}: {
+  height: number;
+  title: React.ReactNode;
+  desc: React.ReactNode;
+  descStyle?: StyleProp<TextStyle>;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  ref?: Ref<BottomSheetModal>;
+}) => {
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
 
@@ -78,7 +84,7 @@ export const ConfirmBottomSheetModal = forwardRef<
       </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
-});
+};
 
 const getStyles = createGetStyles(colors => ({
   sheet: {

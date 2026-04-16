@@ -29,5 +29,6 @@ export interface CandleData {
   interval: CandlePeriod;
   showVolume?: boolean;
   fitContent?: boolean;
+  noTime?: boolean;
   candles: CandleStick[];
 }

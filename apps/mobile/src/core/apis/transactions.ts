@@ -16,8 +16,42 @@ import type {
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { Account } from '../services/preference';
+import { TX_GAS_LIMIT_CHAIN_MAPPING } from '@/constant/txGasLimit';
+import {
+  GasTokenBalanceInfo,
+  getTempoFeeTokenInfo,
+  isTempoChain,
+} from '@/utils/tempo';
 
-interface BlockInfo {
+const GAS_PRICE_DECIMALS = 18;
+
+const rawAmountToBn = (
+  value: string | number | BigNumber | null | undefined,
+) => {
+  if (BigNumber.isBigNumber(value)) {
+    return value;
+  }
+  return new BigNumber(value || 0);
+};
+
+const pow10 = (decimals: number) => {
+  return new BigNumber(10).pow(Math.max(0, decimals));
+};
+
+const convert18RawToTokenRaw = (
+  rawAmountIn18: BigNumber,
+  tokenDecimals: number,
+) => {
+  if (tokenDecimals === GAS_PRICE_DECIMALS) {
+    return rawAmountIn18;
+  }
+  if (tokenDecimals > GAS_PRICE_DECIMALS) {
+    return rawAmountIn18.times(pow10(tokenDecimals - GAS_PRICE_DECIMALS));
+  }
+  return rawAmountIn18.div(pow10(GAS_PRICE_DECIMALS - tokenDecimals));
+};
+
+export interface BlockInfo {
   baseFeePerGas: string;
   difficulty: string;
   extraData: string;
@@ -50,6 +84,9 @@ export async function calcGasLimit({
   explainTx,
   needRatio,
   account,
+  preparedBlock,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
+  checkTxValueInBalance = true,
 }: {
   chain: Chain;
   tx: Tx;
@@ -59,33 +96,36 @@ export async function calcGasLimit({
   explainTx: ExplainTxResponse;
   needRatio: boolean;
   account: Account;
+  preparedBlock?: BlockInfo | Promise<BlockInfo | null>;
+  gasTokenDecimals?: number;
+  checkTxValueInBalance?: boolean;
 }) {
-  let block: null | BlockInfo = null;
+  let block: null | BlockInfo = preparedBlock ? await preparedBlock : null;
   try {
-    block = await apiProvider.requestETHRpc<any>(
-      {
-        method: 'eth_getBlockByNumber',
-        params: ['latest', false],
-      },
-      chain.serverId,
-      account,
-    );
+    if (!block) {
+      block = await apiProvider.requestETHRpc<BlockInfo>(
+        {
+          method: 'eth_getBlockByNumber',
+          params: ['latest', false],
+        },
+        chain.serverId,
+        account,
+      );
+    }
   } catch (e) {
     // NOTHING
   }
 
   // use server response gas limit
   let ratio = SAFE_GAS_LIMIT_RATIO[chain.id] || DEFAULT_GAS_LIMIT_RATIO;
-  let sendNativeTokenAmount = new BigNumber(tx.value); // current transaction native token transfer count
-  sendNativeTokenAmount = isNaN(sendNativeTokenAmount.toNumber())
-    ? new BigNumber(0)
-    : sendNativeTokenAmount;
+  const sendNativeTokenRawAmount = checkTxValueInBalance
+    ? convert18RawToTokenRaw(rawAmountToBn(tx.value || 0), gasTokenDecimals)
+    : new BigNumber(0);
   const gasNotEnough = gas
     .times(ratio)
     .times(selectedGas?.price || 0)
-    .div(1e18)
-    .plus(sendNativeTokenAmount.div(1e18))
-    .isGreaterThan(new BigNumber(nativeTokenBalance).div(1e18));
+    .plus(sendNativeTokenRawAmount)
+    .isGreaterThan(rawAmountToBn(nativeTokenBalance));
   if (gasNotEnough) {
     ratio = explainTx.gas.gas_ratio;
   }
@@ -97,6 +137,15 @@ export async function calcGasLimit({
     const buffer = SAFE_GAS_LIMIT_BUFFER[chain.id] || DEFAULT_GAS_LIMIT_BUFFER;
     recommendGasLimit = new BigNumber(block.gasLimit).times(buffer).toFixed(0);
   }
+
+  const singleTxGasLimit =
+    TX_GAS_LIMIT_CHAIN_MAPPING[chain.enum] || Number(recommendGasLimit);
+
+  recommendGasLimit =
+    Number(recommendGasLimit) > singleTxGasLimit
+      ? singleTxGasLimit + ''
+      : recommendGasLimit;
+
   const gasLimit = intToHex(
     Math.max(Number(recommendGasLimit), Number(tx.gas || 0)),
   );
@@ -107,6 +156,59 @@ export async function calcGasLimit({
   };
 }
 
+export const getGasTokenBalance = async ({
+  address,
+  chainId,
+  account,
+}: {
+  address: string;
+  chainId: number;
+  account: Account;
+}): Promise<GasTokenBalanceInfo> => {
+  const chain = findChain({
+    id: chainId,
+  });
+  if (!chain) {
+    throw new Error('chain not found');
+  }
+
+  if (isTempoChain(chain.serverId)) {
+    const feeToken = await getTempoFeeTokenInfo({
+      account,
+      userAddress: address,
+      chainServerId: chain.serverId,
+    });
+    return {
+      rawBalance: rawAmountToBn(feeToken.rawBalanceHex || 0).toFixed(0),
+      token: {
+        tokenId: feeToken.tokenId,
+        symbol: feeToken.symbol,
+        decimals: feeToken.decimals,
+        logoUrl: feeToken.logoUrl,
+      },
+    };
+  }
+
+  const balance = await apiProvider.requestETHRpc<any>(
+    {
+      method: 'eth_getBalance',
+      params: [address, 'latest'],
+    },
+    chain.serverId,
+    account,
+  );
+
+  return {
+    rawBalance: rawAmountToBn(balance || 0).toFixed(0),
+    token: {
+      tokenId: chain.nativeTokenAddress,
+      symbol: chain.nativeTokenSymbol,
+      decimals: chain.nativeTokenDecimals || GAS_PRICE_DECIMALS,
+      logoUrl: chain.nativeTokenLogo,
+    },
+  };
+};
+
 export const getNativeTokenBalance = async ({
   address,
   chainId,
@@ -116,21 +218,12 @@ export const getNativeTokenBalance = async ({
   chainId: number;
   account: Account;
 }): Promise<string> => {
-  const chain = findChain({
-    id: chainId,
-  });
-  if (!chain) {
-    throw new Error('chain not found');
-  }
-  const balance = await apiProvider.requestETHRpc<any>(
-    {
-      method: 'eth_getBalance',
-      params: [address, 'latest'],
-    },
-    chain.serverId,
+  const gasToken = await getGasTokenBalance({
+    address,
+    chainId,
     account,
-  );
-  return balance;
+  });
+  return gasToken.rawBalance;
 };
 
 export const explainGas = async ({
@@ -141,6 +234,8 @@ export const explainGas = async ({
   tx,
   gasLimit,
   account,
+  preparedL1Fee,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
 }: {
   gasUsed: number | string;
   gasPrice: number | string;
@@ -149,9 +244,13 @@ export const explainGas = async ({
   tx: Tx;
   gasLimit: string | undefined;
   account: Account;
+  preparedL1Fee?: string | Promise<string>;
+  gasTokenDecimals?: number;
 }) => {
-  let gasCostTokenAmount = new BigNumber(gasUsed).times(gasPrice).div(1e18);
-  let maxGasCostAmount = new BigNumber(gasLimit || 0).times(gasPrice).div(1e18);
+  let gasCostRawAmountIn18 = rawAmountToBn(gasUsed).times(gasPrice);
+  let maxGasCostRawAmountIn18 = rawAmountToBn(gasLimit || 0).times(gasPrice);
+  let gasCostTokenAmount = gasCostRawAmountIn18.div(1e18);
+  let maxGasCostAmount = maxGasCostRawAmountIn18.div(1e18);
   const chain = findChain({
     id: chainId,
   });
@@ -159,21 +258,41 @@ export const explainGas = async ({
     throw new Error(`${chainId} is not found in supported chains`);
   }
   if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
-    const res = await apiProvider.fetchEstimatedL1Fee(
-      {
-        txParams: tx,
-        account,
-      },
-      chain.enum,
-    );
-    gasCostTokenAmount = new BigNumber(res).div(1e18).plus(gasCostTokenAmount);
-    maxGasCostAmount = new BigNumber(res).div(1e18).plus(maxGasCostAmount);
+    let res =
+      typeof preparedL1Fee === 'object' && 'then' in preparedL1Fee
+        ? await preparedL1Fee
+        : preparedL1Fee || undefined;
+    if (!res) {
+      res = await apiProvider.fetchEstimatedL1Fee(
+        {
+          txParams: tx,
+          account,
+        },
+        chain.enum,
+      );
+    }
+    gasCostRawAmountIn18 = gasCostRawAmountIn18.plus(rawAmountToBn(res));
+    maxGasCostRawAmountIn18 = maxGasCostRawAmountIn18.plus(rawAmountToBn(res));
+    gasCostTokenAmount = gasCostRawAmountIn18.div(1e18);
+    maxGasCostAmount = maxGasCostRawAmountIn18.div(1e18);
   }
-  const gasCostUsd = new BigNumber(gasCostTokenAmount).times(nativeTokenPrice);
+  const gasCostUsd = new BigNumber(gasCostTokenAmount).times(
+    isTempoChain(chain.serverId) ? 1 : nativeTokenPrice,
+  );
+  const gasCostRawAmount = convert18RawToTokenRaw(
+    gasCostRawAmountIn18,
+    gasTokenDecimals,
+  );
+  const maxGasCostRawAmount = convert18RawToTokenRaw(
+    maxGasCostRawAmountIn18,
+    gasTokenDecimals,
+  );
 
   return {
     gasCostUsd,
     gasCostAmount: gasCostTokenAmount,
     maxGasCostAmount,
+    gasCostRawAmount,
+    maxGasCostRawAmount,
   };
 };

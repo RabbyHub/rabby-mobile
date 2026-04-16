@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -9,8 +9,9 @@ import { default as RcTipCC } from './icons/tip-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Button } from '../Button';
 import {
+  clearScreenshotJustNow,
   useIOSScreenIsBeingCaptured,
-  useIOSScreenshotted,
+  useIOSScreenshottedJustNow,
 } from '@/hooks/native/security';
 import {
   ProtectedConf,
@@ -19,6 +20,10 @@ import {
 } from '@/hooks/navigation';
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
+import { Text } from '@/components/Typography';
+import { useIosForceDisableAlertForSensitiveScene } from '@/hooks/appSettings';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 
 const RcTip = makeThemeIconFromCC(RcTipCC, 'orange-default');
 
@@ -37,7 +42,11 @@ export default function SecurityTipStubModal({
   const { t } = useTranslation();
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.securityTip}
+      visible={visible}
+      transparent
+      animationType="fade">
       <BlurView style={styles.overlay}>
         <TouchableOpacity
           activeOpacity={1}
@@ -70,58 +79,30 @@ export default function SecurityTipStubModal({
           </View>
         </TouchableOpacity>
       </BlurView>
-    </Modal>
+    </TrackedModal>
   );
-}
-
-function useGlobalSecurityTipForScreenCapture() {
-  const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
-  const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
-
-  return {
-    shouldShowSecurityTip:
-      atSensitiveScene &&
-      isBeingCaptured &&
-      $protectedConf.iosBlurType === ProtectType.SafeTipModal,
-    onOk: $protectedConf.onOk,
-  };
-}
-function useGlobalSecurityTipForScreenShot() {
-  const { $protectedConf } = useAtSensitiveScene();
-  const onIsScreenshottedJustNow = React.useCallback<
-    (Parameters<typeof useIOSScreenshotted>[0] &
-      object)['onIsScreenshottedJustNow'] &
-      object
-  >(
-    ctx => {
-      ctx.setScreenshotted(!!$protectedConf.warningScreenshotBackup);
-    },
-    [$protectedConf.warningScreenshotBackup],
-  );
-
-  const { isScreenshotJustNow, clearScreenshotJustNow } = useIOSScreenshotted({
-    isTop: false,
-    onIsScreenshottedJustNow,
-  });
-
-  React.useEffect(() => {
-    if (!$protectedConf.warningScreenshotBackup) {
-      clearScreenshotJustNow();
-    }
-  }, [$protectedConf.warningScreenshotBackup, clearScreenshotJustNow]);
-
-  return {
-    shouldShowBackupWarning:
-      isScreenshotJustNow && $protectedConf.warningScreenshotBackup,
-    clearScreenshotJustNow,
-  };
 }
 
 export function GlobalSecurityTipStubModal() {
-  const { shouldShowSecurityTip, onOk } =
-    useGlobalSecurityTipForScreenCapture();
-  const { shouldShowBackupWarning, clearScreenshotJustNow } =
-    useGlobalSecurityTipForScreenShot();
+  const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
+  const { atSensitiveScene, iosBlurType, warningScreenshotBackup, onOk } =
+    useAtSensitiveScene();
+
+  const shouldShowSecurityTip =
+    atSensitiveScene &&
+    isBeingCaptured &&
+    iosBlurType === ProtectType.SafeTipModal;
+
+  const { isScreenshotJustNow } = useIOSScreenshottedJustNow();
+
+  React.useEffect(() => {
+    if (!warningScreenshotBackup) {
+      clearScreenshotJustNow();
+    }
+  }, [warningScreenshotBackup]);
+
+  const shouldShowBackupWarning =
+    isScreenshotJustNow && warningScreenshotBackup;
 
   return (
     <>

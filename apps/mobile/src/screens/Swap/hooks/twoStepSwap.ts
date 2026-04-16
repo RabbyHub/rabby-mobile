@@ -3,7 +3,11 @@ import { CHAINS_ENUM } from '@debank/common';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const twoStepChains = ['HYPER' as CHAINS_ENUM];
+const twoStepChains = [
+  'HYPER' as CHAINS_ENUM,
+  'MONAD' as CHAINS_ENUM,
+  'RSK' as CHAINS_ENUM,
+];
 
 export const useTwoStepSwap = ({
   chain,
@@ -15,7 +19,7 @@ export const useTwoStepSwap = ({
   chain: CHAINS_ENUM;
   txs?: Tx[];
   enable: boolean;
-  type: 'approveSwap' | 'approveBridge';
+  type: 'approveSwap' | 'approveBridge' | 'approveDeposit';
   onApprovePending?: () => void;
 }) => {
   const shouldTwoStep = enable

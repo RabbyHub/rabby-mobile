@@ -2,70 +2,74 @@ import React, { useCallback, useMemo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
+import RcIconHomeHeaderPenEditAddr from '@/assets2024/icons/common/edit-cc.svg';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 
 import { Text } from '@/components';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { Account } from '@/core/services/preference';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { useNavigation } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
-import { refreshingAtom } from './hooks/project';
-import { useAtomValue } from 'jotai';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { loadingCurveAtom } from '@/hooks/useCurve';
+import {
+  apisSingleHome,
+  useSingleHomeAccount,
+  useSingleHomeAccountAlias,
+  useSingleHomeLoading,
+} from './hooks/singleHome';
+import { navBack } from '@/hooks/navigation';
+import { useAlias2 } from '@/hooks/alias';
+import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 
-export default function HomeHeaderArea({
-  account: currentAccount,
-}: {
-  account: Account;
-}) {
+export default function HomeHeaderArea({ style }: RNViewProps) {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const refreshing = useAtomValue(refreshingAtom);
-  const isLoadingCurve = useAtomValue(loadingCurveAtom);
 
-  const name = useMemo(
-    () => currentAccount?.aliasName || currentAccount?.brandName,
-    [currentAccount],
-  );
+  const {
+    aliasExist,
+    address: currentAddress,
+    brandName,
+    nameText,
+  } = useSingleHomeAccountAlias();
+  const { isLoadingCurve, balanceLoading } = useSingleHomeLoading();
+
+  const { show: showEditAliasName } = useAliasNameEditModal();
+  const showEditAliasModal = useCallback(() => {
+    const currentAccount = apisSingleHome.getCurrentAccount();
+    currentAccount && showEditAliasName(currentAccount);
+  }, [showEditAliasName]);
 
   const handleCopyAddress = useCallback<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
   >(
     evt => {
       evt.stopPropagation();
-      if (!currentAccount?.address) {
+      apisSingleHome.setFoldChart(true);
+      if (!currentAddress) {
         return;
       }
       trigger('impactLight', {
         enableVibrateFallback: true,
         ignoreAndroidSystemSettings: false,
       });
-      Clipboard.setString(currentAccount.address);
-      toastCopyAddressSuccess(currentAccount.address);
+      Clipboard.setString(currentAddress);
+      toastCopyAddressSuccess(currentAddress);
     },
-    [currentAccount?.address],
+    [currentAddress],
   );
 
-  const nav = useNavigation();
-  const goBack = useCallback(() => {
-    nav.goBack();
-  }, [nav]);
-
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.innerBox}>
         <View style={styles.touchBox}>
           <View style={styles.accountBox}>
-            <View className="relative">
-              <TouchableOpacity hitSlop={24} onPress={goBack}>
+            <View style={styles.walletIcon}>
+              <TouchableOpacity hitSlop={24} onPress={navBack}>
                 <WalletIcon
-                  type={currentAccount?.brandName as KEYRING_TYPE}
-                  address={currentAccount?.address}
+                  type={brandName as KEYRING_TYPE}
+                  address={currentAddress}
                   width={22}
                   height={22}
                   borderRadius={6}
@@ -78,9 +82,18 @@ export default function HomeHeaderArea({
               numberOfLines={1}
               ellipsizeMode="tail"
               style={styles.titleText}>
-              {name}
+              {nameText}
             </Text>
-            {refreshing || isLoadingCurve ? (
+            {currentAddress && !aliasExist && (
+              <TouchableOpacity
+                onPress={evt => {
+                  evt.stopPropagation();
+                  showEditAliasModal();
+                }}>
+                <RcIconHomeHeaderPenEditAddr style={styles.editIcon} />
+              </TouchableOpacity>
+            )}
+            {isLoadingCurve || balanceLoading ? (
               <LoadingCircle />
             ) : (
               <RcIconCopy style={styles.copy} />
@@ -94,8 +107,7 @@ export default function HomeHeaderArea({
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    width: '100%',
-    marginLeft: 8,
+    flexShrink: 1,
   },
   innerBox: {
     width: '100%',
@@ -108,17 +120,24 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
+    flexShrink: 1,
+    gap: 6,
   },
   accountBox: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'transparent', // 奇怪的问题，不加这个就会只展示content的内容
-    paddingRight: 4,
-    paddingBottom: 4,
+    borderColor: 'transparent',
     overflow: 'visible',
+    // ...makeDebugBorder(),
+  },
+  walletIcon: {
+    position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // ...makeDebugBorder('yellow'),
   },
   titleText: {
     flexShrink: 1,
@@ -129,13 +148,13 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     flexWrap: 'nowrap',
   },
+  editIcon: {
+    width: 20,
+    height: 20,
+    color: ctx.colors2024['neutral-title-1'],
+  },
   copy: {
     width: 18,
     height: 18,
-  },
-  walletIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
   },
 }));

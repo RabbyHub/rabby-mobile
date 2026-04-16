@@ -1,30 +1,25 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-} from 'react';
-import { View, Text, Alert } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { View } from 'react-native';
 import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 import { RcCode } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
+import { DevTestItem, GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
+import { E2E_ID } from '@/constant/e2e';
 import { RootNames } from '@/constant/layout';
-import { useAccounts } from '@/hooks/account';
 import { useDevServerModalVisible } from '../Modals/DevModalDevServer';
 import { toast } from '@/components2024/Toast';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { Text } from '@/components/Typography';
 
 const devUIPlaygroundModalVisibleAtom = atom(false);
 export function useDevUIPlaygroundModalVisible() {
@@ -66,39 +61,20 @@ export default function DevUIPlaygroundModal({
 
   const navigation = useRabbyAppNavigation();
 
-  const { accounts } = useAccounts();
-
   const { haventSetDevServer, setDevServerSettingsModalVisible } =
     useDevServerModalVisible();
 
   const Items = (() => {
     const list: DevTestItem[] = [
       {
-        label: 'New Get Started 2024',
+        label: 'Animated View & Text',
         icon: <RcCode style={styles.labelIcon} />,
-        disabled: !!accounts.length,
-        onDisabledPress: () => {
-          if (accounts.length) {
-            Alert.alert(
-              'Warning',
-              accounts.length > 1
-                ? `You have ${accounts.length} accounts, please remove them first`
-                : 'You have an account, please remove it first',
-            );
-            return { keepModalVisible: true };
-          }
-        },
         onPress: () => {
           navigation.dispatch(
-            StackActions.push(RootNames.StackGetStarted, {
-              screen: RootNames.GetStartedScreen2024,
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIAnimatedTextAndView,
             }),
           );
-          // navigation.dispatch(
-          //   StackActions.push(RootNames.StackTestkits, {
-          //     screen: RootNames.NewUserGetStarted2024,
-          //   }),
-          // );
         },
       },
       {
@@ -124,12 +100,46 @@ export default function DevUIPlaygroundModal({
         },
       },
       {
+        label: '2024 Components',
+        testID: E2E_ID.playground.components2024Entry,
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIComponents2024ShowCase,
+            }),
+          );
+        },
+      },
+      {
         label: 'Form',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
           navigation.dispatch(
             StackActions.push(RootNames.StackTestkits, {
               screen: RootNames.DevUIFormShowCase,
+            }),
+          );
+        },
+      },
+      {
+        label: 'Toast',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIToast,
+            }),
+          );
+        },
+      },
+      {
+        label: 'Notifications',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUINotifications,
             }),
           );
         },
@@ -189,7 +199,8 @@ export default function DevUIPlaygroundModal({
   })();
 
   const { safeSizes } = useSafeAndroidBottomSizes({
-    sheetHeight: getFullHeight(Items.length),
+    // sheetHeight: getFullHeight(Items.length),
+    sheetHeight: getFullHeight(5),
     containerPaddingBottom: SIZES.containerPb,
   });
 
@@ -201,9 +212,9 @@ export default function DevUIPlaygroundModal({
       snapPoints={[safeSizes.sheetHeight]}
       handleStyle={styles.handleStyle}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {
@@ -211,7 +222,7 @@ export default function DevUIPlaygroundModal({
           },
         ]}>
         <Text style={styles.title}>Component Playground</Text>
-        <View style={styles.mainContainer}>
+        <BottomSheetScrollView contentContainerStyle={styles.mainContainer}>
           {Items.map((item, idx) => {
             const itemKey = `testitem-${item.label}`;
 
@@ -232,7 +243,7 @@ export default function DevUIPlaygroundModal({
               </GeneralTestItem>
             );
           })}
-        </View>
+        </BottomSheetScrollView>
       </AutoLockView>
     </AppBottomSheetModal>
   );

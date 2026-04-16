@@ -4,6 +4,8 @@ script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
+. $script_dir/fast-build/_fns.sh --source-only
+. $script_dir/turbo-build/_fns.sh --source-only
 
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
@@ -54,15 +56,96 @@ build_adhoc() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
-  yarn;
-  yarn syncrnversion;
-  cd $project_dir/ios;
-  bundle install && bundle exec pod install --repo-update;
-  cd $project_dir;
-  bundle exec fastlane ios adhoc;
+  export ios_archive_path="$project_dir/ios/Package/adhoc/RabbyMobile.xcarchive"
+
+  prepare_ios_build_artifacts;
+  prepare_status=$?
+
+  if [ $prepare_status -ne 0 ]; then
+    return $prepare_status
+  fi
+
+  if ios_fast_build_enabled; then
+    prepare_ios_ruby_bundle;
+    ruby_status=$?
+
+    if [ $ruby_status -ne 0 ]; then
+      return $ruby_status
+    fi
+
+    echo "[deploy-ios-adhoc] trying iOS fast-build from template archive..."
+    CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/ios.sh export
+    fast_build_status=$?
+
+    if [ $fast_build_status -eq 0 ]; then
+      echo "[deploy-ios-adhoc] iOS fast-build succeeded."
+      return 0
+    fi
+
+    echo "[deploy-ios-adhoc] iOS fast-build failed with status $fast_build_status, will fall back to full archive build."
+  fi
+
+  prepare_ios_native_deps;
+  deps_status=$?
+
+  if [ $deps_status -ne 0 ]; then
+    return $deps_status
+  fi
+
+  if turbo_build_enabled; then
+    turbo_prepare_ios_derived_data;
+  fi
+  turbo_bundle_exec exec fastlane ios adhoc;
+  build_status=$?
+
+  if [ $build_status -eq 0 ] && ios_fast_build_enabled && [ -d "$ios_archive_path" ]; then
+    sh $script_dir/fast-build/ios.sh save-template "$ios_archive_path"
+  fi
+
+  return $build_status
 }
 
-[ $GHA_MOCK_BUILD_FAILED == "true" ] && SKIP_BUILD=true
+prepare_ios_ruby_bundle() {
+  turbo_prepare_ruby_bundle
+}
+
+prepare_ios_build_artifacts() {
+  turbo_prepare_js_dependencies;
+
+  if turbo_build_enabled; then
+    ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)
+  fi
+
+  if turbo_build_enabled && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then
+    turbo_log "ios build artifacts already up to date"
+    return 0
+  fi
+
+  yarn check-nodeengines &&
+    yarn ../mobile-local-pages make-theme &&
+    yarn ../mobile-local-pages build --mode ios &&
+    yarn react-native-asset &&
+    sh ./scripts/fns.sh reset_builtin_assets &&
+    yarn buildworker:prod:ios &&
+    yarn syncrnversion
+  prepare_status=$?
+
+  if [ $prepare_status -ne 0 ]; then
+    return $prepare_status
+  fi
+
+  if turbo_build_enabled; then
+    turbo_mark_ios_build_artifacts_ready "$ios_build_artifacts_key"
+  fi
+}
+
+prepare_ios_native_deps() {
+  prepare_ios_ruby_bundle || return $?
+
+  turbo_prepare_cocoapods
+}
+
+[ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-adhoc] start build..."
@@ -70,7 +153,7 @@ if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-adhoc] finish build."
 fi
 
-if [[ ! -f $ouput_dir/RabbyMobile.ipa || $GHA_MOCK_BUILD_FAILED == "true" ]]; then
+if [[ ! -f $ouput_dir/RabbyMobile.ipa || "$GHA_MOCK_BUILD_FAILED" == "true" ]]; then
   echo "[deploy-ios-adhoc] ⚠️ build failed! No $ouput_dir/RabbyMobile.ipa found";
   node $script_dir/notify-lark.js "FAILED" ios
   exit 1;
@@ -85,7 +168,8 @@ manifest_plist_url="itms-services://?action=download-manifest&url=$deployment_cd
 cp $ouput_dir/RabbyMobile.ipa $deployment_local_dir/rabbymobile.ipa
 cp $ouput_dir/manifest.plist $deployment_local_dir/manifest.plist
 
-/usr/libexec/PlistBuddy -c "Set:items:0:metadata:title Rabby Wallet" $deployment_local_dir/manifest.plist
+/usr/libexec/PlistBuddy -c "Set:items:0:metadata:title Reg Rabby Wallet" $deployment_local_dir/manifest.plist
+/usr/libexec/PlistBuddy -c "Set:items:0:metadata:bundle-identifier com.debank.rabby-mobile-regression" $deployment_local_dir/manifest.plist
 /usr/libexec/PlistBuddy -c "Set:items:0:assets:0:url $deployment_cdn_baseurl/rabbymobile.ipa" $deployment_local_dir/manifest.plist # appURL
 /usr/libexec/PlistBuddy -c "Set:items:0:assets:1:url $deployment_cdn_baseurl/icon_57x57@57w.png" $deployment_local_dir/manifest.plist # displayImageURL
 /usr/libexec/PlistBuddy -c "Set:items:0:assets:2:url $deployment_cdn_baseurl/icon_512x512@512w.png" $deployment_local_dir/manifest.plist # fullSizeImageURL
@@ -104,7 +188,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
   aws s3 sync $NO_VERIFY_SSL_FLAG $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
 
-  node $script_dir/notify-lark.js "$manifest_plist_url" ios
+  node $script_dir/notify-lark.js "$manifest_plist_url" ios "$(ios_fast_build_enabled_value)"
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
@@ -116,4 +200,3 @@ if [ -z $CI ]; then
 fi
 
 echo "[deploy-ios-adhoc] finish sync."
-

@@ -5,12 +5,12 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
 import useAsync from 'react-use/lib/useAsync';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
@@ -27,6 +27,9 @@ import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
+import { useFavoriteTokens } from '@/components/Token/hooks/favorite';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { Text } from '@/components/Typography';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -54,9 +57,10 @@ const BridgeToTokenSelect = ({
   placeholder,
   address,
 }: BridgeToTokenSelectProps) => {
-  const [queryConds, setQueryConds] = useState({
+  const [_queryConds, setQueryConds] = useState({
     keyword: '',
   });
+  const queryConds = useDebouncedValue(_queryConds, 250);
 
   const bridgeSupportedChains = useBridgeSupportedChains();
   const {
@@ -65,7 +69,9 @@ const BridgeToTokenSelect = ({
     setTokenSelectorVisible,
   } = useTokenSelectorModalVisible({
     onVisibleChanged: useMemoizedFn(visible => {
-      if (!visible) return;
+      if (!visible) {
+        return;
+      }
     }),
   });
 
@@ -78,7 +84,10 @@ const BridgeToTokenSelect = ({
   const handleCurrentTokenChange = (token: TokenItem) => {
     onChange && onChange('');
     onTokenChange(token);
-    setTokenSelectorVisible(false);
+    // Close the modal without triggering state update
+    // The state update will be handled by handleTokenSelectorClose (via onCancel)
+    // when the modal finishes closing, which avoids a race condition
+    setTokenSelectorVisible(false, { noTriggerRerender: true });
 
     setQueryConds(prev => ({ ...prev }));
   };
@@ -113,22 +122,43 @@ const BridgeToTokenSelect = ({
     return [];
   }, [currentAccount, chainId, tokenSelectorVisible, queryConds.keyword]);
 
-  const displayTokenList = useMemo(() => {
-    return uniqBy(tokenList, item => {
-      return `${item.chain}-${item.id}`;
-    })
-      .filter(e => !excludeTokens.includes(e.id))
-      .filter(e => {
-        if (favoriteFilterValue === 'favorite') {
-          return pinedQueue?.some(
-            x => x.chainId === e.chain && x.tokenId === e.id,
-          );
-        }
-        return true;
-      });
-  }, [tokenList, excludeTokens, favoriteFilterValue, pinedQueue]);
+  const { data: favoriteTokens, loading: favoriteTokensLoading } =
+    useFavoriteTokens({
+      focus: favoriteFilterValue === 'favorite',
+      address,
+      chainId,
+    });
 
-  const isListLoading = tokenListLoading;
+  const displayTokenList = useMemo(() => {
+    return uniqBy(
+      (favoriteFilterValue === 'favorite'
+        ? favoriteTokens
+        : tokenList || []
+      ).map(item => tokenItemToITokenItem(item, '')),
+      item => {
+        return `${item.chain}-${item.id}`;
+      },
+    )
+      .map(e => ({
+        ...e,
+        isPin: pinedQueue?.some(
+          x => x.chainId === e.chain && x.tokenId === e.id,
+        ),
+      }))
+      .filter(e => !excludeTokens.includes(e.id));
+  }, [
+    favoriteFilterValue,
+    favoriteTokens,
+    tokenList,
+    pinedQueue,
+    excludeTokens,
+  ]);
+
+  const isListLoading = useMemo(() => {
+    return favoriteFilterValue === 'favorite'
+      ? favoriteTokensLoading
+      : tokenListLoading;
+  }, [favoriteFilterValue, favoriteTokensLoading, tokenListLoading]);
 
   const handleSearchTokens = React.useCallback(async keyword => {
     setQueryConds({

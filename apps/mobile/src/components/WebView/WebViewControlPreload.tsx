@@ -64,9 +64,7 @@ export default function WebViewControlPreload() {
   const [firstTouched, setFirstTouched] = useAtom(firstTouchedAtom);
 
   const { entryScriptWeb3Loaded, entryScripts } =
-    useJavaScriptBeforeContentLoaded({
-      isTop: false,
-    });
+    useJavaScriptBeforeContentLoaded();
 
   // devLog(
   //   '[debug] entryScriptWeb3Loaded, firstTouched',

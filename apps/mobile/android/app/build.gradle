@@ -3,6 +3,19 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: "com.google.gms.google-services"
 
+def metroMaxWorkers = System.getenv("RABBY_MOBILE_METRO_MAX_WORKERS")
+def metroNodeMaxOldSpaceSize = System.getenv("RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE")
+def metroNodeExecutableAndArgs = ["node"]
+def metroExtraPackagerArgs = []
+
+if (metroNodeMaxOldSpaceSize) {
+    metroNodeExecutableAndArgs += ["--max-old-space-size=${metroNodeMaxOldSpaceSize}"]
+}
+
+if (metroMaxWorkers) {
+    metroExtraPackagerArgs += ["--max-workers", metroMaxWorkers]
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -26,7 +39,9 @@ react {
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
-    // nodeExecutableAndArgs = ["node"]
+    if (!metroNodeExecutableAndArgs.isEmpty()) {
+        nodeExecutableAndArgs = metroNodeExecutableAndArgs
+    }
     //
     //   The command to run when bundling. By default is 'bundle'
     // bundleCommand = "ram-bundle"
@@ -42,7 +57,9 @@ react {
     //
     //   A list of extra flags to pass to the 'bundle' commands.
     //   See https://github.com/react-native-community/cli/blob/main/docs/commands.md#bundle
-    // extraPackagerArgs = []
+    if (!metroExtraPackagerArgs.isEmpty()) {
+        extraPackagerArgs = metroExtraPackagerArgs
+    }
 
     /* Hermes Commands */
     //   The hermes compiler command to run. By default it is 'hermesc'
@@ -60,22 +77,18 @@ react {
  */
 def enableProguardInReleaseBuilds = true
 
-def isNewArchitectureEnabled() {
-  return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
-}
-
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
  * For example, to use the international variant, you can use:
- * `def jscFlavor = 'org.webkit:android-jsc-intl:+'`
+ * `def jscFlavor = io.github.react-native-community:jsc-android-intl:2026004.+`
  *
  * The international variant includes ICU i18n library and necessary data
  * allowing to use e.g. `Date.toLocaleString` and `String.localeCompare` that
  * give correct results when using with locales other than en-US. Note that
  * this variant is about 6MiB larger per architecture than default.
  */
-def jscFlavor = 'org.webkit:android-jsc:+'
+def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 
@@ -94,9 +107,14 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100151
-        versionName "0.6.44"
+        versionCode 100202
+        versionName "0.6.65"
         missingDimensionStrategy "store", "play"
+        externalNativeBuild {
+          cmake {
+            arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+          }
+        }
     }
     splits {
         abi {
@@ -167,32 +185,22 @@ android {
 		  it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
     }
     sourceSets {
-      main {
-        if (isNewArchitectureEnabled()) {
-          java.srcDirs += [
-            "src/newarch",
-            // This is needed to build Kotlin project with NewArch enabled
-            "${project.buildDir}/generated/source/codegen/java"
-          ]
-        } else {
-          java.srcDirs += ["src/oldarch"]
+        main {
+            java.srcDirs += ["src/oldarch"]
         }
-      }
     }
-    // packagingOptions {
-    //   jniLibs {
-    //     pickFirsts += [
-    //       'lib/**/libssl.so',
-    //       'lib/**/libcrypto.so'
-    //     ]
-    //   }
-    // }
 }
 
 androidComponents {
   onVariants(selector().withBuildType("debug")) {
     // packaging.jniLibs.pickFirsts.add('lib/**/libssl.so')
     packaging.jniLibs.pickFirsts.add('lib/**/libcrypto.so')
+  }
+
+  // for allVariants
+  onVariants(selector().all()) {
+    packaging.jniLibs.pickFirsts.add('lib/**/libjsi.so')
+    packaging.jniLibs.pickFirsts.add('lib/**/libreactnative.so')
   }
 }
 
@@ -201,9 +209,15 @@ dependencies {
 
     implementation 'com.google.firebase:firebase-analytics:17.4.1'
     // implementation("com.google.firebase:firebase-analytics")
+    // implementation project(path: ":@react-native-firebase_analytics")
+    // implementation project(path: ":@react-native-firebase_messaging")
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'
+
+    // implementation 'com.squareup.okhttp3:logging-interceptor:5.1.0'
+    // implementation 'com.squareup.okhttp3:okhttp:5.1.0'
+    // implementation 'com.squareup.okhttp3:okhttp-urlconnection:5.1.0'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
@@ -214,6 +228,6 @@ dependencies {
     implementation project(':react-native-splash-screen')
     // implementation project(':isudaji_react-native-install-apk')
 
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.10'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
     implementation 'com.android.billingclient:billing:7.0.0'
 }

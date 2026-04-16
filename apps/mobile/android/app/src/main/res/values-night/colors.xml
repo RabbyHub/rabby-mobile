@@ -5,5 +5,5 @@
   <color name="primary">#7084ff</color>
   <color name="primary_dark">#7084ff</color>
   <color name="launchscreen_bg">#131416</color>
-  <color name="status_bar_color">#ffffff</color>
+  <color name="status_bar_color">#000000</color>
 </resources>

@@ -14,7 +14,7 @@ import {
 import { makeDebugBorder } from '@/utils/styles';
 
 import { Button } from '../Button';
-import { toast } from '../Toast';
+import { toast } from '@/components2024/Toast';
 
 const isAndroid = Platform.OS === 'android';
 

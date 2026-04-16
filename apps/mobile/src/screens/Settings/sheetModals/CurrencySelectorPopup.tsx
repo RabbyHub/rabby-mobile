@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Keyboard, Text, useWindowDimensions, View } from 'react-native';
+import { Keyboard, useWindowDimensions, View } from 'react-native';
 
 import { RcIconCheckmarkCC, RcNextSearchCC } from '@/assets/icons/common';
 
@@ -30,6 +30,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { sortBy, uniq } from 'lodash';
 import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Text } from '@/components/Typography';
 
 const visibleAtom = atom(false);
 export function useCurrentCurrencyVisible() {
@@ -45,8 +46,10 @@ export function useCurrentCurrencyVisible() {
 
 export function CurrencySelectorPopup({
   onCancel,
+  onSelectCurrency,
 }: RNViewProps & {
   onCancel?(): void;
+  onSelectCurrency?(item: CurrencyItem): void;
 }) {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -180,7 +183,10 @@ export function CurrencySelectorPopup({
               <TouchableOpacity
                 key={item.code}
                 onPress={() => {
-                  setCurrentCurrency(item.code);
+                  if (!isSelected) {
+                    setCurrentCurrency(item.code);
+                    onSelectCurrency?.(item);
+                  }
                   setIsShowCurrencyPopup(false);
                 }}>
                 <View style={styles.listItem}>

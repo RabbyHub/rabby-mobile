@@ -1,0 +1,15 @@
+appId: ${RABBY_ANDROID_E2E_PACKAGE}
+name: Android single home toggle curve
+tags:
+  - android
+  - maestro
+  - single-home
+  - curve
+env:
+  SINGLE_HOME_CURVE_TOGGLE_ID: e2e.home.single-address.curve.toggle
+---
+- assertVisible:
+    id: ${SINGLE_HOME_CURVE_TOGGLE_ID}
+
+- tapOn:
+    id: ${SINGLE_HOME_CURVE_TOGGLE_ID}

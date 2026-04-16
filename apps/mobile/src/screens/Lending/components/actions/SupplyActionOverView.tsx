@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { PopupDetailProps } from '../../type';
-import { formatPercent } from '@/screens/TokenDetail/util';
 import { isHFEmpty } from '../../utils';
 import WarningFillCC from '@/assets2024/icons/common/WarningFill-cc.svg';
 import HealthFactorText from '../HealthFactorText';
@@ -15,6 +14,13 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTranslation } from 'react-i18next';
 import { formatNetworth } from '@/utils/math';
 import IsolatedTag from '../IsolatedTag';
+import { formatApy } from '../../utils/format';
+import { getSupplyCapData } from '../../utils/supply';
+import {
+  getAssetCollateralType,
+  getCollateralState,
+} from '../../utils/collateral';
+import { Text } from '@/components/Typography';
 
 const SupplyActionOverView: React.FC<
   PopupDetailProps & {
@@ -27,12 +33,23 @@ const SupplyActionOverView: React.FC<
   const { t } = useTranslation();
 
   const apyText = useMemo(() => {
-    return formatPercent(Number(reserve?.reserve?.supplyAPY || '0'));
+    return formatApy(Number(reserve?.reserve?.supplyAPY || '0'));
   }, [reserve?.reserve?.supplyAPY]);
 
   const availableText = useMemo(() => {
     return `${formatNetworth(Number(availableBorrowsUSD || '0'))}`;
   }, [availableBorrowsUSD]);
+
+  const [canBeEnabledAsCollateral, collateralState] = useMemo(() => {
+    const { supplyCapReached } = getSupplyCapData(reserve);
+    const collateralType = getAssetCollateralType(
+      reserve,
+      userSummary.totalCollateralUSD,
+      userSummary.isInIsolationMode,
+      supplyCapReached,
+    );
+    return getCollateralState({ collateralType });
+  }, [reserve, userSummary]);
 
   const handleSupplyDescription = () => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -99,17 +116,30 @@ const SupplyActionOverView: React.FC<
           </View>
         </View>
 
-        {reserve?.reserve?.isIsolated && (
-          <View style={[styles.item, styles.hfDescContainer]}>
-            <IsolatedTag />
-          </View>
-        )}
-
         <View style={[styles.item, styles.apyContainer]}>
           <Text style={styles.title}>
             {t('page.Lending.supplyDetail.supplyAPY')}
           </Text>
           <Text style={styles.apy}>{apyText}</Text>
+        </View>
+
+        <View style={[styles.item, styles.apyContainer]}>
+          <View style={styles.collateralizationContainer}>
+            <Text style={styles.title}>
+              {t('page.Lending.supplyDetail.collateralization')}
+            </Text>
+            {reserve?.reserve?.isIsolated && <IsolatedTag />}
+          </View>
+          <View style={styles.availableValueContainer}>
+            <Text
+              style={[
+                styles.collateralizationValue,
+                canBeEnabledAsCollateral ? styles.enabled : styles.unavailable,
+              ]}>
+              {' • '}
+              {collateralState}
+            </Text>
+          </View>
         </View>
 
         <View
@@ -192,6 +222,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   apyContainer: {
     marginTop: 26,
   },
+  collateralizationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   availableValue: {
     textAlign: 'right',
     flex: 1,
@@ -200,6 +235,21 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  collateralizationValue: {
+    textAlign: 'right',
+    flex: 1,
+    color: colors2024['neutral-title-1'],
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  enabled: {
+    color: colors2024['green-default'],
+  },
+  unavailable: {
+    color: colors2024['red-default'],
   },
   apy: {
     color: colors2024['neutral-title-1'],

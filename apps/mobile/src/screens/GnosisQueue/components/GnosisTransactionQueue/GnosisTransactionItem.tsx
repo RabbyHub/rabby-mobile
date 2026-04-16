@@ -1,5 +1,5 @@
 import { Button, Tip } from '@/components';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apisSafe } from '@/core/apis/safe';
 import { sendRequest } from '@/core/apis/sendRequest';
@@ -21,13 +21,14 @@ import { useMemoizedFn } from 'ahooks';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { toChecksumAddress } from 'web3-utils';
 import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations';
 import { GnosisTransactionExplain } from './GnosisTransactionExplain';
 import { ReplacePopup } from './ReplacePopup';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 export type ConfirmationProps = {
   owner: string;

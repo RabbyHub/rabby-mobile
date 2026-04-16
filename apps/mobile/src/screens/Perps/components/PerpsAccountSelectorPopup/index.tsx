@@ -8,13 +8,15 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { keyBy, sortBy, uniqBy } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
+import { getClearinghouseStateByMap } from '@/hooks/perps/usePerpsStore';
+import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
+import { formatSpotState } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 
 export const PerpsAccountSelectorPopup: React.FC<{
   visible?: boolean;
@@ -22,9 +24,16 @@ export const PerpsAccountSelectorPopup: React.FC<{
   value?: Account | null;
   onChange?: (a: Account) => void;
   title?: React.ReactNode;
-}> = ({ visible, onClose, value, onChange, title }) => {
+  checkIconPosition?: 'name' | 'right';
+}> = ({
+  visible,
+  onClose,
+  value,
+  onChange,
+  title,
+  checkIconPosition = 'name',
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { t } = useTranslation();
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getModalStyle,
@@ -56,62 +65,58 @@ export const PerpsAccountSelectorPopup: React.FC<{
     selectedAccount: value,
   });
 
-  const sdk = apisPerps.getPerpsSDK();
-
   const { data: _data, runAsync: runFetchPerpsInfo } = useRequest(
     async () => {
       const list = uniqBy(myAddresses, i => i.address.toLowerCase());
       const res = await Promise.all(
         list.slice(0, 10).map(async item => {
           try {
-            const info = await sdk.info.getClearingHouseState(item.address);
-            return {
-              address: item.address,
-              info,
-            };
+            const info = getClearinghouseStateByMap(item.address);
+            if (info && Number(info.withdrawable || 0) === 0) {
+              try {
+                const sdk = apisPerps.getPerpsSDK();
+                const userAbstraction = await sdk.info.getUserAbstraction(
+                  item.address,
+                );
+                if (userAbstraction === UserAbstractionResp.unifiedAccount) {
+                  const spotState = await sdk.info.getSpotClearingHouseState(
+                    item.address,
+                  );
+                  const formatted = formatSpotState(spotState);
+                  return {
+                    address: item.address,
+                    info: {
+                      ...info,
+                      withdrawable: formatted.availableToTrade,
+                    },
+                  };
+                }
+              } catch (e) {
+                // unifiedAccount get error，fallback use info
+              }
+            }
+            return { address: item.address, info };
           } catch (e) {
-            return {
-              address: item.address,
-              info: null,
-            };
+            return { address: item.address, info: null };
           }
         }),
       );
 
       const resDict = keyBy(res, item => item.address.toLowerCase());
 
-      const dict = {
-        active: [],
-        inactive: [],
-      } as Record<
-        string,
-        { info?: ClearinghouseState; account: KeyringAccountWithAlias }[]
-      >;
-      myAddresses.forEach((account, index) => {
+      const listWithInfo = myAddresses.map(account => {
         const item = resDict[account.address.toLowerCase()];
-        if (
-          item?.info &&
-          (item.info.assetPositions.length ||
-            +item.info.marginSummary > 0 ||
-            +item.info.withdrawable > 0)
-        ) {
-          dict.active.push({
-            info: {
-              ...item.info,
-            },
-            account: account,
-          });
-        } else {
-          dict.inactive.push({ account: account });
-        }
+        return {
+          account,
+          info: item?.info ? { ...item.info } : null,
+        };
       });
 
-      dict.active = sortBy(
-        dict.active,
-        item => -(item.info?.marginSummary.accountValue || 0),
+      return sortBy(
+        listWithInfo,
+        item => -(item.info?.assetPositions?.length || 0),
+        item => -Number(item.info?.withdrawable || 0),
       );
-
-      return dict;
     },
     {
       manual: true,
@@ -124,13 +129,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
   );
 
   const data = useMemo(() => {
-    if (!_data) {
-      return {
-        active: [],
-        inactive: myAddresses.map(item => ({ account: item })),
-      };
-    }
-    return _data;
+    return _data ?? myAddresses.map(account => ({ account, info: null }));
   }, [_data, myAddresses]);
 
   const [tmpSelectAccount, setTmpSelectAccount] = useState<Account | null>(
@@ -190,17 +189,9 @@ export const PerpsAccountSelectorPopup: React.FC<{
           <View>
             <Text style={styles.title}>{title || 'Select Account'}</Text>
           </View>
-          {data?.active.length ? (
+          {data.length ? (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                  {t('page.perps.PerpsAccountSelectorPopup.activatedAddress')}
-                </Text>
-                <Text style={styles.sectionTitle}>
-                  {t('page.perps.PerpsAccountSelectorPopup.hyperliquidBalance')}
-                </Text>
-              </View>
-              {data?.active?.map(item => {
+              {data.map(item => {
                 return (
                   <PerpsAccountSelectorItem
                     key={
@@ -212,119 +203,17 @@ export const PerpsAccountSelectorPopup: React.FC<{
                     tmpSelectAccount={
                       tmpSelectAccount as KeyringAccountWithAlias
                     }
-                    info={item.info}
+                    info={item?.info}
                     lastUsedAccount={lastUsedAccount as KeyringAccountWithAlias}
                     loading={loading}
                     onPress={handleSelect}
                     currentAccount={value as KeyringAccountWithAlias}
+                    checkIconPosition={checkIconPosition}
                   />
                 );
               })}
             </View>
           ) : null}
-          {data?.inactive.length ? (
-            <View style={styles.section}>
-              {data.active.length ? (
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>
-                    {t(
-                      'page.perps.PerpsAccountSelectorPopup.notActivatedAddress',
-                    )}
-                  </Text>
-                </View>
-              ) : null}
-              {data?.inactive?.map(item => {
-                return (
-                  <PerpsAccountSelectorItem
-                    key={
-                      item.account.address +
-                      item.account.type +
-                      item.account.brandName
-                    }
-                    account={item.account}
-                    tmpSelectAccount={
-                      tmpSelectAccount as KeyringAccountWithAlias
-                    }
-                    info={item.info}
-                    lastUsedAccount={lastUsedAccount as KeyringAccountWithAlias}
-                    loading={loading}
-                    onPress={handleSelect}
-                    currentAccount={value as KeyringAccountWithAlias}
-                  />
-                );
-              })}
-            </View>
-          ) : null}
-          {/* {myAddresses?.map(item => {
-            const usdValue = (() => {
-              const b = item.balance || 0;
-              return `$${splitNumberByStep(
-                b > 10 ? Math.floor(b) : b.toFixed(2),
-              )}`;
-            })();
-
-            const isCurrent = isSameAccount(item, value);
-            return (
-              <TouchableOpacity
-                key={`${item.address}-${item.type}-${item.brandName}`}
-                onPress={() => {
-                  handleSelect(item);
-                }}>
-                <AddressItemShadowView
-                  // disableShadow
-                  style={[
-                    styles.addressItemView,
-                    // style,
-                    // isCurrent || isPressing ? styles.active : null,
-                  ]}>
-                  <View style={styles.addressItemInner}>
-                    <WalletIcon
-                      borderRadius={12}
-                      width={46}
-                      height={46}
-                      style={styles.walletIcon}
-                      address={item.address}
-                      type={item.brandName}
-                    />
-                    <View style={styles.centerInfo}>
-                      <View style={styles.nameAndAdderss}>
-                        <Text style={styles.addressText}>
-                          {item.aliasName || ellipsisAddress(item.address)}
-                        </Text>
-                      </View>
-                      <View style={styles.bottomArea}>
-                        <Text style={styles.balanceText}>{usdValue}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.rightArea}>
-                      {loading && isSameAccount(item, tmpSelectAccount) ? (
-                        <ActivityIndicator />
-                      ) : isSameAddress(
-                          item.address,
-                          lastUsdeAccount?.address || '',
-                        ) && item.type === lastUsdeAccount?.type ? (
-                        <View style={styles.tag}>
-                          <Text style={styles.tagText}>
-                            {t('page.perps.PerpsAccountSelectorPopup.lastUsed')}
-                          </Text>
-                        </View>
-                      ) : (
-                        <>
-                          {isCurrent ? (
-                            <RcIconCorrectCC
-                              color={colors2024['green-default']}
-                              width={16}
-                              height={16}
-                            />
-                          ) : null}
-                        </>
-                      )}
-                    </View>
-                  </View>
-                </AddressItemShadowView>
-              </TouchableOpacity>
-            );
-          })} */}
         </AutoLockView>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
@@ -362,7 +251,7 @@ const getModalStyle = createGetStyles2024(ctx => {
       textAlign: 'center',
     },
     section: {
-      marginBottom: 12,
+      // marginBottom: 12,
     },
     sectionHeader: {
       display: 'flex',

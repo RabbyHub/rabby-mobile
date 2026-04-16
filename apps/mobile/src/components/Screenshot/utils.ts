@@ -13,6 +13,8 @@ import {
   SceneAccounts,
 } from '@/hooks/sceneAccountInfoAtom';
 import { appJsonStore } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
+import { apisPerps } from '@/core/apis';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -25,8 +27,13 @@ function runTryCatch<T extends (...args: any[]) => any>(
   }
 }
 
-export function getSceneAddresses() {
-  const accounts = appJsonStore.getItem('@SceneAccounts', {}) as SceneAccounts;
+export async function getSceneAddresses() {
+  const zustandStore = appJsonStore.getItem(
+    APP_MMKV_WEAK_KEYS.SCENE_ACCOUNTS,
+    {},
+  );
+
+  const accounts = zustandStore.state as SceneAccounts;
 
   const values = Object.entries(accounts).reduce((acc, [key, value]) => {
     if (!key.startsWith('@')) {
@@ -35,8 +42,13 @@ export function getSceneAddresses() {
     return acc;
   }, {} as { [K in AccountSwitcherScene]: string | null });
 
+  const perpsInfo = await runTryCatch(
+    async () => await apisPerps.getPerpsCurrentAccount(),
+  );
+
   return {
     ...values,
+    Perps: perpsInfo?.address || perpsInfo,
   };
 }
 
@@ -100,7 +112,7 @@ export async function getScreenshotFeedbackExtra({
     myUncallableAddressCount,
     myFirstAddress: myFirstCallableAddress,
     myCurrentAddress,
-    mySceneAddresses: runTryCatch(() => getSceneAddresses()),
+    mySceneAddresses: await runTryCatch(async () => await getSceneAddresses()),
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
     systemVersion: runTryCatch(() => DeviceInfo.getSystemVersion()),

@@ -5,16 +5,24 @@ import {
   FontWeightEnum,
   getFontWeightType,
 } from '@/core/utils/fonts';
-import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native';
-type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
+import {
+  ImageStyle,
+  ScaledSize,
+  StyleSheet,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
+import { SharedValue } from 'react-native-reanimated';
+import { EdgeInsets } from 'react-native-safe-area-context';
+type StyleType = ViewStyle | TextStyle | ImageStyle;
+type NamedStyles<T> = { [P in keyof T]: StyleType };
 
 type CreateStylesOptions = {
   isLight: boolean;
   /**
-   * @description bottom safe area inset value
+   * @description safe area inset value
    */
-  bottomSafeArea: number;
+  safeAreaInsets: EdgeInsets;
 };
 export const createGetStyles =
   <T extends NamedStyles<any>>(
@@ -38,18 +46,83 @@ type CreateStyles2024Options = {
    */
   colors2024: AppColors2024Variants;
   /**
-   * @description bottom safe area inset value
+   * @description safe area inset value
    */
-  bottomSafeArea: number;
-  // /**
-  //  * @description bottom safe area inset value
-  //  */
-  // androidOnlyBottomSafeArea: number;
+  safeAreaInsets: EdgeInsets;
 };
-export const createGetStyles2024 =
-  <T extends NamedStyles<any>>(styles: (ctx: CreateStyles2024Options) => T) =>
-  (ctx: CreateStyles2024Options) =>
-    StyleSheet.create(mutateStyles(styles(ctx)));
+type CreateStyles2024WithReanimatedOptions = Pick<
+  CreateStyles2024Options,
+  'isLight' | 'colors2024'
+> & {
+  safeAreaInsets: SharedValue<EdgeInsets>;
+  winLayout: SharedValue<ScaledSize>;
+  scrLayout: SharedValue<ScaledSize>;
+};
+
+function emptyGetStyles2024() {
+  return {
+    getStyles: (_ctx: CreateStyles2024Options) => StyleSheet.create({}),
+    getReanimatedStyles: {} as Record<
+      string,
+      (ctx: CreateStyles2024WithReanimatedOptions) => StyleType
+    >,
+  };
+}
+
+const DefaultGetStyles = emptyGetStyles2024().getStyles;
+
+export function createGetStyles2024<T extends NamedStyles<any>>(
+  styles?: (ctx: CreateStyles2024Options) => T,
+): {
+  getStyles: (ctx: CreateStyles2024Options) => T;
+  getReanimatedStyles: Record<
+    string,
+    (ctx: CreateStyles2024WithReanimatedOptions) => StyleType
+  >;
+};
+export function createGetStyles2024<
+  R extends NamedStyles<any>,
+  T extends NamedStyles<any>,
+>(
+  input: {
+    reanimatedStyles?: {
+      [P in keyof R]: (ctx: CreateStyles2024WithReanimatedOptions) => R[P];
+    };
+    styles?: T;
+  },
+  styles: (ctx: CreateStyles2024Options) => T,
+): {
+  getStyles: (ctx: CreateStyles2024Options) => T;
+  getReanimatedStyles: {
+    [P in keyof R]: (ctx: CreateStyles2024WithReanimatedOptions) => R[P];
+  };
+};
+export function createGetStyles2024(...args: any[]) {
+  let styles: (ctx: CreateStyles2024Options) => NamedStyles<any> = args[0];
+  let input:
+    | {
+        reanimatedStyles?: {
+          [P in keyof any]: (ctx: CreateStyles2024WithReanimatedOptions) => any;
+        };
+        styles?: (ctx: CreateStyles2024Options) => NamedStyles<any>;
+      }
+    | undefined;
+  if (args.length === 2) {
+    input = args[0];
+    styles = args[1];
+  }
+
+  const stylesFn = input?.styles || styles || DefaultGetStyles;
+
+  const getStyles = (ctx: CreateStyles2024Options) =>
+    StyleSheet.create(mutateStyles(stylesFn(ctx)));
+  const reanimatedStyles = input?.reanimatedStyles || {};
+
+  return {
+    getStyles,
+    getReanimatedStyles: reanimatedStyles,
+  };
+}
 
 type TriAngleConf = {
   dir?: 'up' | 'down' | 'left' | 'right';
@@ -104,12 +177,14 @@ export function makeTriangleStyle(
 }
 
 export function makeDevOnlyStyle<T extends any = ViewStyle>(input: T): T | {} {
+  'worklet';
   if (!__DEV__) return {};
 
   return input;
 }
 
 export function makeDebugBorder(color = 'blue'): ViewStyle {
+  'worklet';
   return makeDevOnlyStyle({
     borderWidth: 1,
     borderColor: color,
@@ -123,7 +198,7 @@ export function makeProdBorder(color = 'blue'): ViewStyle {
   };
 }
 
-function mutateStyles<T extends NamedStyles<any>>(input: T): T {
+export function mutateStyles<T extends NamedStyles<any>>(input: T): T {
   try {
     input = JSON.parse(JSON.stringify(input));
     // if (IS_IOS) return input;
@@ -147,27 +222,43 @@ function mutateStyles<T extends NamedStyles<any>>(input: T): T {
       const fwTypeResult = getFontWeightType(fontWeight);
 
       // like sf pro rounded
-      if (lcFontFamily && /sf(.?)pro(.?)rounded/i.test(lcFontFamily)) {
+      if (lcFontFamily && /^sf(.?)pro(.?)rounded$/i.test(lcFontFamily)) {
         switch (fwTypeResult.supertype) {
           case FontWeightEnum.heavy: {
-            tInput.fontFamily = FontNames.sf_pro_rounded_heavy;
-            delete tInput.fontWeight;
+            if (IS_IOS) {
+              tInput.fontFamily = 'SF Pro Rounded';
+            } else {
+              tInput.fontFamily = FontNames.sf_pro_rounded_heavy;
+              delete tInput.fontWeight;
+            }
             break;
           }
           case FontWeightEnum.bold: {
-            tInput.fontFamily = FontNames.sf_pro_rounded_bold;
-            delete tInput.fontWeight;
+            if (IS_IOS) {
+              tInput.fontFamily = 'SF Pro Rounded';
+            } else {
+              tInput.fontFamily = FontNames.sf_pro_rounded_bold;
+              delete tInput.fontWeight;
+            }
             break;
           }
           case FontWeightEnum.medium: {
-            tInput.fontFamily = FontNames.sf_pro_rounded_medium;
-            delete tInput.fontWeight;
+            if (IS_IOS) {
+              tInput.fontFamily = 'SF Pro Rounded';
+            } else {
+              tInput.fontFamily = FontNames.sf_pro_rounded_medium;
+              delete tInput.fontWeight;
+            }
             break;
           }
           case FontWeightEnum.normal:
           default: {
-            tInput.fontFamily = FontNames.sf_pro_rounded_regular;
-            delete tInput.fontWeight;
+            if (IS_IOS) {
+              tInput.fontFamily = 'SF Pro Rounded';
+            } else {
+              tInput.fontFamily = FontNames.sf_pro_rounded_regular;
+              delete tInput.fontWeight;
+            }
             break;
           }
         }

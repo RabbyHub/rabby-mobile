@@ -1,15 +1,15 @@
 import React from 'react';
-import { Text, View, ViewStyle } from 'react-native';
+import { View, ViewStyle } from 'react-native';
 
 import { Card } from '@/components';
 
-import { AbstractPortfolio } from '../types';
 import { PortfolioHeader } from '../components/PortfolioDetail';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatAmount, formatPrice } from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
-import { useTranslation } from 'react-i18next';
+import { IProtocolPortfolio } from '@/store/protocols';
+import { Text } from '@/components/Typography';
 
 export default React.memo(
   ({
@@ -18,12 +18,11 @@ export default React.memo(
     style,
   }: {
     name: string;
-    data: AbstractPortfolio;
+    data: IProtocolPortfolio;
     style?: ViewStyle;
   }) => {
     const portfolio = data._originPortfolio;
     const { styles } = useTheme2024({ getStyle: getStyles });
-    const { t } = useTranslation();
 
     return (
       <Card style={style}>
@@ -31,31 +30,24 @@ export default React.memo(
         <View style={styles.poolContainer}>
           <Text style={styles.nameText}>{portfolio.detail.name}</Text>
           <View style={styles.container}>
-            <View style={styles.header}>
+            {/* <View style={styles.header}>
               <Text style={styles.headerText}>
                 {t('component.Prediction.side')}
-              </Text>
-              <Text style={styles.headerText}>
-                {t('component.Prediction.amount')}
-              </Text>
-              <Text style={styles.headerText}>
-                {t('component.Prediction.price')}
               </Text>
               <Text style={[styles.headerText, styles.contentTextRight]}>
                 {t('component.Prediction.usdValue')}
               </Text>
-            </View>
+            </View> */}
             <View style={styles.content}>
               <Text style={styles.contentText}>{portfolio.detail.side}</Text>
-              <Text style={styles.contentText}>
-                {formatAmount(portfolio.detail.amount ?? 0)}
-              </Text>
-              <Text style={styles.contentText}>
-                {formatPrice(portfolio.detail.price ?? 0)}
-              </Text>
-              <Text style={[styles.contentText, styles.contentTextRight]}>
-                {formatNetworth(portfolio.stats.net_usd_value ?? 0)}
-              </Text>
+              <View style={styles.amountTextContainer}>
+                <Text style={[styles.contentText, styles.contentTextRight]}>
+                  {formatNetworth(portfolio.stats.net_usd_value ?? 0)}
+                </Text>
+                <Text style={[styles.amountText, styles.contentTextRight]}>
+                  {formatAmount(portfolio.detail.amount ?? 0)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -66,17 +58,20 @@ export default React.memo(
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   poolContainer: {
-    marginTop: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
+    backgroundColor: colors2024['neutral-bg-2'],
+    paddingTop: 8,
+    paddingBottom: 6,
+    borderRadius: 8,
   },
   container: {
     marginTop: 8,
     gap: 4,
   },
   nameText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors2024['neutral-body'],
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
   header: {
@@ -102,6 +97,17 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
+  },
+  amountText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontWeight: 500,
+    lineHeight: 16,
+    color: colors2024['neutral-secondary'],
+  },
+  amountTextContainer: {
+    display: 'flex',
+    flexDirection: 'column',
   },
   contentTextRight: {
     textAlign: 'right',

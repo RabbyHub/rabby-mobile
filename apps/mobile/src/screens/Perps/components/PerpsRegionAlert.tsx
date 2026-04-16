@@ -1,10 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { RcIconWarningCC } from '@/assets2024/icons/common';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export const PerpsRegionAlert: React.FC<{}> = ({}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -20,6 +21,7 @@ export const PerpsRegionAlert: React.FC<{}> = ({}) => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
+    marginBottom: 12,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -28,7 +30,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['orange-light-1'],
     borderRadius: 8,
     justifyContent: 'center',
-    marginBottom: 12,
     marginHorizontal: 16,
   },
   text: {

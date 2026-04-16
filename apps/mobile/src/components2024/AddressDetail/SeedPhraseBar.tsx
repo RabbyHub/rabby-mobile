@@ -1,10 +1,10 @@
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { apiMnemonic } from '@/core/apis';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import ArrowSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
-import { Text, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -13,6 +13,7 @@ import {
 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { Text } from '@/components/Typography';
 
 interface Props {
   account: KeyringAccountWithAlias;
@@ -51,6 +52,7 @@ export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
             keyringId: keyringId || undefined,
             isExistedKR: result.isExistedKR,
             account,
+            brandName: KEYRING_CLASS.MNEMONIC,
           },
           onCancel: () => {
             removeGlobalBottomSheetModal2024(id);

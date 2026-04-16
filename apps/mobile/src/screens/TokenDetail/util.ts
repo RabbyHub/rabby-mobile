@@ -1,3 +1,4 @@
+import { formatAmount } from '@/utils/number';
 import { getTimeSpan } from '@/utils/time';
 import BigNumber from 'bignumber.js';
 
@@ -11,7 +12,7 @@ export const formatPercent = (value: number) => {
 };
 export const formatAmountValueKMB = (
   value: string | number,
-  decimals = 2,
+  decimals = 4,
 ): string => {
   const bnValue = new BigNumber(value);
 
@@ -22,14 +23,18 @@ export const formatAmountValueKMB = (
   const numValue = bnValue.toNumber();
   let formattedValue: string;
 
-  if (numValue >= 1e9) {
+  if (numValue >= 1e15) {
+    formattedValue = numValue.toExponential(2);
+  } else if (numValue >= 1e12) {
+    formattedValue = `${(numValue / 1e12).toFixed(2)}T`;
+  } else if (numValue >= 1e9) {
     formattedValue = `${(numValue / 1e9).toFixed(2)}B`;
   } else if (numValue >= 1e6) {
     formattedValue = `${(numValue / 1e6).toFixed(2)}M`;
   } else if (numValue >= 1e3) {
     formattedValue = `${(numValue / 1e3).toFixed(2)}K`;
   } else {
-    formattedValue = numValue.toFixed(decimals);
+    formattedValue = formatAmount(value, decimals);
   }
 
   return `${formattedValue}`;

@@ -9,12 +9,17 @@ project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
 . $script_dir/fast-build/_fns.sh --source-only
+. $script_dir/turbo-build/_fns.sh --source-only
 
-USE_RESIGN_APK=${USE_RESIGN_APK:-"false"}
+export RABBY_MOBILE_ANDROID_FAST_BUILD="${RABBY_MOBILE_ANDROID_FAST_BUILD:-false}"
+FAST_BUILD_ENABLED=$(fast_build_enabled_value)
+UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
 check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;
+
+cd $project_dir;
 
 # prepare variables
 # TODO: read from gradle
@@ -22,8 +27,6 @@ proj_version=$(node --eval="process.stdout.write(require('./package.json').versi
 app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
 android_version_name=$(grep -m1 "versionName" ./android/app/build.gradle | cut -d'"' -f2)
 android_version_code=$(grep -m1 "versionCode" ./android/app/build.gradle | xargs | cut -c 13-)
-
-cd $project_dir;
 
 BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
 
@@ -34,24 +37,56 @@ deployment_local_dir="$script_dir/deployments/android"
 
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
+prepare_android_build_artifacts() {
+  turbo_prepare_js_dependencies
+  turbo_prepare_ruby_bundle
+
+  if turbo_build_enabled; then
+    android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key)
+
+    if turbo_android_build_artifacts_ready "$android_build_artifacts_key"; then
+      turbo_log "android build artifacts already up to date"
+      return 0
+    fi
+  fi
+
+  yarn check-nodeengines &&
+    yarn ../mobile-local-pages make-theme &&
+    yarn ../mobile-local-pages build --mode android &&
+    yarn react-native-asset &&
+    sh ./scripts/fns.sh reset_builtin_assets &&
+    yarn buildworker:prod:android
+  prepare_status=$?
+
+  if [ $prepare_status -eq 0 ] && turbo_build_enabled; then
+    turbo_mark_android_build_artifacts_ready "$android_build_artifacts_key"
+  fi
+
+  return $prepare_status
+}
+
 build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
-  [ -z "$CI" ] && yarn;
-  yarn check-nodeengines && yarn ../mobile-local-pages bundle:all &&yarn link-assets;
+  prepare_android_build_artifacts || return $?
   if [ $RABBY_HOST_OS != "Windows" ]; then
-    if [ "$USE_RESIGN_APK" == "true" ]; then
-      echo "[deploy-android] try to resign template.apk to get the new one."
+    if [ "$FAST_BUILD_ENABLED" = "true" ]; then
+      echo "[deploy-android] try to fast-build from template.apk."
+      echo "[deploy-android] fast build scope: ${RABBY_MOBILE_FAST_BUILD_SCOPE:-bundle-only}"
       CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/android.sh resign
       if [ $? -eq 0 ]; then
-        echo "[deploy-android] APK resigned successfully."
+        echo "[deploy-android] APK fast-build succeeded."
         android_export_target="$script_dir/.fast-build-work/app-resigned.apk"
         return ;
       fi
-      echo "Failed to resign APK. Will Build it again."
-      USE_RESIGN_APK="false"
+      echo "Failed to fast-build APK. Will build it again."
+      FAST_BUILD_ENABLED="false"
     fi
     echo "[deploy-android] build with fastlane."
-    bundle exec fastlane android selfhost
+    turbo_restore_gradle_state
+    turbo_bundle_exec exec fastlane android selfhost
+    fastlane_status=$?
+    [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
+    return $fastlane_status
   else
     echo "[deploy-android] run build.sh script directly."
     if [ $buildchannel == "selfhost" ]; then
@@ -64,10 +99,22 @@ build_selfhost() {
 
 build_appstore() {
   export RABBY_MOBILE_BUILD_ENV="production";
-  yarn && yarn check-nodeengines && yarn ../mobile-local-pages bundle:all &&yarn link-assets;
+  if turbo_build_enabled; then
+    prepare_android_build_artifacts || return $?
+  else
+    yarn &&
+      yarn check-nodeengines &&
+      yarn ../mobile-local-pages bundle:all &&
+      yarn link-assets &&
+      yarn buildworker:prod:android
+  fi
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
-    bundle exec fastlane android playstore
+    turbo_restore_gradle_state
+    turbo_bundle_exec exec fastlane android playstore
+    fastlane_status=$?
+    [ $fastlane_status -eq 0 ] && turbo_save_gradle_state
+    return $fastlane_status
   else
     echo "[deploy-android] run build.sh script directly."
     sh $project_dir/android/build.sh buildAppStore
@@ -143,7 +190,7 @@ fi
 
 file_date=$(date -r $android_export_target '+%Y%m%d_%H%M%S')
 version_bundle_name="$file_date-${android_version_name}.${android_version_code}"
-if [ "$USE_RESIGN_APK" == "true" ]; then
+if [ "$FAST_BUILD_ENABLED" = "true" ]; then
   version_bundle_name="${version_bundle_name}-resigned"
   apk_name="rabby-mobile-resigned.apk"
 fi
@@ -182,8 +229,8 @@ print_manual_upload_sentry_sourcemap() {
   fi
 }
 
-# only upload apk as template when it is not resigned
-if [ "$USE_RESIGN_APK" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
+# only upload apk as template when it is not fast-built from a template
+if [ "$UPLOAD_TEMPLATE_APK" = "true" ] && [ "$FAST_BUILD_ENABLED" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
   template_apk_s3_dir=$RABBY_MOBILE_REG_PUB_DEPLOYMENT/.templates/android;
   native_part_hash=$(collect_android_native_entries)
   echo "[deploy-android] will set apk $android_export_target to $template_apk_s3_dir/$native_part_hash.apk"
@@ -222,7 +269,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && node $script_dir/notify-lark.js "$apk_url" android "$USE_RESIGN_APK"
+    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && node $script_dir/notify-lark.js "$apk_url" android "$FAST_BUILD_ENABLED"
   fi
 fi
 

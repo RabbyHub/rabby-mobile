@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useChainBalances } from '@/hooks/account';
+import {
+  useChainBalances,
+  useMatteredChainBalancesAll,
+} from '@/hooks/accountChainBalance';
 import { RcWalletCC } from '@/assets/icons/common';
 import { formatUsdValue } from '@/utils/number';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
@@ -14,6 +17,7 @@ import { Tip } from '@/components/Tip';
 import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
+import { Text } from '@/components/Typography';
 
 export default function ChainItem({
   data,
@@ -38,9 +42,9 @@ export default function ChainItem({
 
   const {
     matteredChainBalances: _matteredChainBalances,
-    matteredChainBalancesAll,
     testnetMatteredChainBalances,
   } = useChainBalances();
+  const { matteredChainBalancesAll } = useMatteredChainBalancesAll();
 
   const matteredChainBalances = useMemo(
     () =>
@@ -54,6 +58,7 @@ export default function ChainItem({
       testnetMatteredChainBalances?.[data.serverId]
     );
   }, [data.serverId, matteredChainBalances, testnetMatteredChainBalances]);
+
   const finalDisabledTips = useMemo(() => {
     if (typeof disabledTips === 'function') {
       return disabledTips({ chain: data });

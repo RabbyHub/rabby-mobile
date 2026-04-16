@@ -1,8 +1,9 @@
 export const ellipsisOverflowedText = (
-  str: string,
+  str?: string,
   length = 5,
   removeLastComma = false,
 ) => {
+  if (!str) return '';
   if (str.length <= length) return str;
   let cut = str.substring(0, length);
   if (removeLastComma) {

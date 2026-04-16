@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { findBestLanguageTag } from 'react-native-localize';
-import { useAtom } from 'jotai';
+import { getLocales } from 'react-native-localize';
 import {
-  atomByMMKV,
   duplicatelyStringifiedAppJsonStore,
   IS_BOOTED_USER,
   MMKVStorageStrategy,
+  zustandByMMKV,
 } from '@/core/storage/mmkv';
 import i18n, {
   DEFAULT_LANG,
@@ -14,13 +13,38 @@ import i18n, {
   SupportedLang,
   SupportedLangs,
 } from '@/utils/i18n';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
 function filterOutBestLang() {
-  const langs = SupportedLangs.map(item => item.lang);
-  return findBestLanguageTag(langs);
+  const supportedLangs = SupportedLangs.map(item => item.lang);
+  const locales = getLocales();
+
+  for (const locale of locales) {
+    const { languageCode, countryCode } = locale;
+
+    // exact match (e.g., en-US -> en-US)
+    const fullTag = countryCode
+      ? `${languageCode}-${countryCode}`
+      : languageCode;
+    if (supportedLangs.includes(fullTag as SupportedLang)) {
+      return { languageTag: fullTag, isRTL: locale.isRTL };
+    }
+
+    // language-code prefix match (e.g., en-GB -> en-US)
+    const matchedByPrefix = supportedLangs.find(lang => {
+      const prefix = lang.split('-')[0];
+      return prefix && prefix.toLowerCase() === languageCode.toLowerCase();
+    });
+    if (matchedByPrefix) {
+      return { languageTag: matchedByPrefix, isRTL: locale.isRTL };
+    }
+  }
+
+  return undefined;
 }
 
-let defaultLang = filterOutBestLang()?.languageTag || DEFAULT_LANG;
+let defaultLang: SupportedLang =
+  (filterOutBestLang()?.languageTag as SupportedLang) || DEFAULT_LANG;
 /**
  * @notice
  * - users with version<0.5.4 has '@AppLang' in storage, because this file is not lazy-loaded
@@ -81,29 +105,31 @@ function makeLangSetting(lang: SupportedLang): LangSetting {
   return { lang: filterSupportedLang(lang), isRTL: false };
 }
 
-const langAtom = atomByMMKV<{
+const langStore = zustandByMMKV<{
   lang: SupportedLang;
   isRTL?: boolean;
 }>('@AppLangSetting', makeLangSetting(defaultLang), {
   storage: MMKVStorageStrategy.compatJson,
 });
 
+function gSetCurrentLanguage(valOrFunc: UpdaterOrPartials<LangSetting>) {
+  langStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc);
+
+    return newVal;
+  });
+}
+
+const setCurrentLanguage = async (lang: SupportedLang) => {
+  const nextVal = filterSupportedLang(lang);
+  await i18n.changeLanguage(nextVal);
+  gSetCurrentLanguage(makeLangSetting(nextVal));
+};
+
 export function useAppLanguage() {
-  const [currentLangSetting, _setCurrentLangSetting] = useAtom(langAtom);
+  const lang = langStore(s => s.lang);
 
-  const setCurrentLanguage = useCallback(
-    async (lang: SupportedLang) => {
-      const nextVal = filterSupportedLang(lang);
-      await i18n.changeLanguage(nextVal);
-      _setCurrentLangSetting(makeLangSetting(nextVal));
-    },
-    [_setCurrentLangSetting],
-  );
-
-  const currentLanguage = useMemo(
-    () => filterSupportedLang(currentLangSetting.lang),
-    [currentLangSetting.lang],
-  );
+  const currentLanguage = useMemo(() => filterSupportedLang(lang), [lang]);
 
   return {
     currentLanguage,
@@ -111,22 +137,20 @@ export function useAppLanguage() {
   };
 }
 
-/**
- * @description only call this hook once in the app
- */
-export function useTriggerI18nChangeOnAppTop() {
-  const { currentLanguage } = useAppLanguage();
+function i18nChange(lang: SupportedLang) {
+  i18n
+    .changeLanguage(filterSupportedLang(lang))
+    .then(() => {
+      console.debug(`[useTriggerI18nChangeOnAppTop] current language: ${lang}`);
+    })
+    .catch(error => {
+      console.error(error);
+    });
+}
 
-  useEffect(() => {
-    i18n
-      .changeLanguage(currentLanguage)
-      .then(() => {
-        console.debug(
-          `[useTriggerI18nChangeOnAppTop] current language: ${currentLanguage}`,
-        );
-      })
-      .catch(error => {
-        console.error(error);
-      });
-  }, [currentLanguage]);
+export function startSubscribeLangChange() {
+  i18nChange(langStore.getState().lang);
+  langStore.subscribe(async state => {
+    i18nChange(state.lang);
+  });
 }

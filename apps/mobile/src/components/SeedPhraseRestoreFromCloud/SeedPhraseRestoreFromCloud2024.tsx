@@ -10,10 +10,11 @@ import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { RootNames } from '@/constant/layout';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { shouldRedirectToSetPasswordBefore2024 } from '@/hooks/useLock';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
-  shouldRedirect2SetPassword?: (any) => Promise<boolean>;
+  shouldRedirect2SetPassword?: typeof shouldRedirectToSetPasswordBefore2024;
   files: BackupData[];
 }
 
@@ -52,6 +53,7 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
         setStep('backup_downloading');
         await new Promise(resolve => setTimeout(resolve, 500));
         onDone();
+
         if (
           await shouldRedirect2SetPassword?.({
             backScreen: RootNames.ImportSuccess2024,

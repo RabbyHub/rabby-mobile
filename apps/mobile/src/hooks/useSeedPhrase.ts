@@ -1,13 +1,16 @@
 import { useCallback, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { keyringService } from '@/core/services';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TypeKeyringGroup, useWalletTypeData } from './useWalletTypeData';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { apiMnemonic } from '@/core/apis';
-import { navigateDeprecated } from '@/utils/navigation';
+import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
+import { ellipsisAddress } from '@/utils/address';
+import { contactService } from '@/core/services';
 
 const useGetHdKeys = () => {
   return useAsync(async () => {
@@ -51,24 +54,57 @@ export const useSeedPhrase = () => {
 
   const handleAddSeedPhraseAddress2024 = useCallback(
     async (publicKey: string, accounts: string[]) => {
-      if (publicKey) {
-        const data = await apiMnemonic.getMnemonicKeyring(
-          'publickey',
-          publicKey,
-        );
-
-        navigateDeprecated(RootNames.StackAddress, {
-          screen: RootNames.CreateNewAddress,
-          params: {
-            useCurrentSeed: true,
-            mnemonics: data.mnemonic as string,
-            title: `3. ${t('screens.addressStackTitle.ConfrimAddress')}`,
-            accounts,
-          },
-        });
+      if (!publicKey) {
+        return;
       }
+      const data = await apiMnemonic.getMnemonicKeyring('publickey', publicKey);
+      const mnemonics = data.mnemonic as string;
+      const passphrase = data.passphrase || '';
+
+      const MAX_ACCOUNT_COUNT = 50;
+      const api = apiMnemonic.getKeyringByMnemonic(mnemonics, passphrase);
+      let newAddress = '';
+      let accountsToCreate: any[] = [];
+      for (let i = 0; i < MAX_ACCOUNT_COUNT; i++) {
+        const res = await api?.getAddresses(i, i + 1);
+        const idx = accounts.findIndex(item => item === res?.[0].address);
+        if (idx === -1 && res) {
+          accountsToCreate = res;
+          newAddress = res?.[0]?.address;
+          break;
+        }
+      }
+
+      if (!newAddress) {
+        return;
+      }
+
+      contactService.setAlias({
+        address: newAddress,
+        alias: '',
+      });
+      await activeAndPersistAccountsByMnemonics(
+        mnemonics,
+        passphrase,
+        accountsToCreate,
+        false,
+      );
+
+      replaceToFirst(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess2024,
+        params: {
+          type: KEYRING_TYPE.HdKeyring,
+          brandName: KEYRING_CLASS.MNEMONIC,
+          isFirstCreate: true,
+          address: [newAddress],
+          mnemonics,
+          passphrase,
+          isExistedKR: false,
+          alias: ellipsisAddress(newAddress),
+        },
+      });
     },
-    [t],
+    [],
   );
 
   const seedPhraseList = useMemo(() => {
@@ -84,6 +120,18 @@ export const useSeedPhrase = () => {
       return publicKeys
         .map(e => pbMappings[e])
         .filter(e => !!e)
+        .sort((a, b) => {
+          const getTotalValue = (item: typeof a) =>
+            (item.list || []).reduce((pre, now) => {
+              return pre + (now.balance || 0);
+            }, 0);
+          const aValue = getTotalValue(a);
+          const bValue = getTotalValue(b);
+          if (aValue === bValue) {
+            return (b.list.length || 0) - (a.list.length || 0);
+          }
+          return bValue - aValue;
+        })
         .map((e, index) => ({ ...e, index: index })) as TypeKeyringGroup[];
     }
     return [];

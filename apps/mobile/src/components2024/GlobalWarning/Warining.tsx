@@ -1,9 +1,10 @@
-import { View, Text, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleProp, ViewStyle } from 'react-native';
 import RcOfflineCC from '@/assets2024/icons/common/offline-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export enum GlobalWarningType {
   Network = 'network',
@@ -84,11 +85,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontWeight: '800',
     fontSize: 14,
+    lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
   text: {
     color: colors2024['neutral-title-1'],
     fontSize: 14,
+    lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
   refreshText: {

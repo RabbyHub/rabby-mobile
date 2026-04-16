@@ -1,20 +1,31 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { View, TouchableOpacity } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
-import { CHAINS_ENUM } from '@debank/common';
-import { useLendingSummary } from '../../hooks';
+import {
+  useLendingSummary,
+  usePoolDataProviderContract,
+  useSelectedMarket,
+} from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { buildBorrowTx } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { buildBorrowTx, optimizedPath } from '../../poolService';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -39,23 +50,31 @@ import { useTranslation } from 'react-i18next';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import { transactionHistoryService } from '@/core/services/shared';
 import { useRefreshHistoryId } from '../../hooks';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
+import { CHAINS_ENUM } from '@debank/common';
+import BorrowToCapTip from '../Tips/BorrowToCapTip';
+import { formatTokenAmount } from '@/utils/number';
+import { stats } from '@/utils/stats';
+import { isZeroAmount } from '../../utils/number';
+import { Text } from '@/components/Typography';
 
 export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const { refresh } = useRefreshHistoryId();
   const [isLoading, setIsLoading] = useState(false);
@@ -67,20 +86,32 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   });
   const [isChecked, setIsChecked] = useState(false);
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { chainEnum, chainInfo, selectedMarketData } = useSelectedMarket();
+  const { pools } = usePoolDataProviderContract();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
-  const { ctx } = useSignatureStore();
-
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: txs.length ? txs?.[0]?.chainId + '' : '',
     autoResetGasStoreOnChainChange: true,
   });
 
+  const { ctx } = useSignatureStoreOf(instance);
+  const hasNoSupply = useMemo(() => {
+    return (
+      !userSummary?.totalLiquidityUSD || userSummary.totalLiquidityUSD === '0'
+    );
+  }, [userSummary?.totalLiquidityUSD]);
+
   const afterHF = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (hasNoSupply || !amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item =>
@@ -99,7 +130,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       ).plus(borrowAmountInUsd),
       currentLiquidationThreshold: userSummary.currentLiquidationThreshold,
     }).toString();
-  }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
+  }, [
+    amount,
+    formattedPoolReservesAndIncentives,
+    hasNoSupply,
+    reserve,
+    userSummary,
+  ]);
 
   const isRisky = useMemo(() => {
     if (!afterHF || Number(afterHF) < 0) {
@@ -109,14 +146,16 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [afterHF]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount || hasNoSupply) {
       setTxs([]);
+      return;
+    }
+    if (!pools) {
       return;
     }
 
     try {
       setIsLoading(true);
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -129,10 +168,12 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
       const borrowTx = await buildBorrowTx({
+        poolBundle: pools.poolBundle,
         amount: parseUnits(amount, targetPool.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
         debtTokenAddress: targetPool?.variableDebtTokenAddress || '',
+        useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
       });
       delete borrowTx.gasLimit;
 
@@ -144,19 +185,25 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       ]);
     } catch (error) {
       console.error('Build transactions error:', error);
+      toast.error('something error');
+      setTxs([]);
     } finally {
       setIsLoading(false);
     }
   }, [
     amount,
+    chainInfo,
     currentAccount,
     formattedPoolReservesAndIncentives,
+    hasNoSupply,
+    pools,
     reserve.underlyingAsset,
+    selectedMarketData?.chainId,
   ]);
 
   const handleBorrow = useCallback(
     async (forceFullSign?: boolean) => {
-      if (!currentAccount || !txs.length || !amount || amount === '0') {
+      if (!currentAccount || !txs.length || !amount || isZeroAmount(amount)) {
         return;
       }
 
@@ -180,12 +227,11 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
               setAmount(undefined);
               onClose?.();
-              return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleBorrow(true);
-              return;
             }
+            return;
           }
         } else {
           for (const tx of txs) {
@@ -208,7 +254,7 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
           }
         }
         const txId = last(results);
-        if (txId) {
+        if (txId && txs[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txs[0].chainId,
@@ -216,6 +262,31 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW },
           );
         }
+
+        const targetPool = formattedPoolReservesAndIncentives.find(item =>
+          isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+        );
+        const usdValue = targetPool
+          ? new BigNumber(amount || '0')
+              .multipliedBy(
+                BigNumber(
+                  targetPool.formattedPriceInMarketReferenceCurrency || '0',
+                ),
+              )
+              .toString()
+          : '0';
+
+        stats.report('aaveInternalTx', {
+          tx_type: LendingReportType.Borrow,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
+        });
+
         refresh();
         toast.success(
           `${t('page.Lending.borrowDetail.actions')} ${t(
@@ -234,10 +305,13 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
       txs,
       amount,
       canShowDirectSubmit,
+      formattedPoolReservesAndIncentives,
+      chainInfo?.serverId,
       refresh,
       t,
       onClose,
       openDirect,
+      reserve.underlyingAsset,
     ],
   );
 
@@ -252,7 +326,10 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
     const poolAmount = BigNumber(reserve.reserve.borrowCap)
       .minus(BigNumber(reserve.reserve.totalDebt))
       .multipliedBy(BORROW_SAFE_MARGIN);
-    const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
+    const formattedPoolAmount = poolAmount.lt(0) ? BigNumber(0) : poolAmount;
+    const miniAmount = myAmount.gte(formattedPoolAmount)
+      ? formattedPoolAmount
+      : myAmount;
     const usdValue = miniAmount
       .multipliedBy(
         BigNumber(
@@ -276,13 +353,25 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [buildTransactions]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
+    if (
+      currentAccount &&
+      canShowDirectSubmit &&
+      amount &&
+      !isZeroAmount(amount)
+    ) {
       prefetchMiniSigner({
         txs: txs?.length ? txs : [],
         synGasHeaderInfo: true,
       });
     }
   }, [canShowDirectSubmit, currentAccount, amount, txs, prefetchMiniSigner]);
+
+  const showBorrowToCapTip = useMemo(() => {
+    if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
+      return false;
+    }
+    return BigNumber(reserve.reserve.totalDebt).gte(reserve.reserve.borrowCap);
+  }, [reserve?.reserve?.totalDebt, reserve?.reserve?.borrowCap]);
 
   const errorMessage = useMemo(() => {
     if (!reserve?.reserve?.totalDebt || !reserve?.reserve?.borrowCap) {
@@ -311,139 +400,164 @@ export const BorrowActionPopup: React.FC<PopupDetailProps> = ({
   }, [reserve.reserve.borrowCap, reserve.reserve.totalDebt, t]);
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>
-        {t('page.Lending.borrowDetail.actions')} {reserve.reserve.symbol}
-      </Text>
-      {errorMessage ? (
-        <View style={styles.errorMessageContainer}>
-          <RcIconWarningCircleCC
-            width={15}
-            height={15}
-            color={colors2024['orange-default']}
-          />
-          <Text style={styles.errorMessage}>{errorMessage}</Text>
-        </View>
-      ) : null}
-      <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>
-          {t('page.Lending.popup.amount')}
+    <SignatureInstanceProvider instance={instance}>
+      <AutoLockView as="View" style={styles.container}>
+        <Text style={styles.title}>
+          {t('page.Lending.borrowDetail.actions')} {reserve.reserve.symbol}
         </Text>
-        <Text style={styles.amountValueDescription}>{`${formatAmountValueKMB(
-          availableToBorrow.amount || '0',
-        )}${reserve.reserve.symbol} ($${formatAmountValueKMB(
-          availableToBorrow.usdValue || '0',
-        )}) ${t('page.Lending.popup.available')}`}</Text>
-      </View>
-      <TokenAmountInput
-        value={amount}
-        onChange={setAmount}
-        symbol={reserve.reserve.symbol}
-        handleClickMaxButton={() => {
-          setAmount(availableToBorrow.amount || '0');
-        }}
-        tokenAmount={Number(availableToBorrow.amount || '0')}
-        price={Number(
-          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
-        )}
-        style={styles.amountInput}
-        chain={CHAINS_ENUM.ETH}
-      />
-      <BottomSheetScrollView
-        style={styles.bottomSheetScrollView}
-        contentContainerStyle={styles.transactionContainer}>
-        <BorrowActionOverView
-          reserve={reserve}
-          userSummary={userSummary}
-          afterHF={afterHF}
-        />
-
-        {!!amount && amount !== '0' && canShowDirectSubmit && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={isLoading}
-              openShowMore={noop}
-              chainServeId="eth"
+        {hasNoSupply ? null : errorMessage ? (
+          <View style={styles.errorMessageContainer}>
+            <RcIconWarningCircleCC
+              width={15}
+              height={15}
+              color={colors2024['orange-default']}
             />
+            <Text style={styles.errorMessage}>{errorMessage}</Text>
           </View>
-        )}
-      </BottomSheetScrollView>
+        ) : null}
+        <View style={styles.amountHeader}>
+          <Text style={styles.amountHeaderTitle}>
+            {t('page.Lending.popup.amount')}
+          </Text>
+          <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
+            availableToBorrow.amount || '0',
+          )}${reserve.reserve.symbol} ($${formatAmountValueKMB(
+            availableToBorrow.usdValue || '0',
+          )}) ${t('page.Lending.popup.available')}`}</Text>
+        </View>
+        <TokenAmountInput
+          value={amount}
+          onChange={setAmount}
+          symbol={reserve.reserve.symbol}
+          handleClickMaxButton={() => {
+            setAmount(availableToBorrow.amount || '0');
+          }}
+          tokenAmount={Number(availableToBorrow.amount || '0')}
+          price={Number(
+            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+          )}
+          style={styles.amountInput}
+          chain={chainEnum || CHAINS_ENUM.ETH}
+        />
+        <BottomSheetScrollView
+          style={styles.bottomSheetScrollView}
+          contentContainerStyle={styles.transactionContainer}>
+          <BorrowActionOverView
+            reserve={reserve}
+            userSummary={userSummary}
+            afterHF={afterHF}
+          />
 
-      <View style={styles.buttonContainer}>
-        {isRisky && (
-          <>
-            <View style={styles.warningContainer}>
-              <RcIconWarningCircleCC
-                width={15}
-                height={15}
-                color={colors2024['red-default']}
-              />
-              <Text style={styles.warningText}>
-                {t('page.Lending.risk.warning')}
+          {canShowDirectSubmit &&
+            !hasNoSupply &&
+            !!amount &&
+            !isZeroAmount(amount) && (
+              <View style={styles.gasPreContainer}>
+                <DirectSignGasInfo
+                  supportDirectSign={true}
+                  loading={false}
+                  openShowMore={noop}
+                  chainServeId={chainInfo?.serverId || ''}
+                />
+              </View>
+            )}
+          {showBorrowToCapTip && <BorrowToCapTip />}
+          {hasNoSupply && (
+            <View style={styles.noSupplyMessageContainer}>
+              <View style={styles.noSupplyMessageHeader}>
+                <RcIconWarningCircleCC
+                  width={18}
+                  height={18}
+                  color={colors2024['red-default']}
+                />
+                <Text style={styles.noSupplyMessagePrefix}>
+                  {t('page.Lending.borrowDetail.noSupplyPrefix')}
+                </Text>
+              </View>
+              <Text style={styles.noSupplyMessageDesc}>
+                {t('page.Lending.borrowDetail.noSupplyDesc')}
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.checkbox}
-              onPress={() => {
-                setIsChecked(prev => !prev);
-              }}>
-              <CheckBoxRect size={16} checked={isChecked} />
-              <Text style={styles.checkboxText}>
-                {t('page.Lending.risk.checkbox')}
-              </Text>
-            </TouchableOpacity>
-          </>
-        )}
+          )}
+        </BottomSheetScrollView>
 
-        {canShowDirectSubmit ? (
-          <DirectSignBtn
-            loading={isLoading}
-            loadingType="circle"
-            key={`${amount}`}
-            showTextOnLoading
-            wrapperStyle={styles.directSignBtn}
-            authTitle={t('page.Lending.borrowDetail.actions')}
-            title={`${t('page.Lending.borrowDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
-            onFinished={() => handleBorrow()}
-            disabled={
-              !amount ||
-              amount === '0' ||
-              !txs.length ||
-              isLoading ||
-              !currentAccount ||
-              !!ctx?.disabledProcess ||
-              (isRisky && !isChecked)
-            }
-            type="primary"
-            syncUnlockTime
-            account={currentAccount}
-            showHardWalletProcess
-          />
-        ) : (
-          <Button
-            loadingType="circle"
-            showTextOnLoading
-            containerStyle={styles.fullWidthButton}
-            onPress={() => handleBorrow()}
-            title={`${t('page.Lending.borrowDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
-            loading={isLoading}
-            disabled={
-              !amount ||
-              amount === '0' ||
-              !txs.length ||
-              isLoading ||
-              !currentAccount ||
-              (isRisky && !isChecked)
-            }
-          />
-        )}
-      </View>
-    </AutoLockView>
+        <View style={styles.buttonContainer}>
+          {isRisky && (
+            <>
+              <View style={styles.warningContainer}>
+                <RcIconWarningCircleCC
+                  width={15}
+                  height={15}
+                  color={colors2024['red-default']}
+                />
+                <Text style={styles.warningText}>
+                  {t('page.Lending.risk.warning')}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.checkbox}
+                onPress={() => {
+                  setIsChecked(prev => !prev);
+                }}>
+                <CheckBoxRect size={16} checked={isChecked} />
+                <Text style={styles.checkboxText}>
+                  {t('page.Lending.risk.checkbox')}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {canShowDirectSubmit ? (
+            <DirectSignBtn
+              loading={isLoading}
+              loadingType="circle"
+              key={`${amount}`}
+              showTextOnLoading
+              wrapperStyle={styles.directSignBtn}
+              authTitle={t('page.Lending.borrowDetail.actions')}
+              title={t('page.Lending.borrowDetail.actions')}
+              onFinished={() => handleBorrow()}
+              disabled={
+                hasNoSupply ||
+                !amount ||
+                isZeroAmount(amount) ||
+                !txs.length ||
+                isLoading ||
+                !currentAccount ||
+                !!ctx?.disabledProcess ||
+                (isRisky && !isChecked)
+              }
+              type="aave"
+              iconColor={
+                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+              }
+              syncUnlockTime
+              account={currentAccount}
+              showHardWalletProcess
+            />
+          ) : (
+            <Button
+              type="aave"
+              loadingType="circle"
+              showTextOnLoading
+              containerStyle={styles.fullWidthButton}
+              onPress={() => handleBorrow()}
+              title={t('page.Lending.borrowDetail.actions')}
+              loading={isLoading}
+              disabled={
+                hasNoSupply ||
+                !amount ||
+                isZeroAmount(amount) ||
+                !txs.length ||
+                isLoading ||
+                !currentAccount ||
+                (isRisky && !isChecked)
+              }
+            />
+          )}
+        </View>
+      </AutoLockView>
+    </SignatureInstanceProvider>
   );
 };
 const getStyles = createGetStyles2024(ctx => ({
@@ -619,6 +733,42 @@ const getStyles = createGetStyles2024(ctx => ({
     flex: 1,
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
+  },
+  noSupplyMessageContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 4,
+    backgroundColor: ctx.colors2024['red-light-1'],
+    padding: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 18,
+    width: '100%',
+  },
+  noSupplyMessageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  noSupplyMessageContent: {
+    flexDirection: 'column',
+    display: 'flex',
+    gap: 8,
+  },
+  noSupplyMessagePrefix: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: ctx.colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  noSupplyMessageDesc: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: ctx.colors2024['red-default'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 2,
   },
   errorMessageContainer: {
     flexDirection: 'row',

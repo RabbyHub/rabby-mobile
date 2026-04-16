@@ -6,7 +6,8 @@ import { createGetStyles } from '@/utils/styles';
 import { useIsOnBackground } from '@/hooks/useLock';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { View } from 'react-native';
 
 const getBlurModalStyles = createGetStyles(colors => {
   return {
@@ -16,6 +17,10 @@ const getBlurModalStyles = createGetStyles(colors => {
       left: 0,
       bottom: 0,
       right: 0,
+    },
+
+    iosView: {
+      backgroundColor: colors['neutral-bg-1'],
     },
   };
 });
@@ -36,6 +41,10 @@ export function BackgroundSecureBlurView() {
     BLUR_FREE_ROOT_NAMES.includes(currentRouteName as any)
   )
     return null;
+
+  // if (IS_IOS) {
+  //   return <View style={[styles.container, styles.iosView]} />;
+  // }
 
   return (
     <BlurView

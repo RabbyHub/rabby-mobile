@@ -1,18 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { getChain } from '@/utils/chain';
-import {
-  ProjectItem,
-  TokenItem,
-  TxDisplayItem,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { ProjectItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -29,6 +19,7 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { HistoryItemTokenArea } from './HistoryItemTokenArea';
 import { getTokenSymbol } from '@/utils/token';
 import FastImage from 'react-native-fast-image';
+import { Text } from '@/components/Typography';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
@@ -57,14 +48,23 @@ export const HistoryItem = React.memo(
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
-    const isScam = data.is_scam;
-    const isSmallUsdTx = data.isSmallUsdTx;
+    const isScam = data.is_scam || data.isSmallUsdTx;
     const chainItem = getChain(data.chain);
     const { styles, isLight } = useTheme2024({ getStyle });
 
     const formatType: HistoryItemCateType = useMemo(() => {
+      if (data.historyType === HistoryItemCateType.Swap) {
+        if (
+          data.receives?.[0]?.token?.is_core &&
+          data.sends?.[0]?.token?.is_core
+        ) {
+          return HistoryItemCateType.Swap;
+        } else {
+          return HistoryItemCateType.UnKnown;
+        }
+      }
       return data.historyType;
-    }, [data.historyType]);
+    }, [data.historyType, data.receives, data.sends]);
 
     const tokenApproveData = useMemo(() => {
       const res: TokenChangeDataItem[] = [];
@@ -96,6 +96,18 @@ export const HistoryItem = React.memo(
             return t('page.transactions.itemTitle.LendingBorrow');
           case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
             return t('page.transactions.itemTitle.LendingRepay');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL:
+            return t('page.transactions.itemTitle.LendingOnCollateral');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
+            return t('page.transactions.itemTitle.LendingOffCollateral');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE:
+            return t('page.transactions.itemTitle.LendingManageEMode');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE:
+            return t('page.transactions.itemTitle.LendingManageEModeDisable');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP:
+            return t('page.transactions.itemTitle.LendingDebtSwap');
+          case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY_WITH_COLLATERAL:
+            return t('page.transactions.itemTitle.LendingRepayWithCollateral');
         }
       }
 
@@ -154,10 +166,10 @@ export const HistoryItem = React.memo(
       switch (formatType) {
         case HistoryItemCateType.GAS_RECEIVED:
         case HistoryItemCateType.GAS_WITHDRAW:
-          address = FromText + t('page.home.services.gasAccount');
+          address = FromText + t('page.home.services.gasDeposit');
           break;
         case HistoryItemCateType.GAS_DEPOSIT:
-          address = ToText + t('page.home.services.gasAccount');
+          address = ToText + t('page.home.services.gasDeposit');
           break;
 
         case HistoryItemCateType.Send:
@@ -216,7 +228,12 @@ export const HistoryItem = React.memo(
             isShowRPCStatus={true}
           />
           {typeof address === 'string' ? (
-            <Text style={styles.describeText}>{address}</Text>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={styles.describeText}>
+              {address}
+            </Text>
           ) : (
             address
           )}
@@ -243,6 +260,7 @@ export const HistoryItem = React.memo(
           isForMultipleAddress,
           data,
           title: formatTitle,
+          treatSmallAssetsAsScam: true,
         },
       });
     }, [onPress, navigation, isForMultipleAddress, data, formatTitle]);
@@ -300,12 +318,7 @@ export const HistoryItem = React.memo(
 
     return (
       <TouchableOpacity onPress={handleNavigateDetail}>
-        <View
-          style={[
-            styles.card,
-            style,
-            isScam || isSmallUsdTx ? styles.cardGray : null,
-          ]}>
+        <View style={[styles.card, style, isScam ? styles.cardGray : null]}>
           <View style={styles.cardBody}>
             <View
               style={[
@@ -318,13 +331,24 @@ export const HistoryItem = React.memo(
                 type={formatType as HistoryItemCateType}
                 tokenChangeData={tokenChangeData}
                 tokenApproveData={tokenApproveData}
+                isFailure={isFailed}
               />
-              <View style={styles.textBox}>
+              <View
+                style={[
+                  styles.textBox,
+                  noNeedTokenChangeType && styles.textBoxNotChange,
+                ]}>
                 <View style={styles.titleBox}>
                   <Text style={styles.titleText} numberOfLines={1}>
                     {formatTitle}
                   </Text>
-                  {isShowSuccess ? (
+                  {isScam ? (
+                    <View style={styles.scamContainer}>
+                      <Text style={styles.scamText}>
+                        {t('page.transactions.scam')}
+                      </Text>
+                    </View>
+                  ) : isShowSuccess ? (
                     <TxStatusItem status={1} showSuccess={true} />
                   ) : (
                     <TxStatusItem status={data.tx?.status ?? 1} />
@@ -386,6 +410,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     justifyContent: 'center',
   },
+  textBoxNotChange: {
+    flexShrink: 1,
+  },
   titleText: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
@@ -399,6 +426,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
+    flexShrink: 1,
   },
   cardHeader: {
     paddingHorizontal: 16,
@@ -411,14 +439,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   scamContainer: {
     borderRadius: 2,
-    backgroundColor: colors2024['neutral-line'],
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    height: 18,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  scam: {
+  scamText: {
     fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
     fontSize: 12,
-    lineHeight: 14,
+    lineHeight: 16,
     color: colors2024['neutral-foot'],
   },
   cardHeaderInner: {

@@ -9,10 +9,8 @@ import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { cached } from '@/utils/cache';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { getAllAccountsToDisplay } from './account';
-import { getDefaultStore } from 'jotai';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { sortAccountList } from '@/utils/sortAccountList';
-import { sceneAccountInfoAtom } from '@/hooks/sceneAccountInfoAtom';
 import { findChain } from '@/utils/chain';
 
 export const removeDapp = (origin: string) => {
@@ -90,6 +88,7 @@ export const connect = async ({
         icon: '',
       },
     ),
+    origin,
     currentAccount: account,
     isConnected: true,
     chainId,
@@ -110,6 +109,7 @@ export function setCurrentAccountForDapp(
     },
   });
   const dapp = dappService.getDapp(origin);
+
   if (dapp?.isConnected) {
     sessionService.broadcastEvent(
       BroadcastEvent.accountsChanged,

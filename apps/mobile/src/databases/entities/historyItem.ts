@@ -7,7 +7,11 @@ import {
 import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column, Brackets } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
-import { columnConverter, badRealTransformer } from './_helpers';
+import {
+  columnConverter,
+  badRealTransformer,
+  jsonTransformer,
+} from './_helpers';
 import { prepareAppDataSource } from '../imports';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
@@ -24,6 +28,9 @@ import {
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
 import { CustomTxItem } from '@/core/services/transactionHistory';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
 export type ProjectItemType = {
   chain: string;
@@ -32,7 +39,8 @@ export type ProjectItemType = {
   name: string;
 };
 
-@Entity('cache_historyitem')
+@ParseEntity()
+@Entity(ORM_TABLE_NAMES.cache_historyitem)
 export class HistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
   @Column('boolean')
@@ -65,33 +73,27 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column({
     type: 'text',
     default: '[]',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
   receives: {
     token_id: string;
     amount: number;
     from_addr: string;
     price?: number;
-    token?: TokenItem;
+    token: TokenItem;
   }[] = [];
   // sends
   @Column({
     type: 'text',
     default: '[]',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
   sends: {
     token_id: string;
     amount: number;
     to_addr: string;
     price?: number;
-    token?: TokenItem;
+    token: TokenItem;
   }[] = [];
   // tx_name
   @Column('text', { default: '' })
@@ -103,10 +105,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column({
     type: 'text',
     default: '{}',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
   token_approve_item: TokenItem = {
     amount: 0,
@@ -135,12 +134,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   @Column({
     type: 'text',
     default: '{}',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
-  project_item?: ProjectItemType = {
+  project_item?: ProjectItemType | null = {
     chain: '',
     id: '',
     logo_url: '',
@@ -181,6 +177,60 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.txHash]
       .filter(Boolean)
       .join('-')}`);
+  }
+
+  static fillEntity(
+    e: HistoryItemEntity,
+    owner_addr: string,
+    input: TxHistoryItem,
+    tokenDict: Record<string, TokenItem>,
+    projectDict: Record<string, ProjectItemType>,
+    pinedQueue: IManageToken[],
+    customTxItem?: CustomTxItem,
+  ) {
+    e.owner_addr = owner_addr;
+    e.other_addr = input.other_addr ?? '';
+    e.is_scam = input.is_scam ?? false;
+    e.txHash = input.id ?? '';
+    e.chain = input.chain ?? 'eth';
+    e.receives = input.receives.map(item => {
+      const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
+      return {
+        ...item,
+        token,
+      };
+    });
+    e.sends = input.sends.map(item => {
+      const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
+      return {
+        ...item,
+        token,
+      };
+    });
+    e.status = input.tx?.status ?? 1;
+    e.time_at = input.time_at ?? 0;
+    e.cate_id = input.cate_id ?? '';
+    e.tx_name = input.tx?.name ?? '';
+    e.token_approve_id = input.token_approve?.token_id ?? '';
+    e.token_approve_value = input.token_approve?.value ?? 0;
+    e.token_approve_spender = input.token_approve?.spender ?? '';
+    e.token_approve_item = fetchHistoryTokenItem(
+      e.token_approve_id,
+      e.chain,
+      tokenDict,
+    );
+    e.project_id = input.project_id ?? '';
+    e.project_item = projectDict[e.project_id] || null;
+    e.tx_from_address = input.tx?.from_addr ?? '';
+    e.tx_to_address = input.tx?.to_addr ?? '';
+    e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
+    e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
+    e.is_small_tx = this.judgeIsSmallUsdTx(e, pinedQueue);
+    e.makeDbId();
+    e.history_type = this.getHistoryItemType(e);
+    if (customTxItem) {
+      e.history_custom_type = customTxItem.actionType;
+    }
   }
 
   static judgeIsSmallUsdTx(
@@ -283,60 +333,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     } catch (error) {
       console.error(error);
       return HistoryItemCateType.UnKnown;
-    }
-  }
-
-  static fillEntity(
-    e: HistoryItemEntity,
-    owner_addr: string,
-    input: TxHistoryItem,
-    tokenDict: Record<string, TokenItem>,
-    projectDict: Record<string, ProjectItemType>,
-    pinedQueue: IManageToken[],
-    customTxItem?: CustomTxItem,
-  ) {
-    e.owner_addr = owner_addr;
-    e.other_addr = input.other_addr ?? '';
-    e.is_scam = input.is_scam ?? false;
-    e.txHash = input.id ?? '';
-    e.chain = input.chain ?? 'eth';
-    e.receives = input.receives.map(item => {
-      const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
-      return {
-        ...item,
-        token,
-      };
-    });
-    e.sends = input.sends.map(item => {
-      const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
-      return {
-        ...item,
-        token,
-      };
-    });
-    e.status = input.tx?.status ?? 1;
-    e.time_at = input.time_at ?? 0;
-    e.cate_id = input.cate_id ?? '';
-    e.tx_name = input.tx?.name ?? '';
-    e.token_approve_id = input.token_approve?.token_id ?? '';
-    e.token_approve_value = input.token_approve?.value ?? 0;
-    e.token_approve_spender = input.token_approve?.spender ?? '';
-    e.token_approve_item = fetchHistoryTokenItem(
-      e.token_approve_id,
-      e.chain,
-      tokenDict,
-    );
-    e.project_id = input.project_id ?? '';
-    e.project_item = projectDict[e.project_id] || null;
-    e.tx_from_address = input.tx?.from_addr ?? '';
-    e.tx_to_address = input.tx?.to_addr ?? '';
-    e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
-    e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
-    e.is_small_tx = this.judgeIsSmallUsdTx(e, pinedQueue);
-    e.makeDbId();
-    e.history_type = this.getHistoryItemType(e);
-    if (customTxItem) {
-      e.history_custom_type = customTxItem.actionType;
     }
   }
 
@@ -470,6 +466,45 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
+  static async getUnreadHistoryCount(owner_addrs: string[], maxTimeAt: number) {
+    await prepareAppDataSource();
+    const currentTime = new Date().getTime();
+    console.log('getUnreadHistoryCount exec');
+    const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
+    const repo = this.getRepository();
+    const queryBuilder = repo
+      .createQueryBuilder('historyitem')
+      .select(['owner_addr', 'txHash'])
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .andWhere('historyitem.time_at > :maxTimeAt', {
+        maxTimeAt,
+      })
+      .andWhere(
+        'LOWER(historyitem.tx_from_address) != LOWER(historyitem.owner_addr)',
+      )
+      .andWhere('historyitem.is_scam = :is_scam', {
+        is_scam: false,
+      })
+      .andWhere(
+        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
+        {
+          oneHourAgo,
+          is_small_tx: false,
+        },
+      )
+      .orderBy('historyitem.time_at', 'DESC')
+      .take(10);
+    const res = await queryBuilder.getRawMany();
+
+    console.log(
+      'getUnreadHistoryCount exec time:',
+      new Date().getTime() - currentTime,
+      'count:',
+      res.length,
+    );
+    return res;
+  }
+
   static async getHistoryItemsPaginated(
     owner_addrs: string[],
     options: {
@@ -526,6 +561,12 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
             CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW,
             CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW,
             CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP,
+            CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY_WITH_COLLATERAL,
           ],
         },
       );
@@ -568,7 +609,8 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   }
 
   static async getTokenHistoryItemSortedByTime(
-    owner_addrs: string[],
+    owner_addr: string,
+    start_time: number,
     tokenId: string,
     chain: string,
     count?: number,
@@ -580,11 +622,11 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
     console.log('getTokenHistoryItemSortedByTime exec');
 
-    const queryBuilder = repo
+    let queryBuilder = repo
       .createQueryBuilder('historyitem')
-      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .where('historyitem.owner_addr = :owner_addr', { owner_addr })
       .andWhere('historyitem.chain = :chain', { chain })
-      // .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
+      .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
       .andWhere(
         new Brackets(qb => {
           qb.where('historyitem.token_approve_id = :tokenId')
@@ -607,6 +649,13 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       )
       .orderBy('historyitem.time_at', 'DESC')
       .take(count || 10000); // limit
+
+    if (start_time) {
+      queryBuilder = queryBuilder.andWhere(
+        'historyitem.time_at < :start_time',
+        { start_time },
+      );
+    }
 
     const res = await queryBuilder.getMany();
     console.log(

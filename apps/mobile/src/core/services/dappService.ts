@@ -6,6 +6,8 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { Account } from './preference';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { omit } from 'lodash';
+import * as Sentry from '@sentry/react-native';
 
 export interface DappInfo {
   origin: string;
@@ -43,6 +45,17 @@ export class DappService extends StoreServiceBase<
         storageAdapter: options?.storageAdapter,
       },
     );
+
+    Object.keys(this.store.dapps).forEach(origin => {
+      const dapp = this.store.dapps[origin];
+      if (dapp && (!dapp.origin || !/^https?:\/\//.test(dapp.origin))) {
+        this.store.dapps[origin] = {
+          ...dapp,
+          origin,
+        };
+      }
+    });
+    this.store.dapps = { ...this.store.dapps };
 
     this.patchDapps(
       ['https://www.google.com', 'https://x.com', 'https://github.com'].reduce(
@@ -95,7 +108,21 @@ export class DappService extends StoreServiceBase<
   }
 
   updateDapp(dapp: DappInfo) {
-    this.store.dapps[dapp.origin] = dapp;
+    if (!dapp?.origin || !/^https?:\/\//.test(dapp.origin)) {
+      Sentry.captureException(new Error('Invalid dapp origin'), {
+        tags: {
+          scene: 'dappService',
+        },
+        extra: {
+          dapp: omit(dapp, 'currentAccount'),
+        },
+      });
+      return;
+    }
+    this.store.dapps[dapp.origin] = {
+      ...this.store.dapps[dapp.origin],
+      ...dapp,
+    };
     this.store.dapps = { ...this.store.dapps };
   }
 
@@ -112,12 +139,16 @@ export class DappService extends StoreServiceBase<
       this.store.dapps[origin] = {
         ...this.store.dapps[origin],
         ...dapps[origin],
+        origin,
       };
     });
     this.store.dapps = { ...this.store.dapps };
   }
 
   updateFavorite(origin: string, isFavorite: boolean) {
+    if (!this.store.dapps[origin]) {
+      return;
+    }
     this.store.dapps[origin] = {
       ...this.store.dapps[origin],
       isFavorite,
@@ -127,19 +158,14 @@ export class DappService extends StoreServiceBase<
     this.store.dapps = { ...this.store.dapps };
   }
 
-  updateConnected(origin: string, isConnected: boolean) {
-    this.store.dapps[origin].isConnected = isConnected;
-    this.store.dapps = { ...this.store.dapps };
-  }
-
   disconnect(origin: string) {
-    this.store.dapps[origin].isConnected = false;
-    this.store.dapps = { ...this.store.dapps };
-  }
-
-  setChainId(origin: string, chainId: CHAINS_ENUM) {
-    this.store.dapps[origin].chainId = chainId;
-    this.store.dapps = { ...this.store.dapps };
+    if (!this.store.dapps[origin]) {
+      return;
+    }
+    this.store.dapps = {
+      ...this.store.dapps,
+      [origin]: { ...this.store.dapps[origin], isConnected: false },
+    };
   }
 
   hasPermission(origin: string) {

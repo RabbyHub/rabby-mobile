@@ -11,13 +11,14 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { DropdownMenuView } from '../BrowserScreen/components/BrowserTab/DropdownMenuView';
 import { useTranslation } from 'react-i18next';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
+import RcIconFavoriteCC from '@/assets2024/icons/browser/favorite-cc.svg';
 
 export const BrowserHandler = () => {
   const { styles, isLight, colors2024 } = useTheme2024({
@@ -191,6 +192,29 @@ export const BrowserHandler = () => {
       !browserState.isShowManage ? (
         <View style={styles.handleComponent}>
           <View style={styles.handleComponentContainer}>
+            {activeTabState.isDapp ? (
+              <>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleAction('favorite');
+                  }}
+                  hitSlop={5}>
+                  <View style={{ paddingLeft: 12 }}>
+                    <RcIconFavoriteCC
+                      color={
+                        activeTabState.isBookmark
+                          ? colors2024['orange-default']
+                          : colors2024['neutral-line']
+                      }
+                      width={24}
+                      height={24}
+                    />
+                  </View>
+                </TouchableOpacity>
+                <View style={styles.divider} />
+              </>
+            ) : null}
+
             {activeTabState.url ? (
               <DropdownMenuView menuConfig={menuConfigs}>
                 <View style={styles.handleItem}>

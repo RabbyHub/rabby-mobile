@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useAtom } from 'jotai';
@@ -39,6 +39,11 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Button } from '../Button';
+import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
+import i18next from 'i18next';
+import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
+import { accountEvents } from '@/core/apis/account';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 
@@ -51,55 +56,78 @@ export interface Props {
     mnemonics?: string;
     passphrase?: string;
     keyringId?: number;
+    /** @deprecated */
+    isExistedKR?: boolean;
     account?: KeyringAccountWithAlias;
-    brand: string;
+    brandName: string;
   };
   onCancel: () => void;
 }
 
+async function onAddressImported(addresses: KeyringEventAccount[]) {
+  // accountEvents.emit('ACCOUNT_ADDED', {
+  //   accounts: addresses,
+  // });
+}
+
 export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
-  const apiHD = React.useMemo(() => {
+  const { apiHD, hdType, hdBrandName, settingModalName } = React.useMemo(() => {
+    const ret = {
+      apiHD: null,
+      hdType: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
+      hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
+      settingModalName: MODAL_NAMES.SETTING_KEYSTONE,
+    };
     switch (params.type) {
-      case KEYRING_TYPE.LedgerKeyring:
-        return apiLedger;
-      case KEYRING_TYPE.OneKeyKeyring:
-        return apiOneKey;
-      case KEYRING_TYPE.KeystoneKeyring:
-        return apiKeystone;
-      case KEYRING_TYPE.TrezorKeyring:
-        return apiTrezor;
-      default:
-        return null;
+      case KEYRING_TYPE.LedgerKeyring: {
+        return {
+          ...ret,
+          apiHD: apiLedger,
+          hdType: KEYRING_TYPE.LedgerKeyring,
+          hdBrandName: KEYRING_CLASS.HARDWARE.LEDGER,
+          settingModalName: MODAL_NAMES.SETTING_LEDGER,
+        };
+      }
+      case KEYRING_TYPE.OneKeyKeyring: {
+        return {
+          ...ret,
+          apiHD: apiOneKey,
+          hdType: KEYRING_TYPE.OneKeyKeyring,
+          hdBrandName: KEYRING_CLASS.HARDWARE.ONEKEY,
+          settingModalName: MODAL_NAMES.SETTING_ONEKEY,
+        };
+      }
+      case KEYRING_TYPE.KeystoneKeyring: {
+        return {
+          ...ret,
+          apiHD: apiKeystone,
+          hdType: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
+          hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
+          settingModalName: MODAL_NAMES.SETTING_KEYSTONE,
+        };
+      }
+      case KEYRING_TYPE.TrezorKeyring: {
+        return {
+          ...ret,
+          apiHD: apiTrezor,
+          hdType: KEYRING_TYPE.TrezorKeyring,
+          hdBrandName: KEYRING_CLASS.HARDWARE.TREZOR,
+          settingModalName: MODAL_NAMES.SETTING_TREZOR,
+        };
+      }
+      case KEYRING_TYPE.HdKeyring: {
+        return {
+          ...ret,
+          apiHD: null,
+          hdType: KEYRING_TYPE.HdKeyring,
+          hdBrandName: KEYRING_CLASS.MNEMONIC,
+          settingModalName: MODAL_NAMES.SETTING_HDKEYRING,
+        };
+      }
     }
+
+    return ret;
   }, [params]);
-  const hdType = React.useMemo(() => {
-    switch (params.type) {
-      case KEYRING_TYPE.LedgerKeyring:
-        return KEYRING_TYPE.LedgerKeyring;
-      case KEYRING_TYPE.OneKeyKeyring:
-        return KEYRING_TYPE.OneKeyKeyring;
-      case KEYRING_TYPE.TrezorKeyring:
-        return KEYRING_TYPE.TrezorKeyring;
-      case KEYRING_TYPE.HdKeyring:
-        return KEYRING_TYPE.HdKeyring;
-      default:
-        return HARDWARE_KEYRING_TYPES.Keystone.type;
-    }
-  }, [params.type]) as KEYRING_TYPE;
-  const hdBrandName = React.useMemo(() => {
-    switch (params.type) {
-      case KEYRING_TYPE.LedgerKeyring:
-        return KEYRING_CLASS.HARDWARE.LEDGER;
-      case KEYRING_TYPE.OneKeyKeyring:
-        return KEYRING_CLASS.HARDWARE.ONEKEY;
-      case KEYRING_TYPE.TrezorKeyring:
-        return KEYRING_CLASS.HARDWARE.TREZOR;
-      case KEYRING_TYPE.HdKeyring:
-        return KEYRING_CLASS.MNEMONIC;
-      default:
-        return HARDWARE_KEYRING_TYPES.Keystone.brandName;
-    }
-  }, [params.type]);
   const [accounts, setAccounts] = React.useState<ViewAccount[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [setting, setSetting] = useAtom(settingAtom);
@@ -195,6 +223,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     stoppedRef.current = false;
     const start = startNumberRef.current;
     let i = start;
+    // let unknownError = false;
+
     try {
       maxCountRef.current =
         (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
@@ -213,6 +243,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
       } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
         errMessage = t('page.newAddress.ledger.error.unknown');
+        // unknownError = true;
+        if (__DEV__) exitRef.current = true;
       }
       if (errMessage) {
         toast.show(errMessage);
@@ -304,25 +336,32 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
   const handleConfirm = React.useCallback(async () => {
     setImporting(true);
-    importToastHiddenRef.current = toast.show('Importing...', {
-      duration: 100000,
-    });
+    importToastHiddenRef.current = toast.show(
+      i18next.t('page.newAddress.importing'),
+      {
+        duration: 100000,
+      },
+    );
 
     if (params.type === KEYRING_TYPE.HdKeyring) {
       setTimeout(() => {
         activeAndPersistAccountsByMnemonics(
           params.mnemonics!,
           params.passphrase || '',
-          selectedAccounts as any,
+          selectedAccounts,
           true,
         )
           .then(() => {
-            replaceToFirst(RootNames.StackAddress, {
+            resetNavigationOnTopOfHome(RootNames.StackAddress, {
               screen: RootNames.ImportSuccess2024,
               params: {
                 type: hdType,
                 brandName: hdBrandName,
                 address: selectedAccounts.map(a => a.address),
+                mnemonics: params.mnemonics,
+                passphrase: params.passphrase,
+                keyringId: params.keyringId,
+                isExistedKR: params.isExistedKR,
               },
             });
           })
@@ -344,8 +383,15 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       for (const acc of selectedAccounts) {
         await apiHD?.importAddress(acc.index - 1);
       }
+      await onAddressImported(
+        selectedAccounts.map(item => ({
+          address: item.address,
+          type: hdType,
+          brandName: hdBrandName,
+        })),
+      );
 
-      replaceToFirst(RootNames.StackAddress, {
+      resetNavigationOnTopOfHome(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: hdType,
@@ -365,6 +411,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     params.type,
     params.mnemonics,
     params.passphrase,
+    params.keyringId,
+    params.isExistedKR,
     selectedAccounts,
     hdType,
     hdBrandName,
@@ -378,27 +426,10 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     };
   }, []);
 
-  const settingModalName = React.useMemo(() => {
-    switch (params.type) {
-      case KEYRING_TYPE.HdKeyring:
-        return MODAL_NAMES.SETTING_HDKEYRING;
-      case KEYRING_TYPE.LedgerKeyring:
-        return MODAL_NAMES.SETTING_LEDGER;
-      case KEYRING_TYPE.OneKeyKeyring:
-        return MODAL_NAMES.SETTING_ONEKEY;
-      case KEYRING_TYPE.KeystoneKeyring:
-        return MODAL_NAMES.SETTING_KEYSTONE;
-      case KEYRING_TYPE.TrezorKeyring:
-        return MODAL_NAMES.SETTING_TREZOR;
-      default:
-        return null;
-    }
-  }, [params.type]);
-
   const handleSetting = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: settingModalName!,
-      brand: params.brand,
+      brand: params.brandName,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
       },
@@ -411,7 +442,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         : {}),
     });
   }, [
-    params.brand,
+    params.brandName,
     params.keyringId,
     params.mnemonics,
     params.passphrase,

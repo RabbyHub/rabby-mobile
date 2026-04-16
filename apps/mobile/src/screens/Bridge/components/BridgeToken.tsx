@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   useWindowDimensions,
@@ -33,6 +31,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
+import { Text, TextInput } from '@/components/Typography';
 
 const hiddenSlider = false;
 
@@ -56,6 +55,7 @@ const BridgeToken = ({
   handleMax,
   skeletonLoading,
   disabled,
+  clearOnDisabled,
   slider,
   onChangeSlider,
   onSliderScrollEnabledChange,
@@ -77,6 +77,7 @@ const BridgeToken = ({
   inSufficient?: boolean;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  clearOnDisabled?: boolean;
   slider?: number;
   onChangeSlider?: (value: number, syncAmount?: boolean) => void;
   onSliderScrollEnabledChange?: (enabled: boolean) => void;
@@ -195,10 +196,10 @@ const BridgeToken = ({
   );
 
   useEffect(() => {
-    if (isFromToken && disabled) {
+    if (isFromToken && disabled && clearOnDisabled) {
       onInputChange?.('');
     }
-  }, [isFromToken, disabled, onInputChange]);
+  }, [isFromToken, disabled, clearOnDisabled, onInputChange]);
 
   return (
     <View style={styles.container}>
@@ -461,6 +462,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     // height: 36,
     lineHeight: 36,
+    includeFontPadding: false,
     paddingLeft: 0,
     borderWidth: 0,
     overflow: 'hidden',

@@ -1,6 +1,6 @@
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 import { colord } from 'colord';
@@ -10,6 +10,7 @@ import {
   ModalScannerEventType,
   useAccountSelectModalCtx,
 } from '../hooks';
+import { Text } from '@/components/Typography';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 

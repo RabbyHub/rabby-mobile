@@ -4,18 +4,18 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { DistanceToLiquidationTag } from './DistanceToLiquidationTag';
 import { useMemoizedFn } from 'ahooks';
 import { calculateDistanceToLiquidation } from './utils';
 import { OpenOrder } from '@rabby-wallet/hyperliquid-sdk';
 import { useTranslation } from 'react-i18next';
-
-const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
+import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 
 export const PerpsPositionItem: React.FC<{
   item: PositionAndOpenOrder['position'];
-  marketData: MarketData;
+  marketData?: MarketData;
   onPress(): void;
   openOrders: OpenOrder[];
   onShowRiskPopup: (coin: string) => void;
@@ -39,9 +39,7 @@ export const PerpsPositionItem: React.FC<{
   const absPnlUsd = Math.abs(Number(unrealizedPnl));
   const absPnlPct = Math.abs(Number(returnOnEquity));
   const leverageType = item.leverage.type || 'isolated';
-  const pnlText = `${sign}${formatUsdValue(absPnlUsd)} (${sign}${formatPct(
-    absPnlPct,
-  )})`;
+  const pnlText = `${sign}${formatUsdValue(absPnlUsd)}`;
   const logoUrl = marketData?.logoUrl || '';
   const leverageText = `${leverage.value}x`;
 
@@ -57,6 +55,7 @@ export const PerpsPositionItem: React.FC<{
       order =>
         order.orderType === 'Take Profit Market' &&
         order.isTrigger &&
+        order.isPositionTpsl &&
         order.reduceOnly,
     );
 
@@ -64,6 +63,7 @@ export const PerpsPositionItem: React.FC<{
       order =>
         order.orderType === 'Stop Market' &&
         order.isTrigger &&
+        order.isPositionTpsl &&
         order.reduceOnly,
     );
 
@@ -87,15 +87,17 @@ export const PerpsPositionItem: React.FC<{
         {/* Left section: icon + coin info */}
         <View style={styles.leftSection}>
           <View style={styles.coinInfoRow}>
-            <AssetAvatar logo={logoUrl} size={28} />
+            <AssetAvatar logo={logoUrl} size={28} style={styles.icon} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <Text style={styles.coinName}>{coin}</Text>
-                {leverageType === 'cross' && (
-                  <View style={styles.crossTag}>
-                    <Text style={styles.crossText}>Cross</Text>
-                  </View>
-                )}
+                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
+                <View style={styles.crossTag}>
+                  <Text style={styles.crossText}>
+                    {leverageType === 'cross'
+                      ? t('page.perpsDetail.PerpsPosition.cross')
+                      : t('page.perpsDetail.PerpsPosition.isolated')}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -106,7 +108,7 @@ export const PerpsPositionItem: React.FC<{
                 {
                   backgroundColor:
                     side === 'Long'
-                      ? colors2024['green-light-4']
+                      ? colors2024['green-light-1']
                       : colors2024['red-light-1'],
                 },
               ]}>
@@ -118,11 +120,13 @@ export const PerpsPositionItem: React.FC<{
                 {side} {leverageText}
               </Text>
             </View>
-            <DistanceToLiquidationTag
-              liquidationPrice={liquidationPx}
-              markPrice={marketData?.markPx}
-              onPress={handleDistanceTagPress}
-            />
+            {!hasStopLoss && (
+              <DistanceToLiquidationTag
+                liquidationPrice={liquidationPx}
+                markPrice={marketData?.markPx}
+                onPress={handleDistanceTagPress}
+              />
+            )}
           </View>
         </View>
 
@@ -197,6 +201,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     gap: 6,
   },
+  icon: {
+    backgroundColor: 'white',
+    borderRadius: 1000,
+  },
   coinNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -213,7 +221,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors2024['neutral-foot'],
   },
   crossTag: {
@@ -322,7 +330,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-secondary'],
   },
   tpSlSeparator: {
     fontFamily: 'SF Pro Rounded',

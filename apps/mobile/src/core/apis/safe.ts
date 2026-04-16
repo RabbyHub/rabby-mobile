@@ -3,7 +3,6 @@ import { keyringService, preferenceService } from '../services/shared';
 import { ethers } from 'ethers';
 // import { preferenceService } from '../service';
 // import { EthereumProvider } from './buildinProvider';
-import { GNOSIS_SUPPORT_CHAINS } from '@/constant';
 import { Chain } from '@/constant/chains';
 import { findChain } from '@/utils/chain';
 import Safe, { SafeMessage } from '@rabby-wallet/gnosis-sdk';
@@ -23,7 +22,10 @@ import { isEqual, sortBy, uniq, without } from 'lodash';
 import { toChecksumAddress } from '@ethereumjs/util';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
 import PQueue from 'p-queue';
-import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
+import {
+  GNOSIS_SUPPORT_CHAINS,
+  SafeTransactionItem,
+} from '@rabby-wallet/gnosis-sdk/dist/api';
 
 const gnosisPQueue = new PQueue({
   interval: 1000,
@@ -78,7 +80,7 @@ class ApisSafe {
               return chain;
             }
           } catch (e) {
-            console.error(e);
+            // console.error(e);
             return null;
           }
         },
@@ -152,7 +154,7 @@ class ApisSafe {
     const networks = keyring.networkIdsMap[address];
     const chainList = await this.fetchGnosisChainList(
       address,
-      networks.map(id => findChain({ networkId: id })?.enum || ''),
+      (networks || []).map(id => findChain({ networkId: id })?.enum || ''),
     );
     const nextNetworks = uniq(
       (networks || []).concat(chainList.map(chain => chain.network)),
@@ -365,7 +367,7 @@ class ApisSafe {
                 address: safeAddress,
               });
               const threshold = await safe.getThreshold();
-              const { results } = await safe.apiKit.getMessages(safeAddress);
+              const { results } = await safe.getMessages();
               return {
                 networkId,
                 messages: results.filter(
@@ -641,8 +643,7 @@ class ApisSafe {
     chainId: number;
     messageHash: string;
   }) => {
-    const apiKit = Safe.createSafeApiKit(String(chainId));
-    return apiKit.getMessage(messageHash);
+    return Safe.getMessage(messageHash, String(chainId));
   };
 
   getGnosisMessageHash = async ({

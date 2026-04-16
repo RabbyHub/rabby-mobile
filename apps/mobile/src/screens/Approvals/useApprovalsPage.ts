@@ -33,7 +33,7 @@ export type ApprovalAssetsItem =
   | approvalUtils.SpenderInTokenApproval;
 
 import { groupBy, sortBy, flatten } from 'lodash';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 
 import { openapi, testOpenapi } from '@/core/request';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
@@ -57,6 +57,7 @@ import { Account } from '@/core/services/preference';
 export const FILTER_TYPES = {
   contract: 'contract',
   assets: 'assets',
+  EIP7702: 'EIP7702',
 } as const;
 
 const SAFE_LEVEL: Record<string, string> = {
@@ -182,8 +183,8 @@ export function useApprovalsPageOnTop(options: {
 
   const [searchKw, setSearchKw] = useState('');
 
-  const debouncedSkContract = useDebounceValue(searchKw, 250);
-  const debouncedSkAssets = useDebounceValue(searchKw, 250);
+  const debouncedSkContract = useDebouncedValue(searchKw, 250);
+  const debouncedSkAssets = useDebouncedValue(searchKw, 250);
 
   const queueRef = useRef(new PQueue({ concurrency: 40 }));
 

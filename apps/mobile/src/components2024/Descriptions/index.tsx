@@ -1,12 +1,13 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { View, Text, StyleProp, TextStyle, ViewStyle } from 'react-native';
+import { View, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Button, ButtonProps } from '../Button';
 import AutoLockView from '@/components/AutoLockView';
+import { Text } from '@/components/Typography';
 
 export const Descriptions: React.FC<{
-  title?: string;
+  title?: React.ReactNode;
   titleStyle?: StyleProp<TextStyle>;
   sectionStyle?: StyleProp<ViewStyle>;
   sectionDescStyle?: StyleProp<TextStyle>;

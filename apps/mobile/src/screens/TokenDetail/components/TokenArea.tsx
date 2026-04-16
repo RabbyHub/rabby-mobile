@@ -5,7 +5,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { TokenFromAddressItem } from '..';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
@@ -14,6 +14,8 @@ import { ellipsisAddress } from '@/utils/address';
 import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
+import { Text } from '@/components/Typography';
 
 interface Props {
   token: AbstractPortfolioToken | CombineTokensItem;
@@ -36,12 +38,7 @@ export const TokenArea: React.FC<Props> = ({
         a => isSameAddress(a.address, item.address) && item.type === a.type,
       );
       if (account) {
-        navigateDeprecated(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {
-            account: account,
-          },
-        });
+        apisSingleHome.navigateToSingleHome(account);
       }
     },
     [rawAllAccounts],

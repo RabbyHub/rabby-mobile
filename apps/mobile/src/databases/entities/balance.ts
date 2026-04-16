@@ -5,8 +5,12 @@ import { BALANCE_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
-@Entity('cache_balance')
+@ParseEntity()
+@Entity(ORM_TABLE_NAMES.cache_balance)
 export class BalanceEntity extends EntityAddressAssetBase {
   // balance
   @Column('real')
@@ -67,11 +71,30 @@ export class BalanceEntity extends EntityAddressAssetBase {
     owner_addr: string,
     isCore: boolean,
   ): Promise<EvmTotalBalanceResponse> {
+    const cache = await this.queryBalanceCache(owner_addr, isCore);
+
+    return (
+      cache || {
+        total_usd_value: 0,
+        evm_usd_value: 0,
+        chain_list: [],
+      }
+    );
+  }
+
+  static async queryBalanceCache(
+    owner_addr: string,
+    isCore: boolean,
+  ): Promise<EvmTotalBalanceResponse | null> {
     await prepareAppDataSource();
     const result = await this.getRepository().findOneBy({
       owner_addr,
       isCore,
     });
+
+    if (!result) {
+      return null;
+    }
 
     return {
       total_usd_value: result?.balance || 0,
@@ -79,6 +102,54 @@ export class BalanceEntity extends EntityAddressAssetBase {
       chain_list:
         columnConverter.jsonStringToObj(result?.chain_list || '[]') || [],
     };
+  }
+
+  static async queryAllBalance() {
+    await prepareAppDataSource();
+    const result = await this.getRepository().find();
+
+    // 数据订正：如果有多个 owner_addr 相同（大小写不敏感）的条目，只保留 update_at 最新的那个
+    const deduplicatedResult = Object.values(
+      result.reduce((acc, item) => {
+        const key = item.owner_addr.toLowerCase();
+        if (!acc[key] || item._local_updated_at > acc[key]._local_updated_at) {
+          acc[key] = item;
+        }
+        return acc;
+      }, {} as Record<string, (typeof result)[number]>),
+    );
+
+    return deduplicatedResult.map(item => ({
+      ...item,
+      chain_list:
+        columnConverter.jsonStringToObj(item.chain_list || '[]') || [],
+    })) as Array<
+      Omit<BalanceEntity, 'chain_list'> & {
+        chain_list: EvmTotalBalanceResponse['chain_list'];
+      }
+    >;
+  }
+
+  static async queryChainList(
+    address: string,
+  ): Promise<EvmTotalBalanceResponse['chain_list']> {
+    if (!address) {
+      return [];
+    }
+
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+    const result = await repo.findOne({
+      where: {
+        owner_addr: address,
+      },
+      select: {
+        chain_list: true,
+      },
+    });
+
+    return columnConverter.jsonStringToObj(result?.chain_list || '[]') || [];
   }
 
   static async isExpired(owner_addr: string, isCore: boolean) {

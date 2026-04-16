@@ -5,7 +5,7 @@ import { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import i18n from '@/utils/i18n';
 import abiCoder, { AbiCoder } from 'web3-eth-abi';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import {
   preferenceService,
   swapService,
@@ -20,6 +20,13 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Account } from '@/core/services/preference';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { FromSceneParam } from '@/navigation-type';
+import {
+  getMarketTabActionPrefix,
+  getMarketTabCreateSwapTxAction,
+} from '@/screens/Market/analytics';
+import { stats } from '@/utils/stats';
+import { toChecksumAddress } from '@ethereumjs/util';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -86,7 +93,7 @@ export const approveToken = async ({
         stateMutability: 'nonpayable',
         type: 'function',
       },
-      [spender, amount] as any,
+      [toChecksumAddress(spender), amount] as any,
     ),
   };
   if (gasPrice) {
@@ -127,6 +134,9 @@ export const dexSwap = async (
     account,
     isTwoStep,
     isApprove,
+    from,
+    payUsdValue,
+    dexId,
   }: {
     chain: CHAINS_ENUM;
     quote: QuoteResult;
@@ -145,6 +155,9 @@ export const dexSwap = async (
     account: Account;
     isApprove?: boolean;
     isTwoStep?: boolean;
+    payUsdValue?: string;
+    dexId?: string;
+    from?: FromSceneParam;
   },
   $ctx?: any,
   addSwapTxHistoryObj?: Omit<SwapTxHistoryItem, 'hash'>,
@@ -253,6 +266,33 @@ export const dexSwap = async (
           };
           transactionHistoryService.addSwapTxHistory(swapTxHistoryObj);
 
+          const marketTab = from?.scene
+            ? getMarketTabActionPrefix(from.scene)
+            : null;
+          const createSwapTxAction = from?.scene
+            ? getMarketTabCreateSwapTxAction(from.scene)
+            : null;
+
+          if (marketTab && createSwapTxAction) {
+            stats.report('memecoinSwapTx', {
+              chain: chainObj.serverId,
+              tx_id: hash,
+              dex_id: dexId || 'WrapToken',
+              market_tab: marketTab,
+              meme_chain: from?.chain || '',
+              meme_ca: from?.id || '',
+              meme_symbol: from?.symbol || '',
+              user_addr: account.address || '',
+              pay_token_usd_value: payUsdValue || '',
+              create_at: Date.now(),
+              address_type: account.type || '',
+              app_version: APP_VERSIONS.fromNative || '0',
+            });
+            matomoRequestEvent({
+              category: 'Rabby Market',
+              action: createSwapTxAction,
+            });
+          }
           if (swapTxHistoryObj.isFromCopyTrading) {
             matomoRequestEvent({
               category: 'CopyTrading',

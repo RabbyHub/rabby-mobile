@@ -1,12 +1,11 @@
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   ColorSchemeName,
   Appearance,
   useColorScheme,
-  AppState,
   Platform,
 } from 'react-native';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   ThemeColors,
@@ -16,15 +15,42 @@ import {
   AppColorSchemes,
   AppColors2024Variants,
 } from '@/constant/theme';
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import {
+  appJsonStore,
+  MMKVStorageStrategy,
+  zustandByMMKV,
+} from '@/core/storage/mmkv';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
 import { TFunction } from 'i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useMemoizedFn } from 'ahooks';
+import { runDevIIFEFunc } from '@/core/utils/store';
+import { useCreationWithShallowCompare } from './common/useMemozied';
+import { isWorkletFunction, useAnimatedStyle } from 'react-native-reanimated';
+import { svsLayout } from './useAppLayout';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
+
+function isValidAppTheme(themMode: any) {
+  return ['light', 'dark', 'system'].includes(themMode);
+}
+
+function coerceFinalThemeValue<T extends AppThemeScheme | ColorSchemeName>(
+  input: T,
+  defaultValue: T,
+): T {
+  switch (input) {
+    default:
+      return defaultValue;
+    case 'light':
+      return 'light' as T;
+    case 'dark':
+      return 'dark' as T;
+    case 'system':
+      return 'system' as T;
+  }
+}
 
 const FORCE_THEME = 'light' as const;
 function coerceBinaryTheme(
@@ -32,7 +58,9 @@ function coerceBinaryTheme(
   rnColorScheme: ColorSchemeName = 'light',
 ): Exclude<ColorSchemeName, null | void> {
   if (SHOULD_SUPPORT_DARK_MODE) {
-    return appTheme === 'system' ? rnColorScheme || 'light' : appTheme;
+    return appTheme === 'system'
+      ? rnColorScheme || 'light'
+      : coerceFinalThemeValue(appTheme, 'light');
   }
 
   return FORCE_THEME;
@@ -46,21 +74,54 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
     : 'light';
 }
 
-const ThemeStoreBase = atomByMMKV('@AppTheme', 'light' as AppThemeScheme, {
-  storage: MMKVStorageStrategy.compatString,
-});
+// runDevIIFEFunc(() => {
+//   appJsonStore.setItem('@AppTheme', 'dark');
+// });
 
-const ThemeModeStore = atom(
-  get => get(ThemeStoreBase),
-  (get, set, update) => {
-    const nextValue =
-      typeof update === 'function' ? update(get(ThemeStoreBase)) : update;
-    set(ThemeStoreBase, nextValue);
+const themeModeStore = zustandByMMKV<{ appTheme: AppThemeScheme }>(
+  '@AppTheme',
+  { appTheme: 'light' },
+  {
+    storage: MMKVStorageStrategy.compatString,
+    migrateFromAtom(ctx) {
+      const newData = {
+        state: {
+          appTheme: (isValidAppTheme(ctx.oldData)
+            ? ctx.oldData
+            : 'light') as AppThemeScheme,
+        },
+        version: 0,
+      };
+      ctx.appJsonStore.setItem(ctx.key, newData);
+
+      return { migrated: newData.state };
+    },
   },
 );
 
+function toggleThemeMode(nextTheme?: AppThemeScheme) {
+  // throw new Error(`cannot specify theme node!`);
+
+  themeModeStore.setState(prev => {
+    if (!nextTheme) {
+      nextTheme =
+        AppColorSchemes[
+          (AppColorSchemes.indexOf(prev.appTheme) + 1) % AppColorSchemes.length
+        ];
+    }
+    Appearance.setColorScheme(appThemeToColorScheme(nextTheme));
+    return { ...prev, appTheme: nextTheme };
+  });
+}
+
+function getBinaryMode(appTheme = themeModeStore.getState().appTheme) {
+  const colorScheme = Appearance.getColorScheme();
+
+  return coerceBinaryTheme(appTheme, colorScheme);
+}
+
 export function useGetBinaryMode() {
-  const appTheme = useAtomValue(ThemeModeStore);
+  const appTheme = themeModeStore(s => s.appTheme);
   const colorScheme = useColorScheme();
 
   return coerceBinaryTheme(appTheme, colorScheme);
@@ -84,7 +145,7 @@ export function makeThemeOptions(t: TFunction) {
 }
 
 export function useAppThemeConfig() {
-  const appTheme = useAtomValue(ThemeModeStore);
+  const appTheme = themeModeStore(s => s.appTheme);
   return appTheme;
 }
 
@@ -92,24 +153,8 @@ export function useAppThemeConfig() {
 // type suggests that it can be null. This will not happen in practice, so this
 // makes it a bit easier to work with.
 export const useAppTheme = (options?: { isAppTop?: boolean }) => {
-  const [appTheme, setAppTheme] = useAtom(ThemeModeStore);
+  const appTheme = themeModeStore(s => s.appTheme);
   const colorScheme = useColorScheme();
-
-  const toggleThemeMode = React.useCallback(
-    (nextTheme?: AppThemeScheme) => {
-      // throw new Error(`cannot specify theme node!`);
-
-      if (!nextTheme) {
-        nextTheme =
-          AppColorSchemes[
-            (AppColorSchemes.indexOf(appTheme) + 1) % AppColorSchemes.length
-          ];
-      }
-      setAppTheme(nextTheme);
-      Appearance.setColorScheme(appThemeToColorScheme(nextTheme));
-    },
-    [appTheme, setAppTheme],
-  );
 
   const binaryTheme: ColorSchemeName = React.useMemo(
     () => coerceBinaryTheme(appTheme, colorScheme),
@@ -122,14 +167,14 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
     Appearance.setColorScheme(appThemeToColorScheme(appTheme));
   }, [options?.isAppTop, appTheme]);
 
-  const { setMode } = useThemeMode();
+  const { setMode: rneui_setMode } = useThemeMode();
 
+  const setRneuiMode = useMemoizedFn(rneui_setMode);
   React.useEffect(() => {
     if (!options?.isAppTop) return;
 
-    setMode(colorScheme === 'dark' ? 'dark' : 'light');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options?.isAppTop, colorScheme]);
+    setRneuiMode(colorScheme === 'dark' ? 'dark' : 'light');
+  }, [options?.isAppTop, setRneuiMode, colorScheme]);
 
   React.useEffect(() => {
     if (!options?.isAppTop) return;
@@ -144,7 +189,7 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
     return () => {
       subp.remove();
     };
-  }, [options?.isAppTop, appTheme]);
+  }, [options?.isAppTop]);
 
   return {
     appTheme,
@@ -160,7 +205,7 @@ export const useThemeColors = (): AppColorsVariants => {
 };
 
 export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
-  getStyle: T,
+  _getStyle: T,
   opts?: { isLight?: boolean },
 ) {
   const appThemeMode = useGetBinaryMode();
@@ -171,14 +216,15 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
       ? opts?.isLight
       : appThemeMode === 'light';
 
-  const { bottom: bottomSafeArea } = useSafeAreaInsets();
+  const { safeAreaInsets } = useStyleSafeAreaInsets();
+  const getStyle = useMemoizedFn(_getStyle || makeNoop());
 
   const cs = React.useMemo(() => {
     return {
       colors,
-      styles: getStyle(colors, { isLight, bottomSafeArea }) as ReturnType<T>,
+      styles: getStyle(colors, { isLight, safeAreaInsets }) as ReturnType<T>,
     };
-  }, [colors, getStyle, isLight, bottomSafeArea]);
+  }, [colors, getStyle, isLight, safeAreaInsets]);
 
   return {
     ...cs,
@@ -187,13 +233,61 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
   };
 }
 
-const isAndroid = Platform.OS === 'android';
+const makeNoop = () => () => void 0;
+
+export const apisTheme = {
+  getBinaryMode,
+  getColors2024,
+};
+
+export function getColors2024(
+  appThemeMode: ReturnType<typeof getBinaryMode> = getBinaryMode(),
+) {
+  const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
+  const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
+
+  return {
+    isLight: appThemeMode !== 'dark',
+    classicalColors,
+    colors: classicalColors,
+    colors2024,
+  };
+}
+
+export function useStyleSafeAreaInsets() {
+  const safeAreaInsetsOrig = useSafeAreaInsets();
+  const safeAreaInsets = useMemo(() => {
+    return {
+      top: safeAreaInsetsOrig.top,
+      bottom: safeAreaInsetsOrig.bottom,
+      left: safeAreaInsetsOrig.left,
+      right: safeAreaInsetsOrig.right,
+    };
+  }, [
+    safeAreaInsetsOrig.top,
+    safeAreaInsetsOrig.bottom,
+    safeAreaInsetsOrig.left,
+    safeAreaInsetsOrig.right,
+  ]);
+
+  return { safeAreaInsets };
+}
+
+function emptyGetStyles2024() {
+  return createGetStyles2024();
+}
+const DefaultMakeStyles2024 = emptyGetStyles2024();
 export function useTheme2024<
   T extends ReturnType<typeof createGetStyles2024>,
 >(opts?: { getStyle?: T; isLight?: boolean }) {
   const appThemeMode = useGetBinaryMode();
-  const { bottom: bottomSafeArea } = useSafeAreaInsets();
-  const { getStyle } = opts || {};
+  const { safeAreaInsets } = useStyleSafeAreaInsets();
+  const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
+  const getStyles = useMemoizedFn(
+    makeStyles.getStyles || DefaultMakeStyles2024.getStyles,
+  );
+  const getReanimatedStyles =
+    makeStyles.getReanimatedStyles || DefaultMakeStyles2024.getReanimatedStyles;
 
   const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
   const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
@@ -205,19 +299,77 @@ export function useTheme2024<
 
   const cs = React.useMemo(() => {
     return {
-      styles: getStyle?.({
+      styles: getStyles?.({
         colors: classicalColors,
         colors2024,
         classicalColors,
         isLight,
-        bottomSafeArea,
-        // androidOnlyBottomSafeArea: isAndroid ? bottomSafeArea : 0,
-      }) as T extends void ? void : ReturnType<T>,
+        safeAreaInsets,
+      }) as T extends void ? void : ReturnType<T['getStyles']>,
     };
-  }, [colors2024, classicalColors, getStyle, isLight, bottomSafeArea]);
+  }, [colors2024, classicalColors, getStyles, isLight, safeAreaInsets]);
+
+  const reanimatedStyles = React.useMemo(() => {
+    type Fns = T['getReanimatedStyles'] & object;
+    return Object.entries(getReanimatedStyles || {}).reduce(
+      (acc, [key, workletFn]) => {
+        if (!isWorkletFunction(workletFn)) {
+          throw new Error(`reanimatedStyles.${key} is not a worklet function`);
+        }
+        // @ts-expect-error
+        acc[key] = () => {
+          'worklet';
+          return workletFn({
+            colors2024,
+            isLight,
+            safeAreaInsets: svsLayout.insets,
+            winLayout: svsLayout.winLayout,
+            scrLayout: svsLayout.screenLayout,
+          });
+        };
+        return acc;
+      },
+      {} as { [P in keyof Fns]: () => ReturnType<Fns[P] & object> },
+    );
+  }, [colors2024, isLight, getReanimatedStyles]);
 
   return {
     ...cs,
+    reanimatedStyles,
+    colors: classicalColors,
+    classicalColors,
+    colors2024,
+    appThemeMode,
+    isLight,
+  };
+}
+
+export function getTheme2024<
+  T extends ReturnType<typeof createGetStyles2024>,
+>(opts?: { getStyle?: T; isLight?: boolean }) {
+  const appThemeMode = getBinaryMode();
+  const safeAreaInsets = svsLayout.insets.value;
+  const { getStyle: makeStyles = DefaultMakeStyles2024 } = opts || {};
+  const getStyles = makeStyles.getStyles || DefaultMakeStyles2024.getStyles;
+
+  const classicalColors = ThemeColors[appThemeMode] as AppColorsVariants;
+  const colors2024 = ThemeColors2024[appThemeMode] as AppColors2024Variants;
+
+  const isLight =
+    typeof opts?.isLight === 'boolean'
+      ? opts?.isLight
+      : appThemeMode === 'light';
+
+  const styles = getStyles?.({
+    colors: classicalColors,
+    colors2024,
+    classicalColors,
+    isLight,
+    safeAreaInsets,
+  }) as T extends void ? void : ReturnType<T['getStyles']>;
+
+  return {
+    ...styles,
     colors: classicalColors,
     classicalColors,
     colors2024,

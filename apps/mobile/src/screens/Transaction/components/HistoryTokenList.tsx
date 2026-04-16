@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
-import { Text, View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { AssetAvatar } from '@/components';
 import {
   NFTItem,
@@ -17,24 +17,18 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatTokenAmount } from '@/utils/number';
 import { HistoryItemIcon } from './HistoryItemIcon';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
-import { naviPush } from '@/utils/navigation';
+import { navigateDeprecated, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { ellipsisOverflowedText } from '@/utils/text';
-import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
-import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
-
-import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import { HistoryItemCateType } from './type';
 import { Account } from '@/core/services/preference';
 import { isArray } from 'lodash';
 import { Dimensions } from 'react-native';
-const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
+import { Text } from '@/components/Typography';
 
 interface ItemProps {
   status: number;
@@ -150,12 +144,8 @@ export const HistoryTokenList = ({
           account: currentAccount,
         });
       } else {
-        // if (address) {
-        //   setTokenDetailAddress(address);
-        // }
-        // openTokenDetailPopup(token as TokenItem);
-        naviPush(RootNames.TokenDetail, {
-          token: ensureAbstractPortfolioToken(singeToken as TokenItem),
+        navigateDeprecated(RootNames.TokenDetail, {
+          token: tokenItemToITokenItem(singeToken as TokenItem, ''),
           needUseCacheToken: true,
           isSingleAddress: !isForMultipleAddress,
           account: currentAccount,
@@ -186,7 +176,7 @@ export const HistoryTokenList = ({
         isApprove ? approve?.price : receives?.[0]?.price || sends?.[0]?.price
       ) as number;
       const isUnlimited =
-        singleAmount && new BigNumber(singleAmount).gte(10 ** 9);
+        isApprove && singleAmount && new BigNumber(singleAmount).gte(10 ** 9);
       const appvoveAmmountStr = singleAmount
         ? isUnlimited
           ? t('page.transactions.detail.Unlimited')

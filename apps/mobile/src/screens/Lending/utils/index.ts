@@ -2,7 +2,7 @@ import { ThemeColors2024 } from '@/constant/theme';
 import { HF_COLOR_BAD_THRESHOLD, HF_COLOR_GOOD_THRESHOLD } from './constant';
 
 export const getHealthStatusColor = (healthFactor: number) => {
-  if (!healthFactor || healthFactor <= 0) {
+  if (healthFactor === undefined || healthFactor < 0) {
     return {
       color: 'transparent',
       backgroundColor: 'transparent',
@@ -22,7 +22,7 @@ export const getHealthStatusColor = (healthFactor: number) => {
   }
   return {
     color: ThemeColors2024.light['green-default'],
-    backgroundColor: ThemeColors2024.light['green-light-4'],
+    backgroundColor: ThemeColors2024.light['green-light-1'],
   };
 };
 

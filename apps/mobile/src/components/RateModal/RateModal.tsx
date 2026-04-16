@@ -2,9 +2,6 @@ import {
   Dimensions,
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -25,10 +22,13 @@ import {
 } from './hooks';
 import { toast } from '@/components2024/Toast';
 import PressableStar from './RateStar';
+import { Text, TextInput } from '@/components/Typography';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 
 const LOGO_SIZE = 67;
 
-export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
+export function RateModal() {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
@@ -73,7 +73,8 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
   }, [wantFeedback, userFeedback]);
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.rateGuide}
       visible={rateModalShown}
       transparent
       animationType="fade"
@@ -128,7 +129,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                     ]}
                     onPress={() => {
                       openAppRateUrl();
-                      pushRateDetails({ totalBalanceText }).finally(() => {
+                      pushRateDetails().finally(() => {
                         closeModal();
                       });
                     }}
@@ -224,7 +225,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                       styles.feedbackButtonConfirmText,
                     ]}
                     onPress={() => {
-                      pushRateDetails({ totalBalanceText })
+                      pushRateDetails()
                         .then(() => {
                           toast.success(
                             t('page.nextComponent.rateModal.feedbackSuccess'),
@@ -242,7 +243,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
           </View>
         </KeyboardAvoidingView>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 }
 

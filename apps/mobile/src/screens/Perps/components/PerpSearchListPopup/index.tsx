@@ -12,16 +12,16 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
-  Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { PerpsMarketItem } from '../PerpsMarketSection/PerpsMarketItem';
 import { sortBy } from 'lodash';
+import { useShallow } from 'zustand/react/shallow';
+import { Text, TextInput } from '@/components/Typography';
 
 export const PerpSearchListPopup: React.FC<{
   visible: boolean;
@@ -39,6 +39,11 @@ export const PerpSearchListPopup: React.FC<{
   onSelect,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const { favoriteMarkets } = perpsStore(
+    useShallow(s => ({
+      favoriteMarkets: s.favoriteMarkets,
+    })),
+  );
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
@@ -55,8 +60,26 @@ export const PerpSearchListPopup: React.FC<{
   const { t } = useTranslation();
 
   const list = useMemo(() => {
-    return sortBy(marketData, item => -(item.dayNtlVlm || 0));
-  }, [marketData]);
+    const favoriteItems: typeof marketData = [];
+    const nonFavoriteItems: typeof marketData = [];
+    marketData.forEach(item => {
+      const isFavorite = favoriteMarkets.includes(item.name.toUpperCase());
+      if (isFavorite) {
+        favoriteItems.push(item);
+      } else {
+        nonFavoriteItems.push(item);
+      }
+    });
+    const sortedFavorites = sortBy(
+      favoriteItems,
+      item => -(item.dayNtlVlm || 0),
+    );
+    const sortedNonFavorites = sortBy(
+      nonFavoriteItems,
+      item => -(item.dayNtlVlm || 0),
+    );
+    return [...sortedFavorites, ...sortedNonFavorites];
+  }, [marketData, favoriteMarkets]);
 
   const filteredList = useMemo(() => {
     if (!search) {
@@ -186,6 +209,7 @@ export const PerpSearchListPopup: React.FC<{
               <PerpsMarketItem
                 key={item.name}
                 item={item}
+                isFavorite={favoriteMarkets.includes(item.name.toUpperCase())}
                 hasPosition={positionCoinSet.has(item.name)}
                 onPress={() => {
                   onCancel();

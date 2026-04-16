@@ -10,7 +10,6 @@ import {
   Pressable as RNPressable,
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -32,7 +31,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetFlatList, TouchableHighlight } from '@gorhom/bottom-sheet';
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useWhitelistVariedAccounts } from '@/screens/Send/hooks/useWhiteListAddress';
 import {
   RecentHistoryItem,
   useRecentSend,
@@ -50,6 +49,7 @@ import { touchedFeedback } from '@/utils/touch';
 import { RcIconLockCC } from '@/assets/icons/send';
 import { default as RcIconUnknownAddressAvatarCC } from '@/screens/Send/icons/unknown-address-avatar-cc.svg';
 import { SelectAccountSheetModalSizes } from './layout';
+import { Text } from '@/components/Typography';
 
 const MY_ADDRESS_LIMIT = 3;
 
@@ -193,7 +193,7 @@ export function AccountsPanelInSheetModal({
     whitelist,
     myAccounts,
     findAccountWithoutBalance,
-  } = useWhiteListAddress();
+  } = useWhitelistVariedAccounts();
 
   useEffect(() => {
     if (parentVisible) {
@@ -262,7 +262,7 @@ export function AccountsPanelInSheetModal({
           }}>
           <View style={styles.placeHolderWrapper}>
             <Text style={styles.placeHolder}>
-              {t('page.sendPoly.enterAddress')}
+              {t('page.sendPoly.enterOrSearchAddress')}
             </Text>
           </View>
           <TouchableOpacity
@@ -343,7 +343,7 @@ export function AccountsPanelInSheetModal({
                         justifyContent: 'center',
                         alignItems: 'center',
                       }}
-                      color={colors2024['green-light-2']}
+                      color={colors2024['green-light-disable']}
                     />
                     <RcIconLockCC
                       style={{
@@ -707,7 +707,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
       height: 46,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: colors2024['green-light-4'],
+      backgroundColor: colors2024['green-light-1'],
       borderRadius: 12,
     },
     addWhitelistHintText: {

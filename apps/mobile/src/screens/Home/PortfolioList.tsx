@@ -4,24 +4,26 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  memo,
 } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ListRenderItem, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 import { createGetStyles2024 } from '@/utils/styles';
-import { AbstractProject, ActionItem } from './types';
+import { ActionItem } from './types';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { TokenRowSectionHeader } from './components/AssetRenderItems';
-import { FullDefiRenderItem } from './components/AssetRenderItems';
+import {
+  FullDefiRenderItem,
+  TokenRowSectionHeader,
+} from './components/AssetRenderItems';
 import { useTranslation } from 'react-i18next';
-import { DisplayedProject } from './utils/project';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
-import { DefiItemLoader, ItemLoader } from './components/Skeleton';
+import { DefiItemLoader } from './components/Skeleton';
 import {
   Tabs,
   useCurrentTabScrollY,
@@ -29,11 +31,21 @@ import {
 } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
-import { Account } from '@/core/services/preference';
 import { getItemId } from './utils/listRenderId';
-import { usePortfolios } from './hooks/usePortfolio';
+import useLoadMoreData from '../Address/components/MultiAssets/hooks/useLoadMoreData';
+import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { getAllDefiCount } from './utils/converAssets';
-import { useCurrency } from '@/hooks/useCurrency';
+import useProtocols, {
+  getSingleProtocolsCacheKey,
+  ICacheProtocolItem,
+  useProtocolListComputedStore,
+} from '@/store/protocols';
+import { useShallow } from 'zustand/react/shallow';
+
+const emptyCacheProtocolItem: ICacheProtocolItem = {
+  fold: [],
+  unFold: [],
+};
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -45,86 +57,102 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
+const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 
 interface Props {
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
-  chain?: string;
-  account: Account;
-  updatePortfolio: (portfolios: DisplayedProject[]) => void;
 }
 const FOOTER_HEIGHT = 220;
-const SPACING_HEIGHT = 16;
+const SPACING_HEIGHT = 8;
 
-export const PortfolioList = ({
-  onRefresh,
-  onReachTopStatusChange,
-  chain,
-  account: currentAccount,
-  updatePortfolio: updatePortfolioCallback,
-}: Props) => {
-  const { styles, isLight } = useTheme2024({
+export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
+  const { styles } = useTheme2024({
     getStyle: getStyles,
   });
   const { t } = useTranslation();
-  const [foldDefi, setFoldDefi] = useState(true);
+  const { currentAccount } = useSingleHomeAccount();
+  const { selectedChain } = useSingleHomeChain();
+
+  const lowerAddress = useMemo(
+    () => currentAccount?.address?.toLowerCase(),
+    [currentAccount?.address],
+  );
+
   const focusedTab = useFocusedTab();
-  const hasBeenFocusedRef = useRef(false);
 
   const isFocused = useMemo(() => {
     const currentFocused = focusedTab === 'defi';
-    if (currentFocused) {
-      hasBeenFocusedRef.current = true;
-    }
-    return hasBeenFocusedRef.current;
+    return currentFocused;
   }, [focusedTab]);
 
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const [foldDefi, setFoldDefi] = useState(true);
+
+  const loadingPortfolio = useProtocols(state => {
+    if (!lowerAddress) {
+      return false;
+    }
+    return !!state.isLoadingByAddress[lowerAddress];
+  });
+
+  const updatePortfolio = useProtocols(state => state.getProtocols);
+
+  const singleProtocolsKey = useMemo(() => {
+    if (!lowerAddress) {
+      return null;
+    }
+    return getSingleProtocolsCacheKey(lowerAddress, selectedChain);
+  }, [lowerAddress, selectedChain]);
+
+  const registerSingleProtocols = useProtocolListComputedStore(
+    state => state.registerSingleProtocols,
+  );
+
+  const _portfolios = useProtocolListComputedStore(
+    useShallow(state =>
+      singleProtocolsKey
+        ? state.singleProtocolsCache[singleProtocolsKey] ||
+          emptyCacheProtocolItem
+        : emptyCacheProtocolItem,
+    ),
+  );
+
+  const filteredPortfolios = useMemo(() => {
+    const foldList = _portfolios?.fold || [];
+    const unFoldList = _portfolios?.unFold || [];
+    const foldDeFiValue = getAllDefiCount(foldList);
+    return {
+      unFoldList,
+      foldList,
+      foldDeFiValue,
+    };
+  }, [_portfolios]);
 
   const {
-    data: _rawPortfolios,
-    // hasValue: hasPortfolios,
-    updateData: updatePortfolio,
-    isLoading: loadingPortfolio,
-  } = usePortfolios(currentAccount?.address?.toLowerCase(), false);
+    data: portfolios,
+    loadMore: loadMorePortfolios,
+    hasMore: hasMorePortfolios,
+  } = useLoadMoreData(filteredPortfolios.unFoldList);
 
-  useEffect(() => {
-    if (_rawPortfolios && !loadingPortfolio) {
-      updatePortfolioCallback(_rawPortfolios);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_rawPortfolios?.length, loadingPortfolio, updatePortfolioCallback]);
-
-  const { currency } = useCurrency();
-
-  const portfolios = useMemo(
-    () =>
-      _rawPortfolios.filter(item =>
-        chain && item?.chain ? item.chain === chain : true,
-      ),
-    [_rawPortfolios, chain],
+  const shouldDefaultExpand = useMemo(
+    () => filteredPortfolios.unFoldList.length <= 5,
+    [filteredPortfolios.unFoldList.length],
   );
 
   const dataList = useMemo(() => {
-    const foldAndIncludeBalanceDefiList = portfolios.filter(
-      i => i._isFold && !i._isExcludeBalance && i.netWorth > 0,
-    );
-    const foldAndExcludeBalanceDefiList = portfolios.filter(
-      i => i._isFold && (i._isExcludeBalance || i.netWorth === 0),
-    );
-    const foldDefiList: ActionItem[] = [
-      ...foldAndIncludeBalanceDefiList,
-      ...foldAndExcludeBalanceDefiList,
-    ].map(item => ({
-      type: 'fold_defi',
+    const unFoldDefiList: ActionItem[] = portfolios.map(item => ({
+      type: 'unfold_defi',
       data: item,
     }));
-    const unFoldDefiList: ActionItem[] = portfolios
-      .filter(i => !i._isFold)
-      .map(item => ({
-        type: 'unfold_defi',
-        data: item as unknown as DisplayedProject,
-      }));
+
+    const foldDeFiList: ActionItem[] = filteredPortfolios.foldList.map(
+      item => ({
+        type: 'fold_defi',
+        data: item,
+      }),
+    );
+
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -134,23 +162,28 @@ export const PortfolioList = ({
         data: unFoldDefiList,
       },
       {
-        show: !!foldDefiList.length,
+        show: !!foldDeFiList.length,
         data: [
           {
             type: 'toggle_defi_fold',
+            data: filteredPortfolios.foldDeFiValue,
           },
-          ...(foldDefi ? [] : foldDefiList),
+          ...(foldDefi ? [] : foldDeFiList),
         ],
       },
       {
-        show: !!loadingPortfolio && !portfolios.length,
+        show:
+          !!loadingPortfolio && !portfolios.length && !unFoldDefiList.length,
         data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
           data: 'index-defi' + index.toString(),
         })),
       },
       {
-        show: !loadingPortfolio && portfolios.length === 0,
+        show:
+          !loadingPortfolio &&
+          portfolios.length === 0 &&
+          unFoldDefiList.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -165,56 +198,62 @@ export const PortfolioList = ({
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldDefi, loadingPortfolio, portfolios, t]);
+  }, [
+    filteredPortfolios.foldDeFiValue,
+    filteredPortfolios.foldList,
+    foldDefi,
+    loadingPortfolio,
+    portfolios,
+    t,
+  ]);
 
   useEffect(() => {
-    if (isFocused) {
-      updatePortfolio();
+    if (isFocused && lowerAddress) {
+      updatePortfolio(lowerAddress);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused]);
+  }, [isFocused, lowerAddress, updatePortfolio]);
 
-  const foldDefiAmount = useMemo(() => {
-    return getAllDefiCount(
-      portfolios.filter(i => i._isFold),
-      currency.usd_rate,
-      currency.symbol,
-    );
-  }, [currency.symbol, currency.usd_rate, portfolios]);
+  useEffect(() => {
+    if (!lowerAddress) {
+      return;
+    }
+    registerSingleProtocols(lowerAddress, selectedChain);
+  }, [lowerAddress, selectedChain, registerSingleProtocols]);
 
-  const renderItem = useCallback(
-    (_type, _data: ActionItem) => {
+  const renderItem = useCallback<ListRenderItem<ActionItem>>(
+    props => {
+      const { item: _data } = props;
       const { type, data } = _data;
       switch (type) {
         case 'unfold_defi':
-        case 'fold_defi':
           return (
-            <FullDefiRenderItem
-              data={data as unknown as AbstractProject}
+            <MemoFullDefiRenderItem
+              data={data}
               showAccount={false}
+              disableAction={loadingPortfolio}
+              defaultExpand={shouldDefaultExpand}
               account={currentAccount}
             />
-          );
-        case 'defi_header':
-          return (
-            <Text style={styles.symbol}>
-              {t('page.singleHome.sectionHeader.Defi')}
-            </Text>
           );
         case 'toggle_defi_fold':
           return (
             <TokenRowSectionHeader
-              str={foldDefiAmount}
+              style={styles.tokenSectionHeader}
+              str={data}
               fold={foldDefi}
-              style={styles.sectionHeader}
-              buttonStyle={StyleSheet.flatten([
-                styles.buttonHeader,
-                !isLight && styles.bg2,
-              ])}
               onPressFold={() => setFoldDefi(pre => !pre)}
             />
           );
-        case 'empty-assets':
+        case 'fold_defi':
+          return (
+            <MemoFullDefiRenderItem
+              data={data}
+              showAccount={false}
+              disableAction={loadingPortfolio}
+              defaultExpand={false}
+              account={currentAccount}
+            />
+          );
         case 'empty-defi':
           return (
             <EmptyAssets
@@ -223,27 +262,32 @@ export const PortfolioList = ({
               type={type}
             />
           );
-        case 'loading-skeleton':
-          return (
-            <View style={styles.rowWrap}>
-              <ItemLoader style={styles.removeLeft} />
-            </View>
-          );
         case 'loading-defi-skeleton':
           return <DefiItemLoader />;
         default:
           return null;
       }
     },
-    [currentAccount, foldDefi, foldDefiAmount, isLight, styles, t],
+    [
+      currentAccount,
+      foldDefi,
+      loadingPortfolio,
+      shouldDefaultExpand,
+      styles.emptyAssets,
+      styles.tokenSectionHeader,
+    ],
   );
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
   }, []);
 
   const ListRenderFooter = useCallback(() => {
-    return <View style={{ height: FOOTER_HEIGHT }} />;
-  }, []);
+    return hasMorePortfolios ? (
+      <DefiItemLoader style={styles.defiLoading} />
+    ) : (
+      <View style={{ height: FOOTER_HEIGHT }} />
+    );
+  }, [hasMorePortfolios, styles.defiLoading]);
 
   const scrollY = useCurrentTabScrollY();
   const handleScroll = useCallback(
@@ -269,18 +313,26 @@ export const PortfolioList = ({
       <Tabs.FlatList
         data={dataList}
         keyExtractor={getItemId}
-        renderItem={({ item }) => renderItem(item.type, item)}
+        renderItem={renderItem}
         // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
         ItemSeparatorComponent={ListRenderSeparator}
         ListFooterComponent={ListRenderFooter}
         showsVerticalScrollIndicator={showScrollIndicator}
         showsHorizontalScrollIndicator={false}
         style={[styles.bgContainer, styles.list]}
+        onEndReached={loadMorePortfolios}
+        onEndReachedThreshold={0.5}
+        windowSize={4}
+        maxToRenderPerBatch={15}
+        removeClippedSubviews
         refreshControl={
           <RefreshControl
             style={styles.bgContainer}
             onRefresh={() => {
-              updatePortfolio?.(true);
+              if (!lowerAddress) {
+                return;
+              }
+              updatePortfolio?.(lowerAddress, true);
               onRefresh?.();
             }}
             refreshing={false}
@@ -354,8 +406,14 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
   },
   emptyAssets: {
+    //backgroundColor: 'transparent',
+    //height: '100%',
+    //marginTop: -100,
+  },
+  defiLoading: {
+    marginTop: 16,
+  },
+  tokenSectionHeader: {
     backgroundColor: 'transparent',
-    height: '100%',
-    marginTop: -100,
   },
 }));

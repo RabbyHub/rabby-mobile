@@ -1,19 +1,20 @@
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import {
   StyleSheet,
-  Text,
   TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
+import { Text } from '@/components/Typography';
 
 type Option = {
   key: string;
   label: string;
+  testID?: RNViewProps['testID'];
+  accessibilityLabel?: RNViewProps['accessibilityLabel'];
 };
 
 export type PillsSwitchProps<T extends readonly Option[] | Option[]> = {
@@ -26,7 +27,7 @@ export type PillsSwitchProps<T extends readonly Option[] | Option[]> = {
   containerStyle?: ViewStyle;
   activeTextStyle?: TextStyle;
   inactiveTextStyle?: TextStyle;
-};
+} & Pick<RNViewProps, 'testID' | 'accessibilityLabel'>;
 
 export function PillsSwitch<T extends readonly Option[] | Option[]>({
   options = [] as unknown as T,
@@ -38,16 +39,23 @@ export function PillsSwitch<T extends readonly Option[] | Option[]>({
   containerStyle,
   activeTextStyle,
   inactiveTextStyle,
+  testID,
+  accessibilityLabel,
 }: PillsSwitchProps<T>) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View
+      style={[styles.container, containerStyle]}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}>
       {options.map((item: Option) => {
         const isActive = item.key === value;
 
         return (
           <TouchableOpacity
             key={`pills-switch-${item.key}`}
+            testID={item.testID}
+            accessibilityLabel={item.accessibilityLabel ?? item.testID}
             style={[
               styles.item,
               itemStyle,

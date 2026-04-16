@@ -1,9 +1,8 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { CHAINS_ENUM } from '@/constant/chains';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useFindChain } from '@/hooks/useFindChain';
 import React from 'react';
 import {
   createGlobalBottomSheetModal2024,
@@ -15,16 +14,17 @@ import {
 } from '@/components2024/GlobalBottomSheetModal/types';
 import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 import { useTranslation } from 'react-i18next';
+import { apisLending, useSelectedMarket } from '../hooks';
+import { CustomMarket, getMarketLogo } from '../config/market';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   return {
     container: {
       borderRadius: 16,
-      paddingHorizontal: 22,
-      paddingVertical: 16,
-      backgroundColor: isLight
-        ? colors2024['neutral-line']
-        : colors2024['neutral-bg-5'],
+      paddingHorizontal: 16,
+      paddingVertical: 13,
+      backgroundColor: colors2024['neutral-bg-5'],
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -58,9 +58,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => {
 });
 
 export function ChainSelector({
-  chainEnum,
   style,
-  onChange,
   disable,
 }: React.PropsWithChildren<
   RNViewProps & {
@@ -71,24 +69,30 @@ export function ChainSelector({
 >) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const chainItem = useFindChain({
-    enum: chainEnum,
-  });
-
-  const modalRef = React.useRef<MODAL_ID>();
+  const { selectedMarketData, setMarketKey, chainEnum } = useSelectedMarket();
+  const modalRef = React.useRef<MODAL_ID>(undefined);
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {
       removeGlobalBottomSheetModal2024(modalRef.current);
     }
   }, []);
+  const setDefaultMarket = React.useCallback(() => {
+    apisLending.setLoading(true, { marketKey: CustomMarket.proto_mainnet_v3 });
+    removeChainModal();
+    setMarketKey?.(CustomMarket.proto_mainnet_v3);
+  }, [removeChainModal, setMarketKey]);
 
   const createChainModal = React.useCallback(() => {
     removeChainModal();
+    if (!selectedMarketData?.market) {
+      setDefaultMarket();
+      return;
+    }
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_LENDING_CHAIN,
-      value: chainEnum,
-      titleText: t('page.Lending.selectChain'),
+      value: selectedMarketData.market,
+      titleText: t('page.Lending.selectMarket'),
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         rootViewType: 'View',
@@ -98,12 +102,21 @@ export function ChainSelector({
             : colors2024['neutral-bg-1'],
         },
       },
-      onChange: chain => {
+      onChange: market => {
+        apisLending.setLoading(true, { marketKey: market });
         removeChainModal();
-        onChange?.(chain);
+        setMarketKey?.(market);
       },
     });
-  }, [removeChainModal, chainEnum, t, isLight, colors2024, onChange]);
+  }, [
+    removeChainModal,
+    selectedMarketData?.market,
+    t,
+    isLight,
+    colors2024,
+    setDefaultMarket,
+    setMarketKey,
+  ]);
 
   return (
     <>
@@ -116,9 +129,14 @@ export function ChainSelector({
             size={24}
             chainEnum={chainEnum}
             isShowRPCStatus={true}
+            source={
+              selectedMarketData && getMarketLogo(selectedMarketData.market)
+            }
           />
           <Text style={[styles.chainName]}>
-            {chainItem?.name} {t('page.Lending.market')}
+            {t('page.Lending.marketSlot', {
+              market: selectedMarketData?.marketTitle,
+            })}
           </Text>
         </View>
 

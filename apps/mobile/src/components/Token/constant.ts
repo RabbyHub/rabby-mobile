@@ -1,7 +1,7 @@
-import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import { ITokenItem } from '@/store/tokens';
 
 export const SCAM_TOKEN_HAEDER_ID = 'scam_token_header';
-export const SCAM_TOKEN_HEADER_DATA: TokenItemMaybeWithOwner = {
+export const SCAM_TOKEN_HEADER_DATA: ITokenItem = {
   id: SCAM_TOKEN_HAEDER_ID,
   chain: '',
   amount: 0,
@@ -19,4 +19,7 @@ export const SCAM_TOKEN_HEADER_DATA: TokenItemMaybeWithOwner = {
   symbol: '',
   time_at: 0,
   price_24h_change: 0,
+  owner_addr: '',
+  usd_value: 0,
+  cex_ids: [],
 };

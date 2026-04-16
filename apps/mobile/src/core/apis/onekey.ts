@@ -8,29 +8,57 @@ import { DEVICE } from '@onekeyfe/hd-core';
 import { atom, useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
 import React from 'react';
+import { zCreate } from '../utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '../utils/store';
 
-export const oneKeyDevices = atom<SearchDevice[]>([]);
+// export const oneKeyDevices = atom<SearchDevice[]>([]);
 
-export const useGlobalInitOneKey = () => {
-  const [, setDevices] = useAtom(oneKeyDevices);
-
-  React.useEffect(() => {
-    HardwareBleSdk.on(DEVICE.CONNECT, payload => {
-      setDevices(prev => {
-        if (prev.find(d => d.connectId === payload?.device?.connectId)) {
-          return prev;
-        }
-        return [...prev, payload?.device];
-      });
-    });
-    HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
-      cleanUp();
-      setDevices(prev =>
-        prev.filter(d => d.connectId !== payload?.device?.connectId),
-      );
-    });
-  }, [setDevices]);
+type OnekeyDevicesState = {
+  devices: SearchDevice[];
 };
+
+const onekeyDevicesStore = zCreate<OnekeyDevicesState>(() => ({
+  devices: [],
+}));
+function setDevices(
+  valOrFunc: UpdaterOrPartials<OnekeyDevicesState['devices']>,
+) {
+  onekeyDevicesStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.devices, valOrFunc, {
+      strict: false,
+    });
+
+    return {
+      ...prev,
+      devices: newVal,
+    };
+  });
+}
+export function useOneKeyDevices() {
+  const devices = onekeyDevicesStore(s => s.devices);
+
+  return {
+    devices,
+    setOneKeyDevices: setDevices,
+  };
+}
+
+export function startSubscribeOnekeyDevices() {
+  HardwareBleSdk.on(DEVICE.CONNECT, payload => {
+    setDevices(prev => {
+      if (prev.find(d => d.connectId === payload?.device?.connectId)) {
+        return prev;
+      }
+      return [...prev, payload?.device];
+    });
+  });
+  HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
+    cleanUp();
+    setDevices(prev =>
+      prev.filter(d => d.connectId !== payload?.device?.connectId),
+    );
+  });
+}
 
 export async function initOneKeyKeyring() {
   return getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring, keyring => {

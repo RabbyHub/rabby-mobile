@@ -3,13 +3,14 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Slider } from '@rneui/themed';
 import React, { useCallback, useMemo, useRef } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
 import { useWindowDimensions } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
+import { Text } from '@/components/Typography';
 
 const isAndroid = Platform.OS === 'android';
 const sliderHapticTriggerNumbers = [0, 50, 100];
@@ -18,16 +19,24 @@ interface PerpsSliderProps {
   value: number;
   key?: string;
   onValueChange: (value: number) => void;
+  step?: number;
+  maxValue?: number;
   showPercentage?: boolean;
   disabled?: boolean;
+  minValue?: number;
+  hightLightTriggerValue?: number[];
 }
 
 export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   value,
   onValueChange,
   disabled = false,
+  maxValue,
+  step,
   key,
   showPercentage = true,
+  minValue,
+  hightLightTriggerValue,
 }) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -40,10 +49,9 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
   const handleValueChange = useCallback(
     (v: number) => {
       // Trigger haptic feedback when reaching specific values
-      if (
-        v !== previousValue.current &&
-        sliderHapticTriggerNumbers.includes(v)
-      ) {
+      const triggerValues =
+        hightLightTriggerValue || sliderHapticTriggerNumbers;
+      if (v !== previousValue.current && triggerValues.includes(v)) {
         trigger('impactLight', {
           enableVibrateFallback: true,
           ignoreAndroidSystemSettings: false,
@@ -52,7 +60,7 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
       previousValue.current = v;
       onValueChange(v);
     },
-    [onValueChange],
+    [onValueChange, hightLightTriggerValue],
   );
 
   const sliderStyle = useAnimatedStyle(
@@ -102,11 +110,11 @@ export const PerpsSlider: React.FC<PerpsSliderProps> = ({
           disabled={disabled}
           value={value}
           onValueChange={handleValueChange}
-          minimumValue={0}
-          maximumValue={100}
-          step={1}
+          minimumValue={minValue || 0}
+          maximumValue={maxValue || 100}
+          step={step}
           trackStyle={styles.sliderTrack}
-          minimumTrackTintColor={colors2024['brand-default']}
+          minimumTrackTintColor="#50D2C1"
           maximumTrackTintColor={colors2024['neutral-line']}
           thumbStyle={styles.thumbStyle}
           thumbProps={thumbComponent}
@@ -166,13 +174,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 10,
     height: 10,
     borderRadius: 10,
-    backgroundColor: colors2024['brand-default'],
-  },
-  // For simple slider
-  simpleThumbStyle: {
-    width: 24,
-    height: 24,
-    backgroundColor: colors2024['brand-default'],
-    borderRadius: 12,
+    backgroundColor: '#50D2C1',
   },
 }));

@@ -1,5 +1,4 @@
-import { MMKV } from 'react-native-mmkv';
-import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
+import { dayCurveMMKV } from '@/core/storage/mmkvInstances';
 import { openapi } from '@/core/request';
 import { CurveDayType } from './curveDayType';
 
@@ -15,10 +14,6 @@ export const CURE_CACHE_TIME = 10 * 60 * 1000; // 10 min
 // export const CURE_CACHE_TIME = 7 * 24 * 60 * 60 * 1000; // TODO: 7 days min tmp for test
 export const LONG_TIME_UNTIL_EXPIRED = 5 * 24 * 60 * 60 * 1000; // 5 days expired is invalid
 
-const storage = new MMKV({
-  id: MMKV_FILE_NAMES.DAYCURVE,
-});
-
 const isExpired = (updateTime: number) => {
   return Date.now() - updateTime > CURE_CACHE_TIME;
 };
@@ -29,7 +24,7 @@ const isLongTimeExpired = (updateTime: number) => {
 
 export const getCurveCache = (_address: string) => {
   const address = _address.toLowerCase();
-  const data = storage.getString(address);
+  const data = dayCurveMMKV.getString(address);
   if (data) {
     const cache = JSON.parse(data) as ICURVE_DATA;
     return {
@@ -43,7 +38,7 @@ export const getCurveCache = (_address: string) => {
 
 export const setCurveCache = (_address: string, data: ICURVE_DATA) => {
   const address = _address.toLowerCase();
-  storage.set(address, JSON.stringify(data));
+  dayCurveMMKV.set(address, JSON.stringify(data));
 };
 
 export const getNetCurve = async (
@@ -58,10 +53,7 @@ export const getNetCurve = async (
   return openapi.getNetCurve(addr, days);
 };
 
-export const get24hCurveDataWithCache = async (
-  _address: string,
-  force = false,
-) => {
+const get24hCurveDataWithCache = async (_address: string, force = false) => {
   const address = _address.toLowerCase();
   const cache = getCurveCache(address);
   if (cache && !force && !cache.isExpired) {
@@ -81,13 +73,13 @@ export const get24hCurveDataWithCache = async (
 
 export const deleteCurveCache = (_address: string) => {
   const address = _address.toLowerCase();
-  storage.delete(address);
+  dayCurveMMKV.delete(address);
 };
 
 // delete all curve cache that is long time expired
 export const deleteLongTimeCurveCache = () => {
   try {
-    const keys = storage.getAllKeys();
+    const keys = dayCurveMMKV.getAllKeys();
     keys.forEach(key => {
       const cache = getCurveCache(key);
       if (cache && isLongTimeExpired(cache.updateTime)) {

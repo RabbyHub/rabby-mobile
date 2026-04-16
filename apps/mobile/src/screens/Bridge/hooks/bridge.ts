@@ -19,6 +19,7 @@ import BigNumber from 'bignumber.js';
 
 export const bridgeToken = async (
   {
+    approveId,
     to,
     data,
     payTokenRawAmount,
@@ -31,6 +32,7 @@ export const bridgeToken = async (
     value,
     account,
   }: {
+    approveId?: string;
     data: string;
     to: string;
     value: string;
@@ -61,7 +63,7 @@ export const bridgeToken = async (
       await approveToken({
         chainServerId: payTokenChainServerId,
         id: payTokenId,
-        spender: to,
+        spender: approveId || to,
         amount: 0,
         $ctx: {
           ga: {
@@ -79,7 +81,7 @@ export const bridgeToken = async (
       await approveToken({
         chainServerId: payTokenChainServerId,
         id: payTokenId,
-        spender: to,
+        spender: approveId || to,
         amount: payTokenRawAmount,
         $ctx: {
           ga: {
@@ -143,6 +145,7 @@ export const bridgeToken = async (
 
 export const buildBridgeToken = async (
   {
+    approveId,
     to,
     data,
     payTokenRawAmount,
@@ -155,6 +158,7 @@ export const buildBridgeToken = async (
     value,
     account,
   }: {
+    approveId?: string;
     data: string;
     to: string;
     value: string;
@@ -185,7 +189,7 @@ export const buildBridgeToken = async (
       const res = await approveToken({
         chainServerId: payTokenChainServerId,
         id: payTokenId,
-        spender: to,
+        spender: approveId || to,
         amount: 0,
         $ctx: {
           ga: {
@@ -206,7 +210,7 @@ export const buildBridgeToken = async (
       const res = await approveToken({
         chainServerId: payTokenChainServerId,
         id: payTokenId,
-        spender: to,
+        spender: approveId || to,
         amount: payTokenRawAmount,
         $ctx: {
           ga: {

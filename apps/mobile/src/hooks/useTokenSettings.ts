@@ -1,56 +1,68 @@
 import { preferenceService } from '@/core/services';
-import { atom, useAtom } from 'jotai';
-import { useCallback } from 'react';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 
-const userTokenSettingsAtom = atom<
-  Awaited<ReturnType<typeof preferenceService.getUserTokenSettings>>
->({
-  foldTokens: [],
-  unfoldTokens: [],
-  includeDefiAndTokens: [],
-  excludeDefiAndTokens: [],
-  pinedQueue: [],
-  foldNfts: [],
-  unfoldNfts: [],
-  foldDefis: [],
-  unFoldDefis: [],
+type UserTokenSettingsState = Awaited<
+  ReturnType<typeof preferenceService.getUserTokenSettings>
+>;
+const userTokenSettingsStore = zCreate<UserTokenSettingsState>(() => {
+  return {
+    foldTokens: [],
+    unfoldTokens: [],
+    includeDefiAndTokens: [],
+    excludeDefiAndTokens: [],
+    pinedQueue: [],
+    foldNfts: [],
+    unfoldNfts: [],
+    foldDefis: [],
+    unFoldDefis: [],
+    ...preferenceService.getUserTokenSettings(),
+  };
 });
 
-userTokenSettingsAtom.onMount = set => {
-  preferenceService.getUserTokenSettings().then(set);
+function setUserTokenSettings(
+  valOrFunc: UpdaterOrPartials<UserTokenSettingsState>,
+) {
+  userTokenSettingsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev, valOrFunc, {
+      strict: false,
+    });
+
+    return newVal;
+  });
+}
+
+export function getUserTokenSettingsInMemory() {
+  return userTokenSettingsStore.getState();
+}
+
+const fetchUserTokenSettings = async () => {
+  const data = await preferenceService.getUserTokenSettings();
+  setUserTokenSettings(data);
+};
+
+const pinToken = <T extends { id: string; chain: string }>(token: T) => {
+  preferenceService.pinToken({
+    tokenId: token.id,
+    chainId: token.chain,
+  });
+  // TODO: improve, can only update tokens about list on store
+  fetchUserTokenSettings();
+};
+
+const removePinedToken = <T extends { id: string; chain: string }>(
+  token: T,
+) => {
+  preferenceService.removePinedToken({
+    tokenId: token.id,
+    chainId: token.chain,
+  });
+  // TODO: improve, can only update tokens about list on store
+  fetchUserTokenSettings();
 };
 
 export const useUserTokenSettings = () => {
-  const [userTokenSettings, setUserTokenSettings] = useAtom(
-    userTokenSettingsAtom,
-  );
-
-  const fetchUserTokenSettings = useCallback(async () => {
-    const data = await preferenceService.getUserTokenSettings();
-    setUserTokenSettings(data);
-  }, [setUserTokenSettings]);
-
-  const pinToken = useCallback(
-    <T extends { id: string; chain: string }>(token: T) => {
-      preferenceService.pinToken({
-        tokenId: token.id,
-        chainId: token.chain,
-      });
-      fetchUserTokenSettings();
-    },
-    [fetchUserTokenSettings],
-  );
-
-  const removePinedToken = useCallback(
-    <T extends { id: string; chain: string }>(token: T) => {
-      preferenceService.removePinedToken({
-        tokenId: token.id,
-        chainId: token.chain,
-      });
-      fetchUserTokenSettings();
-    },
-    [fetchUserTokenSettings],
-  );
+  const userTokenSettings = userTokenSettingsStore(s => s);
 
   return {
     userTokenSettings,

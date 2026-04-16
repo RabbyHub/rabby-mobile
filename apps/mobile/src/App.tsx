@@ -7,43 +7,42 @@ import 'react-native-gesture-handler';
  */
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
-import { useAppTheme, useThemeColors } from '@/hooks/theme';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
-import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
 import React, { Suspense, useEffect } from 'react';
-import { setup, withIAPContext } from 'react-native-iap';
+import { withIAPContext } from 'react-native-iap';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { RootNames } from './constant/layout';
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import BigNumber from 'bignumber.js';
 import { ThemeColors } from './constant/theme';
-import { keyringService } from './core/services';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
-import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
-import { useSecureOnBackground } from './hooks/useLock';
-import { replace } from './utils/navigation';
-import JotaiNexus from './components/JotaiNexus';
-import { useUpgradeInfo } from './hooks/version';
-import { AppProvider } from './hooks/global';
-import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
-import { useAppPreventScreenshotOnScreen } from './hooks/navigation';
-import { useAutoGoogleSignIfPreviousSignedOnTop } from './hooks/cloudStorage';
-import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLongerSupports';
-import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
+import {
+  useAppCouldRender,
+  useBootstrapApp,
+  useInitializeAppOnTop,
+} from './hooks/useBootstrap';
+import { AppProvider, loadSecurityChain } from './hooks/global';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
-import { useGasAccountInfo } from './screens/GasAccount/hooks';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
-import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
-import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
 import Safe from '@rabby-wallet/gnosis-sdk';
-import { SAFE_API_KEY } from './constant/env';
-Safe.apiKey = SAFE_API_KEY;
+import {
+  RerenderDetector,
+  useRendererDetect,
+} from './components/Perf/PerfDetector';
+import { isEqual } from 'lodash';
+import { svsLayout } from './hooks/useAppLayout';
+import { openapi } from './core/request';
 
-import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
+Safe.openapiService = openapi;
+
+BigNumber.config({ EXPONENTIAL_AT: [-20, 100] });
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -58,72 +57,71 @@ const rneuiTheme = createTheme({
 
 type AppProps = { rabbitCode: string };
 
-function MainScreen({ rabbitCode }: AppProps) {
-  const { isAppUnlocked } = useInitializeAppOnTop();
-  const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
-  const { binaryTheme } = useAppTheme({ isAppTop: true });
+const MemoziedAppNav = React.memo(AppNavigation);
+const RozeniteDevTools =
+  process.env.WITH_ROZENITE === 'true'
+    ? require('./devtools/RozeniteDevTools').default
+    : null;
+
+const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
+  useInitializeAppOnTop();
 
   useSetupServiceStub();
-  useUpgradeInfo({ isTop: true });
   useUniversalLinkOnTop();
-  useSecureOnBackground();
-  useGlobalAppPreventScreenrecordOnDev();
-  useAppPreventScreenshotOnScreen({ isTop: true });
-  useAutoGoogleSignIfPreviousSignedOnTop();
-  useNoLongerSupports();
-  useTriggerI18nChangeOnAppTop();
   useIAPListener();
-  useGasAccountInfo();
-  useTrezorConnectOnUrl();
   useIncreaseTxCountOnAppTop({ isTop: true });
-  useIntervalSyncDDefaultRPCs();
-  useUserDidTakeScreenshot({ isTop: true });
 
-  const initAccounts = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (!accounts?.length) {
-      replace(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
-      });
-    }
-  });
+  useRendererDetect({ name: 'MainScreen' });
 
-  useEffect(() => {
-    if (isAppUnlocked) {
-      initAccounts();
-    }
-  }, [isAppUnlocked, initAccounts]);
+  const { couldRender } = useAppCouldRender();
+
+  const safeAreaInsets = useSafeAreaInsets();
 
   return (
-    <AppProvider value={{ securityChain: securityChainOnTop }}>
+    <AppProvider
+      value={{ rabbitCode, securityChain: loadSecurityChain({ rabbitCode }) }}>
+      <RerenderDetector name="UnderAppProvider" />
       <BottomSheetModalProvider>
         <ScreenSceneAccountProvider>
-          {couldRender && <AppNavigation colorScheme={binaryTheme} />}
+          {couldRender && <MemoziedAppNav />}
         </ScreenSceneAccountProvider>
       </BottomSheetModalProvider>
     </AppProvider>
   );
+});
+
+function SizeWatcher() {
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    const prevInsets = svsLayout.insets.value;
+    if (isEqual(prevInsets, insets)) return;
+    svsLayout.insets.value = insets;
+  }, [insets]);
+
+  return null;
 }
 
-function App({ rabbitCode }: AppProps): JSX.Element {
+function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
+  const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
+  useBootstrapApp({ rabbitCode });
+
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>
-        <RootSiblingParent>
-          <SafeAreaProvider>
+        <SafeAreaProvider>
+          <RootSiblingParent>
+            {RozeniteDevTools ? <RozeniteDevTools /> : null}
+            <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
                 {/* read from native bundle on production */}
-                <MainScreen
-                  rabbitCode={__DEV__ ? 'RABBY_MOBILE_CODE_DEV' : rabbitCode}
-                />
+                <MainScreen rabbitCode={rabbitCode} />
               </GestureHandlerRootView>
-              {/* <MainScreen /> */}
-              <JotaiNexus />
             </Suspense>
-          </SafeAreaProvider>
-        </RootSiblingParent>
+          </RootSiblingParent>
+        </SafeAreaProvider>
       </ThemeProvider>
     </AppErrorBoundary>
   );

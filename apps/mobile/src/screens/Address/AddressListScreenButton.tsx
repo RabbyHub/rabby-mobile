@@ -1,18 +1,13 @@
 import { TouchableOpacity } from 'react-native';
-import { StackActions, useNavigation } from '@react-navigation/core';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { AppRootName, RootNames } from '@/constant/layout';
-import { useSetPasswordFirst } from '@/hooks/useLock';
-import { CurrentAddressProps } from './components/AddressListScreenContainer';
+import { RootNames } from '@/constant/layout';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
+import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -42,27 +37,11 @@ export const AddressListScreenButton: React.FC<Props> = ({
   type = 'address',
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const onPress = React.useCallback(() => {
     switch (type) {
       case 'address':
-        const id = createGlobalBottomSheetModal2024({
-          name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-          onDone: () => {
-            removeGlobalBottomSheetModal2024(id);
-          },
-          shouldRedirectToSetPasswordBefore2024,
-          navigateTo: (screen: AppRootName, params?: object) => {
-            navigation.dispatch(
-              StackActions.push(RootNames.StackAddress, {
-                screen,
-                params,
-              }),
-            );
-          },
-        });
+        apiGlobalModal.showAddSelectMethodModal();
         break;
       case 'watch-address':
         navigateDeprecated(RootNames.StackAddress, {
@@ -77,13 +56,16 @@ export const AddressListScreenButton: React.FC<Props> = ({
       default:
       // NOTHING
     }
-  }, [type, shouldRedirectToSetPasswordBefore2024, navigation]);
+  }, [type]);
   return (
     <TouchableOpacity
       style={styles.headerRight}
       hitSlop={hitSlop}
-      onPress={onPress}>
-      <WalletSVG width={24} height={24} color={colors2024['neutral-body']} />
+      onPress={onPress}
+      {...makeTestIDProps(
+        type === 'address' ? E2E_ID.home.addAddressButton : null,
+      )}>
+      <WalletSVG width={22} height={22} color={colors2024['neutral-title-1']} />
     </TouchableOpacity>
   );
 };

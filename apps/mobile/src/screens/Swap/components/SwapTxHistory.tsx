@@ -2,13 +2,7 @@
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  View,
-  Image,
-} from 'react-native';
+import { ActivityIndicator, TouchableOpacity, View, Image } from 'react-native';
 import { ModalLayouts, RootNames } from '@/constant/layout';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,8 +16,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { navigateDeprecated } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { syncSingleAddress } from '@/databases/hooks/history';
 import IconEmpty from '@/assets2024/images/lending/empty.png';
 import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -32,6 +25,9 @@ import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -52,6 +48,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
   },
   walletIcon: {
     borderRadius: 4,
@@ -136,7 +134,10 @@ const HistoryList = ({
               return (
                 <View style={styles.addressRow}>
                   <WalletIcon style={styles.walletIcon} />
-                  <Text style={styles.address}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.address}>
                     {currentAccount?.aliasName ||
                       ellipsisAddress(currentAccount?.address || '')}
                   </Text>
@@ -271,6 +272,7 @@ export const SwapTxHistory = ({
             isForMultipleAddress,
             data: detailData,
             title: t('page.swap.swapped'),
+            treatSmallAssetsAsScam: true,
           },
         });
       } else {
@@ -307,12 +309,21 @@ export const SwapTxHistory = ({
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
-  const { syncSingleAddress } = useSyncHistoryDB();
   useEffect(() => {
     if (currentAccount?.address) {
       syncSingleAddress(currentAccount?.address);
     }
-  }, [currentAccount?.address, syncSingleAddress]);
+  }, [currentAccount?.address]);
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      bottomRef.current?.dismiss();
+      return !visible;
+    }, [visible]),
+    { autoEffectEnabled: false },
+  );
+
+  useFocusEffect(onHardwareBackHandler);
 
   return (
     <AppBottomSheetModal

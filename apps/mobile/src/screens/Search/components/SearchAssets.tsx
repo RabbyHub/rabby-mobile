@@ -3,11 +3,10 @@ import RcIconClose from '@/assets2024/icons/search/RcIconClose.svg';
 import RcIconRight from '@/assets2024/icons/search/IconRight.svg';
 import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
 import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Keyboard, Pressable, Text, View } from 'react-native';
+import { FlatList, Keyboard, View } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -15,7 +14,6 @@ import {
 
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
@@ -37,9 +35,15 @@ import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { tokenItemToITokenItem } from '@/utils/token';
+import { ITokenItem } from '@/store/tokens';
+import { FavoriteTag } from '@/components2024/Favorite';
+import { Text } from '@/components/Typography';
+import { SearchTokenHeader } from './SearchTokenHeader';
 
 interface Props {
-  resultTokens: AbstractPortfolioToken[];
+  resultTokens: ITokenItem[];
   loading: boolean;
   searchState: string;
 }
@@ -64,7 +68,7 @@ export const SearchAssets: React.FC<Props> = ({
     [],
   );
 
-  const modalRef = React.useRef<MODAL_ID>();
+  const modalRef = React.useRef<MODAL_ID>(undefined);
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {
@@ -103,59 +107,39 @@ export const SearchAssets: React.FC<Props> = ({
 
   useFocusEffect(fetchPinedTokenList);
 
-  const handleOpenTokenDetail = React.useCallback(
-    (token: AbstractPortfolioToken) => {
-      navigateDeprecated(RootNames.TokenMarketInfo, {
-        token: token,
-        unHold: token._unHold,
-        needUseCacheToken: true,
-      });
-    },
-    [],
-  );
+  const handleOpenTokenDetail = React.useCallback((token: TokenItem) => {
+    navigateDeprecated(RootNames.TokenMarketInfo, {
+      token: tokenItemToITokenItem(token, ''),
+      unHold: true, // TODO: 待确认
+      needUseCacheToken: true,
+    });
+  }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: AbstractPortfolioToken }) => {
+    ({ item }: { item: ITokenItem }) => {
+      const isPined = watchlistTokenList.some(
+        t => t.chainId === item.chain && t.tokenId === item.id,
+      );
       return (
         item && (
-          <ExternalTokenRow
-            data={item}
-            style={styles.renderItemWrapper}
-            onTokenPress={handleOpenTokenDetail}
-            logoSize={40}
-            decimalPrecision
-            rightSlot={
-              <Pressable
-                style={styles.rightSlot}
-                onPress={e => {
-                  e.stopPropagation();
-                  handlePressFavorite(item.id, item.chain);
-                }}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-                <RcIconFavorite
-                  width={22}
-                  height={21}
-                  color={
-                    watchlistTokenList.some(
-                      t => t.chainId === item.chain && t.tokenId === item.id,
-                    )
-                      ? colors2024['orange-default']
-                      : colors2024['neutral-line']
-                  }
-                />
-              </Pressable>
-            }
-          />
+          <View>
+            <ExternalTokenRow
+              data={item}
+              style={styles.renderItemWrapper}
+              onTokenPress={handleOpenTokenDetail}
+              logoSize={46}
+              decimalPrecision
+            />
+            {isPined ? <FavoriteTag style={styles.favoriteTag} /> : null}
+          </View>
         )
       );
     },
     [
-      colors2024,
-      handleOpenTokenDetail,
-      handlePressFavorite,
-      styles.rightSlot,
-      styles.renderItemWrapper,
       watchlistTokenList,
+      styles.renderItemWrapper,
+      styles.favoriteTag,
+      handleOpenTokenDetail,
     ],
   );
 
@@ -187,7 +171,7 @@ export const SearchAssets: React.FC<Props> = ({
 
   const ListEmptyComponent = useMemo(
     () =>
-      !loading && (!resultTokens || !resultTokens?.length) ? (
+      !loading && (!filterTokens || !filterTokens?.length) ? (
         <View style={styles.emptyView}>
           {isLight ? (
             <RcIconEmpty style={styles.image} />
@@ -209,7 +193,7 @@ export const SearchAssets: React.FC<Props> = ({
       loading,
       styles.image,
       isLight,
-      resultTokens,
+      filterTokens,
       styles.emptyView,
       styles.emptyText,
       t,
@@ -286,7 +270,12 @@ export const SearchAssets: React.FC<Props> = ({
       <FlatList
         keyExtractor={(_, index) => index.toString()}
         data={filterTokens}
+        ListHeaderComponent={
+          filterTokens.length > 0 ? <SearchTokenHeader /> : null
+        }
         ListEmptyComponent={ListEmptyComponent}
+        onScrollBeginDrag={Keyboard.dismiss}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => renderItem({ item })}
         style={styles.list}
       />
@@ -379,7 +368,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
   },
   emptyHolder: {
     marginTop: 65,
@@ -401,7 +390,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
-    color: ctx.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-title-1'],
     // backgroundColor: ctx.isLight
     //   ? ctx.colors2024['neutral-bg-0']
     //   : ctx.colors2024['neutral-bg-1'],
@@ -427,5 +416,10 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   rightSlot: {
     marginLeft: 8,
+  },
+  favoriteTag: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 }));

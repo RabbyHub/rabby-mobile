@@ -32,12 +32,12 @@ import {
   EVENT_NAMES,
   MODAL_NAMES,
 } from '@/components2024/GlobalBottomSheetModal/types';
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
-import { whitelistAtom } from '@/hooks/whitelist';
+import { setWhitelist } from '@/hooks/whitelist';
 import { contactService, whitelistService } from '@/core/services';
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
@@ -89,17 +89,15 @@ export const ScreenAddNewWhitelistAddress = ({
 
   const { list } = useCexSupportList();
 
-  const { findAccountWithoutBalance } = useWhiteListAddress();
+  const { findAccountWithoutBalance } = useFindAddressByWhitelist();
 
   const { t } = useTranslation();
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
 
-  const [, setWL] = useAtom(whitelistAtom);
-
   const getWhitelist = React.useCallback(async () => {
     const data = await whitelistService.getWhitelist();
-    setWL(data);
-  }, [setWL]);
+    setWhitelist(data);
+  }, []);
   // TODO: make auto focus
   // const { inputCallbackRef } = useAutoFocusInput(false);
 
@@ -302,7 +300,7 @@ export const ScreenAddNewWhitelistAddress = ({
             inputProps={{
               autoFocus: true,
               ...(__DEV__ && { autoFocus: false }),
-              placeholder: t('page.sendPoly.enterAddress'),
+              placeholder: t('page.sendPoly.enterOrSearchAddress'),
               placeholderTextColor: colors2024['neutral-secondary'],
               value: input,
               blurOnSubmit: true,
@@ -321,7 +319,6 @@ export const ScreenAddNewWhitelistAddress = ({
                 ]}>
                 <PasteButton
                   style={styles.pasteButton}
-                  cleanClipboardAfterPaste={!__DEV__}
                   onPaste={text => {
                     handleInputChange(text);
                     Keyboard.dismiss();

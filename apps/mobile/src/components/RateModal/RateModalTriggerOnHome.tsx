@@ -1,7 +1,6 @@
 import {
   Dimensions,
   StyleSheet,
-  Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
@@ -18,6 +17,7 @@ import { useExposureRateGuide, useRateModal } from './hooks';
 import PressableStar from './RateStar';
 import { useEffect, useState } from 'react';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { Text } from '@/components/Typography';
 
 const STAR_SIZE = 38;
 const TRIGGER_HEIGHT = 88;
@@ -48,7 +48,7 @@ function starToText(number: number) {
 export function RateModalTriggerOnHome({
   style,
   totalBalanceText,
-}: RNViewProps & { totalBalanceText: string }) {
+}: RNViewProps & { totalBalanceText?: string }) {
   const { isLight, styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();

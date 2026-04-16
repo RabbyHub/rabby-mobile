@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { TextStyle, Text, StyleSheet } from 'react-native';
+import { TextStyle, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { DEFAULT_NAVBAR_FONT_SIZE } from '@/constant/layout';
+import { Text } from '@/components/Typography';
 
 export default function HeaderTitleText({
   style,

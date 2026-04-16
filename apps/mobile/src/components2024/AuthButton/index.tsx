@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useBiometrics } from '@/hooks/biometrics';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { RequestGenericPurpose } from '@/core/apis/keychain';
@@ -15,17 +15,21 @@ import { updateUnlockTime } from '@/core/apis/lock';
 export type IAuthButtonProps = Omit<ButtonProps, 'onPress'> & {
   onFinished?: () => void;
   onCancel?: () => void;
+  onAuthModalDismiss?: () => void;
   onBeforeAuth?: () => void;
   authTitle?: string;
   syncUnlockTime?: boolean;
+  iconColor?: string;
 };
 
 const AuthButton: React.FC<IAuthButtonProps> = ({
   onFinished: _onFinished,
   onBeforeAuth,
   onCancel,
+  onAuthModalDismiss,
   authTitle,
   syncUnlockTime,
+  iconColor,
   ...props
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -33,6 +37,8 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
   const {
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
+
+  const isProcessingRef = useRef(false);
 
   const onFinished = useCallback(() => {
     if (syncUnlockTime) {
@@ -45,28 +51,36 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
     return apisLock.throwErrorIfInvalidPwd(password);
   };
   const unlockWithBiometrics = useCallback(async () => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     onBeforeAuth?.();
-    if (!isBiometricsEnabled) {
-      AuthenticationModal2024.show({
-        title: authTitle || t('page.addressDetail.add-to-whitelist'),
-        authType: ['password'],
-        onFinished: () => {
-          onFinished?.();
-        },
-        onCancel: () => {
-          onCancel?.();
-        },
-        validationHandler(password) {
-          return apisLock.throwErrorIfInvalidPwd(password);
-        },
-      });
-    }
+
+    const finish = () => {
+      isProcessingRef.current = false;
+      onFinished?.();
+    };
+
+    const cancel = () => {
+      isProcessingRef.current = false;
+      onCancel?.();
+    };
+
+    const onDismiss = () => {
+      isProcessingRef.current = false;
+      onAuthModalDismiss?.();
+    };
+
     try {
+      if (!isBiometricsEnabled) {
+        throw new Error('Biometrics Disabled');
+      }
+
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
           await validationHandler?.(password);
-          onFinished?.();
+          finish();
         },
       });
     } catch (error: any) {
@@ -76,18 +90,23 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
       AuthenticationModal2024.show({
         title: authTitle || t('page.addressDetail.add-to-whitelist'),
         authType: ['password'],
-        onFinished: () => {
-          onFinished?.();
-        },
-        onCancel: () => {
-          onCancel?.();
-        },
+        onFinished: finish,
+        onCancel: cancel,
+        onDismiss: onDismiss,
         validationHandler(password) {
           return apisLock.throwErrorIfInvalidPwd(password);
         },
       });
     }
-  }, [onBeforeAuth, isBiometricsEnabled, authTitle, t, onFinished, onCancel]);
+  }, [
+    onBeforeAuth,
+    isBiometricsEnabled,
+    authTitle,
+    t,
+    onFinished,
+    onCancel,
+    onAuthModalDismiss,
+  ]);
 
   return (
     <Button
@@ -95,19 +114,19 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
         isBiometricsEnabled ? (
           isFaceID ? (
             <RcIconKeychainFaceIdCC
-              color={colors2024['neutral-InvertHighlight']}
+              color={iconColor || colors2024['neutral-InvertHighlight']}
               style={styles.lockIcon}
             />
           ) : (
             <RcIconKeychainFingerprintCC
-              color={colors2024['neutral-InvertHighlight']}
+              color={iconColor || colors2024['neutral-InvertHighlight']}
               style={styles.lockIcon}
             />
           )
         ) : (
           // <BiometricsIcon isFaceID={isFaceID} size={22} />
           <RcIconLock
-            color={colors2024['neutral-InvertHighlight']}
+            color={iconColor || colors2024['neutral-InvertHighlight']}
             style={styles.lockIcon}
           />
         )

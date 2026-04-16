@@ -1,13 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDevOnlyStyle } from '@/utils/styles';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
@@ -21,6 +15,7 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { ellipsisAddress } from '@/utils/address';
 import { IS_ANDROID } from '@/core/native/utils';
 import { AccountSwitcherContextMenu } from '../AccountSwitcher/ContextMenu';
+import { Text } from '@/components/Typography';
 
 const SIZES = {
   itemH: 78,
@@ -73,10 +68,6 @@ export function AddressItemInSheetModal({
   const onPressAccount = useCallback(() => {
     proponPressAddress?.(account);
   }, [account, proponPressAddress]);
-
-  // const { tokenList: tokens } = useTopTokensForAddress({
-  //   accountAddress: account?.address,
-  // });
 
   const handleCopyAddress = () => {
     triggerLight();

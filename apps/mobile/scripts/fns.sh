@@ -181,6 +181,29 @@ reset_builtin_assets() {
   # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
 
+build_worker_if_not_exist() {
+  local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+  local project_dir=$(dirname $script_dir)
+
+  # ./assets/ios/threads/worker.thread.jsbundle
+  local ios_target=$project_dir/assets/ios/threads/worker.thread.jsbundle
+  if [ ! -f $ios_target ]; then
+    echo "[build_worker_if_not_exist] $ios_target not exist, building..."
+    yarn buildworker:prod:ios
+  else
+    echo "[build_worker_if_not_exist] $ios_target exist, skipped."
+  fi
+
+  # ./android/app/src/main/assets/threads/worker.thread.bundle
+  local android_target=$project_dir/android/app/src/main/assets/threads/worker.thread.bundle
+  if [ ! -f $android_target ]; then
+    echo "[build_worker_if_not_exist] $android_target not exist, building..."
+    yarn buildworker:prod:android
+  else
+    echo "[build_worker_if_not_exist] $android_target exist, skipped."
+  fi
+}
+
 print_cmd_upload_changelog() {
   proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
   if [ -z $upload_ver ]; then
@@ -247,8 +270,8 @@ update_webview_assets() {
     project_dir=$(dirname $script_dir)
   fi
   curl -fSL https://unpkg.com/vconsole@3.15.1/dist/vconsole.min.js -o $project_dir/assets/custom/vconsole.min.js
-  curl -fSL https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js -o $project_dir/assets/custom/bignumber.js@9.3.1-bignumber.min.js
-  curl -fSL https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js -o $project_dir/assets/custom/lightweight-charts.standalone.production.js
+  # curl -fSL https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js -o $project_dir/assets/custom/bignumber.js@9.3.1-bignumber.min.js
+  # curl -fSL https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js -o $project_dir/assets/custom/lightweight-charts.standalone.production.js
 }
 
 
@@ -261,6 +284,13 @@ if [ ! -z $func_to_exec ]; then
       ;;
     "reset_builtin_assets")
       reset_builtin_assets
+      ;;
+    "build_worker_if_not_exist")
+      build_worker_if_not_exist
+      ;;
+    "build_worker")
+      yarn buildworker:prod:ios
+      yarn buildworker:prod:android
       ;;
     "run_upload_changelog")
       run_upload_changelog

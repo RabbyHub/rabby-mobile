@@ -1,80 +1,130 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React from 'react';
+import React, { useRef } from 'react';
 
-import { View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import {
+  ScrollView,
+  View,
+  TouchableWithoutFeedback,
+  Keyboard,
+  TouchableOpacity,
+} from 'react-native';
 import { RootNames } from '@/constant/layout';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
-import { StackActions, useNavigation } from '@react-navigation/native';
-import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ProgressBar } from '@/components2024/progressBar';
-import LinearGradient from 'react-native-linear-gradient';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
+import { SeedPhraseGroup } from './CreateSelectOnCurrentSeed/SeedPhraseGroup';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/Typography';
+import { apiMnemonic } from '@/core/apis';
+import { addKeyringAndactiveAndPersistAccounts } from '@/core/apis/mnemonic';
+import { keyringService } from '@/core/services';
+import { ellipsisAddress } from '@/utils/address';
+import { replaceToFirst } from '@/utils/navigation';
+import { toast } from '@/components2024/Toast';
+import { setAccountNeedsBackupReminder } from '@/hooks/account';
 
 function MainListBlocks() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { seedPhraseList } = useSeedPhrase();
-  const navigation = useNavigation();
+  const { seedPhraseList, handleAddSeedPhraseAddress2024 } = useSeedPhrase();
+  const { bottom } = useSafeAreaInsets();
+  const creatingRef = useRef(false);
 
-  const handleCreateNewSeed = React.useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.CreateNewAddress,
-        params: {
-          noSetupPassword: true,
-          useCurrentSeed: false,
-          title: `2. ${t('screens.addressStackTitle.ConfrimAddress')}`,
+  const handleCreateNewSeed = React.useCallback(async () => {
+    if (creatingRef.current) {
+      return;
+    }
+    creatingRef.current = true;
+    try {
+      const seedPhrase = await apiMnemonic.generatePreMnemonic();
+      const Keyring = keyringService.getKeyringClassForType(
+        KEYRING_CLASS.MNEMONIC,
+      ) as any;
+      const keyring = new Keyring({ mnemonic: seedPhrase, passphrase: '' });
+      const accountsToCreate = keyring?.getAddresses(0, 1);
+      const address = accountsToCreate?.[0]?.address;
+
+      await addKeyringAndactiveAndPersistAccounts(
+        seedPhrase,
+        '',
+        accountsToCreate.map((acc: any) => ({
+          address: acc.address,
+          aliasName: '',
+          index: acc.index,
+        })),
+        false,
+      );
+      keyringService.removePreMnemonics();
+
+      await setAccountNeedsBackupReminder(
+        {
+          address,
+          type: KEYRING_TYPE.HdKeyring,
+          brandName: KEYRING_CLASS.MNEMONIC,
         },
-      }),
-    );
-  }, [navigation, t]);
+        true,
+      );
 
-  const handleCreateCurrentSeed = React.useCallback(() => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackAddress, {
-        screen: RootNames.CreateSelectOnCurrentSeed,
-        params: {},
-      }),
-    );
-  }, [navigation]);
+      replaceToFirst(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess2024,
+        params: {
+          type: KEYRING_TYPE.HdKeyring,
+          brandName: KEYRING_CLASS.MNEMONIC,
+          isFirstCreate: true,
+          address: [address],
+          mnemonics: seedPhrase,
+          passphrase: '',
+          isExistedKR: false,
+          alias: ellipsisAddress(address),
+          showBackup: true,
+        },
+      });
+    } catch (e) {
+      console.error('handleCreateNewSeed error', e);
+      toast.show('Failed to create wallet');
+    } finally {
+      creatingRef.current = false;
+    }
+  }, []);
 
   return (
     <TouchableWithoutFeedback
       onPress={() => {
         Keyboard.dismiss();
       }}>
-      <View style={[styles.container]}>
-        <ProgressBar amount={3} currentCount={1} />
-        <Card
-          style={[styles.listItem, styles.marginTop]}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(bottom, 20) },
+        ]}>
+        <TouchableOpacity
+          style={styles.titleContainer}
           onPress={handleCreateNewSeed}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.titleText}>
-              {t('page.nextComponent.createNewAddress.createNewSeedPhrase')}
-            </Text>
-            <IcRightArrow color={colors2024['neutral-title-1']} />
-          </View>
-          <Text style={styles.tipText}>
-            {t('page.nextComponent.createNewAddress.createNewDesc')}
+          <Text style={styles.titleText}>
+            {t('page.nextComponent.createNewAddress.createNewSeedPhrase')}
           </Text>
-        </Card>
-        {Boolean(seedPhraseList.length) && (
-          <Card style={styles.listItem} onPress={handleCreateCurrentSeed}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.titleText}>
-                {t('page.nextComponent.createNewAddress.createOnCurrent')}
-              </Text>
-              <IcRightArrow color={colors2024['neutral-title-1']} />
-            </View>
-            <Text style={styles.tipText}>
-              {t('page.nextComponent.createNewAddress.createOnCurrentDesc')}
-            </Text>
-          </Card>
-        )}
-      </View>
+          <IcRightArrow
+            color={colors2024['neutral-title-1']}
+            width={12}
+            height={12}
+          />
+        </TouchableOpacity>
+
+        {Boolean(seedPhraseList.length) &&
+          seedPhraseList.map((item, index) => (
+            <SeedPhraseGroup
+              onAddAddress={handleAddSeedPhraseAddress2024}
+              key={index}
+              index={index}
+              data={item}
+              style={styles.group}
+            />
+          ))}
+      </ScrollView>
     </TouchableWithoutFeedback>
   );
 }
@@ -84,38 +134,35 @@ function CreateSelectMethod(): JSX.Element {
   return (
     <NormalScreenContainer
       overwriteStyle={{
-        backgroundColor: colors2024['neutral-bg-1'],
+        backgroundColor: colors2024['neutral-bg-0'],
       }}>
-      <LinearGradient
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]} // 渐变颜色
-        start={{ x: 0, y: 0 }} // 渐变起始位置
-        end={{ x: 0, y: 1 }} // 渐变结束位置
-        // style={{
-        //   height: '100%',
-        // }}
-      >
-        <MainListBlocks />
-      </LinearGradient>
+      <MainListBlocks />
     </NormalScreenContainer>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   titleContainer: {
     display: 'flex',
     flexWrap: 'nowrap',
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   marginTop: {
     marginTop: 28,
   },
   titleText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 20,
     textAlign: 'left',
     color: colors2024['neutral-title-1'],
     // marginRight: 4,
@@ -150,13 +197,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   container: {
-    height: '100%',
-    position: 'relative',
+    flex: 1,
     display: 'flex',
+  },
+  content: {
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 24,
-    marginBottom: 20,
   },
   inputContainer: {
     marginVertical: 8,
@@ -184,6 +231,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
+  },
+  group: {
+    width: '100%',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 16,
   },
 }));
 

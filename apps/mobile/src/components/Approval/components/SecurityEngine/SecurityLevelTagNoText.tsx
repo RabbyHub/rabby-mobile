@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   StyleProp,
@@ -10,6 +9,7 @@ import {
 } from 'react-native';
 import { SecurityEngineLevel } from '@/constant/security';
 import ArrowRightSVG from '@/assets/icons/approval/arrow-right-lite.svg';
+import { Text } from '@/components/Typography';
 
 const styles = StyleSheet.create({
   container: {

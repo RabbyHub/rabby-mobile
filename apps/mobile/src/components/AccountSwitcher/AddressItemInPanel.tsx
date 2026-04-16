@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import React, { useCallback, useMemo } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -15,6 +15,8 @@ import { AccountSwitcherContextMenu } from './ContextMenu';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { TokenDetailHeaderArea } from '@/screens/TokenDetail/components/HeaderArea';
 import { formatPrice, formatTokenAmount } from '@/utils/number';
+import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 const MY_ADDRESS_LIMIT = 3;
 export const AddressItemSizes = {
   radiusValue: 20,
@@ -35,13 +37,29 @@ export function AddressItemInPanel({
   addressItemProps,
   isCurrent,
   isHideToken,
+  rightText,
+  rightAddon,
+  renderRight,
+  renderNameAddon,
+  checkIconPosition = 'right',
   onPressAddress: proponPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
   onPressAddress?: (account: Account) => void;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
   isHideToken?: boolean;
+  rightText?: string;
+  rightAddon?: React.ReactNode;
+  renderRight?: (ctx: {
+    account: Account;
+    isCurrent?: boolean;
+  }) => React.ReactNode;
+  renderNameAddon?: (ctx: {
+    account: Account;
+    isCurrent?: boolean;
+  }) => React.ReactNode;
+  checkIconPosition?: 'name' | 'right';
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
@@ -58,6 +76,45 @@ export function AddressItemInPanel({
   const { tokenList: tokens } = useTopTokensForAddress({
     accountAddress: account?.address,
   });
+
+  const renderTextNode = useCallback(
+    (node: React.ReactNode, textStyle: any) => {
+      if (node === null || node === undefined) {
+        return null;
+      }
+      if (typeof node === 'string' || typeof node === 'number') {
+        return <Text style={textStyle}>{node}</Text>;
+      }
+      return node;
+    },
+    [],
+  );
+
+  const rightNode = useMemo(() => {
+    if (!renderRight) {
+      return null;
+    }
+    return renderTextNode(
+      renderRight({ account, isCurrent }),
+      styles.rightText,
+    );
+  }, [account, isCurrent, renderRight, renderTextNode, styles.rightText]);
+
+  const nameAddonNode = useMemo(() => {
+    if (!renderNameAddon) {
+      return null;
+    }
+    return renderTextNode(
+      renderNameAddon({ account, isCurrent }),
+      styles.nameAddonText,
+    );
+  }, [
+    account,
+    isCurrent,
+    renderNameAddon,
+    renderTextNode,
+    styles.nameAddonText,
+  ]);
 
   return (
     <AddressItemShadowView
@@ -98,6 +155,14 @@ export function AddressItemInPanel({
                   <View style={styles.centerInfo}>
                     <View style={styles.nameAndAdderss}>
                       <WalletName style={styles.addressAliasName} />
+                      {nameAddonNode}
+                      {isCurrent && checkIconPosition === 'name' ? (
+                        <RcIconCorrectCC
+                          color={colors2024['green-default']}
+                          width={16}
+                          height={16}
+                        />
+                      ) : null}
                     </View>
                     <View style={styles.bottomArea}>
                       <WalletBalance
@@ -124,7 +189,14 @@ export function AddressItemInPanel({
                     </View>
                   </View>
                   <View style={styles.rightArea}>
-                    {isCurrent && (
+                    {rightNode}
+                    {rightAddon}
+                    {rightText ? (
+                      <Text style={styles.rightText} numberOfLines={1}>
+                        {rightText}
+                      </Text>
+                    ) : null}
+                    {isCurrent && checkIconPosition === 'right' && (
                       <RcIconCorrectCC
                         color={colors2024['green-default']}
                         width={16}
@@ -147,13 +219,20 @@ export function AddressItemInPanelForTokenDetail({
   addressItemProps,
   isCurrent,
   token,
+  renderNameAddon,
+  checkIconPosition = 'right',
   onPressAddress: _onPressAddress,
 }: {
   addressItemProps: AddressItemProps & { account: Account };
   isCurrent?: boolean;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
   onPressAddress?: (account: Account) => void;
   isHideToken?: boolean;
+  renderNameAddon?: (ctx: {
+    account: Account;
+    isCurrent?: boolean;
+  }) => React.ReactNode;
+  checkIconPosition?: 'name' | 'right';
 } & RNViewProps) {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getAddressItemInPanelStyle,
@@ -167,6 +246,19 @@ export function AddressItemInPanelForTokenDetail({
     accountAddress: account?.address,
     token,
   });
+  const nameAddonNode = useMemo(() => {
+    if (!renderNameAddon) {
+      return null;
+    }
+    const node = renderNameAddon({ account, isCurrent });
+    if (node === null || node === undefined) {
+      return null;
+    }
+    if (typeof node === 'string' || typeof node === 'number') {
+      return <Text style={styles.nameAddonText}>{node}</Text>;
+    }
+    return node;
+  }, [account, isCurrent, renderNameAddon, styles.nameAddonText]);
   const onPressAddress = useCallback(() => {
     _onPressAddress?.(account);
   }, [account, _onPressAddress]);
@@ -215,7 +307,8 @@ export function AddressItemInPanelForTokenDetail({
                   <View style={styles.centerInfo}>
                     <View style={styles.nameAndAdderss}>
                       <WalletName style={styles.addressAliasName} />
-                      {isCurrent && (
+                      {nameAddonNode}
+                      {isCurrent && checkIconPosition === 'name' && (
                         <RcIconCorrectCC
                           color={colors2024['green-default']}
                           width={16}
@@ -242,6 +335,15 @@ export function AddressItemInPanelForTokenDetail({
                       </View>
                     )}
                   </View>
+                  {isCurrent && checkIconPosition === 'right' ? (
+                    <View style={styles.rightArea}>
+                      <RcIconCorrectCC
+                        color={colors2024['green-default']}
+                        width={16}
+                        height={16}
+                      />
+                    </View>
+                  ) : null}
                 </View>
               );
             }}
@@ -293,6 +395,14 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       justifyContent: 'flex-start',
       gap: 4,
       // ...makeDebugBorder('yellow'),
+    },
+    nameAddonText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 14,
+      lineHeight: 18,
+      fontStyle: 'normal',
+      fontWeight: '500',
+      color: ctx.colors2024['neutral-secondary'],
     },
     addressAliasName: {
       flexShrink: 1,
@@ -384,10 +494,22 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       color: ctx.colors2024['brand-default'],
     },
     rightArea: {
+      flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
+      gap: 6,
       height: '100%',
+      marginLeft: 8,
       // ...makeDebugBorder(),
+    },
+    rightText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 17,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 22,
+      color: ctx.colors2024['neutral-title-1'],
+      textAlign: 'right',
     },
     tokenAmount: {
       fontFamily: 'SF Pro Rounded',

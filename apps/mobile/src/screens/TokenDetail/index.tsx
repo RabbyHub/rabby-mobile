@@ -4,18 +4,23 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractProject } from '@/screens/Home/types';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { createGetStyles2024 } from '@/utils/styles';
-import { abstractTokenToTokenItem } from '@/utils/token';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, Platform, Pressable, Text, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  ImageBackground,
+  Platform,
+  Pressable,
+  View,
+} from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatPrice } from '@/utils/number';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -37,8 +42,14 @@ import {
 import { AccountSwitcher } from './components/InScreenSwitch';
 import RcIconRightArrowCC from '@/assets2024/icons/copyTrading/IconRightCC.svg';
 import { patchSingleToken } from '@/databases/sync/assets';
+import { BG_FULL_HEIGHT } from '../Home/hooks/useBgSize';
+import { Tabs } from 'react-native-collapsible-tab-view';
+import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
+import { IconRightCC } from './components/IconRightCC';
 
 const isAndroid = Platform.OS === 'android';
+const ScreenWidth = Dimensions.get('window').width;
 
 export type TokenFromAddressItem = {
   address: string;
@@ -57,6 +68,8 @@ const TokenDetailContent = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
+  const [reachTop, setReachTop] = React.useState(false);
 
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -64,7 +77,6 @@ const TokenDetailContent = () => {
   const { t } = useTranslation();
 
   const setIsFromBack = useSetAtom(isFromBackAtom);
-  const { safeOffHeader } = useSafeSizes();
   const { safeOffBottom } = useSafeSizes();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -104,23 +116,23 @@ const TokenDetailContent = () => {
         const res = await openapi.getToken(
           effectiveAccount?.address!,
           token.chain,
-          token._tokenId,
+          token.id,
         );
+        // TODO: 通过 store 写 db
         patchSingleToken(effectiveAccount?.address!, res);
-        return ensureAbstractPortfolioToken({
-          ...abstractTokenToTokenItem(token),
+        return {
+          ...token,
           amount: res?.amount,
           price_24h_change: res?.price_24h_change,
           usd_value: res?.usd_value,
           price: res?.price,
-        });
+        } as ITokenItem;
       },
       {
-        refreshDeps: [token.chain, token._tokenId, effectiveAccount?.address],
+        refreshDeps: [token.chain, token.id, effectiveAccount?.address],
       },
     );
 
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
 
   const refreshTag = useCallback(() => {
@@ -131,12 +143,13 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: -3 }}
+        style={{ marginLeft: isAndroid ? 0 : -30 }}
         key={effectiveAccount?.address}
         tokenSize={33}
-        chainSize={14}
+        chainSize={15}
         borderChain
         token={token}
+        showCopyIcon
       />
     );
   }, [effectiveAccount?.address, token]);
@@ -153,13 +166,20 @@ const TokenDetailContent = () => {
     return (
       <RightMore
         token={token}
-        triggerUpdate={triggerUpdate}
+        triggerUpdate={() =>
+          effectiveAccount?.address &&
+          apisAddressBalance.triggerUpdate({
+            address: effectiveAccount?.address,
+            force: false,
+            fromScene: 'TokenDetail',
+          })
+        }
         isMultiAddress={false}
         refreshTags={refreshTag}
-        unHold={false}
+        unHold
       />
     );
-  }, [token, triggerUpdate, refreshTag]);
+  }, [token, refreshTag, effectiveAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {
@@ -178,14 +198,140 @@ const TokenDetailContent = () => {
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
 
-  const { amountSum, usdValue, percentChange, isLoss, is24hNoChange, price } =
-    useSingleTokenBalance({
-      token: baseTokenInfo || token,
-    });
+  const {
+    amountSum,
+    usdValue,
+    percentChange,
+    has24hChangeData,
+    isLoss,
+    is24hNoChange,
+    price,
+  } = useSingleTokenBalance({
+    token: baseTokenInfo || token,
+  });
 
   const onRefresh = useCallback(async () => {
     refreshBaseTokenInfo();
   }, [refreshBaseTokenInfo]);
+  const renderHeader = useCallback(() => {
+    return (
+      <View style={styles.balanceOverviewContainer}>
+        <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
+        <View style={styles.balanceOverviewContent}>
+          <BalanceOverview usdValue={usdValue} amount={amountSum} />
+          {!baseTokenInfo ? null : (
+            <Pressable
+              style={[
+                styles.floatingBarContent,
+                has24hChangeData
+                  ? [
+                      isLoss ? styles.lossShadow : styles.upShadow,
+                      {
+                        borderColor: is24hNoChange
+                          ? colors2024['neutral-secondary']
+                          : isLoss
+                          ? colors2024['red-disable']
+                          : colors2024['green-light-2'],
+                        backgroundColor: is24hNoChange
+                          ? colors2024['neutral-bg-1']
+                          : isLoss
+                          ? colors2024['red-light-1']
+                          : colors2024['green-light-1'],
+                      },
+                    ]
+                  : styles.marketDataBarContent,
+              ]}
+              onPress={handleOpenTokenMarketInfo}>
+              {has24hChangeData ? (
+                <>
+                  <View style={styles.floatPriceContainer}>
+                    <Text style={styles.floatBalanceTitle}>
+                      {t('page.tokenDetail.price')}:
+                    </Text>
+                    <Text style={styles.floatPrice}>
+                      {price ? `${formatPrice(price)}` : ' --'}
+                    </Text>
+                  </View>
+                  <View style={styles.floatBalanceContainer}>
+                    <Text
+                      style={[
+                        styles.floatPriceChange,
+                        {
+                          color: is24hNoChange
+                            ? colors2024['neutral-body']
+                            : isLoss
+                            ? colors2024['red-default']
+                            : colors2024['green-default'],
+                        },
+                      ]}>
+                      {is24hNoChange ? '' : isLoss ? '-' : '+'}
+                      {percentChange}
+                    </Text>
+                    <RcIconRightArrowCC
+                      width={14}
+                      height={14}
+                      color={
+                        is24hNoChange
+                          ? colors2024['neutral-body']
+                          : isLoss
+                          ? colors2024['red-default']
+                          : colors2024['green-default']
+                      }
+                    />
+                  </View>
+                </>
+              ) : (
+                <View style={styles.marketDataContainer}>
+                  <Text style={styles.marketDataText}>
+                    {t('page.tokenDetail.tabs.marketData')}
+                  </Text>
+                  <View style={styles.marketDataIconContainer}>
+                    <IconRightCC
+                      width={14}
+                      height={14}
+                      rectColor={colors2024['neutral-line']}
+                      pathColor={colors2024['neutral-title-1']}
+                    />
+                  </View>
+                </View>
+              )}
+            </Pressable>
+          )}
+        </View>
+
+        <View style={[styles.historyHeader]}>
+          <Text style={styles.relateTitle}>
+            {t('page.tokenDetail.Transaction')}
+          </Text>
+        </View>
+      </View>
+    );
+  }, [
+    amountSum,
+    baseTokenInfo,
+    colors2024,
+    handleOpenTokenMarketInfo,
+    has24hChangeData,
+    is24hNoChange,
+    isLoss,
+    percentChange,
+    price,
+    styles,
+    t,
+    usdValue,
+  ]);
+
+  const handleReachTopStatusChange = React.useCallback(
+    (status: boolean) => {
+      setReachTop(status);
+      Animated.timing(fadeAnim, {
+        toValue: status ? 1 : 0,
+        duration: 10,
+        useNativeDriver: true,
+      }).start();
+    },
+    [fadeAnim, setReachTop],
+  );
 
   if (!effectiveAccount?.address) {
     return null;
@@ -195,88 +341,48 @@ const TokenDetailContent = () => {
     <NormalScreenContainer2024
       type="bg1"
       overwriteStyle={styles.rootScreenContainer}>
-      <ImageBackground
-        source={
-          !isLoss
-            ? require('@/assets2024/singleHome/up.png')
-            : require('@/assets2024/singleHome/loss.png')
-        }
-        resizeMode="cover"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: safeOffHeader + 120,
-        }}
-      />
+      <Animated.View
+        style={[
+          styles.topWrapper,
+          {
+            height: BG_FULL_HEIGHT,
+            opacity: fadeAnim,
+          },
+        ]}>
+        <ImageBackground
+          source={
+            !isLoss
+              ? require('@/assets2024/singleHome/up.png')
+              : require('@/assets2024/singleHome/loss.png')
+          }
+          resizeMode="cover"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: BG_FULL_HEIGHT,
+          }}
+        />
+      </Animated.View>
+      <Tabs.Container
+        renderTabBar={() => null}
+        tabBarHeight={0}
+        headerHeight={120}
+        renderHeader={renderHeader}
+        headerContainerStyle={styles.headerContainer}
+        containerStyle={styles.container}
+        pagerProps={{ scrollEnabled: !isAndroid }}>
+        <Tabs.Tab label="History" name="history">
+          <TokenDetailHistoryList
+            onRefresh={onRefresh}
+            onReachTopStatusChange={handleReachTopStatusChange}
+            finalAccount={effectiveAccount}
+            token={token}
+          />
+        </Tabs.Tab>
+      </Tabs.Container>
 
-      <View style={styles.balanceOverviewContainer}>
-        <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
-        <View style={styles.balanceOverviewContent}>
-          <BalanceOverview usdValue={usdValue} amount={amountSum} />
-          {!baseTokenInfo ? null : (
-            <Pressable
-              style={[
-                styles.floatingBarContent,
-                isLoss ? styles.lossShadow : styles.upShadow,
-                {
-                  borderColor: is24hNoChange
-                    ? colors2024['neutral-secondary']
-                    : isLoss
-                    ? colors2024['red-disable']
-                    : colors2024['green-disable'],
-                  backgroundColor: is24hNoChange
-                    ? colors2024['neutral-bg-1']
-                    : isLoss
-                    ? colors2024['red-light-1']
-                    : colors2024['green-light-4'],
-                },
-              ]}
-              onPress={handleOpenTokenMarketInfo}>
-              <View style={styles.floatPriceContainer}>
-                <Text style={styles.floatBalanceTitle}>
-                  {t('page.tokenDetail.price')}:
-                </Text>
-                <Text style={styles.floatPrice}>${formatPrice(price)}</Text>
-              </View>
-              <View style={styles.floatBalanceContainer}>
-                <Text
-                  style={[
-                    styles.floatPriceChange,
-                    {
-                      color: is24hNoChange
-                        ? colors2024['neutral-body']
-                        : isLoss
-                        ? colors2024['red-default']
-                        : colors2024['green-default'],
-                    },
-                  ]}>
-                  {is24hNoChange ? '0.0%' : isLoss ? '-' : '+'}
-                  {percentChange}
-                </Text>
-                <RcIconRightArrowCC
-                  width={14}
-                  height={14}
-                  color={
-                    is24hNoChange
-                      ? colors2024['neutral-body']
-                      : isLoss
-                      ? colors2024['red-default']
-                      : colors2024['green-default']
-                  }
-                />
-              </View>
-            </Pressable>
-          )}
-        </View>
-      </View>
-      <TokenDetailHistoryList
-        onRefresh={onRefresh}
-        finalAccount={effectiveAccount}
-        token={token}
-      />
-      <View style={{ height: isAndroid ? 220 + safeOffBottom : 56 }} />
       <View style={styles.bottomContainer}>
         <TokenDetailBottomBtns
           token={token}
@@ -313,10 +419,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         : colors2024['neutral-bg-1'],
       paddingBottom: 20,
     },
+    topWrapper: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: ScreenWidth,
+      overflow: 'hidden',
+    },
+    headerContainer: {
+      backgroundColor: 'transparent',
+      shadowColor: 'transparent',
+      shadowOpacity: 0,
+      elevation: 0,
+    },
+    container: {
+      overflow: 'hidden',
+    },
     balanceOverviewContainer: {
       paddingLeft: 23,
       paddingRight: 16,
-      marginBottom: 24,
     },
     bottomContainer: {
       width: '100%',
@@ -332,15 +453,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      overflow: 'hidden',
     },
     floatingBarContent: {
       flexDirection: 'column',
       gap: 4,
       borderWidth: 1,
       borderColor: colors2024['green-default'],
-      backgroundColor: colors2024['green-light-4'],
+      backgroundColor: colors2024['green-light-1'],
       padding: 6,
       paddingHorizontal: 12,
+      borderRadius: 16,
+      borderBottomRightRadius: 2,
+    },
+    marketDataBarContent: {
+      height: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-line'],
+      backgroundColor: colors2024['neutral-bg-1'],
       borderRadius: 16,
       borderBottomRightRadius: 2,
     },
@@ -386,6 +518,26 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       gap: 4,
     },
+    marketDataContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      minWidth: 90,
+    },
+    marketDataText: {
+      color: colors2024['neutral-body'],
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+    },
+    marketDataIconContainer: {
+      width: 14,
+      height: 14,
+      borderRadius: 999,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     floatPrice: {
       color: colors2024['neutral-title-1'],
       fontSize: 14,
@@ -399,6 +551,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 18,
       fontWeight: '800',
       fontFamily: 'SF Pro Rounded',
+    },
+    relateTitle: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: '900',
+    },
+    historyHeader: {
+      flexDirection: 'row',
+      marginTop: 26,
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    historyHeaderTop: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
     },
   };
 });

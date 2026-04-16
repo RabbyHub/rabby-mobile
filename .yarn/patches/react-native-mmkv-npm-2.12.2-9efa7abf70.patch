@@ -1,3 +1,16 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index d91238762ab58c649b262f1135588b765db235b8..62e8aa21c6e14b22effff8e15cb7e54a71356a90 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -91,7 +91,7 @@ android {
+     externalNativeBuild {
+       cmake {
+         cppFlags "-O2 -frtti -fexceptions -Wall -Wno-unused-variable -fstack-protector-all"
+-        arguments "-DANDROID_STL=c++_shared"
++        arguments "-DANDROID_STL=c++_shared", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+         abiFilters (*reactNativeArchitectures())
+       }
+     }
 diff --git a/android/src/main/cpp/MmkvHostObject.cpp b/android/src/main/cpp/MmkvHostObject.cpp
 index 1ffbdc2d960f800cae56de82ae4cff2d6586a477..9ccc10fc28f5a4a0aebd9ded4c266592d000f781 100644
 --- a/android/src/main/cpp/MmkvHostObject.cpp

@@ -1,13 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
-# . ./patches/patch-env.sh --source-only
+script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+project_dir=$(dirname $(dirname $script_dir))
 
-WITH_ENVIRONMENT="../node_modules/react-native/scripts/xcode/with-environment.sh"
-REACT_NATIVE_XCODE="../node_modules/react-native/scripts/react-native-xcode.sh"
+WITH_ENVIRONMENT="$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh"
+REACT_NATIVE_XCODE="$REACT_NATIVE_PATH/scripts/react-native-xcode.sh"
 SENTRY_XCODE="../node_modules/@sentry/react-native/scripts/sentry-xcode.sh"
-BUNDLE_REACT_NATIVE="/bin/sh $SENTRY_XCODE $REACT_NATIVE_XCODE"
 
 # you can also run `sudo ln -s $(which node) /usr/local/bin/node` on macOS
 export NODE_BINARY=$(command -v node);
@@ -30,10 +30,72 @@ if [[ "$CONFIGURATION" == "Release" ]]; then
 fi
 echo "[RabbyMobileBuild] buildchannel is $buildchannel"
 
-[ -f yarn ] && yarn install;
+check_env_file() {
+  env_file="$project_dir/.env"
+  if [ "$APP_ENV" == "hashing" ]; then
+    echo "[RabbyMobileBuild] in hashing mode"
+    env_file="$project_dir/.env.hashing"
+  elif [ "$CONFIGURATION" == "Release" ]; then
+    env_file="$project_dir/.env.production"
+  elif [ -f "$project_dir/.env.local" ]; then
+    env_file="$project_dir/.env.local"
+  fi
+
+  echo "[RabbyMobileBuild] checking env file: $env_file"
+
+  local sysenv_krPwd=$RABBY_MOBILE_KR_PWD
+  local krPwd_fromEnvFile=""
+  local env_buildchannel=""
+
+  if [ -f "$env_file" ]; then
+    while IFS='=' read -r key value || [ -n "$key" ]; do
+      key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1')
+      if [ -z "$key_cleaned" ]; then continue; fi
+      value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
+      if [ "$key_cleaned" == "RABBY_MOBILE_KR_PWD" ]; then
+        krPwd_fromEnvFile="$value_cleaned"
+      elif [ "$key_cleaned" == "RABBY_MOBILE_BUILD_CHANNEL" ]; then
+        env_buildchannel="$value_cleaned"
+      fi
+
+      if [ "$key_cleaned" == "IOS_SKIP_METRO_BUNDLE_ON_DEBUG" ]; then
+        export IOS_SKIP_METRO_BUNDLE_ON_DEBUG="$value_cleaned"
+      fi
+    done < <(grep -v '^[[:space:]]*#' "$env_file" | grep -v '^[[:space:]]*$')
+
+    if [ -z "$krPwd_fromEnvFile" ]; then
+      echo "[RabbyMobileBuild] no RABBY_MOBILE_KR_PWD in env file $env_file, abort bundle"
+      exit 1
+    elif [ "$CONFIGURATION" == "Release" ] && [ "$env_buildchannel" != "appstore" ]; then
+      echo "[RabbyMobileBuild] RABBY_MOBILE_BUILD_CHANNEL from env file $env_file is invalid, abort bundle"
+      exit 1
+    else
+      echo "[RabbyMobileBuild] found env file $env_file, use its vars"
+    fi
+  else
+    if [ -z "$sysenv_krPwd" ]; then
+      echo "[RabbyMobileBuild] no RABBY_MOBILE_KR_PWD in system env, abort bundle"
+      exit 1
+    fi
+    echo "RABBY_MOBILE_KR_PWD=$sysenv_krPwd" >> $env_file
+    if [ "$CONFIGURATION" == "Release" ]; then
+      echo "RABBY_MOBILE_BUILD_CHANNEL=appstore" >> $env_file
+    fi
+    echo "[RabbyMobileBuild] no env file $env_file found, have written to it"
+  fi
+}
+
+check_env_file;
+
+if [ "$CONFIGURATION" == "Debug" ] && [ "$IOS_SKIP_METRO_BUNDLE_ON_DEBUG" == "true" ]; then
+  echo "[RabbyMobileBuild] skip debug bundle while preserving Metro device setup"
+  export SKIP_BUNDLING=1
+fi
+
+[ -f yarn ] && yarn install --immutable;
 [ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;
 echo "[RabbyMobileBuild] customize build environment vars finished."
 
-/bin/sh -c "$WITH_ENVIRONMENT \"$BUNDLE_REACT_NATIVE\""
+/bin/sh -c "$WITH_ENVIRONMENT $SENTRY_XCODE"
 
 echo "[RabbyMobileBuild] finish bundle with sentry build."

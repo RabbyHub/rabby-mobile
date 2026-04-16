@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 
 import { RcArrowRight3CC } from '@/assets/icons/common';
 import { RcIconBallCC, RcIconGoogle } from '@/assets/icons/dapp';
@@ -14,25 +14,25 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTranslation } from 'react-i18next';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn } from 'ahooks';
+import { ViewProps } from 'react-native';
+import { Text } from '@/components/Typography';
 
-export function BrowserSearchResult({
+export function DappFirstSearchResult({
   data,
   searchText,
   onOpenURL,
   isValidDomain,
-  isInBottomSheet,
+  style,
 }: {
   data: DappInfo[];
   searchText: string;
-  onOpenURL?(url: string): void;
+  onOpenURL?(url: string, options?: { isDirect?: boolean }): void;
   isValidDomain?: boolean;
-  isInBottomSheet?: boolean;
+  style?: ViewProps['style'];
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
-
-  const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
 
   const { t } = useTranslation();
 
@@ -51,8 +51,140 @@ export function BrowserSearchResult({
   });
 
   return (
+    <>
+      {searchText ? (
+        <View style={[styles.list, { flex: 0 }, style]}>
+          {data?.[0] ? (
+            <View>
+              <Text style={styles.firstTitle}>{t('global.Dapp')}</Text>
+              <BrowserSiteCard
+                keyword={searchText}
+                data={data[0]}
+                onPress={handlePress}
+                isShowBorder
+                isShowFavorite
+                isShowListBy
+              />
+            </View>
+          ) : null}
+          <TouchableOpacity
+            style={styles.listItem}
+            hitSlop={10}
+            onPress={() => {
+              onOpenURL?.(
+                `https://www.google.com/search?q=${encodeURIComponent(
+                  searchText,
+                )}`,
+              );
+            }}>
+            <RcIconGoogle style={styles.listItemIcon} />
+            <View style={styles.listItemContent}>
+              <Text
+                style={styles.listItemText}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {t('page.browser.BrowserSearch.searchInGoogle', {
+                  searchText: searchText,
+                })}
+              </Text>
+              <RcArrowRight3CC
+                width={16}
+                height={16}
+                style={styles.listItemArrowIcon}
+                color={colors2024['neutral-body']}
+              />
+            </View>
+          </TouchableOpacity>
+          {isValidDomain ? (
+            <TouchableOpacity
+              style={styles.listItem}
+              hitSlop={10}
+              onPress={() => {
+                const url = /^https?:\/\//.test(searchText)
+                  ? searchText
+                  : `https://${searchText}`;
+                onOpenURL?.(url, { isDirect: true });
+                const origin = safeGetOrigin(url);
+                if (origin) {
+                  matomoRequestEvent({
+                    category: 'Websites Usage',
+                    action: 'Website_Visit_Direct Open',
+                    label: origin,
+                  });
+                }
+              }}>
+              <RcIconBallCC
+                style={styles.listItemIcon}
+                color={colors2024['neutral-secondary']}
+              />
+              <View style={styles.listItemContent}>
+                <Text
+                  style={styles.listItemText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {t('page.browser.BrowserSearch.openUrl', {
+                    searchText: searchText,
+                  })}
+                </Text>
+                <RcArrowRight3CC
+                  width={16}
+                  height={16}
+                  style={styles.listItemArrowIcon}
+                  color={colors2024['neutral-body']}
+                />
+              </View>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
+    </>
+  );
+}
+
+export function BrowserSearchResult({
+  data,
+  searchText,
+  onOpenURL,
+  isValidDomain,
+  isInBottomSheet,
+  showOtherResults = true,
+}: {
+  data: DappInfo[];
+  searchText: string;
+  onOpenURL?(url: string, options?: { isDirect?: boolean }): void;
+  isValidDomain?: boolean;
+  isInBottomSheet?: boolean;
+  showOtherResults?: boolean;
+}) {
+  const { colors2024, styles } = useTheme2024({
+    getStyle,
+  });
+
+  const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
+
+  const { t } = useTranslation();
+
+  const handlePress = useMemoizedFn(
+    (dapp: DappInfo, options?: { isDirect?: boolean }) => {
+      if (
+        !dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))?.isDapp
+      ) {
+        dappService.updateDapp(dapp);
+      }
+      onOpenURL?.(dapp.url || dapp.origin, options);
+      if (dapp.origin) {
+        matomoRequestEvent({
+          category: 'Websites Usage',
+          action: 'Website_Visit_Search Results',
+          label: dapp.origin,
+        });
+      }
+    },
+  );
+
+  return (
     <Component
-      data={data?.slice(1)}
+      data={showOtherResults ? data?.slice(1) : []}
       style={styles.dappList}
       keyExtractor={item => item.origin}
       // onEndReached={onEndReached}
@@ -62,94 +194,16 @@ export function BrowserSearchResult({
       // ListEmptyComponent={ListEmptyComponent}
       ListHeaderComponent={
         <>
-          {searchText ? (
-            <View style={styles.list}>
-              {data?.[0] ? (
-                <View>
-                  <BrowserSiteCard
-                    keyword={searchText}
-                    data={data[0]}
-                    onPress={handlePress}
-                    isShowBorder
-                    isShowFavorite
-                    isShowListBy
-                  />
-                </View>
-              ) : null}
-              <TouchableOpacity
-                style={styles.listItem}
-                hitSlop={10}
-                onPress={() => {
-                  onOpenURL?.(
-                    `https://www.google.com/search?q=${encodeURIComponent(
-                      searchText,
-                    )}`,
-                  );
-                }}>
-                <RcIconGoogle style={styles.listItemIcon} />
-                <View style={styles.listItemContent}>
-                  <Text
-                    style={styles.listItemText}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {t('page.browser.BrowserSearch.searchInGoogle', {
-                      searchText: searchText,
-                    })}
-                  </Text>
-                  <RcArrowRight3CC
-                    width={16}
-                    height={16}
-                    style={styles.listItemArrowIcon}
-                    color={colors2024['neutral-body']}
-                  />
-                </View>
-              </TouchableOpacity>
-              {isValidDomain ? (
-                <TouchableOpacity
-                  style={styles.listItem}
-                  hitSlop={10}
-                  onPress={() => {
-                    const url = /^https?:\/\//.test(searchText)
-                      ? searchText
-                      : `https://${searchText}`;
-                    onOpenURL?.(url);
-                    const origin = safeGetOrigin(url);
-                    if (origin) {
-                      matomoRequestEvent({
-                        category: 'Websites Usage',
-                        action: 'Website_Visit_Direct Open',
-                        label: origin,
-                      });
-                    }
-                  }}>
-                  <RcIconBallCC
-                    style={styles.listItemIcon}
-                    color={colors2024['neutral-secondary']}
-                  />
-                  <View style={styles.listItemContent}>
-                    <Text
-                      style={styles.listItemText}
-                      numberOfLines={1}
-                      ellipsizeMode="tail">
-                      {t('page.browser.BrowserSearch.openUrl', {
-                        searchText: searchText,
-                      })}
-                    </Text>
-                    <RcArrowRight3CC
-                      width={16}
-                      height={16}
-                      style={styles.listItemArrowIcon}
-                      color={colors2024['neutral-body']}
-                    />
-                  </View>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          ) : null}
+          <DappFirstSearchResult
+            data={data}
+            searchText={searchText}
+            onOpenURL={onOpenURL}
+            isValidDomain={isValidDomain}
+          />
           {data?.length > 1 ? (
             <View style={styles.header}>
               <Text style={styles.title}>
-                {t('page.browser.BrowserSearch.results')}
+                {t('page.browser.BrowserSearch.otherResults')}
               </Text>
             </View>
           ) : null}
@@ -161,7 +215,7 @@ export function BrowserSearchResult({
             <BrowserSiteCard
               data={item}
               onPress={handlePress}
-              isShowBorder
+              // isShowBorder
               isShowFavorite
               isShowListBy
             />
@@ -195,6 +249,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dappListItem: {
     marginBottom: 12,
   },
+  firstTitle: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontStyle: 'normal',
+    fontWeight: '800',
+    lineHeight: 22,
+    paddingBottom: 12,
+  },
   list: {
     flex: 1,
     display: 'flex',
@@ -224,11 +287,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 16,
   },
   listItemText: {
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   footer: {
     backgroundColor: colors2024['neutral-bg-1'],

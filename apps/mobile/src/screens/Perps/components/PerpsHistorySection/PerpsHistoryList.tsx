@@ -13,7 +13,6 @@ import {
   FlatList,
   ListRenderItem,
   StyleProp,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -21,10 +20,11 @@ import { PerpsHistoryAccountItem } from './PerpsHistoryAccountItem';
 import { PerpsHistoryDetailPopup } from './PerpsHistoryDetailPopup';
 import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { PerpsHistoryItem } from './PerpsHistoryItem';
+import { Text } from '@/components/Typography';
 
 export const PerpsHistoryList: React.FC<{
-  ListHeaderComponent?: React.ReactElement;
-  ListFooterComponent?: React.ReactElement;
+  ListHeaderComponent?: React.ReactElement<any>;
+  ListFooterComponent?: React.ReactElement<any>;
   marketDataMap: MarketDataMap;
   historyList?: (AccountHistoryItem | WsFill)[];
   style?: StyleProp<ViewStyle>;
@@ -35,6 +35,7 @@ export const PerpsHistoryList: React.FC<{
   historyList: list,
   style,
 }) => {
+  console.log('PerpsHistoryList render', list?.[0], list?.[1]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -50,7 +51,7 @@ export const PerpsHistoryList: React.FC<{
   const handleItemClick = useMemoizedFn((fill: WsFill) => {
     const obj = {
       ...fill,
-      logoUrl: marketDataMap[fill.coin.toUpperCase()]?.logoUrl || '',
+      logoUrl: marketDataMap[fill.coin]?.logoUrl || '',
     };
     setSelectedFill(obj);
     setDetailVisible(true);

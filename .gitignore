@@ -38,6 +38,15 @@ preview-build-message.txt
 
 # Cursor AI rules (local development only)
 .cursor/
-.claude/
-docs
-CLAUDE*.md
+.claude/*.local.*
+.claude/worktrees
+docs/*
+!docs/mobile-app-log-format.md
+CLAUDE*.local.md
+
+# codex
+.codex
+
+tasks
+.agents
+.turbo-build

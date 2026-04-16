@@ -4,18 +4,13 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { registerAppScreen } from '@/perfs/apis';
-import {
-  preloadNonProductionScreens,
-  TESTKITS_PRELOAD_SCREENS,
-} from '@/perfs/preloads';
-import { useLayoutEffect } from 'react';
-import { devOnlyDelayNavi } from '../Testkits/testkits-utils';
-
-const GetStartedScreen2024 = registerAppScreen<
-  typeof import('@/screens/GetStarted/NewUserGetStarted2024').default
+import { TESTKITS_PRELOAD_SCREENS } from '@/perfs/preloads';
+import { isNonPublicProductionEnv } from '@/constant';
+const DevUIAnimatedTextAndView = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIAnimatedTextAndView').default
 >({
-  loader: () => import('@/screens/GetStarted/NewUserGetStarted2024'),
-  name: TESTKITS_PRELOAD_SCREENS.NewUserGetStarted2024,
+  loader: () => import('@/screens/Testkits/DevUIAnimatedTextAndView'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIAnimatedTextAndView,
 });
 const DevUIFontShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIFontShowCase').default
@@ -34,6 +29,24 @@ const DevUIAccountShowCase = registerAppScreen<
 >({
   loader: () => import('@/screens/Testkits/DevUIAccountShowCase'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIAccountShowCase,
+});
+const DevUIComponents2024ShowCase = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIComponents2024ShowCase').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIComponents2024ShowCase'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIComponents2024ShowCase,
+});
+const DevUIToast = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIToast').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIToast'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIToast,
+});
+const DevUINotifications = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUINotifications').default
+>({
+  loader: () => import('@/screens/Testkits/DevUINotifications'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUINotifications,
 });
 const DevUIScreenContainerShowCase = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIScreenContainerShowCase').default
@@ -65,6 +78,26 @@ const DevDataSQLite = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevDataSQLite'),
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
+const DevSwitches = !isNonPublicProductionEnv
+  ? registerAppScreen<typeof import('@/screens/Testkits/DevSwitches').default>({
+      loader: () => import('@/screens/Testkits/DevSwitches'),
+      name: TESTKITS_PRELOAD_SCREENS.DevSwitches,
+    })
+  : require('@/screens/Testkits/DevSwitches').default;
+const DevPerf = !isNonPublicProductionEnv
+  ? registerAppScreen<typeof import('@/screens/Testkits/DevPerf').default>({
+      loader: () => import('@/screens/Testkits/DevPerf'),
+      name: TESTKITS_PRELOAD_SCREENS.DevPerf,
+    })
+  : require('@/screens/Testkits/DevPerf').default;
+const DebugLogViewer = !isNonPublicProductionEnv
+  ? registerAppScreen<
+      typeof import('@/screens/Testkits/DebugLogViewer').default
+    >({
+      loader: () => import('@/screens/Testkits/DebugLogViewer'),
+      name: TESTKITS_PRELOAD_SCREENS.DebugLogViewer,
+    })
+  : require('@/screens/Testkits/DebugLogViewer').default;
 
 const Stack = createNativeStackNavigator();
 
@@ -93,11 +126,8 @@ export function TestkitsNavigator() {
         statusBarBackgroundColor: colors['blue-default'],
       }}>
       <Stack.Screen
-        name={RootNames.NewUserGetStarted2024}
-        component={GetStartedScreen2024}
-        // options={{
-        //   navigationBarHidden: true,
-        // }}
+        name={RootNames.DevUIAnimatedTextAndView}
+        component={DevUIAnimatedTextAndView}
       />
       <Stack.Screen
         name={RootNames.DevUIFontShowCase}
@@ -112,8 +142,17 @@ export function TestkitsNavigator() {
         component={DevUIAccountShowCase}
       />
       <Stack.Screen
+        name={RootNames.DevUIComponents2024ShowCase}
+        component={DevUIComponents2024ShowCase}
+      />
+      <Stack.Screen
         name={RootNames.DevUIScreenContainerShowCase}
         component={DevUIScreenContainerShowCase}
+      />
+      <Stack.Screen name={RootNames.DevUIToast} component={DevUIToast} />
+      <Stack.Screen
+        name={RootNames.DevUINotifications}
+        component={DevUINotifications}
       />
       <Stack.Screen name={RootNames.DevUIDapps} component={DevUIDapps} />
       <Stack.Screen
@@ -126,6 +165,31 @@ export function TestkitsNavigator() {
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+
+      <Stack.Screen
+        name={RootNames.DevSwitches}
+        component={DevSwitches}
+        options={{
+          headerShown: true,
+          // presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.DevPerf}
+        component={DevPerf}
+        options={{
+          headerShown: true,
+          // presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name={RootNames.DebugLogViewer}
+        component={DebugLogViewer}
+        options={{
+          headerShown: true,
+          title: 'App Log Verification',
+        }}
+      />
     </Stack.Navigator>
   );
 }

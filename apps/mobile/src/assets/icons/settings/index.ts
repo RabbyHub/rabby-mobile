@@ -10,6 +10,7 @@ export const RcClearPending = makeThemeIcon2024FromCC(
     onLight: ctx.colors2024['brand-default'],
     onDark: ctx.colors2024['brand-default'],
   }),
+  { allowColorProp: true },
 );
 
 import { default as RcFeedbackCC } from './feedback-cc.svg';
@@ -51,7 +52,16 @@ export const RcFingerprint = makeThemeIcon2024FromCC(RcFingerprintCC, ctx => ({
   onDark: ctx.colors2024['brand-default'],
 }));
 
-// terms-of-use-cc.svg
+// icon-notification-cc.svg
+import { default as RcNotificationCC } from './icon-notification-cc.svg';
+export const RcNotification = makeThemeIcon2024FromCC(
+  RcNotificationCC,
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
+);
+
 import { default as RcTermsOfUseCC } from './terms-of-use-cc.svg';
 export const RcTermsOfUse = makeThemeIcon2024FromCC(RcTermsOfUseCC, ctx => ({
   onLight: ctx.colors2024['brand-default'],
@@ -125,12 +135,17 @@ export const RcManagePassword = makeThemeIconFromCC(
 );
 
 import { default as RcScreenshotCC } from './screenshot-cc.svg';
-export const RcScreenshot = makeThemeIconFromCC(RcScreenshotCC, 'neutral-body');
+export const RcScreenshot = makeThemeIconFromCC(
+  RcScreenshotCC,
+  'neutral-body',
+  { allowColorProp: true },
+);
 
 import { default as RcScreenRecordCC } from './screenrecord-cc.svg';
 export const RcScreenRecord = makeThemeIconFromCC(
   RcScreenRecordCC,
   'neutral-body',
+  { allowColorProp: true },
 );
 
 import { default as RcAddCustomNetworkCC } from './add-custom-network-cc.svg';
@@ -146,12 +161,14 @@ import { default as RcGoogleDriveCC } from './google-drive-cc.svg';
 export const RcGoogleDrive = makeThemeIconFromCC(
   RcGoogleDriveCC,
   'neutral-body',
+  { allowColorProp: true },
 );
 
 import { default as RcGoogleSignoutCC } from './google-signout-cc.svg';
 export const RcGoogleSignout = makeThemeIconFromCC(
   RcGoogleSignoutCC,
   'neutral-body',
+  { allowColorProp: true },
 );
 
 import { default as RcCodeCC } from './code-cc.svg';

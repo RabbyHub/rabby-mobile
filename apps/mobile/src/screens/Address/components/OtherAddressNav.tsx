@@ -1,8 +1,9 @@
 import React from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import { Text } from '@/components/Typography';
 
 export const OtherAddressNav = ({ onPress, text }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });

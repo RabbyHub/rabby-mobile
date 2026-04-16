@@ -1,5 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -10,7 +16,7 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { formatTimestamp } from '@/utils/time';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { Empty } from '@/screens/Transaction/components/Empty';
@@ -21,6 +27,9 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useGetCexList } from '@/screens/Transaction/hook';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
+import { Text } from '@/components/Typography';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -104,6 +113,16 @@ export const SendHistory = ({
     }
   };
 
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      bottomRef.current?.dismiss();
+      return !visible;
+    }, [visible]),
+    { autoEffectEnabled: false },
+  );
+
+  useFocusEffect(onHardwareBackHandler);
+
   return (
     <AppBottomSheetModal
       ref={bottomRef}
@@ -133,7 +152,10 @@ export const SendHistory = ({
             return (
               <View style={styles.addressRow}>
                 <WalletIcon style={styles.walletIcon} />
-                <Text style={styles.address}>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.address}>
                   {currentAccount?.aliasName ||
                     ellipsisAddress(currentAccount?.address || '')}
                 </Text>
@@ -176,6 +198,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
   },
   walletIcon: {
     borderRadius: 4,

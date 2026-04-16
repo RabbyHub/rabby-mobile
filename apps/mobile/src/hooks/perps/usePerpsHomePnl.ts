@@ -1,37 +1,20 @@
-import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect } from 'react';
-import { apisPerps } from './../../core/apis/perps';
-import { usePerpsStore } from './usePerpsStore';
-import { useFocusEffect } from '@react-navigation/native';
+import { perpsStore } from './usePerpsStore';
+import { useShallow } from 'zustand/react/shallow';
+import { usePerpsAccount } from './usePerpsAccount';
 
 export const usePerpsHomePnl = () => {
-  const { state: perpsState, setHomePositionPnl } = usePerpsStore();
-
-  const fetch = useMemoizedFn(async () => {
-    const sdk = apisPerps.getPerpsSDK();
-    const account = await apisPerps.getPerpsCurrentAccount();
-    if (account?.address) {
-      const res = await sdk.info.getClearingHouseState(account.address);
-      if (res.assetPositions.length === 0 || !res?.assetPositions) {
-        setHomePositionPnl({ pnl: 0, show: false });
-      } else {
-        const pnl = res.assetPositions.reduce((acc, asset) => {
-          return acc + Number(asset.position.unrealizedPnl);
-        }, 0);
-        setHomePositionPnl({ pnl, show: true });
-      }
-    } else {
-      setHomePositionPnl({ pnl: 0, show: false });
-    }
-  });
-
-  useFocusEffect(
-    useCallback(() => {
-      fetch();
-    }, [fetch]),
+  const { homePositionPnl } = perpsStore(
+    useShallow(s => ({
+      homePositionPnl: s.homePositionPnl,
+    })),
   );
+  const { accountValue } = usePerpsAccount();
 
   return {
-    perpsPositionInfo: perpsState.homePositionPnl,
+    perpsPositionInfo: {
+      ...homePositionPnl,
+      show: homePositionPnl.show || Number(accountValue) > 0,
+      accountValue: Number(accountValue),
+    },
   };
 };

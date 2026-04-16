@@ -64,7 +64,7 @@ class WatchKeyring extends EventEmitter implements KeyringIntf {
     return [prefixedAddress];
   }
 
-  async signTransaction(address: string, transaction: any): Promise<void> {
+  async signTransaction(address: string, transaction: any) {
     // TODO: split by protocol(walletconnect, cold wallet, etc)
     throw new Error('Can not sign with watch address');
   }

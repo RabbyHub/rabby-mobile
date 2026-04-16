@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react-native';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import {
   notificationService,
   preferenceService,
@@ -15,7 +15,7 @@ import {
   Props as ApprovalPopupContainerProps,
 } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
@@ -39,6 +39,7 @@ import {
 } from '@/utils/errorTxRetry';
 import useAsync from 'react-use/lib/useAsync';
 import { useUnmount } from 'ahooks';
+import { Text } from '@/components/Typography';
 
 interface ApprovalParams {
   address: string;

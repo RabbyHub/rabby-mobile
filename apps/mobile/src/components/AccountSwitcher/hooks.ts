@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -7,6 +7,12 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { apisAccount } from '@/core/apis';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { useRequest } from 'ahooks';
+import { isEqual } from 'lodash';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { zCreate } from '@/core/utils/reexports';
+import { keyringService } from '@/core/services';
+import { ITokenItem } from '@/store/tokens';
+import { perfEvents } from '@/core/utils/perf';
 
 type AccountSwitcherState = {
   /**
@@ -92,99 +98,112 @@ export function useAccountSceneVisible(forScene?: AccountSwitcherScene) {
   };
 }
 
-const addressTop5TokensAtom = atom<{
-  [addr: string]: TokenItem[];
-}>({});
-const addressTop5TokensRequestingRefs = {};
-function useTopTokensByAccount() {
-  const [addressTop5Tokens, setAddressTop5Tokens] = useAtom(
-    addressTop5TokensAtom,
-  );
-  const setTokensByAddr = useCallback(
-    (addr: string, tokens: TokenItem[]) => {
-      setAddressTop5Tokens(prev => ({
-        ...prev,
-        [addr]: tokens,
-      }));
-    },
-    [setAddressTop5Tokens],
-  );
-
-  function getTop5Tokens(tokens: TokenItem[]): TokenItem[] {
-    const tokenMap: { [symbol: string]: TokenItem } = {};
-    let sum = 0;
-    tokens.forEach(token => {
-      sum += token.price * token.amount;
-      if (tokenMap[token.symbol]) {
-        tokenMap[token.symbol].usd_value! += token.price * token.amount;
-      } else {
-        tokenMap[token.symbol] = {
-          ...token,
-          usd_value: token.price * token.amount,
-        };
-      }
+function getTop5Tokens(tokens: TokenItem[]): TokenItem[] {
+  const tokenMap: { [symbol: string]: TokenItem } = {};
+  let sum = 0;
+  tokens.forEach(token => {
+    sum += token.price * token.amount;
+    const item = (tokenMap[token.symbol] = tokenMap[token.symbol] || {
+      ...token,
+      usd_value: 0,
     });
+    item.usd_value = item.usd_value || 0;
+    item.usd_value += token.price * token.amount;
+  });
 
-    const aggregatedTokens = Object.values(tokenMap);
+  const aggregatedTokens = Object.values(tokenMap);
 
-    aggregatedTokens.sort((a, b) => (b.usd_value ?? 0) - (a.usd_value ?? 0));
+  aggregatedTokens.sort((a, b) => (b.usd_value ?? 0) - (a.usd_value ?? 0));
 
-    return aggregatedTokens
-      .slice(0, 5)
-      .filter(
-        item => (item.usd_value || 0) > 10 && (item.usd_value || 0) > sum * 0.1,
-      );
-  }
+  return aggregatedTokens
+    .slice(0, 5)
+    .filter(
+      item => (item.usd_value || 0) > 10 && (item.usd_value || 0) > sum * 0.1,
+    );
+}
 
-  const fetchTokensByAddress = useCallback(
-    (addr?: string, count = 5) => {
-      if (!addr) return;
-      if (addressTop5TokensRequestingRefs[addr]) return;
-      addressTop5TokensRequestingRefs[addr] = true;
+// const addressTop5TokensAtom = atom<{
+//   [addr: string]: TokenItem[];
+// }>({});
+type AccountSwitchState = {
+  top5Tokens: { [addr: string]: TokenItem[] };
+};
+const accountSwitchStore = zCreate<AccountSwitchState>(() => {
+  return {
+    top5Tokens: {},
+  };
+});
 
-      TokenItemEntity.queryTokensByOwner(addr, {
-        filter_tokenGte10Dollar: false,
-        filter_tokenProportionGte10Percent: false,
-      })
-        .then(tokens => {
-          setTokensByAddr(addr, getTop5Tokens(tokens));
-        })
-        .catch(error => {
-          console.error('[useTopTokensByAccount] error', error);
-          setTokensByAddr(addr, []);
-        })
-        .finally(() => {
-          addressTop5TokensRequestingRefs[addr] = false;
-        });
-    },
-    [setTokensByAddr],
-  );
+const setAddressTop5Tokens = (
+  valOrFunc: UpdaterOrPartials<AccountSwitchState['top5Tokens']>,
+) => {
+  accountSwitchStore.setState(prev => ({
+    ...prev,
+    top5Tokens: resolveValFromUpdater(prev.top5Tokens, valOrFunc).newVal,
+  }));
+};
 
-  return { addressTop5Tokens, fetchTokensByAddress };
+const setTokensByAddr = (addr: string, tokens: TokenItem[]) => {
+  setAddressTop5Tokens(prev => {
+    if (isEqual(prev[addr], tokens)) {
+      return prev;
+    }
+    return {
+      ...prev,
+      [addr]: tokens,
+    };
+  });
+};
+
+const fetchTokensByAddresses = (addrs: string[], count = 5) => {
+  TokenItemEntity.queryTokensByOwner(addrs, {
+    filter_tokenGte10Dollar: false,
+    filter_tokenProportionGte10Percent: false,
+  }).then(tokens => {
+    const tokensByAddr: { [addr: string]: TokenItem[] } = {};
+    addrs.forEach(addr => {
+      tokensByAddr[addr] = [];
+    });
+    tokens.forEach(token => {
+      const list = (tokensByAddr[token.owner_addr] =
+        tokensByAddr[token.owner_addr] || []);
+      list.push(token);
+    });
+    Object.entries(tokensByAddr).forEach(([addr, tokens]) => {
+      setTokensByAddr(addr, getTop5Tokens(tokens));
+    });
+  });
+};
+
+function useTopTokensByAccount() {
+  const addressTop5Tokens = accountSwitchStore(s => s.top5Tokens);
+
+  return { addressTop5Tokens };
 }
 
 const fetchedRef = { current: false };
-export function useFetchTokensForAllAccounts() {
-  const { fetchTokensByAddress } = useTopTokensByAccount();
+export const fetchTop5TokensForAllAccountsOnce = () => {
+  if (fetchedRef.current) return;
+  fetchedRef.current = true;
 
-  const fetchTop5TokensForAllAccountsOnce = useCallback(() => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
+  apisAccount
+    .getAllAccountsToDisplay()
+    .then(accounts => {
+      const addresses = new Set([...accounts.map(account => account.address)]);
+      fetchTokensByAddresses([...addresses]);
+    })
+    .catch(error => {
+      console.error('[useFetchTokensForAllAccounts] error', error);
+      fetchedRef.current = false;
+    });
+};
 
-    apisAccount
-      .getAllAccountsToDisplay()
-      .then(accounts => {
-        accounts.forEach(account => {
-          fetchTokensByAddress(account.address);
-        });
-      })
-      .catch(error => {
-        console.error('[useFetchTokensForAllAccounts] error', error);
-        fetchedRef.current = false;
-      });
-  }, [fetchTokensByAddress]);
-
-  return { fetchTop5TokensForAllAccountsOnce };
+export function startFetchOnceTop5TokensForAllAccounts() {
+  const onUnlock = () => {
+    fetchTop5TokensForAllAccountsOnce();
+    sub.remove();
+  };
+  const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
 }
 
 export function useTopTokensForAddress(options?: {
@@ -192,39 +211,31 @@ export function useTopTokensForAddress(options?: {
   count?: number;
 }) {
   const { count = 5, accountAddress } = options || {};
-  const { addressTop5Tokens, fetchTokensByAddress } = useTopTokensByAccount();
+  const { addressTop5Tokens } = useTopTokensByAccount();
 
+  const lowerAddr = useMemo(
+    () => accountAddress?.toLowerCase(),
+    [accountAddress],
+  );
   useEffect(() => {
-    if (!accountAddress) return;
+    if (!lowerAddr) return;
 
-    fetchTokensByAddress(accountAddress, count);
-  }, [accountAddress, fetchTokensByAddress, count]);
-
-  // useAppOrmSyncEvents({
-  //   taskFor: 'token',
-  //   onRemoteDataUpserted: useCallback(({ success, owner_addr }) => {
-  //     if (!success) return ;
-  //     if (!owner_addr) return ;
-
-  //     fetchTokensByAddress(owner_addr, count);
-  //   }, [fetchTokensByAddress, count]),
-  // });
+    fetchTokensByAddresses([lowerAddr], count);
+  }, [lowerAddr, count]);
 
   const tokenList = useMemo(() => {
-    return accountAddress
-      ? addressTop5Tokens[accountAddress]?.slice(0, count)
-      : null;
-  }, [addressTop5Tokens, accountAddress, count]);
+    return lowerAddr ? addressTop5Tokens[lowerAddr]?.slice(0, count) : null;
+  }, [addressTop5Tokens, lowerAddr, count]);
 
   return {
+    addressTop5Tokens,
     tokenList,
-    fetchTokensByAddress,
   };
 }
 
 export function useTokenAmountForAddress(options?: {
   accountAddress?: string;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
 }) {
   const { accountAddress, token } = options || {};
 
@@ -237,13 +248,13 @@ export function useTokenAmountForAddress(options?: {
         });
       }
       return TokenItemEntity.getAddressesAmount({
-        address: accountAddress,
+        address: accountAddress.toLowerCase(),
         chain: token.chain,
-        tokenId: token._tokenId,
+        tokenId: token.id,
       });
     },
     {
-      refreshDeps: [accountAddress, token?.chain, token?._tokenId],
+      refreshDeps: [accountAddress, token?.chain, token?.id],
     },
   );
 

@@ -1,31 +1,29 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Account } from '@/core/services/preference';
 import { useAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
-import { trigger } from 'react-native-haptic-feedback';
+import { useWindowDimensions, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useGasAccountInfo, useGasAccountMethods } from '../hooks';
-import { useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
 import { toast } from '@/components2024/Toast';
 import { filterMyAccounts } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { Text } from '@/components/Typography';
 
 const GasAccountLoginContent: React.FC<{
   onLogin?(): void;
 }> = ({ onLogin }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { login, logout } = useGasAccountMethods();
+  const { login } = useGasAccountMethods();
   const { value: gasAccountInfo } = useGasAccountInfo();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
@@ -34,8 +32,6 @@ const GasAccountLoginContent: React.FC<{
     () => [...filterMyAccounts(accounts)],
     [accounts],
   );
-  const { sig } = useGasAccountSign();
-
   const [loading, setLoading] = useState(false);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
@@ -55,13 +51,9 @@ const GasAccountLoginContent: React.FC<{
     if (loading) {
       return;
     }
-    const isSwitch = gasAccountInfo?.account.id || sig;
     setLoading(true);
     try {
       await switchSceneCurrentAccount('GasAccount', account);
-      if (isSwitch) {
-        await logout();
-      }
       await login(account);
       await onLogin?.();
       toast.success(t('page.gasAccount.loginSuccess'));
@@ -82,7 +74,7 @@ const GasAccountLoginContent: React.FC<{
       colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
       locations={[0.0745, 0.2242]}
       start={{ x: 0, y: 0 }}
-      style={{ width: '100%', height: '100%', paddingBottom: 44 }}
+      style={styles.loginGradient}
       end={{ x: 0, y: 1 }}>
       <View style={styles.loginConfirmContainer}>
         <View style={styles.handleView}>
@@ -117,7 +109,7 @@ export const GasAccountLoginPopup: React.FC<{
   onClose?(): void;
   onLogin?(): void;
 }> = ({ visible, onClose, onLogin }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
@@ -129,14 +121,10 @@ export const GasAccountLoginPopup: React.FC<{
   }, [visible]);
 
   const { height } = useWindowDimensions();
-  const maxHeight = useMemo(() => {
-    return height - 200;
-  }, [height]);
+  const maxHeight = height - 200;
 
   return (
     <AppBottomSheetModal
-      // enableContentPanningGesture={false} // has scorll list
-      // snapPoints={[Math.min(height - 200, 652)]}
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
@@ -154,11 +142,14 @@ export const GasAccountLoginPopup: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
+  loginGradient: {
+    width: '100%',
+    height: '100%',
+    paddingBottom: 44,
+  },
   popup: {
-    // justifyContent: 'flex-end',
     margin: 0,
     height: '100%',
-    // paddingVertical: 10,
     minHeight: 364,
   },
   handleStyle: {

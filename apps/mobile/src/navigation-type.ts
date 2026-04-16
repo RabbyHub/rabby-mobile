@@ -9,21 +9,15 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import {} from '@react-navigation/bottom-tabs';
 
 import type { RootNames } from './constant/layout';
-import type {
-  DisplayedKeyring,
-  DisplayKeyring,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import type { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type { Chain, CHAINS_ENUM } from './constant/chains';
 import type {
-  CopyTradeTokenItemV2,
   NFTItem,
   SendAction,
   TokenItem,
   TransferingNFTItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import type {
-  AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
 } from './screens/Home/types';
@@ -37,20 +31,32 @@ import {
 } from './screens/Approvals/useApprovalsPage';
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
-import { DisplayedProject } from './screens/Home/utils/project';
+import { ITokenItem } from './store/tokens';
 
 /**
  * Learn more about using TypeScript with React Navigation:
  * https://reactnavigation.org/docs/typescript/
  */
 
+export type FromSceneParam = {
+  scene: string;
+  id?: string;
+  chain?: string;
+  symbol?: string;
+};
+
 export type RootStackParamsList = {
   [RootNames.StackRoot]?: NavigatorScreenParams<HomeNavigatorParamsList>;
   [RootNames.StackHomeNonTab]?: NavigatorScreenParams<HomeNonTabNavigatorParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
-  [RootNames.Unlock]?: {};
+  [RootNames.Unlock]?: {
+    disableAutoTriggerUnlock?: boolean;
+  };
+  SetupWallet?:
+    | { seedPhraseVaultId: string }
+    | { privateKeyVaultId: string }
+    | undefined;
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
@@ -63,15 +69,6 @@ export type RootStackParamsList = {
     account?: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };
-  [RootNames.DeFiDetail]?: {
-    data: AbstractProject;
-    portfolioList: AbstractPortfolio[];
-    rawPortfolios?: DisplayedProject[];
-    isSingleAddress?: boolean;
-    account?: KeyringAccountWithAlias | null;
-    cache: boolean;
-    relateTokenId?: string;
-  };
   [RootNames.Scanner]?: {
     syncExtension?: boolean;
     /** @description for some scene scan in place, such as scan from modal */
@@ -79,33 +76,36 @@ export type RootStackParamsList = {
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
+  [RootNames.SelectImportMethod]?: {};
+  [RootNames.ImportRabbyWallet]?: {};
+  [RootNames.ImportSecret]?: {};
+  [RootNames.Backup]?: {
+    address?: string;
+    type?: string;
+    brandName?: string;
+  };
   [RootNames.TokenDetail]: {
-    token:
-      | AbstractPortfolioToken
-      | import('@/screens/Home/hooks/store').CombineTokensItem;
+    token: ITokenItem;
     fromPortfolio?: boolean;
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
-    rawPortfolios?: DisplayedProject[]; // only for single address
+    rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
-    timestamp?: number; // 添加时间戳确保每次都是新页面
   };
   [RootNames.TokenMarketInfo]: {
-    token:
-      | AbstractPortfolioToken
-      | import('@/screens/Home/hooks/store').CombineTokensItem;
+    token: ITokenItem;
     fromPortfolio?: boolean;
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
-    rawPortfolios?: DisplayedProject[]; // only for single address
+    rawPortfolios?: AbstractProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
-    timestamp?: number; // 添加时间戳确保每次都是新页面
+    from?: FromSceneParam;
   };
 };
 
@@ -127,7 +127,9 @@ export type HomeNavigatorParamsList = {
 
 export type HomeNonTabNavigatorParamsList = {
   [RootNames.Search]?: {};
+  [RootNames.Market]?: {};
   [RootNames.Watchlist]?: {};
+  [RootNames.Meme]?: {};
 };
 
 export type DappsNavigatorParamsList = {
@@ -142,24 +144,24 @@ export type BrowserNavigatorParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
-  [RootNames.GetStartedScreen2024]?: {};
 };
 
 type TestKitsNavigatorParamsList = {
-  [RootNames.NewUserGetStarted2024]?: {};
   [RootNames.DevUIFontShowCase]?: {};
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
+  [RootNames.DevUIComponents2024ShowCase]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
   [RootNames.DevUIBuiltInPages]?: {};
   [RootNames.DevUIPermissions]?: {};
+  [RootNames.DevSwitches]?: {};
+  [RootNames.DevPerf]?: {};
 };
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
-  [RootNames.AddressAssetsOverview]?: {};
   [RootNames.ReceiveAddressList]?: {
     tokenSymbol?: string;
     chainEnum?: CHAINS_ENUM;
@@ -171,6 +173,7 @@ export type AddressNavigatorParamList = {
     mnemonics?: string;
     title?: string;
     accounts?: string[];
+    isFirstCreate?: boolean;
   };
   [RootNames.SetPassword2024]?: {
     finishGoToScreen:
@@ -184,13 +187,14 @@ export type AddressNavigatorParamList = {
     delaySetPassword?: boolean;
     hideBackIcon?: boolean;
     isFirstImportPassword?: boolean;
+    isFirstCreate?: boolean;
   };
   [RootNames.ImportSafeAddress2024]?: {};
   [RootNames.ImportWatchAddress2024]?: {};
-  [RootNames.CreateSelectOnCurrentSeed]?: {};
   [RootNames.CreateSelectMethod]?: {};
   [RootNames.CreateChooseBackup]?: {
     delaySetPassword?: boolean;
+    isFirstCreate?: boolean;
   };
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {
@@ -226,6 +230,7 @@ export type AddressNavigatorParamList = {
     keyringId?: number;
     alias?: string;
     isExistedKR?: boolean;
+    showBackup?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -256,9 +261,6 @@ export type AddressNavigatorParamList = {
   [RootNames.BackupPrivateKey]?: {
     data: string;
   };
-  [RootNames.BackupMnemonic]?: {
-    data: string;
-  };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
   [RootNames.SafeAddressList]?: {};
@@ -276,16 +278,11 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
-    scrollToToken?: string;
-    account: Account;
+    // account: Account;
   };
 };
 
 export type TransactionNavigatorParamList = {
-  [RootNames.CopyTradingTokenDetail]?: {
-    tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
-    showTabType?: TabType;
-  };
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
@@ -294,11 +291,14 @@ export type TransactionNavigatorParamList = {
     currentAddress?: string;
   };
   [RootNames.LendingHistory]?: {};
-  [RootNames.CopyTrading]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;
     title?: string;
+    /**
+     * @default false
+     */
+    treatSmallAssetsAsScam?: boolean;
   };
   [RootNames.HistoryLocalDetail]: {
     data: TransactionGroup;
@@ -343,6 +343,7 @@ export type TransactionNavigatorParamList = {
     isSwapToTokenDetail?: boolean;
     isFromSwap?: boolean;
     isFromCopyTrading?: boolean;
+    from?: FromSceneParam;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]: {
@@ -364,10 +365,6 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
   [RootNames.GasAccount]?: {};
-  [RootNames.Buy]?: {
-    receiveToken?: TokenItem;
-  };
-  [RootNames.MultiBuy]?: TransactionNavigatorParamList['Buy'] & object;
   [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
     dataSource: AssetApprovalSpender[];
@@ -376,6 +373,8 @@ export type TransactionNavigatorParamList = {
 
   [RootNames.Perps]?: {
     account?: KeyringAccountWithAlias;
+    fromName?: string;
+    dappId?: string;
   };
   [RootNames.PerpsMarketList]?: {};
   [RootNames.PerpsHistory]?: {
@@ -383,14 +382,22 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.PerpsMarketDetail]: {
     market: string;
-    fromSource?: string;
+    fromSource?: 'homePagePositionList' | 'openPosition' | '';
+    showOpenPosition?: boolean;
+    direction?: 'Long' | 'Short';
   };
-  [RootNames.Lending]?: {};
+  [RootNames.Lending]?: {
+    tokenAddress?: string;
+    direction?: 'supply' | 'borrow';
+    account?: KeyringAccountWithAlias;
+    dappId?: string;
+  };
+  [RootNames.Prediction]?: {};
 };
 
 export type SettingNavigatorParamList = {
   [RootNames.Settings]?: {
-    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+    // enterActionType?: 'setBiometrics' | 'setAutoLockExpireTime';
   };
   [RootNames.ProviderControllerTester]?: {};
   [RootNames.SetPassword]?:
@@ -409,7 +416,7 @@ export type SettingNavigatorParamList = {
     | {
         actionAfterSetup: 'testkits:fromSettings';
         // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
-        actionType: 'setBiometrics' | 'setAutoLockTime';
+        actionType: 'setBiometrics' | 'setAutoLockExpireTime';
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};

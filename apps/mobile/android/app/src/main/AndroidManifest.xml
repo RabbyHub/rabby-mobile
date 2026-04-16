@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
   <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE" /> <!-- Android 14+ -->
   <!-- <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/> -->
 
   <application
@@ -9,7 +10,13 @@
     android:icon="@mipmap/ic_launcher"
     android:roundIcon="@mipmap/ic_launcher_round"
     android:allowBackup="false"
-    android:theme="@style/AppTheme">
+    android:pageSizeCompat="enabled"
+    android:theme="@style/AppTheme"
+    android:networkSecurityConfig="@xml/network_security_config">
+    <!-- if set targetSdkVersion >= 36 (android 16) on build.gradle, you can uncomment lines below, disable predictive animation to avoid gesture issue before react-navigation support it -->
+    <!-- tools:replace="android:enableOnBackInvokedCallback"
+    android:enableOnBackInvokedCallback="false"> -->
+
     <!--
     android:windowSoftInputMode="adjustPan":https://github.com/APSL/react-native-keyboard-aware-scroll-view?tab=readme-ov-file#android-support -->
     <!-- <activity

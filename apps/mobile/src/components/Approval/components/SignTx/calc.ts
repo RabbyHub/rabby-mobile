@@ -1,5 +1,4 @@
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import i18n from '@/utils/i18n';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -13,16 +12,55 @@ import {
 import { transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import { Account } from '@/core/services/preference';
+import i18n from '@/utils/i18n';
+import { getEIP7702MiniGasLimit } from '@/utils/7702';
+import {
+  GasTokenBalanceInfo,
+  getTempoFeeTokenInfo,
+  isTempoChain,
+} from '@/utils/tempo';
+
+const GAS_PRICE_DECIMALS = 18;
+
+const rawAmountToBn = (
+  value: string | number | BigNumber | null | undefined,
+) => {
+  if (BigNumber.isBigNumber(value)) {
+    return value;
+  }
+  return new BigNumber(value || 0);
+};
+
+const pow10 = (decimals: number) => {
+  return new BigNumber(10).pow(Math.max(0, decimals));
+};
+
+const convert18RawToTokenRaw = (
+  rawAmountIn18: BigNumber,
+  tokenDecimals: number,
+) => {
+  if (tokenDecimals === GAS_PRICE_DECIMALS) {
+    return rawAmountIn18;
+  }
+  if (tokenDecimals > GAS_PRICE_DECIMALS) {
+    return rawAmountIn18.times(pow10(tokenDecimals - GAS_PRICE_DECIMALS));
+  }
+  return rawAmountIn18.div(pow10(GAS_PRICE_DECIMALS - tokenDecimals));
+};
 
 export const getRecommendGas = async ({
   gas,
   tx,
   gasUsed,
+  preparedHistoryGasUsed,
 }: {
   gasUsed: number;
   gas: number;
   tx: Tx;
   chainId: number;
+  preparedHistoryGasUsed?:
+    | ReturnType<typeof openapi.historyGasUsed>
+    | Awaited<ReturnType<typeof openapi.historyGasUsed>>;
 }) => {
   if (gas > 0) {
     return {
@@ -40,16 +78,21 @@ export const getRecommendGas = async ({
     };
   }
   try {
-    const res = await openapi.historyGasUsed({
-      tx: {
-        ...tx,
-        nonce: tx.nonce || '0x1', // set a mock nonce for explain if dapp not set it
-        data: tx.data,
-        value: tx.value || '0x0',
-        gas: tx.gas || '', // set gas limit if dapp not set
-      },
-      user_addr: tx.from,
-    });
+    let res: Awaited<ReturnType<typeof openapi.historyGasUsed>>;
+    if (!preparedHistoryGasUsed) {
+      res = await openapi.historyGasUsed({
+        tx: {
+          ...tx,
+          nonce: tx.nonce || '0x1', // set a mock nonce for explain if dapp not set it
+          data: tx.data,
+          value: tx.value || '0x0',
+          gas: tx.gas || '', // set gas limit if dapp not set
+        },
+        user_addr: tx.from,
+      });
+    } else {
+      res = await preparedHistoryGasUsed;
+    }
     if (res.gas_used > 0) {
       return {
         needRatio: true,
@@ -96,6 +139,59 @@ export const getRecommendNonce = async ({
   return `0x${BigNumber.max(onChainNonce, localNonce).toString(16)}`;
 };
 
+export const getGasTokenBalance = async ({
+  address,
+  chainId,
+  account,
+}: {
+  address: string;
+  chainId: number;
+  account: Account;
+}): Promise<GasTokenBalanceInfo> => {
+  const chain = findChain({
+    id: chainId,
+  });
+  if (!chain) {
+    throw new Error('chain not found');
+  }
+
+  if (isTempoChain(chain.serverId)) {
+    const feeToken = await getTempoFeeTokenInfo({
+      account,
+      userAddress: address,
+      chainServerId: chain.serverId,
+    });
+    return {
+      rawBalance: rawAmountToBn(feeToken.rawBalanceHex || 0).toFixed(0),
+      token: {
+        tokenId: feeToken.tokenId,
+        symbol: feeToken.symbol,
+        decimals: feeToken.decimals,
+        logoUrl: feeToken.logoUrl,
+      },
+    };
+  }
+
+  const balance = await apiProvider.requestETHRpc<string>(
+    {
+      method: 'eth_getBalance',
+      params: [address, 'latest'],
+    },
+    chain.serverId,
+    account,
+  );
+
+  return {
+    rawBalance: rawAmountToBn(balance || 0).toFixed(0),
+    token: {
+      tokenId: chain.nativeTokenAddress,
+      symbol: chain.nativeTokenSymbol,
+      decimals: chain.nativeTokenDecimals || GAS_PRICE_DECIMALS,
+      logoUrl: chain.nativeTokenLogo,
+    },
+  };
+};
+
 export const getNativeTokenBalance = async ({
   address,
   chainId,
@@ -105,21 +201,13 @@ export const getNativeTokenBalance = async ({
   chainId: number;
   account: Account;
 }): Promise<string> => {
-  const chain = findChain({
-    id: chainId,
-  });
-  if (!chain) {
-    throw new Error('chain not found');
-  }
-  const balance = await apiProvider.requestETHRpc(
-    {
-      method: 'eth_getBalance',
-      params: [address, 'latest'],
-    },
-    chain.serverId,
+  const gasToken = await getGasTokenBalance({
+    address,
+    chainId,
     account,
-  );
-  return balance;
+  });
+
+  return gasToken.rawBalance;
 };
 
 export const explainGas = async ({
@@ -130,6 +218,8 @@ export const explainGas = async ({
   tx,
   gasLimit,
   account,
+  preparedL1Fee,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
 }: {
   gasUsed: number | string;
   gasPrice: number | string;
@@ -138,28 +228,54 @@ export const explainGas = async ({
   tx: Tx;
   gasLimit: string | undefined;
   account: Account;
+  preparedL1Fee?: string | Promise<string>;
+  gasTokenDecimals?: number;
 }) => {
-  let gasCostTokenAmount = new BigNumber(gasUsed).times(gasPrice).div(1e18);
-  let maxGasCostAmount = new BigNumber(gasLimit || 0).times(gasPrice).div(1e18);
+  let gasCostRawAmountIn18 = rawAmountToBn(gasUsed).times(gasPrice);
+  let maxGasCostRawAmountIn18 = rawAmountToBn(gasLimit || 0).times(gasPrice);
+  let gasCostTokenAmount = gasCostRawAmountIn18.div(1e18);
+  let maxGasCostAmount = maxGasCostRawAmountIn18.div(1e18);
   const chain = findChain({ id: chainId });
-  if (!chain) throw new Error(`${chainId} is not found in supported chains`);
-  if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
-    const res = await apiProvider.fetchEstimatedL1Fee(
-      {
-        txParams: tx,
-        account,
-      },
-      chain.enum,
-    );
-    gasCostTokenAmount = new BigNumber(res).div(1e18).plus(gasCostTokenAmount);
-    maxGasCostAmount = new BigNumber(res).div(1e18).plus(maxGasCostAmount);
+  if (!chain) {
+    throw new Error(`${chainId} is not found in supported chains`);
   }
-  const gasCostUsd = new BigNumber(gasCostTokenAmount).times(nativeTokenPrice);
+  if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
+    let res =
+      typeof preparedL1Fee === 'object' && 'then' in preparedL1Fee
+        ? await preparedL1Fee
+        : preparedL1Fee || undefined;
+    if (!res) {
+      res = await apiProvider.fetchEstimatedL1Fee(
+        {
+          txParams: tx,
+          account,
+        },
+        chain.enum,
+      );
+    }
+    gasCostRawAmountIn18 = gasCostRawAmountIn18.plus(rawAmountToBn(res));
+    maxGasCostRawAmountIn18 = maxGasCostRawAmountIn18.plus(rawAmountToBn(res));
+    gasCostTokenAmount = gasCostRawAmountIn18.div(1e18);
+    maxGasCostAmount = maxGasCostRawAmountIn18.div(1e18);
+  }
+  const gasCostUsd = new BigNumber(gasCostTokenAmount).times(
+    isTempoChain(chain.serverId) ? 1 : nativeTokenPrice,
+  );
+  const gasCostRawAmount = convert18RawToTokenRaw(
+    gasCostRawAmountIn18,
+    gasTokenDecimals,
+  );
+  const maxGasCostRawAmount = convert18RawToTokenRaw(
+    maxGasCostRawAmountIn18,
+    gasTokenDecimals,
+  );
 
   return {
     gasCostUsd,
     gasCostAmount: gasCostTokenAmount,
     maxGasCostAmount,
+    gasCostRawAmount,
+    maxGasCostRawAmount,
   };
 };
 
@@ -172,6 +288,7 @@ export const useExplainGas = ({
   gasLimit,
   isReady,
   account,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
 }: {
   gasUsed: number | string;
   gasPrice: number | string;
@@ -181,11 +298,14 @@ export const useExplainGas = ({
   gasLimit: string | undefined;
   isReady: boolean;
   account: Account;
+  gasTokenDecimals?: number;
 }) => {
   const [result, setResult] = useState({
     gasCostUsd: new BigNumber(0),
     gasCostAmount: new BigNumber(0),
     maxGasCostAmount: new BigNumber(0),
+    gasCostRawAmount: new BigNumber(0),
+    maxGasCostRawAmount: new BigNumber(0),
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -199,6 +319,7 @@ export const useExplainGas = ({
         tx,
         gasLimit,
         account,
+        gasTokenDecimals,
       }).then(data => {
         setResult(data);
         setIsLoading(false);
@@ -213,6 +334,7 @@ export const useExplainGas = ({
     gasLimit,
     isReady,
     account,
+    gasTokenDecimals,
   ]);
 
   return useMemo(() => {
@@ -235,6 +357,8 @@ export const checkGasAndNonce = ({
   isSpeedUp,
   isGnosisAccount,
   nativeTokenBalance,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
+  checkTxValueInBalance = true,
 }: {
   recommendGasLimitRatio: number;
   nativeTokenBalance: string;
@@ -243,10 +367,12 @@ export const checkGasAndNonce = ({
   tx: Tx;
   gasLimit: number | string | BigNumber;
   nonce: number | string | BigNumber;
-  gasExplainResponse: ReturnType<typeof useExplainGas>;
+  gasExplainResponse: Awaited<ReturnType<typeof explainGas>>;
   isCancel: boolean;
   isSpeedUp: boolean;
   isGnosisAccount: boolean;
+  gasTokenDecimals?: number;
+  checkTxValueInBalance?: boolean;
 }) => {
   const errors: {
     code: number;
@@ -292,15 +418,21 @@ export const checkGasAndNonce = ({
       }
     }
   }
-  let sendNativeTokenAmount = new BigNumber(tx.value); // current transaction native token transfer count
-  sendNativeTokenAmount = isNaN(sendNativeTokenAmount.toNumber())
-    ? new BigNumber(0)
-    : sendNativeTokenAmount;
+  const balanceRawAmount = rawAmountToBn(nativeTokenBalance || 0);
+  const sendNativeTokenRawAmount = checkTxValueInBalance
+    ? convert18RawToTokenRaw(rawAmountToBn(tx.value || 0), gasTokenDecimals)
+    : new BigNumber(0);
+  const maxGasCostRawAmount =
+    gasExplainResponse.maxGasCostRawAmount ||
+    rawAmountToBn(gasExplainResponse.maxGasCostAmount).times(
+      pow10(gasTokenDecimals),
+    );
+
   if (
     !isGnosisAccount &&
-    gasExplainResponse.maxGasCostAmount
-      .plus(sendNativeTokenAmount.div(1e18))
-      .isGreaterThan(new BigNumber(nativeTokenBalance).div(1e18))
+    maxGasCostRawAmount
+      .plus(sendNativeTokenRawAmount)
+      .isGreaterThan(balanceRawAmount)
   ) {
     errors.push({
       code: 3001,
@@ -332,6 +464,8 @@ export const useCheckGasAndNonce = ({
   isSpeedUp,
   isGnosisAccount,
   nativeTokenBalance,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
+  checkTxValueInBalance = true,
 }: Parameters<typeof checkGasAndNonce>[0]) => {
   return useMemo(
     () =>
@@ -347,6 +481,8 @@ export const useCheckGasAndNonce = ({
         isSpeedUp,
         isGnosisAccount,
         nativeTokenBalance,
+        gasTokenDecimals,
+        checkTxValueInBalance,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -360,6 +496,165 @@ export const useCheckGasAndNonce = ({
       isSpeedUp,
       isGnosisAccount,
       nativeTokenBalance,
+      gasTokenDecimals,
+      checkTxValueInBalance,
     ],
   );
+};
+
+export type SignTxCheckError = {
+  code: number;
+  msg: string;
+  level?: 'warn' | 'danger' | 'forbidden';
+};
+
+const toHex = (value: number | string) => {
+  return `0x${new BigNumber(value || 0).integerValue().toString(16)}`;
+};
+
+export const buildGasLevelValidationTx = ({
+  tx,
+  gas,
+  support1559,
+  enable7702,
+}: {
+  tx: Tx;
+  gas: {
+    price: number;
+    gasLimit: number;
+    nonce: number;
+    maxPriorityFee?: number;
+  };
+  support1559: boolean;
+  enable7702: boolean;
+}) => {
+  const nonceHex = toHex(gas.nonce);
+  const gasLimitHex = enable7702
+    ? getEIP7702MiniGasLimit(toHex(gas.gasLimit))
+    : toHex(gas.gasLimit);
+
+  const nextTx = support1559
+    ? ({
+        ...tx,
+        maxFeePerGas: toHex(Math.round(gas.price)),
+        maxPriorityFeePerGas:
+          gas.maxPriorityFee !== undefined && gas.maxPriorityFee < 0
+            ? tx.maxFeePerGas
+            : toHex(Math.round(gas.maxPriorityFee || 0)),
+        gas: gasLimitHex,
+        nonce: nonceHex,
+      } as Tx)
+    : ({
+        ...tx,
+        gasPrice: toHex(Math.round(gas.price)),
+        gas: gasLimitHex,
+        nonce: nonceHex,
+      } as Tx);
+
+  return {
+    tx: nextTx,
+    nonceHex,
+    gasLimitHex,
+    validationGasPrice:
+      nextTx.gasPrice || nextTx.maxFeePerGas || toHex(Math.round(gas.price)),
+  };
+};
+
+export const checkNativeLevelInsufficient = async ({
+  tx,
+  gasPrice,
+  gasUsed,
+  chainId,
+  nativeTokenPrice,
+  gasLimitHex,
+  recommendGasLimitRatio,
+  recommendGasLimit,
+  recommendNonce,
+  nonceHex,
+  isCancel,
+  isSpeedUp,
+  isGnosisAccount,
+  nativeTokenBalance,
+  explainGasFn,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
+  checkTxValueInBalance = true,
+}: {
+  tx: Tx;
+  gasPrice: number;
+  gasUsed: number;
+  chainId: number;
+  nativeTokenPrice: number;
+  gasLimitHex: string;
+  recommendGasLimitRatio: number;
+  recommendGasLimit: number | string | BigNumber;
+  recommendNonce: number | string | BigNumber;
+  nonceHex: string;
+  isCancel: boolean;
+  isSpeedUp: boolean;
+  isGnosisAccount: boolean;
+  nativeTokenBalance: string;
+  gasTokenDecimals?: number;
+  checkTxValueInBalance?: boolean;
+  explainGasFn: (params: {
+    gasUsed: number;
+    gasPrice: number;
+    chainId: number;
+    nativeTokenPrice: number;
+    tx: Tx;
+    gasLimit: string;
+  }) => ReturnType<typeof explainGas>;
+}): Promise<[boolean, number]> => {
+  const gasExplain = await explainGasFn({
+    gasUsed,
+    gasPrice,
+    chainId,
+    nativeTokenPrice,
+    tx,
+    gasLimit: gasLimitHex,
+  });
+
+  return [
+    checkGasAndNonce({
+      recommendGasLimitRatio,
+      recommendGasLimit,
+      recommendNonce,
+      tx,
+      gasLimit: gasLimitHex,
+      nonce: Number(nonceHex),
+      isCancel,
+      gasExplainResponse: gasExplain,
+      isSpeedUp,
+      isGnosisAccount,
+      nativeTokenBalance,
+      gasTokenDecimals,
+      checkTxValueInBalance,
+    }).some(item => item.code === 3001),
+    0,
+  ];
+};
+
+export const checkGasAccountLevelInsufficient = async ({
+  tx,
+  gasLimitHex,
+  validationGasPrice,
+  validateGasAccountLevel,
+}: {
+  tx: Tx;
+  gasLimitHex: string;
+  validationGasPrice: string;
+  validateGasAccountLevel: (txs: Tx[]) => Promise<{
+    valid: boolean;
+    cost: number;
+    errors: SignTxCheckError[];
+  }>;
+}): Promise<[boolean, number]> => {
+  const gasAccountValidation = await validateGasAccountLevel([
+    {
+      ...tx,
+      gas: gasLimitHex,
+      gasPrice: validationGasPrice,
+    } as Tx,
+  ]);
+
+  return [!gasAccountValidation.valid, gasAccountValidation.cost];
 };

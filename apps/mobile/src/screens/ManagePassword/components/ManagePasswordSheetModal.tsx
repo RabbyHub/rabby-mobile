@@ -1,11 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import {
-  Text,
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  TextInput,
-} from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import * as Yup from 'yup';
@@ -24,17 +18,18 @@ import { FormInput } from '@/components/Form/Input';
 import { useTranslation } from 'react-i18next';
 import { useFormik } from 'formik';
 import { getFormikErrorsCount } from '@/utils/patch';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { useBiometrics } from '@/hooks/biometrics';
-import { useResetHasTipedUserEnableBiometrics } from '@/screens/Unlock/hooks';
+import { resetHasTipedUserEnableBiometrics } from '@/screens/Unlock/hooks';
 import AutoLockView from '@/components/AutoLockView';
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { useAccounts } from '@/hooks/account';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
+import { Text, TextInput } from '@/components/Typography';
 
 type Props = {
   height?: number;
@@ -112,8 +107,6 @@ function useClearPasswordForm() {
 
   const { fetchLockInfo } = useWalletPasswordInfo();
   const { fetchBiometrics } = useBiometrics();
-  const { resetHasTipedUserEnableBiometrics } =
-    useResetHasTipedUserEnableBiometrics();
 
   const formik = useFormik({
     initialValues: { currentPassword: '' },
@@ -138,7 +131,11 @@ function useClearPasswordForm() {
           values.currentPassword,
         );
         if (result.clearCustomPasswordError) {
-          toast.show(result.clearCustomPasswordError);
+          const errString =
+            typeof result.clearCustomPasswordError === 'string'
+              ? result.clearCustomPasswordError
+              : result.clearCustomPasswordError?.message;
+          toast.show(errString);
         } else {
           toast.success('Clear Password Successfully');
           resetHasTipedUserEnableBiometrics();
@@ -231,7 +228,7 @@ const CancelPasswordSheetModal = (props: Props) => {
           <View style={styles.btnGap} />
           <Button
             disabled={shouldDisabled}
-            onPress={formik.handleSubmit}
+            onPress={() => formik.handleSubmit()}
             title={'Confirm'}
             type="clear"
             buttonStyle={[styles.buttonStyle]}
@@ -270,10 +267,6 @@ function useResetPasswordAndKeyringsForm() {
   const { fetchLockInfo } = useWalletPasswordInfo();
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const { fetchBiometrics } = useBiometrics();
-  const { resetHasTipedUserEnableBiometrics } =
-    useResetHasTipedUserEnableBiometrics();
-
-  const navitation = useRabbyAppNavigation();
 
   const formik = useFormik({
     initialValues: { currentPassword: '' },
@@ -402,7 +395,7 @@ export const ResetPasswordAndKeyringsSheetModal = (props: Props) => {
           <View style={styles.btnGap} />
           <Button
             disabled={shouldDisabled}
-            onPress={formik.handleSubmit}
+            onPress={() => formik.handleSubmit()}
             title={'Confirm'}
             type="clear"
             buttonStyle={[styles.buttonStyle]}

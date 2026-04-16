@@ -1,0 +1,7 @@
+interface:
+  display_name: "Tmp Feature Test Release"
+  short_description: "Promote fixes to Friday tmp and run Feature Test"
+  default_prompt: "Use $tmp-feature-test-release to cherry-pick a committed fix into this Friday tmp branch and dispatch Feature Test."
+
+policy:
+  allow_implicit_invocation: true

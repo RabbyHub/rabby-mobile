@@ -7,12 +7,25 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import {
-  SyncStorage,
-  SyncStringStorage,
+  type SyncStorage,
+  type SyncStringStorage,
 } from 'jotai/vanilla/utils/atomWithStorage';
-import { MMKV_FILE_NAMES, walkThroughMMKVFiles } from '../utils/appFS';
+import { type StateStorage } from 'zustand/middleware';
+
+import { walkThroughMMKVFiles } from '../utils/appFS';
 import RNHelpers from '../native/RNHelpers';
 import { IS_IOS } from '../native/utils';
+import { runDevIIFEFunc } from '../utils/store';
+import { reactotronEvents } from '../utils/reactotron-plugins/_utils';
+import {
+  zCreate,
+  zCreateJSONStorage,
+  zMutative,
+  zPersist,
+} from '../utils/reexports';
+import { appMMKV, keyringMMKV } from './mmkvInstances';
+import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from './mmkvConstants';
+// import { lendingCacheStorage } from '@/screens/Lending/hooks';
 
 function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
   return (
@@ -32,42 +45,51 @@ function checkIfDuplicatedStringifiedJsonString(input: any) {
   );
 }
 
-function makeAppStorage(options?: MMKVConfiguration) {
-  const mmkv = new MMKV(options);
+export function getJsonValueStringCompat(
+  mmkv: MMKV,
+  key: string,
+  options?: MMKVConfiguration,
+): string | null {
+  const raw = mmkv.getString(key);
+  if (!raw) return null;
+  let finalString: string | null = raw;
 
+  try {
+    if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
+      finalString = stringUtils.safeParseJSON(raw, {
+        defaultValue: raw,
+      });
+    } else if (checkIfDuplicatedStringifiedJsonString(raw)) {
+      finalString = stringUtils.safeParseJSON(raw, {
+        defaultValue: raw,
+      });
+    }
+  } catch (e) {
+    if (__DEV__) {
+      console.warn(
+        `[getJsonValueStringCompat::${options?.id}] Failed to parse item with key "${key}":`,
+        e,
+      );
+    }
+  }
+
+  return finalString ?? null;
+}
+
+export function makeMMKVStorage(options?: MMKVConfiguration) {
+  return makeMMKVStorageByInstance(new MMKV(options), options);
+}
+
+export function makeMMKVStorageByInstance(
+  mmkv: MMKV,
+  options?: MMKVConfiguration,
+) {
   function getItem<T>(key: string): T | null {
     const value = mmkv.getString(key);
 
     return !value
       ? null
       : stringUtils.safeParseJSON(value, { defaultValue: null });
-  }
-
-  function getJsonValueStringCompat(key: string): string | null {
-    const raw = mmkv.getString(key);
-    if (!raw) return null;
-    let finalString: string | null = raw;
-
-    try {
-      if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
-        finalString = stringUtils.safeParseJSON(raw, {
-          defaultValue: raw,
-        });
-      } else if (checkIfDuplicatedStringifiedJsonString(raw)) {
-        finalString = stringUtils.safeParseJSON(raw, {
-          defaultValue: raw,
-        });
-      }
-    } catch (e) {
-      if (__DEV__) {
-        console.warn(
-          `[getJsonValueStringCompat::${options?.id}] Failed to parse item with key "${key}":`,
-          e,
-        );
-      }
-    }
-
-    return finalString ?? null;
   }
 
   function setItem<T>(key: string, value: T): void {
@@ -103,7 +125,8 @@ function makeAppStorage(options?: MMKVConfiguration) {
   const methods = {
     getItem,
     setItem,
-    getJsonValueStringCompat,
+    getJsonValueStringCompat: (key: string) =>
+      getJsonValueStringCompat(mmkv, key, options),
     removeItem,
     setRawString,
     getRawString,
@@ -123,43 +146,51 @@ function makeAppStorage(options?: MMKVConfiguration) {
 const {
   storage: appStorage,
   methods: appMethods,
-  mmkv: appMMKV,
-} = makeAppStorage({
+  mmkv: appMMKVInstance,
+} = makeMMKVStorageByInstance(appMMKV, {
   id: MMKV_FILE_NAMES.DEFAULT,
 });
 
-const { storage: keyringStorage } = makeAppStorage({
-  id: MMKV_FILE_NAMES.KEYRING,
-  encryptionKey: 'keyring',
-});
+const { storage: keyringStorage, mmkv: keyringMMKVInstance } =
+  makeMMKVStorageByInstance(keyringMMKV, {
+    id: MMKV_FILE_NAMES.KEYRING,
+    encryptionKey: 'keyring',
+  });
 
 export function normalizeKeyringState() {
-  const legacyData = appStorage.getItem('keyringState');
+  const legacyData = appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
   const result = {
     legacyData,
-    keyringData: keyringStorage.getItem('keyringState') || legacyData,
+    keyringData:
+      keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) || legacyData,
   };
 
-  if (legacyData) appMMKV.trim();
+  if (legacyData) appMMKVInstance.trim();
 
   // console.debug('result.legacyData', result.legacyData);
   // console.debug('result.keyringData', result.keyringData);
   if (!result.legacyData) return result;
 
-  keyringStorage.setItem('keyringState', result.legacyData);
+  keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, result.legacyData);
   result.keyringData = result.legacyData;
 
-  appStorage.removeItem('keyringState');
-  appMMKV.trim();
+  appStorage.removeItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
+  appMMKVInstance.trim();
 
   return result;
 }
 
-export { appStorage, keyringStorage };
+export const appMMKVForDebug = __DEV__
+  ? appMMKVInstance
+  : (null as any as typeof appMMKVInstance);
+export const keyringMMKVForDebug = __DEV__
+  ? keyringMMKVInstance
+  : (null as any as typeof keyringMMKVInstance);
+export { appStorage, keyringStorage, appMMKVInstance, keyringMMKVInstance };
 
 export const IS_BOOTED_USER =
-  !!appStorage.getItem('keyringState') ||
-  !!keyringStorage.getItem('keyringState');
+  !!appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) ||
+  !!keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
 
 export const enum MMKVStorageStrategy {
   'legacy' = -1,
@@ -167,37 +198,57 @@ export const enum MMKVStorageStrategy {
   'compatString' = 1,
   'next' = 11,
 }
-type StringStorageOption =
-  /* AsyncStringStorage |  */
-  | SyncStringStorage
+type PresetStringStorageOption =
   /** @deprecated */
   | MMKVStorageStrategy.legacy
   | MMKVStorageStrategy.compatJson
   | MMKVStorageStrategy.compatString;
-/**
- * persist item as json, read it as its original type
- *
- * @baddesign In the past, `makeJsonStore` use storage consist with appStorage,
- * which also persist value as json, and treat it as json on parsing. This duplicates
- * the logic of `makeJsonStore`, and is not a good design, that is, one value would
- * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
- */
-function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
-  const { storage } = options || {};
 
-  const jsonStore =
+function isPresetStorageStrategy(
+  storage?:
+    | PresetStringStorageOption
+    | JotaiStringStorageOption
+    | ZustandStringStorageOption,
+): storage is
+  | MMKVStorageStrategy.legacy
+  | MMKVStorageStrategy.compatJson
+  | MMKVStorageStrategy.compatString {
+  return (
     storage === MMKVStorageStrategy.legacy ||
     storage === MMKVStorageStrategy.compatJson ||
     storage === MMKVStorageStrategy.compatString
-      ? createJSONStorage<T>(() => GET_STRING_STORAGE_FOR_JSON_STORE(storage))
-      : storage
-      ? createJSONStorage<T>(() => storage)
-      : createJSONStorage<T>(() => ({
-          getItem: appMethods.getRawString,
-          setItem: appMethods.setRawString,
-          removeItem: appMethods.removeItem,
-          clearAll: appMethods.clearAll,
-        }));
+  );
+}
+
+type JotaiStringStorageOption = SyncStringStorage | PresetStringStorageOption;
+/**
+ * @deprecated
+ * persist item as json, read it as its original type
+ *
+ * @baddesign In the past, `makeJotaiJsonStore` use storage consist with appStorage,
+ * which also persist value as json, and treat it as json on parsing. This duplicates
+ * the logic of `makeJotaiJsonStore`, and is not a good design, that is, one value would
+ * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
+ */
+export function makeJotaiJsonStore<T = any>(options?: {
+  methods?: Pick<
+    ReturnType<typeof makeMMKVStorage>['methods'],
+    'getRawString' | 'setRawString' | 'removeItem' | 'clearAll'
+  >;
+  storage?: JotaiStringStorageOption;
+}) {
+  const { methods = appMethods, storage } = options || {};
+
+  const jsonStore = isPresetStorageStrategy(storage)
+    ? createJSONStorage<T>(() => GET_STRING_STORAGE_FOR_JSON_STORE(storage))
+    : storage
+    ? createJSONStorage<T>(() => storage)
+    : createJSONStorage<T>(() => ({
+        getItem: methods.getRawString,
+        setItem: methods.setRawString,
+        removeItem: methods.removeItem,
+        clearAll: methods.clearAll,
+      }));
 
   return jsonStore;
 }
@@ -205,11 +256,11 @@ function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
 /**
  * @deprecated
  */
-export const duplicatelyStringifiedAppJsonStore = makeJsonStore<any>({
+export const duplicatelyStringifiedAppJsonStore = makeJotaiJsonStore<any>({
   storage: appStorage as SyncStringStorage,
 });
 
-export const appJsonStore = makeJsonStore<any>({
+export const appJsonStore = makeJotaiJsonStore<any>({
   storage: undefined,
 });
 
@@ -240,24 +291,128 @@ const GET_STRING_STORAGE_FOR_JSON_STORE = (strategy: MMKVStorageStrategy) => {
   }
 };
 
+export const appStorageForZustand = GET_STRING_STORAGE_FOR_JSON_STORE(
+  MMKVStorageStrategy.compatJson,
+);
+
 export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
   options?: {
-    storage?: StringStorageOption;
+    getOnInit?: boolean;
+    storage?: JotaiStringStorageOption;
     setupSubscribe?(ctx: {
       jsonStore: SyncStorage<T>;
     }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;
   },
 ) => {
-  const { storage } = options || {};
-  const jsonStore = makeJsonStore<T>({ storage });
+  const { storage, getOnInit = false } = options || {};
+  const jsonStore = makeJotaiJsonStore<T>({ storage });
 
   if (typeof options?.setupSubscribe === 'function') {
     jsonStore.subscribe = options?.setupSubscribe({ jsonStore });
   }
 
-  return atomWithStorage<T>(key, initialValue, jsonStore);
+  return atomWithStorage<T>(key, initialValue, jsonStore, {
+    getOnInit,
+  });
+};
+
+const defaultMigrateFromAtom: MigrateFromAtom<any> = ctx => {
+  const newData = { state: ctx.oldData, version: 0 };
+  appJsonStore.setItem(ctx.key, newData);
+
+  return { migrated: newData };
+};
+type MigrateFromAtom<T> = (ctx: {
+  key: string;
+  // legacyAppStoreKey: string;
+  oldData: any;
+  appJsonStore: typeof appJsonStore;
+}) => { migrated: T; trimLegacyKey?: boolean };
+type ZustandStringStorageOption = StateStorage | PresetStringStorageOption;
+export const zustandByMMKV = <T = any>(
+  key: string,
+  initialValue: T,
+  options?: {
+    legacyAppStoreKey?: string;
+    migrateFromAtom?: MigrateFromAtom<T>;
+    storage: ZustandStringStorageOption;
+  },
+) => {
+  const {
+    storage,
+    legacyAppStoreKey = key,
+    migrateFromAtom = defaultMigrateFromAtom,
+  } = options || {};
+  const store =
+    (isPresetStorageStrategy(storage)
+      ? GET_STRING_STORAGE_FOR_JSON_STORE(storage)
+      : storage) || appStorageForZustand;
+
+  const oldData = appJsonStore.getItem(legacyAppStoreKey, initialValue);
+  const newData =
+    key === legacyAppStoreKey
+      ? oldData
+      : appJsonStore.getItem(key, initialValue);
+  const hasMigrated =
+    newData?.hasOwnProperty('state') && newData?.hasOwnProperty('version');
+
+  if (!hasMigrated) {
+    const result = migrateFromAtom({ key, oldData, appJsonStore });
+    if (key !== legacyAppStoreKey || result.trimLegacyKey) {
+      removeLegacyMMKVStorageByKey(legacyAppStoreKey as any);
+    }
+  }
+
+  const zustandStore = zCreate(
+    zPersist<T>(
+      () => ({
+        ...initialValue,
+        // use old state
+        ...(!hasMigrated && oldData),
+      }),
+      {
+        name: key,
+        storage: zCreateJSONStorage(() => store),
+      },
+    ),
+  );
+
+  return zustandStore;
+};
+
+export const zMutativeByMMKV = <T = any>(
+  key: string,
+  initialValue: T,
+  options?: {
+    storage: ZustandStringStorageOption;
+  },
+) => {
+  const {
+    storage,
+    // mutative = false,
+  } = options || {};
+  const store =
+    (isPresetStorageStrategy(storage)
+      ? GET_STRING_STORAGE_FOR_JSON_STORE(storage)
+      : storage) || appStorageForZustand;
+
+  const persistOpts = {
+    name: key,
+    storage: zCreateJSONStorage(() => store),
+  };
+
+  const zustandStore = zCreate(
+    zPersist(
+      zMutative<T>(() => ({
+        ...initialValue,
+      })),
+      persistOpts,
+    ),
+  );
+
+  return zustandStore;
 };
 
 export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
@@ -312,3 +467,41 @@ export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
     },
   );
 })();
+
+runDevIIFEFunc(() => {
+  const logStorage = (
+    storage: typeof appJsonStore | typeof keyringStorage,
+    // | typeof lendingCacheStorage,
+  ) => {
+    const allKeys = appMMKVForDebug.getAllKeys();
+    console.debug('Reactotron MMKV Store keys', allKeys);
+    const dump: Record<string, any> = {};
+    allKeys.forEach(key => {
+      dump[key] = storage.getItem(key, null);
+    });
+    console.debug('Reactotron MMKV Store: appStore', dump);
+  };
+  reactotronEvents.subscribe('CM_LOG_MMKV_STORE', ({ mmkvName }) => {
+    switch (mmkvName) {
+      default:
+      case 'a':
+      case 'app':
+      case 'appStore': {
+        logStorage(appJsonStore);
+        break;
+      }
+      case 'k':
+      case 'keyring':
+      case 'keyringStore': {
+        logStorage(keyringStorage);
+        break;
+      }
+      case 'l':
+      case 'lending':
+      case 'lendingDataCache': {
+        // logStorage(lendingCacheStorage);
+        break;
+      }
+    }
+  });
+});

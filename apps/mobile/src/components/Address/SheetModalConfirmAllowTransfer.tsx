@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
@@ -18,11 +18,12 @@ import { FormInput } from '@/components/Form/Input';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { apisLock } from '@/core/apis';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { BiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
 import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';
 import usePrevious from 'react-use/lib/usePrevious';
+import { Text } from '@/components/Typography';
 
 interface ConfirmAllowTransferModalProps {
   toAddr: string;

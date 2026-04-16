@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import * as Yup from 'yup';
@@ -19,7 +13,7 @@ import { FormInput } from '@/components/Form/Input';
 import { default as RcPasswordLockCC } from './icons/password-lock-cc.svg';
 import { CheckBoxCircled } from '@/components/Icons/Checkbox';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { apisLock } from '@/core/apis';
 import TouchableView, {
   SilentTouchableView,
@@ -36,6 +30,7 @@ import { SettingNavigatorParamList } from '@/navigation-type';
 import { sheetModalRefsNeedLock, useLoadLockInfo } from '@/hooks/useLock';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
+import { Text, TextInput } from '@/components/Typography';
 
 const INIT_FORM_DATA = __DEV__
   ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
@@ -88,8 +83,6 @@ function useSetupPasswordForm() {
     >();
   const navParams = route.params;
 
-  // const { updateSetPasswordFirst } = useSetPasswordFirstState();
-
   const { fetchLockInfo } = useLoadLockInfo();
 
   const formik = useAppFormik({
@@ -130,10 +123,9 @@ function useSetupPasswordForm() {
               break;
             }
             case 'testkits:fromSettings': {
-              // updateSetPasswordFirst({ isOnSettingsWaiting: false });
               if (navParams.actionType === 'setBiometrics') {
                 sheetModalRefsNeedLock.switchBiometricsRef.current?.toggle();
-              } else if (navParams.actionType === 'setAutoLockTime') {
+              } else if (navParams.actionType === 'setAutoLockExpireTime') {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
               }
               navigation.canGoBack() && navigation.goBack();

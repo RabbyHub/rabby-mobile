@@ -24,18 +24,17 @@ import { Bridge } from '../Bridge';
 import { GasAccountScreen } from '../GasAccount';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import MultiAddressHistory from '../Transaction/MultiAddressHistory';
-import { BuyScreen } from '../Buy';
-import { CopyTradingScreen } from '../CopyTrading';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
-import CopyTradingTokenDetail from '../CopyTrading/component/CopyTradingTokenDetail';
-import { PerpsScreen } from '../Perps';
-import { PerpsMarketListScreen } from '../PerpsMarketList';
+import { PerpsOriginScreen } from '../Perps/index';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
 import { PerpsHistoryScreen } from '../PerpsHistory';
 import LendingHistory from '../Lending/components/LendingHistory';
-import AAVEScreen from '../Lending';
+import LendingScreen from '../Lending';
+import PredictionScreen from '../Prediction';
+import { PredictionScreenWithPreload } from '../InnerDapp/InnerDappPreloadScreens';
+import { useInnerDappPreloadStrategy } from '@/config/innerDappPreloadStrategy';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -47,6 +46,12 @@ export default function TransactionNavigator() {
   const { t } = useTranslation();
   const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
+  const innerDappStrategy = useInnerDappPreloadStrategy();
+
+  const PredictionComponent =
+    innerDappStrategy === 'screen'
+      ? PredictionScreenWithPreload
+      : PredictionScreen;
 
   return (
     <TransactionStack.Navigator
@@ -319,7 +324,7 @@ export default function TransactionNavigator() {
         name={RootNames.GasAccount}
         component={GasAccountScreen}
         options={mergeScreenOptions({
-          title: 'GasAccount',
+          title: 'Gas Deposit',
           ...headerPresets.withBgCard2_2024,
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
@@ -335,24 +340,8 @@ export default function TransactionNavigator() {
       />
 
       <TransactionStack.Screen
-        name={RootNames.CopyTrading}
-        component={CopyTradingScreen}
-        options={mergeScreenOptions({
-          title: t('page.home.services.copyTrading'),
-          ...headerPresets.withBgCard1_2024,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            color: colors['neutral-title-1'],
-          },
-        })}
-      />
-
-      <TransactionStack.Screen
         name={RootNames.Perps}
-        component={PerpsScreen}
+        component={PerpsOriginScreen}
         options={mergeScreenOptions({
           title: t('page.home.services.perps'),
           // ...headerPresets.withBgCard1_2024,
@@ -398,60 +387,15 @@ export default function TransactionNavigator() {
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
-        })}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.CopyTradingTokenDetail}
-        component={CopyTradingTokenDetail}
-        options={mergeScreenOptions({
-          headerShown: true,
-          headerTitleAlign: 'left',
-          headerTitle: '',
           headerStyle: {
-            // backgroundColor: colors['neutral-bg-2'],
-            backgroundColor: 'transparent',
+            backgroundColor: colors2024['neutral-bg-1'],
           },
         })}
       />
 
-      <TransactionStack.Screen
-        name={RootNames.Buy}
-        component={BuyScreen}
-        options={mergeScreenOptions({
-          title: 'Buy',
-          // ...headerPresets.withBgCard1_2024,
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-                disableSwitch
-              />
-            );
-          },
-        })}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.MultiBuy}
-        component={BuyScreen.ForMultipleAddress}
-        options={mergeScreenOptions({
-          title: 'Buy',
-          // ...headerPresets.withBgCard1_2024,
-          headerTitle: ctx => {
-            return (
-              <ScreenHeaderAccountSwitcher
-                forScene="MakeTransactionAbout"
-                titleText={ctx.children}
-              />
-            );
-          },
-        })}
-      />
       <TransactionStack.Screen
         name={RootNames.Lending}
-        component={AAVEScreen}
+        component={LendingScreen}
         options={mergeScreenOptions({
           title: t('page.home.services.lending'),
           ...headerPresets.withBgCard1_2024,
@@ -465,16 +409,25 @@ export default function TransactionNavigator() {
           },
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
+            backgroundColor: colors2024['neutral-bg-1'],
           },
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: 12,
             fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.Prediction}
+        component={PredictionComponent}
+        options={mergeScreenOptions({
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          // headerShown: false,
+          // gestureEnabled: true,
         })}
       />
     </TransactionStack.Navigator>

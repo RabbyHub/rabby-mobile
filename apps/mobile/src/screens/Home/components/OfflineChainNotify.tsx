@@ -1,12 +1,11 @@
 import { openapi } from '@/core/request';
-import { offlineChainService, preferenceService } from '@/core/services';
+import { offlineChainService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
+import balanceStore from '@/store/balance';
 import { findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { atom, useAtom } from 'jotai';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import RcIconTipsCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import RcIconCloseCC from '@/assets2024/icons/offlineChain/close-cc.svg';
@@ -18,23 +17,48 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { useMockDataForHomeCenterArea } from '@/screens/Settings/sheetModals/DevUIHomeCenterArea';
+import { useMockDataForHomeCenterArea } from '../hooks/homeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { Text } from '@/components/Typography';
 
-const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
+// const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
+type ClosedTipsState = {
+  closedTipsChains: string[];
+};
+const closedTipsStore = zCreate<ClosedTipsState>(() => ({
+  closedTipsChains: offlineChainService.getCloseTipsChains(),
+}));
+
+function setClosedTipsChainState(
+  valOrFunc: UpdaterOrPartials<ClosedTipsState['closedTipsChains']>,
+) {
+  closedTipsStore.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.closedTipsChains, valOrFunc);
+
+    offlineChainService.setCloseTipsChains(newVal);
+
+    return { ...prev, closedTipsChains: newVal };
+  });
+}
+
+const clearOfflineChainTips = () => {
+  offlineChainService.mockClearCloseTipsChains();
+  setClosedTipsChainState([]);
+};
+
+const setClosedTipsChain = (chain: string) => {
+  setClosedTipsChainState(p => [...p, chain]);
+  offlineChainService.setCloseTipsChains([chain]);
+};
 
 export const useMockClearOfflineChainTips = () => {
-  const [, setClosedTipsChain] = useAtom(closedTipsChainsAtom);
-  const clearOfflineChainTips = useCallback(() => {
-    offlineChainService.mockClearCloseTipsChains();
-    setClosedTipsChain([]);
-  }, [setClosedTipsChain]);
-
   return { clearOfflineChainTips };
 };
 
 export const useOfflineChain = () => {
-  const [closedTipsChains, _setClosedTipsChain] = useAtom(closedTipsChainsAtom);
+  const closedTipsChains = closedTipsStore(s => s.closedTipsChains);
   const { mockData } = useMockDataForHomeCenterArea();
   const { value: offlineList } = useAsync(async () => {
     // leave here for mock data
@@ -49,19 +73,12 @@ export const useOfflineChain = () => {
     return openapi.getOfflineChainList();
   }, [mockData.forceShowOffchainNotify]);
 
-  const setClosedTipsChain = useCallback(
-    (chain: string) => {
-      _setClosedTipsChain(p => [...p, chain]);
-      offlineChainService.setCloseTipsChains([chain]);
-    },
-    [_setClosedTipsChain],
-  );
-
-  const { balanceAccounts } = useAccountsBalance();
+  const balanceMap = balanceStore(s => s.balanceMap);
+  const chainUSDMap = balanceStore(s => s.chainUSDMap);
 
   const list = useMemo(() => {
-    const accountChainBalanceList = balanceAccounts.map(
-      e => preferenceService.getAddressBalance(e.address)?.chain_list,
+    const accountChainBalanceList = Object.keys(balanceMap).map(
+      addr => chainUSDMap[addr],
     );
 
     return offlineList
@@ -73,12 +90,14 @@ export const useOfflineChain = () => {
         if (!isIn7days || isExpired) {
           return false;
         }
+
+        if (mockData.forceShowOffchainNotify) return true;
         return accountChainBalanceList.some(chainBalance =>
           chainBalance?.some(chain => chain.id === e.id && chain.usd_value > 1),
         );
       })
       .sort((a, b) => a.offline_at - b.offline_at);
-  }, [balanceAccounts, offlineList]);
+  }, [balanceMap, chainUSDMap, offlineList, mockData.forceShowOffchainNotify]);
 
   const displayWillClosedChain = useMemo(
     () => list?.filter(e => !closedTipsChains?.includes(e.id))?.[0],

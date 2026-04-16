@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { StyleProp, Text, TextStyle, View } from 'react-native';
+import { StyleProp, TextStyle, View } from 'react-native';
 
 import { CHAINS_ENUM } from '@/constant/chains';
 
@@ -8,8 +8,9 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { SelectSortedChainProps } from '@/components/SelectSortedChain';
+import { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
 import { useFindChain } from '@/hooks/useFindChain';
+import { Text } from '@/components/Typography';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
 

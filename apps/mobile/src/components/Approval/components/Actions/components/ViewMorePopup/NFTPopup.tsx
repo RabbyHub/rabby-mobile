@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
 import { Chain } from '@/constant/chains';
@@ -10,6 +10,7 @@ import { formatAmount } from '@/utils/number';
 import { getStyle } from '../getStyle';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { Text } from '@/components/Typography';
 
 interface NFTData {
   nft: NFTItem;

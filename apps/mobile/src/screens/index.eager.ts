@@ -4,7 +4,6 @@ export { ScannerScreen } from '@/screens/Scanner/ScannerScreen';
 
 export { TokenDetailScreen } from '@/screens/TokenDetail';
 export { NFTDetailScreen } from '@/screens/NftDetail';
-export { DeFiDetailScreen } from '@/screens/DeFiDetail';
 // export { default as NotFoundScreen } from '@/screens/NotFound';
 
 // export { default as MyBundleScreen } from '@/screens/Assets/MyBundle';

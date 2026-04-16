@@ -11,7 +11,6 @@ import {
   Image,
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -23,6 +22,7 @@ import {
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 
 // import { TestnetChainLogo } from '../Chain/TestnetChainLogo';
+import { Text } from '@/components/Typography';
 
 interface ChainSelectorProps {
   value: CHAINS_ENUM;
@@ -68,6 +68,7 @@ export const ChainSelector = ({
   const { t } = useTranslation();
 
   const activeSelectChainPopup = () => {
+    if (!account) return;
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: value,

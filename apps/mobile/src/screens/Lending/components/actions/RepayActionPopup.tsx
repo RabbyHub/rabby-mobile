@@ -1,29 +1,42 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { View, Pressable } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
-import { CHAINS_ENUM } from '@debank/common';
-import { useLendingSummary } from '../../hooks';
+import {
+  useLendingSummary,
+  usePoolDataProviderContract,
+  useSelectedMarket,
+} from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { buildRepayTx } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { buildRepayTx, optimizedPath } from '../../poolService';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { findChain } from '@/utils/chain';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components2024/Toast';
 import RepayActionOverView from './RepayActionOverView';
 import { parseUnits } from 'viem';
-import { calculateHFAfterRepay } from '../../utils/hfUtils';
+import {
+  calculateHFAfterRepay,
+  calculateHFAfterRepayWithAToken,
+} from '../../utils/hfUtils';
 import { getERC20Allowance } from '@/core/apis/provider';
-import { CustomMarket, marketsData } from '../../config/market';
 import { approveToken } from '@/core/apis/approvals';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import { useMiniSigner } from '@/hooks/useSigner';
@@ -34,35 +47,110 @@ import { transactionHistoryService } from '@/core/services/shared';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import { useRefreshHistoryId } from '../../hooks';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
+import { CHAINS_ENUM } from '@debank/common';
+import {
+  API_ETH_MOCK_ADDRESS,
+  REPAY_AMOUNT_MULTIPLIER,
+} from '../../utils/constant';
+import RepayWithCollateral from './RepayWithCollateralContent';
+import { getCollateralToken, getFromToken } from '../../utils/swap';
+import { isSupportRepayWithCollateral } from './RepayWithCollateralContent/utils';
+import wrapperToken from '../../config/wrapperToken';
+import { displayGhoForMintableMarket } from '../../utils/supply';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { IAvailableRepayToken } from '../RepayTokenModal';
+import { stats } from '@/utils/stats';
+import { isZeroAmount } from '../../utils/number';
+import { Text } from '@/components/Typography';
 
-export const RepayActionPopup: React.FC<PopupDetailProps> = ({
+export const RepayActionPopupContent: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [_amount, setAmount] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [needApprove, setNeedApprove] = useState(false);
   const [repayTx, setRepayTx] = useState<any>(null);
   const { refresh } = useRefreshHistoryId();
   const [approveTxs, setApproveTxs] = useState<any>(null);
+  const [isAtTokenRepay, setIsAtTokenRepay] = useState(false);
+
+  const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
+    useSelectedMarket();
+  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+
+  const availableRepayTokens = useMemo(() => {
+    const poolReserve = formattedPoolReservesAndIncentives.find(item =>
+      isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+    );
+    if (!poolReserve) {
+      return [];
+    }
+    const _tokens: IAvailableRepayToken[] = [
+      {
+        address: poolReserve.underlyingAsset,
+        symbol: poolReserve.symbol,
+        aToken: false,
+        decimals: poolReserve.decimals,
+        balance: reserve.walletBalance || '0',
+      },
+    ];
+    if (
+      selectedMarketData?.v3 &&
+      !displayGhoForMintableMarket({
+        symbol: poolReserve.symbol,
+        currentMarket: selectedMarketData?.market,
+      })
+    ) {
+      _tokens.push({
+        address: poolReserve.aTokenAddress,
+        symbol: `a${poolReserve.symbol}`,
+        aToken: true,
+        balance: reserve.underlyingBalance,
+        decimals: poolReserve.decimals,
+      });
+    }
+    return _tokens;
+  }, [
+    formattedPoolReservesAndIncentives,
+    reserve,
+    selectedMarketData?.market,
+    selectedMarketData?.v3,
+  ]);
+
+  const selectedRepayToken = useMemo(() => {
+    if (availableRepayTokens.length <= 1) {
+      return availableRepayTokens[0];
+    }
+    if (isAtTokenRepay) {
+      return availableRepayTokens[1];
+    }
+    return availableRepayTokens[0];
+  }, [availableRepayTokens, isAtTokenRepay]);
 
   const repayAmount = useMemo(() => {
-    const miniAmount = BigNumber(reserve?.walletBalance || '0').gt(
+    const miniAmount = BigNumber(selectedRepayToken?.balance || '0').gt(
       reserve.variableBorrows,
     )
       ? reserve.variableBorrows
-      : reserve.walletBalance;
+      : selectedRepayToken?.balance;
     const usdValue = BigNumber(miniAmount || '0')
       .multipliedBy(reserve.reserve.formattedPriceInMarketReferenceCurrency)
       .toString();
@@ -73,7 +161,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       isDebtUp,
     };
   }, [
-    reserve.walletBalance,
+    selectedRepayToken?.balance,
     reserve.variableBorrows,
     reserve.reserve.formattedPriceInMarketReferenceCurrency,
   ]);
@@ -83,19 +171,20 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
 
   const { t } = useTranslation();
 
-  const { ctx } = useSignatureStore();
-
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
-  const { formattedPoolReservesAndIncentives } = useLendingSummary();
+
+  const { pools } = usePoolDataProviderContract();
   const canShowDirectSubmit = useMemo(
+    //() => false,
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
 
   const afterHF = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item =>
@@ -104,22 +193,37 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     if (!targetPool) {
       return undefined;
     }
+    if (isAtTokenRepay) {
+      return calculateHFAfterRepayWithAToken({
+        user: userSummary,
+        amount,
+        debt: reserve.variableBorrows,
+        usdPrice: reserve.reserve.formattedPriceInMarketReferenceCurrency,
+      }).toString();
+    }
     return calculateHFAfterRepay({
       user: userSummary,
       amount,
       debt: reserve.variableBorrows,
       usdPrice: reserve.reserve.formattedPriceInMarketReferenceCurrency,
     }).toString();
-  }, [amount, formattedPoolReservesAndIncentives, reserve, userSummary]);
+  }, [
+    amount,
+    formattedPoolReservesAndIncentives,
+    isAtTokenRepay,
+    reserve,
+    userSummary,
+  ]);
 
   const checkApproveStatus = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount || isAtTokenRepay) {
       setNeedApprove(false);
       return;
     }
-
+    if (!selectedMarketData) {
+      return;
+    }
     try {
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -136,7 +240,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       const allowance = await getERC20Allowance(
         chainInfo.serverId,
         reserve.underlyingAsset,
-        marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+        selectedMarketData.addresses.LENDING_POOL,
         currentAccount.address,
         currentAccount,
       );
@@ -155,21 +259,25 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     }
   }, [
     amount,
+    currentAccount,
+    isAtTokenRepay,
+    selectedMarketData,
+    chainInfo,
     reserve.underlyingAsset,
     reserve.reserve.decimals,
-    currentAccount,
   ]);
 
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount) {
       setRepayTx(null);
       setApproveTxs(null);
       return;
     }
-
+    if (!selectedMarketData || !pools) {
+      return;
+    }
     try {
       setIsLoading(true);
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -183,12 +291,13 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       let actualNeedApprove = false;
       let allowance = '0';
       if (
-        !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress)
+        !isSameAddress(reserve.underlyingAsset, chainInfo.nativeTokenAddress) &&
+        !isAtTokenRepay
       ) {
         allowance = await getERC20Allowance(
           chainInfo.serverId,
           reserve.underlyingAsset,
-          marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          selectedMarketData.addresses.LENDING_POOL,
           currentAccount.address,
           currentAccount,
         );
@@ -204,6 +313,12 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
 
       // 如果需要approve，构建approve交易
       if (actualNeedApprove) {
+        const approveAmount = new BigNumber(amount)
+          .multipliedBy(_amount === '-1' ? REPAY_AMOUNT_MULTIPLIER : 1)
+          .multipliedBy(10 ** reserve.reserve.decimals)
+          .integerValue(BigNumber.ROUND_UP)
+          .toFixed(0);
+
         const requiredAmount = new BigNumber(amount)
           .multipliedBy(10 ** reserve.reserve.decimals)
           .toString();
@@ -211,7 +326,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         // 检查是否需要两步approve（针对以太坊上的USDT）
         let shouldTwoStepApprove = false;
         if (
-          chainInfo?.enum === CHAINS_ENUM.ETH &&
+          isMainnet &&
           isSameAddress(reserve.underlyingAsset, ETH_USDT_CONTRACT) &&
           Number(allowance) !== 0 &&
           !new BigNumber(allowance || '0').gte(requiredAmount)
@@ -224,8 +339,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           const zeroApproveResult = await approveToken({
             chainServerId: chainInfo.serverId,
             id: reserve.underlyingAsset,
-            spender:
-              marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+            spender: selectedMarketData.addresses.LENDING_POOL,
             amount: 0,
             account: currentAccount,
             isBuild: true,
@@ -245,9 +359,8 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: reserve.underlyingAsset,
-          spender:
-            marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
-          amount: requiredAmount,
+          spender: selectedMarketData.addresses.LENDING_POOL,
+          amount: approveAmount,
           account: currentAccount,
           isBuild: true,
         });
@@ -267,12 +380,15 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         return;
       }
       const repayResult = await buildRepayTx({
+        poolBundle: pools.poolBundle,
         amount:
           _amount === '-1'
             ? '-1'
             : parseUnits(amount, targetPool.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
+        useOptimizedPath: optimizedPath(selectedMarketData?.chainId),
+        repayWithATokens: isAtTokenRepay,
       });
       delete repayResult.gasLimit;
 
@@ -282,16 +398,24 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       });
     } catch (error) {
       console.error('Build transactions error:', error);
+      toast.error('something error');
+      setRepayTx(null);
+      setApproveTxs(null);
     } finally {
       setIsLoading(false);
     }
   }, [
     _amount,
     amount,
+    chainInfo,
     currentAccount,
     formattedPoolReservesAndIncentives,
+    isAtTokenRepay,
+    isMainnet,
+    pools,
     reserve.reserve.decimals,
     reserve.underlyingAsset,
+    selectedMarketData,
   ]);
 
   const txsForMiniApproval: Tx[] = useMemo(() => {
@@ -305,7 +429,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     return list as Tx[];
   }, [approveTxs, repayTx]);
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: txsForMiniApproval.length
       ? txsForMiniApproval?.[0]?.chainId + ''
@@ -313,13 +441,15 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     autoResetGasStoreOnChainChange: true,
   });
 
+  const { ctx } = useSignatureStoreOf(instance);
+
   const handleRepay = useCallback(
     async (forceFullSign?: boolean) => {
       if (
         !currentAccount ||
         !txsForMiniApproval?.length ||
         !amount ||
-        amount === '0'
+        isZeroAmount(amount)
       ) {
         return;
       }
@@ -344,12 +474,11 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
               setAmount(undefined);
               onClose?.();
-              return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleRepay(true);
-              return;
             }
+            return;
           }
         } else {
           for (const tx of txsForMiniApproval) {
@@ -372,7 +501,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           }
         }
         const txId = last(results);
-        if (txId) {
+        if (txId && txsForMiniApproval[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,
@@ -380,6 +509,33 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY },
           );
         }
+
+        const poolReserve = formattedPoolReservesAndIncentives.find(item =>
+          isSameAddress(item.underlyingAsset, reserve.underlyingAsset),
+        );
+        const usdValue = poolReserve
+          ? new BigNumber(amount || '0')
+              .multipliedBy(
+                BigNumber(
+                  poolReserve.formattedPriceInMarketReferenceCurrency || '0',
+                ),
+              )
+              .toString()
+          : '0';
+
+        stats.report('aaveInternalTx', {
+          tx_type: isAtTokenRepay
+            ? LendingReportType.RepayWithAToken
+            : LendingReportType.Repay,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
+        });
+
         refresh();
         toast.success(
           `${t('page.Lending.repayDetail.actions')} ${t(
@@ -389,6 +545,10 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
         setAmount(undefined);
         onClose?.();
       } catch (error) {
+        console.error('Handle repay error:', error);
+        toast.error('something error');
+        setAmount(undefined);
+        onClose?.();
       } finally {
         setIsLoading(false);
       }
@@ -398,10 +558,14 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
       txsForMiniApproval,
       amount,
       canShowDirectSubmit,
+      formattedPoolReservesAndIncentives,
+      isAtTokenRepay,
+      chainInfo?.serverId,
       refresh,
       t,
       onClose,
       openDirect,
+      reserve.underlyingAsset,
     ],
   );
 
@@ -422,6 +586,7 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
 
   const handleChangeAmount = useCallback(
     (value: string) => {
+      if (directSignBtnRef.current?.isAuthInProgress()) return;
       const maxSelected = value === '-1';
       if (maxSelected) {
         // 还清所有债务
@@ -437,6 +602,29 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
     [repayAmount.isDebtUp, repayAmount.amount],
   );
 
+  const handleClickToken = useCallback(() => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.REPAY_TOKEN_SELECT,
+      availableRepayTokens: availableRepayTokens,
+      onChange: v => {
+        setIsAtTokenRepay(v.aToken);
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+      onCancel: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        rootViewType: 'View',
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+    });
+  }, [availableRepayTokens, colors2024, isLight]);
+
   useEffect(() => {
     checkApproveStatus();
   }, [checkApproveStatus]);
@@ -446,7 +634,12 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   }, [buildTransactions]);
 
   useEffect(() => {
-    if (currentAccount && canShowDirectSubmit && amount && amount !== '0') {
+    if (
+      currentAccount &&
+      canShowDirectSubmit &&
+      amount &&
+      !isZeroAmount(amount)
+    ) {
       prefetchMiniSigner({
         txs: txsForMiniApproval?.length ? txsForMiniApproval : [],
         synGasHeaderInfo: true,
@@ -461,97 +654,113 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>
-        {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
-      </Text>
-      <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>
-          {t('page.Lending.popup.amount')}
-        </Text>
-        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          repayAmount.amount || '0',
-        )} ${reserve.reserve.symbol} ($${formatAmountValueKMB(
-          repayAmount.usdValue || '0',
-        )}) ${t('page.Lending.popup.available')}`}</Text>
-      </View>
-      <TokenAmountInput
-        value={amount}
-        onChange={handleChangeAmount}
-        symbol={reserve.reserve.symbol}
-        handleClickMaxButton={() => {
-          handleChangeAmount('-1');
-        }}
-        tokenAmount={Number(repayAmount.amount || '0')}
-        price={Number(
-          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
-        )}
-        style={styles.amountInput}
-        chain={CHAINS_ENUM.ETH}
-      />
+    <SignatureInstanceProvider instance={instance}>
       <BottomSheetScrollView
         style={styles.bottomSheetScrollView}
-        contentContainerStyle={styles.transactionContainer}>
-        <RepayActionOverView
-          reserve={reserve}
-          amount={amount}
-          userSummary={userSummary}
-          afterRepayAmount={afterRepayAmount}
-          afterRepayUsdValue={afterRepayUsdValue}
-          afterHF={afterHF}
+        showsVerticalScrollIndicator
+        persistentScrollbar
+        contentContainerStyle={styles.contentContainer}>
+        <View style={styles.amountHeader}>
+          <Text style={styles.amountHeaderTitle}>
+            {t('page.Lending.popup.amount')}
+          </Text>
+          <Text
+            style={[
+              styles.amountValueDescription,
+              (repayAmount.amount === '0' || !repayAmount.amount) &&
+                styles.amountValueDescriptionDanger,
+            ]}>{`${formatTokenAmount(repayAmount.amount || '0')} ${
+            reserve.reserve.symbol
+          } ($${formatAmountValueKMB(repayAmount.usdValue || '0')}) ${t(
+            'page.Lending.popup.available',
+          )}`}</Text>
+        </View>
+        <TokenAmountInput
+          value={amount}
+          onChange={handleChangeAmount}
+          symbol={selectedRepayToken?.symbol || reserve.reserve.symbol}
+          handleClickMaxButton={() => {
+            handleChangeAmount('-1');
+          }}
+          tokenAmount={Number(repayAmount.amount || '0')}
+          price={Number(
+            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+          )}
+          style={styles.amountInput}
+          onClickToken={
+            // 有aToken选项，并且有质押余额
+            availableRepayTokens.length > 1 && !!reserve.underlyingBalance
+              ? () => {
+                  handleClickToken();
+                }
+              : undefined
+          }
+          chain={chainEnum || CHAINS_ENUM.ETH}
         />
+        <View style={styles.transactionContainer}>
+          <RepayActionOverView
+            reserve={reserve}
+            amount={amount}
+            userSummary={userSummary}
+            afterRepayAmount={afterRepayAmount}
+            afterRepayUsdValue={afterRepayUsdValue}
+            afterHF={afterHF}
+          />
 
-        {!!amount && amount !== '0' && canShowDirectSubmit && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
-              loading={isLoading}
-              openShowMore={noop}
-              chainServeId="eth"
-            />
-          </View>
-        )}
+          {!!amount && !isZeroAmount(amount) && canShowDirectSubmit && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+              />
+            </View>
+          )}
+        </View>
       </BottomSheetScrollView>
 
       <View style={styles.buttonContainer}>
         {canShowDirectSubmit ? (
           <DirectSignBtn
+            ref={directSignBtnRef}
+            type="aave"
+            iconColor={
+              isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+            }
             loading={isLoading}
             loadingType="circle"
             key={`${amount}-${needApprove}`}
             showTextOnLoading
             wrapperStyle={styles.directSignBtn}
             authTitle={t('page.Lending.repayDetail.actions')}
-            title={`${t('page.Lending.repayDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.repayDetail.actions')}
             onFinished={() => handleRepay()}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !txsForMiniApproval?.length ||
               isLoading ||
               !currentAccount ||
               !!ctx?.disabledProcess
             }
-            type="primary"
+            // type="primary"
             syncUnlockTime
             account={currentAccount}
             showHardWalletProcess
           />
         ) : (
           <Button
+            type="aave"
             loadingType="circle"
             showTextOnLoading
             containerStyle={styles.fullWidthButton}
             onPress={() => handleRepay()}
-            title={`${t('page.Lending.repayDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
+            title={t('page.Lending.repayDetail.actions')}
             loading={isLoading}
             disabled={
               !amount ||
-              amount === '0' ||
+              isZeroAmount(amount) ||
               !txsForMiniApproval?.length ||
               isLoading ||
               !currentAccount
@@ -559,6 +768,154 @@ export const RepayActionPopup: React.FC<PopupDetailProps> = ({
           />
         )}
       </View>
+    </SignatureInstanceProvider>
+  );
+};
+
+export const RepayActionPopup: React.FC<PopupDetailProps> = ({
+  reserve,
+  userSummary,
+  onClose,
+}) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+
+  const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>(
+    'wallet',
+  );
+  const { chainInfo, selectedMarketData } = useSelectedMarket();
+  const { formattedPoolReservesAndIncentives, displayPoolReserves } =
+    useLendingSummary();
+  const repayToken = useMemo(() => {
+    const r = formattedPoolReservesAndIncentives.find(item =>
+      isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+    );
+    if (!r || !chainInfo?.id) {
+      return undefined;
+    }
+    return getFromToken(r, chainInfo?.id, reserve?.variableBorrows || '0');
+  }, [
+    formattedPoolReservesAndIncentives,
+    chainInfo?.id,
+    reserve?.variableBorrows,
+    reserve?.underlyingAsset,
+  ]);
+
+  const defaultCollateralToken = useMemo(() => {
+    const collateralTokens = displayPoolReserves
+      .filter(
+        item =>
+          !isSameAddress(item.underlyingAsset, reserve?.underlyingAsset || ''),
+      )
+      .sort((a, b) => {
+        return BigNumber(b.underlyingBalanceUSD).comparedTo(
+          a.underlyingBalanceUSD,
+        );
+      });
+    const hasLtvZeroCollateral = collateralTokens
+      .filter(
+        item =>
+          !!item.underlyingBalance &&
+          item.underlyingBalance !== '0' &&
+          item.usageAsCollateralEnabledOnUser,
+      )
+      .some(item => item.reserve.baseLTVasCollateral === '0');
+    // 如果有ltv 为 0的抵押物，必须优先还款
+    const displayReserve = hasLtvZeroCollateral
+      ? collateralTokens.filter(
+          item => item.reserve.baseLTVasCollateral === '0',
+        )?.[0]
+      : collateralTokens?.[0];
+
+    const r = formattedPoolReservesAndIncentives.find(item => {
+      return isSameAddress(
+        displayReserve?.underlyingAsset || '',
+        API_ETH_MOCK_ADDRESS,
+      )
+        ? isSameAddress(
+            item.underlyingAsset,
+            wrapperToken?.[displayReserve?.chain || CHAINS_ENUM.ETH]?.address,
+          )
+        : isSameAddress(
+            item.underlyingAsset,
+            displayReserve?.underlyingAsset || '',
+          );
+    });
+    if (!r || !chainInfo?.id) {
+      return undefined;
+    }
+    return getCollateralToken(
+      r,
+      chainInfo?.id,
+      displayReserve?.underlyingBalance || '0',
+    );
+  }, [
+    displayPoolReserves,
+    formattedPoolReservesAndIncentives,
+    chainInfo?.id,
+    reserve?.underlyingAsset,
+  ]);
+
+  const showSwitch = useMemo(() => {
+    return isSupportRepayWithCollateral(chainInfo?.id || 0, selectedMarketData);
+  }, [chainInfo?.id, selectedMarketData]);
+
+  return (
+    <AutoLockView style={styles.container}>
+      <Text style={styles.title}>
+        {t('page.Lending.repayDetail.actions')} {reserve.reserve.symbol}
+      </Text>
+      {showSwitch && (
+        <View style={styles.switchContainer}>
+          <Text style={styles.sourceSwitchTitle}>
+            {t('page.Lending.repayDetail.repayWith')}
+          </Text>
+          <View style={styles.sourceSwitchContainer}>
+            <Pressable
+              style={[
+                styles.sourceSwitchTab,
+                repaySource === 'wallet' && styles.sourceSwitchTabActive,
+              ]}
+              onPress={() => setRepaySource('wallet')}>
+              <Text
+                style={[
+                  styles.sourceSwitchTabText,
+                  repaySource === 'wallet' && styles.sourceSwitchTabTextActive,
+                ]}>
+                {t('page.Lending.repayDetail.tabs.wallet')}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.sourceSwitchTab,
+                repaySource === 'collateral' && styles.sourceSwitchTabActive,
+              ]}
+              onPress={() => setRepaySource('collateral')}>
+              <Text
+                style={[
+                  styles.sourceSwitchTabText,
+                  repaySource === 'collateral' &&
+                    styles.sourceSwitchTabTextActive,
+                ]}>
+                {t('page.Lending.repayDetail.tabs.collateral')}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+      {repaySource === 'wallet' ? (
+        <RepayActionPopupContent
+          reserve={reserve}
+          userSummary={userSummary}
+          onClose={onClose}
+        />
+      ) : repayToken ? (
+        <RepayWithCollateral
+          onClose={onClose}
+          repayToken={repayToken}
+          defaultCollateralToken={defaultCollateralToken}
+        />
+      ) : null}
     </AutoLockView>
   );
 };
@@ -573,13 +930,18 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 20,
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
+  switchContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    width: '100%',
+    zIndex: 999,
+  },
   amountHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 4,
-    marginTop: 36,
+    marginTop: 16,
   },
   amountHeaderTitle: {
     fontSize: 17,
@@ -594,6 +956,9 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
+  amountValueDescriptionDanger: {
+    color: ctx.colors2024['red-default'],
+  },
   amountInput: {
     marginTop: 12,
   },
@@ -604,11 +969,17 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
   },
   contentContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
+    paddingBottom: 200,
     width: '100%',
   },
   bottomSheetScrollView: {
+    flex: 1,
     width: '100%',
+    marginTop: 16,
+    height: '100%',
+    overflow: 'visible',
+    paddingBottom: 140,
   },
   transactionContainer: {
     gap: 12,
@@ -632,6 +1003,52 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     marginTop: 0,
     fontFamily: 'SF Pro Rounded',
+    width: '100%',
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    zIndex: 999,
+  },
+  sourceSwitchTitle: {
+    marginTop: 16,
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'left',
+    width: '100%',
+  },
+  sourceSwitchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    marginTop: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 0,
+    borderRadius: 10,
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  sourceSwitchTab: {
+    flex: 1,
+    height: 34,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  sourceSwitchTabActive: {
+    backgroundColor: ctx.colors2024['neutral-title-1'],
+  },
+  sourceSwitchTabText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  sourceSwitchTabTextActive: {
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-bg-0'],
   },
   buttonContainer: {
     height: 116,

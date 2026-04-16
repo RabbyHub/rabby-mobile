@@ -8,7 +8,6 @@ import React, {
 import {
   View,
   StyleSheet,
-  Text,
   Image,
   TouchableOpacity,
   TextStyle,
@@ -16,7 +15,7 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import AddressMemo from './AddressMemo';
 import UserListDrawer from './UserListDrawer';
 import { getTimeSpan } from '@/utils/time';
@@ -52,6 +51,7 @@ import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPop
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { useFindChain } from '@/hooks/useFindChain';
 import { Chain } from '@/constant/chains';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

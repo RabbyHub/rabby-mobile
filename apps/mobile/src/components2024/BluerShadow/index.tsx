@@ -1,4 +1,5 @@
-import React from 'react';
+import { useTheme2024 } from '@/hooks/theme';
+import React, { type Ref } from 'react';
 import { Platform, StyleSheet, View, ViewProps } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 
@@ -14,21 +15,34 @@ interface Props {
 }
 
 export const BlurShadowView = ({
+  ref,
   children,
   isLight,
   blurAmount = 29,
   borderRadius = 20,
   viewProps,
   viewTypeOnNoShadow = viewProps ? 'view' : 'fragment',
-}: Props) => {
+}: Props & { ref?: Ref<View> }) => {
   if (!isLight || isAndroid) {
-    if (viewTypeOnNoShadow === 'fragment') return children;
+    if (viewTypeOnNoShadow === 'fragment') {
+      if (ref && __DEV__) {
+        console.warn(
+          '[BlurShadowView] ref is ignored when viewTypeOnNoShadow is "fragment"',
+        );
+      }
+      return children;
+    }
 
-    return <View {...viewProps}>{children}</View>;
+    return (
+      <View ref={ref} {...viewProps}>
+        {children}
+      </View>
+    );
   }
 
   return (
     <View
+      ref={ref}
       {...viewProps}
       style={[
         isLight ? styles.lightContainer : styles.container,

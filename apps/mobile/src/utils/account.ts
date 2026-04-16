@@ -2,11 +2,6 @@ import { contactService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import {
-  KeyringAccount,
-  KeyringTypeName,
-} from '@rabby-wallet/keyring-utils/src/types';
-import BigNumber from 'bignumber.js';
 import { ellipsisAddress } from './address';
 
 const priority = {
@@ -24,17 +19,7 @@ export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
   })[0];
 }
 
-export const sortAccountsByBalance = <
-  T extends { address: string; balance?: number }[],
->(
-  accounts: T,
-) => {
-  return accounts.sort((a, b) => {
-    return new BigNumber(b?.balance || 0)
-      .minus(new BigNumber(a?.balance || 0))
-      .toNumber();
-  });
-};
+export { sortAccountsByBalance, filterMyAccounts } from '@/core/apis/account';
 
 export function isWatchOrSafeAccount(account: Account | Account['type']) {
   if (!account) {
@@ -47,15 +32,6 @@ export function isWatchOrSafeAccount(account: Account | Account['type']) {
     accType && [KEYRING_CLASS.WATCH, KEYRING_CLASS.GNOSIS].includes(accType)
   );
 }
-export const filterMyAccounts = <
-  T extends KeyringAccount | KeyringAccountWithAlias,
->(
-  accounts: T[],
-) => {
-  return accounts.filter(
-    a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
-  );
-};
 
 export const isAccountSupportMiniApproval = (type?: string) => {
   if (!type) {

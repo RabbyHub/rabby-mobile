@@ -17,7 +17,6 @@ import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 import { duplicatelyStringifiedAppJsonStore } from '@/core/storage/mmkv';
 import { openapi } from '@/core/request';
 import { patchSingleToken } from '@/databases/sync/assets';
-import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyItem';
 import { HistoryItemCateType } from './type';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
@@ -97,10 +96,13 @@ export const fetchHistoryTokenItem = (
   tokenDict: Record<string, TokenItem>,
 ) => {
   const tokenUUID = `${chain}_token:${token_id}`;
-  return tokenDict[tokenUUID] || tokenDict[token_id] || {};
+  // TODO: {} is a temporary fix, need to make one real TokenItem object
+  return tokenDict[tokenUUID] || tokenDict[token_id] || ({} as TokenItem);
 };
 
-export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
+export const ensureHistoryListItemFromDb = (
+  item: HistoryItemEntity,
+): HistoryDisplayItem => {
   return {
     ...item,
     historyCustomType: item.history_custom_type,
@@ -127,7 +129,7 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
       value: item.token_approve_value,
       token: item.token_approve_item,
     },
-    project_item: item.project_item,
+    project_item: item.project_item ?? null,
     key: item._db_id,
     address: item.owner_addr,
     isSmallUsdTx: item.is_small_tx,
@@ -291,17 +293,4 @@ export const txDonePatchTokenAmountInDb = async (
   } catch (e) {
     console.log('txDonePatchTokenAmountInDb error', e);
   }
-};
-
-export const insertCopyTradingBuyItem = (history: SwapTxHistoryItem) => {
-  CopyTradingBuyItemEntity.insertBuyItem(history.address, {
-    hash: history.hash,
-    id: history.toToken.id,
-    chain: history.toToken.chain,
-    amount: history.toAmount,
-    price: history.toToken.price,
-    from_token_id: history.fromToken.id,
-    from_token_amount: history.fromAmount,
-    from_token_price: history.fromToken.price,
-  });
 };

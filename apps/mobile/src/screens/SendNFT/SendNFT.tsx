@@ -1,8 +1,16 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useRoute } from '@react-navigation/native';
@@ -22,10 +30,14 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import BottomArea from './components/BottomArea';
 import { findChain } from '@/utils/chain';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { useTranslation } from 'react-i18next';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ShowMoreOnSendNFT } from './components/ShowMoreOnSendNFT';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { Text } from '@/components/Typography';
+
+const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
+  KeyboardAwareScrollView,
+);
 
 export default function SendNFT() {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -47,7 +59,6 @@ export default function SendNFT() {
   const fromAccount = navParams?.fromAccount;
 
   const toAddress = navParams?.toAddress || '';
-  const addressBrandName = navParams?.addressBrandName;
   const addrDesc = navParams?.addrDesc;
   const account = fromAccount || currentAccount;
 
@@ -67,25 +78,32 @@ export default function SendNFT() {
     formValues,
     handleFieldChange,
     handleGasLevelChanged,
+    scrollviewRef,
     handleIgnoreGasFeeChange,
+    onBottomAreaLayout,
+    scrollViewStyle,
+    scrollToBottom,
 
     whitelistEnabled,
     computed: {
+      toAccount,
+      toAddressPositiveTips,
       toAddressInContactBook,
-      toAddressIsValid,
-      toAddressIsRecentlySend,
-      toAddressInWhitelist,
+      toAddrCex,
+      // toAddressIsRecentlySend,
+      // toAddressInWhitelist,
       canSubmit,
       canDirectSign,
     },
+    miniSignInstance,
   } = useSendNFTForm({
     toAddress: navParams?.toAddress,
+    toAddressBrandName: navParams?.addressBrandName,
     nftToken: nftItem,
-    account,
+    currentAccount: account,
   });
 
   const { fetchContactAccounts } = useContactAccounts();
-  const { t } = useTranslation();
 
   // Initialize formValues.to with toAddress from navParams
   React.useEffect(() => {
@@ -129,60 +147,68 @@ export default function SendNFT() {
   }
 
   return (
-    <SendNFTInternalContextProvider
-      value={{
-        screenState,
-        formValues,
-        computed: {
-          canSubmit,
-          toAddressIsRecentlySend,
-          toAddressInWhitelist,
-          whitelistEnabled,
-          toAddressIsValid,
-          toAddressInContactBook,
-          chainItem,
-          currentNFT: nftItem,
-          canDirectSign,
-        },
-        events: sendNFTEvents,
-        formik,
-        fns: {
-          putScreenState,
-          fetchContactAccounts,
-        },
+    <SignatureInstanceProvider instance={miniSignInstance}>
+      <SendNFTInternalContextProvider
+        value={{
+          screenState,
+          formValues,
+          computed: {
+            fromAddress: account.address,
+            canSubmit,
+            toAccount,
+            toAddressPositiveTips,
+            // toAddressIsRecentlySend,
+            // toAddressInWhitelist,
+            whitelistEnabled,
+            toAddrCex,
+            toAddressInContactBook,
+            chainItem,
+            currentNFT: nftItem,
+            canDirectSign,
+          },
+          events: sendNFTEvents,
+          formik,
+          fns: {
+            putScreenState,
+            fetchContactAccounts,
+          },
 
-        callbacks: {
-          handleFieldChange,
-          handleGasLevelChanged,
-          handleIgnoreGasFeeChange,
-        },
-      }}>
-      <NormalScreenContainer overwriteStyle={styles.container}>
-        <AccountSwitcherModal forScene="SendNFT" inScreen />
-        <View style={styles.sendNFTScreen}>
-          <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
-            {/* From */}
-            <FromAddressControl2024 disableSwitch={true} forScene="SendNFT" />
+          callbacks: {
+            handleFieldChange,
+            handleGasLevelChanged,
+            handleIgnoreGasFeeChange,
+            onBottomAreaLayout,
+            onGasInfoDebouncedLoaded: scrollToBottom,
+          },
+        }}>
+        <NormalScreenContainer2024 type="bg1">
+          <AccountSwitcherModal forScene="SendNFT" inScreen />
+          <View style={styles.sendNFTScreen}>
+            <AnimatedKeyboardAwareScrollView
+              innerRef={instance => {
+                scrollviewRef.current =
+                  instance as unknown as KeyboardAwareScrollView;
+              }}
+              contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
+              {/* From */}
+              <FromAddressControl2024 disableSwitch={true} />
 
-            {/* To */}
-            <ToAddressControl2024
-              // address={toAddress}
-              brandName={addressBrandName}
-              addrDesc={addrDesc}
-            />
+              {/* To */}
+              <ToAddressControl2024 addrDesc={addrDesc} />
 
-            {/* nft amount info */}
-            <NFTSection
-              collectionName={collectionName}
-              nftItem={nftItem}
-              chainItem={chainItem}
-            />
-            <ShowMoreOnSendNFT chainServeId={chainItem?.serverId || ''} />
-          </KeyboardAwareScrollView>
-          <BottomArea account={account} />
-        </View>
-      </NormalScreenContainer>
-    </SendNFTInternalContextProvider>
+              {/* nft amount info */}
+              <NFTSection
+                collectionName={collectionName}
+                nftItem={nftItem}
+                chainItem={chainItem}
+              />
+              <ShowMoreOnSendNFT chainServeId={chainItem?.serverId || ''} />
+            </AnimatedKeyboardAwareScrollView>
+            <BottomArea account={account} />
+          </View>
+        </NormalScreenContainer2024>
+      </SendNFTInternalContextProvider>
+    </SignatureInstanceProvider>
   );
 }
 
@@ -201,21 +227,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
   },
   mainContent: {
-    width: '100%',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 16,
-    paddingBottom: 220,
-  },
-  bottomDockArea: {
-    bottom: 0,
-    width: '100%',
-    padding: 20,
-    backgroundColor: colors2024['neutral-bg1'],
-    borderTopWidth: 0.5,
-    borderTopStyle: 'solid',
-    borderTopColor: colors2024['neutral-line'],
-    position: 'absolute',
+    paddingHorizontal: 20,
+    paddingBottom: 308,
   },
 
   buttonContainer: {

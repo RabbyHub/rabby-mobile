@@ -7,7 +7,7 @@ import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
 import dayjs from 'dayjs';
 
-type CurrencyServiceStore = {
+export type CurrencyServiceStore = {
   data: {
     currencyList: CurrencyItem[];
     updatedAt: number;

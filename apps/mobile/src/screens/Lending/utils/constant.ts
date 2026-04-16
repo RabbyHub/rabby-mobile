@@ -20,6 +20,9 @@ export const HF_COLOR_BAD_THRESHOLD = 1.1; // 1.1
 // 清算线
 export const LIQUIDATION_HF_THRESHOLD = 1.0; // 1.0
 
+// emode操作预估时，健康因子低于该值时，阻断用户操作
+export const HF_BLOCK_THRESHOLD = 1.01;
+
 export const USD_DECIMALS = 8;
 
 // 模拟原生代币的地址
@@ -30,3 +33,17 @@ export const referralCode = '1608';
 
 // withdraw：最大可提取金额的健康因子阈值
 export const MAX_CLICK_WITHDRAW_HF_THRESHOLD = 1.05;
+
+// max时为了偿还利息额外给的阈值
+export const REPAY_AMOUNT_MULTIPLIER = 1.0025;
+
+export const APP_CODE_LENDING_DEBT_SWAP = 'rabby-mobile-lending-debt-swap';
+
+export const APP_CODE_LENDING_REPAY_WITH_COLLATERAL =
+  'rabby-mobile-lending-repay-with-collateral';
+
+export const MAX_UINT_AMOUNT =
+  '115792089237316195423570985008687907853269984665640564039457584007913129639935';
+
+export const LIQUIDATION_SAFETY_THRESHOLD = 1.05;
+export const LIQUIDATION_DANGER_THRESHOLD = 1.01;

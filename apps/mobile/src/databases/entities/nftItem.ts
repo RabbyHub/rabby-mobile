@@ -6,8 +6,12 @@ import { columnConverter, badRealTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
-@Entity('cache_nftitem')
+@ParseEntity()
+@Entity(ORM_TABLE_NAMES.cache_nftitem)
 export class NFTItemEntity extends EntityAddressAssetBase {
   // chain
   @Column('text', { default: '' })
@@ -226,7 +230,7 @@ export class NFTItemEntity extends EntityAddressAssetBase {
       .createQueryBuilder()
       .delete()
       .from(NFTItemEntity)
-      .where('owner_addr = :owner_addr', { owner_addr })
+      .where('lower(owner_addr) = lower(:owner_addr)', { owner_addr })
       .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
       .execute();
 

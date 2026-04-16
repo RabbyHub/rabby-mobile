@@ -11,31 +11,33 @@
 		00E356F31AD99517003FC87E /* RabbyMobileTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* RabbyMobileTests.m */; };
 		0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */; };
 		014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */; };
+		018EF41E2EFBCDE8001A2361 /* RNThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 018EF41A2EFBCDE8001A2361 /* RNThread.m */; };
+		018EF41F2EFBCDE8001A2361 /* ThreadSelfModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 018EF41C2EFBCDE8001A2361 /* ThreadSelfModule.m */; };
+		018EF4562EFC0016001A2361 /* threads in Resources */ = {isa = PBXBuildFile; fileRef = 018EF4552EFC0011001A2361 /* threads */; };
+		018EF45A2EFC0FEE001A2361 /* RNUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 018EF4582EFC0FEE001A2361 /* RNUtils.m */; };
 		01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */; };
 		01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */; };
 		01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE01E2C3889BB0033D12B /* ScreenShield.swift */; };
-		01BFCA772EA23EA600E71394 /* lightweight-charts.standalone.production.js in Resources */ = {isa = PBXBuildFile; fileRef = 01BFCA762EA23EA600E71394 /* lightweight-charts.standalone.production.js */; };
 		01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */; };
 		01DBDDA02E86FFF70060C03B /* builtin-pages in Resources */ = {isa = PBXBuildFile; fileRef = 01DBDD9F2E86FFF70060C03B /* builtin-pages */; };
-		01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 01E584B52C370990007F3280 /* LaunchScreen.xib */; };
 		01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */; };
 		0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */; };
-		5EE661F197D0425E824520F4 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 8E9AD328E8F6407FBCE15FC1 /* InpageBridgeWeb3.js */; };
 		61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */; };
-		817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */ = {isa = PBXBuildFile; fileRef = FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
 		A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 370EA128F5694C408EE79381 /* vconsole.min.js */; };
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
 		AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */; };
+		BA11A04DCA0A4A64A8355C12 /* e1789a3f58159a0b7c06ac86c1596058.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 86186D0BE58742E092BA1BF3 /* e1789a3f58159a0b7c06ac86c1596058.min.js */; };
 		E576F98C62E44D04A874C8B7 /* SF-Pro-Rounded-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */; };
+		9182295941E84E6AB3BB3DDB /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = 6F4C5DF9B1A24514B332C2F8 /* InpageBridgeWeb3.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,20 +56,30 @@
 		00E356F21AD99517003FC87E /* RabbyMobileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RabbyMobileTests.m; sourceTree = "<group>"; };
 		0120B20E2D082C0000FCB1B1 /* RNHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNHelpers.h; path = RabbyMobile/RNHelpers.h; sourceTree = "<group>"; };
 		0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RNHelpers.mm; path = RabbyMobile/RNHelpers.mm; sourceTree = "<group>"; };
+		0125AF792F2A3CFE0016DDB5 /* RabbyMobileNotificationRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RabbyMobileNotificationRelease.entitlements; sourceTree = "<group>"; };
 		01390F572E40CD3C0058B77C /* RabbyMobileRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileRelease.entitlements; path = RabbyMobile/RabbyMobileRelease.entitlements; sourceTree = "<group>"; };
-		014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = RabbyMobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		018EF4192EFBCDE8001A2361 /* RNThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNThread.h; sourceTree = "<group>"; };
+		018EF41A2EFBCDE8001A2361 /* RNThread.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNThread.m; sourceTree = "<group>"; };
+		018EF41B2EFBCDE8001A2361 /* ThreadSelfModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreadSelfModule.h; sourceTree = "<group>"; };
+		018EF41C2EFBCDE8001A2361 /* ThreadSelfModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ThreadSelfModule.m; sourceTree = "<group>"; };
+		018EF4552EFC0011001A2361 /* threads */ = {isa = PBXFileReference; lastKnownFileType = folder; name = threads; path = ../assets/ios/threads; sourceTree = "<group>"; };
+		018EF4572EFC0FEE001A2361 /* RNUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNUtils.h; sourceTree = "<group>"; };
+		018EF4582EFC0FEE001A2361 /* RNUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNUtils.m; sourceTree = "<group>"; };
 		01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+ImageEffects.m"; path = "RabbyMobile/UIImage+ImageEffects.m"; sourceTree = "<group>"; };
 		01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RNScreenshotPrevent.m; path = RabbyMobile/RNScreenshotPrevent.m; sourceTree = "<group>"; };
 		01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNScreenshotPrevent.h; path = RabbyMobile/RNScreenshotPrevent.h; sourceTree = "<group>"; };
 		01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+ImageEffects.h"; path = "RabbyMobile/UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		01BBE01E2C3889BB0033D12B /* ScreenShield.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ScreenShield.swift; path = RabbyMobile/ScreenShield.swift; sourceTree = "<group>"; };
-		01BFCA762EA23EA600E71394 /* lightweight-charts.standalone.production.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = "lightweight-charts.standalone.production.js"; path = "../assets/custom/lightweight-charts.standalone.production.js"; sourceTree = SOURCE_ROOT; };
 		01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = AppConfig.xcconfig; path = RabbyMobile/AppConfig.xcconfig; sourceTree = "<group>"; };
 		01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileDebug.entitlements; path = RabbyMobile/RabbyMobileDebug.entitlements; sourceTree = "<group>"; };
 		01D49C742CBE7D5E008C5EE2 /* RNTimeChanged.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RNTimeChanged.h; path = RabbyMobile/RNTimeChanged.h; sourceTree = "<group>"; };
 		01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = RNTimeChanged.mm; path = RabbyMobile/RNTimeChanged.mm; sourceTree = "<group>"; };
 		01DBDD9F2E86FFF70060C03B /* builtin-pages */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "builtin-pages"; path = "../assets/ios/builtin-pages"; sourceTree = "<group>"; };
-		01E584B52C370990007F3280 /* LaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LaunchScreen.xib; path = RabbyMobile/LaunchScreen.xib; sourceTree = "<group>"; };
+		01E0CA722F22C4AC0050B84A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		01E0CA742F22C4AC0050B84A /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
+		01E0CB3A2F238DA40050B84A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		01E0CB3B2F238DA40050B84A /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReactNativeSecurity.h; path = RabbyMobile/ReactNativeSecurity.h; sourceTree = "<group>"; };
 		01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ReactNativeSecurity.mm; path = RabbyMobile/ReactNativeSecurity.mm; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* RabbyMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RabbyMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -76,25 +88,31 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = RabbyMobile/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = RabbyMobile/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = RabbyMobile/main.m; sourceTree = "<group>"; };
+		151B773A68D0A3B50F76755A /* Pods-RabbyMobileNotification.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.release.xcconfig"; sourceTree = "<group>"; };
 		1B2D9C4676E5EA7E90C5705F /* Pods-RabbyMobile.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.regression.xcconfig"; sourceTree = "<group>"; };
 		322D3F7B9B8D39882C19A512 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };
+		32B6FD6243A2B6510D5BDC15 /* Pods-RabbyMobileNotification.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.debug.xcconfig"; sourceTree = "<group>"; };
 		370EA128F5694C408EE79381 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-RabbyMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.debug.xcconfig"; sourceTree = "<group>"; };
 		48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Regular.otf"; path = "../assets/fonts/SF-Pro-Rounded-Regular.otf"; sourceTree = "<group>"; };
 		5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Bold.otf"; path = "../assets/fonts/SF-Pro-Rounded-Bold.otf"; sourceTree = "<group>"; };
+		62B8C84B05CF872511F26010 /* Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileNotification/Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig"; sourceTree = "<group>"; };
+		6923FF90C9FD630B289B7614 /* Pods-RabbyMobile-RabbyMobileNotification.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileNotification.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileNotification/Pods-RabbyMobile-RabbyMobileNotification.regression.xcconfig"; sourceTree = "<group>"; };
 		6B576D0FC998649BFE6FCB60 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; sourceTree = "<group>"; };
 		78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile_RabbyMobileTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = RabbyMobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		86186D0BE58742E092BA1BF3 /* e1789a3f58159a0b7c06ac86c1596058.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = e1789a3f58159a0b7c06ac86c1596058.min.js; path = ../assets/custom/e1789a3f58159a0b7c06ac86c1596058.min.js; sourceTree = "<group>"; };
+		88C933734903F821FA0C5573 /* Pods_RabbyMobileNotification.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobileNotification.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
-		8E9AD328E8F6407FBCE15FC1 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
 		A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Medium.otf"; path = "../assets/fonts/SF-Pro-Rounded-Medium.otf"; sourceTree = "<group>"; };
 		A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobile.entitlements; path = RabbyMobile/RabbyMobile.entitlements; sourceTree = "<group>"; };
 		ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DE2ED77CA6BCCFCA3B356774 /* Pods-RabbyMobileNotification.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobileNotification.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobileNotification/Pods-RabbyMobileNotification.regression.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Heavy.otf"; path = "../assets/fonts/SF-Pro-Rounded-Heavy.otf"; sourceTree = "<group>"; };
-		FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "bignumber.js@9.3.1-bignumber.min.js"; path = "../assets/custom/bignumber.js@9.3.1-bignumber.min.js"; sourceTree = "<group>"; };
+		6F4C5DF9B1A24514B332C2F8 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; name = "InpageBridgeWeb3.js"; path = "../assets/custom/InpageBridgeWeb3.js"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,9 +153,43 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		018EF41D2EFBCDE8001A2361 /* Thread */ = {
+			isa = PBXGroup;
+			children = (
+				018EF4192EFBCDE8001A2361 /* RNThread.h */,
+				018EF41A2EFBCDE8001A2361 /* RNThread.m */,
+				018EF41B2EFBCDE8001A2361 /* ThreadSelfModule.h */,
+				018EF41C2EFBCDE8001A2361 /* ThreadSelfModule.m */,
+			);
+			name = Thread;
+			path = RabbyMobile/Thread;
+			sourceTree = "<group>";
+		};
+		018EF4592EFC0FEE001A2361 /* Base */ = {
+			isa = PBXGroup;
+			children = (
+				018EF4572EFC0FEE001A2361 /* RNUtils.h */,
+				018EF4582EFC0FEE001A2361 /* RNUtils.m */,
+			);
+			name = Base;
+			path = RabbyMobile/Base;
+			sourceTree = "<group>";
+		};
+		01E0CB3C2F238DA40050B84A /* RabbyMobileNotification */ = {
+			isa = PBXGroup;
+			children = (
+				0125AF792F2A3CFE0016DDB5 /* RabbyMobileNotificationRelease.entitlements */,
+				01E0CB3A2F238DA40050B84A /* Info.plist */,
+				01E0CB3B2F238DA40050B84A /* NotificationService.swift */,
+			);
+			path = RabbyMobileNotification;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* RabbyMobile */ = {
 			isa = PBXGroup;
 			children = (
+				018EF4592EFC0FEE001A2361 /* Base */,
+				018EF41D2EFBCDE8001A2361 /* Thread */,
 				01390F572E40CD3C0058B77C /* RabbyMobileRelease.entitlements */,
 				0120B20E2D082C0000FCB1B1 /* RNHelpers.h */,
 				0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */,
@@ -145,7 +197,6 @@
 				01D49C752CBE7D5E008C5EE2 /* RNTimeChanged.mm */,
 				01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */,
 				A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */,
-				01E584B52C370990007F3280 /* LaunchScreen.xib */,
 				01BBE01E2C3889BB0033D12B /* ScreenShield.swift */,
 				01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */,
 				01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */,
@@ -170,6 +221,9 @@
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */,
 				B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */,
+				01E0CA722F22C4AC0050B84A /* UserNotifications.framework */,
+				01E0CA742F22C4AC0050B84A /* UserNotificationsUI.framework */,
+				88C933734903F821FA0C5573 /* Pods_RabbyMobileNotification.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -184,12 +238,14 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				018EF4552EFC0011001A2361 /* threads */,
 				01DBDD9F2E86FFF70060C03B /* builtin-pages */,
 				014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */,
 				ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */,
 				13B07FAE1A68108700A75B9A /* RabbyMobile */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* RabbyMobileTests */,
+				01E0CB3C2F238DA40050B84A /* RabbyMobileNotification */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -218,6 +274,11 @@
 				322D3F7B9B8D39882C19A512 /* Pods-RabbyMobile.release.xcconfig */,
 				1B2D9C4676E5EA7E90C5705F /* Pods-RabbyMobile.regression.xcconfig */,
 				78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */,
+				62B8C84B05CF872511F26010 /* Pods-RabbyMobile-RabbyMobileNotification.release.xcconfig */,
+				6923FF90C9FD630B289B7614 /* Pods-RabbyMobile-RabbyMobileNotification.regression.xcconfig */,
+				32B6FD6243A2B6510D5BDC15 /* Pods-RabbyMobileNotification.debug.xcconfig */,
+				151B773A68D0A3B50F76755A /* Pods-RabbyMobileNotification.release.xcconfig */,
+				DE2ED77CA6BCCFCA3B356774 /* Pods-RabbyMobileNotification.regression.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -229,10 +290,9 @@
 				F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */,
 				A4836FAFC22B499AAA2E435D /* SF-Pro-Rounded-Medium.otf */,
 				48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */,
-				8E9AD328E8F6407FBCE15FC1 /* InpageBridgeWeb3.js */,
 				370EA128F5694C408EE79381 /* vconsole.min.js */,
-				FB7142274FF640DBA93D0473 /* bignumber.js@9.3.1-bignumber.min.js */,
-				01BFCA762EA23EA600E71394 /* lightweight-charts.standalone.production.js */,
+				86186D0BE58742E092BA1BF3 /* e1789a3f58159a0b7c06ac86c1596058.min.js */,
+				6F4C5DF9B1A24514B332C2F8 /* InpageBridgeWeb3.js */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -291,6 +351,7 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					00E356ED1AD99517003FC87E = {
@@ -335,21 +396,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				01DBDDA02E86FFF70060C03B /* builtin-pages in Resources */,
-				01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */,
-				01BFCA772EA23EA600E71394 /* lightweight-charts.standalone.production.js in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */,
 				ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */,
 				62F658AD5D35470FBE7DF799 /* SF-Pro-Rounded-Bold.otf in Resources */,
 				E576F98C62E44D04A874C8B7 /* SF-Pro-Rounded-Heavy.otf in Resources */,
+				018EF4562EFC0016001A2361 /* threads in Resources */,
 				0FDFDF1FBA404AB3A3E6ECCA /* SF-Pro-Rounded-Medium.otf in Resources */,
 				5497879220EF4D48850C0543 /* SF-Pro-Rounded-Regular.otf in Resources */,
-				5EE661F197D0425E824520F4 /* InpageBridgeWeb3.js in Resources */,
 				A9D2208BFEB74DE8946F4B97 /* vconsole.min.js in Resources */,
-				817EDAB71A6F410782AFA68A /* bignumber.js@9.3.1-bignumber.min.js in Resources */,
 				A435C93C4EB14CC4B4CB98D0 /* BuildFile in Resources */,
+				BA11A04DCA0A4A64A8355C12 /* e1789a3f58159a0b7c06ac86c1596058.min.js in Resources */,
+				9182295941E84E6AB3BB3DDB /* InpageBridgeWeb3.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -370,7 +430,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = ". ./patches/phase-bundle-rn.sh\n";
+			shellScript = "/bin/bash -l ./patches/phase-bundle-rn.sh\n";
 		};
 		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -527,7 +587,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export RCT_METRO_PORT=\"${RCT_METRO_PORT:=8081}\"\necho \"export RCT_METRO_PORT=${RCT_METRO_PORT}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\nif [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z localhost ${RCT_METRO_PORT} ; then\n    if ! curl -s \"http://localhost:${RCT_METRO_PORT}/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port ${RCT_METRO_PORT} already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../node_modules/react-native/scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi\n";
+			shellScript = "export RCT_METRO_PORT=\"${RCT_METRO_PORT:=8081}\"\nexport NO_PROXY=\"127.0.0.1,localhost,::1${NO_PROXY:+,$NO_PROXY}\"\nexport no_proxy=\"$NO_PROXY\"\necho \"export RCT_METRO_PORT=${RCT_METRO_PORT}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\nif [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z 127.0.0.1 ${RCT_METRO_PORT} ; then\n    if ! curl --noproxy '*' -s \"http://127.0.0.1:${RCT_METRO_PORT}/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port ${RCT_METRO_PORT} already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../node_modules/react-native/scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -545,12 +605,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				018EF41E2EFBCDE8001A2361 /* RNThread.m in Sources */,
+				018EF41F2EFBCDE8001A2361 /* ThreadSelfModule.m in Sources */,
 				01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */,
 				01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				01D49C762CBE7D5E008C5EE2 /* RNTimeChanged.mm in Sources */,
+				018EF45A2EFC0FEE001A2361 /* RNUtils.m in Sources */,
 				01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */,
 				0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */,
 			);
@@ -571,14 +634,13 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -599,11 +661,10 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -729,6 +790,8 @@
 					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers/platform/ios",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD = "";
@@ -749,6 +812,8 @@
 					"-DFOLLY_NO_CONFIG",
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
 				OTHER_LDFLAGS = "$(inherited)";
 				RABBYGO_SCHEMA = "rabbygo-regression";
@@ -766,8 +831,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconRegression;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = RabbyMobile/RabbyMobile.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ZPNP2SF27Q;
@@ -788,8 +853,9 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression";
 				PRODUCT_NAME = RabbyMobile;
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegression;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegressionOpcode;
 				RABBY_MOBILE_DISPLAY_NAME = "Reg Wallet";
+				SENTRY_DISABLE_AUTO_UPLOAD = false;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -804,12 +870,13 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 6B576D0FC998649BFE6FCB60 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
 				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -822,7 +889,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile-regression";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHocRegression;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RabbyMobile.app/RabbyMobile";
 			};
 			name = Regression;
@@ -840,6 +907,7 @@
 				DEVELOPMENT_TEAM = ZPNP2SF27Q;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
 				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -858,6 +926,7 @@
 				PRODUCT_NAME = RabbyMobile;
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileDevelopment;
 				RABBY_MOBILE_DISPLAY_NAME = "Debug Rabby";
+				SENTRY_DISABLE_AUTO_UPLOAD = false;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -876,8 +945,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = RabbyMobile/RabbyMobileRelease.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: OPCODE LABS PTE. LTD. (ZPNP2SF27Q)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ZPNP2SF27Q;
@@ -898,8 +967,9 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile";
 				PRODUCT_NAME = RabbyMobile;
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAppStore;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAppStoreOpcode;
 				RABBY_MOBILE_DISPLAY_NAME = "Rabby Wallet";
+				SENTRY_DISABLE_AUTO_UPLOAD = false;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -948,7 +1018,7 @@
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1023,6 +1093,8 @@
 					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers/platform/ios",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD = "";
@@ -1044,6 +1116,8 @@
 					"-DFOLLY_NO_CONFIG",
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
 				OTHER_LDFLAGS = "$(inherited)";
 				RABBYGO_SCHEMA = "rabbygo-debug";
@@ -1121,6 +1195,8 @@
 					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
 					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-runtimeexecutor/React_runtimeexecutor.framework/Headers/platform/ios",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD = "";
@@ -1141,6 +1217,8 @@
 					"-DFOLLY_NO_CONFIG",
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
 				OTHER_LDFLAGS = "$(inherited)";
 				RABBYGO_SCHEMA = rabbygo;

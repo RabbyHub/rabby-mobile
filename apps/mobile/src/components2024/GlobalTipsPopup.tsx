@@ -8,14 +8,16 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const GlobalTipsPopup: React.FC<{}> = ({}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { state, hideTipsPopup } = useTipsPopup();
 
-  const { title, desc, visible } = state || {};
+  const { title, desc, visible, buttonStyle, buttonTitleStyle, buttonType } =
+    state || {};
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
@@ -53,12 +55,18 @@ export const GlobalTipsPopup: React.FC<{}> = ({}) => {
             <Text style={styles.title}>{title}</Text>
           </View>
           <View style={styles.content}>
-            <Text style={styles.desc}>{desc}</Text>
+            {typeof desc === 'string' ? (
+              <Text style={styles.desc}>{desc}</Text>
+            ) : (
+              desc
+            )}
           </View>
           <Button
-            type="primary"
+            type={buttonType || 'primary'}
             title={t('component.GlobalTipsPopup.btn')}
             onPress={hideTipsPopup}
+            buttonStyle={buttonStyle}
+            titleStyle={buttonTitleStyle}
           />
         </BottomSheetView>
       </AppBottomSheetModal>

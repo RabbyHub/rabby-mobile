@@ -8,6 +8,8 @@ import {
   checkMultipleFailed,
   shouldRejectUnlockDueToMultipleFailed,
 } from '../utils/unlockRateLimit';
+import { runIIFEFunc } from '../utils/store';
+import { perfEvents } from '../utils/perf';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -268,6 +270,13 @@ export function isUnlocked() {
   return keyringService.isUnlocked();
 }
 
+export async function isLockedWithCustomPassword() {
+  if (keyringService.isUnlocked()) return false;
+
+  const lockInfo = await getRabbyLockInfo();
+  return lockInfo.isUseCustomPwd;
+}
+
 export type UnlockResultErrors = {
   error: string;
   formFieldError?: string;
@@ -357,3 +366,19 @@ export function subscribeAppLock(fn: () => any) {
 
   return dispose;
 }
+
+runIIFEFunc(() => {
+  const isFirstTimeAfterLaunchRef = {
+    current: true,
+  };
+  keyringService.on('unlock', ctx => {
+    console.debug('[perf] keyringService unlock event ctx', ctx);
+    if (ctx.scene === 'unlock') {
+      const isFirstTimeAfterLaunch = isFirstTimeAfterLaunchRef.current;
+      isFirstTimeAfterLaunchRef.current = false;
+      perfEvents.emit('USER_MANUALLY_UNLOCK', {
+        isFirstTimeAfterLaunch,
+      });
+    }
+  });
+});

@@ -13,7 +13,7 @@ export const ActionGroup: React.FC<Props> = props => {
   const { account } = props;
 
   if (account.type === KEYRING_CLASS.WATCH) {
-    return <SubmitActions {...props} />;
+    return <SubmitActions {...props} USE_LAST_UNLOCKED_AUTH />;
   }
 
   if (account.type === KEYRING_CLASS.HARDWARE.LEDGER) {
@@ -29,11 +29,11 @@ export const ActionGroup: React.FC<Props> = props => {
   }
 
   if (account.type === KEYRING_CLASS.PRIVATE_KEY) {
-    return <PrivateKeyActions {...props} />;
+    return <PrivateKeyActions {...props} USE_LAST_UNLOCKED_AUTH />;
   }
 
   if (account.type === KEYRING_CLASS.MNEMONIC) {
-    return <PrivateKeyActions {...props} />;
+    return <PrivateKeyActions {...props} USE_LAST_UNLOCKED_AUTH />;
   }
 
   return <ProcessActions {...props} />;

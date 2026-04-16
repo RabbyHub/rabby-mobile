@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react';
+import type { Ref } from 'react';
 import {
   StyleSheet,
   View,
@@ -147,296 +154,287 @@ export type DappWebViewControl2Type = {
   getWebViewState: () => WebViewState;
   getWebViewActions: () => WebViewActions;
 };
-const DappWebViewControl2 = React.forwardRef<
-  DappWebViewControl2Type,
-  DappWebViewControlProps
->(
-  (
-    {
-      dappOrigin,
-      dappTabId,
-      embedHtml,
-      initialUrl: _initialUrl,
-      onPressHeaderLeftClose,
 
-      headerRight,
-      headerNode,
-      navControlContent,
-      webviewProps,
-      webviewContainerMaxHeight = Dimensions.get('screen').height,
-      webviewNode,
-      style,
-    },
+const DappWebViewControl2 = ({
+  ref,
+  dappOrigin,
+  dappTabId,
+  embedHtml,
+  initialUrl: _initialUrl,
+  onPressHeaderLeftClose,
+
+  headerRight,
+  headerNode,
+  navControlContent,
+  webviewProps,
+  webviewContainerMaxHeight = Dimensions.get('screen').height,
+  webviewNode,
+  style,
+}: DappWebViewControlProps & { ref?: Ref<DappWebViewControl2Type> }) => {
+  const { styles, colors, colors2024 } = useTheme2024({
+    getStyle: getStyles,
+  });
+
+  const {
+    webviewRef,
+    webviewIdRef,
+    urlRef,
+    titleRef,
+    iconRef,
+
+    webviewState,
+
+    latestUrl,
+    webviewActions,
+  } = useWebViewControl({ initialTabId: dappTabId });
+
+  const { entryScriptWeb3Loaded, fullScript } =
+    useJavaScriptBeforeContentLoaded();
+
+  const { formattedCurrentUrl, stillInDappOrigin, urlString } = useMemo(() => {
+    const urlString = latestUrl || convertToWebviewUrl(dappOrigin);
+    const urlInfo = canoicalizeDappUrl(urlString);
+
+    const hasSameOrigin =
+      canoicalizeDappUrl(urlString).httpOrigin === dappOrigin;
+
+    return {
+      stillInDappOrigin: hasSameOrigin,
+      formattedCurrentUrl: hasSameOrigin ? urlInfo.hostname : urlString,
+      urlString,
+    };
+  }, [dappOrigin, latestUrl]);
+
+  useImperativeHandle(
     ref,
-  ) => {
-    const { styles, colors, colors2024 } = useTheme2024({
-      getStyle: getStyles,
-    });
+    () => ({
+      getWebViewDappOrigin: () => dappOrigin,
+      getWebViewId: () => webviewIdRef.current || '',
+      getWebViewState: () => webviewState,
+      getWebViewActions: () => webviewActions,
+    }),
+    [dappOrigin, webviewIdRef, webviewState, webviewActions],
+  );
 
-    const {
-      webviewRef,
-      webviewIdRef,
+  const handlePressCloseDefault = useCallback(() => {
+    console.debug('handlePressCloseDefault: implement close dapp');
+  }, []);
+
+  const handlePressHeaderLeftClose = useCallback(() => {
+    if (typeof onPressHeaderLeftClose === 'function') {
+      return onPressHeaderLeftClose({
+        defaultAction: handlePressCloseDefault,
+        dappOrigin: dappOrigin,
+        latestUrl: latestUrl,
+        webviewId: webviewIdRef.current,
+      });
+    }
+
+    return handlePressCloseDefault();
+  }, [
+    handlePressCloseDefault,
+    onPressHeaderLeftClose,
+    dappOrigin,
+    latestUrl,
+    webviewIdRef,
+  ]);
+
+  const { headerRightNode, finalNavControlNode } = useDefaultNodes({
+    headerRight,
+    navControlContent,
+    webviewState,
+    webviewActions,
+  });
+
+  const handleCopyUrl = useMemoizedFn(() => {
+    Clipboard.setString(urlString);
+    toast.success('Copied!');
+  });
+
+  const renderedHeaderNode = useMemo(() => {
+    const node = (
+      <View style={[styles.dappWebViewHeadContainer]}>
+        <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
+          <TouchableView
+            onPress={handlePressHeaderLeftClose}
+            style={[styles.touchableHeadWrapper]}>
+            <RcIconCloseDapp
+              color={styles.closeDappIcon.color}
+              width={24}
+              height={24}
+            />
+          </TouchableView>
+        </View>
+        <View style={styles.DappWebViewHeadTitleWrapper}>
+          <TouchableOpacity onPress={handleCopyUrl}>
+            {stillInDappOrigin ? (
+              <Text
+                style={styles.HeadTitleOrigin}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {formattedCurrentUrl}
+              </Text>
+            ) : (
+              <Text
+                style={styles.HeadTitleFull}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {formattedCurrentUrl}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
+          {headerRightNode}
+        </View>
+      </View>
+    );
+    if (typeof headerNode === 'function') {
+      return headerNode({ header: node });
+    }
+
+    return headerNode || node;
+  }, [
+    stillInDappOrigin,
+    headerRightNode,
+    headerNode,
+    handlePressHeaderLeftClose,
+    formattedCurrentUrl,
+    styles,
+    handleCopyUrl,
+  ]);
+
+  const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
+    dappOrigin,
+    webviewRef,
+    webviewIdRef,
+    siteInfoRefs: {
       urlRef,
       titleRef,
       iconRef,
+    },
+    // onSelfClose,
+  });
 
-      webviewState,
+  const initialUrl = useMemo(() => {
+    if (!_initialUrl) return convertToWebviewUrl(dappOrigin);
 
-      latestUrl,
-      webviewActions,
-    } = useWebViewControl({ initialTabId: dappTabId });
+    if (
+      canoicalizeDappUrl(_initialUrl).origin !==
+      canoicalizeDappUrl(dappOrigin).origin
+    )
+      return convertToWebviewUrl(dappOrigin);
 
-    const { entryScriptWeb3Loaded, fullScript } =
-      useJavaScriptBeforeContentLoaded({ isTop: false });
+    return convertToWebviewUrl(_initialUrl);
+  }, [dappOrigin, _initialUrl]);
 
-    const { formattedCurrentUrl, stillInDappOrigin, urlString } =
-      useMemo(() => {
-        const urlString = latestUrl || convertToWebviewUrl(dappOrigin);
-        const urlInfo = canoicalizeDappUrl(urlString);
+  const renderedWebviewNode = useMemo(() => {
+    if (!entryScriptWeb3Loaded) return null;
 
-        const hasSameOrigin =
-          canoicalizeDappUrl(urlString).httpOrigin === dappOrigin;
+    const node = (
+      <WebView
+        // cacheEnabled={false}
+        cacheEnabled
+        startInLoadingState
+        allowsFullscreenVideo={false}
+        allowsInlineMediaPlayback={false}
+        originWhitelist={['*']}
+        {...webviewProps}
+        style={[styles.dappWebView, webviewProps?.style]}
+        ref={webviewRef}
+        source={{
+          ...(embedHtml
+            ? {
+                html: embedHtml,
+              }
+            : {
+                uri: initialUrl,
+              }),
+          // TODO: cusotmize userAgent here
+          // 'User-Agent': ''
+        }}
+        testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
+        applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
+        javaScriptEnabled
+        // androidLayerType='software'
+        injectedJavaScriptBeforeContentLoaded={fullScript}
+        injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
+        {...(IS_ANDROID && {
+          injectedJavaScript: PATCH_ANCHOR_TARGET,
+        })}
+        onNavigationStateChange={webviewActions.onNavigationStateChange}
+        webviewDebuggingEnabled={__DEV__}
+        onLoadStart={nativeEvent => {
+          webviewProps?.onLoadStart?.(nativeEvent);
+          onLoadStart(nativeEvent);
+        }}
+        onShouldStartLoadWithRequest={nativeEvent => {
+          return checkShouldStartLoadingWithRequestForDappWebView(nativeEvent);
+        }}
+        onError={errorLog}
+        onMessage={event => {
+          // // leave here for debug
+          // if (__DEV__) {
+          //   console.log('WebView:: onMessage event', event);
+          // }
+          onBridgeMessage(event);
+          webviewProps?.onMessage?.(event);
 
-        return {
-          stillInDappOrigin: hasSameOrigin,
-          formattedCurrentUrl: hasSameOrigin ? urlInfo.hostname : urlString,
-          urlString,
-        };
-      }, [dappOrigin, latestUrl]);
-
-    React.useImperativeHandle(
-      ref,
-      () => ({
-        getWebViewDappOrigin: () => dappOrigin,
-        getWebViewId: () => webviewIdRef.current || '',
-        getWebViewState: () => webviewState,
-        getWebViewActions: () => webviewActions,
-      }),
-      [dappOrigin, webviewIdRef, webviewState, webviewActions],
+          // // leave here for debug
+          // webviewRef.current?.injectJavaScript(
+          //   JS_POST_MESSAGE_TO_PROVIDER(
+          //     JSON.stringify({
+          //       type: 'hello',
+          //       data: 'I have received your message!',
+          //     }),
+          //     '*',
+          //   ),
+          // );
+        }}
+      />
     );
 
-    const handlePressCloseDefault = useCallback(() => {
-      console.debug('handlePressCloseDefault: implement close dapp');
-    }, []);
+    if (typeof webviewNode === 'function') {
+      return webviewNode({ webview: node });
+    }
 
-    const handlePressHeaderLeftClose = useCallback(() => {
-      if (typeof onPressHeaderLeftClose === 'function') {
-        return onPressHeaderLeftClose({
-          defaultAction: handlePressCloseDefault,
-          dappOrigin: dappOrigin,
-          latestUrl: latestUrl,
-          webviewId: webviewIdRef.current,
-        });
-      }
+    return webviewNode || node;
+  }, [
+    embedHtml,
+    webviewProps,
+    entryScriptWeb3Loaded,
+    fullScript,
+    initialUrl,
+    onBridgeMessage,
+    onLoadStart,
+    webviewActions.onNavigationStateChange,
+    webviewNode,
+    webviewRef,
+    styles,
+  ]);
 
-      return handlePressCloseDefault();
-    }, [
-      handlePressCloseDefault,
-      onPressHeaderLeftClose,
-      dappOrigin,
-      latestUrl,
-      webviewIdRef,
-    ]);
+  return (
+    <AutoLockView style={[style, styles.dappWebViewControl]}>
+      {renderedHeaderNode}
 
-    const { headerRightNode, finalNavControlNode } = useDefaultNodes({
-      headerRight,
-      navControlContent,
-      webviewState,
-      webviewActions,
-    });
+      {/* webvbiew */}
+      <View
+        // renderToHardwareTextureAndroid
+        style={[
+          styles.dappWebViewContainer,
+          !webviewContainerMaxHeight
+            ? {}
+            : {
+                maxHeight: webviewContainerMaxHeight,
+              },
+        ]}>
+        {renderedWebviewNode}
+      </View>
 
-    const handleCopyUrl = useMemoizedFn(() => {
-      Clipboard.setString(urlString);
-      toast.success('Copied!');
-    });
-
-    const renderedHeaderNode = useMemo(() => {
-      const node = (
-        <View style={[styles.dappWebViewHeadContainer]}>
-          <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
-            <TouchableView
-              onPress={handlePressHeaderLeftClose}
-              style={[styles.touchableHeadWrapper]}>
-              <RcIconCloseDapp
-                color={styles.closeDappIcon.color}
-                width={24}
-                height={24}
-              />
-            </TouchableView>
-          </View>
-          <View style={styles.DappWebViewHeadTitleWrapper}>
-            <TouchableOpacity onPress={handleCopyUrl}>
-              {stillInDappOrigin ? (
-                <Text
-                  style={styles.HeadTitleOrigin}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {formattedCurrentUrl}
-                </Text>
-              ) : (
-                <Text
-                  style={styles.HeadTitleFull}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {formattedCurrentUrl}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-          <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
-            {headerRightNode}
-          </View>
-        </View>
-      );
-      if (typeof headerNode === 'function') {
-        return headerNode({ header: node });
-      }
-
-      return headerNode || node;
-    }, [
-      stillInDappOrigin,
-      headerRightNode,
-      headerNode,
-      handlePressHeaderLeftClose,
-      formattedCurrentUrl,
-      styles,
-      handleCopyUrl,
-    ]);
-
-    const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
-      dappOrigin,
-      webviewRef,
-      webviewIdRef,
-      siteInfoRefs: {
-        urlRef,
-        titleRef,
-        iconRef,
-      },
-      // onSelfClose,
-    });
-
-    const initialUrl = useMemo(() => {
-      if (!_initialUrl) return convertToWebviewUrl(dappOrigin);
-
-      if (
-        canoicalizeDappUrl(_initialUrl).origin !==
-        canoicalizeDappUrl(dappOrigin).origin
-      )
-        return convertToWebviewUrl(dappOrigin);
-
-      return convertToWebviewUrl(_initialUrl);
-    }, [dappOrigin, _initialUrl]);
-
-    const renderedWebviewNode = useMemo(() => {
-      if (!entryScriptWeb3Loaded) return null;
-
-      const node = (
-        <WebView
-          // cacheEnabled={false}
-          cacheEnabled
-          startInLoadingState
-          allowsFullscreenVideo={false}
-          allowsInlineMediaPlayback={false}
-          originWhitelist={['*']}
-          {...webviewProps}
-          style={[styles.dappWebView, webviewProps?.style]}
-          ref={webviewRef}
-          source={{
-            ...(embedHtml
-              ? {
-                  html: embedHtml,
-                }
-              : {
-                  uri: initialUrl,
-                }),
-            // TODO: cusotmize userAgent here
-            // 'User-Agent': ''
-          }}
-          testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
-          applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
-          javaScriptEnabled
-          // androidLayerType='software'
-          injectedJavaScriptBeforeContentLoaded={fullScript}
-          injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-          {...(IS_ANDROID && {
-            injectedJavaScript: PATCH_ANCHOR_TARGET,
-          })}
-          onNavigationStateChange={webviewActions.onNavigationStateChange}
-          webviewDebuggingEnabled={__DEV__}
-          onLoadStart={nativeEvent => {
-            webviewProps?.onLoadStart?.(nativeEvent);
-            onLoadStart(nativeEvent);
-          }}
-          onShouldStartLoadWithRequest={nativeEvent => {
-            return checkShouldStartLoadingWithRequestForDappWebView(
-              nativeEvent,
-            );
-          }}
-          onError={errorLog}
-          onMessage={event => {
-            // // leave here for debug
-            // if (__DEV__) {
-            //   console.log('WebView:: onMessage event', event);
-            // }
-            onBridgeMessage(event);
-            webviewProps?.onMessage?.(event);
-
-            // // leave here for debug
-            // webviewRef.current?.injectJavaScript(
-            //   JS_POST_MESSAGE_TO_PROVIDER(
-            //     JSON.stringify({
-            //       type: 'hello',
-            //       data: 'I have received your message!',
-            //     }),
-            //     '*',
-            //   ),
-            // );
-          }}
-        />
-      );
-
-      if (typeof webviewNode === 'function') {
-        return webviewNode({ webview: node });
-      }
-
-      return webviewNode || node;
-    }, [
-      embedHtml,
-      webviewProps,
-      entryScriptWeb3Loaded,
-      fullScript,
-      initialUrl,
-      onBridgeMessage,
-      onLoadStart,
-      webviewActions.onNavigationStateChange,
-      webviewNode,
-      webviewRef,
-      styles,
-    ]);
-
-    return (
-      <AutoLockView style={[style, styles.dappWebViewControl]}>
-        {renderedHeaderNode}
-
-        {/* webvbiew */}
-        <View
-          // renderToHardwareTextureAndroid
-          style={[
-            styles.dappWebViewContainer,
-            !webviewContainerMaxHeight
-              ? {}
-              : {
-                  maxHeight: webviewContainerMaxHeight,
-                },
-          ]}>
-          {renderedWebviewNode}
-        </View>
-
-        <View style={styles.dappWebViewNavControl}>{finalNavControlNode}</View>
-      </AutoLockView>
-    );
-  },
-);
+      <View style={styles.dappWebViewNavControl}>{finalNavControlNode}</View>
+    </AutoLockView>
+  );
+};
 
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({

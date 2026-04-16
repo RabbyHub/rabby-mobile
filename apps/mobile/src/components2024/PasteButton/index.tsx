@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   TouchableOpacity,
-  Text,
   StyleProp,
   ViewStyle,
   StyleSheet,
@@ -13,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import IconPaste from '@/assets2024/icons/common/paste.svg';
+import { Text } from '@/components/Typography';
 
 interface IProps {
   onPaste: (text: string) => void;
@@ -26,7 +26,7 @@ const PasteButton: React.FC<IProps> = ({
   onPaste,
   style,
   disableTrigger,
-  cleanClipboardAfterPaste = true,
+  cleanClipboardAfterPaste = false,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();

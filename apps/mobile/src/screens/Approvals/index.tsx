@@ -14,12 +14,17 @@ import { ApprovalsBottomArea } from './components/Layout';
 import { ApprovalsLayouts } from './layout';
 import ListByAssets from './ListByAssets';
 import ListByContracts from './ListByContracts';
+import EIP7702RevokeList from './EIP7702Revoke';
 import {
   ApprovalsPageContext,
   FILTER_TYPES,
   useApprovalsPage,
   useApprovalsPageOnTop,
 } from './useApprovalsPage';
+import {
+  EIP7702ApprovalsProvider,
+  useEIP7702Approvals,
+} from './useEIP7702Approvals';
 import BottomSheetApprovalContract from './components/BottomSheetApprovalContract';
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -39,6 +44,7 @@ const ApprovalScreenContainer: React.FC<{
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { filterType, setFilterType, searchKw, setSearchKw } =
     useApprovalsPage();
+  const { totalCount: eip7702TotalCount } = useEIP7702Approvals();
 
   const { t } = useTranslation();
 
@@ -84,6 +90,12 @@ const ApprovalScreenContainer: React.FC<{
   );
 
   const [isSearching, setIsSearching] = React.useState(false);
+  const eip7702Label = React.useMemo(() => {
+    if (!eip7702TotalCount) {
+      return 'EIP-7702';
+    }
+    return `EIP-7702 (${eip7702TotalCount})`;
+  }, [eip7702TotalCount]);
 
   const getHeaderTitle = React.useCallback(() => {
     return (
@@ -157,10 +169,15 @@ const ApprovalScreenContainer: React.FC<{
         name={FILTER_TYPES.contract}>
         <ListByContracts />
       </Tabs.Tab>
+
       <Tabs.Tab
         label={t('page.approvals.tab-switch.assets')}
         name={FILTER_TYPES.assets}>
         <ListByAssets />
+      </Tabs.Tab>
+
+      <Tabs.Tab label={eip7702Label} name={FILTER_TYPES.EIP7702}>
+        <EIP7702RevokeList />
       </Tabs.Tab>
     </Tabs.Container>
   );
@@ -186,14 +203,20 @@ export default function ApprovalsScreen() {
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <ApprovalsPageContext.Provider value={approvalsPageCtx}>
-        <View style={styles.verticalContainer}>
-          <ApprovalScreenContainer account={account} />
+        <EIP7702ApprovalsProvider
+          account={account}
+          isActive={approvalsPageCtx.filterType === FILTER_TYPES.EIP7702}
+          prefetch
+          searchKeyword={approvalsPageCtx.searchKw}>
+          <View style={styles.verticalContainer}>
+            <ApprovalScreenContainer account={account} />
 
-          <BottomSheetApprovalContract account={account} />
-          <BottomSheetApprovalAsset account={account} />
+            <BottomSheetApprovalContract account={account} />
+            <BottomSheetApprovalAsset account={account} />
 
-          <ApprovalsBottomArea account={account} />
-        </View>
+            <ApprovalsBottomArea account={account} />
+          </View>
+        </EIP7702ApprovalsProvider>
       </ApprovalsPageContext.Provider>
     </NormalScreenContainer2024>
   );

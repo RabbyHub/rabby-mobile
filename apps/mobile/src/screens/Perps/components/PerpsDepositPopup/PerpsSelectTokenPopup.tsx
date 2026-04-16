@@ -1,3 +1,4 @@
+import RcIconBolt from '@/assets2024/icons/perps/IconBolt.svg';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -5,131 +6,87 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import {
   ARB_USDC_TOKEN_ID,
   ARB_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_USDC_TOKEN_ID,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
-import { openapi } from '@/core/request';
-import { Account } from '@/core/services/preference';
-import { useTokens } from '@/hooks/chainAndToken/useToken';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { formatUsdValue } from '@/utils/number';
+import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
+import { ITokenItem } from '@/store/tokens';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useMemoizedFn } from 'ahooks';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
+import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
+import { Text } from '@/components/Typography';
+
+const isDirectDepositToken = (item: ITokenItem) => {
+  return (
+    (item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+      isSameAddress(item.id, ARB_USDC_TOKEN_ID)) ||
+    (item.chain === HYPE_USDC_TOKEN_SERVER_CHAIN &&
+      isSameAddress(item.id, HYPE_USDC_TOKEN_ID))
+  );
+};
 
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
   visible?: boolean;
-  account?: Account | null;
-  onSelect?(token: AbstractPortfolioToken): Promise<void>;
-}> = ({ onClose, visible, account, onSelect }) => {
+  tokens: ITokenItem[];
+  onSelect?(token: ITokenItem): Promise<void>;
+}> = ({ onClose, visible, onSelect, tokens }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
 
-  const { tokens: _tokens, updateData } = useTokens(
-    account?.address,
-    false,
-    0,
-    undefined,
-    true,
-  );
-
-  const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
-    async () => {
-      if (!account?.address) {
-        return;
-      }
-
-      const arbUsdcToken = await openapi.getToken(
-        account?.address,
-        ARB_USDC_TOKEN_SERVER_CHAIN,
-        ARB_USDC_TOKEN_ID,
-      );
-      return ensureAbstractPortfolioToken(arbUsdcToken);
-    },
-    {
-      refreshDeps: [account?.address],
-      manual: true,
-    },
-  );
-
-  const tokens = useMemo(() => {
-    return !arbUsdc
-      ? _tokens
-      : [
-          arbUsdc,
-          ...(_tokens?.filter(
-            item =>
-              !(
-                item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-                isSameAddress(item._tokenId, ARB_USDC_TOKEN_ID)
-              ) && item.is_core,
-          ) || []),
-        ];
-  }, [_tokens, arbUsdc]);
-
-  useEffect(() => {
-    if (visible) {
-      updateData();
-      runFetchUsdcToken();
-    }
-  }, [runFetchUsdcToken, updateData, visible]);
-
-  const renderItem = useMemoizedFn(
-    ({ item }: { item: AbstractPortfolioToken }) => {
-      return (
-        <TouchableOpacity
-          style={[styles.tokenListItem]}
-          onPress={() => {
-            onSelect?.(item);
-          }}>
-          <View style={styles.box}>
-            <AssetAvatar
-              size={46}
-              chain={item.chain}
-              logo={item.logo_url}
-              chainSize={18}
-            />
-            <Text
-              style={StyleSheet.flatten([
-                {
-                  marginLeft: 8,
-                },
-                styles.text,
-              ])}>
-              {getTokenSymbol(item)}
-            </Text>
-            {item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
-            item._tokenId === ARB_USDC_TOKEN_ID ? (
-              <View style={styles.depositTag}>
-                <Text style={styles.depositTagText}>
-                  {t('page.perps.PerpsDepositTokenModal.directTag')}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          <Text style={styles.text}>
-            {formatUsdValue(item.amount * item.price || 0)}
+  const renderItem = useMemoizedFn(({ item }: { item: ITokenItem }) => {
+    return (
+      <TouchableOpacity
+        style={[styles.tokenListItem]}
+        onPress={() => {
+          onSelect?.(item);
+        }}>
+        <View style={styles.box}>
+          <AssetAvatar
+            size={46}
+            chain={item.chain}
+            logo={item.logo_url}
+            chainSize={18}
+          />
+          <Text
+            style={StyleSheet.flatten([
+              {
+                marginLeft: 8,
+              },
+              styles.text,
+            ])}>
+            {getTokenSymbol(item)}
           </Text>
-        </TouchableOpacity>
-      );
-    },
-  );
+          {isDirectDepositToken(item) ? (
+            <View style={styles.depositTag}>
+              <Text style={styles.depositTagText}>
+                {t('page.perps.PerpsDepositTokenModal.directDepositFast')}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.rightArea}>
+          <Text style={styles.text}>
+            {formatUsdValue(
+              isDirectDepositToken(item)
+                ? item.amount
+                : item.amount * item.price || 0,
+            )}
+          </Text>
+          <Text style={styles.amountText}>{formatAmount(item.amount)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  });
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -142,65 +99,77 @@ export const PerpsSelectTokenPopup: React.FC<{
   }, [visible]);
 
   return (
-    <>
-      <AppBottomSheetModal
-        ref={modalRef}
-        {...makeBottomSheetProps({
-          colors: colors2024,
-          linearGradientType: isLight ? 'bg0' : 'bg1',
-        })}
-        onDismiss={onClose}
-        snapPoints={[Dimensions.get('window').height - 200]}>
-        <AutoLockView style={styles.container}>
-          <Text style={styles.title}>
-            {t('page.perps.PerpsSelectTokenPopup.title')}
+    <AppBottomSheetModal
+      ref={modalRef}
+      {...makeBottomSheetProps({
+        colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}
+      onDismiss={onClose}
+      snapPoints={[Dimensions.get('window').height - 200]}>
+      <AutoLockView style={styles.container}>
+        <Text style={styles.title}>
+          {t('page.perps.PerpsSelectTokenPopup.title')}
+        </Text>
+        <View style={styles.subTitleRow}>
+          <Text style={styles.subTitleText}>
+            {t('page.perps.PerpsSelectTokenPopup.token')}
           </Text>
-          <BottomSheetFlatList
-            keyboardShouldPersistTaps="handled"
-            data={tokens}
-            style={styles.flatList}
-            renderItem={renderItem}
-            ItemSeparatorComponent={() => <View style={styles.divider} />}
-            keyExtractor={item => item.id + item.chain}
-            ListEmptyComponent={
-              <NotMatchedHolder
-                style={{
-                  height: 400,
-                }}
-                text="No tokens"
-              />
-            }
-          />
-        </AutoLockView>
-      </AppBottomSheetModal>
-    </>
+          <Text style={styles.subTitleText}>
+            {t('page.perps.PerpsSelectTokenPopup.balance')}
+          </Text>
+        </View>
+        <BottomSheetFlatList
+          keyboardShouldPersistTaps="handled"
+          data={tokens}
+          style={styles.flatList}
+          renderItem={renderItem}
+          ItemSeparatorComponent={() => <View style={styles.divider} />}
+          keyExtractor={item => item.id + item.chain}
+          ListEmptyComponent={
+            <NotMatchedHolder
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{
+                height: 400,
+              }}
+              text={t('page.perps.PerpsSelectTokenPopup.noTokens')}
+            />
+          }
+        />
+      </AutoLockView>
+    </AppBottomSheetModal>
   );
 };
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   container: {
     width: '100%',
-    // flex: 1
     height: '100%',
     position: 'relative',
     paddingBottom: 20,
   },
+  rightArea: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
-    marginBottom: 24,
+    marginBottom: 12,
     textAlign: 'center',
   },
 
   depositTag: {
     borderRadius: 4,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.12)',
     paddingHorizontal: 4,
     paddingVertical: 1,
-
+    flexDirection: 'row',
     marginLeft: 6,
   },
   depositTagText: {
@@ -208,12 +177,12 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 16,
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
+    color: '#50D2C1',
   },
 
   flatList: {
     flexShrink: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   tokenListItem: {
     paddingVertical: 14,
@@ -238,6 +207,32 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 20,
+  },
+
+  amountText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+
+  subTitleText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+
+  subTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 24,
+    marginBottom: 8,
   },
 
   divider: {

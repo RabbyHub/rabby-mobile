@@ -7,10 +7,11 @@ import { findChainByEnum } from '@/utils/chain';
 
 const { isSameAddress } = addressUtils;
 
-export const tokenAmountBn = (token: TokenItem) =>
-  new BigNumber(token?.raw_amount_hex_str || 0, 16).div(
-    10 ** (token?.decimals || 1),
+export const tokenAmountBn = (token: TokenItem) => {
+  return new BigNumber(token?.raw_amount_hex_str || 0, 16).div(
+    10 ** token.decimals,
   );
+};
 
 export function isSwapWrapToken(
   payTokenId: string,
@@ -18,9 +19,9 @@ export function isSwapWrapToken(
   chain: CHAINS_ENUM,
 ) {
   const wrapTokens = [
-    WrapTokenAddressMap[chain as keyof typeof WrapTokenAddressMap],
-    findChainByEnum(chain)?.nativeTokenAddress ||
-      CHAINS[chain].nativeTokenAddress,
+    WrapTokenAddressMap[chain as keyof typeof WrapTokenAddressMap]!,
+    (findChainByEnum(chain)?.nativeTokenAddress ||
+      CHAINS[chain].nativeTokenAddress)!,
   ];
   return (
     !!payTokenId &&

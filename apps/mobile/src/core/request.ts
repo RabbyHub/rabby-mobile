@@ -2,9 +2,9 @@ import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
 
 import { gS } from '@rabby-wallet/rabby-sign-bvm/es/sign-rabby';
-import { APP_VERSIONS, INITIAL_OPENAPI_URL } from '@/constant';
-import { isNonPublicProductionEnv } from '@/constant';
+import { APP_VERSIONS } from '@/constant';
 import { openApiStore } from './services/openapiStore';
+import { instrumentOpenApiFailureLogging } from '@/utils/openapiFailureLogging';
 
 const SIGN_HDS = [
   'x-api-ts',
@@ -28,19 +28,15 @@ export const SignApiPlugin: RabbyApiPlugin = {
 };
 
 export const openapi = new OpenApiService({
-  store: isNonPublicProductionEnv
-    ? openApiStore
-    : {
-        apiKey: openApiStore.apiKey,
-        apiTime: openApiStore.apiTime,
-        host: INITIAL_OPENAPI_URL,
-      },
+  store: openApiStore,
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
   clientVersion: APP_VERSIONS.fromJs,
 });
 openapi.initSync();
+instrumentOpenApiFailureLogging(openapi, 'openapi');
 
+// TODO: REMOVE ME
 export const testOpenapi = new OpenApiService({
   store: {
     host: __DEV__
@@ -54,6 +50,7 @@ export const testOpenapi = new OpenApiService({
   clientVersion: APP_VERSIONS.fromJs,
 });
 testOpenapi.initSync();
+instrumentOpenApiFailureLogging(testOpenapi, 'testOpenapi');
 
 export async function getOpenApiService(
   type: 'mainnet' | 'testnet' = 'mainnet',

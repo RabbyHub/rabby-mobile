@@ -1,15 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
+import { View, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Skeleton, Slider } from '@rneui/themed';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import {
+  apiSendToken,
   useInputBlurOnEvents,
   useSendTokenInternalContext,
 } from './hooks/useSendToken';
@@ -31,6 +26,7 @@ import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { tokenAmountBn } from '../Swap/utils';
 import BigNumber from 'bignumber.js';
 import usePrevious from 'react-use/lib/usePrevious';
+import { Text, TextInput } from '@/components/Typography';
 
 export function BalanceSection({
   style,
@@ -49,9 +45,8 @@ export function BalanceSection({
 
     slider,
     formValues,
+    directSignBtnRef,
     computed: { chainItem, currentToken, currentTokenBalance },
-
-    fns: { putScreenState },
 
     callbacks: {
       handleGasLevelChanged,
@@ -60,6 +55,7 @@ export function BalanceSection({
       checkCexSupport,
       onChangeSlider,
       setSlider,
+      // isAuthInProgress,
     },
   } = useSendTokenInternalContext();
 
@@ -74,14 +70,14 @@ export function BalanceSection({
       });
 
       if (result.isNormalEnough && result.normalLevel) {
-        putScreenState({ selectedGasLevel: result.normalLevel });
+        apiSendToken.putScreenState({ selectedGasLevel: result.normalLevel });
       } else if (result.isSlowEnough && result.slowLevel) {
-        putScreenState({ selectedGasLevel: result.slowLevel });
+        apiSendToken.putScreenState({ selectedGasLevel: result.slowLevel });
       } else if (result.customLevel) {
-        putScreenState({ selectedGasLevel: result.customLevel });
+        apiSendToken.putScreenState({ selectedGasLevel: result.customLevel });
       }
     }
-  }, [putScreenState, currentToken, screenState.gasList]);
+  }, [currentToken, screenState.gasList]);
 
   const showBubble = useSharedValue(false);
 
@@ -117,8 +113,11 @@ export function BalanceSection({
     [onChangeSlider, showBubble],
   );
 
-  const handleAmountChange = useCallback(
-    (value: string) => {
+  const handleAmountChange = useCallback<
+    React.ComponentProps<typeof TokenAmountInput>['onChange'] & object
+  >(
+    value => {
+      if (directSignBtnRef.current?.isAuthInProgress()) return false;
       try {
         handleFieldChange?.('amount', value);
         const sliderValue = value
@@ -134,7 +133,7 @@ export function BalanceSection({
         console.error('handleAmountChange error', e);
       }
     },
-    [handleFieldChange, currentToken, setSlider],
+    [handleFieldChange, currentToken, setSlider, directSignBtnRef],
   );
 
   const sliderDisable = useMemo(() => {
@@ -156,46 +155,43 @@ export function BalanceSection({
     <View style={style}>
       <View style={styles.titleSection}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.newAmount')}</Text>
-
-        <View style={styles.sliderContainer}>
-          <Slider
-            key={`${currentToken?.id}-${currentToken?.chain}`}
-            allowTouchTrack={!sliderDisable}
-            disabled={sliderDisable}
-            style={styles.slider}
-            value={slider}
-            onSlidingStart={onSlidingStart}
-            onValueChange={onChangeSlider}
-            onSlidingComplete={onAfterChangeSlider}
-            minimumValue={0}
-            maximumValue={100}
-            minimumTrackTintColor={colors2024['brand-default']}
-            maximumTrackTintColor={colors2024['neutral-line']}
-            step={1}
-            thumbStyle={styles.thumbStyle}
-            thumbProps={{
-              children: (
-                <View>
-                  <View style={[styles.outerThumb, { position: 'relative' }]}>
-                    <View style={styles.innerThumb} />
-
-                    <Animated.View style={sliderStyle}>
-                      <BubbleWithText slide={slider || 0} />
-                    </Animated.View>
-                  </View>
-                </View>
-              ),
-            }}
-          />
-          <Text style={styles.sliderValue}>{slider}%</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.balanceArea}
+          onPress={screenState.isLoading ? noop : handleClickMaxButton}>
+          {screenState.showBalanceLoading ? (
+            <Skeleton style={{ width: 100, height: 16 }} />
+          ) : (
+            <>
+              {!screenState.showGasReserved &&
+              (screenState.balanceError || screenState.balanceWarn) ? (
+                <Text style={[styles.issueText]}>
+                  {screenState.balanceError ? (
+                    <>
+                      {screenState.balanceError}: {currentTokenBalance}
+                    </>
+                  ) : screenState.balanceWarn ? (
+                    <>{screenState.balanceWarn}</>
+                  ) : null}
+                </Text>
+              ) : (
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.balanceText}>
+                  {t('page.sendToken.sectionBalance.title')}:{' '}
+                  {currentTokenBalance}
+                </Text>
+              )}
+            </>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View>
         {currentAccount && chainItem && (
           <TokenAmountInput
             ref={amountInputRef}
-            defaultAccount={currentAccount}
+            currentAccount={currentAccount}
             value={formValues.amount}
             onChange={handleAmountChange}
             disableItemCheck={disableItemCheck}
@@ -262,11 +258,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     balanceArea: {
       flexDirection: 'row',
       alignItems: 'center',
-    },
-
-    titleRight: {
-      flexDirection: 'row',
-      // alignItems: 'center',
     },
 
     issueBlock: {

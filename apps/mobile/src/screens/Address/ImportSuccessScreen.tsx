@@ -33,6 +33,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
 import { GnosisSupportChainList } from './ImportSafeAddressScreen';
+import { apisHomeTabIndex } from '@/hooks/navigation';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -131,6 +132,7 @@ export const ImportSuccessScreen = () => {
         },
       ],
     });
+    apisHomeTabIndex.setTabIndex(0);
   }, [importAddresses, navigation]);
 
   const isFocus = useIsFocused();

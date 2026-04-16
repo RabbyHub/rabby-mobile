@@ -1,19 +1,11 @@
 import { useDebounce } from 'ahooks';
 import { useEffect, useRef, useState } from 'react';
-import {
-  CombineDefiItem,
-  CombineNFTItem,
-  CombineTokensItem,
-} from '../Home/hooks/store';
-import { DisplayedPortfolio } from '../Home/utils/project';
-import { formatAmount } from '@/utils/math';
-import { AbstractPortfolioToken } from '../Home/types';
+import { CombineNFTItem, CombineTokensItem } from '../Home/hooks/store';
 import { openapi } from '@/core/request';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks/index';
-import BigNumber from 'bignumber.js';
-import { formatUsdValue } from '@/utils/number';
-
+import { ITokenItem } from '@/store/tokens';
+import { tokenItemToITokenItem } from '@/utils/token';
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
   const debouncedSearchValue = useDebounce(searchState, {
@@ -43,78 +35,6 @@ export const filterTokens = (
     );
   });
 };
-const findTokenWithHighestAmount = (
-  portfolios: DisplayedPortfolio[],
-  filterText: string,
-) => {
-  const symbolTotals = new Map();
-  const filterTextLower = filterText.toLowerCase();
-
-  portfolios.forEach(position => {
-    position._tokenList.forEach(token => {
-      if (token.symbol.toLowerCase().includes(filterTextLower)) {
-        const currentTotal = symbolTotals.get(token.symbol) || 0;
-        symbolTotals.set(token.symbol, currentTotal + token.amount);
-      }
-    });
-  });
-
-  if (symbolTotals.size === 0) {
-    return null;
-  }
-
-  let maxSymbol = '';
-  let maxAmount = 0;
-
-  symbolTotals.forEach((amount, symbol) => {
-    if (amount > maxAmount) {
-      maxAmount = amount;
-      maxSymbol = symbol;
-    }
-  });
-
-  return {
-    symbol: maxSymbol,
-    amount: maxAmount,
-  };
-};
-
-export const filterPortfolios = (
-  portfolios: CombineDefiItem[],
-  filterText?: string,
-) => {
-  if (!filterText) {
-    return portfolios;
-  }
-  const res: CombineDefiItem[] = [];
-  portfolios.forEach(portfolio => {
-    const portfolioNameLower = portfolio.name?.toLowerCase() || '';
-    const portfolioAddressLower = portfolio.id?.toLowerCase() || '';
-    // const portfolioChainLower = portfolio.chain?.toLowerCase() || '';
-    const filterTextLower = filterText?.toLowerCase() || '';
-    const { symbol, amount } =
-      findTokenWithHighestAmount(portfolio._portfolios, filterText) || {};
-    if (
-      [portfolioNameLower, portfolioAddressLower].some(i =>
-        i.includes(filterTextLower),
-      ) ||
-      amount
-    ) {
-      res.push(
-        Object.assign(
-          portfolio,
-          amount
-            ? {
-                filterTokenDesc: `${formatAmount(amount)}${symbol}`,
-              }
-            : {},
-        ),
-      );
-      return;
-    }
-  });
-  return res;
-};
 
 export const filterNfts = (nfts: CombineNFTItem[], filterText?: string) => {
   if (!filterText) {
@@ -136,13 +56,11 @@ export const filterNfts = (nfts: CombineNFTItem[], filterText?: string) => {
 };
 
 export const useSearchTokens = (filterText?: string) => {
-  const [resultTokens, setResultTokens] = useState<AbstractPortfolioToken[]>(
-    [],
-  );
+  const [resultTokens, setResultTokens] = useState<ITokenItem[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const searchedRef = useRef<string>('');
-  const { top10Addresses } = useAccountInfo();
+  const { myTop10Addresses } = useAccountInfo();
 
   const handleSearch = async (text?: string) => {
     if (!text) {
@@ -167,10 +85,10 @@ export const useSearchTokens = (filterText?: string) => {
         tokenId: string;
         amount: number;
       }> = [];
-      if (top10Addresses.length > 0 && tokenList.length > 0) {
+      if (myTop10Addresses.length > 0 && tokenList.length > 0) {
         try {
           localAmounts = await TokenItemEntity.getTokenListAmount({
-            owner_addr: top10Addresses,
+            owner_addr: myTop10Addresses,
             tokenList,
           });
         } catch (error) {
@@ -189,19 +107,13 @@ export const useSearchTokens = (filterText?: string) => {
           const key = `${token.chain}-${token.id}`;
           const localAmount = amountMap.get(key) || 0;
 
-          const amountBn = new BigNumber(localAmount);
-          const priceBn = new BigNumber(token.price || 0);
-          const usdValue = amountBn.times(priceBn).toNumber();
-
-          return {
-            ...token,
-            _isPined: false,
-            _isFold: false,
-            _isExcludeBalance: false,
-            _usdValueStr: usdValue ? formatUsdValue(usdValue) : '$0',
-            _amountStr: localAmount ? formatAmount(localAmount) : '0',
-            _tokenId: token.id,
-          } as unknown as AbstractPortfolioToken;
+          return tokenItemToITokenItem(
+            {
+              ...token,
+              amount: localAmount,
+            },
+            '',
+          );
         }),
       );
       setSearched(true);

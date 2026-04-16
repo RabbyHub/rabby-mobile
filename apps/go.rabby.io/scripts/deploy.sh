@@ -12,18 +12,18 @@ case $RABBY_GO_ENV in
     local_dir="mobile-regression"
     s3_dir="rabby-go-regression/$local_dir"
     ;;
-  debug|mobile-debug|*)
-    RABBY_GO_ENV="mobile-debug"
-    echo "Deploying debug build..."
-    local_dir="mobile-debug"
-    s3_dir="rabby-go-debug/$local_dir"
-    ;;
   production|mobile-production)
     RABBY_GO_ENV="mobile-production"
     echo "Deploying production build..."
     local_dir="mobile"
     s3_dir="rabby-go/$local_dir"
     # can_prune=false
+    ;;
+  debug|mobile-debug|*)
+    RABBY_GO_ENV="mobile-debug"
+    echo "Deploying debug build..."
+    local_dir="mobile-debug"
+    s3_dir="rabby-go-debug/$local_dir"
     ;;
 esac
 
@@ -62,11 +62,11 @@ if [ ! -z "$REALLY_UPLOAD" ]; then
 
   # if [ ! -z $RABBY_GO_CDN_FRONTEND_ID ]; then
   #   echo "Automatically refresh CDN"
-  #   aws cloudfront create-invalidation --distribution-id $RABBY_GO_CDN_FRONTEND_ID --paths "/$s3_dir/*"
+  #   aws cloudfront create-invalidation --distribution-id $RABBY_GO_CDN_FRONTEND_ID --paths "/$local_dir/*"
   #   echo "CDN invalidation created"
   # fi
   echo "You can refresh CDN by the command below"
-  echo "aws cloudfront create-invalidation --distribution-id \$RABBY_GO_CDN_FRONTEND_ID --paths "/$s3_dir/*""
+  echo "aws cloudfront create-invalidation --distribution-id \$RABBY_GO_CDN_FRONTEND_ID --paths "/$local_dir/*""
 fi
 
-echo "Refresh by \`aws cloudfront create-invalidation --distribution-id \$RABBY_GO_CDN_FRONTEND_ID --paths '/$s3_dir/*'\`"
+echo "Refresh by \`aws cloudfront create-invalidation --distribution-id \$RABBY_GO_CDN_FRONTEND_ID --paths '/$local_dir/*'\`"

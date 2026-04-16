@@ -248,8 +248,10 @@ CGSize CGSizeAspectFill(const CGSize aspectRatio, const CGSize minimumSize)
 }
 
 - (UIImage *)convertViewToImage:(UIView *)view {
-    UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.opaque, 0.0);
-    [view.layer renderInContext:UIGraphicsGetCurrentContext()];
+    // UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.opaque, 0.0);
+    // [view.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIGraphicsBeginImageContextWithOptions(view.bounds.size, NO, 0.0);
+    [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:YES];
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;

@@ -1,5 +1,5 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
-import { useAccounts, usePinAddresses } from './account';
+import { storeApiAccounts, useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
@@ -8,11 +8,12 @@ import { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
 import { sortAccountList } from '@/utils/sortAccountList';
 import {
-  AccountSwitcherInfos,
   AccountSwitcherScene,
   makeSceneAccount,
   SceneAccountInfo,
-  sceneAccountInfoAtom,
+  sceneAccountInfoStore,
+  zResetSceneAccountInfo,
+  zSetSceneAccountInfo,
 } from './sceneAccountInfoAtom';
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
@@ -48,14 +49,8 @@ export const AccountSwitcherContext = React.createContext<SceneAccountInfo>(
 );
 
 export function useResetSceneAccountInfo() {
-  const [, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
-
-  const resetSceneAccountInfo = useCallback(() => {
-    setSceneAccountInfo(cloneDeep(AccountSwitcherInfos));
-  }, [setSceneAccountInfo]);
-
   return {
-    resetSceneAccountInfo,
+    resetSceneAccountInfo: zResetSceneAccountInfo,
   };
 }
 
@@ -83,148 +78,144 @@ export function usePreFetchBeforeEnterScene() {
   };
 }
 
+const toggleUseAllAccountsOnScene = (
+  scene: AccountSwitcherScene,
+  useAll: boolean,
+) => {
+  zSetSceneAccountInfo(prev => {
+    const nextVal = ScenesSupportAllAccounts.includes(scene) ? useAll : false;
+
+    return {
+      ...prev,
+      [scene]: {
+        ...prev[scene],
+        useAllAccounts: nextVal,
+      },
+    };
+  });
+};
+
+/**
+ * @description switch current account in scene, enable it if account is not null, or
+ * inactivate it if account is null
+ *
+ * this function is re-entrant, it will not set same account again
+ */
+export const switchSceneCurrentAccount = async (
+  scene: AccountSwitcherScene,
+  account: Account | null,
+  options?: { maybeReEntrant?: boolean },
+) => {
+  const prev = sceneAccountInfoStore.getState();
+  const { maybeReEntrant } = options || {};
+
+  try {
+    const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
+    const finalResult = {
+      nextEnableAccount: undefined as null | Account | undefined,
+      result: prev,
+    };
+
+    const doReturn = async <T extends typeof prev>(val: T) => {
+      zSetSceneAccountInfo(val);
+    };
+
+    if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
+      patches.useAllAccounts = false;
+    }
+
+    if (account) {
+      finalResult.nextEnableAccount = account;
+
+      // avoid duplicate set same account
+      if (isSameAccount(account, prev[scene]?.currentAccount)) {
+        delete patches.currentAccount;
+      } else {
+        patches.currentAccount = normalizeSceneKeyringAccount(account);
+      }
+    } else {
+      patches.currentAccount = null;
+      finalResult.nextEnableAccount = null;
+      if (!prev[scene]?.currentAccount) {
+        return doReturn(prev);
+      }
+    }
+
+    if (Object.keys(patches).length === 0) {
+      return doReturn(prev);
+    }
+
+    return doReturn({
+      ...prev,
+      [scene]: {
+        ...prev[scene],
+        ...patches,
+      },
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('switchSceneSigningAccount error', error);
+    }
+    return prev;
+  }
+};
+
+/**
+ * @description
+ * @warn you must wait this function end, then the `currentAccount` will be updated really
+ */
+export async function switchSceneSigningAccount(
+  scene: AccountSwitcherScene,
+  account: Account | null,
+) {
+  const prev = sceneAccountInfoStore.getState();
+
+  try {
+    const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
+
+    const doReturn = <T extends typeof prev>(val: T) => {
+      zSetSceneAccountInfo(val);
+      return val;
+    };
+
+    if (account) {
+      // // leave here for debug
+      // if (__DEV__) console.warn('result', result);
+
+      // avoid duplicate set same account
+      if (isSameAccount(account, prev[scene]?.signingAccount)) {
+        delete patches.signingAccount;
+      } else {
+        patches.signingAccount = normalizeSceneKeyringAccount(account);
+      }
+    } else {
+      patches.signingAccount = null;
+      if (!prev[scene]?.signingAccount) {
+        return doReturn(prev);
+      }
+    }
+
+    if (Object.keys(patches).length === 0) {
+      return doReturn(prev);
+    }
+
+    return doReturn({
+      ...prev,
+      [scene]: { ...prev[scene], ...patches },
+    });
+  } catch (error) {
+    if (__DEV__) {
+      console.error('switchSceneSigningAccount error', error);
+    }
+    return prev;
+  }
+}
+
 export function useSwitchSceneCurrentAccount() {
-  const [sceneAccountInfo, setSceneAccountInfo] = useAtom(sceneAccountInfoAtom);
-
-  /**
-   * @description switch current account in scene, enable it if account is not null, or
-   * inactivate it if account is null
-   *
-   * this function is re-entrant, it will not set same account again
-   */
-  const switchSceneCurrentAccount = useCallback(
-    async (
-      scene: AccountSwitcherScene,
-      account: Account | null,
-      options?: { maybeReEntrant?: boolean },
-    ) => {
-      const prev = sceneAccountInfo;
-      const { maybeReEntrant } = options || {};
-
-      try {
-        const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
-        const finalResult = {
-          nextEnableAccount: undefined as null | Account | undefined,
-          result: prev,
-        };
-
-        const doReturn = async <T extends typeof prev>(val: T) => {
-          setSceneAccountInfo(val);
-        };
-
-        if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
-          patches.useAllAccounts = false;
-        }
-
-        if (account) {
-          finalResult.nextEnableAccount = account;
-
-          // avoid duplicate set same account
-          if (isSameAccount(account, prev[scene]?.currentAccount)) {
-            delete patches.currentAccount;
-          } else {
-            patches.currentAccount = normalizeSceneKeyringAccount(account);
-          }
-        } else {
-          patches.currentAccount = null;
-          finalResult.nextEnableAccount = null;
-          if (!prev[scene]?.currentAccount) {
-            return doReturn(prev);
-          }
-        }
-
-        if (Object.keys(patches).length === 0) {
-          return doReturn(prev);
-        }
-
-        return doReturn({
-          ...prev,
-          [scene]: {
-            ...prev[scene],
-            ...patches,
-          },
-        });
-      } catch (error) {
-        if (__DEV__) {
-          console.error('switchSceneSigningAccount error', error);
-        }
-        return prev;
-      }
-    },
-    [sceneAccountInfo, setSceneAccountInfo],
-  );
-
-  /**
-   * @description
-   * @warn you must wait this function end, then the `currentAccount` will be updated really
-   */
-  const switchSceneSigningAccount = useCallback(
-    async (scene: AccountSwitcherScene, account: Account | null) => {
-      const prev = sceneAccountInfo;
-
-      try {
-        const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
-
-        const doReturn = <T extends typeof prev>(val: T) => {
-          setSceneAccountInfo(val);
-          return val;
-        };
-
-        if (account) {
-          // // leave here for debug
-          // if (__DEV__) console.warn('result', result);
-
-          // avoid duplicate set same account
-          if (isSameAccount(account, prev[scene]?.signingAccount)) {
-            delete patches.signingAccount;
-          } else {
-            patches.signingAccount = normalizeSceneKeyringAccount(account);
-          }
-        } else {
-          patches.signingAccount = null;
-          if (!prev[scene]?.signingAccount) {
-            return doReturn(prev);
-          }
-        }
-
-        if (Object.keys(patches).length === 0) {
-          return doReturn(prev);
-        }
-
-        return doReturn({
-          ...prev,
-          [scene]: { ...prev[scene], ...patches },
-        });
-      } catch (error) {
-        if (__DEV__) {
-          console.error('switchSceneSigningAccount error', error);
-        }
-        return prev;
-      }
-    },
-    [sceneAccountInfo, setSceneAccountInfo],
-  );
-
-  const toggleUseAllAccountsOnScene = useCallback(
-    (scene: AccountSwitcherScene, useAll: boolean) => {
-      setSceneAccountInfo(prev => {
-        const nextVal = ScenesSupportAllAccounts.includes(scene)
-          ? useAll
-          : false;
-
-        return {
-          ...prev,
-          [scene]: {
-            ...prev[scene],
-            useAllAccounts: nextVal,
-          },
-        };
-      });
-    },
-    [setSceneAccountInfo],
-  );
+  const sceneAccountInfo = sceneAccountInfoStore(s => s);
 
   return {
+    /** @deprecated use global switchSceneCurrentAccount instead */
     switchSceneCurrentAccount,
     switchSceneSigningAccount,
     toggleUseAllAccountsOnScene,
@@ -308,7 +299,8 @@ function computeSceneAccountInfo({
     !result.finalSceneCurrentAccount &&
     accounts.length
   ) {
-    result.finalSceneCurrentAccount = result.myAddresses[0] || accounts[0];
+    result.finalSceneCurrentAccount =
+      (result.myAddresses[0] || accounts[0]) ?? null;
   }
 
   if (!result.isSceneUsingAllAccounts && result.finalSceneCurrentAccount) {
@@ -334,7 +326,9 @@ export function useSceneAccountInfo(options: {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 
   const { forScene } = options || {};
-  const [sceneAccounts] = useAtom(sceneAccountInfoAtom);
+  const sceneAccountInfo = sceneAccountInfoStore(s =>
+    !forScene ? null : s[forScene],
+  );
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -361,7 +355,6 @@ export function useSceneAccountInfo(options: {
     );
   }, [forScene]);
 
-  const sceneAccountInfo = sceneAccounts[forScene];
   const computeFinalSceneAccount = useCallback(
     (account?: Account | null) => {
       const result = computeSceneAccountInfo({
@@ -419,6 +412,29 @@ export function useSceneAccountInfo(options: {
   };
 }
 
+function getSceneAccountInfo(options: { forScene: AccountSwitcherScene }) {
+  const accounts = storeApiAccounts.getAccounts();
+  const pinAddresses = storeApiAccounts.getPinAddresses();
+
+  const { forScene } = options || {};
+  const sceneAccountInfo = sceneAccountInfoStore.getState()[forScene];
+
+  const result = computeSceneAccountInfo({
+    forScene,
+    sceneCurrentAccount: sceneAccountInfo?.currentAccount ?? null,
+    isSceneUsingAllAccounts: !!sceneAccountInfo?.useAllAccounts,
+    accounts,
+    pinAddresses,
+  });
+
+  return result;
+}
+
+export const storeApiAccountsSwitcher = {
+  getSceneAccountInfo,
+  toggleUseAllAccountsOnScene,
+};
+
 function getDefaultSceneAccountInfo() {
   return {
     forScene: null,
@@ -449,12 +465,13 @@ const ScreenSceneAccountContext = React.createContext<
 type ProviderProps = React.ComponentProps<
   typeof ScreenSceneAccountContext.Provider
 >;
+const defaultSceneAccount = getDefaultSceneAccountInfo();
 export const ScreenSceneAccountProvider: React.FC<
   Omit<ProviderProps, 'value'> & Partial<Pick<ProviderProps, 'value'>>
 > = props => {
   const { children, value } = props;
   return React.createElement(ScreenSceneAccountContext.Provider, {
-    value: value || getDefaultSceneAccountInfo(),
+    value: value || defaultSceneAccount,
     children,
   });
 };

@@ -36,7 +36,7 @@ const HeaderBalanceCard = ({
         {
           backgroundColor: isLoss
             ? colors2024['red-light-1']
-            : colors2024['green-light-4'],
+            : colors2024['green-light-1'],
         },
         style,
       ]}
@@ -46,21 +46,21 @@ const HeaderBalanceCard = ({
         <View style={styles.textContainer}>
           <Text style={styles.amount}>{amount}</Text>
           <Text style={styles.usdValue}> ≈${usdValue}</Text>
-          <Text
-            style={[
-              styles.percentChange,
-              {
-                color: is24hNoChange
-                  ? colors2024['neutral-foot']
-                  : isLoss
-                  ? colors2024['red-default']
-                  : colors2024['green-default'],
-              },
-            ]}>
-            {`(${is24hNoChange ? '' : isLoss ? '-' : '+'}${
-              percentChange ? percentChange : '0.0%'
-            })`}
-          </Text>
+          {!!percentChange && (
+            <Text
+              style={[
+                styles.percentChange,
+                {
+                  color: is24hNoChange
+                    ? colors2024['neutral-foot']
+                    : isLoss
+                    ? colors2024['red-default']
+                    : colors2024['green-default'],
+                },
+              ]}>
+              {`(${is24hNoChange ? '' : isLoss ? '-' : '+'}${percentChange})`}
+            </Text>
+          )}
         </View>
       </View>
       <RcIconRightArrowCC
@@ -79,7 +79,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     height: 42,
     borderRadius: 6,
-    backgroundColor: colors2024['green-light-4'],
+    backgroundColor: colors2024['green-light-1'],
     paddingHorizontal: 16,
     paddingVertical: 10,
     flexDirection: 'row',

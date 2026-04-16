@@ -4,7 +4,7 @@ import Toast from 'react-native-root-toast';
 import semver from 'semver';
 import RNFS from 'react-native-fs';
 
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { devLog } from './logger';
 
 import { AppBuildChannel, BUILD_CHANNEL } from '@/constant/env';

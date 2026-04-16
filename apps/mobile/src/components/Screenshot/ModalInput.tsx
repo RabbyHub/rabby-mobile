@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Dimensions, Keyboard, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import type { Ref } from 'react';
+import { Dimensions, Keyboard, View } from 'react-native';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,65 +10,64 @@ import {
 } from './hooks';
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Text, TextInput } from '@/components/Typography';
 
 export type BottomInputMethods = {};
 export type BottomInputProps = {} & RNViewProps;
 
-const ModalInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
-  ({ style }, ref) => {
-    const { feedbackText: value, onChangeFeedback } = useFeedbackOnScreenshot();
+const ModalInput = ({
+  style,
+}: BottomInputProps & { ref?: Ref<BottomInputMethods> }) => {
+  const { feedbackText: value, onChangeFeedback } = useFeedbackOnScreenshot();
 
-    // const [value, setValue] = useState(feedbackText);
-    // useEffect(() => {
-    //   setValue(feedbackText);
-    // }, [feedbackText]);
-    const valueOverLimit = value.length > SCREENSHOT_FEEDBACK_MAX_LENGTH - 1;
+  // const [value, setValue] = useState(feedbackText);
+  // useEffect(() => {
+  //   setValue(feedbackText);
+  // }, [feedbackText]);
+  const valueOverLimit = value.length > SCREENSHOT_FEEDBACK_MAX_LENGTH - 1;
 
-    const { styles } = useTheme2024({ getStyle: getStyle });
-    const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle: getStyle });
+  const { t } = useTranslation();
 
-    const inputRef = useRef<any>(null);
-    const isEmpty = !value;
+  const inputRef = useRef<any>(null);
+  const isEmpty = !value;
 
-    const handleDone = useCallback(async () => {
-      onChangeFeedback(value.trim());
-      Keyboard.dismiss();
-    }, [onChangeFeedback, value]);
+  const handleDone = useCallback(async () => {
+    onChangeFeedback(value.trim());
+    Keyboard.dismiss();
+  }, [onChangeFeedback, value]);
 
-    return (
-      <View style={[styles.container, style]}>
-        <View style={[styles.inputContainer]}>
-          <TextInput
-            ref={inputRef}
-            value={value}
-            onChangeText={text => {
-              onChangeFeedback(text);
-            }}
-            multiline={true}
-            onBlur={handleDone}
-            submitBehavior="blurAndSubmit"
-            returnKeyType="done"
-            enterKeyHint="done"
-            textAlign="left"
-            textAlignVertical="top"
-            autoFocus={IS_ANDROID}
-            placeholder={t(
-              'component.screenshotModal.feedbackInput.placeholder',
-            )}
-            placeholderTextColor={styles.inputPlaceholder.color}
-            style={[styles.input, isEmpty ? styles.inputPlaceholder : null]}
-          />
-          {/* <Text style={styles.inputTextLenIndicator}>
-            <Text style={[valueOverLimit && styles.inputTextOverLimit]}>
-              {value.length}
-            </Text>
-            {`/${SCREENSHOT_FEEDBACK_MAX_LENGTH - 1}`}
-          </Text> */}
-        </View>
+  return (
+    <View style={[styles.container, style]}>
+      <View style={[styles.inputContainer]}>
+        <TextInput
+          ref={inputRef}
+          value={value}
+          onChangeText={text => {
+            onChangeFeedback(text);
+          }}
+          multiline={true}
+          onBlur={handleDone}
+          submitBehavior="blurAndSubmit"
+          returnKeyType="done"
+          enterKeyHint="done"
+          textAlign="left"
+          textAlignVertical="top"
+          autoFocus={IS_ANDROID}
+          placeholder={t('component.screenshotModal.feedbackInput.placeholder')}
+          placeholderTextColor={styles.inputPlaceholder.color}
+          style={[styles.input, isEmpty ? styles.inputPlaceholder : null]}
+        />
+        {/* <Text style={styles.inputTextLenIndicator}>
+          <Text style={[valueOverLimit && styles.inputTextOverLimit]}>
+            {value.length}
+          </Text>
+          {`/${SCREENSHOT_FEEDBACK_MAX_LENGTH - 1}`}
+        </Text> */}
       </View>
-    );
-  },
-);
+    </View>
+  );
+};
 
 export default ModalInput;
 

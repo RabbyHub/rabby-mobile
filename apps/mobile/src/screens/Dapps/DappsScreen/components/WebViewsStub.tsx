@@ -10,7 +10,6 @@ import {
   Platform,
   StyleProp,
   StyleSheet,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -55,10 +54,11 @@ import { globalSetActiveDappState } from '@/core/bridges/state';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNavControl2 } from '@/components/WebView/DappWebViewControl2/Widgets';
 import { IS_ANDROID } from '@/core/native/utils';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { WebViewHeaderRight } from '@/components/WebView/DappWebViewControl2/WebViewHeaderRight';
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
+import { Text } from '@/components/Typography';
 
 const revealedTopBackdropStyle = StyleSheet.flatten([
   {
@@ -154,7 +154,7 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
 
 const isIOS = Platform.OS === 'ios';
 function useForceExpandOnceOnBootstrap(
-  sheetModalRef: React.RefObject<OpenedDappBottomSheetModal> | null,
+  sheetModalRef: React.RefObject<OpenedDappBottomSheetModal | null> | null,
 ) {
   const { stateRef: firstTouchedRef, setRefState: setFirstTouched } =
     useRefState(false);
@@ -433,7 +433,6 @@ export function OpenedDappWebViewStub() {
               ref={inst => {
                 if (isActiveDapp) {
                   globalSetActiveDappState({ dappOrigin: dappInfo.origin });
-                  // @ts-expect-error
                   activeDappWebViewControlRef.current = inst;
                   // const activeTabId = inst?.getWebViewId() ?? undefined;
                   globalSetActiveDappState({

@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, ActivityIndicator, Image } from 'react-native';
+import { View, ActivityIndicator, Image } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { useBridgeHistory } from '../hooks';
@@ -18,6 +18,9 @@ import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
+import { Text } from '@/components/Typography';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -54,7 +57,10 @@ const HistoryList = ({ recentShowTime }: { recentShowTime: number }) => {
               return (
                 <View style={styles.addressRow}>
                   <WalletIcon style={styles.walletIcon} />
-                  <Text style={styles.address}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.address}>
                     {currentAccount?.aliasName ||
                       ellipsisAddress(currentAccount?.address || '')}
                   </Text>
@@ -174,6 +180,16 @@ export const BridgeTxHistory = ({
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      bottomRef.current?.dismiss();
+      return !visible;
+    }, [visible]),
+    { autoEffectEnabled: false },
+  );
+
+  useFocusEffect(onHardwareBackHandler);
+
   return (
     <AppBottomSheetModal
       ref={bottomRef}
@@ -230,6 +246,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
   },
   walletIcon: {
     borderRadius: 4,

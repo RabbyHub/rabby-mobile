@@ -15,9 +15,10 @@ import {
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { Chain } from '@/constant/chains';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { formatAmount } from '@/utils/number';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 

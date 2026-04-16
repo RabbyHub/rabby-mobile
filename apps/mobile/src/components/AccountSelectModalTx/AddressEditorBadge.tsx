@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { contactService } from '@/core/services';
 import { isValidHexAddress } from '@metamask/utils';
 import { IS_IOS } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 export function AddressEditorBadge({
   style,
@@ -92,11 +93,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     minWidth: 146,
   },
   addressText: {
+    maxWidth: '60%',
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontWeight: '500',
-    lineHeight: 23,
+    lineHeight: 20,
     marginLeft: 2,
     ...(IS_IOS && {
       position: 'relative',

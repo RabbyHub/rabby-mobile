@@ -2,14 +2,22 @@ import 'reflect-metadata';
 import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Entity, Column } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
-import { columnConverter, badRealTransformer } from './_helpers';
+import {
+  columnConverter,
+  badRealTransformer,
+  jsonTransformer,
+} from './_helpers';
 import { prepareAppDataSource } from '../imports';
 import BigNumber from 'bignumber.js';
 import { findChain } from '@/utils/chain';
 import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
-@Entity('cache_localhistoryitem')
+@ParseEntity()
+@Entity(ORM_TABLE_NAMES.cache_local_historyitem)
 export class LocalHistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
   @Column('boolean')
@@ -38,20 +46,14 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
   @Column({
     type: 'text',
     default: '[]',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
   receives: string = '[]';
   // sends
   @Column({
     type: 'text',
     default: '[]',
-    transformer: {
-      to: (val: any) => columnConverter.jsonObjToString(val),
-      from: (val: any) => columnConverter.jsonStringToObj(val),
-    },
+    transformer: jsonTransformer,
   })
   sends: string = '[]';
   // tx_name

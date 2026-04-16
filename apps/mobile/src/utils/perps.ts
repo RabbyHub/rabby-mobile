@@ -1,15 +1,55 @@
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import {
+  AllDexsClearinghouseState,
+  MarketData,
+} from '@/hooks/perps/usePerpsStore';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
-import { Meta, AssetCtx, MarginTable } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  Meta,
+  AssetCtx,
+  MarginTable,
+  ClearinghouseState,
+  SpotClearinghouseState,
+} from '@rabby-wallet/hyperliquid-sdk';
+import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
+import { Account } from '@/core/services/preference';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { apisPerps } from '@/core/apis';
+import { perpsService } from '@/core/services';
+import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
+
+const getPxDecimals = (markPx: string) => {
+  const parts = markPx.split('.');
+  if (!parts[1]) {
+    return 2;
+  }
+  const decimalPart = parts[1];
+  return decimalPart.length;
+};
+
+export const normalizeHyperliquidCoinForLogo = (coin: string) => {
+  if (!coin) {
+    return '';
+  }
+  // Keep km:* untouched, but drop k-prefix for meme perps like kPEPE -> PEPE.
+  if (coin.startsWith('k') && !coin.startsWith('km:')) {
+    return coin.slice(1);
+  }
+  return coin;
+};
+
+export const getHyperliquidCoinLogoUrl = (coin: string) => {
+  const iconKey = normalizeHyperliquidCoinForLogo(coin);
+  if (!iconKey) {
+    return '';
+  }
+  return `https://app.hyperliquid.xyz/coins/${iconKey}.svg`;
+};
 
 export const formatMarkData = (
   marketData: [Meta, AssetCtx[]],
-  topAssets: {
-    id: number;
-    name: string;
-    full_logo_url: string | null;
-    daily_volume: number;
-  }[],
+  topAssets: PerpTopToken[],
+  xyzMarketData: [Meta, AssetCtx[]],
 ): MarketData[] => {
   try {
     if (!Array.isArray(marketData) || marketData.length < 2) {
@@ -38,9 +78,26 @@ export const formatMarkData = (
       }
     }
 
+    const xyzMarginTableMap: Record<number, MarginTable> = {};
+    if (
+      xyzMarketData?.[0]?.marginTables &&
+      Array.isArray(xyzMarketData[0].marginTables)
+    ) {
+      for (const entry of xyzMarketData[0].marginTables) {
+        const [id, table] = entry || [];
+        if (id != null) {
+          xyzMarginTableMap[id] = table;
+        }
+      }
+    }
+
     const result: MarketData[] = topAssets
       .map(topAsset => {
         const index = topAsset.id;
+        const dexId = topAsset.dex_id;
+        const meta = dexId === 'xyz' ? xyzMarketData[0] : marketData[0];
+        const metrics = dexId === 'xyz' ? xyzMarketData[1] : marketData[1];
+        const tableMap = dexId === 'xyz' ? xyzMarginTableMap : marginTableMap;
         const hlDataAsset = meta.universe[index];
 
         if (!hlDataAsset) {
@@ -51,8 +108,8 @@ export const formatMarkData = (
           return null;
         }
 
-        const m = metrics[index] || {};
-        const table = marginTableMap[hlDataAsset?.marginTableId];
+        const m = metrics[index];
+        const table = tableMap[hlDataAsset?.marginTableId];
         const tiers = table?.marginTiers || [];
         const firstTier =
           Array.isArray(tiers) && tiers.length > 0 ? tiers[0] : undefined;
@@ -61,6 +118,7 @@ export const formatMarkData = (
 
         const item: MarketData = {
           index,
+          dexId: topAsset.dex_id,
           name: String(topAsset.name ?? ''),
           // 取保证金表第一档的最大杠杆；若无表则回退 asset.maxLeverage
           maxLeverage: Number(
@@ -71,14 +129,8 @@ export const formatMarkData = (
           maxUsdValueSize: String(nextTier?.lowerBound ?? PERPS_MAX_NTL_VALUE),
           szDecimals: Number(hlDataAsset.szDecimals ?? 0),
           // 根据 markPx 推断价格精度
-          pxDecimals: (() => {
-            const markPx = m?.markPx;
-            if (!markPx) {
-              return 2;
-            }
-            const parts = markPx.split('.');
-            return parts.length > 1 ? parts[1].length : 2;
-          })(),
+          onlyIsolated: hlDataAsset.onlyIsolated,
+          pxDecimals: getPxDecimals(m?.markPx ?? ''),
           dayBaseVlm: String(m?.dayBaseVlm ?? '0'),
           dayNtlVlm: String(m?.dayNtlVlm ?? '0'),
           funding: String(m?.funding ?? '0'),
@@ -89,8 +141,7 @@ export const formatMarkData = (
           premium: String(m?.premium ?? '0'),
           prevDayPx: String(m?.prevDayPx ?? ''),
           logoUrl:
-            topAsset.full_logo_url ||
-            `https://app.hyperliquid.xyz/coins/${topAsset.name}.svg`,
+            topAsset.full_logo_url || getHyperliquidCoinLogoUrl(topAsset.name),
         };
         return item;
       })
@@ -108,13 +159,13 @@ export const calLiquidationPrice = (
   margin: number,
   direction: 'Long' | 'Short',
   positionSize: number,
-  leverage: number,
+  nationalValue: number,
   maxLeverage: number,
 ) => {
   const MMR = 1 / maxLeverage / 2;
   const side = direction === 'Long' ? 1 : -1;
   // const nationalValue = margin * leverage;
-  const nationalValue = positionSize * markPrice;
+  // const nationalValue = positionSize * markPrice;
   const maintenance_margin_required = nationalValue * MMR;
   const margin_available = margin - maintenance_margin_required;
   const liq_price =
@@ -125,13 +176,12 @@ export const calLiquidationPrice = (
 
 // transfer_margin_required = max(initial_margin_required, 0.1 * total_position_value)
 export const calTransferMarginRequired = (
-  entryPrice: number,
   markPrice: number,
   positionSize: number,
   leverage: number,
 ) => {
   const nationalValue = Number(positionSize) * Number(markPrice);
-  const initialNationalValue = Number(positionSize) * Number(entryPrice);
+  const initialNationalValue = Number(positionSize) * Number(markPrice);
   const initialMarginRequired = initialNationalValue * (1 / leverage);
   const transferMarginRequired = Math.max(
     initialMarginRequired,
@@ -168,7 +218,7 @@ export const formatTpOrSlPrice = (
     return vStr;
   }
 
-  const [integerPart, decimalPart] = vStr.split('.');
+  const [integerPart = '', decimalPart = ''] = vStr.split('.');
 
   // Rule: if integer part has 6+ digits, force integer to always pass validator
   if (integerPart.length >= 6) {
@@ -211,20 +261,13 @@ export const formatTpOrSlPrice = (
     return integerPart;
   }
 
-  // Some digits are in decimal part
+  // Calculate remaining digits allowed in decimal part
+  // Note: every digit in decimalPart counts toward allDigits length
   const remainingDigits = 5 - integerPartLength;
 
-  // Keep leading zeros but count significant digits after them
-  const leadingZerosInDecimal = decimalPart.match(/^0*/)?.[0] || '';
-  const sigDigitsInDecimal = decimalPart.slice(leadingZerosInDecimal.length);
-  const desiredSig = Math.min(remainingDigits, sigDigitsInDecimal.length);
-  const takenSig = sigDigitsInDecimal.slice(0, desiredSig);
-
-  // Compose decimal respecting maxDecimals
-  let composedDecimal = (leadingZerosInDecimal + takenSig).slice(
-    0,
-    maxDecimals,
-  );
+  // Limit decimal part to the minimum of remainingDigits and maxDecimals
+  const maxDecimalLength = Math.min(remainingDigits, maxDecimals);
+  let composedDecimal = decimalPart.slice(0, maxDecimalLength);
 
   // Remove trailing zeros
   composedDecimal = composedDecimal.replace(/0+$/, '');
@@ -232,4 +275,185 @@ export const formatTpOrSlPrice = (
     return `${integerPart}.${composedDecimal}`;
   }
   return `${integerPart}`;
+};
+
+export const calcAccountValueByAllDexs = (
+  clearinghouseState?: AllDexsClearinghouseState,
+) => {
+  if (!Array.isArray(clearinghouseState) || !clearinghouseState) {
+    return 0;
+  }
+  return clearinghouseState.reduce((acc, item) => {
+    return acc + Number(item[1]?.marginSummary?.accountValue || 0);
+  }, 0);
+};
+
+export const formatPositionPnl = (clearinghouseState: ClearinghouseState) => {
+  return {
+    pnl: Number(
+      clearinghouseState.assetPositions.reduce((acc, asset) => {
+        return acc + Number(asset.position.unrealizedPnl);
+      }, 0),
+    ),
+    show: Number(clearinghouseState.marginSummary.accountValue) > 0,
+    type: (clearinghouseState.assetPositions.length > 0
+      ? 'pnl'
+      : 'accountValue') as 'pnl' | 'accountValue',
+    accountValue: Number(clearinghouseState.marginSummary.accountValue),
+  };
+};
+
+export const formatAllDexsClearinghouseState = (
+  allClearinghouseState: AllDexsClearinghouseState,
+): ClearinghouseState | null => {
+  if (!allClearinghouseState || !allClearinghouseState[0]) {
+    return null;
+  }
+  const hyperDexState = allClearinghouseState[0][1];
+
+  const assetPositions = allClearinghouseState
+    .map(item => item[1]?.assetPositions || [])
+    .flat();
+
+  const withdrawable = allClearinghouseState.reduce((acc, item) => {
+    return acc + Number(item[1]?.withdrawable || 0);
+  }, 0);
+
+  return {
+    assetPositions: assetPositions,
+    crossMaintenanceMarginUsed:
+      hyperDexState?.crossMaintenanceMarginUsed || '0',
+    crossMarginSummary: hyperDexState?.crossMarginSummary || {},
+    marginSummary: {
+      ...hyperDexState.marginSummary,
+      accountValue: calcAccountValueByAllDexs(allClearinghouseState).toString(),
+    },
+    time: hyperDexState?.time || 0,
+    withdrawable: withdrawable.toString(),
+  };
+};
+
+export const formatPerpsCoin = (coin: string) => {
+  if (coin.includes(':')) {
+    // is hip-3 coin
+    return coin.split(':')[1];
+  } else {
+    return coin;
+  }
+};
+
+export const findDefaultAccount = (
+  accounts: Account[],
+  currentAccount: Account,
+) => {
+  const selectedItem =
+    currentAccount &&
+    accounts.find(
+      item =>
+        isSameAddress(item.address, currentAccount.address) &&
+        item.type === currentAccount.type,
+    );
+  return selectedItem;
+};
+
+export const checkPerpsReference = async ({
+  account,
+  scene = 'invite',
+}: {
+  account?: Account | null;
+  scene?: 'invite' | 'connect';
+}) => {
+  try {
+    const address = account?.address;
+    if (!address) {
+      return false;
+    }
+    let accountTypes = Object.values(KEYRING_CLASS.HARDWARE);
+    const inviteConfig = perpsService.getInviteConfig(address) || {};
+    let lastTime = inviteConfig.lastInvitedAt || 0;
+    let duration = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    if (scene === 'connect') {
+      accountTypes.push(...[KEYRING_CLASS.PRIVATE_KEY, KEYRING_CLASS.MNEMONIC]);
+      lastTime = inviteConfig.lastConnectedAt || 0;
+      duration = 24 * 60 * 60 * 1000; // 1 day
+    }
+
+    if (!accountTypes.includes(account.type)) {
+      return false;
+    }
+
+    if (lastTime) {
+      const now = Date.now();
+      const diff = now - lastTime;
+      if (diff < duration) {
+        return false;
+      }
+    }
+    const sdk = apisPerps.getPerpsSDK();
+    const info = await sdk.info.getClearingHouseState(address);
+    const needDepositFirst =
+      Number(info?.marginSummary?.accountValue || 0) === 0 &&
+      Number(info?.withdrawable || 0) === 0;
+    if (needDepositFirst) {
+      return false;
+    }
+
+    const data = await sdk.info.getReferral(account?.address || '');
+
+    if (data?.referredBy) {
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    console.error('checkPerpsReference error', e);
+    return false;
+  }
+};
+
+export const formatSpotState = (spotState: SpotClearinghouseState) => {
+  if (!spotState || !spotState.balances || spotState.balances.length === 0) {
+    return {
+      accountValue: '0',
+      availableToTrade: '0',
+    };
+  }
+  const availableToTrade = new BigNumber(
+    spotState.balances?.[0]?.total || '0',
+  ).minus(spotState.balances?.[0]?.hold || '0');
+  return {
+    accountValue: spotState.balances?.[0]?.total || '0',
+    availableToTrade: availableToTrade.toString(),
+  };
+  // const token = spotState.balances.find((i) => i.token === USDC_TOKEN_ID);
+  // const availableToTrade = spotState.tokenToAvailableAfterMaintenance?.find(
+  //   (i) => i?.[0] === USDC_TOKEN_ID
+  // );
+
+  // return {
+  //   accountValue: token?.total || '0',
+  //   availableToTrade: availableToTrade?.[1] || '0',
+  // };
+};
+
+export const getStatsReportSide = (isBuy: boolean, isReduceOnly: boolean) => {
+  if (isReduceOnly) {
+    return isBuy ? 'close short' : 'close long';
+  }
+  return isBuy ? 'open long' : 'open short';
+};
+
+export const handleDisplayFundingPayments = (fundingPayments: string) => {
+  const bn = new BigNumber(fundingPayments || 0);
+  if (bn.isZero()) {
+    return '$0.00';
+  }
+  // negative means funding payment, positive means funding gains
+  const sign = bn.isNegative() ? '+' : '-';
+  if (bn.abs().lt(0.01)) {
+    return sign + '$0.01';
+  }
+
+  return sign + '$' + bn.abs().toFixed(2);
 };

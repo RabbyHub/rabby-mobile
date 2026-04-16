@@ -196,7 +196,7 @@ class TrezorKeyring {
     if (this.isUnlocked(start, len)) {
       return Promise.resolve('already unlocked');
     }
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       const hdPaths: string[] = [];
       hdPaths.push(this.hdPath);
 
@@ -260,7 +260,7 @@ class TrezorKeyring {
   }
 
   addAccounts(n = 1) {
-    return new Promise((resolve, reject) => {
+    return new Promise<string[]>((resolve, reject) => {
       this.unlock(this.unlockedAccount, n)
         .then(_ => {
           const from = this.unlockedAccount;
@@ -389,7 +389,7 @@ class TrezorKeyring {
    * @returns The signed transaction, an instance of either new-style or old-style
    * ethereumjs transaction.
    */
-  signTransaction(address: string, tx: Transaction[TransactionType]) {
+  async signTransaction(address: string, tx: Transaction[TransactionType]) {
     return this._signTransaction(
       address,
       Number(tx.common.chainId()),

@@ -1,6 +1,7 @@
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
+import { MMKV_FILE_NAMES } from '../storage/mmkvConstants';
 
 const isIOS = Platform.OS === 'ios';
 export const APP_DOCUMENT_LIKE_PATH = isIOS
@@ -12,18 +13,7 @@ export const MMKV_ROOT_PATH = isIOS
   : // TODO: test it on Android
     `${stringUtils.unSuffix(RNFS.DocumentDirectoryPath, '/')}/mmkv`;
 
-/**
- * @description every files will have a `.crc` file with the same name
- */
-export enum MMKV_FILE_NAMES {
-  DEFAULT = 'mmkv.default',
-  KEYCHAIN = 'mmkv.keychain',
-  KEYRING = 'mmkv.keyring',
-  CHAINS = 'mmkv.chains',
-  DAYCURVE = 'mmkv.24hCurve',
-  CEXID = 'mmkv.cexid',
-  BALANCE_24H = 'mmkv.balance24h',
-}
+export { MMKV_FILE_NAMES };
 
 export async function walkThroughMMKVFiles(
   callback: (ctx: {

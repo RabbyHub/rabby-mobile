@@ -3,19 +3,24 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { usePerpsPopupState } from '../../hooks/usePerpsPopupState';
+import { Text } from '@/components/Typography';
 
 // Export header component separately for use in main FlatList
 export const PerpsMarketSectionHeader: React.FC = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+
   const [_popupState, setPopupState] = usePerpsPopupState();
 
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{t('page.perps.explorePerps')}</Text>
+      <View style={styles.sectionTitleRow}>
+        <View style={styles.sectionTitleBar} />
+        <Text style={styles.sectionTitle}>{t('page.perps.explorePerps')}</Text>
+      </View>
       <TouchableOpacity
         style={styles.sectionAction}
         onPress={() => {
@@ -49,9 +54,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sectionTitleBar: {
+    width: 4,
+    height: 20,
+    borderRadius: 100,
+    backgroundColor: '#50D2C1',
   },
   sectionTitle: {
     fontFamily: 'SF Pro Rounded',

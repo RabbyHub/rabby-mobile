@@ -4,19 +4,18 @@ import React from 'react';
 import {
   StyleProp,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
 import IconPaste from '@/assets/icons/common/paste-cc.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';
 import { navigateDeprecated } from '@/utils/navigation';
+import { Text, TextInput } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

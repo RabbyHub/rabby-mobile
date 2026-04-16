@@ -119,6 +119,22 @@ const rules: Rule[] = [
       }, 500);
     },
   },
+  {
+    matches: ['https://app.lighter.xyz'],
+    hiddenSelectors: [
+      '#root > div:nth-child(2) > div.flex.size-full.min-h-screen.flex-col.items-center.p-1.pb-2 > div.flex.h-auto.items-center.justify-between.self-stretch.rounded.px-3.py-1.max-mobile\\:py-2.mobile\\:mx-1.bg-banner.max-mobile\\:mb-1',
+    ],
+    runner: () => {
+      setTimeout(() => {
+        const bannerExit = document.querySelector(
+          '.smartbanner a.smartbanner__exit',
+        );
+        if (bannerExit) {
+          (bannerExit as HTMLElement)?.click?.();
+        }
+      }, 500);
+    },
+  },
 ];
 
 const injectStyle = (styleContent: string) => {

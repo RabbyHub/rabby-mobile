@@ -2,6 +2,7 @@ import { Account } from '../services/preference';
 
 export type MobileContext = {
   fromTabId?: string;
+  isFromMobileInnerDapp?: boolean;
 };
 
 export type MobileSession = {
@@ -21,7 +22,7 @@ export type ProviderRequest<TMethod extends string = string> = {
     } & Record<string, any>;
   };
   session: MobileSession;
-  account?: Account;
+  account?: Account | null;
   origin?: string;
   requestedApproval?: boolean;
 };

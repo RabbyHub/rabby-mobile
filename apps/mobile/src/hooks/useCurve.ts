@@ -2,16 +2,26 @@ import { getNetCurve } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import { CurveDayType } from '@/utils/curveDayType';
 import {
+  coerceFloat,
   formatCurrency,
   formatUsdValue,
   splitNumberByStep,
 } from '@/utils/number';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { atom, useAtom } from 'jotai';
 import { USD_CURRENCY } from '@/constant/currency';
 import BigNumber from 'bignumber.js';
 import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
+import { zCreate, zMutative } from '@/core/utils/reexports';
+import {
+  resolveValFromUpdater,
+  runIIFEFunc,
+  UpdaterOrPartials,
+} from '@/core/utils/store';
+import { perfEvents } from '@/core/utils/perf';
+import { useSingleHomeAddress } from '@/screens/Home/hooks/singleHome';
+import { apisAddressBalance } from './useCurrentBalance';
+import { useMemo } from 'react';
+import { computeBalanceChange } from '@/core/apis/balance';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
 
@@ -27,6 +37,12 @@ export type CurvePoint = {
   clockTimeString: string;
   dateTimeString: string;
 };
+
+function lcAddr(address: string) {
+  if (!address) return '';
+
+  return address.toLowerCase();
+}
 
 export const formatSmallUsdValue = (value: number) => {
   if (!value) {
@@ -66,15 +82,27 @@ export const formatSmallCurrencyValue = (
   });
 };
 
+const EXPECTED_CHECK_DIFF = 600;
+
 export const formChartData = (
   data: CurveList,
-  realtimeNetWorth = 0,
-  realtimeTimestamp?: number,
-  type = CurveDayType.DAY,
-  staticBalance?: number | null,
+  options: {
+    realtimeNetWorth: number;
+    realtimeTimestamp?: number;
+    type?: CurveDayType;
+    staticBalance?: number | null;
+  },
 ) => {
+  const {
+    realtimeNetWorth = 0,
+    realtimeTimestamp,
+    type = CurveDayType.DAY,
+    staticBalance = null,
+  } = options;
   const startData = data[0] || { value: 0, timestamp: 0, usd_value: 0 };
+  const startUsdValue = coerceFloat(startData.usd_value, 0);
   const step = type === CurveDayType.DAY ? 30 * 60 : 3 * 60 * 60;
+
   const list =
     data
       ?.reduce((acc: CurveList, curr) => {
@@ -92,7 +120,10 @@ export const formChartData = (
         return acc;
       }, [])
       .map(x => {
-        const change = x.usd_value - startData.usd_value;
+        const { assetsChange: change, changePercent } = computeBalanceChange(
+          x.usd_value,
+          startUsdValue,
+        );
 
         return {
           value: x.usd_value || 0,
@@ -100,10 +131,7 @@ export const formChartData = (
           change: `${formatUsdValue(Math.abs(change))}`,
           rawChange: Math.abs(change),
           isLoss: change < 0,
-          changePercent:
-            startData.usd_value === 0
-              ? `${x.usd_value === 0 ? '0' : '100.00'}%`
-              : `${(Math.abs(change * 100) / startData.usd_value).toFixed(2)}%`,
+          changePercent,
           timestamp: x.timestamp,
           dateString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
           clockTimeString: dayjs.unix(x.timestamp).format('HH:mm'),
@@ -113,7 +141,10 @@ export const formChartData = (
 
   // patch realtime newworth
   if (realtimeTimestamp) {
-    const realtimeChange = realtimeNetWorth - startData.usd_value;
+    const {
+      assetsChange: realtimeChange,
+      changePercent: realtimeChangePercent,
+    } = computeBalanceChange(realtimeNetWorth, startUsdValue);
 
     list.push({
       value: realtimeNetWorth || 0,
@@ -121,12 +152,7 @@ export const formChartData = (
       change: `${formatUsdValue(Math.abs(realtimeChange))}`,
       rawChange: Math.abs(realtimeChange),
       isLoss: realtimeChange < 0,
-      changePercent:
-        startData.usd_value === 0
-          ? `${realtimeNetWorth === 0 ? '0' : '100.00'}%`
-          : `${(Math.abs(realtimeChange * 100) / startData.usd_value).toFixed(
-              2,
-            )}%`,
+      changePercent: realtimeChangePercent,
       timestamp: Math.floor(realtimeTimestamp / 1000),
       dateString: dayjs.unix(realtimeTimestamp / 1000).format('MM DD, HH:mm'),
       clockTimeString: dayjs.unix(realtimeTimestamp / 1000).format('HH:mm'),
@@ -136,9 +162,12 @@ export const formChartData = (
     });
   }
 
-  const endNetWorth = list?.length ? list[list.length - 1]?.value : 0;
-  const assetsChange = endNetWorth - startData.usd_value;
-  const isEmptyAssets = endNetWorth === 0 && startData.usd_value === 0;
+  const endNetWorth = list?.length ? list[list.length - 1]?.value || 0 : 0;
+  const isEmptyAssets = endNetWorth === 0 && startUsdValue === 0;
+  const { assetsChange, changePercent } = computeBalanceChange(
+    endNetWorth,
+    startUsdValue,
+  );
 
   return {
     list,
@@ -146,126 +175,219 @@ export const formChartData = (
     netWorth: formatSmallUsdValue(staticBalance || endNetWorth),
     rawChange: assetsChange,
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
-    changePercent:
-      startData.usd_value !== 0
-        ? `${Math.abs((assetsChange * 100) / startData.usd_value).toFixed(2)}%`
-        : `${endNetWorth === 0 ? '0' : '100.00'}%`,
+    changePercent: changePercent,
     isLoss: assetsChange < 0,
     isEmptyAssets,
   };
 };
 
-export const getChangeData = (
-  data: CurveList,
-  realtimeNetWorth = 0,
-  realtimeTimestamp?: number,
-) => {
-  const startData = data[0] || { value: 0, timestamp: 0, usd_value: 0 };
-  const endNetWorth = realtimeTimestamp
-    ? realtimeNetWorth || 0
-    : data?.length
-    ? data[data.length - 1]?.usd_value || 0
-    : 0;
-  const assetsChange = endNetWorth - startData.usd_value;
-
-  return {
-    changePercent:
-      startData.usd_value !== 0
-        ? `${Math.abs((assetsChange * 100) / startData.usd_value).toFixed(2)}%`
-        : `${endNetWorth === 0 ? '0' : '100.00'}%`,
-    isLoss: assetsChange < 0,
-  };
+type CurveState = {
+  curveList: CurveList;
+  loadedFromApi: boolean;
+  updateTime: number;
+  loadingCurve: boolean;
+  selectData: ReturnType<typeof formChartData>;
+  isDecrease: boolean;
 };
-export const loadingCurveAtom = atom(true);
-export const useCurve = (
-  address: string | undefined,
-  nonce: number,
-  realtimeNetWorth: number | null,
-  days: CurveDayType = CurveDayType.DAY,
-  staticBalance: number | null,
-) => {
-  const [data, setData] = useState<
-    {
-      timestamp: number;
-      usd_value: number;
-    }[]
-  >([]);
-  const [isLoading, setIsLoading] = useAtom(loadingCurveAtom);
-  const select = useMemo(() => {
-    return formChartData(
-      data,
-      realtimeNetWorth ?? 0,
-      new Date().getTime(),
-      days,
-      staticBalance,
+function getDefaultCurveState(): CurveState {
+  return {
+    curveList: [],
+    loadedFromApi: false,
+    updateTime: 0,
+    loadingCurve: false,
+    selectData: formChartData([], {
+      realtimeNetWorth: 0,
+      type: CurveDayType.DAY,
+      staticBalance: 0,
+    }),
+    isDecrease: false,
+  };
+}
+type AddressCurveState = {
+  [address: string]: CurveState | null;
+};
+export const loadingCurveState = zCreate(
+  zMutative<AddressCurveState>(() => ({}), { strict: __DEV__ }),
+);
+export function makeDefaultSelectData(): ReturnType<typeof formChartData> {
+  return {
+    list: [],
+    rawNetWorth: 0,
+    rawChange: 0,
+    netWorth: '',
+    change: '',
+    changePercent: '',
+    isLoss: false,
+    isEmptyAssets: false,
+  };
+}
+
+export function useIsLoadingCurve(address?: string) {
+  return {
+    isLoadingCurve: loadingCurveState(s =>
+      !address ? false : !!s[lcAddr(address)]?.loadingCurve,
+    ),
+  };
+}
+
+function setIsLoadingCurve(
+  address: string,
+  valOrFunc: UpdaterOrPartials<CurveState['loadingCurve']>,
+) {
+  address = lcAddr(address);
+  loadingCurveState.setState(prev => {
+    const { newVal, changed } = resolveValFromUpdater(
+      prev[address]?.loadingCurve || false,
+      valOrFunc,
+      {
+        strict: true,
+      },
     );
-  }, [data, realtimeNetWorth, days, staticBalance]);
+    if (!changed) return prev;
 
-  const fetch = useCallback(
-    async (addr: string, force = false) => {
-      try {
-        const curve = await getNetCurve(addr, days, force);
-        const start =
-          days === CurveDayType.DAY
-            ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
-            : dayjs().add(-7, 'days').add(1, 'hours').valueOf();
-        const step = days === CurveDayType.DAY ? 5 * 60 * 1000 : 60 * 60 * 1000;
-        const result = patchCurveData(
-          curve.map(item => {
-            return {
-              timestamp: item.timestamp * 1000,
-              price: item.usd_value,
-            };
-          }),
-          start,
-          step,
-        );
-        setData(
-          result.map(item => {
-            return {
-              timestamp: dayjs(item.timestamp).unix(),
-              usd_value: item.price,
-            };
-          }),
-        );
-      } catch (error) {
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [days, setIsLoading],
-  );
+    const addrState = (prev[address] = prev[address] || getDefaultCurveState());
+    addrState.loadingCurve = newVal;
+  });
+}
 
-  const refresh = useCallback(
-    async (ignoreLoading?: boolean) => {
-      if (!address) {
-        return;
-      }
-      if (!ignoreLoading) {
-        setIsLoading(true);
-      }
-      await fetch(address, true);
-    },
-    [address, fetch, setIsLoading],
-  );
+function setCurveData(
+  address: string,
+  valOrFunc: UpdaterOrPartials<CurveState['curveList']>,
+  input: {
+    days?: CurveDayType;
+    totalEvmBalance?: number;
+    totalBalance: number | null;
+    loadedFromApi: boolean;
+  },
+) {
+  address = lcAddr(address);
+  loadingCurveState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(
+      prev[address]?.curveList || [],
+      valOrFunc,
+    );
 
-  useEffect(() => {
-    setIsLoading(true);
-    setData([]);
-  }, [address, setIsLoading]);
+    const selectData = formChartData(newVal, {
+      realtimeNetWorth: input.totalEvmBalance ?? 0,
+      realtimeTimestamp: new Date().getTime(),
+      type: input.days ?? CurveDayType.DAY,
+      staticBalance: input.totalBalance ?? 0,
+    });
 
-  useEffect(() => {
-    if (!address) {
-      return;
-    }
-    setIsLoading(true);
-    fetch(address);
-  }, [address, fetch, nonce, setIsLoading]);
+    const addrState = (prev[address] = prev[address] || getDefaultCurveState());
+    addrState.loadedFromApi = input.loadedFromApi;
+    addrState.updateTime = Date.now();
+    addrState.curveList = newVal;
+    addrState.selectData = selectData;
+    addrState.isDecrease = selectData.isLoss;
+  });
+}
+
+type FetchParams = {
+  realtimeNetWorth: number | null;
+  staticBalance: number | null;
+};
+
+const fetchCurveFor = async (
+  addr: string,
+  options?: Partial<FetchParams> & { force?: boolean; days: CurveDayType },
+) => {
+  const addressBalanceState = apisAddressBalance.getBalanceState(addr);
+  const {
+    realtimeNetWorth = addressBalanceState?.evmBalance,
+    staticBalance = addressBalanceState?.balance,
+    force = false,
+    days = CurveDayType.DAY,
+  } = options || {};
+  /**
+   * TODO: this is temporary solution, but this is still MUCH BETTER than its previous shape,
+   * at least it's readable, observable, predictable and stable.
+   */
+  if (
+    typeof realtimeNetWorth !== 'number' ||
+    typeof staticBalance !== 'number'
+  ) {
+    console.warn(
+      'realtimeNetWorth or staticBalance is invalid, skip this time fetch',
+    );
+    return;
+  }
+  try {
+    setIsLoadingCurve(addr, true);
+    const curve = await getNetCurve(addr, days, force);
+    const start =
+      days === CurveDayType.DAY
+        ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
+        : dayjs().add(-7, 'days').add(1, 'hours').valueOf();
+    const step = days === CurveDayType.DAY ? 5 * 60 * 1000 : 60 * 60 * 1000;
+    const result = patchCurveData(
+      curve.map(item => {
+        return {
+          timestamp: item.timestamp * 1000,
+          price: item.usd_value,
+        };
+      }),
+      start,
+      step,
+    );
+    setCurveData(
+      addr,
+      result.map(item => {
+        return {
+          timestamp: dayjs(item.timestamp).unix(),
+          usd_value: item.price,
+        };
+      }),
+      {
+        days,
+        totalEvmBalance: realtimeNetWorth,
+        totalBalance: staticBalance,
+        loadedFromApi: true,
+      },
+    );
+  } catch (error) {
+  } finally {
+    setIsLoadingCurve(addr, false);
+  }
+};
+
+export function useCurveDataByAddress(address: string) {
+  const lcAddress = useMemo(() => lcAddr(address), [address]);
+
+  // const defaultState = useMemo(() => getDefaultCurveState(), []);
+  const curveState = loadingCurveState(s => s[lcAddress] || null);
 
   return {
-    result: isLoading ? undefined : select,
-    isLoading,
-    refresh,
-    hasNoData: !data.length && !isLoading,
+    curveState,
   };
-};
+}
+
+export function startSubscribeBalanceUpdated() {
+  perfEvents.subscribe(
+    'TMP_UPDATED:SINGLE_HOME_BALANCE',
+    ({ address: addr, newBalance, force, fromScene }) => {
+      console.debug(
+        '[perf] TMP_UPDATED:SINGLE_HOME_BALANCE',
+        addr,
+        newBalance,
+        force,
+        fromScene,
+      );
+
+      switch (fromScene) {
+        case 'SingleAddressHome': {
+          fetchCurveFor(addr, {
+            days: CurveDayType.DAY,
+            realtimeNetWorth: newBalance?.evmBalance,
+            staticBalance: newBalance?.balance,
+            force: force,
+          });
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    },
+  );
+}

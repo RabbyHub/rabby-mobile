@@ -8,11 +8,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
+import { Text } from '@/components/Typography';
 
 export const PerpsInfo: React.FC<{
-  market: MarketData;
+  market?: MarketData;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
 }> = ({ market, activeAssetCtx }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -47,6 +48,7 @@ export const PerpsInfo: React.FC<{
               showTipsPopup({
                 title: t('page.perpsDetail.PerpsInfo.openInterest'),
                 desc: t('page.perpsDetail.PerpsInfo.openInterestTips'),
+                buttonType: 'hyperliquid',
               });
             }}>
             <View style={styles.listItemMain}>
@@ -55,7 +57,7 @@ export const PerpsInfo: React.FC<{
               </Text>
               <RcIconInfoCC
                 width={18}
-                height={16}
+                height={18}
                 color={colors2024['neutral-info']}
               />
             </View>
@@ -78,11 +80,12 @@ export const PerpsInfo: React.FC<{
               showTipsPopup({
                 title: t('page.perpsDetail.PerpsInfo.funding'),
                 desc: t('page.perpsDetail.PerpsInfo.fundingTips'),
+                buttonType: 'hyperliquid',
               });
             }}>
             <View style={styles.listItemMain}>
               <Text style={styles.label}>
-                {t('page.perpsDetail.PerpsInfo.funding')}
+                {t('page.perpsDetail.PerpsInfo.fundingRate')}
               </Text>
               <RcIconInfoCC
                 width={18}
@@ -122,9 +125,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   list: {
     borderRadius: 16,
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-1']
+    //   : colors2024['neutral-bg-2'],
     backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+      ? colors2024['neutral-bg-5']
+      : colors2024['neutral-bg-3'],
   },
   listItem: {
     display: 'flex',

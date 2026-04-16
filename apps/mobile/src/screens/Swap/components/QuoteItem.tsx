@@ -20,8 +20,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useSwapBottomModalTips } from '../hooks/tip';
+import { Text } from '@/components/Typography';
 
 const GAS_USE_AMOUNT_LIMIT = 2_000_000;
 
@@ -152,7 +153,7 @@ export const DexQuoteItem = (
               {
                 backgroundColor: !isBestQuote
                   ? colors2024['red-light-1']
-                  : colors2024['green-light-4'],
+                  : colors2024['green-light-1'],
               },
             ]}>
             <Text

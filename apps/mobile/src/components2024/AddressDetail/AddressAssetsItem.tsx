@@ -4,7 +4,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { splitNumberByStep } from '@/utils/number';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
-import { useAccountInfo } from '@/hooks/useAccountInfo';
+import { useAccountsInfo } from '@/hooks/useAccountInfo';
 import { useAddressSource } from '@/hooks/useAddressSource';
 import { GnosisSafeInfoBar } from './GnosisSafeInfoBar';
 import { SeedPhraseBar } from './SeedPhraseBar';
@@ -27,7 +27,7 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
     [account.balance],
   );
 
-  const accountInfo = useAccountInfo(
+  const accountInfo = useAccountsInfo(
     account.type,
     account.address,
     account.brandName,

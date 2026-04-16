@@ -1,20 +1,18 @@
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Chain } from '@/constant/chains';
-import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { navigateDeprecated } from '@/utils/navigation';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
@@ -23,6 +21,9 @@ import { GasLessNotEnough } from './GasLessComponents/GasLessNotEnough';
 import { GasLessConfig } from './GasLessComponents';
 import { GasLessActivityToSign } from './GasLessComponents/GasLessActivityToSign';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Text } from '@/components/Typography';
+import { shouldUseLegacyApprovalFooterAutoSwitch } from '../TxComponents/GasSelector/approvalGasDisplay';
+import { GasAccountTopUpWaitCallback } from '@/screens/GasAccount/components/topUpContinuation';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   isSwap?: boolean;
@@ -49,14 +50,15 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasMethod?: 'native' | 'gasAccount';
   gasAccountCost?: GasAccountCheckResult;
   onChangeGasAccount?: () => void;
-  isGasAccountLogin?: boolean;
   isWalletConnect?: boolean;
   gasAccountCanPay?: boolean;
   noCustomRPC?: boolean;
   canGotoUseGasAccount?: boolean;
   canDepositUseGasAccount?: boolean;
+  disableGasAccountDeposit?: boolean;
   rejectApproval?(): void;
   onDeposit?(): void;
+  onWaitDepositResult?: GasAccountTopUpWaitCallback;
   gasAccountAddress?: string;
   isFirstGasCostLoading?: boolean;
   isFirstGasLessLoading?: boolean;
@@ -201,14 +203,14 @@ export const FooterBar: React.FC<Props> = ({
   gasAccountCost,
   gasMethod,
   onChangeGasAccount,
-  isGasAccountLogin,
   isWalletConnect,
   gasAccountCanPay,
   noCustomRPC,
   canGotoUseGasAccount,
   canDepositUseGasAccount,
-  rejectApproval,
+  disableGasAccountDeposit = false,
   onDeposit,
+  onWaitDepositResult,
   gasAccountAddress,
   isFirstGasCostLoading,
   isFirstGasLessLoading,
@@ -254,6 +256,7 @@ export const FooterBar: React.FC<Props> = ({
     });
     return map;
   }, [engineResults]);
+  const currentSelectionGasNotEnough = !!props.isGasNotEnough;
 
   const payGasByGasAccount = gasMethod === 'gasAccount';
 
@@ -291,19 +294,28 @@ export const FooterBar: React.FC<Props> = ({
 
   const isSetGasMethodRef = useRef(false);
   useEffect(() => {
+    if (!shouldUseLegacyApprovalFooterAutoSwitch()) {
+      return;
+    }
     if (isSetGasMethodRef.current) {
       return;
     }
     if (!isFirstGasCostLoading && !isFirstGasLessLoading) {
       isSetGasMethodRef.current = true;
 
-      if (showGasLess && !canUseGasLess && canGotoUseGasAccount) {
+      if (
+        showGasLess &&
+        currentSelectionGasNotEnough &&
+        !canUseGasLess &&
+        canGotoUseGasAccount
+      ) {
         onChangeGasAccount?.();
       }
     }
   }, [
     canGotoUseGasAccount,
     canUseGasLess,
+    currentSelectionGasNotEnough,
     isFirstGasCostLoading,
     isFirstGasLessLoading,
     onChangeGasAccount,
@@ -342,11 +354,15 @@ export const FooterBar: React.FC<Props> = ({
                   }}
                   gasLessConfig={gasLessConfig}
                 />
-              ) : isWatchAddr ||
+              ) : !currentSelectionGasNotEnough ||
+                isWatchAddr ||
                 account.type === KEYRING_TYPE.GnosisKeyring ? null : (
                 <GasLessNotEnough
+                  nativeTokenInsufficient={currentSelectionGasNotEnough}
                   canGotoUseGasAccount={canGotoUseGasAccount}
-                  canDepositUseGasAccount={canDepositUseGasAccount}
+                  canDepositUseGasAccount={
+                    disableGasAccountDeposit ? false : canDepositUseGasAccount
+                  }
                   onChangeGasAccount={onChangeGasAccount}
                   gasAccountAddress={gasAccountAddress!}
                   gasAccountCost={gasAccountCost}
@@ -354,12 +370,9 @@ export const FooterBar: React.FC<Props> = ({
                     onDeposit?.();
                     onChangeGasAccount?.();
                   }}
-                  onGotoGasAccount={() => {
-                    rejectApproval?.();
-                    navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.GasAccount,
-                      params: {},
-                    });
+                  onWaitDepositResult={async result => {
+                    await onWaitDepositResult?.(result);
+                    onChangeGasAccount?.();
                   }}
                 />
               )
@@ -371,17 +384,13 @@ export const FooterBar: React.FC<Props> = ({
                 <GasAccountTips
                   gasAccountAddress={gasAccountAddress!}
                   gasAccountCost={gasAccountCost}
-                  isGasAccountLogin={isGasAccountLogin}
+                  onChangeGasAccount={onChangeGasAccount}
                   isWalletConnect={isWalletConnect}
                   noCustomRPC={noCustomRPC}
+                  nativeTokenInsufficient={currentSelectionGasNotEnough}
                   onDeposit={onDeposit}
-                  onGotoGasAccount={() => {
-                    rejectApproval?.();
-                    navigateDeprecated(RootNames.StackTransaction, {
-                      screen: RootNames.GasAccount,
-                      params: {},
-                    });
-                  }}
+                  onWaitDepositResult={onWaitDepositResult}
+                  disableDepositAction={disableGasAccountDeposit}
                 />
               )
             ) : null}

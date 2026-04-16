@@ -73,7 +73,7 @@ export const ConnectOneKey: React.FC<{
       // });
       showImportMorePopup({
         type: KEYRING_TYPE.OneKeyKeyring,
-        brand: KEYRING_CLASS.HARDWARE.ONEKEY,
+        brandName: KEYRING_CLASS.HARDWARE.ONEKEY,
       });
       onDone?.();
     }

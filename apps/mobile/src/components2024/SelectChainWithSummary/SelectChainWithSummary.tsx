@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Keyboard,
-  Pressable,
-  Text,
-  View,
-  ViewStyle,
-  TextInput,
-} from 'react-native';
+import { Keyboard, Pressable, View, ViewStyle } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
@@ -17,7 +10,10 @@ import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 
 import { NetSwitchTabsKey } from '@/constant/netType';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
+import {
+  useLoadMatteredChainBalances,
+  useMatteredChainBalancesAll,
+} from '@/hooks/accountChainBalance';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import NetSwitchTabs, {
@@ -34,9 +30,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { NextSearchBar } from '../SearchBar';
 import { Account } from '@/core/services/preference';
-
-const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
-const RcIconSearch = makeThemeIconFromCC(RcNextSearchCC, 'neutral-secondary');
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { Text, TextInput } from '@/components/Typography';
 
 const useChainSeletorList = ({
   supportChains,
@@ -47,7 +42,7 @@ const useChainSeletorList = ({
   supportChains?: Chain['enum'][];
   netTabKey?: NetSwitchTabsKey;
   needAllAddresses?: boolean;
-  account: Account;
+  account?: Account;
 }) => {
   const [search, setSearch] = useState('');
   const {
@@ -55,42 +50,37 @@ const useChainSeletorList = ({
     matteredChainBalances,
     fetchMatteredChainBalance,
 
-    matteredChainBalancesAll,
     fetchAllAddressesChainBalance,
   } = useLoadMatteredChainBalances({
     account,
   });
+
+  useRendererDetect({ name: 'SelectChainWithSummary' });
+
+  const { matteredChainBalancesAll } = useMatteredChainBalancesAll();
+
   useEffect(() => {
     needAllAddresses
       ? fetchAllAddressesChainBalance()
       : fetchMatteredChainBalance();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needAllAddresses, fetchMatteredChainBalance]);
-
-  const { pinned, chainBalances } = useMemo(() => {
-    return {
-      // TODO: not supported now
-      pinned: [],
-      chainBalances:
-        netTabKey === 'testnet'
-          ? testnetMatteredChainBalances
-          : needAllAddresses
-          ? matteredChainBalancesAll
-          : matteredChainBalances,
-      isShowTestnet: false,
-    };
   }, [
-    netTabKey,
-    testnetMatteredChainBalances,
-    matteredChainBalances,
-    matteredChainBalancesAll,
     needAllAddresses,
+    fetchAllAddressesChainBalance,
+    fetchMatteredChainBalance,
   ]);
 
   const { mainnetList, testnetList } = useChainList();
 
-  const { allSearched, matteredList, unmatteredList } = useMemo(() => {
+  const { pinned, allSearched, matteredList, unmatteredList } = useMemo(() => {
     const searchKw = search?.trim().toLowerCase();
+    const pinned = [];
+    const chainBalances =
+      netTabKey === 'testnet'
+        ? testnetMatteredChainBalances
+        : needAllAddresses
+        ? matteredChainBalancesAll
+        : matteredChainBalances;
+
     const result = varyAndSortChainItems({
       supportChains,
       searchKeyword: searchKw,
@@ -102,6 +92,9 @@ const useChainSeletorList = ({
     });
 
     return {
+      // TODO: not supported now
+      pinned,
+      chainBalances,
       allSearched: result.allSearched,
       matteredList: searchKw ? [] : result.matteredList,
       unmatteredList: searchKw ? [] : result.unmatteredList,
@@ -109,11 +102,13 @@ const useChainSeletorList = ({
   }, [
     search,
     supportChains,
-    chainBalances,
-    pinned,
     netTabKey,
     mainnetList,
     testnetList,
+    testnetMatteredChainBalances,
+    matteredChainBalances,
+    matteredChainBalancesAll,
+    needAllAddresses,
   ]);
 
   return {
@@ -129,7 +124,7 @@ const useChainSeletorList = ({
 };
 
 export type SelectSortedChainProps = {
-  value?: CHAINS_ENUM;
+  value?: CHAINS_ENUM | null;
   onChange?: (value: CHAINS_ENUM) => void;
   supportChains?: CHAINS_ENUM[];
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
@@ -140,7 +135,7 @@ export type SelectSortedChainProps = {
   excludeChains?: CHAINS_ENUM[];
   needAllAddresses?: boolean;
   onClose?: () => void;
-  account: Account;
+  account?: Account;
 };
 export default function SelectChainWithSummary({
   value,
@@ -181,13 +176,13 @@ export default function SelectChainWithSummary({
     if (excludeChains?.length) {
       return [_matteredList, _unmatteredList].map(chains =>
         chains.filter(e => !excludeChains.includes(e.enum)),
-      );
+      ) as [Chain[], Chain[]];
     }
     return [_matteredList, _unmatteredList];
   }, [excludeChains, _matteredList, _unmatteredList]);
 
   useEffect(() => {
-    const chain = findChainByEnum(value);
+    const chain = findChainByEnum(value ?? undefined);
     const isTestnet = !!chain?.isTestnet;
     if (isTestnet) {
       onTabChange('testnet');
@@ -283,7 +278,7 @@ export default function SelectChainWithSummary({
             style={styles.innerBlock}
             matteredList={matteredList}
             unmatteredList={unmatteredList}
-            value={value}
+            value={value ?? undefined}
             onChange={onChange}
             supportChains={supportChains}
             disabledTips={disabledTips}

@@ -4,8 +4,12 @@ import { EntityAddressAssetBase } from './base';
 import { CEX_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
+import { PreparedStatement } from '@op-engineering/op-sqlite';
+import { ParseEntity } from '@/core/utils/typeorm';
 
-@Entity('cache_cex')
+@ParseEntity()
+@Entity(ORM_TABLE_NAMES.cache_cex)
 export class CexEntity extends EntityAddressAssetBase {
   // cexId
   @Column('text')

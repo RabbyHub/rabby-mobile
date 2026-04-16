@@ -4,17 +4,16 @@ import { useTheme2024 } from '@/hooks/theme';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  CurvePoint,
-  formatSmallCurrencyValue,
-  formChartData,
-} from '@/hooks/useCurve';
+import { formatSmallCurrencyValue, type CurvePoint } from '@/hooks/useCurve';
+import { E2E_ID } from '@/constant/e2e';
 import Animated, {
+  Easing,
   useAnimatedProps,
   useAnimatedStyle,
   useDerivedValue,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
-import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
@@ -24,67 +23,131 @@ import {
   UNFOLD_ASSETS_HEADER_HEIGHT,
 } from '@/constant/layout';
 import Svg, { Path } from 'react-native-svg';
+import {
+  apisSingleHome,
+  useHomeFoldChart,
+  useSingleHomeAddress,
+  useSingleHomeHomeTopChart,
+} from '../hooks/singleHome';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { AnimateableText } from '@/components/Typography';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ScreenWidth = Dimensions.get('screen').width;
 
-function Chart({
-  data,
+const ZERO_LINE_CHART_DATA: CurvePoint[] = [
+  {
+    value: 0,
+    netWorth: '$0',
+    change: '$0',
+    rawChange: 0,
+    isLoss: false,
+    changePercent: '0%',
+    timestamp: 0,
+    dateString: '',
+    clockTimeString: '',
+    dateTimeString: '',
+  },
+  {
+    value: 0,
+    netWorth: '$0',
+    change: '$0',
+    rawChange: 0,
+    isLoss: false,
+    changePercent: '0%',
+    timestamp: 1,
+    dateString: '',
+    clockTimeString: '',
+    dateTimeString: '',
+  },
+];
+
+export const HomeTopChart = memo(function Chart({
   isOffline,
-  loading,
   isNoAssets,
   pathColor,
-  fold,
-  setFold,
 }: {
   isOffline: boolean;
-  data: ReturnType<typeof formChartData>;
-  loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
-  fold: boolean;
-  setFold: (fold: boolean) => void;
 }) {
   const { styles, colors } = useTheme2024({ getStyle });
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { isFoldChart: fold } = useHomeFoldChart();
+
+  const { currentAddress } = useSingleHomeAddress();
+  useCurrentBalance({
+    address: currentAddress,
+    AUTO_FETCH: true,
+    fromScene: 'SingleAddressHome',
+  });
+
+  const {
+    isLoadingChartData,
+    balanceLoadingWithoutLocal,
+    selectData: data,
+  } = useSingleHomeHomeTopChart();
+
+  const heightAnim = useSharedValue(0);
+  const opacityAnim = useSharedValue(0);
 
   useEffect(() => {
-    // 延迟初始化动画，避免页面切换时的卡顿
-    const timer = setTimeout(() => {
-      setIsInitialized(true);
-    }, 100);
+    const DURATION = 200;
+    if (fold) {
+      heightAnim.value = withTiming(FOLD_ASSETS_HEADER_HEIGHT, {
+        easing: Easing.inOut(Easing.ease),
+        duration: DURATION,
+      });
+      opacityAnim.value = withTiming(0, { duration: DURATION });
+    } else {
+      heightAnim.value = withTiming(UNFOLD_ASSETS_HEADER_HEIGHT, {
+        easing: Easing.inOut(Easing.ease),
+        duration: DURATION,
+      });
+      opacityAnim.value = withTiming(1, { duration: DURATION });
+    }
+  }, [fold, heightAnim, opacityAnim]);
 
-    return () => {
-      clearTimeout(timer);
+  const animatedHeightStyle = useAnimatedStyle(() => {
+    return {
+      height: heightAnim.value,
     };
-  }, []);
+  });
+
+  const animOpacityStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacityAnim.value,
+    };
+  });
+
+  const chartData = useMemo(() => {
+    return data.list.length ? data.list : ZERO_LINE_CHART_DATA;
+  }, [data.list]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          height: fold
-            ? FOLD_ASSETS_HEADER_HEIGHT
-            : UNFOLD_ASSETS_HEADER_HEIGHT,
-        },
-      ]}>
+    <Animated.View
+      onTouchStart={e => {
+        e.stopPropagation();
+      }}
+      style={[styles.container, animatedHeightStyle]}>
       <View style={styles.chartContainer}>
-        <LineChart.Provider data={data.list}>
-          {isInitialized ? (
-            <ChartHeader
-              fold={fold}
-              setFold={setFold}
-              rawNetWorth={data.rawNetWorth}
-              changePercent={data.changePercent}
-              isLoss={data.isLoss}
-              data={data.list}
-              loading={loading}
+        <LineChart.Provider data={chartData}>
+          {balanceLoadingWithoutLocal ? (
+            <Skeleton
+              {...makeTestIDProps(E2E_ID.home.singleBalanceLoading)}
+              width={181}
+              height={42}
+              style={styles.skeleton}
+              LinearGradientComponent={LoadingLinear}
             />
-          ) : null}
-          {fold ? null : isOffline || isNoAssets ? null : !loading ? (
-            isInitialized ? (
+          ) : (
+            <ChartHeader animOpacityStyle={animOpacityStyle} />
+          )}
+          <Animated.View style={[animOpacityStyle]}>
+            {isOffline ||
+            isNoAssets ||
+            !chartData.length ? null : !isLoadingChartData ? (
               <LineChart
                 height={104}
                 width={ScreenWidth - 32}
@@ -104,40 +167,40 @@ function Chart({
                 />
               </LineChart>
             ) : (
-              <CurveLoader style={styles.loading} />
-            )
-          ) : (
-            <CurveLoader style={styles.loading} />
-          )}
+              <CurveLoader
+                {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
+                style={styles.loading}
+              />
+            )}
+          </Animated.View>
         </LineChart.Provider>
       </View>
-    </View>
+    </Animated.View>
   );
-}
-export const HomeTopChart = memo(Chart);
+});
 
 interface IHeaderProps {
-  rawNetWorth: number;
-  changePercent: string;
-  isLoss: boolean;
-  loading: boolean;
-  data: CurvePoint[];
-  fold: boolean;
-  setFold: (fold: boolean) => void;
+  animOpacityStyle: ReturnType<typeof useAnimatedStyle>;
 }
-export const ChartHeader = ({
-  rawNetWorth,
-  changePercent,
-  isLoss,
-  loading,
-  data: _data,
-  fold,
-  setFold,
-}: IHeaderProps) => {
+const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
   const [isInitialized, setIsInitialized] = useState(false);
   const { currency, formatCurrentCurrency } = useCurrency();
+
+  const {
+    balanceLoadingWithoutLocal: loading,
+    selectData,
+    balance,
+    isLoadingChartData,
+  } = useSingleHomeHomeTopChart();
+
+  const rawNetWorth = balance || 0;
+  const changePercent = selectData.changePercent;
+  const isLoss = selectData.isLoss;
+  const _data = selectData.list;
+  const changeLoading =
+    !loading && isLoadingChartData && !selectData.changePercent;
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(rawNetWorth, { currency });
@@ -171,21 +234,23 @@ export const ChartHeader = ({
       if (changePercent === '0%') {
         return changePercent;
       }
-      return `${isLoss ? '-' : '+'}${changePercent}`;
+      return `${changePercent ? (isLoss ? '-' : '+') : ''}${changePercent}`;
     }
 
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
     const formatChangePercent = isActiveIndexData
-      ? data?.[currentIndex.value].changePercent
+      ? data?.[currentIndex.value]?.changePercent || ''
       : changePercent;
     const formatLoss = isActiveIndexData
-      ? data?.[currentIndex.value].isLoss
+      ? data?.[currentIndex.value]?.isLoss ?? false
       : isLoss;
     if (changePercent === '0%') {
       return changePercent;
     }
-    return `${formatLoss ? '-' : '+'}${formatChangePercent}`;
+    return `${
+      formatChangePercent ? (formatLoss ? '-' : '+') : ''
+    }${formatChangePercent}`;
   }, [data, currentIndex.value, changePercent, isLoss, isInitialized]);
 
   const dateTime = useDerivedValue(() => {
@@ -266,69 +331,75 @@ export const ChartHeader = ({
     return {
       text: formatNetWorth.value,
     };
-  }, [formatNetWorth.value]);
-
+  }, [netWorth]);
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
     };
-  }, [percentChange.value]);
+  }, [changePercent]);
 
   const dateTimeAnimatedProps = useAnimatedProps(() => {
     return {
       text: dateTime.value,
     };
-  }, [dateTime.value]);
+  });
 
-  if (loading) {
-    return (
-      <Skeleton
-        width={181}
-        height={42}
-        style={styles.skeleton}
-        LinearGradientComponent={LoadingLinear}
-      />
-    );
-  }
+  const { isFoldChart: fold } = useHomeFoldChart();
+
   return (
-    <View style={styles.charHeader}>
+    <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
         <AnimateableText
+          {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
           style={styles.netWorth}
           animatedProps={netWorthAnimatedProps}
         />
-        {fold ? null : (
-          <AnimateableText
-            style={styles.changeTime}
-            animatedProps={dateTimeAnimatedProps}
-          />
-        )}
+        <AnimateableText
+          style={[styles.changeTime, animOpacityStyle]}
+          animatedProps={dateTimeAnimatedProps}
+        />
       </View>
       <Pressable
-        onPress={() => setFold(!fold)}
+        {...makeTestIDProps(E2E_ID.home.singleCurveToggle)}
+        hitSlop={20}
+        onPress={() => apisSingleHome.setFoldChart(!fold)}
         style={styles.percentChangeContainer}>
-        <AnimateableText
-          style={lossStyleProps}
-          animatedProps={percentChangeAnimatedProps}
-        />
-        <View>
-          <Svg
-            style={{
-              transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
-            }}
-            width={16}
-            height={16}
-            viewBox="0 0 24 24"
-            fill="none">
-            <AnimatedPath
-              d="M8.4 4.80005L15.6 12L8.4 19.2"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              animatedProps={lossStyleProps}
+        {changeLoading ? (
+          <Skeleton
+            {...makeTestIDProps(E2E_ID.home.singleChangeLoading)}
+            width={92}
+            height={20}
+            style={styles.skeletonChange}
+            LinearGradientComponent={LoadingLinear}
+          />
+        ) : (
+          <>
+            <AnimateableText
+              style={lossStyleProps}
+              animatedProps={percentChangeAnimatedProps}
             />
-          </Svg>
-        </View>
+            <View>
+              <Svg
+                style={{
+                  transform: fold
+                    ? [{ rotate: '90deg' }]
+                    : [{ rotate: '270deg' }],
+                }}
+                width={16}
+                height={16}
+                viewBox="0 0 24 24"
+                fill="none">
+                <AnimatedPath
+                  d="M8.4 4.80005L15.6 12L8.4 19.2"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  animatedProps={lossStyleProps}
+                />
+              </Svg>
+            </View>
+          </>
+        )}
       </Pressable>
     </View>
   );
@@ -344,6 +415,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 7,
     marginLeft: 8,
     marginRight: 8,
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  skeletonChange: {
     borderRadius: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -365,10 +442,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    alignSelf: 'flex-start',
+    marginTop: 16,
+    // ...makeDebugBorder(),
   },
   netWorth: {
     fontSize: 42,
-    lineHeight: 48,
+    lineHeight: 46,
     // textAlign: 'center',
     fontWeight: '900',
     color: colors2024['neutral-title-1'],

@@ -3,7 +3,8 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const PerpsDepositCard: React.FC<{
   availableBalance: number;
@@ -53,14 +54,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.12)',
   },
   btnText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: colors2024['brand-default'],
+    color: isLight ? colors2024['neutral-title-1'] : '#50D2C1',
   },
   balance: {
     fontWeight: '700',

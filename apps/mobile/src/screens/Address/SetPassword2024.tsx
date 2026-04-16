@@ -1,11 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 
 import {
   View,
-  Text,
-  TextInput,
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
@@ -26,7 +24,6 @@ import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner2024';
@@ -43,8 +40,9 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { AddressNavigatorParamList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { stats } from '@/utils/stats';
-import { IS_IOS } from '@/core/native/utils';
+import { Text, TextInput } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -61,9 +59,10 @@ function useSetupPasswordForm(
   toggleBiometrics: ReturnType<typeof useBiometrics>['toggleBiometrics'],
   finishGoToScreen: (AddressNavigatorParamList['SetPassword2024'] &
     object)['finishGoToScreen'],
-  isBiometricsEnabled: boolean,
+  couldSetupBiometrics: boolean,
   delaySetPassword?: boolean,
   isFirstImportPassword?: boolean,
+  isFirstCreate?: boolean,
 ) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
@@ -87,10 +86,10 @@ function useSetupPasswordForm(
                 t('page.createPassword.confirmError'),
               ),
         }),
-      switch: Yup.boolean().default(isBiometricsEnabled),
+      switch: Yup.boolean().default(couldSetupBiometrics),
       checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
     });
-  }, [t, isBiometricsEnabled]);
+  }, [t, couldSetupBiometrics]);
 
   const navigation = useRabbyAppNavigation();
 
@@ -148,6 +147,7 @@ function useSetupPasswordForm(
             screen: RootNames.CreateChooseBackup,
             params: {
               delaySetPassword: true,
+              isFirstCreate: !!isFirstCreate,
             },
           });
         } else {
@@ -198,7 +198,7 @@ function MainListBlocks() {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const {
-    computed: { defaultTypeLabel, isBiometricsEnabled, couldSetupBiometrics },
+    computed: { defaultTypeLabel, couldSetupBiometrics },
     fetchBiometrics,
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
@@ -206,9 +206,10 @@ function MainListBlocks() {
   const { formik, shouldDisabled } = useSetupPasswordForm(
     toggleBiometrics,
     state.finishGoToScreen,
-    isBiometricsEnabled,
+    couldSetupBiometrics,
     state.delaySetPassword,
     state.isFirstImportPassword,
+    state.isFirstCreate,
   );
 
   useFocusEffect(
@@ -264,7 +265,9 @@ function MainListBlocks() {
         onTouchInputAway();
       }}>
       <View style={[styles.container]}>
-        {!state.hideProgress && <ProgressBar amount={3} currentCount={2} />}
+        {(!state.hideProgress || state?.isFirstCreate) && (
+          <ProgressBar amount={3} currentCount={2} />
+        )}
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.passwordTopTips')}
         </Text>
@@ -288,6 +291,7 @@ function MainListBlocks() {
                   inputMode: 'text',
                   returnKeyType: 'done',
                   placeholder: '',
+                  ...makeTestIDProps(E2E_ID.onboarding.setPasswordInput),
                   onChangeText(text) {
                     formik.setFieldValue('password', text, true);
                   },
@@ -321,6 +325,7 @@ function MainListBlocks() {
                   returnKeyType: 'done',
                   placeholder: '',
                   placeholderTextColor: colors2024['neutral-foot'],
+                  ...makeTestIDProps(E2E_ID.onboarding.setPasswordConfirmInput),
                   onChangeText(text) {
                     formik.setFieldValue('confirmPassword', text, true);
                   },
@@ -351,6 +356,12 @@ function MainListBlocks() {
               <View style={styles.valueView}>
                 <AppSwitch2024
                   value={formik.values.switch}
+                  {...makeTestIDProps(
+                    E2E_ID.onboarding.setPasswordBiometrics,
+                    formik.values.switch
+                      ? E2E_ID.onboarding.setPasswordBiometricsOn
+                      : E2E_ID.onboarding.setPasswordBiometricsOff,
+                  )}
                   onValueChange={async value => {
                     if (!couldSetupBiometrics) {
                       toast.show(
@@ -367,6 +378,7 @@ function MainListBlocks() {
             </View>
             <TouchableOpacity
               style={styles.agreementWrapper}
+              {...makeTestIDProps(E2E_ID.onboarding.setPasswordAgreement)}
               onPress={() => {
                 formik.setFieldValue('checked', !formik.values.checked, true);
               }}>
@@ -408,6 +420,7 @@ function MainListBlocks() {
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}
           onPress={handleContinue}
+          {...makeTestIDProps(E2E_ID.onboarding.setPasswordSubmit)}
         />
       </View>
     </TouchableWithoutFeedback>

@@ -7,7 +7,8 @@ import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { Text, View, ViewProps, Image } from 'react-native';
+import { View, ViewProps, Image } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const EmptyAssets = ({
   style,
@@ -15,7 +16,7 @@ export const EmptyAssets = ({
   type = 'empty-assets',
 }: {
   style?: ViewProps['style'];
-  desc?: string;
+  desc?: string | null;
   type?: 'empty-assets' | 'empty-defi' | 'empty-nft';
 }) => {
   const { styles, isLight } = useTheme2024({ getStyle });
@@ -52,7 +53,7 @@ export const EmptyAssets = ({
 
 const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   container: {
-    height: 186,
+    height: 195,
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',

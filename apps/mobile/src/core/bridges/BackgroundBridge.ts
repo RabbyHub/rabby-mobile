@@ -33,6 +33,7 @@ type BackgroundBridgeOptions = {
   titleRef: RefLikeObject<string>;
   iconRef: RefLikeObject<string | undefined>;
   isMainFrame: boolean;
+  isFromMobileInnerDapp?: boolean;
 };
 
 export class BackgroundBridge extends EventEmitter {
@@ -52,6 +53,8 @@ export class BackgroundBridge extends EventEmitter {
 
   #engine: JsonRpcEngine | null = null;
 
+  #isFromMobileInnerDapp = false;
+
   get origin() {
     return this.#webviewOrigin;
   }
@@ -64,11 +67,22 @@ export class BackgroundBridge extends EventEmitter {
     return this.#webviewIdRef.current;
   }
 
+  get isFromMobileInnerDapp() {
+    return this.#isFromMobileInnerDapp;
+  }
+
   constructor(options: BackgroundBridgeOptions) {
     super();
 
-    const { webview, webviewIdRef, urlRef, titleRef, iconRef, isMainFrame } =
-      options;
+    const {
+      webview,
+      webviewIdRef,
+      urlRef,
+      titleRef,
+      iconRef,
+      isMainFrame,
+      isFromMobileInnerDapp,
+    } = options;
 
     this.#webview = webview.current;
     this.#webviewIdRef = webviewIdRef;
@@ -80,6 +94,8 @@ export class BackgroundBridge extends EventEmitter {
     this.#urlRef = urlRef;
     this.#titleRef = titleRef;
     this.#iconRef = iconRef;
+
+    this.#isFromMobileInnerDapp = !!isFromMobileInnerDapp;
 
     this.port = new Port(this.#webview, isMainFrame);
 

@@ -17,6 +17,7 @@ import {
   MakePropsByAsMap,
   useComponentByAsProp,
 } from '@/hooks/common/useComponentAsProp';
+import { perfEvents } from '@/core/utils/perf';
 
 const implUiRefreshTimeout = throttle(
   () => {
@@ -31,30 +32,6 @@ const implUiRefreshTimeout = throttle(
   { leading: true },
 );
 autoLockEvent.addListener('triggerRefresh', implUiRefreshTimeout);
-
-function useAutoLockIfTimeout(currentRouteName: string | null) {
-  React.useEffect(() => {
-    if (currentRouteName === RootNames.Unlock) return;
-
-    const handler: Parameters<
-      typeof autoLockEvent.addListener<'timeout'>
-    >[1] = ctx => {
-      const routeName = getLatestNavigationName();
-
-      const hasBeenUnlock = routeName === RootNames.Unlock;
-      if (!hasBeenUnlock) {
-        requestLockWalletAndBackToUnlockScreen();
-      } else {
-        ctx.delayLock();
-      }
-    };
-    autoLockEvent.addListener('timeout', handler);
-
-    return () => {
-      autoLockEvent.removeListener('timeout', handler);
-    };
-  }, [currentRouteName]);
-}
 
 export function useRefreshAutoLockPanResponder() {
   return React.useMemo(() => {
@@ -103,11 +80,11 @@ export default function AutoLockView<
 }
 
 function ForAppNav(props: Props<'View'>) {
-  const { currentRouteName } = useCurrentRouteName();
-  useAutoLockIfTimeout(currentRouteName ?? null);
-
   React.useEffect(() => {
-    keyringService.on('unlock', apisAutoLock.handleUnlock);
+    const subUnlock = perfEvents.subscribe(
+      'USER_MANUALLY_UNLOCK',
+      apisAutoLock.handleUnlock,
+    );
     keyringService.on('lock', apisAutoLock.handleLock);
 
     const hideEvent = Keyboard.addListener(
@@ -121,7 +98,7 @@ function ForAppNav(props: Props<'View'>) {
 
     // release event listeners on destruction
     return () => {
-      keyringService.off('unlock', apisAutoLock.handleUnlock);
+      subUnlock.remove();
       keyringService.off('lock', apisAutoLock.handleLock);
 
       hideEvent.remove();

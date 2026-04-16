@@ -10,7 +10,7 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -28,7 +28,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
-import { getAlianName, getAliasName } from '@/core/apis/contact';
+import { getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
 import { transactionHistoryService } from '@/core/services';
 import {
@@ -43,6 +43,7 @@ import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { naviPush } from '@/utils/navigation';
 import FastImage from 'react-native-fast-image';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
+import { Text } from '@/components/Typography';
 
 export type HistoryLocalDetailParams = GetNestedScreenRouteProp<
   'TransactionNavigatorParamList',
@@ -101,10 +102,18 @@ export const TransactionItem = ({
 
     if (
       data.maxGasTx.action?.actionData.wrapToken ||
-      data.maxGasTx.action?.actionData.unWrapToken ||
-      data.maxGasTx.action?.actionData.swap
+      data.maxGasTx.action?.actionData.unWrapToken
     ) {
       return HistoryItemCateType.Swap;
+    }
+
+    if (data.maxGasTx.action?.actionData.swap) {
+      if (
+        data.maxGasTx.action?.actionData.swap?.payToken?.is_core &&
+        data.maxGasTx.action?.actionData.swap?.receiveToken?.is_core
+      ) {
+        return HistoryItemCateType.Swap;
+      }
     }
 
     if (
@@ -291,6 +300,18 @@ export const TransactionItem = ({
           return t('page.transactions.itemTitle.LendingBorrow');
         case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
           return t('page.transactions.itemTitle.LendingRepay');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL:
+          return t('page.transactions.itemTitle.LendingOnCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
+          return t('page.transactions.itemTitle.LendingOffCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE:
+          return t('page.transactions.itemTitle.LendingManageEMode');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE:
+          return t('page.transactions.itemTitle.LendingManageEModeDisable');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP:
+          return t('page.transactions.itemTitle.LendingDebtSwap');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY_WITH_COLLATERAL:
+          return t('page.transactions.itemTitle.LendingRepayWithCollateral');
       }
     }
 
@@ -335,7 +356,7 @@ export const TransactionItem = ({
 
     switch (formatType) {
       case HistoryItemCateType.GAS_DEPOSIT:
-        address = ToText + t('page.home.services.gasAccount');
+        address = ToText + t('page.home.services.gasDeposit');
         break;
       case HistoryItemCateType.Send:
         const acData = data.maxGasTx?.action?.actionData.send;
@@ -487,6 +508,7 @@ export const TransactionItem = ({
           type={formatType as HistoryItemCateType}
           tokenChangeData={tokenChangeData}
           tokenApproveData={tokenApproveData}
+          isFailure={isFailed}
         />
         <View style={styles.textBox}>
           <View style={styles.titleBox}>

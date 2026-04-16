@@ -148,7 +148,7 @@ export function redirectToAddAddressEntry(options?: {
     }
     case 'replace':
       replace(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
+        screen: RootNames.GetStarted,
       });
       break;
     case 'resetTo':
@@ -159,7 +159,7 @@ export function redirectToAddAddressEntry(options?: {
             name: RootNames.StackGetStarted,
             state: {
               index: 0,
-              routes: [{ name: RootNames.GetStartedScreen2024 }],
+              routes: [{ name: RootNames.GetStarted }],
             },
           },
         ],
@@ -168,22 +168,34 @@ export function redirectToAddAddressEntry(options?: {
     case 'push':
     default:
       navigateDeprecated(RootNames.StackGetStarted, {
-        screen: RootNames.GetStartedScreen2024,
+        screen: RootNames.GetStarted,
       });
       break;
   }
 }
 
-export const replaceToFirst = ((name: any, params?: object) => {
+/** @deprecated use `resetNavigationOnTopOfHome` instead */
+export const replaceToFirst: typeof naviReplace = (name, params?) => {
   if (navigationRef.isReady()) {
     navigationRef.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name, params }],
+        routes: [
+          {
+            name: RootNames.StackRoot,
+            params: {
+              screen: RootNames.Home,
+            },
+          },
+          {
+            name: name,
+            params: params || {},
+          },
+        ],
       }),
     );
   } else {
     // You can decide what to do if react navigation is not ready
     // You can ignore this, or add these actions to a queue you can call later
   }
-}) as typeof navigationRef.navigate;
+};

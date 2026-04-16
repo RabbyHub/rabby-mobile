@@ -4,7 +4,7 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { atom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View, Text } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { FooterButton } from '@/components2024/FooterButton/FooterButton';
 import { Radio } from '@/components2024/Radio';
@@ -13,6 +13,7 @@ import { Account, InitAccounts } from './type';
 import { fetchAccountsInfo } from './util';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Text } from '@/components/Typography';
 
 export const MAX_ACCOUNT_COUNT = 50;
 const HARDENED_OFFSET = 0x80000000 - 50;

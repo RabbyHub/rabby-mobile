@@ -3,7 +3,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
   View,
-  TextInput,
   Platform,
   ActivityIndicator,
   Keyboard,
@@ -20,29 +19,73 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast, toastWithIcon } from '@/components/Toast';
-import { apisAccount, apisKeychain, apisLock } from '@/core/apis';
+import { toast, toastWithIcon } from '@/components2024/Toast';
+import { apisKeychain, apisLock } from '@/core/apis';
 import {
-  resetNavigationTo,
+  UnlockUIManager,
   usePreventGoBack,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
-import { useFocusEffect } from '@react-navigation/native';
-import { APP_TEST_PWD } from '@/constant';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { APP_TEST_PWD, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import {
   RequestGenericPurpose,
   parseKeychainError,
 } from '@/core/apis/keychain';
-import { useTipedUserEnableBiometrics, useUnlockApp } from './hooks';
+import {
+  storeApisUnlock,
+  useTipedUserEnableBiometrics,
+  useUnlockApp,
+} from './hooks';
 import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
-import { useBiometrics } from '@/hooks/biometrics';
+import { storeApisBiometrics, useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { sleep } from '@/utils/async';
 import { updateUnlockTime } from '@/core/apis/lock';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 import YesIcon from '@/assets2024/icons/common/check.svg';
+import i18next from 'i18next';
+import { RootNames } from '@/constant/layout';
+import { measureTime } from '@/core/utils/statics';
+import { stats } from '@/utils/stats';
+import DeviceInfo from 'react-native-device-info';
+import { getAddressesForReport } from '@/core/apis/address';
+import { perfEvents } from '@/core/utils/perf';
+import { GetRootScreenRouteProp } from '@/navigation-type';
+import { TextInput } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
+
+function runTryCatch<T extends (...args: any[]) => any>(
+  fn: T,
+): ReturnType<T> | null {
+  try {
+    return fn();
+  } catch (error) {
+    console.error('Error occurred:', error);
+    return null;
+  }
+}
+async function reportUnlockTime(
+  timsMs: number,
+  unlockType: 'password' | 'biometrics',
+) {
+  stats.report('unlockTime', {
+    unlock_type: unlockType,
+    duration: timsMs,
+    os_version: DeviceInfo.getSystemVersion(),
+    os_name: DeviceInfo.getSystemName(),
+    app_ver: APP_VERSIONS.forFeedback,
+    app_id: APPLICATION_ID,
+    callable_addr_count:
+      (await runTryCatch(
+        async () =>
+          await getAddressesForReport().then(res => res.myCallableAddressCount),
+      )) || 0,
+  });
+}
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -61,7 +104,8 @@ const toastBiometricsFailed = (message?: string) => {
 const toastLoading = toastWithIcon(() => (
   <ActivityIndicator style={{ marginRight: 6 }} />
 ));
-const toastUnlocking = () => toastLoading('Unlocking', { duration: 3000 });
+const toastUnlocking = () =>
+  toastLoading(i18next.t('page.unlock.unlocking'), { duration: 3000 });
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   const { isFaceID = isIOS, size = BiometricsIconSize } = props;
@@ -73,7 +117,6 @@ export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   );
 }
 
-const unlockOnceRef = { current: false };
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
 function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { t } = useTranslation();
@@ -82,22 +125,18 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       password: Yup.string().required(t('page.unlock.password.required')),
     });
   }, [t]);
-  const { isUnlocking, unlockApp, afterLeaveFromUnlock } = useUnlockApp();
+  const { isUnlocking } = useUnlockApp();
 
   const checkUnlocked = useCallback(async () => {
     if (!apisLock.isUnlocked()) return;
 
-    const hasUnlockOnce = unlockOnceRef.current;
+    requestAnimationFrame(() => {
+      UnlockUIManager.markUnlockedOnce();
+      UnlockUIManager.resetNavOnUIUnlock();
+    });
 
-    const hasAccountsInKeyring = await apisAccount.hasVisibleAccounts();
-    resetNavigationTo(
-      navigation,
-      !hasAccountsInKeyring && !hasUnlockOnce ? 'GetStarted2024' : 'Home',
-    );
-    unlockOnceRef.current = true;
-
-    afterLeaveFromUnlock();
-  }, [navigation, afterLeaveFromUnlock]);
+    storeApisUnlock.afterLeaveFromUnlock();
+  }, []);
 
   const { tipEnableBiometrics } = useTipedUserEnableBiometrics();
 
@@ -112,10 +151,14 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       if (getFormikErrorsCount(errors)) return;
 
       const { needAlert } = await tipEnableBiometrics(values.password);
-      console.log('needAlert', needAlert);
+      console.debug('needAlert', needAlert);
       const hideToast = needAlert ? null : toastUnlocking();
       try {
-        const result = await unlockApp(values.password);
+        measureTime.start('UnlockWithPassword');
+        const result = await storeApisUnlock.unlockApp(values.password);
+        const timeResult = measureTime.end('UnlockWithPassword');
+        reportUnlockTime(timeResult.diff, 'password');
+
         if (result.error) {
           helpers?.setFieldError(
             'password',
@@ -161,21 +204,18 @@ export default function UnlockScreen() {
 
   const RcRabbyLogo = isLight ? RcRabbyLogoLight : RcRabbyLogoDark;
   const navigation = useRabbyAppNavigation();
+  const { params } = useRoute<GetRootScreenRouteProp<'Unlock'>>();
   const {
     computed: { isBiometricsEnabled, isFaceID },
-    fetchBiometrics,
-    toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
 
   useFocusEffect(
     useCallback(() => {
-      fetchBiometrics();
-    }, [fetchBiometrics]),
+      storeApisBiometrics.fetchBiometrics();
+    }, []),
   );
-
-  const { unlockApp } = useUnlockApp();
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
   const couldSwitchingAuthentication = isBiometricsEnabled;
@@ -195,7 +235,11 @@ export default function UnlockScreen() {
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
-          const result = await unlockApp(password);
+          measureTime.start('UnlockWithBiometrics');
+          const result = await storeApisUnlock.unlockApp(password);
+          const timeResult = measureTime.end('UnlockWithBiometrics');
+          reportUnlockTime(timeResult.diff, 'biometrics');
+
           if (result.error) {
             throw new Error(result.error);
           }
@@ -208,11 +252,11 @@ export default function UnlockScreen() {
       if (__DEV__ && incToReset() === 0) {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
-        toggleBiometrics(false, {});
+        storeApisBiometrics.toggleBiometrics(false, {});
       } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
-        toggleBiometrics(false, {});
+        storeApisBiometrics.toggleBiometrics(false, {});
       } else {
         toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
       }
@@ -240,10 +284,10 @@ export default function UnlockScreen() {
         }
       }
     }
-  }, [unlockApp, toggleBiometrics, t]);
+  }, [t]);
 
   const lockBiometricRef = React.useRef(false);
-  const manualUnlockWithBiometrics = useCallback(async () => {
+  const processUnlockWithBiometrics = useCallback(async () => {
     if (lockBiometricRef.current) {
       return;
     }
@@ -265,14 +309,25 @@ export default function UnlockScreen() {
 
   useLayoutEffect(() => {
     incToReset(true);
-    (async () => {
+    const sub = perfEvents.subscribe('AUTO_TRIGGER_UNLOCK', async () => {
       // wait screen rendered
       await sleep(500);
       if (!isBiometricsEnabled) return;
 
-      await manualUnlockWithBiometrics();
-    })();
-  }, [isBiometricsEnabled, manualUnlockWithBiometrics]);
+      await processUnlockWithBiometrics();
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [isBiometricsEnabled, processUnlockWithBiometrics]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (params?.disableAutoTriggerUnlock) return;
+      UnlockUIManager.triggerAutoUnlock();
+    }, [params?.disableAutoTriggerUnlock]),
+  );
 
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
@@ -313,6 +368,7 @@ export default function UnlockScreen() {
                   secureTextEntry: true,
                   inputMode: 'text',
                   returnKeyType: 'done',
+                  ...makeTestIDProps(E2E_ID.unlock.passwordInput),
                   placeholderTextColor: colors2024['neutral-foot'],
                   onChangeText(text) {
                     formik.setFieldError('password', undefined);
@@ -335,6 +391,7 @@ export default function UnlockScreen() {
                   loading={isUnlocking}
                   disabled={shouldDisabled}
                   type="primary"
+                  {...makeTestIDProps(E2E_ID.unlock.submit)}
                   buttonStyle={[styles.buttonShadow]}
                   containerStyle={[
                     styles.nextButtonContainer,
@@ -354,7 +411,7 @@ export default function UnlockScreen() {
               <View style={styles.biometricsBtns}>
                 <TouchableView
                   style={styles.biometricsBtn}
-                  onPress={manualUnlockWithBiometrics}>
+                  onPress={processUnlockWithBiometrics}>
                   <BiometricsIcon isFaceID={isFaceID} />
                 </TouchableView>
               </View>
@@ -366,6 +423,12 @@ export default function UnlockScreen() {
         <View style={styles.switchingAuthTypeButtonWrapper}>
           <TouchableText
             disabled={shouldDisabled}
+            {...makeTestIDProps(
+              E2E_ID.unlock.switchAuthType,
+              usingBiometrics
+                ? E2E_ID.unlock.switchAuthTypePassword
+                : E2E_ID.unlock.switchAuthTypeBiometrics,
+            )}
             style={styles.switchingAuthTypeButton}
             onPress={() => {
               setUsingBiometrics(prev => !prev);

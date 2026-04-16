@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -12,6 +12,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useForceLocalVersionForNonProduction } from '@/hooks/version';
 import { APP_VERSIONS } from '@/constant';
+import { Text } from '@/components/Typography';
 
 const localVersionSelectorModalVisibleAtom = atom(false);
 export function useLocalVersionSelectorModalVisible() {
@@ -82,9 +83,9 @@ export default function DevForceLocalVersionSelector({
       snapPoints={[safeSizes.sheetHeight]}
       handleStyle={styles.handleStyle}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {

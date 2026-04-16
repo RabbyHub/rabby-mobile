@@ -8,7 +8,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useCallback } from 'react';
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -21,7 +21,7 @@ type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
 export const isSingleAddressAtom = atom<boolean>(false);
 export const useSendRoutes = () => {
-  const { findAccountWithoutBalance } = useWhiteListAddress();
+  const { findAccountWithoutBalance } = useFindAddressByWhitelist();
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
 

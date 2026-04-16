@@ -4,8 +4,12 @@ import {
   keyringStorage,
   normalizeKeyringState,
 } from '../storage/mmkv';
+import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
 
-import { ContactBookService } from '@rabby-wallet/service-address';
+import {
+  ContactBookService,
+  ContactBookStore,
+} from '@rabby-wallet/service-address';
 
 import { findChainByID } from '@/utils/chain';
 import { DappService } from './dappService';
@@ -46,7 +50,10 @@ import { SyncChainService } from './syncChainService';
 import { PerpsService } from './perpsService';
 import { CurrencyService } from './currencyService';
 import { LendingService } from './lendingService';
-import { SAFE_API_KEY } from '@/constant/env';
+import { perfEvents } from '../utils/perf';
+import { KeyringIntf } from '@rabby-wallet/keyring-utils';
+import { AutoConnectService } from './autoConnect';
+import { openapi } from '../request';
 
 migrateAppStorage(appStorage);
 
@@ -72,10 +79,8 @@ function try_catch_issue_on_preference({
 }
 
 try_catch_issue_on_preference({ pos: 'before_preference' });
+GnosisKeyring.setOpenapiService(openapi);
 
-GnosisKeyring.setApiKey(SAFE_API_KEY);
-
-// TODO: add other keyring classes
 const keyringClasses = [
   MockWalletConnectKeyring,
   WatchKeyring,
@@ -86,10 +91,21 @@ const keyringClasses = [
   SimpleKeyring,
   HDKeyring,
   TrezorKeyring,
-] as any;
+] as (typeof KeyringIntf)[];
 
 export const contactService = new ContactBookService({
   storageAdapter: appStorage,
+});
+contactService.setBeforeSetKV((k, v) => {
+  switch (k) {
+    case 'aliases': {
+      const aliases = v as unknown as ContactBookStore['aliases'];
+      perfEvents.emit('CONTACTS_ALIASES_UPDATE', {
+        nextState: aliases,
+      });
+      break;
+    }
+  }
 });
 
 export const appEncryptor = new RNEncryptor();
@@ -106,12 +122,12 @@ keyringService.loadStore(keyringState || {});
 keyringService.store.subscribe(value => {
   // // leave here to test migrate legacyData to keyringData
   // if (__DEV__) {
-  //   appStorage.setItem('keyringState', value);
+  //   appStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, value);
   // }
 
   keyringStorage.clearAll();
   // keyringStorage.flushToDisk?.();
-  keyringStorage.setItem('keyringState', value);
+  keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, value);
 });
 
 export const dappService = new DappService({
@@ -130,6 +146,13 @@ export const preferenceService = new PreferenceService({
   storageAdapter: appStorage,
   keyringService,
   sessionService,
+});
+
+preferenceService.setBeforeSetKV((k, v) => {
+  perfEvents.emit('PREFERENCE_UPDATED', {
+    key: k,
+    value: v,
+  });
 });
 
 try_catch_issue_on_preference({ pos: 'after_preference' });
@@ -162,6 +185,10 @@ export const transactionBroadcastWatcherService =
 
 export const securityEngineService = new SecurityEngineService({
   storageAdapter: appStorage,
+});
+
+export const autoConnectService = new AutoConnectService({
+  dappService,
 });
 
 transactionWatcherService.roll();
@@ -239,6 +266,8 @@ export const lendingService = new LendingService({
 export const currencyService = new CurrencyService({
   storageAdapter: appStorage,
 });
+
+export { default as debugLogService } from './debugLogService';
 
 migrateServices({
   contactBook: contactService,

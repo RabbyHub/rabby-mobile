@@ -17,10 +17,11 @@ import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { formatAmount, formatUsdValue } from '@/utils/number';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import DescItem from '../Actions/components/DescItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
+import { Text } from '@/components/Typography';
 const { isSameAddress } = addressUtils;
 
 const SwapTokenOrder = ({

@@ -8,12 +8,17 @@ import {
 } from 'react-native';
 import { enableLayoutAnimations } from 'react-native-reanimated';
 
+const isTurboModuleEnabled = global.__turboModuleProxy != null;
+
 interface NativeModulesStatic {
   ReactNativeSecurity: /* NativeModule &  */ {
     blockScreen(): void;
     unblockScreen(): void;
   };
   RNScreenshotPrevent: NativeModule & {
+    scanScreenshotDirectory: () => void;
+    startScreenCaptureDetection: () => Promise<void>;
+    stopScreenCaptureDetection: () => Promise<void>;
     togglePreventScreenshot: (isPrevent: boolean) => void;
     iosIsBeingCaptured(): boolean;
     // iosToggleBlurView(isProtected: boolean): void;
@@ -25,6 +30,12 @@ interface NativeModulesStatic {
   };
   RNHelpers: NativeModule & {
     forceExitApp(): void;
+    shareFile?(options: {
+      filePath: string;
+      mimeType?: string;
+      title?: string;
+      subject?: string;
+    }): Promise<void>;
     /**
      * @description try to set a file to not be backed up by iCloud
      * @param filePath
@@ -34,6 +45,16 @@ interface NativeModulesStatic {
     //  * @description try to set a directory's files(including files in subdirectories) to not be backed up by iCloud
     //  */
     // iosExcludeDirectoryFromBackup?(directoryPath: string): Promise<boolean>;
+  };
+  RNThread: NativeModule & {
+    startThread(
+      jsFilePath: string,
+      options?: {
+        usePackedResource?: true | string;
+      },
+    ): Promise<number>;
+    stopThread(threadId: number): void;
+    postThreadMessage(threadId: number, message: string): void;
   };
 }
 

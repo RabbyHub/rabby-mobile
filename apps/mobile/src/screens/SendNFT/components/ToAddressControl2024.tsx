@@ -2,7 +2,6 @@ import React, { useLayoutEffect, useMemo, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
   StyleProp,
   ViewStyle,
   TouchableOpacity,
@@ -12,7 +11,7 @@ import {
 import { StackActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { SheetModalSelectAccountSend } from '@/components/AccountSelectModalTx/SelectAccountSheetModal';
 
 import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
@@ -38,6 +37,7 @@ import { CaretArrowIconCC } from '@/components/Icons/CaretArrowIconCC';
 import { useSendNFTInternalContext } from '../hooks/useSendNFT';
 import { RcIconTipRightCC } from '@/screens/Send/icons';
 import { makeAccountObject } from '@/utils/account';
+import { Text } from '@/components/Typography';
 
 export const ToAccountEntry = ({
   account,
@@ -410,48 +410,34 @@ const getToItemStyles = createGetStyles2024(({ colors2024 }) => ({
 
 export default function ToAddressControl2024({
   style,
-  brandName,
+  // brandName,
   addrDesc,
 }: React.PropsWithChildren<
   RNViewProps & {
-    brandName?: string;
+    // brandName?: string;
     addrDesc?: AddrDescResponse['desc'] | null;
   }
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
-  const { findAccountWithoutBalance } = useWhiteListAddress();
+  const { findAccountWithoutBalance } = useFindAddressByWhitelist();
   const {
     formValues,
-    computed: { toAddressIsRecentlySend },
+    computed: { toAddressPositiveTips, toAccount },
     callbacks: { handleFieldChange },
   } = useSendNFTInternalContext();
-
-  const foundAccountInfo = useMemo(() => {
-    return findAccountWithoutBalance(formValues.to, { brandName });
-  }, [formValues.to, brandName, findAccountWithoutBalance]);
 
   const { t } = useTranslation();
 
   const [isSelectingAccount, setIsSelectingAccount] = useState(false);
 
-  const currentAccount =
-    foundAccountInfo?.account ||
-    makeAccountObject({ address: formValues.to, brandName });
-  if (!currentAccount) {
-    return null;
-  }
-
-  const hasPositiveTips =
-    !!foundAccountInfo?.isMyImported ||
-    !!foundAccountInfo?.inWhitelist ||
-    toAddressIsRecentlySend;
+  if (!toAccount) return null;
 
   return (
     <View style={[styles.control, style]}>
       <View style={styles.titleContainer}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.To')}</Text>
-        {!!hasPositiveTips && (
+        {!!toAddressPositiveTips?.hasPositiveTips && (
           <View style={styles.positiveTipsInfo}>
             <RcIconTipRightCC
               width={18}
@@ -459,17 +445,17 @@ export default function ToAddressControl2024({
               color={colors2024['green-default']}
             />
             <Text style={styles.positiveTipsText}>
-              {foundAccountInfo?.inWhitelist ? (
+              {toAddressPositiveTips?.inWhitelist ? (
                 <Text>
                   {t(
                     'page.sendToken.sectionTo.positiveTips.whitelistedAddress',
                   )}
                 </Text>
-              ) : foundAccountInfo?.isMyImported ? (
+              ) : toAddressPositiveTips?.isMyImported ? (
                 <Text>
                   {t('page.sendToken.sectionTo.positiveTips.yourOwnAddress')}
                 </Text>
-              ) : toAddressIsRecentlySend ? (
+              ) : toAddressPositiveTips.isRecentlySend ? (
                 t('page.sendToken.sectionTo.positiveTips.sentRecently')
               ) : null}
             </Text>
@@ -479,9 +465,9 @@ export default function ToAddressControl2024({
       <ToAccountEntry
         isSelectingAccount={isSelectingAccount}
         onPress={() => setIsSelectingAccount(true)}
-        account={currentAccount}
+        account={toAccount}
         addrDesc={addrDesc}
-        inWhiteList={isAddrOnWhitelist(currentAccount.address)}
+        inWhiteList={isAddrOnWhitelist(toAccount.address)}
       />
       <SheetModalSelectAccountSend
         visible={isSelectingAccount}

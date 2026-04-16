@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Table, Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
@@ -17,6 +17,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useThemeColors } from '@/hooks/theme';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 
@@ -226,8 +227,8 @@ const Swap = ({
                   {t('page.signTx.swap.valueDiff')}
                 </Text>
               </SubRow>
-              <SubRow>
-                <Text style={commonStyle.subRowText}>
+              <SubRow style={{ flex: 2 }}>
+                <Text style={[commonStyle.subRowText, { textAlign: 'right' }]}>
                   {t('page.signTx.swap.simulationNotSupport')}
                 </Text>
               </SubRow>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -15,6 +15,7 @@ import { parseApprovalSpenderSelection } from '../utils';
 import RcIconWarning from '@/assets2024/icons/common/warning.svg';
 import { HighlightText } from '@/components2024/HighlightText';
 import { AssetAvatar } from '@/components';
+import { Text } from '@/components/Typography';
 
 export const ContractFloorLayouts = {
   floorHeader: { paddingTop: 0 },
@@ -159,7 +160,7 @@ function CardProto({
 
 export const getCardStyles = createGetStyles2024(ctx => {
   const { colors2024, isLight } = ctx;
-  const selectableStyles = getSelectableContainerStyle(ctx);
+  const selectableStyles = getSelectableContainerStyle.getStyles(ctx);
 
   return {
     container: {

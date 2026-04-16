@@ -3,24 +3,33 @@ import { AssetAvatar } from '@/components';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { splitNumberByStep } from '@/utils/number';
+import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import { Text } from '@/components/Typography';
 
-export const PerpsHistoryItem: React.FC<{
+export interface PerpsHistoryItemProps {
   fill: WsFill;
   marketData: Record<string, MarketData>;
   onPress?: (fill: WsFill) => void;
   orderTpOrSl?: 'tp' | 'sl';
-}> = ({ fill, orderTpOrSl, marketData, onPress }) => {
+}
+
+const PerpsHistoryItemComponent: React.FC<PerpsHistoryItemProps> = ({
+  fill,
+  orderTpOrSl,
+  marketData,
+  onPress,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const { coin, closedPnl: _closedPnl, dir, fee } = fill as WsFill;
+  const { coin, closedPnl: _closedPnl, dir, fee, px } = fill as WsFill;
 
   const titleString = useMemo(() => {
     const isLiquidation = Boolean(fill?.liquidation);
@@ -57,8 +66,9 @@ export const PerpsHistoryItem: React.FC<{
     return fill?.dir;
   }, [fill?.dir, fill?.liquidation, orderTpOrSl, t]);
 
-  const itemData = marketData[coin.toUpperCase()];
+  const itemData = marketData[coin];
   const logoUrl = itemData?.logoUrl;
+  const pxDecimals = itemData?.pxDecimals;
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && _closedPnl;
   const direction =
     dir === 'Close Long' || dir === 'Open Long' ? 'Long' : 'Short';
@@ -89,7 +99,9 @@ export const PerpsHistoryItem: React.FC<{
             <Text style={styles.name}>{titleString}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.coin}>{coin}-USD</Text>
+            <Text style={styles.coin}>
+              {formatPerpsCoin(coin)}-USD @${Number(px).toFixed(pxDecimals)}
+            </Text>
           </View>
         </View>
         <View style={styles.extra}>
@@ -105,6 +117,8 @@ export const PerpsHistoryItem: React.FC<{
     </TouchableOpacity>
   );
 };
+
+export const PerpsHistoryItem = memo(PerpsHistoryItemComponent);
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -146,7 +160,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
   },
   name: {
     fontFamily: 'SF Pro Rounded',
@@ -156,6 +170,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
   },
   extra: {
+    flexShrink: 0,
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
@@ -178,6 +193,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
+    whiteSpace: 'nowrap',
   },
   time: {
     fontFamily: 'SF Pro Rounded',

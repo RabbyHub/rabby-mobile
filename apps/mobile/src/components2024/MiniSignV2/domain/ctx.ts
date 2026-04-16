@@ -43,6 +43,8 @@ export type SignerCtx = {
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
     maxGasCostAmount: BigNumber;
+    gasCostRawAmount: BigNumber;
+    maxGasCostRawAmount: BigNumber;
   };
   gasFeeTooHigh?: boolean;
   disabledProcess?: boolean;

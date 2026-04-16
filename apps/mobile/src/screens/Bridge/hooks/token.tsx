@@ -14,10 +14,11 @@ import { openapi } from '@/core/request';
 import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
+import { bridgeQuoteScore } from '../components/BridgeQuoteItem';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
+import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';
@@ -30,6 +31,9 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { shouldScheduleQuotePolling } from '@/utils/quotePolling';
+import { isTokenMarketClosed } from '@/utils/token';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 export const enableInsufficientQuote = true;
 
@@ -82,7 +86,7 @@ const useToken = (type: 'from' | 'to') => {
   const userAddress = currentAccount?.address;
 
   // 使用 useRef 保持 chain 状态，避免账户切换时重置
-  const chainRef = useRef<CHAINS_ENUM | undefined>();
+  const chainRef = useRef<CHAINS_ENUM | undefined>(undefined);
   const [chain, setChain] = useState<CHAINS_ENUM | undefined>(chainRef.current);
 
   // 标记是否已经初始化过 chain，避免重复初始化
@@ -199,7 +203,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     SelectedBridgeQuote | undefined
   >();
 
-  const expiredTimer = useRef<NodeJS.Timeout>();
+  const expiredTimer = useRef<NodeJS.Timeout>(undefined);
+  const autoQuoteRefreshPausedRef = useRef(false);
 
   const inSufficient = useMemo(
     () =>
@@ -212,6 +217,14 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   const inSufficientCanGetQuote = useMemo(
     () => (enableInsufficientQuote ? true : !inSufficient),
     [inSufficient],
+  );
+  const quoteBlockedByClosedMarket = useMemo(
+    () => isTokenMarketClosed(fromToken) || isTokenMarketClosed(toToken),
+    [fromToken, toToken],
+  );
+  const canRequestQuote = useMemo(
+    () => inSufficientCanGetQuote && !quoteBlockedByClosedMarket,
+    [inSufficientCanGetQuote, quoteBlockedByClosedMarket],
   );
 
   const getRecommendToChain = async (chain: CHAINS_ENUM) => {
@@ -358,12 +371,40 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         clearTimeout(expiredTimer.current);
       }
 
-      if (!quote?.manualClick && quote) {
+      if (
+        !quote?.manualClick &&
+        quote &&
+        shouldScheduleQuotePolling({
+          enabled: true,
+          paused: autoQuoteRefreshPausedRef.current,
+        })
+      ) {
         expiredTimer.current = setTimeout(() => {
-          setRefreshId(e => e + 1);
+          if (
+            shouldScheduleQuotePolling({
+              enabled: true,
+              paused: autoQuoteRefreshPausedRef.current,
+            })
+          ) {
+            setRefreshId(e => e + 1);
+          }
         }, 1000 * 30);
       }
       setOriSelectedBridgeQuote(quote);
+    },
+    [setRefreshId],
+  );
+
+  const setAutoQuoteRefreshPaused = useCallback(
+    (paused: boolean) => {
+      autoQuoteRefreshPausedRef.current = paused;
+      if (paused) {
+        if (expiredTimer.current) {
+          clearTimeout(expiredTimer.current);
+        }
+        return;
+      }
+      setRefreshId(e => e + 1);
     },
     [setRefreshId],
   );
@@ -573,7 +614,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       const currentFetchId = fetchIdRef.current;
 
       if (
-        inSufficientCanGetQuote &&
+        canRequestQuote &&
         userAddress &&
         fromToken?.id &&
         toToken?.id &&
@@ -729,6 +770,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
               const fromFindChain = findChain({ serverId: fromToken?.chain });
               if (fromToken?.id === fromFindChain?.nativeTokenAddress) {
                 tokenApproved = true;
+              } else if (!quote.approve_contract_id) {
+                tokenApproved = true;
               } else {
                 allowance = await getERC20Allowance(
                   fromToken.chain,
@@ -793,7 +836,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         }
       }
     }, [
-      inSufficientCanGetQuote,
+      canRequestQuote,
       aggregatorsList,
       refreshId,
       userAddress,
@@ -810,7 +853,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   useEffect(() => {
     if (
-      inSufficientCanGetQuote &&
+      canRequestQuote &&
       userAddress &&
       fromToken?.id &&
       toToken?.id &&
@@ -824,7 +867,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       setPending(false);
     }
   }, [
-    inSufficientCanGetQuote,
+    canRequestQuote,
     userAddress,
     fromToken?.id,
     toToken?.id,
@@ -845,31 +888,31 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
   useEffect(() => {
     if (!quoteLoading && toToken?.id && quoteList.every(e => !e.loading)) {
-      const sortedList = quoteList?.sort((b, a) => {
-        return new BigNumber(a.to_token_amount)
-          .times(toToken.price || 1)
-          .minus(a.gas_fee.usd_value)
-          .minus(
-            new BigNumber(b.to_token_amount)
-              .times(toToken.price || 1)
-              .minus(b.gas_fee.usd_value),
-          )
-          .toNumber();
-      });
-      if (
-        sortedList[0] &&
-        sortedList[0]?.bridge_id &&
-        sortedList[0]?.aggregator?.id
-      ) {
+      if (!quoteList.length) {
+        return;
+      }
+
+      // 用新评分公式找 best（考虑 gas + 耗时成本）
+      let bestQuote = quoteList[0];
+      let bestScore = bridgeQuoteScore(quoteList[0], toToken);
+      for (let i = 1; i < quoteList.length; i++) {
+        const score = bridgeQuoteScore(quoteList[i], toToken);
+        if (score.gt(bestScore)) {
+          bestScore = score;
+          bestQuote = quoteList[i];
+        }
+      }
+
+      if (bestQuote?.bridge_id && bestQuote?.aggregator?.id) {
         setBestQuoteId({
-          bridgeId: sortedList[0]?.bridge_id,
-          aggregatorId: sortedList[0]?.aggregator?.id,
+          bridgeId: bestQuote.bridge_id,
+          aggregatorId: bestQuote.aggregator.id,
         });
 
-        let useQuote = sortedList[0];
+        let useQuote = bestQuote;
 
         setOriSelectedBridgeQuote(preItem => {
-          useQuote = preItem?.manualClick ? preItem : sortedList[0];
+          useQuote = preItem?.manualClick ? preItem : bestQuote!;
           return preItem;
         });
 
@@ -889,6 +932,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     initIdRef.current += 1;
     const currentFetchId = initIdRef.current;
     const { firstChain } = await fetchOrderedChainList({
+      address: currentAccount?.address,
       supportChains: supportedChains,
     });
     if (initIdRef.current !== currentFetchId) {
@@ -945,6 +989,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       }
     }
   }, [
+    currentAccount?.address,
     fetchOrderedChainList,
     supportedChains,
     setSlider,
@@ -969,12 +1014,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
 
   useEffect(() => {
-    if (!inSufficientCanGetQuote) {
+    if (!canRequestQuote) {
       setQuotesList([]);
       setRecommendFromToken(undefined);
       setSelectedBridgeQuote(undefined);
     }
-  }, [inSufficientCanGetQuote, setSelectedBridgeQuote]);
+  }, [canRequestQuote, setSelectedBridgeQuote]);
 
   useEffect(() => {
     if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
@@ -993,6 +1038,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   useFocusEffect(
     useCallback(() => {
       const refresh = () => {
+        if (
+          autoQuoteRefreshPausedRef.current ||
+          isGasAccountDepositFlowActive()
+        ) {
+          return;
+        }
         setTokenRefreshId(e => e + 1);
       };
       eventBus.addListener(EVENTS.RELOAD_TX, refresh);
@@ -1024,6 +1075,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
 
     inSufficient,
     inSufficientCanGetQuote,
+    quoteBlockedByClosedMarket,
     amount,
     handleAmountChange,
     showLoss,
@@ -1045,6 +1097,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     payTokenIsNativeToken,
 
     setSelectedBridgeQuote,
+    setAutoQuoteRefreshPaused,
     ...slippageObj,
 
     onChangeSlider,

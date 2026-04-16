@@ -11,8 +11,9 @@ export enum MultiHomeFeatTitle {
   Points = 'Rabby Points',
   Buy = 'Buy',
   Search = 'Search',
+  Market = 'Market',
   Watchlist = 'Watchlist',
-  CopyTrading = 'Copy Trading',
+  Meme = 'Meme',
   Perps = 'Perps',
   Lending = 'Lending',
   /** @deprecated */
@@ -32,3 +33,16 @@ export enum TxAccountPannelSectionTitle {
   SafeAddresses = 'Safe Addresses',
   WatchAddresses = 'Watch Addresses',
 }
+
+export type HomeFeatureNewTagConfig = {
+  enableNewTag: boolean;
+};
+
+export const HOME_FEATURE_NEW_TAG_CONFIG: Partial<
+  Record<MultiHomeFeatTitle, HomeFeatureNewTagConfig>
+> = {
+  // 配置是否显示NEW标签在这里
+  [MultiHomeFeatTitle.Market]: {
+    enableNewTag: true,
+  },
+};

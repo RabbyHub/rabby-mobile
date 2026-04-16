@@ -7,14 +7,14 @@ import {
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View, ViewProps } from 'react-native';
+import { View, ViewProps } from 'react-native';
 // import useBalanceChange from '../..//hooks/useBalanceChange';
 // import { Table, Col, Row } from '../Actions/components/Table';
 // import LogoWithText from '../Actions/components/LogoWithText';
 // import * as Values from '../Actions/components/Values';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 // import useCommonStyle from '../../hooks/useCommonStyle';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import RcIconArrowRight from '@/assets2024/icons/history/IconArrowRightCircle.svg';
@@ -23,13 +23,13 @@ import useBalanceChange from '@/components/Approval/hooks/useBalanceChange';
 import { Media } from '@/components/Media';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 import { RootNames } from '@/constant/layout';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Account } from '@/core/services/preference';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { Text } from '@/components/Typography';
 
 const NFTBalanceChange = ({
   data,
@@ -199,7 +199,7 @@ export const BalanceChange = ({
 
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(token),
+      token: tokenItemToITokenItem(token, ''),
       needUseCacheToken: true,
       isSingleAddress,
       account,

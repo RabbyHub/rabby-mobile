@@ -1,7 +1,7 @@
 import { RcIconBridge } from '@/assets2024/singleHome';
 import { BSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
@@ -12,18 +12,19 @@ import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ColorValue, Pressable, Text, View } from 'react-native';
+import { ColorValue, Pressable, View } from 'react-native';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import RcIconSendCC from '@/assets2024/singleHome/send.svg';
 import RcIconSwapCC from '@/assets2024/singleHome/swap.svg';
 import RcIconMoreCC from '@/assets/icons/home/more-cc.svg';
 import RcIconReceiveCC from '@/assets2024/singleHome/receive-cc.svg';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import { useSetAtom } from 'jotai';
 import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { CHAINS_ENUM } from '@debank/common';
+import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -36,7 +37,7 @@ export const TokenDetailBottomBtns = ({
   finalAccount,
   tokenSelectType,
 }: {
-  token: AbstractPortfolioToken;
+  token: ITokenItem;
   finalAccount: KeyringAccountWithAlias | null;
   tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
 }) => {
@@ -107,7 +108,7 @@ export const TokenDetailBottomBtns = ({
           screen: RootNames.Bridge,
           params: {
             chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-            tokenId: token?._tokenId,
+            tokenId: token?.id,
           },
         });
       },
@@ -121,7 +122,7 @@ export const TokenDetailBottomBtns = ({
     setIsFromBack(false);
     navigateToSendPolyScreen(true, {
       chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-      tokenId: token?._tokenId,
+      tokenId: token?.id,
     });
   };
   const handleSwap = async () => {
@@ -135,7 +136,7 @@ export const TokenDetailBottomBtns = ({
       screen: RootNames.Swap,
       params: {
         chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-        tokenId: token?._tokenId,
+        tokenId: token?.id,
         type: tokenSelectType === 'swapTo' ? 'Buy' : 'Sell',
         address: finalAccount?.address,
         isFromSwap,

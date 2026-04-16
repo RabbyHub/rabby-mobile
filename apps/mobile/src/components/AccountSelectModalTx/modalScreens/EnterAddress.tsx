@@ -3,20 +3,25 @@ import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigateDeprecated } from '@/utils/navigation';
-import { isValidHexAddress } from '@metamask/utils';
+import { isValidAddress } from '@ethereumjs/util';
 import {
   Keyboard,
   TouchableOpacity,
   View,
   TouchableWithoutFeedback,
+  StyleSheet,
 } from 'react-native';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
-import { openapi } from '@/core/request';
+import { resolveEnsAddressByName } from '@/utils/ens';
 import { debounce, throttle } from 'lodash';
-import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { useAccountSelectModalCtx } from '../hooks';
 import { SelectAccountSheetModalSizes } from '../layout';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
@@ -25,7 +30,11 @@ import { Button } from '@/components2024/Button';
 import { AddressEditorBadge } from '../AddressEditorBadge';
 import { touchedFeedback } from '@/utils/touch';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { useSortedAccounts } from '@/screens/Address/useSortAddressList';
+import { SearchedAddressItemInSheetModal } from '../AddressItem/SearchedItem';
+import { Account } from '@/core/services/preference';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -40,18 +49,6 @@ const ERROR_MESSAGE = {
     "The address you're trying to import is duplicated",
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
-
-const debouncedGetEnsAddress = debounce(
-  (
-    input: string,
-    callback: (result: any) => void,
-    errorCallback: (e: any) => void,
-  ) => {
-    openapi.getEnsAddressByName(input).then(callback).catch(errorCallback);
-  },
-  500,
-  { leading: false, trailing: true },
-);
 
 const ScreenPanelEnterAddress = ({
   onCleanupInput,
@@ -73,20 +70,110 @@ const ScreenPanelEnterAddress = ({
     addr: string;
     name: string;
   }>(null);
+  const debouncedResolveEns = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          callback: (result: { addr: string; name: string } | null) => void,
+        ) => {
+          const result = await resolveEnsAddressByName(value);
+          callback(result);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
 
-  const { findAccountWithoutBalance } = useWhiteListAddress();
+  const isValidAddr = useMemo(
+    () => isValidAddress(input as `0x${string}`),
+    [input],
+  );
+  const hasError = !!input && !isValidAddr && !ensResult?.addr;
+  const disableConfirm = !input || hasError;
+
+  const { sortedAccounts, fetchSortedAccounts } = useSortedAccounts();
+  const { isAddrOnWhitelist, findAccountWithoutBalance } =
+    useFindAddressByWhitelist();
 
   const { t } = useTranslation();
 
   const { foundAccountInfo } = useMemo(() => {
     let info: null | ReturnType<typeof findAccountWithoutBalance> = null;
-    if (isValidHexAddress(input as `0x${string}`)) {
+    if (isValidAddress(input as `0x${string}`)) {
       info = findAccountWithoutBalance(input, { useEllipsisAsFallback: false }); // clear input when enter screen
     }
     return {
       foundAccountInfo: info,
     };
   }, [findAccountWithoutBalance, input]);
+
+  const { hasAccount, searchedAccountCount, mainAccounts, watchAccounts } =
+    useMemo(() => {
+      const ret = {
+        hasAccount: false,
+        searchedAccountCount: 0,
+        mainAccounts: [] as typeof sortedAccounts,
+        watchAccounts: [] as typeof sortedAccounts,
+      };
+      const lowerFilterText = input?.toLowerCase() || '';
+
+      const filterAccount = (account: Account) => {
+        if (!lowerFilterText) return true;
+
+        const address = account.address.toLowerCase();
+        const brandName = account.brandName?.toLowerCase() || '';
+        const aliasName = account.aliasName?.toLowerCase() || '';
+
+        return (
+          address.includes(lowerFilterText) ||
+          brandName.includes(lowerFilterText) ||
+          aliasName.includes(lowerFilterText)
+        );
+      };
+
+      sortedAccounts.forEach(account => {
+        if (!filterAccount(account)) return;
+
+        if (account.type === KEYRING_TYPE.WatchAddressKeyring) {
+          ret.watchAccounts.push(account);
+        } else {
+          ret.mainAccounts.push(account);
+        }
+      });
+
+      ret.hasAccount = ret.mainAccounts.length + ret.watchAccounts.length > 0;
+      ret.searchedAccountCount =
+        ret.mainAccounts.length + ret.watchAccounts.length;
+
+      return ret;
+    }, [sortedAccounts, input]);
+
+  const showSearchError = hasError && !hasAccount;
+
+  const handleConfirmAddress = useCallback(
+    async (address: string) => {
+      if (!isValidAddress(address as any)) {
+        setError(INPUT_ERROR.INVALID_ADDRESS);
+        return;
+      }
+      try {
+        setLoading(true);
+        Keyboard.dismiss();
+
+        const { inWhitelist, account, isMyImported } =
+          findAccountWithoutBalance(address, undefined);
+
+        cbOnSelectedAccount?.(account);
+      } catch (err: any) {
+        console.error('[EnterAddress] err', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [findAccountWithoutBalance, cbOnSelectedAccount],
+  );
 
   const handleDone = useCallback(async () => {
     if (!input) {
@@ -98,26 +185,9 @@ const ScreenPanelEnterAddress = ({
     if (ensResult && input !== ensResult.addr) {
       address = ensResult.addr;
     }
-    if (!isValidHexAddress(address as any)) {
-      setError(INPUT_ERROR.INVALID_ADDRESS);
-      return;
-    }
-    try {
-      setLoading(true);
-      Keyboard.dismiss();
 
-      const { inWhitelist, account, isMyImported } = findAccountWithoutBalance(
-        address,
-        undefined,
-      );
-
-      cbOnSelectedAccount?.(account);
-    } catch (err: any) {
-      console.error('[EnterAddress] err', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [ensResult, input, findAccountWithoutBalance, cbOnSelectedAccount]);
+    await handleConfirmAddress(address);
+  }, [ensResult, input, handleConfirmAddress]);
 
   const handleInputChange = React.useCallback(
     (text: string) => {
@@ -142,36 +212,44 @@ const ScreenPanelEnterAddress = ({
   useEffect(() => {
     if (!input) {
       setError(undefined);
+      setEnsResult(null);
       return;
     }
-    if (isValidHexAddress(input as `0x${string}`)) {
+    if (isValidAddress(input as `0x${string}`)) {
       setError(undefined);
+      setEnsResult(null);
+      debouncedResolveEns.cancel();
       return;
     }
 
-    debouncedGetEnsAddress(
-      input,
-      result => {
-        if (result && result.addr) {
-          setEnsResult(result);
-          setError(undefined);
-        } else {
-          setEnsResult(null);
-          setError(INPUT_ERROR.INVALID_ADDRESS);
-        }
-      },
-      () => {
+    debouncedResolveEns(input, result => {
+      if (result && result.addr) {
+        setEnsResult(result);
+        setError(undefined);
+      } else {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      },
-    );
-  }, [input]);
+      }
+    });
+  }, [input, debouncedResolveEns]);
+
+  useEffect(() => {
+    return () => {
+      debouncedResolveEns.cancel();
+    };
+  }, [debouncedResolveEns]);
 
   useEffect(() => {
     if (newValue) {
       setInput(newValue);
     }
   }, [newValue, setInput]);
+
+  const showAccountList = !!input;
+  const showConfirmButton =
+    searchedAccountCount === 1 || !!foundAccountInfo?.account || isValidAddr;
+  const displayWatchOnlyDivider =
+    !!mainAccounts.length && !!watchAccounts.length;
 
   return (
     <TouchableWithoutFeedback
@@ -183,14 +261,16 @@ const ScreenPanelEnterAddress = ({
       }}>
       <View
         style={[styles.container, { paddingBottom: safeSizes.containerPb }]}>
-        <BottomSheetScrollView contentContainerStyle={styles.topContent}>
-          <View>
+        <BottomSheetScrollView
+          contentContainerStyle={styles.topContent}
+          keyboardShouldPersistTaps="handled">
+          <View style={styles.inputAreaContainer}>
             <NextInput.TextArea
               as="TextInput"
               style={styles.textContainer}
               inputStyle={styles.textArea}
               tipText={''}
-              hasError={!!error}
+              hasError={showSearchError}
               fieldErrorTextStyle={styles.error}
               containerStyle={Object.assign(
                 {
@@ -203,7 +283,7 @@ const ScreenPanelEnterAddress = ({
                     },
               )}
               inputProps={{
-                placeholder: t('page.sendPoly.innerEnterAddress'),
+                placeholder: t('page.sendPoly.enterOrSearchAddress'),
                 placeholderTextColor: colors2024['neutral-secondary'],
                 value: input,
                 blurOnSubmit: true,
@@ -213,18 +293,10 @@ const ScreenPanelEnterAddress = ({
                 onSubmitEditing: onSubmitEditing,
               }}
               customIcon={ctx => (
-                <View
-                  style={[
-                    ctx.wrapperStyle,
-                    styles.customIconContainer,
-                    {
-                      right: 0,
-                      paddingRight: 0,
-                    },
-                  ]}>
+                <View style={[ctx.wrapperStyle, styles.customIconContainer]}>
                   <PasteButton
                     style={styles.pasteButton}
-                    cleanClipboardAfterPaste={!__DEV__}
+                    cleanClipboardAfterPaste={false}
                     onPaste={text => {
                       handleInputChange(text);
                       Keyboard.dismiss();
@@ -249,19 +321,24 @@ const ScreenPanelEnterAddress = ({
                 </View>
               )}
             />
+            {!!foundAccountInfo?.account && (
+              <View style={styles.addressEditorPos}>
+                <AddressEditorBadge
+                  style={styles.addressEditor}
+                  account={foundAccountInfo?.account}
+                  onUpdatedAlias={() => {
+                    fetchSortedAccounts();
+                  }}
+                />
+              </View>
+            )}
           </View>
           <View style={styles.afterInput}>
-            {!error && !ensResult && foundAccountInfo?.account && (
-              <AddressEditorBadge
-                style={styles.addressEditor}
-                account={foundAccountInfo?.account}
-              />
-            )}
-            {!error && ensResult && input === ensResult.addr && (
+            {!showSearchError && ensResult && input === ensResult.addr && (
               <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
             )}
 
-            {!error && ensResult && input !== ensResult.addr && (
+            {!showSearchError && ensResult && input !== ensResult.addr && (
               <TouchableOpacity
                 style={styles.ensResultBox}
                 onPress={() => {
@@ -272,8 +349,49 @@ const ScreenPanelEnterAddress = ({
                 <Text style={styles.ensResult}>{ensResult.addr}</Text>
               </TouchableOpacity>
             )}
-            {error && (
+            {showSearchError && error && (
               <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
+            )}
+            {!showSearchError && hasAccount && showAccountList && (
+              <View style={styles.accountsList}>
+                {mainAccounts.map(account => {
+                  const key = `acc-${account.address}-${account.brandName}`;
+                  return (
+                    <SearchedAddressItemInSheetModal
+                      key={key}
+                      account={account}
+                      inWhiteList={isAddrOnWhitelist(account.address)}
+                      onPress={() => {
+                        handleConfirmAddress(account.address);
+                      }}
+                    />
+                  );
+                })}
+
+                {displayWatchOnlyDivider && (
+                  <View style={[styles.accountsDividerWrapper]}>
+                    {/* <View style={styles.accountsDivider} /> */}
+                    <View style={styles.accountsDividerPart} />
+                    <Text style={styles.accountsDividerText}>
+                      {t('page.sendPoly.dividerWatchOnlyWallets')}
+                    </Text>
+                    <View style={styles.accountsDividerPart} />
+                  </View>
+                )}
+                {watchAccounts.map(account => {
+                  const key = `acc-${account.address}-${account.brandName}`;
+                  return (
+                    <SearchedAddressItemInSheetModal
+                      key={key}
+                      account={account}
+                      inWhiteList={isAddrOnWhitelist(account.address)}
+                      onPress={() => {
+                        handleConfirmAddress(account.address);
+                      }}
+                    />
+                  );
+                })}
+              </View>
             )}
           </View>
         </BottomSheetScrollView>
@@ -285,15 +403,17 @@ const ScreenPanelEnterAddress = ({
               bottom: safeSizes.bottomContentBottom,
             },
           ]}>
-          <Button
-            type={'primary'}
-            {...{
-              title: t('global.Confirm'),
-              onPress: handleDone,
-              loading: loading,
-              disabled: !input || !!error,
-            }}
-          />
+          {showConfirmButton && (
+            <Button
+              type={'primary'}
+              {...{
+                title: t('global.Confirm'),
+                onPress: handleDone,
+                loading: loading,
+                disabled: disableConfirm,
+              }}
+            />
+          )}
         </View>
       </View>
     </TouchableWithoutFeedback>
@@ -306,6 +426,7 @@ const SIZES = {
   bottomContentH: 56,
   bottomContentBottom: IS_IOS ? 48 : 0,
   containerPb: 20,
+  itemH: 78,
 };
 const getStyles = createGetStyles2024(ctx => ({
   container: {
@@ -324,6 +445,9 @@ const getStyles = createGetStyles2024(ctx => ({
   topContent: {
     paddingHorizontal: SelectAccountSheetModalSizes.sectionPx,
   },
+  inputAreaContainer: {
+    position: 'relative',
+  },
   errorMessage: {
     color: ctx.colors2024['red-default'],
     fontSize: 13,
@@ -334,6 +458,7 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     paddingTop: 8,
     position: 'relative',
+    height: 140,
   },
   textArea: {
     marginTop: 10,
@@ -348,6 +473,10 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+
+    right: 0,
+    paddingRight: 0,
+    bottom: 8,
   },
   pasteButton: {
     borderWidth: 0,
@@ -381,6 +510,15 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
+  addressEditorPos: {
+    zIndex: 10,
+    position: 'absolute',
+    bottom: 16,
+    left: 20,
+    right: 20,
+    // ...makeDebugBorder(),
+    ...makeDevOnlyStyle({}),
+  },
   addressEditor: {
     alignSelf: 'flex-start',
   },
@@ -400,4 +538,50 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'flex-start',
     flex: 1,
   },
+
+  /* address :start */
+  accountsList: {
+    width: '100%',
+    flexDirection: 'column',
+    gap: 12,
+  },
+
+  accountsDividerWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: 32,
+    marginTop: 0,
+    marginBottom: 0,
+
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
+  accountsDividerPart: {
+    height: 1,
+    backgroundColor: ctx.colors2024['neutral-line'],
+    // ...makeDebugBorder(),
+    width: '100%',
+    flexShrink: 1,
+  },
+  // accountsDivider: {
+  //   position: 'absolute',
+  //   top: '50%',
+  //   left: 0,
+  //   right: 0,
+  //   height: 1,
+  //   backgroundColor: ctx.colors2024['neutral-line'],
+  // },
+  accountsDividerText: {
+    color: ctx.colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: 500,
+    lineHeight: 18,
+
+    flexShrink: 0,
+  },
+  /* address item: end */
 }));

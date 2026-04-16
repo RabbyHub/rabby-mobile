@@ -18,40 +18,40 @@ import {
   purchaseUpdatedListener,
 } from 'react-native-iap';
 
-export const useIAPListener = () => {
-  const handlePurchase = useMemoizedFn(async (purchase: Purchase) => {
-    devLog('purchaseUpdatedListener -> 1', purchase);
-    const receipt = purchase.transactionReceipt;
-    if (receipt) {
+const handlePurchase = async (purchase: Purchase) => {
+  devLog('purchaseUpdatedListener -> 1', purchase);
+  const receipt = purchase.transactionReceipt;
+  if (receipt) {
+    try {
       try {
-        try {
-          await openapi.confirmIapOrder(
-            Platform.select({
-              ios: {
-                transaction_id: purchase.transactionId || '',
-                product_id: purchase.productId,
-                device_type: 'ios',
-              },
-              android: {
-                transaction_id: purchase.purchaseToken || '',
-                product_id: purchase.productId,
-                device_type: 'android',
-              },
-            })!,
-          );
+        await openapi.confirmIapOrder(
+          Platform.select({
+            ios: {
+              transaction_id: purchase.transactionId || '',
+              product_id: purchase.productId,
+              device_type: 'ios',
+            },
+            android: {
+              transaction_id: purchase.purchaseToken || '',
+              product_id: purchase.productId,
+              device_type: 'android',
+            },
+          })!,
+        );
 
-          eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase });
-        } catch (e: any) {
-          eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase, error: e });
-        }
-        finishTransaction({ purchase, isConsumable: true });
+        eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase });
       } catch (e: any) {
         eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase, error: e });
-        console.error(e);
       }
+      finishTransaction({ purchase, isConsumable: true });
+    } catch (e: any) {
+      eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase, error: e });
+      console.error(e);
     }
-  });
+  }
+};
 
+export const useIAPListener = () => {
   useEffect(() => {
     let purchaseUpdateSubscription: ReturnType<
       typeof purchaseErrorListener
@@ -94,5 +94,5 @@ export const useIAPListener = () => {
       purchaseErrorSubscription?.remove();
       purchaseErrorSubscription = null;
     };
-  }, [handlePurchase]);
+  }, []);
 };

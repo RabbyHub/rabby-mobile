@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
@@ -32,6 +32,7 @@ import { TokenAmountItem } from './components/TokenAmountItem';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
 import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
 import { RcIconUnknownToken } from '@/screens/Approvals/icons';
+import { Text } from '@/components/Typography';
 
 interface ApproveAmountModalProps {
   amount: number | string;

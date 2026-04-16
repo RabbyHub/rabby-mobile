@@ -9,10 +9,10 @@ import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { NotFoundHolder } from '@/components/EmptyHolder/NotFound';
 import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Tip } from '@/components/Tip';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 import { SkeletonHistoryListOfTokenDetail } from '@/components/TokenDetailPopup/Skeleton';
@@ -53,13 +53,8 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Dimensions,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface AddAssetProps {
   data: {
@@ -126,31 +121,32 @@ export const AddAsset = ({
         reason: '',
       };
     }
-    if (!token)
+    if (!token) {
       return {
         disable: true,
         reason: t('page.addToken.noTokenFound'),
       };
-    if (token?.is_core) {
-      return {
-        disable: true,
-        reason: t('page.addToken.tokenSupported'),
-      };
     }
-    const isCustom = customTokens.some(
-      t => isSameAddress(t.address, token.id) && token.chain === t.chain,
-    );
-    if (isCustom) {
-      return {
-        disable: true,
-        reason: t('page.addToken.tokenCustomized'),
-      };
-    }
+    // if (token?.is_core) {
+    //   return {
+    //     disable: true,
+    //     reason: t('page.addToken.tokenSupported'),
+    //   };
+    // }
+    // const isCustom = customTokens.some(
+    //   t => isSameAddress(t.address, token.id) && token.chain === t.chain,
+    // );
+    // if (isCustom) {
+    //   return {
+    //     disable: true,
+    //     reason: t('page.addToken.tokenCustomized'),
+    //   };
+    // }
     return {
       disable: false,
       reason: '',
     };
-  }, [customTestnetToken, token, t, customTokens, isCustomTestnetTokenAdded]);
+  }, [customTestnetToken, token, t, isCustomTestnetTokenAdded]);
 
   const supportChains = useMemo(() => {
     const chains: CHAINS_ENUM[] = [];
@@ -178,14 +174,14 @@ export const AddAsset = ({
 
   const hasSelectedChain = useRef(false);
   const activeSelectChainPopup = useMemoizedFn(() => {
-    const id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       supportChains: supportChains,
       hideTestnetTab: true,
       onChange: (v: CHAINS_ENUM) => {
         hasSelectedChain.current = true;
         handleChainChanged?.(v);
-        removeGlobalBottomSheetModal(id);
+        removeGlobalBottomSheetModal2024(id);
       },
       account,
 

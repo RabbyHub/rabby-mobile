@@ -8,6 +8,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import { formatPerpsCoin } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -15,13 +16,8 @@ import {
 } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Text, TextInput } from '@/components/Typography';
 
 export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;
@@ -40,6 +36,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     bothFee: number;
     tpTriggerPx: string;
     slTriggerPx: string;
+    selectedMarginMode: 'cross' | 'isolated';
     estimatedLiquidationPrice: string | number;
   };
 }> = ({ visible, onClose, info, onConfirm }) => {
@@ -65,6 +62,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     estimatedLiquidationPrice,
     tpTriggerPx,
     slTriggerPx,
+    selectedMarginMode,
   } = info;
 
   const { t } = useTranslation();
@@ -110,13 +108,17 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
               <View style={styles.coinContainer}>
                 <AssetAvatar size={24} logo={coinLogo} />
-                <Text style={styles.value}>{coin} - USD</Text>
+                <Text style={styles.value}>{formatPerpsCoin(coin)} - USD</Text>
               </View>
             </View>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.margin')}
+                  {t(
+                    selectedMarginMode === 'cross'
+                      ? 'page.perpsDetail.PerpsOpenPositionCheckPopup.marginCross'
+                      : 'page.perpsDetail.PerpsOpenPositionCheckPopup.margin',
+                  )}
                 </Text>
               </View>
               <View>
@@ -147,6 +149,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.sizeTips',
                     ),
+                    buttonType: 'hyperliquid',
                   });
                 }}>
                 <View style={styles.listItemMain}>
@@ -162,7 +165,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  {formatUsdValue(Number(tradeAmount))} = {tradeSize} {coin}
+                  {formatUsdValue(Number(tradeAmount))} = {tradeSize}{' '}
+                  {formatPerpsCoin(coin)}
                 </Text>
               </View>
             </View>
@@ -199,7 +203,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {coin}-USD{' '}
+                  {formatPerpsCoin(coin)}-USD{' '}
                   {t('page.perpsDetail.PerpsOpenPositionCheckPopup.price')}
                 </Text>
               </View>
@@ -219,6 +223,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                     desc: t(
                       'page.perpsDetail.PerpsOpenPositionCheckPopup.liquidationPriceTips',
                     ),
+                    buttonType: 'hyperliquid',
                   });
                 }}>
                 <View style={styles.listItemMain}>
@@ -236,40 +241,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
-                  $
-                  {splitNumberByStep(
-                    Number(estimatedLiquidationPrice).toFixed(2),
-                  )}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.rabbyFee')}
-                </Text>
-              </View>
-              <View style={styles.listTagRow}>
-                <View style={styles.tagContainer}>
-                  <Text style={styles.tagText}>
-                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.free')}
-                  </Text>
-                </View>
-                <Text style={styles.value}>0%</Text>
-              </View>
-            </View>
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  {t(
-                    'page.perpsDetail.PerpsOpenPositionCheckPopup.providerFee',
-                  )}
-                </Text>
-              </View>
-              <View>
-                <Text style={styles.value}>
-                  {formatPercent(providerFee, 4)}
+                  ${splitNumberByStep(Number(estimatedLiquidationPrice))}
                 </Text>
               </View>
             </View>
@@ -277,10 +249,12 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
         </BottomSheetScrollView>
         <View style={styles.footer}>
           <Button
-            type="primary"
-            title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
-              direction,
-            })}
+            type="hyperliquid"
+            title={
+              direction === 'Long'
+                ? t('page.perpsDetail.action.long')
+                : t('page.perpsDetail.action.short')
+            }
             onPress={async () => {
               setLoading(true);
               await onConfirm?.();
@@ -296,6 +270,20 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
+    feeContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      marginBottom: 20,
+    },
+    fee: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-foot'],
+    },
     container: {
       height: '100%',
       // paddingBottom: 56,
@@ -308,7 +296,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     footer: {
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingTop: 12,
+      paddingTop: 16,
       paddingHorizontal: 16,
       paddingBottom: 56,
     },

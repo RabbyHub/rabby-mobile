@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, Alert } from 'react-native';
+import { View, Alert } from 'react-native';
 import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -17,15 +17,18 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { SwapItemEntity } from '@/databases/entities/swapitem';
 import {
   dropAppDataSourceAndQuitApp,
   prepareAppDataSource,
 } from '@/databases/imports';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { downloadDbFile } from '@/databases/dbfs';
 import { IS_IOS } from '@/core/native/utils';
+import { perpsService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
+import { naviPush } from '@/utils/navigation';
+import { Text } from '@/components/Typography';
 
 const devDataPlaygroundModalVisibleAtom = atom(false);
 export function useDevDataPlaygroundModalVisible() {
@@ -64,8 +67,6 @@ export default function DevDataPlaygroundModal({
     onCancel?.();
   }, [setDataPlaygroundModalVisible, onCancel]);
 
-  const { resetUpdateHistoryTime } = useHistoryTokenDict();
-
   const navigation = useRabbyAppNavigation();
 
   const Items = (() => {
@@ -78,27 +79,6 @@ export default function DevDataPlaygroundModal({
             StackActions.push(RootNames.StackTestkits, {
               screen: RootNames.DevDataSQLite,
             }),
-          );
-        },
-      },
-      {
-        label: 'Clear All SQLite and quit',
-        icon: <RcCode style={styles.labelIcon} />,
-        onPress: async () => {
-          Alert.alert(
-            'Clear',
-            'This will clear all SQLite database data, restart app is required, are you sure?',
-            [
-              { text: 'Cancel', onPress: makeNoop },
-              {
-                text: 'Clear',
-                style: 'destructive',
-                onPress: async () => {
-                  resetUpdateHistoryTime();
-                  await dropAppDataSourceAndQuitApp();
-                },
-              },
-            ],
           );
         },
       },
@@ -120,16 +100,11 @@ export default function DevDataPlaygroundModal({
       //   },
       // },
       {
-        label: 'Clear history DB data',
+        label: 'Reset Perps Store',
         icon: <RcCode style={styles.labelIcon} />,
-        onPress: async () => {
-          resetUpdateHistoryTime();
-          await prepareAppDataSource();
-          await Promise.all([
-            HistoryItemEntity.clear(),
-            SwapItemEntity.clear(),
-            BuyItemEntity.clear(),
-          ]);
+        onPress: () => {
+          perpsService.resetStore();
+          toast.success('PERPS STORE RESET SUCCESS');
         },
       },
       {
@@ -138,6 +113,15 @@ export default function DevDataPlaygroundModal({
         visible: IS_IOS,
         onPress: async () => {
           downloadDbFile();
+        },
+      },
+      {
+        label: 'High performance',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: async () => {
+          naviPush(RootNames.StackTestkits, {
+            screen: RootNames.DevPerf,
+          });
         },
       },
     ];
@@ -158,9 +142,9 @@ export default function DevDataPlaygroundModal({
       snapPoints={[safeSizes.sheetHeight]}
       handleStyle={styles.handleStyle}
       onDismiss={handleCancel}
-      enableContentPanningGesture={false}>
+      enableContentPanningGesture>
       <AutoLockView
-        as="BottomSheetView"
+        as="View"
         style={[
           styles.container,
           {

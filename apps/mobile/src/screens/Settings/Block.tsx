@@ -1,13 +1,15 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { SvgProps } from 'react-native-svg';
 import { isValidElementType } from 'react-is';
 import { default as RcIconRight } from '@/assets/icons/settings/icon-arrow-right.svg';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { type E2ETestID, makeTestIDProps } from '@/utils/makeTestIDProps';
+import { Text } from '@/components/Typography';
 
 export function Block({
   label,
@@ -62,6 +64,8 @@ function BlockItem({
   onDisabledPress,
   visible = true,
   disabled = false,
+  testID,
+  accessibilityLabel,
 }: React.PropsWithChildren<{
   label?: React.ReactNode;
   icon?: React.ReactNode | React.FC<SvgProps>;
@@ -71,6 +75,8 @@ function BlockItem({
   onDisabledPress?: React.ComponentProps<typeof TouchableView>['onPress'];
   visible?: boolean;
   disabled?: boolean;
+  testID?: E2ETestID | null;
+  accessibilityLabel?: E2ETestID | null;
 }>) {
   const { colors2024: colors, styles } = useTheme2024({
     getStyle: getBlockItemStyles,
@@ -135,6 +141,7 @@ function BlockItem({
 
   return (
     <TouchableView
+      {...makeTestIDProps(testID ?? null, accessibilityLabel ?? null)}
       // disabled={disabled}
       style={[styles.container, { opacity: disabled ? 0.6 : 1 }]}
       disabled={disabled ? !onDisabledPress : !onPress}
@@ -197,6 +204,12 @@ export type SettingConfBlock = {
   label: string;
   items: Pick<
     React.ComponentProps<typeof BlockItem>,
-    'label' | 'icon' | 'onPress' | 'rightTextNode' | 'rightNode'
+    | 'label'
+    | 'icon'
+    | 'onPress'
+    | 'rightTextNode'
+    | 'rightNode'
+    | 'testID'
+    | 'accessibilityLabel'
   >[];
 };

@@ -19,15 +19,11 @@
     },
     {
       "path": "assets/custom/InpageBridgeWeb3.js",
-      "sha1": "716513ceae63295355531066e075dc8a151e58cc"
+      "sha1": "bc15c1e62c5a86b8220d305f9fc79656d0774e13"
     },
     {
-      "path": "assets/custom/bignumber.js@9.3.1-bignumber.min.js",
-      "sha1": "09467302eb67e5242fce85907c41404d8736bbe3"
-    },
-    {
-      "path": "assets/custom/lightweight-charts.standalone.production.js",
-      "sha1": "32a6a882c2c565b348c39d15921863350e11b4ec"
+      "path": "assets/custom/e1789a3f58159a0b7c06ac86c1596058.min.js",
+      "sha1": "cfe4dd05502f7c273d924848e23917e8b58a4faa"
     },
     {
       "path": "assets/custom/vconsole.min.js",

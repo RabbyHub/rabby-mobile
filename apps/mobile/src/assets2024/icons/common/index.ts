@@ -4,6 +4,7 @@ export { default as RcIconWarningCircleCC } from './warning-circle-cc.svg';
 import RcCheckboxEmptyCC from './checkbox-empty-cc.svg';
 import RcCheckboxFilledBrand from './checkbox-filled-brand.svg';
 import RcScannerCC from './scanner-cc.svg';
+import RcIconGlobeCC from './globe-cc.svg';
 
 import { makeThemeIcon2024FromCC } from '@/hooks/makeThemeIcon';
 
@@ -28,3 +29,4 @@ export const ICONS_COMMON_2024 = {
 };
 
 export { RcIconWarningCC };
+export { RcIconGlobeCC };

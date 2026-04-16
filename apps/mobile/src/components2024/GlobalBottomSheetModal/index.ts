@@ -35,7 +35,7 @@ export const createGlobalBottomSheetModal2024 = debounce(
     leading: true,
     trailing: false,
   },
-);
+) as typeof apisAppWin2024.createGlobalBottomSheetModal;
 export const removeGlobalBottomSheetModal2024 =
   apisAppWin2024.removeGlobalBottomSheetModal;
 export const globalBottomSheetModalAddListener2024 =

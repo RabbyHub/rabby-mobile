@@ -23,7 +23,7 @@ export const getCexWithLocalCache = async (
   if (!forceCache && (force || isExpired)) {
     const addressDesc = await openapi.addrDesc(address);
     const cexInfo = addressDesc?.desc?.cex;
-    runOnJS(syncCexInfo)(address, cexInfo);
+    syncCexInfo(address, cexInfo);
     res = cexInfo;
   } else {
     res = await CexEntity.queryCexInfo(address);
@@ -60,7 +60,7 @@ export const getAddrDescWithCexLocalCacheSync = async (
       } as Cex;
     }
     addressDesc.desc.cex = cexInfo;
-    runOnJS(syncCexInfo)(address, cexInfo);
+    syncCexInfo(address, cexInfo);
     return addressDesc?.desc;
   } catch (error) {
     // may 429 error

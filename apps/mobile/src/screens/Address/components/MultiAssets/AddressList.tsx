@@ -1,6 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
-import { Text, View, TouchableOpacity } from 'react-native';
-import { useCallback, useMemo, useRef } from 'react';
+import { View, TouchableOpacity, Pressable } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,142 +10,138 @@ import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
-import { CurrentAddressProps } from '../AddressListScreenContainer';
-import { StackActions, useNavigation } from '@react-navigation/native';
-import { AppRootName, RootNames } from '@/constant/layout';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useSetPasswordFirst } from '@/hooks/useLock';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { useBalanceUpdate } from './hooks/balance';
-import { Tabs } from 'react-native-collapsible-tab-view';
-import { RefreshControl } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useMulti24hBalance, getChangeData } from '@/hooks/use24hBalance';
+import { NotMatterAddressDialog } from '../../NotMatterAddressDialog';
+import AutoLockView from '@/components/AutoLockView';
+import { ManageSetting } from '../ManageSetting';
+import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
+import { RootNames } from '@/constant/layout';
+import { naviPush } from '@/utils/navigation';
+import { useScene24hBalanceMulti24hBalance } from '@/hooks/useScene24hBalance';
+import { computeBalanceChange } from '@/core/apis/balance';
+import balanceStore from '@/store/balance';
+import { Text } from '@/components/Typography';
 
 const SPACING_HEIGHT = 8;
-export const AddressList = () => {
+interface AddressListProps {
+  showMarkIfNewlyAdded?: boolean;
+  onAddAddressPress?: () => void;
+  onDone?: () => void;
+  onMoreAddressListPress?: () => void;
+  isManageMode?: boolean;
+}
+const AddressList = ({
+  showMarkIfNewlyAdded = true,
+  onAddAddressPress,
+  onDone,
+  onMoreAddressListPress,
+  isManageMode,
+}: AddressListProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
-  const modalRef =
-    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
-  const {
-    top10Addresses,
-    notMatterAccounts,
-    list: _rawList,
-    fetchAccounts,
-  } = useAccountInfo();
+  const { myTop10Accounts, myTop10Records, notMatteredAccounts } =
+    useAccountInfo();
 
-  const { triggerUpdate, balanceAccounts, getTotalBalance } =
-    useAccountsBalance({
-      cacheTime: 10 * 60 * 1000,
-      accountsNoUnique: true, // balanceAccounts has filter same address accounts
-    });
+  const balanceMap = balanceStore(s => s.balanceMap);
 
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
-
-  const { multi24hBalance, refresh: refresh24hBalance } = useMulti24hBalance(
-    top10Addresses,
-    true,
-    top10Balance.total,
-    top10Balance.totalEvm,
-  );
-
-  useBalanceUpdate(triggerUpdate);
-
-  const list = useMemo(() => {
-    return _rawList.slice(0, 10).map(item => {
-      const account = balanceAccounts.find(acc =>
-        isSameAddress(acc.address, item.address),
-      );
-      return {
-        ...item,
-        balance: account?.balance || item.balance || 0,
-        evmBalance: account?.evmBalance || item.evmBalance || 0,
-      };
-    });
-  }, [balanceAccounts, _rawList]);
+  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
 
   const addressListData = useMemo(() => {
-    return [
-      ...list.map(item => {
-        const changeData = multi24hBalance[item.address.toLowerCase()]?.data;
-        const chartData = getChangeData(
-          changeData,
-          item.evmBalance,
-          new Date().getTime(),
+    return myTop10Accounts
+      .map(item => {
+        const account = balanceMap[item.address.toLowerCase()];
+        const canShowChange = !!account;
+
+        const balance = account?.totalBalance || item.balance || 0;
+        const evmBalance = account?.evmBalance || item.evmBalance || 0;
+
+        const changeData = multi24hBalance[item.address.toLowerCase()];
+        const startValue = changeData?.total_usd_value || 0;
+        const { changePercent, assetsChange } = computeBalanceChange(
+          evmBalance,
+          startValue,
         );
         return {
           ...item,
-          balance: item.balance,
-          changPercent: changeData ? chartData?.changePercent : undefined,
-          isLoss: changeData ? chartData?.isLoss : undefined,
+          balance,
+          evmBalance,
+          changPercent: changeData && canShowChange ? changePercent : undefined,
+          isLoss: changeData && canShowChange ? assetsChange < 0 : undefined,
         };
-      }),
-    ];
-  }, [list, multi24hBalance]);
+      })
+      .sort((a, b) => b.balance - a.balance);
+  }, [balanceMap, myTop10Accounts, multi24hBalance]);
 
   const renderItem = useCallback(
     ({ item }) => {
+      if (isManageMode) {
+        const gotoAddressDetail = () => {
+          onDone?.();
+          naviPush(RootNames.StackAddress, {
+            screen: RootNames.AddressDetail,
+            params: {
+              address: item.address,
+              type: item.type,
+              brandName: item.brandName,
+            },
+          });
+        };
+        return (
+          <View style={[styles.itemGap, styles.manageModeItem]}>
+            <Pressable onPress={gotoAddressDetail} style={styles.manageBtn}>
+              <RcIconSettingCC
+                width={20}
+                height={20}
+                color={colors2024['neutral-secondary']}
+              />
+            </Pressable>
+            <View style={{ width: '100%' }}>
+              <AddressEntry
+                showMarkIfNewlyAdded={showMarkIfNewlyAdded}
+                data={item}
+                onSelect={onDone}
+              />
+            </View>
+          </View>
+        );
+      }
       return (
         <View style={styles.itemGap}>
-          <AddressEntry data={item} />
+          <AddressEntry
+            showMarkIfNewlyAdded={showMarkIfNewlyAdded}
+            data={item}
+            onSelect={onDone}
+          />
         </View>
       );
     },
-    [styles.itemGap],
+    [
+      isManageMode,
+      styles.itemGap,
+      styles.manageModeItem,
+      styles.manageBtn,
+      onDone,
+      colors2024,
+      showMarkIfNewlyAdded,
+    ],
   );
 
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-
-  const gotoAddAddress = useCallback(() => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-      shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackAddress, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
-  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
-
   const handleMoreWalletsPress = useCallback(() => {
-    if (modalRef.current) {
-      removeGlobalBottomSheetModal2024(modalRef.current);
-    }
-    modalRef.current = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(modalRef.current);
-        modalRef.current = undefined;
-      },
-    });
-  }, []);
+    onMoreAddressListPress?.();
+  }, [onMoreAddressListPress]);
 
   const notMatterAvatarList = useMemo(() => {
-    return notMatterAccounts.slice(0, 3);
-  }, [notMatterAccounts]);
+    return notMatteredAccounts
+      .filter(x => !myTop10Records.has(x.address.toLowerCase()))
+      .slice(0, 3);
+  }, [notMatteredAccounts, myTop10Records]);
 
   const renderFooter = useCallback(
     () => (
       <View>
-        {notMatterAccounts.length > 0 && (
+        {notMatteredAccounts.length > 0 && (
           <View style={styles.moreWalletsContainer}>
             <View style={styles.moreWalletsHintContainer}>
               <View style={styles.horizontalLine} />
@@ -218,7 +216,7 @@ export const AddressList = () => {
             </TouchableOpacity>
           </View>
         )}
-        <Card style={styles.footerCard} onPress={gotoAddAddress}>
+        <Card style={styles.footerCard} onPress={onAddAddressPress}>
           <View style={styles.footerMain}>
             <WalletSVG
               width={20}
@@ -234,50 +232,102 @@ export const AddressList = () => {
       </View>
     ),
     [
-      notMatterAccounts,
+      notMatteredAccounts,
       notMatterAvatarList,
       colors2024,
-      gotoAddAddress,
+      onAddAddressPress,
       styles,
       t,
       handleMoreWalletsPress,
     ],
   );
 
-  const onRefresh = useCallback(async () => {
-    try {
-      await Promise.all([
-        triggerUpdate(true),
-        refresh24hBalance(true),
-        fetchAccounts(),
-      ]);
-    } catch (error) {
-      console.error('Refresh failed:', error);
-    }
-  }, [fetchAccounts, refresh24hBalance, triggerUpdate]);
-
+  // return null;
   return (
-    <Tabs.FlatList
+    <BottomSheetFlatList
       keyExtractor={item => `${item.address}-${item.brandName}`}
       data={addressListData}
       renderItem={renderItem}
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
-      ListFooterComponent={renderFooter}
+      ListFooterComponent={isManageMode ? null : renderFooter}
+      style={styles.listContainer}
       ListHeaderComponent={<View style={{ height: SPACING_HEIGHT }} />}
-      refreshControl={
-        <RefreshControl
-          style={styles.bgContainer}
-          onRefresh={onRefresh}
-          refreshing={false}
-        />
-      }
     />
   );
 };
 
+export const AddressListModal = ({
+  onAddAddressPress,
+  onDone,
+}: AddressListProps) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const [moreAddressList, setMoreAddressList] = useState(false);
+  const [isManageMode, setIsManageMode] = useState(false);
+
+  const switchManageMode = () => {
+    setIsManageMode(e => !e);
+  };
+
+  if (moreAddressList) {
+    return (
+      <NotMatterAddressDialog
+        onDone={onDone}
+        onBack={() => setMoreAddressList(false)}
+      />
+    );
+  }
+  return (
+    <AutoLockView as="View" style={styles.container}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          paddingRight: 20,
+        }}>
+        <ManageSetting
+          isManageMode={isManageMode}
+          switchManageMode={switchManageMode}
+        />
+      </View>
+      <Text style={styles.title}>{t('component.multiAddressModal.title')}</Text>
+
+      <AddressList
+        onAddAddressPress={onAddAddressPress}
+        onDone={onDone}
+        onMoreAddressListPress={() => setMoreAddressList(true)}
+        isManageMode={isManageMode}
+      />
+    </AutoLockView>
+  );
+};
+
 const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    flex: 1,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
+  },
+  done: {
+    color: ctx.colors2024['neutral-secondary'],
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 24,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-title-1'],
+  },
   footerGap: {
     height: 70,
   },
@@ -304,6 +354,22 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   itemGap: {
     marginTop: SPACING_HEIGHT,
+  },
+  manageModeItem: {
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: -16,
+  },
+  manageBtn: {
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContainer: {
+    flex: 1,
+    marginTop: 8,
   },
   list: {
     backgroundColor: ctx.isLight

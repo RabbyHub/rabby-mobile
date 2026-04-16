@@ -1,6 +1,7 @@
 import {
   DEV_CONSOLE_URL as DEV_CONSOLE_URL_,
-  RABBY_MOBILE_SAFE_API_KEY as RABBY_MOBILE_SAFE_API_KEY_,
+  RABBY_MOBILE_E2E_SILENT_LOGS as RABBY_MOBILE_E2E_SILENT_LOGS_,
+  RABBY_MOBILE_FE_SERVICE_URL as RABBY_MOBILE_FE_SERVICE_URL_,
 } from '@env';
 
 export const APP_RUNTIME_ENV = __DEV__
@@ -13,6 +14,9 @@ export type AppBuildChannel = 'selfhost' | 'selfhost-reg' | 'appstore';
 export const BUILD_CHANNEL =
   (process.env.buildchannel as AppBuildChannel) || 'selfhost-reg';
 export const DEV_CONSOLE_URL = DEV_CONSOLE_URL_;
+export const IS_E2E_SILENT_LOGS =
+  RABBY_MOBILE_E2E_SILENT_LOGS_ === 'true' ||
+  process.env.RABBY_MOBILE_E2E_SILENT_LOGS === 'true';
 
 const INPUT_BUILD_GIT_INFO =
   typeof process.env.BUILD_GIT_INFO === 'object'
@@ -22,10 +26,12 @@ export const BUILD_GIT_INFO: {
   BUILD_GIT_HASH: string;
   BUILD_GIT_HASH_TIME?: string;
   BUILD_GIT_COMMITOR?: string;
+  BUILD_TIME?: string;
 } = {
   BUILD_GIT_HASH: 'unknown',
   BUILD_GIT_HASH_TIME: undefined,
   BUILD_GIT_COMMITOR: undefined,
+  BUILD_TIME: undefined,
   ...INPUT_BUILD_GIT_INFO,
 };
 
@@ -36,11 +42,12 @@ export function getSentryEnv() {
 export const SENTRY_DEBUG = APP_RUNTIME_ENV !== 'production';
 
 export const IS_HERMES_ENABLED = !!(global as any).HermesInternal;
+export const IS_CONSOLE_STRIPPED =
+  process.env.RABBY_MOBILE_STRIP_CONSOLE === 'true';
 
 export const appIsProd = process.env.NODE_ENV === 'production';
 export const appIsDev = __DEV__;
+export const IS_ROZENITE_ENABLED = process.env.WITH_ROZENITE === 'true';
 
-export const SAFE_API_KEY =
-  /* from .env* */ RABBY_MOBILE_SAFE_API_KEY_ ||
-  /* for developer */ process.env.MOBILE_SAFE_API_KEY ||
-  '';
+export const RABBY_MOBILE_FE_SERVICE_URL =
+  RABBY_MOBILE_FE_SERVICE_URL_ || process.env.RABBY_MOBILE_FE_SERVICE_URL || '';

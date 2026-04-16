@@ -10,16 +10,10 @@ import {
   formatUsdValue,
 } from '@/utils/number';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -27,7 +21,6 @@ import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { ellipsisAddress } from '@/utils/address';
 import { naviPush } from '@/utils/navigation';
@@ -59,6 +52,7 @@ import {
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 interface Props {
   data: TransactionGroup;
@@ -141,7 +135,7 @@ export const Send: React.FC<Props> = ({
   const handleGotoTokenDetail = useMemoizedFn(() => {
     if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
     naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(actionData.token),
+      token: tokenItemToITokenItem(actionData.token, ''),
       needUseCacheToken: true,
       isSingleAddress,
       account,
@@ -571,6 +565,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
+    maxWidth: '45%',
   },
   itemAddressText: {
     color: colors2024['neutral-foot'],

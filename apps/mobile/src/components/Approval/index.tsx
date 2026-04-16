@@ -6,7 +6,7 @@ import {
 } from '@/utils/events';
 import { IExtractFromPromise } from '@/utils/type';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
 import { ApprovalComponent } from './components';
 import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
@@ -16,6 +16,7 @@ import {
   shouldAllowApprovePopupByTabId,
 } from '@/core/bridges/state';
 // import TouchableText from '../Touchable/TouchableText';
+import { Text } from '@/components/Typography';
 
 function ShouldntRenderApproveDueToDappDisappeared() {
   return (
@@ -84,11 +85,16 @@ export const Approval = () => {
   const { approvalComponent, params, origin, account } = data;
 
   const fromTabId =
-    params.$mobileCtx?.fromTabId ||
-    data.$mobileCtx?.fromTabId ||
+    params?.$mobileCtx?.fromTabId ||
+    data?.$mobileCtx?.fromTabId ||
     params?.session?.$mobileCtx?.fromTabId;
 
-  const fromOrigin = origin || params.origin;
+  const isFromMobileInnerDapp =
+    params?.$mobileCtx?.isFromMobileInnerDapp ||
+    data?.$mobileCtx?.isFromMobileInnerDapp ||
+    params?.session?.$mobileCtx?.isFromMobileInnerDapp;
+
+  const fromOrigin = origin || params?.origin;
   const shouldDisallow =
     !isInternalSession(fromOrigin) &&
     !shouldAllowApprovePopupByTabId({
@@ -102,7 +108,7 @@ export const Approval = () => {
       { allowSecondaryDomainMatch: false },
     );
 
-  if (shouldDisallow && !shouldAllowForLegacy) {
+  if (shouldDisallow && !shouldAllowForLegacy && !isFromMobileInnerDapp) {
     return <ShouldntRenderApproveDueToDappDisappeared />;
   }
 

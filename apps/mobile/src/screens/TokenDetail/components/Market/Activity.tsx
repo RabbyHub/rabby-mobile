@@ -9,13 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  FlatList,
-  Pressable,
-  Text,
-  View,
-  ActivityIndicator,
-} from 'react-native';
+import { FlatList, Pressable, View, ActivityIndicator } from 'react-native';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
@@ -34,6 +28,7 @@ import { throttle, uniqBy } from 'lodash';
 import { Service } from 'ahooks/lib/useInfiniteScroll/types';
 import { scrollEndCallBack } from './hooks';
 import { every10sEvent } from '../../event';
+import { Text } from '@/components/Typography';
 
 interface ISummaryData {
   data?: MarketSummary;
@@ -689,7 +684,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
-    backgroundColor: colors2024['green-light-4'],
+    backgroundColor: colors2024['green-light-1'],
     borderRadius: 6,
     width: 32,
     lineHeight: 26,

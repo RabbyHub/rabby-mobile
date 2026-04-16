@@ -1,26 +1,22 @@
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
-import { chunk } from 'lodash';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { runOnJS } from 'react-native-reanimated';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 import {
-  syncRemotePortocols,
-  syncRemotePortocol,
+  syncRemoteProtocols,
+  syncRemoteProtocol,
 } from '@/databases/sync/assets';
-import { KeyringAccountWithAlias } from '@/hooks/account';
-import { useSafeState } from '@/hooks/useSafeState';
 import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
 import {
   batchLoadProjects,
-  loadAppChainList,
   loadPortfolioSnapshot,
-  snapshot2Display,
 } from '@/screens/Home/utils/portfolio';
-import { batchQueryTokensWithLocalCache } from '@/screens/Home/utils/token';
 
 import { TokenItemEntity } from '../entities/tokenitem';
 import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
+import { IProtocolItem } from '@/store/protocols';
+import { complexProtocol2ProtocolItem } from '@/utils/protocol';
+import { useAppChainStore } from '@/store/appchain';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -52,16 +48,23 @@ export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   return { assetsInfo, fetchAssetsInfo };
 }
 
-export const loadAppChainComplexProtocols = async (userAddr: string) => {
+export const loadAppChainComplexProtocols = async (
+  userAddr: string,
+  force = false,
+) => {
   try {
-    const appChainListRes = await loadAppChainList(userAddr);
-    const protocols: ComplexProtocol[] = [];
-    if (appChainListRes?.apps?.length) {
-      appChainListRes.apps.forEach(app => {
-        protocols.push(formatAppChain(app));
-      });
-    }
-    const errorAppIds = appChainListRes?.error_apps?.map(app => app.id) || [];
+    // 从 appchain store 读取数据
+    const lowerAddr = userAddr.toLowerCase();
+    await useAppChainStore.getState().getAppChains(lowerAddr, force);
+    const appChainMap = useAppChainStore.getState().appChainMap;
+    const appChains = appChainMap[lowerAddr] || [];
+
+    const protocols: ComplexProtocol[] = appChains.map(app =>
+      formatAppChain(app),
+    );
+
+    // store 中只存储成功的数据，没有 error_apps
+    const errorAppIds: string[] = [];
     return { protocols, errorAppIds };
   } catch (error) {
     //  just ignore the data
@@ -70,78 +73,36 @@ export const loadAppChainComplexProtocols = async (userAddr: string) => {
   }
 };
 
-export const syncTokens = async (
-  address: string,
-  force?: boolean,
-  onlySync?: boolean,
-) => {
-  if (!address) {
-    return [];
-  }
-  console.log('syncTokens', address);
-  const tokenRes = await batchQueryTokensWithLocalCache(
-    {
-      user_id: address,
-    },
-    force,
-    onlySync,
-  );
-  return (
-    tokenRes?.map(i => ({
-      ...i,
-      owner_addr: address,
-    })) || []
-  );
-};
-
 export const syncProtocols = async (
   address: string,
   force?: boolean,
-  onlySync?: boolean,
-) => {
+): Promise<IProtocolItem[]> => {
   if (!address) {
     return [];
   }
   const isExpired = await ProtocolItemEntity.isExpired(address);
 
   if (!isExpired && !force) {
-    return onlySync ? [] : ProtocolItemEntity.batchQueryPortocols(address);
+    const protocols = await ProtocolItemEntity.batchQueryProtocols(address);
+    return protocols;
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
-  const { list } = snapshot2Display(snapshotRes || []);
-  const snapshotData = Object.values(list)?.sort(
-    (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-  );
-
-  const chunkIds = chunk(
-    snapshotData.map(i => i.id),
-    5,
-  );
-  const protocols: ComplexProtocol[] = [];
-  await Promise.all(
-    chunkIds.map(async ids => {
-      const projects = await batchLoadProjects(address, ids, false, true);
-      if (!projects?.length) {
-        return;
-      }
-      protocols.push(...projects.filter(i => !!i));
-    }),
-  );
   const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
     address,
+    force,
   );
-  protocols.push(...appChainProtocols);
-  runOnJS(syncRemotePortocols)(address, [...protocols]);
-  return protocols;
+  const protocols = [...snapshotRes, ...appChainProtocols];
+  syncRemoteProtocols(address, snapshotRes);
+  return protocols.map(p => complexProtocol2ProtocolItem(p, address));
 };
 
 export const syncSpecificProtocol = async (
   address: string,
   protocolId: string,
   chain: string,
-) => {
+): Promise<IProtocolItem | undefined> => {
   if (!address || !protocolId || !chain) {
-    return [];
+    return undefined;
   }
 
   const isAppChainProtocol = isAppChain(chain);
@@ -163,12 +124,13 @@ export const syncSpecificProtocol = async (
     !projects[0] ||
     !projects[0].portfolio_item_list?.length
   ) {
-    runOnJS(syncRemotePortocol)(address, null, { deleteId: protocolId });
-    return [];
+    syncRemoteProtocol(address, null, { deleteId: protocolId });
+    return undefined;
   }
-
-  runOnJS(syncRemotePortocol)(address, projects[0]);
-  return projects;
+  if (!isAppChainProtocol) {
+    syncRemoteProtocol(address, projects[0]);
+  }
+  return complexProtocol2ProtocolItem(projects[0], address);
 };
 
 export const syncNFTs = async (
@@ -191,53 +153,4 @@ export const syncNFTs = async (
     console.error(e);
     return [];
   }
-};
-
-export const useSyncAssetsDB = (sortedAccounts: KeyringAccountWithAlias[]) => {
-  const [isSyncing, setIsSyncing] = useSafeState(false);
-  const [isFirstFetch, setIsFirstFetch] = useState(true);
-  const abortRef = useRef(false);
-
-  const interrupt = () => {
-    abortRef.current = true;
-  };
-
-  const syncTop10Assets = async (force?: boolean) => {
-    const top10Account = sortedAccounts.filter(i => !!i.balance).slice(0, 10);
-    setIsSyncing(true);
-    const addresses = [
-      ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
-    ];
-    try {
-      for (const address of addresses) {
-        if (abortRef.current) {
-          console.log('Fetching interrupted.');
-          setIsSyncing(false);
-          setIsFirstFetch(false);
-          break;
-        }
-
-        try {
-          await Promise.all([
-            syncTokens(address, force, true),
-            syncProtocols(address, force, true),
-            syncNFTs(address, force, true),
-          ]);
-        } catch (error) {
-          console.error(`Error fetching data for ${address.slice(-4)}:`, error);
-        }
-        await new Promise(resolve => setTimeout(resolve, 0));
-      }
-    } finally {
-      setIsSyncing(false);
-      setIsFirstFetch(false);
-    }
-  };
-
-  return {
-    isSyncing,
-    syncTop10Assets,
-    interrupt,
-    refreshing: !!isSyncing && !isFirstFetch,
-  };
 };

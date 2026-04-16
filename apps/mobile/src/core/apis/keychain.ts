@@ -1,23 +1,19 @@
 import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 import { Platform } from 'react-native';
 import RNKeychain, {
-  BaseOptions,
-  SetOptions,
-  GetOptions,
-  UserCredentials,
+  STORAGE_TYPE,
+  type BaseOptions,
+  type GetOptions,
+  type SetOptions,
+  type UserCredentials,
 } from 'react-native-keychain';
-import { MMKV } from 'react-native-mmkv';
 
 import { appEncryptor } from '../services';
 import i18n from '@/utils/i18n';
 import * as apisLock from './lock';
-import { MMKV_FILE_NAMES } from '../utils/appFS';
+import { keychainMMKV } from '../storage/mmkvInstances';
+import { KEYCHAIN_MMKV_KEYS } from '../storage/mmkvConstants';
 
-const storage = new MMKV({
-  id: MMKV_FILE_NAMES.KEYCHAIN,
-});
-
-const KEYCHAIN_AUTH_TYPES_KEY = 'KEYCHAIN_AUTH_TYPES';
 export enum KEYCHAIN_AUTH_TYPES {
   APPLICATION_PASSWORD = 0,
   BIOMETRICS = 1,
@@ -26,14 +22,14 @@ export enum KEYCHAIN_AUTH_TYPES {
 }
 function getAuthenticationType() {
   return (
-    storage.getNumber(KEYCHAIN_AUTH_TYPES_KEY) ||
+    keychainMMKV.getNumber(KEYCHAIN_MMKV_KEYS.AUTHENTICATION_TYPE) ||
     KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD
   );
 }
 const authTypeRef = { current: getAuthenticationType() };
 function setAuthenticationType(type?: KEYCHAIN_AUTH_TYPES) {
   authTypeRef.current = type || KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD;
-  storage.set(KEYCHAIN_AUTH_TYPES_KEY, authTypeRef.current);
+  keychainMMKV.set(KEYCHAIN_MMKV_KEYS.AUTHENTICATION_TYPE, authTypeRef.current);
 }
 export function isAuthenticatedByBiometrics() {
   return authTypeRef.current === KEYCHAIN_AUTH_TYPES.BIOMETRICS;
@@ -114,25 +110,30 @@ async function waitInstance() {
 
 /* ===================== Biometrics:start ===================== */
 const CANCELSTR = i18n.t('native.authentication.auth_prompt_cancel');
-const DEFAULT_OPTIONS: BaseOptions = {
+const DEFAULT_BASE_OPTIONS: BaseOptions = {
   service: 'com.debank',
 };
 const DEFAULT_SET_OPTIONS: SetOptions = {
-  ...DEFAULT_OPTIONS,
-  // authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
-  // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
-  // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
+  ...DEFAULT_BASE_OPTIONS,
+  ...(isAndroid && {
+    storage: STORAGE_TYPE.RSA,
+  }),
 };
-const DEFAULT_GET_OPTIONS: GetOptions = {
-  ...DEFAULT_OPTIONS,
+type ExtendedGetOptions = GetOptions & {
+  authenticationType?: typeof RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS;
+};
+const DEFAULT_GET_OPTIONS: ExtendedGetOptions = {
+  ...DEFAULT_BASE_OPTIONS,
   authenticationPrompt: {
     title: i18n.t('native.authentication.auth_prompt_title'),
     // subtitle: '',
     description: i18n.t('native.authentication.auth_prompt_desc'),
     cancel: i18n.t('native.authentication.auth_prompt_cancel'),
   },
-  // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
-  // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
+  authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
+  ...(isAndroid && {
+    rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
+  }),
 };
 
 const MsgCanceledByUsers = ['code: 10', 'code: 13', `msg: ${CANCELSTR}`];
@@ -156,7 +157,7 @@ export function parseKeychainError(error: any | Error) {
 const GENERIC_USER = 'rabbymobile-user';
 export async function resetGenericPassword() {
   const result = await RNKeychain.resetGenericPassword({
-    service: DEFAULT_SET_OPTIONS.service,
+    service: DEFAULT_BASE_OPTIONS.service,
   });
 
   if (result) {

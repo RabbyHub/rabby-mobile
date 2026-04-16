@@ -2,8 +2,9 @@ import { ThemeColors2024 } from '@/constant/theme';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import dayjs from 'dayjs';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export type TabKey = (typeof TIME_TAB_LIST)[number]['key'];
 

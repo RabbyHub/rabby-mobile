@@ -1,7 +1,10 @@
 import {
   GasLevel,
+  MemeItem,
   PortfolioItemToken,
+  TokenMarketTokenItem,
   TokenItem,
+  TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Contract, providers } from 'ethers';
 import { hexToString } from 'web3-utils';
@@ -16,6 +19,9 @@ import { formatUsdValue, formatAmount } from '@/utils/number';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { Account } from '@/core/services/preference';
 import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { ITokenItem } from '@/store/tokens';
+import { columnConverter } from '@/databases/entities/_helpers';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
 export const geTokenDecimals = async (
@@ -166,6 +172,10 @@ export function getTokenSymbol(token?: {
   );
 }
 
+export function isTokenMarketClosed(token?: { market_status?: string | null }) {
+  return token?.market_status === 'closed';
+}
+
 export type TokenItemFromAbstractPortfolioToken = TokenItemMaybeWithOwner & {
   cex_ids?: string[];
   isFakerFoldRow?: boolean;
@@ -227,11 +237,11 @@ export class DisplayedToken implements AbstractPortfolioToken {
   decimals: number;
   display_symbol: string | null;
   raw_amount_hex_str?: string;
-  is_core: boolean;
+  is_core: boolean | null;
   is_wallet: boolean;
   name: string;
   optimized_symbol: string;
-  is_verified: boolean;
+  is_verified: boolean | null;
   time_at: number;
   price_24h_change?: number | null;
   low_credit_score?: boolean;
@@ -458,3 +468,74 @@ export function checkIfTokenBalanceEnough(
     customLevel,
   };
 }
+
+export const tokenItemEntityToTokenItem = (
+  token: TokenItemEntity,
+): ITokenItem => {
+  return {
+    ...token,
+    usd_value: token.price * token.amount,
+    cex_ids:
+      typeof token.cex_ids === 'string' // TODO: 处理干净后移除兼容逻辑
+        ? columnConverter.jsonStringToObj(token.cex_ids)
+        : token.cex_ids,
+    launchpad:
+      typeof token.launchpad === 'string'
+        ? columnConverter.jsonStringToObj(token.launchpad)
+        : token.launchpad,
+    asset:
+      typeof token.asset === 'string'
+        ? columnConverter.jsonStringToObj(token.asset)
+        : token.asset,
+  };
+};
+
+export const tokenItemToITokenItem = (
+  token: TokenItemWithEntity,
+  owner: string,
+): ITokenItem => {
+  return {
+    ...token,
+    usd_value: token.price * token.amount,
+    owner_addr: owner,
+    cex_ids: token.cex_ids || [],
+    fdv: token.identity?.fdv || token.fdv,
+  };
+};
+
+export const memeItemToITokenItem = (
+  token: MemeItem | TokenMarketTokenItem,
+  owner: string,
+): ITokenItem => {
+  return {
+    ...token,
+    id: token.id,
+    chain: token.chain,
+    amount: 0,
+    decimals: 18,
+    display_symbol: token.symbol,
+    logo_url: token.logo_url,
+    name: token.name,
+    optimized_symbol: token.symbol,
+    symbol: token.symbol,
+    is_wallet: false,
+    owner_addr: owner,
+    usd_value: 0,
+    time_at: 0,
+    cex_ids: [],
+  };
+};
+
+export const scamTokenFilter = (item: {
+  is_suspicious?: boolean | null;
+  is_verified?: boolean | null;
+  is_core?: boolean | null;
+}) => {
+  const manualTagScam = item.is_verified === false;
+  const maybeScam = item.is_suspicious === true;
+  const manualTagNotCore = item.is_core === false;
+  if (manualTagScam || maybeScam || manualTagNotCore) {
+    return false;
+  }
+  return true;
+};

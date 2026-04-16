@@ -20,7 +20,7 @@ type Props = {
     menuTitle?: string;
     menuActions: MenuAction[];
   };
-  children: React.ReactElement;
+  children: React.ReactElement<any>;
   triggerProps?: Omit<MenuTriggerProps, 'children'>;
 } & ContextMenuContentProps;
 

@@ -1,0 +1,141 @@
+import {
+  loadJavaScriptBeforeContentLoadedOnBoot,
+  subscribeUnlockToFetchAccounts,
+} from './hooks/useBootstrap';
+
+import { runIIFEFunc } from './core/utils/store';
+import { startSubscribeLangChange } from './hooks/lang';
+import { connectPushServerOnBootstrap } from './core/notifications';
+
+import { startManageAccountStoreLifecycle } from './hooks/account';
+
+import {
+  loadLockInfoOnBootstrap,
+  startSubscribeAppStateChange,
+} from './hooks/useLock';
+import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
+import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
+import { startSubscribeBalanceUpdated } from './hooks/useCurve';
+import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
+import { startSubscribeOnekeyDevices } from './core/apis/onekey';
+import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
+import { startFetchOnceTop5TokensForAllAccounts } from './components/AccountSwitcher/hooks';
+import { startSyncOnlineConfig } from './core/config/online';
+import { loadVersionInfoOnBootstrap } from './hooks/version';
+import { autoGoogleSignIfPreviousSignedOnBoot } from './hooks/cloudStorage';
+import {
+  screenshotModalStartSyncNetworth,
+  startSubscribeUserDidTakeScreenshot,
+} from './components/Screenshot/hooks';
+import { startSubscribeWhetherPreventScreenshot } from './hooks/native/security';
+import {
+  startSubscribeAtSensitiveScene,
+  startSubscribeIOSJustScreenshotted,
+  startSubscribeIOSScreenRecording,
+  startSubscribeRemoteNotification,
+} from './hooks/navigation';
+import { startComputationThread } from './perfs/thread';
+import { rateModalStartSyncNetworth } from './components/RateModal/hooks';
+import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/useNoLongerSupports';
+import { startCheckClearAction } from './utils/clipboard';
+import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
+import tokenListStore from './store/tokens';
+import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
+import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
+import useProtocolListStore from './store/protocols';
+import { useAppChainStore } from './store/appchain';
+import balanceStore from './store/balance';
+import { apisAutoLock } from './core/apis';
+import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
+import { startWatchLayoutChange } from './hooks/useAppLayout';
+import { startCareAppNotificationPermissions } from './hooks/appNotification';
+import nftListStore from './store/nfts';
+import { keyringService } from './core/services';
+
+startComputationThread();
+startSubscribeLangChange();
+
+connectPushServerOnBootstrap();
+
+startManageAccountStoreLifecycle();
+loadLockInfoOnBootstrap();
+apisAutoLock.setupAutoLockChecker();
+startFetchOnceTop5TokensForAllAccounts();
+subscribeUnlockToFetchAccounts();
+startSubscribeAppStateChange();
+
+startSyncOnlineConfig();
+loadVersionInfoOnBootstrap();
+
+loadJavaScriptBeforeContentLoadedOnBoot();
+
+startSubscribeOnekeyDevices();
+startSubscribeTrezorConnectOnUrl();
+
+autoGoogleSignIfPreviousSignedOnBoot();
+startSubscribeBalanceUpdated();
+startSyncDefaultRPCs();
+runIIFEFunc(() => {
+  storeApiGasAccount.fetchGasAccountInfo();
+});
+startSubscribePerpsOnAppState();
+startWatchLayoutChange();
+
+startSubscribeUserDidTakeScreenshot();
+startSubscribeAtSensitiveScene();
+startSubscribeIOSJustScreenshotted();
+startSubscribeWhetherPreventScreenshot();
+startSubscribeIOSScreenRecording();
+
+rateModalStartSyncNetworth();
+screenshotModalStartSyncNetworth();
+
+startProcessAccountBalanceEvents();
+startProcessScene24hBalanceEvents();
+startProcessMultiCurveEvents();
+
+trimNoLongerSupportsOnUnlock();
+
+startCheckClearAction();
+startSubscribeOpenApiHttpErrorDebugToast();
+
+startCareAppNotificationPermissions();
+startSubscribeRemoteNotification();
+
+async function initStores() {
+  console.time('initStore');
+  await useAppChainStore.getState().initStore();
+  await balanceStore.getState().initStore();
+  await tokenListStore.getState().initStore();
+  await nftListStore.getState().initStore();
+  await useProtocolListStore.getState().initStore();
+  console.timeEnd('initStore');
+}
+
+const initStoresStateRef = {
+  started: false,
+};
+const startInitStores = async () => {
+  if (initStoresStateRef.started) {
+    return;
+  }
+  initStoresStateRef.started = true;
+  await initStores();
+};
+
+function startInitStoresOnUnlock() {
+  if (keyringService.isUnlocked()) {
+    startInitStores().catch(error => {
+      console.error('startInitStoresOnUnlock::error', error);
+    });
+    return;
+  }
+
+  keyringService.once('unlock', () => {
+    startInitStores().catch(error => {
+      console.error('startInitStoresOnUnlock::error', error);
+    });
+  });
+}
+
+startInitStoresOnUnlock();

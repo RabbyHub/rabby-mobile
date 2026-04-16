@@ -3,7 +3,6 @@ import React from 'react';
 
 import {
   View,
-  Text,
   TouchableWithoutFeedback,
   Keyboard,
   StyleSheet,
@@ -31,6 +30,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { IS_IOS } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Text } from '@/components/Typography';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -70,7 +70,8 @@ function MainListBlocks() {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
       },
-      preventScreenshotOnModalOpen: true,
+      preventScreenshotOnModalOpen: false,
+      // screenshotReportFreeBeforeModalClose: true,
       delaySetPassword: state?.delaySetPassword,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
@@ -88,8 +89,14 @@ function MainListBlocks() {
         Keyboard.dismiss();
       }}>
       <View style={[styles.container]}>
-        <ProgressBar amount={3} currentCount={3} />
-        <Text style={[styles.text]}>
+        {!!state?.isFirstCreate && <ProgressBar amount={3} currentCount={3} />}
+        <Text
+          style={[
+            styles.text,
+            !!state?.isFirstCreate && {
+              marginTop: 60,
+            },
+          ]}>
           {t('page.nextComponent.createNewAddress.backupSeedPhrase')}
         </Text>
         <Card style={styles.listItem} onPress={handleBackupToCloud}>
@@ -244,7 +251,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     fontSize: 17,
     lineHeight: 22,
-    marginTop: 60,
     marginBottom: 30,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',

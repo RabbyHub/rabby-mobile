@@ -7,14 +7,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import {
-  FlatListProps,
-  Image,
-  Keyboard,
-  Platform,
-  Text,
-  View,
-} from 'react-native';
+import { FlatListProps, Image, Keyboard, Platform, View } from 'react-native';
 import {
   FlatList,
   TouchableOpacity,
@@ -27,6 +20,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 export const DappSearchCardList = ({
   keyword,
@@ -60,6 +54,7 @@ export const DappSearchCardList = ({
   }, [chain]);
 
   const activeSelectChainPopup = () => {
+    if (!account) return;
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: chain,

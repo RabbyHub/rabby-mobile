@@ -2,9 +2,8 @@ import { Keyboard, ScrollView, useWindowDimensions, View } from 'react-native';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { ModalLayouts } from '@/constant/layout';
 import { AccountsPanelInModal } from './AccountsPanel';
-import AutoLockView, { useRefreshAutoLockPanResponder } from '../AutoLockView';
+import AutoLockView from '../AutoLockView';
 import {
   useCallback,
   useEffect,
@@ -16,10 +15,10 @@ import { useDappCurrentAccount } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { ITokenItem } from '@/store/tokens';
 
 export function AccountSwitcherModal({
   forScene,
@@ -27,7 +26,7 @@ export function AccountSwitcherModal({
   panelLinearGradientProps,
 }: AccountSwitcherAopProps<{
   inScreen?: boolean;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
   panelLinearGradientProps?: React.ComponentProps<
     typeof AccountsPanelInModal
   >['linearContainerProps'];
@@ -76,6 +75,7 @@ export function AccountSwitcherModal({
         linearGradientType: 'linear',
         colors: colors2024,
       })}
+      handleStyle={styles.handleStyle}
       onDismiss={onCancel}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
@@ -98,7 +98,9 @@ export function AccountSwitcherModal({
 const getModalStyle = createGetStyles2024(ctx => {
   return {
     handleStyle: {
-      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-0']
+        : ctx.colors2024['neutral-bg-1'],
       paddingTop: 10,
       height: 36,
     },
@@ -172,6 +174,7 @@ export function AccountSwitcherModalInDappWebView({
         linearGradientType: 'linear',
         colors: colors2024,
       })}
+      handleStyle={styles.handleStyle}
       onDismiss={onCancel}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
@@ -218,7 +221,7 @@ const getModalInDappWebViewStyle = createGetStyles2024(ctx => {
       backgroundColor: 'rgba(0, 0, 0, 0.60)',
     },
     handleStyle: {
-      backgroundColor: 'transparent',
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
       paddingTop: 10,
       height: 36,
     },

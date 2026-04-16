@@ -1,12 +1,12 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
-import { View, Text, Dimensions, TouchableOpacity, Modal } from 'react-native';
+import { View, Dimensions, TouchableOpacity, Modal } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { AssetAvatar } from '@/components';
 import { useLongPressTokenAtom } from '../hooks';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -15,9 +15,9 @@ import { formatAmount } from '@/utils/math';
 import { formatUsdValue } from '@/utils/number';
 import BigNumber from 'bignumber.js';
 import { RootNames } from '@/constant/layout';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { Text } from '@/components/Typography';
 
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
@@ -36,19 +36,25 @@ export const TokenInfoPopup = () => {
     });
   };
 
-  const usdValueStr = useMemo(() => {
+  const usdValue = useMemo(() => {
     if (
       !longPressToken.tokenEntity?.price ||
       !longPressToken.tokenItem?.amount
     ) {
-      return '0';
+      return 0;
     }
     const amount = longPressToken.tokenItem?.amount || 0;
     const amountBn = new BigNumber(amount);
     const priceBn = new BigNumber(longPressToken.tokenEntity?.price || 0);
-    const usdValue = amountBn.times(priceBn).toNumber();
-    return formatUsdValue(usdValue);
+    return amountBn.times(priceBn).toNumber();
   }, [longPressToken.tokenEntity?.price, longPressToken.tokenItem?.amount]);
+
+  const usdValueStr = useMemo(() => {
+    if (usdValue === 0) {
+      return '0';
+    }
+    return formatUsdValue(usdValue);
+  }, [usdValue]);
 
   return (
     <Modal
@@ -97,6 +103,8 @@ export const TokenInfoPopup = () => {
                 _usdValueStr: usdValueStr,
                 _amountStr: formatAmount(longPressToken.tokenItem?.amount),
                 _tokenId: longPressToken.tokenEntity.id,
+                usd_value: usdValue,
+                fdv: longPressToken.tokenEntity.identity?.fdv,
               } as unknown as AbstractPortfolioToken
             }
             style={{
@@ -106,12 +114,10 @@ export const TokenInfoPopup = () => {
                 longPressToken.position.y + longPressToken.position.height + 13,
               ),
             }}
-            onPressRightIcon={() => {
+            onPressBottomRow={() => {
               if (longPressToken.tokenItem) {
                 navigateDeprecated(RootNames.TokenDetail, {
-                  token: {
-                    ...ensureAbstractPortfolioToken(longPressToken.tokenItem),
-                  },
+                  token: tokenItemToITokenItem(longPressToken.tokenItem, ''),
                   account: currentAccount,
                   needUseCacheToken: true,
                 });
@@ -121,6 +127,7 @@ export const TokenInfoPopup = () => {
             onTokenPress={() => {}}
             touchable={false}
             logoSize={40}
+            rightInfoMode="balance"
           />
         )}
         {IS_ANDROID ? (

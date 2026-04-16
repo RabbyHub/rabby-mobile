@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import { isNil } from 'lodash';
+import { coerceInteger } from './number';
 
 dayjs.extend(utc);
 
@@ -30,11 +31,11 @@ export const timeago = (a: number, b: number) => {
   };
 };
 
-export function getTimeSpan(times: number) {
-  if (isNaN(+times)) {
-    times = 0;
+export function getTimeSpan(seconds: number) {
+  if (isNaN(+seconds)) {
+    seconds = 0;
   }
-  const int = Math.floor(times);
+  const int = Math.floor(seconds);
   const d = parseInt(int / 60 / 60 / 24 + '');
   const h = parseInt(((int / 60 / 60) % 24) + '');
   const m = parseInt(((int / 60) % 60) + '');
@@ -61,9 +62,9 @@ export function getTimeSpanByMs(ms: number) {
   };
 }
 
-export const formatTimeReadable = (timeElapse: number) => {
+export const formatTimeReadable = (seconds: number) => {
   let timeStr = '';
-  const { d, h, m, s } = getTimeSpan(timeElapse);
+  const { d, h, m, s } = getTimeSpan(seconds);
 
   if (d) timeStr = `${d}day` + (d > 1 ? 's' : '');
   if (h && !timeStr) timeStr = `${h}hr` + (h > 1 ? 's' : '');
@@ -187,4 +188,26 @@ export function formatIntlTimestamp(timestamp: number): string {
   const timePart = timeFormatter.format(date);
 
   return `${datePart} at ${timePart}`;
+}
+
+export function getLottieAnimationDurationInMS(
+  animationData: any,
+  options: {
+    frameCountFallback?: number;
+    frameRateFallback?: number;
+  },
+): number {
+  const frameCount =
+    coerceInteger(animationData['op'] || options.frameCountFallback, 0) -
+    coerceInteger(animationData['ip'], 0);
+  const frameRate = coerceInteger(
+    animationData['fr'] || options.frameRateFallback,
+    30,
+  ); // Default to 30 if not specified
+
+  if (frameRate === 0) {
+    return 0;
+  }
+
+  return (frameCount / frameRate) * 1000;
 }

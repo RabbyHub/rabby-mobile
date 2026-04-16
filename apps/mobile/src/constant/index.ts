@@ -2,7 +2,6 @@ import { Image, Platform, NativeModules } from 'react-native';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
-import { CHAINS_ENUM } from './chains';
 import { BUILD_CHANNEL } from './env';
 
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
@@ -133,32 +132,6 @@ export const APP_FEATURE_SWITCH = {
     return !!this.customizePassword;
   },
 };
-
-export const GNOSIS_SUPPORT_CHAINS = [
-  CHAINS_ENUM.ETH,
-  CHAINS_ENUM.BSC,
-  CHAINS_ENUM.POLYGON,
-  CHAINS_ENUM.GNOSIS,
-  CHAINS_ENUM.AVAX,
-  CHAINS_ENUM.OP,
-  CHAINS_ENUM.ARBITRUM,
-  CHAINS_ENUM.AURORA,
-  CHAINS_ENUM.BASE,
-  CHAINS_ENUM.CELO,
-  CHAINS_ENUM.PZE,
-  CHAINS_ENUM.ERA,
-  CHAINS_ENUM.SCRL,
-  CHAINS_ENUM.LINEA,
-  'XLAYER',
-  CHAINS_ENUM.MANTLE,
-  'WORLD',
-  CHAINS_ENUM.BLAST,
-  'SONIC',
-  'BERA',
-  'INK',
-  'HEMI',
-  'KATANA',
-];
 
 export const SELF_HOST_SAFE_NETWORKS = [
   '1',

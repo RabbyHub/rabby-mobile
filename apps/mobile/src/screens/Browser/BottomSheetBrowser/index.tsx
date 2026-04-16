@@ -25,12 +25,12 @@ import { BackHandler, Platform, useWindowDimensions, View } from 'react-native';
 import { BrowserScreen } from '../BrowserScreen';
 import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
 import { BrowserHandler } from './BrowserHandler';
+import { BrowserFavoriteManage } from '../BrowserScreen/components/BrowserFavoriteManage';
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
   const { browserState, setPartialBrowserState, onHideBrowser, terminateTabs } =
     useBrowser();
-  const { browserHistoryList } = useBrowserHistory();
   const { styles } = useTheme2024({
     getStyle,
   });
@@ -39,6 +39,7 @@ export const BottomSheetBrowser = () => {
 
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { width } = useWindowDimensions();
+  const { browserHistoryList } = useBrowserHistory();
 
   const snapPoints = useMemo(() => {
     return [safeOffScreenTop];
@@ -249,6 +250,83 @@ export const BrowserManagePopup = () => {
       }}>
       <AutoLockView as="View">
         <BrowserManage />
+      </AutoLockView>
+    </AppBottomSheetModal>
+  );
+};
+
+export const BrowserFavoritePopup = () => {
+  const { safeOffScreenTop } = useSafeSizes();
+
+  const { browserState, setPartialBrowserState, openTab } = useBrowser();
+  const { colors2024, styles } = useTheme2024({ getStyle });
+
+  const snapPoints = useMemo(() => {
+    return [safeOffScreenTop - 40];
+  }, [safeOffScreenTop]);
+
+  const modalRef = useRef<AppBottomSheetModal>(null);
+
+  useEffect(() => {
+    if (browserState.isShowFavorite) {
+      modalRef.current?.present();
+    } else {
+      modalRef.current?.close();
+    }
+  }, [browserState.isShowFavorite]);
+
+  const handleBackPress = useCallback(() => {
+    if (browserState.isShowFavorite) {
+      setPartialBrowserState({
+        isShowFavorite: false,
+      });
+      return true;
+    }
+    return false;
+  }, [browserState.isShowFavorite, setPartialBrowserState]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => subscription.remove();
+  }, [handleBackPress]);
+
+  useEffect(() => {
+    const handler = () => {
+      modalRef?.current?.present();
+    };
+    eventBus.addListener(EVENT_SHOW_BROWSER_MANAGE, handler);
+
+    return () => {
+      eventBus.removeListener(EVENT_SHOW_BROWSER_MANAGE, handler);
+    };
+  }, []);
+
+  return (
+    <AppBottomSheetModal
+      index={browserState.isShowFavorite ? 0 : -1}
+      enableHandlePanningGesture
+      enableContentPanningGesture={true}
+      enablePanDownToClose
+      // name="urlWebviewContainerRef"
+      handleStyle={styles.handleStyle}
+      handleIndicatorStyle={styles.handleIndicatorStyle}
+      ref={modalRef}
+      keyboardBehavior="extend"
+      // android_keyboardInputMode="adjustResize"
+      snapPoints={snapPoints}
+      // enableDismissOnClose={false}
+      onChange={index => {
+        if (index === -1) {
+          setPartialBrowserState({
+            isShowFavorite: false,
+          });
+        }
+      }}>
+      <AutoLockView as="View">
+        <BrowserFavoriteManage />
       </AutoLockView>
     </AppBottomSheetModal>
   );

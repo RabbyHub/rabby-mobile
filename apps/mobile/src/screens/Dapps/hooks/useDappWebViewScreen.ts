@@ -11,7 +11,7 @@ import {
   activeDappStateEvents,
   globalSetActiveDappState,
 } from '@/core/bridges/state';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import { stringUtils, urlUtils, hashUtils } from '@rabby-wallet/base-utils';
 import {
   useSceneAccountInfo,
@@ -455,8 +455,8 @@ export function useDappWebViewScreen() {
     };
   }, [dapps, activeDappOrigin, openedDappRecords]);
 
-  const openedDappItems = useDebounceValue(originalInfo.openedDappItems, 100);
-  const activeDapp = useDebounceValue(originalInfo.activeDapp, 250);
+  const openedDappItems = useDebouncedValue(originalInfo.openedDappItems, 100);
+  const activeDapp = useDebouncedValue(originalInfo.activeDapp, 250);
 
   return {
     openingActiveDappRef,

@@ -1,6 +1,5 @@
 import {
   View,
-  TextInput,
   StyleSheet,
   ViewStyle,
   TextStyle,
@@ -10,6 +9,7 @@ import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { ReactNode } from 'react';
+import { TextInput } from '@/components/Typography';
 
 interface InputProps extends TextInputProps {
   addonAfter?: ReactNode;

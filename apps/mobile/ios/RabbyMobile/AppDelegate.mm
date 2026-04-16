@@ -10,8 +10,9 @@
 // splash screen
 #import "RNSplashScreen.h"
 
-// device info
-#import "RNDeviceInfo/RNDeviceInfo.h"
+// push notification
+#import <UserNotifications/UserNotifications.h>
+#import <RNCPushNotificationIOS.h>
 
 #import <sys/utsname.h>
 
@@ -29,22 +30,22 @@
   NSDictionary *cfnInfo = [NSBundle bundleWithIdentifier:@"com.apple.CFNetwork"].infoDictionary;
   NSString *cfnVersion = cfnInfo[@"CFBundleVersion"];
 
-  RNDeviceInfo* rnDeviveInfo = [self.bridge moduleForClass:[RNDeviceInfo class]];
-  if (rnDeviveInfo == nil) {
-    NSLog(@"[app] device-info module not found!");
-    rnDeviveInfo = [[RNDeviceInfo alloc] init];
-  }
+  NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
 
-  NSDictionary *deviceInfo = [rnDeviveInfo constantsToExport];
+  struct utsname systemInfo;
+  uname(&systemInfo);
+  NSString *model = [NSString stringWithUTF8String:systemInfo.machine];
+  NSString *systemName = [[UIDevice currentDevice] systemName];
+  NSString *systemVersion = [[UIDevice currentDevice] systemVersion];
 
   return [NSString stringWithFormat:@"%@/%@ CFNetwork/%@ Darwin/%@ (%@ %@/%@)",
     self.moduleName,
-    deviceInfo[@"appVersion"],
+    appVersion,
     cfnVersion,
     [self _getDarwinVersion],
-    deviceInfo[@"model"],
-    deviceInfo[@"systemName"],
-    deviceInfo[@"systemVersion"]
+    model,
+    systemName,
+    systemVersion
   ];
 }
 
@@ -58,25 +59,29 @@
   NSString *rabbitCode = rabbitCodeFromBundle ?: @"RABBY_MOBILE_CODE_DEV";
   self.initialProps = @{ @"rabbitCode": rabbitCode };
 
+  // Create bridge manually — do NOT rely on [super ...]
   RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
 
-  // ✅ 设置 User-Agent 到 RCTHTTPRequestHandler（私有 API，需使用 selector）
+  // Set up User-Agent
   NSString *userAgent = [self makeUserAgent];
+
   RCTHTTPRequestHandler *requestHandler = [bridge moduleForName:@"RCTHTTPRequestHandler"];
   if ([requestHandler respondsToSelector:@selector(setDefaultRequestHeaders:)]) {
     [requestHandler performSelector:@selector(setDefaultRequestHeaders:)
                          withObject:@{@"User-Agent": userAgent}];
   }
 
-  // set RCTSetCustomNSURLSessionConfigurationProvider
   RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
     configuration.HTTPAdditionalHeaders = @{ @"User-Agent": userAgent };
-
-    // configure the session
     return configuration;
   });
 
+  // Define UNUserNotificationCenter
+  UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+  center.delegate = self;
+
+  // Create root view and window manually
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
                                                    moduleName:self.moduleName
                                             initialProperties:self.initialProps];
@@ -94,7 +99,18 @@
   return YES;
 }
 
+//Called when a notification is delivered to a foreground app.
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
+{
+  completionHandler(UNNotificationPresentationOptionSound | UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge);
+}
+
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
+{
+  return [self bundleURL];
+}
+
+- (NSURL *)bundleURL
 {
 #if DEBUG
   return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
@@ -119,6 +135,31 @@ continueUserActivity:(NSUserActivity *)userActivity
   return [RCTLinkingManager application:application
                    continueUserActivity:userActivity
                      restorationHandler:restorationHandler];
+}
+
+// Required for the register event.
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+{
+ [RNCPushNotificationIOS didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
+}
+// Required for the notification event.
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
+  [RNCPushNotificationIOS didReceiveRemoteNotification:userInfo fetchCompletionHandler:completionHandler];
+}
+// Required for the registrationError event.
+- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
+{
+ [RNCPushNotificationIOS didFailToRegisterForRemoteNotificationsWithError:error];
+}
+// Required for localNotification event
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+didReceiveNotificationResponse:(UNNotificationResponse *)response
+         withCompletionHandler:(void (^)(void))completionHandler
+{
+  [RNCPushNotificationIOS didReceiveNotificationResponse:response];
+  completionHandler();
 }
 
 @end

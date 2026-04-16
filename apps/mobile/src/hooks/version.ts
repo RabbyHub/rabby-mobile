@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
-import { atom, useAtom } from 'jotai';
 import { getVersion } from 'react-native-device-info';
 
 import Toast from 'react-native-root-toast';
@@ -9,9 +8,8 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
-import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import { zustandByMMKV } from '@/core/storage/mmkv';
 
-import { useEffect } from 'react';
 import {
   DownloadLatestApkResult,
   MergedRemoteVersion,
@@ -20,11 +18,14 @@ import {
 } from '@/utils/version';
 import { BUILD_CHANNEL } from '@/constant/env';
 import { APP_URLS, isNonPublicProductionEnv } from '@/constant';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useUnmountedRef } from './common/useMount';
+import { zCreate } from '@/core/utils/reexports';
+import { RefLikeObject } from '@/utils/type';
 
 const appLocalVersion = getVersion();
-const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>(
+
+const remoteVersionStore = zustandByMMKV<MergedRemoteVersion>(
   '@RemoteVersionMMKV',
   {
     version: appLocalVersion,
@@ -35,68 +36,71 @@ const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>(
     couldUpgrade: false,
     changelog: '',
   },
-  { storage: MMKVStorageStrategy.compatJson },
 );
+function setRemoteVersion(val: MergedRemoteVersion) {
+  remoteVersionStore.setState(val);
+}
+const localVersionStore = zCreate<string>(() => appLocalVersion);
+function setLocalVersion(val: string) {
+  localVersionStore.setState(val);
+}
 
-const localVersionAtom = atom<string>(appLocalVersion);
+const loadRemoteVersion = async () => {
+  return getUpgradeInfo().then(result => {
+    setRemoteVersion(result.finalRemoteInfo);
+    setLocalVersion(result.localVersion);
 
-export function useUpgradeInfo(options?: { isTop?: boolean }) {
-  const { isTop = false } = options || {};
+    return result;
+  });
+};
 
-  const [remoteVersion, setRemoteVersion] = useAtom(RemoteVersionAtom);
-  const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
+export function loadVersionInfoOnBootstrap() {
+  loadRemoteVersion().catch(error => {
+    console.error('Load remote version info failed', error);
+  });
+}
 
-  const loadRemoteVersion = useCallback(async () => {
-    return getUpgradeInfo().then(result => {
+const openedModalIdRef: RefLikeObject<string> = { current: '' };
+const triggerCheckVersion = async (
+  options?: Parameters<typeof getUpgradeInfo>[0],
+) => {
+  if (openedModalIdRef.current) return;
+  openedModalIdRef.current = 'checking';
+
+  return getUpgradeInfo(options)
+    .then(result => {
       setRemoteVersion(result.finalRemoteInfo);
-      setLocalVersion(result.localVersion);
 
-      return result;
-    });
-  }, [setLocalVersion, setRemoteVersion]);
-
-  const openedModalIdRef = useRef<string>('');
-  const triggerCheckVersion = useCallback(
-    async (options?: Parameters<typeof getUpgradeInfo>[0]) => {
-      if (openedModalIdRef.current) return;
-      openedModalIdRef.current = 'checking';
-
-      return getUpgradeInfo(options)
-        .then(result => {
-          setRemoteVersion(result.finalRemoteInfo);
-
-          if (!result.finalRemoteInfo.couldUpgrade) {
-            toast.success('You are using the latest version', {
-              position: Toast.positions.BOTTOM,
-            });
-          } else {
-            openedModalIdRef.current = createGlobalBottomSheetModal({
-              name: MODAL_NAMES.TIP_UPGRADE,
-              title: 'New Version',
-              bottomSheetModalProps: {
-                onDismiss: () => {
-                  removeGlobalBottomSheetModal(openedModalIdRef.current);
-                  openedModalIdRef.current = '';
-                },
-              },
-            });
-          }
-        })
-        .catch(error => {
-          openedModalIdRef.current = '';
-
-          console.error('Check version failed', error);
-          toast.info('Check version failed', {
-            position: Toast.positions.BOTTOM,
-          });
+      if (!result.finalRemoteInfo.couldUpgrade) {
+        toast.success('You are using the latest version', {
+          position: Toast.positions.BOTTOM,
         });
-    },
-    [setRemoteVersion],
-  );
+      } else {
+        openedModalIdRef.current = createGlobalBottomSheetModal({
+          name: MODAL_NAMES.TIP_UPGRADE,
+          title: 'New Version',
+          bottomSheetModalProps: {
+            onDismiss: () => {
+              removeGlobalBottomSheetModal(openedModalIdRef.current);
+              openedModalIdRef.current = '';
+            },
+          },
+        });
+      }
+    })
+    .catch(error => {
+      openedModalIdRef.current = '';
 
-  useEffect(() => {
-    if (isTop) loadRemoteVersion();
-  }, [isTop, loadRemoteVersion]);
+      console.error('Check version failed', error);
+      toast.info('Check version failed', {
+        position: Toast.positions.BOTTOM,
+      });
+    });
+};
+
+export function useUpgradeInfo() {
+  const remoteVersion = remoteVersionStore(s => s);
+  const localVersion = localVersionStore(s => s);
 
   return {
     localVersion,
@@ -109,7 +113,7 @@ export function useUpgradeInfo(options?: { isTop?: boolean }) {
  * @warning make sure this hook only used on non-production environment
  */
 export function useForceLocalVersionForNonProduction() {
-  const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
+  const localVersion = localVersionStore(s => s);
   const { triggerCheckVersion } = useUpgradeInfo();
 
   const forceLocalVersion = useCallback(
@@ -119,7 +123,7 @@ export function useForceLocalVersionForNonProduction() {
       setLocalVersion(version);
       triggerCheckVersion({ forceLocalVersion: version });
     },
-    [setLocalVersion, triggerCheckVersion],
+    [triggerCheckVersion],
   );
 
   return {

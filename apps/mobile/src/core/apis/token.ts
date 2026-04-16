@@ -5,6 +5,7 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { t } from 'i18next';
 import { AbiCoder } from 'web3-eth-abi';
 import { addHexPrefix, unpadHexString } from 'ethereumjs-util';
+import { toChecksumAddress } from '@ethereumjs/util';
 import { Account } from '../services/preference';
 
 export async function transferNFT(
@@ -74,7 +75,11 @@ export async function transferNFT(
                   stateMutability: 'nonpayable',
                   type: 'function',
                 },
-                [account.address, to, tokenId],
+                [
+                  toChecksumAddress(account.address),
+                  toChecksumAddress(to),
+                  tokenId,
+                ],
               ),
             },
           ],
@@ -128,7 +133,13 @@ export async function transferNFT(
                   stateMutability: 'nonpayable',
                   type: 'function',
                 },
-                [account.address, to, tokenId, amount, []] as any,
+                [
+                  toChecksumAddress(account.address),
+                  toChecksumAddress(to),
+                  tokenId,
+                  amount,
+                  [],
+                ] as any,
               ),
             },
           ],
@@ -188,7 +199,7 @@ export const sendToken = async ({
           },
         ],
       },
-      [to, rawAmount],
+      [toChecksumAddress(to), rawAmount],
     ),
     isSend: true,
   };

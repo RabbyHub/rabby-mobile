@@ -1,4 +1,5 @@
 import { matomoRequestEvent } from '@/utils/analytics';
+import balanceStore from '@/store/balance';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import dayjs from 'dayjs';
 import groupBy from 'lodash/groupBy';
@@ -10,13 +11,13 @@ export const sendUserAddressEvent = async () => {
     return;
   }
 
+  const balanceMap = balanceStore.getState().balanceMap;
   const accounts = await keyringService.getAllVisibleAccountsArray();
   const list = accounts.map(account => {
     const category = KEYRING_CATEGORY_MAP[account.type];
     const action = account.brandName;
     const isEmpty =
-      (preferenceService.getAddressBalance(account.address)?.total_usd_value ||
-        0) <= 0;
+      (balanceMap[account.address.toLowerCase()]?.totalBalance || 0) <= 0;
     return {
       category,
       action,

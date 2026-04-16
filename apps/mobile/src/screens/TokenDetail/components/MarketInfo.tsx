@@ -2,9 +2,12 @@ import React, { useMemo } from 'react';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
-import { formatNumber, formatPrice, formatUsdValue } from '@/utils/number';
+import { View } from 'react-native';
+import { formatPrice, formatUsdValue } from '@/utils/number';
 import { useTranslation } from 'react-i18next';
+import { formatAmountValueKMB } from '../util';
+import { Text } from '@/components/Typography';
+import { isNumber } from 'lodash';
 
 const MarketInfo = ({
   price,
@@ -16,7 +19,7 @@ const MarketInfo = ({
   holders,
 }: {
   price: number;
-  price24hChange: number;
+  price24hChange?: number;
   marketCap: string;
   totalSupply: string;
   volume24h: string;
@@ -25,24 +28,36 @@ const MarketInfo = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const currentIsLoss = price24hChange < 0;
+  const currentIsLoss = isNumber(price24hChange) ? price24hChange < 0 : false;
   const percentChangeText = useMemo(() => {
-    const changeValue = formatUsdValue(price24hChange * price);
-    const formatPercent = price24hChange
+    const changeValue = isNumber(price24hChange)
+      ? formatUsdValue(price24hChange * price)
+      : '';
+    const formatPercent = isNumber(price24hChange)
       ? Math.abs((price24hChange || 0) * 100).toFixed(2) + '%'
       : '';
-    return `${formatPercent}(${changeValue})`;
+    return isNumber(price24hChange)
+      ? `${
+          !!formatPercent && price24hChange !== 0
+            ? price24hChange > 0
+              ? '+'
+              : '-'
+            : ''
+        }${formatPercent}(${changeValue})`
+      : '';
   }, [price24hChange, price]);
   return (
     <View style={styles.container}>
       <View style={styles.priceContainer}>
-        <Text style={styles.priceValue}>{formatPrice(price)}</Text>
+        <Text style={styles.priceValue}>{`$${formatPrice(price)}`}</Text>
         <View style={styles.priceChangeContainer}>
           <Text
             style={[
               styles.priceChangeValue,
               {
-                color: currentIsLoss
+                color: !price24hChange
+                  ? colors2024['neutral-secondary']
+                  : currentIsLoss
                   ? colors2024['red-default']
                   : colors2024['green-default'],
               },
@@ -57,7 +72,7 @@ const MarketInfo = ({
             {t('page.tokenDetail.marketInfo.marketCap')}
           </Text>
           <Text style={styles.infoItemValue}>
-            {marketCap ? formatNumber(marketCap) : '-'}
+            {marketCap ? formatUsdValue(marketCap) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
@@ -65,7 +80,7 @@ const MarketInfo = ({
             {t('page.tokenDetail.marketInfo.totalSupply')}
           </Text>
           <Text style={styles.infoItemValue}>
-            {totalSupply ? formatNumber(totalSupply) : '-'}
+            {totalSupply ? formatAmountValueKMB(totalSupply) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>

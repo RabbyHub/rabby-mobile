@@ -7,12 +7,12 @@ import { openapi } from '@/core/request';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractProject } from '@/screens/Home/types';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { getMarketTabToSwapPageAction } from '@/screens/Market/analytics';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -22,7 +22,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   Dimensions,
   RefreshControl,
@@ -31,8 +30,7 @@ import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
-import { formatTokenAmount } from '@/utils/number';
+import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
@@ -63,6 +61,9 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
 import { every10sEvent, useEvery10sEvent } from './event';
+import { ITokenItem } from '@/store/tokens';
+import { formatAmountValueKMB } from './util';
+import { Text } from '@/components/Typography';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
@@ -123,8 +124,8 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
 export const TokenMarketInfoScreen = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenMarketInfo'>['route']>();
-  const { token, account, tokenSelectType } = route.params || {};
-
+  const { token, account, tokenSelectType, from } = route.params || {};
+  console.log('token', token);
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
@@ -150,18 +151,18 @@ export const TokenMarketInfoScreen = () => {
       const res = await openapi.getToken(
         finalAccount!.address,
         token.chain,
-        token._tokenId,
+        token.id,
       );
-      return ensureAbstractPortfolioToken({
-        ...abstractTokenToTokenItem(token),
+      return {
+        ...token,
         price_24h_change: res?.price_24h_change,
         usd_value: res?.usd_value,
         price: res?.price,
         support_market_data: res?.support_market_data,
-      });
+      } as ITokenItem;
     },
     {
-      refreshDeps: [token.chain, token._tokenId, finalAccount?.address],
+      refreshDeps: [token.chain, token.id, finalAccount?.address],
     },
   );
 
@@ -171,19 +172,18 @@ export const TokenMarketInfoScreen = () => {
     refreshAsync: refreshTokenEntity,
   } = useRequest(
     async () => {
-      if (!token || !token._tokenId) {
+      if (!token || !token.id) {
         return;
       }
 
-      const res = await openapi.getTokenEntity(token._tokenId, token.chain);
+      const res = await openapi.getTokenEntity(token.id, token.chain);
       return res;
     },
     {
-      refreshDeps: [token._tokenId, token.chain],
+      refreshDeps: [token.id, token.chain],
     },
   );
 
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
 
   const refreshTag = useCallback(() => {
@@ -194,9 +194,10 @@ export const TokenMarketInfoScreen = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: -3 }}
+        style={{ marginLeft: isAndroid ? 0 : -30 }}
         key={finalAccount?.address}
         token={token}
+        showCopyIcon
       />
     );
   }, [finalAccount?.address, token]);
@@ -207,13 +208,20 @@ export const TokenMarketInfoScreen = () => {
     return (
       <RightMore
         token={token}
-        triggerUpdate={triggerUpdate}
+        triggerUpdate={() =>
+          finalAccount?.address &&
+          apisAddressBalance.triggerUpdate({
+            address: finalAccount?.address,
+            force: false,
+            fromScene: 'TokenDetail',
+          })
+        }
         isMultiAddress={false}
         refreshTags={refreshTag}
-        unHold={false}
+        unHold
       />
     );
-  }, [token, triggerUpdate, refreshTag]);
+  }, [token, refreshTag, finalAccount?.address]);
 
   useFocusEffect(
     useCallback(() => {
@@ -266,14 +274,25 @@ export const TokenMarketInfoScreen = () => {
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       // 关闭弹窗隐藏
       setIsFromBack(false);
+      const marketAction = from?.scene
+        ? getMarketTabToSwapPageAction(from.scene)
+        : null;
+
+      if (marketAction) {
+        matomoRequestEvent({
+          category: 'Rabby Market',
+          action: marketAction,
+        });
+      }
       navigation.push(RootNames.StackTransaction, {
         screen: account ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-          tokenId: token?._tokenId,
+          tokenId: token?.id,
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
           address,
           isFromSwap,
+          from,
         },
       });
     },
@@ -298,7 +317,7 @@ export const TokenMarketInfoScreen = () => {
         screen: account ? RootNames.Bridge : RootNames.MultiBridge,
         params: {
           toChainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-          toTokenId: token?._tokenId,
+          toTokenId: token?.id,
         },
       });
     },
@@ -431,7 +450,7 @@ export const TokenMarketInfoScreen = () => {
 
   const { marketInfo, holdInfo, supplyInfo } = useTokenMarketInfo({
     chain: token.chain,
-    tokenId: token._tokenId,
+    tokenId: token.id,
   });
 
   const handleChangeInterval = useCallback(
@@ -440,14 +459,14 @@ export const TokenMarketInfoScreen = () => {
       fetchTokenPriceData(
         {
           chain: token.chain,
-          tokenId: token._tokenId,
+          tokenId: token.id,
         },
         interval,
       ).then(res => {
         chartWebViewRef.current?.setData(res);
       });
     },
-    [setCurrentInterval, token._tokenId, token.chain],
+    [setCurrentInterval, token.id, token.chain],
   );
   const handleScroll = useCallback(event => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
@@ -463,16 +482,17 @@ export const TokenMarketInfoScreen = () => {
     fetchTokenPriceData(
       {
         chain: token.chain,
-        tokenId: token._tokenId,
+        tokenId: token.id,
       },
       currentInterval,
       Math.floor(Date.now() / 1000),
     ).then(res => {
-      chartWebViewRef.current?.updateCandleData(res.candles[0]);
+      res.candles[0] &&
+        chartWebViewRef.current?.updateCandleData(res.candles[0]);
     });
   }, [
     currentInterval,
-    token._tokenId,
+    token.id,
     token.chain,
     tokenWithAmount?.support_market_data,
   ]);
@@ -523,7 +543,7 @@ export const TokenMarketInfoScreen = () => {
             style={styles.innerContainer}>
             {!!account && (
               <HeaderBalanceCard
-                amount={formatTokenAmount(amountSum)}
+                amount={formatAmountValueKMB(amountSum)}
                 usdValue={usdValue}
                 percentChange={percentChange}
                 isLoss={isLoss}
@@ -543,7 +563,9 @@ export const TokenMarketInfoScreen = () => {
                 <>
                   <MarketInfo
                     price={tokenWithAmount?.price ?? 0}
-                    price24hChange={tokenWithAmount?.price_24h_change ?? 0}
+                    price24hChange={
+                      tokenWithAmount?.price_24h_change ?? undefined
+                    }
                     marketCap={
                       supplyInfo?.market_cap_usd_value?.toString() ?? ''
                     }
@@ -572,7 +594,7 @@ export const TokenMarketInfoScreen = () => {
                       fetchTokenPriceData(
                         {
                           chain: token.chain,
-                          tokenId: token._tokenId,
+                          tokenId: token.id,
                         },
                         currentInterval,
                       ).then(res => {
@@ -592,7 +614,7 @@ export const TokenMarketInfoScreen = () => {
             </View>
             <ActivityAndHolders
               hideActivity={!tokenWithAmount?.support_market_data}
-              tokenId={token._tokenId}
+              tokenId={token.id}
               chainId={token.chain}
               symbol={token.symbol}
             />

@@ -2,8 +2,8 @@ import { RcIconScannerCC } from '@/assets/icons/address';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { apisAddress } from '@/core/apis';
-import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
+import { resolveEnsAddressByName } from '@/utils/ens';
 import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -24,6 +24,8 @@ import { useTranslation } from 'react-i18next';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { ellipsisAddress } from '@/utils/address';
 import { debounce } from 'lodash';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -39,18 +41,6 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
-const debouncedGetEnsAddress = debounce(
-  (
-    input: string,
-    callback: (result: any) => void,
-    errorCallback: (e: any) => void,
-  ) => {
-    openapi.getEnsAddressByName(input).then(callback).catch(errorCallback);
-  },
-  500,
-  { leading: false, trailing: true },
-);
-
 export const ImportWatchAddressScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, setInput] = React.useState('');
@@ -63,6 +53,21 @@ export const ImportWatchAddressScreen2024 = () => {
 
   const { t } = useTranslation();
   const duplicateAddressModal = useDuplicateAddressModal();
+  const debouncedResolveEns = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          callback: (result: { addr: string; name: string } | null) => void,
+        ) => {
+          const result = await resolveEnsAddressByName(value);
+          callback(result);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
 
   const handleDone = async () => {
     if (!input) {
@@ -125,29 +130,31 @@ export const ImportWatchAddressScreen2024 = () => {
   useEffect(() => {
     if (!input) {
       setError(undefined);
+      setEnsResult(null);
       return;
     }
     if (isValidHexAddress(input as `0x${string}`)) {
       setError(undefined);
+      setEnsResult(null);
+      debouncedResolveEns.cancel();
       return;
     }
-    debouncedGetEnsAddress(
-      input,
-      result => {
-        if (result && result.addr) {
-          setEnsResult(result);
-          setError(undefined);
-        } else {
-          setEnsResult(null);
-          setError(INPUT_ERROR.INVALID_ADDRESS);
-        }
-      },
-      () => {
+    debouncedResolveEns(input, result => {
+      if (result && result.addr) {
+        setEnsResult(result);
+        setError(undefined);
+      } else {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      },
-    );
-  }, [input]);
+      }
+    });
+  }, [input, debouncedResolveEns]);
+
+  useEffect(() => {
+    return () => {
+      debouncedResolveEns.cancel();
+    };
+  }, [debouncedResolveEns]);
 
   return (
     <FooterButtonScreenContainer
@@ -156,12 +163,11 @@ export const ImportWatchAddressScreen2024 = () => {
         title: t('global.Confirm'),
         onPress: handleDone,
         disabled: !input || !!error,
+        ...makeTestIDProps(E2E_ID.home.watchAddressSubmit),
       }}
       style={styles.screen}
       footerBottomOffset={56}
-      footerContainerStyle={{
-        paddingHorizontal: 20,
-      }}>
+      footerContainerStyle={styles.footerContainer}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.topContent}>
@@ -191,6 +197,7 @@ export const ImportWatchAddressScreen2024 = () => {
                   value: input,
                   blurOnSubmit: true,
                   returnKeyType: 'done',
+                  ...makeTestIDProps(E2E_ID.home.watchAddressInput),
                   onSubmitEditing: onSubmitEditing,
                   onChangeText: handleSubmit,
                 }}
@@ -216,6 +223,7 @@ export const ImportWatchAddressScreen2024 = () => {
               {!error && ensResult && input !== ensResult.addr && (
                 <TouchableOpacity
                   style={styles.ensResultBox}
+                  {...makeTestIDProps(E2E_ID.home.watchAddressEnsResult)}
                   onPress={() => {
                     Keyboard.dismiss();
                     setInput(ensResult.addr);
@@ -245,6 +253,9 @@ export const ImportWatchAddressScreen2024 = () => {
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
+  },
+  footerContainer: {
+    paddingHorizontal: 20,
   },
   container: {
     display: 'flex',

@@ -116,7 +116,7 @@ const BottomSheetBackdropComponent = ({
     [animatedIndex, appearsOnIndex, disappearsOnIndex, opacity],
   );
   const containerStyle = useMemo(
-    () => [styles.container, style, containerAnimatedStyle],
+    () => [styles.backdrop, style, containerAnimatedStyle],
     [style, containerAnimatedStyle],
   );
   //#endregion

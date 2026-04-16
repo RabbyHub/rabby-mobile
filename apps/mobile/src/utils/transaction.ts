@@ -7,6 +7,10 @@ import type {
   ExplainTxResponse,
   GasLevel,
   Tx,
+  TxAllHistoryResult,
+  TxDisplayItem,
+  TxHistoryResult,
+  TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
@@ -16,6 +20,72 @@ import { hexToString, isHex, stringToHex } from 'web3-utils';
 import { findChain, getChain } from './chain';
 import i18n from './i18n';
 import { openExternalUrl } from '@/core/utils/linking';
+import { Account, IManageToken } from '@/core/services/preference';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { preferenceService, transactionHistoryService } from '@/core/services';
+import { CustomTxItem } from '@/core/services/transactionHistory';
+import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
+import {
+  CUSTOM_HISTORY_TITLE_TYPE,
+  HistoryItemCateType,
+} from '@/screens/Transaction/components/type';
+import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
+import i18next from 'i18next';
+import { ellipsisOverflowedText } from './text';
+import { getTokenSymbol } from './token';
+
+const GAS_PRICE_DECIMALS = 18;
+
+const rawAmountToBn = (
+  value: string | number | BigNumber | null | undefined,
+) => {
+  if (BigNumber.isBigNumber(value)) {
+    return value;
+  }
+  return new BigNumber(value || 0);
+};
+
+const pow10 = (decimals: number) => {
+  return new BigNumber(10).pow(Math.max(0, decimals));
+};
+
+const convert18RawToTokenRaw = (
+  rawAmountIn18: BigNumber,
+  tokenDecimals: number,
+) => {
+  if (tokenDecimals === GAS_PRICE_DECIMALS) {
+    return rawAmountIn18;
+  }
+  if (tokenDecimals > GAS_PRICE_DECIMALS) {
+    return rawAmountIn18.times(pow10(tokenDecimals - GAS_PRICE_DECIMALS));
+  }
+  return rawAmountIn18.div(pow10(GAS_PRICE_DECIMALS - tokenDecimals));
+};
+
+export interface ApprovalRes extends Tx {
+  type?: string;
+  address?: string;
+  uiRequestComponent?: string;
+  isSend?: boolean;
+  isSpeedUp?: boolean;
+  isCancel?: boolean;
+  isSwap?: boolean;
+  isGnosis?: boolean;
+  account?: Account;
+  extra?: Record<string, any>;
+  traceId?: string;
+  $ctx?: any;
+  signingTxId?: string;
+  pushType?: TxPushType;
+  lowGasDeadline?: number;
+  reqId?: string;
+  isGasLess?: boolean;
+  isGasAccount?: boolean;
+  logId?: string;
+  sig?: string;
+  $account?: Account;
+}
 
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
@@ -26,6 +96,19 @@ export const is1559Tx = (tx: Tx) => {
     isHexString(tx.maxPriorityFeePerGas || '')
   );
 };
+export const is7702Tx = (tx: ApprovalRes) => {
+  if ('authorizationList' in tx) {
+    if (
+      Array.isArray(tx.authorizationList) &&
+      tx.authorizationList.length > 0
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 export const GASPRICE_RANGE = {
   [CHAINS_ENUM.ETH]: [0, 20000],
   [CHAINS_ENUM.BOBA]: [0, 20000],
@@ -108,7 +191,7 @@ export const calcMaxPriorityFee = (
   chainId: number,
   useMaxFee: boolean,
 ) => {
-  if (target.priority_price && target.priority_price !== null) {
+  if (target.priority_price !== null && target.priority_price !== undefined) {
     if (target.priority_price > target.price) {
       return target.price;
     }
@@ -194,14 +277,11 @@ export function getCustomTxParamsData(
     if (spender.startsWith('0x')) {
       spender = spender.substring(2);
     }
-    const [signature, tokenValue] = data.split(spender);
+    const separator = new RegExp(spender, 'i');
+    const [signature, tokenValue] = data.split(separator);
 
     if (!signature || !tokenValue) {
       throw new Error('Invalid data');
-    } else if (tokenValue.length !== 64) {
-      throw new Error(
-        'Invalid token value; should be exactly 64 hex digits long (u256)',
-      );
     }
 
     let customPermissionValue = calcTokenValue(
@@ -213,10 +293,7 @@ export function getCustomTxParamsData(
       throw new Error('Custom value is larger than u256');
     }
 
-    customPermissionValue = customPermissionValue.padStart(
-      tokenValue.length,
-      '0',
-    );
+    customPermissionValue = customPermissionValue.padStart(64, '0');
     const customTxParamsData = `${signature}${spender}${customPermissionValue}`;
     return customTxParamsData;
   }
@@ -297,7 +374,9 @@ export function formatTxInputDataOnERC20(maybeHex: string) {
     utf8Data: '',
   };
 
-  if (!maybeHex) return result;
+  if (!maybeHex) {
+    return result;
+  }
 
   result.currentIsHex = maybeHex.startsWith('0x') && isHex(maybeHex);
 
@@ -364,6 +443,8 @@ export const checkGasAndNonce = ({
   isSpeedUp,
   isGnosisAccount,
   nativeTokenBalance,
+  gasTokenDecimals = GAS_PRICE_DECIMALS,
+  checkTxValueInBalance = true,
 }: {
   recommendGasLimitRatio: number;
   nativeTokenBalance: string;
@@ -377,10 +458,14 @@ export const checkGasAndNonce = ({
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
     maxGasCostAmount: BigNumber;
+    gasCostRawAmount?: BigNumber;
+    maxGasCostRawAmount?: BigNumber;
   };
   isCancel: boolean;
   isSpeedUp: boolean;
   isGnosisAccount: boolean;
+  gasTokenDecimals?: number;
+  checkTxValueInBalance?: boolean;
 }) => {
   const errors: {
     code: number;
@@ -426,15 +511,20 @@ export const checkGasAndNonce = ({
       }
     }
   }
-  let sendNativeTokenAmount = new BigNumber(tx.value); // current transaction native token transfer count
-  sendNativeTokenAmount = isNaN(sendNativeTokenAmount.toNumber())
-    ? new BigNumber(0)
-    : sendNativeTokenAmount;
+  const balanceRawAmount = rawAmountToBn(nativeTokenBalance || 0);
+  const sendNativeTokenRawAmount = checkTxValueInBalance
+    ? convert18RawToTokenRaw(rawAmountToBn(tx.value || 0), gasTokenDecimals)
+    : new BigNumber(0);
+  const maxGasCostRawAmount =
+    gasExplainResponse.maxGasCostRawAmount ||
+    rawAmountToBn(gasExplainResponse.maxGasCostAmount).times(
+      pow10(gasTokenDecimals),
+    );
   if (
     !isGnosisAccount &&
-    gasExplainResponse.maxGasCostAmount
-      .plus(sendNativeTokenAmount.div(1e18))
-      .isGreaterThan(new BigNumber(nativeTokenBalance).div(1e18))
+    maxGasCostRawAmount
+      .plus(sendNativeTokenRawAmount)
+      .isGreaterThan(balanceRawAmount)
   ) {
     errors.push({
       code: 3001,
@@ -463,14 +553,20 @@ export function openTxExternalUrl(input: {
     openPromise: null as ReturnType<typeof openExternalUrl> | null,
   };
   const { chain, txHash, address } = input;
-  if (!chain) return result;
+  if (!chain) {
+    return result;
+  }
 
   const chainItem = typeof chain === 'string' ? getChain(chain) : chain;
-  if (!chainItem) return result;
+  if (!chainItem) {
+    return result;
+  }
 
   result.canOpen = !!chainItem?.scanLink;
 
-  if (!result.canOpen) return result;
+  if (!result.canOpen) {
+    return result;
+  }
 
   if (txHash) {
     result.openPromise = openExternalUrl(
@@ -483,4 +579,177 @@ export function openTxExternalUrl(input: {
   }
 
   return result;
+}
+
+export function txResultToDisplayTxItems(
+  res: TxHistoryResult | TxAllHistoryResult,
+) {
+  const { cate_dict, project_dict, history_list } = res;
+  const tokenDict =
+    (res as TxAllHistoryResult).token_uuid_dict ||
+    (res as TxHistoryResult).token_dict;
+
+  const displayList: TxDisplayItem[] = history_list
+    .map(item => ({
+      ...item,
+      projectDict: project_dict,
+      cateDict: cate_dict,
+      tokenDict: tokenDict,
+    }))
+    .sort((v1, v2) => v2.time_at - v1.time_at);
+
+  return displayList;
+}
+
+export function txResultToToHistoryDisplayItem(input: {
+  address: string;
+  res: TxHistoryResult | TxAllHistoryResult;
+  pinedQueue: IManageToken[];
+  customTxItemsMap: Record<string, CustomTxItem>;
+}) {
+  const { address, res, pinedQueue, customTxItemsMap } = input;
+  const { cate_dict, project_dict: projectDict, history_list } = res;
+  const tokenDict =
+    (res as TxAllHistoryResult).token_uuid_dict ||
+    (res as TxHistoryResult).token_dict;
+
+  // const pinedQueue = preferenceService.getPinToken();
+  //     const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
+
+  const historyItems = history_list
+    .filter(i => Boolean(i.tx))
+    .map(raw => {
+      const customKey = `${address.toLowerCase()}-${raw.chain}-${raw.id}`;
+      const item = new HistoryItemEntity();
+      HistoryItemEntity.fillEntity(
+        item,
+        address,
+        raw,
+        tokenDict,
+        projectDict,
+        pinedQueue,
+        customTxItemsMap[customKey] || undefined,
+      );
+      return ensureHistoryListItemFromDb(item);
+    });
+
+  return historyItems;
+}
+
+export function prepareTxHistoryDisplayUIData(data: HistoryDisplayItem) {
+  const formatType: HistoryItemCateType = (() => {
+    if (data.historyType === HistoryItemCateType.Swap) {
+      if (
+        data.receives?.[0]?.token?.is_core &&
+        data.sends?.[0]?.token?.is_core
+      ) {
+        return HistoryItemCateType.Swap;
+      } else {
+        return HistoryItemCateType.UnKnown;
+      }
+    }
+    return data.historyType;
+  })();
+
+  const tokenApproveData = (() => {
+    const res: TokenChangeDataItem[] = [];
+
+    if (!data.token_approve?.token_id) {
+      return res;
+    }
+
+    const tokenId = data.token_approve?.token_id || '';
+    const token = data.token_approve?.token;
+    res.push({
+      amount: data.token_approve?.value!,
+      token,
+      token_id: tokenId,
+      type: 'approve',
+    });
+
+    return res;
+  })();
+
+  const formatTitle = (() => {
+    if (data.historyCustomType) {
+      switch (data.historyCustomType) {
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY:
+          return i18next.t('page.transactions.itemTitle.LendingSupply');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_WITHDRAW:
+          return i18next.t('page.transactions.itemTitle.LendingWithdraw');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_BORROW:
+          return i18next.t('page.transactions.itemTitle.LendingBorrow');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY:
+          return i18next.t('page.transactions.itemTitle.LendingRepay');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_ON_COLLATERAL:
+          return i18next.t('page.transactions.itemTitle.LendingOnCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_OFF_COLLATERAL:
+          return i18next.t('page.transactions.itemTitle.LendingOffCollateral');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE:
+          return i18next.t('page.transactions.itemTitle.LendingManageEMode');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_MANAGE_EMODE_DISABLE:
+          return i18next.t(
+            'page.transactions.itemTitle.LendingManageEModeDisable',
+          );
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_DEBT_SWAP:
+          return i18next.t('page.transactions.itemTitle.LendingDebtSwap');
+        case CUSTOM_HISTORY_TITLE_TYPE.LENDING_REPAY_WITH_COLLATERAL:
+          return i18next.t(
+            'page.transactions.itemTitle.LendingRepayWithCollateral',
+          );
+      }
+    }
+
+    switch (formatType) {
+      case HistoryItemCateType.GAS_DEPOSIT:
+        return i18next.t('page.transactions.itemTitle.DepositedGas');
+      case HistoryItemCateType.GAS_RECEIVED:
+        return i18next.t('page.transactions.itemTitle.ReceivedGas');
+
+      case HistoryItemCateType.GAS_WITHDRAW:
+        return i18next.t('page.transactions.itemTitle.WithdrawnGas');
+
+      case HistoryItemCateType.Swap:
+        return i18next.t('page.transactions.itemTitle.Swap');
+
+      case HistoryItemCateType.Send:
+        return i18next.t('page.transactions.itemTitle.Send');
+      case HistoryItemCateType.Recieve:
+        return i18next.t('page.transactions.itemTitle.Recieve');
+      case HistoryItemCateType.Bridge:
+        return i18next.t('page.transactions.itemTitle.Bridge');
+
+      case HistoryItemCateType.Approve:
+        return (
+          i18next.t('page.transactions.itemTitle.Approve') +
+          ' ' +
+          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0]?.token), 6)
+        );
+      case HistoryItemCateType.Revoke:
+        return i18next.t('page.transactions.itemTitle.Revoke', {
+          token: ellipsisOverflowedText(
+            getTokenSymbol(tokenApproveData[0]?.token),
+            6,
+          ),
+        });
+      case HistoryItemCateType.Contract:
+        return i18next.t('page.transactions.itemTitle.Contract');
+      case HistoryItemCateType.Cancel:
+        return i18next.t('page.transactions.itemTitle.Cancel');
+      case HistoryItemCateType.UnKnown:
+        return i18next.t('page.transactions.itemTitle.Default');
+      case HistoryItemCateType.Buy:
+        return i18next.t('page.transactions.itemTitle.Buy');
+      default:
+        return data.tx?.name
+          ? ellipsisOverflowedText(data.tx?.name, 15)
+          : i18next.t('page.transactions.itemTitle.Default');
+    }
+  })();
+
+  return {
+    tokenApproveData,
+    formatTitle,
+    formatType,
+  };
 }

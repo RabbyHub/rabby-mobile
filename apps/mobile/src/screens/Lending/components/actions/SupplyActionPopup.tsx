@@ -1,28 +1,38 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { View } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { PopupDetailProps } from '../../type';
 import { formatAmountValueKMB } from '@/screens/TokenDetail/util';
 import { TokenAmountInput } from './TokenAmountInput';
-import { CHAINS_ENUM } from '@debank/common';
 import SupplyActionOverView from './SupplyActionOverView';
 import {
   calculateHFAfterSupply,
   effectUserAvailable,
 } from '../../utils/hfUtils';
-import { useLendingSummary } from '../../hooks';
+import {
+  useLendingSummary,
+  usePoolDataProviderContract,
+  useSelectedMarket,
+} from '../../hooks';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import BigNumber from 'bignumber.js';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { buildSupplyTx } from '../../poolService';
-import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { buildSupplyTx, optimizedPath } from '../../poolService';
+import {
+  DirectSignBtn,
+  DirectSignBtnMethods,
+} from '@/components2024/DirectSignBtn';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
-import { findChain } from '@/utils/chain';
-import { CustomMarket, marketsData } from '../../config/market';
 import { DirectSignGasInfo } from '@/screens/Bridge/components/BridgeShowMore';
 import { last, noop } from 'lodash';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -37,25 +47,32 @@ import { useTranslation } from 'react-i18next';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
+  LendingReportType,
 } from '@/screens/Transaction/components/type';
 import { transactionHistoryService } from '@/core/services';
 import { useRefreshHistoryId } from '../../hooks';
 import wrapperToken from '../../config/wrapperToken';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { APP_VERSIONS, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apiProvider } from '@/core/apis';
 import { Button } from '@/components2024/Button';
+import { MINI_SIGN_ERROR } from '@/components2024/MiniSignV2/state/SignatureManager';
 import {
-  MINI_SIGN_ERROR,
-  useSignatureStore,
-} from '@/components2024/MiniSignV2/state/SignatureManager';
+  useSignatureStoreOf,
+  SignatureInstanceProvider,
+} from '@/components2024/MiniSignV2';
 import { SUPPLY_UI_SAFE_MARGIN } from '../../utils/constant';
+import { CHAINS_ENUM } from '@debank/common';
+import { ReserveErrorTip } from '../ErrorTip';
+import { stats } from '@/utils/stats';
+import { isZeroAmount } from '../../utils/number';
+import { Text } from '@/components/Typography';
 
 export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   reserve,
   userSummary,
   onClose,
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [needApprove, setNeedApprove] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,25 +83,28 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     forScene: 'Lending',
   });
   const { formattedPoolReservesAndIncentives } = useLendingSummary();
+  const { isMainnet, chainInfo, chainEnum, selectedMarketData } =
+    useSelectedMarket();
+  const { pools } = usePoolDataProviderContract();
   const { t } = useTranslation();
-  const { ctx } = useSignatureStore();
   const canShowDirectSubmit = useMemo(
     () => isAccountSupportMiniApproval(currentAccount?.type || ''),
     [currentAccount?.type],
   );
+  const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
   const isNativeToken = useMemo(() => {
     return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS);
   }, [reserve.underlyingAsset]);
 
   const afterHF = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
             item.underlyingAsset,
-            wrapperToken[reserve.chain].address,
+            wrapperToken?.[reserve.chain]?.address,
           )
         : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
     });
@@ -107,14 +127,14 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   ]);
 
   const afterAvailable = useMemo(() => {
-    if (!amount || amount === '0') {
+    if (!amount || isZeroAmount(amount)) {
       return undefined;
     }
     const targetPool = formattedPoolReservesAndIncentives.find(item => {
       return isSameAddress(reserve.underlyingAsset, API_ETH_MOCK_ADDRESS)
         ? isSameAddress(
             item.underlyingAsset,
-            wrapperToken[reserve.chain].address,
+            wrapperToken?.[reserve.chain]?.address,
           )
         : isSameAddress(item.underlyingAsset, reserve.underlyingAsset);
     });
@@ -142,13 +162,15 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
   // 检查approve额度
   const checkApproveStatus = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount) {
       setNeedApprove(false);
+      return;
+    }
+    if (!selectedMarketData) {
       return;
     }
 
     try {
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -166,7 +188,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       const allowance = await getERC20Allowance(
         chainInfo.serverId,
         reserve.underlyingAsset,
-        marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+        selectedMarketData.addresses.LENDING_POOL,
         currentAccount.address,
         currentAccount,
       );
@@ -186,6 +208,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
   }, [
     amount,
     currentAccount,
+    selectedMarketData,
+    chainInfo,
     reserve.underlyingAsset,
     reserve.reserve.decimals,
     isNativeToken,
@@ -193,15 +217,17 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
   // 构建交易和估算gas
   const buildTransactions = useCallback(async () => {
-    if (!amount || amount === '0' || !currentAccount) {
+    if (!amount || isZeroAmount(amount) || !currentAccount) {
       setSupplyTx(null);
       setApproveTxs(null);
+      return;
+    }
+    if (!selectedMarketData || !pools) {
       return;
     }
 
     try {
       setIsLoading(true);
-      const chainInfo = findChain({ serverId: 'eth' });
       if (!chainInfo) {
         return;
       }
@@ -218,7 +244,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         allowance = await getERC20Allowance(
           chainInfo.serverId,
           reserve.underlyingAsset,
-          marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          selectedMarketData.addresses.LENDING_POOL,
           currentAccount.address,
           currentAccount,
         );
@@ -235,12 +261,12 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       if (actualNeedApprove && !isNativeToken) {
         const requiredAmount = new BigNumber(amount)
           .multipliedBy(10 ** reserve.reserve.decimals)
-          .toString();
+          .toFixed();
 
         // 检查是否需要两步approve（针对以太坊上的USDT）
         let shouldTwoStepApprove = false;
         if (
-          chainInfo?.enum === CHAINS_ENUM.ETH &&
+          isMainnet &&
           isSameAddress(reserve.underlyingAsset, ETH_USDT_CONTRACT) &&
           Number(allowance) !== 0 &&
           !new BigNumber(allowance || '0').gte(requiredAmount)
@@ -253,8 +279,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           const zeroApproveResult = await approveToken({
             chainServerId: chainInfo.serverId,
             id: reserve.underlyingAsset,
-            spender:
-              marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+            spender: selectedMarketData.addresses.LENDING_POOL,
             amount: 0,
             account: currentAccount,
             isBuild: true,
@@ -274,8 +299,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
         const approveResult = await approveToken({
           chainServerId: chainInfo.serverId,
           id: reserve.underlyingAsset,
-          spender:
-            marketsData[CustomMarket.proto_mainnet_v3].addresses.LENDING_POOL,
+          spender: selectedMarketData.addresses.LENDING_POOL,
           amount: requiredAmount,
           account: currentAccount,
           isBuild: true,
@@ -294,9 +318,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
 
       // 构建supply交易
       const supplyResult = await buildSupplyTx({
+        poolBundle: pools.poolBundle,
         amount: parseUnits(amount, reserve.reserve.decimals).toString(),
         address: currentAccount.address,
         reserve: reserve.underlyingAsset,
+        useOptimizedPath: optimizedPath(selectedMarketData.chainId),
       });
       delete supplyResult.gasLimit;
 
@@ -309,15 +335,22 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       setSupplyTx(formattedSupplyResult);
     } catch (error) {
       console.error('Build transactions error:', error);
+      toast.error('something error');
+      setSupplyTx(null);
+      setApproveTxs(null);
     } finally {
       setIsLoading(false);
     }
   }, [
     amount,
     currentAccount,
+    selectedMarketData,
+    pools,
+    chainInfo,
     reserve.underlyingAsset,
     reserve.reserve.decimals,
     isNativeToken,
+    isMainnet,
   ]);
 
   const supplyAmount = useMemo(() => {
@@ -325,7 +358,10 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     const poolAmount = BigNumber(reserve.reserve.supplyCap)
       .minus(BigNumber(reserve.reserve.totalLiquidity))
       .multipliedBy(SUPPLY_UI_SAFE_MARGIN);
-    const miniAmount = myAmount.gte(poolAmount) ? poolAmount : myAmount;
+    const formattedPoolAmount = poolAmount.lt(0) ? BigNumber(0) : poolAmount;
+    const miniAmount = myAmount.gte(formattedPoolAmount)
+      ? formattedPoolAmount
+      : myAmount;
     const usdValue = miniAmount
       .multipliedBy(
         BigNumber(
@@ -334,6 +370,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       )
       .toString();
     return {
+      isLteZero: miniAmount.lte(0),
       amount: miniAmount.toString(),
       usdValue,
     };
@@ -355,7 +392,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     return list as Tx[];
   }, [approveTxs, supplyTx]);
 
-  const { openDirect, prefetch: prefetchMiniSigner } = useMiniSigner({
+  const {
+    openDirect,
+    prefetch: prefetchMiniSigner,
+    instance: miniSignInstance,
+  } = useMiniSigner({
     account: currentAccount!,
     chainServerId: txsForMiniApproval.length
       ? txsForMiniApproval?.[0]?.chainId + ''
@@ -363,10 +404,12 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     autoResetGasStoreOnChainChange: true,
   });
 
+  const { ctx } = useSignatureStoreOf(miniSignInstance);
+
   // 执行supply交易
   const handleSupply = useCallback(
     async (forceFullSign?: boolean) => {
-      if (!currentAccount || !supplyTx || !amount || amount === '0') {
+      if (!currentAccount || !supplyTx || !amount || isZeroAmount(amount)) {
         return;
       }
 
@@ -390,12 +433,11 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
               setAmount(undefined);
               onClose?.();
-              return;
             }
             if (error === MINI_SIGN_ERROR.PREFETCH_FAILURE) {
               handleSupply(true);
-              return;
             }
+            return;
           }
         } else {
           for (const tx of txsForMiniApproval) {
@@ -418,7 +460,7 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
           }
         }
         const txId = last(results);
-        if (txId) {
+        if (txId && txsForMiniApproval[0]?.chainId) {
           transactionHistoryService.setCustomTxItem(
             currentAccount.address,
             txsForMiniApproval[0].chainId,
@@ -426,6 +468,26 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
             { actionType: CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY },
           );
         }
+
+        const usdValue = new BigNumber(amount || '0')
+          .multipliedBy(
+            BigNumber(
+              reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+            ),
+          )
+          .toString();
+
+        stats.report('aaveInternalTx', {
+          tx_type: LendingReportType.Supply,
+          chain: chainInfo?.serverId || '',
+          tx_id: txId || '',
+          user_addr: currentAccount.address || '',
+          address_type: currentAccount.type || '',
+          usd_value: usdValue,
+          create_at: Date.now(),
+          app_version: APP_VERSIONS.fromNative || '0',
+        });
+
         refresh();
         toast.success(
           `${t('page.Lending.supplyDetail.actions')} ${t(
@@ -445,6 +507,8 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
       amount,
       txsForMiniApproval,
       canShowDirectSubmit,
+      reserve.reserve.formattedPriceInMarketReferenceCurrency,
+      chainInfo?.serverId,
       refresh,
       t,
       onClose,
@@ -474,104 +538,123 @@ export const SupplyActionPopup: React.FC<PopupDetailProps> = ({
     prefetchMiniSigner,
   ]);
 
+  const emptyAmount = !supplyAmount.amount || supplyAmount.amount === '0';
+
   return (
-    <AutoLockView as="BottomSheetView" style={styles.container}>
-      <Text style={styles.title}>
-        {t('page.Lending.supplyDetail.actions')} {reserve.reserve.symbol}
-      </Text>
-      <View style={styles.amountHeader}>
-        <Text style={styles.amountHeaderTitle}>
-          {t('page.Lending.popup.amount')}
+    <SignatureInstanceProvider instance={miniSignInstance}>
+      <AutoLockView as="View" style={styles.container}>
+        <Text style={styles.title}>
+          {t('page.Lending.supplyDetail.actions')} {reserve.reserve.symbol}
         </Text>
-        <Text style={styles.amountValueDescription}>{`${formatTokenAmount(
-          supplyAmount.amount || '0',
-        )}${reserve.reserve.symbol}($${formatAmountValueKMB(
-          supplyAmount.usdValue || '0',
-        )}) ${t('page.Lending.popup.available')}`}</Text>
-      </View>
-      <TokenAmountInput
-        value={amount}
-        onChange={setAmount}
-        symbol={reserve.reserve.symbol}
-        handleClickMaxButton={() => {
-          setAmount(supplyAmount.amount || '0');
-        }}
-        tokenAmount={Number(supplyAmount.amount || '0')}
-        price={Number(
-          reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
-        )}
-        style={styles.amountInput}
-        chain={CHAINS_ENUM.ETH}
-      />
-      <BottomSheetScrollView
-        style={styles.bottomSheetScrollView}
-        contentContainerStyle={styles.transactionContainer}>
-        <SupplyActionOverView
-          reserve={reserve}
-          userSummary={userSummary}
-          afterHF={afterHF}
-          afterAvailable={afterAvailable}
+        <View style={styles.amountHeader}>
+          <Text style={styles.amountHeaderTitle}>
+            {t('page.Lending.popup.amount')}
+          </Text>
+          <Text
+            style={[
+              styles.amountValueDescription,
+              emptyAmount && styles.amountValueDescriptionDanger,
+            ]}>{`${formatTokenAmount(supplyAmount.amount || '0')}${
+            reserve.reserve.symbol
+          }($${
+            supplyAmount.isLteZero
+              ? '0'
+              : formatAmountValueKMB(supplyAmount.usdValue || '0')
+          }) ${t('page.Lending.popup.available')}`}</Text>
+        </View>
+        <TokenAmountInput
+          value={amount}
+          onChange={v => {
+            if (directSignBtnRef.current?.isAuthInProgress()) return;
+            setAmount(v);
+          }}
+          symbol={reserve.reserve.symbol}
+          handleClickMaxButton={() => {
+            setAmount(supplyAmount.amount || '0');
+          }}
+          tokenAmount={Number(supplyAmount.amount || '0')}
+          price={Number(
+            reserve.reserve.formattedPriceInMarketReferenceCurrency || '0',
+          )}
+          style={styles.amountInput}
+          chain={chainEnum || CHAINS_ENUM.ETH}
         />
+        <BottomSheetScrollView
+          style={styles.bottomSheetScrollView}
+          contentContainerStyle={styles.transactionContainer}>
+          <SupplyActionOverView
+            reserve={reserve}
+            userSummary={userSummary}
+            afterHF={afterHF}
+            afterAvailable={afterAvailable}
+          />
 
-        {!!amount && amount !== '0' && canShowDirectSubmit && (
-          <View style={styles.gasPreContainer}>
-            <DirectSignGasInfo
-              supportDirectSign={true}
+          {!!amount && !isZeroAmount(amount) && canShowDirectSubmit && (
+            <View style={styles.gasPreContainer}>
+              <DirectSignGasInfo
+                supportDirectSign={true}
+                loading={false}
+                openShowMore={noop}
+                chainServeId={chainInfo?.serverId || ''}
+                textColor={colors2024['neutral-title-1']}
+              />
+            </View>
+          )}
+
+          <ReserveErrorTip reserve={reserve} style={{ marginTop: 30 }} />
+        </BottomSheetScrollView>
+
+        <View style={styles.buttonContainer}>
+          {canShowDirectSubmit ? (
+            <DirectSignBtn
+              ref={directSignBtnRef}
               loading={isLoading}
-              openShowMore={noop}
-              chainServeId="eth"
+              loadingType="circle"
+              key={`${amount}-${needApprove}`}
+              showTextOnLoading
+              wrapperStyle={styles.directSignBtn}
+              authTitle={t('page.Lending.supplyDetail.actions')}
+              title={`${t('page.Lending.supplyDetail.actions')} ${
+                reserve.reserve.symbol
+              }`}
+              onFinished={() => handleSupply()}
+              disabled={
+                !amount ||
+                isZeroAmount(amount) ||
+                !supplyTx ||
+                isLoading ||
+                !currentAccount ||
+                !!ctx?.disabledProcess
+              }
+              type="aave"
+              iconColor={
+                isLight ? colors2024['neutral-InvertHighlight'] : '#192945'
+              }
+              syncUnlockTime
+              account={currentAccount}
+              showHardWalletProcess
             />
-          </View>
-        )}
-      </BottomSheetScrollView>
-
-      <View style={styles.buttonContainer}>
-        {canShowDirectSubmit ? (
-          <DirectSignBtn
-            loading={isLoading}
-            loadingType="circle"
-            key={`${amount}-${needApprove}`}
-            showTextOnLoading
-            wrapperStyle={styles.directSignBtn}
-            authTitle={t('page.Lending.supplyDetail.actions')}
-            title={`${t('page.Lending.supplyDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
-            onFinished={() => handleSupply()}
-            disabled={
-              !amount ||
-              amount === '0' ||
-              !supplyTx ||
-              isLoading ||
-              !currentAccount ||
-              !!ctx?.disabledProcess
-            }
-            type="primary"
-            syncUnlockTime
-            account={currentAccount}
-            showHardWalletProcess
-          />
-        ) : (
-          <Button
-            loadingType="circle"
-            showTextOnLoading
-            containerStyle={styles.fullWidthButton}
-            onPress={() => handleSupply()}
-            title={`${t('page.Lending.supplyDetail.actions')} ${
-              reserve.reserve.symbol
-            }`}
-            loading={isLoading}
-            disabled={
-              !amount ||
-              amount === '0' ||
-              !supplyTx ||
-              isLoading ||
-              !currentAccount
-            }
-          />
-        )}
-      </View>
-    </AutoLockView>
+          ) : (
+            <Button
+              type="aave"
+              loadingType="circle"
+              showTextOnLoading
+              containerStyle={styles.fullWidthButton}
+              onPress={() => handleSupply()}
+              title={t('page.Lending.supplyDetail.actions')}
+              loading={isLoading}
+              disabled={
+                !amount ||
+                isZeroAmount(amount) ||
+                !supplyTx ||
+                isLoading ||
+                !currentAccount
+              }
+            />
+          )}
+        </View>
+      </AutoLockView>
+    </SignatureInstanceProvider>
   );
 };
 const getStyles = createGetStyles2024(ctx => ({
@@ -605,6 +688,9 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+  },
+  amountValueDescriptionDanger: {
+    color: ctx.colors2024['red-default'],
   },
   amountInput: {
     marginTop: 12,

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   TouchableOpacityProps,
   Animated,
@@ -16,6 +15,7 @@ import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { WarningText } from './WarningText';
+import { Text } from '@/components/Typography';
 
 export const BRIDGE_SLIPPAGE = ['0.5', '1'];
 
@@ -50,6 +50,27 @@ const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
       style={[styles.item, props.active && styles.itemActive, props.style]}
     />
   );
+};
+
+export const useSlippageTooLowOrTooHigh = (params: {
+  type: 'swap' | 'bridge';
+  value?: string;
+}) => {
+  const { type, value } = params;
+  const [minimumSlippage, maximumSlippage] = useMemo(() => {
+    if (type === 'swap') {
+      return [0.1, 10];
+    }
+    return [0.2, 3];
+  }, [type]);
+
+  const [isLow, isHigh] = useMemo(() => {
+    return [
+      value?.trim() !== '' && Number(value || 0) < minimumSlippage,
+      value?.trim() !== '' && Number(value || 0) > maximumSlippage,
+    ];
+  }, [maximumSlippage, minimumSlippage, value]);
+  return isLow || isHigh;
 };
 
 export const BridgeSlippage = (props: SlippageProps) => {

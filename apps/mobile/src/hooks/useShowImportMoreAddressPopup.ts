@@ -12,7 +12,7 @@ import { KeyringAccountWithAlias } from './account';
 
 export const useShowImportMoreAddressPopup = () => {
   const modalRef =
-    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>(undefined);
 
   const showImportMorePopup = useMemoizedFn(
     (params: {
@@ -21,7 +21,7 @@ export const useShowImportMoreAddressPopup = () => {
       passphrase?: string;
       keyringId?: number;
       account?: KeyringAccountWithAlias;
-      brand: string;
+      brandName: string;
     }) => {
       Keyboard.dismiss();
       if (modalRef.current) {

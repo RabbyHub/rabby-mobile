@@ -4,8 +4,9 @@ import {
   BottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import React, { forwardRef, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, TextStyle } from 'react-native';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import type { Ref } from 'react';
+import { StyleSheet, TextStyle } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
@@ -15,6 +16,8 @@ import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
+import { perfEvents } from '@/core/utils/perf';
+import { Text } from '@/components/Typography';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -83,12 +86,13 @@ export function useAutoLockBottomSheetModalOnChange(
   return { handleChange };
 }
 
-export const AppBottomSheetModal = forwardRef<
-  BottomSheetModal,
-  React.ComponentProps<typeof BottomSheetModal> & {
-    backdropProps?: Partial<BottomSheetDefaultBackdropProps>;
-  }
->(({ onChange, ...props }, ref) => {
+export const AppBottomSheetModal = ({
+  onChange,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BottomSheetModal> & {
+  backdropProps?: Partial<BottomSheetDefaultBackdropProps>;
+} & { ref?: Ref<BottomSheetModal> }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
   const backgroundStyle = useMemo(
@@ -117,6 +121,21 @@ export const AppBottomSheetModal = forwardRef<
 
   const { handleChange } = useAutoLockBottomSheetModalOnChange(onChange);
 
+  useEffect(() => {
+    const sub = perfEvents.subscribe(
+      'GLOBAL_CLEAR_ALL_COVERED_COMPONENTS',
+      () => {
+        if (ref && 'current' in ref) {
+          ref.current?.dismiss();
+        }
+      },
+    );
+
+    return () => {
+      sub.remove();
+    };
+  }, [ref]);
+
   return (
     <BottomSheetModal
       backdropComponent={renderBackdrop}
@@ -135,14 +154,16 @@ export const AppBottomSheetModal = forwardRef<
       ]}
     />
   );
-});
+};
 
 export type AppBottomSheetModal = BottomSheetModal;
 
-export const OpenedDappBottomSheetModal = forwardRef<
-  BottomSheetModal,
-  Omit<BottomSheetModalProps, 'handleComponent'>
->((props, ref) => {
+export const OpenedDappBottomSheetModal = ({
+  ref,
+  ...props
+}: Omit<BottomSheetModalProps, 'handleComponent'> & {
+  ref?: Ref<BottomSheetModal>;
+}) => {
   return (
     <BottomSheetModal
       {...props}
@@ -153,7 +174,7 @@ export const OpenedDappBottomSheetModal = forwardRef<
       ref={ref}
     />
   );
-});
+};
 
 export type OpenedDappBottomSheetModal = BottomSheetModal;
 
@@ -176,17 +197,21 @@ const renderOpenedDappNavCardBackdrop = (props: BottomSheetBackdropProps) => {
 };
 
 const SYS_BOTTOM_OFFSET = IS_IOS ? 12 : 8;
-export const DappNavCardBottomSheetModal = forwardRef<
-  AppBottomSheetModal,
-  Omit<React.ComponentProps<typeof AppBottomSheetModal>, 'snapPoints'> & {
-    bottomNavH: number;
-    children?: React.ReactNode;
-    /**
-     * @default false
-     */
-    keepAliveOnAppLocked?: boolean;
-  }
->(({ children, bottomNavH, keepAliveOnAppLocked = false, ...props }, ref) => {
+export const DappNavCardBottomSheetModal = ({
+  children,
+  bottomNavH,
+  keepAliveOnAppLocked = false,
+  ref,
+  ...props
+}: Omit<React.ComponentProps<typeof AppBottomSheetModal>, 'snapPoints'> & {
+  bottomNavH: number;
+  children?: React.ReactNode;
+  /**
+   * @default false
+   */
+  keepAliveOnAppLocked?: boolean;
+  ref?: Ref<AppBottomSheetModal>;
+}) => {
   const { safeTop } = useSafeSizes();
   const { styles } = useThemeStyles(getDappNavCardBottomSheetStyles);
 
@@ -201,8 +226,9 @@ export const DappNavCardBottomSheetModal = forwardRef<
 
     const dispose = apisLock.subscribeAppLock(() => {
       if (keepAliveOnAppLocked) return;
-      const refI = ref as Exclude<typeof ref, Function>;
-      refI?.current?.dismiss();
+      if (ref && 'current' in ref) {
+        ref.current?.dismiss();
+      }
     });
 
     return dispose;
@@ -232,7 +258,7 @@ export const DappNavCardBottomSheetModal = forwardRef<
       </AutoLockView>
     </AppBottomSheetModal>
   );
-});
+};
 
 const getDappNavCardBottomSheetStyles = createGetStyles(colors => {
   return {

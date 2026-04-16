@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useRef, useState } from 'react';
-import { TextInput } from 'react-native';
+import { TextInput } from '@/components/Typography';
 
 /**
  * @see https://github.com/react-navigation/react-navigation/issues/11626#issuecomment-1823588248
@@ -8,7 +8,7 @@ import { TextInput } from 'react-native';
 export default function useAutoFocusInput(disableAutoFocus = false) {
   const [isInputInitialized, setIsInputInitialized] = useState(false);
 
-  const inputRef = useRef<TextInput>();
+  const inputRef = useRef<TextInput>(undefined);
   const navigation = useNavigation();
 
   useEffect(() => {

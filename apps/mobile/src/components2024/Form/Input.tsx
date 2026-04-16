@@ -1,10 +1,8 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, type Ref } from 'react';
 import {
   View,
-  TextInput,
   TextInputProps,
   StyleSheet,
-  Text,
   StyleProp,
   ViewStyle,
   TextStyle,
@@ -26,6 +24,7 @@ import {
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { Pressable } from 'react-native-gesture-handler';
+import { TextInput, Text } from '@/components/Typography';
 
 const RcIconClose = makeThemeIconFromCC(RcIconCloseCircleCC, 'neutral-foot');
 
@@ -128,243 +127,240 @@ type RenderCtx = {
   wrapperStyle: StyleProp<ViewStyle>;
   iconStyle: StyleProp<ViewStyle>;
 };
-const NextInputComponent = React.forwardRef<
-  TextInput,
-  RNViewProps & {
-    as?: InputType;
-    disableNestedTouchEventOnAndroid?: boolean;
-    containerStyle?: React.ComponentProps<typeof View>['style'];
-    fieldName?: string;
-    fieldNameStyle?: React.ComponentProps<typeof Text>['style'];
-    inputProps?: Omit<TextInputProps | BottomSheetTextInputProps, 'onChange'>;
-    inputStyle?: React.ComponentProps<typeof TextInput>['style'];
-    clearable?: boolean;
-    clearIcon?:
-      | React.ReactNode
-      | ((
-          ctx: RenderCtx & {
-            clearable?: boolean;
-            onPressClear?: React.ComponentProps<
-              typeof TouchableOpacity
-            >['onPress'];
-          },
-        ) => React.ReactNode);
-    customIcon?:
-      | React.ReactNode
-      | ((
-          ctx: RenderCtx & {
-            onPressCustom?: React.ComponentProps<
-              typeof TouchableOpacity
-            >['onPress'];
-          },
-        ) => React.ReactNode);
-    onPressCustom?: React.ComponentProps<typeof TouchableOpacity>['onPress'];
-    hasError?: boolean;
-    tipText?: string;
-    tipIcon?: React.ReactNode;
-    disableFocusingStyle?: boolean;
-    fieldErrorContainerStyle?: StyleProp<ViewStyle>;
-    fieldErrorTextStyle?: StyleProp<TextStyle>;
-  }
->(
-  (
-    {
-      as: asProp,
-      disableNestedTouchEventOnAndroid = false,
-      fieldName,
-      containerStyle,
-      inputProps,
-      inputStyle,
-      fieldNameStyle,
-      clearable,
-      clearIcon,
-      customIcon,
-      onPressCustom,
-      tipText,
-      tipIcon,
-      disableFocusingStyle = false,
-      fieldErrorContainerStyle,
-      fieldErrorTextStyle,
-      hasError = false,
-      ...viewProps
+const NextInputComponent = ({
+  ref,
+  as: asProp,
+  disableNestedTouchEventOnAndroid = false,
+  fieldName,
+  containerStyle,
+  inputProps,
+  inputStyle,
+  fieldNameStyle,
+  clearable,
+  clearIcon,
+  customIcon,
+  onPressCustom,
+  tipText,
+  tipIcon,
+  disableFocusingStyle = false,
+  fieldErrorContainerStyle,
+  fieldErrorTextStyle,
+  hasError = false,
+  ...viewProps
+}: RNViewProps & {
+  ref?: Ref<TextInput>;
+  as?: InputType;
+  disableNestedTouchEventOnAndroid?: boolean;
+  containerStyle?: React.ComponentProps<typeof View>['style'];
+  fieldName?: string;
+  fieldNameStyle?: React.ComponentProps<typeof Text>['style'];
+  inputProps?: Omit<TextInputProps | BottomSheetTextInputProps, 'onChange'>;
+  inputStyle?: React.ComponentProps<typeof TextInput>['style'];
+  clearable?: boolean;
+  clearIcon?:
+    | React.ReactNode
+    | ((
+        ctx: RenderCtx & {
+          clearable?: boolean;
+          onPressClear?: React.ComponentProps<
+            typeof TouchableOpacity
+          >['onPress'];
+        },
+      ) => React.ReactNode);
+  customIcon?:
+    | React.ReactNode
+    | ((
+        ctx: RenderCtx & {
+          onPressCustom?: React.ComponentProps<
+            typeof TouchableOpacity
+          >['onPress'];
+        },
+      ) => React.ReactNode);
+  onPressCustom?: React.ComponentProps<typeof TouchableOpacity>['onPress'];
+  hasError?: boolean;
+  tipText?: string;
+  tipIcon?: React.ReactNode;
+  disableFocusingStyle?: boolean;
+  fieldErrorContainerStyle?: StyleProp<ViewStyle>;
+  fieldErrorTextStyle?: StyleProp<TextStyle>;
+}) => {
+  const { styles } = useTheme2024({ getStyle: getFormInputStyles });
+
+  const JSXComponent = useMemo(() => {
+    switch (asProp) {
+      default:
+      case 'TextInput':
+        return TextInput;
+      case 'BottomSheetTextInput':
+        return BottomSheetTextInput;
+    }
+  }, [asProp]);
+
+  const [isFocusing, setIsFocusing] = React.useState(false);
+  const onFocus = useCallback<TextInputProps['onFocus'] & object>(
+    evt => {
+      setIsFocusing(true);
+      inputProps?.onFocus?.(evt);
     },
-    ref,
-  ) => {
-    const { styles } = useTheme2024({ getStyle: getFormInputStyles });
+    [inputProps],
+  );
+  const onBlur = useCallback<TextInputProps['onBlur'] & object>(
+    evt => {
+      setIsFocusing(false);
+      inputProps?.onBlur?.(evt);
+    },
+    [inputProps],
+  );
 
-    const JSXComponent = useMemo(() => {
-      switch (asProp) {
-        default:
-        case 'TextInput':
-          return TextInput;
-        case 'BottomSheetTextInput':
-          return BottomSheetTextInput;
-      }
-    }, [asProp]);
-
-    const [isFocusing, setIsFocusing] = React.useState(false);
-    const onFocus = useCallback<TextInputProps['onFocus'] & object>(
-      evt => {
-        setIsFocusing(true);
-        inputProps?.onFocus?.(evt);
-      },
-      [inputProps],
-    );
-    const onBlur = useCallback<TextInputProps['onBlur'] & object>(
-      evt => {
-        setIsFocusing(false);
-        inputProps?.onBlur?.(evt);
-      },
-      [inputProps],
-    );
-
-    const innerRef = React.useRef<TextInput>(null);
-    const inputRef = (ref as React.RefObject<TextInput>) || innerRef;
-    const onPressClear = useCallback<
-      React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
-    >(
-      evt => {
-        if (clearable) {
-          evt?.stopPropagation?.();
-          if (typeof inputRef !== 'function') {
-            inputRef?.current?.clear();
-          }
-
-          inputProps?.onChangeText?.('');
+  const innerRef = useRef<TextInput>(null);
+  const inputRef = (ref as React.RefObject<TextInput | null>) || innerRef;
+  const onPressClear = useCallback<
+    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
+  >(
+    evt => {
+      if (clearable) {
+        evt?.stopPropagation?.();
+        if (typeof inputRef !== 'function') {
+          inputRef?.current?.clear();
         }
-      },
-      [inputRef, clearable, inputProps],
-    );
 
-    const formattedClearIcon = useMemo(() => {
-      const clearWrapperStyle = StyleSheet.flatten([styles.rightIconWrapper]);
-      const clearIconStyle = StyleSheet.flatten([styles.closeIcon]);
-
-      if (typeof clearIcon === 'function') {
-        return clearIcon({
-          clearable,
-          iconStyle: clearIconStyle,
-          wrapperStyle: clearWrapperStyle,
-          onPressClear,
-        });
+        inputProps?.onChangeText?.('');
       }
-      return (
-        <TouchableOpacity
-          disabled={!clearable}
-          style={clearWrapperStyle}
-          onPress={onPressClear}>
-          <RcIconClose style={clearIconStyle} />
-        </TouchableOpacity>
-      );
-    }, [styles, clearable, clearIcon, onPressClear]);
+    },
+    [inputRef, clearable, inputProps],
+  );
 
-    const _onPressCustom = useCallback<
-      React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
-    >(
-      evt => {
-        onPressCustom?.(evt);
-      },
-      [onPressCustom],
-    );
+  const formattedClearIcon = useMemo(() => {
+    const clearWrapperStyle = StyleSheet.flatten([styles.rightIconWrapper]);
+    const clearIconStyle = StyleSheet.flatten([styles.closeIcon]);
 
-    const formmatedCustomIcon = useMemo(() => {
-      if (!customIcon) {
-        return null;
-      }
-
-      const iconWrapperStyle = StyleSheet.flatten([styles.rightIconWrapper]);
-      const iconStyle = StyleSheet.flatten([styles.closeIcon]);
-
-      if (typeof customIcon === 'function') {
-        return customIcon({
-          iconStyle,
-          wrapperStyle: iconWrapperStyle,
-          onPressCustom: _onPressCustom,
-        });
-      }
-      return customIcon;
-    }, [styles, customIcon, _onPressCustom]);
-
-    const hasCustomIcon = !!formattedClearIcon || !!formmatedCustomIcon;
-
-    const needPatchTouchEvent = isAndroid && disableNestedTouchEventOnAndroid;
-    const WrapperComp = needPatchTouchEvent ? Pressable : React.Fragment;
-
+    if (typeof clearIcon === 'function') {
+      return clearIcon({
+        clearable,
+        iconStyle: clearIconStyle,
+        wrapperStyle: clearWrapperStyle,
+        onPressClear,
+      });
+    }
     return (
-      <WrapperComp
-        onPress={() => {
+      <TouchableOpacity
+        disabled={!clearable}
+        style={clearWrapperStyle}
+        onPress={onPressClear}>
+        <RcIconClose style={clearIconStyle} />
+      </TouchableOpacity>
+    );
+  }, [styles, clearable, clearIcon, onPressClear]);
+
+  const _onPressCustom = useCallback<
+    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
+  >(
+    evt => {
+      onPressCustom?.(evt);
+    },
+    [onPressCustom],
+  );
+
+  const formmatedCustomIcon = useMemo(() => {
+    if (!customIcon) {
+      return null;
+    }
+
+    const iconWrapperStyle = StyleSheet.flatten([styles.rightIconWrapper]);
+    const iconStyle = StyleSheet.flatten([styles.closeIcon]);
+
+    if (typeof customIcon === 'function') {
+      return customIcon({
+        iconStyle,
+        wrapperStyle: iconWrapperStyle,
+        onPressCustom: _onPressCustom,
+      });
+    }
+    return customIcon;
+  }, [styles, customIcon, _onPressCustom]);
+
+  const hasCustomIcon = !!formattedClearIcon || !!formmatedCustomIcon;
+
+  const needPatchTouchEvent = isAndroid && disableNestedTouchEventOnAndroid;
+  const WrapperComp = needPatchTouchEvent ? Pressable : React.Fragment;
+
+  return (
+    <WrapperComp
+      {...(WrapperComp !== React.Fragment && {
+        onPress: () => {
           if (!Keyboard.isVisible()) {
             inputRef.current?.blur();
           }
           inputRef.current?.focus();
-        }}>
-        <View
-          {...viewProps}
-          style={StyleSheet.flatten([
-            styles.inputContainer,
-            hasCustomIcon && styles.inputContainerWithIcon,
-            hasError && styles.errorInputContainer,
-            !disableFocusingStyle &&
-              isFocusing &&
-              !hasError &&
-              styles.inputContainerFocusing,
-            containerStyle,
-            !!fieldName && styles.inputContainerWithFieldName,
-            viewProps?.style,
-          ])}>
-          {fieldName && (
-            <Text
-              style={StyleSheet.flatten([styles.fieldName, fieldNameStyle])}>
-              {fieldName}
-            </Text>
-          )}
-          <JSXComponent
-            {...inputProps}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            ref={inputRef as any}
-            style={StyleSheet.flatten([
-              styles.input,
-              inputStyle,
-              inputProps?.style,
-              !!fieldName && styles.inputWithFieldName,
-            ])}
-          />
-          {formmatedCustomIcon
-            ? formmatedCustomIcon
-            : clearable && inputProps?.value && (formattedClearIcon || null)}
-        </View>
-        {tipText && (
-          <View
-            style={StyleSheet.flatten([
-              styles.formFieldTipTextContainer,
-              fieldErrorContainerStyle,
-            ])}>
-            <Text
-              style={StyleSheet.flatten([
-                styles.formFieldTipText,
-                hasError && styles.formFieldErrorText,
-                fieldErrorTextStyle,
-              ])}>
-              {tipText}
-            </Text>
-            {tipIcon}
-          </View>
+        },
+      })}>
+      <View
+        {...viewProps}
+        style={StyleSheet.flatten([
+          styles.inputContainer,
+          hasCustomIcon && styles.inputContainerWithIcon,
+          hasError && styles.errorInputContainer,
+          !disableFocusingStyle &&
+            isFocusing &&
+            !hasError &&
+            styles.inputContainerFocusing,
+          containerStyle,
+          !!fieldName && styles.inputContainerWithFieldName,
+          viewProps?.style,
+        ])}>
+        {fieldName && (
+          <Text style={StyleSheet.flatten([styles.fieldName, fieldNameStyle])}>
+            {fieldName}
+          </Text>
         )}
-      </WrapperComp>
-    );
-  },
-);
+        <JSXComponent
+          {...inputProps}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          ref={inputRef as any}
+          style={StyleSheet.flatten([
+            styles.input,
+            inputStyle,
+            inputProps?.style,
+            !!fieldName && styles.inputWithFieldName,
+          ])}
+        />
+        {formmatedCustomIcon
+          ? formmatedCustomIcon
+          : clearable && inputProps?.value && (formattedClearIcon || null)}
+      </View>
+      {tipText && (
+        <View
+          style={StyleSheet.flatten([
+            styles.formFieldTipTextContainer,
+            fieldErrorContainerStyle,
+          ])}>
+          <Text
+            style={StyleSheet.flatten([
+              styles.formFieldTipText,
+              hasError && styles.formFieldErrorText,
+              fieldErrorTextStyle,
+            ])}>
+            {tipText}
+          </Text>
+          {tipIcon}
+        </View>
+      )}
+    </WrapperComp>
+  );
+};
 
 export type NextInputProps = React.ComponentProps<typeof NextInputComponent>;
 
-const PasswordInput = React.forwardRef<
-  TextInput,
-  NextInputProps & {
-    initialPasswordVisible?: boolean;
-    iconColor?: string;
-  }
->(({ initialPasswordVisible = false, ...props }, ref) => {
+const PasswordInput = ({
+  ref,
+  initialPasswordVisible = false,
+  ...props
+}: NextInputProps & {
+  ref?: Ref<TextInput>;
+  initialPasswordVisible?: boolean;
+  iconColor?: string;
+}) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getPasswordInputStyles,
   });
@@ -379,7 +375,7 @@ const PasswordInput = React.forwardRef<
   const customIconProp = useMemo(() => {
     return (
       props.customIcon ||
-      ((ctx => (
+      ((ctx: RenderCtx) => (
         <TouchableView
           style={ctx.wrapperStyle}
           onPress={() => {
@@ -397,7 +393,7 @@ const PasswordInput = React.forwardRef<
             />
           )}
         </TouchableView>
-      )) as React.FC<RenderCtx>)
+      ))
     );
   }, [props.customIcon, props.iconColor, passwordVisible, colors2024]);
 
@@ -417,7 +413,7 @@ const PasswordInput = React.forwardRef<
       customIcon={customIconProp}
     />
   );
-});
+};
 
 const getPasswordInputStyles = createGetStyles2024(ctx => {
   return {
@@ -429,10 +425,12 @@ const getPasswordInputStyles = createGetStyles2024(ctx => {
   };
 });
 
-function TextAreaInput(
-  props: Omit<React.ComponentProps<typeof NextInputComponent>, 'fieldName'>,
-  ref: React.ForwardedRef<TextInput>,
-) {
+function TextAreaInput({
+  ref,
+  ...props
+}: Omit<React.ComponentProps<typeof NextInputComponent>, 'fieldName'> & {
+  ref?: Ref<TextInput>;
+}) {
   const { styles } = useTheme2024({ getStyle: getTextAreaInputStyles });
 
   const customIconProp = useMemo(() => {
@@ -470,11 +468,9 @@ function TextAreaInput(
   );
 }
 
-const ForwardedTextAreaInput = React.forwardRef(TextAreaInput);
-
 export const NextInput = Object.assign(NextInputComponent, {
   Password: PasswordInput,
-  TextArea: ForwardedTextAreaInput,
+  TextArea: TextAreaInput,
 });
 
 const getTextAreaInputStyles = createGetStyles2024(ctx => {

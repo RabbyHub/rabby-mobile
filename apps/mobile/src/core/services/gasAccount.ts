@@ -4,6 +4,7 @@ import createPersistStore, {
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { Account } from './preference';
 import { openapi } from '../request';
+import dayjs from 'dayjs';
 
 const CACHE_VALIDITY_PERIOD = 60 * 60 * 1000;
 
@@ -31,6 +32,12 @@ export type GasAccountEligibilityCache = {
   };
 };
 
+export type GasAccountRuntimeAccount = {
+  address: string;
+  type: string;
+  brandName: string;
+};
+
 export type GasAccountServiceStore = {
   accountId?: string;
   sig?: string;
@@ -45,6 +52,28 @@ export type GasAccountServiceStore = {
   eligibilityCache: GasAccountEligibilityCache;
   lastEligibilityCheckTimestamp?: number;
   currentEligibleAddress?: ClaimedGiftAddress;
+  hasEverLoggedIn?: boolean;
+  currentBalanceAccountId?: string;
+  currentHasBalance?: boolean;
+  ga4ActiveEventTime?: number;
+};
+
+const getInitialHasEverLoggedIn = (
+  rawStore?: Partial<GasAccountServiceStore> | null,
+) => {
+  if (typeof rawStore?.hasEverLoggedIn === 'boolean') {
+    return rawStore.hasEverLoggedIn;
+  }
+
+  if (rawStore?.sig && rawStore?.accountId) {
+    return true;
+  }
+
+  if (rawStore) {
+    return undefined;
+  }
+
+  return false;
 };
 
 export class GasAccountService {
@@ -55,9 +84,21 @@ export class GasAccountService {
     eligibilityCache: {},
     lastEligibilityCheckTimestamp: undefined,
     currentEligibleAddress: undefined,
+    hasEverLoggedIn: false,
+    ga4ActiveEventTime: 0,
+  };
+  runtimeState: {
+    pendingHardwareAccount?: GasAccountRuntimeAccount;
+    accountsWithGasAccountBalance: GasAccountRuntimeAccount[];
+  } = {
+    pendingHardwareAccount: undefined,
+    accountsWithGasAccountBalance: [],
   };
 
   constructor(options?: StorageAdapaterOptions) {
+    const rawStore = options?.storageAdapter?.getItem(
+      APP_STORE_NAMES.gasAccount,
+    ) as Partial<GasAccountServiceStore> | null | undefined;
     const storage = createPersistStore<GasAccountServiceStore>(
       {
         name: APP_STORE_NAMES.gasAccount,
@@ -66,6 +107,8 @@ export class GasAccountService {
           eligibilityCache: {},
           lastEligibilityCheckTimestamp: undefined,
           currentEligibleAddress: undefined,
+          hasEverLoggedIn: false,
+          ga4ActiveEventTime: 0,
         },
       },
       {
@@ -74,6 +117,7 @@ export class GasAccountService {
     );
 
     this.store = storage || this.store;
+    this.store.hasEverLoggedIn = getInitialHasEverLoggedIn(rawStore);
   }
 
   getGasAccountData = (key?: keyof GasAccountServiceStore) => {
@@ -92,6 +136,8 @@ export class GasAccountService {
       this.store.sig = undefined;
       this.store.accountId = undefined;
       this.store.account = undefined;
+      this.store.currentBalanceAccountId = undefined;
+      this.store.currentHasBalance = undefined;
     } else {
       this.store.sig = sig;
       this.store.accountId = account?.address;
@@ -149,19 +195,11 @@ export class GasAccountService {
     return cacheAge <= CACHE_VALIDITY_PERIOD;
   };
 
-  // 清理过期缓存
-  private clearExpiredCache = () => {
-    if (!this.isCacheValid()) {
-      this.store.eligibilityCache = {};
-      this.store.lastEligibilityCheckTimestamp = undefined;
-    }
-  };
-
   // 批量检查地址资格（带缓存）
   checkAddressEligibilityBatch = async (addresses: string[], force = false) => {
-    console.log('checkAddressEligibilityBatch', addresses, force);
+    console.debug('checkAddressEligibilityBatch', addresses, force);
     // 检查缓存
-    if (!force && this.isCacheValid() && this.store.eligibilityCache) {
+    if (!force && this.isCacheValid()) {
       const result = this.getDataFromCache(addresses);
       if (result) {
         return result;
@@ -169,32 +207,27 @@ export class GasAccountService {
     }
 
     // 缓存无效或强制刷新，调用API
-    return await this.checkEligibilityFromAPI(addresses);
+    return this.checkEligibilityFromAPI(addresses);
   };
 
   // 从缓存获取数据
   private getDataFromCache = (addresses: string[]) => {
-    let allAddressesCached = true;
-    addresses.forEach(addr => {
-      if (!this.store.eligibilityCache![addr.toLowerCase()]) {
-        allAddressesCached = false;
-      }
-    });
+    const cache = this.store.eligibilityCache;
+    const allAddressesCached = addresses.every(
+      addr => !!cache[addr.toLowerCase()],
+    );
 
-    if (allAddressesCached) {
-      // 全部命中缓存
-      return this.getFullyCachedData(addresses);
-    } else {
-      // 部分命中缓存，需要检查未缓存的地址
-      return this.getPartiallyCachedData(addresses);
-    }
+    return allAddressesCached
+      ? this.getFullyCachedData(addresses)
+      : this.getPartiallyCachedData(addresses);
   };
 
   // 获取完全缓存的数据
   private getFullyCachedData = (addresses: string[]) => {
+    const cache = this.store.eligibilityCache;
     const filteredData: ClaimedGiftAddress[] = [];
     addresses.forEach(addr => {
-      const item = this.store.eligibilityCache![addr.toLowerCase()];
+      const item = cache[addr.toLowerCase()];
       if (item) {
         filteredData.push({
           address: addr,
@@ -212,18 +245,19 @@ export class GasAccountService {
 
   // 获取部分缓存的数据
   private getPartiallyCachedData = async (addresses: string[]) => {
+    const cache = this.store.eligibilityCache;
     const cachedData: ClaimedGiftAddress[] = [];
     const uncachedAddresses: string[] = [];
     addresses.forEach(addr => {
-      if (this.store.eligibilityCache![addr.toLowerCase()]) {
+      const addressKey = addr.toLowerCase();
+      const cached = cache[addressKey];
+      if (cached) {
         cachedData.push({
           address: addr,
-          isEligible:
-            this.store.eligibilityCache![addr.toLowerCase()].isEligible,
-          isChecked: this.store.eligibilityCache![addr.toLowerCase()].isChecked,
-          isClaimed: this.store.eligibilityCache![addr.toLowerCase()].isClaimed,
-          giftUsdValue:
-            this.store.eligibilityCache![addr.toLowerCase()].giftUsdValue,
+          isEligible: !!cached.isEligible,
+          isChecked: !!cached.isChecked,
+          isClaimed: !!cached.isClaimed,
+          giftUsdValue: cached.giftUsdValue,
         });
       } else {
         uncachedAddresses.push(addr);
@@ -281,9 +315,7 @@ export class GasAccountService {
     this.updateCacheWithNewData(uncachedData);
 
     // 合并缓存数据和新数据
-    const allData = [...cachedData, ...uncachedData];
-
-    return allData;
+    return [...cachedData, ...uncachedData];
   };
 
   // 从API检查资格
@@ -333,37 +365,39 @@ export class GasAccountService {
       item => !item.isEligible && !!item.address,
     );
 
-    if (ineligibleData.length > 0) {
-      // 直接更新对象缓存
-      ineligibleData.forEach(item => {
-        if (!item || !item.address) return;
-        const addressKey = item.address?.toLowerCase() || '';
-        if (!addressKey || addressKey === 'undefined') return;
-        this.store.eligibilityCache[addressKey] = {
-          isEligible: item.isEligible,
-          timestamp: Date.now(),
-          isChecked: item.isChecked,
-          isClaimed: item.isClaimed,
-          giftUsdValue: item.giftUsdValue,
-        };
-      });
-
-      // 更新缓存时间戳
-      this.store.lastEligibilityCheckTimestamp = Date.now();
+    if (!ineligibleData.length) {
+      return;
     }
+
+    const now = Date.now();
+    ineligibleData.forEach(item => {
+      const addressKey = item.address.toLowerCase();
+      if (!addressKey || addressKey === 'undefined') {
+        return;
+      }
+      this.store.eligibilityCache[addressKey] = {
+        isEligible: item.isEligible,
+        timestamp: now,
+        isChecked: item.isChecked,
+        isClaimed: item.isClaimed,
+        giftUsdValue: item.giftUsdValue,
+      };
+    });
+
+    this.store.lastEligibilityCheckTimestamp = now;
   };
 
   // 获取单个地址资格（优先使用缓存）
   getAddressEligibility = async (address: string, force = false) => {
     // 检查缓存
-    if (!force && this.isCacheValid() && this.store.eligibilityCache) {
+    if (!force && this.isCacheValid()) {
       const addressKey = address.toLowerCase();
       const cachedData = this.store.eligibilityCache[addressKey];
 
       if (cachedData) {
         // 构造ClaimedGiftAddress对象
         const result: ClaimedGiftAddress = {
-          address: address,
+          address,
           isEligible: cachedData.isEligible,
           isChecked: cachedData.isChecked,
           isClaimed: cachedData.isClaimed,
@@ -431,7 +465,9 @@ export class GasAccountService {
 
   // 检查并清理过期缓存
   checkAndClearExpiredCache = () => {
-    if (!this.store.eligibilityCache) return;
+    if (!this.store.eligibilityCache) {
+      return;
+    }
 
     const now = Date.now();
     const beforeCount = Object.keys(this.store.eligibilityCache).length;
@@ -480,4 +516,56 @@ export class GasAccountService {
       remainingTime,
     };
   };
+
+  markLoggedIn() {
+    const isFirstLogin = this.store.hasEverLoggedIn === false;
+    this.store.hasEverLoggedIn = true;
+    return isFirstLogin;
+  }
+
+  getCurrentBalanceState() {
+    return {
+      accountId: this.store.currentBalanceAccountId,
+      hasBalance: this.store.currentHasBalance,
+    };
+  }
+
+  setCurrentBalanceState(accountId?: string, hasBalance?: boolean) {
+    this.store.currentBalanceAccountId = accountId;
+    this.store.currentHasBalance = hasBalance;
+  }
+
+  hasTrackedGa4ActiveToday() {
+    return dayjs(this.store.ga4ActiveEventTime || 0)
+      .utc()
+      .isSame(dayjs().utc(), 'day');
+  }
+
+  markGa4ActiveTracked(timestamp = Date.now()) {
+    this.store.ga4ActiveEventTime = timestamp;
+  }
+
+  getPendingHardwareAccount() {
+    return this.runtimeState.pendingHardwareAccount;
+  }
+
+  setPendingHardwareAccount(account?: GasAccountRuntimeAccount) {
+    this.runtimeState.pendingHardwareAccount = account;
+  }
+
+  clearPendingHardwareAccount() {
+    this.runtimeState.pendingHardwareAccount = undefined;
+  }
+
+  getAccountsWithGasAccountBalance() {
+    return this.runtimeState.accountsWithGasAccountBalance;
+  }
+
+  setAccountsWithGasAccountBalance(accounts: GasAccountRuntimeAccount[]) {
+    this.runtimeState.accountsWithGasAccountBalance = accounts;
+  }
+
+  clearAccountsWithGasAccountBalance() {
+    this.runtimeState.accountsWithGasAccountBalance = [];
+  }
 }

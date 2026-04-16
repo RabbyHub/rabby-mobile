@@ -1,11 +1,11 @@
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { Switch, SwitchProps } from 'react-native-switch';
+import { RabbySwitch, SwitchProps } from '@/components/Switch/Switch';
 
-export const AppSwitch = React.forwardRef<Switch, SwitchProps>((props, ref) => {
+export const AppSwitch = (props: SwitchProps) => {
   const colors = useThemeColors();
   return (
-    <Switch
+    <RabbySwitch
       circleSize={18}
       renderActiveText={false}
       renderInActiveText={false}
@@ -17,10 +17,9 @@ export const AppSwitch = React.forwardRef<Switch, SwitchProps>((props, ref) => {
       circleBorderActiveColor={colors['blue-default']}
       circleBorderInactiveColor={colors['neutral-line']}
       {...props}
-      ref={ref}
     />
   );
-});
+};
 
 export type SwitchToggleType = {
   toggle: (enabled?: boolean) => void;

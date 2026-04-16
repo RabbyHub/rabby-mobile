@@ -8,7 +8,10 @@ import mixPlugin from 'colord/plugins/mix';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { ActionsContainer, Props } from '../FooterBar/ActionsContainer';
+import {
+  ActionsContainer,
+  PropsWithAuthSession,
+} from '../FooterBar/ActionsContainer';
 import { GasLessAnimatedWrapper } from '../FooterBar/GasLessComponents';
 import { useSubmitAction } from '../FooterBar/useSubmitAction';
 import { preferenceService } from '@/core/services';
@@ -19,7 +22,8 @@ import { useGetMiniSigningTypedData } from '@/hooks/useMiniApprovalDirectSignTyp
 
 extend([mixPlugin]);
 
-export const MiniSubmitActions: React.FC<Props> = ({
+export const MiniSubmitActions: React.FC<PropsWithAuthSession> = ({
+  USE_LAST_UNLOCKED_AUTH: useLastUnlockedAuth = false,
   disabledProcess,
   onSubmit,
   onCancel,
@@ -51,7 +55,9 @@ export const MiniSubmitActions: React.FC<Props> = ({
   const colors = useThemeColors();
   const { styles } = useTheme2024({ getStyle: getStyles2024 });
   const [pressedConfirm, setPressedConfirm] = React.useState(false);
-  const { submitText, SubmitIcon, onPress } = useSubmitAction();
+  const { submitText, SubmitIcon, onPress } = useSubmitAction({
+    useLastUnlockedAuth,
+  });
   const handlePress = React.useCallback(() => {
     setPressedConfirm(true);
     globalBottomSheetModalAddListener(
@@ -101,7 +107,7 @@ export const MiniSubmitActions: React.FC<Props> = ({
         </View>
       ) : (
         <View style={styles.warper}>
-          {/* @ts-ignore */}
+          {/* @ts-expect-error */}
           <Tip content={enableTooltip ? tooltipContent : undefined}>
             <View style={styles.buttonWrapper}>
               <GasLessAnimatedWrapper

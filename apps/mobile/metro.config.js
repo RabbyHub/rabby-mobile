@@ -1,9 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const {
-  createSentryMetroSerializer,
-} = require('@sentry/react-native/dist/js/tools/sentryMetroSerializer');
+const { withSentryConfig } = require('@sentry/react-native/metro');
+const { withRozenite } = require('@rozenite/metro');
 const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
@@ -18,8 +17,26 @@ const {
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
+const escapePathForRegex = value =>
+  value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
+const turboBuildBlockList = new RegExp(
+  [
+    `${escapePathForRegex(path.resolve(projectRoot, '.turbo-build'))}\\/.*`,
+    `${escapePathForRegex(path.resolve(workspaceRoot, '.turbo-build'))}\\/.*`,
+  ].join('|'),
+);
 
 const LOG_FILE = path.join(__dirname, 'jsModuleId.log');
+
+/**
+ * Compose functions from right to left.
+ * @param {...Function} fns - Functions to compose
+ * @returns {Function} Composed function
+ */
+const compose =
+  (...fns) =>
+  x =>
+    fns.reduceRight((v, f) => f(v), x);
 
 // 保证 module 的顺序
 // https://github.com/facebook/metro/blob/d7c74eac8d277ea321a0b81336732764cc0b7e1f/packages/metro/src/lib/createModuleIdFactory.js#L14
@@ -52,6 +69,58 @@ const createModuleIdFactory = () => {
 };
 
 /**
+ * Higher-order function to enable stable hashing configuration.
+ * Returns a new config object with stable hashing settings.
+ * @param {import('metro-config').MetroConfig} config - Input config (immutable)
+ * @returns {import('metro-config').MetroConfig} New config with stable hashing
+ */
+const withStableHash = config => {
+  return {
+    ...config,
+    serializer: {
+      ...config.serializer,
+      // hash 一致性时，防止 sentry 或其他来源干扰
+      customSerializer: undefined,
+      createModuleIdFactory,
+    },
+    transformer: {
+      ...config.transformer,
+      minifierConfig: {
+        compress: {
+          switches: false, // 禁用 switches 优化
+        },
+      },
+      getTransformOptions: async () => ({
+        transform: {
+          experimentalImportSupport: false,
+          inlineRequires: false,
+        },
+      }),
+    },
+  };
+};
+
+/**
+ * Higher-order function to disable package exports.
+ * FIXME: upgrade dependencies to be compatible with metro's new default settings
+ * @see https://github.com/expo/expo/discussions/36551
+ *
+ * known incompatible libraries:
+ *   - @ledgerhq/hw-app-eth@6.45.0
+ * @param {import('metro-config').MetroConfig} config - Input config (immutable)
+ * @returns {import('metro-config').MetroConfig} New config with package exports disabled
+ */
+const withPackageExportsDisabled = config => {
+  return {
+    ...config,
+    resolver: {
+      ...config.resolver,
+      unstable_enablePackageExports: false,
+    },
+  };
+};
+
+/**
  * Metro configuration
  * https://reactnative.dev/docs/metro
  *
@@ -60,9 +129,11 @@ const createModuleIdFactory = () => {
 const config = {
   projectRoot,
   transformer: {
-    babelTransformerPath: require.resolve(
-      'react-native-svg-transformer/react-native',
-    ),
+    babelTransformerPath: require.resolve('./webview-raw-transformer'),
+
+    // babelTransformerPath: require.resolve(
+    //   'react-native-svg-transformer/react-native',
+    // ),
     getTransformOptions: async () => ({
       transform: {
         experimentalImportSupport: false,
@@ -70,12 +141,16 @@ const config = {
       },
     }),
   },
-  serializer: {
-    customSerializer: createSentryMetroSerializer(),
-  },
   resolver: {
     assetExts: assetExts.filter(ext => ext !== 'svg'),
-    sourceExts: [...sourceExts, 'svg'],
+    sourceExts: [
+      ...sourceExts,
+      'svg',
+      'webview.injected.js',
+      'webview.injected.ts',
+      'webview.injected.tsx',
+    ],
+    blockList: turboBuildBlockList,
     enableGlobalPackages: true,
     extraNodeModules: {
       ...require('node-libs-react-native'),
@@ -136,6 +211,12 @@ const config = {
       } catch (error) {
         console.warn('\n5️⃣ getDefaultConfig cannot resolve: ', moduleName);
       }
+
+      // If all resolution attempts fail, throw the original error
+      // instead of returning undefined to avoid "Cannot read properties of undefined (reading 'type')"
+      throw new Error(
+        `Unable to resolve module ${moduleName} from ${context.originModulePath}`,
+      );
     },
   },
   watchFolders: [
@@ -145,26 +226,22 @@ const config = {
   ],
 };
 
-if (process.env.APP_ENV === 'hashing') {
-  // hash 一致性时，防止 sentry 干扰
-  delete config.serializer.customSerializer;
+const mergedConfig = compose(
+  process.env.APP_ENV === 'hashing' ? withStableHash : withSentryConfig,
+  wrapWithReanimatedMetroConfig,
+  withPackageExportsDisabled,
+)(mergeConfig(defaultConfig, config));
 
-  config.serializer.createModuleIdFactory = createModuleIdFactory;
+const rozeniteEnabled = process.env.WITH_ROZENITE === 'true';
 
-  config.transformer.minifierConfig = {
-    compress: {
-      switches: false, // 禁用 switches 优化
-    },
-  };
-
-  config.transformer.getTransformOptions = async () => ({
-    transform: {
-      experimentalImportSupport: false,
-      inlineRequires: false,
-    },
-  });
-}
-
-module.exports = wrapWithReanimatedMetroConfig(
-  mergeConfig(defaultConfig, config),
-);
+module.exports = rozeniteEnabled
+  ? withRozenite(mergedConfig, {
+      enabled: true,
+      include: [
+        '@rozenite/react-navigation-plugin',
+        '@rozenite/network-activity-plugin',
+        '@rozenite/storage-plugin',
+        '@rabby-wallet/rozenite-resource-flow-plugin',
+      ],
+    })
+  : mergedConfig;

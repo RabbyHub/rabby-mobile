@@ -8,7 +8,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { maxBy, minBy, sortBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Spin } from './Spin';
 import { CANCEL_TX_TYPE, INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -29,7 +29,8 @@ import { intToHex } from '@/utils/number';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { CancelTxPopup } from './CancelTxPopup';
 import { Button } from '@/components2024/Button';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
+import { Text } from '@/components/Typography';
 
 export const TransactionPendingDetail = ({
   data,

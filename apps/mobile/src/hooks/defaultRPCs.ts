@@ -1,8 +1,7 @@
 import { customRPCService } from '@/core/services';
-import useInterval from 'react-use/lib/useInterval';
 
-export const useIntervalSyncDDefaultRPCs = () => {
-  useInterval(() => {
+export function startSyncDefaultRPCs() {
+  setInterval(() => {
     customRPCService.syncDefaultRPC(false);
-  }, 20 * 60 * 1000); // 30 minutes
-};
+  }, 20 * 60 * 1000);
+}

@@ -6,15 +6,18 @@ import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import { TouchableOpacity, View } from 'react-native';
+import { FavoriteTag } from '@/components2024/Favorite';
+import { formatPerpsCoin } from '@/utils/perps';
+import { Text } from '@/components/Typography';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
-export const PerpsMarketItem: React.FC<{
+const PerpsMarketItemComponent: React.FC<{
   item: MarketData;
+  isFavorite?: boolean;
   hasPosition?: boolean;
   onPress?(): void;
-}> = ({ item, onPress, hasPosition }) => {
+}> = ({ item, onPress, hasPosition, isFavorite }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -30,7 +33,7 @@ export const PerpsMarketItem: React.FC<{
         <View style={styles.content}>
           <View style={styles.row}>
             <View style={styles.nameContainer}>
-              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.name}>{formatPerpsCoin(item.name)}</Text>
               {hasPosition && (
                 <View style={styles.positionContainer}>
                   <Text style={styles.positionText}>1 Position</Text>
@@ -38,7 +41,6 @@ export const PerpsMarketItem: React.FC<{
               )}
             </View>
             <Text style={styles.price}>
-              {' '}
               {`$${splitNumberByStep(item.markPx)}`}
             </Text>
           </View>
@@ -60,10 +62,13 @@ export const PerpsMarketItem: React.FC<{
             </Text>
           </View>
         </View>
+        {isFavorite && <FavoriteTag style={styles.favoriteTag} />}
       </View>
     </TouchableOpacity>
   );
 };
+
+export const PerpsMarketItem = React.memo(PerpsMarketItemComponent);
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -72,7 +77,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 12,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+      : colors2024['neutral-bg-3'],
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -82,6 +87,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 46,
     height: 46,
     borderRadius: 1000,
+    backgroundColor: 'white',
     flexShrink: 0,
   },
   content: {
@@ -114,11 +120,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '500',
-    color: colors2024['brand-default'],
+    fontWeight: '700',
+    color: '#50D2C1',
   },
   positionContainer: {
-    backgroundColor: colors2024['brand-light-1'],
+    backgroundColor: 'rgba(80, 210, 193, 0.12)',
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 1,
@@ -165,5 +171,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   priceChangeDown: {
     color: colors2024['red-default'],
+  },
+  favoriteTag: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 }));

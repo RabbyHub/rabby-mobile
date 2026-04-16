@@ -1,34 +1,69 @@
 require 'base64'
 
+def turbo_build_enabled?
+  ENV['RABBY_MOBILE_TURBO_BUILD'] == 'true'
+end
+
+def turbo_ios_derived_data_path
+  path = ENV['RABBY_MOBILE_TURBO_IOS_DERIVED_DATA_PATH']
+  return path unless path.nil? || path.empty?
+
+  './ios/DerivedData'
+end
+
+def ios_adhoc_archive_path
+  path = ENV['RABBY_MOBILE_IOS_ARCHIVE_PATH']
+  return path unless path.nil? || path.empty?
+
+  './ios/Package/adhoc/RabbyMobile.xcarchive'
+end
+
+def ios_adhoc_skip_build_archive?
+  ENV['RABBY_MOBILE_IOS_SKIP_BUILD_ARCHIVE'] == 'true'
+end
+
 platform :ios do
   private_lane :prepare_apple_sign do |opts|
     # setup_ci
 
-    # enforce configuration
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      sdk: "iphoneos*",
-      path: './ios/RabbyMobile.xcodeproj',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegression' : 'RabbyMobileAppStore',
-      bundle_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
-    )
+    # # enforce configuration
+    # update_code_signing_settings(
+    #   use_automatic_signing: false,
+    #   targets: ['RabbyMobile'],
+    #   sdk: "iphoneos*",
+    #   path: './ios/RabbyMobile.xcodeproj',
+    #   profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
+    #   bundle_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
+    # )
 
     ENV['CONFIGURATION'] = opts[:type] == 'adhoc' ? 'Regression' : 'Release'
 
+    # Main App: RabbyMobile
     match(
       type: opts[:type],
       app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegression' : 'RabbyMobileAppStore',
+      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
       readonly: true,
       shallow_clone: true,
       verbose: false,
       force_for_new_devices: true,
       clone_branch_directly: true)
+
+    # # App Extension: RabbyMobileNotification
+    # match(
+    #   type: opts[:type],
+    #   app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile*' : 'com.debank.rabby-mobile.RabbyMobileNotification',
+    #   profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileWildcardAdHocRegression' : 'RabbyMobileNotificationAppStore',
+    #   readonly: true,
+    #   shallow_clone: true,
+    #   verbose: false,
+    #   force_for_new_devices: true,
+    #   clone_branch_directly: true)
   end
 
   desc "Release for the iOS adhoc"
   lane :adhoc do
-    prepare_apple_sign(type: 'adhoc', profile_name: "RabbyMobileAdHocRegression")
+    prepare_apple_sign(type: 'adhoc')
 
     gym(
       scheme: 'RabbyMobileRegression',
@@ -36,8 +71,11 @@ platform :ios do
       configuration: 'Regression',
       output_directory: "./ios/Package/adhoc",
       build_path: "./ios/Package/adhoc",
+      archive_path: ios_adhoc_archive_path,
+      skip_build_archive: ios_adhoc_skip_build_archive?,
+      derived_data_path: turbo_build_enabled? ? turbo_ios_derived_data_path : nil,
       destination: "generic/platform=iOS",
-      clean: true,
+      clean: ios_adhoc_skip_build_archive? ? false : !turbo_build_enabled?,
       ## if you wanna output log to stdout, uncomment below 2 lines
       # xcodebuild_formatter: '',
       # suppress_xcode_output: false,
@@ -48,7 +86,8 @@ platform :ios do
         method: 'ad-hoc',
         signingStyle: 'manual',
         provisioningProfiles: {
-          "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegression"
+          "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegressionOpcode",
+          # "com.debank.rabby-mobile-regression.RabbyMobileNotification": "RabbyMobileWildcardAdHocRegression"
         },
         manifest: {
           appURL: "https://download.rabby.io/downloads/wallet-mobile/ios/rabbymobile.ipa",
@@ -89,7 +128,7 @@ platform :ios do
 
   desc "Release for the iOS production"
   lane :appstore do
-      prepare_apple_sign(type: 'appstore', profile_name: "RabbyMobileAppStore")
+      prepare_apple_sign(type: 'appstore')
       gym(
         scheme: 'RabbyMobile',
         workspace: './ios/RabbyMobile.xcworkspace',
@@ -109,8 +148,8 @@ platform :ios do
           method: "app-store",
           signingStyle: 'manual',
           provisioningProfiles: {
-            "com.debank.rabby-mobile-regression": "RabbyMobileAdHocRegression",
-            "com.debank.rabby-mobile": "RabbyMobileAppStore"
+            "com.debank.rabby-mobile": "RabbyMobileAppStoreOpcode",
+            "com.debank.rabby-mobile.RabbyMobileNotification": "RabbyMobileNotificationAppStore"
           }
         })
       pilot(
@@ -177,10 +216,20 @@ platform :android do
   desc "Release for the Android selfhost"
   lane :selfhost do
     write_key_store
-    gradle(task: 'clean', project_dir: './android')
+    use_cache = (ENV['RABBY_MOBILE_GRADLE_USE_CACHE'] == 'true' || turbo_build_enabled?) ? 'true' : 'false'
     build_channel = ENV['buildchannel'] || 'selfhost-reg'
     if build_channel == 'selfhost-reg'
-      build_rabbymobile_app(tasks: ['assembleRegression'])
+      if use_cache == 'true'
+        UI.message("Using Gradle cache for selfhost-reg build")
+      else
+        UI.message("Not using Gradle cache for selfhost-reg build")
+        gradle(task: 'clean', project_dir: './android')
+      end
+      build_rabbymobile_app(tasks: ['assembleRegression'], properties: {
+        "org.gradle.configuration-cache"=>use_cache == 'true',
+        "org.gradle.caching"=>use_cache == 'true',
+        "org.gradle.parallel"=>true,
+      })
     else
       build_rabbymobile_app(tasks: ['assembleRelease'])
     end
@@ -189,7 +238,16 @@ platform :android do
   desc "Release for the Android playstore"
   lane :playstore do
     write_key_store
-    gradle(task: 'clean', project_dir: './android')
-    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'])
+    use_cache = turbo_build_enabled?
+    if use_cache
+      UI.message("Using Gradle cache for playstore build")
+    else
+      gradle(task: 'clean', project_dir: './android')
+    end
+    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'], properties: {
+      "org.gradle.configuration-cache"=>use_cache ? 'true' : 'false',
+      "org.gradle.caching"=>use_cache ? 'true' : 'false',
+      "org.gradle.parallel"=>use_cache ? 'true' : 'false',
+    })
   end
 end

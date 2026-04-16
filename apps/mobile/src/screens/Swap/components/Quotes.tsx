@@ -15,7 +15,7 @@ import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, TouchableOpacity, View } from 'react-native';
 import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
 import { refreshIdAtom } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
@@ -28,6 +28,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconLoading from '@/assets2024/icons/bridge/IconLoading.svg';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Text } from '@/components/Typography';
 
 interface QuotesProps
   extends Omit<
@@ -114,8 +115,7 @@ export const Quotes = ({
             .div(
               10 **
                 (bestQuote?.data?.toTokenDecimals ||
-                  other.receiveToken.decimals ||
-                  1),
+                  other.receiveToken.decimals),
             )
             .toString(10)
         : receiveTokenAmount,

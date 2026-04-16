@@ -1,20 +1,20 @@
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { sortBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../Button';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { AccountSelectItem } from './AccountSelectItem';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface AccountSelectDrawerProps {
   onChange(account: Account): void;
@@ -78,57 +78,60 @@ export const AccountSelectPopup = ({
       ref={modalRef}
       onDismiss={() => onCancel?.()}
       snapPoints={[640]}>
-      <BottomSheetView>
-        <View
-          style={[
-            styles.popupContainer,
-            {
-              paddingBottom: bottom || 20,
-            },
-          ]}>
-          <Text style={styles.title}>{title}</Text>
-          <FlatList
-            data={accounts}
-            renderItem={item => {
-              const account = item.item;
-              const checked = checkedAccount
-                ? isSameAddress(account.address, checkedAccount.address) &&
-                  checkedAccount.brandName === account.brandName
-                : false;
-              return (
-                <AccountSelectItem
-                  account={account}
-                  onSelect={setCheckedAccount}
-                  checked={checked}
-                  networkId={networkId}
-                />
-              );
-            }}
-            ListEmptyComponent={
-              <View style={styles.empty}>
-                <RcIconEmptyCC color={themeColors['neutral-foot']} />
-                <Text style={styles.emptyText}>No available address</Text>
-              </View>
-            }
+      <View
+        style={[
+          styles.popupContainer,
+          {
+            paddingBottom: bottom || 20,
+          },
+        ]}>
+        <Text style={styles.title}>{title}</Text>
+        <BottomSheetFlatList
+          data={accounts}
+          keyExtractor={item =>
+            `${item.address}-${item.type}-${item.brandName}`
+          }
+          renderItem={item => {
+            const account = item.item;
+            const checked = checkedAccount
+              ? isSameAddress(account.address, checkedAccount.address) &&
+                checkedAccount.brandName === account.brandName
+              : false;
+            return (
+              <AccountSelectItem
+                account={account}
+                onSelect={setCheckedAccount}
+                checked={checked}
+                networkId={networkId}
+              />
+            );
+          }}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <RcIconEmptyCC color={themeColors['neutral-foot']} />
+              <Text style={styles.emptyText}>
+                {t('component.AccountSelectPopup.noAvailableAddress')}
+              </Text>
+            </View>
+          }
+        />
+        <View style={styles.footer}>
+          <Button
+            type="primary"
+            onPress={onCancel}
+            title={t('component.AccountSelectDrawer.btn.cancel')}
+            containerStyle={styles.buttonContainer}
           />
-          <View style={styles.footer}>
-            <Button
-              type="primary"
-              onPress={onCancel}
-              title={t('component.AccountSelectDrawer.btn.cancel')}
-              containerStyle={styles.buttonContainer}
-            />
-            <Button
-              type="primary"
-              onPress={() => checkedAccount && onChange(checkedAccount)}
-              disabled={!checkedAccount}
-              title={t('component.AccountSelectDrawer.btn.proceed')}
-              loading={isLoading}
-              containerStyle={styles.buttonContainer}
-            />
-          </View>
+          <Button
+            type="primary"
+            onPress={() => checkedAccount && onChange(checkedAccount)}
+            disabled={!checkedAccount}
+            title={t('component.AccountSelectDrawer.btn.proceed')}
+            loading={isLoading}
+            containerStyle={styles.buttonContainer}
+          />
         </View>
-      </BottomSheetView>
+      </View>
     </AppBottomSheetModal>
   );
 };

@@ -1,15 +1,13 @@
 import { RcArrowRight2CC } from '@/assets/icons/common';
-import {
-  RcIconApplePayCC,
-  RcIconGooglePayCC,
-} from '@/assets2024/icons/gas-account';
+import { RcIconGooglePayCC } from '@/assets2024/icons/gas-account';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { Text } from '@/components/Typography';
 
 export const GasAccountDepositTipSelect: React.FC<{
   onSelect(type: 'token' | 'pay'): void;
@@ -24,11 +22,10 @@ export const GasAccountDepositTipSelect: React.FC<{
       enableOnAndroid
       scrollEnabled={false}
       keyboardOpeningTime={0}
-      // style={styles.container}
       contentContainerStyle={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
-          {t('page.gasAccount.depositSelectPopup.title')}
+          {t('page.gasAccount.depositPopup.gasDepositTitle')}
         </Text>
         <Text style={styles.description}>
           {t('page.gasAccount.depositSelectPopup.desc')}

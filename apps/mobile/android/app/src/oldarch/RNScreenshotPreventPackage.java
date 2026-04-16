@@ -18,20 +18,6 @@ import java.util.Map;
 import java.util.List;
 
 public class RNScreenshotPreventPackage extends TurboReactPackage /* implements ReactPackage */ {
-  // @Override
-  // public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
-  //   return Collections.emptyList();
-  // }
-
-  // useless for TurboReactPackage
-  // @Override
-  // public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
-  //   List<NativeModule> modules = new ArrayList<>();
-  //   modules.add(new RNScreenshotPreventModule(reactContext));
-
-  //   return modules;
-  // }
-
   @Nullable
   @Override
   public NativeModule getModule(String name, ReactApplicationContext reactContext) {

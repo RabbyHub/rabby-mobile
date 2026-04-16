@@ -1,6 +1,9 @@
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
+
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   contactService,
   dappService,
@@ -12,11 +15,12 @@ import {
   whitelistService,
 } from '../services';
 import { getKeyring } from './keyring';
-import { addressUtils } from '@rabby-wallet/base-utils';
 import { BroadcastEvent } from '@/constant/event';
 
 export async function addWatchAddress(address: string) {
-  const keyring = await getKeyring(KEYRING_TYPE.WatchAddressKeyring);
+  const keyring = await getKeyring<WatchKeyring>(
+    KEYRING_TYPE.WatchAddressKeyring,
+  );
 
   keyring.setAccountToAdd(address);
   const result = await keyringService.addNewAccount(keyring);
@@ -49,7 +53,7 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
 
   await keyringService.removeAccount(
     account.address,
-    account.type as string,
+    account.type,
     account.brandName,
     isRemoveEmptyKeyring,
   );
@@ -83,6 +87,7 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     if (isSameAccount(account, dapp.currentAccount)) {
       dappService.updateDapp({
         ...dapp,
+        origin,
         currentAccount: newCurrentAccount,
       });
       if (dapp?.isConnected) {
@@ -113,3 +118,38 @@ export async function getAllMyAccount() {
 }
 
 export async function addWalletConnectAddress(addrses: string) {}
+
+export async function getAddressesForReport(
+  allAccounts?: KeyringAccountWithAlias[],
+) {
+  const myAccountList = allAccounts || (await getAllAccounts());
+  const myCallableAddresses: string[] = [];
+  const myUncallableAddresses: string[] = [];
+
+  const {
+    callables: myCallableAddressCount,
+    uncallables: myUncallableAddressCount,
+  } = myAccountList.reduce(
+    (acc, item) => {
+      if (
+        item.type !== KEYRING_TYPE.WatchAddressKeyring &&
+        item.type !== KEYRING_TYPE.GnosisKeyring
+      ) {
+        myCallableAddresses.push(item.address);
+        acc.callables += 1;
+      } else {
+        myUncallableAddresses.push(item.address);
+        acc.uncallables += 1;
+      }
+      return acc;
+    },
+    { callables: 0, uncallables: 0 },
+  );
+
+  return {
+    myCallableAddresses,
+    myUncallableAddresses,
+    myCallableAddressCount,
+    myUncallableAddressCount,
+  };
+}

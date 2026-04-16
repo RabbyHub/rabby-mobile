@@ -5,7 +5,6 @@ import {
   Image,
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -14,6 +13,7 @@ import { SvgProps } from 'react-native-svg';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors2024 } from '@/constant/theme';
+import { Text } from '@/components/Typography';
 
 const RcIconRight = makeThemeIconFromCC(ArrowRightCC, {
   onLight: ThemeColors2024.light['neutral-title-1'],
@@ -30,6 +30,8 @@ export interface ListItemProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   content?: React.ReactNode;
+  testID?: string;
+  accessibilityLabel?: string;
 }
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -42,12 +44,16 @@ export const ListItem: React.FC<ListItemProps> = ({
   disabled,
   style,
   content,
+  testID,
+  accessibilityLabel,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <TouchableOpacity
       disabled={!onPress && !disabled}
       onPress={disabled ? undefined : onPress}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
       style={StyleSheet.flatten([
         styles.root,
         disabled ? styles.rootDisabled : undefined,

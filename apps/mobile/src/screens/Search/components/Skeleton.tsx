@@ -1,9 +1,10 @@
-import { memo } from 'react';
-import { View, Text, StyleProp, ViewStyle } from 'react-native';
+import React, { memo } from 'react';
+import { View, StyleProp, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 export const ItemLoader = memo(
   ({ style }: { style?: StyleProp<ViewStyle> }) => {

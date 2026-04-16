@@ -15,8 +15,11 @@ import { AbstractPortfolioToken } from './types';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { HomePendingBadge } from './components/HomePending';
-import { Account } from '@/core/services/preference';
-import { atom, useAtomValue } from 'jotai';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import { useSingleHomeAccount, apisSingleHome } from './hooks/singleHome';
+import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
+import { naviPush } from '@/utils/navigation';
 
 const hitSlop = {
   top: 10,
@@ -36,19 +39,35 @@ interface HeaderRightHistoryProps {
   isInTokenDetail?: boolean;
   isMultiAddress?: boolean;
   tokenItem?: AbstractPortfolioToken;
-  account: Account;
 }
 
-export const refreshHistoryIdAtom = atom(0);
+const refreshHistoryIdState = zCreate<{ refreshId: number }>(() => ({
+  refreshId: 0,
+}));
+
+export function setRefreshHistoryId(valOrFunc: UpdaterOrPartials<number>) {
+  refreshHistoryIdState.setState(prev => {
+    const { newVal } = resolveValFromUpdater(prev.refreshId, valOrFunc, {
+      strict: true,
+    });
+    return { refreshId: newVal };
+  });
+}
+
+export function useRefreshHistoryId() {
+  return {
+    refreshHistoryId: refreshHistoryIdState(s => s.refreshId),
+    setRefreshHistoryId,
+  };
+}
 
 export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   isInTokenDetail,
   isMultiAddress,
   tokenItem,
-  account: currentAccount,
 }) => {
   const [pendingTxCount, setPendingTxCount] = useState(0);
-  const timeRef = useRef<null | NodeJS.Timer>(null);
+  const timeRef = useRef<null | ReturnType<typeof setInterval>>(null);
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const [historyCount, setHistoryCount] = useState<{
@@ -56,6 +75,8 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     fail: number;
   }>();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
+  const { currentAccount } = useSingleHomeAccount();
 
   const fetchHistory = useCallback(() => {
     if (!currentAccount) {
@@ -89,7 +110,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     timeRef.current = pendingsLength ? setInterval(fetchHistory, 5000) : null;
   }, [currentAccount, tokenItem]);
 
-  const refreshId = useAtomValue(refreshHistoryIdAtom);
+  const refreshId = refreshHistoryIdState(s => s.refreshId);
   useEffect(() => {
     if (refreshId > 0) {
       fetchHistory();
@@ -104,7 +125,9 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   );
 
   const openHistory = useCallback(async () => {
-    await switchSceneCurrentAccount('History', currentAccount);
+    apisSingleHome.setFoldChart(true);
+    currentAccount &&
+      (await switchSceneCurrentAccount('History', currentAccount));
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: isMultiAddress
@@ -119,12 +142,12 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
       }),
     );
   }, [
-    navigation,
     switchSceneCurrentAccount,
-    tokenItem,
     currentAccount,
-    isInTokenDetail,
+    navigation,
     isMultiAddress,
+    isInTokenDetail,
+    tokenItem,
   ]);
 
   return (
@@ -138,7 +161,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
         <View
           style={{ marginRight: 16, position: 'relative', paddingVertical: 4 }}>
           <RcIconHistory
-            color={colors2024['neutral-body']}
+            color={colors2024['neutral-title-1']}
             width={22}
             height={22}
           />
@@ -164,21 +187,23 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   );
 };
 
-export const RightArea: React.FC<{
-  account: Account;
-}> = ({ account: currentAccount }) => {
-  const showAddressDetail = useAddressDetailModal();
+export const SingleHomeRightArea = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const { t } = useTranslation();
 
+  const { currentAccount } = useSingleHomeAccount();
+
   const onPress = () => {
     if (currentAccount) {
-      showAddressDetail({
-        account: currentAccount,
-        onDelete: () => {
-          toast.success(t('global.Deleted'));
-          navigation?.canGoBack() && navigation.goBack();
+      apisSingleHome.setFoldChart(true);
+
+      naviPush(RootNames.StackAddress, {
+        screen: RootNames.AddressDetail,
+        params: {
+          address: currentAccount.address,
+          type: currentAccount.type,
+          brandName: currentAccount.brandName,
         },
       });
     }
@@ -186,9 +211,13 @@ export const RightArea: React.FC<{
 
   return (
     <>
-      <HeaderRightHistory account={currentAccount} />
+      <HeaderRightHistory />
       <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
-        <RcIconMore width={24} height={24} color={colors2024['neutral-body']} />
+        <RcIconSettingCC
+          width={20}
+          height={20}
+          color={colors2024['neutral-title-1']}
+        />
       </CustomTouchableOpacity>
     </>
   );

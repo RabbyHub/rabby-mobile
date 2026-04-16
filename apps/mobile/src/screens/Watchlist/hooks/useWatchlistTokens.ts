@@ -3,7 +3,13 @@ import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAtomValue } from 'jotai';
+import {
+  sortWatchlistTokens,
+  watchlistChangeSortAtom,
+  watchlistTokenSortAtom,
+} from '../sort';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
   const chunks: IManageToken[][] = [];
@@ -15,17 +21,18 @@ const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
 
 export const watchlistTokensAtom = atom<TokenDetailWithPriceCurve[]>([]);
 
-export const useWatchlistTokens = () => {
+export const useWatchlistTokens = (onBeforeRefresh?: () => void) => {
   const [data, setData] = useAtom(watchlistTokensAtom);
   const [hasData, setHasData] = useState(false);
   const [loading, setLoading] = useState(false);
   // token级别缓存，key为chainId:tokenId
   const cacheRef = useRef<Map<string, TokenDetailWithPriceCurve>>(new Map());
+  const noData = useMemo(() => data.length === 0, [data]);
 
   const getWatchlistTokens = useCallback(
-    async (force = false) => {
+    async (force = false, chainId?: string) => {
       try {
-        if (data.length === 0) {
+        if (noData) {
           setLoading(true);
         }
         const { pinedQueue = [] } =
@@ -33,11 +40,17 @@ export const useWatchlistTokens = () => {
         setHasData(pinedQueue.length > 0);
         // 生成所有token的key
         const allKeys = pinedQueue
+          .filter(t =>
+            chainId ? t.chainId.toLowerCase() === chainId.toLowerCase() : true,
+          )
           .filter(t => t.chainId && t.tokenId)
           .map(i => `${i.chainId}:${i.tokenId}`);
         let needFetchKeys = allKeys;
         if (!force) {
           needFetchKeys = allKeys.filter(key => !cacheRef.current.has(key));
+        }
+        if (force || needFetchKeys.length > 0) {
+          onBeforeRefresh?.();
         }
         // 分批请求未缓存的token
         let newTokenDetails: TokenDetailWithPriceCurve[] = [];
@@ -80,12 +93,12 @@ export const useWatchlistTokens = () => {
         return [];
       }
     },
-    [data.length],
+    [noData, onBeforeRefresh],
   );
 
   const handleFetchTokens = useCallback(
-    (force = false) => {
-      return getWatchlistTokens(force).then(setData);
+    (force = false, chainId?: string) => {
+      return getWatchlistTokens(force, chainId).then(setData);
     },
     [getWatchlistTokens, setData],
   );
@@ -96,4 +109,25 @@ export const useWatchlistTokens = () => {
     hasData,
     loading,
   };
+};
+
+export const useWatchListTokenBadge = () => {
+  const { handleFetchTokens, data } = useWatchlistTokens();
+  const tokenSort = useAtomValue(watchlistTokenSortAtom);
+  const changeSort = useAtomValue(watchlistChangeSortAtom);
+  const sortedTokens = useMemo(
+    () => sortWatchlistTokens(data, tokenSort, changeSort),
+    [changeSort, data, tokenSort],
+  );
+
+  const last3Token = useMemo(
+    () => (sortedTokens.length >= 3 ? sortedTokens.slice(0, 3) : sortedTokens),
+    [sortedTokens],
+  );
+
+  useEffect(() => {
+    handleFetchTokens();
+  }, [handleFetchTokens]);
+
+  return last3Token;
 };

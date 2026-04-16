@@ -1,4 +1,8 @@
-import { calcMaxPriorityFee, checkGasAndNonce } from '@/utils/transaction';
+import {
+  calcMaxPriorityFee,
+  checkGasAndNonce,
+  is7702Tx,
+} from '@/utils/transaction';
 
 import {
   ExplainTxResponse,
@@ -23,7 +27,7 @@ import { intToHex } from './number';
 import BigNumber from 'bignumber.js';
 import {
   explainGas,
-  getNativeTokenBalance,
+  getGasTokenBalance,
   getRecommendGas,
 } from '@/components/Approval/components/SignTx/calc';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -43,8 +47,10 @@ import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { isNonPublicProductionEnv } from '@/constant';
 import { getDefaultStore } from 'jotai';
-import { mockBatchRevokeAtom } from '@/hooks/appSettings';
+import { mockBatchRevokeStore } from '@/hooks/appSettings';
 import { Account } from '@/core/services/preference';
+import miscService from '@/core/services/misc';
+import { isTempoChain } from './tempo';
 
 // fail code
 export enum FailedCode {
@@ -157,7 +163,7 @@ export const sendTransaction = async ({
   sig?: string;
   account: Account;
 }) => {
-  const MOCK_BATCH_REVOKE = getDefaultStore().get(mockBatchRevokeAtom);
+  const MOCK_BATCH_REVOKE = mockBatchRevokeStore.getState();
   console.log('MOCK_BATCH_REVOKE', MOCK_BATCH_REVOKE);
 
   onProgress?.('building');
@@ -190,6 +196,9 @@ export const sendTransaction = async ({
 
   const signingTxId = await transactionHistoryService.addSigningTx(tx);
 
+  const reportGasLevel =
+    normalGas.level || miscService.getCurrentGasLevel() || 'normal';
+
   stats.report('createTransaction', {
     type: currentAccount.brandName,
     category: KEYRING_CATEGORY_MAP[currentAccount.type],
@@ -199,6 +208,7 @@ export const sendTransaction = async ({
     trigger: ga?.trigger || '',
     networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
     swapUseSlider: ga?.swapUseSlider ?? '',
+    gasLevel: reportGasLevel,
   });
 
   // pre exec tx
@@ -218,14 +228,17 @@ export const sendTransaction = async ({
       pending_tx_list: await apisTransactionHistory.getPendingTxs({
         recommendNonce,
         address,
+        chainId: tx.chainId,
       }),
     }));
 
-  const balance = await getNativeTokenBalance({
+  const gasToken = await getGasTokenBalance({
     chainId: chain.id,
     address,
     account,
   });
+  const balance = gasToken.rawBalance;
+  const checkTxValueInBalance = !isTempoChain(chain.serverId);
   let estimateGas = 0;
   if (preExecResult.gas.success) {
     estimateGas = preExecResult.gas.gas_limit || preExecResult.gas.gas_used;
@@ -257,6 +270,8 @@ export const sendTransaction = async ({
       explainTx: preExecResult,
       needRatio,
       account,
+      gasTokenDecimals: gasToken.token.decimals,
+      checkTxValueInBalance,
     });
     gasLimit = _gasLimit;
     recommendGasLimitRatio = _recommendGasLimitRatio;
@@ -271,6 +286,7 @@ export const sendTransaction = async ({
     tx,
     gasLimit,
     account,
+    gasTokenDecimals: gasToken.token.decimals,
   });
 
   // check gas errors
@@ -288,6 +304,8 @@ export const sendTransaction = async ({
         isGnosisAccount: false,
         nativeTokenBalance: balance,
         recommendGasLimitRatio,
+        gasTokenDecimals: gasToken.token.decimals,
+        checkTxValueInBalance,
       });
 
   const isGasNotEnough = !isGasLess && checkErrors.some(e => e.code === 3001);
@@ -375,7 +393,7 @@ export const sendTransaction = async ({
   if (support1559) {
     transaction.maxFeePerGas = maxFeePerGas;
     transaction.maxPriorityFeePerGas =
-      maxPriorityFee <= 0
+      maxPriorityFee < 0
         ? tx.maxFeePerGas
         : intToHex(Math.round(maxPriorityFee));
   } else {
@@ -393,7 +411,8 @@ export const sendTransaction = async ({
         nonce: recommendNonce || '0x1',
         value: tx.value || '0x0',
         to: tx.to || '',
-      },
+        type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
+      } as any,
       origin: INTERNAL_REQUEST_SESSION.origin || '',
       addr: address,
     }));
@@ -455,9 +474,11 @@ export const sendTransaction = async ({
   const estimateGasCost = {
     gasCostUsd: gasCost.gasCostUsd,
     gasCostAmount: gasCost.gasCostAmount,
-    nativeTokenSymbol: preExecResult.native_token.symbol,
+    nativeTokenSymbol: gasToken.token.symbol,
     gasPrice: normalGas.price,
-    nativeTokenPrice: preExecResult.native_token.price,
+    nativeTokenPrice: isTempoChain(chain.serverId)
+      ? 1
+      : preExecResult.native_token.price,
   };
 
   onProgress?.('builded');
@@ -567,7 +588,7 @@ export const sendTransaction = async ({
     // calc gas cost
     const gasCostAmount = new BigNumber(txCompleted.gasUsed)
       .times(estimateGasCost.gasPrice)
-      .div(1e18);
+      .div(new BigNumber(10).pow(gasToken.token.decimals || 18));
     const gasCostUsd = new BigNumber(gasCostAmount).times(
       estimateGasCost.nativeTokenPrice,
     );
@@ -603,6 +624,7 @@ export const sendTransactionByMiniSignV2 = async ({
   session,
   account: _account,
   preExecResult,
+  onSigningTxCreated,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -616,6 +638,7 @@ export const sendTransactionByMiniSignV2 = async ({
   session?: Parameters<typeof apiProvider.ethSendTransaction>[0]['session'];
   account: Account;
   preExecResult: ExplainTxResponse;
+  onSigningTxCreated?: (signingTxId: string) => void;
 }) => {
   onProgress?.('building');
 
@@ -627,6 +650,9 @@ export const sendTransactionByMiniSignV2 = async ({
   const currentAccount = _account;
 
   const signingTxId = await transactionHistoryService.addSigningTx(tx);
+  onSigningTxCreated?.(signingTxId);
+
+  const reportGasLevel = miscService.getCurrentGasLevel() || 'normal';
 
   stats.report('createTransaction', {
     type: currentAccount.brandName,
@@ -637,6 +663,7 @@ export const sendTransactionByMiniSignV2 = async ({
     trigger: ga?.trigger || '',
     networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
     swapUseSlider: ga?.swapUseSlider ?? '',
+    gasLevel: reportGasLevel,
   });
 
   const transaction: Tx = {
@@ -655,7 +682,7 @@ export const sendTransactionByMiniSignV2 = async ({
   if (support1559) {
     transaction.maxFeePerGas = maxFeePerGas;
     transaction.maxPriorityFeePerGas =
-      maxPriorityFee <= 0
+      maxPriorityFee < 0
         ? tx.maxFeePerGas
         : intToHex(Math.round(maxPriorityFee));
   } else {
@@ -671,7 +698,8 @@ export const sendTransactionByMiniSignV2 = async ({
       nonce: tx.nonce || '0x1',
       value: tx.value || '0x0',
       to: tx.to || '',
-    },
+      type: is7702Tx(tx) ? 4 : support1559 ? 2 : undefined,
+    } as any,
     origin: INTERNAL_REQUEST_SESSION.origin || '',
     addr: currentAccount.address,
   });

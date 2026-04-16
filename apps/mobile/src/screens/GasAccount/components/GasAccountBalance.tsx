@@ -1,9 +1,9 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StyleProp, Text, TextStyle } from 'react-native';
-import { useGasAccountInfoV2 } from '../hooks';
+import { StyleProp, TextStyle } from 'react-native';
 import { formatUsdValue } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import { GasAccountInfo } from '@rabby-wallet/rabby-api/dist/types';
+import { Text } from '@/components/Typography';
 
 export interface GasAccountBalanceProps {
   style?: StyleProp<TextStyle>;
@@ -24,7 +24,7 @@ export const GasAccountBalance: React.FC<GasAccountBalanceProps> = ({
 
   return (
     <Text style={[styles.text, style]}>
-      {account?.balance ? formatUsdValue(account?.balance) : '$0'}
+      {account.balance ? formatUsdValue(account.balance) : '$0'}
     </Text>
   );
 };

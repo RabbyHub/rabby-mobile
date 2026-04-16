@@ -33,11 +33,7 @@ export const usePerpsDeposit = ({
 }: {
   currentPerpsAccount: Account | null;
 }) => {
-  const {
-    state: perpsState,
-    fetchUserNonFundingLedgerUpdates,
-    setLocalLoadingHistory,
-  } = usePerpsStore();
+  const { state: perpsState, setLocalLoadingHistory } = usePerpsStore();
 
   // const {
   //   sendMiniTransactions,
@@ -82,23 +78,31 @@ export const usePerpsDeposit = ({
       txs: Tx[],
       amount: string,
       cacheBridgeHistory?: PerpBridgeHistory,
-    ) => {
+      options?: { skipHistory?: boolean; isHypeDeposit?: boolean },
+    ): Promise<string | undefined> => {
       if (!txs || txs.length === 0) {
         throw new Error('No txs');
       }
 
+      const time = Date.now();
       if (!currentPerpsAccount) {
         return;
       }
       const currentTxs = txs;
 
       const handleSetHistory = (hash: string) => {
+        if (options?.skipHistory) {
+          return;
+        }
         setLocalLoadingHistory(
           [
             {
-              time: Date.now(),
+              time,
               hash,
-              type: cacheBridgeHistory ? 'receive' : 'deposit',
+              type:
+                cacheBridgeHistory || options?.isHypeDeposit
+                  ? 'receive'
+                  : 'deposit',
               status: 'pending',
               usdValue: amount.toString(),
             },
@@ -109,7 +113,7 @@ export const usePerpsDeposit = ({
         postPerpBridgeQuote(hash, cacheBridgeHistory);
       };
 
-      const handleFullback = async () => {
+      const handleFullback = async (): Promise<string | undefined> => {
         const results: string[] = [];
         for (const tx of currentTxs) {
           try {
@@ -136,11 +140,11 @@ export const usePerpsDeposit = ({
         }
         const signature = last(results as Array<string>);
         handleSetHistory(signature as string);
+        return signature;
       };
 
       if (isAccountSupportDirectSign(currentPerpsAccount.type)) {
         try {
-          // await runAuth();
           resetGasStore();
           closeMiniSign();
           const res = await openDirect({
@@ -150,17 +154,17 @@ export const usePerpsDeposit = ({
               source: 'Perps',
               trigger: 'Perps',
             },
-            // showMaskLoading: false,
           });
           const txHash = last(res) || '';
           handleSetHistory(txHash);
+          return txHash;
         } catch (error) {
           console.error(error);
 
           if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
             closeMiniSign();
           } else {
-            await handleFullback();
+            return await handleFullback();
           }
         }
       } else if (
@@ -179,24 +183,18 @@ export const usePerpsDeposit = ({
           });
           const txHash = last(res) || '';
           handleSetHistory(txHash);
+          return txHash;
         } catch (error) {
           if (error === MINI_SIGN_ERROR.USER_CANCELLED) {
             closeMiniSign();
           } else {
-            await handleFullback();
+            return await handleFullback();
           }
         }
       } else {
-        await handleFullback();
+        return await handleFullback();
       }
     },
-  );
-
-  useInterval(
-    () => {
-      fetchUserNonFundingLedgerUpdates();
-    },
-    perpsState.localLoadingHistory.length > 0 ? 30 * 1000 : undefined,
   );
 
   return {

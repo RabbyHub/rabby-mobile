@@ -1,6 +1,7 @@
-import SQLite from 'react-native-sqlite-storage';
+import { SQLite } from './exports';
 
-SQLite.DEBUG(false);
-
-SQLite.enablePromise(true);
-// SQLite.enablePromise(false);
+// if (SQLite === RNSQLiteStorage) {
+//   RNSQLiteStorage.DEBUG(false);
+//   RNSQLiteStorage.enablePromise(true);
+//   // RNSQLiteStorage.enablePromise(false);
+// }

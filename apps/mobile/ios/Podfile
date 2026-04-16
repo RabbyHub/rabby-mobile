@@ -16,8 +16,9 @@ node_require('react-native-permissions/scripts/setup.rb')
 $RNFirebaseAsStaticFramework = true
 $RNGoogleMobileAdsAsStaticFramework = true
 $RNAdMobAsStaticFramework = true
+# $NotifeeExtension = true
 
-platform :ios, '15.1'
+platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
 # ⬇️ uncomment wanted permissions
@@ -28,14 +29,14 @@ setup_permissions([
   # 'CalendarsWriteOnly',
   # 'Camera',
   # 'Contacts',
-  # 'FaceID',
+  'FaceID',
   # 'LocationAccuracy',
   # 'LocationAlways',
   # 'LocationWhenInUse',
   # 'MediaLibrary',
   # 'Microphone',
   # 'Motion',
-  # 'Notifications',
+  'Notifications',
   # 'PhotoLibrary',
   # 'PhotoLibraryAddOnly',
   # 'Reminders',
@@ -68,6 +69,16 @@ target 'RabbyMobile' do
     # Pods for testing
   end
 
+  pre_install do |installer|
+    installer.pod_targets.each do |pod|
+      if pod.name.eql?('op-sqlite')
+        def pod.build_type
+          Pod::BuildType.static_library
+        end
+      end
+    end
+  end
+
   # use_flipper!({'Flipper' => '0.58.0'})
   post_install do |installer|
     # flipper_post_install(installer)
@@ -76,8 +87,26 @@ target 'RabbyMobile' do
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
+      :ccache_enabled => ENV['RABBY_MOBILE_POD_USE_CACHE'] == "true",
     )
+
+    # Fix fmt 11.0.2 compilation error with Xcode 26.4+
+    # https://github.com/expo/expo/issues/44229
+    # https://github.com/facebook/react-native/pull/56099
+    fmt_base = File.join(installer.sandbox.pod_dir('fmt'), 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      content = File.read(fmt_base)
+      patched = content.gsub(
+        /^#\s*define\s+FMT_USE_CONSTEVAL\s+1\b/,
+        '#define FMT_USE_CONSTEVAL 0'
+      )
+      if patched != content
+        File.chmod(0644, fmt_base)
+        File.write(fmt_base, patched)
+        puts 'Patched fmt: FMT_USE_CONSTEVAL=0'
+      end
+    end
+
     # __apply_Xcode_12_5_M1_post_install_workaround(installer)
     patch_build_settings(installer)
 
@@ -88,6 +117,11 @@ target 'RabbyMobile' do
     # system("bash ./handle_bitcode.sh")
   end
 end
+
+# target 'RabbyMobileNotification' do
+#   use_frameworks! :linkage => :static
+#   pod 'RNNotifeeCore', :path => '../node_modules/@notifee/react-native/RNNotifeeCore.podspec'
+# end
 
 def patch_build_settings(installer)
   arch = `arch`.strip
@@ -113,7 +147,6 @@ def patch_build_settings(installer)
 
   projects.each do |project|
     project.build_configurations.each do |config|
-      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64" if arch == "arm64"
       config.build_settings["DEVELOPMENT_TEAM"] = "ZPNP2SF27Q"
       config.build_settings["ENABLE_BITCODE"] = "NO"
     end

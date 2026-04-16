@@ -3,21 +3,18 @@ import { ViewStyle } from 'react-native';
 
 import { Card } from '@/components';
 
-import { AbstractPortfolio } from '../types';
 import { PortfolioHeader, TokenList } from '../components/PortfolioDetail';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { IProtocolPortfolio } from '@/store/protocols';
 
 export default React.memo(
   ({
     name,
     data,
     style,
-    currentAccount,
   }: {
     name: string;
-    data: AbstractPortfolio;
+    data: IProtocolPortfolio;
     style?: ViewStyle;
-    currentAccount?: KeyringAccountWithAlias;
   }) => {
     const portfolio = data._originPortfolio;
 
@@ -25,17 +22,14 @@ export default React.memo(
       <Card style={style}>
         <PortfolioHeader data={data} name={name} showDescription />
         <TokenList
-          currentAccount={currentAccount}
           tokens={portfolio?.detail?.supply_token_list}
           name="supplied"
         />
         <TokenList
-          currentAccount={currentAccount}
           tokens={portfolio?.detail?.borrow_token_list}
           name="borrowed"
         />
         <TokenList
-          currentAccount={currentAccount}
           tokens={portfolio?.detail?.reward_token_list}
           name="rewards"
         />

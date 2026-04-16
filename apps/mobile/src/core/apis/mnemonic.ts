@@ -7,6 +7,7 @@ import {
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
+import * as import_english from '@scure/bip39/wordlists/english';
 import {
   contactService,
   hdKeyringService,
@@ -22,6 +23,54 @@ import {
   requestKeyring,
 } from './keyring';
 import { throwErrorIfInvalidPwd } from './lock';
+import { accountEvents } from '@/core/apis/account';
+
+/**
+ * Formats a mnemonic string by trimming, splitting by whitespace/comma/newline, and rejoining.
+ * @param mnemonic - Raw mnemonic input (may contain newlines, commas, extra spaces)
+ * @returns Cleaned mnemonic string (space-separated words)
+ */
+export function formatMnemonic(mnemonic: string): string {
+  const trimmed = mnemonic?.trim() || '';
+  const words = trimmed.split(/\s+|,|\n/).filter(Boolean);
+  return words.join(' ');
+}
+
+/**
+ * Validates a mnemonic phrase and returns the cleaned version.
+ * Checks each word against the BIP39 English wordlist and validates the full mnemonic.
+ * @param mnemonic - Raw mnemonic input
+ * @returns The cleaned mnemonic string
+ * @throws Error if the mnemonic is invalid
+ */
+export function validateAndCleanMnemonic(mnemonic: string): string {
+  const cleanedMnemonic = formatMnemonic(mnemonic);
+  const words = cleanedMnemonic.split(' ');
+
+  // Check each word against the wordlist
+  const errorList: Array<{ index: number; word: string }> = [];
+  for (let index = 0; index < words.length; index++) {
+    const word = words[index]?.trim();
+    if (word && !import_english.wordlist.includes(word)) {
+      errorList.push({ index, word });
+    }
+  }
+
+  if (errorList.length > 0) {
+    throw new Error(
+      `${t('background.error.errorWords', {
+        count: errorList.length,
+      })}: ${errorList.map(i => i.word).join(',')}`,
+    );
+  }
+
+  // Validate the full mnemonic
+  if (!HdKeyring.validateMnemonic(cleanedMnemonic)) {
+    throw new Error(t('background.error.invalidMnemonic'));
+  }
+
+  return cleanedMnemonic;
+}
 
 export const getMnemonics = async (password: string, address: string) => {
   await throwErrorIfInvalidPwd(password);
@@ -282,22 +331,20 @@ export const requestHDKeyringByMnemonics = (
 export const addKeyringAndactiveAndPersistAccounts = async (
   mnemonic: string,
   passphrase: string,
-  accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
+  accountsToImport: Pick<Account, 'address' | 'aliasName' | 'index'>[],
   addAlias: boolean,
 ) => {
   try {
     const Keyring = keyringService.getKeyringClassForType(
       KEYRING_CLASS.MNEMONIC,
-    ) as any;
+    );
 
     const keyring = new Keyring({ mnemonic, passphrase });
 
-    keyringService.updateHdKeyringIndex(keyring as any);
-    keyringService.addKeyring(keyring as any);
+    keyringService.updateHdKeyringIndex(keyring);
+    keyringService.addKeyring(keyring);
 
-    await keyring.activeAccounts(
-      accountsToImport.map(acc => (acc as any).index! - 1),
-    );
+    await keyring.activeAccounts?.(accountsToImport.map(acc => acc.index! - 1));
 
     const detail = keyring.getInfoByAddress(accountsToImport[0].address);
     if (detail?.basePublicKey) {
@@ -330,7 +377,7 @@ export const addKeyringAndactiveAndPersistAccounts = async (
 export const activeAndPersistAccountsByMnemonics = async (
   mnemonics: string,
   passphrase: string,
-  accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
+  accountsToImport: Required<Pick<Account, 'address'>>[],
   addDefaultAlias = false,
 ) => {
   const keyring = getKeyringByMnemonic(mnemonics, passphrase);
@@ -350,9 +397,16 @@ export const activeAndPersistAccountsByMnemonics = async (
   //   accountsToImport.map(acc => (acc as any).index! - 1),
   // );
 
-  await keyring.activeAccounts(
-    accountsToImport.map(acc => (acc as any).index! - 1),
-  );
+  keyring.activeAccounts(accountsToImport.map(acc => (acc as any).index! - 1));
+
+  // accountEvents.emit('ACCOUNT_ADDED', {
+  //   accounts: accountsToImport.map(acc => ({
+  //     address: acc.address,
+  //     type: keyring.type as KeyringTypeName,
+  //     brandName: keyring.type,
+  //   })),
+  //   scene: 'memonics',
+  // });
 
   const detail = keyring.getInfoByAddress(accountsToImport[0].address);
   if (detail?.basePublicKey) {
@@ -459,7 +513,10 @@ export const addMnemonicKeyringAndGotoSuccessScreen = async (
   });
 };
 
-// TODO: if address is existed, return keyringId
+/**
+ * @deprecated
+ * Do navigation in UI modules
+ */
 export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
   input: string | string[],
   passphrase = '',
@@ -512,7 +569,6 @@ export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
         brandName: KEYRING_CLASS.MNEMONIC,
         isFirstImport: true,
         address: addresses,
-        mnemonics: arr[0],
         passphrase,
         keyringId: currentAddressInfo.keyringId || undefined,
         isExistedKR: currentAddressInfo.isExistedKR,

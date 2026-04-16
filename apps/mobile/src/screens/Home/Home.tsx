@@ -1,43 +1,92 @@
-/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import { ImageBackground, View, Animated } from 'react-native';
-import HeaderArea from './HeaderArea';
+import { View, Animated } from 'react-native';
+import HomeHeaderArea from './HeaderArea';
+import { SingleHomeRightArea } from './SingleHomeRightArea';
 import { AssetContainer } from './AssetContainer';
-import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useHeaderHeight } from '@react-navigation/elements';
-import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenRouteProp } from '@/navigation-type';
-import { RightArea } from './SingleHomeRightArea';
 import { BottomBtns } from './components/BottomBtns';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { TopBg } from './components/BgComponents';
+import { useBgSize } from './hooks/useBgSize';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import {
+  apisSingleHome,
+  useSingleHomeAccount,
+  useSingleHomeIsDecrease,
+} from './hooks/singleHome';
+import { useUnmount } from 'ahooks';
+import { HomeTopArea } from './components/HomeTopArea';
+import { HeaderBackPressable } from '@/hooks/navigation';
+import { BackupReminderCard } from '@/components2024/BackupReminderCard';
+import { useBackupReminder } from '@/hooks/account';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
-function HomeScreen(): JSX.Element {
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+function HomeHeader() {
+  const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.containerLeft}>
+        <HeaderBackPressable
+          style={styles.backButton}
+          {...makeTestIDProps(E2E_ID.home.singleAddressBack)}
+        />
+        <HomeHeaderArea />
+      </View>
+      <View style={styles.containerRight}>
+        <SingleHomeRightArea />
+      </View>
+    </View>
+  );
+}
+
+const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
+  container: {
+    marginTop: safeAreaInsets.top,
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    backgroundColor: 'transparent',
+    width: '100%',
+    zIndex: 10,
+  },
+
+  containerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    width: '100%',
+    flexShrink: 1,
+  },
+
+  containerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+  },
+
+  backButton: {
+    marginRight: 8,
+  },
+}));
+
+function SingleAddressHome(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [isDecrease, setIsDecrease] = React.useState<boolean>(false);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
-  const route =
-    useRoute<
-      GetNestedScreenRouteProp<
-        'SingleAddressNavigatorParamList',
-        'SingleAddressHome'
-      >
-    >();
-  const currentAccount = route?.params?.account;
-  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
-  const headerHeight = useHeaderHeight();
-  const { safeOffHeader } = useSafeSizes();
+  const { topHeight } = useBgSize();
+  const { currentAccount } = useSingleHomeAccount();
+  const needsBackupReminder = useBackupReminder(currentAccount);
 
-  const handleUpdateIsDecrease = React.useCallback((status: boolean) => {
-    setIsDecrease(status);
-  }, []);
+  const { isDecrease } = useSingleHomeIsDecrease();
 
   const handleReachTopStatusChange = React.useCallback(
     (status: boolean) => {
+      apisSingleHome.setReachTop(!status);
       Animated.timing(fadeAnim, {
         toValue: status ? 1 : 0,
         duration: 100,
@@ -46,73 +95,45 @@ function HomeScreen(): JSX.Element {
     },
     [fadeAnim],
   );
-  const renderHeaderTitle = React.useCallback(() => {
-    return <HomeScreen.HeaderArea account={currentAccount} />;
-  }, [currentAccount]);
 
-  const renderHeaderRight = React.useCallback(() => {
-    return <RightArea account={currentAccount} />;
-  }, [currentAccount]);
+  useRendererDetect({ name: 'SingleAddressHome' });
 
-  React.useEffect(() => {
-    setNavigationOptions({
-      // header: props => <HomeNativeStackHeader {...props} />,
-      headerTitle: renderHeaderTitle,
-      headerRight: renderHeaderRight,
-    });
-  }, [
-    currentAccount.address,
-    navigation,
-    renderHeaderRight,
-    renderHeaderTitle,
-    setNavigationOptions,
-  ]);
+  const handleTouchEnd = () => {
+    apisSingleHome.setFoldChart(true);
+  };
+
+  useUnmount(() => {
+    apisSingleHome.clearCurrentAccount();
+  });
 
   return (
     <NormalScreenContainer2024
       type="bg1"
-      overwriteStyle={styles.rootScreenContainer}>
-      <Animated.View
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '100%',
-          height: Math.max(headerHeight, 130),
-          opacity: fadeAnim,
-        }}>
-        <ImageBackground
-          source={
-            !isDecrease
-              ? require('@/assets2024/singleHome/up.png')
-              : require('@/assets2024/singleHome/loss.png')
-          }
-          resizeMode="cover"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: safeOffHeader + 120,
-          }}
-        />
-      </Animated.View>
-      <View style={styles.safeView}>
-        <AssetContainer
-          onRefresh={triggerUpdate}
-          onUpdateIsDecrease={handleUpdateIsDecrease}
-          onReachTopStatusChange={handleReachTopStatusChange}
+      overwriteStyle={[
+        styles.rootScreenContainer,
+        {
+          // 设计要求，TODO: check一些安卓机型
+          paddingTop: topHeight,
+        },
+      ]}>
+      <TopBg fadeAnim={fadeAnim} isDecrease={isDecrease} />
+
+      <View style={styles.safeView} onTouchStart={handleTouchEnd}>
+        <HomeTopArea />
+        <BackupReminderCard
+          visible={needsBackupReminder}
           account={currentAccount}
         />
+        <AssetContainer onReachTopStatusChange={handleReachTopStatusChange} />
       </View>
-      <View style={styles.bottomContainer}>
+      <View style={styles.bottomContainer} onTouchStart={handleTouchEnd}>
         <BottomBtns currentAccount={currentAccount} />
       </View>
     </NormalScreenContainer2024>
   );
 }
 
-HomeScreen.HeaderArea = HeaderArea;
+SingleAddressHome.Header = HomeHeader;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   rootScreenContainer: {
@@ -135,4 +156,4 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-export default HomeScreen;
+export default SingleAddressHome;

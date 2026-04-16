@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, View } from 'react-native';
-import { Button } from '@/components';
+import { Button } from '@/components2024/Button';
 import {
   useSendNFTFormik,
   useSendNFTInternalContext,
@@ -10,17 +10,19 @@ import { useTranslation } from 'react-i18next';
 import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfirmAllowTransfer';
 import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import AuthButton from '@/components2024/AuthButton';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import { useAtom } from 'jotai';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSignatureStore } from '@/components2024/MiniSignV2';
 import { DirectSignBtn } from '@/components2024/DirectSignBtn';
 import { Account } from '@/core/services/preference';
-
-const isAndroid = Platform.OS === 'android';
+import { RiskType, sortRisksDesc, useRisks } from '@/components/SendLike/risk';
+import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
+import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
+import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
 export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
@@ -33,12 +35,20 @@ export default function BottomArea({ account }: { account: Account | null }) {
     formValues,
     screenState,
     computed: {
+      fromAddress,
       canSubmit,
       canDirectSign: canShowDirectSign,
+      toAddressPositiveTips,
       toAddressInContactBook,
+      toAddrCex,
+      currentNFT: nftItem,
+    },
+    callbacks: {
+      handleIgnoreGasFeeChange,
+      onBottomAreaLayout,
+      onGasInfoDebouncedLoaded,
     },
     fns: { putScreenState, fetchContactAccounts },
-    callbacks: { handleIgnoreGasFeeChange },
   } = useSendNFTInternalContext();
 
   const { isSubmitLoading, addressToAddAsContacts } = screenState;
@@ -46,21 +56,127 @@ export default function BottomArea({ account }: { account: Account | null }) {
   const [isAllowTransferModalVisible, setIsAllowTransferModalVisible] =
     React.useState(false);
 
-  const { safeOffBottom } = useSafeSizes();
-
   const { status, ctx } = useSignatureStore();
+  const [calcCount, setCalcCount] = useState(ctx?.txsCalc?.length);
+  useEffect(() => {
+    setCalcCount(ctx?.txsCalc?.length);
+  }, [ctx?.txsCalc?.length]);
+  const debouncedCalcCount = useDebouncedValue(calcCount, 300);
+  useEffect(() => {
+    if (!debouncedCalcCount) return;
+    if (debouncedCalcCount > 0) {
+      onGasInfoDebouncedLoaded();
+    }
+  }, [debouncedCalcCount, onGasInfoDebouncedLoaded]);
 
   const isDirectSigning = status === 'signing';
-
   const canDirectSign = !ctx?.disabledProcess;
   const showRiskTipsForMiniSign = !!ctx?.gasFeeTooHigh;
 
+  const {
+    loading: loadingRisks,
+    risks: risks,
+    fetchRisks,
+  } = useRisks({
+    // balance: !!screenState.toAddrAccountInfo?.account?.balance,
+    fromAddress,
+    toAddress: formValues.to,
+    cex: toAddrCex,
+    forbiddenCheck: useMemo(() => {
+      return {
+        user_addr: fromAddress || '',
+        to_addr: formValues.to || '',
+        chain_id: nftItem?.chain,
+        // id: nftItem?.id || '',
+        id: formValues.to || '',
+      };
+    }, [fromAddress, formValues.to, nftItem?.chain /* , nftItem?.id */]),
+    onLoadFinished: useCallback(
+      ctx => {
+        putScreenState(prev => ({
+          ...prev,
+          agreeRequiredChecks: {
+            ...prev.agreeRequiredChecks,
+            forToAddress: false,
+          },
+        }));
+      },
+      [putScreenState],
+    ),
+  });
+
+  useEffect(() => {
+    const onTxCompleted: EventBusListeners[typeof EVENTS.TX_COMPLETED] =
+      txDetail => {
+        if (isGasAccountDepositFlowActive()) {
+          return;
+        }
+        fetchRisks();
+        setTimeout(() => {
+          if (isGasAccountDepositFlowActive()) {
+            return;
+          }
+          fetchRisks();
+        }, 5000);
+      };
+    eventBus.addListener(EVENTS.TX_COMPLETED, onTxCompleted);
+
+    return () => {
+      eventBus.removeListener(EVENTS.TX_COMPLETED, onTxCompleted);
+    };
+  }, [fetchRisks]);
+
+  const { mostImportantRisks, hasRiskForToAddress } = React.useMemo(() => {
+    const ret = {
+      risksForToAddress: [] as { value: string }[],
+      mostImportantRisks: [] as { value: string }[],
+    };
+    if (risks.length) {
+      const sorted = (
+        !toAddressPositiveTips?.hasPositiveTips
+          ? [...risks]
+          : [...risks].filter(item => item.type !== RiskType.NEVER_SEND)
+      ).sort(sortRisksDesc);
+
+      ret.risksForToAddress = sorted
+        .slice(0, 1)
+        .map(item => ({ value: item.value }));
+    }
+
+    ret.mostImportantRisks = [...ret.risksForToAddress].slice(0, 1);
+
+    return {
+      mostImportantRisks: ret.mostImportantRisks,
+      hasRiskForToAddress: !!ret.risksForToAddress.length,
+    };
+  }, [risks, toAddressPositiveTips?.hasPositiveTips]);
+
+  const agreeRequiredChecked =
+    hasRiskForToAddress && screenState.agreeRequiredChecks.forToAddress;
+
+  const disableSubmitDueToBasic =
+    !canSubmit || (!!mostImportantRisks.length && !agreeRequiredChecked);
+
   return (
-    <View
-      style={[
-        styles.bottomDockArea,
-        isAndroid && { paddingBottom: 20 + safeOffBottom },
-      ]}>
+    <View onLayout={onBottomAreaLayout} style={[styles.bottomDockArea]}>
+      <BottomRiskTip
+        loadingRisks={loadingRisks}
+        mostImportantRisks={mostImportantRisks}
+        agreeRequiredChecked={agreeRequiredChecked}
+        onToggleAgreeRequiredChecked={() => {
+          putScreenState(prev => {
+            return {
+              ...prev,
+              agreeRequiredChecks: {
+                ...prev.agreeRequiredChecks,
+                ...(hasRiskForToAddress && {
+                  forToAddress: !agreeRequiredChecked,
+                }),
+              },
+            };
+          });
+        }}
+      />
       {canShowDirectSign ? (
         <DirectSignBtn
           // refresh  risk check
@@ -73,7 +189,9 @@ export default function BottomArea({ account }: { account: Account | null }) {
             handleIgnoreGasFeeChange(p?.ignoreGasFee || false);
             handleSubmit();
           }}
-          disabled={!canSubmit || !canDirectSign || isDirectSigning}
+          disabled={
+            disableSubmitDueToBasic || !canDirectSign || isDirectSigning
+          }
           loading={isSubmitLoading}
           type={'primary'}
           syncUnlockTime
@@ -83,13 +201,11 @@ export default function BottomArea({ account }: { account: Account | null }) {
         />
       ) : (
         <Button
-          disabled={!canSubmit}
-          containerStyle={styles.buttonContainer}
-          titleStyle={styles.buttonText}
+          disabled={disableSubmitDueToBasic}
           type="primary"
           title={'Send'}
           loading={isSubmitLoading}
-          onPress={handleSubmit}
+          onPress={() => handleSubmit()}
         />
       )}
 
@@ -125,28 +241,30 @@ export default function BottomArea({ account }: { account: Account | null }) {
   );
 }
 
-const getStyles = createGetStyles2024(({ colors2024 }) => {
-  return {
-    bottomDockArea: {
-      bottom: 0,
-      width: '100%',
-      padding: 24,
-      paddingBottom: 56,
-      backgroundColor: colors2024['neutral-bg-1'],
-      position: 'absolute',
-    },
+export const SIZES = {
+  containerPt: 16,
+  containerPb: 48,
+  // height: 308,
+  bottom: 48,
+};
 
-    buttonContainer: {
-      width: '100%',
-      height: 52,
-      borderRadius: 6,
-      ...(!isAndroid && {
-        marginBottom: 16,
-      }),
-    },
-
-    buttonText: {
-      color: colors2024['neutral-title-2'],
-    },
-  };
-});
+const getStyles = createGetStyles2024(
+  ({ colors2024, safeAreaInsets, isLight, colors }) => {
+    return {
+      bottomDockArea: {
+        bottom: 0,
+        width: '100%',
+        paddingHorizontal: 24,
+        position: 'absolute',
+        paddingTop: SIZES.containerPt,
+        paddingBottom: SIZES.containerPb + safeAreaInsets.bottom,
+        backgroundColor: resolveBgColorByType('bg1', {
+          isLight: isLight ?? true,
+          colors,
+          colors2024,
+        }),
+        // ...makeDebugBorder(),
+      },
+    };
+  },
+);

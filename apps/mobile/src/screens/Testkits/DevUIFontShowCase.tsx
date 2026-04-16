@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { RcIconLogoBlue } from '@/assets/icons/common';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -16,6 +16,7 @@ import TouchableText from '@/components/Touchable/TouchableText';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { FontNames } from '@/core/utils/fonts';
 import { ThemeColors, ThemeColors2024 } from '@/constant/theme';
+import { Text } from '@/components/Typography';
 
 const FONTS_CONFIG = [
   {
@@ -210,6 +211,7 @@ const getStyles = createGetStyles2024(ctx =>
     areaTitle: {
       fontSize: 36,
       marginBottom: 12,
+      color: ctx.colors2024['neutral-title-1'],
     },
     screenScrollableView: {
       // height: '100%',

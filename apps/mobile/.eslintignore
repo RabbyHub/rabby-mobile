@@ -1,2 +1,4 @@
 assets/custom/*
 assets/pages/*
+**/*.min.js
+src/core/bridges/InpageBridgeWeb3.js

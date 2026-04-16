@@ -4,12 +4,13 @@ import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
 import { useThemeStyles } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { DappIcon } from './DappIcon';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { createGetStyles, makeTriangleStyle } from '@/utils/styles';
 import { formatDappOriginToShow } from '@/utils/url';
 import { DappCardListBy } from './DappCard';
+import { Text } from '@/components/Typography';
 
 const NUM_OF_LINES = 3;
 

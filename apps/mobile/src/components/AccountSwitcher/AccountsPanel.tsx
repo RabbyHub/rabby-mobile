@@ -4,7 +4,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import {
   Dimensions,
   StyleProp,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -33,6 +32,8 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -42,7 +43,9 @@ const SectionCollapsableNav = function ({
   onCollapsedChange?: (collapsed: boolean) => void;
   title: React.ReactNode;
 }) {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { styles, colors2024 } = useTheme2024({
+    getStyle: getPanelStyle,
+  });
 
   const tilteNode = useMemo(() => {
     return typeof title === 'string' ? (
@@ -95,10 +98,12 @@ AccountSwitcherAopProps<{
     switchAction: () => Promise<void>;
     sceneAccount: Account;
   }) => void;
-  token?: AbstractPortfolioToken;
+  token?: ITokenItem;
   scrollToBottom(): void;
 }>) {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
+  const { styles, colors2024, isLight } = useTheme2024({
+    getStyle: getPanelStyle,
+  });
 
   const { toggleSceneVisible } = useAccountSceneVisible(forScene);
 
@@ -124,13 +129,13 @@ AccountSwitcherAopProps<{
     forScene,
   });
 
-  const notTop10Addresses = useMemo(() => {
+  const notTop10Accounts = useMemo(() => {
     return myAddresses.slice(10);
   }, [myAddresses]);
 
   const notMatterAddresses = useMemo(() => {
-    return [...notTop10Addresses, ...safeAddresses, ...watchAddresses];
-  }, [notTop10Addresses, safeAddresses, watchAddresses]);
+    return [...notTop10Accounts, ...safeAddresses, ...watchAddresses];
+  }, [notTop10Accounts, safeAddresses, watchAddresses]);
 
   const finalCurrentAccount =
     allowNullCurrentAccount && !sceneCurrentAccount
@@ -222,7 +227,7 @@ AccountSwitcherAopProps<{
   const renderRemainAddressesByType = useCallback(
     (
       accounts: ReturnType<typeof useSceneAccountInfo>['myAddresses'],
-      type: 'notTop10Addresses' | 'gnosisAccounts' | 'watchAccounts',
+      type: 'notTop10Accounts' | 'gnosisAccounts' | 'watchAccounts',
       title: string,
     ) => {
       if (accounts.length === 0) {
@@ -358,8 +363,8 @@ AccountSwitcherAopProps<{
         {remainAddressesCollapsed && (
           <View style={styles.addressListContainerNew}>
             {renderRemainAddressesByType(
-              notTop10Addresses,
-              'notTop10Addresses',
+              notTop10Accounts,
+              'notTop10Accounts',
               t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
             )}
             {renderRemainAddressesByType(
@@ -377,7 +382,7 @@ AccountSwitcherAopProps<{
       </View>
     ) : null;
   }, [
-    notTop10Addresses,
+    notTop10Accounts,
     safeAddresses,
     watchAddresses,
     colors2024,
@@ -492,7 +497,7 @@ AccountSwitcherAopProps<{
 
   return (
     <LinearGradientContainer
-      type="bg1"
+      type={isLight ? 'bg0' : 'bg1'}
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
       <View style={styles.header}>

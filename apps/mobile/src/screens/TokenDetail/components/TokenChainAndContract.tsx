@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -24,8 +24,10 @@ import RcIconCopy from '@/assets2024/icons/tokenDetail/copy.svg';
 import { useMemoizedFn } from 'ahooks';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { ITokenItem } from '@/store/tokens';
+import { Text } from '@/components/Typography';
 interface Props {
-  token: AbstractPortfolioToken;
+  token: ITokenItem;
   tokenEntity?: TokenEntityDetail;
 }
 
@@ -43,14 +45,14 @@ export const TokenChainAndContract: React.FC<Props> = ({
           id of non-native token is `{token_address}{chain.symbol}  */
     // const isContractToken = /^0x.{40}/.test(token.id) && token.id.endsWith(token.chain);
     const _isContractToken =
-      /^0x.{40}/.test(token._tokenId) && token.id?.includes(token._tokenId);
+      /^0x.{40}/.test(token.id) && token.id?.includes(token.id);
     return {
       chainItem: item,
       isContractToken: _isContractToken,
       nativeTokenChainName: !_isContractToken && item ? item.name : '',
       tokenAddress: !_isContractToken
         ? item?.nativeTokenAddress || ''
-        : token._tokenId,
+        : token.id,
     };
   }, [token]);
 
@@ -58,11 +60,11 @@ export const TokenChainAndContract: React.FC<Props> = ({
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
   >(evt => {
     evt.stopPropagation();
-    if (!token?._tokenId) {
+    if (!token?.id) {
       return;
     }
-    Clipboard.setString(token._tokenId);
-    toastCopyAddressSuccess(token._tokenId);
+    Clipboard.setString(token.id);
+    toastCopyAddressSuccess(token.id);
   });
 
   return (

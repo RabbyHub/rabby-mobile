@@ -24,10 +24,9 @@ import {
 } from 'ahooks';
 import PQueue from 'p-queue';
 import { last, unionBy, orderBy, debounce } from 'lodash';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
-  BuyHistoryItem,
   TokenItem,
   TxAllHistoryResult,
   TxHistoryItem,
@@ -49,9 +48,9 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { syncTop10History, syncSingleAddress } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { useHistoryLoading } from '@/hooks/historyTokenDict';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import {
   ensureHistoryListItemFromDb,
@@ -67,14 +66,20 @@ import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
 } from './components/type';
+import { Text } from '@/components/Typography';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
 
-export interface HistoryDisplayItem extends TxHistoryItem {
+export interface HistoryDisplayItem extends Omit<TxHistoryItem, 'tx'> {
   // projectDict: TxHistoryResult['project_dict'];
   // cateDict: TxHistoryResult['cate_dict'];
   // tokenDict: TxHistoryResult['token_dict'];
+  tx:
+    | (TxHistoryItem['tx'] & {
+        id?: string;
+      })
+    | null;
   receives: {
     amount: number;
     from_addr: string;
@@ -98,9 +103,10 @@ export interface HistoryDisplayItem extends TxHistoryItem {
     token?: TokenItem;
   } | null;
   address: string;
-  project_item: ProjectItemType;
+  project_item: ProjectItemType | null;
   key: string;
-  isSmallUsdTx?: boolean;
+  isSmallUsdTx?: boolean; // is will be filtered small tx
+  cateDict?: Record<string, string>;
   account?: KeyringAccountWithAlias;
   isShowSuccess?: boolean;
   historyType: HistoryItemCateType;
@@ -129,7 +135,7 @@ function History({
   isTestnet?: boolean;
   isForMultipleAddress: boolean;
 }): JSX.Element {
-  const { top10Addresses, list: accountList } = useAccountInfo();
+  const { myTop10Addresses, list: accountList } = useAccountInfo();
   const route =
     useRoute<
       GetNestedScreenRouteProp<
@@ -174,9 +180,7 @@ function History({
     },
   );
 
-  const { syncTop10History, syncSingleAddress } =
-    useSyncHistoryDB(top10Addresses);
-  const { historyLoading } = useHistoryTokenDict();
+  const historyLoading = useHistoryLoading();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
 
@@ -196,7 +200,7 @@ function History({
         filterScamAndSmallTx === undefined ? !isShowAll : filterScamAndSmallTx;
       dbFetchLoadingRef.current = true;
       const addresses = isSceneUsingAllAccounts
-        ? top10Addresses.map(i => i.toLowerCase())
+        ? myTop10Addresses.map(i => i.toLowerCase())
         : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
       const {
         items: historyList,
@@ -208,11 +212,14 @@ function History({
         filterScamAndSmallTx: isFilter,
       });
 
+      const oneHourAgo = Math.floor(new Date().getTime() / 1000) - 60 * 60;
       const list = historyList.map(item => {
         return {
           ...ensureHistoryListItemFromDb(item),
           // hidden small and scam no need this prop
-          isSmallUsdTx: isFilter ? false : item.is_small_tx,
+          isSmallUsdTx: isFilter
+            ? false
+            : item.is_small_tx && item.time_at <= oneHourAgo,
           isShowSuccess: historySuccessList.includes(
             `${item.owner_addr.toLowerCase()}-${item.txHash}`,
           ),
@@ -386,7 +393,7 @@ function History({
 
     const list: TransactionGroup[] = [];
     const addressList = isSceneUsingAllAccounts
-      ? top10Addresses
+      ? myTop10Addresses
       : [finalSceneCurrentAccount?.address.toLowerCase()];
     for (let i = 0; i < addressList.length; i++) {
       const addr = addressList[i];
@@ -457,7 +464,7 @@ function History({
     } else {
       dbLastCursorRef.current = 0;
       isSceneUsingAllAccounts
-        ? syncTop10History(true)
+        ? syncTop10History(myTop10Addresses, true)
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
     }
   });
@@ -659,7 +666,7 @@ function History({
     }
 
     const addresses = isSceneUsingAllAccounts
-      ? top10Addresses.map(a => a.toLowerCase())
+      ? myTop10Addresses.map(a => a.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     const isLoading = addresses.some(address => {
       return historyLoading[address];
@@ -705,7 +712,7 @@ function History({
 
   return (
     // eslint-disable-next-line react-native/no-inline-styles
-    <View style={{ paddingTop: 0, position: 'relative' }}>
+    <View style={{ paddingTop: 0, position: 'relative', height: '100%' }}>
       <>
         <TransactionAlert pendingTxs={groups?.filter(item => item.isPending)} />
         <HistoryList

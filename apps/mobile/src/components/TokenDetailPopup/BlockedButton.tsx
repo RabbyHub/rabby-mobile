@@ -1,10 +1,11 @@
 import clsx from 'clsx';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { AppSwitch } from '../customized/Switch';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
+import { Text } from '@/components/Typography';
 
 export interface Props {
   selected?: boolean;

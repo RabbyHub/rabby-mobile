@@ -4,7 +4,6 @@ import {
   Linking,
   Platform,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -31,6 +30,7 @@ import {
   RcFingerprint,
   RcScreenshotReport,
   RcIconCurrency,
+  RcNotification,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -38,8 +38,10 @@ import {
   APP_RUNTIME_ENV,
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
+  IS_CONSOLE_STRIPPED,
   IS_HERMES_ENABLED,
 } from '@/constant/env';
+import { E2E_ID } from '@/constant/e2e';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import {
@@ -53,11 +55,9 @@ import { type SettingConfBlock, Block } from './Block';
 // import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
-import type { SwitchToggleType } from '@/components';
-import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import {
   APP_FEATURE_SWITCH,
   APP_URLS,
@@ -74,15 +74,15 @@ import {
   ResetPasswordAndKeyringsSheetModal,
 } from '../ManagePassword/components/ManagePasswordSheetModal';
 
-import { useBiometrics, useBiometricsComputed } from '@/hooks/biometrics';
-import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import {
-  AutoLockCountDownLabel,
-  AutoLockSettingLabel,
-} from './components/LockAbout';
+  storeApisBiometrics,
+  useBiometrics,
+  useBiometricsComputed,
+} from '@/hooks/biometrics';
+import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
+import { AutoLockSettingLabel } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
-import { SwitchShowFloatingAutoLockCountdown } from './components/SwitchFloatingView';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
@@ -94,10 +94,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
 } from './sheetModals/DevForceLocalVersionSelector';
+import InnerDappPreloadStrategySelector, {
+  useInnerDappPreloadStrategySelectorModalVisible,
+} from './sheetModals/InnerDappPreloadStrategySelector';
+import { useInnerDappPreloadRetention } from '@/config/innerDappPreloadRetention';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
-import CloudDriveTestItemModal, {
-  useCloudDriveTestItemModalVisible,
-} from './sheetModals/DevCloudDrive';
 import WalletLockTestItemModal, {
   useWalletLockTestItemModalVisible,
 } from './sheetModals/DevWalletLock';
@@ -107,9 +108,6 @@ import DevUIPlaygroundModal, {
 import DevDataPlayground, {
   useDevDataPlaygroundModalVisible,
 } from './sheetModals/DevDataPlayground';
-import DevUIWipModal, {
-  useUIDevWipModalVisiable,
-} from './sheetModals/DevUIWip';
 import CurrentLanguageSelectorModal, {
   useCurrentLanguageModalVisible,
 } from './sheetModals/LanguageSelector';
@@ -122,22 +120,13 @@ import {
 import { AppCacheSizeText } from './components/SpecialText';
 import { IS_IOS } from '@/core/native/utils';
 import { abortAllSyncTasks } from '@/databases/sync/_task';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { resetUpdateHistoryTime } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
-import MockBatchRevokeModal, {
-  useDevMockBatchRevokeVisible,
-} from './sheetModals/DevMockBatchRevoke';
-import { preferenceService } from '@/core/services';
+import { perpsService, preferenceService } from '@/core/services';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
-import DevUIHomeCenterAreaModal, {
-  useUIDevHomeCenterAreaModalVisiable,
-} from './sheetModals/DevUIHomeCenterArea';
-import DevScreenRecordingModal, {
-  useDevScreenRecordingModalVisiable,
-} from './sheetModals/DevScreenRecording';
 import {
   DevModalDevServer,
   useDevServerModalVisible,
@@ -151,6 +140,23 @@ import {
   CurrencySelectorPopup,
   useCurrentCurrencyVisible,
 } from './sheetModals/CurrencySelectorPopup';
+import { isWorkerThreadRunning } from '@/perfs/thread';
+import {
+  setEnableTransactionNofification,
+  useAppNotificationEnabled,
+} from '@/hooks/appNotification';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { SupportedLang } from '@/utils/i18n';
+import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  trackSettingsCurrency,
+  trackSettingsFaceId,
+  trackSettingsLanguage,
+  trackSettingsLockTime,
+  trackSettingsScreenshotToBug,
+  trackSettingsTxNotification,
+} from '@/utils/analytics0331';
+import { Text } from '@/components/Typography';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -158,15 +164,61 @@ const LAYOUTS = {
 
 const isIOS = Platform.OS === 'ios';
 
+function TrackedTransactionNotificationSwitch() {
+  const { value } = useAppNotificationEnabled();
+
+  const handleToggle = useCallback(async (nextEnabled: boolean) => {
+    const finalValue = await setEnableTransactionNofification(nextEnabled);
+    if (typeof finalValue !== 'boolean') {
+      return;
+    }
+
+    trackSettingsTxNotification(finalValue).catch(error => {
+      console.error('trackSettingsTxNotification failed', error);
+    });
+  }, []);
+
+  return (
+    <AppSwitch2024
+      circleSize={20}
+      changeValueImmediately={false}
+      value={!!value}
+      onValueChange={handleToggle}
+    />
+  );
+}
+
+function getInnerDappPreloadStrategyLabel(strategy: string) {
+  switch (strategy) {
+    case 'legacy':
+      return 'Legacy';
+    case 'screen':
+      return 'Screen';
+    default:
+      return strategy;
+  }
+}
+
 function AlertBuildInfo() {
+  const commonInfos = [
+    `Build Channel: ${BUILD_CHANNEL}`,
+    `Runtime Env: ${APP_RUNTIME_ENV}`,
+    !!BUILD_GIT_INFO.BUILD_TIME &&
+      `Build Time: ${dayjs(BUILD_GIT_INFO.BUILD_TIME).format(
+        'YYYY-MM-DD HH:mm:ss',
+      )}`,
+    `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+    '   ',
+    `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
+    `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
+    `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
+  ];
+
   if (isNonPublicProductionEnv) {
     Alert.alert(
       'Build Info',
       [
-        `Build Channel: ${BUILD_CHANNEL}`,
-        `Runtime Env: ${APP_RUNTIME_ENV}`,
-        `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
-        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
+        ...commonInfos,
         '   ',
         !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
           `Lastest Commit: ${dayjs(BUILD_GIT_INFO.BUILD_GIT_HASH_TIME).format(
@@ -184,22 +236,11 @@ function AlertBuildInfo() {
       ],
     );
   } else {
-    Alert.alert(
-      'Build Info',
-      [
-        `Build Channel: ${BUILD_CHANNEL}`,
-        `Runtime Env: ${APP_RUNTIME_ENV}`,
-        `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
-        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
-      ]
-        .filter(Boolean)
-        .join('\n'),
-      [
-        {
-          text: 'OK',
-        },
-      ],
-    );
+    Alert.alert('Build Info', [...commonInfos].filter(Boolean).join('\n'), [
+      {
+        text: 'OK',
+      },
+    ]);
   }
 }
 
@@ -213,17 +254,19 @@ function SettingsBlocks() {
   // const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
   const startSelectAutolockTime = useCallback(() => {
     if (
-      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setAutoLockTime' })
-    )
+      shouldRedirectToSetPasswordBefore({
+        onSettingsAction: 'setAutoLockExpireTime',
+      })
+    ) {
       return;
+    }
     selectAutolockTimeRef.current?.present();
   }, [shouldRedirectToSetPasswordBefore]);
 
-  const { resetUpdateHistoryTime } = useHistoryTokenDict();
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const {
-    computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
+    computed: { couldSetupBiometrics, isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -244,8 +287,9 @@ function SettingsBlocks() {
   const startSwitchBiometrics = useCallback(() => {
     if (
       shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
-    )
+    ) {
       return;
+    }
     switchBiometricsRef.current?.toggle();
   }, [shouldRedirectToSetPasswordBefore]);
 
@@ -267,6 +311,50 @@ function SettingsBlocks() {
   const { clearBrowserData } = useClearBrowserData();
 
   const { toggleScreenshotToReport } = useScreenshotToReportEnabled();
+  const handleBiometricsToggleSuccess = useCallback((enabled: boolean) => {
+    trackSettingsFaceId(enabled).catch(error => {
+      console.error('trackSettingsFaceId failed', error);
+    });
+  }, []);
+
+  const handleTransactionNotificationToggle = useCallback(async () => {
+    const finalValue = await setEnableTransactionNofification(prev => !prev);
+    if (typeof finalValue !== 'boolean') {
+      return;
+    }
+
+    trackSettingsTxNotification(finalValue).catch(error => {
+      console.error('trackSettingsTxNotification failed', error);
+    });
+  }, []);
+
+  const handleScreenshotToBugToggle = useCallback(
+    (enabled?: boolean) => {
+      const nextEnabled = toggleScreenshotToReport(enabled);
+      trackSettingsScreenshotToBug(nextEnabled).catch(error => {
+        console.error('trackSettingsScreenshotToBug failed', error);
+      });
+    },
+    [toggleScreenshotToReport],
+  );
+
+  const handleAutoLockSelect = useCallback((ms: number) => {
+    trackSettingsLockTime(ms).catch(error => {
+      console.error('trackSettingsLockTime failed', error);
+    });
+  }, []);
+
+  const handleLanguageSelect = useCallback((lang: SupportedLang) => {
+    trackSettingsLanguage(lang).catch(error => {
+      console.error('trackSettingsLanguage failed', error);
+    });
+  }, []);
+
+  const handleCurrencySelect = useCallback((item: CurrencyItem) => {
+    trackSettingsCurrency(item.code).catch(error => {
+      console.error('trackSettingsCurrency failed', error);
+    });
+  }, []);
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -277,13 +365,24 @@ function SettingsBlocks() {
             label: biometricsComputed.defaultTypeLabel,
             icon: isFaceID ? RcFaceId : RcFingerprint,
             rightNode: (
-              <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
+              <SwitchBiometricsAuthentication
+                ref={switchBiometricsRef}
+                onToggleSuccess={handleBiometricsToggleSuccess}
+              />
             ),
             onPress: () => {
               startSwitchBiometrics();
             },
             disabled: disabledBiometrics,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
+          },
+          {
+            label: t('page.setting.transactionNotification'),
+            icon: RcNotification,
+            rightNode: <TrackedTransactionNotificationSwitch />,
+            onPress: () => {
+              handleTransactionNotificationToggle();
+            },
           },
           {
             label: t('page.setting.autoLockTime'),
@@ -355,11 +454,19 @@ function SettingsBlocks() {
           {
             label: t('page.setting.screenshotReportSwitch'),
             icon: RcScreenshotReport,
-            rightNode: <SwitchScreenshotToReport ref={switchBiometricsRef} />,
+            rightNode: (
+              <SwitchScreenshotToReport
+                onToggleSuccess={enabled => {
+                  trackSettingsScreenshotToBug(enabled).catch(error => {
+                    console.error('trackSettingsScreenshotToBug failed', error);
+                  });
+                }}
+              />
+            ),
             onPress: () => {
-              toggleScreenshotToReport();
+              handleScreenshotToBugToggle();
             },
-            disabled: disabledBiometrics,
+            // disabled: disabledBiometrics,
             visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {
@@ -554,11 +661,14 @@ function SettingsBlocks() {
         }}
       />
 
-      <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
+      <SelectAutolockTimeBottomSheetModal
+        ref={selectAutolockTimeRef}
+        onSelectTimeMs={handleAutoLockSelect}
+      />
 
-      <CurrentLanguageSelectorModal />
+      <CurrentLanguageSelectorModal onSelectLanguage={handleLanguageSelect} />
 
-      <CurrencySelectorPopup />
+      <CurrencySelectorPopup onSelectCurrency={handleCurrencySelect} />
     </>
   );
 }
@@ -578,26 +688,26 @@ function DevSettingsBlocks() {
     }, [fetchBiometrics]),
   );
 
-  // const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
-
-  const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
     useLocalVersionSelectorModalVisible();
+  const {
+    currentStrategy: innerDappPreloadStrategy,
+    setVisible: setInnerDappPreloadStrategySelectorVisible,
+  } = useInnerDappPreloadStrategySelectorModalVisible();
+  const innerDappPreloadRetention = useInnerDappPreloadRetention();
+  const innerDappRetentionLabel =
+    innerDappPreloadStrategy === 'screen' ? 1 : innerDappPreloadRetention;
+  const innerDappPreloadLabel = `${getInnerDappPreloadStrategyLabel(
+    innerDappPreloadStrategy,
+  )} · ${innerDappRetentionLabel}`;
 
-  const { setCloudDriveTestItemModalVisible } =
-    useCloudDriveTestItemModalVisible();
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
-  const { setDevUIHomeCenterAreaModalVisible } =
-    useUIDevHomeCenterAreaModalVisiable();
-  const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
-  const { setDevScreenRecordingModalVisible } =
-    useDevScreenRecordingModalVisiable();
+
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
-  const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
 
@@ -636,6 +746,19 @@ function DevSettingsBlocks() {
               visible: NEED_DEVSETTINGBLOCKS,
             },
             {
+              label: 'Inner Dapp Preload',
+              icon: RcCode,
+              onPress: () => {
+                setInnerDappPreloadStrategySelectorVisible(true);
+              },
+              rightTextNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  {innerDappPreloadLabel}
+                </Text>
+              ),
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
               label: 'Backend Service URL',
               icon: RcCode,
               onPress: async () => {
@@ -650,29 +773,27 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: '[Cloud] Test Memonics Backup',
-              icon: RcGoogleDrive,
+              label: 'Regression Switches',
+              icon: RcCode,
+              onPress: () => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DevSwitches,
+                  }),
+                );
+              },
+            },
+            {
+              label: 'LAN Dev Server Settings',
+              icon: RcCode,
               onPress: async () => {
-                setCloudDriveTestItemModalVisible(true);
-              },
-            },
-            {
-              label: '[UI] Mock Home Center Areas',
-              icon: RcCode,
-              onPress: () => {
-                setDevUIHomeCenterAreaModalVisible(true);
-              },
-            },
-            {
-              label: '[UI] Wip Helpers',
-              icon: RcCode,
-              onPress: () => {
-                setDevUIWipModalVisible(true);
+                setDevServerSettingsModalVisible(true);
               },
             },
             {
               label: 'UI Playground',
               icon: RcCode,
+              testID: E2E_ID.settings.uiPlayground,
               onPress: () => {
                 setDevUIPlaygroundModalVisible(true);
               },
@@ -685,35 +806,14 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: 'Screen Recording',
-              icon: isIOS ? RcScreenRecord : RcScreenshot,
-              onPress: () => {
-                setDevScreenRecordingModalVisible(true);
-              },
-            },
-            {
-              label: (
-                <Text>
-                  <AutoLockCountDownLabel />
-                </Text>
-              ),
-              icon: RcAutoLockTime,
-              onPress: () => {
-                switchShowFloatingAutoLockCountdownRef.current?.toggle();
-              },
-              rightNode: (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <SwitchShowFloatingAutoLockCountdown
-                    ref={switchShowFloatingAutoLockCountdownRef}
-                  />
-                </View>
-              ),
-            },
-            {
-              label: 'Mock Batch Revoke',
+              label: 'App Log Verification',
               icon: RcCode,
               onPress: () => {
-                setMockBatchRevokeVisible(true);
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackTestkits, {
+                    screen: RootNames.DebugLogViewer,
+                  }),
+                );
               },
             },
           ],
@@ -725,11 +825,16 @@ function DevSettingsBlocks() {
           icon: RcEarth,
           items: [
             {
-              label: 'LAN Server Settings',
+              label: 'Inner Dapp Preload',
               icon: RcCode,
-              onPress: async () => {
-                setDevServerSettingsModalVisible(true);
+              onPress: () => {
+                setInnerDappPreloadStrategySelectorVisible(true);
               },
+              rightTextNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  {innerDappPreloadLabel}
+                </Text>
+              ),
             },
             // {
             //   label: 'WebView Test',
@@ -831,18 +936,6 @@ function DevSettingsBlocks() {
                 });
               },
             },
-            // {
-            //   label: 'Test Biometrics',
-            //   icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
-            //   onPress: () => {
-            //     startBiometricsVerification({
-            //       onFinished: () => {
-            //         abortBiometricsVerification();
-            //       },
-            //     });
-            //   },
-            //   disabled: disabledBiometrics || !isBiometricsEnabled,
-            // },
           ],
         },
       }),
@@ -876,14 +969,11 @@ function DevSettingsBlocks() {
       })}
 
       <DevForceLocalVersionSelector />
+      <InnerDappPreloadStrategySelector />
 
-      <CloudDriveTestItemModal />
       <WalletLockTestItemModal />
-      <DevUIWipModal />
-      <DevUIHomeCenterAreaModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
-      <DevScreenRecordingModal />
       <DevModalDevServer />
       <OpenApiPopup
         visible={isShowOpenApiPopup}
@@ -891,7 +981,6 @@ function DevSettingsBlocks() {
           setIsShowOpenApiPopup(false);
         }}
       />
-      <MockBatchRevokeModal />
     </>
   );
 }
@@ -899,15 +988,10 @@ function DevSettingsBlocks() {
 export default function SettingsScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const {
-    computed: { couldSetupBiometrics },
-    fetchBiometrics,
-  } = useBiometrics({ autoFetch: true });
-
   useFocusEffect(
     useCallback(() => {
-      fetchBiometrics();
-    }, [fetchBiometrics]),
+      storeApisBiometrics.fetchBiometrics();
+    }, []),
   );
 
   const { safeSizes } = useSafeAndroidBottomSizes({

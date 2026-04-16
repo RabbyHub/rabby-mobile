@@ -8,6 +8,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@/constant/chains';
 import createPersistStore, {
   StorageAdapaterOptions,
+  StoreServiceBase,
 } from '@rabby-wallet/persist-store';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { BroadcastEvent } from '@/constant/event';
@@ -33,7 +34,12 @@ const { isSameAddress } = addressUtils;
 //   index?: number;
 //   balance?: number;
 // }
-export interface Account extends KeyringAccountWithAlias {}
+export interface Account extends KeyringAccountWithAlias {
+  /**
+   * @description property for HDKeyring and hardware keyring to indicate the index of the account
+   */
+  index?: number | undefined;
+}
 
 export interface ChainGas {
   gasPrice?: number | null; // custom cached gas price
@@ -87,6 +93,8 @@ export type ITokenSetting = {
   foldDefis?: string[];
   unFoldDefis?: string[];
 };
+
+export type TokenDisplayMode = 'byAddress' | 'byAsset' | 'bySymbol';
 
 export interface ITokenManageSettingMap {
   [address: string]: {
@@ -170,13 +178,14 @@ export interface PreferenceStore {
    */
   tempCurrentAccount?: Account;
   /** 用户是否跳过了watchlist引导 */
-  watchlistSkip?: boolean;
+  watchlistSkipV2?: boolean;
 
   lastReportTime?: number;
 
   balanceHideType?: BALANCE_HIDE_TYPE;
 
   currency?: string;
+  tokenDisplayMode?: TokenDisplayMode;
 
   hasShowAsterPopup: boolean;
   hasShowAsterReferralMap: Record<string, boolean>;
@@ -184,6 +193,14 @@ export interface PreferenceStore {
   hyperliquidInvite?: {
     lastTime?: number;
   };
+
+  enabledTransactionNofification?: boolean;
+
+  /**
+   * Map of account dbId to backup reminder state
+   * Stores accounts that need backup reminder (created via "Create New Wallet")
+   */
+  needsBackupReminderMap: Record<string, boolean>;
 }
 
 export interface AddressSortStore {
@@ -202,9 +219,12 @@ export type SetCurrentAccountOptions = {
   needSyncToSession?: boolean;
 };
 
-export class PreferenceService {
+export class PreferenceService extends StoreServiceBase<
+  PreferenceStore,
+  APP_STORE_NAMES.preference
+> {
   [x: string]: any;
-  store!: PreferenceStore;
+  // store!: PreferenceStore;
   keyringService: KeyringService;
   sessionService: import('./session').SessionService;
   // globalSerivceEvents: typeof import('../apis/serviceEvent').globalSerivceEvents;
@@ -218,60 +238,59 @@ export class PreferenceService {
     },
   ) {
     const defaultLang = 'en';
-    this.keyringService = options.keyringService;
-    this.sessionService = options.sessionService;
-    this.store = createPersistStore<PreferenceStore>(
+    super(
+      APP_STORE_NAMES.preference,
       {
-        name: APP_STORE_NAMES.preference,
-        template: {
-          currentAccount: undefined,
-          balanceMap: {},
-          testnetBalanceMap: {},
-          locale: defaultLang,
-          lastTimeSendToken: {},
-          pinAddresses: [],
-          foldDefis: [],
-          unFoldDefis: [],
-          foldNfts: [],
-          unFoldNfts: [],
-          gasCache: {},
-          currentVersion: '0',
-          pinnedChain: [],
-          tokenApprovalChain: {},
-          nftApprovalChain: {},
-          sendLogTime: 0,
-          sendEnableTime: 0,
-          customizedToken: [],
-          blockedToken: [],
-          collectionStarred: [],
-          reportActionTsSet: {} as Record<REPORT_TIMEOUT_ACTION_KEY, number>,
-          currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY.NONE,
-          hiddenBalance: false,
-          isShowTestnet: false,
-          autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
-          // themeMode: DARK_MODE_TYPE.light,
-          addressSortStore: {
-            ...defaultAddressSortStore,
-          },
-          isInvited: false,
-          lastUsedAccount: undefined,
-          tempCurrentAccount: undefined,
-          tokenManageSettingMap: {},
-          safeSelfHostConfirm: {},
-          addressAvatarMap: {},
-          hasOpenCopyTrading: false,
-          watchlistSkip: false,
-          balanceHideType: BALANCE_HIDE_TYPE.SHOW,
-          currency: 'USD',
-          hasShowAsterReferralMap: {},
-          hasShowAsterPopup: false,
-          hyperliquidInvite: {
-            lastTime: 0,
-          },
+        currentAccount: undefined,
+        balanceMap: {},
+        testnetBalanceMap: {},
+        locale: defaultLang,
+        lastTimeSendToken: {},
+        pinAddresses: [],
+        foldDefis: [],
+        unFoldDefis: [],
+        foldNfts: [],
+        unFoldNfts: [],
+        gasCache: {},
+        currentVersion: '0',
+        pinnedChain: [],
+        tokenApprovalChain: {},
+        nftApprovalChain: {},
+        sendLogTime: 0,
+        sendEnableTime: 0,
+        customizedToken: [],
+        blockedToken: [],
+        collectionStarred: [],
+        reportActionTsSet: {} as Record<REPORT_TIMEOUT_ACTION_KEY, number>,
+        currentReportActionStats: REPORT_TIMEOUT_ACTION_KEY.NONE,
+        hiddenBalance: false,
+        isShowTestnet: false,
+        autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
+        // themeMode: DARK_MODE_TYPE.light,
+        addressSortStore: {
+          ...defaultAddressSortStore,
         },
+        isInvited: false,
+        lastUsedAccount: undefined,
+        tempCurrentAccount: undefined,
+        tokenManageSettingMap: {},
+        safeSelfHostConfirm: {},
+        addressAvatarMap: {},
+        hasOpenCopyTrading: false,
+        watchlistSkipV2: false,
+        balanceHideType: BALANCE_HIDE_TYPE.SHOW,
+        currency: 'USD',
+        tokenDisplayMode: 'byAddress',
+        hasShowAsterReferralMap: {},
+        hasShowAsterPopup: false,
+        hyperliquidInvite: {
+          lastTime: 0,
+        },
+        enabledTransactionNofification: false,
+        needsBackupReminderMap: {},
       },
       {
-        storage: options?.storageAdapter,
+        storageAdapter: options?.storageAdapter,
         beforePersist(obj) {
           if (!obj) {
             const msg = `[preferenceService] preference set as nil value (${obj}), it's unexpected`;
@@ -281,6 +300,9 @@ export class PreferenceService {
         },
       },
     );
+
+    this.keyringService = options.keyringService;
+    this.sessionService = options.sessionService;
     // reset current account if app not closed properly
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
@@ -290,12 +312,33 @@ export class PreferenceService {
     }
   }
 
+  getPreferenceByKey<T extends keyof PreferenceStore>(
+    key: T,
+  ): PreferenceStore[T] {
+    return this.store[key];
+  }
+
+  setPreferenceByKey<T extends keyof PreferenceStore>(
+    key: T,
+    value: PreferenceStore[T],
+  ) {
+    this.store[key] = value;
+  }
+
   setHasOpenCopyTrading = (value: boolean) => {
     this.store.hasOpenCopyTrading = value;
   };
 
   getHasOpenCopyTrading = () => {
     return this.store.hasOpenCopyTrading;
+  };
+
+  getTokenDisplayMode = (): TokenDisplayMode => {
+    return this.store.tokenDisplayMode || 'byAddress';
+  };
+
+  setTokenDisplayMode = (mode: TokenDisplayMode) => {
+    this.store.tokenDisplayMode = mode;
   };
 
   addAddressAvatar = (address: string, avatar: string) => {
@@ -334,6 +377,40 @@ export class PreferenceService {
       };
     } else {
       this.store.safeSelfHostConfirm[networkId] = true;
+    }
+  };
+
+  /**
+   * Check if an account needs backup reminder
+   * @param dbId - The account's _db_id (format: "type:brandName:address")
+   */
+  getNeedsBackupReminder = (dbId: string): boolean => {
+    return this.store.needsBackupReminderMap[dbId] ?? false;
+  };
+
+  /**
+   * Set backup reminder state for an account
+   * @param dbId - The account's _db_id
+   * @param needsReminder - Whether the account needs backup reminder
+   */
+  setNeedsBackupReminder = (dbId: string, needsReminder: boolean) => {
+    this.store.needsBackupReminderMap = {
+      ...this.store.needsBackupReminderMap,
+      [dbId]: needsReminder,
+    };
+    appServiceEvents.emit('backupReminderChanged', dbId);
+  };
+
+  /**
+   * Clear backup reminder for an account (e.g., after successful backup)
+   * @param dbId - The account's _db_id
+   */
+  clearNeedsBackupReminder = (dbId: string) => {
+    if (dbId in this.store.needsBackupReminderMap) {
+      const map = { ...this.store.needsBackupReminderMap };
+      delete map[dbId];
+      this.store.needsBackupReminderMap = map;
+      appServiceEvents.emit('backupReminderChanged', dbId);
     }
   };
 
@@ -495,10 +572,10 @@ export class PreferenceService {
   }
 
   setCurrentAccount = (
-    account: Account | null,
+    account?: Account | null,
     options?: SetCurrentAccountOptions,
   ) => {
-    this.store.currentAccount = account;
+    this.store.currentAccount = account ?? null;
     if (account) {
       // this._notifyAccountsChanged(account, !!options?.needSyncToSession);
       appServiceEvents.emit('currentAccountChanged', account);
@@ -514,7 +591,7 @@ export class PreferenceService {
     // return the first account in the account list
     const [first] = await this.keyringService.getAllVisibleAccountsArray();
 
-    return first;
+    return first!;
   };
 
   setLastUsedAccount = (account: Account) => {
@@ -579,11 +656,6 @@ export class PreferenceService {
     }
   };
 
-  getAddressBalance = (address: string): EvmTotalBalanceResponse | null => {
-    const balanceMap = this.store.balanceMap || {};
-    return balanceMap[address.toLowerCase()] || null;
-  };
-
   getTestnetAddressBalance = (
     address: string,
   ): EvmTotalBalanceResponse | null => {
@@ -629,7 +701,7 @@ export class PreferenceService {
 
   getLastTimeGasSelection = (chainId: keyof GasCache): ChainGas | null => {
     const cache = this.store.gasCache[chainId];
-    return cache;
+    return cache ?? null;
   };
 
   updateLastTimeGasSelection = (chainId: keyof GasCache, gas: ChainGas) => {
@@ -791,7 +863,7 @@ export class PreferenceService {
     this.store.sendEnableTime = time;
   };
 
-  setAutoLockTime = (time: number) => {
+  setAutoLockExpireTime = (time: number) => {
     this.store.autoLockTime = time;
   };
   setHiddenBalance = (value: boolean) => {
@@ -805,11 +877,11 @@ export class PreferenceService {
   };
 
   setWatchlistSkip = (value: boolean) => {
-    this.store.watchlistSkip = value;
+    this.store.watchlistSkipV2 = value;
   };
 
   getWatchlistSkip = () => {
-    return !!this.store.watchlistSkip;
+    return !!this.store.watchlistSkipV2;
   };
 
   resetAddressSortStoreExpiredValue = () => {
@@ -869,7 +941,7 @@ export class PreferenceService {
     );
     if (!exist) {
       this.store.pinedQueue = [token, ...pinedQueue];
-      this.manualUnFoldToken(token);
+      // this.manualUnFoldToken(token);
       matomoRequestEvent({
         category: 'Watchlist Usage',
         action: 'Watchlist_StarToken',
@@ -902,7 +974,7 @@ export class PreferenceService {
         item =>
           item.chainId !== token.chainId || item.tokenId !== token.tokenId,
       );
-      this.removePinedToken(token);
+      // this.removePinedToken(token);
     }
   };
   manualUnFoldToken = (token: IManageToken) => {
@@ -1017,13 +1089,13 @@ export class PreferenceService {
 
   getUserTokenSettingsSync = () => {
     return {
-      foldTokens: this.store.foldTokens || [],
-      unfoldTokens: this.store.unfoldTokens || [],
-      includeDefiAndTokens: this.store.includeDefiAndTokens || [],
-      excludeDefiAndTokens: this.store.excludeDefiAndTokens || [],
+      foldTokens: [],
+      unfoldTokens: [],
+      includeDefiAndTokens: [],
+      excludeDefiAndTokens: [],
       pinedQueue: this.store.pinedQueue || [],
-      foldNfts: this.store.foldNfts || [],
-      unfoldNfts: this.store.unFoldNfts || [],
+      foldNfts: [],
+      unfoldNfts: [],
       foldDefis: [],
       // foldDefis: this.store.foldDefis || [],
       unFoldDefis: [],

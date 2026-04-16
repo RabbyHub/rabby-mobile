@@ -1,9 +1,9 @@
 import React, { memo, ReactNode, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Image,
   Pressable,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -31,9 +31,11 @@ import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
-import { formatPrice, formatUsdValue } from '@/utils/number';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import {
+  TokenItem,
+  TokenItemWithEntity,
+} from '@rabby-wallet/rabby-api/dist/types';
+import { formatPrice, formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
@@ -44,13 +46,22 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { StyleProp } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { AccountOverview } from '../AccountOverview';
+import { formatAmount } from '@/utils/number';
+import { ITokenItem } from '@/store/tokens';
+import { isLpToken } from '@/utils/lpToken';
+import LpTokenIcon from '../LpTokenIcon';
+import LpTokenSwitch from '../LpTokenSwitch';
+import { isNumber } from 'lodash';
+import { Text } from '@/components/Typography';
 
-const formatPercentage = (x: number) => {
+export const formatPercentage = (x: number, ignoreSign = false) => {
   if (Math.abs(x) < 0.00001) {
-    return '0%';
+    return ignoreSign ? '0%' : '(0%)';
   }
   const percentage = (x * 100).toFixed(2);
-  return `${x >= 0 ? '+' : ''}${percentage}%`;
+  return ignoreSign
+    ? `${x >= 0 ? '+' : ''}${percentage}%`
+    : `(${x >= 0 ? '+' : ''}${percentage}%)`;
 };
 
 const hitSlop = {
@@ -60,6 +71,7 @@ const hitSlop = {
   right: 10,
 };
 
+// TODO：删掉，没有入口了
 export const TokenRow = memo(
   ({
     data,
@@ -137,10 +149,9 @@ export const TokenRow = memo(
     }, [styles.modalNextButtonText, t]);
     const children = useMemo(() => {
       const amountContent = data._priceStr ? (
-        <Text
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={styles.amountStr}>{`${data._amountStr} ${data.symbol}`}</Text>
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
+          {data._amountStr}
+        </Text>
       ) : null;
 
       return (
@@ -174,7 +185,7 @@ export const TokenRow = memo(
                   numberOfLines={1}
                   ellipsizeMode="tail"
                   style={styles.tokenSymbol}>
-                  {data.symbol}
+                  {getTokenSymbol(data)}
                 </Text>
                 {!hideFoldTag && data._isManualFold && (
                   <TextBadge type="folded" />
@@ -208,7 +219,15 @@ export const TokenRow = memo(
               )}
             </Text>
             {showAccount ? (
-              amountContent
+              <Text
+                style={StyleSheet.compose(styles.percent, {
+                  ...(data._isExcludeBalance && (data._usdValue || 0) > 0
+                    ? styles.exclude
+                    : {}),
+                  color: percentColor,
+                })}>
+                {formatPercentage(Number(data.price_24h_change) || 0)}
+              </Text>
             ) : data._isExcludeBalance && (data._usdValue || 0) > 0 ? (
               <TouchableOpacity
                 hitSlop={hitSlop}
@@ -230,25 +249,22 @@ export const TokenRow = memo(
               </Text>
             ) : null}
           </View>
-          {data._isPined && (
-            <View style={[styles.favoriteBadge]}>
-              <RcIconFavorite color={colors2024['orange-default']} />
-            </View>
-          )}
         </TouchableOpacity>
       );
     }, [
-      data._priceStr,
-      data._amountStr,
-      data.symbol,
-      data?.logo_url,
-      data?.chain,
-      data._isManualFold,
-      data._isExcludeBalance,
-      data._usdValue,
-      data.price_24h_change,
-      data._isPined,
-      styles,
+      data,
+      styles.amountStr,
+      styles.tokenRowWrap,
+      styles.tokenRowTokenWrap,
+      styles.tokenRowTokenInner,
+      styles.tokenHeader,
+      styles.tokenSymbol,
+      styles.tokenRowUsdValueWrap,
+      styles.tokenRowAmount,
+      styles.tokenRowUsdValue,
+      styles.exclude,
+      styles.percent,
+      styles.tips,
       style,
       onPressToken,
       mediaStyle,
@@ -259,9 +275,9 @@ export const TokenRow = memo(
       account,
       currency.usd_rate,
       currency.symbol,
+      percentColor,
       handleShowExcludeTips,
       colors2024,
-      percentColor,
       disableMenu,
     ]);
     if (disableMenu) {
@@ -282,9 +298,173 @@ export const TokenRow = memo(
   },
 );
 
-export interface TokenRowDataType extends AbstractPortfolioToken {
-  identity?: TokenEntityDetail;
-}
+export const TokenRowV2 = memo(
+  ({
+    data,
+    style,
+    logoSize = 40,
+    chainLogoSize = 16,
+    logoStyle,
+    onTokenPress,
+    account,
+    scene = 'default',
+    hideChainLogo = false,
+  }: {
+    data: ITokenItem;
+    style?: ViewStyle;
+    logoStyle?: ViewStyle;
+    logoSize?: number;
+    chainLogoSize?: number;
+    hideChainLogo?: boolean;
+    getMenuActions?: (token: ITokenItem) => MenuAction[];
+    hideFoldTag?: boolean;
+    disableMenu?: boolean;
+    onTokenPress?(token: ITokenItem): void;
+    account?: KeyringAccountWithAlias;
+    scene?: 'default' | 'portfolio'; // portfolio 适用于展示用户拥有的资产，比如资产页、用户持有 token 的选择器
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
+    const { currency } = useCurrency();
+    const showAccount = !!account;
+    const percentColor = useMemo(() => {
+      if (
+        !data?.price_24h_change ||
+        Math.abs(Number(data.price_24h_change)) < 0.00001
+      ) {
+        return colors2024['neutral-secondary'];
+      }
+      if (Number(data.price_24h_change) > 0) {
+        return colors2024['green-default'];
+      }
+      return colors2024['red-default'];
+    }, [colors2024, data.price_24h_change]);
+
+    const mediaStyle = useMemo(
+      () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
+      [logoStyle, styles.tokenRowLogo],
+    );
+
+    const onPressToken = useCallback(() => {
+      return onTokenPress?.(data);
+    }, [data, onTokenPress]);
+
+    const handleShowExcludeTips = useCallback(() => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.DESCRIPTION,
+        title: t('page.tokenDetail.excludeBalanceTips'),
+        sections: [],
+        bottomSheetModalProps: {
+          enableContentPanningGesture: true,
+          enablePanDownToClose: true,
+          enableDismissOnClose: true,
+          snapPoints: ['40%'],
+        },
+        nextButtonProps: {
+          title: (
+            <Text style={styles.modalNextButtonText}>
+              {t('page.tokenDetail.excludeBalanceTipsButton')}
+            </Text>
+          ),
+          titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+          onPress: () => {
+            removeGlobalBottomSheetModal2024(modalId);
+          },
+        },
+      });
+    }, [styles.modalNextButtonText, t]);
+
+    const amountContent = (
+      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.amountStr}>
+        {formatAmount(data.amount)}
+      </Text>
+    );
+
+    return (
+      <TouchableOpacity
+        style={StyleSheet.flatten([styles.tokenRowWrap, style])}
+        delayLongPress={200}
+        onPress={onPressToken}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View>
+            <AssetAvatar
+              logo={data?.logo_url}
+              chain={hideChainLogo ? false : data?.chain}
+              style={mediaStyle}
+              size={logoSize}
+              chainSize={chainLogoSize}
+            />
+          </View>
+          <View style={styles.tokenRowTokenInner}>
+            <View style={styles.tokenHeader}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.tokenSymbol}>
+                {getTokenSymbol(data)}
+              </Text>
+              {isLpToken(data) && (
+                <LpTokenIcon protocolId={data.protocol_id || ''} />
+              )}
+            </View>
+            {showAccount ? (
+              <AccountOverview account={account} />
+            ) : (
+              amountContent
+            )}
+          </View>
+        </View>
+
+        <View style={styles.tokenRowUsdValueWrap}>
+          <Text
+            style={[
+              styles.tokenRowAmount,
+              scene === 'portfolio' && !data.is_core ? styles.exclude : null,
+            ]}>
+            {formatNetworth(
+              new BigNumber(data.usd_value || 0)
+                .times(currency.usd_rate)
+                .toNumber(),
+              false,
+              currency.symbol,
+            )}
+          </Text>
+          {showAccount ? (
+            <View style={styles.priceInfo}>
+              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              {isNumber(data.price_24h_change) && (
+                <Text
+                  style={StyleSheet.compose(styles.percent, {
+                    ...(!data.is_core && (data.usd_value || 0) > 0
+                      ? styles.exclude
+                      : {}),
+                    color: percentColor,
+                  })}>
+                  {formatPercentage(Number(data.price_24h_change) || 0)}
+                </Text>
+              )}
+            </View>
+          ) : scene === 'portfolio' ? (
+            <View style={styles.priceInfo}>
+              <Text style={styles.price}>{`$${formatPrice(data.price)}`}</Text>
+              {isNumber(data.price_24h_change) && (
+                <Text
+                  style={StyleSheet.compose(styles.percent, {
+                    ...(!data.is_core && (data.usd_value || 0) > 0
+                      ? styles.exclude
+                      : {}),
+                    color: percentColor,
+                  })}>
+                  {formatPercentage(Number(data.price_24h_change) || 0)}
+                </Text>
+              )}
+            </View>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
 
 const Container = ({
   touchable,
@@ -313,25 +493,26 @@ export const ExternalTokenRow = memo(
     onTokenPress,
     touchable = true,
     decimalPrecision = false,
-    isPined = false,
     rightSlot,
-    onPressRightIcon,
+    onPressBottomRow,
     afterNode,
+    rightInfoMode = 'priceChange',
   }: {
-    data: TokenRowDataType;
+    data: ITokenItem | TokenItem | TokenItemWithEntity;
     style?: StyleProp<ViewStyle>;
     logoStyle?: ViewStyle;
     fold?: boolean;
     logoSize?: number;
     chainLogoSize?: number;
-    isPined?: boolean;
-    onTokenPress?(token: TokenRowDataType): void;
+    onTokenPress?(token: ITokenItem | TokenItem | TokenItemWithEntity): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
     rightSlot?: ReactNode;
-    onPressRightIcon?(): void;
+    onPressBottomRow?(): void;
     afterNode?: ReactNode;
+    rightInfoMode?: 'priceChange' | 'balance';
   }) => {
+    const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
     const mediaStyle = useMemo(
@@ -347,8 +528,9 @@ export const ExternalTokenRow = memo(
     }, [data, onTokenPress]);
 
     const fdv = useMemo(() => {
-      if (data.identity?.fdv) {
-        return data.identity?.fdv;
+      const d = data as TokenItemWithEntity;
+      if (d.identity?.fdv) {
+        return d.identity?.fdv;
       }
       return data.fdv || 0;
     }, [data]);
@@ -359,9 +541,9 @@ export const ExternalTokenRow = memo(
       return (
         <Pressable
           onPress={e => {
-            if (onPressRightIcon) {
+            if (onPressBottomRow) {
               e.stopPropagation();
-              onPressRightIcon?.();
+              onPressBottomRow?.();
             } else {
               onPressToken?.();
             }
@@ -373,35 +555,27 @@ export const ExternalTokenRow = memo(
               <View style={styles.gasBadgeTextRoot}>
                 <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
               </View>
-            ) : (
-              <Text
-                style={styles.searchSubText}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {'FDV'}
-                <Text style={styles.fdvValue}>
-                  {':'}
-                  {fdv ? formatUsdValueKMB(fdv || 0) : ' -'}
-                </Text>
-              </Text>
-            )}
-            {!isGasToken && (data?.identity?.token_id || data.id) && (
-              <View style={styles.verticalLine} />
-            )}
-            {!isGasToken && (data?.identity?.token_id || data.id) && (
-              <View style={styles.tokenRowContent}>
-                <Text style={styles.caValue}>
-                  {'CA'}
-                  <Text style={styles.caValueText}>
-                    {':'}
-                    {ellipsisAddress(data?.identity?.token_id || data.id)}
+            ) : null}
+            {!isGasToken &&
+              Boolean(
+                (data as TokenItemWithEntity)?.identity?.token_id || data.id,
+              ) && (
+                <View style={styles.tokenRowContent}>
+                  <Text style={styles.caValue}>
+                    {'CA'}
+                    <Text style={styles.caValueText}>
+                      {': '}
+                      {ellipsisAddress(
+                        (data as TokenItemWithEntity)?.identity?.token_id ||
+                          data.id,
+                      )}
+                    </Text>
                   </Text>
-                </Text>
-              </View>
-            )}
+                </View>
+              )}
           </View>
           <View style={styles.rightSection}>
-            {(notVerified || isSuspicious) && (
+            {!!(notVerified || isSuspicious) && (
               <View>
                 <RcTipCC
                   style={styles.tips}
@@ -431,29 +605,43 @@ export const ExternalTokenRow = memo(
         </Pressable>
       );
     }, [
-      data.is_verified,
-      data?.identity?.token_id,
-      data.id,
-      data.is_suspicious,
+      data,
       styles.searchTokenExtraInfo,
       styles.bubbleArrow,
       styles.leftSection,
       styles.gasBadgeTextRoot,
       styles.gasBadgeText,
-      styles.searchSubText,
-      styles.fdvValue,
-      styles.verticalLine,
       styles.tokenRowContent,
       styles.caValue,
       styles.caValueText,
       styles.rightSection,
       styles.tips,
       isGasToken,
-      fdv,
       colors2024,
-      onPressRightIcon,
+      onPressBottomRow,
       onPressToken,
     ]);
+    const isPositive = useMemo(
+      () => (data.price_24h_change || 0) >= 0,
+      [data.price_24h_change],
+    );
+    const topRightText = useMemo(() => {
+      if (rightInfoMode === 'balance') {
+        return formatNetworth(data.usd_value);
+      }
+      return `${decimalPrecision ? '$' : ''}${(decimalPrecision
+        ? formatPrice
+        : formatUsdValue)(data.price || 0)}`;
+    }, [data.price, data.usd_value, decimalPrecision, rightInfoMode]);
+    const bottomRightText = useMemo(() => {
+      if (rightInfoMode === 'balance') {
+        return formatTokenAmount(data.amount || 0);
+      }
+      if (!isNumber(data.price_24h_change)) {
+        return null;
+      }
+      return formatPercentage(Number(data.price_24h_change) || 0, true);
+    }, [data.amount, data.price_24h_change, rightInfoMode]);
 
     return (
       <Container
@@ -480,9 +668,23 @@ export const ExternalTokenRow = memo(
                     ellipsizeMode="tail">
                     {getTokenSymbol(data)}
                   </Text>
+                  {isLpToken(data) && (
+                    <View style={styles.lpTokenIconContainer}>
+                      <LpTokenIcon protocolId={data?.protocol_id || ''} />
+                    </View>
+                  )}
+                  {data.launchpad?.logo ? (
+                    <Image
+                      source={{ uri: data.launchpad?.logo }}
+                      style={styles.fourMemeIcon}
+                      width={18}
+                      height={18}
+                    />
+                  ) : null}
                   <ExchangeLogos
+                    style={styles.exchangeLogos}
                     logos={
-                      data.cex_ids
+                      data.cex_ids?.length
                         ? data.cex_ids
                             .map(
                               id =>
@@ -490,26 +692,57 @@ export const ExternalTokenRow = memo(
                                   ?.logo_url || '',
                             )
                             .filter(i => !!i) || []
-                        : data.identity?.cex_list?.map(item => item.logo_url) ||
-                          []
+                        : (data as TokenItemWithEntity).identity?.cex_list?.map(
+                            item => item.logo_url,
+                          ) || []
                     }
                   />
                 </View>
-                <Text style={styles.usdValue}>
-                  {decimalPrecision ? '$' : ''}
-                  {(decimalPrecision ? formatPrice : formatUsdValue)(
-                    data.price || 0,
+                <View style={styles.tokenAssetContainer}>
+                  {!!data.asset && (
+                    <>
+                      {data.asset?.logo ? (
+                        <Image
+                          source={{ uri: data.asset?.logo }}
+                          style={styles.fourMemeIcon}
+                          width={16}
+                          height={16}
+                        />
+                      ) : null}
+                      <View style={styles.nameWrapper}>
+                        <Text
+                          style={styles.tokenFdv}
+                          numberOfLines={1}
+                          ellipsizeMode="tail">
+                          {data.asset?.name}
+                        </Text>
+                      </View>
+                      <Text style={styles.tokenFdvSeparator}>|</Text>
+                    </>
                   )}
-                </Text>
+                  <Text style={styles.tokenFdv}>
+                    {fdv ? formatUsdValueKMB(data.fdv || 0) : '-'}
+                  </Text>
+                </View>
               </View>
               <View style={styles.colContent}>
-                <Text style={styles.tokenRowAmount}>{data._usdValueStr}</Text>
-                <Text
-                  style={styles.searchAmountStr}
-                  ellipsizeMode="tail"
-                  numberOfLines={1}>
-                  {data._amountStr} {data.symbol}
-                </Text>
+                <Text style={styles.tokenRowAmount}>{topRightText}</Text>
+                <View style={styles.priceInfo}>
+                  {bottomRightText &&
+                    (rightInfoMode === 'balance' ? (
+                      <Text style={styles.searchAmountStr}>
+                        {bottomRightText}
+                      </Text>
+                    ) : isNumber(data.price_24h_change) ? (
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.changeText,
+                          !isPositive && styles.changeTextPositive,
+                        ])}>
+                        {bottomRightText}
+                      </Text>
+                    ) : null)}
+                </View>
               </View>
             </View>
             {rightSlot}
@@ -519,11 +752,6 @@ export const ExternalTokenRow = memo(
 
           {afterNode || null}
         </View>
-        {isPined && (
-          <View style={[styles.favoriteBadge]}>
-            <RcIconFavorite color={colors2024['orange-default']} />
-          </View>
-        )}
       </Container>
     );
   },
@@ -537,7 +765,7 @@ export const TokenRowSectionHeader = memo(
     buttonStyle,
     onPressFold,
   }: {
-    str: string;
+    str?: string | null;
     fold?: boolean;
     style?: ViewStyle;
     buttonStyle?: ViewStyle;
@@ -575,6 +803,65 @@ export const TokenRowSectionHeader = memo(
         <View style={styles.tokenRowUsdValueWrap}>
           <Text style={styles.tokenRowUsdValue}>{str}</Text>
         </View>
+      </View>
+    );
+  },
+);
+
+export const TokenRowSectionLpTokenHeader = memo(
+  ({
+    str,
+    isEnabled,
+    onValueChange,
+    fold,
+    style,
+    buttonStyle,
+    onPressFold,
+  }: {
+    str?: string | null;
+    isEnabled: boolean;
+    onValueChange: (value: boolean) => void;
+    fold?: boolean;
+    style?: ViewStyle;
+    buttonStyle?: ViewStyle;
+    onPressFold?(): void;
+  }) => {
+    const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+    const { t } = useTranslation();
+
+    return (
+      <View style={[styles.tokenSectionHeader, style]}>
+        <View style={styles.tokenRowTokenWrap}>
+          <View style={styles.tokenRowTokenInner}>
+            <TouchableOpacity
+              onPress={onPressFold}
+              style={[styles.tokenRowTokenInnerSmallToken, buttonStyle]}>
+              <Text style={styles.actionText}>
+                {fold
+                  ? t('page.tokenDetail.action.all')
+                  : t('page.tokenDetail.action.less')}
+              </Text>
+              {fold ? (
+                <RcUnFoldCC
+                  style={styles.arrow}
+                  color={colors2024['neutral-secondary']}
+                />
+              ) : (
+                <RcFoldCC
+                  style={styles.arrow}
+                  color={colors2024['neutral-secondary']}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+        {fold ? (
+          <View style={styles.tokenRowUsdValueWrap}>
+            <Text style={styles.tokenRowUsdValue}>{str}</Text>
+          </View>
+        ) : (
+          <LpTokenSwitch isEnabled={isEnabled} onValueChange={onValueChange} />
+        )}
       </View>
     );
   },
@@ -655,8 +942,28 @@ const getStyles = createGetStyles2024(ctx => ({
     maxWidth: 150,
     // ...makeDebugBorder(),
   },
+  lpTokenIconContainer: {
+    marginLeft: 0,
+    flexShrink: 0,
+    justifyContent: 'flex-start',
+  },
+  exchangeLogos: {
+    backgroundColor: ctx.colors2024['neutral-bg-5'],
+    paddingHorizontal: 0,
+    paddingVertical: 2,
+    borderRadius: 12,
+    paddingRight: 4,
+  },
+  fourMemeIcon: {
+    width: 16,
+    height: 16,
+  },
+  priceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   usdValue: {
-    marginTop: 2,
     color: ctx.colors2024['neutral-secondary'],
     fontSize: 14,
     lineHeight: 18,
@@ -674,7 +981,7 @@ const getStyles = createGetStyles2024(ctx => ({
   tokenRowTokenInner: {
     flexShrink: 1,
     justifyContent: 'center',
-    gap: 0,
+    gap: 2,
   },
   searchTokenExtraInfo: {
     flex: 1,
@@ -719,6 +1026,34 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     // gap: 8,
   },
+  tokenAssetContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tokenAssetItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tokenFdv: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+  },
+  nameWrapper: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  tokenFdvSeparator: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-line'],
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 18,
+  },
   colContent: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -726,11 +1061,21 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 0,
     flex: 0,
   },
+  tokenHeaderAmount: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+    width: '100%',
+    maxWidth: '100%',
+    fontFamily: 'SF Pro Rounded',
+  },
   leftColContent: {
     maxWidth: '70%',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     flex: 1,
+    gap: 2,
     overflow: 'hidden',
   },
   verticalLine: {
@@ -858,14 +1203,14 @@ const getStyles = createGetStyles2024(ctx => ({
     gap: 4,
   },
   caValue: {
-    color: ctx.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-foot'],
     fontSize: 14,
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
   caValueText: {
-    color: ctx.colors2024['neutral-title-1'],
+    color: ctx.colors2024['neutral-foot'],
   },
   searchTokenDanger: {
     flex: 1,
@@ -905,10 +1250,17 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 14,
     height: 14,
   },
+  price: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+  },
   percent: {
     textAlign: 'right',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
   },
@@ -933,14 +1285,15 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-InvertHighlight'],
     backgroundColor: ctx.colors2024['brand-default'],
   },
-  favoriteBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    backgroundColor: ctx.colors2024['orange-light-1'],
-    borderBottomLeftRadius: 12,
-    borderTopRightRadius: 16,
+  changeText: {
+    fontWeight: '500',
+    fontSize: 14,
+    lineHeight: 18,
+    color: ctx.colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+  },
+  changeTextPositive: {
+    color: ctx.colors2024['red-default'],
   },
 }));

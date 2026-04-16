@@ -11,7 +11,13 @@ const tpl = JSON.parse(`
   "compilerOptions": {
     "noEmit": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    ${
+      true
+        ? ''
+        : '// disable on typecheck, but enabled by default in tsconfig.json, to avoid unncessary errors from node_modules during development'
+    }
+    "noUncheckedIndexedAccess": false
   },
   "include": [
     "src/index.d.ts",
@@ -48,5 +54,5 @@ module.exports = {
         return 'tsc --project tsconfig.typecheck.temp.json --noEmit';
       }),
   ].filter(Boolean),
-  '*': 'prettier --write --ignore-unknown',
+  '!(*.min.json)': 'prettier --write --ignore-unknown',
 };

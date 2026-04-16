@@ -1,15 +1,9 @@
-import {
-  StyleProp,
-  Text,
-  TextStyle,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleProp, TextStyle, TouchableOpacity, View } from 'react-native';
 import { CHAINS_ENUM } from '@/constant/chains';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { SelectSortedChainProps } from '@/components/SelectSortedChain';
+import { SelectSortedChainProps } from '@/components2024/SelectChainWithSummary';
 import { useFindChain } from '@/hooks/useFindChain';
 import React from 'react';
 import {
@@ -23,6 +17,7 @@ import {
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
@@ -87,7 +82,7 @@ export function ChainInfo({
   });
   const { t } = useTranslation();
 
-  const modalRef = React.useRef<MODAL_ID>();
+  const modalRef = React.useRef<MODAL_ID>(undefined);
 
   const removeChainModal = React.useCallback(() => {
     if (modalRef.current) {

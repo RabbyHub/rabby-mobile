@@ -24,7 +24,7 @@ import PQueue from 'p-queue';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import RuleResult from './RuleResult';
 import { SignTestnetPermission } from './SignTestnetPermission';
@@ -52,6 +52,7 @@ import { ConnectSkeleton } from './ConnectSkeleton';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getDappAccount } from '@/hooks/useDapps';
+import { Text } from '@/components/Typography';
 
 const RuleDesc = [
   {
@@ -721,7 +722,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 16,
   },
   hover: {
-    backgroundColor: colors2024['blue-light-1'],
+    backgroundColor: colors2024['blue-light-4'],
   },
   connectContent: {
     borderRadius: 16,

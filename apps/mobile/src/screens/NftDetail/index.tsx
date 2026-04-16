@@ -4,14 +4,14 @@ import dayjs from 'dayjs';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { Text } from '@/components';
 import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
-import { StackActions, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { GetRootScreenRouteProp } from '@/navigation-type';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -19,27 +19,18 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
-import { navigate, naviPush } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
 import FastImage from 'react-native-fast-image';
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { useMyAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useAssets } from '../Search/useAssets';
+import { useLoadAssets } from '../Search/useAssets';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { ellipsisAddress } from '@/utils/address';
-import { DropDownMenuView } from '@/components2024/DropDownMenu';
-import { DisplayNftItem } from '../Home/types';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { trigger } from 'react-native-haptic-feedback';
 import { preferenceService } from '@/core/services';
-import { RcIconMore } from '@/assets/icons/home';
-import { toast } from '@/components2024/Toast';
-import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
-import { GetRootScreensParamsList } from '@/navigation-type';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 const ListItem = (props: {
   title: string;
@@ -63,71 +54,6 @@ const ListItem = (props: {
   );
 };
 
-const hitSlop = {
-  top: 10,
-  bottom: 10,
-  left: 10,
-  right: 10,
-};
-
-const RightMore: React.FC<{
-  nft: DisplayNftItem;
-  refreshTags: () => void;
-}> = ({ nft, refreshTags }) => {
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { t } = useTranslation();
-
-  const menuActions = React.useMemo(() => {
-    return [
-      {
-        title: nft._isFold
-          ? t('page.tokenDetail.action.unfold')
-          : t('page.tokenDetail.action.fold'),
-        icon: nft._isFold
-          ? isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
-          : isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-        androidIconName: nft._isFold
-          ? 'ic_rabby_menu_unfold'
-          : 'ic_rabby_menu_fold',
-        key: 'fold',
-        action() {
-          if (nft._isFold) {
-            preferenceService.manualUnFoldNft({
-              chain: nft.chain,
-              id: nft.id,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-          } else {
-            preferenceService.manualFoldNft({
-              chain: nft.chain,
-              id: nft.id,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-          }
-          nft._isFold = !nft._isFold;
-          refreshTags();
-        },
-      },
-    ] as MenuAction[];
-  }, [nft, t, isDarkTheme, refreshTags]);
-
-  return (
-    <DropDownMenuView
-      menuConfig={{
-        menuActions: menuActions,
-      }}
-      triggerProps={{ action: 'press' }}>
-      <CustomTouchableOpacity hitSlop={hitSlop}>
-        <RcIconMore width={24} height={24} />
-      </CustomTouchableOpacity>
-    </DropDownMenuView>
-  );
-};
-
 export const NFTDetailScreen = () => {
   const { styles, colors } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -139,18 +65,6 @@ export const NFTDetailScreen = () => {
   const chain = getCHAIN_ID_LIST().get((token as NonListType).chain);
   const isSvgURL = (token as NonListType)?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
-  const { nftRefresh, singleNFTRefresh } = useTriggerTagAssets();
-
-  const refreshTag = useCallback(() => {
-    if (isSingleAddress) {
-      singleNFTRefresh();
-    } else {
-      nftRefresh();
-    }
-  }, [isSingleAddress, nftRefresh, singleNFTRefresh]);
-  const getHeaderRight = useMemoizedFn(() => {
-    return <RightMore nft={token as DisplayNftItem} refreshTags={refreshTag} />;
-  });
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
     return (
@@ -197,10 +111,9 @@ export const NFTDetailScreen = () => {
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: TokenDetailHeaderArea,
-      headerRight: getHeaderRight,
       headerTitleAlign: 'center',
     });
-  }, [TokenDetailHeaderArea, getHeaderRight, setNavigationOptions]);
+  }, [TokenDetailHeaderArea, setNavigationOptions]);
 
   const calPrice = useCallback((iToken: NFTItem) => {
     if (iToken?.usd_price) {
@@ -231,13 +144,25 @@ export const NFTDetailScreen = () => {
 
   const handleSend = useCallback(
     async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
-      const fromAccount =
-        address && accountType
-          ? accounts.find(i => isSameAddress(address, i.address))
-          : undefined;
-      if (!fromAccount) {
-        return;
+      const foundRet = {
+        matched: null as null | (typeof accounts)[number],
+        onlyMatchedAddress: null as null | (typeof accounts)[number],
+      };
+
+      for (const acc of accounts) {
+        if (isSameAddress(acc.address, address)) {
+          foundRet.onlyMatchedAddress = acc;
+
+          if (acc.type === accountType) {
+            foundRet.matched = acc;
+            foundRet.onlyMatchedAddress = null;
+            break;
+          }
+        }
       }
+      const fromAccount = foundRet.matched || foundRet.onlyMatchedAddress;
+      if (!fromAccount) return;
+
       await switchSceneCurrentAccount('SendNFT', fromAccount);
       naviPush(RootNames.StackTransaction, {
         screen: RootNames.SendNFT,
@@ -252,7 +177,7 @@ export const NFTDetailScreen = () => {
     [accounts, switchSceneCurrentAccount],
   );
 
-  const { assetsMap, getCacheTop10Assets } = useAssets({ hideCombined: true });
+  const { nftsMap, getCacheTop10Assets } = useLoadAssets();
 
   type ItemBase = {
     data: NFTItem;
@@ -278,8 +203,8 @@ export const NFTDetailScreen = () => {
 
     const tempList: ItemBase[] = [];
 
-    Object.keys(assetsMap).map((address, index) => {
-      const { nfts } = assetsMap[address];
+    Object.keys(nftsMap).map((address, index) => {
+      const nfts = nftsMap[address];
 
       nfts?.map(item => {
         if (
@@ -304,7 +229,7 @@ export const NFTDetailScreen = () => {
       );
       if (idx > -1) {
         resList.push({
-          ...tempList[idx],
+          ...tempList[idx]!,
           type: account.type,
           aliasName: account.aliasName || ellipsisAddress(account.address),
           index: idx,
@@ -320,13 +245,11 @@ export const NFTDetailScreen = () => {
             index: 0,
           } as ItemBase,
         ];
-  }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
+  }, [nftsMap, token, accounts, finalAccount, isSingleAddress]);
+
   useEffect(() => {
     const id = setTimeout(() => {
-      getCacheTop10Assets({
-        disableToken: true,
-        disableDefi: true,
-      });
+      getCacheTop10Assets({});
     }, 200);
     return () => {
       clearTimeout(id);

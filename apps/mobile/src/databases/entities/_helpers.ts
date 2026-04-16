@@ -1,7 +1,9 @@
+import { SQLiteDriverType } from '@/core/databases/exports';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import BigNumber from 'bignumber.js';
-import { ValueTransformer } from 'typeorm/browser';
+import { DeleteResult, ValueTransformer } from 'typeorm/browser';
+import { makeJsEEClass } from '@/core/services/_utils';
 
 export const DECIMALS_INT_RATIO = 18;
 
@@ -44,30 +46,28 @@ export const columnConverter = {
  */
 export const badRealTransformer: ValueTransformer = {
   to: (decimals?: number | string) => {
-    if (!decimals) {
-      return 0;
-    }
+    if (!decimals) return 0;
     if (typeof decimals === 'string') {
-      decimals = parseInt(decimals);
+      const maybeValidInt = parseInt(decimals);
+      if (Number.isNaN(maybeValidInt)) return decimals;
+
+      decimals = maybeValidInt;
     }
 
-    if (Number.isNaN(decimals)) {
-      return 0;
-    }
+    if (Number.isNaN(decimals)) return 0;
 
     return decimals * DECIMALS_INT_RATIO;
   },
   from: (int?: number | string) => {
-    if (!int) {
-      return 0;
-    }
+    if (!int) return 0;
     if (typeof int === 'string') {
-      int = parseInt(int);
+      const maybeValidInt = parseInt(int);
+      if (Number.isNaN(maybeValidInt)) return int;
+
+      int = maybeValidInt;
     }
 
-    if (Number.isNaN(int)) {
-      return 0;
-    }
+    if (Number.isNaN(int)) return 0;
 
     return int / DECIMALS_INT_RATIO;
   },
@@ -83,8 +83,27 @@ export function correctBadRealOnSql(
  * @description should used with TEXT column type
  */
 export const jsonTransformer: ValueTransformer = {
-  to: (val: any) => JSON.stringify(val),
-  from: (val: any) => stringUtils.safeParseJSON(val),
+  to: (val: any) => {
+    // avoid duplicate stringify
+    if (typeof val === 'string') return val;
+    return columnConverter.jsonObjToString(val);
+  },
+  from: (val: any) => columnConverter.jsonStringToObj(val),
+};
+
+/**
+ * @description should used with nullable TEXT column type
+ */
+export const nullableJsonTransformer: ValueTransformer = {
+  to: (val: any) => {
+    if (val === null || val === undefined || val === '') return null;
+    if (typeof val === 'string') return val;
+    return JSON.stringify(val);
+  },
+  from: (val: any) => {
+    if (val === null || val === undefined || val === '') return null;
+    return columnConverter.jsonStringToObj(val);
+  },
 };
 
 /**
@@ -95,3 +114,12 @@ export const bigNumberTransformer: ValueTransformer = {
     BigNumber.isBigNumber(val) ? val.toString() : new BigNumber(val).toString(),
   from: (val: any) => new BigNumber(val),
 };
+
+export const RECOMMENDED_DEFAULT_QUERY_LIMIT =
+  SQLiteDriverType === 'RNSQLiteStorage' ? 200 : 500;
+
+export type OrmEventBusListeners = {
+  [`account_info:removed`]: (ctx: { deleteResult: DeleteResult }) => void;
+};
+const { EventEmitter: OrmEE } = makeJsEEClass<OrmEventBusListeners>();
+export const ormEvents = new OrmEE();

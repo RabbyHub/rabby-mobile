@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Easing, Text, TouchableOpacity } from 'react-native';
+import { Easing, TouchableOpacity } from 'react-native';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import { Spin } from '@/screens/TransactionRecord/components/Spin';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
 import { Animated } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const PendingTx = ({
   number,
@@ -52,8 +53,8 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     flexDirection: 'row',
     borderRadius: 100,
     alignItems: 'center',
-    backgroundColor: colors2024['orange-light-4'],
-    borderColor: colors2024['orange-disable'],
+    backgroundColor: colors2024['orange-light-1'],
+    borderColor: colors2024['orange-light-2'],
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderWidth: 1,

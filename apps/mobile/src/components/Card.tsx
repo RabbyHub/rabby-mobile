@@ -48,7 +48,6 @@ export const Card = (props: CardProps) => {
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
-      borderRadius: 8,
       backgroundColor: 'white',
       overflow: 'hidden',
     },

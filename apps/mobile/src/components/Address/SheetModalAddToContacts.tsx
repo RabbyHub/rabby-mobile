@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import * as Yup from 'yup';
 
 import { BottomSheetModalConfirmContainer } from '@/components/customized/BottomSheetModalConfirmContainer';
@@ -13,9 +13,10 @@ import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { useFormik } from 'formik';
 import { apisAddress } from '@/core/apis';
 import { useAlias } from '@/hooks/alias';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import { Text, TextInput } from '@/components/Typography';
 
 interface AddToContactsModalProps {
   onFinished: (result: {

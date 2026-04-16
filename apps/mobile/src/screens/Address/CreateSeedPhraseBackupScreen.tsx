@@ -4,7 +4,7 @@ import {
   CopyAddressIconType,
 } from '@/components/AddressViewer/CopyAddress';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { WordsMatrix } from '@/components/WordsMatrix';
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
@@ -14,8 +14,9 @@ import { navigateDeprecated } from '@/utils/navigation';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { Text } from '@/components/Typography';
 
 export const CreateSeedPhraseBackupScreen = () => {
   const colors = useThemeColors();
@@ -60,7 +61,7 @@ export const CreateSeedPhraseBackupScreen = () => {
           <CopyAddressIcon
             ref={copyAddressRef}
             address={seedPhrase || ''}
-            onToastSucess={() => toast.success('Copied')}
+            onToastSuccess={() => toast.success('Copied')}
           />
           <Text style={styles.copyText}>Copy seed phrase</Text>
         </View>

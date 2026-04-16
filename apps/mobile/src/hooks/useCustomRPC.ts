@@ -1,24 +1,53 @@
 import { CHAINS_ENUM } from '@/constant/chains';
 import { apiCustomRPC } from '@/core/apis';
 import { RPCItem } from '@/core/services/customRPCService';
+import { zCreate } from '@/core/utils/reexports';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 
-const customRPCAtom = atom<Partial<Record<CHAINS_ENUM, RPCItem>>>({});
-const customRPCStatusAtom = atom<
-  Partial<Record<CHAINS_ENUM, 'success' | 'error' | undefined>>
->({});
+// const customRPCAtom = atom<Partial<Record<CHAINS_ENUM, RPCItem>>>({});
+// const customRPCStatusAtom = atom<
+//   Partial<Record<CHAINS_ENUM, 'success' | 'error' | undefined>>
+// >({});
+
+type CustomRPCState = {
+  customRPC: Partial<Record<CHAINS_ENUM, RPCItem>>;
+  customRPCStatus: Partial<
+    Record<CHAINS_ENUM, 'success' | 'error' | undefined>
+  >;
+};
+const customRPCStore = zCreate<CustomRPCState>(() => ({
+  customRPC: {},
+  customRPCStatus: {},
+}));
+
+function setCustomRPCStore(
+  valOrFunc: UpdaterOrPartials<CustomRPCState['customRPC']>,
+) {
+  customRPCStore.setState(prev => ({
+    ...prev,
+    customRPC: resolveValFromUpdater(prev.customRPC, valOrFunc).newVal,
+  }));
+}
+function setCustomRPCStatus(
+  valOrFunc: UpdaterOrPartials<CustomRPCState['customRPCStatus']>,
+) {
+  customRPCStore.setState(prev => ({
+    ...prev,
+    customRPCStatus: resolveValFromUpdater(prev.customRPCStatus, valOrFunc)
+      .newVal,
+  }));
+}
+
+export const getAllRPC = async () => {
+  const rpcMap = await apiCustomRPC.getAllCustomRPC();
+  setCustomRPCStore(rpcMap);
+  return rpcMap;
+};
 
 export const useCustomRPC = () => {
-  const [customRPCStore, setCustomRPCStore] = useAtom(customRPCAtom);
-
-  const getAllRPC = useMemoizedFn(async () => {
-    const rpcMap = await apiCustomRPC.getAllCustomRPC();
-    setCustomRPCStore(rpcMap);
-    return rpcMap;
-  });
-
   const setCustomRPC = useMemoizedFn(
     async (payload: { chain: CHAINS_ENUM; url: string }) => {
       await apiCustomRPC.setCustomRPC(payload.chain, payload.url);
@@ -49,7 +78,7 @@ export const useCustomRPC = () => {
 
 export const useCustomRPCStatus = (chainEnum?: CHAINS_ENUM) => {
   const { customRPCStore } = useCustomRPC();
-  const [customRPCStatus, setCustomRPCStatus] = useAtom(customRPCStatusAtom);
+  const customRPCStatus = customRPCStore(s => s.customRPCStatus);
   const hasCustomRPC = useMemo(() => {
     return chainEnum && customRPCStore[chainEnum]?.enable;
   }, [chainEnum, customRPCStore]);

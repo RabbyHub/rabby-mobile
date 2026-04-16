@@ -1,4 +1,4 @@
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiLedger } from '@/core/apis';
 import { atom, getDefaultStore, useAtom } from 'jotai';
 import React from 'react';

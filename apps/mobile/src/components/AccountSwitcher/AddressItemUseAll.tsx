@@ -2,7 +2,6 @@ import {
   Image,
   ImageSourcePropType,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -19,6 +18,7 @@ import { Account } from '@/core/services/preference';
 import { getWalletAvator2024 } from '@/utils/walletInfo2024';
 import { SvgProps } from 'react-native-svg';
 import { AddressItemSizes } from './AddressItemInPanel';
+import { Text } from '@/components/Typography';
 
 const ImagesList = [PrivateKeyPNG, SeedPNG, SeedPNG];
 

@@ -12,7 +12,7 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, Text, View } from 'react-native';
+import { Dimensions, Keyboard, Pressable, View } from 'react-native';
 import {
   AccountSelectModalProvider,
   SelectAccountSheetModalScreen,
@@ -31,6 +31,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { touchedFeedback } from '@/utils/touch';
 import { ScreenPanelScanner } from './modalScreens/ScanQrcode';
 import { Button } from '@/components2024/Button';
+import { Text } from '@/components/Typography';
 
 function getDefaultScreenStates(): {
   isScanning: boolean;
@@ -57,8 +58,9 @@ function getDefaultScreenStates(): {
     },
   };
 }
-// const SNAPSHOTS = [1, '80%'];
-const SNAPSHOTS = [__DEV__ ? '80%' : '80%'];
+const maxHeight = Dimensions.get('window').height - 120;
+// const SNAPSHOTS = [1, maxHeight];
+const SNAPSHOTS = [__DEV__ ? maxHeight : maxHeight];
 const SHOW_IDX = SNAPSHOTS.length === 1 ? true : SNAPSHOTS.length - 1;
 export function SheetModalSelectAccountSend({
   type,
@@ -519,7 +521,8 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
       fontWeight: FontWeightEnum.heavy,
-      lineHeight: 20,
+      //lineHeight: 20,
+      lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',
 

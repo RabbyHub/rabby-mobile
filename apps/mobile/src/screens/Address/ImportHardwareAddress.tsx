@@ -11,7 +11,7 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -177,20 +177,21 @@ export function ImportHardwareAddressScreen(): JSX.Element {
 
       showImportMorePopup({
         type: KEYRING_TYPE.TrezorKeyring,
-        brand: KEYRING_CLASS.HARDWARE.TREZOR,
+        brandName: KEYRING_CLASS.HARDWARE.TREZOR,
       });
     }
   }, [setSetting, showImportMorePopup]);
 
   const handleTrezor = React.useCallback(async () => {
     try {
+      setSetting(pre => ({ ...pre, startNumber: 1 }));
       await importFirstAddress();
     } catch (error) {
       toast.error(`error ${(error as any)?.message || String(error)}`);
 
       console.log('error', error);
     }
-  }, [importFirstAddress]);
+  }, [importFirstAddress, setSetting]);
 
   return (
     <NormalScreenContainer2024>

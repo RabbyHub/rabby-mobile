@@ -14,7 +14,6 @@ import {
   Keyboard,
   Pressable,
   StyleSheet,
-  Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -33,6 +32,13 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useImportAddressProc } from '@/hooks/address/useNewUser';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import {
+  isNewlyInputTextSameWithContentFromClipboard,
+  onPastedSensitiveData,
+} from '@/utils/clipboard';
+import { Text } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -55,7 +61,7 @@ export const ImportPrivateKeyScreen2024 = () => {
           params: {
             type: KEYRING_TYPE.SimpleKeyring,
             brandName: KEYRING_CLASS.PRIVATE_KEY,
-            address: account.address,
+            address: account?.address,
           },
         });
       })
@@ -134,6 +140,7 @@ export const ImportPrivateKeyScreen2024 = () => {
         title: t('global.Confirm'),
         onPress: handleConfirm,
         disabled: !privateKey || !!error,
+        ...makeTestIDProps(E2E_ID.onboarding.privateKeySubmit),
       }}
       style={styles.screen}
       footerBottomOffset={56}
@@ -166,7 +173,17 @@ export const ImportPrivateKeyScreen2024 = () => {
                   textContentType: 'none',
                   blurOnSubmit: true,
                   returnKeyType: 'done',
-                  onChangeText: setPrivateKey,
+                  ...makeTestIDProps(E2E_ID.onboarding.privateKeyInput),
+                  onChangeText: (text: string) => {
+                    setPrivateKey(text);
+                    isNewlyInputTextSameWithContentFromClipboard(text).then(
+                      isSame => {
+                        if (isSame) {
+                          onPastedSensitiveData({ type: 'seedPhrase' });
+                        }
+                      },
+                    );
+                  },
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components
                 customIcon={ctx => (
@@ -188,6 +205,7 @@ export const ImportPrivateKeyScreen2024 = () => {
               style={styles.pasteButton}
               onPaste={text => {
                 setPrivateKey(text);
+                onPastedSensitiveData({ type: 'privateKey' });
               }}
             />
           </View>

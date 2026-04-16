@@ -7,7 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -18,10 +18,9 @@ import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { naviPush } from '@/utils/navigation';
-import { getTokenSymbol } from '@/utils/token';
+import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
 import {
@@ -44,6 +43,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
 import { findAccountByPriority } from '@/utils/account';
 import { Account } from '@/core/services/preference';
+import { Text } from '@/components/Typography';
 
 interface Props {
   data: TransactionGroup;
@@ -118,7 +118,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
 
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
-      token: ensureAbstractPortfolioToken(token),
+      token: tokenItemToITokenItem(token, ''),
       needUseCacheToken: true,
       isSingleAddress,
       account,
@@ -523,6 +523,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
+    maxWidth: '45%',
   },
   itemAddressText: {
     color: colors2024['neutral-foot'],

@@ -74,8 +74,27 @@ class ApisPerps {
   };
   setHasDoneNewUserProcess = perpsService.setHasDoneNewUserProcess;
   getHasDoneNewUserProcess = perpsService.getHasDoneNewUserProcess;
+  setHasShownPerpsGuidePopup = perpsService.setHasShownPerpsGuidePopup;
+  getHasShownPerpsGuidePopup = perpsService.getHasShownPerpsGuidePopup;
+  setHasClosedLearnMoreCard = perpsService.setHasClosedLearnMoreCard;
+  getHasClosedLearnMoreCard = perpsService.getHasClosedLearnMoreCard;
   getPerpsAgentWallet = async (masterWallet: string) => {
     return perpsService.getAgentWallet(masterWallet);
+  };
+  getOrCreatePerpsAgentWallet = async (masterWallet: string) => {
+    const res = await perpsService.getAgentWallet(masterWallet);
+    if (!res) {
+      const resp = await this.createPerpsAgentWallet(masterWallet);
+      return {
+        vault: resp.vault,
+        agentAddress: resp.agentAddress,
+      };
+    } else {
+      return {
+        vault: res.vault,
+        agentAddress: res.preference.agentAddress,
+      };
+    }
   };
 }
 

@@ -9,7 +9,8 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 export const PerpsAccountLogoutPopup: React.FC<{
   visible: boolean;

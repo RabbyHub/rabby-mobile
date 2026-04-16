@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,6 +11,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { getSelectableContainerStyle } from './Layout';
 import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/Typography';
 
 function ApprovalCardAssetsProto({
   assetItem: asset,
@@ -124,7 +125,7 @@ function ApprovalCardAssetsProto({
 }
 
 export const getAssetItemStyles = createGetStyles2024(ctx => {
-  const selectableStyles = getSelectableContainerStyle(ctx);
+  const selectableStyles = getSelectableContainerStyle.getStyles(ctx);
   const { colors2024, isLight } = ctx;
 
   return {

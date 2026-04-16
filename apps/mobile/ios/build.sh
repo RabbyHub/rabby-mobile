@@ -17,7 +17,7 @@ build_configuration="Release"
 # ./build.sh method # default method is ad-hoc
 method=${1:-ad-hoc}
 
- [[ $method = app-store ]] && mobileprovision_name="RabbyMobileAppStore" || mobileprovision_name="RabbyMobileAdHoc"
+ [[ $method = app-store ]] && mobileprovision_name="RabbyMobileAppStoreOpcode" || mobileprovision_name="RabbyMobileAdHocRegressionOpcode"
 
 bundle_identifier="com.debank.rabby-mobile"
 

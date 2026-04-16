@@ -21,10 +21,12 @@ import {
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { SignatureInstanceProvider } from '@/components2024/MiniSignV2';
 import {
+  apiSendToken,
+  getSendChainToken,
   SendTokenEvents,
   SendTokenInternalContextProvider,
-  subscribeEvent,
   useSendTokenForm,
   useSendTokenInternalContext,
   useSendTokenScreenChainToken,
@@ -44,13 +46,13 @@ import {
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
+import { useLoadMatteredChainBalances } from '@/hooks/accountChainBalance';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { toastLoading } from '@/components/Toast';
+import { toastLoading } from '@/components2024/Toast';
 import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
@@ -67,7 +69,7 @@ import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import {
   getAddrDescWithCexLocalCacheSync,
@@ -83,9 +85,25 @@ import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
-import { useCexSupportList } from '@/hooks/useCexSupportList';
+import {
+  globalSupportCexList,
+  useCexSupportList,
+} from '@/hooks/useCexSupportList';
 import { isValidHexAddress } from '@metamask/utils';
 import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { DirectSignBtnMethods } from '@/components2024/DirectSignBtn';
+
+const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
+  KeyboardAwareScrollView,
+);
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -119,10 +137,11 @@ function SendScreen({
     forScene: 'MakeTransactionAbout',
   });
 
+  useRendererDetect({ name: 'SendScreen' });
+
   useEffect(() => {
     clearLocalPendingTxData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearLocalPendingTxData]);
 
   const route =
     useRoute<
@@ -133,15 +152,10 @@ function SendScreen({
     >();
   const navParams = route.params;
 
-  const { chainItem, currentToken, setChainEnum } =
-    useSendTokenScreenChainToken();
-  const [routeParams] = useAtom(sendScreenParamsAtom);
+  const { chainItem, currentToken } = useSendTokenScreenChainToken();
+  const routeParams = useAtomValue(sendScreenParamsAtom);
 
-  const {
-    sendTokenScreenState: screenState,
-    putScreenState,
-    resetScreenState,
-  } = useSendTokenScreenState();
+  const { sendTokenScreenState: screenState } = useSendTokenScreenState();
 
   const Header = useCallback(
     () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
@@ -163,7 +177,8 @@ function SendScreen({
         };
       }
       const toCexId = screenState.toAddrDesc?.cex?.id;
-      if (toCexId) {
+      const isSupportCEX = globalSupportCexList.find(cex => cex.id === toCexId);
+      if (toCexId && isSupportCEX) {
         const cex_ids =
           token.cex_ids || token.identity?.cex_list.map(item => item.id);
         const noSupportToken = cex_ids?.every?.(
@@ -230,27 +245,37 @@ function SendScreen({
     setSlider,
     handleGasLevelChanged,
     handleIgnoreGasFeeChange,
+    setReloadTxRefreshPaused,
+    onBottomAreaLayout,
+    scrollViewRef,
+    scrollViewStyle,
+    scrollToBottom,
 
     checkCexSupport,
     loadCurrentToken,
+    refreshCurrentTokenBalance,
     handleCurrentTokenChange,
+
+    directSignBtnRef,
+    formValuesRef,
 
     whitelistEnabled,
     computed: {
+      toAccount,
       toAddressInContactBook,
-      toAddressIsValid,
-      toAddressIsRecentlySend,
-      toAddressInWhitelist,
       toAddressIsCex,
+      toAddressPositiveTips,
       canSubmit,
       canDirectSign,
       toAddrCex,
     },
+    miniSignInstance,
   } = useSendTokenForm({
     toAddress: navParams?.toAddress,
+    toAddressBrandName: navParams?.addressBrandName,
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
-    currentAccount: currentAccount!,
+    currentAccount,
   });
 
   useEffect(() => {
@@ -258,18 +283,20 @@ function SendScreen({
     if (!isValidHexAddress(formValues.to as `0x${string}`)) return;
 
     getAddrDescWithCexLocalCacheSync(formValues.to).then(res => {
-      putScreenState({
+      apiSendToken.putScreenState({
         toAddrDesc: res,
       });
     });
-  }, [formValues.to, putScreenState]);
+  }, [formValues.to]);
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
-    account: currentAccount!,
+    account: currentAccount,
   });
-  const isShowLoadingRef = useRef(true);
-  const initByCache = async () => {
+  const initByCacheFinishedRef = useRef(false);
+  const initByCache = useCallback(async () => {
     let targetToken: TokenItem | null = null;
+    const { chainItem: latestChainItem, currentToken } = getSendChainToken();
+
     if (
       navParams &&
       'safeInfo' in navParams &&
@@ -277,7 +304,7 @@ function SendScreen({
     ) {
       const safeInfo = navParams.safeInfo;
       const target = findChainByID(safeInfo.chainId);
-      putScreenState({
+      apiSendToken.putScreenState({
         safeInfo: safeInfo,
       });
 
@@ -286,7 +313,7 @@ function SendScreen({
         chain: target ? target?.serverId : currentToken.chain,
         ...EMPTY_TOKEN_ITEM,
       };
-      target?.enum && setChainEnum(target.enum);
+      target?.enum && apiSendToken.setChainEnum(target.enum);
     } else if (
       navParams &&
       'chainEnum' in navParams &&
@@ -308,7 +335,7 @@ function SendScreen({
           : currentToken.id,
         ...EMPTY_TOKEN_ITEM,
       };
-      target && setChainEnum(target.enum);
+      target && apiSendToken.setChainEnum(target.enum);
     } else {
       const isManualChangeToken =
         routeParams?.tokenId && routeParams?.chainEnum;
@@ -323,13 +350,15 @@ function SendScreen({
         }
       }
 
-      if (!targetToken) {
-        targetToken = await preferenceService.getLastTimeSendToken(
-          currentAccount!.address,
-        );
+      if (!targetToken && currentAccount?.address) {
+        targetToken =
+          (await preferenceService.getLastTimeSendToken(
+            currentAccount?.address,
+          )) ?? null;
       }
       if (!targetToken) {
         const { firstChain } = await fetchOrderedChainList({
+          address: currentAccount?.address,
           supportChains: undefined,
         });
         targetToken = firstChain ? makeTokenFromChain(firstChain) : null;
@@ -338,74 +367,51 @@ function SendScreen({
         targetToken = currentToken;
       }
     }
-    const hideLoading = isShowLoadingRef.current
-      ? toastLoading('Loading Token...')
-      : noop;
-    try {
-      if (navParams?.toAddress) {
-        const res = await getRecommendToken({
-          from: currentAccount!.address,
-          to: navParams?.toAddress || '',
-          tokenId: targetToken.id,
-          chain: targetToken.chain,
-        });
-        if (
-          !lowcaseSame(res.chain, targetToken.chain) ||
-          !lowcaseSame(res.tokenId, targetToken.id)
-        ) {
-          targetToken = {
-            chain: res.chain,
-            id: res.tokenId,
-            ...EMPTY_TOKEN_ITEM,
-          };
-        }
+
+    if (navParams?.toAddress && currentAccount?.address) {
+      const res = await getRecommendToken({
+        from: currentAccount?.address,
+        to: navParams?.toAddress || '',
+        tokenId: targetToken.id,
+        chain: targetToken.chain,
+      });
+      if (
+        !lowcaseSame(res.chain, targetToken.chain) ||
+        !lowcaseSame(res.tokenId, targetToken.id)
+      ) {
+        targetToken = {
+          chain: res.chain,
+          id: res.tokenId,
+          ...EMPTY_TOKEN_ITEM,
+        };
       }
-      // 更新页面状态
-      if (chainItem && targetToken.chain !== chainItem.serverId) {
-        const target = findChainByServerID(targetToken.chain);
-        if (target?.enum) {
-          setChainEnum(target.enum);
-        }
+    }
+    if (latestChainItem && targetToken.chain !== latestChainItem.serverId) {
+      const target = findChainByServerID(targetToken.chain);
+      if (target?.enum) {
+        apiSendToken.setChainEnum(target.enum);
       }
-      // // 不知道为什么要，感觉可以不要
-      // if (!chainItem) {
-      //   setChainEnum(CHAINS_ENUM.ETH);
-      // }
-      // // 应该去了也可以
-      // if (targetToken) {
-      //   if (
-      //     !lowcaseSame(targetToken.chain, currentToken.chain) ||
-      //     !lowcaseSame(targetToken.id, currentToken.id)
-      //   ) {
-      //     // setCurrentToken(targetToken);
-      //   }
-      // }
-      await Promise.race([
-        await loadCurrentToken(
+    }
+    await Promise.race([
+      currentAccount?.address &&
+        (await loadCurrentToken(
           targetToken.id,
           targetToken.chain,
-          currentAccount!.address,
-        ),
-        sleep(5000),
-      ]);
-    } finally {
-      hideLoading();
-      isShowLoadingRef.current = true;
-    }
-  };
+          currentAccount?.address,
+        )),
+      sleep(5000),
+    ]);
+  }, [
+    navParams,
+    routeParams,
+    currentAccount,
+    fetchOrderedChainList,
+    loadCurrentToken,
+  ]);
 
-  const init = async () => {
-    if (!currentAccount) {
-      redirectBackErrorHandler(navigation);
-      return;
-    }
-    putScreenState({ inited: true });
-  };
+  const checkIsAddressBlocked = useCallback(async (to?: string) => {
+    if (!to) return;
 
-  const checkIsAddressBlocked = async (to?: string) => {
-    if (!to) {
-      return;
-    }
     try {
       const { is_blocked } = await openapi.isBlockedAddress(to);
       if (is_blocked) {
@@ -413,58 +419,61 @@ function SendScreen({
         setIsShowBlockedTransactionDialog(true);
       }
     } catch (e) {
-      // NOTHING
+      console.error('checkIsAddressBlocked error', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (screenState.inited) {
-      initByCache();
+      (async () => {
+        if (initByCacheFinishedRef.current) return;
+        initByCacheFinishedRef.current = true;
+
+        try {
+          await initByCache();
+        } catch (e) {
+          console.error('SendScreen initByCache error', e);
+          initByCacheFinishedRef.current = false;
+        }
+      })();
       checkIsAddressBlocked(navParams?.toAddress);
+    }
+  }, [
+    screenState.inited,
+    initByCache,
+    checkIsAddressBlocked,
+    navParams?.toAddress,
+  ]);
+
+  useEffect(() => {
+    (async () => {
+      if (!initByCacheFinishedRef.current) return;
+      if (!currentAccount?.address) return;
+
+      await refreshCurrentTokenBalance();
+    })();
+  }, [currentAccount?.address, refreshCurrentTokenBalance]);
+
+  useEffect(() => {
+    if (!currentAccount) {
+      redirectBackErrorHandler(navigation);
+      return;
     } else {
-      init();
+      apiSendToken.putScreenState({ inited: true });
 
       return () => {
         apiPageStateCache.clearPageStateCache();
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    navParams,
-    screenState.inited,
-    currentAccount?.address,
-    currentAccount?.type,
-  ]);
+  }, [currentAccount, navigation]);
 
   const { fetchContactAccounts } = useContactAccounts();
 
-  useEffect(() => {
-    const disposeRets = [] as Function[];
-    subscribeEvent(
-      sendTokenEvents,
-      SendTokenEvents.ON_SIGNED_SUCCESS,
-      () => {
-        isShowLoadingRef.current = false;
-        resetScreenState();
-        // navigation.dispatch(
-        //   StackActions.replace(RootNames.StackRoot, {
-        //     screen: RootNames.Home,
-        //   }),
-        // );
-      },
-      { disposeRets },
-    );
-
-    return () => {
-      disposeRets.forEach(dispose => dispose());
-    };
-  }, [sendTokenEvents, resetScreenState]);
-
   useLayoutEffect(() => {
     return () => {
-      resetScreenState();
+      apiSendToken.resetScreenState();
     };
-  }, [resetScreenState]);
+  }, []);
 
   const { balanceNumText } = React.useMemo(() => {
     const balanceNum = new BigNumber(currentToken.raw_amount_hex_str || 0).div(
@@ -491,105 +500,113 @@ function SendScreen({
   });
 
   return (
-    <SendTokenInternalContextProvider
-      value={{
-        screenState,
-        formValues,
-        computed: {
-          canSubmit,
-          toAddressIsRecentlySend,
-          toAddressInWhitelist,
-          toAddressIsCex,
-          whitelistEnabled,
-          toAddressIsValid,
-          toAddressInContactBook,
-          canDirectSign,
-          toAddrCex,
+    <SignatureInstanceProvider instance={miniSignInstance}>
+      <SendTokenInternalContextProvider
+        value={{
+          screenState,
+          formValues,
+          computed: {
+            fromAddress: currentAccount?.address || '',
+            canSubmit,
+            toAccount,
+            toAddressIsCex,
+            whitelistEnabled,
+            toAddressInContactBook,
+            toAddressPositiveTips,
+            canDirectSign,
+            toAddrCex,
 
-          chainItem,
-          currentToken,
-          currentTokenBalance: balanceNumText,
-        },
-        events: sendTokenEvents,
-        formik,
-        slider,
-        fns: {
-          putScreenState,
-          fetchContactAccounts,
-          disableItemCheck,
-        },
+            chainItem,
+            currentToken,
+            currentTokenBalance: balanceNumText,
+          },
+          sendTokenEvents,
+          formik,
+          slider,
+          fns: {
+            fetchContactAccounts,
+            disableItemCheck,
+          },
 
-        callbacks: {
-          handleCurrentTokenChange,
-          handleFieldChange,
-          checkCexSupport,
-          handleClickMaxButton,
-          onChangeSlider,
-          setSlider,
-          handleGasLevelChanged,
-          handleIgnoreGasFeeChange,
-        },
-      }}>
-      <NormalScreenContainer2024
-        type="bg1"
-        // overwriteStyle={styles.screenContainer}
-      >
-        {/* TODO: clean it */}
-        {(isForMultipleAddress || !isForMultipleAddress) && (
+          directSignBtnRef,
+          formValuesRef,
+          callbacks: {
+            handleCurrentTokenChange,
+            handleFieldChange,
+            checkCexSupport,
+            handleClickMaxButton,
+            onChangeSlider,
+            setSlider,
+            handleGasLevelChanged,
+            handleIgnoreGasFeeChange,
+            setReloadTxRefreshPaused,
+            onBottomAreaLayout,
+            onGasInfoDebouncedLoaded: scrollToBottom,
+          },
+        }}>
+        <NormalScreenContainer2024
+          type="bg1"
+          // overwriteStyle={styles.screenContainer}
+        >
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
-        )}
-        <TouchableWithoutFeedback
-          onPress={() => {
-            sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
-            Keyboard.dismiss();
-          }}>
-          <ScrollView contentContainerStyle={styles.sendScreen}>
-            <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
-              {/* FromToSection */}
-              <View>
-                {/* From */}
-                <FromAddressControl2024 disableSwitch={false} />
-                {/* To */}
-                <ToAddressControl2024
-                  style={{
-                    marginTop: 24,
-                    marginBottom: 0,
-                  }}
-                  addrDesc={screenState.toAddrDesc}
-                  brandName={navParams?.addressBrandName}
-                />
-                {/* balance info */}
-                <BalanceSection
-                  disableItemCheck={disableItemCheck}
-                  style={styles.balance}
-                />
-                <ShowMoreOnSend chainServeId={chainItem?.serverId || ''} />
-              </View>
-              {Boolean(localPendingTxData && !canSubmit) && (
-                <PendingTxItem
-                  isForMultipleAddress={isForMultipleAddress}
-                  data={localPendingTxData!}
-                  type="send"
-                  clearLocalPendingTxData={clearLocalPendingTxData}
-                />
-              )}
-            </KeyboardAwareScrollView>
-            <BottomArea account={currentAccount} />
-          </ScrollView>
-        </TouchableWithoutFeedback>
-        <TokenInfoPopup />
-        <BlockedAddressDialog
-          visible={isShowBlockedTransactionDialog}
-          onConfirm={() => {
-            navigation.dispatch(
-              StackActions.replace(RootNames.StackRoot, {
-                screen: RootNames.Home,
-              }),
-            );
-          }}
-        />
-      </NormalScreenContainer2024>
-    </SendTokenInternalContextProvider>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
+              Keyboard.dismiss();
+            }}>
+            <ScrollView contentContainerStyle={styles.sendScreen}>
+              <AnimatedKeyboardAwareScrollView
+                innerRef={instance => {
+                  scrollViewRef.current =
+                    instance as unknown as KeyboardAwareScrollView;
+                }}
+                contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
+                {/* FromToSection */}
+                <View>
+                  {/* From */}
+                  <FromAddressControl2024 disableSwitch={false} />
+                  {/* To */}
+                  <ToAddressControl2024
+                    style={{
+                      marginTop: 24,
+                      marginBottom: 0,
+                    }}
+                    addrDesc={screenState.toAddrDesc}
+                    // brandName={navParams?.addressBrandName}
+                  />
+                  {/* balance info */}
+                  <BalanceSection
+                    disableItemCheck={disableItemCheck}
+                    style={styles.balance}
+                  />
+                  <ShowMoreOnSend chainServeId={chainItem?.serverId || ''} />
+                </View>
+                {Boolean(localPendingTxData && !canSubmit) && (
+                  <PendingTxItem
+                    isForMultipleAddress={isForMultipleAddress}
+                    data={localPendingTxData!}
+                    type="send"
+                    clearLocalPendingTxData={clearLocalPendingTxData}
+                  />
+                )}
+              </AnimatedKeyboardAwareScrollView>
+              <BottomArea account={currentAccount} />
+            </ScrollView>
+          </TouchableWithoutFeedback>
+          <TokenInfoPopup />
+          <BlockedAddressDialog
+            visible={isShowBlockedTransactionDialog}
+            onConfirm={() => {
+              navigation.dispatch(
+                StackActions.replace(RootNames.StackRoot, {
+                  screen: RootNames.Home,
+                }),
+              );
+            }}
+          />
+        </NormalScreenContainer2024>
+      </SendTokenInternalContextProvider>
+    </SignatureInstanceProvider>
   );
 }
 
@@ -630,17 +647,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     mainContent: {
       paddingHorizontal: 24,
-      paddingBottom: 220,
+      paddingBottom: 280,
     },
     balance: {
       marginTop: 24,
-    },
-    sectionTitle: {
-      color: colors2024['neutral-title-1'],
-      fontSize: 17,
-      fontWeight: '700',
-      fontFamily: 'SF Pro Rounded',
-      marginBottom: 8,
     },
     buttonContainer: {
       width: '100%',
@@ -648,33 +658,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     button: {
       backgroundColor: colors2024['blue-default'],
-    },
-    overlay: {
-      backgroundColor: 'rgba(0,0,0,0.8)',
-      height: '100%',
-      justifyContent: 'center',
-    },
-    modalContent: {
-      borderRadius: 20,
-      backgroundColor: colors2024['neutral-bg-1'],
-      boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-      marginHorizontal: 20,
-      paddingHorizontal: 20,
-      paddingVertical: 30,
-    },
-    btns: {
-      padding: 0,
-      marginTop: 30,
-    },
-    alertModalText: {
-      fontSize: 18,
-      lineHeight: 22,
-      fontWeight: '700',
-      fontFamily: 'SF Pro Rounded',
-      textAlign: 'center',
-      color: colors2024['neutral-title-1'],
     },
   }),
 );

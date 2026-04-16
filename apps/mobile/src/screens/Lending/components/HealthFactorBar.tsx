@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { getHealthStatusColor } from '../utils';
@@ -7,6 +7,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { HF_COLOR_GOOD_THRESHOLD } from '../utils/constant';
 import { useTranslation } from 'react-i18next';
 import { getHealthFactorText } from './HealthFactorText';
+import { Text } from '@/components/Typography';
 
 interface HealthFactorBarProps {
   healthFactor: string;
@@ -148,7 +149,7 @@ const getStyles = createGetStyles2024(ctx => ({
     left: '0%',
     top: '150%',
     alignItems: 'center',
-    maxWidth: '20%',
+    maxWidth: 80,
   },
   liquidationMarker: {
     position: 'absolute',
@@ -168,11 +169,12 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   liquidationText: {
     fontSize: 14,
-    lineHeight: 14,
+    lineHeight: 16,
     fontWeight: '500',
     color: ctx.colors2024['red-default'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
+    height: 36,
   },
   riskyTextContainer: {
     flexDirection: 'row',

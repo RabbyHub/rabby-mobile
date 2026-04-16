@@ -1,69 +1,72 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DisplayNftItem } from '../types';
-import { ITokenSetting } from '@/core/services/preference';
-import { preferenceService } from '@/core/services';
-import { useSafeState } from 'ahooks';
 import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
-import { syncNFTs } from '@/databases/hooks/assets';
-import { singleNFTNonceAtom } from './refresh';
-import { useAtom } from 'jotai';
-import { NFTItemEntity } from '@/databases/entities/nftItem';
+import { useSingleNftRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { CombineNFTItem } from './store';
+import { apisAddrChainStatics } from '../useChainInfo';
+import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import nftListStore from '@/store/nfts';
 
-export const tagNfts = (
-  nfts: NFTItem[],
-  tokenSetting: ITokenSetting,
-): DisplayNftItem[] => {
-  const { foldNfts, unfoldNfts } = tokenSetting;
+const EMPTY_NFT_LIST: DisplayNftItem[] = [];
 
+export const tagNfts = (nfts: NFTItem[]): DisplayNftItem[] => {
   return nfts.map(i => {
     const isFold = (() => {
-      if (foldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
-        return true;
-      }
-      if (unfoldNfts?.some(nft => nft.chain === i.chain && nft.id === i.id)) {
-        return false;
-      }
       if (!i.is_core) {
         return true;
       }
       return false;
     })();
 
-    const isManualFold = foldNfts?.some(
-      nft => nft.chain === i.chain && nft.id === i.id,
-    );
-
     return Object.assign(i, {
       _isFold: isFold,
-      _isManualFold: isManualFold,
+      _isManualFold: false,
     });
   });
 };
 export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [list, setList] = useSafeState<DisplayNftItem[]>([]);
-  const [singleNFTNonce, setSingleNFTNonce] = useAtom(singleNFTNonceAtom);
+  const normalizedAddr = addr?.toLowerCase();
+  const list = nftListStore(
+    useCallback(
+      s =>
+        normalizedAddr
+          ? s.nftsMap[normalizedAddr] || EMPTY_NFT_LIST
+          : EMPTY_NFT_LIST,
+      [normalizedAddr],
+    ),
+  );
+  const getNFTListWithCache = nftListStore(s => s.getNFTListWithCache);
+  const batchLoadCacheNFT = nftListStore(s => s.batchLoadCacheNFT);
+  const refreshTagNftByStore = nftListStore(s => s.refreshTagNft);
+
+  const debouncedList = useDebouncedValue(list, 500);
+  useEffect(() => {
+    if (!addr || !debouncedList) {
+      return;
+    }
+    apisAddrChainStatics.updateNft(addr, debouncedList);
+  }, [addr, debouncedList]);
+
   const fetchData = useCallback(
     async (force?: boolean) => {
       if (!addr) {
+        setIsLoading(false);
         return;
       }
+      setIsLoading(true);
       try {
-        const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
-        const tokenSetting = await preferenceService.getUserTokenSettings();
-        setList(tagNfts(cacheNfts, tokenSetting));
-        const nfts = await syncNFTs(addr, force);
-        setList(tagNfts(nfts, tokenSetting));
+        await getNFTListWithCache(addr, force);
       } catch (e) {
         console.error('ServiceErrorType.NFT', e);
       } finally {
         setIsLoading(false);
       }
     },
-    [addr, setList],
+    [addr, getNFTListWithCache],
   );
 
   const batchLocalData = useCallback(async () => {
@@ -71,19 +74,15 @@ export const useQueryNft = (addr?: string, visible = true) => {
       return;
     }
     try {
-      const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
-      const tokenSetting = await preferenceService.getUserTokenSettings();
-      setList(tagNfts(cacheNfts, tokenSetting));
+      await batchLoadCacheNFT([addr]);
     } catch (e) {
       console.error('nft batchLocalData error', e);
     }
-  }, [addr, setList]);
+  }, [addr, batchLoadCacheNFT]);
 
   const refreshTagNft = useCallback(async () => {
-    const tokenSettings =
-      (await preferenceService.getUserTokenSettings()) || {};
-    setList(pre => tagNfts(pre || [], tokenSettings));
-  }, [setList]);
+    refreshTagNftByStore();
+  }, [refreshTagNftByStore]);
 
   const debounceReloadNftList = useMemo(
     () => debounce(batchLocalData, 2000),
@@ -117,12 +116,15 @@ export const useQueryNft = (addr?: string, visible = true) => {
     ),
   });
 
-  useEffect(() => {
-    if (singleNFTNonce > 0) {
-      refreshTagNft();
-      setSingleNFTNonce(0);
-    }
-  }, [refreshTagNft, setSingleNFTNonce, singleNFTNonce]);
+  useSingleNftRefresh({
+    onRefresh: refreshTagNft,
+  });
+  // useEffect(() => {
+  //   if (singleNFTNonce > 0) {
+  //     refreshTagNft();
+  //     setSingleNFTNonce(0);
+  //   }
+  // }, [refreshTagNft, setSingleNFTNonce, singleNFTNonce]);
 
   useEffect(() => {
     if (addr && visible) {
@@ -133,34 +135,52 @@ export const useQueryNft = (addr?: string, visible = true) => {
 
   return {
     isLoading,
-    list: list || [],
+    list,
     reload: fetchData,
   };
 };
 
-export type NftItemWithCollection = NFTItem | CollectionList;
-export const collectionNftList = (nftList: NFTItem[]) => {
-  const collectionList: NftItemWithCollection[] = [];
+type CombineCollectionList = CollectionList & {
+  address?: string;
+};
+export type NftItemWithCollection = CombineNFTItem | CombineCollectionList;
+
+export function varyNftListByFold<T extends any>(
+  nftList: CombineNFTItem[],
+  mapperItem: (collection: NftItemWithCollection, item: CombineNFTItem) => T,
+  options?: {
+    forSingleAddress: boolean;
+  },
+) {
+  const { forSingleAddress = false } = options || {};
+
+  const retValues = {
+    foldList: [] as T[],
+    unFoldList: [] as T[],
+  };
+
+  const collectionMap: Record<string, CombineCollectionList> = {};
   nftList.forEach(item => {
+    const targetList = item._isFold ? retValues.foldList : retValues.unFoldList;
     if (!item.collection_id || !item.collection) {
-      collectionList.push(item);
+      targetList.push(mapperItem(item, item));
       return;
     }
-    const collection = collectionList.find(
-      (citem): citem is CollectionList =>
-        'nft_list' in citem &&
-        citem.chain === item.chain &&
-        citem.id === item.collection?.id &&
-        !!citem.nft_list.length,
-    );
-    if (collection) {
-      collection.nft_list.push({ ...item, collection: null });
+    const key = `${forSingleAddress ? '' : item.address}-${item.chain}-${
+      item.collection?.id
+    }`;
+    if (collectionMap[key]) {
+      collectionMap[key].nft_list.push({ ...item, collection: null });
     } else {
-      collectionList.push({
+      const newCollection: CombineCollectionList = {
         ...item.collection,
+        address: item.address,
         nft_list: [{ ...item, collection: null }],
-      } as unknown as CollectionList);
+      } as unknown as CombineCollectionList;
+      collectionMap[key] = newCollection;
+      targetList.push(mapperItem(newCollection, item));
     }
   });
-  return collectionList;
-};
+
+  return retValues;
+}

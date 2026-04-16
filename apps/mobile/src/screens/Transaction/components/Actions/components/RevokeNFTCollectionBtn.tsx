@@ -13,7 +13,8 @@ import { NFTCollection, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Typography';
 
 interface Props {
   account: KeyringAccountWithAlias;
@@ -101,7 +102,7 @@ export const RevokeNFTCollectionBtn = ({
     resetNavigationTo(navigation, 'Home');
   });
 
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   return (
     <View style={styles.card}>

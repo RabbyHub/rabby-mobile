@@ -1,13 +1,13 @@
 import React, {
   useCallback,
   useState,
-  forwardRef,
   useImperativeHandle,
   useMemo,
   useRef,
   useEffect,
 } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import type { Ref } from 'react';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 
@@ -23,6 +23,7 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import AutoLockView from '../AutoLockView';
 import { Button } from '../Button';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/Typography';
 
 export type GasLevelType = keyof typeof SORT_SCORE;
 
@@ -46,18 +47,15 @@ export type ReserveGasType = {
   getSelectedGasLevel: () => GasLevel | null;
 };
 
-export const ReserveGasContent = forwardRef<
-  ReserveGasType,
-  ReserveGasContentProps
->((props, ref) => {
-  const {
-    gasList,
-    chain,
-    limit = 1000000,
-    selectedItem = 'normal',
-    onGasChange,
-    rawHexBalance,
-  } = props;
+export const ReserveGasContent = ({
+  ref,
+  gasList,
+  chain,
+  limit = 1000000,
+  selectedItem = 'normal',
+  onGasChange,
+  rawHexBalance,
+}: ReserveGasContentProps & { ref?: Ref<ReserveGasType> }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
@@ -209,7 +207,7 @@ export const ReserveGasContent = forwardRef<
       />
     </View>
   );
-});
+};
 
 const ReserveGasPopup = (
   props: ReserveGasContentProps & { visible: boolean; onClose?: () => void },

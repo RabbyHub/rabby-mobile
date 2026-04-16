@@ -1,11 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import {
   ExplainTxResponse,
   Tx,
@@ -18,11 +12,13 @@ import { useDappAction } from './hook';
 import { sendRequest } from '@/core/apis/provider';
 import { toast } from '@/components2024/Toast';
 import { DappActionHeader } from './DappActionHeader';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { INTERNAL_REQUEST_SESSION, APP_VERSIONS } from '@/constant';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { debounce } from 'lodash';
+import { debounce, last } from 'lodash';
 import { useMiniSigner } from '@/hooks/useSigner';
+import { stats } from '@/utils/stats';
+import { Text } from '@/components/Typography';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -61,16 +57,22 @@ export const DappActions = ({
   data,
   chain,
   protocolLogo,
+  protocolName,
   currentAccount,
   onRefresh,
   session = INTERNAL_REQUEST_SESSION,
+  style,
+  disableAction,
 }: {
   data?: WithdrawAction[];
   chain?: string;
   protocolLogo?: string;
+  protocolName?: string;
   currentAccount?: KeyringAccountWithAlias;
   onRefresh?: () => Promise<void>;
   session?: typeof INTERNAL_REQUEST_SESSION;
+  style?: StyleProp<ViewStyle>;
+  disableAction?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const withdrawAction = useMemo(
@@ -110,6 +112,10 @@ export const DappActions = ({
     account: currentAccount!,
   });
 
+  const simulationRef = React.useRef<{
+    usdValueChange?: number;
+  }>({});
+
   const setDisableSignBtn = useCallback(
     (v: boolean) => {
       updateConfig({ disableSignBtn: v });
@@ -118,6 +124,13 @@ export const DappActions = ({
   );
   const onPreExecChange = useCallback(
     (r: ExplainTxResponse) => {
+      const totalReceiveUsdValue =
+        r?.balance_change?.receive_token_list?.reduce((acc, token) => {
+          return acc + (Number(token.usd_value) || 0);
+        }, 0);
+      simulationRef.current = {
+        usdValueChange: totalReceiveUsdValue,
+      };
       if (!r.pre_exec.success) {
         setDisableSignBtn(true);
         return;
@@ -141,13 +154,38 @@ export const DappActions = ({
   }, [currentAccount?.type]);
 
   const handleSubmit = useCallback(
-    async (action: () => Promise<Tx[]>, title?: string) => {
+    async (action: () => Promise<Tx[]>, title?: string, type?: ActionType) => {
+      simulationRef.current = {};
+
+      const now = Date.now();
+      const base = {
+        tx_type: type || '',
+        chain: chain || '',
+        user_addr: currentAccount?.address || '',
+        address_type: currentAccount?.type || '',
+        protocol_name: protocolName || '',
+        app_version: APP_VERSIONS.fromNative || '0',
+        create_at: now,
+      } as const;
+
+      const getSimulationFields = () => {
+        const s = simulationRef.current;
+        return {
+          simulation_result:
+            typeof s.usdValueChange === 'number' ? s.usdValueChange : '',
+        } as const;
+      };
+
       const txs = await action();
+      if (!txs?.length) {
+        return;
+      }
+
       if (canDirectSign) {
         try {
           closeMiniSigner();
           resetGasStore();
-          await openUI({
+          const hashes = await openUI({
             txs: txs,
             title: (
               <DappActionHeader
@@ -168,6 +206,12 @@ export const DappActions = ({
             showCheck: true,
             session,
           });
+          const hash = last(hashes);
+          stats.report('defiDirectTx', {
+            ...base,
+            tx_id: typeof hash === 'string' ? hash : '',
+            ...getSimulationFields(),
+          });
           setTimeout(() => {
             onRefresh?.();
             closeMiniSigner();
@@ -177,16 +221,23 @@ export const DappActions = ({
         }
       } else {
         try {
+          let lastHash = '';
           for await (const tx of txs) {
-            await sendRequest({
+            lastHash = (await sendRequest({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],
               },
               session: INTERNAL_REQUEST_SESSION,
               account: currentAccount!,
-            });
+            })) as string;
           }
+          stats.report('defiDirectTx', {
+            ...base,
+            tx_id: lastHash || '',
+            tx_status: 'success',
+            ...getSimulationFields(),
+          });
           setTimeout(() => {
             onRefresh?.();
           }, 500);
@@ -210,6 +261,7 @@ export const DappActions = ({
       onRefresh,
       openUI,
       protocolLogo,
+      protocolName,
       resetGasStore,
       session,
     ],
@@ -218,20 +270,32 @@ export const DappActions = ({
     return null;
   }
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {showWithdraw && (
         <ActionButton
           text="Withdraw"
+          disabled={disableAction}
           onPress={() => {
-            handleSubmit(actionWithdraw, 'Withdraw');
+            if (disableAction) {
+              return;
+            }
+            handleSubmit(
+              actionWithdraw,
+              'Withdraw',
+              isQueueWithdraw ? ActionType.Queue : ActionType.Withdraw,
+            );
           }}
         />
       )}
       {showClaim && (
         <ActionButton
           text="Claim"
+          disabled={disableAction}
           onPress={() => {
-            handleSubmit(actionClaim, 'Claim');
+            if (disableAction) {
+              return;
+            }
+            handleSubmit(actionClaim, 'Claim', ActionType.Claim);
           }}
         />
       )}
@@ -244,19 +308,22 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: 12,
-    marginTop: 12,
+    // marginLeft: 8,
+    // marginRight: 8,
   },
   button: {
     flex: 1,
-    height: 52,
+    height: 48,
     borderRadius: 12,
-    backgroundColor: colors2024['neutral-bg-5'],
+    // backgroundColor: colors2024['neutral-InvertHighlight'],
+    borderWidth: 1,
+    borderColor: colors2024['brand-default'],
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    color: colors2024['neutral-title-1'],
+    color: colors2024['brand-default'],
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '700',

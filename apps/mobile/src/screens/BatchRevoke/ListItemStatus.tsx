@@ -39,9 +39,12 @@ export const ListItemStatus: React.FC<{
         onStillRevoke();
         removeGlobalBottomSheetModal2024(id);
       },
-      failedCode: data.$status?.status === 'fail' && data.$status.failedCode,
+      failedCode:
+        data.$status?.status === 'fail' ? data.$status.failedCode : undefined,
       gasCostUsd:
-        data.$status?.status === 'fail' && data.$status?.gasCost?.gasCostUsd,
+        data.$status?.status === 'fail'
+          ? data.$status?.gasCost?.gasCostUsd
+          : undefined,
     });
   }, [data.$status, onStillRevoke]);
 

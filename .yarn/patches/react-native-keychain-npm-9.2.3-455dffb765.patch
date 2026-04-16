@@ -1,0 +1,103 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 4f2ab5536..1bab52c3b 100755
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -47,6 +47,12 @@ android {
+     sourceCompatibility JavaVersion.VERSION_17
+     targetCompatibility JavaVersion.VERSION_17
+   }
++
++  testOptions {
++    unitTests {
++      includeAndroidResources = true
++    }
++  }
+ }
+ 
+ repositories {
+@@ -85,6 +91,11 @@ dependencies {
+ 
+   // Used to store encrypted data
+   implementation("androidx.datastore:datastore-preferences:1.1.1")
++
++  testImplementation 'junit:junit:4.13.2'
++  testImplementation 'org.hamcrest:hamcrest:2.2'
++  testImplementation 'org.robolectric:robolectric:4.14.1'
++  testImplementation 'androidx.test:core:1.6.1'
+ }
+ 
+ if (isNewArchitectureEnabled()) {
+diff --git a/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt b/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt
+index 7227ba180..a44462536 100644
+--- a/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt
++++ b/android/src/main/java/com/oblador/keychain/DataStorePrefsStorage.kt
+@@ -42,15 +42,10 @@ class DataStorePrefsStorage(
+   override fun getEncryptedEntry(service: String): ResultSet? {
+     val bytesForUsername = getBytesForUsername(service)
+     val bytesForPassword = getBytesForPassword(service)
+-    var cipherStorageName = getCipherStorageName(service)
++    val cipherStorageName = resolveCipherStorageName(getCipherStorageName(service))
+ 
+     // in case of wrong password or username
+     if (bytesForUsername == null || bytesForPassword == null) return null
+-    if (cipherStorageName == null) {
+-      // If the CipherStorage name is not found, we assume it is because the entry was written by an
+-      // older version of this library which used Facebook Conceal, so we default to that.
+-      cipherStorageName = KnownCiphers.FB
+-    }
+     return ResultSet(cipherStorageName, bytesForUsername, bytesForPassword)
+   }
+ 
+@@ -121,3 +116,14 @@ class DataStorePrefsStorage(
+     return prefsData[prefKey]?.let { Base64.decode(it, Base64.DEFAULT) }
+   }
+ }
++
++internal fun resolveCipherStorageName(cipherStorageName: String?): String {
++  if (cipherStorageName != null) {
++    return cipherStorageName
++  }
++
++  // Rabby's legacy Android biometric entries were persisted with RSA-backed keychain storage
++  // before the cipher marker was written. Keep resolving those migrated records as RSA so
++  // upgrades can still decrypt and rehydrate existing biometrics state.
++  return KnownCiphers.RSA
++}
+diff --git a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
+index f4f69d363..be96913fe 100644
+--- a/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
++++ b/android/src/main/java/com/oblador/keychain/cipherStorage/CipherStorageKeystoreRsaEcb.kt
+@@ -194,7 +194,7 @@ class CipherStorageKeystoreRsaEcb(reactContext: ReactApplicationContext) :
+ 
+     val keySize = if (isForTesting) ENCRYPTION_KEY_SIZE_WHEN_TESTING else ENCRYPTION_KEY_SIZE
+ 
+-    val validityDuration = 5
++    val validityDuration = 1
+     val keyGenParameterSpecBuilder =
+       KeyGenParameterSpec.Builder(alias, purposes)
+         .setBlockModes(BLOCK_MODE_ECB)
+diff --git a/android/src/test/java/com/oblador/keychain/DataStorePrefsStorageTest.kt b/android/src/test/java/com/oblador/keychain/DataStorePrefsStorageTest.kt
+new file mode 100644
+index 000000000..40ea8cb84
+--- /dev/null
++++ b/android/src/test/java/com/oblador/keychain/DataStorePrefsStorageTest.kt
+@@ -0,0 +1,19 @@
++package com.oblador.keychain
++
++import org.junit.Assert.assertEquals
++import org.junit.Test
++
++class DataStorePrefsStorageTest {
++  @Test
++  fun legacySharedPreferencesEntriesWithoutCipherMarkerDefaultToRsa() {
++    assertEquals(KeychainModule.KnownCiphers.RSA, resolveCipherStorageName(null))
++  }
++
++  @Test
++  fun existingCipherMarkerIsPreserved() {
++    assertEquals(
++      KeychainModule.KnownCiphers.RSA,
++      resolveCipherStorageName(KeychainModule.KnownCiphers.RSA),
++    )
++  }
++}

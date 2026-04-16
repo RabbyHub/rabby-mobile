@@ -4,10 +4,14 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Tab, TabView } from '@rneui/themed';
-import React from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import React, { useCallback } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import RcIconCopy from '@/assets2024/singleHome/copy.svg';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toast } from '@/components2024/Toast';
+import { Text } from '@/components/Typography';
 
 interface ContentProps {
   abi?: ExplainTxResponse['abi_str'];
@@ -73,6 +77,15 @@ const getStyles = (colors: AppColorsVariants) =>
     tabContentText: {
       color: colors['neutral-title1'],
     },
+    copyIcon: {
+      position: 'absolute',
+      right: -4,
+      top: 4,
+      width: 32,
+      height: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
   });
 
 export const ViewRawDetail = ({
@@ -87,6 +100,14 @@ export const ViewRawDetail = ({
   const hasAbi = !!abi;
   const hasHex = !!(raw?.data && raw?.data !== '0x');
   const num = Number(hasRaw) + Number(hasAbi) + Number(hasHex);
+
+  const handleCopy = useCallback((str?: string | number) => {
+    if (!str) {
+      return;
+    }
+    Clipboard.setString(str + '');
+    toast.success('Copied');
+  }, []);
 
   return (
     <AutoLockView as="View" style={styles.popupView}>
@@ -123,6 +144,13 @@ export const ViewRawDetail = ({
               <Text style={styles.tabContentText} selectable>
                 {stringify(raw)}
               </Text>
+              <Pressable
+                style={styles.copyIcon}
+                onPress={() => {
+                  handleCopy(stringify(raw));
+                }}>
+                <RcIconCopy />
+              </Pressable>
             </BottomSheetScrollView>
           </TabView.Item>
         )}
@@ -132,6 +160,13 @@ export const ViewRawDetail = ({
               <Text style={styles.tabContentText} selectable>
                 {abi}
               </Text>
+              <Pressable
+                style={styles.copyIcon}
+                onPress={() => {
+                  handleCopy(abi);
+                }}>
+                <RcIconCopy />
+              </Pressable>
             </BottomSheetScrollView>
           </TabView.Item>
         )}
@@ -141,6 +176,13 @@ export const ViewRawDetail = ({
               <Text style={styles.tabContentText} selectable>
                 {raw?.data}
               </Text>
+              <Pressable
+                style={styles.copyIcon}
+                onPress={() => {
+                  handleCopy(raw?.data);
+                }}>
+                <RcIconCopy />
+              </Pressable>
             </BottomSheetScrollView>
           </TabView.Item>
         )}

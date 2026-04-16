@@ -8,16 +8,18 @@ import { extend } from 'colord';
 import mixPlugin from 'colord/plugins/mix';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { ActionsContainer, Props } from './ActionsContainer';
+import { StyleSheet, View } from 'react-native';
+import { ActionsContainer, PropsWithAuthSession } from './ActionsContainer';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { useSubmitAction } from './useSubmitAction';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Text } from '@/components/Typography';
 
 extend([mixPlugin]);
 
-export const SubmitActions: React.FC<Props> = ({
+export const SubmitActions: React.FC<PropsWithAuthSession> = ({
+  USE_LAST_UNLOCKED_AUTH: useLastUnlockedAuth = true,
   disabledProcess,
   onSubmit,
   onCancel,
@@ -47,7 +49,9 @@ export const SubmitActions: React.FC<Props> = ({
   const colors = useThemeColors();
   const { styles } = useTheme2024({ getStyle: getStyles2024 });
   const [pressedConfirm, setPressedConfirm] = React.useState(false);
-  const { submitText, SubmitIcon, onPress } = useSubmitAction();
+  const { submitText, SubmitIcon, onPress } = useSubmitAction({
+    useLastUnlockedAuth,
+  });
   const handlePress = React.useCallback(() => {
     setPressedConfirm(true);
     globalBottomSheetModalAddListener(

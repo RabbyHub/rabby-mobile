@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { memo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import TouchableView from '../Touchable/TouchableView';
 import { AccountSwitcherAopProps, useAccountSceneVisible } from './hooks';
@@ -14,6 +14,7 @@ import { ellipsisAddress } from '@/utils/address';
 import useMount from 'react-use/lib/useMount';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { CaretArrowIconCC } from '../Icons/CaretArrowIconCC';
+import { Text } from '@/components/Typography';
 
 function AccountSwitcherComponent({
   forScene,
@@ -53,14 +54,19 @@ function AccountSwitcherComponent({
           preFetchData();
         }
       }}>
-      <View style={styles.addressRow}>
+      <View style={styles.addressRowWrapper}>
         {!!finalSceneCurrentAccount && (
-          <AddressItem account={finalSceneCurrentAccount}>
+          <AddressItem
+            account={finalSceneCurrentAccount}
+            style={styles.addressItem}>
             {({ WalletIcon }) => {
               return (
                 <View style={styles.addressRow}>
                   <WalletIcon style={styles.walletIcon} />
-                  <Text style={styles.address}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.address}>
                     {finalSceneCurrentAccount.aliasName ||
                       ellipsisAddress(finalSceneCurrentAccount?.address)}
                   </Text>
@@ -104,6 +110,14 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 20,
       color: ctx.colors2024['neutral-title-1'],
     },
+    addressRowWrapper: {
+      flexDirection: 'row',
+      width: '100%',
+      alignItems: 'center',
+    },
+    addressItem: {
+      flex: 1,
+    },
     addressRow: {
       flexDirection: 'row',
       width: '100%',
@@ -121,6 +135,7 @@ const getStyle = createGetStyles2024(ctx => {
       lineHeight: 20,
       fontSize: 16,
       color: ctx.colors2024['neutral-title-1'],
+      flex: 1,
     },
     addressCaretIcon: {
       marginLeft: 'auto',
