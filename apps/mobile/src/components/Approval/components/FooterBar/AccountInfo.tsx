@@ -8,10 +8,10 @@ import { useTheme2024 } from '@/hooks/theme';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getWalletIcon } from '@/utils/walletInfo';
+import { getWalletIcon2024 } from '@/utils/walletInfo2024';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 export interface Props {
@@ -33,7 +33,7 @@ export const AccountInfo: React.FC<Props> = ({
   });
   const displayBalance = splitNumberByStep((balance || 0).toFixed(2));
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
 
   const init = async () => {
     const result = await contactService.getAliasByAddress(
@@ -49,15 +49,16 @@ export const AccountInfo: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
 
-  const BrandIcon = getWalletIcon(account?.brandName);
+  const walletIcon = getWalletIcon2024(account?.brandName, isLight);
   const [enableNicknameTip, setEnableNicknameTip] = React.useState(false);
 
   return (
     <View style={styles.wrapper}>
-      <BrandIcon
-        width={20}
-        height={20}
+      <Image
+        source={walletIcon}
         style={{
+          width: 20,
+          height: 20,
           flexShrink: 0,
         }}
       />
