@@ -62,13 +62,7 @@ env:
 
 - hideKeyboard
 
-- runFlow:
-    when:
-      visible:
-        text: "Open debugger to view warnings\\."
-    commands:
-      - tapOn:
-          point: "91%,91%"
+- runFlow: android-dismiss-debug-warnings-overlay.yaml
 
 - assertVisible:
     id: ${PRIVATE_KEY_SUBMIT_ID}

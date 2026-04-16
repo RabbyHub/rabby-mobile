@@ -1,0 +1,16 @@
+{
+  "send": {
+    "from": {
+      "address": "0x341a1fBD51825E5a107DB54cCb3166DeBA145479"
+    },
+    "to": {
+      "address": "0x28E6A2021769102BbAB3730A2F70cDdce1bf3Db3"
+    },
+    "token": {
+      "chain": "arb",
+      "tokenId": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "symbol": "USDC"
+    },
+    "amount": "0.1"
+  }
+}

@@ -43,6 +43,13 @@ Current first flow:
   - navigate from Home into Settings -> UI Playground -> 2024 Components
   - verify a small set of stable `components2024` interactions through testIDs
 
+- `src/run-android-send-smoke.mjs`
+  - preserve app data and relaunch
+  - require an already-configured wallet state instead of onboarding from scratch
+  - bootstrap only from Lock screen, single-address Home, or multi-address Home
+  - on debug builds, use the DevTools bridge to open the Send screen with a local fixture
+  - inject the amount through the DevTools bridge, then use Maestro to submit the Send flow for real
+
 Run:
 
 ```bash
@@ -80,6 +87,12 @@ Components2024 showcase smoke:
 
 ```bash
 yarn workspace automation-maestro run:android-components2024-showcase-smoke
+```
+
+Send smoke:
+
+```bash
+yarn workspace automation-maestro run:android-send-smoke
 ```
 
 Multi-key run:
@@ -137,6 +150,53 @@ Artifacts:
 - by default, reports are written to `apps/automation-maestro/.artifacts/`
 - override the output root with `RABBY_MAESTRO_ARTIFACTS_DIR=...`
 
+## Shared flow fixture
+
+The automation runners can read a shared local JSON fixture so multiple flows
+can keep their scenario inputs in one place.
+
+Checked-in example:
+
+- `apps/automation-maestro/flows.fixture.example.json`
+
+Preferred local file:
+
+- `apps/automation-maestro/flows.fixture.local.json`
+
+Legacy Send-only fallback:
+
+- `apps/automation-maestro/send.fixture.local.json`
+
+Current Send smoke resolution order:
+
+1. `RABBY_SEND_FIXTURE_FILE`
+2. `RABBY_FLOW_FIXTURE_FILE`
+3. `android.sendSmoke.fixtureFile` from `maestro.config.local.*`
+4. `android.sharedFixtureFile` from `maestro.config.local.*`
+5. `apps/automation-maestro/flows.fixture.local.json`
+6. `apps/automation-maestro/send.fixture.local.json`
+
+Example:
+
+```json
+{
+  "send": {
+    "from": {
+      "address": "0x341a1fBD51825E5a107DB54cCb3166DeBA145479"
+    },
+    "to": {
+      "address": "0x28E6A2021769102BbAB3730A2F70cDdce1bf3Db3"
+    },
+    "token": {
+      "chain": "arb",
+      "tokenId": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "symbol": "USDC"
+    },
+    "amount": "0.1"
+  }
+}
+```
+
 ## Optional config file
 
 If present, the runner auto-loads the first matching file:
@@ -160,11 +220,15 @@ export default {
     binary: "/Users/you/.maestro/bin/maestro"
   },
   android: {
+    sharedFixtureFile: "flows.fixture.local.json",
     onboardingImportPrivateKey: {
       packageName: "com.debank.rabbymobile.debug",
       appPassword: "11111111",
       launchActivity:
         "com.debank.rabbymobile.debug/com.debank.rabbymobile.MainActivity"
+    },
+    sendSmoke: {
+      fixtureFile: "flows.fixture.local.json"
     },
     homeImportPrivateKey: {
       flowFile: "flows/android-home-import-private-key.yaml"

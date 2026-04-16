@@ -23,13 +23,7 @@ env:
   SINGLE_HOME_CURVE_TOGGLE_ID: e2e.home.single-address.curve.toggle
   SINGLE_HOME_BACK_ID: e2e.home.single-address.back
 ---
-- runFlow:
-    when:
-      visible:
-        text: "Open debugger to view warnings\\."
-    commands:
-      - tapOn:
-          point: "91%,91%"
+- runFlow: android-dismiss-debug-warnings-overlay.yaml
 
 - extendedWaitUntil:
     visible:
@@ -68,13 +62,7 @@ env:
 
 - hideKeyboard
 
-- runFlow:
-    when:
-      visible:
-        text: "Open debugger to view warnings\\."
-    commands:
-      - tapOn:
-          point: "91%,91%"
+- runFlow: android-dismiss-debug-warnings-overlay.yaml
 
 - assertVisible:
     id: ${PRIVATE_KEY_SUBMIT_ID}
@@ -124,13 +112,7 @@ env:
       - tapOn:
           id: ${SET_PASSWORD_BIOMETRICS_ID}
 
-- runFlow:
-    when:
-      visible:
-        text: "Open debugger to view warnings\\."
-    commands:
-      - tapOn:
-          point: "91%,91%"
+- runFlow: android-dismiss-debug-warnings-overlay.yaml
 
 - assertVisible:
     id: ${SET_PASSWORD_SUBMIT_ID}

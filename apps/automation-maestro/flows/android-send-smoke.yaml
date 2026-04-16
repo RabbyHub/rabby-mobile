@@ -1,0 +1,59 @@
+appId: ${RABBY_ANDROID_E2E_PACKAGE}
+name: Android send smoke
+tags:
+  - android
+  - maestro
+  - send
+env:
+  SEND_SCREEN_ID: e2e.send.screen
+  SEND_FROM_SECTION_ID: e2e.send.from.section
+  SEND_TO_SECTION_ID: e2e.send.to.section
+  SEND_AMOUNT_INPUT_ID: e2e.send.amount.input
+  SEND_TOKEN_SELECTOR_ID: e2e.send.token.selector
+  SEND_CONFIRM_BUTTON_ID: e2e.send.confirm.button
+  AUTH_MODAL_PASSWORD_INPUT_ID: e2e.auth-modal.password.input
+  AUTH_MODAL_CONFIRM_BUTTON_ID: e2e.auth-modal.confirm
+---
+- extendedWaitUntil:
+    visible:
+      id: ${SEND_SCREEN_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${SEND_FROM_SECTION_ID}
+
+- assertVisible:
+    id: ${SEND_TO_SECTION_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${SEND_AMOUNT_INPUT_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${SEND_TOKEN_SELECTOR_ID}
+
+- assertVisible:
+    id: ${SEND_CONFIRM_BUTTON_ID}
+
+- runFlow: android-dismiss-debug-warnings-overlay.yaml
+
+- tapOn:
+    id: ${SEND_CONFIRM_BUTTON_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${AUTH_MODAL_PASSWORD_INPUT_ID}
+    timeout: 15000
+
+- runFlow:
+    file: android-dismiss-bottom-overlay.yaml
+    env:
+      BOTTOM_OVERLAY_TEXT_REGEX: "Biometrics Disabled"
+      BOTTOM_OVERLAY_CLOSE_POINT: "92%,92%"
+
+- assertVisible:
+    id: ${AUTH_MODAL_CONFIRM_BUTTON_ID}
+
+- tapOn:
+    id: ${AUTH_MODAL_CONFIRM_BUTTON_ID}

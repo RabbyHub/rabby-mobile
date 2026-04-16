@@ -92,6 +92,8 @@ import {
 import { isValidHexAddress } from '@metamask/utils';
 import { type ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { useRendererDetect } from '@/components/Perf/PerfDetector';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import Animated, {
   runOnJS,
   useAnimatedReaction,
@@ -544,67 +546,71 @@ function SendScreen({
             onGasInfoDebouncedLoaded: scrollToBottom,
           },
         }}>
-        <NormalScreenContainer2024
-          type="bg1"
-          // overwriteStyle={styles.screenContainer}
-        >
-          <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
-          <TouchableWithoutFeedback
-            onPress={() => {
-              sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
-              Keyboard.dismiss();
-            }}>
-            <ScrollView contentContainerStyle={styles.sendScreen}>
-              <AnimatedKeyboardAwareScrollView
-                innerRef={instance => {
-                  scrollViewRef.current =
-                    instance as unknown as KeyboardAwareScrollView;
-                }}
-                contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
-                {/* FromToSection */}
-                <View>
-                  {/* From */}
-                  <FromAddressControl2024 disableSwitch={false} />
-                  {/* To */}
-                  <ToAddressControl2024
-                    style={{
-                      marginTop: 24,
-                      marginBottom: 0,
-                    }}
-                    addrDesc={screenState.toAddrDesc}
-                    // brandName={navParams?.addressBrandName}
-                  />
-                  {/* balance info */}
-                  <BalanceSection
-                    disableItemCheck={disableItemCheck}
-                    style={styles.balance}
-                  />
-                  <ShowMoreOnSend chainServeId={chainItem?.serverId || ''} />
-                </View>
-                {Boolean(localPendingTxData && !canSubmit) && (
-                  <PendingTxItem
-                    isForMultipleAddress={isForMultipleAddress}
-                    data={localPendingTxData!}
-                    type="send"
-                    clearLocalPendingTxData={clearLocalPendingTxData}
-                  />
-                )}
-              </AnimatedKeyboardAwareScrollView>
-              <BottomArea account={currentAccount} />
-            </ScrollView>
-          </TouchableWithoutFeedback>
-          <TokenInfoPopup />
-          <BlockedAddressDialog
-            visible={isShowBlockedTransactionDialog}
-            onConfirm={() => {
-              navigation.dispatch(
-                StackActions.replace(RootNames.StackRoot, {
-                  screen: RootNames.Home,
-                }),
-              );
-            }}
-          />
-        </NormalScreenContainer2024>
+        <View
+          style={styles.screenRoot}
+          {...makeTestIDProps(E2E_ID.send.screen)}>
+          <NormalScreenContainer2024
+            type="bg1"
+            // overwriteStyle={styles.screenContainer}
+          >
+            <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
+            <TouchableWithoutFeedback
+              onPress={() => {
+                sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
+                Keyboard.dismiss();
+              }}>
+              <ScrollView contentContainerStyle={styles.sendScreen}>
+                <AnimatedKeyboardAwareScrollView
+                  innerRef={instance => {
+                    scrollViewRef.current =
+                      instance as unknown as KeyboardAwareScrollView;
+                  }}
+                  contentContainerStyle={[styles.mainContent, scrollViewStyle]}>
+                  {/* FromToSection */}
+                  <View>
+                    {/* From */}
+                    <FromAddressControl2024 disableSwitch={false} />
+                    {/* To */}
+                    <ToAddressControl2024
+                      style={{
+                        marginTop: 24,
+                        marginBottom: 0,
+                      }}
+                      addrDesc={screenState.toAddrDesc}
+                      // brandName={navParams?.addressBrandName}
+                    />
+                    {/* balance info */}
+                    <BalanceSection
+                      disableItemCheck={disableItemCheck}
+                      style={styles.balance}
+                    />
+                    <ShowMoreOnSend chainServeId={chainItem?.serverId || ''} />
+                  </View>
+                  {Boolean(localPendingTxData && !canSubmit) && (
+                    <PendingTxItem
+                      isForMultipleAddress={isForMultipleAddress}
+                      data={localPendingTxData!}
+                      type="send"
+                      clearLocalPendingTxData={clearLocalPendingTxData}
+                    />
+                  )}
+                </AnimatedKeyboardAwareScrollView>
+                <BottomArea account={currentAccount} />
+              </ScrollView>
+            </TouchableWithoutFeedback>
+            <TokenInfoPopup />
+            <BlockedAddressDialog
+              visible={isShowBlockedTransactionDialog}
+              onConfirm={() => {
+                navigation.dispatch(
+                  StackActions.replace(RootNames.StackRoot, {
+                    screen: RootNames.Home,
+                  }),
+                );
+              }}
+            />
+          </NormalScreenContainer2024>
+        </View>
       </SendTokenInternalContextProvider>
     </SignatureInstanceProvider>
   );
@@ -651,6 +657,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
     balance: {
       marginTop: 24,
+    },
+    screenRoot: {
+      flex: 1,
     },
     buttonContainer: {
       width: '100%',

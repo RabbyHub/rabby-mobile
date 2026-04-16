@@ -21,6 +21,11 @@ export const E2E_ID = {
     switchAuthTypePassword: 'e2e.unlock.switch-auth-type.password',
     switchAuthTypeBiometrics: 'e2e.unlock.switch-auth-type.biometrics',
   },
+  authModal: {
+    passwordInput: 'e2e.auth-modal.password.input',
+    cancelButton: 'e2e.auth-modal.cancel',
+    confirmButton: 'e2e.auth-modal.confirm',
+  },
   home: {
     addAddressButton: 'e2e.home.add-address.button',
     settingsButton: 'e2e.home.settings.button',
@@ -43,6 +48,15 @@ export const E2E_ID = {
   },
   settings: {
     uiPlayground: 'e2e.settings.ui-playground',
+  },
+  send: {
+    screen: 'e2e.send.screen',
+    fromSection: 'e2e.send.from.section',
+    toSection: 'e2e.send.to.section',
+    amountInput: 'e2e.send.amount.input',
+    amountMax: 'e2e.send.amount.max',
+    tokenSelector: 'e2e.send.token.selector',
+    confirmButton: 'e2e.send.confirm.button',
   },
   playground: {
     components2024Entry: 'e2e.playground.components2024.entry',

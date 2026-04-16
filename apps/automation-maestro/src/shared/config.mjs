@@ -11,6 +11,7 @@ const DEFAULT_CONFIG = Object.freeze({
     env: {},
   },
   android: {
+    sharedFixtureFile: 'flows.fixture.local.json',
     onboardingImportPrivateKey: {
       packageName: 'com.debank.rabbymobile.debug',
       appPassword: '11111111',
@@ -40,6 +41,12 @@ const DEFAULT_CONFIG = Object.freeze({
     },
     components2024ShowcaseSmoke: {
       flowFile: 'flows/android-components2024-showcase-smoke.yaml',
+      maestroEnv: {},
+    },
+    sendSmoke: {
+      flowFile: 'flows/android-send-smoke.yaml',
+      bootstrapFlowFile: 'flows/android-home-ready-existing-user.yaml',
+      fixtureFile: null,
       maestroEnv: {},
     },
   },

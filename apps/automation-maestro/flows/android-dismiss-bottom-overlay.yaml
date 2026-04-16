@@ -1,0 +1,14 @@
+appId: ${RABBY_ANDROID_E2E_PACKAGE}
+name: Android dismiss bottom overlay
+tags:
+  - android
+  - maestro
+  - utility
+---
+- runFlow:
+    when:
+      visible:
+        text: ${BOTTOM_OVERLAY_TEXT_REGEX}
+    commands:
+      - tapOn:
+          point: ${BOTTOM_OVERLAY_CLOSE_POINT}

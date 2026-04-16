@@ -1,0 +1,11 @@
+appId: ${RABBY_ANDROID_E2E_PACKAGE}
+name: Android dismiss debug warnings overlay
+tags:
+  - android
+  - maestro
+  - utility
+env:
+  BOTTOM_OVERLAY_TEXT_REGEX: "Open debugger to view warnings\\."
+  BOTTOM_OVERLAY_CLOSE_POINT: "91%,91%"
+---
+- runFlow: android-dismiss-bottom-overlay.yaml
