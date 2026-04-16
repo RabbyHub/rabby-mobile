@@ -47,6 +47,7 @@ build_official_android_payload() {
   cd "$project_dir"
   export RABBY_MOBILE_BUILD_ENV="regression"
   export BUILD_TARGET_PLATFORM="android"
+  initialize_android_sentry_auto_upload_default
   export SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
 
   if build_cache_enabled; then

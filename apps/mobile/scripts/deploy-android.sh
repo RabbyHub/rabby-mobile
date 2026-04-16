@@ -13,6 +13,7 @@ project_dir=$(dirname $script_dir)
 
 export RABBY_MOBILE_ANDROID_FAST_BUILD="${RABBY_MOBILE_ANDROID_FAST_BUILD:-false}"
 FAST_BUILD_ENABLED=$(fast_build_enabled_value)
+initialize_android_sentry_auto_upload_default
 UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
 check_build_params;
@@ -216,7 +217,7 @@ fi
 cp $android_export_target $deployment_local_dir/$apk_name
 
 print_manual_upload_sentry_sourcemap() {
-  if [ ! -z $SENTRY_DISABLE_AUTO_UPLOAD ]; then
+  if sentry_auto_upload_disabled; then
     echo "[deploy-android] manual upload sourcemap to sentry:"
     echo "[deploy-android]
       ./node_modules/@sentry/cli/bin/sentry-cli react-native gradle \

@@ -21,6 +21,27 @@ fast_build_enabled_value() {
   fi
 }
 
+sentry_auto_upload_disabled() {
+  case "${SENTRY_DISABLE_AUTO_UPLOAD:-}" in
+    true|1|yes|on)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+initialize_android_sentry_auto_upload_default() {
+  if [ -n "${SENTRY_DISABLE_AUTO_UPLOAD+x}" ]; then
+    return 0
+  fi
+
+  if fast_build_enabled; then
+    export SENTRY_DISABLE_AUTO_UPLOAD=false
+  fi
+}
+
 ios_fast_build_enabled() {
   case "${RABBY_MOBILE_IOS_FAST_BUILD:-}" in
     true|1|yes|on)
