@@ -1,4 +1,4 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
+appId: ${RABBY_MAESTRO_APP_ID}
 name: Android home ready for existing user
 tags:
   - android
@@ -15,7 +15,7 @@ env:
     maxRetries: 2
     commands:
       - runFlow:
-          file: android-dismiss-debug-warnings-overlay.yaml
+          file: shared-dismiss-debug-warnings-overlay.yaml
 
       - assertNotVisible:
           id: ${WELCOME_IMPORT_EXISTING_ID}

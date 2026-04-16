@@ -1,4 +1,4 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
+appId: ${RABBY_MAESTRO_APP_ID}
 name: Android send smoke
 tags:
   - android
@@ -36,7 +36,7 @@ env:
 - assertVisible:
     id: ${SEND_CONFIRM_BUTTON_ID}
 
-- runFlow: android-dismiss-debug-warnings-overlay.yaml
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
 
 - tapOn:
     id: ${SEND_CONFIRM_BUTTON_ID}
@@ -47,7 +47,7 @@ env:
     timeout: 15000
 
 - runFlow:
-    file: android-dismiss-bottom-overlay.yaml
+    file: shared-dismiss-bottom-overlay.yaml
     env:
       BOTTOM_OVERLAY_TEXT_REGEX: "Biometrics Disabled"
       BOTTOM_OVERLAY_CLOSE_POINT: "92%,92%"

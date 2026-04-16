@@ -1,7 +1,7 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
-name: Android dismiss bottom overlay
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Shared dismiss bottom overlay
 tags:
-  - android
+  - shared
   - maestro
   - utility
 ---

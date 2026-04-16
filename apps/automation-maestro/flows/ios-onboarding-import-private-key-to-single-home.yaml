@@ -1,7 +1,7 @@
 appId: ${RABBY_MAESTRO_APP_ID}
-name: Android onboarding import private key to single home
+name: iOS onboarding import private key to single home
 tags:
-  - android
+  - ios
   - maestro
   - onboarding
   - single-home
@@ -16,11 +16,9 @@ env:
   SET_PASSWORD_BIOMETRICS_ID: e2e.onboarding.set-password.biometrics
   SET_PASSWORD_BIOMETRICS_ON_LABEL: e2e.onboarding.set-password.biometrics.on
   SET_PASSWORD_SUBMIT_ID: e2e.onboarding.set-password.submit
-  SINGLE_HOME_BALANCE_VALUE_ID: e2e.home.single-address.balance.value
   SINGLE_HOME_BALANCE_LOADING_ID: e2e.home.single-address.balance.loading
   SINGLE_HOME_CHANGE_LOADING_ID: e2e.home.single-address.change.loading
   SINGLE_HOME_CURVE_LOADING_ID: e2e.home.single-address.curve.loading
-  SINGLE_HOME_CURVE_TOGGLE_ID: e2e.home.single-address.curve.toggle
   SINGLE_HOME_BACK_ID: e2e.home.single-address.back
 ---
 - runFlow: shared-dismiss-debug-warnings-overlay.yaml
@@ -36,11 +34,21 @@ env:
 - tapOn:
     id: ${WELCOME_IMPORT_EXISTING_ID}
 
+- extendedWaitUntil:
+    visible:
+      id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+    timeout: 15000
+
 - assertVisible:
     id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
 
 - tapOn:
     id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${PRIVATE_KEY_TAB_ID}
+    timeout: 15000
 
 - assertVisible:
     id: ${PRIVATE_KEY_TAB_ID}
@@ -48,32 +56,38 @@ env:
 - tapOn:
     id: ${PRIVATE_KEY_TAB_ID}
 
+- extendedWaitUntil:
+    visible:
+      id: ${PRIVATE_KEY_INPUT_ID}
+    timeout: 15000
+
 - assertVisible:
     id: ${PRIVATE_KEY_INPUT_ID}
 
 - tapOn:
-    id: ${PRIVATE_KEY_INPUT_ID}
+    text: "粘贴|Paste"
 
-- eraseText: 100
+- runFlow: ios-allow-paste-permission.yaml
 
-- setClipboard: ${RABBY_MAESTRO_TEST_PRIVATE_KEY}
+- tapOn:
+    text: "粘贴|Paste"
+    optional: true
 
-- pasteText
-
-- hideKeyboard
-
-- runFlow: shared-dismiss-debug-warnings-overlay.yaml
+- hideKeyboard:
+    optional: true
 
 - assertVisible:
     id: ${PRIVATE_KEY_SUBMIT_ID}
 
-- tapOn:
-    point: "50%,86%"
-
-- extendedWaitUntil:
-    visible:
-      id: ${SET_PASSWORD_INPUT_ID}
-    timeout: 15000
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn:
+          point: "50%,91%"
+      - extendedWaitUntil:
+          visible:
+            id: ${SET_PASSWORD_INPUT_ID}
+          timeout: 20000
 
 - assertVisible:
     id: ${SET_PASSWORD_INPUT_ID}
@@ -85,7 +99,8 @@ env:
 
 - inputText: ${RABBY_MAESTRO_APP_PASSWORD}
 
-- hideKeyboard
+- hideKeyboard:
+    optional: true
 
 - tapOn:
     point: "50%,24%"
@@ -102,7 +117,8 @@ env:
 
 - inputText: ${RABBY_MAESTRO_APP_PASSWORD}
 
-- hideKeyboard
+- hideKeyboard:
+    optional: true
 
 - tapOn:
     point: "50%,24%"
@@ -121,14 +137,6 @@ env:
     id: ${SET_PASSWORD_SUBMIT_ID}
 
 - tapOn:
-    point: "50%,95%"
-
-- extendedWaitUntil:
-    notVisible:
-      id: ${SET_PASSWORD_SUBMIT_ID}
-    timeout: 20000
-
-- assertNotVisible:
     id: ${SET_PASSWORD_SUBMIT_ID}
 
 - extendedWaitUntil:

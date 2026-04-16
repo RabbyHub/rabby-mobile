@@ -1,7 +1,7 @@
 appId: ${RABBY_MAESTRO_APP_ID}
-name: Android single home back to home
+name: iOS single home back to home
 tags:
-  - android
+  - ios
   - maestro
   - single-home
   - home

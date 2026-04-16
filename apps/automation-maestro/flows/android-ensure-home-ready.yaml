@@ -1,4 +1,4 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
+appId: ${RABBY_MAESTRO_APP_ID}
 name: Android ensure Home is ready
 tags:
   - android
@@ -33,7 +33,7 @@ env:
           file: android-single-home-back-to-home.yaml
 
       - runFlow:
-          file: android-dismiss-debug-warnings-overlay.yaml
+          file: shared-dismiss-debug-warnings-overlay.yaml
 
       - extendedWaitUntil:
           visible:

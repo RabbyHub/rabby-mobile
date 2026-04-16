@@ -1,4 +1,4 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
+appId: ${RABBY_MAESTRO_APP_ID}
 name: Android home import private key
 tags:
   - android
@@ -56,13 +56,13 @@ env:
 
 - eraseText: 100
 
-- setClipboard: ${RABBY_ANDROID_TEST_PRIVATE_KEY}
+- setClipboard: ${RABBY_MAESTRO_TEST_PRIVATE_KEY}
 
 - pasteText
 
 - hideKeyboard
 
-- runFlow: android-dismiss-debug-warnings-overlay.yaml
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
 
 - assertVisible:
     id: ${PRIVATE_KEY_SUBMIT_ID}

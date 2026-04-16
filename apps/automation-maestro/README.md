@@ -4,6 +4,18 @@ Deterministic and hierarchy-driven automation for Rabby Mobile.
 
 This is the preferred local e2e path right now.
 
+## Flow naming
+
+- use `shared-*.yaml` only for flows that are confirmed reusable across platforms
+- default to `android-*.yaml` / `ios-*.yaml` first when adding or changing flows
+- keep the platform prefix for anything platform-specific, or anything that has only been validated on one platform so far
+- merge back into `shared-*` only after both platform variants have been implemented, compared, and verified to have no meaningful divergence
+
+Currently verified shared utilities:
+
+- `flows/shared-dismiss-bottom-overlay.yaml`
+- `flows/shared-dismiss-debug-warnings-overlay.yaml`
+
 Current first flow:
 
 - `flows/android-onboarding-import-private-key.yaml`
@@ -16,6 +28,20 @@ Current first flow:
 - `flows/android-onboarding-import-private-key-to-single-home.yaml`
   - same onboarding path, but it intentionally stops on single-address Home
   - this is the base flow for single-address balance smoke validation
+
+- `flows/ios-onboarding-import-private-key-to-single-home.yaml`
+  - start from the welcome page on a booted iOS simulator
+  - paste the first configured private key through the simulator system clipboard
+  - use an iOS-specific submit point on the private-key page
+  - enter the app password for real on `SetupWallet`
+  - explicitly turn biometrics off when the toggle is on
+  - stop on single-address Home after success
+
+- `src/run-ios-onboarding-import-private-key.mjs`
+  - require a booted iOS simulator
+  - terminate the debug app, clear simulator app data, and reset the simulator keychain
+  - write the first configured private key into the simulator pasteboard before launch
+  - launch the app, then run the iOS onboarding flow end-to-end
 
 - `flows/android-home-balance-smoke.yaml`
   - preserve app data and relaunch
@@ -55,7 +81,7 @@ Run:
 ```bash
 cd apps/automation-maestro
 cp .env.example .env.local
-# fill RABBY_ANDROID_TEST_PRIVATE_KEYS in .env.local
+# fill RABBY_MAESTRO_TEST_PRIVATE_KEYS in .env.local
 node src/run-android-onboarding-import-private-key.mjs
 ```
 
@@ -63,6 +89,12 @@ Or from the repo root:
 
 ```bash
 yarn workspace automation-maestro run:android-onboarding-import-private-key
+```
+
+iOS simulator onboarding:
+
+```bash
+yarn workspace automation-maestro run:ios-onboarding-import-private-key
 ```
 
 Home balance smoke:
@@ -109,10 +141,15 @@ yarn workspace automation-maestro run:android-onboarding-import-private-keys
 
 - requires `node >= 22`
 - the shell entrypoints are intentionally thin and delegate to the Node runners
-- `RABBY_ANDROID_TEST_PRIVATE_KEYS` is a `;`-separated list
+- `RABBY_MAESTRO_TEST_PRIVATE_KEYS` is a `;`-separated list
+- `RABBY_MAESTRO_APP_ID` is the Maestro `appId` for the current target
+- `RABBY_MAESTRO_APP_PASSWORD` is the app unlock/setup password used by flows
 - Maestro itself does not auto-read `.env*` here
 - the Node runner loads local env files, resolves config, then passes values to
   `maestro test -e ...`
+- the iOS onboarding runner additionally resets the booted simulator keychain,
+  clears app data, and writes the first configured private key into the
+  simulator pasteboard before launching the app
 - debug-package runners additionally connect to Metro DevTools and write bridge snapshots as JSON artifacts next to the Maestro HTML reports
 - local-only files such as `.env.local`, `.env.regression`, and `.artifacts/`
   are expected to stay untracked inside this package
@@ -120,14 +157,17 @@ yarn workspace automation-maestro run:android-onboarding-import-private-keys
 Example:
 
 ```bash
-RABBY_ANDROID_TEST_PRIVATE_KEYS=0xabc...;0xdef...;0x123...
+RABBY_MAESTRO_TEST_PRIVATE_KEYS=0xabc...;0xdef...;0x123...
 ```
 
 Compatibility:
 
-- the single-key legacy env `RABBY_ANDROID_TEST_PRIVATE_KEY` still works
+- the single-key env `RABBY_MAESTRO_TEST_PRIVATE_KEY` still works
 - the existing single-flow runner defaults to the first key in
-  `RABBY_ANDROID_TEST_PRIVATE_KEYS`
+  `RABBY_MAESTRO_TEST_PRIVATE_KEYS`
+- legacy Android-prefixed envs such as `RABBY_ANDROID_E2E_PACKAGE`,
+  `RABBY_ANDROID_APP_PASSWORD`, `RABBY_ANDROID_TEST_PRIVATE_KEY`, and
+  `RABBY_ANDROID_TEST_PRIVATE_KEYS` still work as fallbacks
 
 Env loading order:
 
@@ -232,6 +272,15 @@ export default {
     },
     homeImportPrivateKey: {
       flowFile: "flows/android-home-import-private-key.yaml"
+    }
+  },
+  ios: {
+    onboardingImportPrivateKey: {
+      bundleId: "com.debank.rabby-mobile-debug",
+      appPassword: "11111111",
+      flowFile: "flows/ios-onboarding-import-private-key.yaml",
+      resetKeychain: true,
+      clearAppData: true
     }
   }
 };
