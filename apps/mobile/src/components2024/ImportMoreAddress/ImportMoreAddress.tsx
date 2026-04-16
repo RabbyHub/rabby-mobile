@@ -416,13 +416,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       for (const acc of selectedAccounts) {
         await apiHD?.importAddress(acc.index - 1);
       }
-      await onAddressImported(
-        selectedAccounts.map(item => ({
-          address: item.address,
-          type: hdType,
-          brandName: hdBrandName,
-        })),
-      );
 
       resetNavigationOnTopOfHome(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
