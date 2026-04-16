@@ -110,6 +110,7 @@ export const ImportSafeAddressScreen2024 = () => {
       footerBottomOffset={56}
       footerContainerStyle={{
         paddingHorizontal: 20,
+        paddingTop: 16,
       }}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
@@ -185,7 +186,7 @@ const getStyles = createGetStyles2024(ctx => ({
   topContent: {
     alignItems: 'center',
     width: '100%',
-    flexShrink: 0,
+    flex: 1,
   },
   errorMessage: {
     color: ctx.colors2024['red-default'],

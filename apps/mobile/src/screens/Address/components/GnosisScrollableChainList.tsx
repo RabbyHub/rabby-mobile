@@ -30,8 +30,7 @@ export const GnosisScrollableChainList = ({
       </Text>
       <ScrollView
         style={styles.chainListScroll}
-        contentContainerStyle={styles.chainListContent}
-        showsVerticalScrollIndicator={false}>
+        contentContainerStyle={styles.chainListContent}>
         <View style={styles.chainList}>
           {data?.map(chain => {
             return (
@@ -51,6 +50,7 @@ const getStyles = createGetStyles2024(ctx => ({
   chainListContainer: {
     marginTop: 16,
     alignItems: 'center',
+    flex: 1,
   },
   chainListDesc: {
     color: ctx.colors2024['neutral-secondary'],
@@ -62,7 +62,6 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
   },
   chainListScroll: {
-    maxHeight: 300,
     width: '100%',
   },
   chainListContent: {

@@ -151,7 +151,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
 
   const abortLoadRef = React.useRef<(() => void) | null>(null);
   const exitRef = React.useRef(false);
-  const startNumberRef = React.useRef((setting?.startNumber || 1) - 1);
+  const startNumberRef = React.useRef(0); // Default to index 0, updated when setting changes
   const [currentAccounts, setCurrentAccounts] = React.useState<ViewAccount[]>(
     [],
   );
@@ -316,6 +316,26 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     abortLoadRef.current = handleLoadAddress();
   }, [handleLoadAddress]);
 
+  // Init HD path settings - must run BEFORE startNumberRef sync effect
+  React.useEffect(() => {
+    const getDefaultPath = () => {
+      // OneKey only supports BIP44
+      if (params.type === KEYRING_TYPE.OneKeyKeyring) {
+        return LedgerHDPathType.BIP44;
+      }
+      // HdKeyring defaults to BIP44
+      if (params.type === KEYRING_TYPE.HdKeyring) {
+        return LedgerHDPathType.BIP44;
+      }
+      // Ledger, Trezor, Keystone default to LedgerLive (matches settingAtom default)
+      return LedgerHDPathType.LedgerLive;
+    };
+    // Reset startNumberRef to ensure it's in sync with atom (index 0 = address #1)
+    startNumberRef.current = 0;
+    setSetting({ hdPath: getDefaultPath(), startNumber: 1 });
+  }, [setSetting, params.type]);
+
+  // Sync startNumberRef when setting changes
   React.useEffect(() => {
     startNumberRef.current = (setting?.startNumber || 1) - 1;
   }, [setting?.startNumber]);
@@ -349,13 +369,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     }
   }, [apiHD, getMnemonicKeyring, params.type, getAliasByAddress]);
 
-  // HdKeyring init - sets initial HD path
-  React.useEffect(() => {
-    if (params.type === KEYRING_TYPE.HdKeyring) {
-      setSetting({ hdPath: LedgerHDPathType.BIP44, startNumber: 1 });
-    }
-  }, [setSetting, params.type]);
-
   // initial load
   React.useEffect(() => {
     abortLoadRef.current = handleLoadAddress();
@@ -367,8 +380,9 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     return () => {
       exitRef.current = true;
       abortLoadRef.current?.();
+      setSetting(prev => ({ ...prev, startNumber: 1 }));
     };
-  }, []);
+  }, [setSetting]);
 
   const importToastHiddenRef = React.useRef<() => void>(() => {});
 
