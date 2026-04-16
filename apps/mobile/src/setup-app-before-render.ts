@@ -52,6 +52,7 @@ import {
 import useProtocolListStore from './store/protocols';
 import { useAppChainStore } from './store/appchain';
 import addressBalanceStore, {
+  ensureAccountBalanceSelectionLifecycle,
   startProcessAccountBalanceEvents,
 } from './store/balance';
 import { apisAutoLock } from './core/apis';
@@ -134,7 +135,7 @@ async function initUnlockedStores() {
 const initPersistedStoresStateRef = {
   promise: null as Promise<void> | null,
 };
-const startInitPersistedStores = async () => {
+export const startInitPersistedStores = async () => {
   if (initPersistedStoresStateRef.promise) {
     return initPersistedStoresStateRef.promise;
   }
@@ -142,6 +143,19 @@ const startInitPersistedStores = async () => {
   initPersistedStoresStateRef.promise = promise;
   await promise;
 };
+
+export async function startUnlockScreenBootstrapWarmups() {
+  const results = await Promise.allSettled([
+    startInitPersistedStores(),
+    ensureAccountBalanceSelectionLifecycle(),
+  ]);
+
+  results.forEach(result => {
+    if (result.status === 'rejected') {
+      console.error('startUnlockScreenBootstrapWarmups::error', result.reason);
+    }
+  });
+}
 
 const initUnlockedStoresStateRef = {
   promise: null as Promise<void> | null,
@@ -172,7 +186,4 @@ function startInitStoresOnUnlock() {
   });
 }
 
-startInitPersistedStores().catch(error => {
-  console.error('startInitPersistedStores::error', error);
-});
 startInitStoresOnUnlock();

@@ -1246,6 +1246,92 @@ async function warmupSelectedAccountsBalance(selectedAccounts: Account[]) {
   await addressBalanceStore.hydrateCachedBalancesForAccounts(selectedAccounts);
 }
 
+const accountBalanceSelectionLifecycleStateRef = {
+  promise: null as Promise<void> | null,
+  hasSubscribed: false,
+  prevSelectionSignature: '',
+};
+
+async function initAccountBalanceSelectionLifecycle() {
+  console.time('initAccountBalanceSelectionLifecycle');
+
+  try {
+    const { default: accountStore } = await import('./account');
+
+    const syncSelectionFromAccounts = async () => {
+      const { selectedAccounts, selectedAddresses, matteredAccountLength } =
+        await getMatteredAccountsSnapshot();
+      await warmupSelectedAccountsBalance(selectedAccounts);
+      const nextBalance = buildBalanceAccountsFromList(
+        selectedAccounts,
+        addressBalanceStore.getAddressValueMap(),
+      );
+
+      setAccountsBalanceState(
+        prev => ({
+          ...prev,
+          balance: nextBalance,
+          selectedAddresses,
+          hasResolvedSelection: true,
+          matteredAccountLength,
+          ...buildSelectedBalanceDerivedState(selectedAddresses, nextBalance),
+        }),
+        {
+          source: 'accounts_changed',
+        },
+      );
+    };
+
+    if (!accountBalanceSelectionLifecycleStateRef.hasSubscribed) {
+      accountBalanceSelectionLifecycleStateRef.hasSubscribed = true;
+
+      accountStore.subscribe(state => {
+        const accountsSignature = state.accounts
+          .map(
+            account =>
+              `${account.address.toLowerCase()}::${account.type}::${
+                account.brandName
+              }`,
+          )
+          .sort()
+          .join('|');
+        const pinSignature = state.pinnedAddresses
+          .map(item => `${item.address.toLowerCase()}::${item.brandName}`)
+          .join('|');
+        const nextSignature = `${accountsSignature}##${pinSignature}`;
+
+        if (
+          nextSignature ===
+          accountBalanceSelectionLifecycleStateRef.prevSelectionSignature
+        ) {
+          return;
+        }
+
+        accountBalanceSelectionLifecycleStateRef.prevSelectionSignature =
+          nextSignature;
+        void syncSelectionFromAccounts();
+      });
+    }
+
+    await syncSelectionFromAccounts();
+  } finally {
+    console.timeEnd('initAccountBalanceSelectionLifecycle');
+  }
+}
+
+export async function ensureAccountBalanceSelectionLifecycle() {
+  if (accountBalanceSelectionLifecycleStateRef.promise) {
+    return accountBalanceSelectionLifecycleStateRef.promise;
+  }
+
+  const promise = initAccountBalanceSelectionLifecycle().catch(error => {
+    accountBalanceSelectionLifecycleStateRef.promise = null;
+    throw error;
+  });
+  accountBalanceSelectionLifecycleStateRef.promise = promise;
+  await promise;
+}
+
 export const syncBalanceAccountStore = () => {
   const state = balanceAccountsStore.getState();
   if (!state.selectedAddresses.length) {
@@ -1295,6 +1381,12 @@ export function startProcessAccountBalanceEvents() {
     syncBalanceAccountStore();
   });
 
+  keyringService.once('unlock', () => {
+    ensureAccountBalanceSelectionLifecycle().catch(error => {
+      console.error('ensureAccountBalanceSelectionLifecycle::error', error);
+    });
+  });
+
   addressBalanceStore.subscribe(() => {
     const current = balanceAccountsStore.getState();
     if (!current.selectedAddresses.length) {
@@ -1320,62 +1412,6 @@ export function startProcessAccountBalanceEvents() {
         source: 'balance_changed',
       },
     );
-  });
-
-  void (async () => {
-    const { default: accountStore } = await import('./account');
-    let prevSelectionSignature = '';
-
-    const syncSelectionFromAccounts = async () => {
-      const { selectedAccounts, selectedAddresses, matteredAccountLength } =
-        await getMatteredAccountsSnapshot();
-      await warmupSelectedAccountsBalance(selectedAccounts);
-      const nextBalance = buildBalanceAccountsFromList(
-        selectedAccounts,
-        addressBalanceStore.getAddressValueMap(),
-      );
-
-      setAccountsBalanceState(
-        prev => ({
-          ...prev,
-          balance: nextBalance,
-          selectedAddresses,
-          hasResolvedSelection: true,
-          matteredAccountLength,
-          ...buildSelectedBalanceDerivedState(selectedAddresses, nextBalance),
-        }),
-        {
-          source: 'accounts_changed',
-        },
-      );
-    };
-
-    accountStore.subscribe(state => {
-      const accountsSignature = state.accounts
-        .map(
-          account =>
-            `${account.address.toLowerCase()}::${account.type}::${
-              account.brandName
-            }`,
-        )
-        .sort()
-        .join('|');
-      const pinSignature = state.pinnedAddresses
-        .map(item => `${item.address.toLowerCase()}::${item.brandName}`)
-        .join('|');
-      const nextSignature = `${accountsSignature}##${pinSignature}`;
-
-      if (nextSignature === prevSelectionSignature) {
-        return;
-      }
-
-      prevSelectionSignature = nextSignature;
-      void syncSelectionFromAccounts();
-    });
-
-    await syncSelectionFromAccounts();
-  })().catch(error => {
-    console.error('startProcessAccountBalanceEvents error', error);
   });
 }
 

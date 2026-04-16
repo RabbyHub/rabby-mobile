@@ -39,6 +39,9 @@ type RNViewProps = {
   accessibilityLabel?: import('react').ComponentProps<
     typeof import('react-native').View
   >['accessibilityLabel'];
+  accessible?: import('react').ComponentProps<
+    typeof import('react-native').View
+  >['accessible'];
 };
 
 type RabbyDevToolsBridgeMethodName =
