@@ -1247,7 +1247,8 @@
         "selectAddMethod": "Select Add Method",
         "syncRabbyExtension": "Sync Rabby Extension",
         "restoreRabbyWallet": "Restore Rabby Wallet",
-        "seedPhraseOrPrivateKey": "Seed phrase or private key"
+        "seedPhraseOrPrivateKey": "Seed phrase or private key",
+        "moreOptions": "More options"
       },
       "multiAddressHome": {
         "pin": "Pin",

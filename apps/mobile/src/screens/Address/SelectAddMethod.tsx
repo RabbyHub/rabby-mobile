@@ -228,7 +228,9 @@ function SelectAddMethod(): JSX.Element {
 
       {/* More options */}
       <Pressable style={styles.moreOptionsWrapper} onPress={onPressMoreOptions}>
-        <Text style={styles.moreOptionsText}>More options</Text>
+        <Text style={styles.moreOptionsText}>
+          {t('page.nextComponent.addAddress.moreOptions')}
+        </Text>
         <RcArrowRight2CC
           width={10}
           height={10}
