@@ -45,15 +45,19 @@ const syncCustomTestChainList = () => {
 
 type BootStrapState = {
   couldRender: boolean;
+  startupUnlockRouteResetPending: boolean;
 };
 const zBootstrapStore = zCreate<BootStrapState>(() => ({
   couldRender: false,
+  startupUnlockRouteResetPending: false,
 }));
 function setBootstrap(valOrFunc: UpdaterOrPartials<BootStrapState>) {
   zBootstrapStore.setState(
     prev => resolveValFromUpdater(prev, valOrFunc).newVal,
   );
 }
+
+const STARTUP_UNLOCK_SHELL_TIMEOUT_MS = 180;
 
 const DEBUG_IN_PAGE_SCRIPTS = {
   LOAD_BEFORE: __DEV__
@@ -258,21 +262,36 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
     if (startedLoadRef.current) return;
     startedLoadRef.current = true;
 
-    Promise.allSettled([
-      getTriedUnlock(),
-      loadSecurityChain({ rabbitCode }),
-      storeApisBiometrics.fetchBiometrics(),
-    ])
-      .then(async ([_unlockResult, _securityChain]) => {
+    loadSecurityChain({ rabbitCode });
+
+    storeApisBiometrics.fetchBiometrics().catch(error => {
+      console.error('useBootstrapApp::fetchBiometrics:error', error);
+    });
+
+    let didRenderUnlockShellBeforeTryUnlockSettled = false;
+    const timer = setTimeout(() => {
+      didRenderUnlockShellBeforeTryUnlockSettled = true;
+      setBootstrap(prev => ({ ...prev, couldRender: true }));
+    }, STARTUP_UNLOCK_SHELL_TIMEOUT_MS);
+
+    getTriedUnlock()
+      .then(_unlockResult => {
         console.debug('useBootstrapApp::sucess', _unlockResult);
-        setBootstrap({ couldRender: true });
       })
       .catch(err => {
-        startedLoadRef.current = false;
         console.error('useBootstrapApp::error', err);
-        setBootstrap({ couldRender: false });
       })
       .finally(() => {
+        clearTimeout(timer);
+
+        setBootstrap(prev => ({
+          ...prev,
+          couldRender: true,
+          startupUnlockRouteResetPending:
+            didRenderUnlockShellBeforeTryUnlockSettled &&
+            keyringService.isUnlocked(),
+        }));
+
         setTimeout(() => {
           hideSplashScreen(false);
           console.debug(
@@ -280,6 +299,10 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           );
         }, 3e3);
       });
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [rabbitCode]);
 }
 
@@ -288,5 +311,23 @@ export function useAppCouldRender() {
 
   return {
     couldRender,
+  };
+}
+
+export function useStartupUnlockRouteReset() {
+  const startupUnlockRouteResetPending = zBootstrapStore(
+    s => s.startupUnlockRouteResetPending,
+  );
+
+  const markStartupUnlockRouteResetHandled = React.useCallback(() => {
+    setBootstrap(prev => ({
+      ...prev,
+      startupUnlockRouteResetPending: false,
+    }));
+  }, []);
+
+  return {
+    startupUnlockRouteResetPending,
+    markStartupUnlockRouteResetHandled,
   };
 }

@@ -9,10 +9,7 @@ import { connectPushServerOnBootstrap } from './core/notifications';
 
 import { startManageAccountStoreLifecycle } from './hooks/account';
 
-import {
-  loadLockInfoOnBootstrap,
-  startSubscribeAppStateChange,
-} from './hooks/useLock';
+import { startSubscribeAppStateChange } from './hooks/useLock';
 import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
 import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
 import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
@@ -67,7 +64,6 @@ startSubscribeLangChange();
 connectPushServerOnBootstrap();
 
 startManageAccountStoreLifecycle();
-loadLockInfoOnBootstrap();
 apisAutoLock.setupAutoLockChecker();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();

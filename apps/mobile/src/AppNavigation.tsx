@@ -97,9 +97,10 @@ import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
 import DeviceInfo from 'react-native-device-info';
 import { coerceNumber } from './utils/coerce';
-import { useAppCouldRender } from './hooks/useBootstrap';
+import { useStartupUnlockRouteReset } from './hooks/useBootstrap';
 import { InnerDappWebViewPreloadEntry } from './components/WebView/InnerDappWebViewPreloadEntry';
 import { useTranslation } from 'react-i18next';
+import { UnlockUIManager } from './hooks/navigation';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -263,9 +264,41 @@ export default function AppNavigation() {
   const colors = useThemeColors();
 
   const { isAppUnlocked } = useAppUnlocked();
+  const { startupUnlockRouteResetPending, markStartupUnlockRouteResetHandled } =
+    useStartupUnlockRouteReset();
   const initialRouteName = isAppUnlocked
     ? RootNames.StackGetStarted
     : RootNames.Unlock;
+
+  const tryResetRouteAfterDeferredStartupUnlock = useCallback(() => {
+    if (!startupUnlockRouteResetPending || !isAppUnlocked) return;
+    if (!navigationRef.isReady()) return;
+
+    const currentRouteName = navigationRef.getCurrentRoute()?.name;
+    if (!currentRouteName) return;
+
+    if (currentRouteName !== RootNames.Unlock) {
+      markStartupUnlockRouteResetHandled();
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      UnlockUIManager.resetNavOnUIUnlock()
+        .catch(error => {
+          console.error(
+            'tryResetRouteAfterDeferredStartupUnlock::error',
+            error,
+          );
+        })
+        .finally(() => {
+          markStartupUnlockRouteResetHandled();
+        });
+    });
+  }, [
+    isAppUnlocked,
+    markStartupUnlockRouteResetHandled,
+    startupUnlockRouteResetPending,
+  ]);
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
@@ -283,8 +316,13 @@ export default function AppNavigation() {
         screen_class: readyRootName,
       });
       matomoLogScreenView({ name: readyRootName });
+      tryResetRouteAfterDeferredStartupUnlock();
     });
-  }, []);
+  }, [tryResetRouteAfterDeferredStartupUnlock]);
+
+  React.useEffect(() => {
+    tryResetRouteAfterDeferredStartupUnlock();
+  }, [tryResetRouteAfterDeferredStartupUnlock]);
 
   useDetermineExitAppOnPressBack();
 
@@ -296,10 +334,6 @@ export default function AppNavigation() {
     colorScheme,
     navigationRef.current,
   );
-
-  // const { couldRender } = useAppCouldRender();
-
-  // if (!couldRender) return null;
 
   return (
     <AutoLockView.ForAppNav

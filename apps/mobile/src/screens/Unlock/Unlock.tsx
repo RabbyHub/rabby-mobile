@@ -239,8 +239,17 @@ export default function UnlockScreen() {
   );
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
+  const syncedInitialBiometricsViewRef = React.useRef(isBiometricsEnabled);
   const couldSwitchingAuthentication = isBiometricsEnabled;
   const usingPassword = !usingBiometrics || !isBiometricsEnabled;
+
+  React.useEffect(() => {
+    if (syncedInitialBiometricsViewRef.current) return;
+    if (!isBiometricsEnabled) return;
+
+    syncedInitialBiometricsViewRef.current = true;
+    setUsingBiometrics(true);
+  }, [isBiometricsEnabled]);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
@@ -346,8 +355,9 @@ export default function UnlockScreen() {
   useFocusEffect(
     useCallback(() => {
       if (params?.disableAutoTriggerUnlock) return;
+      if (!isBiometricsEnabled) return;
       UnlockUIManager.triggerAutoUnlock();
-    }, [params?.disableAutoTriggerUnlock]),
+    }, [isBiometricsEnabled, params?.disableAutoTriggerUnlock]),
   );
 
   const { registerPreventEffect } = usePreventGoBack({
