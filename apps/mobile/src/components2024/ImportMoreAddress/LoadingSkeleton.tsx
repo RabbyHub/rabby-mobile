@@ -17,7 +17,6 @@ export const LoadingSkeleton = () => {
           <Skeleton
             animation="wave"
             LinearGradientComponent={LoadingLinear}
-            boneColor={colors2024['neutral-bg-2']}
             width={168}
             height={34}
             style={styles.skeletonBar}

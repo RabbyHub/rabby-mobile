@@ -19,7 +19,7 @@ import {
   apiTrezor,
 } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate, replaceToFirst } from '@/utils/navigation';
+import { replace } from '@/utils/navigation';
 
 import { toast } from '@/components2024/Toast';
 import { settingAtom } from '@/components/HDSetting/MainContainer';
@@ -40,7 +40,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Button } from '../Button';
 import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import i18next from 'i18next';
-import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
@@ -416,13 +415,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       for (const acc of selectedAccounts) {
         await apiHD?.importAddress(acc.index - 1);
       }
-      await onAddressImported(
-        selectedAccounts.map(item => ({
-          address: item.address,
-          type: hdType,
-          brandName: hdBrandName,
-        })),
-      );
 
       resetNavigationOnTopOfHome(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
@@ -471,7 +463,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         ? {
             onSwitchDevice: () => {
               onCancel();
-              navigate(RootNames.StackAddress, {
+              replace(RootNames.StackAddress, {
                 screen: RootNames.ImportHardwareAddress,
               });
             },
