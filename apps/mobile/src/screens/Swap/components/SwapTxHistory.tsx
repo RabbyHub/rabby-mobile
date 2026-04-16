@@ -21,13 +21,15 @@ import IconEmpty from '@/assets2024/images/lending/empty.png';
 import IconEmptyDark from '@/assets2024/images/lending/empty-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { transactionHistoryService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text } from '@/components/Typography';
+import { notificationOpenapi } from '@/core/notifications/openapi';
+import { txResultToToHistoryDisplayItem } from '@/utils/transaction';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -102,7 +104,7 @@ const HistoryList = ({
   onGotoDetail,
   recentShowTime,
 }: {
-  onGotoDetail: (txId: string) => void;
+  onGotoDetail: (txId: string, chain: string) => void;
   recentShowTime: number;
 }) => {
   const { txList, loading, loadMore, noMore } = useSwapHistory();
@@ -114,7 +116,7 @@ const HistoryList = ({
 
   const renderItem = useCallback(
     ({ item }) => (
-      <TouchableOpacity onPress={() => onGotoDetail(item.tx_id)}>
+      <TouchableOpacity onPress={() => onGotoDetail(item.tx_id, item.chain)}>
         <SwapHistoryItem data={item} recentShowTime={recentShowTime} />
       </TouchableOpacity>
     ),
@@ -255,7 +257,7 @@ export const SwapTxHistory = ({
   }, [setVisible]);
 
   const goToDetail = useCallback(
-    async (txId: string) => {
+    async (txId: string, chain: string) => {
       const historyItem = await HistoryItemEntity.findOne({
         where: { txHash: txId },
       });
@@ -275,25 +277,74 @@ export const SwapTxHistory = ({
             treatSmallAssetsAsScam: true,
           },
         });
-      } else {
-        const { pendings, completeds } = transactionHistoryService.getList(
-          currentAccount?.address ?? '',
-        );
-        const arr = pendings.concat(completeds);
-        const itemData = arr.find(i => i.txs[0].hash === txId);
+        return;
+      }
 
-        if (itemData) {
-          onDismiss();
-          navigateDeprecated(RootNames.StackTransaction, {
-            screen: RootNames.HistoryLocalDetail,
-            params: {
-              isForMultipleAddress,
-              data: itemData,
-              type: HistoryItemCateType.Swap,
-              title: t('page.swap.swapped'),
-            },
-          });
-        }
+      const { pendings, completeds } = transactionHistoryService.getList(
+        currentAccount?.address ?? '',
+      );
+      const arr = pendings.concat(completeds);
+      const itemData = arr.find(i => i.txs[0]?.hash === txId);
+
+      if (itemData) {
+        onDismiss();
+        navigateDeprecated(RootNames.StackTransaction, {
+          screen: RootNames.HistoryLocalDetail,
+          params: {
+            isForMultipleAddress,
+            data: itemData,
+            type: HistoryItemCateType.Swap,
+            title: t('page.swap.swapped'),
+          },
+        });
+        return;
+      }
+
+      // Fallback: fetch single tx detail from API for transactions older than
+      // 90 days that are not persisted locally
+      console.debug(
+        '[SwapTxHistory] goToDetail: tx not found locally, fetching from API',
+        txId,
+        chain,
+      );
+      const txDetail = await notificationOpenapi
+        .getUserTxDetail({
+          chainId: chain,
+          txId,
+          userAddr: currentAccount?.address ?? '',
+        })
+        .catch(err => {
+          console.error(
+            '[SwapTxHistory] goToDetail: getUserTxDetail failed',
+            err,
+          );
+          return null;
+        });
+
+      if (!txDetail) {
+        return;
+      }
+
+      const pinedQueue = preferenceService.getPinToken();
+      const customTxItemsMap = transactionHistoryService.getCustomTxItemMap();
+      const historyDisplayItem = txResultToToHistoryDisplayItem({
+        address: currentAccount?.address || '',
+        res: txDetail,
+        pinedQueue,
+        customTxItemsMap,
+      })[0];
+
+      if (historyDisplayItem) {
+        onDismiss();
+        navigateDeprecated(RootNames.StackTransaction, {
+          screen: RootNames.HistoryDetail,
+          params: {
+            isForMultipleAddress,
+            data: historyDisplayItem,
+            title: t('page.swap.swapped'),
+            treatSmallAssetsAsScam: true,
+          },
+        });
       }
     },
     [onDismiss, t, isForMultipleAddress, currentAccount?.address],
