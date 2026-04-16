@@ -61,6 +61,16 @@ ios_fast_build_enabled_value() {
   fi
 }
 
+initialize_ios_sentry_auto_upload_default() {
+  if [ -n "${SENTRY_DISABLE_AUTO_UPLOAD+x}" ]; then
+    return 0
+  fi
+
+  if ios_fast_build_enabled; then
+    export SENTRY_DISABLE_AUTO_UPLOAD=false
+  fi
+}
+
 project_ruby_version() {
   if [ -f "$project_dir/.ruby-version" ]; then
     tr -d '\r\n' <"$project_dir/.ruby-version"

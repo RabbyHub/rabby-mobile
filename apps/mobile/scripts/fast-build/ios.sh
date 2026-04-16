@@ -61,6 +61,7 @@ build_official_ios_payload() {
   local_entry_file="index.js"
   local_bundle_name="main"
   local_use_hermes="${USE_HERMES:-true}"
+  initialize_ios_sentry_auto_upload_default
   local_sentry_disable_auto_upload="${SENTRY_DISABLE_AUTO_UPLOAD:-true}"
 
   if [ ! -x "$local_react_native_path/scripts/react-native-xcode.sh" ]; then
