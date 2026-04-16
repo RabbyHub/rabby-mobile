@@ -27,6 +27,7 @@ const isAndroid = Platform.OS === 'android';
 type MarketTabKey = 'watchlist' | string;
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
+const TAB_BAR_HEIGHT = 28;
 
 const marketTabAtom = atomByMMKV<MarketTabKey>(
   '@market.activeTab',
@@ -181,6 +182,7 @@ export default function MarketScreen() {
         index={index}
         indexDecimal={indexDecimal}
         text=""
+        style={styles.tabLabel}
         containerStyle={styles.watchlistLabelContainer}
         icon={
           <RcIconFavorite
@@ -195,7 +197,7 @@ export default function MarketScreen() {
         }
       />
     ),
-    [colors2024, styles.watchlistLabelContainer],
+    [colors2024, styles.watchlistLabelContainer, styles.tabLabel],
   );
 
   return (
@@ -210,7 +212,7 @@ export default function MarketScreen() {
       ]}>
       <Tabs.Container
         renderTabBar={renderTabBar}
-        tabBarHeight={36}
+        tabBarHeight={TAB_BAR_HEIGHT}
         lazy
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
@@ -229,6 +231,7 @@ export default function MarketScreen() {
             const renderCategoryLabel = ({ index, indexDecimal }) => (
               <CustomLabel
                 index={index}
+                style={styles.tabLabel}
                 containerStyle={styles.categoryLabelContainer}
                 indexDecimal={indexDecimal}
                 text={category.name}
@@ -280,7 +283,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderBottomColor: colors2024['neutral-bg-5'],
     },
     tabBar: {
-      height: 36,
+      height: TAB_BAR_HEIGHT,
       width: 'auto',
       flexShrink: 0,
       flex: 0,
@@ -296,7 +299,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       display: 'flex',
       paddingLeft: 20,
       position: 'relative',
-      height: 36,
+      height: TAB_BAR_HEIGHT,
       backgroundColor: bgColor,
       overflow: 'hidden',
     },
@@ -309,14 +312,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flex: 1,
     },
     categoryLabelContainer: {
-      height: 36,
+      height: TAB_BAR_HEIGHT,
       justifyContent: 'center',
       alignItems: 'center',
     },
     watchlistLabelContainer: {
-      height: 36,
+      height: TAB_BAR_HEIGHT,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    tabLabel: {
+      marginTop: 0,
     },
   };
 });
