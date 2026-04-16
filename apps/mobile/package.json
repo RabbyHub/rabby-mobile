@@ -232,6 +232,7 @@
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
     "@noble/hashes": "^1.4.0",
+    "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^",
     "@react-native-community/cli": "20.0.0",
     "@react-native-community/cli-platform-android": "20.0.0",
     "@react-native-community/cli-platform-ios": "20.0.0",

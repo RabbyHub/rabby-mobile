@@ -11,11 +11,12 @@ const DEFAULT_CONFIG = Object.freeze({
     env: {},
   },
   android: {
+    sharedFixtureFile: 'flows.fixture.local.json',
     onboardingImportPrivateKey: {
       packageName: 'com.debank.rabbymobile.debug',
       appPassword: '11111111',
-      privateKeysEnvName: 'RABBY_ANDROID_TEST_PRIVATE_KEYS',
-      privateKeyEnvName: 'RABBY_ANDROID_TEST_PRIVATE_KEY',
+      privateKeysEnvName: 'RABBY_MAESTRO_TEST_PRIVATE_KEYS',
+      privateKeyEnvName: 'RABBY_MAESTRO_TEST_PRIVATE_KEY',
       flowFile: 'flows/android-onboarding-import-private-key.yaml',
       launchActivity: null,
       maestroEnv: {},
@@ -40,6 +41,24 @@ const DEFAULT_CONFIG = Object.freeze({
     },
     components2024ShowcaseSmoke: {
       flowFile: 'flows/android-components2024-showcase-smoke.yaml',
+      maestroEnv: {},
+    },
+    sendSmoke: {
+      flowFile: 'flows/android-send-smoke.yaml',
+      bootstrapFlowFile: 'flows/android-home-ready-existing-user.yaml',
+      fixtureFile: null,
+      maestroEnv: {},
+    },
+  },
+  ios: {
+    onboardingImportPrivateKey: {
+      bundleId: 'com.debank.rabby-mobile-debug',
+      appPassword: '11111111',
+      privateKeysEnvName: 'RABBY_MAESTRO_TEST_PRIVATE_KEYS',
+      privateKeyEnvName: 'RABBY_MAESTRO_TEST_PRIVATE_KEY',
+      flowFile: 'flows/ios-onboarding-import-private-key.yaml',
+      resetKeychain: true,
+      clearAppData: true,
       maestroEnv: {},
     },
   },

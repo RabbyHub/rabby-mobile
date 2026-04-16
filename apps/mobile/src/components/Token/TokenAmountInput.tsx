@@ -70,6 +70,18 @@ interface TokenAmountInputProps {
   currentAccount?: KeyringAccountWithAlias | null;
   disableItemCheck?: ITokenCheck;
   inSufficient?: boolean;
+  amountInputProps?: Pick<
+    React.ComponentProps<typeof NumericInput>,
+    'testID' | 'accessibilityLabel'
+  >;
+  maxButtonProps?: Pick<
+    React.ComponentProps<typeof TouchableOpacity>,
+    'testID' | 'accessibilityLabel'
+  >;
+  tokenSelectProps?: Pick<
+    React.ComponentProps<typeof TokenSelect>,
+    'testID' | 'accessibilityLabel'
+  >;
 }
 
 /**
@@ -91,6 +103,9 @@ export const TokenAmountInput = ({
   disableItemCheck,
   currentAccount,
   inSufficient,
+  amountInputProps,
+  maxButtonProps,
+  tokenSelectProps,
   ref,
 }: React.PropsWithChildren<RNViewProps & TokenAmountInputProps> & {
   ref?: Ref<TextInput>;
@@ -165,8 +180,9 @@ export const TokenAmountInput = ({
             placeholder="0"
             placeholderTextColor={colors2024['neutral-info']}
             inputMode="decimal"
-            keyboardType="numeric"
+            keyboardType="decimal-pad"
             numberOfLines={1}
+            {...amountInputProps}
           />
         )}
         <View style={styles.inlinePrizeContainer}>
@@ -186,7 +202,8 @@ export const TokenAmountInput = ({
             <TouchableOpacity
               disabled={isEstimatingGas}
               style={styles.maxButtonWrapper}
-              onPress={handleClickMaxButton}>
+              onPress={handleClickMaxButton}
+              {...maxButtonProps}>
               <Text style={styles.maxButtonText}>MAX</Text>
             </TouchableOpacity>
           </>
@@ -203,6 +220,7 @@ export const TokenAmountInput = ({
           placeholder={placeholder}
           supportChains={[]}
           style={{ borderRadius: 100 }}
+          {...tokenSelectProps}
         />
         {/* <View style={styles.balanceWrapper}>
               <RcIconWalletCC

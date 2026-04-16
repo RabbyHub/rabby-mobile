@@ -168,7 +168,7 @@ export const ImportWatchAddressScreen2024 = () => {
       style={styles.screen}
       footerBottomOffset={56}
       footerContainerStyle={styles.footerContainer}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <View style={styles.topContent}>
             <WalletIcon

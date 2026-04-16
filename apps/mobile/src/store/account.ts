@@ -28,6 +28,8 @@ import { checkAddedAccountsGasAccountIfNeeded } from '@/utils/autoLoginGasAccoun
 
 export interface AccountStoreState {
   accounts: KeyringAccountWithAlias[];
+  hasFetchedAccounts: boolean;
+  isFetchingAccounts: boolean;
   pinnedAddresses: IPinAddress[];
   currentAccount: KeyringAccountWithAlias | null;
   newlyAddedAccounts: Record<
@@ -43,14 +45,37 @@ class AccountStore extends BaseStore<AccountStoreState> {
 
   private readonly fetchAccountsInParallel =
     this.createAvoidParallelAsyncMethod(async () => {
-      const accounts = await fetchAllAccounts();
-      this.setAccounts(accounts);
-      return accounts;
+      this.setState(prev => {
+        if (prev.isFetchingAccounts) {
+          return prev;
+        }
+        return {
+          isFetchingAccounts: true,
+        };
+      });
+
+      try {
+        const accounts = await fetchAllAccounts();
+        this.setState({
+          accounts,
+          hasFetchedAccounts: true,
+          isFetchingAccounts: false,
+        });
+        return accounts;
+      } catch (error) {
+        this.setState({
+          hasFetchedAccounts: true,
+          isFetchingAccounts: false,
+        });
+        throw error;
+      }
     });
 
   constructor() {
     super({
       accounts: [],
+      hasFetchedAccounts: false,
+      isFetchingAccounts: false,
       pinnedAddresses: preferenceService.getPinAddresses(),
       currentAccount: null,
       newlyAddedAccounts: {},

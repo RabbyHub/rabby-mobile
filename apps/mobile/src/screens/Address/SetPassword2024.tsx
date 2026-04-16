@@ -260,6 +260,7 @@ function MainListBlocks() {
 
   return (
     <TouchableWithoutFeedback
+      accessible={false}
       onPress={() => {
         Keyboard.dismiss();
         onTouchInputAway();

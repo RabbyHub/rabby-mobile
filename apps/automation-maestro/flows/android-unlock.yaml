@@ -1,4 +1,4 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
+appId: ${RABBY_MAESTRO_APP_ID}
 name: Android unlock
 tags:
   - android
@@ -11,13 +11,7 @@ env:
   UNLOCK_SWITCH_AUTH_TYPE_PASSWORD_LABEL: e2e.unlock.switch-auth-type.password
   HOME_ADD_ADDRESS_BUTTON_ID: e2e.home.add-address.button
 ---
-- runFlow:
-    when:
-      visible:
-        text: "Open debugger to view warnings\\."
-    commands:
-      - tapOn:
-          point: "91%,91%"
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
 
 - runFlow:
     when:
@@ -40,9 +34,10 @@ env:
 
 - eraseText: 100
 
-- inputText: ${RABBY_ANDROID_APP_PASSWORD}
+- inputText: ${RABBY_MAESTRO_APP_PASSWORD}
 
-- hideKeyboard
+- hideKeyboard:
+    optional: true
 
 - assertVisible:
     id: ${UNLOCK_SUBMIT_ID}

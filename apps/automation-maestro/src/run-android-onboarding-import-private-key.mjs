@@ -15,6 +15,8 @@ import {
   resolveAdbBinary,
   resolveArtifactRootDir,
   resolveLaunchActivity,
+  resolveMaestroAppId,
+  resolveMaestroAppPassword,
   resolveMaestroBinary,
 } from './shared/android.mjs';
 import { log, run } from './shared/process.mjs';
@@ -31,13 +33,20 @@ async function main() {
   const scenarioConfig = config.android.onboardingImportPrivateKey;
   const maestroBin = resolveMaestroBinary(config);
 
-  const packageName =
-    process.env.RABBY_ANDROID_E2E_PACKAGE ||
-    process.env.RABBY_ANDROID_DEBUG_PACKAGE || scenarioConfig.packageName;
-  const appPassword =
-    process.env.RABBY_ANDROID_APP_PASSWORD ||
-    process.env.RABBY_ANDROID_DEBUG_PASSWORD ||
-    scenarioConfig.appPassword;
+  const packageName = resolveMaestroAppId({
+    fallback: scenarioConfig.packageName,
+    platformEnvNames: [
+      'RABBY_ANDROID_E2E_PACKAGE',
+      'RABBY_ANDROID_DEBUG_PACKAGE',
+    ],
+  });
+  const appPassword = resolveMaestroAppPassword({
+    fallback: scenarioConfig.appPassword,
+    platformEnvNames: [
+      'RABBY_ANDROID_APP_PASSWORD',
+      'RABBY_ANDROID_DEBUG_PASSWORD',
+    ],
+  });
   const privateKeysEnvName = scenarioConfig.privateKeysEnvName;
   const privateKeyEnvName = scenarioConfig.privateKeyEnvName;
   const { privateKeys, sourceEnvName } = resolvePrivateKeys({

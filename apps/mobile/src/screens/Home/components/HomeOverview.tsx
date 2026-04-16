@@ -61,7 +61,7 @@ import { currencyService } from '@/core/services';
 import { useMyAccounts } from '@/hooks/account';
 import { storeApiAccountsSwitcher } from '@/hooks/accountsSwitcher';
 import { apisHomeTabIndex, useRabbyAppNavigation } from '@/hooks/navigation';
-import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
+import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { navigateDeprecated } from '@/utils/navigation';
 import { useTranslation } from 'react-i18next';
@@ -83,8 +83,8 @@ import { syncTop10History } from '@/databases/hooks/history';
 import { useSubscribePosition } from '@/hooks/perps/usePerpsStore';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { refreshDayCurve } from '@/hooks/useMultiCurve';
-import { refresh24hAssets } from '@/hooks/useScene24hBalance';
+import { refreshDayCurve } from '@/store/curve24h';
+import { scene24hBalanceStore } from '@/store/balance24h';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { deleteLongTime24hBalanceCache } from '@/utils/24hBalanceCache';
 import useTokenList from '@/store/tokens';
@@ -133,14 +133,16 @@ import {
   WorkletFunction,
 } from 'react-native-reanimated/lib/typescript/commonTypes';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import {
+  HOME_TOP_HEADER_SIZES,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+} from '@/constant/home';
 import { useInnerDappSelection } from '@/hooks/useInnerDappSelection';
 import { NewTag } from './NewTag';
 import { useHomeFeatureNewTag } from '../hooks/useHomeFeatureNewTag';
 import { useMemoizedFn } from 'ahooks';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { sleep } from '@/utils/async';
-import balanceStore from '@/store/balance';
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { isEqual } from 'lodash';
 import {
@@ -149,7 +151,6 @@ import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
-  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
   useIOSPulldownRefreshStates,
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
@@ -260,15 +261,13 @@ const usePulldownRefreshGesture = <T extends ScrollView | RNGHScrollView>({
   });
 
   useEffect(() => {
-    const remove = balanceStore.subscribe(async (cur, prev) => {
-      if (isEqual(cur.isLoadingByAddress, prev.isLoadingByAddress)) {
+    const remove = addressBalanceStore.subscribe(async (cur, prev) => {
+      if (cur.metaMap === prev.metaMap || isEqual(cur.metaMap, prev.metaMap)) {
         return;
       }
       const { top10Addresses } = await getTop10MyAccounts();
-      const isTop10BalanceLoading = cur.getIsTop10BalanceLoading(
-        top10Addresses,
-        cur.isLoadingByAddress,
-      ).isTop10BalanceLoading;
+      const isTop10BalanceLoading =
+        addressBalanceStore.getAddressesFlowState(top10Addresses).isAnyLoading;
 
       if (!isTop10BalanceLoading) {
         runOnUI(setPulldownRefreshStage)({
@@ -723,7 +722,7 @@ export const HomeOverview = React.memo(() => {
 
   useFetchCexInfo();
 
-  const { triggerUpdate } = useAccountsBalanceTrigger();
+  const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
   const isFirstTriggerRef = useRef(true);
 
   useEffect(() => {
@@ -764,7 +763,10 @@ export const HomeOverview = React.memo(() => {
       }
       triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
         // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
-        refresh24hAssets({ balanceAccounts, reason: 'manual_refresh' });
+        scene24hBalanceStore.refresh24hAssets({
+          balanceAccounts,
+          reason: 'manual_refresh',
+        });
         refreshDayCurve({ balanceAccounts, reason: 'manual_refresh' });
       });
       triggerUpdateAlert();
@@ -784,7 +786,7 @@ export const HomeOverview = React.memo(() => {
     return Promise.all([
       // force update balance from server api
       triggerUpdate(true).then(balanceAccounts => {
-        refresh24hAssets({
+        scene24hBalanceStore.refresh24hAssets({
           force: true,
           balanceAccounts,
           reason: 'manual_refresh',

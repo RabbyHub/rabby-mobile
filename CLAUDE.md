@@ -11,6 +11,10 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 - **React Native**: 0.81.6
 - **TypeScript**: 5.7.3
 
+## Local Playbooks
+
+- For `apps/mobile` store, hooks, or Home-path performance work, read `apps/mobile/skills/perf-hooks.md` before changing selector boundaries or exposing large store state to React consumers. It captures the local rules around scene-picked minimal state, scene-level derived data, and limiting render fan-out.
+
 ## Common Commands
 
 ### Root Monorepo Commands
