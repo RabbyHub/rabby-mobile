@@ -91,7 +91,7 @@
     "@rabby-wallet/rabby-logger": "0.2.1-alpha",
     "@rabby-wallet/rabby-security-engine": "2.0.12",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
-    "@rabby-wallet/rabby-swap": "0.0.74",
+    "@rabby-wallet/rabby-swap": "0.0.75-beta.1",
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
