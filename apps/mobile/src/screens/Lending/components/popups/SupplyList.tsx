@@ -36,7 +36,7 @@ import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Text, TextInput } from '@/components/Typography';
-//import { colord } from 'colord';
+import { colord } from 'colord';
 
 const FOOT_HEIGHT = 86;
 
@@ -289,9 +289,9 @@ export const LendingSupplyListContent: React.FC<
         <TouchableOpacity
           style={[styles.item, isWrapperToken && styles.wrapperToken]}
           onPress={() => handlePressItem(data)}>
-          {/*{isWrapperToken && !search && (
+          {isWrapperToken && !search && (
             <View style={styles.wrapperTokenArrow} />
-          )}*/}
+          )}
           <View style={styles.left}>
             <TokenIcon
               tokenSymbol={data.reserve.symbol}
@@ -325,7 +325,7 @@ export const LendingSupplyListContent: React.FC<
         </TouchableOpacity>
       );
     },
-    [chainEnum, foldHideList, handlePressItem, styles, t],
+    [chainEnum, foldHideList, handlePressItem, search, styles, t],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -407,7 +407,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   const cardBgColor = isLight
     ? colors2024['neutral-bg-1']
     : colors2024['neutral-bg-2'];
-  //const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
+  const wrapperTokenCardBgColor = colord(colors2024['neutral-line'])
+    .alpha(0.3)
+    .toRgbString();
 
   return {
     container: {
@@ -445,19 +447,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       overflow: 'visible',
     },
     wrapperToken: {
-      //backgroundColor: wrapperTokenCardBgColor,
-      //borderWidth: 1,
-      //borderColor: cardBgColor,
+      backgroundColor: wrapperTokenCardBgColor,
+      borderWidth: 1,
+      paddingHorizontal: 12,
+      borderColor: cardBgColor,
     },
     wrapperTokenArrow: {
       position: 'absolute',
       top: -14,
-      left: 30,
+      left: 20,
       zIndex: 1,
       ...makeTriangleStyle({
         dir: 'up',
         size: 7,
-        color: cardBgColor,
+        color: wrapperTokenCardBgColor,
         backgroundColor: 'transparent',
       }),
     },

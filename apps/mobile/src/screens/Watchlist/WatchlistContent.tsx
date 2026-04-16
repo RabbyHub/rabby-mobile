@@ -401,7 +401,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flex: 1,
   },
   scrollViewContent: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     flexGrow: 1,
   },
   stickyHeader: {

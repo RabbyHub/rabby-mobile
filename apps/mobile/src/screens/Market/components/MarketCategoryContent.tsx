@@ -359,7 +359,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     height: isAndroid ? 46 : 44,
   },
   scrollView: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     flexGrow: 1,
   },
   stickyHeader: {
