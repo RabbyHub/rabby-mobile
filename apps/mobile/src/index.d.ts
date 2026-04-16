@@ -39,12 +39,18 @@ type RNViewProps = {
   accessibilityLabel?: import('react').ComponentProps<
     typeof import('react-native').View
   >['accessibilityLabel'];
+  accessible?: import('react').ComponentProps<
+    typeof import('react-native').View
+  >['accessible'];
 };
 
 type RabbyDevToolsBridgeMethodName =
   | 'ping'
   | 'getHomePortfolioSnapshot'
-  | 'getSingleHomeSnapshot';
+  | 'getSingleHomeSnapshot'
+  | 'openSendScreen'
+  | 'getSendScreenSnapshot'
+  | 'setSendAmount';
 
 interface RabbyDevToolsBridge {
   listMethods(): RabbyDevToolsBridgeMethodName[];
@@ -53,6 +59,9 @@ interface RabbyDevToolsBridge {
   ping(): unknown;
   getHomePortfolioSnapshot(): unknown;
   getSingleHomeSnapshot(): unknown;
+  openSendScreen(input: unknown): unknown;
+  getSendScreenSnapshot(): unknown;
+  setSendAmount(amount: unknown): unknown;
 }
 
 declare var __RABBY_DEVTOOLS_BRIDGE__: RabbyDevToolsBridge | undefined;

@@ -1,4 +1,4 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
+appId: ${RABBY_MAESTRO_APP_ID}
 name: Android onboarding import private key to single home
 tags:
   - android
@@ -23,13 +23,7 @@ env:
   SINGLE_HOME_CURVE_TOGGLE_ID: e2e.home.single-address.curve.toggle
   SINGLE_HOME_BACK_ID: e2e.home.single-address.back
 ---
-- runFlow:
-    when:
-      visible:
-        text: "Open debugger to view warnings\\."
-    commands:
-      - tapOn:
-          point: "91%,91%"
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
 
 - extendedWaitUntil:
     visible:
@@ -62,19 +56,13 @@ env:
 
 - eraseText: 100
 
-- setClipboard: ${RABBY_ANDROID_TEST_PRIVATE_KEY}
+- setClipboard: ${RABBY_MAESTRO_TEST_PRIVATE_KEY}
 
 - pasteText
 
 - hideKeyboard
 
-- runFlow:
-    when:
-      visible:
-        text: "Open debugger to view warnings\\."
-    commands:
-      - tapOn:
-          point: "91%,91%"
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
 
 - assertVisible:
     id: ${PRIVATE_KEY_SUBMIT_ID}
@@ -95,7 +83,7 @@ env:
 
 - eraseText: 100
 
-- inputText: ${RABBY_ANDROID_APP_PASSWORD}
+- inputText: ${RABBY_MAESTRO_APP_PASSWORD}
 
 - hideKeyboard
 
@@ -112,9 +100,12 @@ env:
 
 - eraseText: 100
 
-- inputText: ${RABBY_ANDROID_APP_PASSWORD}
+- inputText: ${RABBY_MAESTRO_APP_PASSWORD}
 
 - hideKeyboard
+
+- tapOn:
+    point: "50%,24%"
 
 - runFlow:
     when:
@@ -124,13 +115,7 @@ env:
       - tapOn:
           id: ${SET_PASSWORD_BIOMETRICS_ID}
 
-- runFlow:
-    when:
-      visible:
-        text: "Open debugger to view warnings\\."
-    commands:
-      - tapOn:
-          point: "91%,91%"
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
 
 - assertVisible:
     id: ${SET_PASSWORD_SUBMIT_ID}

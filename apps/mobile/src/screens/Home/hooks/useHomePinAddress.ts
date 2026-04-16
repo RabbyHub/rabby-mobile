@@ -3,7 +3,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAccounts, usePinAddresses } from '@/hooks/account';
 import { sortAccountsByBalance } from '@/utils/account';
-import { BalanceAccountType } from '@/hooks/useAccountsBalance';
+import { BalanceAccountType } from '@/store/balance';
 import { ellipsisAddress } from '@/utils/address';
 
 export default function useHomePinAddress(

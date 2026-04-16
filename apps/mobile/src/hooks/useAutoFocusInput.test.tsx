@@ -11,6 +11,11 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockUseNavigation(),
 }));
 
+const flushPendingTimers = async () => {
+  jest.runOnlyPendingTimers();
+  await Promise.resolve();
+};
+
 describe('useAutoFocusInput', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -65,7 +70,7 @@ describe('useAutoFocusInput', () => {
     });
 
     await act(async () => {
-      await jest.runAllTimersAsync();
+      await flushPendingTimers();
     });
 
     expect(focus).toHaveBeenCalledTimes(1);

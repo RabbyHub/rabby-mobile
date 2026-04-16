@@ -128,6 +128,34 @@ export function launchActivity(adbBinary, launchActivity) {
   });
 }
 
+export function resolveMaestroAppId({
+  fallback,
+  platformEnvNames = [],
+} = {}) {
+  for (const envName of ['RABBY_MAESTRO_APP_ID', ...platformEnvNames]) {
+    const value = process.env[envName]?.trim();
+    if (value) {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
+export function resolveMaestroAppPassword({
+  fallback,
+  platformEnvNames = [],
+} = {}) {
+  for (const envName of ['RABBY_MAESTRO_APP_PASSWORD', ...platformEnvNames]) {
+    const value = process.env[envName]?.trim();
+    if (value) {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
 export function buildMaestroArgs({
   maestroBin,
   flowFile,
@@ -149,6 +177,10 @@ export function buildMaestroArgs({
     path.join(outputDir, `${reportBasename}-debug-output`),
     '--test-output-dir',
     path.join(outputDir, `${reportBasename}-test-output`),
+    '-e',
+    `RABBY_MAESTRO_APP_ID=${packageName}`,
+    '-e',
+    `RABBY_MAESTRO_APP_PASSWORD=${appPassword}`,
     '-e',
     `RABBY_ANDROID_E2E_PACKAGE=${packageName}`,
     '-e',

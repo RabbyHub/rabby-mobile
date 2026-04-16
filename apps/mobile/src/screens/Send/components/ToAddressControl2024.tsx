@@ -41,6 +41,8 @@ import { useSendTokenInternalContext } from '../hooks/useSendToken';
 import { RcIconTipRightCC } from '../icons';
 import { makeAccountObject } from '@/utils/account';
 import { IExtractFromPromise } from '@/utils/type';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 
 export const ToAccountEntry = ({
@@ -439,7 +441,9 @@ export default function ToAddressControl2024({
   }
 
   return (
-    <View style={[styles.control, style]}>
+    <View
+      style={[styles.control, style]}
+      {...makeTestIDProps(E2E_ID.send.toSection)}>
       <View style={styles.titleContainer}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.To')}</Text>
         {!!toAddressPositiveTips?.hasPositiveTips && (

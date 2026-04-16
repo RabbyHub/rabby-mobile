@@ -13,6 +13,8 @@ import {
   resolveAdbBinary,
   resolveArtifactRootDir,
   resolveLaunchActivity,
+  resolveMaestroAppId,
+  resolveMaestroAppPassword,
   resolveMaestroBinary,
   runMaestroFlow,
   runAdb,
@@ -173,14 +175,20 @@ async function main() {
   const onboardingConfig = config.android.onboardingImportPrivateKey;
   const maestroBin = resolveMaestroBinary(config);
 
-  const packageName =
-    process.env.RABBY_ANDROID_E2E_PACKAGE ||
-    process.env.RABBY_ANDROID_DEBUG_PACKAGE ||
-    onboardingConfig.packageName;
-  const appPassword =
-    process.env.RABBY_ANDROID_APP_PASSWORD ||
-    process.env.RABBY_ANDROID_DEBUG_PASSWORD ||
-    onboardingConfig.appPassword;
+  const packageName = resolveMaestroAppId({
+    fallback: onboardingConfig.packageName,
+    platformEnvNames: [
+      'RABBY_ANDROID_E2E_PACKAGE',
+      'RABBY_ANDROID_DEBUG_PACKAGE',
+    ],
+  });
+  const appPassword = resolveMaestroAppPassword({
+    fallback: onboardingConfig.appPassword,
+    platformEnvNames: [
+      'RABBY_ANDROID_APP_PASSWORD',
+      'RABBY_ANDROID_DEBUG_PASSWORD',
+    ],
+  });
 
   const flowFile = resolveMaestroFile(scenarioConfig.flowFile);
   if (!fs.existsSync(flowFile)) {

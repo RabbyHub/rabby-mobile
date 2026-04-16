@@ -13,3 +13,5 @@ maestro.config.local.mjs
 maestro.config.local.js
 maestro.config.local.cjs
 maestro.config.local.json
+flows.fixture.local.json
+send.fixture.local.json

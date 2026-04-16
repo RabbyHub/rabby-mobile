@@ -31,6 +31,8 @@ import { useSignatureStore } from '@/components2024/MiniSignV2';
 import { BottomRiskTip } from '@/components/SendLike/BottomRiskTip';
 import { resolveBgColorByType } from '@/components2024/ScreenContainer/LinearGradientContainer';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 import { isGasAccountDepositFlowActive } from '@/screens/GasAccount/utils/depositFlowRuntime';
 
@@ -262,6 +264,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
           account={account}
           showHardWalletProcess
           showRiskTips={showRiskTipsForMiniSign && canSubmit}
+          {...makeTestIDProps(E2E_ID.send.confirmButton)}
         />
       ) : (
         <Button
@@ -270,6 +273,7 @@ export default function BottomArea({ account }: { account: Account | null }) {
           title={'Send'}
           loading={isSubmitLoading}
           onPress={() => handleSubmit()}
+          {...makeTestIDProps(E2E_ID.send.confirmButton)}
         />
       )}
 

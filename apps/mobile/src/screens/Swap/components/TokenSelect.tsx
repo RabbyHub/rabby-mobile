@@ -93,6 +93,8 @@ const TokenSelect = ({
   searchPlaceholder,
   disableItemCheck,
   style,
+  testID,
+  accessibilityLabel,
   ref,
 }: TokenSelectProps & RNViewProps & { ref?: Ref<TokenSelectInst> }) => {
   const [_queryConds, setQueryConds] = useState<QueryConditions>({
@@ -402,7 +404,9 @@ const TokenSelect = ({
       <TouchableOpacity
         onPress={handleSelectToken}
         onLongPress={handleLongPressToken}
-        ref={tokenPressRef}>
+        ref={tokenPressRef}
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}>
         <View
           style={[
             type === 'bridgeFrom' ? styles.bridgeWrapper : styles.wrapper,

@@ -1,10 +1,14 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatSmallCurrencyValue, type CurvePoint } from '@/hooks/useCurve';
+import {
+  formatSmallCurrencyValue,
+  type CurvePoint,
+  warmupCurveForAddress,
+} from '@/hooks/useCurve';
 import { E2E_ID } from '@/constant/e2e';
 import Animated, {
   Easing,
@@ -87,7 +91,52 @@ export const HomeTopChart = memo(function Chart({
     isLoadingChartData,
     balanceLoadingWithoutLocal,
     selectData: data,
+    balance,
+    evmBalance,
   } = useSingleHomeHomeTopChart();
+  const initialCurveWarmupRef = useRef<{
+    address: string | null;
+    triggered: boolean;
+  }>({
+    address: null,
+    triggered: false,
+  });
+
+  useEffect(() => {
+    const lowerAddress = currentAddress?.toLowerCase() || null;
+
+    if (!lowerAddress) {
+      initialCurveWarmupRef.current = {
+        address: null,
+        triggered: false,
+      };
+      return;
+    }
+
+    if (initialCurveWarmupRef.current.address !== lowerAddress) {
+      initialCurveWarmupRef.current = {
+        address: lowerAddress,
+        triggered: false,
+      };
+    }
+
+    if (initialCurveWarmupRef.current.triggered) {
+      return;
+    }
+
+    if (typeof balance !== 'number' || typeof evmBalance !== 'number') {
+      return;
+    }
+
+    initialCurveWarmupRef.current = {
+      address: lowerAddress,
+      triggered: true,
+    };
+    warmupCurveForAddress(lowerAddress, {
+      realtimeNetWorth: evmBalance,
+      staticBalance: balance,
+    });
+  }, [balance, currentAddress, evmBalance]);
 
   const heightAnim = useSharedValue(0);
   const opacityAnim = useSharedValue(0);
@@ -190,17 +239,15 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
 
   const {
     balanceLoadingWithoutLocal: loading,
+    changeLoading,
     selectData,
     balance,
-    isLoadingChartData,
   } = useSingleHomeHomeTopChart();
 
   const rawNetWorth = balance || 0;
   const changePercent = selectData.changePercent;
   const isLoss = selectData.isLoss;
   const _data = selectData.list;
-  const changeLoading =
-    !loading && isLoadingChartData && !selectData.changePercent;
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(rawNetWorth, { currency });
