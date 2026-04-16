@@ -57,6 +57,7 @@ export const NumericInput = ({
   onChangeText,
   min,
   max,
+  keyboardType = 'decimal-pad',
   ref,
   ...props
 }: NumericInputProps & { ref?: Ref<TextInput> }) => {
@@ -84,8 +85,8 @@ export const NumericInput = ({
 
   return (
     <TextInput
-      keyboardType="number-pad"
       {...props}
+      keyboardType={keyboardType}
       ref={ref}
       style={StyleSheet.flatten([styles.input, style])}
       value={internalValue}
@@ -100,6 +101,7 @@ export const BottomSheetModalNumericInput = ({
   onChangeText,
   min = Number.NEGATIVE_INFINITY,
   max = Number.POSITIVE_INFINITY,
+  keyboardType = 'decimal-pad',
   ref,
   ...props
 }: NumericInputProps &
@@ -131,7 +133,7 @@ export const BottomSheetModalNumericInput = ({
     <BottomSheetTextInput
       {...props}
       ref={ref as any}
-      keyboardType="number-pad"
+      keyboardType={keyboardType}
       style={style}
       value={internalValue}
       onChangeText={handleChange}

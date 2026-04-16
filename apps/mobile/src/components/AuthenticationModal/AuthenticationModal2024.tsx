@@ -25,12 +25,14 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
+import { E2E_ID } from '@/constant/e2e';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { NextInput } from '@/components2024/Form/Input';
 import { Text } from '@/components/Typography';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const SIZES = {
   /* input height from Figma: 56px */
@@ -106,6 +108,8 @@ function FooterButtonGroup({
   disabled,
   hideCancelButton,
   confirmButtonText,
+  cancelButtonProps,
+  confirmButtonProps,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
@@ -115,6 +119,14 @@ function FooterButtonGroup({
   disabled?: boolean;
   hideCancelButton?: boolean;
   confirmButtonText?: string;
+  cancelButtonProps?: Pick<
+    React.ComponentProps<typeof Button>,
+    'testID' | 'accessibilityLabel'
+  >;
+  confirmButtonProps?: Pick<
+    React.ComponentProps<typeof Button>,
+    'testID' | 'accessibilityLabel'
+  >;
 }) {
   const { t } = useTranslation();
   const { styles: footerStyles } = useTheme2024({
@@ -143,6 +155,7 @@ function FooterButtonGroup({
           containerStyle={footerStyles.btnContainer}
           type="ghost"
           onPress={onCancel ?? noop}
+          {...cancelButtonProps}
         />
       )}
       {showConfirm && (
@@ -164,6 +177,7 @@ function FooterButtonGroup({
             ])}
             onPress={onConfirm}
             disabled={disabled}
+            {...confirmButtonProps}
           />
         </>
       )}
@@ -467,6 +481,7 @@ export const AuthenticationModal2024 = ({
                     returnKeyLabel: t('global.Confirm'),
                     placeholderTextColor: colors2024['neutral-foot'],
                     onChangeText: setPassword,
+                    ...makeTestIDProps(E2E_ID.authModal.passwordInput),
                   }}
                   style={StyleSheet.flatten([
                     styles.input,
@@ -500,6 +515,8 @@ export const AuthenticationModal2024 = ({
         disabled={hasCheckFailed}
         hideCancelButton={hideCancelButton}
         confirmButtonText={confirmText}
+        cancelButtonProps={makeTestIDProps(E2E_ID.authModal.cancelButton)}
+        confirmButtonProps={makeTestIDProps(E2E_ID.authModal.confirmButton)}
       />
     </AutoLockView>
   );

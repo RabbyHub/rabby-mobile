@@ -1,10 +1,10 @@
 appId: ${RABBY_MAESTRO_APP_ID}
-name: Android ensure Home is ready
+name: Android home ready for existing user
 tags:
   - android
   - maestro
   - bootstrap
-  - home
+  - existing-user
 env:
   WELCOME_IMPORT_EXISTING_ID: e2e.onboarding.welcome.import-existing
   UNLOCK_PASSWORD_INPUT_ID: e2e.unlock.password.input
@@ -15,10 +15,10 @@ env:
     maxRetries: 2
     commands:
       - runFlow:
-          when:
-            visible:
-              id: ${WELCOME_IMPORT_EXISTING_ID}
-          file: android-onboarding-import-private-key.yaml
+          file: shared-dismiss-debug-warnings-overlay.yaml
+
+      - assertNotVisible:
+          id: ${WELCOME_IMPORT_EXISTING_ID}
 
       - runFlow:
           when:
@@ -31,9 +31,6 @@ env:
             visible:
               id: ${SINGLE_HOME_BACK_ID}
           file: android-single-home-back-to-home.yaml
-
-      - runFlow:
-          file: shared-dismiss-debug-warnings-overlay.yaml
 
       - extendedWaitUntil:
           visible:

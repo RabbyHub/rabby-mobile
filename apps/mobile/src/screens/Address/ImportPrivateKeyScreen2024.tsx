@@ -147,7 +147,7 @@ export const ImportPrivateKeyScreen2024 = () => {
       footerContainerStyle={{
         paddingHorizontal: 20,
       }}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <View style={styles.topContent}>
             <PrivateKeyIcon style={styles.icon} />

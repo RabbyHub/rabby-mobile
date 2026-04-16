@@ -3,7 +3,22 @@ import {
   BUILD_GIT_INFO,
   IS_HERMES_ENABLED,
 } from '@/constant/env';
+import { RootNames } from '@/constant/layout';
 import { runDevIIFEFunc } from '@/core/utils/store';
+import { jotaiStore } from '@/core/utils/reexports';
+import { switchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { sceneAccountInfoStore } from '@/hooks/sceneAccountInfoAtom';
+import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
+import { isValidAddress } from '@ethereumjs/util';
+import BigNumber from 'bignumber.js';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import {
+  apiSendToken,
+  getSendChainToken,
+  getSendTokenFormValues,
+  getSendTokenScreenState,
+  requestSendTokenFormPatch,
+} from '@/screens/Send/hooks/useSendToken';
 import accountStore from '@/store/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { balance24hStore, scene24hBalanceStore } from '@/store/balance24h';
@@ -15,11 +30,13 @@ import {
   makeDefaultSelectData,
 } from '@/store/curveShared';
 import { formatUsdValue } from '@/utils/number';
-import { getLatestNavigationName } from '@/utils/navigation';
+import { findChainByEnum, findChainByServerID } from '@/utils/chain';
+import { getLatestNavigationName, naviPush } from '@/utils/navigation';
 import { apisSingleHome } from '@/screens/Home/hooks/singleHome';
 import { getIsFoldMultiChart } from '@/screens/Address/components/MultiAssets/RenderRow/CurveChart';
+import { getRecentSendPendingTxData } from '@/screens/Send/hooks/useRecentSend';
 
-type DevtoolsMethod = (...args: unknown[]) => unknown;
+type DevtoolsMethod = (...args: any[]) => unknown;
 
 function normalizeAddresses(addresses?: string[]) {
   return Array.from(
@@ -27,6 +44,180 @@ function normalizeAddresses(addresses?: string[]) {
       (addresses || []).filter(Boolean).map(address => address.toLowerCase()),
     ),
   );
+}
+
+function normalizeAddress(address?: string | null) {
+  return String(address || '')
+    .trim()
+    .toLowerCase();
+}
+
+function resolveSceneAccount(
+  scene: keyof ReturnType<typeof sceneAccountInfoStore.getState>,
+) {
+  const sceneAccount = sceneAccountInfoStore.getState()[scene]?.currentAccount;
+  if (!sceneAccount) {
+    return null;
+  }
+
+  return (
+    accountStore.getState().accounts.find(account => {
+      return (
+        normalizeAddress(account.address) ===
+          normalizeAddress(sceneAccount.address) &&
+        account.type === sceneAccount.type &&
+        account.brandName === sceneAccount.brandName
+      );
+    }) || sceneAccount
+  );
+}
+
+function resolveSendFromAccount(input?: {
+  address?: string;
+  type?: string;
+  brandName?: string;
+}) {
+  const address = normalizeAddress(input?.address);
+  if (!address) {
+    throw new Error(
+      '[RabbyDevToolsBridge] Send fixture is missing from.address',
+    );
+  }
+
+  const matchedAccounts = accountStore.getState().accounts.filter(account => {
+    return normalizeAddress(account.address) === address;
+  });
+
+  if (!matchedAccounts.length) {
+    throw new Error(
+      `[RabbyDevToolsBridge] No local account found for send.from.address=${input?.address}`,
+    );
+  }
+
+  return (
+    matchedAccounts.find(account => {
+      return (
+        (!input?.type || account.type === input.type) &&
+        (!input?.brandName || account.brandName === input.brandName)
+      );
+    }) ||
+    matchedAccounts.find(account => account.type !== KEYRING_CLASS.WATCH) ||
+    matchedAccounts[0]
+  );
+}
+
+function resolveSendChain(input?: string) {
+  const chain = String(input || '').trim();
+  if (!chain) {
+    throw new Error(
+      '[RabbyDevToolsBridge] Send fixture is missing token.chain',
+    );
+  }
+
+  const resolved = findChainByServerID(chain) || findChainByEnum(chain as any);
+
+  if (!resolved) {
+    throw new Error(
+      `[RabbyDevToolsBridge] Unsupported send token chain: ${input}`,
+    );
+  }
+
+  return resolved;
+}
+
+function buildSendScreenSnapshot() {
+  const routeName = getLatestNavigationName() || null;
+  const screenState = getSendTokenScreenState();
+  const formValues = getSendTokenFormValues();
+  const { chainEnum, chainItem, currentToken } = getSendChainToken();
+  const currentAccount = resolveSceneAccount('MakeTransactionAbout');
+  const latestTx = getRecentSendPendingTxData();
+  const canSubmit =
+    !!formValues.to &&
+    isValidAddress(formValues.to) &&
+    !screenState.balanceError &&
+    new BigNumber(formValues.amount || 0).gt(0) &&
+    !screenState.isLoading;
+
+  return {
+    routeName,
+    currentAccount: currentAccount
+      ? {
+          address: currentAccount.address,
+          brandName: currentAccount.brandName,
+          type: currentAccount.type,
+          aliasName:
+            'aliasName' in currentAccount
+              ? currentAccount.aliasName
+              : undefined,
+        }
+      : null,
+    chain: chainItem
+      ? {
+          enum: chainEnum,
+          serverId: chainItem.serverId,
+          id: chainItem.id,
+          name: chainItem.name,
+        }
+      : null,
+    currentToken: currentToken
+      ? {
+          id: currentToken.id,
+          chain: currentToken.chain,
+          symbol: currentToken.symbol,
+          name: currentToken.name,
+          decimals: currentToken.decimals,
+          amount: currentToken.amount,
+          rawAmountHex: currentToken.raw_amount_hex_str,
+        }
+      : null,
+    formValues: {
+      to: formValues.to,
+      amount: formValues.amount,
+      messageDataForSendToEoa: formValues.messageDataForSendToEoa,
+      messageDataForContractCall: formValues.messageDataForContractCall,
+    },
+    screenState: {
+      inited: screenState.inited,
+      isLoading: screenState.isLoading,
+      showBalanceLoading: screenState.showBalanceLoading,
+      balanceError: screenState.balanceError,
+      balanceWarn: screenState.balanceWarn,
+      isEstimatingGas: screenState.isEstimatingGas,
+      isSubmitLoading: screenState.isSubmitLoading,
+      selectedGasLevel: screenState.selectedGasLevel
+        ? {
+            level: screenState.selectedGasLevel.level,
+            price: screenState.selectedGasLevel.price,
+          }
+        : null,
+    },
+    latestTx: latestTx
+      ? {
+          hash: latestTx.hash,
+          status: latestTx.status,
+          amount: latestTx.amount,
+          from: latestTx.from,
+          to: latestTx.to,
+          chainId: latestTx.chainId,
+          createdAt: latestTx.createdAt,
+          completedAt: latestTx.completedAt || null,
+          token: latestTx.token
+            ? {
+                id: latestTx.token.id,
+                chain: latestTx.token.chain,
+                symbol: latestTx.token.symbol,
+                decimals: latestTx.token.decimals,
+              }
+            : null,
+        }
+      : null,
+    computed: {
+      canSubmit,
+      hasToAddress: !!formValues.to,
+      hasAmount: !!formValues.amount,
+    },
+  };
 }
 
 function buildHomeDisplayAddressesState() {
@@ -402,6 +593,96 @@ const bridgeMethods = {
   getSingleHomeSnapshot() {
     return buildSingleHomeSnapshot();
   },
+  openSendScreen(input?: {
+    from?: {
+      address?: string;
+      type?: string;
+      brandName?: string;
+    };
+    to?: {
+      address?: string;
+      brandName?: string;
+    };
+    token?: {
+      chain?: string;
+      tokenId?: string;
+      symbol?: string;
+    };
+    amount?: string | number;
+  }) {
+    const fromAccount = resolveSendFromAccount(input?.from);
+    const chain = resolveSendChain(input?.token?.chain);
+    const tokenId = String(input?.token?.tokenId || '').trim();
+    const toAddress = String(input?.to?.address || '').trim();
+
+    if (!tokenId) {
+      throw new Error(
+        '[RabbyDevToolsBridge] Send fixture is missing token.tokenId',
+      );
+    }
+    if (!toAddress) {
+      throw new Error(
+        '[RabbyDevToolsBridge] Send fixture is missing to.address',
+      );
+    }
+
+    apiSendToken.resetScreenState();
+    jotaiStore.set(sendScreenParamsAtom, {
+      chainEnum: chain.enum,
+      tokenId,
+    });
+    void switchSceneCurrentAccount('MakeTransactionAbout', fromAccount);
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.Send,
+      params: {
+        chainEnum: chain.enum,
+        tokenId,
+        toAddress,
+        addressBrandName: input?.to?.brandName,
+      },
+    });
+
+    return {
+      ok: true,
+      routeNameBefore: getLatestNavigationName() || null,
+      resolved: {
+        from: {
+          address: fromAccount.address,
+          brandName: fromAccount.brandName,
+          type: fromAccount.type,
+        },
+        to: {
+          address: toAddress,
+          brandName: input?.to?.brandName || null,
+        },
+        token: {
+          chain: chain.serverId,
+          chainEnum: chain.enum,
+          tokenId,
+          symbol: input?.token?.symbol || null,
+        },
+        amount: input?.amount == null ? null : String(input.amount),
+      },
+    };
+  },
+  getSendScreenSnapshot() {
+    return buildSendScreenSnapshot();
+  },
+  setSendAmount(amount?: string | number) {
+    const nextAmount = String(amount ?? '').trim();
+
+    if (!nextAmount) {
+      throw new Error('[RabbyDevToolsBridge] Send amount is required');
+    }
+
+    requestSendTokenFormPatch({ amount: nextAmount });
+
+    return {
+      ok: true,
+      routeName: getLatestNavigationName() || null,
+      amount: nextAmount,
+    };
+  },
 } satisfies Record<string, DevtoolsMethod>;
 
 runDevIIFEFunc(() => {
@@ -421,6 +702,9 @@ runDevIIFEFunc(() => {
     ping: () => bridgeMethods.ping(),
     getHomePortfolioSnapshot: () => bridgeMethods.getHomePortfolioSnapshot(),
     getSingleHomeSnapshot: () => bridgeMethods.getSingleHomeSnapshot(),
+    openSendScreen: input => bridgeMethods.openSendScreen(input as never),
+    getSendScreenSnapshot: () => bridgeMethods.getSendScreenSnapshot(),
+    setSendAmount: amount => bridgeMethods.setSendAmount(amount as never),
   };
 
   globalThis.__RABBY_DEVTOOLS_BRIDGE__ = bridge;
