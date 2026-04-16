@@ -139,19 +139,47 @@ function SelectAddMethod(): JSX.Element {
     setConfirmCB,
   ]);
 
-  const onPressImportSeedPhrase = React.useCallback(() => {
+  const onPressImportSeedPhrase = React.useCallback(async () => {
+    setConfirmCB(async () => {
+      navigation.replace(RootNames.ImportSecret, {
+        initialTab: 'seedPhrase',
+        flow: 'in_app',
+      });
+    });
+    if (
+      await shouldRedirectToSetPasswordBefore2024({
+        backScreen: RootNames.CreateSelectMethod,
+        isFirstImportPassword: true,
+      })
+    ) {
+      return;
+    }
     navigation.navigate(RootNames.ImportSecret, {
       initialTab: 'seedPhrase',
       flow: 'in_app',
     });
-  }, [navigation]);
+  }, [navigation, shouldRedirectToSetPasswordBefore2024, setConfirmCB]);
 
-  const onPressImportPrivateKey = React.useCallback(() => {
+  const onPressImportPrivateKey = React.useCallback(async () => {
+    setConfirmCB(async () => {
+      navigation.replace(RootNames.ImportSecret, {
+        initialTab: 'privateKey',
+        flow: 'in_app',
+      });
+    });
+    if (
+      await shouldRedirectToSetPasswordBefore2024({
+        backScreen: RootNames.CreateSelectMethod,
+        isFirstImportPassword: true,
+      })
+    ) {
+      return;
+    }
     navigation.navigate(RootNames.ImportSecret, {
       initialTab: 'privateKey',
       flow: 'in_app',
     });
-  }, [navigation]);
+  }, [navigation, shouldRedirectToSetPasswordBefore2024, setConfirmCB]);
 
   const onPressHardwareWallet = React.useCallback(() => {
     navigation.navigate(RootNames.StackAddress, {
