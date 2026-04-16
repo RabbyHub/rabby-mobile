@@ -1,8 +1,8 @@
 import { View, TouchableOpacity } from 'react-native';
 
+import type { IDisplayedAccountWithBalance } from '@/core/account/display';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { formatUsdValue } from '@/utils/number';
 import { formatAddressToShow } from '@/utils/address';
 import {

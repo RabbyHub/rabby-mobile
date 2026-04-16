@@ -1,7 +1,7 @@
 import { makeJsEEClass } from '@/core/services/_utils';
 import type { Multi24hBalanceState } from '@/store/balance24h';
 import { ContactBookStore } from '@rabby-wallet/service-address';
-import { Account, PreferenceStore } from '../services/preference';
+import type { PreferenceStore } from '../services/preference';
 
 export type PerfEventBusListeners = {
   EVENT_ROUTE_CHANGE: (ctx: {
@@ -37,10 +37,6 @@ export type PerfEventBusListeners = {
 
   GLOBAL_CLEAR_ALL_COVERED_COMPONENTS: () => void;
 };
-type PerfListeners = {
-  [P: string]: (data: any) => void;
-};
-const { EventEmitter: PerfEE } =
-  makeJsEEClass<PerfEventBusListeners /*  & PerfListeners */>();
+const { EventEmitter: PerfEE } = makeJsEEClass<PerfEventBusListeners>();
 export const perfEvents = new PerfEE();
 perfEvents.setMaxListeners(1000);

@@ -12,7 +12,7 @@ import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { useAutoLockCountDown } from './LockAbout';
 import { colord } from 'colord';
-import { NEED_DEVSETTINGBLOCKS } from '@/constant';
+import { NEED_DEVSETTINGBLOCKS } from '@/constant/package';
 import { useFloatingView } from '@/hooks/appSettings';
 import {
   Gesture,

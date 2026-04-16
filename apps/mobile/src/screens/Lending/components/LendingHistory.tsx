@@ -38,7 +38,7 @@ import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
 } from '@/screens/Transaction/components/type';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { makeTxPageBackgroundColors } from '@/constant/layout';
 import { Text } from '@/components/Typography';

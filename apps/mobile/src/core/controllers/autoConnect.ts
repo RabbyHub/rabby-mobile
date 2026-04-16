@@ -1,7 +1,11 @@
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { fromHex, isHex } from 'viem';
-import { Account } from '../services/preference';
-import { keyringService } from '../services/shared';
+import type KeyringService from '@rabby-wallet/service-keyring';
+import type { Account } from '../services/preference';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
 
 const AUTO_CONNECT_SILENTLY_ORIGINS = new Set<string>([
   'https://polymarket.com',
@@ -56,7 +60,7 @@ const SUPPORTED_PERSONAL_SIGN = new Map<string, string[]>([
   ],
 ]);
 
-export const shouldAutoPersonalSign = ({
+export const shouldAutoPersonalSign = async ({
   origin,
   method,
   account,
@@ -80,6 +84,9 @@ export const shouldAutoPersonalSign = ({
   }
 
   if (account.brandName === KEYRING_CLASS.MNEMONIC) {
+    const keyringService = await getServiceReady<KeyringService>(
+      SERVICE_READY_KEYS.keyringService,
+    );
     const currentKeyring = keyringService.keyrings.find(item => {
       return (
         item.type === KEYRING_CLASS.MNEMONIC &&

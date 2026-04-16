@@ -31,10 +31,12 @@ import { checkShouldStartLoadingWithRequestForDappWebView } from '@/components/W
 import { APP_UA_PARIALS } from '@/constant';
 import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { selectDappAccount } from '@/core/dapp/accountSelector';
+import { transactionHistoryService } from '@/core/services/shared';
 import {
   browserService,
   dappService,
@@ -49,7 +51,7 @@ import {
 } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import { getDappAccount, useDapps } from '@/hooks/useDapps';
+import { useDapps } from '@/hooks/useDapps';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { sleep } from '@/utils/async';
 import { isGoogle, isValidAppStoreUrl } from '@/utils/browser';
@@ -591,7 +593,12 @@ export const BrowserTab = ({
     disableAutoFetch: true,
   });
   const account = useMemo(() => {
-    return getDappAccount({ dappInfo, accounts });
+    return selectDappAccount({
+      dappInfo,
+      accounts,
+      recentTransactions: transactionHistoryService.store.transactions,
+      fallbackAccount: preferenceService.getFallbackAccount(),
+    });
   }, [accounts, dappInfo, browserState.isShowBrowser]);
 
   return (

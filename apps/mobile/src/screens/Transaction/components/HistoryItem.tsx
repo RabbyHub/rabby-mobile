@@ -1,7 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { getChain } from '@/utils/chain';
 import { ProjectItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { TxChange } from './TokenChange';
 import React, { useCallback, useEffect, useMemo } from 'react';
@@ -12,7 +11,11 @@ import { ellipsisAddress } from '@/utils/address';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { TxStatusItem } from '../HistoryDetailScreen';
+import type {
+  HistoryDisplayItem,
+  TokenChangeDataItem,
+} from '@/core/history/display';
+import { TxStatusItem } from './TxStatusItem';
 import { useTranslation } from 'react-i18next';
 import { CUSTOM_HISTORY_TITLE_TYPE, HistoryItemCateType } from './type';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -27,14 +30,6 @@ type HistoryItemProps = {
   isForMultipleAddress?: boolean;
   getCexInfoByAddress?: (address: string) => ProjectItem;
   onPress?: (data: HistoryDisplayItem) => void;
-};
-
-export type TokenChangeDataItem = {
-  amount: number;
-  token?: TokenItem;
-  token_id: string;
-  price?: number;
-  type: 'send' | 'receive' | 'approve';
 };
 
 export const HistoryItem = React.memo(
@@ -86,6 +81,11 @@ export const HistoryItem = React.memo(
     }, [data]);
 
     const formatTitle = useMemo(() => {
+      const approveTokenSymbol =
+        tokenApproveData[0]?.token_id?.length === 32
+          ? 'NFT'
+          : getTokenSymbol(tokenApproveData[0]?.token as TokenItem | undefined);
+
       if (data.historyCustomType) {
         switch (data.historyCustomType) {
           case CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY:
@@ -134,14 +134,11 @@ export const HistoryItem = React.memo(
           return (
             t('page.transactions.itemTitle.Approve') +
             ' ' +
-            ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+            ellipsisOverflowedText(approveTokenSymbol, 6)
           );
         case HistoryItemCateType.Revoke:
           return t('page.transactions.itemTitle.Revoke', {
-            token: ellipsisOverflowedText(
-              getTokenSymbol(tokenApproveData[0].token),
-              6,
-            ),
+            token: ellipsisOverflowedText(approveTokenSymbol, 6),
           });
         case HistoryItemCateType.Contract:
           return t('page.transactions.itemTitle.Contract');

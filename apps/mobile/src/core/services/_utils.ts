@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import type { Account } from './preference';
+import type { KeyringAccountWithAlias } from '@/core/account/utils';
 
 type Listener = (resp?: any) => void;
 
@@ -51,7 +51,9 @@ export function makeJsEEClass<
 }
 
 const { EventEmitter: AppServiceEvents } = makeJsEEClass<{
-  currentAccountChanged: (account: Account) => void;
+  currentAccountChanged: (
+    account: KeyringAccountWithAlias & { index?: number | undefined },
+  ) => void;
   backupReminderChanged: (dbId: string) => void;
 }>();
 

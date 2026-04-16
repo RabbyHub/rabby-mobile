@@ -33,14 +33,12 @@ import {
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { RNGHRefreshControl } from '@/components/customized/reexports';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
-import {
-  NftItemWithCollection,
-  varyNftListByFold,
-} from '@/screens/Home/hooks/nft';
+import { varyNftListByFold } from '@/screens/Home/hooks/nft';
+import type { NftItemWithCollection } from '@/core/nft/displayTypes';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useFocusedTab } from 'react-native-collapsible-tab-view';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
-import { TabName } from './TabsMultiAssets';
+import { TabName } from './constants';
 import { ListRenderSeparator } from './RenderRow/Common';
 import {
   createGlobalBottomSheetModal2024,

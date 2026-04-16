@@ -10,7 +10,8 @@ import WebView, { WebViewProps } from 'react-native-webview';
 
 import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
-import { APP_UA_PARIALS, isNonPublicProductionEnv } from '@/constant';
+import { APP_UA_PARIALS } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import {
   BUILTIN_SPECIAL_URLS,

@@ -5,7 +5,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import { useAccountInfo } from '../hooks';
-import { TabName } from '../TabsMultiAssets';
+import { TabName } from '../constants';
 import { useMyAccounts } from '@/hooks/account';
 import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { findAccountByPriority } from '@/utils/account';

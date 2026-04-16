@@ -1,6 +1,6 @@
 import { Chain, CHAINS_ENUM, getChainList } from '@/constant/chains';
-import { TestnetChain } from '@/core/services/customTestnetService';
-import { ITokenItem } from '@/store/tokens';
+import type { TestnetChain } from '@/core/services/customTestnet.types';
+import type { ITokenItem } from '@/store/tokens';
 import {
   ChainWithBalance,
   TokenItem,

@@ -1,4 +1,5 @@
 export * from './type-helpers';
+export * from './deferred';
 
 export * as addressUtils from './isomorphic/address';
 export * as stringUtils from './isomorphic/string';

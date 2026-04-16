@@ -5,7 +5,7 @@ import {
 } from '@/assets/icons/lock';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { apisLock } from '@/core/apis';
 import { unlockTimeEvent, updateUnlockTime } from '@/core/apis/lock';
 import { useBiometrics } from '@/hooks/biometrics';

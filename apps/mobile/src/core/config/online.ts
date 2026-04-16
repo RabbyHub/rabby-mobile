@@ -1,4 +1,4 @@
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import axios from 'axios';
 import { merge } from 'lodash';
 import { stringUtils } from '@rabby-wallet/base-utils';

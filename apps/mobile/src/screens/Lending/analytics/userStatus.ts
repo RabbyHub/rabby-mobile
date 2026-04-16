@@ -1,5 +1,5 @@
 import { keyToMarketKey } from '@/screens/Home/utils/protocolConfig';
-import { IProtocolItem } from '@/store/protocols';
+import type { IProtocolItem } from '@/core/protocol/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 type LendingUserStatusChainScope = 'SC' | 'MC';

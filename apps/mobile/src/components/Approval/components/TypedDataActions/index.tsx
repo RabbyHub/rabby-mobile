@@ -36,7 +36,8 @@ import CoboSafeModificationDelegatedAddress from './CoboSafeModificationDelegate
 import CoboSafeModificationRule from './CoboSafeModificationRule';
 import CoboSafeModificationTokenApproval from './CoboSafeModificationTokenApproval';
 import { CommonAction } from '../CommonAction';
-import { getActionsStyle } from '../Actions';
+import { getActionsStyle } from '../Actions/style';
+import type { MultiActionProps } from '../Actions/types';
 import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
@@ -56,11 +57,7 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { Text } from '@/components/Typography';
 
-export interface MultiActionProps {
-  actionList: ParsedTypedDataActionData[] | ParsedTransactionActionData[];
-  requireDataList: ActionRequireData[];
-  engineResultList: Result[][];
-}
+export type { MultiActionProps } from '../Actions/types';
 const ActionItem = ({
   raw,
   chain,

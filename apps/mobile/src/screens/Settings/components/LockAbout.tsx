@@ -8,7 +8,7 @@ import {
 } from '@/hooks/appTimeout';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import useInterval from 'react-use/lib/useInterval';
-import { NEED_DEVSETTINGBLOCKS } from '@/constant';
+import { NEED_DEVSETTINGBLOCKS } from '@/constant/package';
 import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 import { usePasswordStatus } from '@/hooks/useLock';
 import { useToggleShowAutoLockCountdown } from '@/hooks/appSettings';

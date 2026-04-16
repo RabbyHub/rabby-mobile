@@ -10,13 +10,11 @@ import {
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import providerController from '../controllers/provider';
 import {
   customRPCService,
   notificationService,
   preferenceService,
-  transactionHistoryService,
-} from '@/core/services';
+} from '@/core/services/shared';
 import { OP_STACK_ENUMS } from '@/constant/gas';
 import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
@@ -25,7 +23,14 @@ import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { Account } from '../services/preference';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
+import { getRecommendNonce } from './nonce';
+import type { Account } from '../services/preference';
+import type { TransactionHistoryService } from '@/core/services/transactionHistory';
+import { getProviderController } from '../controllers/provider';
 
 function buildTxParams(txMeta) {
   return {
@@ -56,19 +61,22 @@ export default function buildUnserializedTransaction(txMeta) {
 }
 
 export { sendRequest } from './sendRequest';
+export { getRecommendNonce } from './nonce';
 
 export const requestETHRpc = <T = any>(
   data: { method: string; params: any },
   chainId: string,
   account?: Account | null,
 ): Promise<IExtractFromPromise<T>> => {
-  return providerController.ethRpc(
-    {
-      data,
-      session: INTERNAL_REQUEST_SESSION,
-      account,
-    },
-    chainId,
+  return getProviderController().then(providerController =>
+    providerController.ethRpc(
+      {
+        data,
+        session: INTERNAL_REQUEST_SESSION,
+        account,
+      },
+      chainId,
+    ),
   );
 };
 
@@ -204,34 +212,6 @@ export const fetchEstimatedL1Fee = async (
   return Promise.resolve('0x0');
 };
 
-export const getRecommendNonce = async ({
-  from,
-  chainId,
-  account,
-}: {
-  from: string;
-  chainId: number;
-  account: Account | null;
-}) => {
-  const chain = findChain({
-    id: chainId,
-  });
-  if (!chain) {
-    throw new Error(t('background.error.invalidChainId'));
-  }
-  const onChainNonce = await requestETHRpc(
-    {
-      method: 'eth_getTransactionCount',
-      params: [from, 'latest'],
-    },
-    chain.serverId,
-    account,
-  );
-  const localNonce =
-    (await transactionHistoryService.getNonceByChain(from, chainId)) || 0;
-  return `0x${BigNumber.max(onChainNonce, localNonce).toString(16)}`;
-};
-
 export const getERC20Allowance = async (
   chainServerId,
   erc20Address: string,
@@ -337,17 +317,24 @@ export const generateApproveTokenTx = ({
 };
 
 export const ethSendTransaction = async (
-  ...args: Parameters<typeof providerController.ethSendTransaction>
+  ...args: Parameters<
+    Awaited<ReturnType<typeof getProviderController>>['ethSendTransaction']
+  >
 ) => {
   const signingTxId = args?.[0]?.approvalRes?.signingTxId;
   try {
     notificationService.currentMiniApproval = {
       signingTxId,
     };
+    const providerController = await getProviderController();
     const res = await providerController.ethSendTransaction(...args);
     return res;
   } catch (e) {
     if (signingTxId != null) {
+      const transactionHistoryService =
+        await getServiceReady<TransactionHistoryService>(
+          SERVICE_READY_KEYS.transactionHistoryService,
+        );
       transactionHistoryService.removeSigningTx(signingTxId);
     }
 
@@ -356,8 +343,11 @@ export const ethSendTransaction = async (
 };
 
 export const ethPersonalSign = async (
-  ...args: Parameters<typeof providerController.personalSign>
+  ...args: Parameters<
+    Awaited<ReturnType<typeof getProviderController>>['personalSign']
+  >
 ) => {
+  const providerController = await getProviderController();
   return providerController.personalSign(...args);
 };
 

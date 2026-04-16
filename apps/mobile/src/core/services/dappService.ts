@@ -3,7 +3,7 @@ import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
-import { Account } from './preference';
+import type { Account } from './preference';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { omit } from 'lodash';

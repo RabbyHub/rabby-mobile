@@ -1,8 +1,5 @@
-import {
-  accountEvents,
-  fetchAllAccounts,
-  KeyringAccountWithAlias,
-} from '@/core/apis/account';
+import { accountEvents, fetchAllAccounts } from '@/core/apis/account';
+import { KeyringAccountWithAlias } from '@/core/account/utils';
 import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';

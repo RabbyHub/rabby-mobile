@@ -1,9 +1,13 @@
 import { openapi } from '@/core/request';
-import { keyringService } from '@/core/services';
+import {
+  contactService,
+  keyringService,
+  preferenceService,
+} from '@/core/services/shared';
 import { makeJsEEClass } from '@/core/services/_utils';
 import { ORM_TABLE_NAMES } from '@/databases/constant';
 import { BalanceEntity } from '@/databases/entities/balance';
-import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
+import type { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { syncBalance } from '@/databases/sync/assets';
 import { HOME_REFRESH_INTERVAL } from '@/constant/home';
 import { appStorage } from '@/core/storage/mmkv';
@@ -17,11 +21,17 @@ import { ChainWithBalance } from '@rabby-wallet/rabby-api/dist/types';
 import { unionBy } from 'lodash';
 import PQueue from 'p-queue';
 import { useCallback, useMemo, useRef } from 'react';
-import type { Account } from '@/core/services/preference';
 import { perfEvents } from '@/core/utils/perf';
 import { zCreate, zMutative } from '@/core/utils/reexports';
 import { makeSWRKeyAsyncFunc } from '@/core/utils/concurrency';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
+import {
+  filterMyAccounts,
+  filterOutTopAccounts,
+  KeyringAccountWithAlias,
+  sortAccountList,
+} from '@/core/account/utils';
+import { registerAccountBalanceSnapshotProvider } from '@/core/account/balanceSnapshot';
 import {
   ResourceBaseStore,
   ResourceFlowState,
@@ -410,7 +420,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
   };
 
   hydrateCachedBalancesForAccounts = async (
-    accounts: Array<Pick<Account, 'address' | 'type'>>,
+    accounts: Array<Pick<KeyringAccountWithAlias, 'address' | 'type'>>,
   ) => {
     if (!accounts.length) {
       return;
@@ -428,7 +438,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       return;
     }
 
-    const coreAddressSet = buildCoreAddressSet(accounts as Account[]);
+    const coreAddressSet = buildCoreAddressSet(accounts);
     for (const address of lowerAddresses) {
       const localTargets = buildBalanceLocalTargets(address);
 
@@ -498,7 +508,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
     const addresses = await keyringService.getAllAddresses();
-    const coreAddressSet = buildCoreAddressSet(addresses as Account[]);
+    const coreAddressSet = buildCoreAddressSet(addresses);
 
     const fetchList: Array<{ address: string; isCore: boolean }> = [];
 
@@ -880,11 +890,8 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
       try {
         console.debug('[perf] fetchTotalBalance:: fetchType', fetchType);
 
-        const { getAccountList } = await import('@/core/apis/account');
-        const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
-        const caredAccounts = sortedAccounts;
-        const { selectedAccounts, selectedAddresses } =
-          await pickSelectedAccountsFromSortedAccounts(caredAccounts);
+        const { selectedAccounts, selectedAddresses, matteredAccountLength } =
+          await getMatteredAccountsSnapshot();
 
         if (selectedAccounts.length) {
           await this.batchGetTotalBalance(
@@ -908,7 +915,7 @@ class AddressBalanceStore extends ResourceBaseStore<AddressBalanceResourceValue>
             balance: retBalances,
             selectedAddresses,
             hasResolvedSelection: true,
-            matteredAccountLength: caredAccounts.length,
+            matteredAccountLength,
             ...buildSelectedBalanceDerivedState(selectedAddresses, retBalances),
           },
           {
@@ -1056,7 +1063,7 @@ function persistCachedHomeTop10Addresses(addresses: string[]) {
 }
 
 const buildBalanceAccountsFromList = (
-  accounts: Account[],
+  accounts: KeyringAccountWithAlias[],
   balanceMap: Record<string, IBalanceData>,
 ) => {
   return accounts.reduce((acc, account) => {
@@ -1210,27 +1217,45 @@ function buildSelectedBalanceDerivedState(
 }
 
 async function pickSelectedAccountsFromSortedAccounts(
-  sortedAccounts: Account[],
+  sortedAccounts: KeyringAccountWithAlias[],
 ) {
-  const { filterOutTop10Accounts } = await import('@/core/apis/account');
-  const { top10Accounts, top10Addresses } = filterOutTop10Accounts(
-    sortedAccounts,
-    {
-      gatherSameAddress: false,
-    },
-  );
+  const { topAccounts, topAddresses } = filterOutTopAccounts(sortedAccounts, {
+    topCount: 10,
+    gatherSameAddress: false,
+  });
 
   return {
-    selectedAccounts: unionBy(top10Accounts, account =>
+    selectedAccounts: unionBy(topAccounts, account =>
       account.address.toLowerCase(),
     ),
-    selectedAddresses: top10Addresses.map(address => address.toLowerCase()),
+    selectedAddresses: topAddresses.map(address => address.toLowerCase()),
   };
 }
 
+async function getSortedMyAccountsSnapshot() {
+  const balanceMap = addressBalanceStore.getAddressValueMap();
+  const accounts = await keyringService.getAllVisibleAccountsArray();
+  const myAccounts = filterMyAccounts(
+    accounts.map(account => {
+      const lowerAddress = account.address.toLowerCase();
+      const balance = balanceMap[lowerAddress];
+      return {
+        ...account,
+        aliasName:
+          contactService.getAliasByAddress(account.address)?.alias || '',
+        evmBalance: balance?.evmBalance || 0,
+        balance: balance?.totalBalance || 0,
+      } satisfies KeyringAccountWithAlias;
+    }),
+  );
+
+  return sortAccountList(myAccounts, {
+    highlightedAddresses: preferenceService.getPinAddresses(),
+  });
+}
+
 async function getMatteredAccountsSnapshot() {
-  const { getAccountList } = await import('@/core/apis/account');
-  const { sortedAccounts } = await getAccountList({ filter: 'onlyMine' });
+  const sortedAccounts = await getSortedMyAccountsSnapshot();
   const matteredAccountLength = sortedAccounts.length;
   const { selectedAccounts, selectedAddresses } =
     await pickSelectedAccountsFromSortedAccounts(sortedAccounts);
@@ -1242,7 +1267,9 @@ async function getMatteredAccountsSnapshot() {
   };
 }
 
-async function warmupSelectedAccountsBalance(selectedAccounts: Account[]) {
+async function warmupSelectedAccountsBalance(
+  selectedAccounts: KeyringAccountWithAlias[],
+) {
   await addressBalanceStore.hydrateCachedBalancesForAccounts(selectedAccounts);
 }
 
@@ -1416,5 +1443,10 @@ export function startProcessAccountBalanceEvents() {
 }
 
 export const addressBalanceStore = new AddressBalanceStore();
+
+registerAccountBalanceSnapshotProvider({
+  getAddressValueMap: () => addressBalanceStore.getAddressValueMap(),
+});
+
 export default addressBalanceStore;
 export { getCachedHomeTop10Addresses };

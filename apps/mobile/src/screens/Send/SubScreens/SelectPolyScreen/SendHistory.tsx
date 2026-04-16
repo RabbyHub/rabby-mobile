@@ -14,7 +14,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import { formatTimestamp } from '@/utils/time';
 import { View } from 'react-native';
 import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';

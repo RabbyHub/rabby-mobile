@@ -11,7 +11,8 @@ import { Account, IPinAddress } from '@/core/services/preference';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
-import { accountEvents, KeyringAccountWithAlias } from '@/core/apis/account';
+import { accountEvents } from '@/core/apis/account';
+import { KeyringAccountWithAlias } from '@/core/account/utils';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import addressBalanceStore from '@/store/balance';
 import accountStore, {

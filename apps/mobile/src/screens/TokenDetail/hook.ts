@@ -5,9 +5,9 @@ import {
   TokenItem,
   TokenItemWithEntity,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { patchSingleToken } from '@/databases/sync/assets';
+import { patchSingleToken } from '@/databases/sync/tokenPatch';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { RelatedDeFiType, TokenFromAddressItem } from '.';
+import type { RelatedDeFiType, TokenFromAddressItem } from './types';
 import { unionBy } from 'lodash';
 import { formatPrice } from '@/utils/number';
 import {

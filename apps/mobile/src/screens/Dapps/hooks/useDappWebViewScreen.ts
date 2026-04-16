@@ -17,7 +17,7 @@ import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { useRefState } from '@/hooks/common/useRefState';
 import { useDappsViewConfig } from './useDappView';
 import {
@@ -307,8 +307,9 @@ export function useDappWebViewScreen() {
 
       const dappInfo: DappInfo = dapps[item.origin];
       if (!dappInfo.currentAccount) {
-        const account = apisDapp.setCurrentAccountForDapp(item.origin);
-        dappInfo.currentAccount = account;
+        void apisDapp.setCurrentAccountForDapp(item.origin).then(account => {
+          dappInfo.currentAccount = account;
+        });
       }
 
       const needTriggerWebViewReload =

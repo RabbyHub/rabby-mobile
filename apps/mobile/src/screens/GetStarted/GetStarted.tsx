@@ -17,7 +17,7 @@ import {
   useCreateAddressProc,
   useImportAddressProc,
 } from '@/hooks/address/useNewUser';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
@@ -25,6 +25,7 @@ import { Text } from '@/components/Typography';
 import ChevronRightSmallCC from '@/assets/icons/common/right-2-cc.svg';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { recordStartupProbeOnce } from '@/debug/startupProbe';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -62,6 +63,7 @@ function NewUserGetStartedScreen() {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
+  const didLayoutRef = React.useRef(false);
 
   const [getStarted, setGetStarted] = useState<{
     localHasAccounts: boolean;
@@ -167,7 +169,20 @@ function NewUserGetStartedScreen() {
   const { bottom, top } = useSafeAreaInsets();
 
   return (
-    <View style={styles.screen}>
+    <View
+      style={styles.screen}
+      onLayout={() => {
+        if (didLayoutRef.current) {
+          return;
+        }
+
+        didLayoutRef.current = true;
+        recordStartupProbeOnce('GET_STARTED_LAYOUT', {
+          flags: {
+            firstSafeUnlockFrame: true,
+          },
+        });
+      }}>
       {/* Header with logo - positioned right next to status bar, horizontally centered */}
       <View style={[styles.logoWrapper, { top: top + 6 }]}>
         <Image

@@ -21,7 +21,7 @@ import { getTokenSymbol, tokenItemToITokenItem } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
 import { navigateDeprecated, naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { HistoryDisplayItem } from '../MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { HistoryItemCateType } from './type';

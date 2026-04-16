@@ -1,4 +1,4 @@
-import { TestnetChain } from '@/core/services/customTestnetService';
+import type { TestnetChain } from '@/core/services/customTestnet.types';
 import { EVENT_UPDATE_CHAIN_LIST, eventBus } from '@/utils/events';
 import { Chain, CHAINS_ENUM } from '@debank/common';
 import { DEFAULT_CHAIN_LIST } from './default-chain-data';

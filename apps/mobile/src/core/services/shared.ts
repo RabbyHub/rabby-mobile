@@ -54,6 +54,7 @@ import { perfEvents } from '../utils/perf';
 import { KeyringIntf } from '@rabby-wallet/keyring-utils';
 import { AutoConnectService } from './autoConnect';
 import { openapi } from '../request';
+import { registerServiceReady, SERVICE_READY_KEYS } from './serviceReady';
 
 migrateAppStorage(appStorage);
 
@@ -68,7 +69,9 @@ function try_catch_issue_on_preference({
     const preferenceData = appStorage.getItem(APP_STORE_NAMES.preference);
     if (!preferenceData && keyringState) {
       const msg = `[${pos}] keyringState is not empty but preference is empty`;
-      if (__DEV__) console.error(msg);
+      if (__DEV__) {
+        console.error(msg);
+      }
       Sentry.captureException(new Error(msg));
     }
   } catch (error) {
@@ -96,6 +99,7 @@ const keyringClasses = [
 export const contactService = new ContactBookService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.contactService, contactService);
 contactService.setBeforeSetKV((k, v) => {
   switch (k) {
     case 'aliases': {
@@ -117,6 +121,7 @@ export const keyringService = new KeyringService({
   onCreateKeyring,
   contactService,
 });
+registerServiceReady(SERVICE_READY_KEYS.keyringService, keyringService);
 keyringService.loadStore(keyringState || {});
 
 keyringService.store.subscribe(value => {
@@ -133,20 +138,27 @@ keyringService.store.subscribe(value => {
 export const dappService = new DappService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.dappService, dappService);
 
 export const browserHistoryService = new BrowserHistoryService({
   storageAdapter: appStorage,
 });
+registerServiceReady(
+  SERVICE_READY_KEYS.browserHistoryService,
+  browserHistoryService,
+);
 
 export const sessionService = new SessionService({
   dappService,
 });
+registerServiceReady(SERVICE_READY_KEYS.sessionService, sessionService);
 
 export const preferenceService = new PreferenceService({
   storageAdapter: appStorage,
   keyringService,
   sessionService,
 });
+registerServiceReady(SERVICE_READY_KEYS.preferenceService, preferenceService);
 
 preferenceService.setBeforeSetKV((k, v) => {
   perfEvents.emit('PREFERENCE_UPDATED', {
@@ -160,21 +172,34 @@ try_catch_issue_on_preference({ pos: 'after_preference' });
 export const whitelistService = new WhitelistService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.whitelistService, whitelistService);
 
 export const transactionHistoryService = new TransactionHistoryService({
   storageAdapter: appStorage,
   preferenceService,
 });
+registerServiceReady(
+  SERVICE_READY_KEYS.transactionHistoryService,
+  transactionHistoryService,
+);
 
 export const notificationService = new NotificationService({
   preferenceService,
   transactionHistoryService,
 });
+registerServiceReady(
+  SERVICE_READY_KEYS.notificationService,
+  notificationService,
+);
 
 export const transactionWatcherService = new TransactionWatcherService({
   storageAdapter: appStorage,
   transactionHistoryService,
 });
+registerServiceReady(
+  SERVICE_READY_KEYS.transactionWatcherService,
+  transactionWatcherService,
+);
 
 export const transactionBroadcastWatcherService =
   new TransactionBroadcastWatcherService({
@@ -182,14 +207,27 @@ export const transactionBroadcastWatcherService =
     transactionHistoryService,
     transactionWatcherService,
   });
+registerServiceReady(
+  SERVICE_READY_KEYS.transactionBroadcastWatcherService,
+  transactionBroadcastWatcherService,
+);
 
 export const securityEngineService = new SecurityEngineService({
   storageAdapter: appStorage,
 });
+registerServiceReady(
+  SERVICE_READY_KEYS.securityEngineService,
+  securityEngineService,
+);
 
 export const autoConnectService = new AutoConnectService({
   dappService,
+  contactService,
+  keyringService,
+  preferenceService,
+  transactionHistoryService,
 });
+registerServiceReady(SERVICE_READY_KEYS.autoConnectService, autoConnectService);
 
 transactionWatcherService.roll();
 
@@ -222,50 +260,69 @@ syncPendingTxs();
 export const rabbyPointsService = new RabbyPointsService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.rabbyPointsService, rabbyPointsService);
 
 export const swapService = new SwapService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.swapService, swapService);
 
 export const hdKeyringService = new HDKeyringService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.hdKeyringService, hdKeyringService);
 
 export const bridgeService = new BridgeService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.bridgeService, bridgeService);
 
 export const gasAccountService = new GasAccountService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.gasAccountService, gasAccountService);
 
 export const offlineChainService = new OfflineChainService({
   storageAdapter: appStorage,
 });
+registerServiceReady(
+  SERVICE_READY_KEYS.offlineChainService,
+  offlineChainService,
+);
 
 export const browserService = new BrowserService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.browserService, browserService);
 
 export const metamaskModeService = new MetamaskModeService({
   storageAdapter: appStorage,
 });
+registerServiceReady(
+  SERVICE_READY_KEYS.metamaskModeService,
+  metamaskModeService,
+);
 
 export const syncChainService = new SyncChainService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.syncChainService, syncChainService);
 
 export const perpsService = new PerpsService({
   storageAdapter: appStorage,
+  keyringService,
 });
+registerServiceReady(SERVICE_READY_KEYS.perpsService, perpsService);
 
 export const lendingService = new LendingService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.lendingService, lendingService);
 
 export const currencyService = new CurrencyService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.currencyService, currencyService);
 
 export { default as debugLogService } from './debugLogService';
 

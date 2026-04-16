@@ -8,10 +8,11 @@ import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
-import { getAccountList, sortAccountList } from '@/core/apis/account';
+import { getAccountList } from '@/core/apis/account';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater } from '@/core/utils/store';
 import { useMemoizedFn } from 'ahooks';
+import { sortAccountList } from '@/utils/sortAccountList';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 

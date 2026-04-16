@@ -2,6 +2,7 @@ import { SIGN_PERMISSION_TYPES } from '@/constant/permission';
 import { SecurityEngineLevel } from '@/constant/security';
 import { apiSecurityEngine } from '@/core/apis';
 import { openapi } from '@/core/request';
+import { transactionHistoryService } from '@/core/services/shared';
 import {
   dappService,
   notificationService,
@@ -48,10 +49,10 @@ import { toast } from '@/components2024/Toast';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { AccountSelector } from '@/components2024/AccountSelector';
 import { Account } from '@/core/services/preference';
+import { selectDappAccount } from '@/core/dapp/accountSelector';
 import { ConnectSkeleton } from './ConnectSkeleton';
 import { useAccounts, useMyAccounts } from '@/hooks/account';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { getDappAccount } from '@/hooks/useDapps';
 import { Text } from '@/components/Typography';
 
 const RuleDesc = [
@@ -352,7 +353,12 @@ ConnectProps) => {
 
   const init = async () => {
     const site = await dappService.getDapp(origin);
-    const _selectedAccount = getDappAccount({ dappInfo: site, accounts });
+    const _selectedAccount = selectDappAccount({
+      dappInfo: site,
+      accounts,
+      recentTransactions: transactionHistoryService.store.transactions,
+      fallbackAccount: preferenceService.getFallbackAccount(),
+    });
     setSelectedAccount(_selectedAccount);
     let level: 'very_low' | 'low' | 'medium' | 'high' = 'low';
     let collectList: { name: string; logo_url: string }[] = [];

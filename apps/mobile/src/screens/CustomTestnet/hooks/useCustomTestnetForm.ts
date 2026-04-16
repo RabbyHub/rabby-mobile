@@ -1,4 +1,4 @@
-import { TestnetChainBase } from '@/core/services/customTestnetService';
+import type { TestnetChainBase } from '@/core/services/customTestnet.types';
 import { useFormik } from 'formik';
 import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';

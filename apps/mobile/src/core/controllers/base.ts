@@ -1,14 +1,22 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { keyringService } from '../services';
-import { preferenceService } from '@/core/services/shared';
-import { Account } from '../services/preference';
+import type { Account } from '../services/preference';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
+import type KeyringService from '@rabby-wallet/service-keyring';
+import type { PreferenceService } from '@/core/services/preference';
 
 const { isSameAddress } = addressUtils;
 
 class BaseController {
   @Reflect.metadata('PRIVATE', true)
   getCurrentAccount = async () => {
+    const [keyringService, preferenceService] = await Promise.all([
+      getServiceReady<KeyringService>(SERVICE_READY_KEYS.keyringService),
+      getServiceReady<PreferenceService>(SERVICE_READY_KEYS.preferenceService),
+    ]);
     let account: Account | null | undefined =
       preferenceService.getFallbackAccount();
     if (account) {
@@ -38,11 +46,14 @@ class BaseController {
 
   @Reflect.metadata('PRIVATE', true)
   syncGetCurrentAccount = () => {
-    return preferenceService.getFallbackAccount() || null;
+    return null;
   };
 
   @Reflect.metadata('PRIVATE', true)
-  getAccounts = () => {
+  getAccounts = async () => {
+    const keyringService = await getServiceReady<KeyringService>(
+      SERVICE_READY_KEYS.keyringService,
+    );
     return keyringService.getAllVisibleAccountsArray();
   };
 }

@@ -53,7 +53,7 @@ import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
-import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { TabName } from '@/screens/Address/components/MultiAssets/constants';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';

@@ -21,7 +21,7 @@ import {
 } from '@/components2024/ContextMenuView/ContextMenuView';
 import { IS_ANDROID } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
-import { NftItemWithCollection } from '../../hooks/nft';
+import type { NftItemWithCollection } from '@/core/nft/displayTypes';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayNftItem } from '../../types';
 import { KeyringAccountWithAlias } from '@/hooks/account';

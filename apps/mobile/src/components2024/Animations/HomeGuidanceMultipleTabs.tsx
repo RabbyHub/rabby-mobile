@@ -59,7 +59,7 @@ import { zCreate } from '@/core/utils/reexports';
 import { UpdaterOrPartials } from '@/core/utils/store';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
-import { getHomeTabIndicatorWidth } from '@/screens/Home/components/CustomTabBar';
+import { getHomeTabIndicatorWidth } from '@/screens/Home/components/tabIndicator';
 import { Text } from '@/components/Typography';
 const MS_PLAY_ONCE = getLottieAnimationDurationInMS(
   AnimSwipeRightToViewAllAssets,

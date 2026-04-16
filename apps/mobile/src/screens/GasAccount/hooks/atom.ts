@@ -278,13 +278,17 @@ const createSnapshotRefreshRequestId = () => {
 const isLatestSnapshotRefreshRequest = (requestId: number) =>
   requestId === latestSnapshotRefreshRequestId;
 
+let reLoginAfterInvalidSessionHandler: null | (() => Promise<void>) = null;
+
+export function setReLoginAfterInvalidSessionHandler(
+  handler: null | (() => Promise<void>),
+) {
+  reLoginAfterInvalidSessionHandler = handler;
+}
+
 const triggerReLoginAfterInvalidSession = async () => {
   try {
-    const { autoLoginGasAccountIfNeeded, resetAutoLoginFlag } = await import(
-      '@/utils/autoLoginGasAccount'
-    );
-    resetAutoLoginFlag();
-    await autoLoginGasAccountIfNeeded();
+    await reLoginAfterInvalidSessionHandler?.();
   } catch (error) {
     console.error(
       'autoLoginGasAccountIfNeeded after invalidateSession error',

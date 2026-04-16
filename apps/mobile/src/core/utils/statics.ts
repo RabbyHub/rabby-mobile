@@ -1,4 +1,4 @@
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 
 type TaggedTime = {
   [tag: string]: [number, number];

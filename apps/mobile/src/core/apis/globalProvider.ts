@@ -1,20 +1,31 @@
-const store = {
-  provider: null,
-  sendRequest: null,
+import { createDeferred } from '@rabby-wallet/base-utils';
+
+import type { EthereumProvider } from './buildinProvider';
+
+export type GlobalProviderRef = {
+  currentProvider: EthereumProvider;
 };
 
-export function setGlobalProvider(provider: any) {
-  store.provider = provider;
+const providerRef = {
+  current: null as GlobalProviderRef | null,
+};
+
+let providerDeferred = createDeferred<GlobalProviderRef>();
+let hasResolvedProvider = false;
+
+export function registerGlobalProvider(provider: GlobalProviderRef) {
+  providerRef.current = provider;
+
+  if (!hasResolvedProvider) {
+    hasResolvedProvider = true;
+    providerDeferred.resolve(provider);
+  }
 }
 
-export function getGlobalProvider(): any {
-  return store.provider;
-}
+export function getGlobalProvider(): Promise<GlobalProviderRef> {
+  if (providerRef.current) {
+    return Promise.resolve(providerRef.current);
+  }
 
-export function setGlobalTmpStore(nextStore: any) {
-  Object.assign(store, nextStore);
-}
-
-export function getGlobalTmpStore(key: keyof typeof store): any {
-  return store[key];
+  return providerDeferred.promise;
 }

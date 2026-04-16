@@ -8,7 +8,8 @@ import { toast } from '@/components2024/Toast';
 import { devLog } from './logger';
 
 import { AppBuildChannel, BUILD_CHANNEL } from '@/constant/env';
-import { PROD_APPLICATION_ID, APP_URLS, APP_VERSIONS } from '@/constant';
+import { APP_URLS, APP_VERSIONS } from '@/constant';
+import { PROD_APPLICATION_ID } from '@/constant/package';
 import { sleep } from './async';
 
 export type RemoteVersionRes = {

@@ -15,7 +15,7 @@ import { Skeleton } from '@rneui/themed';
 import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { Text } from '@/components/Typography';
-import { formatPercentageKMB } from '@/screens/Meme/components/TokenItem';
+import { formatPercentageKMB } from './priceChange';
 import { isNumber } from 'lodash';
 import { useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';

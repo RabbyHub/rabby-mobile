@@ -31,7 +31,8 @@ import {
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
+import { AddressItemInDetail } from '../AddressItemInDetail';
+import { TxStatusItem } from '../TxStatusItem';
 import { Button } from '@/components2024/Button';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { StackActions } from '@react-navigation/native';

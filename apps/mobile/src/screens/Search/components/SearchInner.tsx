@@ -20,7 +20,7 @@ import {
   DappFirstSearchResult,
 } from '@/screens/Browser/BrowserScreen/components/BrowserSearch/BrowserSearchResult';
 import { useSearchDapps } from '@/screens/Browser/BrowserScreen/hooks/useSearchDapps';
-import { useShowSearchBottomSheet } from './SeachBottomSheet';
+import { useShowSearchBottomSheet } from './state';
 import { useSearchTokens } from '../useSearch';
 import { IS_ANDROID } from '@/core/native/utils';
 import { SearchAssetsOnHome } from './SearchAssetsOnHome';

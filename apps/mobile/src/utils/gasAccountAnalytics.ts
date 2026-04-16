@@ -1,9 +1,17 @@
 import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
-import { gasAccountService } from '@/core/services/shared';
+import type { GasAccountService } from '@/core/services/gasAccount';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
 import { matomoRequestEvent } from '@/utils/analytics';
 
-const fireGasAccountStatusEvent = (hasBalance: boolean) => {
+const getGasAccountService = () =>
+  getServiceReady<GasAccountService>(SERVICE_READY_KEYS.gasAccountService);
+
+const fireGasAccountStatusEvent = async (hasBalance: boolean) => {
+  const gasAccountService = await getGasAccountService();
   matomoRequestEvent({
     category: 'Gas Account',
     action: `GasAccount_On_${hasBalance ? 'True' : 'False'}`,
@@ -26,6 +34,7 @@ const getGasAccountHasBalance = async (sig: string, accountId: string) => {
 };
 
 const syncGasAccountBalanceState = async (sig: string, accountId: string) => {
+  const gasAccountService = await getGasAccountService();
   const hasBalance = await getGasAccountHasBalance(sig, accountId);
   if (typeof hasBalance !== 'boolean') {
     return undefined;
@@ -39,6 +48,7 @@ export const handleGasAccountLoginSuccess = async (
   signature: string,
   account: Account,
 ) => {
+  const gasAccountService = await getGasAccountService();
   const previousSig = gasAccountService.getGasAccountSig();
   const previousBalanceState = gasAccountService.getCurrentBalanceState();
   const wasLoggedIn = !!previousSig.sig && !!previousSig.accountId;
@@ -66,11 +76,12 @@ export const handleGasAccountLoginSuccess = async (
   }
 
   if (!wasLoggedIn || (hadBalance === false && hasBalance)) {
-    fireGasAccountStatusEvent(hasBalance);
+    await fireGasAccountStatusEvent(hasBalance);
   }
 };
 
 const trackGasAccountActiveStatus = async () => {
+  const gasAccountService = await getGasAccountService();
   const { sig, accountId } = gasAccountService.getGasAccountSig();
 
   if (!sig || !accountId) {
@@ -82,11 +93,12 @@ const trackGasAccountActiveStatus = async () => {
     return false;
   }
 
-  fireGasAccountStatusEvent(hasBalance);
+  await fireGasAccountStatusEvent(hasBalance);
   return true;
 };
 
 export const trackGasAccountActiveStatusOncePerDay = async () => {
+  const gasAccountService = await getGasAccountService();
   if (gasAccountService.hasTrackedGa4ActiveToday()) {
     return false;
   }

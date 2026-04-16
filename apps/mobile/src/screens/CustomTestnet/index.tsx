@@ -5,10 +5,10 @@ import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { toast } from '@/components2024/Toast';
 import { AppColorsVariants } from '@/constant/theme';
 import { apiCustomTestnet } from '@/core/apis';
-import {
+import type {
   TestnetChain,
   TestnetChainBase,
-} from '@/core/services/customTestnetService';
+} from '@/core/services/customTestnet.types';
 import { useThemeColors } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DisplayNftItem } from '../types';
+import {
+  CombineNFTItem,
+  DisplayNftItem,
+  NftItemWithCollection,
+} from '@/core/nft/displayTypes';
 import { NFTItem, CollectionList } from '@rabby-wallet/rabby-api/dist/types';
 import { useSingleNftRefresh } from './refresh';
 import { debounce } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { CombineNFTItem } from './store';
 import { apisAddrChainStatics } from '../useChainInfo';
 import { useDebouncedValue } from '@/hooks/common/delayLikeValue';
 import nftListStore from '@/store/nfts';
@@ -143,7 +146,6 @@ export const useQueryNft = (addr?: string, visible = true) => {
 type CombineCollectionList = CollectionList & {
   address?: string;
 };
-export type NftItemWithCollection = CombineNFTItem | CombineCollectionList;
 
 export function varyNftListByFold<T extends any>(
   nftList: CombineNFTItem[],

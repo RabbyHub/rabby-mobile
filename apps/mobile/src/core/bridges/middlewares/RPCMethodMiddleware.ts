@@ -1,12 +1,16 @@
 import { createAsyncMiddleware } from 'json-rpc-engine';
 
 import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
-import { keyringService } from '@/core/services';
 import { dappSendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
 import { getActiveDappState, isRpcAllowed } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
 import { SAFE_RPC_METHODS, SELF_CHECK_RPC_METHOD } from '@/constant/rpc';
+import type KeyringService from '@rabby-wallet/service-keyring';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
 
 let appVersion = '';
 
@@ -31,13 +35,18 @@ export enum ApprovalTypes {
 
 export type RefLikeObject<T> = { current: T };
 
+export interface RPCMethodMiddlewareBridge {
+  webviewId: string;
+  isFromMobileInnerDapp: boolean;
+}
+
 export interface RPCMethodsMiddleParameters {
   hostname: string;
   // navigation: any;
   urlRef: RefLikeObject<string>;
   titleRef: RefLikeObject<string>;
   iconRef: RefLikeObject<string | undefined>;
-  bridge: import('../BackgroundBridge').BackgroundBridge;
+  bridge: RPCMethodMiddlewareBridge;
   // // Bookmarks
   // isHomepage: () => boolean;
   // // Show autocomplete
@@ -70,6 +79,9 @@ RPCMethodsMiddleParameters) =>
   createAsyncMiddleware<{}, any>(async (req, res, next) => {
     // Used by eth_accounts and eth_coinbase RPCs.
     const getEthAccounts = async () => {
+      const keyringService = await getServiceReady<KeyringService>(
+        SERVICE_READY_KEYS.keyringService,
+      );
       const accounts = await keyringService.getAccounts();
 
       res.result = accounts;

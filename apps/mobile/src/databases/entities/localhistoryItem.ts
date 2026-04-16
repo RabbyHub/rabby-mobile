@@ -10,8 +10,8 @@ import {
 import { prepareAppDataSource } from '../imports';
 import BigNumber from 'bignumber.js';
 import { findChain } from '@/utils/chain';
-import { TransactionHistoryItem } from '@/core/services/transactionHistory';
-import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import type { TransactionHistoryItem } from '@/core/history/txTypes';
+import { HistoryItemCateType } from '@/core/history/types';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';
 import { ParseEntity } from '@/core/utils/typeorm';

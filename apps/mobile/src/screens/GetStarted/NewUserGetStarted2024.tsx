@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { RcIconLogoBlue } from '@/assets/icons/common';
@@ -19,7 +19,7 @@ import {
   useCreateAddressProc,
   useImportAddressProc,
 } from '@/hooks/address/useNewUser';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import {
   useSafeAreaFrame,
@@ -29,10 +29,12 @@ import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { recordStartupProbeOnce } from '@/debug/startupProbe';
 
 function GetStartedScreen2024(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+  const didLayoutRef = React.useRef(false);
 
   const [getStaretd, setGetStaretd] = useState<{
     localHasAccounts: boolean;
@@ -169,7 +171,20 @@ function GetStartedScreen2024(): JSX.Element {
   }, [bottom, height, top, WHeight]);
 
   return (
-    <View style={styles.screen}>
+    <View
+      style={styles.screen}
+      onLayout={() => {
+        if (didLayoutRef.current) {
+          return;
+        }
+
+        didLayoutRef.current = true;
+        recordStartupProbeOnce('GET_STARTED_LAYOUT', {
+          flags: {
+            firstSafeUnlockFrame: true,
+          },
+        });
+      }}>
       <View style={offsetAreaStyle} />
       <View style={styles.contentArea}>
         <View style={styles.centerWrapper}>

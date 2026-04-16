@@ -2,12 +2,6 @@ import semver from 'semver';
 import * as Sentry from '@sentry/react-native';
 
 import { APP_VERSIONS } from '@/constant';
-import {
-  GET_SERVICE_BY_NAME,
-  MIGRATABLE_STORE_SERVICE,
-  STORE_BASED_SERVICE,
-  STORE_SERVICE_MAP,
-} from '@/core/storage/storeConstant';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import {
@@ -15,6 +9,12 @@ import {
   sortMigrationByUTC0DateVer,
   UTC0LikeVer,
 } from './datever';
+import type {
+  GET_SERVICE_BY_NAME,
+  MIGRATABLE_STORE_SERVICE,
+  STORE_BASED_SERVICE,
+  STORE_SERVICE_MAP,
+} from './serviceTypes';
 
 const APP_VER = APP_VERSIONS.fromJs;
 

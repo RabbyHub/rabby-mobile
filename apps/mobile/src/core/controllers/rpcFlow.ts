@@ -4,17 +4,8 @@ import { ethErrors } from 'eth-rpc-errors';
 //   notificationService,
 //   permissionService,
 // } from 'background/service';
-import {
-  autoConnectService,
-  dappService,
-  keyringService,
-  notificationService,
-  preferenceService,
-} from '../services';
 import PromiseFlow from '@/utils/promiseFlow';
-import providerController from './provider';
 // import eventBus from '@/eventBus';
-import { ProviderRequest } from './type';
 import * as Sentry from '@sentry/react-native';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
@@ -26,16 +17,27 @@ import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
-import { find, reject } from 'lodash';
 import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
 import BigNumber from 'bignumber.js';
+import { selectDappAccount } from '@/core/dapp/accountSelector';
 import { getAccountList } from '../apis/account';
-import { getDappAccount } from '@/hooks/useDapps';
 import { shouldAutoConnect, shouldAutoPersonalSign } from './autoConnect';
 import { openapi } from '../request';
-import { Account } from '../services/preference';
+import type KeyringService from '@rabby-wallet/service-keyring';
+import type { AutoConnectService } from '@/core/services/autoConnect';
+import type { DappService } from '@/core/services/dappService';
+import type { NotificationService } from '@/core/services/notification';
+import type { PreferenceService } from '@/core/services/preference';
+import type { Account } from '../services/preference';
+import type { ProviderRequest } from './type';
+import type { TransactionHistoryService } from '@/core/services/transactionHistory';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
+import { getProviderController } from './provider';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -63,6 +65,7 @@ const flowContext = flow
       data: { method },
     } = ctx.request;
     ctx.mapMethod = underline2Camelcase(method);
+    const providerController = await getProviderController();
 
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check method');
@@ -95,11 +98,18 @@ const flowContext = flow
         session: { origin },
       },
     } = ctx;
+    const providerController = await getProviderController();
 
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check lock');
 
     if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
+      const [keyringService, notificationService] = await Promise.all([
+        getServiceReady<KeyringService>(SERVICE_READY_KEYS.keyringService),
+        getServiceReady<NotificationService>(
+          SERVICE_READY_KEYS.notificationService,
+        ),
+      ]);
       // check lock
       const isUnlock = keyringService.memStore.getState().isUnlocked;
 
@@ -138,9 +148,31 @@ const flowContext = flow
     } = ctx;
 
     const { isFromMobileInnerDapp } = $mobileCtx || {};
+    const providerController = await getProviderController();
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check connect');
     if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
+      const [
+        autoConnectService,
+        dappService,
+        notificationService,
+        preferenceService,
+        transactionHistoryService,
+      ] = await Promise.all([
+        getServiceReady<AutoConnectService>(
+          SERVICE_READY_KEYS.autoConnectService,
+        ),
+        getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+        getServiceReady<NotificationService>(
+          SERVICE_READY_KEYS.notificationService,
+        ),
+        getServiceReady<PreferenceService>(
+          SERVICE_READY_KEYS.preferenceService,
+        ),
+        getServiceReady<TransactionHistoryService>(
+          SERVICE_READY_KEYS.transactionHistoryService,
+        ),
+      ]);
       if (!dappService.hasPermission(origin)) {
         if (connectOrigins.has(origin)) {
           throw ethErrors.rpc.resourceNotFound(
@@ -163,9 +195,11 @@ const flowContext = flow
           ) {
             const site = dappService.getDapp(origin);
             const { accounts } = await getAccountList();
-            defaultAccount = getDappAccount({
+            defaultAccount = selectDappAccount({
               dappInfo: site,
               accounts,
+              recentTransactions: transactionHistoryService.store.transactions,
+              fallbackAccount: preferenceService.getFallbackAccount(),
             })!;
             defaultChain =
               site?.chainId && findChain({ enum: site.chainId })
@@ -242,6 +276,13 @@ const flowContext = flow
     const isFromMobileInnerDapp = $mobileCtx?.isFromMobileInnerDapp;
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check need approval');
+    const providerController = await getProviderController();
+    const [dappService, notificationService] = await Promise.all([
+      getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+      getServiceReady<NotificationService>(
+        SERVICE_READY_KEYS.notificationService,
+      ),
+    ]);
     const [approvalType, condition, options = {}] =
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
 
@@ -275,7 +316,7 @@ const flowContext = flow
       ctx.request.data.params[0] = message;
       ctx.request.data.params[1] = from;
     }
-    if (approvalType && (!condition || !condition(ctx.request))) {
+    if (approvalType && (!condition || !(await condition(ctx.request)))) {
       ctx.request.requestedApproval = true;
       if (approvalType === 'SignTx' && !('chainId' in params[0])) {
         const site = dappService.getConnectedDapp(origin);
@@ -290,12 +331,12 @@ const flowContext = flow
       }
       if (
         !isFromMobileInnerDapp ||
-        !shouldAutoPersonalSign({
+        !(await shouldAutoPersonalSign({
           origin,
           method: ctx.request.data.method,
           account: ctx.request.account,
           msgParams: ctx.request.data.params,
-        })
+        }))
       ) {
         ctx.approvalRes = await notificationService.requestApproval(
           {
@@ -328,6 +369,13 @@ const flowContext = flow
     return next();
   })
   .use(async ctx => {
+    const providerController = await getProviderController();
+    const [dappService, notificationService] = await Promise.all([
+      getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+      getServiceReady<NotificationService>(
+        SERVICE_READY_KEYS.notificationService,
+      ),
+    ]);
     const { approvalRes, mapMethod, request } = ctx;
     // process request
     const [approvalType] =
@@ -343,17 +391,17 @@ const flowContext = flow
 
     const isAutoPersonalSign =
       isFromMobileInnerDapp &&
-      shouldAutoPersonalSign({
+      (await shouldAutoPersonalSign({
         origin,
         method: ctx.request.data.method,
         account: ctx.request.account,
         msgParams: ctx.request.data.params,
-      });
+      }));
 
     const createRequestDeferFn =
       (originApprovalRes: typeof approvalRes) =>
       async (isRetry = false) =>
-        new Promise(async resolve => {
+        new Promise(async (resolve, reject) => {
           let waitSignComponentPromise = Promise.resolve();
           if (
             !isAutoPersonalSign &&
@@ -479,7 +527,7 @@ const flowContext = flow
     if (!isAutoPersonalSign && uiRequestComponent) {
       ctx.request.requestedApproval = true;
       const result = await requestApprovalLoop({ uiRequestComponent, ...rest });
-      reportStatsData();
+      await reportStatsData();
       if (rest?.safeMessage) {
         const safeMessage: {
           safeAddress: string;
@@ -509,7 +557,10 @@ const flowContext = flow
   })
   .callback();
 
-function reportStatsData() {
+async function reportStatsData() {
+  const notificationService = await getServiceReady<NotificationService>(
+    SERVICE_READY_KEYS.notificationService,
+  );
   const statsData = notificationService.getStatsData();
   if (!statsData || statsData.reported) return;
   if (statsData?.signed) {
@@ -552,6 +603,9 @@ export default async (request: ProviderRequest) => {
   };
   try {
     const origin = request.origin || request.session.origin;
+    const dappService = await getServiceReady<DappService>(
+      SERVICE_READY_KEYS.dappService,
+    );
     const dapp = dappService.getDapp(origin);
     if (dapp && !dapp.isDapp) {
       dappService.updateDapp({
@@ -560,9 +614,12 @@ export default async (request: ProviderRequest) => {
       });
     }
   } catch (e) {}
+  const notificationService = await getServiceReady<NotificationService>(
+    SERVICE_READY_KEYS.notificationService,
+  );
   notificationService.setStatsData();
-  return flowContext(ctx).finally(() => {
-    reportStatsData();
+  return flowContext(ctx).finally(async () => {
+    await reportStatsData();
 
     if (ctx.request.requestedApproval) {
       flow.requestedApproval = false;

@@ -2,7 +2,7 @@ import RcIconDelete from '@/assets/icons/custom-testnet/delete-cc.svg';
 import RcIconEdit from '@/assets/icons/custom-testnet/edit-cc.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { AppColorsVariants } from '@/constant/theme';
-import { TestnetChain } from '@/core/services/customTestnetService';
+import type { TestnetChain } from '@/core/services/customTestnet.types';
 import { useThemeColors } from '@/hooks/theme';
 import { useMemoizedFn } from 'ahooks';
 import { EventEmitter } from 'ahooks/lib/useEventEmitter';
@@ -24,7 +24,7 @@ export const CustomTestnetItem = ({
   onRemove,
   onPress,
   editable,
-  disabled,
+  disabled: _disabled,
   close$,
 }: {
   style?: StyleProp<ViewStyle>;
@@ -51,7 +51,7 @@ export const CustomTestnetItem = ({
   const renderRightActions = useMemoizedFn(
     (
       progress: Animated.AnimatedInterpolation<number>,
-      dragX: Animated.AnimatedInterpolation<number>,
+      _dragX: Animated.AnimatedInterpolation<number>,
     ) => {
       const trans = [128, 64].map(x => {
         return progress.interpolate({

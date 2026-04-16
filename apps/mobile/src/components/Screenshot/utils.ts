@@ -1,7 +1,8 @@
 import { Platform } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 
-import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
+import { APP_VERSIONS } from '@/constant';
+import { APPLICATION_ID } from '@/constant/package';
 import { BUILD_GIT_INFO } from '@/constant/env';
 import { getAllAccounts } from '@/core/apis/address';
 import { getLatestNavigationName } from '@/utils/navigation';

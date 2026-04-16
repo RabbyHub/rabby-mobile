@@ -25,11 +25,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  varyNftListByFold,
-  NftItemWithCollection,
-  useQueryNft,
-} from './hooks/nft';
+import { varyNftListByFold, useQueryNft } from './hooks/nft';
+import type { NftItemWithCollection } from '@/core/nft/displayTypes';
 import { EmptyAssets } from './components/AssetRenderItems/EmptyAssets';
 import { ItemLoader } from './components/Skeleton';
 import {

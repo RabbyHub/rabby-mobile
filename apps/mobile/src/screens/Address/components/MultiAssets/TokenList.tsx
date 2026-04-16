@@ -24,7 +24,7 @@ import { isTabsSwiping, useAccountInfo } from './hooks';
 import { useCurrency } from '@/hooks/useCurrency';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
-import { TabName } from './TabsMultiAssets';
+import { TabName } from './constants';
 import useTokenList, {
   getMultiAssetsCacheKey,
   ITokenItem,

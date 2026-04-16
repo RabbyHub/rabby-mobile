@@ -15,7 +15,7 @@ import { GestureDetector, RefreshControl } from 'react-native-gesture-handler';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useLoadMoreData from './hooks/useLoadMoreData';
-import { TAB_HEADER_FULL_HEIGHT, TabName } from './TabsMultiAssets';
+import { TAB_HEADER_FULL_HEIGHT, TabName } from './constants';
 import {
   ListRenderFooter as ListRenderFooterComponent,
   ListRenderSeparator,

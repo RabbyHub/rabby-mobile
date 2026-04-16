@@ -8,8 +8,13 @@ import {
 } from '@/components2024/DappFrameAccountHeader';
 import DappWebViewCore from '@/components/WebView/DappWebViewCore';
 import { apisDapp } from '@/core/apis';
+import { selectDappAccount } from '@/core/dapp/accountSelector';
+import {
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services/shared';
 import { useAccounts } from '@/hooks/account';
-import { useDappsValue, getDappAccount } from '@/hooks/useDapps';
+import { useDappsValue } from '@/hooks/useDapps';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -58,7 +63,12 @@ export const InnerDappWebViewScreen = ({
   }, [dapps, dappOrigin]);
 
   const account = useMemo(() => {
-    return getDappAccount({ dappInfo, accounts });
+    return selectDappAccount({
+      dappInfo,
+      accounts,
+      recentTransactions: transactionHistoryService.store.transactions,
+      fallbackAccount: preferenceService.getFallbackAccount(),
+    });
   }, [accounts, dappInfo]);
 
   const handleSelectAccount = (nextAccount: Account) => {

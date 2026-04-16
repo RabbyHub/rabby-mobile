@@ -12,6 +12,7 @@ import { ETHSign } from './ETHSign/ETHSign';
 import { Unknown } from './Unknown/Unknown';
 import { AddChain } from './AddChain/AddChain';
 import { AddAsset } from './AddAsset/AddAsset';
+import type { ApprovalComponentType } from './types';
 
 export const ApprovalComponent = {
   Connect,
@@ -28,5 +29,3 @@ export const ApprovalComponent = {
   AddChain,
   AddAsset,
 };
-
-export type ApprovalComponentType = keyof typeof ApprovalComponent;

@@ -12,11 +12,11 @@ import {
 
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { BALANCE_HIDE_TYPE } from '@/constant/balance';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useCurrency } from '@/hooks/useCurrency';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
 import { trigger } from 'react-native-haptic-feedback';
-import { BALANCE_HIDE_TYPE } from '../hooks/useHideBalance';
 import BigNumber from 'bignumber.js';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { apisSingleHome } from '../hooks/singleHome';

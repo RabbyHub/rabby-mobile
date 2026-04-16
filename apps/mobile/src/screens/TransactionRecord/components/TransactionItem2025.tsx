@@ -27,7 +27,8 @@ import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
+import type { TokenChangeDataItem } from '@/core/history/display';
+import { TxStatusItem } from '@/screens/Transaction/components/TxStatusItem';
 import { getAliasName } from '@/core/apis/contact';
 import { findChain } from '@/utils/chain';
 import { transactionHistoryService } from '@/core/services';
@@ -35,7 +36,6 @@ import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
 } from '@/screens/Transaction/components/type';
-import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
 import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryItemTokenArea';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { ellipsisAddress } from '@/utils/address';
@@ -290,6 +290,11 @@ export const TransactionItem = ({
   }, [data]);
 
   const formatTitle = useMemo(() => {
+    const approveTokenSymbol =
+      tokenApproveData[0]?.token_id?.length === 32
+        ? 'NFT'
+        : getTokenSymbol(tokenApproveData[0]?.token as TokenItem | undefined);
+
     if (data.customActionInfo.customActionTitleType) {
       switch (data.customActionInfo.customActionTitleType) {
         case CUSTOM_HISTORY_TITLE_TYPE.LENDING_SUPPLY:
@@ -330,14 +335,11 @@ export const TransactionItem = ({
         return (
           t('page.transactions.itemTitle.Approve') +
           ' ' +
-          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
+          ellipsisOverflowedText(approveTokenSymbol, 6)
         );
       case HistoryItemCateType.Revoke:
         return t('page.transactions.itemTitle.Revoke', {
-          token: ellipsisOverflowedText(
-            getTokenSymbol(tokenApproveData[0].token),
-            6,
-          ),
+          token: ellipsisOverflowedText(approveTokenSymbol, 6),
         });
       case HistoryItemCateType.Cancel:
         return t('page.transactions.itemTitle.Cancel');

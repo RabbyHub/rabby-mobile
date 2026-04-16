@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { TabName } from '@/screens/Address/components/MultiAssets/constants';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 export function useReportTokenTabView(params: {

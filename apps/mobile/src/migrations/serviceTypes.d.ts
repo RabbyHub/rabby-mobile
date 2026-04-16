@@ -1,0 +1,51 @@
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import type { ContactBookService } from '@rabby-wallet/service-address';
+import type { BrowserHistoryService } from '@/core/services/browserHistoryService';
+import type { BrowserService } from '@/core/services/browserService';
+import type { BridgeService } from '@/core/services/bridge';
+import type { CurrencyService } from '@/core/services/currencyService';
+import type { DappService } from '@/core/services/dappService';
+import type { GasAccountService } from '@/core/services/gasAccount';
+import type { HDKeyringService } from '@/core/services/hdKeyringService';
+import type { LendingService } from '@/core/services/lendingService';
+import type { MetamaskModeService } from '@/core/services/metamaskModeService';
+import type { OfflineChainService } from '@/core/services/offlineChain';
+import type { PerpsService } from '@/core/services/perpsService';
+import type { PreferenceService } from '@/core/services/preference';
+import type { RabbyPointsService } from '@/core/services/rabbyPoints';
+import type { SecurityEngineService } from '@/core/services/securityEngine';
+import type { SwapService } from '@/core/services/swap';
+import type { SyncChainService } from '@/core/services/syncChainService';
+import type { TransactionBroadcastWatcherService } from '@/core/services/transactionBroadcastWatcher';
+import type { TransactionHistoryService } from '@/core/services/transactionHistory';
+import type { TransactionWatcherService } from '@/core/services/transactionWatcher';
+import type { WhitelistService } from '@/core/services/whitelist';
+
+export type STORE_SERVICE_MAP = {
+  [APP_STORE_NAMES.contactBook]: ContactBookService;
+  [APP_STORE_NAMES.HDKeyRingLastAddAddrTime]: HDKeyringService;
+  [APP_STORE_NAMES.dapps]: DappService;
+  [APP_STORE_NAMES.browserHistory]: BrowserHistoryService;
+  [APP_STORE_NAMES.preference]: PreferenceService;
+  [APP_STORE_NAMES.whitelist]: WhitelistService;
+  [APP_STORE_NAMES.txHistory]: TransactionHistoryService;
+  [APP_STORE_NAMES.transactions]: TransactionWatcherService;
+  [APP_STORE_NAMES.transactionBroadcastWatcher]: TransactionBroadcastWatcherService;
+  [APP_STORE_NAMES.securityEngine]: SecurityEngineService;
+  [APP_STORE_NAMES.RabbyPoints]: RabbyPointsService;
+  [APP_STORE_NAMES.swap]: SwapService;
+  [APP_STORE_NAMES.bridge]: BridgeService;
+  [APP_STORE_NAMES.gasAccount]: GasAccountService;
+  [APP_STORE_NAMES.offlineChain]: OfflineChainService;
+  [APP_STORE_NAMES.browser]: BrowserService;
+  [APP_STORE_NAMES.metamaskMode]: MetamaskModeService;
+  [APP_STORE_NAMES.syncChain]: SyncChainService;
+  [APP_STORE_NAMES.perps]: PerpsService;
+  [APP_STORE_NAMES.lending]: LendingService;
+  [APP_STORE_NAMES.currency]: CurrencyService;
+};
+
+export type MIGRATABLE_STORE_SERVICE = keyof STORE_SERVICE_MAP;
+export type STORE_BASED_SERVICE = STORE_SERVICE_MAP[MIGRATABLE_STORE_SERVICE];
+export type GET_SERVICE_BY_NAME<T extends MIGRATABLE_STORE_SERVICE> =
+  STORE_SERVICE_MAP[T];

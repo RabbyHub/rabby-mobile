@@ -1,5 +1,8 @@
 import { Account } from '@/core/services/preference';
-import { dappService } from '@/core/services';
+import {
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services/shared';
 import { formatNetworth } from '@/utils/math';
 import { formatUsdValue } from '@/utils/number';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -8,13 +11,11 @@ import { useShallow } from 'zustand/shallow';
 import useProtocolListStore from '@/store/protocols';
 import useAppChainStore from '@/store/appchain';
 import { DappSelectItem } from './constants';
-import { getDappAccount, useDapps } from '@/hooks/useDapps';
+import { selectDappAccount } from '@/core/dapp/accountSelector';
+import { useDapps } from '@/hooks/useDapps';
 import { useAccounts } from '@/hooks/account';
-import { perpsStore as usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
-
-const ORIGIN_PNG_IDS = new Set(['venus', 'hyperliquid']);
 
 const getOriginKey = (url?: string) => {
   if (!url) {
@@ -109,7 +110,12 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
 
       const dappInfo = dapps[dappOrigin];
       let dappAccount: Account | null;
-      dappAccount = getDappAccount({ dappInfo, accounts });
+      dappAccount = selectDappAccount({
+        dappInfo,
+        accounts,
+        recentTransactions: transactionHistoryService.store.transactions,
+        fallbackAccount: preferenceService.getFallbackAccount(),
+      });
       if (item.id === 'aave') {
         dappAccount = aaveLendingAccount;
       }
@@ -128,10 +134,6 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
         return {
           ...item,
           value: undefined,
-          // remoteUrl: ORIGIN_PNG_IDS.has(item.id)
-          //   ? undefined
-          //   : dappService.getDapp(originKey || item.url || '')?.info
-          //       ?.logo_url || undefined,
         };
       }
       const netWorth =
@@ -142,10 +144,6 @@ export const useDappListWithValue = ({ dAppList }: Params) => {
       return {
         ...item,
         value: formatNetworth(netWorth),
-        // remoteUrl: ORIGIN_PNG_IDS.has(item.id)
-        //   ? undefined
-        //   : dappService.getDapp(originKey || item.url || '')?.info?.logo_url ||
-        //     undefined,
       };
     });
   }, [

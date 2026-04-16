@@ -1,8 +1,10 @@
 import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
+import type { ContactBookService } from '@rabby-wallet/service-address';
+import type KeyringService from '@rabby-wallet/service-keyring';
 import { LRUCache } from 'lru-cache';
+import type { KeyringAccountWithAlias } from '@/core/account/utils';
+import { selectDappAccount } from '@/core/dapp/accountSelector';
 import { openapi } from '../request';
-import { getAccountList } from '../apis/account';
-import { getDappAccount } from '@/hooks/useDapps';
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 
@@ -42,14 +44,38 @@ const COUNT = 2;
 
 export class AutoConnectService {
   dappService: import('./dappService').DappService;
+  contactService: ContactBookService;
+  keyringService: KeyringService;
+  preferenceService: import('./preference').PreferenceService;
+  transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
 
   constructor(
     options: StorageAdapaterOptions & {
       dappService: import('./dappService').DappService;
+      contactService: ContactBookService;
+      keyringService: KeyringService;
+      preferenceService: import('./preference').PreferenceService;
+      transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
     },
   ) {
     this.dappService = options.dappService;
+    this.contactService = options.contactService;
+    this.keyringService = options.keyringService;
+    this.preferenceService = options.preferenceService;
+    this.transactionHistoryService = options.transactionHistoryService;
   }
+
+  private loadAccounts = async (): Promise<KeyringAccountWithAlias[]> => {
+    const [accounts, aliasMap] = await Promise.all([
+      this.keyringService.getAllVisibleAccountsArray(),
+      this.contactService.getAliasByMap(),
+    ]);
+
+    return accounts.map(account => ({
+      ...account,
+      aliasName: aliasMap[account.address.toLowerCase()]?.alias || '',
+    }));
+  };
 
   autoConnect = async (origin: string) => {
     try {
@@ -80,11 +106,13 @@ export class AutoConnectService {
       ) {
         defaultChain = site.chainId;
       }
-      const { accounts } = await getAccountList();
-      const defaultAccount = getDappAccount({
+      const accounts = await this.loadAccounts();
+      const defaultAccount = selectDappAccount({
         dappInfo: site,
         accounts,
-      })!;
+        recentTransactions: this.transactionHistoryService.store.transactions,
+        fallbackAccount: this.preferenceService.getFallbackAccount(),
+      });
 
       if (defaultAccount && !defaultChain) {
         const recommendChains = await getRecommendChains(
@@ -135,11 +163,13 @@ export class AutoConnectService {
       ) {
         return;
       }
-      const { accounts } = await getAccountList();
-      const defaultAccount = getDappAccount({
+      const accounts = await this.loadAccounts();
+      const defaultAccount = selectDappAccount({
         dappInfo: site,
         accounts,
-      })!;
+        recentTransactions: this.transactionHistoryService.store.transactions,
+        fallbackAccount: this.preferenceService.getFallbackAccount(),
+      });
 
       if (defaultAccount) {
         getRecommendChains(defaultAccount.address, origin);

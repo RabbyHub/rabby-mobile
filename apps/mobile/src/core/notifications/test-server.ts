@@ -1,7 +1,7 @@
 import { getDevServerHost, DevServerScene } from '../utils/devServerSettings';
 import { makeMobileClientPushInfo } from '../apis/device';
 import { RABBY_MOBILE_FE_SERVICE_URL } from '@/constant/env';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { preferenceService } from '../services';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { checkIfEnabledNotificationWithPermission } from './switch';

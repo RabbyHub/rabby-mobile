@@ -1,7 +1,7 @@
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { getActionsStyle } from '../Actions';
+import { getActionsStyle } from '../Actions/style';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Card } from '../Actions/components/Card';
 import { Divide } from '../Actions/components/Divide';

@@ -1,22 +1,24 @@
 import { keyBy } from 'lodash';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { keyringService } from '../services';
-import {
-  autoConnectService,
-  dappService,
-  metamaskModeService,
-} from '@/core/services/shared';
-import providerController from './provider';
+import type KeyringService from '@rabby-wallet/service-keyring';
 import { findChain, findChainByEnum } from '@/utils/chain';
-import { ProviderRequest } from './type';
 import { createDappBySession } from '../apis/dapp';
 import { openapi } from '../request';
+import type { ProviderRequest } from './type';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
+import type { AutoConnectService } from '@/core/services/autoConnect';
+import type { DappService } from '@/core/services/dappService';
+import type { MetamaskModeService } from '@/core/services/metamaskModeService';
+import { getProviderController } from './provider';
 
 const networkIdMap: {
   [key: string]: string;
 } = {};
 
-const tabCheckin = ({
+const tabCheckin = async ({
   data: {
     params: { name, icon, userAgent },
   },
@@ -30,6 +32,10 @@ const tabCheckin = ({
   // }
   console.debug('[tabCheckin]', origin, name, icon, userAgent);
 
+  const [dappService, autoConnectService] = await Promise.all([
+    getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+    getServiceReady<AutoConnectService>(SERVICE_READY_KEYS.autoConnectService),
+  ]);
   const dapp = dappService.getDapp(origin);
   if (!dapp) {
     dappService.addDapp(
@@ -55,9 +61,14 @@ const getProviderState = async (req: ProviderRequest) => {
   const {
     session: { origin },
   } = req;
+  const [dappService, keyringService] = await Promise.all([
+    getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+    getServiceReady<KeyringService>(SERVICE_READY_KEYS.keyringService),
+  ]);
   const chainEnum = dappService.getDapp(origin)?.chainId || CHAINS_ENUM.ETH;
   const isUnlocked = keyringService.memStore.getState().isUnlocked;
   let networkVersion = '1';
+  const providerController = await getProviderController();
   if (networkIdMap[chainEnum]) {
     networkVersion = networkIdMap[chainEnum];
   } else {
@@ -106,6 +117,9 @@ const getIsMetamaskMode = async (req: ProviderRequest) => {
   if (!origin) {
     return false;
   }
+  const metamaskModeService = await getServiceReady<MetamaskModeService>(
+    SERVICE_READY_KEYS.metamaskModeService,
+  );
   return metamaskModeService.checkIsMetamaskMode(origin);
 };
 

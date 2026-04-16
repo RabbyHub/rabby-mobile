@@ -1,24 +1,36 @@
-import { SessionProp } from './../services/session';
-import { DappInfo } from '@/core/services/dappService';
-import { dappService } from '../services';
-import { preferenceService, sessionService } from '../services/shared';
+import type { SessionProp } from './../services/session';
+import type { DappInfo } from '@/core/services/dappService';
+import type { DappService } from '@/core/services/dappService';
 import { BroadcastEvent } from '@/constant/event';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '../request';
 import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { cached } from '@/utils/cache';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { getAllAccountsToDisplay } from './account';
+import { getAllAccountsToDisplay } from '@/core/account/display';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
+import type { PreferenceService } from '@/core/services/preference';
+import type { SessionService } from '@/core/services/session';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { sortAccountList } from '@/utils/sortAccountList';
 import { findChain } from '@/utils/chain';
 
-export const removeDapp = (origin: string) => {
-  disconnect(origin);
+export const removeDapp = async (origin: string) => {
+  const dappService = await getServiceReady<DappService>(
+    SERVICE_READY_KEYS.dappService,
+  );
+  await disconnect(origin);
   dappService.removeDapp(origin);
 };
 
-export const disconnect = (origin: string) => {
+export const disconnect = async (origin: string) => {
+  const [dappService, sessionService] = await Promise.all([
+    getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+    getServiceReady<SessionService>(SERVICE_READY_KEYS.sessionService),
+  ]);
   if (!dappService.hasPermission(origin)) {
     return;
   }
@@ -39,6 +51,10 @@ export const connect = async ({
   info?: BasicDappInfo;
   currentAccount?: DappInfo['currentAccount'];
 }) => {
+  const [dappService, preferenceService] = await Promise.all([
+    getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+    getServiceReady<PreferenceService>(SERVICE_READY_KEYS.preferenceService),
+  ]);
   const dapp = dappService.getDapp(origin);
   const allAccounts = await getAllAccountsToDisplay();
   const pinAddresses = preferenceService.getPinAddresses();
@@ -96,10 +112,15 @@ export const connect = async ({
   syncBasicDappInfo(origin);
 };
 
-export function setCurrentAccountForDapp(
+export async function setCurrentAccountForDapp(
   origin: string,
   currentAccount?: DappInfo['currentAccount'],
 ) {
+  const [dappService, preferenceService, sessionService] = await Promise.all([
+    getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+    getServiceReady<PreferenceService>(SERVICE_READY_KEYS.preferenceService),
+    getServiceReady<SessionService>(SERVICE_READY_KEYS.sessionService),
+  ]);
   if (currentAccount === undefined) {
     currentAccount = preferenceService.getFallbackAccount();
   }
@@ -159,12 +180,17 @@ export const createDappBySession = ({
 };
 
 export const syncBasicDappInfo = async (origin: string | string[]) => {
+  const dappService = await getServiceReady<DappService>(
+    SERVICE_READY_KEYS.dappService,
+  );
   const input = Array.isArray(origin) ? origin : [origin];
   const ids = input
     .filter(item => !!item)
     .map(item => item.replace(/^https?:\/\//, ''));
 
-  if (!ids.length) return;
+  if (!ids.length) {
+    return;
+  }
 
   const res = await openapi.getDappsInfo({
     ids: ids,
@@ -186,7 +212,10 @@ export const syncBasicDappInfo = async (origin: string | string[]) => {
 };
 
 export const syncBasicDappsInfo = async () => {
-  const dapps = Object.values(dappService.getDapps());
+  const dappService = await getServiceReady<DappService>(
+    SERVICE_READY_KEYS.dappService,
+  );
+  const dapps = Object.values(dappService.getDapps()) as DappInfo[];
   const ids = dapps
     .filter(
       item =>
@@ -220,7 +249,11 @@ export const syncBasicDappsInfo = async () => {
   }
 };
 
-export const updateDappChain = (dapp: DappInfo) => {
+export const updateDappChain = async (dapp: DappInfo) => {
+  const [dappService, sessionService] = await Promise.all([
+    getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+    getServiceReady<SessionService>(SERVICE_READY_KEYS.sessionService),
+  ]);
   dappService.updateDapp(dapp);
   const chain = findChain({
     enum: dapp.chainId,

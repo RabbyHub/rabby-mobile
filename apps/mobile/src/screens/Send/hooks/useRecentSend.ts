@@ -6,7 +6,7 @@ import {
   SendTxHistoryItem,
 } from '@/core/services/transactionHistory';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import { findChain } from '@/utils/chain';
 import { SendRequireData } from '@rabby-wallet/rabby-action';
 import { useInterval, useMemoizedFn, useRequest } from 'ahooks';

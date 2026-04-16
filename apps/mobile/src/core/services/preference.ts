@@ -6,21 +6,21 @@ import i18n, { SupportedLang } from '@/utils/i18n';
 import dayjs from 'dayjs';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { BALANCE_HIDE_TYPE } from '@/constant/balance';
 import createPersistStore, {
   StorageAdapaterOptions,
   StoreServiceBase,
 } from '@rabby-wallet/persist-store';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/core/account/utils';
 import { BroadcastEvent } from '@/constant/event';
 import KeyringService from '@rabby-wallet/service-keyring';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from './_utils';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
 
 const { isSameAddress } = addressUtils;
 

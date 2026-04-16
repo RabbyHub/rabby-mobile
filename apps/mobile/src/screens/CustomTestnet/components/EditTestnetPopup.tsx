@@ -6,13 +6,12 @@ import {
   AppBottomSheetModalTitle,
   Button,
 } from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
 import { apiCustomTestnet } from '@/core/apis';
-import {
+import type {
   TestnetChain,
   TestnetChainBase,
-} from '@/core/services/customTestnetService';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+} from '@/core/services/customTestnet.types';
+import { useTheme2024 } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, {
@@ -38,7 +37,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { ConfirmModifyRpcModal } from './ConfirmModifyRpcModal';
 import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
 
 type Props = {
@@ -73,7 +72,7 @@ export const EditCustomTestnetPopup = ({
   const { colors, styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const formik = useCustomTestnetForm({
-    onSubmit(values) {},
+    onSubmit() {},
   });
 
   const resetForm = useMemoizedFn(() => {

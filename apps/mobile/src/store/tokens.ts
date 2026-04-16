@@ -1,13 +1,19 @@
 import { getTop10MyAccounts } from '@/core/apis/account';
 import { openapi } from '@/core/request';
+import { queryTokensCache } from '@/core/token/queryTokensCache';
 import { zCreate } from '@/core/utils/reexports';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { syncRemoteTokens } from '@/databases/sync/assets';
-import { queryTokensCache } from '@/screens/Home/utils/token';
 import { defaultTokenFilter, lpTokenFilter } from '@/utils/lpToken';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
-import { preferenceService } from '@/core/services/shared';
-import { TokenDisplayMode } from '@/core/services/preference';
+import type {
+  PreferenceService,
+  TokenDisplayMode,
+} from '@/core/services/preference';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
 import { getTokenSymbol } from '@/utils/token';
 import {
   tokenItemEntityToTokenItem,
@@ -533,15 +539,25 @@ const computeChainSelector = (
     .filter(item => item.is_core);
 };
 
+type TokenPreferenceService = Pick<
+  PreferenceService,
+  'getTokenDisplayMode' | 'setTokenDisplayMode'
+>;
+
+const getTokenPreferenceService = () =>
+  getServiceReady<TokenPreferenceService>(SERVICE_READY_KEYS.preferenceService);
+
 const tokenListStore = zCreate<TokenListState>(set => ({
   tokenListMap: {},
   isLoading: false, // 整体的 loading 状态
-  tokenDisplayMode: preferenceService.getTokenDisplayMode(),
+  tokenDisplayMode: 'byAddress',
   // 单个地址的 loading 状态：cache token拿到loading设置false，等所有token都拿到allLoading才设置false
   isLoadingByAddress: {},
   setTokenDisplayMode(mode) {
     set(() => ({ tokenDisplayMode: mode }));
-    preferenceService.setTokenDisplayMode(mode);
+    void getTokenPreferenceService().then(service => {
+      service.setTokenDisplayMode(mode);
+    });
   },
   async initStore() {
     // 在 App 启动时执行，初始化冷备数据
@@ -550,11 +566,15 @@ const tokenListStore = zCreate<TokenListState>(set => ({
     const lowerAddresses = Array.from(
       new Set(top10Addresses.map(item => item.toLowerCase())),
     );
-    const tokenMap = await TokenItemEntity.getDefaultTokensByAddresses(
-      lowerAddresses,
-    );
+    const [tokenMap, preferenceService] = await Promise.all([
+      TokenItemEntity.getDefaultTokensByAddresses(lowerAddresses),
+      getTokenPreferenceService(),
+    ]);
     // 写入 Store
-    set(() => ({ tokenListMap: tokenMap }));
+    set(() => ({
+      tokenListMap: tokenMap,
+      tokenDisplayMode: preferenceService.getTokenDisplayMode(),
+    }));
   },
 
   async batchGetTokenList(addresses: string[], force = false) {

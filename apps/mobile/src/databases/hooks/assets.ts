@@ -14,7 +14,7 @@ import {
 
 import { TokenItemEntity } from '../entities/tokenitem';
 import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
-import { IProtocolItem } from '@/store/protocols';
+import type { IProtocolItem } from '@/core/protocol/types';
 import { complexProtocol2ProtocolItem } from '@/utils/protocol';
 import { useAppChainStore } from '@/store/appchain';
 

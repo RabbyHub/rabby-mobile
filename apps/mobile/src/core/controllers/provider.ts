@@ -19,21 +19,8 @@ import {
   recoverPersonalSignature,
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
+
 import { openapi } from '../request';
-import {
-  preferenceService,
-  dappService,
-  transactionHistoryService,
-  transactionWatcherService,
-  transactionBroadcastWatcherService,
-  notificationService,
-  swapService,
-  customTestnetService,
-  bridgeService,
-  customRPCService,
-  gasAccountService,
-} from '@/core/services/shared';
-import { keyringService } from '../services';
 // import {
 //   transactionWatchService,
 //   transactionHistoryService,
@@ -54,33 +41,50 @@ import RpcCache from '../services/rpcCache';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { SAFE_RPC_METHODS } from '@/constant/rpc';
 import BaseController from './base';
-import { Account } from '../services/preference';
 import BigNumber from 'bignumber.js';
 // import { formatTxMetaForRpcResult } from 'background/utils/tx';
 import { findChain, findChainByEnum } from '@/utils/chain';
-import { is1559Tx, is7702Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
-import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
 import { createDappBySession } from '../apis/dapp';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
-import { StatsData } from '../services/notification';
 import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
 import { bytesToHex } from '@ethereumjs/util';
-import { CustomTestnetTokenBase } from '../services/customTestnetService';
 // import { updateExpiredTime } from '@/databases/sync/assets';
 import { PENDGING_TIME } from '@/constant/expireTime';
 import { isString } from 'lodash';
-import { updateExpiredTime } from '@/databases/sync/utils';
+import { updateExpiredTime } from '@/databases/sync/expireAssets';
 import { assertProviderRequest } from '../utils/assertProviderRequest';
-import { ProviderRequest } from './type';
 import { hexToNumber, isAddress, toHex } from 'viem';
 import { add0x } from '@/utils/address';
 import { removeLeadingZeroes } from '@/utils/7702';
 import { handleGasAccountLoginSuccess } from '@/utils/gasAccountAnalytics';
+import {
+  is1559Tx,
+  is7702Tx,
+  validateGasPriceRange,
+} from '@/core/utils/txValidation';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
+import type { BridgeService } from '@/core/services/bridge';
+import type { CustomRPCService } from '@/core/services/customRPCService';
+import type { CustomTestnetTokenBase } from '../services/customTestnetService';
+import type { CustomTestnetService } from '@/core/services/customTestnetService';
+import type { DappService } from '@/core/services/dappService';
+import type KeyringService from '@rabby-wallet/service-keyring';
+import type { NotificationService, StatsData } from '../services/notification';
+import type { Account } from '../services/preference';
+import type { SessionService } from '@/core/services/session';
+import type { SwapService } from '@/core/services/swap';
+import type { TransactionBroadcastWatcherService } from '@/core/services/transactionBroadcastWatcher';
+import type { TransactionHistoryService } from '@/core/services/transactionHistory';
+import type { TransactionWatcherService } from '@/core/services/transactionWatcher';
+import type { ProviderRequest } from './type';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -183,7 +187,7 @@ const v1SignTypedDataVlidation = ({
     throw ethErrors.rpc.invalidParams('from should be same as current address');
 };
 
-const signTypedDataVlidation = ({
+const signTypedDataVlidation = async ({
   data: {
     params: [from, data],
   },
@@ -202,6 +206,7 @@ const signTypedDataVlidation = ({
   } catch (e) {
     throw ethErrors.rpc.invalidParams('data is not a validate JSON string');
   }
+  const { dappService } = await getProviderControllerServices();
   if (!dappService.isInternalDapp(session.origin)) {
     const currentChain = dappService.getDapp(session.origin)?.chainId;
 
@@ -235,7 +240,25 @@ interface ControllerParams<T> {
   approvalRes: ApprovalRes;
 }
 
+type ProviderControllerServices = {
+  bridgeService: BridgeService;
+  customRPCService: CustomRPCService;
+  customTestnetService: CustomTestnetService;
+  dappService: DappService;
+  keyringService: KeyringService;
+  notificationService: NotificationService;
+  sessionService: SessionService;
+  swapService: SwapService;
+  transactionBroadcastWatcherService: TransactionBroadcastWatcherService;
+  transactionHistoryService: TransactionHistoryService;
+  transactionWatcherService: TransactionWatcherService;
+};
+
 class ProviderController extends BaseController {
+  constructor(private readonly services: ProviderControllerServices) {
+    super();
+  }
+
   @Reflect.metadata('PRIVATE', true)
   ethRpc = (
     req: {
@@ -249,6 +272,9 @@ class ProviderController extends BaseController {
       data: { method, params },
       session: { origin },
     } = req;
+
+    const { dappService, customRPCService, customTestnetService } =
+      this.services;
 
     if (
       !dappService.getDapp(origin)?.isConnected &&
@@ -337,6 +363,7 @@ class ProviderController extends BaseController {
     } = req;
     console.log(req);
     assertProviderRequest(req as any);
+    const { dappService, sessionService } = this.services;
     if (!dappService.getDapp(origin)?.isConnected) {
       throw ethErrors.provider.unauthorized();
     }
@@ -380,6 +407,7 @@ class ProviderController extends BaseController {
     session: Session;
     account?: Account | null;
   }) => {
+    const { dappService, keyringService } = this.services;
     if (
       !dappService.getDapp(origin)?.isConnected ||
       !keyringService.isUnlocked()
@@ -397,6 +425,7 @@ class ProviderController extends BaseController {
     session: Session;
     account?: Account;
   }) => {
+    const { dappService } = this.services;
     if (!dappService.getDapp(origin)?.isConnected) {
       return null;
     }
@@ -407,6 +436,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('SAFE', true)
   ethChainId = ({ session }: { session: Session }) => {
     const origin = session.origin;
+    const { dappService } = this.services;
     const site = dappService.getDapp(origin);
 
     return findChainByEnum(site?.chainId, { fallback: CHAINS_ENUM.ETH })!.hex;
@@ -414,7 +444,7 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('APPROVAL', [
     'SignTx',
-    (req: ProviderRequest) => {
+    async (req: ProviderRequest) => {
       assertProviderRequest(req);
       const {
         data: {
@@ -423,6 +453,7 @@ class ProviderController extends BaseController {
         session,
         account,
       } = req;
+      const { dappService } = await getProviderControllerServices();
       const currentAddress = account?.address?.toLowerCase();
       const currentChain = dappService.isInternalDapp(session.origin)
         ? findChain({ id: tx.chainId })!.enum
@@ -466,6 +497,18 @@ class ProviderController extends BaseController {
       approvalRes,
       account,
     } = cloneDeep(options);
+    const {
+      dappService,
+      keyringService,
+      transactionHistoryService,
+      transactionWatcherService,
+      transactionBroadcastWatcherService,
+      notificationService,
+      swapService,
+      bridgeService,
+      customRPCService,
+      customTestnetService,
+    } = this.services;
     const currentAccount = account;
     const keyring = await this._checkAddress(txParams.from, options);
     const isSend = !!txParams.isSend;
@@ -587,7 +630,7 @@ class ProviderController extends BaseController {
     let opts;
     opts = extra;
     if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
-      const buildinProvider = getGlobalProvider();
+      const buildinProvider = await getGlobalProvider();
       if (!buildinProvider?.currentProvider) {
         throw new Error('buildinProvider not found');
       }
@@ -1092,6 +1135,7 @@ class ProviderController extends BaseController {
     try {
       const [string, from] = data.params;
       const hex = isHexString(string) ? string : stringToHex(string);
+      const { keyringService } = this.services;
       const keyring = await this._checkAddress(from, req);
       const result = await keyringService.signPersonalMessage(
         keyring,
@@ -1136,6 +1180,7 @@ class ProviderController extends BaseController {
     },
     req: ProviderRequest,
   ) => {
+    const { keyringService } = this.services;
     const keyring = await this._checkAddress(from, req);
     let _data = data;
     if (version !== 'V1') {
@@ -1353,7 +1398,7 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('APPROVAL', [
     'AddChain',
-    ({
+    async ({
       data: {
         params: [chainParams],
       },
@@ -1365,6 +1410,7 @@ class ProviderController extends BaseController {
       if (!chainParams.chainId) {
         throw ethErrors.rpc.invalidParams('chainId is required');
       }
+      const { dappService } = await getProviderControllerServices();
       const connected = dappService.getConnectedDapp(session.origin);
 
       if (connected) {
@@ -1394,6 +1440,7 @@ class ProviderController extends BaseController {
       rpcUrl: string;
     };
   }) => {
+    const { dappService, sessionService } = this.services;
     let chainId = chainParams.chainId;
     if (typeof chainId === 'number') {
       chainId = intToHex(chainId).toLowerCase();
@@ -1414,9 +1461,6 @@ class ProviderController extends BaseController {
     }
 
     const connectSite = dappService.getConnectedDapp(origin);
-    const prev = connectSite
-      ? findChain({ enum: connectSite.chainId })
-      : undefined;
     if (!connectSite) {
       return;
     }
@@ -1439,7 +1483,7 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('APPROVAL', [
     'SwitchChain',
-    ({
+    async ({
       data,
       session,
     }: {
@@ -1454,6 +1498,7 @@ class ProviderController extends BaseController {
       if (!data.params[0]?.chainId) {
         throw ethErrors.rpc.invalidParams('chainId is required');
       }
+      const { dappService } = await getProviderControllerServices();
       const connected = dappService.getConnectedDapp(session.origin);
       if (connected) {
         const { chainId } = data.params[0];
@@ -1483,6 +1528,7 @@ class ProviderController extends BaseController {
     };
     session: Session;
   }) => {
+    const { dappService, sessionService } = this.services;
     let chainId = chainParams.chainId;
     if (typeof chainId === 'number') {
       chainId = intToHex(chainId).toLowerCase();
@@ -1499,9 +1545,6 @@ class ProviderController extends BaseController {
     }
 
     const connectSite = dappService.getConnectedDapp(origin);
-    const prev = connectSite
-      ? findChain({ enum: connectSite.chainId })
-      : undefined;
 
     if (!connectSite) {
       return;
@@ -1569,6 +1612,7 @@ class ProviderController extends BaseController {
   }: {
     approvalRes: { id: string; chain: string } & CustomTestnetTokenBase;
   }) => {
+    const { customTestnetService } = this.services;
     const { id, chain, chainId, symbol, decimals } = approvalRes;
     const chainInfo = findChain({
       serverId: chain,
@@ -1607,6 +1651,7 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('SAFE', true)
   walletGetPermissions = ({ session: { origin } }: { session: Session }) => {
+    const { dappService, keyringService } = this.services;
     const result: Web3WalletPermission[] = [];
     if (keyringService.isUnlocked() && dappService.getConnectedDapp(origin)) {
       result.push({ parentCapability: 'eth_accounts' });
@@ -1619,6 +1664,7 @@ class ProviderController extends BaseController {
    */
   @Reflect.metadata('SAFE', true)
   walletRevokePermissions = ({ session: { origin }, data: { params } }) => {
+    const { dappService, keyringService, sessionService } = this.services;
     if (keyringService.isUnlocked() && dappService.getConnectedDapp(origin)) {
       if (params?.[0] && 'eth_accounts' in params[0]) {
         sessionService.broadcastEvent(
@@ -1667,6 +1713,7 @@ class ProviderController extends BaseController {
           'Invalid parameters: must use the current user address to sign',
       });
     }
+    const { keyringService } = this.services;
     const keyring = await keyringService.getKeyringForAccount(
       currentAddress,
       type,
@@ -1690,4 +1737,74 @@ class ProviderController extends BaseController {
   };
 }
 
-export default new ProviderController();
+let providerControllerServicesPromise: Promise<ProviderControllerServices> | null =
+  null;
+let providerControllerPromise: Promise<ProviderController> | null = null;
+
+export const getProviderControllerServices = () => {
+  if (!providerControllerServicesPromise) {
+    providerControllerServicesPromise = Promise.all([
+      getServiceReady<BridgeService>(SERVICE_READY_KEYS.bridgeService),
+      getServiceReady<CustomRPCService>(SERVICE_READY_KEYS.customRPCService),
+      getServiceReady<CustomTestnetService>(
+        SERVICE_READY_KEYS.customTestnetService,
+      ),
+      getServiceReady<DappService>(SERVICE_READY_KEYS.dappService),
+      getServiceReady<KeyringService>(SERVICE_READY_KEYS.keyringService),
+      getServiceReady<NotificationService>(
+        SERVICE_READY_KEYS.notificationService,
+      ),
+      getServiceReady<SessionService>(SERVICE_READY_KEYS.sessionService),
+      getServiceReady<SwapService>(SERVICE_READY_KEYS.swapService),
+      getServiceReady<TransactionBroadcastWatcherService>(
+        SERVICE_READY_KEYS.transactionBroadcastWatcherService,
+      ),
+      getServiceReady<TransactionHistoryService>(
+        SERVICE_READY_KEYS.transactionHistoryService,
+      ),
+      getServiceReady<TransactionWatcherService>(
+        SERVICE_READY_KEYS.transactionWatcherService,
+      ),
+    ]).then(
+      ([
+        bridgeService,
+        customRPCService,
+        customTestnetService,
+        dappService,
+        keyringService,
+        notificationService,
+        sessionService,
+        swapService,
+        transactionBroadcastWatcherService,
+        transactionHistoryService,
+        transactionWatcherService,
+      ]) => ({
+        bridgeService,
+        customRPCService,
+        customTestnetService,
+        dappService,
+        keyringService,
+        notificationService,
+        sessionService,
+        swapService,
+        transactionBroadcastWatcherService,
+        transactionHistoryService,
+        transactionWatcherService,
+      }),
+    );
+  }
+
+  return providerControllerServicesPromise;
+};
+
+export const getProviderController = () => {
+  if (!providerControllerPromise) {
+    providerControllerPromise = getProviderControllerServices().then(
+      services => new ProviderController(services),
+    );
+  }
+
+  return providerControllerPromise;
+};
+
+export default getProviderController;

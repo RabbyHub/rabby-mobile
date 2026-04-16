@@ -1,5 +1,5 @@
 import { IS_ANDROID } from '@/core/native/utils';
-import { isNonPublicProductionEnv } from './';
+import { isNonPublicProductionEnv } from './package';
 
 const RABBY_GO_ENVS = {
   debug: {

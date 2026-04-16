@@ -10,8 +10,8 @@ import {
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
-import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
-import { isNonPublicProductionEnv } from '@/constant';
+import { APP_URLS, APP_VERSIONS } from '@/constant';
+import { APPLICATION_ID, isNonPublicProductionEnv } from '@/constant/package';
 import { Platform } from 'react-native';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { openExternalUrl } from '@/core/utils/linking';

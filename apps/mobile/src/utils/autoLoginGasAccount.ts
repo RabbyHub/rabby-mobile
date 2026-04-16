@@ -5,7 +5,10 @@ import {
   filterDirectlySignableAccounts,
   isHardwareAccount,
 } from '@/core/apis/account';
-import { storeApiGasAccount } from '@/screens/GasAccount/hooks/atom';
+import {
+  setReLoginAfterInvalidSessionHandler,
+  storeApiGasAccount,
+} from '@/screens/GasAccount/hooks/atom';
 import { Account } from '@/core/services/preference';
 import { makeAvoidParallelAsyncFunc } from '@/core/utils/concurrency';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -212,3 +215,8 @@ export const checkAddedAccountsGasAccountIfNeeded = makeAvoidParallelAsyncFunc(
     setPendingHardwareAccount(hwWithBalance[0]);
   },
 );
+
+setReLoginAfterInvalidSessionHandler(async () => {
+  resetAutoLoginFlag();
+  await autoLoginGasAccountIfNeeded();
+});

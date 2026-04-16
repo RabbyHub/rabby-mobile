@@ -6,14 +6,14 @@ import RcIconYesFailure from '@/assets2024/icons/history/IconYesFailure.svg';
 import RcIconNo from '@/assets2024/icons/history/IconTxNo.svg';
 import RcIconNoDark from '@/assets2024/icons/history/IconTxNoDark.svg';
 import { View, ViewStyle } from 'react-native';
+import type { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { HistoryItemCateType } from './type';
-import { TokenChangeDataItem } from './HistoryItem';
-import { isNFTTokenId } from './utils';
+import type { TokenChangeDataItem } from '@/core/history/display';
 
 interface ItemIconProps {
   type?: HistoryItemCateType | undefined;
@@ -66,7 +66,7 @@ const Avatar = ({
         />
       ) : (
         <AssetAvatar
-          logo={item?.token?.logo_url}
+          logo={(item?.token as TokenItem | undefined)?.logo_url}
           size={size}
           logoStyle={logoStyle}
         />

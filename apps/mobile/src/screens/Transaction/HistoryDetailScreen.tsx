@@ -1,24 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  Animated,
-  Easing,
-  ScrollView,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
-import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
-import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import RcIconScamTips from '@/assets2024/icons/history/IconScamTips.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
-import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
@@ -28,7 +13,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { formatAmount } from '@/utils/number';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
-import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
@@ -49,166 +33,9 @@ import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { HistoryItemCateType } from './components/type';
 import { findAccountByPriority } from '@/utils/account';
-import { useGetCexList } from './hook';
-import FastImage from 'react-native-fast-image';
-import { useAccountSelectModalCtx } from '@/components/AccountSelectModalTx/hooks';
-import { apisSingleHome } from '../Home/hooks/singleHome';
 import { Text } from '@/components/Typography';
-
-export const TxStatusItem = ({
-  status,
-  withText,
-  isPending,
-  showSuccess,
-}: {
-  showSuccess?: boolean;
-  isPending?: boolean;
-  status: number;
-  withText?: boolean;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 1000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    ).start();
-  }, [spinValue]);
-
-  if (isPending) {
-    return (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Animated.View
-          style={{
-            transform: [{ rotate: spin }],
-          }}>
-          <RcIconPending width={18} height={18} />
-        </Animated.View>
-        {withText && (
-          <Text
-            style={[
-              styles.statuItemText,
-              { color: colors2024['orange-default'] },
-            ]}>
-            {t('page.transactions.detail.Pending')}
-          </Text>
-        )}
-      </View>
-    );
-  }
-
-  return status === 1 ? (
-    !withText && !showSuccess ? null : (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <RcIconSuccess width={18} height={18} />
-        {withText && (
-          <Text style={styles.statuItemText}>
-            {t('page.transactions.detail.Succeeded')}
-          </Text>
-        )}
-      </View>
-    )
-  ) : (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <RcIconFail width={18} height={18} />
-      {withText && (
-        <Text
-          style={[styles.statuItemText, { color: colors2024['red-default'] }]}>
-          {t('page.transactions.detail.Failed')}
-        </Text>
-      )}
-    </View>
-  );
-};
-
-export const AddressItemInDetail = ({
-  address,
-  accounts,
-  disableNavigate: propdisableNavigate = false,
-}: {
-  address: string;
-  accounts: KeyringAccountWithAlias[];
-  disableNavigate?: boolean;
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-
-  const disableNavigate = useMemo(() => {
-    if (propdisableNavigate) {
-      return true;
-    }
-
-    return !accounts.find(account => isSameAddress(account.address, address));
-  }, [propdisableNavigate, accounts, address]);
-  const { getCexInfoByAddress } = useGetCexList();
-  const cexInfo = useMemo(() => {
-    return getCexInfoByAddress(address);
-  }, [address, getCexInfoByAddress]);
-
-  const accountSelectCtx = useAccountSelectModalCtx();
-
-  const handleGoAddressDetail = useCallback(() => {
-    const idx = accounts.findIndex(account =>
-      isSameAddress(account.address, address),
-    );
-
-    if (idx > -1) {
-      if (accountSelectCtx.isUnderContext) accountSelectCtx.fnCloseModal();
-      apisSingleHome.navigateToSingleHome(accounts[idx]);
-    } else {
-      // popup
-      console.debug('itemAliaName press open popup', address);
-    }
-  }, [accounts, address, accountSelectCtx]);
-
-  return (
-    <View>
-      <TouchableOpacity
-        disabled={disableNavigate}
-        style={styles.itemAliaName}
-        onPress={handleGoAddressDetail}>
-        <View style={{ alignItems: 'flex-end', flexDirection: 'column' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {cexInfo?.logo_url && (
-              <FastImage
-                source={{ uri: cexInfo.logo_url }}
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 4,
-                  marginRight: 4,
-                }}
-              />
-            )}
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[styles.itemContentText, styles.itemContentTextAliasName]}>
-              {getAliasName(address) || ellipsisAddress(address)}
-            </Text>
-            {!disableNavigate && (
-              <RcIconRightCC
-                width={12}
-                height={12}
-                color={colors2024['neutral-foot']}
-              />
-            )}
-          </View>
-          <Text style={styles.itemAddressText}>{address}</Text>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
-};
+import { AddressItemInDetail } from './components/AddressItemInDetail';
+import { TxStatusItem } from './components/TxStatusItem';
 
 function HistoryDetailScreen(): JSX.Element {
   const route =
@@ -720,15 +547,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     color: colors2024['neutral-foot'],
   },
-  statuItemText: {
-    color: colors2024['green-default'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-
   headerItem: {},
 }));
 

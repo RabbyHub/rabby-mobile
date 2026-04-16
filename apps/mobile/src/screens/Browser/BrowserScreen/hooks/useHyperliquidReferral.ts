@@ -1,4 +1,5 @@
-import { INTERNAL_REQUEST_SESSION, isNonPublicProductionEnv } from '@/constant';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import {
   PERPS_ASTER_INVITE_URL,
   PERPS_INVITE_URL,

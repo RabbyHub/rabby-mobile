@@ -14,7 +14,6 @@ import {
 } from '@/hooks/navigation';
 import { HomeCustomMaterialTabBar } from '@/screens/Home/components/CustomTabBar';
 import { TabsTopHeader } from '@/screens/Home/components/OverviewTopHeader';
-import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import CustomLabel from '@/screens/Home/components/Tabs/CustomLabel';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
@@ -29,6 +28,7 @@ import { TokenList } from './TokenList';
 import { IS_IOS } from '@/core/native/utils';
 import { HomeOverview } from '@/screens/Home/components/HomeOverview';
 import { runOnJS, useAnimatedReaction } from 'react-native-reanimated';
+import { TabName } from './constants';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -40,15 +40,10 @@ export const icons = {
   unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
   unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
-export const TAB_HEADER_FULL_HEIGHT =
-  HOME_TOP_HEADER_SIZES.headerHeight +
-  HOME_TOP_HEADER_SIZES.scrollableListTopOffset;
 
 interface TabMultiAssetsProps {}
 
-import { HomeTabName as TabName } from '@/hooks/navigation';
 import { MultiAssetsContainer } from '@/components/customized/react-native-collapsible-tab-view/MultiAssetsContainer';
-export { HomeTabName as TabName } from '@/hooks/navigation';
 
 const homeTabScrollerRef = apisHomeTabIndex.homeTabScrollerRef;
 

@@ -1,4 +1,4 @@
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { isCached, preload } from 'react-native-bundle-splitter';
 

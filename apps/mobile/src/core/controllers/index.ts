@@ -1,18 +1,38 @@
 import { ProviderRequest } from './type';
 
 import { ethErrors } from 'eth-rpc-errors';
-import { dappService, keyringService, preferenceService } from '../services';
+import type KeyringService from '@rabby-wallet/service-keyring';
+import type { DappService } from '../services/dappService';
+import type { PreferenceService } from '../services/preference';
 
 import rpcFlow from './rpcFlow';
 import internalMethod from './internalMethod';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
-import { Account } from '../services/preference';
+import type { Account } from '../services/preference';
+import { getServiceReady, SERVICE_READY_KEYS } from '../services/serviceReady';
+import { registerProviderExecutor } from './providerExecutor';
 
 const IGNORE_CHECK = ['wallet_importAddress'];
+
+type ProviderDappServiceLike = Pick<DappService, 'getDapp'>;
+type ProviderKeyringServiceLike = Pick<KeyringService, 'hasVault'>;
+type ProviderPreferenceServiceLike = Pick<
+  PreferenceService,
+  'getFallbackAccount'
+>;
 
 export default async function provider<T = void>(
   req: ProviderRequest,
 ): Promise<T> {
+  const [dappService, keyringService, preferenceService] = await Promise.all([
+    getServiceReady<ProviderDappServiceLike>(SERVICE_READY_KEYS.dappService),
+    getServiceReady<ProviderKeyringServiceLike>(
+      SERVICE_READY_KEYS.keyringService,
+    ),
+    getServiceReady<ProviderPreferenceServiceLike>(
+      SERVICE_READY_KEYS.preferenceService,
+    ),
+  ]);
   const {
     data: { method },
   } = req;
@@ -52,3 +72,5 @@ export default async function provider<T = void>(
 
   return rpcFlow(req) as any;
 }
+
+registerProviderExecutor(provider);

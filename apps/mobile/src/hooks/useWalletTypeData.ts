@@ -1,10 +1,8 @@
 import { apiKeyring } from '@/core/apis';
 import { keyringService } from '@/core/services';
 import { useAccounts, usePinAddresses } from '@/hooks/account';
-import {
-  IDisplayedAccountWithBalance,
-  useAccountsToDisplay,
-} from '@/hooks/accountToDisplay';
+import type { IDisplayedAccountWithBalance } from '@/core/account/display';
+import { useAccountsToDisplay } from '@/hooks/accountToDisplay';
 import { sortAccountsByBalance } from '@/utils/account';
 import i18n from '@/utils/i18n';
 import { WALLET_INFO } from '@/utils/walletInfo';

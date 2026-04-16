@@ -1,10 +1,10 @@
-import { IProtocolItem, IProtocolPortfolio } from '@/store/protocols';
+import type { IProtocolItem, IProtocolPortfolio } from '@/core/protocol/types';
 import {
   ComplexProtocol,
   PortfolioItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { columnConverter } from '@/databases/entities/_helpers';
-import { ProtocolItemEntity } from '@/databases/entities/portocolItem';
+import type { ProtocolItemEntity } from '@/databases/entities/portocolItem';
 
 export const portfolioToIProtocolPortfolio = (
   p: PortfolioItem,

@@ -1,5 +1,6 @@
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { filterOutTopAccounts, getAccountList } from '../apis/account';
+import { filterOutTopAccounts } from '@/core/account/utils';
+import { getAccountList } from '../apis/account';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
 
 export const getTopMyAccountsOnNotifications = makeAvoidParallelAsyncFunc(

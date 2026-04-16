@@ -5,7 +5,7 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 
 import { registerAppScreen } from '@/perfs/apis';
 import { TESTKITS_PRELOAD_SCREENS } from '@/perfs/preloads';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 const DevUIAnimatedTextAndView = registerAppScreen<
   typeof import('@/screens/Testkits/DevUIAnimatedTextAndView').default
 >({

@@ -1,7 +1,8 @@
 import RNFS from 'react-native-fs';
 import * as Sentry from '@sentry/react-native';
 
-import { APP_IDS, INITIAL_OPENAPI_URL } from '@/constant';
+import { INITIAL_OPENAPI_URL } from '@/constant';
+import { APP_IDS } from '@/constant/package';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { IS_ANDROID, IS_IOS } from '../native/utils';
 

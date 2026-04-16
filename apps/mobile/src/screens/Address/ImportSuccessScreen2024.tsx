@@ -45,7 +45,7 @@ import usePortfolioList from '@/store/protocols';
 import { eventBus } from '@/utils/events';
 import { apisHomeTabIndex, resetNavigationTo } from '@/hooks/navigation';
 import { apisSingleHome } from '../Home/hooks/singleHome';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { useMount } from 'ahooks';
 import {
   accountEvents,

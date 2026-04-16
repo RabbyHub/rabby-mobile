@@ -1,4 +1,4 @@
-import {
+import type {
   AllDexsClearinghouseState,
   MarketData,
 } from '@/hooks/perps/usePerpsStore';

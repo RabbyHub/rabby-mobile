@@ -64,6 +64,7 @@ import { switchSceneCurrentAccount } from './accountsSwitcher';
 import { findMyAccountByOwnerAddress } from '@/core/notifications/utils';
 import { makeMutable, runOnJS } from 'react-native-reanimated';
 import PQueue from 'p-queue';
+import { HomeTabName } from '@/screens/Address/components/MultiAssets/constants';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -315,12 +316,7 @@ export function useHomeTabIndex() {
   };
 }
 
-export const enum HomeTabName {
-  overview = 'overview',
-  token = 'token',
-  defi = 'defi',
-  nft = 'nft',
-}
+export { HomeTabName };
 export const TabbarLabels: {
   [P in HomeTabName]: {
     index: number;

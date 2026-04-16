@@ -15,15 +15,11 @@ import React, {
 } from 'react';
 import { BackHandler, Keyboard, useWindowDimensions, View } from 'react-native';
 import { SearchInner } from './SearchInner';
-import { atom, useAtom } from 'jotai';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
+import { useShowSearchBottomSheet } from './state';
 
-const showSearchBottomAtom = atom(false);
-
-export const useShowSearchBottomSheet = () => {
-  return useAtom(showSearchBottomAtom);
-};
+export { useShowSearchBottomSheet } from './state';
 
 export const GlobalSearchBottomSheet = () => {
   const { safeOffScreenTop } = useSafeSizes();

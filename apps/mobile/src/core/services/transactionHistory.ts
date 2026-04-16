@@ -21,67 +21,26 @@ import {
   ActionRequireData,
   ParsedActionData,
 } from '@rabby-wallet/rabby-action';
-import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
-import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 // import { updateExpiredTime } from '@/databases/sync/assets'
 import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import {
   loadTxSaveFromLocalStore,
   txDonePatchTokenAmountInDb,
-} from '@/screens/Transaction/components/utils';
+} from '@/core/history/txPersistence';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
-import { updateExpiredTime } from '@/databases/sync/utils';
+import { updateExpiredTime } from '@/databases/sync/expireAssets';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
   CUSTOM_HISTORY_ACTION,
   CUSTOM_HISTORY_TITLE_TYPE,
-} from '@/screens/Transaction/components/type';
+} from '@/core/history/types';
+import type { TransactionHistoryItem } from '@/core/history/txTypes';
 
-export interface TransactionHistoryItem {
-  address: string;
-  chainId: number;
-  nonce: number;
-
-  rawTx: Tx;
-  createdAt: number;
-  completedAt?: number;
-  hash?: string;
-
-  gasTokenSymbol?: string;
-  gasUSDValue?: number;
-  gasTokenCount?: number;
-
-  gasUsed?: number;
-  // site?: ConnectedSite;
-  site?: DappInfo;
-
-  pushType?: TxPushType;
-  reqId?: string;
-
-  isPending?: boolean;
-  isWithdrawed?: boolean;
-  isFailed?: boolean;
-  isSubmitFailed?: boolean;
-  isCompleted?: boolean;
-
-  isSynced?: boolean;
-
-  explain?: ObjectType.Merge<
-    ExplainTxResponse,
-    { approvalId: string; calcSuccess: boolean }
-  >;
-  action?: {
-    actionData: ParsedActionData;
-    requiredData: ActionRequireData;
-  };
-
-  $ctx?: any;
-  keyringType?: KeyringTypeName;
-}
+export type { TransactionHistoryItem } from '@/core/history/txTypes';
 
 export interface TransactionSigningItem {
   rawTx: Tx;

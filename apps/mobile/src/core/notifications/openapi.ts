@@ -1,12 +1,8 @@
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { OpenApiStore } from '../services/openapiStore';
 import { SignApiPlugin } from '../request';
-import {
-  APP_VERSIONS,
-  APPLICATION_ID,
-  INITIAL_OPENAPI_URL,
-  isNonPublicProductionEnv,
-} from '@/constant';
+import { APP_VERSIONS, INITIAL_OPENAPI_URL } from '@/constant';
+import { APPLICATION_ID, isNonPublicProductionEnv } from '@/constant/package';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { makeDeviceUUID } from '../apis/device';
 import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';

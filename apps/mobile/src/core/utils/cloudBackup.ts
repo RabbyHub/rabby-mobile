@@ -6,7 +6,7 @@ import {
   User,
 } from '@react-native-google-signin/google-signin';
 import { appEncryptor } from '../services/shared';
-import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
+import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant/package';
 import { getAddressFromMnemonic } from './mnemonic';
 import { getMnemonicByAddress } from '../apis/mnemonic';
 import { sortBy } from 'lodash';

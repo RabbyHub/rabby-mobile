@@ -4,7 +4,11 @@ import {
   PortfolioItem,
   WithdrawAction,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { AbstractPortfolio, AbstractProject, PortfolioProject } from '../types';
+import type {
+  AbstractPortfolio,
+  AbstractProject,
+  PortfolioProject,
+} from '../types';
 import { formatUsdValue } from '@/utils/number';
 import { DisplayedToken } from '@/utils/token';
 

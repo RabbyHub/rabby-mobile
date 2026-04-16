@@ -51,6 +51,7 @@ const syncCustomTestChainList = () => {
 type BootStrapState = {
   couldRender: boolean;
 };
+
 const zBootstrapStore = zCreate<BootStrapState>(() => ({
   couldRender: false,
 }));
@@ -288,7 +289,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
         storeApisBiometrics.fetchBiometrics(),
       ),
     ])
-      .then(async ([_unlockResult, _securityChain]) => {
+      .then(([_unlockResult, _securityChain]) => {
         console.debug('useBootstrapApp::sucess', _unlockResult);
         recordStartupProbeOnce('BOOTSTRAP_TASKS_ALL_SETTLED', {
           payload: {

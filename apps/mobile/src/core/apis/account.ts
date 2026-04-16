@@ -1,117 +1,34 @@
 import {
-  DisplayKeyring,
-  DisplayedKeyring,
   KEYRING_CLASS,
   KEYRING_TYPE,
   KeyringAccount,
-  KeyringIntf,
 } from '@rabby-wallet/keyring-utils';
-import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import * as Sentry from '@sentry/react-native';
-import { addressUtils } from '@rabby-wallet/base-utils';
-import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
+import type { KeyringEventAccount } from '@rabby-wallet/service-keyring';
 
-import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
-import { contactService, keyringService, preferenceService } from '../services';
-import addressBalanceStore from '@/store/balance';
-
-import { getAddressCacheBalance } from './balance';
-import { requestKeyring } from './keyring';
+import {
+  filterOutTopAccounts,
+  filterMyAccounts,
+  isMyAccount,
+  sortAccountList,
+  sortAccountsByBalance,
+  type KeyringAccountWithAlias,
+} from '@/core/account/utils';
+import {
+  getContactService,
+  getKeyringService,
+  getPreferenceService,
+} from '@/core/account/accountServices';
+import { getAccountBalanceValueMap } from '@/core/account/balanceSnapshot';
 import { isEqual } from 'lodash';
-import { type IPinAddress, type Account } from '../services/preference';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
-
-import BigNumber from 'bignumber.js';
 import { makeJsEEClass } from '@/core/services/_utils';
 
-function ensureDisplayKeyring(keyring: KeyringIntf | DisplayKeyring) {
-  if (keyring instanceof DisplayKeyring) {
-    return keyring;
-  }
-
-  return new DisplayKeyring(keyring);
-}
-
 export async function hasVisibleAccounts() {
+  const keyringService = await getKeyringService();
   const restAccountsCount = await keyringService.getCountOfAccountsInKeyring();
   return restAccountsCount > 0;
 }
-
-async function getAllVisibleAccounts(): Promise<DisplayedKeyring[]> {
-  const typedAccounts = await keyringService.getAllTypedVisibleAccounts();
-
-  return typedAccounts.map(account => ({
-    ...account,
-    keyring: ensureDisplayKeyring(account.keyring),
-  }));
-}
-
-export async function getAllAccountsToDisplay() {
-  const [displayedKeyrings, allAliasNames] = await Promise.all([
-    getAllVisibleAccounts(),
-    contactService.getAliasByMap(),
-  ]);
-
-  const result = await Promise.all(
-    displayedKeyrings
-      .map(item => {
-        return item.accounts.map(account => {
-          return {
-            ...account,
-            address: account.address.toLowerCase(),
-            type: item.type,
-            byImport: item.byImport,
-            aliasName:
-              allAliasNames[account?.address?.toLowerCase()]?.alias || '',
-            keyring: item.keyring,
-            publicKey: item?.publicKey,
-          } as IDisplayedAccountWithBalance;
-        });
-      })
-      .flat(1)
-      .map(async item => {
-        let balance: TotalBalanceResponse | null = null;
-
-        let accountInfo = {} as {
-          hdPathBasePublicKey?: string;
-          hdPathType?: string;
-        };
-
-        await Promise.allSettled([
-          getAddressCacheBalance(item?.address),
-          requestKeyring(item.type, 'getAccountInfo', null, item.address),
-        ]).then(([res1, res2]) => {
-          if (res1.status === 'fulfilled') {
-            balance = res1.value;
-          }
-          if (res2.status === 'fulfilled') {
-            accountInfo = res2.value;
-          }
-        });
-
-        if (!balance) {
-          balance = {
-            total_usd_value: 0,
-            chain_list: [],
-          };
-        }
-        return {
-          ...item,
-          balance: balance?.total_usd_value || 0,
-          hdPathBasePublicKey: accountInfo?.hdPathBasePublicKey,
-          hdPathType: accountInfo?.hdPathType,
-        };
-      }),
-  );
-
-  return result;
-}
-
-export type KeyringAccountWithAlias = KeyringAccount & {
-  aliasName?: string;
-  balance?: number;
-  evmBalance?: number;
-};
 
 /**
  * @description if new fetched accounts are same from the existing ones, return the existing ones
@@ -121,7 +38,11 @@ const existedAccountsRef = { current: [] as KeyringAccountWithAlias[] };
 async function fetchAllAccountsProcess() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
   try {
-    const balanceMap = addressBalanceStore.getAddressValueMap();
+    const [contactService, keyringService] = await Promise.all([
+      getContactService(),
+      getKeyringService(),
+    ]);
+    const balanceMap = getAccountBalanceValueMap();
     nextAccounts = await keyringService
       .getAllVisibleAccountsArray()
       .then(list => {
@@ -156,69 +77,6 @@ async function fetchAllAccountsProcess() {
   }
 }
 
-export const sortAccountsByBalance = <
-  T extends { address: string; balance?: number }[],
->(
-  accounts: T,
-) => {
-  return [...accounts].sort((a, b) => {
-    const balanceDiff = new BigNumber(b?.balance || 0)
-      .minus(new BigNumber(a?.balance || 0))
-      .toNumber();
-
-    if (balanceDiff !== 0) {
-      return balanceDiff;
-    }
-
-    const aAddress = a.address.toLowerCase();
-    const bAddress = b.address.toLowerCase();
-    if (aAddress !== bAddress) {
-      return aAddress.localeCompare(bAddress);
-    }
-
-    const aType =
-      typeof (a as KeyringAccountWithAlias).type === 'string'
-        ? (a as KeyringAccountWithAlias).type
-        : '';
-    const bType =
-      typeof (b as KeyringAccountWithAlias).type === 'string'
-        ? (b as KeyringAccountWithAlias).type
-        : '';
-    if (aType !== bType) {
-      return aType.localeCompare(bType);
-    }
-
-    const aBrandName =
-      typeof (a as Account).brandName === 'string'
-        ? (a as Account).brandName
-        : '';
-    const bBrandName =
-      typeof (b as Account).brandName === 'string'
-        ? (b as Account).brandName
-        : '';
-
-    return aBrandName.localeCompare(bBrandName);
-  }) as T;
-};
-
-export function isMyAccount<T extends KeyringAccount | KeyringAccountWithAlias>(
-  account: T,
-) {
-  return (
-    account.type !== KEYRING_CLASS.WATCH &&
-    account.type !== KEYRING_CLASS.GNOSIS &&
-    account.type !== KEYRING_CLASS.WALLETCONNECT
-  );
-}
-
-export const filterMyAccounts = <
-  T extends KeyringAccount | KeyringAccountWithAlias,
->(
-  accounts: T[],
-) => {
-  return accounts.filter(isMyAccount);
-};
-
 export function isDirectlySignableAccount(
   account: KeyringAccount | KeyringAccountWithAlias,
 ) {
@@ -249,37 +107,6 @@ export function filterDirectlySignableAccounts<
   );
 }
 
-export function sortAccountList(
-  accounts: Account[],
-  {
-    highlightedAddresses = [],
-  }: {
-    highlightedAddresses: IPinAddress[];
-  },
-) {
-  const restAccounts = [...accounts];
-  let highlightedAccounts: typeof accounts = [];
-
-  highlightedAddresses.forEach(highlighted => {
-    const idx = restAccounts.findIndex(
-      account =>
-        addressUtils.isSameAddress(account.address, highlighted.address) &&
-        account.brandName === highlighted.brandName,
-    );
-    if (idx > -1 && restAccounts[idx]) {
-      highlightedAccounts.push(restAccounts[idx]);
-      restAccounts.splice(idx, 1);
-    }
-  });
-  highlightedAccounts = sortAccountsByBalance(highlightedAccounts);
-
-  const normalAccounts = highlightedAccounts
-    .concat(sortAccountsByBalance(restAccounts))
-    .filter(e => !!e);
-
-  return normalAccounts;
-}
-
 export const fetchAllAccounts = makeAvoidParallelAsyncFunc(
   fetchAllAccountsProcess,
 );
@@ -306,6 +133,7 @@ export async function getAccountList(options?: {
   let sortedAccounts = accounts;
 
   if (sortBy.includes('highlight')) {
+    const preferenceService = await getPreferenceService();
     const pinAddresses = preferenceService.getPinAddresses();
     sortedAccounts = sortAccountList(accounts, {
       highlightedAddresses: pinAddresses,
@@ -318,52 +146,6 @@ export async function getAccountList(options?: {
     accounts,
     sortedAccounts,
   };
-}
-
-export function filterOutTopAccounts<
-  T extends { address: string; balance?: number },
->(sortedAccounts: T[], { topCount = 10, gatherSameAddress = false } = {}) {
-  const ret = {
-    topAddresses: [] as string[],
-    /**
-     * @description notice, top accounts may contains more than 10 items, because of same address with different brandName
-     */
-    topAccounts: [] as T[],
-    restAccounts: [] as T[],
-  };
-
-  let topRecords = new Set<string>();
-  if (gatherSameAddress) {
-    for (const item of sortedAccounts) {
-      const lowerAddress = item.address.toLowerCase();
-      if (topRecords.size >= topCount) break;
-
-      topRecords.add(lowerAddress);
-    }
-
-    sortedAccounts.forEach(x => {
-      const lx = x.address.toLowerCase();
-      if (topRecords.has(lx)) {
-        ret.topAccounts.push(x);
-        // ret.topAddresses.push(lx);
-      } else {
-        ret.restAccounts.push(x);
-      }
-    });
-
-    ret.topAddresses = Array.from([...topRecords]);
-  } else {
-    ret.topAccounts = sortedAccounts.slice(0, topCount);
-    ret.restAccounts = sortedAccounts.slice(topCount);
-    ret.topAccounts.forEach(item => {
-      const addr = item.address.toLowerCase();
-      if (!topRecords.has(addr)) ret.topAddresses.push(addr);
-      topRecords.add(addr);
-      return addr;
-    });
-  }
-
-  return { ...ret, topRecords };
 }
 
 type TopAccountsOptions = {

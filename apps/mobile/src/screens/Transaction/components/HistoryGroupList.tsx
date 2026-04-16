@@ -12,7 +12,7 @@ import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { HistoryDisplayItem } from '../MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import { Empty } from '../components/Empty';
 import { formatTimestamp } from '@/utils/time';
 import { createGetStyles2024 } from '@/utils/styles';

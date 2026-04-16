@@ -1,6 +1,7 @@
 import { useDebounce } from 'ahooks';
 import { useEffect, useRef, useState } from 'react';
-import { CombineNFTItem, CombineTokensItem } from '../Home/hooks/store';
+import { CombineTokensItem } from '../Home/hooks/store';
+import type { CombineNFTItem } from '@/core/nft/displayTypes';
 import { openapi } from '@/core/request';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks/index';

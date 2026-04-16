@@ -10,7 +10,8 @@ import { DefaultRPCRes } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import dayjs from 'dayjs';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
+import { registerServiceReady, SERVICE_READY_KEYS } from './serviceReady';
 
 type RPCDefaultItem = DefaultRPCRes['rpcs'][number];
 
@@ -89,7 +90,7 @@ const fetchDefaultRpc = async () => {
   return data.rpcs as RPCDefaultItem[];
 };
 
-class CustomRPCService {
+export class CustomRPCService {
   store: RPCServiceStore = {
     customRPC: {},
     defaultRPC: {},
@@ -396,3 +397,4 @@ class CustomRPCService {
 export const customRPCService = new CustomRPCService({
   storageAdapter: appStorage,
 });
+registerServiceReady(SERVICE_READY_KEYS.customRPCService, customRPCService);

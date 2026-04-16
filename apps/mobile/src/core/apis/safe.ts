@@ -1,5 +1,3 @@
-import { keyringService, preferenceService } from '../services/shared';
-
 import { ethers } from 'ethers';
 // import { preferenceService } from '../service';
 // import { EthereumProvider } from './buildinProvider';
@@ -9,8 +7,7 @@ import Safe, { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { t } from 'i18next';
 import { isAddress } from 'web3-utils';
 import buildinProvider, { EthereumProvider } from './buildinProvider';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { getKeyring } from './keyring';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   GnosisKeyring,
   TransactionBuiltEvent,
@@ -26,6 +23,12 @@ import {
   GNOSIS_SUPPORT_CHAINS,
   SafeTransactionItem,
 } from '@rabby-wallet/gnosis-sdk/dist/api';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
+import type KeyringService from '@rabby-wallet/service-keyring';
+import type { PreferenceService } from '../services/preference';
 
 const gnosisPQueue = new PQueue({
   interval: 1000,
@@ -34,6 +37,15 @@ const gnosisPQueue = new PQueue({
   concurrency: 2,
 });
 
+const getKeyringService = () =>
+  getServiceReady<KeyringService>(SERVICE_READY_KEYS.keyringService);
+const getPreferenceService = () =>
+  getServiceReady<PreferenceService>(SERVICE_READY_KEYS.preferenceService);
+const getGnosisKeyring = async () => {
+  const { getKeyring } = await import('./keyring');
+  return getKeyring<GnosisKeyring>(KEYRING_TYPE.GnosisKeyring);
+};
+
 export const createSafeService = async ({
   address,
   networkId,
@@ -41,6 +53,7 @@ export const createSafeService = async ({
   address: string;
   networkId: string;
 }) => {
+  const preferenceService = await getPreferenceService();
   const account = preferenceService.getFallbackAccount();
   const currentProvider = new EthereumProvider();
   if (account) {
@@ -88,10 +101,12 @@ class ApisSafe {
     ).then(chains => chains.filter((chain): chain is Chain => !!chain));
   };
   importGnosisAddress = async (address: string, networkIds: string[]) => {
+    const keyringService = await getKeyringService();
+    const preferenceService = await getPreferenceService();
     let keyring, isNewKey;
     const keyringType = KEYRING_TYPE.GnosisKeyring;
     try {
-      keyring = await getKeyring(keyringType);
+      keyring = await getGnosisKeyring();
     } catch {
       const GnosisKeyring = keyringService.getKeyringClassForType(keyringType);
       keyring = new GnosisKeyring({});
@@ -119,7 +134,8 @@ class ApisSafe {
     preferenceService.initCurrentAccount();
   };
   syncAllGnosisNetworks = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyringService = await getKeyringService();
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       return;
     }
@@ -147,7 +163,8 @@ class ApisSafe {
   };
 
   syncGnosisNetworks = async (address: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyringService = await getKeyringService();
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       return;
     }
@@ -173,6 +190,7 @@ class ApisSafe {
     address: string;
     networkId: string;
   }) => {
+    const preferenceService = await getPreferenceService();
     const account = preferenceService.getFallbackAccount();
     if (!account) {
       throw new Error(t('background.error.noCurrentAccount'));
@@ -201,7 +219,7 @@ class ApisSafe {
   };
 
   getGnosisNetworkIds = async (address: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     const networkId = keyring.networkIdsMap[address.toLowerCase()];
     if (networkId === undefined) {
       throw new Error(`Address ${address} is not in keyring"`);
@@ -210,7 +228,7 @@ class ApisSafe {
   };
 
   getGnosisTransactionHash = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring.currentTransaction) {
       return keyring.getTransactionHash();
     }
@@ -218,7 +236,7 @@ class ApisSafe {
   };
 
   getGnosisTransactionSignatures = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring.currentTransaction) {
       const sigs = Array.from(keyring.currentTransaction.signatures.values());
       return sigs.map(sig => ({ data: sig.data, signer: sig.signer }));
@@ -227,7 +245,7 @@ class ApisSafe {
   };
 
   setGnosisTransactionHash = async (hash: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     keyring.currentTransactionHash = hash;
   };
 
@@ -238,7 +256,7 @@ class ApisSafe {
     version: string,
     networkId: string,
   ) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring) {
       const currentProvider = new EthereumProvider();
       currentProvider.currentAccount = account.address;
@@ -271,7 +289,7 @@ class ApisSafe {
     },
     hash: string,
   ) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring) {
       buildinProvider.currentProvider.currentAccount = account.address;
       buildinProvider.currentProvider.currentAccountType = account.type;
@@ -295,7 +313,7 @@ class ApisSafe {
   };
 
   postGnosisTransaction = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring || !keyring.currentTransaction) {
       throw new Error(t('background.error.notFoundTxGnosisKeyring'));
     }
@@ -303,7 +321,7 @@ class ApisSafe {
   };
 
   getGnosisAllPendingTxs = async (address: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
@@ -348,7 +366,7 @@ class ApisSafe {
   };
 
   getGnosisAllPendingMessages = async (address: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
@@ -414,7 +432,7 @@ class ApisSafe {
     version: string,
     networkId: string,
   ) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
@@ -434,7 +452,7 @@ class ApisSafe {
   };
 
   signGnosisTransaction = async (account: Account) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring.currentTransaction && keyring.safeInstance) {
       buildinProvider.currentProvider.currentAccount = account.address;
       buildinProvider.currentProvider.currentAccountType = account.type;
@@ -452,7 +470,7 @@ class ApisSafe {
   };
 
   checkGnosisTransactionCanExec = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring.currentTransaction && keyring.safeInstance) {
       const threshold = await keyring.safeInstance.getThreshold();
       return keyring.currentTransaction.signatures.size >= threshold;
@@ -461,7 +479,7 @@ class ApisSafe {
   };
 
   execGnosisTransaction = async (account: Account) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring.currentTransaction && keyring.safeInstance) {
       buildinProvider.currentProvider.currentAccount = account.address;
       buildinProvider.currentProvider.currentAccountType = account.type;
@@ -479,7 +497,7 @@ class ApisSafe {
   };
 
   gnosisGenerateTypedData = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
@@ -490,7 +508,7 @@ class ApisSafe {
   };
 
   gnosisAddConfirmation = async (address: string, signature: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
@@ -501,7 +519,7 @@ class ApisSafe {
   };
 
   gnosisAddPureSignature = async (address: string, signature: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
@@ -512,7 +530,7 @@ class ApisSafe {
   };
 
   gnosisAddSignature = async (address: string, signature: string) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
@@ -523,7 +541,7 @@ class ApisSafe {
   };
 
   clearGnosisTransaction = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring.currentTransaction || keyring.safeInstance) {
       keyring.currentTransaction = null;
       keyring.safeInstance = null;
@@ -543,7 +561,7 @@ class ApisSafe {
     networkId: string;
     message: string | Record<string, any>;
   }) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring) {
       const currentProvider = new EthereumProvider();
       currentProvider.currentAccount = account.address;
@@ -577,7 +595,7 @@ class ApisSafe {
     signerAddress: string;
     signature: string;
   }) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) throw new Error(t('background.error.notFoundGnosisKeyring'));
     return keyring.addMessage({
       signerAddress,
@@ -592,7 +610,7 @@ class ApisSafe {
     signerAddress: string;
     signature: string;
   }) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) throw new Error(t('background.error.notFoundGnosisKeyring'));
     return keyring.addMessageSignature({
       signerAddress,
@@ -628,7 +646,7 @@ class ApisSafe {
     signerAddress: string;
     signature: string;
   }) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) throw new Error(t('background.error.notFoundGnosisKeyring'));
     return keyring.addPureMessageSignature({
       signerAddress,
@@ -663,7 +681,7 @@ class ApisSafe {
   };
 
   getGnosisMessageSignatures = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring.currentSafeMessage) {
       const sigs = Array.from(keyring.currentSafeMessage.signatures.values());
       return sigs.map(sig => ({ data: sig.data, signer: sig.signer }));
@@ -683,7 +701,7 @@ class ApisSafe {
     },
     hash: string,
   ) => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (!keyring) {
       throw new Error(t('background.error.notFoundGnosisKeyring'));
     }
@@ -708,7 +726,7 @@ class ApisSafe {
   };
 
   clearGnosisMessage = async () => {
-    const keyring: GnosisKeyring = await getKeyring(KEYRING_CLASS.GNOSIS);
+    const keyring: GnosisKeyring = await getGnosisKeyring();
     if (keyring.currentSafeMessage || keyring.safeInstance) {
       keyring.currentSafeMessage = null;
       keyring.safeInstance = null;

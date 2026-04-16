@@ -57,6 +57,7 @@ import {
   fetchHistoryTokenItem,
   getHistoryItemType,
 } from './components/utils';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -70,48 +71,6 @@ import { Text } from '@/components/Typography';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
-
-export interface HistoryDisplayItem extends Omit<TxHistoryItem, 'tx'> {
-  // projectDict: TxHistoryResult['project_dict'];
-  // cateDict: TxHistoryResult['cate_dict'];
-  // tokenDict: TxHistoryResult['token_dict'];
-  tx:
-    | (TxHistoryItem['tx'] & {
-        id?: string;
-      })
-    | null;
-  receives: {
-    amount: number;
-    from_addr: string;
-    token_id: string;
-    price?: number;
-    token: TokenItem;
-  }[];
-  sends: {
-    amount: number;
-    to_addr: string;
-    token_id: string;
-    price?: number;
-    token: TokenItem;
-  }[];
-  time_at: number;
-  token_approve: {
-    spender: string;
-    token_id: string;
-    value: number;
-    price?: number;
-    token?: TokenItem;
-  } | null;
-  address: string;
-  project_item: ProjectItemType | null;
-  key: string;
-  isSmallUsdTx?: boolean; // is will be filtered small tx
-  cateDict?: Record<string, string>;
-  account?: KeyringAccountWithAlias;
-  isShowSuccess?: boolean;
-  historyType: HistoryItemCateType;
-  historyCustomType?: CUSTOM_HISTORY_TITLE_TYPE;
-}
 
 interface IFetchHistory {
   last: number;

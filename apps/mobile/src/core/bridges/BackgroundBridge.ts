@@ -17,7 +17,6 @@ import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 import { createOriginMiddleware } from './middlewares';
 import { createSanitizationMiddleware } from './middlewares/SanitizationMiddleware';
-import { dappService, keyringService, sessionService } from '../services';
 import getRpcMethodMiddleware, {
   RefLikeObject,
 } from './middlewares/RPCMethodMiddleware';
@@ -25,6 +24,12 @@ import WebView from 'react-native-webview';
 import { BroadcastEvent } from '@/constant/event';
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
+import type { DappService } from '@/core/services/dappService';
+import type KeyringService from '@rabby-wallet/service-keyring';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
 
 type BackgroundBridgeOptions = {
   webview: RefLikeObject<WebView | null>;
@@ -106,32 +111,44 @@ export class BackgroundBridge extends EventEmitter {
     this._setupProviderConnection(portMux.createStream('rabby-provider'));
 
     setTimeout(() => {
-      const chain =
-        findChain({
-          enum: dappService.getDapp(this.#webviewOrigin)?.chainId,
-        }) ||
-        findChain({
-          enum: CHAINS_ENUM.ETH,
-        });
-      if (chain) {
-        this.port.postMessage(
-          {
-            name: 'rabby-provider',
-            data: {
-              method: BroadcastEvent.chainChanged,
-              params: {
-                chainId: chain.hex,
-                networkVersion: chain.network,
-              },
-            },
-          },
-          this.#webviewOrigin,
-        );
-      }
+      void this.emitInitialChainChanged();
     }, 50);
   }
 
-  isUnlocked() {
+  async emitInitialChainChanged() {
+    const dappService = await getServiceReady<DappService>(
+      SERVICE_READY_KEYS.dappService,
+    );
+    const chain =
+      findChain({
+        enum: dappService.getDapp(this.#webviewOrigin)?.chainId,
+      }) ||
+      findChain({
+        enum: CHAINS_ENUM.ETH,
+      });
+    if (!chain) {
+      return;
+    }
+
+    this.port.postMessage(
+      {
+        name: 'rabby-provider',
+        data: {
+          method: BroadcastEvent.chainChanged,
+          params: {
+            chainId: chain.hex,
+            networkVersion: chain.network,
+          },
+        },
+      },
+      this.#webviewOrigin,
+    );
+  }
+
+  async isUnlocked() {
+    const keyringService = await getServiceReady<KeyringService>(
+      SERVICE_READY_KEYS.keyringService,
+    );
     return keyringService.isUnlocked();
   }
 

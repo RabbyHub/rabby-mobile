@@ -1,5 +1,8 @@
 import { BUILD_CHANNEL } from '@/constant/env';
-import { preferenceService } from '@/core/services';
+import {
+  getServiceReady,
+  SERVICE_READY_KEYS,
+} from '@/core/services/serviceReady';
 import firebaseAnalytics from '@react-native-firebase/analytics';
 
 export const analytics = firebaseAnalytics();
@@ -10,6 +13,13 @@ import { Platform } from 'react-native';
 const ANALYTICS_PATH = 'https://matomo.debank.com/matomo.php';
 const genExtensionId = customAlphabet('1234567890abcdef', 16);
 
+let cachedExtensionId: string | null = null;
+
+type AnalyticsPreferenceStore = {
+  getPreference(key: 'extensionId'): string | null | undefined;
+  setPreference(value: { extensionId: string }): void;
+};
+
 async function postData(url = '', params: URLSearchParams) {
   const response = await fetch(`${url}?${params.toString()}`, {
     method: 'POST',
@@ -18,14 +28,29 @@ async function postData(url = '', params: URLSearchParams) {
   return response;
 }
 
-let extensionId = preferenceService.getPreference('extensionId') as string;
-if (!extensionId) {
-  extensionId = genExtensionId();
-  preferenceService.setPreference({ extensionId });
+async function getOrCreateExtensionId(): Promise<string> {
+  if (cachedExtensionId) {
+    return cachedExtensionId;
+  }
+
+  const preferenceService = await getServiceReady<AnalyticsPreferenceStore>(
+    SERVICE_READY_KEYS.preferenceService,
+  );
+  const persistedExtensionId = preferenceService.getPreference('extensionId');
+  if (persistedExtensionId) {
+    cachedExtensionId = persistedExtensionId;
+    return cachedExtensionId;
+  }
+
+  cachedExtensionId = genExtensionId();
+  preferenceService.setPreference({ extensionId: cachedExtensionId });
+
+  return cachedExtensionId;
 }
 
 const getParams = async () => {
   const gaParams = new URLSearchParams();
+  const extensionId = await getOrCreateExtensionId();
 
   // const url = `https://${location.host}.com/${pathname}`;
 

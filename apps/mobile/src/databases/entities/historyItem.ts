@@ -16,11 +16,8 @@ import { prepareAppDataSource } from '../imports';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
-} from '@/screens/Transaction/components/type';
-import {
-  fetchHistoryTokenItem,
-  isNFTTokenId,
-} from '@/screens/Transaction/components/utils';
+} from '@/core/history/types';
+import { fetchHistoryTokenItem, isNFTTokenId } from '@/core/history/tokenUtils';
 import { IManageToken } from '@/core/services/preference';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,

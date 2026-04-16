@@ -14,8 +14,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
+import { BALANCE_HIDE_TYPE } from '@/constant/balance';
 import { useCurrency } from '@/hooks/useCurrency';
-import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import RcIconSmallWalletCC from '@/assets2024/icons/home/IconSmallWalletCC.svg';

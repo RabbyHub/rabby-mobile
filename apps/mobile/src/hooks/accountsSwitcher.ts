@@ -1,4 +1,5 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
+import { isSameAccount } from '@/core/account/utils';
 import { storeApiAccounts, useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
 import { useAtom } from 'jotai';
@@ -15,6 +16,8 @@ import {
   zResetSceneAccountInfo,
   zSetSceneAccountInfo,
 } from './sceneAccountInfoAtom';
+
+export { isSameAccount } from '@/core/account/utils';
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
   isForMultipleAddress?: boolean;
@@ -220,19 +223,6 @@ export function useSwitchSceneCurrentAccount() {
     switchSceneSigningAccount,
     toggleUseAllAccountsOnScene,
   };
-}
-
-export function isSameAccount(
-  account: Account,
-  saccount?: SceneAccount | null,
-) {
-  if (!saccount) return false;
-
-  return (
-    saccount?.address?.toLowerCase() === account.address.toLowerCase() &&
-    saccount?.brandName === account.brandName &&
-    saccount?.type === account.type
-  );
 }
 
 const ScenesSupportAllAccounts: AccountSwitcherScene[] = [

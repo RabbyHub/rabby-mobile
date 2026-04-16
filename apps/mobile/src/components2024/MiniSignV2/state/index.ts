@@ -4,10 +4,10 @@ export * from './types';
 export { SignatureManager, signatureManager } from './SignatureManager';
 export { useSignatureStore, useSignatureStoreOf } from './useSignatureStore';
 export {
-  getMiniSignGasPanelController,
   useMiniSignGasPanelController,
   useMiniSignGasPanelState,
 } from './useMiniSignGasPanel';
+export { getMiniSignGasPanelController } from './miniSignGasPanelController';
 export {
   SignatureInstanceProvider,
   useSignatureInstance,

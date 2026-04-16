@@ -1,20 +1,13 @@
 import BigNumber from 'bignumber.js';
-import {
-  AbstractPortfolioToken,
-  AbstractProject,
-  DisplayNftItem,
-} from '../types';
+import { AbstractPortfolioToken, AbstractProject } from '../types';
 import { useMemo } from 'react';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import type { CombineNFTItem, DisplayNftItem } from '@/core/nft/displayTypes';
 import nftListStore, {
   combinedNfts,
   getAssetsMapDirectly,
   useOnNftRefresh,
 } from '@/store/nfts';
-
-export type CombineNFTItem = DisplayNftItem & {
-  address?: string;
-};
 type OriginalCombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
   totalUsdValue: BigNumber;

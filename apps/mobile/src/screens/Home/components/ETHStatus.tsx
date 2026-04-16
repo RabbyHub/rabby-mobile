@@ -4,7 +4,7 @@ import { Image, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatPercentageKMB } from '@/screens/Meme/components/TokenItem';
+import { formatPercentageKMB } from '@/screens/Watchlist/components/priceChange';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { create } from 'zustand';

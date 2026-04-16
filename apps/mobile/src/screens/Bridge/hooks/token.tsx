@@ -14,7 +14,7 @@ import { openapi } from '@/core/request';
 import { useRefreshId, useSetQuoteVisible, useSetRefreshId } from './context';
 import { getChainDefaultToken } from '@/constant/swap';
 import { tokenAmountBn } from '@/screens/Swap/utils';
-import { bridgeQuoteScore } from '../components/BridgeQuoteItem';
+import { bridgeQuoteScore } from '../utils/quote';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';

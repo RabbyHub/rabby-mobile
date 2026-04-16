@@ -4,7 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import { formatTimestamp } from '@/utils/time';
 import { View } from 'react-native';
 import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';

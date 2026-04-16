@@ -28,7 +28,8 @@ import {
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import { APP_TEST_PWD, APP_VERSIONS, APPLICATION_ID } from '@/constant';
+import { APP_TEST_PWD, APP_VERSIONS } from '@/constant';
+import { APPLICATION_ID } from '@/constant/package';
 import {
   RequestGenericPurpose,
   parseKeychainError,
@@ -201,6 +202,8 @@ function incToReset(isOnMount = false) {
   return unlockFailedRef.current;
 }
 export default function UnlockScreen() {
+  recordStartupProbeOnce('UNLOCK_RENDER_START');
+
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
@@ -212,6 +215,12 @@ export default function UnlockScreen() {
   } = useBiometrics({ autoFetch: true });
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
+  const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
+  const couldSwitchingAuthentication = isBiometricsEnabled;
+  const usingPassword = !usingBiometrics || !isBiometricsEnabled;
+  const didLayoutUnlockRef = React.useRef(false);
+  const didLayoutPrimaryRef = React.useRef(false);
+  const lockBiometricRef = React.useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -238,11 +247,6 @@ export default function UnlockScreen() {
       };
     }, []),
   );
-
-  const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
-  const couldSwitchingAuthentication = isBiometricsEnabled;
-  const usingPassword = !usingBiometrics || !isBiometricsEnabled;
-  const didLayoutUnlockRef = React.useRef(false);
 
   React.useEffect(() => {
     recordStartupProbeOnce('UNLOCK_MOUNT', {
@@ -320,7 +324,6 @@ export default function UnlockScreen() {
     }
   }, [t]);
 
-  const lockBiometricRef = React.useRef(false);
   const processUnlockWithBiometrics = useCallback(async () => {
     if (lockBiometricRef.current) {
       return;
@@ -344,9 +347,10 @@ export default function UnlockScreen() {
   useLayoutEffect(() => {
     incToReset(true);
     const sub = perfEvents.subscribe('AUTO_TRIGGER_UNLOCK', async () => {
-      // wait screen rendered
       await sleep(500);
-      if (!isBiometricsEnabled) return;
+      if (!isBiometricsEnabled) {
+        return;
+      }
 
       await processUnlockWithBiometrics();
     });
@@ -364,7 +368,10 @@ export default function UnlockScreen() {
         },
       });
 
-      if (params?.disableAutoTriggerUnlock) return;
+      if (params?.disableAutoTriggerUnlock) {
+        return;
+      }
+
       UnlockUIManager.triggerAutoUnlock();
     }, [params?.disableAutoTriggerUnlock]),
   );
@@ -404,7 +411,17 @@ export default function UnlockScreen() {
         </View>
         <View style={styles.bodyContainer}>
           {usingPassword ? (
-            <View style={styles.formWrapper}>
+            <View
+              onLayout={() => {
+                if (didLayoutPrimaryRef.current) return;
+                didLayoutPrimaryRef.current = true;
+                recordStartupProbeOnce('UNLOCK_PRIMARY_CONTENT_LAYOUT', {
+                  payload: {
+                    contentType: 'password',
+                  },
+                });
+              }}
+              style={styles.formWrapper}>
               <NextInput.Password
                 clearable
                 ref={passwordInputRef}
@@ -456,7 +473,17 @@ export default function UnlockScreen() {
               </View>
             </View>
           ) : (
-            <View style={styles.biometricsWrapper}>
+            <View
+              onLayout={() => {
+                if (didLayoutPrimaryRef.current) return;
+                didLayoutPrimaryRef.current = true;
+                recordStartupProbeOnce('UNLOCK_PRIMARY_CONTENT_LAYOUT', {
+                  payload: {
+                    contentType: 'biometrics',
+                  },
+                });
+              }}
+              style={styles.biometricsWrapper}>
               <View style={styles.biometricsBtns}>
                 <TouchableView
                   style={styles.biometricsBtn}

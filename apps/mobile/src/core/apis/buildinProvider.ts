@@ -1,18 +1,23 @@
-import { sendRequest } from '@/core/apis/sendRequest';
 // this script is injected into webpage's context
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { EventEmitter } from 'events';
 // import { underline2Camelcase } from '../controllers/rpcFlow';
-import { notificationService, preferenceService } from '../services';
-import providerController from '@/core/controllers/provider';
 import { findChain } from '@/utils/chain';
 // import { sendRequest } from './provider';
-import { getGlobalTmpStore, setGlobalProvider } from './globalProvider';
+import { registerGlobalProvider } from './globalProvider';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { CHAINS } from '@debank/common';
 import { underline2Camelcase } from '../utils/common';
-import { Account } from '../services/preference';
+import type { Account } from '../services/preference';
+import { getServiceReady, SERVICE_READY_KEYS } from '../services/serviceReady';
+import type { NotificationService } from '../services/notification';
+import type { PreferenceService } from '../services/preference';
+
+const getNotificationService = () =>
+  getServiceReady<NotificationService>(SERVICE_READY_KEYS.notificationService);
+const getPreferenceService = () =>
+  getServiceReady<PreferenceService>(SERVICE_READY_KEYS.preferenceService);
 
 interface StateProvider {
   accounts: string[] | null;
@@ -83,6 +88,10 @@ export class EthereumProvider extends EventEmitter {
     };
     const mapMethod = underline2Camelcase(method);
     const networkId = this.chainId || CHAINS[CHAINS_ENUM.ETH].id.toString();
+    const { getProviderController } = await import(
+      '@/core/controllers/provider'
+    );
+    const providerController = await getProviderController();
 
     const chain = findChain({
       networkId: networkId,
@@ -100,7 +109,8 @@ export class EthereumProvider extends EventEmitter {
       case 'eth_accounts':
       case 'eth_requestAccounts':
         return [this.currentAccount];
-      case 'personal_sign':
+      case 'personal_sign': {
+        const notificationService = await getNotificationService();
         return new Promise((resolve, reject) => {
           notificationService.on('resolve', data => {
             if (data.uiRequestComponent) return;
@@ -110,6 +120,7 @@ export class EthereumProvider extends EventEmitter {
             reject(err);
           });
         });
+      }
       case 'eth_sendTransaction': {
         const txParams = {
           ...data.params[0],
@@ -120,6 +131,7 @@ export class EthereumProvider extends EventEmitter {
         }
         const sendRequest = (await import('@/core/apis/sendRequest'))
           .sendRequest;
+        const preferenceService = await getPreferenceService();
 
         return sendRequest({
           data: {
@@ -224,6 +236,5 @@ const buildinProvider = {
     deleteProperty: () => true,
   }),
 };
-setGlobalProvider(buildinProvider);
-
+registerGlobalProvider(buildinProvider);
 export default buildinProvider;

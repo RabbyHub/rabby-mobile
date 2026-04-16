@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useInfiniteScroll, useMemoizedFn, useMount } from 'ahooks';
 import { KeyringAccountWithAlias } from '@/hooks/account';

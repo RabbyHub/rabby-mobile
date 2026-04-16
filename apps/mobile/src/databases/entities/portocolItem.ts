@@ -6,7 +6,7 @@ import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
-import { IProtocolItem } from '@/store/protocols';
+import type { IProtocolItem } from '@/core/protocol/types';
 import { protocolEntity2IProtocolItem } from '@/utils/protocol';
 import { APP_DB_PREFIX, ORM_TABLE_NAMES } from '../constant';
 import { PreparedStatement } from '@op-engineering/op-sqlite';

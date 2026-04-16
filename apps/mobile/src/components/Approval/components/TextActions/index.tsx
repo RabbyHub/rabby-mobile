@@ -16,7 +16,7 @@ import { CommonAction } from '../CommonAction';
 import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
-import { getActionsStyle } from '../Actions';
+import { getActionsStyle } from '../Actions/style';
 import { ParsedTextActionData } from '@rabby-wallet/rabby-action';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Account } from '@/core/services/preference';

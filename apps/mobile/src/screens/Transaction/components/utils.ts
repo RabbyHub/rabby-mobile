@@ -1,28 +1,33 @@
-import { HistoryDisplayItem } from '../MultiAddressHistory';
+import type { HistoryDisplayItem } from '@/core/history/display';
 import { getTokenSymbol } from '@/utils/token';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import {
   NFTItem,
   TokenItem,
-  TokenItemWithEntity,
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { IManageToken } from '@/core/services/preference';
-import {
-  SwapTxHistoryItem,
-  TransactionHistoryItem,
-} from '@/core/services/transactionHistory';
-import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
+import type { IManageToken } from '@/core/services/preference';
 import { duplicatelyStringifiedAppJsonStore } from '@/core/storage/mmkv';
-import { openapi } from '@/core/request';
-import { patchSingleToken } from '@/databases/sync/assets';
 import { HistoryItemCateType } from './type';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
+import { ensureHistoryListItemFromDb } from '@/core/history/display';
+import {
+  fetchHistoryTokenItem,
+  fetchHistoryTokenUUId,
+  isNFTTokenId,
+} from '@/core/history/tokenUtils';
+
+export { ensureHistoryListItemFromDb } from '@/core/history/display';
+export {
+  fetchHistoryTokenItem,
+  fetchHistoryTokenUUId,
+  isNFTTokenId,
+} from '@/core/history/tokenUtils';
 
 export function getApproveTokeName(data: HistoryDisplayItem): string {
   const tokenId = data.token_approve?.token_id || '';
@@ -82,61 +87,6 @@ export function getHistoryItemType(data: TxHistoryItem): HistoryItemCateType {
 
   return HistoryItemCateType.UnKnown;
 }
-
-export const fetchHistoryTokenUUId = (
-  token_id: string,
-  chain: string,
-): string => {
-  return `${chain}_token:${token_id}`;
-};
-
-export const fetchHistoryTokenItem = (
-  token_id: string,
-  chain: string,
-  tokenDict: Record<string, TokenItem>,
-) => {
-  const tokenUUID = `${chain}_token:${token_id}`;
-  // TODO: {} is a temporary fix, need to make one real TokenItem object
-  return tokenDict[tokenUUID] || tokenDict[token_id] || ({} as TokenItem);
-};
-
-export const ensureHistoryListItemFromDb = (
-  item: HistoryItemEntity,
-): HistoryDisplayItem => {
-  return {
-    ...item,
-    historyCustomType: item.history_custom_type,
-    historyType: item.history_type,
-    receives: item.receives,
-    sends: item.sends,
-    id: item.txHash,
-    tx: {
-      id: item.txHash,
-      status: item.status,
-      from_addr: item.tx_from_address,
-      to_addr: item.tx_to_address,
-      usd_gas_fee: item.tx_usd_gas_fee,
-      eth_gas_fee: item.tx_eth_gas_fee,
-
-      name: '', // no use
-      params: [],
-      value: 0,
-      message: '',
-    },
-    token_approve: {
-      token_id: item.token_approve_id,
-      spender: item.token_approve_spender,
-      value: item.token_approve_value,
-      token: item.token_approve_item,
-    },
-    project_item: item.project_item ?? null,
-    key: item._db_id,
-    address: item.owner_addr,
-    isSmallUsdTx: item.is_small_tx,
-    cateDict: {}, // no use
-    debt_liquidated: null,
-  };
-};
 
 export const judgeIsSmallUsdTx = (
   item: HistoryItemEntity,
@@ -238,59 +188,4 @@ export const judgeIsSmallUsdTxInApi = (
   }
 
   return false;
-};
-
-export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
-  try {
-    const actionData = tx.action?.actionData;
-    if (!actionData?.send) {
-      return;
-    }
-
-    const item = new LocalHistoryItemEntity();
-    LocalHistoryItemEntity.fillEntityFromLocalSend(item, tx);
-    const repo = LocalHistoryItemEntity.getRepository();
-    await repo.manager.save(item);
-  } catch (e) {
-    console.log('loadTxSaveFromLocalStore error', e);
-  }
-};
-
-export const isNFTTokenId = (tokenId: string) => {
-  return tokenId.length === 32;
-};
-
-export const txDonePatchTokenAmountInDb = async (
-  tx: TransactionHistoryItem,
-) => {
-  try {
-    const sendTokenList = tx.explain?.balance_change?.send_token_list;
-    const receiveTokenList = tx.explain?.balance_change?.receive_token_list;
-    const tokenList = [...(sendTokenList || []), ...(receiveTokenList || [])];
-
-    Promise.allSettled(
-      tokenList.map(async token => {
-        try {
-          const tokenRes = (await openapi.getToken(
-            tx.address,
-            token.chain,
-            token.id,
-          )) as TokenItemWithEntity;
-          const cex_ids = tokenRes.identity?.cex_list?.map(item => item.id);
-          tokenRes.cex_ids = cex_ids || [];
-          if (tokenRes) {
-            // todo: check tokenRes.cex_ids is right
-            patchSingleToken(tx.address, tokenRes);
-          }
-        } catch (error) {
-          console.error(
-            `Failed to patch token ${token.id} for ${tx.address}:`,
-            error,
-          );
-        }
-      }),
-    );
-  } catch (e) {
-    console.log('txDonePatchTokenAmountInDb error', e);
-  }
 };

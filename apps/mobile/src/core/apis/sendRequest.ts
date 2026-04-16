@@ -1,8 +1,7 @@
 import abiCoderInst, { AbiCoder } from 'web3-eth-abi';
 
-import provider from '../controllers';
+import { getProviderExecutor } from '../controllers/providerExecutor';
 import { ProviderRequest } from '../controllers/type';
-import { setGlobalTmpStore } from './globalProvider';
 import { Account } from '../services/preference';
 
 export function sendRequest<T = any>(
@@ -20,11 +19,13 @@ export function sendRequest<T = any>(
   if (isBuild) {
     return Promise.resolve<T>(data as T);
   }
-  return provider<T>({
-    data,
-    session,
-    account,
-  });
+  return getProviderExecutor().then(provider =>
+    provider<T>({
+      data,
+      session,
+      account,
+    }),
+  );
 }
 
 export function dappSendRequest<T = any>(
@@ -40,12 +41,12 @@ export function dappSendRequest<T = any>(
   if (isBuild) {
     return Promise.resolve<T>(data as T);
   }
-  return provider<T>({
-    data,
-    session,
-  });
+  return getProviderExecutor().then(provider =>
+    provider<T>({
+      data,
+      session,
+    }),
+  );
 }
-
-setGlobalTmpStore({ sendRequest });
 
 export const abiCoder = abiCoderInst as unknown as AbiCoder;

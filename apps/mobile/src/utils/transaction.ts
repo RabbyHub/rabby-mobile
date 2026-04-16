@@ -6,6 +6,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import type {
   ExplainTxResponse,
   GasLevel,
+  TokenItem,
   Tx,
   TxAllHistoryResult,
   TxDisplayItem,
@@ -24,13 +25,15 @@ import { Account, IManageToken } from '@/core/services/preference';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { CustomTxItem } from '@/core/services/transactionHistory';
-import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
+import { ensureHistoryListItemFromDb } from '@/core/history/display';
 import {
   CUSTOM_HISTORY_TITLE_TYPE,
   HistoryItemCateType,
-} from '@/screens/Transaction/components/type';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
-import { TokenChangeDataItem } from '@/screens/Transaction/components/HistoryItem';
+} from '@/core/history/types';
+import type {
+  HistoryDisplayItem,
+  TokenChangeDataItem,
+} from '@/core/history/display';
 import i18next from 'i18next';
 import { ellipsisOverflowedText } from './text';
 import { getTokenSymbol } from './token';
@@ -670,6 +673,11 @@ export function prepareTxHistoryDisplayUIData(data: HistoryDisplayItem) {
     return res;
   })();
 
+  const approveTokenSymbol =
+    tokenApproveData[0]?.token_id?.length === 32
+      ? 'NFT'
+      : getTokenSymbol(tokenApproveData[0]?.token as TokenItem | undefined);
+
   const formatTitle = (() => {
     if (data.historyCustomType) {
       switch (data.historyCustomType) {
@@ -723,14 +731,11 @@ export function prepareTxHistoryDisplayUIData(data: HistoryDisplayItem) {
         return (
           i18next.t('page.transactions.itemTitle.Approve') +
           ' ' +
-          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0]?.token), 6)
+          ellipsisOverflowedText(approveTokenSymbol, 6)
         );
       case HistoryItemCateType.Revoke:
         return i18next.t('page.transactions.itemTitle.Revoke', {
-          token: ellipsisOverflowedText(
-            getTokenSymbol(tokenApproveData[0]?.token),
-            6,
-          ),
+          token: ellipsisOverflowedText(approveTokenSymbol, 6),
         });
       case HistoryItemCateType.Contract:
         return i18next.t('page.transactions.itemTitle.Contract');

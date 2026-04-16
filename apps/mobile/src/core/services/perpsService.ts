@@ -6,7 +6,7 @@ import { bytesToHex, publicToAddress } from '@ethereumjs/util';
 import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
-import { keyringService } from '@/core/services';
+import type KeyringService from '@rabby-wallet/service-keyring';
 import { Account } from './preference';
 
 export interface AgentWalletInfo {
@@ -59,12 +59,17 @@ export interface PerpsServiceMemoryState {
 
 export class PerpsService {
   private store?: PerpsServiceStore;
+  private keyringService: KeyringService;
   private memoryState: PerpsServiceMemoryState = {
     agentWallets: {},
     unlockPromise: null,
   };
 
-  constructor(options: StorageAdapaterOptions) {
+  constructor(
+    options: StorageAdapaterOptions & {
+      keyringService: KeyringService;
+    },
+  ) {
     this.store = createPersistStore<PerpsServiceStore>(
       {
         name: APP_STORE_NAMES.perps,
@@ -85,6 +90,7 @@ export class PerpsService {
         storage: options?.storageAdapter,
       },
     );
+    this.keyringService = options.keyringService;
     this.memoryState.agentWallets = {};
   }
 
@@ -218,7 +224,9 @@ export class PerpsService {
       if (this.store.agentVaults) {
         const vaultsMap: {
           [address: string]: string;
-        } = await keyringService.decryptWithPassword(this.store.agentVaults);
+        } = await this.keyringService.decryptWithPassword(
+          this.store.agentVaults,
+        );
 
         // Format data for memory state
         for (const masterAddress in vaultsMap) {
@@ -283,14 +291,16 @@ export class PerpsService {
 
     let vaultsMap: { [address: string]: string } = {};
     if (this.store.agentVaults) {
-      vaultsMap = await keyringService.decryptWithPassword(
+      vaultsMap = await this.keyringService.decryptWithPassword(
         this.store.agentVaults,
       );
     }
 
     vaultsMap[normalizedAddress] = vault;
 
-    const encryptedVaults = await keyringService.encryptWithPassword(vaultsMap);
+    const encryptedVaults = await this.keyringService.encryptWithPassword(
+      vaultsMap,
+    );
 
     // Update store
     this.store.agentVaults = encryptedVaults;
@@ -389,14 +399,16 @@ export class PerpsService {
 
     let vaultsMap: { [address: string]: string } = {};
     if (this.store.agentVaults) {
-      vaultsMap = await keyringService.decryptWithPassword(
+      vaultsMap = await this.keyringService.decryptWithPassword(
         this.store.agentVaults,
       );
     }
 
     delete vaultsMap[normalizedAddress];
 
-    const encryptedVaults = await keyringService.encryptWithPassword(vaultsMap);
+    const encryptedVaults = await this.keyringService.encryptWithPassword(
+      vaultsMap,
+    );
 
     this.store.agentVaults = encryptedVaults;
     const updatedPreferences = { ...this.store.agentPreferences };

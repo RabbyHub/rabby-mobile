@@ -28,7 +28,7 @@ import {
 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useMeasureLayoutForHomeGuidanceMultipleTabs } from '@/components2024/Animations/HomeGuidanceMultipleTabs';
-import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
+import { TabName } from '@/screens/Address/components/MultiAssets/constants';
 import { ChainSelector } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import {
   getComputedChainInfo,
@@ -53,6 +53,7 @@ import {
   TabbarLabels,
 } from '@/hooks/navigation';
 import CustomLabel from './Tabs/CustomLabel';
+import { getHomeTabIndicatorWidth } from './tabIndicator';
 
 type ItemLayout = {
   width: number;
@@ -174,14 +175,6 @@ const leftHitSlopTop = 50;
 const leftHitSlopBottom = 4;
 const rightHitSlopTop = 50;
 const rightHitSlopBottom = 4;
-
-export function getHomeTabIndicatorWidth(winWidth: number) {
-  'worklet';
-  // const winWidth = Dimensions.get('window').width;
-  const indicatorWidth = (winWidth - 52) / 2;
-
-  return indicatorWidth;
-}
 
 const indicatorStyles = createGetStyles2024(
   {

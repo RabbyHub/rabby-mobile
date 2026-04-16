@@ -15,16 +15,12 @@ import { NextSearchBar } from '../SearchBar';
 import { useForceUpdate } from '@/hooks/useForceUpdate';
 import { findChainByServerID, searchChains } from '@/utils/chain';
 import { Chain } from '@/constant/chains';
+import type { ChainListItem } from './types';
 import { Text, TextInput } from '@/components/Typography';
 
-const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
+export type { ChainListItem } from './types';
 
-// TODO: 把 ChainListItem 改成基于 Chain 的扩展类型并在最外层处理好避免子组件里面需要多次 findChain
-export type ChainListItem = {
-  chain: string;
-  total: number;
-  percentage: number;
-};
+const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
 
 type SelectSortedChainProps = {
   value?: ChainListItem;

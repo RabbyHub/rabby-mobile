@@ -2,7 +2,12 @@ import useProtocolListStore from '@/store/protocols';
 import { useAccounts } from './account';
 import { useInnerDappSelection } from './useInnerDappSelection';
 import { useShallow } from 'zustand/shallow';
-import { getDappAccount, useDapps } from './useDapps';
+import { selectDappAccount } from '@/core/dapp/accountSelector';
+import {
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services/shared';
+import { useDapps } from './useDapps';
 import { INNER_DAPP_LIST } from '@/components2024/DappFrameAccountHeader';
 import { useMemo } from 'react';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -44,7 +49,12 @@ export const useCurrentInnerDappTypeValue = (
   }, [dapps, dappOrigin]);
 
   const account = useMemo(() => {
-    return getDappAccount({ dappInfo, accounts });
+    return selectDappAccount({
+      dappInfo,
+      accounts,
+      recentTransactions: transactionHistoryService.store.transactions,
+      fallbackAccount: preferenceService.getFallbackAccount(),
+    });
   }, [accounts, dappInfo]);
 
   const difiValue = useMemo(() => {

@@ -1,8 +1,9 @@
-import { contactService } from '@/core/services';
+import { KeyringAccountWithAlias } from '@/core/account/utils';
 import { Account } from '@/core/services/preference';
-import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { ellipsisAddress } from './address';
+
+export { filterMyAccounts, sortAccountsByBalance } from '@/core/account/utils';
 
 const priority = {
   [KEYRING_TYPE.HdKeyring]: 1,
@@ -18,8 +19,6 @@ export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
     return (priority[item1.type] || 100) - (priority[item2.type] || 100);
   })[0];
 }
-
-export { sortAccountsByBalance, filterMyAccounts } from '@/core/apis/account';
 
 export function isWatchOrSafeAccount(account: Account | Account['type']) {
   if (!account) {
@@ -95,16 +94,16 @@ export function stableSerializeItems<
 export function makeAccountObject<T extends Account>({
   address,
   brandName,
+  aliasName,
 }: {
   address: string;
   brandName?: string;
+  aliasName?: string;
 }): T {
   return {
     address,
     brandName: brandName || KEYRING_CLASS.WATCH,
-    aliasName:
-      contactService.getAliasByAddress(address)?.alias ||
-      ellipsisAddress(address),
+    aliasName: aliasName || ellipsisAddress(address),
     balance: 0,
     type: KEYRING_CLASS.WATCH,
   } as any as T;

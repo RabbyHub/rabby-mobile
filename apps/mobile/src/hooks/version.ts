@@ -17,7 +17,8 @@ import {
   getUpgradeInfo,
 } from '@/utils/version';
 import { BUILD_CHANNEL } from '@/constant/env';
-import { APP_URLS, isNonPublicProductionEnv } from '@/constant';
+import { APP_URLS } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { toast } from '@/components2024/Toast';
 import { useUnmountedRef } from './common/useMount';
 import { zCreate } from '@/core/utils/reexports';

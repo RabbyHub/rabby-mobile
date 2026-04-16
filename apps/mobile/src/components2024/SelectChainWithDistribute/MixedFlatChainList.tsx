@@ -4,7 +4,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import { ChainListItem } from './index';
+import type { ChainListItem } from './types';
 
 export default function MixedFlatChainList({
   style,

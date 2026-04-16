@@ -6,7 +6,7 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { formatCurrency } from '@/utils/number';
 import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
-import { ChainListItem } from './index';
+import type { ChainListItem } from './types';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Text } from '@/components/Typography';

@@ -1,10 +1,4 @@
-import {
-  APP_STORE_NAMES,
-  GET_SERVICE_BY_NAME,
-  MIGRATABLE_STORE_SERVICE,
-  STORE_BASED_SERVICE,
-  STORE_SERVICE_MAP,
-} from '@/core/storage/storeConstant';
+import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import {
   preferenceStoreMigration,
   preferenceServiceMigration,
@@ -17,6 +11,12 @@ import {
   processMigrateService,
 } from './_fns.service';
 import { StorageAdapater } from '@rabby-wallet/persist-store';
+import type {
+  GET_SERVICE_BY_NAME,
+  MIGRATABLE_STORE_SERVICE,
+  STORE_BASED_SERVICE,
+  STORE_SERVICE_MAP,
+} from './serviceTypes';
 
 export const storeMigrations: {
   [P in APP_STORE_NAMES]?: IStoreMigrations;

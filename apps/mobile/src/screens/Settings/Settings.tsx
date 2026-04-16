@@ -42,7 +42,10 @@ import {
   IS_HERMES_ENABLED,
 } from '@/constant/env';
 import { E2E_ID } from '@/constant/e2e';
-import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
+import {
+  isNonPublicProductionEnv,
+  NEED_DEVSETTINGBLOCKS,
+} from '@/constant/package';
 import { RootNames } from '@/constant/layout';
 import {
   makeThemeOptions,

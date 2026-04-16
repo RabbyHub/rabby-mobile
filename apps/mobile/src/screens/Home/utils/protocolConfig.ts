@@ -12,7 +12,7 @@ import { CustomMarket } from '@/screens/Lending/config/market';
 import { SvgProps } from 'react-native-svg';
 import { switchPerpsAccountBeforeNavigate } from '@/hooks/perps/usePerpsStore';
 import { useSelectedMarket } from '@/screens/Lending/hooks';
-import { IProtocolPortfolio } from '@/store/protocols';
+import type { IProtocolPortfolio } from '@/core/protocol/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 export const keyToMarketKey: Record<string, CustomMarket> = {

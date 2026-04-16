@@ -12,9 +12,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
-import { BridgeQuoteItem, bridgeQuoteScore } from './BridgeQuoteItem';
+import { BridgeQuoteItem } from './BridgeQuoteItem';
 import { QuoteLoading } from './loading';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { bridgeQuoteScore } from '../utils/quote';
 import { Text } from '@/components/Typography';
 
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({

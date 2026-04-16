@@ -5,8 +5,8 @@ import 'react-native-gesture-handler';
  *
  * @format
  */
-import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
+import AppNavigation from '@/AppNavigation';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
 import { withExpoSnack } from 'nativewind';
@@ -70,7 +70,6 @@ const RozeniteDevTools = IS_ROZENITE_ENABLED
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useInitializeAppOnTop();
-
   useSetupServiceStub();
   useUniversalLinkOnTop();
   useIAPListener();
@@ -79,8 +78,6 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useRendererDetect({ name: 'MainScreen' });
 
   const { couldRender } = useAppCouldRender();
-
-  const safeAreaInsets = useSafeAreaInsets();
 
   React.useEffect(() => {
     recordStartupProbeOnce('MAINSCREEN_MOUNT', {
@@ -91,7 +88,9 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   }, []);
 
   React.useEffect(() => {
-    if (!couldRender) return;
+    if (!couldRender) {
+      return;
+    }
 
     recordStartupProbeOnce('BOOTSTRAP_COULD_RENDER_TRUE', {
       flags: {
@@ -106,7 +105,7 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
       <RerenderDetector name="UnderAppProvider" />
       <BottomSheetModalProvider>
         <ScreenSceneAccountProvider>
-          {couldRender && <MemoziedAppNav />}
+          {couldRender ? <MemoziedAppNav /> : null}
         </ScreenSceneAccountProvider>
       </BottomSheetModalProvider>
     </AppProvider>
@@ -118,7 +117,9 @@ function SizeWatcher() {
 
   useEffect(() => {
     const prevInsets = svsLayout.insets.value;
-    if (isEqual(prevInsets, insets)) return;
+    if (isEqual(prevInsets, insets)) {
+      return;
+    }
     svsLayout.insets.value = insets;
   }, [insets]);
 
@@ -150,7 +151,9 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView
                 onLayout={() => {
-                  if (didLayoutRootRef.current) return;
+                  if (didLayoutRootRef.current) {
+                    return;
+                  }
                   didLayoutRootRef.current = true;
                   recordStartupProbeOnce('APP_ROOT_LAYOUT', {
                     flags: {

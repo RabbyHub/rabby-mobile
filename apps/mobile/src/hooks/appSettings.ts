@@ -1,6 +1,6 @@
 import DeviceUtils from '@/core/utils/device';
 import { zustandByMMKV } from '@/core/storage/mmkv';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import {
   resolveValFromUpdater,
   runIIFEFunc,

@@ -2,7 +2,7 @@ import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 
 export type OfflineChainStore = {
   closeTipsChains: string[];

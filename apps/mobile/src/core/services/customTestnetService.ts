@@ -33,43 +33,20 @@ import { updateChainStore } from '@/constant/chains';
 import { appStorage } from '../storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { registerServiceReady, SERVICE_READY_KEYS } from './serviceReady';
+import type {
+  CustomTestnetToken,
+  CustomTestnetTokenBase,
+  TestnetChain,
+  TestnetChainBase,
+} from './customTestnet.types';
 
-export interface TestnetChainBase {
-  id: number;
-  name: string;
-  nativeTokenSymbol: string;
-  rpcUrl: string;
-  scanLink?: string;
-}
-
-export interface TestnetChain extends TestnetChainBase {
-  nativeTokenAddress: string;
-  hex: string;
-  network: string;
-  enum: CHAINS_ENUM;
-  serverId: string;
-  nativeTokenLogo: string;
-  eip: Record<string, any>;
-  nativeTokenDecimals: number;
-  scanLink: string;
-  isTestnet?: boolean;
-  logo: string;
-  whiteLogo?: string;
-  needEstimateGas?: boolean;
-  severity: number;
-}
-
-export interface CustomTestnetTokenBase {
-  id: string;
-  chainId: number;
-  symbol: string;
-  decimals: number;
-}
-
-export interface CustomTestnetToken extends CustomTestnetTokenBase {
-  amount: number;
-  rawAmount: string;
-}
+export type {
+  CustomTestnetToken,
+  CustomTestnetTokenBase,
+  TestnetChain,
+  TestnetChainBase,
+} from './customTestnet.types';
 
 export type CutsomTestnetServiceStore = {
   customTestnet: Record<string, TestnetChain>;
@@ -171,7 +148,7 @@ export class CustomTestnetService {
           },
         };
       }
-    } catch (error) {
+    } catch (_error) {
       return {
         error: {
           key: 'rpcUrl',
@@ -271,7 +248,7 @@ export class CustomTestnetService {
           }),
         };
       })
-      .catch(e => {
+      .catch(_error => {
         return {
           hash: hash,
           code: -1,
@@ -642,10 +619,10 @@ export class CustomTestnetService {
         ? [chainId]
         : Object.values(this.store.customTestnet).map(item => item.id);
 
-      queryList = chainList.map(chainId => {
+      queryList = chainList.map(targetChainId => {
         return {
           tokenId: q,
-          chainId,
+          chainId: targetChainId,
           address,
         };
       });
@@ -735,3 +712,7 @@ export const createTestnetChain = (chain: TestnetChainBase): TestnetChain => {
 export const customTestnetService = new CustomTestnetService({
   storageAdapter: appStorage,
 });
+registerServiceReady(
+  SERVICE_READY_KEYS.customTestnetService,
+  customTestnetService,
+);

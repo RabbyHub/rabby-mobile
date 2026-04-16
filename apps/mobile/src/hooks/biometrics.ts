@@ -17,11 +17,7 @@ import { Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
 import { IS_IOS } from '@/core/native/utils';
 import { zCreate } from '@/core/utils/reexports';
-import {
-  resolveValFromUpdater,
-  runIIFEFunc,
-  UpdaterOrPartials,
-} from '@/core/utils/store';
+import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { useShallow } from 'zustand/react/shallow';
 
 type BiometricsInfoState = {
@@ -39,12 +35,10 @@ export function setBiometrics(
     prev => resolveValFromUpdater(prev, valOrFunc).newVal,
   );
 }
-// iife
-runIIFEFunc(() => {
-  apisKeychain.getSupportedBiometryType().then(supportedType => {
-    setBiometrics(prev => ({ ...prev, supportedBiometryType: supportedType }));
-  });
-});
+
+export function getBiometricsSnapshot() {
+  return biometricsInfoStore.getState();
+}
 
 export function useBiometricsComputed() {
   const authEnabled = biometricsInfoStore(s => s.authEnabled);
@@ -72,35 +66,41 @@ export function useBiometricsComputed() {
   return computed;
 }
 
-const isFetchingBiometricsRef = { current: false };
+const fetchBiometricsStateRef = {
+  promise: null as Promise<BiometricsInfoState> | null,
+};
 const fetchBiometrics = async () => {
-  if (isFetchingBiometricsRef.current) return;
+  if (fetchBiometricsStateRef.promise) {
+    return fetchBiometricsStateRef.promise;
+  }
 
-  isFetchingBiometricsRef.current = true;
-  try {
-    let supportedType = null as null | BIOMETRY_TYPE;
+  const promise = (async () => {
     try {
-      supportedType = await apisKeychain.getSupportedBiometryType();
-    } catch (error) {
-      console.error(error);
-    }
-    setBiometrics(prev => {
-      // if (prev.authEnabled && !supportedType) {
-      //   toast.info(
-      //     'Biometrics authentication disabled because no valid biometric data found.',
-      //   );
-      // }
-      return {
-        ...prev,
+      let supportedType = null as null | BIOMETRY_TYPE;
+      try {
+        supportedType = await apisKeychain.getSupportedBiometryType();
+      } catch (error) {
+        console.error(error);
+      }
+
+      const nextState = {
+        ...getBiometricsSnapshot(),
         supportedBiometryType: supportedType,
         authEnabled: supportedType ? isAuthenticatedByBiometrics() : false,
       };
-    });
-  } catch (error) {
-    console.error(error);
-  } finally {
-    isFetchingBiometricsRef.current = false;
-  }
+
+      setBiometrics(nextState);
+      return nextState;
+    } catch (error) {
+      console.error(error);
+      return getBiometricsSnapshot();
+    } finally {
+      fetchBiometricsStateRef.promise = null;
+    }
+  })();
+
+  fetchBiometricsStateRef.promise = promise;
+  return promise;
 };
 
 const toggleBiometrics = async <T extends boolean>(

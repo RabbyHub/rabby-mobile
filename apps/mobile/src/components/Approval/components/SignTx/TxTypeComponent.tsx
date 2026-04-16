@@ -10,7 +10,7 @@ import {
   ParsedActionData,
 } from '@rabby-wallet/rabby-action';
 import { Account } from '@/core/services/preference';
-import { MultiActionProps } from '../TypedDataActions';
+import type { MultiActionProps } from '../Actions/types';
 
 export const TxTypeComponent = ({
   actionRequireData,

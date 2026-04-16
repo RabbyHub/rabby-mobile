@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { apisAccount } from '@/core/apis';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { useRequest } from 'ahooks';
 import { isEqual } from 'lodash';
+import { getAllAccountsToDisplay } from '@/core/account/display';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import { zCreate } from '@/core/utils/reexports';
 import { keyringService } from '@/core/services';
@@ -186,8 +186,7 @@ export const fetchTop5TokensForAllAccountsOnce = () => {
   if (fetchedRef.current) return;
   fetchedRef.current = true;
 
-  apisAccount
-    .getAllAccountsToDisplay()
+  getAllAccountsToDisplay()
     .then(accounts => {
       const addresses = new Set([...accounts.map(account => account.address)]);
       fetchTokensByAddresses([...addresses]);

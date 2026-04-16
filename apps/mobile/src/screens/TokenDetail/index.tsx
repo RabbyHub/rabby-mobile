@@ -47,22 +47,12 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { IconRightCC } from './components/IconRightCC';
+import type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
 
-export type TokenFromAddressItem = {
-  address: string;
-  amountStr: string;
-  amount: number;
-  type: KEYRING_TYPE;
-  aliasName: string;
-};
-
-export type RelatedDeFiType = AbstractProject & {
-  amount: number;
-  address: string;
-};
+export type { RelatedDeFiType, TokenFromAddressItem } from './types';
 
 const TokenDetailContent = () => {
   const route =

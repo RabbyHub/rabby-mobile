@@ -1,6 +1,6 @@
 import { sortBy } from 'lodash';
 import type { TransactionHistoryItem } from '../services/transactionHistory';
-import { customRPCService } from '../services';
+import { customRPCService } from '../services/customRPCService';
 
 const getGasPrice = (tx: TransactionHistoryItem) => {
   return Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0);

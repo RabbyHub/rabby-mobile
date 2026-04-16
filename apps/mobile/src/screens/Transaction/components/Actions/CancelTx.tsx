@@ -21,7 +21,8 @@ import { CancelTxRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
+import { AddressItemInDetail } from '../AddressItemInDetail';
+import { TxStatusItem } from '../TxStatusItem';
 import { Account } from '@/core/services/preference';
 import { Text } from '@/components/Typography';
 

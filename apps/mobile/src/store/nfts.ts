@@ -1,8 +1,8 @@
 import { getTop10MyAccounts } from '@/core/apis/account';
+import type { DisplayNftItem } from '@/core/nft/displayTypes';
 import { zCreate } from '@/core/utils/reexports';
 import { syncNFTs } from '@/databases/hooks/assets';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
-import { DisplayNftItem } from '@/screens/Home/types';
 import { eventBus, EventBusListeners } from '@/utils/events';
 import { useCallback, useEffect } from 'react';
 import { CollectionList } from '@rabby-wallet/rabby-api/dist/types';

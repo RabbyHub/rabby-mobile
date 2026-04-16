@@ -1,6 +1,8 @@
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
+import type KeyringService from '@rabby-wallet/service-keyring';
 import { keyringService, preferenceService, sessionService } from '../services';
+import { getServiceReady, SERVICE_READY_KEYS } from '../services/serviceReady';
 import { makeEEClass } from './event';
 import { formatTimeReadable } from '@/utils/time';
 import {
@@ -367,11 +369,15 @@ export function subscribeAppLock(fn: () => any) {
   return dispose;
 }
 
-runIIFEFunc(() => {
+runIIFEFunc(async () => {
   const isFirstTimeAfterLaunchRef = {
     current: true,
   };
-  keyringService.on('unlock', ctx => {
+  const readyKeyringService = await getServiceReady<KeyringService>(
+    SERVICE_READY_KEYS.keyringService,
+  );
+
+  readyKeyringService.on('unlock', ctx => {
     console.debug('[perf] keyringService unlock event ctx', ctx);
     if (ctx.scene === 'unlock') {
       const isFirstTimeAfterLaunch = isFirstTimeAfterLaunchRef.current;

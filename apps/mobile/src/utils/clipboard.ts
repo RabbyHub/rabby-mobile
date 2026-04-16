@@ -1,5 +1,5 @@
 import { toast } from '@/components2024/Toast';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { storeApiExpSettingData } from '@/hooks/appSettings';
 import Clipboard from '@react-native-clipboard/clipboard';
 import i18next from 'i18next';

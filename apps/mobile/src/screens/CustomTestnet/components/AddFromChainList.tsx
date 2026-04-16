@@ -1,9 +1,7 @@
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
-import {
-  TestnetChain,
-  createTestnetChain,
-} from '@/core/services/customTestnetService';
+import { createTestnetChain } from '@/core/services/customTestnetService';
+import type { TestnetChain } from '@/core/services/customTestnet.types';
 import { useDebounce, useInfiniteScroll, useRequest } from 'ahooks';
 // import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
@@ -18,7 +16,6 @@ import { range, sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Dimensions,
   StyleProp,
   StyleSheet,
   useWindowDimensions,
@@ -49,7 +46,6 @@ export const AddFromChainList = ({
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const [_search, setSearch] = React.useState('');
-  const ref = React.useRef<any>(null);
   const [isFocus, setIsFocus] = React.useState(false);
   const search = useDebounce(_search, { wait: 500 });
   const { width: windowWidth } = useWindowDimensions();

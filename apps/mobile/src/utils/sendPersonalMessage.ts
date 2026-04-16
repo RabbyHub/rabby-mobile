@@ -1,4 +1,4 @@
-import { apiProvider } from '@/core/apis';
+import * as apiProvider from '@/core/apis/provider';
 import { Account } from '@/core/services/preference';
 import { matomoRequestEvent } from './analytics';
 import { eventBus, EVENTS } from './events';

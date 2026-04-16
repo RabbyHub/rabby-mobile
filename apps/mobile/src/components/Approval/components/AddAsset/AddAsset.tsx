@@ -21,9 +21,9 @@ import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { ModalLayouts } from '@/constant/layout';
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
-import { dappService, preferenceService } from '@/core/services';
-import { CustomTestnetToken } from '@/core/services/customTestnetService';
-import { Account, Token } from '@/core/services/preference';
+import { dappService } from '@/core/services';
+import type { CustomTestnetToken } from '@/core/services/customTestnet.types';
+import { Account } from '@/core/services/preference';
 import { useThemeStyles } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { ellipsisAddress } from '@/utils/address';
@@ -37,7 +37,6 @@ import {
   BottomSheetFlatList,
   BottomSheetFlatListMethods,
 } from '@gorhom/bottom-sheet';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   TokenItem,
   TxDisplayItem,
@@ -96,7 +95,6 @@ export const AddAsset = ({
   const [tokenHistory, setTokenHistory] = useState<TokenHistoryItem[]>([]);
   const [isTokenHistoryLoaded, setIsTokenHistoryLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [customTokens, setCustomTokens] = useState<Token[]>([]);
   const [currentChain, setCurrentChain] = useState<Chain | null | undefined>(
     null,
   );
@@ -221,7 +219,6 @@ export const AddAsset = ({
         setIsCustomTestnetTokenAdded(isAdded);
       }
     } else {
-      const customTokens = await preferenceService.getCustomizedToken();
       if (account) {
         const { address } = params.data.options;
         const result = await openapi.searchToken(
@@ -246,7 +243,6 @@ export const AddAsset = ({
           setCurrentChain(target || findChain({ enum: CHAINS_ENUM.ETH })!);
         }
       }
-      setCustomTokens(customTokens);
     }
 
     setIsLoading(false);
