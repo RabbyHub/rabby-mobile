@@ -9,7 +9,10 @@ import { connectPushServerOnBootstrap } from './core/notifications';
 
 import { startManageAccountStoreLifecycle } from './hooks/account';
 
-import { startSubscribeAppStateChange } from './hooks/useLock';
+import {
+  loadLockInfoOnBootstrap,
+  startSubscribeAppStateChange,
+} from './hooks/useLock';
 import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
 import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
 import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
@@ -57,6 +60,12 @@ import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';
 import { keyringService } from './core/services';
+import {
+  recordStartupProbe,
+  recordStartupProbeOnce,
+} from './debug/startupProbe';
+
+recordStartupProbeOnce('SETUP_APP_BEFORE_RENDER_LOADED');
 
 startComputationThread();
 startSubscribeLangChange();
@@ -64,6 +73,30 @@ startSubscribeLangChange();
 connectPushServerOnBootstrap();
 
 startManageAccountStoreLifecycle();
+recordStartupProbeOnce('LOCK_INFO_BOOTSTRAP_START', {
+  flags: {
+    lockInfoBootstrapStarted: true,
+  },
+});
+loadLockInfoOnBootstrap()
+  .then(() => {
+    recordStartupProbeOnce('LOCK_INFO_BOOTSTRAP_DONE', {
+      flags: {
+        lockInfoBootstrapSettled: true,
+      },
+    });
+  })
+  .catch(error => {
+    recordStartupProbe('LOCK_INFO_BOOTSTRAP_FAIL', {
+      level: 'warn',
+      payload: {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      flags: {
+        lockInfoBootstrapSettled: true,
+      },
+    });
+  });
 apisAutoLock.setupAutoLockChecker();
 startFetchOnceTop5TokensForAllAccounts();
 subscribeUnlockToFetchAccounts();

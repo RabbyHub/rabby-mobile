@@ -20,6 +20,7 @@ if (!__DEV__) {
 import './src/utils/logging/install';
 import './global';
 import './src/setup-app';
+import './src/debug/startupProbe';
 
 if (process.env.WITH_ROZENITE === 'true') {
   const {

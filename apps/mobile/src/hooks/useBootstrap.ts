@@ -34,6 +34,11 @@ import { replace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { setBrowserState } from './browser/useBrowser';
 import { perfEvents } from '@/core/utils/perf';
+import {
+  recordStartupProbe,
+  recordStartupProbeOnce,
+  trackStartupProbePromise,
+} from '@/debug/startupProbe';
 
 const syncCustomTestChainList = () => {
   try {
@@ -45,19 +50,15 @@ const syncCustomTestChainList = () => {
 
 type BootStrapState = {
   couldRender: boolean;
-  startupUnlockRouteResetPending: boolean;
 };
 const zBootstrapStore = zCreate<BootStrapState>(() => ({
   couldRender: false,
-  startupUnlockRouteResetPending: false,
 }));
 function setBootstrap(valOrFunc: UpdaterOrPartials<BootStrapState>) {
   zBootstrapStore.setState(
     prev => resolveValFromUpdater(prev, valOrFunc).newVal,
   );
 }
-
-const STARTUP_UNLOCK_SHELL_TIMEOUT_MS = 180;
 
 const DEBUG_IN_PAGE_SCRIPTS = {
   LOAD_BEFORE: __DEV__
@@ -240,6 +241,14 @@ export function useJavaScriptBeforeContentLoaded() {
 const splashScreenVisibleRef = { current: true };
 const hideSplashScreen = (forceHide = false) => {
   if (splashScreenVisibleRef.current || forceHide) {
+    recordStartupProbeOnce('SPLASH_HIDE_CALLED', {
+      payload: {
+        forceHide,
+      },
+      flags: {
+        splashHideCalled: true,
+      },
+    });
     SplashScreen.hide();
     splashScreenVisibleRef.current = false;
   }
@@ -262,36 +271,50 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
     if (startedLoadRef.current) return;
     startedLoadRef.current = true;
 
-    loadSecurityChain({ rabbitCode });
-
-    storeApisBiometrics.fetchBiometrics().catch(error => {
-      console.error('useBootstrapApp::fetchBiometrics:error', error);
+    recordStartupProbeOnce('BOOTSTRAP_EFFECT_START', {
+      flags: {
+        bootstrapStarted: true,
+      },
     });
 
-    let didRenderUnlockShellBeforeTryUnlockSettled = false;
-    const timer = setTimeout(() => {
-      didRenderUnlockShellBeforeTryUnlockSettled = true;
-      setBootstrap(prev => ({ ...prev, couldRender: true }));
-    }, STARTUP_UNLOCK_SHELL_TIMEOUT_MS);
-
-    getTriedUnlock()
-      .then(_unlockResult => {
+    Promise.allSettled([
+      trackStartupProbePromise('getTriedUnlock', getTriedUnlock()),
+      trackStartupProbePromise(
+        'loadSecurityChain',
+        Promise.resolve(loadSecurityChain({ rabbitCode })),
+      ),
+      trackStartupProbePromise(
+        'fetchBiometrics',
+        storeApisBiometrics.fetchBiometrics(),
+      ),
+    ])
+      .then(async ([_unlockResult, _securityChain]) => {
         console.debug('useBootstrapApp::sucess', _unlockResult);
+        recordStartupProbeOnce('BOOTSTRAP_TASKS_ALL_SETTLED', {
+          payload: {
+            unlockStatus: _unlockResult.status,
+            securityChainStatus: _securityChain.status,
+          },
+        });
+        recordStartupProbeOnce('BOOTSTRAP_SET_COULD_RENDER_TRUE', {
+          flags: {
+            bootstrapCouldRender: true,
+          },
+        });
+        setBootstrap({ couldRender: true });
       })
       .catch(err => {
+        startedLoadRef.current = false;
         console.error('useBootstrapApp::error', err);
+        recordStartupProbe('BOOTSTRAP_ERROR', {
+          level: 'error',
+          payload: {
+            error: err instanceof Error ? err.message : String(err),
+          },
+        });
+        setBootstrap({ couldRender: false });
       })
       .finally(() => {
-        clearTimeout(timer);
-
-        setBootstrap(prev => ({
-          ...prev,
-          couldRender: true,
-          startupUnlockRouteResetPending:
-            didRenderUnlockShellBeforeTryUnlockSettled &&
-            keyringService.isUnlocked(),
-        }));
-
         setTimeout(() => {
           hideSplashScreen(false);
           console.debug(
@@ -299,10 +322,6 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           );
         }, 3e3);
       });
-
-    return () => {
-      clearTimeout(timer);
-    };
   }, [rabbitCode]);
 }
 
@@ -311,23 +330,5 @@ export function useAppCouldRender() {
 
   return {
     couldRender,
-  };
-}
-
-export function useStartupUnlockRouteReset() {
-  const startupUnlockRouteResetPending = zBootstrapStore(
-    s => s.startupUnlockRouteResetPending,
-  );
-
-  const markStartupUnlockRouteResetHandled = React.useCallback(() => {
-    setBootstrap(prev => ({
-      ...prev,
-      startupUnlockRouteResetPending: false,
-    }));
-  }, []);
-
-  return {
-    startupUnlockRouteResetPending,
-    markStartupUnlockRouteResetHandled,
   };
 }

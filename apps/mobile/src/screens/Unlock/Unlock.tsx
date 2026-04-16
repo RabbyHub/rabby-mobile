@@ -58,6 +58,7 @@ import { TextInput } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
+import { recordStartupProbeOnce } from '@/debug/startupProbe';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -239,17 +240,20 @@ export default function UnlockScreen() {
   );
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
-  const syncedInitialBiometricsViewRef = React.useRef(isBiometricsEnabled);
   const couldSwitchingAuthentication = isBiometricsEnabled;
   const usingPassword = !usingBiometrics || !isBiometricsEnabled;
+  const didLayoutUnlockRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (syncedInitialBiometricsViewRef.current) return;
-    if (!isBiometricsEnabled) return;
-
-    syncedInitialBiometricsViewRef.current = true;
-    setUsingBiometrics(true);
-  }, [isBiometricsEnabled]);
+    recordStartupProbeOnce('UNLOCK_MOUNT', {
+      flags: {
+        unlockMounted: true,
+      },
+      payload: {
+        autoTriggerDisabled: !!params?.disableAutoTriggerUnlock,
+      },
+    });
+  }, [params?.disableAutoTriggerUnlock]);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
@@ -354,10 +358,15 @@ export default function UnlockScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      recordStartupProbeOnce('UNLOCK_FOCUS', {
+        flags: {
+          unlockFocused: true,
+        },
+      });
+
       if (params?.disableAutoTriggerUnlock) return;
-      if (!isBiometricsEnabled) return;
       UnlockUIManager.triggerAutoUnlock();
-    }, [isBiometricsEnabled, params?.disableAutoTriggerUnlock]),
+    }, [params?.disableAutoTriggerUnlock]),
   );
 
   const { registerPreventEffect } = usePreventGoBack({
@@ -371,6 +380,15 @@ export default function UnlockScreen() {
     <SilentTouchableView
       style={{ height: '100%', flex: 1 }}
       viewProps={{
+        onLayout: () => {
+          if (didLayoutUnlockRef.current) return;
+          didLayoutUnlockRef.current = true;
+          recordStartupProbeOnce('UNLOCK_LAYOUT', {
+            flags: {
+              unlockLayout: true,
+            },
+          });
+        },
         style: styles.container,
       }}
       onPress={() => {

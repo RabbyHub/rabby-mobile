@@ -4,6 +4,7 @@
   <color name="background">#ffffff</color>
   <color name="primary">#7084ff</color>
   <color name="primary_dark">#7084ff</color>
-  <color name="launchscreen_bg">#ffffff</color>
+  <color name="launchscreen_bg">#FF8A00</color>
+  <color name="startup_probe_window_bg">#00C853</color>
   <color name="status_bar_color">#ffffff</color>
 </resources>

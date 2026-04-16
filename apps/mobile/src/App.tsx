@@ -40,6 +40,11 @@ import { isEqual } from 'lodash';
 import { svsLayout } from './hooks/useAppLayout';
 import { openapi } from './core/request';
 import { IS_ROZENITE_ENABLED } from './constant/env';
+import {
+  recordStartupProbeOnce,
+  STARTUP_PROBE_ENABLED,
+} from './debug/startupProbe';
+import { StartupProbeOverlay } from './debug/StartupProbeOverlay';
 
 Safe.openapiService = openapi;
 
@@ -77,6 +82,24 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
 
   const safeAreaInsets = useSafeAreaInsets();
 
+  React.useEffect(() => {
+    recordStartupProbeOnce('MAINSCREEN_MOUNT', {
+      flags: {
+        mainScreenMounted: true,
+      },
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (!couldRender) return;
+
+    recordStartupProbeOnce('BOOTSTRAP_COULD_RENDER_TRUE', {
+      flags: {
+        bootstrapCouldRender: true,
+      },
+    });
+  }, [couldRender]);
+
   return (
     <AppProvider
       value={{ rabbitCode, securityChain: loadSecurityChain({ rabbitCode }) }}>
@@ -106,6 +129,16 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
   const rabbitCode = __DEV__ ? 'RABBY_MOBILE_CODE_DEV' : propRabbitCode;
   useBootstrapApp({ rabbitCode });
 
+  const didLayoutRootRef = React.useRef(false);
+
+  React.useEffect(() => {
+    recordStartupProbeOnce('APP_MOUNT', {
+      flags: {
+        appMounted: true,
+      },
+    });
+  }, []);
+
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>
@@ -115,9 +148,25 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
             <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
-              <GestureHandlerRootView style={{ flex: 1 }}>
+              <GestureHandlerRootView
+                onLayout={() => {
+                  if (didLayoutRootRef.current) return;
+                  didLayoutRootRef.current = true;
+                  recordStartupProbeOnce('APP_ROOT_LAYOUT', {
+                    flags: {
+                      appRootLayout: true,
+                    },
+                  });
+                }}
+                style={{
+                  flex: 1,
+                  backgroundColor: STARTUP_PROBE_ENABLED
+                    ? '#1565C0'
+                    : undefined,
+                }}>
                 {/* read from native bundle on production */}
                 <MainScreen rabbitCode={rabbitCode} />
+                <StartupProbeOverlay />
               </GestureHandlerRootView>
             </Suspense>
           </RootSiblingParent>
