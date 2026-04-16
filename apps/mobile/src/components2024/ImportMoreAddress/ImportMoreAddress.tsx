@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { startTransition, useEffect } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -136,6 +136,10 @@ const useHDConfig = (type: KEYRING_TYPE) =>
     }
   }, [type]);
 
+function yieldToRN(): Promise<void> {
+  return new Promise(resolve => requestIdleCallback(() => resolve()));
+}
+
 export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const { apiHD, hdType, hdBrandName, settingModalName } = useHDConfig(
     params.type,
@@ -202,8 +206,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             [];
 
       if (res.length) {
-        // avoid blocking the UI thread
-        await new Promise(resolve => setTimeout(resolve, 20));
         const balances = await Promise.all(
           res.map(async a => {
             return {
@@ -238,14 +240,18 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       let i = start;
 
       try {
+        await yieldToRN();
         maxCountRef.current =
           (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
 
         for (; i < start + maxCountRef.current && !isAborted; ) {
+          await yieldToRN();
           const nextAccounts = await loadAddress(i);
           if (nextAccounts) {
-            setAccounts(prev => {
-              return [...prev, ...nextAccounts];
+            startTransition(() => {
+              setAccounts(prev => {
+                return [...prev, ...nextAccounts];
+              });
             });
           }
           i += stepCountRef.current;
