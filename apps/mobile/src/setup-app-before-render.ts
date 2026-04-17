@@ -16,20 +16,30 @@ async function loadSetupBeforeRenderRuntime(reason: string) {
     return setupBeforeRenderRuntimeRef.promise;
   }
 
+  const loadMode = __DEV__ ? 'sync_require' : 'dynamic_import';
+
   recordStartupProbeOnce('SETUP_APP_BEFORE_RENDER_IMPORT_START', {
     payload: {
       reason,
+      loadMode,
     },
   });
 
-  const runtimePromise = trackStartupProbePromise(
-    'setupAppBeforeRenderImport',
-    import('./setup-app-before-render.runtime'),
+  const runtimePromise = (
+    __DEV__
+      ? Promise.resolve(
+          require('./setup-app-before-render.runtime') as SetupBeforeRenderRuntime,
+        )
+      : trackStartupProbePromise(
+          'setupAppBeforeRenderImport',
+          import('./setup-app-before-render.runtime'),
+        )
   )
     .then(runtime => {
       recordStartupProbeOnce('SETUP_APP_BEFORE_RENDER_IMPORT_DONE', {
         payload: {
           reason,
+          loadMode,
         },
       });
       return runtime;
@@ -40,6 +50,7 @@ async function loadSetupBeforeRenderRuntime(reason: string) {
         level: 'error',
         payload: {
           reason,
+          loadMode,
           error: error instanceof Error ? error.message : String(error),
         },
       });
