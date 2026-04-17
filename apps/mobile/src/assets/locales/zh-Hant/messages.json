@@ -1103,7 +1103,7 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "表單已更改",
       "formChangedAmount": "金額已變更，可能是由於系統鍵盤的密碼自動填充。請檢查並重新輸入正確的金額。",
-      "best-subtitle": "考慮總成本（包括 Gas 費用）和提供最佳報價的速度"
+      "best-subtitle": "「最佳」報價由預計總成本（含 Gas 費用）與交付速度綜合決定。"
     },
     "signFooterBar": {
       "importedByLedger": "透過 Ledger 匯入",

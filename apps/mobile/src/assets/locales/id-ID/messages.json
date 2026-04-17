@@ -1018,7 +1018,7 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedAmount": "Jumlahnya telah berubah, kemungkinan disebabkan oleh pengisian otomatis kata sandi dari keyboard sistem. Silakan tinjau dan masukkan kembali jumlah yang benar.",
       "formChangedTitle": "Form Diubah",
-      "best-subtitle": "Mempertimbangkan biaya total (termasuk Gas fees) dan kecepatan penyampaian penawaran terbaik"
+      "best-subtitle": "Penawaran “Best” ditentukan oleh kombinasi perkiraan biaya total (termasuk biaya Gas) dan kecepatan pengiriman."
     },
     "manageAddress": {
       "cancel": "Batal",
