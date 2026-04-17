@@ -98,15 +98,23 @@ export const TokenList = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const showAave3Action =
-    isAave3 && (name === 'supplied' || name === 'borrowed');
-  const actionDirection: TokenListActionDirection =
-    name === 'borrowed' ? 'borrow' : 'supply';
-  const actionText =
-    actionDirection === 'borrow'
+  const showAave3Action = useMemo(() => {
+    return isAave3 && (name === 'supplied' || name === 'borrowed');
+  }, [isAave3, name]);
+
+  const actionDirection: TokenListActionDirection = useMemo(() => {
+    return name === 'borrowed' ? 'borrow' : 'supply';
+  }, [name]);
+
+  const actionText = useMemo(() => {
+    return actionDirection === 'borrow'
       ? t('page.Lending.repayDetail.actions')
       : t('page.Lending.withdrawDetail.actions');
-  const headers = showAave3Action ? [name, 'Amount', ''] : [name, 'Amount'];
+  }, [actionDirection, t]);
+
+  const headers = useMemo(() => {
+    return showAave3Action ? [name, 'Amount', ''] : [name, 'Amount'];
+  }, [showAave3Action, name]);
 
   const _tokens: TokenItem[] = useMemo(() => {
     return (tokens ?? [])
