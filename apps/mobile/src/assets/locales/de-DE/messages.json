@@ -1384,7 +1384,7 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Formular geändert",
       "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der automatischen Passwortausfüllung durch die Systemtastatur. Bitte überprüfen Sie den Betrag und geben Sie den richtigen Betrag erneut ein.",
-      "best-subtitle": "Den Gesamtpreis (einschließlich Gas-Gebühren) und die Geschwindigkeit der Bereitstellung des besten Angebots berücksichtigen"
+      "best-subtitle": "Das beste Angebot wird durch eine Kombination aus geschätzten Gesamtkosten (einschließlich Gas-Gebühren) und Lieferungsgeschwindigkeit bestimmt."
     },
     "nextComponent": {
       "multiAddressHome": {

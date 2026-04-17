@@ -1016,7 +1016,7 @@
       "gasXUsd": "Gas : {{gasUsd}}",
       "formChangedTitle": "Forme changée",
       "formChangedAmount": "Le montant a changé, probablement en raison du remplissage automatique du mot de passe par le clavier système. Veuillez vérifier et saisir à nouveau le montant correct.",
-      "best-subtitle": "En tenant compte du coût total (frais de Gas inclus) et de la rapidité de livraison du meilleur prix"
+      "best-subtitle": "Le meilleur devis est déterminé par une combinaison du coût total estimé (frais de Gas inclus) et de la vitesse de livraison."
     },
     "dashboard": {
       "hd": {

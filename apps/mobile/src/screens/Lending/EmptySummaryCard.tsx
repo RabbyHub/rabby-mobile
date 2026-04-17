@@ -17,10 +17,14 @@ const EmptySummaryCard = () => {
         {t('page.Lending.summary.empty.description')}
       </Text>
       <Image style={styles.image} source={EmptySummaryCardImage} />
-      <Text style={styles.title}>{t('page.Lending.summary.empty.title')}</Text>
-      <Text style={styles.endDescription}>
-        {t('page.Lending.summary.empty.endDesc')}
-      </Text>
+      <View style={styles.titleContainer}>
+        <Text style={styles.title}>
+          {t('page.Lending.summary.empty.title')}
+        </Text>
+        <Text style={styles.endDescription}>
+          {t('page.Lending.summary.empty.endDesc')}
+        </Text>
+      </View>
     </View>
   );
 };
@@ -34,14 +38,19 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
+    gap: 11,
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 12,
   },
   image: {
     width: 123,
     height: 99,
+  },
+  titleContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   title: {
     color: colors2024['neutral-title-1'],

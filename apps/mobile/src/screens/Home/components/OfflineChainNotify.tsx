@@ -127,9 +127,11 @@ export const useOfflineChain = () => {
 
 export const OfflineChainNotify = ({
   data,
+  style,
 }: {
   data: ReturnType<typeof useOfflineChain>;
-} & RNViewProps) => {
+  style?: RNViewProps['style'];
+}) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const {
@@ -199,7 +201,7 @@ export const OfflineChainNotify = ({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Image
         source={{ uri: chainInfo.logo }}
         width={16}

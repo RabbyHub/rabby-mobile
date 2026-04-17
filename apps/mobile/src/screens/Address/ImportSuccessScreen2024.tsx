@@ -294,6 +294,7 @@ export const ImportSuccessScreen2024 = () => {
   };
 
   const handleBackupSeedPhrase = React.useCallback(() => {
+    saveFirstAddressAlias();
     Keyboard.dismiss();
     const firstAddr = importAddresses[0]?.address;
     navigation.replace(RootNames.Backup, {
@@ -301,7 +302,13 @@ export const ImportSuccessScreen2024 = () => {
       type: state?.type,
       brandName: state?.brandName,
     });
-  }, [navigation, importAddresses, state?.type, state?.brandName]);
+  }, [
+    navigation,
+    importAddresses,
+    state?.type,
+    state?.brandName,
+    saveFirstAddressAlias,
+  ]);
 
   const shouldShowBackupButton = !!state?.showBackup;
   const shouldShowImportMore =

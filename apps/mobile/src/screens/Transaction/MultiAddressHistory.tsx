@@ -212,14 +212,11 @@ function History({
         filterScamAndSmallTx: isFilter,
       });
 
-      const oneHourAgo = Math.floor(new Date().getTime() / 1000) - 60 * 60;
       const list = historyList.map(item => {
         return {
           ...ensureHistoryListItemFromDb(item),
           // hidden small and scam no need this prop
-          isSmallUsdTx: isFilter
-            ? false
-            : item.is_small_tx && item.time_at <= oneHourAgo,
+          isSmallUsdTx: isFilter ? false : item.is_small_tx,
           isShowSuccess: historySuccessList.includes(
             `${item.owner_addr.toLowerCase()}-${item.txHash}`,
           ),

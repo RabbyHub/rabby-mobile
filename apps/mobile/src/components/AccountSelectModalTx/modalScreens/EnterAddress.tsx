@@ -19,7 +19,7 @@ import {
 import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
-import { resolveEnsAddressByName } from '@/utils/ens';
+import { resolveEnsAddressByName, resolveEnsNameByAddress } from '@/utils/ens';
 import { debounce, throttle } from 'lodash';
 import { useFindAddressByWhitelist } from '@/screens/Send/hooks/useWhiteListAddress';
 import { useAccountSelectModalCtx } from '../hooks';
@@ -79,6 +79,18 @@ const ScreenPanelEnterAddress = ({
         ) => {
           const result = await resolveEnsAddressByName(value);
           callback(result);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
+  const debouncedResolveEnsName = React.useMemo(
+    () =>
+      debounce(
+        async (value: string, callback: (name: string | null) => void) => {
+          const name = await resolveEnsNameByAddress(value);
+          callback(name);
         },
         500,
         { leading: false, trailing: true },
@@ -213,14 +225,25 @@ const ScreenPanelEnterAddress = ({
     if (!input) {
       setError(undefined);
       setEnsResult(null);
+      debouncedResolveEnsName.cancel();
       return;
     }
     if (isValidAddress(input as `0x${string}`)) {
       setError(undefined);
-      setEnsResult(null);
       debouncedResolveEns.cancel();
+      debouncedResolveEnsName(input, name => {
+        if (!name) {
+          setEnsResult(null);
+          return;
+        }
+        setEnsResult({
+          addr: input,
+          name,
+        });
+      });
       return;
     }
+    debouncedResolveEnsName.cancel();
 
     debouncedResolveEns(input, result => {
       if (result && result.addr) {
@@ -231,13 +254,14 @@ const ScreenPanelEnterAddress = ({
         setError(INPUT_ERROR.INVALID_ADDRESS);
       }
     });
-  }, [input, debouncedResolveEns]);
+  }, [input, debouncedResolveEns, debouncedResolveEnsName]);
 
   useEffect(() => {
     return () => {
       debouncedResolveEns.cancel();
+      debouncedResolveEnsName.cancel();
     };
-  }, [debouncedResolveEns]);
+  }, [debouncedResolveEns, debouncedResolveEnsName]);
 
   useEffect(() => {
     if (newValue) {

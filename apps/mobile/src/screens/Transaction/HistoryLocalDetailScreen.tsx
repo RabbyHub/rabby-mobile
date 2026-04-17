@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { ScrollView } from 'react-native';
 import { useInterval, useMemoizedFn, useMount, useRequest } from 'ahooks';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -95,7 +96,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
 
   useEffect(() => {
     if (!data.isPending) {
-      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
+      const rawId = `${data.address.toLowerCase()}-${data.maxGasTx?.hash}`;
       transactionHistoryService.clearSuccessAndFailSingleId(rawId);
     }
   }, [data]);
@@ -134,84 +135,97 @@ function HistoryLocalDetailScreen(): JSX.Element {
     return account;
   }, [accounts, data.address, data.keyringType]);
 
+  const isSelfScrollAction =
+    needUseSwap || !!data.maxGasTx?.action?.actionData?.send;
+
+  const actionElement = data.maxGasTx?.action?.actionData?.approveToken ? (
+    <ApproveToken
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.approveNFT ? (
+    <ApproveNFT
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.approveNFTCollection ? (
+    <ApproveNFTCollection
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.revokeNFT ? (
+    <RevokeNFT
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.revokeNFTCollection ? (
+    <RevokeNFTCollection
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.revokeToken ? (
+    <RevokeToken
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.cancelTx ? (
+    <CancelTx
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.deployContract ? (
+    <DeployContact
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : needUseSwap ? (
+    <Swap
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  ) : data.maxGasTx?.action?.actionData?.send ? (
+    <Send
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      onPressAddToWhitelistButton={onPressAddToWhitelistButton}
+      account={txAccount}
+    />
+  ) : (
+    <UnknownAction
+      data={data}
+      isSingleAddress={!isForMultipleAddress}
+      account={txAccount}
+    />
+  );
+
   return (
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg2'}
       style={{
-        // position: 'relative',
-        paddingBottom:
-          needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : bottom,
-        paddingTop: 24,
-        paddingHorizontal:
-          needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : 16,
+        paddingTop: isSelfScrollAction ? 24 : 0,
       }}>
-      {data.maxGasTx.action?.actionData?.approveToken ? (
-        <ApproveToken
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.approveNFT ? (
-        <ApproveNFT
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.approveNFTCollection ? (
-        <ApproveNFTCollection
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.revokeNFT ? (
-        <RevokeNFT
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.revokeNFTCollection ? (
-        <RevokeNFTCollection
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.revokeToken ? (
-        <RevokeToken
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.cancelTx ? (
-        <CancelTx
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.deployContract ? (
-        <DeployContact
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : needUseSwap ? (
-        <Swap
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
-      ) : data.maxGasTx.action?.actionData?.send ? (
-        <Send
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          onPressAddToWhitelistButton={onPressAddToWhitelistButton}
-          account={txAccount}
-        />
+      {isSelfScrollAction ? (
+        actionElement
       ) : (
-        <UnknownAction
-          data={data}
-          isSingleAddress={!isForMultipleAddress}
-          account={txAccount}
-        />
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingTop: 24,
+            paddingBottom: bottom,
+            paddingHorizontal: 16,
+          }}
+          showsVerticalScrollIndicator={false}>
+          {actionElement}
+        </ScrollView>
       )}
     </NormalScreenContainer2024>
   );

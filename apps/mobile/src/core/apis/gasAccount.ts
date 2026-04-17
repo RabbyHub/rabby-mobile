@@ -225,6 +225,7 @@ export const afterBridgeTopUpGasAccount = async ({
   usdValue,
   txId,
   account,
+  scene,
 }: {
   chainServerId: string;
   tokenId: string;
@@ -232,6 +233,7 @@ export const afterBridgeTopUpGasAccount = async ({
   usdValue: number;
   txId: string;
   account: Account;
+  scene: Parameters<typeof openapi.createGasAccountBridgeRecharge>[0]['scene'];
 }) => {
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
@@ -254,6 +256,7 @@ export const afterBridgeTopUpGasAccount = async ({
     from_token_amount: tokenAmount,
     from_usd_value: usdValue,
     tx_id: txId,
+    scene,
   });
 };
 

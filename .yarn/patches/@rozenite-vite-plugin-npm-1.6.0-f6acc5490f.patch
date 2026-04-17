@@ -1,0 +1,26 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index eb67863498551623b56d062db49c0c5df010b30f..7be5b97a2fd3fcff5570ad83cdd59120c91ecd87 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -108,7 +108,7 @@ const rozeniteClientPlugin = () => {
+   const PANEL_TEMPLATE = path.join(TEMPLATES_DIR, "panel.ejs");
+   const generatePanelHtmlContent = (panel) => {
+     const template = fs.readFileSync(PANEL_TEMPLATE, "utf-8");
+-    const relativePath = path.relative(projectRoot, panel.sourceFile);
++    const relativePath = path.relative(projectRoot, panel.sourceFile).split(path.sep).join("/");
+     return ejs.render(template, {
+       panelName: panel.name,
+       panelFile: relativePath
+diff --git a/dist/index.js b/dist/index.js
+index eef822ff56489fb9b94332165b8e0333eba474b4..88594d95f161ebe3451e9967065b05394e425676 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -105,7 +105,7 @@ const rozeniteClientPlugin = () => {
+   const PANEL_TEMPLATE = path.join(TEMPLATES_DIR, "panel.ejs");
+   const generatePanelHtmlContent = (panel) => {
+     const template = fs.readFileSync(PANEL_TEMPLATE, "utf-8");
+-    const relativePath = path.relative(projectRoot, panel.sourceFile);
++    const relativePath = path.relative(projectRoot, panel.sourceFile).split(path.sep).join("/");
+     return ejs.render(template, {
+       panelName: panel.name,
+       panelFile: relativePath
