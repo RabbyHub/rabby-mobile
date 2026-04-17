@@ -48,7 +48,7 @@ export const HistoryItem = React.memo(
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
     const isShowSuccess = data.isShowSuccess;
-    const isScam = data.is_scam || data.isSmallUsdTx;
+    const isScam = data.is_scam;
     const chainItem = getChain(data.chain);
     const { styles, isLight } = useTheme2024({ getStyle });
 
