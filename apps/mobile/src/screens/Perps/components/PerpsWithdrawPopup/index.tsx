@@ -9,12 +9,10 @@ import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
   ARB_USDC_TOKEN_ITEM,
-  HYPE_USDC_TOKEN_ITEM,
   HYPE_EVM_BRIDGE_ADDRESS,
   HYPE_GAS_FEE_IN_HYPE,
   HYPE_SEND_ASSET_TOKEN_MAP,
   WITHDRAW_CHAIN_TOKENS,
-  isHypeWithdrawToken,
   ARB_USDC_TOKEN_SERVER_CHAIN,
   HYPE_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
@@ -47,8 +45,11 @@ import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
 import { PerpsWithdrawSelectTokenPopup } from './PerpsWithdrawSelectTokenPopup';
-import { CHAINS_ENUM } from '@debank/common';
-import { findChainByEnum, findChainByServerID, getChain } from '@/utils/chain';
+import {
+  PerpsWithdrawChainOption,
+  PerpsWithdrawSelectChainPopup,
+} from './PerpsWithdrawSelectChainPopup';
+import { findChainByServerID } from '@/utils/chain';
 
 type SelectChainType =
   | typeof ARB_USDC_TOKEN_SERVER_CHAIN
@@ -91,35 +92,51 @@ export const PerpsWithdrawPopup: React.FC<{
   const [tokenSelectVisible, setTokenSelectVisible] = useState(false);
   const [chainSelectVisible, setChainSelectVisible] = useState(false);
 
-  // Tokens available for selected chain
-  const chainTokens = useMemo(() => {
-    const serverChain =
-      selectChainId === ARB_USDC_TOKEN_SERVER_CHAIN ? 'arb' : 'hyper';
-    return (WITHDRAW_CHAIN_TOKENS[serverChain] || []) as ITokenItem[];
-  }, [selectChainId]);
   const isHypeWithdraw = selectChainId !== ARB_USDC_TOKEN_SERVER_CHAIN;
 
-  // Balance for the selected token
+  // Balance for a given token
   // Unified account: use spotBalancesMap per coin
   // Non-unified: only USDC has balance (accountAvailableBalance), others are 0
-  const availableBalance = useMemo(() => {
-    const tokenSymbol = getTokenSymbol(selectedToken);
-    if (isUnifiedAccount) {
-      const spotBalance =
-        spotBalancesMap[tokenSymbol === 'USDT' ? 'USDT0' : tokenSymbol];
-      return Number(spotBalance?.available) || 0;
-    }
-    // Non-unified: only USDC
-    if (tokenSymbol === 'USDC') {
-      return accountAvailableBalance;
-    }
-    return 0;
-  }, [
-    isUnifiedAccount,
-    spotBalancesMap,
-    selectedToken,
-    accountAvailableBalance,
-  ]);
+  const getTokenBalance = useCallback(
+    (token: ITokenItem) => {
+      const tokenSymbol = getTokenSymbol(token);
+      const sym = tokenSymbol === 'USDT' ? 'USDT0' : tokenSymbol;
+      if (isUnifiedAccount) {
+        return Number(spotBalancesMap[sym]?.available) || 0;
+      }
+      return sym === 'USDC' ? accountAvailableBalance : 0;
+    },
+    [isUnifiedAccount, spotBalancesMap, accountAvailableBalance],
+  );
+
+  // Tokens with pre-computed balance for selected chain, sorted by balance desc
+  const chainTokenItems = useMemo(() => {
+    const tokens = (WITHDRAW_CHAIN_TOKENS[selectChainId] || []) as ITokenItem[];
+    return tokens
+      .map(token => ({ token, balance: getTokenBalance(token) }))
+      .sort((a, b) => b.balance - a.balance);
+  }, [selectChainId, getTokenBalance]);
+
+  const availableBalance = useMemo(
+    () => getTokenBalance(selectedToken),
+    [getTokenBalance, selectedToken],
+  );
+
+  const chainOptions = useMemo<PerpsWithdrawChainOption[]>(
+    () => [
+      {
+        serverChain: ARB_USDC_TOKEN_SERVER_CHAIN,
+        name:
+          findChainByServerID(ARB_USDC_TOKEN_SERVER_CHAIN)?.name ?? 'Arbitrum',
+      },
+      {
+        serverChain: HYPE_USDC_TOKEN_SERVER_CHAIN,
+        name:
+          findChainByServerID(HYPE_USDC_TOKEN_SERVER_CHAIN)?.name ?? 'HyperEVM',
+      },
+    ],
+    [],
+  );
 
   // Fetch pre-transfer check for HyperEVM activation fee
   const { data: preTransferCheck } = useRequest(
@@ -236,6 +253,7 @@ export const PerpsWithdrawPopup: React.FC<{
   useEffect(() => {
     if (!visible) {
       setAmount('');
+      setSelectChainId(ARB_USDC_TOKEN_SERVER_CHAIN);
       setSelectedToken(ARB_USDC_TOKEN_ITEM as ITokenItem);
     }
   }, [setAmount, visible]);
@@ -441,34 +459,13 @@ export const PerpsWithdrawPopup: React.FC<{
           />
         </BottomSheetView>
       </AppBottomSheetModal>
-      <PerpsWithdrawSelectTokenPopup
+      <PerpsWithdrawSelectChainPopup
         visible={chainSelectVisible}
-        title="Select Chain"
-        tokens={[
-          {
-            ...ARB_USDC_TOKEN_ITEM,
-            display_symbol: 'Arbitrum',
-            id: 'arb',
-            symbol: 'Arbitrum',
-            name: 'Arbitrum',
-            optimized_symbol: 'Arbitrum',
-            logo_url: findChainByServerID(ARB_USDC_TOKEN_SERVER_CHAIN)?.logo,
-          } as ITokenItem,
-          {
-            ...HYPE_USDC_TOKEN_ITEM,
-            id: 'hyper-evm',
-            display_symbol: 'HyperEVM',
-            symbol: 'HyperEVM',
-            name: 'HyperEVM',
-            optimized_symbol: 'HyperEVM',
-            logo_url: findChainByServerID(HYPE_USDC_TOKEN_SERVER_CHAIN)?.logo,
-          } as ITokenItem,
-        ]}
+        options={chainOptions}
         onClose={() => setChainSelectVisible(false)}
-        onSelect={token => {
-          setSelectChainId(token.chain as SelectChainType);
-          // Auto-select first token of the chain
-          const tokens = WITHDRAW_CHAIN_TOKENS[token.chain] || [];
+        onSelect={option => {
+          setSelectChainId(option.serverChain as SelectChainType);
+          const tokens = WITHDRAW_CHAIN_TOKENS[option.serverChain] || [];
           if (tokens.length > 0) {
             setSelectedToken(tokens[0] as ITokenItem);
           }
@@ -477,17 +474,9 @@ export const PerpsWithdrawPopup: React.FC<{
       />
       <PerpsWithdrawSelectTokenPopup
         visible={tokenSelectVisible}
-        tokens={chainTokens}
+        items={chainTokenItems}
         height={selectChainId === ARB_USDC_TOKEN_SERVER_CHAIN ? 220 : 460}
         onClose={() => setTokenSelectVisible(false)}
-        getBalance={token => {
-          const sym =
-            getTokenSymbol(token) === 'USDT' ? 'USDT0' : getTokenSymbol(token);
-          if (isUnifiedAccount) {
-            return Number(spotBalancesMap[sym]?.available) || 0;
-          }
-          return sym === 'USDC' ? accountAvailableBalance : 0;
-        }}
         onSelect={token => {
           setSelectedToken(token);
           setAmount('');

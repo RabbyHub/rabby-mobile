@@ -1,55 +1,42 @@
-import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
-import { ITokenItem } from '@/store/tokens';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
 
-export type PerpsWithdrawTokenItem = {
-  token: ITokenItem;
-  balance?: number;
+export type PerpsWithdrawChainOption = {
+  serverChain: string;
+  name: string;
 };
 
-export const PerpsWithdrawSelectTokenPopup: React.FC<{
-  onClose?(): void;
+export const PerpsWithdrawSelectChainPopup: React.FC<{
   visible?: boolean;
-  items: PerpsWithdrawTokenItem[];
+  onClose?(): void;
+  title?: string;
+  options: PerpsWithdrawChainOption[];
   height?: number | string;
-  onSelect?(token: ITokenItem): void;
-}> = ({ onClose, visible, onSelect, items, height }) => {
-  const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({
-    getStyle: getStyle,
-  });
+  onSelect?(option: PerpsWithdrawChainOption): void;
+}> = ({ visible, onClose, options, title, height, onSelect }) => {
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const renderItem = useMemoizedFn(
-    ({ item }: { item: PerpsWithdrawTokenItem }) => {
-      const { token, balance } = item;
-      return (
-        <TouchableOpacity
-          style={styles.tokenListItem}
-          onPress={() => {
-            onSelect?.(token);
-            onClose?.();
-          }}>
-          <View style={styles.box}>
-            <AssetAvatar size={46} logo={token.logo_url} chainSize={18} />
-            <Text style={styles.text}>{getTokenSymbol(token)}</Text>
-          </View>
-          {balance !== undefined && (
-            <Text style={styles.balanceText}>{balance.toFixed(2)}</Text>
-          )}
-        </TouchableOpacity>
-      );
-    },
+    ({ item }: { item: PerpsWithdrawChainOption }) => (
+      <TouchableOpacity
+        style={styles.chainListItem}
+        onPress={() => {
+          onSelect?.(item);
+          onClose?.();
+        }}>
+        <ChainIconImage size={36} chainServerId={item.serverChain} />
+        <Text style={styles.chainName}>{item.name}</Text>
+      </TouchableOpacity>
+    ),
   );
 
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -70,18 +57,16 @@ export const PerpsWithdrawSelectTokenPopup: React.FC<{
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={onClose}
-      snapPoints={[height || 300]}>
+      snapPoints={[height || 280]}>
       <AutoLockView style={styles.container}>
-        <Text style={styles.title}>
-          {t('page.perps.PerpsWithdrawPopup.selectWithdrawToken')}
-        </Text>
+        <Text style={styles.title}>{title || 'Select Chain'}</Text>
         <BottomSheetFlatList
           keyboardShouldPersistTaps="handled"
-          data={items}
+          data={options}
           style={styles.flatList}
           renderItem={renderItem}
           ItemSeparatorComponent={() => <View style={styles.divider} />}
-          keyExtractor={item => item.token.id + item.token.chain}
+          keyExtractor={item => item.serverChain}
         />
       </AutoLockView>
     </AppBottomSheetModal>
@@ -105,35 +90,25 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   flatList: {
     paddingHorizontal: 16,
   },
-  tokenListItem: {
+  chainListItem: {
     paddingVertical: 14,
     paddingHorizontal: 12,
     width: '100%',
-    height: 74,
+    height: 64,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     borderRadius: 16,
+    gap: 8,
   },
-  box: { flexDirection: 'row', alignItems: 'center' },
-  balanceText: {
+  chainName: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
-  },
-  text: {
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '700',
-    lineHeight: 20,
-    marginLeft: 8,
   },
   divider: {
     height: 8,

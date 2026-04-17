@@ -107,6 +107,7 @@ export const PerpsMarketDetailScreen = () => {
     handleActionApproveStatus,
 
     handleDeleteAgent,
+    handleEnableUnifiedAccount,
   } = usePerpsState();
   // const hasPermission = true;
   const [showRiskPopup, setShowRiskPopup] = useState(false);
@@ -243,7 +244,6 @@ export const PerpsMarketDetailScreen = () => {
     handleCancelOrder,
     handleUpdateMargin,
     handleStableCoinOrder,
-    handleEnableUnifiedAccount,
   } = usePerpsPosition();
 
   const { handleDeposit } = usePerpsDeposit({

@@ -5,7 +5,12 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, TouchableOpacity, View } from 'react-native';
+import {
+  ImageBackground,
+  LayoutChangeEvent,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
@@ -43,6 +48,47 @@ export const PerpsAccountCard: React.FC = () => {
       .filter(b => Number(b.total) >= 0.1)
       .sort((a, b) => Number(b.total) - Number(a.total));
   }, [spotBalances]);
+
+  const chipYRef = React.useRef<Record<number, number>>({});
+  const [rowStartIndices, setRowStartIndices] = React.useState<
+    Record<number, true>
+  >({ 0: true });
+
+  React.useEffect(() => {
+    chipYRef.current = {};
+    setRowStartIndices({ 0: true });
+  }, [visibleBalances.length]);
+
+  const handleChipLayout = React.useCallback(
+    (idx: number) => (e: LayoutChangeEvent) => {
+      chipYRef.current[idx] = e.nativeEvent.layout.y;
+      const yMap = chipYRef.current;
+      const indices = Object.keys(yMap)
+        .map(Number)
+        .sort((a, b) => a - b);
+      const next: Record<number, true> = {};
+      let lastY = -Infinity;
+      for (const i of indices) {
+        const y = yMap[i] ?? 0;
+        if (y !== lastY) {
+          next[i] = true;
+          lastY = y;
+        }
+      }
+      setRowStartIndices(prev => {
+        const prevKeys = Object.keys(prev);
+        const nextKeys = Object.keys(next);
+        if (
+          prevKeys.length === nextKeys.length &&
+          nextKeys.every(k => prev[Number(k)])
+        ) {
+          return prev;
+        }
+        return next;
+      });
+    },
+    [],
+  );
 
   const isNewUser = React.useMemo(() => {
     return Number(availableBalance) === 0 && accountValue === 0;
@@ -126,39 +172,50 @@ export const PerpsAccountCard: React.FC = () => {
               </View>
             )}
           </View>
-          {isUnifiedAccount && isBalanceExpanded && (
-            <LinearGradient
-              colors={['rgba(35, 192, 172, 0.20)', 'rgba(35, 192, 172, 0.00)']}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={styles.expandedBalances}>
-              <View style={styles.balanceChipRow}>
-                {visibleBalances.map((b, idx) => (
-                  <View
-                    key={b.coin}
-                    style={[
-                      styles.balanceChip,
-                      idx > 0 && styles.balanceChipWithBorder,
-                    ]}>
-                    {COIN_ICON_MAP[b.coin] || null}
-                    <Text style={styles.balanceChipText}>
-                      {formatUsdValue(Number(b.available))}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-              <TouchableOpacity
-                style={styles.toSwapBtn}
-                onPress={() => {
-                  setPopupState(prev => ({
-                    ...prev,
-                    isShowSwapPopup: true,
-                  }));
-                }}>
-                <Text style={styles.toSwapText}>To swap→</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          )}
+          {isUnifiedAccount &&
+            isBalanceExpanded &&
+            !!visibleBalances.length && (
+              <LinearGradient
+                colors={[
+                  'rgba(35, 192, 172, 0.20)',
+                  'rgba(35, 192, 172, 0.00)',
+                ]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.expandedBalances}>
+                <View style={styles.balanceChipRow}>
+                  {visibleBalances.map((b, idx) => {
+                    const isRowStart = !!rowStartIndices[idx];
+                    return (
+                      <View
+                        key={b.coin}
+                        onLayout={handleChipLayout(idx)}
+                        style={styles.balanceChipWrap}>
+                        {!isRowStart && (
+                          <View style={styles.balanceChipDivider} />
+                        )}
+                        <View style={styles.balanceChip}>
+                          {COIN_ICON_MAP[b.coin] || null}
+                          <Text style={styles.balanceChipText}>
+                            {formatUsdValue(Number(b.available))}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+                <TouchableOpacity
+                  style={styles.toSwapBtn}
+                  onPress={() => {
+                    setPopupState(prev => ({
+                      ...prev,
+                      isShowSwapPopup: true,
+                    }));
+                  }}>
+                  <Text style={styles.toSwapText}>To swap→</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            )}
         </View>
       </LinearGradient>
       {showLearnMore && (
@@ -423,21 +480,30 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   expandedBalances: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginTop: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    gap: 8,
   },
   balanceChipRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     flex: 1,
-    gap: 0,
-    maxWidth: '75%',
+  },
+  balanceChipWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  balanceChipDivider: {
+    width: 1,
+    height: 12,
+    marginHorizontal: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   balanceChip: {
     flexDirection: 'row',
@@ -445,16 +511,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     paddingVertical: 4,
   },
-  balanceChipWithBorder: {
-    marginLeft: 8,
-    paddingLeft: 8,
-    borderLeftWidth: 1,
-    borderLeftColor: 'rgba(255, 255, 255, 0.15)',
-  },
   toSwapBtn: {
-    position: 'absolute',
-    right: 12,
-    top: 8,
+    flexShrink: 0,
+    paddingVertical: 4,
   },
   balanceChipText: {
     fontFamily: 'SF Pro Rounded',
