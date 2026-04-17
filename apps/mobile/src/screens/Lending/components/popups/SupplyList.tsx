@@ -317,14 +317,18 @@ export const LendingSupplyListContent: React.FC<
               )}
             </View>
           </View>
-          <Text style={styles.tvl}>
-            {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
-          </Text>
-          <View style={styles.right}>
-            <Text style={styles.apy}>
-              {formatApy(Number(data.reserve.supplyAPY || '0'))}
+          {!isWrapperToken && (
+            <Text style={styles.tvl}>
+              {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
             </Text>
-          </View>
+          )}
+          {!isWrapperToken && (
+            <View style={styles.right}>
+              <Text style={styles.apy}>
+                {formatApy(Number(data.reserve.supplyAPY || '0'))}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       );
     },
@@ -406,10 +410,7 @@ const LendingSupplyList: React.FC<
 
 export default LendingSupplyList;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const cardBgColor = isLight
-    ? colors2024['neutral-bg-1']
-    : colors2024['neutral-bg-2'];
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   const wrapperTokenCardBgColor = colord(colors2024['neutral-line'])
     .alpha(0.3)
     .toRgbString();
