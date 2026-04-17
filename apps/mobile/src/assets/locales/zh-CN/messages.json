@@ -27,7 +27,8 @@
       "ConfrimAddress": "确认您的钱包",
       "ChooseBackup": "选择备份方法",
       "CreateWallet": "创建钱包",
-      "SetPassword": "设置密码"
+      "SetPassword": "设置密码",
+      "MoreImportMethods": "更多导入方式"
     }
   },
   "native": {
@@ -1243,7 +1244,11 @@
         "safeTitle": "导入 Safe Wallet",
         "watch": "仅观察钱包",
         "watchOnlyTitle": "导入只读钱包",
-        "ImportCloud": "从{{cloud}}导入"
+        "ImportCloud": "从{{cloud}}导入",
+        "ImportFromExtensionOrCloud": "从插件或者{{cloud}}导入",
+        "moreWatchOnlyTitle": "导入观察钱包",
+        "moreWatchOnly": "观察钱包",
+        "moreSafeTitle": "导入Safe钱包"
       },
       "addAddress": {
         "hardwareWallet": "硬件钱包",
@@ -1251,7 +1256,9 @@
         "importAddress": "导入钱包",
         "createAddress": "创建钱包",
         "selectAddMethod": "选择添加方法",
-        "seedPhraseOrPrivateKey": "助记词或私钥"
+        "seedPhraseOrPrivateKey": "助记词或私钥",
+        "restoreRabbyWallet": "恢复Rabby钱包",
+        "moreOptions": "更多导入方式"
       },
       "rateModalTriggerOnHome": {
         "description": "你如何评价 Rabby Wallet？"
@@ -3239,7 +3246,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "恢复您的 Rabby 钱包",
-        "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。"
+        "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。",
+        "subtitleInApp": "从下方选择一种快速导入您的钱包的方式"
       },
       "common": {
         "orYouCanCreateNewWallet": "没有钱包？立即<clickable>创建新钱包</clickable>"
