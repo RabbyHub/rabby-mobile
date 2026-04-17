@@ -1337,8 +1337,8 @@
         "importAddress": "匯入錢包",
         "selectAddMethod": "選擇添加方法",
         "seedPhraseOrPrivateKey": "助记词或私钥",
-        "restoreRabbyWallet": "恢復 Rabby 錢包",
-        "moreOptions": "更多選項"
+        "restoreRabbyWallet": "恢復Rabby錢包",
+        "moreOptions": "更多導入方式"
       },
       "importAddress": {
         "seedPhrase": "匯入助記詞",
@@ -1355,10 +1355,10 @@
         "safeTitle": "導入 Safe Wallet",
         "watch": "觀察型錢包",
         "ImportCloud": "從 {{cloud}} 匯入",
-        "ImportFromExtensionOrCloud": "從擴充功能或 {{cloud}} 匯入",
-        "moreWatchOnlyTitle": "匯入僅監控地址",
-        "moreWatchOnly": "僅監控地址",
-        "moreSafeTitle": "匯入 Safe 地址"
+        "ImportFromExtensionOrCloud": "從擴展功能或{{cloud}}導入",
+        "moreWatchOnlyTitle": "導入觀察錢包",
+        "moreWatchOnly": "觀察錢包",
+        "moreSafeTitle": "導入Safe錢包"
       },
       "rateModalTriggerOnHome": {
         "description": "您如何評價 Rabby Wallet？"
@@ -3301,7 +3301,7 @@
       "restoreWallet": {
         "title": "恢復您的 Rabby 錢包",
         "subtitle": "歡迎回來！🎉  \n選擇一種方法來快速恢復您的錢包。",
-        "subtitleInApp": "選擇以下選項來快速從 Rabby 擴充功能或 iCloud 匯入您的錢包。"
+        "subtitleInApp": "從下方選擇一種快速導入您的錢包的方式"
       },
       "common": {
         "orYouCanCreateNewWallet": "沒有錢包？立即<cw>創建新錢包</cw>"
