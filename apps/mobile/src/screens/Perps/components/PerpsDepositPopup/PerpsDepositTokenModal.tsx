@@ -1,5 +1,6 @@
 import { RcArrowRightCC } from '@/assets2024/icons/perps';
 import { AssetAvatar } from '@/components';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Button } from '@/components2024/Button';
 import { RootNames } from '@/constant/layout';
 import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
@@ -9,10 +10,11 @@ import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { ITokenItem } from '@/store/tokens';
 import { findChain } from '@/utils/chain';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 interface Props {
@@ -43,7 +45,8 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
   }
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.perpsDepositToken}
       transparent={true}
       visible={visible}
       animationType="fade"
@@ -123,7 +126,7 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 

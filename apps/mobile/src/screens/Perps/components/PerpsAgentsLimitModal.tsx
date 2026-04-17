@@ -1,10 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, View } from 'react-native';
+import { View } from 'react-native';
 
 import { RcWarningFull } from '@/assets2024/icons/perps';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text } from '@/components/Typography';
 
@@ -25,7 +27,8 @@ export const PerpsAgentsLimitModal: React.FC<Props> = ({
   });
 
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.perpsAgentsLimit}
       transparent={true}
       visible={visible}
       animationType="fade"
@@ -52,7 +55,7 @@ export const PerpsAgentsLimitModal: React.FC<Props> = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 

@@ -65,6 +65,10 @@ const scene24hBalanceStore = zCreate<Multi24hBalanceState>(() => ({
   },
 }));
 
+export function getScene24hBalanceState() {
+  return scene24hBalanceStore.getState();
+}
+
 function setSceneAddresses<T extends BalanceScene>(
   scene: T,
   valOrFunc: UpdaterOrPartials<Multi24hBalanceState['addresses'][T]>,

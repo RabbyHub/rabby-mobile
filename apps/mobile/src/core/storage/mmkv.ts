@@ -12,7 +12,7 @@ import {
 } from 'jotai/vanilla/utils/atomWithStorage';
 import { type StateStorage } from 'zustand/middleware';
 
-import { MMKV_FILE_NAMES, walkThroughMMKVFiles } from '../utils/appFS';
+import { walkThroughMMKVFiles } from '../utils/appFS';
 import RNHelpers from '../native/RNHelpers';
 import { IS_IOS } from '../native/utils';
 import { runDevIIFEFunc } from '../utils/store';
@@ -23,6 +23,8 @@ import {
   zMutative,
   zPersist,
 } from '../utils/reexports';
+import { appMMKV, keyringMMKV } from './mmkvInstances';
+import { APP_MMKV_KEYS, MMKV_FILE_NAMES } from './mmkvConstants';
 // import { lendingCacheStorage } from '@/screens/Lending/hooks';
 
 function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
@@ -75,8 +77,13 @@ export function getJsonValueStringCompat(
 }
 
 export function makeMMKVStorage(options?: MMKVConfiguration) {
-  const mmkv = new MMKV(options);
+  return makeMMKVStorageByInstance(new MMKV(options), options);
+}
 
+export function makeMMKVStorageByInstance(
+  mmkv: MMKV,
+  options?: MMKVConfiguration,
+) {
   function getItem<T>(key: string): T | null {
     const value = mmkv.getString(key);
 
@@ -139,46 +146,51 @@ export function makeMMKVStorage(options?: MMKVConfiguration) {
 const {
   storage: appStorage,
   methods: appMethods,
-  mmkv: appMMKV,
-} = makeMMKVStorage({
+  mmkv: appMMKVInstance,
+} = makeMMKVStorageByInstance(appMMKV, {
   id: MMKV_FILE_NAMES.DEFAULT,
 });
 
-const { storage: keyringStorage, mmkv: keyringMMKV } = makeMMKVStorage({
-  id: MMKV_FILE_NAMES.KEYRING,
-  encryptionKey: 'keyring',
-});
+const { storage: keyringStorage, mmkv: keyringMMKVInstance } =
+  makeMMKVStorageByInstance(keyringMMKV, {
+    id: MMKV_FILE_NAMES.KEYRING,
+    encryptionKey: 'keyring',
+  });
 
 export function normalizeKeyringState() {
-  const legacyData = appStorage.getItem('keyringState');
+  const legacyData = appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
   const result = {
     legacyData,
-    keyringData: keyringStorage.getItem('keyringState') || legacyData,
+    keyringData:
+      keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) || legacyData,
   };
 
-  if (legacyData) appMMKV.trim();
+  if (legacyData) appMMKVInstance.trim();
 
   // console.debug('result.legacyData', result.legacyData);
   // console.debug('result.keyringData', result.keyringData);
   if (!result.legacyData) return result;
 
-  keyringStorage.setItem('keyringState', result.legacyData);
+  keyringStorage.setItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE, result.legacyData);
   result.keyringData = result.legacyData;
 
-  appStorage.removeItem('keyringState');
-  appMMKV.trim();
+  appStorage.removeItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
+  appMMKVInstance.trim();
 
   return result;
 }
 
 export const appMMKVForDebug = __DEV__
-  ? appMMKV
-  : (null as any as typeof appMMKV);
-export { appStorage, keyringStorage };
+  ? appMMKVInstance
+  : (null as any as typeof appMMKVInstance);
+export const keyringMMKVForDebug = __DEV__
+  ? keyringMMKVInstance
+  : (null as any as typeof keyringMMKVInstance);
+export { appStorage, keyringStorage, appMMKVInstance, keyringMMKVInstance };
 
 export const IS_BOOTED_USER =
-  !!appStorage.getItem('keyringState') ||
-  !!keyringStorage.getItem('keyringState');
+  !!appStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE) ||
+  !!keyringStorage.getItem(APP_MMKV_KEYS.LEGACY_KEYRING_STATE);
 
 export const enum MMKVStorageStrategy {
   'legacy' = -1,

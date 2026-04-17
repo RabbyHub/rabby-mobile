@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Platform, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -39,7 +39,7 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
     return getTargetReserve(underlyingAsset);
   }, [getTargetReserve, underlyingAsset]);
 
-  const { isBorrowed, apyText, usdText, tokenAmountText } = useMemo(() => {
+  const { apyText, usdText, tokenAmountText } = useMemo(() => {
     if (!reserve) {
       return {
         isBorrowed: false,
@@ -285,31 +285,16 @@ const BorrowItem: React.FC<BorrowItemProps> = ({ underlyingAsset, style }) => {
 
 export default BorrowItem;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 0,
     marginTop: 12,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.07,
-        shadowRadius: 16,
-        shadowOffset: {
-          width: 0,
-          height: 8,
-        },
-      },
-      android: {
-        elevation: 0,
-      },
-      default: {},
-    }),
+    backgroundColor: colors2024['neutral-bg-2'],
     position: 'relative',
+    borderWidth: 1,
+    borderColor: colors2024['neutral-bg-1'],
   },
   content: {
     paddingHorizontal: 14,

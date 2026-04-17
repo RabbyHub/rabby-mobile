@@ -1,9 +1,11 @@
 import { Button } from '@/components2024/Button';
+import { TrackedModal } from '@/components/Modal/TrackedModal';
 import { useTheme2024 } from '@/hooks/theme';
+import { MODAL_GATE_IDS } from '@/utils/modalGate';
 import { createGetStyles2024 } from '@/utils/styles';
 import { colord } from 'colord';
 import { useTranslation } from 'react-i18next';
-import { Modal, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 export const NoNewAddressesModal = (props: {
@@ -15,7 +17,8 @@ export const NoNewAddressesModal = (props: {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
-    <Modal
+    <TrackedModal
+      modalId={MODAL_GATE_IDS.syncExtensionNoNewAddresses}
       transparent
       animationType="fade"
       onRequestClose={onCancel}
@@ -32,7 +35,7 @@ export const NoNewAddressesModal = (props: {
           />
         </View>
       </View>
-    </Modal>
+    </TrackedModal>
   );
 };
 

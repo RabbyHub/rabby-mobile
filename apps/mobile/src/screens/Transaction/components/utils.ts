@@ -142,12 +142,6 @@ export const judgeIsSmallUsdTx = (
   item: HistoryItemEntity,
   pinedQueue: IManageToken[],
 ) => {
-  const currentTime = new Date().getTime();
-  if (item.time_at * 1000 > currentTime - 1000 * 60 * 60) {
-    // 1 hour not filter
-    return false;
-  }
-
   if (item.tx_from_address.toLowerCase() === item.owner_addr.toLowerCase()) {
     return false;
   }
@@ -193,12 +187,6 @@ export const judgeIsSmallUsdTxInApi = (
   tokenDict: Record<string, TokenItem>,
   pinedQueue: IManageToken[],
 ) => {
-  const currentTime = new Date().getTime();
-  if (item.time_at * 1000 > currentTime - 1000 * 60 * 60) {
-    // 1 hour not filter
-    return false;
-  }
-
   if (item.tx?.from_addr.toLowerCase() === item.address.toLowerCase()) {
     return false;
   }

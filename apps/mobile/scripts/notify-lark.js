@@ -23,7 +23,7 @@ if (!chatSecret) {
 // sendMessage with axios
 async function sendMessage({
   platform = 'android',
-  isAndroidResigned = false,
+  isFastBuild = false,
   downloadURL = '',
   actionsJobUrl = '',
   gitCommitURL = '',
@@ -109,14 +109,13 @@ async function sendMessage({
               { tag: 'text', text: `下载链接: ` },
               { tag: 'a', href: downloadURL, text: downloadURL },
             ],
-            platform === 'android' &&
-              isAndroidResigned && [
-                { tag: 'text', text: `📢📢📢 注意: ` },
-                {
-                  tag: 'text',
-                  text: `该 APK 来自 FastBuild, 预期启动会比线上慢一半左右, 若存在其它安装问题请联系开发者重新打包`,
-                },
-              ],
+            isFastBuild && [
+              { tag: 'text', text: `📢📢📢 注意: ` },
+              {
+                tag: 'text',
+                text: `该预览包来自 FastBuild, 若存在其它安装问题请联系开发者重新打包`,
+              },
+            ],
             [
               { tag: 'text', text: `二维码，拿 📱 扫一下 🔽` },
               { tag: 'img', image_key },
@@ -161,7 +160,7 @@ if (!process.env.CI && args[0] === 'get-token') {
   sendMessage({
     downloadURL: args[0],
     platform: args[1],
-    isAndroidResigned: args[2] === 'true',
+    isFastBuild: args[2] === 'true',
     actionsJobUrl: process.env.GIT_ACTIONS_JOB_URL,
     gitCommitURL: process.env.GIT_COMMIT_URL,
     gitRefURL: process.env.GIT_REF_URL,

@@ -58,6 +58,10 @@ const rneuiTheme = createTheme({
 type AppProps = { rabbitCode: string };
 
 const MemoziedAppNav = React.memo(AppNavigation);
+const RozeniteDevTools =
+  process.env.WITH_ROZENITE === 'true'
+    ? require('./devtools/RozeniteDevTools').default
+    : null;
 
 const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
   useInitializeAppOnTop();
@@ -107,6 +111,7 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
       <ThemeProvider theme={rneuiTheme}>
         <SafeAreaProvider>
           <RootSiblingParent>
+            {RozeniteDevTools ? <RozeniteDevTools /> : null}
             <SizeWatcher />
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}

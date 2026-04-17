@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl, TouchableOpacity, View } from 'react-native';
 
@@ -442,14 +441,12 @@ const LendingBorrowList: React.FC = () => {
 
 export default LendingBorrowList;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     paddingHorizontal: 16,
     width: '100%',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   titleContainer: {
     paddingTop: 12,
@@ -473,14 +470,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    paddingHorizontal: 4,
+    paddingVertical: 12,
     justifyContent: 'space-between',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 16,
-    marginTop: 8,
   },
   left: {
     flex: 1,
@@ -503,7 +495,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-    textAlign: 'right',
+    textAlign: 'left',
+    paddingLeft: 8,
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -588,21 +581,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     color: colors2024['neutral-secondary'],
     flex: 0,
-    marginLeft: 10,
     width: 100,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   sectionHeader: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     marginTop: 8,
+    marginBottom: 8,
     paddingLeft: 0,
   },
   buttonHeader: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   availableCard: {
     paddingHorizontal: 16,

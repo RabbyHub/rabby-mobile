@@ -151,14 +151,13 @@ export type BrowserNavigatorParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
-  [RootNames.GetStartedScreen2024]?: {};
 };
 
 type TestKitsNavigatorParamsList = {
-  [RootNames.NewUserGetStarted2024]?: {};
   [RootNames.DevUIFontShowCase]?: {};
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
+  [RootNames.DevUIComponents2024ShowCase]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
@@ -397,6 +396,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Lending]?: {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';
+    source?: string;
     account?: KeyringAccountWithAlias;
     dappId?: string;
   };

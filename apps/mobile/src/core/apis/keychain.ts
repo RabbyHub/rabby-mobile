@@ -1,18 +1,13 @@
 import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 import { Platform } from 'react-native';
 import RNKeychain, { STORAGE_TYPE } from 'react-native-keychain';
-import { MMKV } from 'react-native-mmkv';
 
 import { appEncryptor } from '../services';
 import i18n from '@/utils/i18n';
 import * as apisLock from './lock';
-import { MMKV_FILE_NAMES } from '../utils/appFS';
+import { keychainMMKV } from '../storage/mmkvInstances';
+import { KEYCHAIN_MMKV_KEYS } from '../storage/mmkvConstants';
 
-const storage = new MMKV({
-  id: MMKV_FILE_NAMES.KEYCHAIN,
-});
-
-const KEYCHAIN_AUTH_TYPES_KEY = 'KEYCHAIN_AUTH_TYPES';
 export enum KEYCHAIN_AUTH_TYPES {
   APPLICATION_PASSWORD = 0,
   BIOMETRICS = 1,
@@ -21,14 +16,14 @@ export enum KEYCHAIN_AUTH_TYPES {
 }
 function getAuthenticationType() {
   return (
-    storage.getNumber(KEYCHAIN_AUTH_TYPES_KEY) ||
+    keychainMMKV.getNumber(KEYCHAIN_MMKV_KEYS.AUTHENTICATION_TYPE) ||
     KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD
   );
 }
 const authTypeRef = { current: getAuthenticationType() };
 function setAuthenticationType(type?: KEYCHAIN_AUTH_TYPES) {
   authTypeRef.current = type || KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD;
-  storage.set(KEYCHAIN_AUTH_TYPES_KEY, authTypeRef.current);
+  keychainMMKV.set(KEYCHAIN_MMKV_KEYS.AUTHENTICATION_TYPE, authTypeRef.current);
 }
 export function isAuthenticatedByBiometrics() {
   return authTypeRef.current === KEYCHAIN_AUTH_TYPES.BIOMETRICS;

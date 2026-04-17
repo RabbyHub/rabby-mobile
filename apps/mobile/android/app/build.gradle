@@ -3,6 +3,19 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: "com.google.gms.google-services"
 
+def metroMaxWorkers = System.getenv("RABBY_MOBILE_METRO_MAX_WORKERS")
+def metroNodeMaxOldSpaceSize = System.getenv("RABBY_MOBILE_METRO_NODE_MAX_OLD_SPACE_SIZE")
+def metroNodeExecutableAndArgs = ["node"]
+def metroExtraPackagerArgs = []
+
+if (metroNodeMaxOldSpaceSize) {
+    metroNodeExecutableAndArgs += ["--max-old-space-size=${metroNodeMaxOldSpaceSize}"]
+}
+
+if (metroMaxWorkers) {
+    metroExtraPackagerArgs += ["--max-workers", metroMaxWorkers]
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -26,7 +39,9 @@ react {
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
-    // nodeExecutableAndArgs = ["node"]
+    if (!metroNodeExecutableAndArgs.isEmpty()) {
+        nodeExecutableAndArgs = metroNodeExecutableAndArgs
+    }
     //
     //   The command to run when bundling. By default is 'bundle'
     // bundleCommand = "ram-bundle"
@@ -42,7 +57,9 @@ react {
     //
     //   A list of extra flags to pass to the 'bundle' commands.
     //   See https://github.com/react-native-community/cli/blob/main/docs/commands.md#bundle
-    // extraPackagerArgs = []
+    if (!metroExtraPackagerArgs.isEmpty()) {
+        extraPackagerArgs = metroExtraPackagerArgs
+    }
 
     /* Hermes Commands */
     //   The hermes compiler command to run. By default it is 'hermesc'
@@ -90,8 +107,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100199
-        versionName "0.6.64"
+        versionCode 100202
+        versionName "0.6.65"
         missingDimensionStrategy "store", "play"
         externalNativeBuild {
           cmake {

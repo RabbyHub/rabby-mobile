@@ -15,6 +15,10 @@ on:
         required: false
         type: boolean
         default: false
+      FAST_BUILD_ON_IOS:
+        required: false
+        type: boolean
+        default: false
       SKIP_NOTIFY_LARK:
         required: false
         type: boolean
@@ -73,6 +77,7 @@ jobs:
       NODE_OPTIONS: '--max_old_space_size=12288'
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
+      RABBY_MOBILE_IOS_FAST_BUILD: ${{ inputs.FAST_BUILD_ON_IOS }}
       SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
       RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}
       XCODE_VER: '26.3'
@@ -86,29 +91,60 @@ jobs:
         run: |
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
+          yarn_exclude_args=()
           if [ "$RABBY_MOBILE_NM_USE_CACHE" = "true" ]; then
-            echo "Use yarn installed node_modules";
-            yarn_exclude_files="-e node_modules -e apps/mobile/node_modules -e apps/mobile/packages/*/node_modules"
-          else
-            yarn_exclude_files="";
+            echo "Keep yarn install outputs";
+            yarn_exclude_args+=(
+              -e node_modules
+              -e 'apps/*/node_modules'
+              -e 'packages/*/node_modules'
+              -e .yarn/install-state.gz
+              -e .yarn/unplugged
+            )
           fi
 
           if [ "$OS_TYPE" == "Linux" ]; then
             if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
               echo "Keep gradle cache";
-              git clean -ffdx $yarn_exclude_files -e apps/mobile/android/.gradle -e apps/mobile/android/app/build;
+              git clean -ffdx "${yarn_exclude_args[@]}" \
+                -e .turbo-build \
+                -e apps/mobile/.turbo-build \
+                -e apps/mobile/assets/android/builtin-pages \
+                -e apps/mobile/android/app/src/main/assets/custom \
+                -e apps/mobile/android/app/src/main/assets/fonts \
+                -e apps/mobile/android/app/src/main/assets/threads \
+                -e apps/mobile/android/.gradle \
+                -e apps/mobile/android/app/build;
               rm -rf apps/mobile/android/app/build/outputs;
             else
               echo "Clean gradle cache";
-              git clean -ffdx $yarn_exclude_files;
+              git clean -ffdx "${yarn_exclude_args[@]}";
             fi
           elif [ "$OS_TYPE" == "Darwin" ]; then
+            if [ "$RABBY_MOBILE_IOS_FAST_BUILD" = "true" ]; then
+              echo "Keep iOS fast-build template cache";
+              ios_fast_build_exclude_args=(
+                -e apps/mobile/scripts/.fast-build-work/template.xcarchive
+                -e apps/mobile/scripts/.fast-build-work/template-ios.template-shell-hash
+              )
+            else
+              ios_fast_build_exclude_args=()
+            fi
+
             if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
               echo "Keep cocoapods cache";
-              git clean -ffdx $yarn_exclude_files -e apps/mobile/ios/Pods -e apps/mobile/ios/build;
+              git clean -ffdx "${yarn_exclude_args[@]}" \
+                -e .turbo-build \
+                -e apps/mobile/.turbo-build \
+                "${ios_fast_build_exclude_args[@]}" \
+                -e apps/mobile/assets/ios/builtin-pages \
+                -e apps/mobile/assets/ios/threads \
+                -e apps/mobile/ios/RabbyMobile/Resources \
+                -e apps/mobile/ios/Pods \
+                -e apps/mobile/ios/build;
             else
               echo "Clean cocoapods cache";
-              git clean -ffdx $yarn_exclude_files;
+              git clean -ffdx "${yarn_exclude_args[@]}" "${ios_fast_build_exclude_args[@]}";
             fi
           fi
           git reset --hard HEAD;
@@ -176,16 +212,27 @@ jobs:
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
           nvm use;
-          rm -rf node_modules;
           yarn install --immutable;
-          bundle install;
+          if ! bundle check >/dev/null 2>&1; then
+            bundle install;
+          else
+            echo "Ruby bundle already satisfied";
+          fi
 
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
 
           if [ "$OS_TYPE" == "Linux" ]; then
+            export RABBY_MOBILE_TURBO_BUILD=false
+            if [ "$RABBY_MOBILE_GRADLE_USE_CACHE" = "true" ]; then
+              echo "Enable Gradle cache for Linux regression package"
+            fi
             buildchannel=selfhost-reg ./scripts/deploy-android.sh
           elif [ "$OS_TYPE" == "Darwin" ]; then
+            export RABBY_MOBILE_TURBO_BUILD=false
+            if [ "$RABBY_MOBILE_POD_USE_CACHE" = "true" ]; then
+              echo "Enable pod cache for iOS regression package"
+            fi
             if [ "$INPUT_MOBILE_LOC" == "mobile-local" ]; then
               export SENTRY_DISABLE_AUTO_UPLOAD=true
               export NODE_OPTIONS="--max_old_space_size=20480"
@@ -224,7 +271,8 @@ jobs:
           CONFIGURATION: release
           TYPE: adhoc
           RABBY_MOBILE_BUILD_ENV: regression
-          USE_RESIGN_APK: ${{ inputs.FAST_BUILD_ON_ANDROID }}
+          RABBY_MOBILE_ANDROID_FAST_BUILD: ${{ inputs.FAST_BUILD_ON_ANDROID }}
+          RABBY_MOBILE_IOS_FAST_BUILD: ${{ inputs.FAST_BUILD_ON_IOS }}
           SKIP_NOTIFY_LARK: ${{ inputs.SKIP_NOTIFY_LARK }}
           RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}

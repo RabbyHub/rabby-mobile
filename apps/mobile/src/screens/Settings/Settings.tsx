@@ -38,8 +38,10 @@ import {
   APP_RUNTIME_ENV,
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
+  IS_CONSOLE_STRIPPED,
   IS_HERMES_ENABLED,
 } from '@/constant/env';
+import { E2E_ID } from '@/constant/e2e';
 import { isNonPublicProductionEnv, NEED_DEVSETTINGBLOCKS } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import {
@@ -208,6 +210,7 @@ function AlertBuildInfo() {
     `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
     '   ',
     `Hermes Engine: ${IS_HERMES_ENABLED ? 'Enabled' : 'Disabled'}`,
+    `Strip Console: ${IS_CONSOLE_STRIPPED ? 'Enabled' : 'Disabled'}`,
     `Worker Thread: ${isWorkerThreadRunning() ? 'Enabled' : 'Disabled'}`,
   ];
 
@@ -790,6 +793,7 @@ function DevSettingsBlocks() {
             {
               label: 'UI Playground',
               icon: RcCode,
+              testID: E2E_ID.settings.uiPlayground,
               onPress: () => {
                 setDevUIPlaygroundModalVisible(true);
               },
@@ -802,7 +806,7 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: 'Debug Logs Viewer',
+              label: 'App Log Verification',
               icon: RcCode,
               onPress: () => {
                 navigation.dispatch(
