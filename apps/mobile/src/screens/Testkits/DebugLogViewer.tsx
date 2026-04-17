@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import dayjs from 'dayjs';
-import { strFromU8, unzipSync } from 'fflate';
+import { strFromU8, Unzip, UnzipInflate, unzipSync, zipSync } from 'fflate';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import {
   AppBottomSheetModal,
@@ -50,6 +50,31 @@ type ArchiveFileItem = {
   modifiedAt: string | null;
 };
 
+type ArchiveKindDisplay = {
+  label: string;
+  description: string;
+};
+
+type ShareableFileTarget = {
+  path: string;
+  name: string;
+  mimeType: string;
+  title: string;
+  subject: string;
+  message: string;
+  successMessage: string;
+  cleanupPaths?: string[];
+};
+
+type ArchiveEntriesMap = Record<string, Uint8Array>;
+
+type PreparedArchiveShare = {
+  archive: ArchiveFileItem;
+  extractedEntries?: ArchiveEntriesMap;
+  cleanupPaths: string[];
+  preferredLatestLogEntryPath?: string | null;
+};
+
 type ZipValidationResult = {
   archiveName: string;
   archivePath: string;
@@ -76,6 +101,10 @@ function noop() {}
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getFileBaseName(filePath: string) {
+  return filePath.split('/').pop() || filePath;
 }
 
 function formatBytes(bytes: number) {
@@ -129,6 +158,76 @@ function getFileKind(name: string): ArchiveFileItem['kind'] {
   }
 
   return 'other';
+}
+
+function makeArchiveFileRef(
+  filePath: string,
+  kind: ArchiveFileItem['kind'] = 'zip',
+): ArchiveFileItem {
+  return {
+    name: getFileBaseName(filePath),
+    path: filePath,
+    size: 0,
+    kind,
+    createdAt: null,
+    modifiedAt: null,
+  };
+}
+
+function isSamePath(left?: string | null, right?: string | null) {
+  return !!left && !!right && left === right;
+}
+
+function getArchiveKindDisplay(
+  kind: ArchiveFileItem['kind'],
+): ArchiveKindDisplay {
+  if (kind === 'zip') {
+    return {
+      label: 'ZIP',
+      description: 'Finalized archive ready for validation or sharing.',
+    };
+  }
+
+  if (kind === 'partial') {
+    return {
+      label: 'ZIP PARTIAL',
+      description:
+        'Live archive still being written. Share flow exports it first.',
+    };
+  }
+
+  return {
+    label: 'OTHER',
+    description: 'Non-archive file under applogs.',
+  };
+}
+
+function getShareTempDir() {
+  return `${
+    RNFS.TemporaryDirectoryPath || RNFS.CachesDirectoryPath || APP_LOG_ROOT_PATH
+  }/rabby-log-share`;
+}
+
+async function ensureShareTempDir() {
+  const shareTempDir = getShareTempDir();
+
+  await RNFS.mkdir(shareTempDir, {
+    NSURLIsExcludedFromBackupKey: true,
+  });
+
+  return shareTempDir;
+}
+
+function joinUint8Chunks(chunks: Uint8Array[], totalBytes: number) {
+  const merged = new Uint8Array(totalBytes);
+  let offset = 0;
+
+  chunks.forEach(chunk => {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  });
+
+  return merged;
 }
 
 async function listArchiveFiles() {
@@ -195,6 +294,251 @@ async function validateArchiveFile(file: ArchiveFileItem) {
     firstEntryPath,
     firstLinePreview,
   } satisfies ZipValidationResult;
+}
+
+async function waitForFileReady(filePath: string, timeoutMs = 3000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    if (await RNFS.exists(filePath)) {
+      return true;
+    }
+
+    await sleep(80);
+  }
+
+  return RNFS.exists(filePath);
+}
+
+async function extractCompleteEntriesFromPartialArchive(
+  archive: Pick<ArchiveFileItem, 'name' | 'path'>,
+) {
+  const partialBase64 = await RNFS.readFile(archive.path, 'base64');
+  const partialBytes = Uint8Array.from(Buffer.from(partialBase64, 'base64'));
+  const extractedEntries: ArchiveEntriesMap = {};
+  const extractionTasks: Promise<void>[] = [];
+  const unzipper = new Unzip(file => {
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+
+    const extractionTask = new Promise<void>((resolve, reject) => {
+      file.ondata = (error, data, final) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        if (data?.length) {
+          chunks.push(new Uint8Array(data));
+          totalBytes += data.byteLength;
+        }
+
+        if (final) {
+          extractedEntries[file.name] = joinUint8Chunks(chunks, totalBytes);
+          resolve();
+        }
+      };
+    });
+
+    extractionTasks.push(extractionTask);
+    file.start();
+  });
+  unzipper.register(UnzipInflate);
+
+  let unzipError: unknown = null;
+
+  try {
+    unzipper.push(partialBytes, true);
+  } catch (error) {
+    unzipError = error;
+  }
+
+  const extractionResults = await Promise.allSettled(extractionTasks);
+  const firstExtractionFailure = extractionResults.find(
+    item => item.status === 'rejected',
+  );
+
+  if (!Object.keys(extractedEntries).length) {
+    if (firstExtractionFailure?.status === 'rejected') {
+      throw firstExtractionFailure.reason;
+    }
+
+    if (unzipError) {
+      throw unzipError;
+    }
+
+    throw new Error(
+      `No complete entries could be recovered from ${archive.name}`,
+    );
+  }
+
+  return extractedEntries;
+}
+
+async function exportPartialArchiveForSharing(
+  archive: ArchiveFileItem,
+): Promise<PreparedArchiveShare> {
+  const shareTempDir = await ensureShareTempDir();
+  const exportedArchiveName = `${archive.name.replace(
+    /\.zip\.partial$/,
+    '',
+  )}-share-${Date.now()}.zip`;
+  const exportedArchivePath = `${shareTempDir}/${exportedArchiveName}`;
+  const activePartialPath = logger.getState().activeArchiveTempPath;
+
+  if (activePartialPath && activePartialPath === archive.path) {
+    await logger.flush();
+
+    const snapshotPath = await logger.exportArchiveSnapshot(
+      exportedArchivePath,
+    );
+
+    if (!snapshotPath) {
+      throw new Error(
+        `Active partial archive could not be exported from ${archive.name}`,
+      );
+    }
+
+    await waitForFileReady(snapshotPath);
+
+    return {
+      archive: {
+        name: getFileBaseName(snapshotPath),
+        path: snapshotPath,
+        size: 0,
+        kind: 'zip',
+        createdAt: null,
+        modifiedAt: null,
+      } satisfies ArchiveFileItem,
+      cleanupPaths: [snapshotPath],
+      preferredLatestLogEntryPath: logger.getState().activeEntryPath,
+    } satisfies PreparedArchiveShare;
+  }
+
+  const extractedEntries = await extractCompleteEntriesFromPartialArchive(
+    archive,
+  );
+  const exportedArchiveBytes = zipSync(extractedEntries, {
+    level: 6,
+  });
+
+  await RNFS.writeFile(
+    exportedArchivePath,
+    Buffer.from(exportedArchiveBytes).toString('base64'),
+    'base64',
+  );
+
+  return {
+    archive: {
+      name: exportedArchiveName,
+      path: exportedArchivePath,
+      size: exportedArchiveBytes.byteLength,
+      kind: 'zip',
+      createdAt: null,
+      modifiedAt: null,
+    } satisfies ArchiveFileItem,
+    extractedEntries,
+    cleanupPaths: [exportedArchivePath],
+  } satisfies PreparedArchiveShare;
+}
+
+async function finalizeActiveArchiveForSharing(
+  activePartialPath: string,
+): Promise<PreparedArchiveShare | null> {
+  const loggerState = logger.getState();
+
+  if (!isSamePath(loggerState.activeArchiveTempPath, activePartialPath)) {
+    return null;
+  }
+
+  await logger.flush();
+  const finalizedArchivePath = await logger.finalizeArchive();
+
+  if (!finalizedArchivePath) {
+    return null;
+  }
+
+  await waitForFileReady(finalizedArchivePath);
+
+  return {
+    archive: makeArchiveFileRef(finalizedArchivePath, 'zip'),
+    cleanupPaths: [],
+    preferredLatestLogEntryPath: loggerState.activeEntryPath,
+  } satisfies PreparedArchiveShare;
+}
+
+function getLatestLogEntryPath(
+  entries: ArchiveEntriesMap,
+  preferredEntryPath?: string | null,
+) {
+  if (preferredEntryPath && entries[preferredEntryPath]) {
+    return preferredEntryPath;
+  }
+
+  return (
+    Object.keys(entries)
+      .filter(entryName => entryName.endsWith('.log'))
+      .sort((left, right) => right.localeCompare(left))[0] || null
+  );
+}
+
+async function extractLatestLogFileFromEntries(
+  entries: ArchiveEntriesMap,
+  archiveName: string,
+  extraCleanupPaths: string[] = [],
+  preferredEntryPath?: string | null,
+) {
+  const latestLogEntryPath = getLatestLogEntryPath(entries, preferredEntryPath);
+
+  if (!latestLogEntryPath) {
+    throw new Error(`No .log entry found in ${archiveName}`);
+  }
+
+  const shareTempDir = await ensureShareTempDir();
+  const extractedLogName = getFileBaseName(latestLogEntryPath);
+  const extractedLogPath = `${shareTempDir}/${extractedLogName}`;
+
+  if (await RNFS.exists(extractedLogPath)) {
+    await RNFS.unlink(extractedLogPath);
+  }
+
+  await RNFS.writeFile(
+    extractedLogPath,
+    strFromU8(entries[latestLogEntryPath] || new Uint8Array()),
+    'utf8',
+  );
+
+  return {
+    entryPath: latestLogEntryPath,
+    shareTarget: {
+      path: extractedLogPath,
+      name: extractedLogName,
+      mimeType: 'text/plain',
+      title: 'Share latest app log file',
+      subject: extractedLogName,
+      message: `Rabby app latest log file: ${latestLogEntryPath}`,
+      successMessage: `Opened share sheet: ${extractedLogName}`,
+      cleanupPaths: [...extraCleanupPaths, extractedLogPath],
+    } satisfies ShareableFileTarget,
+  };
+}
+
+async function extractLatestLogFileFromArchive(
+  archive: Pick<ArchiveFileItem, 'name' | 'path'>,
+  extraCleanupPaths: string[] = [],
+  preferredEntryPath?: string | null,
+) {
+  const archiveBase64 = await RNFS.readFile(archive.path, 'base64');
+  const archiveEntries = unzipSync(
+    Uint8Array.from(Buffer.from(archiveBase64, 'base64')),
+  );
+
+  return extractLatestLogFileFromEntries(
+    archiveEntries,
+    archive.name,
+    extraCleanupPaths,
+    preferredEntryPath,
+  );
 }
 
 async function writeSampleLogs() {
@@ -337,8 +681,11 @@ export default function DebugLogViewerScreen(): JSX.Element {
     () => snapshot.files.find(item => item.kind === 'zip') || null,
     [snapshot.files],
   );
-  const finalizedArchives = useMemo(
-    () => snapshot.files.filter(item => item.kind === 'zip'),
+  const shareableArchives = useMemo(
+    () =>
+      snapshot.files.filter(
+        item => item.kind === 'zip' || item.kind === 'partial',
+      ),
     [snapshot.files],
   );
   const archiveSharePickerSnapPoints = useMemo(() => [460], []);
@@ -472,8 +819,24 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
     setBusyKey('finalize');
     try {
+      await logger.flush();
       const finalPath = await logger.finalizeArchive();
-      await refreshSnapshot();
+
+      if (finalPath) {
+        await waitForFileReady(finalPath);
+      }
+
+      let nextSnapshot = await refreshSnapshot();
+
+      if (
+        finalPath &&
+        !nextSnapshot.files.some(
+          item => item.kind === 'zip' && item.path === finalPath,
+        )
+      ) {
+        await sleep(120);
+        nextSnapshot = await refreshSnapshot();
+      }
 
       if (finalPath) {
         markSuccess(`Log zip ready: ${finalPath.split('/').pop()}`);
@@ -519,48 +882,124 @@ export default function DebugLogViewerScreen(): JSX.Element {
     }
   }, [busyKey, markError, markInfo, markSuccess, refreshSnapshot]);
 
-  const shareArchiveFile = useCallback(
-    async (archive: ArchiveFileItem) => {
+  const shareLocalFile = useCallback(
+    async (file: ShareableFileTarget) => {
       if (!canShareArchive) {
         markInfo('Archive sharing is disabled in production builds');
         return;
       }
 
-      if (!(await RNFS.exists(archive.path))) {
-        throw new Error(`Archive file missing: ${archive.path}`);
-      }
-
-      if (Platform.OS === 'ios') {
-        const result = await Share.share(
-          {
-            title: archive.name,
-            url: `file://${archive.path}`,
-            message: `Rabby app log archive: ${archive.name}`,
-          },
-          {
-            subject: archive.name,
-          },
-        );
-
-        if (result.action === Share.dismissedAction) {
-          markInfo('Share dismissed');
-        } else {
-          markSuccess(`Shared: ${archive.name}`);
+      try {
+        if (!(await RNFS.exists(file.path))) {
+          throw new Error(`Share source file missing: ${file.path}`);
         }
 
-        return;
-      }
+        if (Platform.OS === 'ios') {
+          const result = await Share.share(
+            {
+              title: file.name,
+              url: `file://${file.path}`,
+              message: file.message,
+            },
+            {
+              subject: file.subject,
+            },
+          );
 
-      await RNHelpers.shareFile({
-        filePath: archive.path,
-        mimeType: 'application/zip',
-        title: 'Share app log archive',
-        subject: archive.name,
-      });
-      markSuccess(`Opened Android share sheet: ${archive.name}`);
+          if (result.action === Share.dismissedAction) {
+            markInfo('Share dismissed');
+          } else {
+            markSuccess(file.successMessage);
+          }
+
+          return;
+        }
+
+        await RNHelpers.shareFile({
+          filePath: file.path,
+          mimeType: file.mimeType,
+          title: file.title,
+          subject: file.subject,
+        });
+        markSuccess(file.successMessage);
+      } finally {
+        if (file.cleanupPaths?.length) {
+          await Promise.allSettled(
+            file.cleanupPaths.map(async path => {
+              if (await RNFS.exists(path)) {
+                await RNFS.unlink(path);
+              }
+            }),
+          );
+        }
+      }
     },
     [canShareArchive, markInfo, markSuccess],
   );
+
+  const prepareArchiveForSharing = useCallback(
+    async (archive: ArchiveFileItem): Promise<PreparedArchiveShare> => {
+      if (archive.kind === 'partial') {
+        const finalizedActiveArchive = await finalizeActiveArchiveForSharing(
+          archive.path,
+        );
+
+        if (finalizedActiveArchive) {
+          return finalizedActiveArchive;
+        }
+
+        return exportPartialArchiveForSharing(archive);
+      }
+
+      return {
+        archive,
+        cleanupPaths: [],
+      } satisfies PreparedArchiveShare;
+    },
+    [],
+  );
+
+  const shareArchiveFile = useCallback(
+    async (archive: ArchiveFileItem) => {
+      const preparedArchive = await prepareArchiveForSharing(archive);
+
+      await shareLocalFile({
+        path: preparedArchive.archive.path,
+        name: preparedArchive.archive.name,
+        mimeType: 'application/zip',
+        title: 'Share app log archive',
+        subject: preparedArchive.archive.name,
+        message: `Rabby app log archive: ${preparedArchive.archive.name}`,
+        successMessage: `Opened share sheet: ${preparedArchive.archive.name}`,
+        cleanupPaths: preparedArchive.cleanupPaths,
+      });
+    },
+    [prepareArchiveForSharing, shareLocalFile],
+  );
+
+  const resolveLatestArchiveForSharing =
+    useCallback(async (): Promise<PreparedArchiveShare | null> => {
+      const activePartialPath = logger.getState().activeArchiveTempPath;
+
+      if (activePartialPath) {
+        return prepareArchiveForSharing(
+          makeArchiveFileRef(activePartialPath, 'partial'),
+        );
+      }
+
+      const nextSnapshot = await refreshSnapshot();
+      const latestArchive =
+        nextSnapshot.files.find(item => item.kind === 'zip') || null;
+
+      if (!latestArchive) {
+        return null;
+      }
+
+      return {
+        archive: latestArchive,
+        cleanupPaths: [],
+      } satisfies PreparedArchiveShare;
+    }, [prepareArchiveForSharing, refreshSnapshot]);
 
   const handleShareLatestZip = useCallback(async () => {
     if (busyKey) {
@@ -574,16 +1013,23 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
     setBusyKey('share');
     try {
-      const nextSnapshot = await refreshSnapshot();
-      const latestArchive =
-        nextSnapshot.files.find(item => item.kind === 'zip') || null;
+      const latestArchive = await resolveLatestArchiveForSharing();
 
       if (!latestArchive) {
         markInfo('No finalized zip found under applogs');
         return;
       }
 
-      await shareArchiveFile(latestArchive);
+      await shareLocalFile({
+        path: latestArchive.archive.path,
+        name: latestArchive.archive.name,
+        mimeType: 'application/zip',
+        title: 'Share app log archive',
+        subject: latestArchive.archive.name,
+        message: `Rabby app log archive: ${latestArchive.archive.name}`,
+        successMessage: `Opened share sheet: ${latestArchive.archive.name}`,
+        cleanupPaths: latestArchive.cleanupPaths,
+      });
     } catch (error) {
       markError('Share latest zip', error);
     } finally {
@@ -594,8 +1040,54 @@ export default function DebugLogViewerScreen(): JSX.Element {
     canShareArchive,
     markError,
     markInfo,
-    refreshSnapshot,
-    shareArchiveFile,
+    resolveLatestArchiveForSharing,
+    shareLocalFile,
+  ]);
+
+  const handleShareLatestLogFile = useCallback(async () => {
+    if (busyKey) {
+      return;
+    }
+
+    if (!canShareArchive) {
+      markInfo('Archive sharing is disabled in production builds');
+      return;
+    }
+
+    setBusyKey('share-log');
+    try {
+      const latestArchive = await resolveLatestArchiveForSharing();
+
+      if (!latestArchive) {
+        markInfo('No finalized zip found under applogs');
+        return;
+      }
+
+      const latestLogFile = latestArchive.extractedEntries
+        ? await extractLatestLogFileFromEntries(
+            latestArchive.extractedEntries,
+            latestArchive.archive.name,
+            latestArchive.cleanupPaths,
+            latestArchive.preferredLatestLogEntryPath,
+          )
+        : await extractLatestLogFileFromArchive(
+            latestArchive.archive,
+            latestArchive.cleanupPaths,
+            latestArchive.preferredLatestLogEntryPath,
+          );
+      await shareLocalFile(latestLogFile.shareTarget);
+    } catch (error) {
+      markError('Share latest log file', error);
+    } finally {
+      setBusyKey(null);
+    }
+  }, [
+    busyKey,
+    canShareArchive,
+    markError,
+    markInfo,
+    resolveLatestArchiveForSharing,
+    shareLocalFile,
   ]);
 
   const handleOpenArchiveSharePicker = useCallback(async () => {
@@ -610,10 +1102,12 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
     try {
       const nextSnapshot = await refreshSnapshot();
-      const archives = nextSnapshot.files.filter(item => item.kind === 'zip');
+      const archives = nextSnapshot.files.filter(
+        item => item.kind === 'zip' || item.kind === 'partial',
+      );
 
       if (!archives.length) {
-        markInfo('No finalized zip found under applogs');
+        markInfo('No zip or zip.partial found under applogs');
         return;
       }
 
@@ -634,7 +1128,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
         await shareArchiveFile(archive);
         setIsArchiveSharePickerVisible(false);
       } catch (error) {
-        markError('Share selected zip', error);
+        markError('Share selected archive', error);
       } finally {
         setBusyKey(null);
       }
@@ -669,7 +1163,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
         <Section
           title="Archive Share"
-          description="Use sharing near the top of the page when you want to export the latest zip quickly or choose an older finalized archive by time range.">
+          description="Use sharing near the top of the page when you want to export the latest zip quickly, extract just the newest `.log` entry, or choose another archive by time range. When the logger currently has an active `.zip.partial`, `share latest` now finalizes that live archive first and then shares the finalized zip or its newest `.log` entry directly. The picker still accepts `.zip.partial`; inactive partial files fall back to an exported temporary zip.">
           <Button
             title={busyKey === 'share' ? 'Opening...' : 'Share Latest Zip'}
             type="ghost"
@@ -679,7 +1173,17 @@ export default function DebugLogViewerScreen(): JSX.Element {
             containerStyle={styles.singleActionButton}
           />
           <Button
-            title="Choose Zip to Share"
+            title={
+              busyKey === 'share-log' ? 'Preparing...' : 'Share Latest Log File'
+            }
+            type="ghost"
+            height={48}
+            disabled={!!busyKey || !canShareArchive}
+            onPress={handleShareLatestLogFile}
+            containerStyle={styles.singleActionButton}
+          />
+          <Button
+            title="Choose Archive to Share"
             type="ghost"
             height={48}
             disabled={!!busyKey || !canShareArchive}
@@ -688,7 +1192,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
           />
           <Text style={styles.sectionHint}>
             {canShareArchive
-              ? 'Non-production builds can share the latest finalized zip directly, or open a picker to choose another finalized zip by time range.'
+              ? 'Non-production builds can share the latest archive directly, extract-and-share the newest `.log` entry, or open a picker to choose another finalized `.zip` or `.zip.partial`. Active partial archives are finalized on demand so the share result stays current.'
               : 'Archive sharing is disabled in production builds even if this page is reachable.'}
           </Text>
         </Section>
@@ -867,7 +1371,7 @@ export default function DebugLogViewerScreen(): JSX.Element {
 
         <Section
           title="Archive Files"
-          description="You should see finalized `.zip` files and, while logging is active, a current `.zip.partial`.">
+          description="You should see finalized `.zip` files and, while logging is active, a current `.zip.partial`. Each row is explicitly labeled as `ZIP` or `ZIP PARTIAL` so you can tell whether it is already finalized.">
           <MetaRow
             label="Root exists"
             value={snapshot.rootExists ? 'true' : 'false'}
@@ -881,36 +1385,43 @@ export default function DebugLogViewerScreen(): JSX.Element {
           {snapshot.files.length === 0 ? (
             <Text style={styles.emptyText}>No files under applogs yet.</Text>
           ) : (
-            snapshot.files.slice(0, 8).map(file => (
-              <View key={file.path} style={styles.fileRow}>
-                <View style={styles.fileHeader}>
-                  <Text style={styles.fileName} numberOfLines={1}>
-                    {file.name}
+            snapshot.files.slice(0, 8).map(file => {
+              const archiveKindDisplay = getArchiveKindDisplay(file.kind);
+
+              return (
+                <View key={file.path} style={styles.fileRow}>
+                  <View style={styles.fileHeader}>
+                    <Text style={styles.fileName} numberOfLines={1}>
+                      {file.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.fileBadge,
+                        file.kind === 'zip'
+                          ? styles.fileBadgeZip
+                          : file.kind === 'partial'
+                          ? styles.fileBadgePartial
+                          : styles.fileBadgeOther,
+                      ]}>
+                      {archiveKindDisplay.label}
+                    </Text>
+                  </View>
+                  <Text style={styles.fileMeta}>
+                    {formatBytes(file.size)} · {formatArchiveTimeRange(file)}
+                  </Text>
+                  <Text style={styles.fileKindHint}>
+                    {archiveKindDisplay.description}
                   </Text>
                   <Text
-                    style={[
-                      styles.fileBadge,
-                      file.kind === 'zip'
-                        ? styles.fileBadgeZip
-                        : file.kind === 'partial'
-                        ? styles.fileBadgePartial
-                        : styles.fileBadgeOther,
-                    ]}>
-                    {file.kind}
+                    style={styles.filePath}
+                    numberOfLines={2}
+                    ellipsizeMode="middle"
+                    selectable>
+                    {file.path}
                   </Text>
                 </View>
-                <Text style={styles.fileMeta}>
-                  {formatBytes(file.size)} · {formatArchiveTimeRange(file)}
-                </Text>
-                <Text
-                  style={styles.filePath}
-                  numberOfLines={2}
-                  ellipsizeMode="middle"
-                  selectable>
-                  {file.path}
-                </Text>
-              </View>
-            ))
+              );
+            })
           )}
         </Section>
 
@@ -989,41 +1500,60 @@ export default function DebugLogViewerScreen(): JSX.Element {
           linearGradientType: 'bg1',
         })}>
         <View style={styles.shareSheetContainer}>
-          <AppBottomSheetModalTitle title="Choose Zip to Share" />
+          <AppBottomSheetModalTitle title="Choose Archive to Share" />
           <Text style={styles.shareSheetDescription}>
-            Finalized zip archives only. Time range currently uses file
-            create/update timestamps.
+            Finalized `.zip` and live `.zip.partial` are both allowed. Partial
+            items are exported to a temporary zip before sharing.
           </Text>
           <BottomSheetScrollView
             contentContainerStyle={styles.shareSheetList}
             showsVerticalScrollIndicator={false}>
-            {finalizedArchives.length ? (
-              finalizedArchives.map(file => (
-                <TouchableOpacity
-                  key={file.path}
-                  style={styles.shareSheetItem}
-                  disabled={busyKey === 'share'}
-                  onPress={() => handleShareSelectedArchive(file)}>
-                  <View style={styles.shareSheetItemHeader}>
-                    <Text style={styles.shareSheetItemTitle} numberOfLines={1}>
-                      {file.name}
+            {shareableArchives.length ? (
+              shareableArchives.map(file => {
+                const archiveKindDisplay = getArchiveKindDisplay(file.kind);
+
+                return (
+                  <TouchableOpacity
+                    key={file.path}
+                    style={styles.shareSheetItem}
+                    disabled={busyKey === 'share'}
+                    onPress={() => handleShareSelectedArchive(file)}>
+                    <View style={styles.shareSheetItemHeader}>
+                      <Text
+                        style={styles.shareSheetItemTitle}
+                        numberOfLines={1}>
+                        {file.name}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.shareSheetItemBadge,
+                          file.kind === 'zip'
+                            ? styles.shareSheetItemBadgeZip
+                            : file.kind === 'partial'
+                            ? styles.shareSheetItemBadgePartial
+                            : styles.shareSheetItemBadgeOther,
+                        ]}>
+                        {archiveKindDisplay.label}
+                      </Text>
+                    </View>
+                    <Text style={styles.shareSheetItemMeta}>
+                      {formatBytes(file.size)} · {formatArchiveTimeRange(file)}
                     </Text>
-                    <Text style={styles.shareSheetItemBadge}>zip</Text>
-                  </View>
-                  <Text style={styles.shareSheetItemMeta}>
-                    {formatBytes(file.size)} · {formatArchiveTimeRange(file)}
-                  </Text>
-                  <Text
-                    style={styles.shareSheetItemPath}
-                    numberOfLines={2}
-                    ellipsizeMode="middle">
-                    {file.path}
-                  </Text>
-                </TouchableOpacity>
-              ))
+                    <Text style={styles.shareSheetItemKindHint}>
+                      {archiveKindDisplay.description}
+                    </Text>
+                    <Text
+                      style={styles.shareSheetItemPath}
+                      numberOfLines={2}
+                      ellipsizeMode="middle">
+                      {file.path}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
             ) : (
               <Text style={styles.emptyText}>
-                No finalized zip files found.
+                No zip or zip.partial files found.
               </Text>
             )}
           </BottomSheetScrollView>
@@ -1194,13 +1724,28 @@ const getStyles = createGetStyles2024(ctx => {
       fontSize: 11,
       fontWeight: '700',
       textTransform: 'uppercase',
+    },
+    shareSheetItemBadgeZip: {
       color: ctx.colors2024['green-default'],
       backgroundColor: `${ctx.colors2024['green-default']}1F`,
+    },
+    shareSheetItemBadgePartial: {
+      color: ctx.colors2024['orange-default'],
+      backgroundColor: `${ctx.colors2024['orange-default']}1F`,
+    },
+    shareSheetItemBadgeOther: {
+      color: ctx.colors2024['neutral-foot'],
+      backgroundColor: ctx.colors2024['neutral-line'],
     },
     shareSheetItemMeta: {
       fontSize: 12,
       color: ctx.colors2024['neutral-foot'],
       fontFamily: monoFont,
+    },
+    shareSheetItemKindHint: {
+      fontSize: 12,
+      lineHeight: 18,
+      color: ctx.colors2024['neutral-body'],
     },
     shareSheetItemPath: {
       fontSize: 12,
@@ -1258,6 +1803,11 @@ const getStyles = createGetStyles2024(ctx => {
       fontSize: 12,
       color: ctx.colors2024['neutral-foot'],
       fontFamily: monoFont,
+    },
+    fileKindHint: {
+      fontSize: 12,
+      lineHeight: 18,
+      color: ctx.colors2024['neutral-body'],
     },
     filePath: {
       fontSize: 12,
