@@ -1,0 +1,15 @@
+.env
+.env.local
+.env.*
+!.env.example
+!.env.*.example
+
+.artifacts/
+captures/
+recordings/
+tmp/
+
+maestro.config.local.mjs
+maestro.config.local.js
+maestro.config.local.cjs
+maestro.config.local.json

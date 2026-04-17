@@ -21,6 +21,7 @@ type ScreenshotSettings = {
   iosForceDisableAlertForSensitiveScene: boolean;
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
   blockSubmitIfFormChangedOnAuth: boolean;
+  toastOpenApiHttpErrorStatus: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -36,6 +37,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
 
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: __DEV__,
+    toastOpenApiHttpErrorStatus: false,
   },
 );
 
@@ -43,7 +45,9 @@ export const storeApiExpSettingData = {
   set: setExpSettingData,
   get: getExpSettingData,
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
-    if (!__DEV__) return 'pasted';
+    if (!__DEV__) {
+      return 'pasted';
+    }
 
     return experimentalSettingsStore.getState()
       .timeTipAboutSeedPhraseAndPrivateKey;
@@ -225,6 +229,40 @@ export function useBlockSubmitIfFormChangedOnAuth() {
   return {
     blockSubmitIfFormChangedOnAuth,
     toggleBlockSubmitIfFormChangedOnAuth,
+  };
+}
+
+export function useToastOpenApiHttpErrorStatus() {
+  const toastOpenApiHttpErrorStatus = experimentalSettingsStore(
+    s => s.toastOpenApiHttpErrorStatus,
+  );
+
+  const toggleToastOpenApiHttpErrorStatus = useCallback((nextVal?: boolean) => {
+    if (!isNonPublicProductionEnv) {
+      return false;
+    }
+
+    let finalValue = false;
+    setExpSettingData(prev => {
+      finalValue =
+        typeof nextVal === 'boolean'
+          ? nextVal
+          : !prev.toastOpenApiHttpErrorStatus;
+
+      return {
+        ...prev,
+        toastOpenApiHttpErrorStatus: finalValue,
+      };
+    });
+
+    return finalValue;
+  }, []);
+
+  return {
+    toastOpenApiHttpErrorStatus: isNonPublicProductionEnv
+      ? toastOpenApiHttpErrorStatus
+      : false,
+    toggleToastOpenApiHttpErrorStatus,
   };
 }
 

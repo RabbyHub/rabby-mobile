@@ -1,6 +1,7 @@
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { makeServiceMigration } from './_fns.service';
 import { appStorage } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 
 export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
@@ -13,7 +14,7 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
           // 如果 ActiveDappWebViewModal 的 sceneAccount 不存在，则使用 preference 的 currentAccount
           const dappService = ctx.service;
           const sceneAccounts = appStorage.getItem(
-            '@SceneAccounts',
+            APP_MMKV_WEAK_KEYS.SCENE_ACCOUNTS_LEGACY,
           ) as unknown as string;
           let dappSceneAccount: KeyringAccount | null = null;
           try {

@@ -7,6 +7,7 @@ import { openapi } from '@/core/request';
 import { AppScreenshotFS, appScreenshotFS } from '@/core/storage/fs';
 import { coerceNumber } from '@/utils/coerce';
 import { zustandByMMKV } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useRefState } from '@/hooks/common/useRefState';
@@ -84,7 +85,7 @@ export const storeApiScreenshotReport = {
 //   });
 // });
 const screenshotFeedbackStore = zustandByMMKV(
-  '@screenshotFeedback',
+  APP_MMKV_WEAK_KEYS.SCREENSHOT_FEEDBACK,
   getDefaultValueFeedback(),
 );
 

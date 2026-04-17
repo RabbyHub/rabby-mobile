@@ -5,6 +5,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { Dimensions, Pressable, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatSmallCurrencyValue, type CurvePoint } from '@/hooks/useCurve';
+import { E2E_ID } from '@/constant/e2e';
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -30,6 +31,7 @@ import {
 } from '../hooks/singleHome';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { AnimateableText } from '@/components/Typography';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -133,6 +135,7 @@ export const HomeTopChart = memo(function Chart({
         <LineChart.Provider data={chartData}>
           {balanceLoadingWithoutLocal ? (
             <Skeleton
+              {...makeTestIDProps(E2E_ID.home.singleBalanceLoading)}
               width={181}
               height={42}
               style={styles.skeleton}
@@ -164,7 +167,10 @@ export const HomeTopChart = memo(function Chart({
                 />
               </LineChart>
             ) : (
-              <CurveLoader style={styles.loading} />
+              <CurveLoader
+                {...makeTestIDProps(E2E_ID.home.singleCurveLoading)}
+                style={styles.loading}
+              />
             )}
           </Animated.View>
         </LineChart.Provider>
@@ -186,18 +192,19 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     balanceLoadingWithoutLocal: loading,
     selectData,
     balance,
+    isLoadingChartData,
   } = useSingleHomeHomeTopChart();
 
   const rawNetWorth = balance || 0;
   const changePercent = selectData.changePercent;
   const isLoss = selectData.isLoss;
   const _data = selectData.list;
+  const changeLoading =
+    !loading && isLoadingChartData && !selectData.changePercent;
 
   const netWorth = useMemo(() => {
     return formatSmallCurrencyValue(rawNetWorth, { currency });
   }, [rawNetWorth, currency]);
-
-  console.debug('[perf] ChartHeader:: rawNetWorth', rawNetWorth);
 
   const data = useMemo(() => {
     return (
@@ -343,6 +350,7 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
     <View style={[styles.charHeader]}>
       <View style={styles.leftContainer}>
         <AnimateableText
+          {...makeTestIDProps(E2E_ID.home.singleBalanceValue)}
           style={styles.netWorth}
           animatedProps={netWorthAnimatedProps}
         />
@@ -352,31 +360,46 @@ const ChartHeader = ({ animOpacityStyle }: IHeaderProps) => {
         />
       </View>
       <Pressable
+        {...makeTestIDProps(E2E_ID.home.singleCurveToggle)}
         hitSlop={20}
         onPress={() => apisSingleHome.setFoldChart(!fold)}
         style={styles.percentChangeContainer}>
-        <AnimateableText
-          style={lossStyleProps}
-          animatedProps={percentChangeAnimatedProps}
-        />
-        <View>
-          <Svg
-            style={{
-              transform: fold ? [{ rotate: '90deg' }] : [{ rotate: '270deg' }],
-            }}
-            width={16}
-            height={16}
-            viewBox="0 0 24 24"
-            fill="none">
-            <AnimatedPath
-              d="M8.4 4.80005L15.6 12L8.4 19.2"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              animatedProps={lossStyleProps}
+        {changeLoading ? (
+          <Skeleton
+            {...makeTestIDProps(E2E_ID.home.singleChangeLoading)}
+            width={92}
+            height={20}
+            style={styles.skeletonChange}
+            LinearGradientComponent={LoadingLinear}
+          />
+        ) : (
+          <>
+            <AnimateableText
+              style={lossStyleProps}
+              animatedProps={percentChangeAnimatedProps}
             />
-          </Svg>
-        </View>
+            <View>
+              <Svg
+                style={{
+                  transform: fold
+                    ? [{ rotate: '90deg' }]
+                    : [{ rotate: '270deg' }],
+                }}
+                width={16}
+                height={16}
+                viewBox="0 0 24 24"
+                fill="none">
+                <AnimatedPath
+                  d="M8.4 4.80005L15.6 12L8.4 19.2"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  animatedProps={lossStyleProps}
+                />
+              </Svg>
+            </View>
+          </>
+        )}
       </Pressable>
     </View>
   );
@@ -392,6 +415,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 7,
     marginLeft: 8,
     marginRight: 8,
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  skeletonChange: {
     borderRadius: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']

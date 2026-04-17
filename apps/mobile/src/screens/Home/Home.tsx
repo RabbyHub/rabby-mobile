@@ -3,7 +3,7 @@ import { View, Animated } from 'react-native';
 import HomeHeaderArea from './HeaderArea';
 import { SingleHomeRightArea } from './SingleHomeRightArea';
 import { AssetContainer } from './AssetContainer';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { BottomBtns } from './components/BottomBtns';
@@ -20,6 +20,8 @@ import { HomeTopArea } from './components/HomeTopArea';
 import { HeaderBackPressable } from '@/hooks/navigation';
 import { BackupReminderCard } from '@/components2024/BackupReminderCard';
 import { useBackupReminder } from '@/hooks/account';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 function HomeHeader() {
   const { styles } = useTheme2024({ getStyle: getHomeHeaderStyle });
@@ -27,7 +29,10 @@ function HomeHeader() {
   return (
     <View style={styles.container}>
       <View style={styles.containerLeft}>
-        <HeaderBackPressable style={{ marginRight: 8 }} />
+        <HeaderBackPressable
+          style={styles.backButton}
+          {...makeTestIDProps(E2E_ID.home.singleAddressBack)}
+        />
         <HomeHeaderArea />
       </View>
       <View style={styles.containerRight}>
@@ -37,45 +42,43 @@ function HomeHeader() {
   );
 }
 
-const getHomeHeaderStyle = createGetStyles2024(
-  ({ colors2024, safeAreaInsets }) => {
-    return {
-      container: {
-        marginTop: safeAreaInsets.top,
-        height: 52,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        backgroundColor: 'transparent',
-        width: '100%',
-        zIndex: 10,
-      },
-
-      containerLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        // ...makeDebugBorder(),
-        width: '100%',
-        flexShrink: 1,
-      },
-
-      containerRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        flexShrink: 0,
-        // ...makeDebugBorder('green'),
-      },
-    };
+const getHomeHeaderStyle = createGetStyles2024(({ safeAreaInsets }) => ({
+  container: {
+    marginTop: safeAreaInsets.top,
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    backgroundColor: 'transparent',
+    width: '100%',
+    zIndex: 10,
   },
-);
+
+  containerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    width: '100%',
+    flexShrink: 1,
+  },
+
+  containerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+  },
+
+  backButton: {
+    marginRight: 8,
+  },
+}));
 
 function SingleAddressHome(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
-  const { safeTop, topHeight } = useBgSize();
+  const { topHeight } = useBgSize();
   const { currentAccount } = useSingleHomeAccount();
   const needsBackupReminder = useBackupReminder(currentAccount);
 

@@ -37,6 +37,8 @@ import {
   onPastedSensitiveData,
 } from '@/utils/clipboard';
 import { Text } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -138,6 +140,7 @@ export const ImportPrivateKeyScreen2024 = () => {
         title: t('global.Confirm'),
         onPress: handleConfirm,
         disabled: !privateKey || !!error,
+        ...makeTestIDProps(E2E_ID.onboarding.privateKeySubmit),
       }}
       style={styles.screen}
       footerBottomOffset={56}
@@ -170,6 +173,7 @@ export const ImportPrivateKeyScreen2024 = () => {
                   textContentType: 'none',
                   blurOnSubmit: true,
                   returnKeyType: 'done',
+                  ...makeTestIDProps(E2E_ID.onboarding.privateKeyInput),
                   onChangeText: (text: string) => {
                     setPrivateKey(text);
                     isNewlyInputTextSameWithContentFromClipboard(text).then(

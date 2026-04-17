@@ -74,6 +74,9 @@ export const apisSingleHome = {
   getCurrentAccount: () => {
     return singleHomeState.getState().currentAccount;
   },
+  getFoldChart: () => {
+    return singleHomeState.getState().foldChart;
+  },
   setSelectChainItem: (chain: ChainListItem | null) => {
     singleHomeState.setState({
       selectedChain: chain,
@@ -91,7 +94,9 @@ export const apisSingleHome = {
           strict: true,
         },
       );
-      if (!changed) return prev;
+      if (!changed) {
+        return prev;
+      }
       return { ...prev, foldChart: newVal };
     });
   },
@@ -104,7 +109,9 @@ export const apisSingleHome = {
           strict: true,
         },
       );
-      if (!changed) return prev;
+      if (!changed) {
+        return prev;
+      }
       return { ...prev, reachTop: newVal };
     });
   },
@@ -202,7 +209,7 @@ export function useSingleHomeLoading() {
 export function useSingleHomeNoAssetsValueOnChain() {
   const { lcAddress } = useSingleHomeAddress();
   const { balanceLoading } = useIsLoadingBalance(lcAddress);
-  const { evmBalance, balance } = useAddressBalance(lcAddress);
+  const { evmBalance } = useAddressBalance(lcAddress);
 
   return {
     noAssetsValue: !balanceLoading && evmBalance === 0,

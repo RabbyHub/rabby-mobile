@@ -1,17 +1,18 @@
 import '@exodus/patch-broken-hermes-typed-arrays';
-import {
-  setJSExceptionHandler,
-  setNativeExceptionHandler,
-} from 'react-native-exception-handler';
+import { setJSExceptionHandler } from 'react-native-exception-handler';
+import { logger } from '@/utils/logger';
 import './perfs/bundle-splitter-analysis.ts';
+import './devtools/e2eBridge';
 import './databases/orm';
 import './core/services';
 import './core/utils/devServerSettings';
 import './core/config/online';
 
 setJSExceptionHandler((error, isFatal) => {
-  console.debug('setJSExceptionHandler:: error');
-  console.log(error);
+  logger.error('setJSExceptionHandler::error', {
+    isFatal,
+    error,
+  });
 }, true);
 
 // setNativeExceptionHandler(
@@ -27,10 +28,10 @@ setJSExceptionHandler((error, isFatal) => {
 // );
 
 ErrorUtils.setGlobalHandler((error, isFatal) => {
-  // if (__DEV__) {
-  //   console.debug('setGlobalHandler:: error');
-  //   console.log(error);
-  // }
+  logger.error('setGlobalHandler::error', {
+    isFatal,
+    error,
+  });
 
   if (isFatal) {
     // WIP: alert on release mode?

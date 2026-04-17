@@ -17,8 +17,17 @@ if (!__DEV__) {
   initSentry();
 }
 
+import './src/utils/logging/install';
 import './global';
 import './src/setup-app';
+
+if (process.env.WITH_ROZENITE === 'true') {
+  const {
+    withOnBootNetworkActivityRecording,
+  } = require('@rozenite/network-activity-plugin');
+  withOnBootNetworkActivityRecording();
+}
+
 if (__DEV__) {
   import('./ReactotronConfig');
 }
