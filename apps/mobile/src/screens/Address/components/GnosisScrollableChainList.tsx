@@ -3,8 +3,9 @@ import { Chain } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
+import FastImage from 'react-native-fast-image';
 
 type RNViewProps = {
   style?: import('react').ComponentProps<typeof View>['style'];
@@ -30,12 +31,22 @@ export const GnosisScrollableChainList = ({
       </Text>
       <ScrollView
         style={styles.chainListScroll}
-        contentContainerStyle={styles.chainListContent}>
+        contentContainerStyle={styles.chainListContent}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews
+        scrollEventThrottle={16}>
         <View style={styles.chainList}>
           {data?.map(chain => {
             return (
               <View style={styles.chainPill} key={chain.id}>
-                <Image source={{ uri: chain.logo }} style={styles.chainLogo} />
+                <FastImage
+                  style={styles.chainLogo}
+                  source={{
+                    uri: chain.logo,
+                    priority: FastImage.priority.low,
+                  }}
+                  resizeMode={FastImage.resizeMode.contain}
+                />
                 <Text style={styles.chainName}>{chain.name}</Text>
               </View>
             );
@@ -49,7 +60,6 @@ export const GnosisScrollableChainList = ({
 const getStyles = createGetStyles2024(ctx => ({
   chainListContainer: {
     marginTop: 16,
-    alignItems: 'center',
     flex: 1,
   },
   chainListDesc: {
@@ -63,6 +73,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   chainListScroll: {
     width: '100%',
+    flex: 1,
   },
   chainListContent: {
     paddingBottom: 8,
@@ -70,21 +81,22 @@ const getStyles = createGetStyles2024(ctx => ({
   chainList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   chainPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     backgroundColor: ctx.colors2024['neutral-bg-2'],
     borderRadius: 8,
     padding: 6,
     height: 32,
+    marginRight: 8,
+    marginBottom: 8,
   },
   chainLogo: {
     width: 18,
     height: 18,
     borderRadius: 9,
+    marginRight: 6,
   },
   chainName: {
     fontSize: 14,
