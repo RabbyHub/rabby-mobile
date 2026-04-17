@@ -183,6 +183,16 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
   }, [cancel, visible]);
   const { bottom } = useSafeAreaInsets();
 
+  const estReceiveUsdNumberBN = useMemo(
+    () =>
+      minDepositPrice && selectedProduct?.price
+        ? new BigNumber(selectedProduct?.price)
+            .plus(gasAccountInfo?.account?.balance || 0)
+            .minus(minDepositPrice)
+        : new BigNumber(0),
+    [selectedProduct?.price, gasAccountInfo?.account?.balance, minDepositPrice],
+  );
+
   return (
     <KeyboardAwareScrollView
       enableOnAndroid
@@ -221,10 +231,9 @@ export const GasAccountDepositWithPay: React.FC<Props> = ({
               topUpUsd: formatUsdValue(minDepositPrice),
               balance: formatUsdValue(
                 selectedProduct?.price
-                  ? new BigNumber(selectedProduct?.price)
-                      .plus(gasAccountInfo?.account?.balance || 0)
-                      .minus(minDepositPrice)
-                      .toFixed()
+                  ? estReceiveUsdNumberBN.lt(0)
+                    ? 0
+                    : estReceiveUsdNumberBN.toFixed()
                   : gasAccountInfo?.account?.balance || 0,
               ),
             })}
