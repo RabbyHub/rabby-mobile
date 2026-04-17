@@ -167,7 +167,7 @@ export enum CANDLE_MENU_KEY_V2 {
   ONE_WEEK = '1W',
 }
 
-import DEFAULT_TOP_ASSET_JSON from './perpsTopAsset.json';
+import DEFAULT_TOP_ASSET_JSON from './PerpsTopAsset.json';
 export const DEFAULT_TOP_ASSET = DEFAULT_TOP_ASSET_JSON as PerpTopTokenV3[];
 
 export const PERPS_MAX_NTL_VALUE = 1000000;
