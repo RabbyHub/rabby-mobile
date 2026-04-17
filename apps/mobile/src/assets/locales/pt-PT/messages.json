@@ -1223,7 +1223,7 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Formulário Alterado",
       "formChangedAmount": "O valor mudou, possivelmente devido ao preenchimento automático da senha pelo teclado do sistema. Por favor, reveja e insira novamente o valor correto.",
-      "best-subtitle": "Considerando o custo total (incluindo taxas de Gas) e a velocidade de obter a melhor cotação"
+      "best-subtitle": "A cotação “Best” é determinada por uma combinação do custo total estimado (incluindo taxas de Gas) e da velocidade de entrega."
     },
     "dashboard": {
       "home": {
