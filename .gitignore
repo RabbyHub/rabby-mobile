@@ -35,6 +35,8 @@ preview-build-message.txt
 /packages*/*/*.tsbuildinfo
 
 /scripts/inpage-bridge/dist
+/apps/mobile/perf/generated/
+/apps/mobile/perf/generated-babel-loadables/
 
 # Cursor AI rules (local development only)
 .cursor/
