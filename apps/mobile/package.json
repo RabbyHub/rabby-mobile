@@ -87,7 +87,7 @@
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.14",
-    "@rabby-wallet/rabby-api": "0.9.59-beta.1",
+    "@rabby-wallet/rabby-api": "0.9.59",
     "@rabby-wallet/rabby-logger": "0.2.1-alpha",
     "@rabby-wallet/rabby-security-engine": "2.0.12",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
