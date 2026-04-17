@@ -1069,7 +1069,7 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Biểu mẫu đã thay đổi",
       "formChangedAmount": "Số tiền đã thay đổi, có thể do hệ thống bàn phím tự động điền mật khẩu. Vui lòng xem lại và nhập lại số tiền chính xác.",
-      "best-subtitle": "Báo giá “Best” được xác định bởi sự kết hợp giữa tổng chi phí ước tính (bao gồm phí Gas) và tốc độ giao hàng."
+      "best-subtitle": "Báo giá tốt nhất được xác định bởi sự kết hợp giữa tổng chi phí ước tính (bao gồm phí Gas) và tốc độ giao hàng."
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",

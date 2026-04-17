@@ -1018,7 +1018,7 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Form Değiştirildi",
       "formChangedAmount": "Miktar değişti, muhtemelen sistem klavyesinden şifre otomatik doldurma nedeniyle. Lütfen kontrol edin ve doğru miktarı yeniden girin.",
-      "best-subtitle": "“Best” teklifi, tahmini toplam maliyet (Gas ücretleri dahil) ve teslimat hızının birleşimiyle belirlenir."
+      "best-subtitle": "En iyi teklif, tahmini toplam maliyet (Gas ücretleri dahil) ve teslimat hızının birleşimiyle belirlenir."
     },
     "manageAddress": {
       "watch-address": "Adres İzle",
