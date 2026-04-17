@@ -109,6 +109,8 @@ build_appstore() {
       yarn buildworker:prod:android
   fi
 
+  turbo_prepare_ruby_bundle || return $?
+
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
