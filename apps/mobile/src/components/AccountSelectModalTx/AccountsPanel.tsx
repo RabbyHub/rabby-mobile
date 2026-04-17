@@ -343,7 +343,7 @@ export function AccountsPanelInSheetModal({
                         justifyContent: 'center',
                         alignItems: 'center',
                       }}
-                      color={colors2024['green-light-disable']}
+                      color={colors2024['green-disable']}
                     />
                     <RcIconLockCC
                       style={{

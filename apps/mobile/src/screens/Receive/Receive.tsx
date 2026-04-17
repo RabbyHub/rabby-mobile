@@ -38,6 +38,11 @@ import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Text } from '@/components/Typography';
 import { BackupReminderCard } from '@/components2024/BackupReminderCard';
 import { useBackupReminder } from '@/hooks/account';
+import {
+  OfflineChainNotify,
+  useOfflineChain,
+} from '@/screens/Home/components/OfflineChainNotify';
+import { rateGuideLastExposureState } from '@/components/RateModal/hooks';
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
@@ -101,6 +106,8 @@ function ReceiveScreen(): JSX.Element {
 
   // Backup reminder logic
   const needsBackupReminder = useBackupReminder(account);
+  const offlineChainData = useOfflineChain();
+  const txCount = rateGuideLastExposureState(state => state.txCount);
 
   const headerTitle = useMemo(
     () => (
@@ -305,6 +312,14 @@ function ReceiveScreen(): JSX.Element {
           contentInsetAdjustmentBehavior="never"
           automaticallyAdjustContentInsets={false}>
           <View style={styles.receiveContainer}>
+            {/* Offline Chain Notify */}
+            {txCount > 0 && (
+              <OfflineChainNotify
+                data={offlineChainData}
+                style={styles.offlineChainNotify}
+              />
+            )}
+
             {/* Backup Reminder Card */}
             <BackupReminderCard
               visible={needsBackupReminder}
@@ -412,6 +427,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'center',
     padding: 24,
     paddingTop: 0,
+    width: '100%',
+  },
+  offlineChainNotify: {
+    marginHorizontal: 0,
+    marginBottom: 12,
+    marginTop: 8,
     width: '100%',
   },
   // Backup Reminder Card styles
