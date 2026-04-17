@@ -1,5 +1,11 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  Image,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { TokenMarketTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -48,6 +54,7 @@ interface TokenListItemProps {
   rightSlot?: React.ReactNode;
   showChainLogo?: boolean;
   showFdvOnly?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 const TokenListItemComponent = ({
@@ -57,6 +64,7 @@ const TokenListItemComponent = ({
   rightSlot,
   showChainLogo = false,
   showFdvOnly = false,
+  style,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const uuid = `${item.chain}:${item.id}`;
@@ -79,7 +87,9 @@ const TokenListItemComponent = ({
       .market_status === 'closed';
 
   return (
-    <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
+    <TouchableOpacity
+      style={[styles.tokenItem, style]}
+      onPress={() => onPress(item)}>
       {/* 左slot */}
       {leftSlot && <View style={styles.leftSlot}>{leftSlot}</View>}
       <View style={styles.tokenLeftSection}>

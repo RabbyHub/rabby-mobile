@@ -27,7 +27,7 @@ const isAndroid = Platform.OS === 'android';
 type MarketTabKey = 'watchlist' | string;
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
-const TAB_BAR_HEIGHT = 28;
+export const TAB_BAR_HEIGHT = 28;
 
 const marketTabAtom = atomByMMKV<MarketTabKey>(
   '@market.activeTab',

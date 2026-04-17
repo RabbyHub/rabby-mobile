@@ -306,7 +306,10 @@ export const LendingSupplyListContent: React.FC<
                 {data.reserve.symbol}
               </Text>
               {!!isWrapperToken && chainEnum && (
-                <Text style={styles.wrapperTokenText}>
+                <Text
+                  style={styles.wrapperTokenText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
                   {t('page.Lending.list.item.wrapperToken', {
                     name: wrapperToken[chainEnum]?.origin?.symbol,
                   })}
@@ -495,6 +498,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     symbolContainer: {
       gap: 2,
+      flexShrink: 1,
+      minWidth: 0,
     },
     wrapperTokenText: {
       fontSize: 12,
@@ -502,6 +507,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       color: colors2024['neutral-info'],
       fontFamily: 'SF Pro Rounded',
+      maxWidth: '100%',
     },
     symbol: {
       fontSize: 16,
