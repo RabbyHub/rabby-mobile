@@ -60,6 +60,10 @@ import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 import { recordStartupProbeOnce } from '@/debug/startupProbe';
+import {
+  preloadHomeEntryNavigator,
+  preloadTransactionHotNavigator,
+} from '@/perfs/preloads';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -217,6 +221,12 @@ export default function UnlockScreen() {
     useUnlockForm(navigation);
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
   const couldSwitchingAuthentication = isBiometricsEnabled;
+
+  React.useEffect(() => {
+    preloadTransactionHotNavigator().catch(error => {
+      console.error('preloadTransactionHotNavigator::error', error);
+    });
+  }, []);
   const usingPassword = !usingBiometrics || !isBiometricsEnabled;
   const didLayoutUnlockRef = React.useRef(false);
   const didLayoutPrimaryRef = React.useRef(false);
@@ -394,6 +404,14 @@ export default function UnlockScreen() {
             flags: {
               unlockLayout: true,
             },
+          });
+
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              preloadHomeEntryNavigator().catch(error => {
+                console.error('postUnlockPreload::error', error);
+              });
+            }, 120);
           });
         },
         style: styles.container,

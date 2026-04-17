@@ -17,9 +17,7 @@ import { analytics, matomoLogScreenView } from './utils/analytics';
 
 import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
-import { BackgroundSecureBlurView } from './components/customized/BlurViews';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
-import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { useAppUnlocked } from './hooks/useLock';
 
@@ -32,18 +30,14 @@ import type {
 import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
 import { IS_IOS } from './core/native/utils';
-import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
-import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
-import { QrCodeModal } from './components2024/QrCodeModal/QrCodeModal';
-import { FloatingDiagnosticsPanel } from './screens/Settings/components/FloatingDiagnosticsPanel';
-
 import {
+  MyBundleScreen,
+  NFTDetailScreen,
+  NotFoundScreen,
   ScannerScreen,
   TokenDetailScreen,
-  NFTDetailScreen,
-} from '@/screens/index.eager';
-import NotFoundScreen from '@/screens/NotFound';
-import MyBundleScreen from '@/screens/Assets/MyBundle';
+  TokenMarketInfoScreen,
+} from '@/perfs/loadables/screens';
 import UnlockScreen from '@/screens/Unlock/Unlock';
 import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
@@ -51,40 +45,45 @@ import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
 import { ImportSecret } from '@/screens/Address/ImportSecret';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
-import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
-import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
-import { GlobalSignerPortal } from './components2024/MiniSignV2/components/GlobalSignerPortal';
-import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
 import { perfEvents } from './core/utils/perf';
-import {
-  BottomSheetBrowser,
-  BrowserFavoritePopup,
-  BrowserManagePopup,
-} from './screens/Browser/BottomSheetBrowser';
-import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/ScreenshotModal';
-import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
-import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
-import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
-import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
-import { InnerDappWebViewPreloadEntry } from './components/WebView/InnerDappWebViewPreloadEntry';
 import { useTranslation } from 'react-i18next';
 import {
   recordStartupProbe,
   recordStartupProbeOnce,
 } from './debug/startupProbe';
 import {
-  TestkitsNavigator,
+  AliasNameEditModal,
+  ApprovalTokenDetailSheetModalStub,
+  BackgroundSecureBlurView,
+  BottomSheetBrowser,
+  BrowserFavoritePopup,
+  BrowserManagePopup,
+  DuplicateAddressModal,
+  FloatingDiagnosticsPanel,
+  GlobalMiniApproval,
+  GlobalMiniSignTypedDataPortal,
+  GlobalSearchBottomSheet,
+  GlobalSecurityTipStubModal,
+  GlobalSignerPortal,
+  GlobalTipsPopup,
+  InnerDappWebViewPreloadEntry,
+  ModalsSubmitFeedbackByScreenshotStub,
+  QrCodeModal,
+  ToggleCollateralModal,
+} from '@/perfs/loadables/appNavigationGlobals';
+import {
   AddressNavigator,
-  SettingNavigator,
-  GetStartedNavigator,
-  HomeScreenNavigator,
-  TransactionNavigator,
-  SingleAddressNavigator,
   DappsNavigator,
   HomeNonTabNavigator,
-} from './screens/Navigators/index.eager';
+  SettingNavigator,
+  SingleAddressNavigator,
+  TestkitsNavigator,
+  TransactionNavigator,
+} from '@/perfs/loadables/navigators';
+import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
+import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();

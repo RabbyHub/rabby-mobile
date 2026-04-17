@@ -14,6 +14,10 @@ function getProbeAccentColor(
     return '#00C853';
   }
 
+  if (!flags.firstSafeUnlockFrame) {
+    return '#0097A7';
+  }
+
   if (!flags.appNavigationReady) {
     return '#1565C0';
   }
@@ -56,7 +60,9 @@ export function StartupProbeOverlay() {
             snapshot.flags.appMounted,
           )} root:${formatFlag(snapshot.flags.appRootLayout)} boot:${formatFlag(
             snapshot.flags.bootstrapStarted,
-          )} cr:${formatFlag(snapshot.flags.bootstrapCouldRender)}`}
+          )} cr:${formatFlag(
+            snapshot.flags.bootstrapCouldRender,
+          )} fs:${formatFlag(snapshot.flags.firstSafeUnlockFrame)}`}
         </Text>
         <Text style={styles.lineMuted}>
           {`nav:${formatFlag(snapshot.flags.appNavigationMounted)}/${formatFlag(

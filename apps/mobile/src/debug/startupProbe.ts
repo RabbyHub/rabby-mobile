@@ -1,11 +1,14 @@
 import { Platform } from 'react-native';
 import { zCreate } from '@/core/utils/reexports';
 import { logger } from '@/utils/logger';
-import { isNonPublicProductionEnv } from '@/constant';
+import { isNonPublicProductionEnv } from '@/constant/package';
 import { useShallow } from 'zustand/react/shallow';
+import { getStartupProbeEnabledOnNextLaunch } from '@/hooks/appSettings';
 
 export const STARTUP_PROBE_ENABLED =
-  Platform.OS === 'android' && isNonPublicProductionEnv;
+  Platform.OS === 'android' &&
+  isNonPublicProductionEnv &&
+  getStartupProbeEnabledOnNextLaunch();
 
 type StartupProbeFlags = {
   jsEntryLoaded: boolean;
@@ -22,6 +25,7 @@ type StartupProbeFlags = {
   unlockMounted: boolean;
   unlockLayout: boolean;
   unlockFocused: boolean;
+  firstSafeUnlockFrame: boolean;
 };
 
 type StartupProbeEvent = {
@@ -64,6 +68,7 @@ const startupProbeStore = zCreate<StartupProbeState>(() => ({
     unlockMounted: false,
     unlockLayout: false,
     unlockFocused: false,
+    firstSafeUnlockFrame: false,
   },
 }));
 

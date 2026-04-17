@@ -111,6 +111,8 @@ tsconfig.typecheck.temp.json
 /scripts/.fast-build-work
 /scripts/**/_test.sh
 /scripts/fast-build/*.txt
+/perf/generated/
+/perf/generated-babel-loadables/
 
 /worker-dist/
 tsconfig.worker.tsbuildinfo

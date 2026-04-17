@@ -14,6 +14,7 @@ This is a **React Native cryptocurrency wallet mobile app** (Rabby Mobile) organ
 ## Local Playbooks
 
 - For `apps/mobile` store, hooks, or Home-path performance work, read `apps/mobile/skills/perf-hooks.md` before changing selector boundaries or exposing large store state to React consumers. It captures the local rules around scene-picked minimal state, scene-level derived data, and limiting render fan-out.
+- For `apps/mobile` startup path, AppNavigation, navigator loading, bundle splitting, loadables, or startup diagnostics, read `apps/mobile/skills/perf-startup-loadables.md` before changing imports, lazy-loading policy, preload timing, or startup instrumentation. It captures the local rules around hot/warm/cold route loading, generated loadables sidecars, dev-vs-prod loading policy, and startup probe usage.
 
 ## Common Commands
 

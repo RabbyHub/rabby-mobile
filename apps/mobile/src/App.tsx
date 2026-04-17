@@ -40,11 +40,9 @@ import { isEqual } from 'lodash';
 import { svsLayout } from './hooks/useAppLayout';
 import { openapi } from './core/request';
 import { IS_ROZENITE_ENABLED } from './constant/env';
-import {
-  recordStartupProbeOnce,
-  STARTUP_PROBE_ENABLED,
-} from './debug/startupProbe';
+import { recordStartupProbeOnce } from './debug/startupProbe';
 import { StartupProbeOverlay } from './debug/StartupProbeOverlay';
+import { startSetupAppBeforeRenderDeferred } from './setup-app-before-render';
 
 Safe.openapiService = openapi;
 
@@ -97,6 +95,30 @@ const MainScreen = React.memo(({ rabbitCode }: AppProps) => {
         bootstrapCouldRender: true,
       },
     });
+  }, [couldRender]);
+
+  React.useEffect(() => {
+    if (!couldRender) {
+      return;
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const frameId = requestAnimationFrame(() => {
+      timeoutId = setTimeout(() => {
+        startSetupAppBeforeRenderDeferred('main_screen_could_render').catch(
+          error => {
+            console.error('startSetupAppBeforeRenderDeferred::error', error);
+          },
+        );
+      }, 120);
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [couldRender]);
 
   return (
@@ -163,9 +185,6 @@ function App({ rabbitCode: propRabbitCode }: AppProps): JSX.Element {
                 }}
                 style={{
                   flex: 1,
-                  backgroundColor: STARTUP_PROBE_ENABLED
-                    ? '#1565C0'
-                    : undefined,
                 }}>
                 {/* read from native bundle on production */}
                 <MainScreen rabbitCode={rabbitCode} />

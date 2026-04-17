@@ -160,6 +160,7 @@ import {
   trackSettingsTxNotification,
 } from '@/utils/analytics0331';
 import { Text } from '@/components/Typography';
+import { useStartupProbeOnNextLaunch } from '@/hooks/appSettings';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -187,6 +188,22 @@ function TrackedTransactionNotificationSwitch() {
       changeValueImmediately={false}
       value={!!value}
       onValueChange={handleToggle}
+    />
+  );
+}
+
+function StartupProbeNextLaunchSwitch() {
+  const {
+    startupProbeEnabledOnNextLaunch,
+    setStartupProbeEnabledOnNextLaunch,
+  } = useStartupProbeOnNextLaunch();
+
+  return (
+    <AppSwitch2024
+      circleSize={20}
+      changeValueImmediately={false}
+      value={startupProbeEnabledOnNextLaunch}
+      onValueChange={setStartupProbeEnabledOnNextLaunch}
     />
   );
 }
@@ -792,6 +809,11 @@ function DevSettingsBlocks() {
               onPress: async () => {
                 setDevServerSettingsModalVisible(true);
               },
+            },
+            {
+              label: 'Startup Probe (next launch)',
+              icon: RcCode,
+              rightNode: <StartupProbeNextLaunchSwitch />,
             },
             {
               label: 'UI Playground',

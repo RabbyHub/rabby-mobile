@@ -46,6 +46,9 @@
     "pre-push": "yarn lint"
   },
   "lint-staged": {
+    "apps/mobile/src/perfs/loadables/*.prod.ts": [
+      "yarn workspace rabby-mobile loadables:generate:stage"
+    ],
     "apps/mobile/*.{js,jsx,ts,tsx}": [
       "yarn workspace rabby-mobile lint:commit:fix"
     ],

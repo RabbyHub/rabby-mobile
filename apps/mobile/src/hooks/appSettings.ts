@@ -22,6 +22,7 @@ type ScreenshotSettings = {
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
+  startupProbeEnabledOnNextLaunch: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -38,6 +39,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: __DEV__,
     toastOpenApiHttpErrorStatus: false,
+    startupProbeEnabledOnNextLaunch: false,
   },
 );
 
@@ -263,6 +265,40 @@ export function useToastOpenApiHttpErrorStatus() {
       ? toastOpenApiHttpErrorStatus
       : false,
     toggleToastOpenApiHttpErrorStatus,
+  };
+}
+
+export function getStartupProbeEnabledOnNextLaunch() {
+  if (!isNonPublicProductionEnv) {
+    return false;
+  }
+
+  return experimentalSettingsStore.getState().startupProbeEnabledOnNextLaunch;
+}
+
+export function useStartupProbeOnNextLaunch() {
+  const startupProbeEnabledOnNextLaunch = experimentalSettingsStore(
+    s => s.startupProbeEnabledOnNextLaunch,
+  );
+
+  const setStartupProbeEnabledOnNextLaunch = useCallback((nextVal: boolean) => {
+    if (!isNonPublicProductionEnv) {
+      return false;
+    }
+
+    setExpSettingData(prev => ({
+      ...prev,
+      startupProbeEnabledOnNextLaunch: nextVal,
+    }));
+
+    return true;
+  }, []);
+
+  return {
+    startupProbeEnabledOnNextLaunch: isNonPublicProductionEnv
+      ? startupProbeEnabledOnNextLaunch
+      : false,
+    setStartupProbeEnabledOnNextLaunch,
   };
 }
 
