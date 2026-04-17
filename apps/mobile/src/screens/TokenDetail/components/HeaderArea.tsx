@@ -6,7 +6,6 @@ import {
   View,
   ViewStyle,
   TouchableOpacity,
-  Clipboard,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -27,6 +26,7 @@ import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { ellipsisAddress } from '@/utils/address';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
