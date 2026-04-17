@@ -27,7 +27,8 @@
       "WatchAddressList": "Dompet Tonton Saja",
       "CreateWallet": "Buat Dompet",
       "ChooseBackup": "Pilih metode pencadangan",
-      "SetPassword": "Atur kata sandi"
+      "SetPassword": "Atur kata sandi",
+      "MoreImportMethods": "Metode Impor Lainnya"
     }
   },
   "page": {
@@ -1018,7 +1019,8 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedAmount": "Jumlahnya telah berubah, kemungkinan disebabkan oleh pengisian otomatis kata sandi dari keyboard sistem. Silakan tinjau dan masukkan kembali jumlah yang benar.",
       "formChangedTitle": "Form Diubah",
-      "best-subtitle": "Penawaran terbaik ditentukan oleh kombinasi perkiraan biaya total (termasuk biaya Gas) dan kecepatan pengiriman."
+      "best-subtitle": "Penawaran terbaik ditentukan oleh kombinasi perkiraan biaya total (termasuk biaya Gas) dan kecepatan pengiriman.",
+      "swap-best-subtitle": "Kutipan terbaik ditentukan berdasarkan perkiraan biaya total terendah, termasuk nilai tukar dan biaya gas."
     },
     "manageAddress": {
       "cancel": "Batal",
@@ -1033,7 +1035,10 @@
       "quickAddressTitle_other": "{{count}} Alamat",
       "quickAddressTitle_one": "{{count}} Alamat",
       "add-address": "Tambah dompet",
-      "delete-checklist-1": "Saya mengerti bahwa jika saya menghapus dompet ini, kunci privat dan frasa benih yang sesuai akan dihapus, dan Rabby TIDAK akan dapat memulihkannya."
+      "delete-checklist-1": "Saya mengerti bahwa jika saya menghapus dompet ini, kunci privat dan frasa benih yang sesuai akan dihapus, dan Rabby TIDAK akan dapat memulihkannya.",
+      "delete-private-key-title": "Hapus Dompet dan Kunci Privat",
+      "delete-seed-phrase-title": "Hapus Dompet dan Seed Phrase",
+      "delete-title": "Hapus Dompet"
     },
     "home": {
       "services": {
@@ -1159,7 +1164,9 @@
         "importAddress": "Impor Dompet",
         "createAddress": "Buat Dompet",
         "selectAddMethod": "Pilih Tambah Metode",
-        "seedPhraseOrPrivateKey": "Seed phrase atau private key"
+        "seedPhraseOrPrivateKey": "Seed phrase atau private key",
+        "restoreRabbyWallet": "Pulihkan Dompet Rabby",
+        "moreOptions": "Opsi lainnya"
       },
       "multiAddressHome": {
         "totalBalance": "Total Balance",
@@ -1190,7 +1197,11 @@
         "watch": "Dompet Hanya Lihat",
         "importTitle": "Impor Dompet",
         "watchOnlyTitle": "Impor Dompet Hanya-Pengawasan",
-        "ImportCloud": "Impor dari {{cloud}}"
+        "ImportCloud": "Impor dari {{cloud}}",
+        "ImportFromExtensionOrCloud": "Impor dari ekstensi atau {{cloud}}",
+        "moreWatchOnlyTitle": "Impor Alamat Watch-only",
+        "moreWatchOnly": "Alamat Watch-only",
+        "moreSafeTitle": "Impor Alamat Safe"
       },
       "rateModalTriggerOnHome": {
         "description": "Bagaimana Anda menilai Rabby Wallet"
@@ -1286,7 +1297,8 @@
         "backupRestoreButton": "Impor Kode Pemulihan",
         "backupUnlockDesc": "Jaga kata sandi Anda tetap aman untuk memulihkan cadangan. Rabby Wallet tidak menyimpannya dan tidak bisa memulihkannya.",
         "passwordMinTip": "Harus memiliki setidaknya 8 karakter",
-        "backupUnlockButton": "Lanjutkan"
+        "backupUnlockButton": "Lanjutkan",
+        "addMoreWalletTitle": "Tambahkan lebih banyak dompet\ndari frase ini"
       },
       "privateKey": {
         "whatIsAPrivateKey": {
@@ -1441,7 +1453,9 @@
         "description1": "Sebuah kunci privat adalah sekumpulan huruf dan angka yang digunakan untuk mengakses dan mengontrol dompet Anda. Anda dapat menggunakannya untuk memulihkan dompet Anda di perangkat apa pun."
       },
       "importing": "Mengimpor...",
-      "Done": "Selesai"
+      "Done": "Selesai",
+      "generatingWallets": "Menghasilkan dompet, harap tunggu...",
+      "selectAddressesToAdd": "Pilih alamat untuk ditambahkan"
     },
     "unlock": {
       "btn": {
@@ -3111,7 +3125,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "Pulihkan dompet Rabby Anda",
-        "subtitle": "Selamat datang kembali! 🎉  \nPilih metode untuk dengan cepat memulihkan dompet Anda."
+        "subtitle": "Selamat datang kembali! 🎉  \nPilih metode untuk dengan cepat memulihkan dompet Anda.",
+        "subtitleInApp": "Pilih salah satu opsi di bawah untuk mengimpor dompet Anda dengan cepat dari ekstensi Rabby atau iCloud."
       },
       "common": {
         "orYouCanCreateNewWallet": "Atau Anda bisa <clickable>membuat dompet baru</clickable>"

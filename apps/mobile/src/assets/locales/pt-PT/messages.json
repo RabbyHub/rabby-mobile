@@ -27,7 +27,8 @@
       "ImportNewAddress": "Adicionar uma Carteira",
       "SetPassword": "Definir palavra-passe",
       "CreateWallet": "Criar Wallet",
-      "ChooseBackup": "Escolha um método de backup"
+      "ChooseBackup": "Escolha um método de backup",
+      "MoreImportMethods": "Mais Métodos de Importação"
     }
   },
   "native": {
@@ -1161,7 +1162,10 @@
       "quickAddressTitle_one": "{{count}} Endereço",
       "quickAddressTitle_other": "{{count}} Endereços",
       "add-address": "Adicionar carteira",
-      "delete-checklist-1": "Eu entendo que se eu deletar esta carteira, a chave privada e a frase semente correspondentes serão deletadas, e a Rabby NÃO será capaz de recuperá-las."
+      "delete-checklist-1": "Eu entendo que se eu deletar esta carteira, a chave privada e a frase semente correspondentes serão deletadas, e a Rabby NÃO será capaz de recuperá-las.",
+      "delete-private-key-title": "Eliminar Carteira e Chave Privada",
+      "delete-seed-phrase-title": "Eliminar Carteira e Frase Semente",
+      "delete-title": "Eliminar Carteira"
     },
     "bridge": {
       "bridge-from": "Ponte de",
@@ -1223,7 +1227,8 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Formulário Alterado",
       "formChangedAmount": "O valor mudou, possivelmente devido ao preenchimento automático da senha pelo teclado do sistema. Por favor, reveja e insira novamente o valor correto.",
-      "best-subtitle": "A melhor cotação é determinada por uma combinação do custo total estimado (incluindo taxas de Gas) e da velocidade de entrega."
+      "best-subtitle": "A melhor cotação é determinada por uma combinação do custo total estimado (incluindo taxas de Gas) e da velocidade de entrega.",
+      "swap-best-subtitle": "A melhor cotação é determinada pelo custo total estimado mais baixo, incluindo a taxa de câmbio e as taxas de gás."
     },
     "dashboard": {
       "home": {
@@ -1444,7 +1449,9 @@
         "createAddress": "Criar Wallet",
         "importAddress": "Importar Carteira",
         "selectAddMethod": "Selecione Adicionar Método",
-        "seedPhraseOrPrivateKey": "Frase semente ou chave privada"
+        "seedPhraseOrPrivateKey": "Frase semente ou chave privada",
+        "restoreRabbyWallet": "Restaurar Carteira Rabby",
+        "moreOptions": "Mais opções"
       },
       "multiAddressHome": {
         "pin": "Pin",
@@ -1501,7 +1508,11 @@
         "safeTitle": "Importar Wallet Seguro",
         "importTitle": "Importar Wallet",
         "watchOnlyTitle": "Importar Carteira Somente para Observação",
-        "ImportCloud": "Importar do {{cloud}}"
+        "ImportCloud": "Importar do {{cloud}}",
+        "ImportFromExtensionOrCloud": "Importar da extensão ou {{cloud}}",
+        "moreWatchOnlyTitle": "Importar Endereço Apenas-Leitura",
+        "moreWatchOnly": "Endereço Apenas-Leitura",
+        "moreSafeTitle": "Importar Endereço Safe"
       },
       "rateModalTriggerOnHome": {
         "description": "Como você avalia a Rabby Wallet?"
@@ -1681,7 +1692,8 @@
         "backupRestoreLoadingText": "A procurar pela frase-semente de backup...",
         "chooseBackupMethodDesc": "Os backups permitem que você restaure a sua carteira se você apagar o aplicativo ou perder o seu dispositivo.",
         "backupUnlockDesc": "Mantenha a sua palavra-passe segura para restaurar os backups. A Rabby Wallet não a armazena e não a pode recuperar.",
-        "backupTips": "Certifique-se de que ninguém mais está a ver o seu ecrã quando faz o backup da seed phrase"
+        "backupTips": "Certifique-se de que ninguém mais está a ver o seu ecrã quando faz o backup da seed phrase",
+        "addMoreWalletTitle": "Adicionar mais carteiras\na partir desta frase"
       },
       "hd": {
         "balance": "Saldo",
@@ -1752,7 +1764,9 @@
         "description4": "A sua chave privada é armazenada localmente no seu dispositivo e encriptada com a sua palavra-passe. Apenas você pode aceder a ela. Rabby não pode recuperar ou aceder à sua chave privada."
       },
       "importing": "A importar...",
-      "Done": "Concluído"
+      "Done": "Concluído",
+      "generatingWallets": "Gerando carteiras, por favor aguarde...",
+      "selectAddressesToAdd": "Selecione os endereços para adicionar"
     },
     "unlock": {
       "btn": {
@@ -3489,7 +3503,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "Restaure a sua carteira Rabby",
-        "subtitle": "Bem-vindo de volta! 🎉  \nEscolha um método para restaurar rapidamente a sua carteira."
+        "subtitle": "Bem-vindo de volta! 🎉  \nEscolha um método para restaurar rapidamente a sua carteira.",
+        "subtitleInApp": "Escolha uma opção abaixo para importar rapidamente as suas carteiras da extensão Rabby ou do iCloud."
       },
       "common": {
         "orYouCanCreateNewWallet": "Ou você pode <clickable>criar uma nova carteira</clickable>"

@@ -27,7 +27,8 @@
       "ConfrimAddress": "确认您的钱包",
       "ChooseBackup": "选择备份方法",
       "CreateWallet": "创建钱包",
-      "SetPassword": "设置密码"
+      "SetPassword": "设置密码",
+      "MoreImportMethods": "更多导入方式"
     }
   },
   "native": {
@@ -976,7 +977,8 @@
       },
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "表单已更改",
-      "formChangedAmount": "金额已更改，可能是由于系统键盘的密码自动填充。请检查并重新输入正确的金额。"
+      "formChangedAmount": "金额已更改，可能是由于系统键盘的密码自动填充。请检查并重新输入正确的金额。",
+      "swap-best-subtitle": "最优报价由最低预估总成本决定，包括汇率和 gas 费。"
     },
     "approvals": {
       "tab-switch": {
@@ -1246,7 +1248,11 @@
         "safeTitle": "导入 Safe Wallet",
         "watch": "仅观察钱包",
         "watchOnlyTitle": "导入只读钱包",
-        "ImportCloud": "从{{cloud}}导入"
+        "ImportCloud": "从{{cloud}}导入",
+        "ImportFromExtensionOrCloud": "从扩展程序导入或从 {{cloud}} 导入",
+        "moreWatchOnlyTitle": "导入只读地址",
+        "moreWatchOnly": "只读地址",
+        "moreSafeTitle": "导入 Safe 地址"
       },
       "addAddress": {
         "hardwareWallet": "硬件钱包",
@@ -1254,7 +1260,9 @@
         "importAddress": "导入钱包",
         "createAddress": "创建钱包",
         "selectAddMethod": "选择添加方法",
-        "seedPhraseOrPrivateKey": "助记词或私钥"
+        "seedPhraseOrPrivateKey": "助记词或私钥",
+        "restoreRabbyWallet": "恢复 Rabby 钱包",
+        "moreOptions": "更多选项"
       },
       "rateModalTriggerOnHome": {
         "description": "你如何评价 Rabby Wallet？"
@@ -1494,7 +1502,8 @@
         "maxAccountCount": "每次最多 50 个地址",
         "icloudBackup": "iCloud 备份",
         "backupUnlockDesc": "请妥善保管您的密码以便恢复备份。Rabby Wallet 不会储存也无法恢复您的密码。",
-        "backupUnlockButton": "继续"
+        "backupUnlockButton": "继续",
+        "addMoreWalletTitle": "通过此助记词\n添加更多钱包"
       },
       "hd": {
         "balance": "余额",
@@ -1565,7 +1574,9 @@
         "title3": "永远不要分享它"
       },
       "importing": "导入中...",
-      "Done": "完成"
+      "Done": "完成",
+      "generatingWallets": "正在生成钱包，请稍候...",
+      "selectAddressesToAdd": "选择要添加的地址"
     },
     "backupPrivateKey": {
       "clickToShowQr": "点击显示私钥二维码",
@@ -3242,7 +3253,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "恢复您的 Rabby 钱包",
-        "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。"
+        "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。",
+        "subtitleInApp": "选择下方选项以从 Rabby 扩展程序或 iCloud 快速导入您的钱包。"
       },
       "common": {
         "orYouCanCreateNewWallet": "没有钱包？立即<clickable>创建新钱包</clickable>"

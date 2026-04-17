@@ -27,7 +27,8 @@
       "ConfrimAddress": "Xác nhận Ví của bạn",
       "SetPassword": "Đặt mật khẩu",
       "ChooseBackup": "Chọn phương pháp sao lưu",
-      "CreateWallet": "Tạo Ví"
+      "CreateWallet": "Tạo Ví",
+      "MoreImportMethods": "Thêm Phương pháp Nhập"
     }
   },
   "native": {
@@ -1069,7 +1070,8 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Biểu mẫu đã thay đổi",
       "formChangedAmount": "Số tiền đã thay đổi, có thể do hệ thống bàn phím tự động điền mật khẩu. Vui lòng xem lại và nhập lại số tiền chính xác.",
-      "best-subtitle": "Báo giá tốt nhất được xác định bởi sự kết hợp giữa tổng chi phí ước tính (bao gồm phí Gas) và tốc độ giao hàng."
+      "best-subtitle": "Báo giá tốt nhất được xác định bởi sự kết hợp giữa tổng chi phí ước tính (bao gồm phí Gas) và tốc độ giao hàng.",
+      "swap-best-subtitle": "Được xác định bởi tổng chi phí ước tính thấp nhất bao gồm tỷ giá hối đoái và phí gas."
     },
     "manageAddress": {
       "enterThePassphrase": "Nhập Passphrase",
@@ -1084,7 +1086,10 @@
       "quickAddressTitle_other": "{{count}} Địa chỉ",
       "quickAddressTitle_one": "{{count}} Địa chỉ",
       "add-address": "Thêm ví",
-      "delete-checklist-1": "Tôi hiểu rằng nếu tôi xóa ví này, khóa riêng tư và cụm từ gốc tương ứng sẽ bị xóa, và Rabby sẽ KHÔNG thể khôi phục chúng."
+      "delete-checklist-1": "Tôi hiểu rằng nếu tôi xóa ví này, khóa riêng tư và cụm từ gốc tương ứng sẽ bị xóa, và Rabby sẽ KHÔNG thể khôi phục chúng.",
+      "delete-private-key-title": "Xóa Ví và Khóa Riêng Tư",
+      "delete-seed-phrase-title": "Xóa Ví và Cụm Từ Khôi Phục",
+      "delete-title": "Xóa Ví"
     },
     "dashboard": {
       "hd": {
@@ -1159,7 +1164,9 @@
         "createAddress": "Tạo Ví",
         "importAddress": "Nhập Ví",
         "selectAddMethod": "Chọn Thêm Phương Thức",
-        "seedPhraseOrPrivateKey": "Cụm từ hạt giống hoặc khóa riêng"
+        "seedPhraseOrPrivateKey": "Cụm từ hạt giống hoặc khóa riêng",
+        "restoreRabbyWallet": "Khôi phục Ví Rabby",
+        "moreOptions": "Thêm tùy chọn"
       },
       "importAddress": {
         "hardWare": "Kết nối ví phần cứng",
@@ -1175,7 +1182,11 @@
         "safeTitle": "Nhập Wallet An toàn",
         "importTitle": "Nhập ví",
         "watchOnlyTitle": "Nhập ví Chỉ Xem",
-        "ImportCloud": "Nhập từ {{cloud}}"
+        "ImportCloud": "Nhập từ {{cloud}}",
+        "ImportFromExtensionOrCloud": "Nhập từ extension hoặc {{cloud}}",
+        "moreWatchOnlyTitle": "Nhập địa chỉ Watch-only",
+        "moreWatchOnly": "Địa chỉ Watch-only",
+        "moreSafeTitle": "Nhập địa chỉ Safe"
       },
       "createNewAddress": {
         "inOrder": "theo thứ tự chính xác.",
@@ -1536,7 +1547,8 @@
         "backupUploadToGDrive": "Đang sao lưu lên Google Drive...",
         "backupUnlockDesc": "Giữ mật khẩu của bạn an toàn để khôi phục sao lưu. Rabby Wallet không lưu trữ mật khẩu và không thể khôi phục nó.",
         "chooseBackupMethodDesc": "Sao lưu cho phép bạn khôi phục ví của mình nếu bạn xóa ứng dụng hoặc mất thiết bị của mình.",
-        "chooseBackupMethodTitle": "Chọn một phương pháp sao lưu"
+        "chooseBackupMethodTitle": "Chọn một phương pháp sao lưu",
+        "addMoreWalletTitle": "Thêm nhiều ví khác từ cụm từ này"
       },
       "onekey": {
         "scan": {
@@ -1579,7 +1591,9 @@
         "description4": "Khoá riêng của bạn được lưu trữ cục bộ trên thiết bị của bạn và được mã hoá bằng mật khẩu của bạn. Chỉ có bạn mới có thể truy cập nó. Rabby không thể lấy lại hoặc truy cập khoá riêng của bạn."
       },
       "importing": "Đang nhập...",
-      "Done": "Xong"
+      "Done": "Xong",
+      "generatingWallets": "Đang tạo ví, vui lòng chờ...",
+      "selectAddressesToAdd": "Chọn địa chỉ để thêm"
     },
     "addressDetail": {
       "pin-in-list": "Ghim trong Danh sách",
@@ -3229,7 +3243,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "Khôi phục ví Rabby của bạn",
-        "subtitle": "Chào mừng bạn trở lại! 🎉  \nChọn một phương pháp để khôi phục ví của bạn nhanh chóng."
+        "subtitle": "Chào mừng bạn trở lại! 🎉  \nChọn một phương pháp để khôi phục ví của bạn nhanh chóng.",
+        "subtitleInApp": "Chọn một tùy chọn bên dưới để nhanh chóng nhập ví của bạn từ tiện ích Rabby hoặc iCloud."
       },
       "common": {
         "orYouCanCreateNewWallet": "Hoặc bạn có thể <clickable>tạo một ví mới</clickable>"
