@@ -1019,7 +1019,7 @@
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
       "best": "Best",
-      "best-subtitle": "The \"Best\" quote is determined by a combination of estimated total cost (including gas fees) and delivery speed.",
+      "best-subtitle": "The best quote is determined by a combination of estimated total cost (including gas fees) and delivery speed.",
       "no-route-found": "No route found",
       "bridged": "Bridged",
       "gasXUsd": "Gas: {{gasUsd}}",
