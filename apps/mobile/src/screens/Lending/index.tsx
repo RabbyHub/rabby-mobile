@@ -10,9 +10,11 @@ import {
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
-import { useFetchLendingData } from './hooks';
+import { useFetchLendingData, useSelectedMarket } from './hooks';
 import { LendingNativeHeader } from './components/LendingHeaderTitle';
 import MyAssetHome from './MyAssetHome';
+import useProtocols from '@/store/protocols';
+import { marketKeyToProtocolId } from '../Home/utils/protocolConfig';
 
 function DashBoardScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
@@ -20,6 +22,11 @@ function DashBoardScreen(): JSX.Element {
   const { finalSceneCurrentAccount } = useSceneAccountInfo({
     forScene: 'Lending',
   });
+  const updateSpecificProtocol = useProtocols(
+    state => state.updateSpecificProtocol,
+  );
+
+  const { chainInfo, marketKey } = useSelectedMarket();
 
   useEffect(() => {
     fetchData();
@@ -28,8 +35,28 @@ function DashBoardScreen(): JSX.Element {
   const handlePendingClear = useCallback(() => {
     setTimeout(() => {
       fetchData(true);
+
+      // lending和 protocol 两个数据源，这里让两个数据源看着更加一致
+      const protocolId = marketKeyToProtocolId(marketKey);
+      if (
+        protocolId &&
+        finalSceneCurrentAccount?.address &&
+        chainInfo?.serverId
+      ) {
+        updateSpecificProtocol(
+          finalSceneCurrentAccount?.address,
+          protocolId,
+          chainInfo?.serverId,
+        );
+      }
     }, 200);
-  }, [fetchData]);
+  }, [
+    chainInfo?.serverId,
+    fetchData,
+    finalSceneCurrentAccount?.address,
+    marketKey,
+    updateSpecificProtocol,
+  ]);
 
   return (
     <NormalScreenContainer2024

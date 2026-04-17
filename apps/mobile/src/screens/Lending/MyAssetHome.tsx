@@ -1,8 +1,11 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, View } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
@@ -31,6 +34,18 @@ import {
 } from './hooks';
 import { ItemListLoading } from './components/ItemRender/ItemLoading';
 import EmptyItem from './components/ItemRender/EmptyItem';
+import { RootNames } from '@/constant/layout';
+import type { TransactionNavigatorParamList } from '@/navigation-type';
+
+type LendingRouteProp = RouteProp<
+  TransactionNavigatorParamList,
+  typeof RootNames.Lending
+>;
+
+type LendingNavigationProp = NativeStackNavigationProp<
+  TransactionNavigatorParamList,
+  typeof RootNames.Lending
+>;
 
 type MyAssetItem =
   | {
@@ -52,6 +67,9 @@ const MyAssetHome: React.FC = () => {
   const { loading: isFetching } = useLendingIsLoading();
   const { fetchData } = useFetchLendingData();
   const { displayPoolReserves, iUserSummary, apyInfo } = useLendingSummary();
+  const route = useRoute<LendingRouteProp>();
+  const navigation = useNavigation<LendingNavigationProp>();
+  const openedRouteActionKeyRef = useRef<string | null>(null);
 
   const loading = isFetching || !iUserSummary || !displayPoolReserves;
 
@@ -200,6 +218,86 @@ const MyAssetHome: React.FC = () => {
   React.useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  React.useEffect(() => {
+    const tokenAddress = route.params?.tokenAddress;
+    const direction = route.params?.direction;
+    const source = route.params?.source;
+    if (!tokenAddress || !direction || loading || !iUserSummary) {
+      return;
+    }
+
+    const keyword = tokenAddress.toLowerCase();
+    const matchesToken = (address?: string) => {
+      if (!address) {
+        return false;
+      }
+      try {
+        return isSameAddress(address, tokenAddress);
+      } catch {
+        return false;
+      }
+    };
+    const reserve = displayPoolReserves?.find(item => {
+      return (
+        matchesToken(item.underlyingAsset) ||
+        matchesToken(item.reserve.underlyingAsset) ||
+        item.reserve.symbol.toLowerCase() === keyword
+      );
+    });
+
+    if (!reserve) {
+      return;
+    }
+
+    const actionKey = `${marketKey}-${direction}-${tokenAddress}`;
+    if (openedRouteActionKeyRef.current === actionKey) {
+      return;
+    }
+    openedRouteActionKeyRef.current = actionKey;
+
+    if (direction !== 'supply' && direction !== 'borrow') {
+      return;
+    }
+
+    const modalId = createGlobalBottomSheetModal2024({
+      name:
+        direction === 'supply'
+          ? MODAL_NAMES.WITHDRAW_ACTION_DETAIL
+          : MODAL_NAMES.REPAY_ACTION_DETAIL,
+      reserve,
+      userSummary: iUserSummary,
+      source: source === 'Portfolio Defi' ? source : undefined,
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        rootViewType: direction === 'borrow' ? 'View' : undefined,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-1'],
+        },
+      },
+    });
+
+    navigation.setParams({
+      tokenAddress: undefined,
+      direction: undefined,
+      source: undefined,
+    });
+  }, [
+    colors2024,
+    displayPoolReserves,
+    iUserSummary,
+    loading,
+    marketKey,
+    navigation,
+    route.params?.direction,
+    route.params?.source,
+    route.params?.tokenAddress,
+  ]);
 
   const handleRefresh = useCallback(() => {
     fetchData(true);
