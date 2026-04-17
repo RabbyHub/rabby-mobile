@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import {
   RcIconSwapChecked,
   RcIconSwapHiddenArrow,
@@ -8,6 +9,7 @@ import { Radio } from '@/components/Radio';
 import { DEX_WITH_WRAP } from '@/constant/swap';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import RcIconRefreshCC from '@/assets2024/icons/bridge/IconRefreshCC.svg';
 import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -348,60 +350,27 @@ export const QuoteList = (props: QuotesProps) => {
       onDismiss={onClose}
       enableDismissOnClose
       {...makeBottomSheetProps({
-        linearGradientType: 'linear',
+        linearGradientType: isLight ? 'bg0' : 'bg1',
         colors: colors2024,
       })}
       handleStyle={styles.bottomBg}
       backgroundStyle={styles.bottomBg}>
-      <LinearGradient
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-        locations={[0.0745, 0.2242]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ flex: 1 }}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerText}>
-            {t('page.bridge.the-following-bridge-route-are-found')}
-          </Text>
-          <TouchableOpacity onPress={refreshQuote} style={styles.refreshBox}>
-            <Animated.View
-              style={{
-                transform: [{ rotate: spin }],
-                marginRight: 4,
-              }}>
-              <RcIconLoading />
-            </Animated.View>
-            <Text style={styles.refreshContent}>{t('global.refresh')}</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={{ flex: 1, position: 'relative' }}>
+        <TouchableOpacity onPress={refreshQuote} style={styles.refreshIconBtn}>
+          <RcIconRefreshCC color={colors2024['neutral-body']} />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>
+          {t('page.bridge.the-following-bridge-route-are-found')}
+        </Text>
+        <Text style={styles.subtitleText}>
+          {t('page.bridge.best-subtitle')}
+        </Text>
 
         <BottomSheetScrollView style={styles.flex1}>
           <Quotes {...props} />
-          <View style={{ height: IS_ANDROID ? 140 : 120 }} />
+          <View style={{ height: IS_ANDROID ? 40 : 20 }} />
         </BottomSheetScrollView>
-
-        <LinearGradient
-          colors={
-            isLight
-              ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
-              : [colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]
-          }
-          locations={[0.6393, 1]}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 0, y: 0 }}
-          style={styles.floatBottom}>
-          <Radio
-            checked={!!sortIncludeGasFee}
-            onPress={() => setSwapSortIncludeGasFee(!sortIncludeGasFee)}
-            title={t('page.swap.sort-with-gas')}
-            checkedIcon={<RcIconSwapChecked width={24} height={24} />}
-            uncheckedIcon={<RcIconSwapUnchecked width={24} height={24} />}
-            textStyle={styles.refreshText}
-            right={true}
-            containerStyle={styles.radioContainer}
-          />
-        </LinearGradient>
-      </LinearGradient>
+      </View>
     </AppBottomSheetModal>
   );
 };
@@ -409,6 +378,21 @@ export const QuoteList = (props: QuotesProps) => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   bottomBg: {
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  subtitleText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  refreshIconBtn: {
+    position: 'absolute',
+    top: -2,
+    right: 24,
   },
   headerContainer: {
     flexDirection: 'row',
