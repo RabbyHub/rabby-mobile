@@ -57,6 +57,7 @@ import {
 } from '@/components2024/WalletSuccessCard';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { scheduleSingleAddressNavigatorPreload } from '@/perfs/preloads';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -166,6 +167,18 @@ export const ImportSuccessScreen2024 = () => {
         }
       : null;
   }, [importAddresses, state?.brandName, state?.type]);
+
+  React.useEffect(() => {
+    return scheduleSingleAddressNavigatorPreload(
+      'import_success_single_address',
+      {
+        enabled: !!onlyFirstAccount,
+        afterFrame: true,
+        delayMs: 120,
+      },
+    );
+  }, [onlyFirstAccount]);
+
   const handleDone = React.useCallback(() => {
     saveFirstAddressAlias();
     Keyboard.dismiss();

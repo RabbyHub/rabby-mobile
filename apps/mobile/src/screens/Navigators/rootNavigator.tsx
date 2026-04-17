@@ -9,7 +9,7 @@ import { HomeNavigatorParamsList } from '@/navigation-type';
 import React, { useLayoutEffect } from 'react';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { preloadHomeShortcutNavigators } from '@/perfs/preloads';
+import { scheduleHomeShortcutNavigatorsPreload } from '@/perfs/preloads';
 
 const HomeHiddenTabStack = createBottomTabNavigator<HomeNavigatorParamsList>();
 
@@ -23,13 +23,10 @@ export function HomeScreenNavigator() {
   }
 
   useLayoutEffect(() => {
-    const timer = setTimeout(() => {
-      preloadHomeShortcutNavigators().catch(error => {
-        console.error('preloadHomeShortcutNavigators::error', error);
-      });
-    }, 300);
-
-    return () => clearTimeout(timer);
+    return scheduleHomeShortcutNavigatorsPreload('unlock_to_home', {
+      afterFrame: true,
+      delayMs: 300,
+    });
   }, []);
 
   return (
