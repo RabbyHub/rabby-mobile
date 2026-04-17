@@ -9833,7 +9833,7 @@ __metadata:
   dependencies:
     "@rabby-wallet/base-utils": "workspace:^"
     "@rozenite/plugin-bridge": "npm:1.6.0"
-    "@rozenite/vite-plugin": "npm:1.6.0"
+    "@rozenite/vite-plugin": "patch:@rozenite/vite-plugin@npm%3A1.6.0#~/.yarn/patches/@rozenite-vite-plugin-npm-1.6.0-f6acc5490f.patch"
     "@tailwindcss/vite": "npm:^4.2.2"
     "@types/react": "npm:^19.1.4"
     "@types/react-dom": "npm:^19.1.5"
@@ -12265,6 +12265,20 @@ __metadata:
   peerDependencies:
     vite: ^7.3.1
   checksum: 10/fe9acd41c8d90c6510cbb466bae744d92b296eef789570cfedba66af62d4946f4e368266a4df1a4e1fabf47df5e3f80ff0aafe56efc74860d043b62948908552
+  languageName: node
+  linkType: hard
+
+"@rozenite/vite-plugin@patch:@rozenite/vite-plugin@npm%3A1.6.0#~/.yarn/patches/@rozenite-vite-plugin-npm-1.6.0-f6acc5490f.patch":
+  version: 1.6.0
+  resolution: "@rozenite/vite-plugin@patch:@rozenite/vite-plugin@npm%3A1.6.0#~/.yarn/patches/@rozenite-vite-plugin-npm-1.6.0-f6acc5490f.patch::version=1.6.0&hash=cd185c"
+  dependencies:
+    "@vitejs/plugin-react": "npm:^4.3.4"
+    ejs: "npm:^3.1.9"
+    vite-plugin-dts: "npm:~4.5.0"
+    vite-plugin-react-native-web: "npm:^2.1.1"
+  peerDependencies:
+    vite: ^7.3.1
+  checksum: 10/3af1ca5b2c91bc6688ba246a792ed6b933f2b88925a84cb6e0952666e22832a15776105bacd28e6e47189edabd7f1115a5a83ce5109e2a657416bb9376a4db39
   languageName: node
   linkType: hard
 
