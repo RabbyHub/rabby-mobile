@@ -33,13 +33,15 @@ import useTokenList, {
 import { formatNetworth } from '@/utils/math';
 import { useFindAccountByAddress, useIsFocusedCurrentTab } from './hooks/share';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
-import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import {
+  HOME_TOP_HEADER_SIZES,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+} from '@/constant/home';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
-  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';

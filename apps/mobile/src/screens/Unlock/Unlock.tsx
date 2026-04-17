@@ -57,6 +57,7 @@ import { GetRootScreenRouteProp } from '@/navigation-type';
 import { TextInput } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -214,6 +215,26 @@ export default function UnlockScreen() {
   useFocusEffect(
     useCallback(() => {
       storeApisBiometrics.fetchBiometrics();
+    }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const frameId = requestAnimationFrame(() => {
+        timeoutId = setTimeout(() => {
+          startUnlockScreenBootstrapWarmups().catch(error => {
+            console.error('startUnlockScreenBootstrapWarmups::error', error);
+          });
+        }, 250);
+      });
+
+      return () => {
+        cancelAnimationFrame(frameId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      };
     }, []),
   );
 

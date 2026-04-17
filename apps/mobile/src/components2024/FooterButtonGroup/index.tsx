@@ -6,6 +6,11 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Button } from '@/components2024/Button';
 import AuthButton from '../AuthButton';
 
+type ButtonTestProps = Pick<
+  React.ComponentProps<typeof Button>,
+  'testID' | 'accessibilityLabel'
+>;
+
 export const FooterButtonGroup: React.FC<{
   onCancel?: () => void;
   onConfirm?: () => void;
@@ -17,6 +22,8 @@ export const FooterButtonGroup: React.FC<{
   loading?: boolean;
   authButton?: boolean;
   style?: StyleProp<ViewStyle>;
+  cancelButtonProps?: ButtonTestProps;
+  confirmButtonProps?: ButtonTestProps;
 }> = ({
   onCancel,
   onConfirm,
@@ -28,6 +35,8 @@ export const FooterButtonGroup: React.FC<{
   loading,
   authButton,
   confirmDisabled,
+  cancelButtonProps,
+  confirmButtonProps,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -44,6 +53,7 @@ export const FooterButtonGroup: React.FC<{
         disabled={disable}
         loading={loading}
         type={'ghost'}
+        {...cancelButtonProps}
       />
       <View style={styles.btnGap} />
 
@@ -55,6 +65,7 @@ export const FooterButtonGroup: React.FC<{
           disabled={disable || confirmDisabled}
           loading={loading}
           type={confirmType || 'primary'}
+          {...confirmButtonProps}
         />
       ) : (
         <Button
@@ -64,6 +75,7 @@ export const FooterButtonGroup: React.FC<{
           disabled={disable || confirmDisabled}
           loading={loading}
           type={confirmType || 'primary'}
+          {...confirmButtonProps}
         />
       )}
     </View>

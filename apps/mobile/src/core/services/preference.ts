@@ -19,7 +19,6 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
-import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
 
@@ -115,12 +114,6 @@ export interface PreferenceStore {
   currentAccount: Account | undefined | null;
   addressAvatarMap: {
     [address: string]: string;
-  };
-  balanceMap: {
-    [address: string]: EvmTotalBalanceResponse;
-  };
-  testnetBalanceMap: {
-    [address: string]: EvmTotalBalanceResponse;
   };
   locale: string;
   lastTimeSendToken: Record<string, TokenItem>;
@@ -244,8 +237,6 @@ export class PreferenceService extends StoreServiceBase<
       APP_STORE_NAMES.preference,
       {
         currentAccount: undefined,
-        balanceMap: {},
-        testnetBalanceMap: {},
         locale: defaultLang,
         lastTimeSendToken: {},
         pinAddresses: [],
@@ -302,6 +293,13 @@ export class PreferenceService extends StoreServiceBase<
         },
       },
     );
+
+    if ('balanceMap' in this.store) {
+      delete this.store.balanceMap;
+    }
+    if ('testnetBalanceMap' in this.store) {
+      delete this.store.testnetBalanceMap;
+    }
 
     this.keyringService = options.keyringService;
     this.sessionService = options.sessionService;
@@ -620,50 +618,6 @@ export class PreferenceService extends StoreServiceBase<
     if (tempAccount) {
       this.setCurrentAccount(tempAccount);
     }
-  };
-
-  updateTestnetAddressBalance = (
-    address: string,
-    data: EvmTotalBalanceResponse,
-  ) => {
-    const testnetBalanceMap = this.store.testnetBalanceMap || {};
-    this.store.testnetBalanceMap = {
-      ...testnetBalanceMap,
-      [address.toLowerCase()]: data,
-    };
-  };
-
-  updateAddressBalance = (address: string, data: EvmTotalBalanceResponse) => {
-    const balanceMap = this.store.balanceMap || {};
-    this.store.balanceMap = {
-      ...balanceMap,
-      [address.toLowerCase()]: data,
-    };
-  };
-
-  removeTestnetAddressBalance = (address: string) => {
-    const key = address.toLowerCase();
-    if (key in this.store.testnetBalanceMap) {
-      const map = this.store.testnetBalanceMap;
-      delete map[key];
-      this.store.testnetBalanceMap = map;
-    }
-  };
-
-  removeAddressBalance = (address: string) => {
-    const key = address.toLowerCase();
-    if (key in this.store.balanceMap) {
-      const map = this.store.balanceMap;
-      delete map[key];
-      this.store.balanceMap = map;
-    }
-  };
-
-  getTestnetAddressBalance = (
-    address: string,
-  ): EvmTotalBalanceResponse | null => {
-    const balanceMap = this.store.testnetBalanceMap || {};
-    return balanceMap[address.toLowerCase()] || null;
   };
 
   getLocale = () => {

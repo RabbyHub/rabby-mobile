@@ -35,6 +35,46 @@ export type ResourceSnapshot<TValue> = {
   persistStatus: ResourceFlowState['persistStatus'];
 };
 
+function normalizeResourceKeys(resourceKeys: string[]) {
+  return Array.from(new Set(resourceKeys.filter(Boolean)));
+}
+
+function buildResourceSnapshots<TValue>(
+  resourceKeys: string[],
+  valueMap: Record<string, TValue>,
+  metaMap: Record<string, ObservableResourceMeta>,
+): ResourceSnapshot<TValue>[] {
+  return normalizeResourceKeys(resourceKeys).map(resourceKey => {
+    const meta = metaMap[resourceKey];
+
+    return {
+      resourceKey,
+      value: valueMap[resourceKey],
+      flow: buildResourceFlowState(meta),
+      sourceOfCurrentValue: meta?.sourceOfCurrentValue,
+      persistStatus: meta?.persistStatus || 'idle',
+    } satisfies ResourceSnapshot<TValue>;
+  });
+}
+
+function buildResourceSnapshotsFromSelectedEntries<TValue>(
+  resourceKeys: string[],
+  valueList: Array<TValue | undefined>,
+  metaList: Array<ObservableResourceMeta | undefined>,
+): ResourceSnapshot<TValue>[] {
+  return normalizeResourceKeys(resourceKeys).map((resourceKey, index) => {
+    const meta = metaList[index];
+
+    return {
+      resourceKey,
+      value: valueList[index],
+      flow: buildResourceFlowState(meta),
+      sourceOfCurrentValue: meta?.sourceOfCurrentValue,
+      persistStatus: meta?.persistStatus || 'idle',
+    } satisfies ResourceSnapshot<TValue>;
+  });
+}
+
 export function buildResourceFlowState(
   meta?: ObservableResourceMeta,
 ): ResourceFlowState {
@@ -88,6 +128,39 @@ export function buildResourceFamilyFlowState(
   };
 }
 
+function buildResourceFamilyFlowStateFromSelectedEntries(
+  resourceKeys: string[],
+  metaList: Array<ObservableResourceMeta | undefined>,
+): ResourceFamilyFlowState {
+  const normalized = normalizeResourceKeys(resourceKeys);
+  const loadingResourceKeys: string[] = [];
+  const missingResourceKeys: string[] = [];
+
+  normalized.forEach((resourceKey, index) => {
+    const flow = buildResourceFlowState(metaList[index]);
+    if (!flow.hasValue) {
+      missingResourceKeys.push(resourceKey);
+    }
+    if (flow.isLoading) {
+      loadingResourceKeys.push(resourceKey);
+    }
+  });
+
+  return {
+    resourceKeys: normalized,
+    loadingResourceKeys,
+    missingResourceKeys,
+    hasAnyValue: normalized.some((_, index) => {
+      return buildResourceFlowState(metaList[index]).hasValue;
+    }),
+    isAnyLoading: loadingResourceKeys.length > 0,
+    isAnyLoadingWithoutValue: normalized.some((_, index) => {
+      return buildResourceFlowState(metaList[index]).isLoadingWithoutValue;
+    }),
+    hasAllValues: normalized.length > 0 && missingResourceKeys.length === 0,
+  };
+}
+
 export class ResourceBaseStore<TValue> extends ObservableResourceStore<TValue> {
   getFlowState = (resourceKey?: string) => {
     return buildResourceFlowState(this.getMeta(resourceKey));
@@ -103,41 +176,59 @@ export class ResourceBaseStore<TValue> extends ObservableResourceStore<TValue> {
     return buildResourceFamilyFlowState(resourceKeys, this.getMetaMap());
   };
 
+  getSnapshots = (resourceKeys: string[]) => {
+    const state = this.getState();
+
+    return buildResourceSnapshots(resourceKeys, state.valueMap, state.metaMap);
+  };
+
   useFamilyFlowState = (resourceKeys: string[]) => {
-    const metaMap = this.useMetaMap();
     const normalizedResourceKeys = useMemo(
-      () => Array.from(new Set(resourceKeys.filter(Boolean))),
+      () => normalizeResourceKeys(resourceKeys),
       [resourceKeys],
+    );
+    const metaList = this.useStore(
+      useShallow(state => {
+        return normalizedResourceKeys.map(resourceKey => {
+          return state.metaMap[resourceKey];
+        });
+      }),
     );
 
     return useMemo(() => {
-      return buildResourceFamilyFlowState(normalizedResourceKeys, metaMap);
-    }, [metaMap, normalizedResourceKeys]);
+      return buildResourceFamilyFlowStateFromSelectedEntries(
+        normalizedResourceKeys,
+        metaList,
+      );
+    }, [metaList, normalizedResourceKeys]);
   };
 
   useSnapshots = (resourceKeys: string[]) => {
     const normalizedResourceKeys = useMemo(
-      () => Array.from(new Set(resourceKeys.filter(Boolean))),
+      () => normalizeResourceKeys(resourceKeys),
       [resourceKeys],
     );
-    const { valueMap, metaMap } = this.useStore(
-      useShallow(state => ({
-        valueMap: state.valueMap,
-        metaMap: state.metaMap,
-      })),
+    const valueList = this.useStore(
+      useShallow(state => {
+        return normalizedResourceKeys.map(resourceKey => {
+          return state.valueMap[resourceKey];
+        });
+      }),
+    );
+    const metaList = this.useStore(
+      useShallow(state => {
+        return normalizedResourceKeys.map(resourceKey => {
+          return state.metaMap[resourceKey];
+        });
+      }),
     );
 
     return useMemo(() => {
-      return normalizedResourceKeys.map(resourceKey => {
-        const meta = metaMap[resourceKey];
-        return {
-          resourceKey,
-          value: valueMap[resourceKey],
-          flow: buildResourceFlowState(meta),
-          sourceOfCurrentValue: meta?.sourceOfCurrentValue,
-          persistStatus: meta?.persistStatus || 'idle',
-        } satisfies ResourceSnapshot<TValue>;
-      });
-    }, [metaMap, normalizedResourceKeys, valueMap]);
+      return buildResourceSnapshotsFromSelectedEntries(
+        normalizedResourceKeys,
+        valueList,
+        metaList,
+      );
+    }, [metaList, normalizedResourceKeys, valueList]);
   };
 }

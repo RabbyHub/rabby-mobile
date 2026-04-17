@@ -5,6 +5,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { AccountSwitcher } from '@/components/AccountSwitcher/InScreenSwitch';
 import { AccountSwitcherScene } from '@/components/AccountSwitcher/hooks';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text } from '@/components/Typography';
 
 export default function FromAddressControl2024({
@@ -18,7 +20,9 @@ export default function FromAddressControl2024({
   const { t } = useTranslation();
 
   return (
-    <View style={[styles.control, style]}>
+    <View
+      style={[styles.control, style]}
+      {...makeTestIDProps(E2E_ID.send.fromSection)}>
       <View style={styles.titleContainer}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.From')}</Text>
       </View>

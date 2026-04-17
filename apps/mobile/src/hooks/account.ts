@@ -14,7 +14,7 @@ import { filterMyAccounts } from '@/utils/account';
 import { useCreationWithShallowCompare } from './common/useMemozied';
 import { accountEvents, KeyringAccountWithAlias } from '@/core/apis/account';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import accountStore, {
   NEWLY_ADDED_ACCOUNT_DURATION,
   useAccountStore,
@@ -263,9 +263,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 export const usePinnedAccountList = () => {
   const pinAddresses = useAccountStore(s => s.pinnedAddresses);
   const accounts = useAccountStore(s => s.accounts);
-  const balanceMap = balanceStore(s => s.balanceMap);
-
-  const pinnedAccountList = useMemo(() => {
+  const pinnedBaseAccounts = useMemo(() => {
     const res: KeyringAccountWithAlias[] = [];
     pinAddresses?.forEach(pinAddr => {
       const item = accounts.find(account => {
@@ -282,16 +280,45 @@ export const usePinnedAccountList = () => {
           KEYRING_TYPE.WalletConnectKeyring,
         ].includes(item.type)
       ) {
-        const balance = balanceMap[item.address.toLowerCase()];
-        res.push({
-          ...item,
-          balance: balance?.totalBalance || item.balance || 0,
-          evmBalance: balance?.evmBalance || item.evmBalance || 0,
-        });
+        res.push(item);
       }
     });
+
     return res;
-  }, [accounts, balanceMap, pinAddresses]);
+  }, [accounts, pinAddresses]);
+  const pinnedAddresses = useMemo(() => {
+    return pinnedBaseAccounts.map(item => item.address.toLowerCase());
+  }, [pinnedBaseAccounts]);
+  const balanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(pinnedAddresses);
+
+  const pinnedAccountList = useMemo(() => {
+    const balanceMap = balanceSnapshots.reduce(
+      (acc, snapshot) => {
+        if (snapshot.value) {
+          acc[snapshot.address] = snapshot.value;
+        }
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          totalBalance: number;
+          evmBalance: number;
+        }
+      >,
+    );
+
+    return pinnedBaseAccounts.map(item => {
+      const balance = balanceMap[item.address.toLowerCase()];
+
+      return {
+        ...item,
+        balance: balance?.totalBalance || item.balance || 0,
+        evmBalance: balance?.evmBalance || item.evmBalance || 0,
+      };
+    });
+  }, [balanceSnapshots, pinnedBaseAccounts]);
 
   return pinnedAccountList;
 };

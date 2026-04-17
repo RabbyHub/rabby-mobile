@@ -280,13 +280,44 @@ const NextInputComponent = ({
   }, [styles, customIcon, _onPressCustom]);
 
   const hasCustomIcon = !!formattedClearIcon || !!formmatedCustomIcon;
+  const containerTestID = viewProps.testID ?? inputProps?.testID;
+  const containerAccessibilityLabel =
+    viewProps.accessibilityLabel ?? inputProps?.accessibilityLabel;
+  const shouldUseFocusableTestWrapper = !!(
+    containerTestID || containerAccessibilityLabel
+  );
+  const normalizedInputProps = useMemo(() => {
+    if (!shouldUseFocusableTestWrapper || !inputProps) {
+      return inputProps;
+    }
+
+    const {
+      testID: _testID,
+      accessibilityLabel: _accessibilityLabel,
+      ...rest
+    } = inputProps;
+
+    return rest;
+  }, [inputProps, shouldUseFocusableTestWrapper]);
 
   const needPatchTouchEvent = isAndroid && disableNestedTouchEventOnAndroid;
-  const WrapperComp = needPatchTouchEvent ? Pressable : React.Fragment;
+  const WrapperComp =
+    needPatchTouchEvent || shouldUseFocusableTestWrapper
+      ? Pressable
+      : React.Fragment;
+  const shouldAttachContainerA11yToView = WrapperComp === React.Fragment;
 
   return (
     <WrapperComp
       {...(WrapperComp !== React.Fragment && {
+        ...(containerTestID ? { testID: containerTestID } : {}),
+        ...(containerAccessibilityLabel
+          ? { accessibilityLabel: containerAccessibilityLabel }
+          : {}),
+        ...((containerTestID || containerAccessibilityLabel) &&
+        !viewProps.accessible
+          ? { accessible: true }
+          : {}),
         onPress: () => {
           if (!Keyboard.isVisible()) {
             inputRef.current?.blur();
@@ -296,6 +327,17 @@ const NextInputComponent = ({
       })}>
       <View
         {...viewProps}
+        {...(shouldAttachContainerA11yToView && containerTestID
+          ? { testID: containerTestID }
+          : {})}
+        {...(shouldAttachContainerA11yToView && containerAccessibilityLabel
+          ? { accessibilityLabel: containerAccessibilityLabel }
+          : {})}
+        {...(shouldAttachContainerA11yToView &&
+        (containerTestID || containerAccessibilityLabel) &&
+        !viewProps.accessible
+          ? { accessible: true }
+          : {})}
         style={StyleSheet.flatten([
           styles.inputContainer,
           hasCustomIcon && styles.inputContainerWithIcon,
@@ -314,14 +356,14 @@ const NextInputComponent = ({
           </Text>
         )}
         <JSXComponent
-          {...inputProps}
+          {...normalizedInputProps}
           onFocus={onFocus}
           onBlur={onBlur}
           ref={inputRef as any}
           style={StyleSheet.flatten([
             styles.input,
             inputStyle,
-            inputProps?.style,
+            normalizedInputProps?.style,
             !!fieldName && styles.inputWithFieldName,
           ])}
         />

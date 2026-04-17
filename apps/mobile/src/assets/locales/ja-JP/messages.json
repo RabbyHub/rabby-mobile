@@ -27,7 +27,8 @@
       "CreateSelectOnCurrentSeed": "2. ウォレットを追加",
       "SetPassword": "パスワードを設定する",
       "CreateWallet": "ウォレットを作成する",
-      "ChooseBackup": "バックアップ方法を選択してください"
+      "ChooseBackup": "バックアップ方法を選択してください",
+      "MoreImportMethods": "その他のインポート方法"
     }
   },
   "constant": {
@@ -1006,7 +1007,9 @@
         "createAddress": "ウォレットを作成",
         "importAddress": "ウォレットをインポートする",
         "selectAddMethod": "メソッドを追加を選択してください",
-        "seedPhraseOrPrivateKey": "シードフレーズまたはプライベートキー"
+        "seedPhraseOrPrivateKey": "シードフレーズまたはプライベートキー",
+        "restoreRabbyWallet": "Rabby 钱包を復元",
+        "moreOptions": "その他のオプション"
       },
       "createNewAddress": {
         "WriteDownSeedPhrase": "シードフレーズを書き留める",
@@ -1048,7 +1051,11 @@
         "watchOnlyTitle": "ウォッチオンリーウォレットのインポート",
         "safeTitle": "安全なウォレットをインポート",
         "importTitle": "ウォレットをインポート",
-        "ImportCloud": "{{cloud}} からインポート"
+        "ImportCloud": "{{cloud}} からインポート",
+        "ImportFromExtensionOrCloud": "拡張機能または{{cloud}}からインポート",
+        "moreWatchOnlyTitle": "監視専用アドレスをインポート",
+        "moreWatchOnly": "監視専用アドレス",
+        "moreSafeTitle": "Safeアドレスをインポート"
       },
       "rateModalTriggerOnHome": {
         "description": "Rabby Walletはどのように評価しますか"
@@ -1151,7 +1158,8 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "フォームが変更されました",
       "formChangedAmount": "金額が変更されました。これは、システムキーボードからのパスワード自動入力が原因の可能性があります。正しい金額を確認して再入力してください。",
-      "best-subtitle": "最適な見積もりは、予想される総コスト（Gas手数料を含む）と配信速度の組み合わせによって決定されます。"
+      "best-subtitle": "最適な見積もりは、予想される総コスト（Gas手数料を含む）と配信速度の組み合わせによって決定されます。",
+      "swap-best-subtitle": "最適な見積りは、為替レートとガス手数料を含む、最低推定総コストによって決まります。"
     },
     "dashboard": {
       "hd": {
@@ -1252,7 +1260,10 @@
       "quickAddressTitle_other": "{{count}} アドレス",
       "quickAddressTitle_one": "{{count}} アドレス",
       "add-address": "ウォレットを追加",
-      "delete-checklist-1": "このウォレットを削除すると、対応するプライベートキーとシードフレーズが削除され、Rabbyがそれらを復元することはできないことを理解しています。"
+      "delete-checklist-1": "このウォレットを削除すると、対応するプライベートキーとシードフレーズが削除され、Rabbyがそれらを復元することはできないことを理解しています。",
+      "delete-private-key-title": "ウォレットと秘密鍵を削除",
+      "delete-seed-phrase-title": "ウォレットとシードフレーズを削除",
+      "delete-title": "ウォレットを削除"
     },
     "signText": {
       "title": "テキストに署名",
@@ -1361,7 +1372,8 @@
         "chooseBackupMethodDesc": "バックアップを使用すると、アプリを削除したりデバイスを紛失した場合にウォレットを復元できます。",
         "backupUploadToGDrive": "Google Driveにバックアップ中...",
         "backupTips": "シードフレーズをバックアップする際は、他の誰も画面を見ていないことを確認してください。",
-        "backupUnlockDesc": "バックアップを復元するためにパスワードを安全に保管してください。Rabby Wallet はそれを保存せず、復元することはできません。"
+        "backupUnlockDesc": "バックアップを復元するためにパスワードを安全に保管してください。Rabby Wallet はそれを保存せず、復元することはできません。",
+        "addMoreWalletTitle": "このパスフレーズからウォレットを追加する"
       },
       "privateKey": {
         "whatIsAPrivateKey": {
@@ -1514,7 +1526,9 @@
         "description4": "あなたの秘密鍵はデバイスにローカルに保存されており、パスワードで暗号化されています。あなたにしかアクセスできません。Rabbyはあなたの秘密鍵を取得したりアクセスしたりすることはできません。"
       },
       "importing": "インポート中...",
-      "Done": "完了"
+      "Done": "完了",
+      "generatingWallets": " walletを生成中です、お待ちください...",
+      "selectAddressesToAdd": "追加するアドレスを選択してください"
     },
     "sign": {
       "transactionSpeed": "トランザクションスピード"
@@ -3164,7 +3178,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "subtitle": "お帰りなさい! 🎉  \nウォレットを迅速に復元する方法を選択してください。",
-        "title": "Rabby ウォレットを復元する"
+        "title": "Rabby ウォレットを復元する",
+        "subtitleInApp": "Rabby 拡張機能または iCloud からウォレットをすばやくインポートするには、下のオプションを選択してください。"
       },
       "common": {
         "orYouCanCreateNewWallet": "または、<clickable>新しいウォレットを作成</clickable>することができます。"

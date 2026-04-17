@@ -37,7 +37,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import useBalanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import useTokenList from '@/store/tokens';
@@ -205,7 +205,11 @@ export const ImportSuccessScreen2024 = () => {
       label: state?.brandName,
     });
 
-    useBalanceStore.getState().batchGetTotalBalance(addresses, true);
+    addressBalanceStore.batchGetTotalBalance(addresses, true, {
+      scene: 'ImportSuccess',
+      requester: 'ImportSuccessScreen2024',
+      endpoint: 'openapi.getTotalBalanceV2',
+    });
     if (
       state.type !== KEYRING_TYPE.WatchAddressKeyring &&
       state.type !== KEYRING_TYPE.GnosisKeyring

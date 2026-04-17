@@ -1,4 +1,4 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
+appId: ${RABBY_MAESTRO_APP_ID}
 name: Android components2024 showcase smoke
 tags:
   - android
@@ -121,7 +121,8 @@ env:
 
 - inputText: wallet
 
-- hideKeyboard
+- hideKeyboard:
+    optional: true
 
 - scrollUntilVisible:
     element:

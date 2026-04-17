@@ -10,7 +10,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import RcIconLoading from '@/assets2024/icons/home/Iconloading.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { E2E_ID } from '@/constant/e2e';
 import { RootNames } from '@/constant/layout';
@@ -32,6 +31,7 @@ import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHe
 import {
   HOME_TOP_HEADER_SIZES,
   ITEM_LAYOUT_PADDING_HORIZONTAL,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
 } from '@/constant/home';
 import { useMemoizedFn } from 'ahooks';
 import { useHideBalance } from '../hooks/useHideBalance';
@@ -48,22 +48,17 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { apisHomeTabIndex, useHomeTabIndex } from '@/hooks/navigation';
-import {
-  useScene24hBalanceCombinedData,
-  useSceneIsLoading,
-} from '@/hooks/useScene24hBalance';
-import useTokenList from '@/store/tokens';
 import IconPerpEdit from '@/assets2024/icons/perps/icon-switch-mode.svg';
-import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
-import balanceStore from '@/store/balance';
+import useTokenList from '@/store/tokens';
 import { useHomeDrawerOpacityStyle } from '../hooks/useHomeDrawerAnimate';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabName } from '@/screens/Address/components/MultiAssets/TabsMultiAssets';
-import { SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
 import { Text } from '@/components/Typography';
 import { useReportTokenTabView } from '../hooks/useReportTokenTabView';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
+import { useShallow } from 'zustand/react/shallow';
 
 const HeaderHeight = 30;
 const handleSwitchToTokenTab = (index: number) => {
@@ -79,8 +74,25 @@ export function TabsTopHeader(): JSX.Element {
     apisHomeTabIndex.svTabIndexDecimal,
   );
   const showNetWorth = tabIndexFromSv > 0.7;
-  const { isLoading: loading } = useSceneIsLoading('Home');
-  const { combinedData: data } = useScene24hBalanceCombinedData('Home');
+  const {
+    totalBalance,
+    showBalanceLoadingWithoutLocal,
+    showChangeLoadingWithoutLocal,
+    isAnyRemoteRefreshing,
+    isChangeAnyLoading,
+    changeData,
+  } = useHomePortfolioStore(
+    useShallow(state => ({
+      totalBalance: state.totalBalance,
+      showBalanceLoadingWithoutLocal: state.showBalanceLoadingWithoutLocal,
+      showChangeLoadingWithoutLocal: state.showChangeLoadingWithoutLocal,
+      isAnyRemoteRefreshing: state.isAnyRemoteRefreshing,
+      isChangeAnyLoading: state.isChangeAnyLoading,
+      changeData: state.changeData,
+    })),
+  );
+  const data = changeData;
+  const scene24hLoading = isChangeAnyLoading;
 
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
@@ -99,23 +111,6 @@ export function TabsTopHeader(): JSX.Element {
     }
   });
   const { currency } = useCurrency();
-  const { myTop10Addresses } = useAccountInfo();
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const isTop10BalanceLoading = balanceStore(s => {
-    return s.getIsTop10BalanceLoading(myTop10Addresses, s.isLoadingByAddress)
-      .isTop10BalanceLoading;
-  });
-
-  const totalBalance = useMemo(() => {
-    if (!myTop10Addresses.length) {
-      return 0;
-    }
-    return myTop10Addresses.reduce((acc, address) => {
-      const balance = balanceMap[address.toLowerCase()];
-      return acc + (balance?.totalBalance || 0);
-    }, 0);
-  }, [balanceMap, myTop10Addresses]);
-
   const tokenDisplayMode = useTokenList(s => s.tokenDisplayMode);
   const setTokenDisplayMode = useTokenList(s => s.setTokenDisplayMode);
 
@@ -154,15 +149,19 @@ export function TabsTopHeader(): JSX.Element {
     }
     return `${data.isLoss ? '-' : '+'}${data.changePercent}`;
   }, [data.changePercent, data.isLoss]);
+  const showChangeLoading = showChangeLoadingWithoutLocal;
+  const showHeaderSideLoadingIndicator = useMemo(() => {
+    return showBalanceLoadingWithoutLocal || isAnyRemoteRefreshing;
+  }, [isAnyRemoteRefreshing, showBalanceLoadingWithoutLocal]);
 
   const gasketWebViewRef = useRef<LocalWebView>(null);
 
-  const previousLoading = usePrevious(loading);
+  const previousLoading = usePrevious(scene24hLoading);
   useEffect(() => {
     if (data.isLoss) {
       return;
     }
-    if (!loading && previousLoading) {
+    if (!scene24hLoading && previousLoading) {
       gasketWebViewRef.current?.sendMessage?.({
         type: 'GASKETVIEW:TOGGLE_LOADING',
         info: {
@@ -170,7 +169,7 @@ export function TabsTopHeader(): JSX.Element {
         },
       });
     }
-  }, [data.isLoss, loading, previousLoading]);
+  }, [data.isLoss, previousLoading, scene24hLoading]);
 
   const { opacityStyle, pullPercent } = useHomeDrawerOpacityStyle();
 
@@ -189,8 +188,14 @@ export function TabsTopHeader(): JSX.Element {
         <Pressable
           style={styles.leftBox}
           onPress={() => handleSwitchToTokenTab(0)}>
-          <Text style={styles.balanceTextBox}>{netWorth}</Text>
-          {changePercent ? (
+          {showBalanceLoadingWithoutLocal ? (
+            <View style={styles.balanceLoadingBox}>
+              <LoadingCircle />
+            </View>
+          ) : (
+            <Text style={styles.balanceTextBox}>{netWorth}</Text>
+          )}
+          {!showBalanceLoadingWithoutLocal && changePercent ? (
             <Text
               style={[
                 styles.changePercentText,
@@ -203,8 +208,13 @@ export function TabsTopHeader(): JSX.Element {
               {changePercent}
             </Text>
           ) : null}
+          {showChangeLoading ? (
+            <View style={styles.changeLoadingBox}>
+              <LoadingCircle />
+            </View>
+          ) : null}
           {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          isTop10BalanceLoading ? (
+          showHeaderSideLoadingIndicator ? (
             <LoadingCircle />
           ) : null}
         </Pressable>
@@ -237,7 +247,7 @@ export function TabsTopHeader(): JSX.Element {
             )}
           </TouchableOpacity>
           {!SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING &&
-          isTop10BalanceLoading ? (
+          showHeaderSideLoadingIndicator ? (
             <LoadingCircle />
           ) : null}
         </View>
@@ -325,12 +335,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     // ...makeDebugBorder('green'),
   },
+  balanceLoadingBox: {
+    minWidth: 24,
+    minHeight: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   changePercentText: {
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
+  },
+  changeLoadingBox: {
+    minWidth: 20,
+    minHeight: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   rightArea: {
     flexDirection: 'row',

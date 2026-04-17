@@ -361,7 +361,7 @@ export const ImportSecret = ({ route }: ScreenProps) => {
       }}
       style={styles.screen}
       footerBottomOffset={48}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <View style={styles.content}>
             <View style={styles.topContent}>

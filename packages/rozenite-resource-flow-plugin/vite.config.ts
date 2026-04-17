@@ -12,5 +12,34 @@ export default defineConfig({
     reportCompressedSize: false,
     minify: true,
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return undefined;
+          }
+
+          if (
+            /node_modules\/(antd|@ant-design|rc-|@rc-component)\//.test(id)
+          ) {
+            return 'lib-antd';
+          }
+
+          if (
+            /node_modules\/(react|react-dom|react-native|react-native-web|scheduler)\//.test(
+              id,
+            )
+          ) {
+            return 'lib-react';
+          }
+
+          if (id.includes('@rozenite/plugin-bridge')) {
+            return 'lib-bridge';
+          }
+
+          return 'lib-vendor';
+        },
+      },
+    },
   },
 });

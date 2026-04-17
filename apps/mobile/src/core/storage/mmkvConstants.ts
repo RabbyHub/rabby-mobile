@@ -6,6 +6,7 @@ export enum MMKV_FILE_NAMES {
   DAYCURVE = 'mmkv.24hCurve',
   CEXID = 'mmkv.cexid',
   BALANCE_24H = 'mmkv.balance24h',
+  TESTNET_BALANCE = 'mmkv.testnetBalance',
 
   LENDING_DATA_CACHE = 'mmkv.lendingDataCache',
 }
@@ -30,4 +31,5 @@ export const APP_MMKV_WEAK_KEYS = {
   HAS_TIPED_USER_ENABLE_BIOMETRICS: '@hasTipedUserEnableBiometrics',
   LENDING_MARKET: '@lendingMarket',
   FAILED_UNLOCK: '@failed_unlock',
+  HOME_TOP10_ADDRESSES: '@homeTop10Addresses',
 } as const;

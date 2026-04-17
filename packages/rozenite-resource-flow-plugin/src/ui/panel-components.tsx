@@ -1,5 +1,5 @@
 import { Card, Tag } from 'antd';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { cn, formatLabel, getStatusTone, toJson } from './panel-utils';
 
@@ -72,6 +72,32 @@ export function EventDot(props: { status?: string }) {
         getStatusTone(props.status) === 'processing' && 'bg-blue-default',
         getStatusTone(props.status) === 'default' && 'bg-neutral-secondary',
       )}
+    />
+  );
+}
+
+export function ChainLogo(props: { src?: string; alt: string; size?: number }) {
+  const [hasError, setHasError] = useState(false);
+  const size = props.size || 24;
+
+  if (!props.src || hasError) {
+    return (
+      <div
+        className="inline-flex shrink-0 items-center justify-center rounded-full border border-neutral-line bg-neutral-bg-2 text-[10px] font-semibold uppercase text-neutral-foot"
+        style={{ width: size, height: size }}>
+        {props.alt.slice(0, 2)}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={props.src}
+      alt={props.alt}
+      width={size}
+      height={size}
+      className="shrink-0 rounded-full border border-neutral-line bg-neutral-bg-1 object-cover"
+      onError={() => setHasError(true)}
     />
   );
 }
