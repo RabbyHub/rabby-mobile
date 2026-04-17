@@ -172,6 +172,7 @@ export interface QRCodeScannerProps extends CameraViewProps {}
 export const QRCodeScanner = (props: QRCodeScannerProps) => {
   const { hasPermission, requestPermission } = useCameraPermission();
   const appState = useAppState();
+  const colors = useThemeColors();
 
   React.useEffect(() => {
     if (!hasPermission && appState === 'active') {
@@ -184,9 +185,15 @@ export const QRCodeScanner = (props: QRCodeScannerProps) => {
       <Text
         style={{
           maxWidth: 300,
+          color: '#FFFFFF',
         }}>
         Camera permission is not granted. You can grant it on
-        <Text onPress={Linking.openSettings}> setting</Text>
+        <Text
+          onPress={() => Linking.openSettings()}
+          style={{ color: '#FFFFFF' }}>
+          {' '}
+          Settings
+        </Text>
       </Text>
     );
   }

@@ -87,12 +87,12 @@ export const AddressItem = (props: AddressItemProps) => {
   }, [account.balance, currency.symbol, currency.usd_rate]);
 
   const WalletIconWrapper = useCallback(
-    (_props: Omit<WalletIconProps, 'type'>) => {
+    (props: Omit<WalletIconProps, 'type'>) => {
       return (
         <WalletIcon
           type={account.brandName}
           address={account.address}
-          {..._props}
+          {...props}
         />
       );
     },
@@ -103,7 +103,8 @@ export const AddressItem = (props: AddressItemProps) => {
       return (
         <Text
           style={StyleSheet.flatten([styles.aliasNameText, style])}
-          numberOfLines={1}>
+          numberOfLines={1}
+          ellipsizeMode="tail">
           {walletName}
         </Text>
       );
@@ -175,6 +176,7 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
   },
   leftContainer: {
+    flex: 1,
     gap: 10,
     alignItems: 'center',
     flexDirection: 'row',
@@ -192,6 +194,8 @@ export const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   middle: {
     gap: 4,
+    flex: 1,
+    flexShrink: 1,
   },
   addressText: {
     fontSize: 16,

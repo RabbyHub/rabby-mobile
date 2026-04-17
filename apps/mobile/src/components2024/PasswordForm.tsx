@@ -260,6 +260,7 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
           {t('page.createPassword.agreeToTerms')}{' '}
           <Text
             style={styles.userAgreementTouchText}
+            suppressHighlighting
             onPress={evt => {
               evt.stopPropagation();
               viewTermsOfUse();
@@ -269,6 +270,7 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({
           {t('page.createPassword.and')}{' '}
           <Text
             style={styles.userAgreementTouchText}
+            suppressHighlighting
             onPress={evt => {
               evt.stopPropagation();
               viewPrivacyPolicy();
