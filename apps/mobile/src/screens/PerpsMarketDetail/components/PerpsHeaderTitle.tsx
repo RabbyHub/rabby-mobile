@@ -114,6 +114,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 24,
     height: 24,
     borderRadius: 1000,
+    backgroundColor: 'white',
   },
   container: {
     display: 'flex',

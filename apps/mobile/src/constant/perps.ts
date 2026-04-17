@@ -1,5 +1,4 @@
-import { ITokenItem } from '@/store/tokens';
-import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 
 // must be a USDC token and more than 5 usdc
 export const PERPS_SEND_ARB_USDC_ADDRESS =
@@ -166,19 +165,6 @@ export enum CANDLE_MENU_KEY_V2 {
   FOUR_HOURS = '4H',
   ONE_DAY = '1D',
   ONE_WEEK = '1W',
-}
-
-// V3 token type with category/brief/description fields
-export interface PerpTopTokenV3 {
-  id: number;
-  name: string;
-  full_logo_url: string | null;
-  daily_volume: number;
-  display_name?: string;
-  dex_id?: string;
-  category?: string;
-  brief?: string;
-  description?: string;
 }
 
 import DEFAULT_TOP_ASSET_JSON from './perpsTopAsset.json';

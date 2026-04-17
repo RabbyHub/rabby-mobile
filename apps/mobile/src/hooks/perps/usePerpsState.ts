@@ -15,7 +15,7 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { Account } from '@/core/services/preference';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { UserAbstraction } from '@rabby-wallet/hyperliquid-sdk';
+import { Abstraction, UserAbstraction } from '@rabby-wallet/hyperliquid-sdk';
 import { formatSpotState } from '@/utils/perps';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -292,13 +292,15 @@ export const usePerpsState = () => {
     }
   }, []);
 
-  const handleSafeSetDexAbstraction = useCallback(async () => {
+  const handleSafeSetUnifiedAccount = useCallback(async () => {
     try {
       const sdk = apisPerps.getPerpsSDK();
-      const res = await sdk.exchange?.agentEnableDexAbstraction();
-      console.log('handleSafeSetDexAbstraction res', res);
+      const res = await sdk.exchange?.agentSetAbstraction(
+        Abstraction.UNIFIED_ACCOUNT,
+      );
+      console.log('handleSafeSetUnifiedAccount res', res);
     } catch (e) {
-      console.log('Failed to handleSafeSetDexAbstraction:', e);
+      console.log('Failed to handleSafeSetUnifiedAccount:', e);
     }
   }, []);
 
@@ -328,12 +330,12 @@ export const usePerpsState = () => {
       );
 
       setTimeout(() => {
-        handleSafeSetDexAbstraction();
+        handleSafeSetUnifiedAccount();
         handleSafeSetReference();
       }, 100);
       // const [approveAgentRes, approveBuilderFeeRes] = results;
     },
-    [handleSafeSetReference, handleSafeSetDexAbstraction],
+    [handleSafeSetReference, handleSafeSetUnifiedAccount],
   );
 
   const ensureLoginApproveSign = useCallback(
@@ -379,7 +381,7 @@ export const usePerpsState = () => {
         if (signActions.length === 0) {
           setAccountNeedApproveAgent(false);
           setAccountNeedApproveBuilderFee(false);
-          handleSafeSetDexAbstraction();
+          handleSafeSetUnifiedAccount();
           return;
         }
 
@@ -426,7 +428,7 @@ export const usePerpsState = () => {
       setAccountNeedApproveAgent,
       setAccountNeedApproveBuilderFee,
       checkExtraAgent,
-      handleSafeSetDexAbstraction,
+      handleSafeSetUnifiedAccount,
     ],
   );
 
@@ -970,7 +972,7 @@ export const usePerpsState = () => {
     handleActionApproveStatus,
 
     handleSafeSetReference,
-    handleSafeSetDexAbstraction,
+    handleSafeSetUnifiedAccount,
     handleEnableUnifiedAccount,
   };
 };

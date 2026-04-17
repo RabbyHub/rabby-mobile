@@ -39,11 +39,11 @@ import {
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { perpsService } from '@/core/services';
-import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 import { stats } from '@/utils/stats';
 import BigNumber from 'bignumber.js';
 
-let perpsTopTokenCache: PerpTopToken[] = [];
+let perpsTopTokenCache: PerpTopTokenV3[] = [];
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -335,19 +335,18 @@ const fetchMarketData = async () => {
   try {
     const fetchTopTokenList = async () => {
       try {
-        return DEFAULT_TOP_ASSET;
-        // if (perpsTopTokenCache.length > 0) {
-        //   return perpsTopTokenCache;
-        // }
-        // const topAssets = await openapi.getPerpTopTokenList({
-        //   dex_id: 'all',
-        // });
-        // if (topAssets.length > 0) {
-        //   perpsTopTokenCache = topAssets;
-        //   return topAssets;
-        // } else {
-        //   return DEFAULT_TOP_ASSET;
-        // }
+        if (perpsTopTokenCache.length > 0) {
+          return perpsTopTokenCache;
+        }
+        const topAssets = await openapi.getPerpTopTokenListV3({
+          dex_id: 'all',
+        });
+        if (topAssets.length > 0) {
+          perpsTopTokenCache = topAssets;
+          return topAssets;
+        } else {
+          return DEFAULT_TOP_ASSET;
+        }
       } catch (error) {
         console.error('Failed to fetch top assets:', error);
         return DEFAULT_TOP_ASSET;

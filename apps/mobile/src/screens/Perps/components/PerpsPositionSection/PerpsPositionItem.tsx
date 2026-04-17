@@ -88,7 +88,7 @@ export const PerpsPositionItem: React.FC<{
         {/* Left section: icon + coin info */}
         <View style={styles.leftSection}>
           <View style={styles.coinInfoRow}>
-            <AssetAvatar logo={logoUrl} size={28} style={styles.icon} />
+            <AssetAvatar logo={logoUrl} size={28} logoStyle={styles.icon} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
                 <PerpsDisplayCoinName item={marketData} />
@@ -201,7 +201,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 6,
   },
   icon: {
+    width: 28,
+    height: 28,
     backgroundColor: 'white',
+    flexShrink: 0,
     borderRadius: 1000,
   },
   coinNameRow: {

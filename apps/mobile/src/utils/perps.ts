@@ -6,7 +6,6 @@ import {
   PERPS_MAX_NTL_VALUE,
   PerpsQuoteAsset,
   COLLATERAL_TOKEN_TO_QUOTE,
-  PerpTopTokenV3,
 } from '@/constant/perps';
 import {
   Meta,
@@ -19,7 +18,7 @@ import { Account } from '@/core/services/preference';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisPerps } from '@/core/apis';
 import { perpsService } from '@/core/services';
-import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
+import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 
 export const getPxDecimals = (markPx: string) => {
@@ -98,7 +97,7 @@ export const formatMarkData = (
 
     const result: MarketData[] = topAssets
       .map(topAsset => {
-        const index = topAsset.id;
+        const index = topAsset.token_id;
         const dexId = topAsset.dex_id ?? '';
         const dexInfo = dexLookup[dexId] ?? dexLookup[''];
         if (!dexInfo) {
@@ -142,8 +141,6 @@ export const formatMarkData = (
           logoUrl:
             topAsset.full_logo_url || getHyperliquidCoinLogoUrl(topAsset.name),
           category: topAsset.category || '',
-          brief: topAsset.brief || '',
-          description: topAsset.description || '',
         };
         return item;
       })

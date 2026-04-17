@@ -507,12 +507,7 @@ export const PerpsMarketDetailScreen = () => {
               handleUpdateMargin={handleUpdateMargin}
             />
           )}
-          {!hasPosition && (
-            <PerpsAbout
-              coin={displayName}
-              description={currentAssetCtx?.description}
-            />
-          )}
+          {!hasPosition && <PerpsAbout coin={coin} />}
           <PerpsInfo market={market} activeAssetCtx={activeAssetCtx} />
 
           <PerpsHistorySection
@@ -520,12 +515,7 @@ export const PerpsMarketDetailScreen = () => {
             marketDataMap={marketDataMap}
             historyList={singleCoinHistoryList}
           />
-          {hasPosition && (
-            <PerpsAbout
-              coin={displayName}
-              description={currentAssetCtx?.description}
-            />
-          )}
+          {hasPosition && <PerpsAbout coin={coin} />}
         </ScrollView>
         {isLogin ? (
           <PerpsFooter

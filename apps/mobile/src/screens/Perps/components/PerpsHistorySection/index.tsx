@@ -119,11 +119,10 @@ export const PerpsHistorySection: React.FC<{
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: {},
-  list: {},
-  contentContainer: {
-    paddingBottom: 56,
+  container: {
+    paddingBottom: 24,
   },
+  list: {},
   sectionHeader: {
     marginTop: 24,
     marginBottom: 12,

@@ -4,21 +4,28 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { Text } from '@/components/Typography';
-import { getPerpsAboutContent } from '@/constant/perpsAbout';
-import { formatPerpsCoin } from '@/utils/perps';
+import { openapi } from '@/core/request';
+import { useAppLanguage } from '@/hooks/lang';
+import { useRequest } from 'ahooks';
+import { PerpTopTokenV3 } from '@rabby-wallet/rabby-api/dist/types';
 
 export const PerpsAbout: React.FC<{
   coin: string;
-  description?: string;
-}> = ({ coin, description }) => {
+}> = ({ coin }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { currentLanguage } = useAppLanguage();
 
-  const baseCoin = formatPerpsCoin(coin);
-  // Prefer description from MarketData (API/JSON), fallback to hardcoded perpsAbout
-  const aboutContent =
-    description ||
-    (getPerpsAboutContent(coin) ?? getPerpsAboutContent(baseCoin));
+  const { data: tokenDetail } = useRequest(
+    () =>
+      openapi.getPerpTokenDetail({
+        name: coin,
+        lang: currentLanguage,
+      }),
+    { refreshDeps: [coin, currentLanguage] },
+  );
+
+  const aboutContent = (tokenDetail as unknown as PerpTopTokenV3)?.description;
 
   if (!aboutContent) {
     return null;
@@ -38,7 +45,7 @@ export const PerpsAbout: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   section: {
     marginBottom: 24,
   },
@@ -57,9 +64,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-5']
-      : colors2024['neutral-bg-3'],
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   desc: {
     fontFamily: 'SF Pro Rounded',
