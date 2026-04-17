@@ -46,6 +46,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { ITokenItem } from '@/store/tokens';
 import { Text } from '@/components/Typography';
 import { IconRightCC } from './components/IconRightCC';
+import { TokenDetailWalletCard } from './components/TokenDetailWalletCard';
 
 const isAndroid = Platform.OS === 'android';
 const ScreenWidth = Dimensions.get('window').width;
@@ -140,7 +141,7 @@ const TokenDetailContent = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        style={{ marginLeft: isAndroid ? 0 : -30 }}
+        //style={{ marginLeft: isAndroid ? 0 : -30 }}
         key={effectiveAccount?.address}
         tokenSize={33}
         chainSize={15}
@@ -161,22 +162,29 @@ const TokenDetailContent = () => {
 
   const getHeaderRight = useCallback(() => {
     return (
-      <RightMore
-        token={token}
-        triggerUpdate={() =>
-          effectiveAccount?.address &&
-          apisAddressBalance.triggerUpdate({
-            address: effectiveAccount?.address,
-            force: false,
-            fromScene: 'TokenDetail',
-          })
-        }
-        isMultiAddress={false}
-        refreshTags={refreshTag}
-        unHold
-      />
+      <View style={styles.headerRightContent}>
+        <AccountSwitcher
+          forScene="TokenDetail"
+          disableSwitch={false}
+          style={styles.headerAccountSwitcher}
+        />
+        <RightMore
+          token={token}
+          triggerUpdate={() =>
+            effectiveAccount?.address &&
+            apisAddressBalance.triggerUpdate({
+              address: effectiveAccount?.address,
+              force: false,
+              fromScene: 'TokenDetail',
+            })
+          }
+          isMultiAddress={false}
+          refreshTags={refreshTag}
+          unHold
+        />
+      </View>
     );
-  }, [token, refreshTag, effectiveAccount?.address]);
+  }, [effectiveAccount?.address, refreshTag, styles, token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -213,7 +221,6 @@ const TokenDetailContent = () => {
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.balanceOverviewContainer}>
-        <AccountSwitcher forScene="TokenDetail" disableSwitch={false} />
         <View style={styles.balanceOverviewContent}>
           <BalanceOverview usdValue={usdValue} amount={amountSum} />
           {!baseTokenInfo ? null : (
@@ -296,6 +303,10 @@ const TokenDetailContent = () => {
           )}
         </View>
 
+        {effectiveAccount ? (
+          <TokenDetailWalletCard account={effectiveAccount} />
+        ) : null}
+
         <View style={[styles.historyHeader]}>
           <Text style={styles.relateTitle}>
             {t('page.tokenDetail.Transaction')}
@@ -307,6 +318,7 @@ const TokenDetailContent = () => {
     amountSum,
     baseTokenInfo,
     colors2024,
+    effectiveAccount,
     handleOpenTokenMarketInfo,
     has24hChangeData,
     is24hNoChange,
@@ -364,7 +376,7 @@ const TokenDetailContent = () => {
       <Tabs.Container
         renderTabBar={() => null}
         tabBarHeight={0}
-        headerHeight={120}
+        headerHeight={260}
         renderHeader={renderHeader}
         headerContainerStyle={styles.headerContainer}
         containerStyle={styles.container}
@@ -434,6 +446,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     balanceOverviewContainer: {
       paddingLeft: 23,
       paddingRight: 16,
+    },
+    headerRightContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerAccountSwitcher: {
+      marginRight: 12,
     },
     bottomContainer: {
       width: '100%',
@@ -557,7 +576,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     historyHeader: {
       flexDirection: 'row',
-      marginTop: 26,
+      marginTop: 0,
       justifyContent: 'space-between',
       alignItems: 'center',
     },

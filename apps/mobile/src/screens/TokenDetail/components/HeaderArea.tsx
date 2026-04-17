@@ -121,7 +121,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
                 style={styles.touchBox}
                 onPress={handleCopyAddress}>
                 <Text style={styles.contractAddress}>
-                  {ellipsisAddress(token.id)}
+                  {ellipsisAddress(token.id, 4)}
                 </Text>
                 <RcIconCopyCC style={styles.copy} />
               </TouchableOpacity>
@@ -136,11 +136,18 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
 
 const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   root: {
-    width: screenWidth - 140,
+    //width: screenWidth - 300,
+    maxWidth: 130,
+    flex: 1,
+    //borderWidth: 1,
+    //borderColor: 'red',
   },
   container: {
-    width: screenWidth - 140,
     marginLeft: 0,
+    paddingRight: 0,
+    paddingLeft: 0,
+    flex: 1,
+    width: '100%',
     display: 'flex',
     flexDirection: 'column',
   },
@@ -209,6 +216,8 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
+    minWidth: 0,
   },
   copy: {
     width: 12,
@@ -223,6 +232,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   showCopySymbol: {
     flexShrink: 1,
+    minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,

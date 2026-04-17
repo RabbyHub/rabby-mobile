@@ -21,6 +21,7 @@ import { Text } from '@/components/Typography';
 function AccountSwitcherComponent({
   forScene = 'TokenDetail',
   disableSwitch = false,
+  style,
 }: RNViewProps &
   AccountSwitcherAopProps<{
     disableSwitch?: boolean;
@@ -47,7 +48,7 @@ function AccountSwitcherComponent({
 
   return (
     <Pressable
-      style={styles.container}
+      style={[styles.container, style]}
       disabled={disableSwitch}
       onPress={() => {
         const nextOpen = !isOpen;
@@ -63,7 +64,7 @@ function AccountSwitcherComponent({
           {({ WalletIcon }) => {
             return (
               <View style={styles.addressRow}>
-                <WalletIcon style={styles.walletIcon} />
+                <WalletIcon style={styles.walletIcon} width={18} height={18} />
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -80,8 +81,8 @@ function AccountSwitcherComponent({
         <CaretArrowIconCC
           dir={!isOpen ? 'down' : 'down'}
           style={[styles.addressCaretIcon]}
-          width={20}
-          height={20}
+          width={18}
+          height={18}
           bgColor="transparent"
           lineColor={colors2024['neutral-foot']}
         />
@@ -95,14 +96,15 @@ export const AccountSwitcher = memo(AccountSwitcherComponent);
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      borderRadius: 6,
+      borderRadius: 8,
       padding: 6,
       backgroundColor: ctx.colors2024['neutral-bg-5'],
+      borderWidth: 1,
+      borderColor: ctx.colors2024['neutral-line'],
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'flex-start',
-      marginBottom: 12,
-      maxWidth: '100%',
+      maxWidth: 132,
     },
     addressItem: {
       flexShrink: 1,
@@ -123,19 +125,19 @@ const getStyle = createGetStyles2024(ctx => {
       borderRadius: 5,
       width: 18,
       height: 18,
-      marginRight: 8,
+      marginRight: 4,
     },
     address: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '500',
-      lineHeight: 20,
-      fontSize: 16,
-      color: ctx.colors2024['neutral-body'],
+      lineHeight: 18,
+      fontSize: 14,
+      color: ctx.colors2024['neutral-foot'],
       flexShrink: 1,
     },
     addressCaretIcon: {
-      marginLeft: 0,
-      width: 20,
+      marginLeft: 4,
+      width: 18,
       flexShrink: 0,
     },
     reverseCaret: {
