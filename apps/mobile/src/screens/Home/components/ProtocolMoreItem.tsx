@@ -180,7 +180,7 @@ export const WrapperDappActionsMemoItem = ({
             </Text>
           </TouchableOpacity>
         ))}
-      {!!item._originPortfolio.withdraw_actions?.length &&
+      {!!filteredActions?.length &&
         !item?._originPortfolio?.proxy_detail?.proxy_contract_id && (
           <DappActions
             data={filteredActions}

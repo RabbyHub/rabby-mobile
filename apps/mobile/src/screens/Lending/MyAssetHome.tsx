@@ -256,6 +256,10 @@ const MyAssetHome: React.FC = () => {
     }
     openedRouteActionKeyRef.current = actionKey;
 
+    if (direction !== 'supply' && direction !== 'borrow') {
+      return;
+    }
+
     const modalId = createGlobalBottomSheetModal2024({
       name:
         direction === 'supply'
