@@ -1,4 +1,9 @@
 import { createAsyncMiddleware } from 'json-rpc-engine';
+import {
+  getApprovalProbeErrorMessage,
+  recordApprovalProbe,
+  shouldLogApprovalProbeMethod,
+} from '@/debug/approvalProbe';
 
 import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { dappSendRequest } from '@/core/apis/sendRequest';
@@ -146,12 +151,39 @@ RPCMethodsMiddleParameters) =>
       );
     }
     const isWhiteListedMethod = isWhitelistedRPC(req.method);
+    const shouldLogMethod = shouldLogApprovalProbeMethod(req.method);
+
+    if (shouldLogMethod) {
+      const activeDappState = getActiveDappState();
+      recordApprovalProbe('RPC_MIDDLEWARE_REQUEST', {
+        method: req.method,
+        origin: req.origin,
+        requestId: req.id ? String(req.id) : null,
+        methodAllowed,
+        webviewId: bridge.webviewId,
+        activeTabId: activeDappState.tabId || null,
+        activeDappOrigin: activeDappState.dappOrigin || null,
+        isScreenHide: !!activeDappState.isScreenHide,
+        isFromMobileInnerDapp: bridge.isFromMobileInnerDapp,
+      });
+    }
 
     try {
       if (isWhiteListedMethod) {
         // dispatch rpc execution stage change here: RPCStageTypes.REQUEST_SEND
       }
       if (!methodAllowed) {
+        if (shouldLogMethod) {
+          recordApprovalProbe(
+            'RPC_MIDDLEWARE_BLOCKED',
+            {
+              method: req.method,
+              origin: req.origin,
+              webviewId: bridge.webviewId,
+            },
+            { level: 'warn' },
+          );
+        }
         if (__DEV__) {
           console.debug(
             `[getRpcMethodMiddleware::not-allowed] req.method: '${req.method}'(req.id: ${req.id}) not allowed now`,
@@ -166,6 +198,12 @@ RPCMethodsMiddleParameters) =>
         }
         await rpcMethods[req.method]?.();
       } else {
+        if (shouldLogMethod) {
+          recordApprovalProbe('RPC_MIDDLEWARE_FORWARD', {
+            method: req.method,
+            origin: req.origin,
+          });
+        }
         if (__DEV__) {
           console.debug(
             `[getRpcMethodMiddleware::rpc-method] req.method: '${req.method}'(req.id: ${req.id}) use providerController`,
@@ -178,6 +216,12 @@ RPCMethodsMiddleParameters) =>
             params: req.params,
           },
           session: providerSessionBase,
+        });
+      }
+      if (shouldLogMethod) {
+        recordApprovalProbe('RPC_MIDDLEWARE_RESOLVED', {
+          method: req.method,
+          origin: req.origin,
         });
       }
       if (__DEV__) {
@@ -198,6 +242,17 @@ RPCMethodsMiddleParameters) =>
         console.debug(
           `[getRpcMethodMiddleware] error for method '${req.method}'(req.id: ${req.id}): `,
           e,
+        );
+      }
+      if (shouldLogMethod) {
+        recordApprovalProbe(
+          'RPC_MIDDLEWARE_ERROR',
+          {
+            method: req.method,
+            origin: req.origin,
+            error: getApprovalProbeErrorMessage(e),
+          },
+          { level: 'warn' },
         );
       }
       throw e;

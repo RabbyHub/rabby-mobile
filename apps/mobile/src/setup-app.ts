@@ -5,6 +5,7 @@ import './perfs/bundle-splitter-analysis';
 import './devtools/e2eBridge';
 import './databases/orm';
 import './core/services';
+import './core/controllers/index';
 import './core/utils/devServerSettings';
 import './core/config/online';
 

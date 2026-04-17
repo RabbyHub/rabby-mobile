@@ -1,4 +1,5 @@
 import { createDeferred, type Deferred } from '@rabby-wallet/base-utils';
+import { recordApprovalProbe } from '@/debug/approvalProbe';
 
 export const SERVICE_READY_KEYS = {
   contactService: 'contactService',
@@ -35,6 +36,9 @@ export type ServiceReadyKey =
 
 const serviceRefs = new Map<string, unknown>();
 const serviceDeferreds = new Map<string, Deferred<any>>();
+const loggedServiceRegisters = new Set<string>();
+const loggedServiceWaits = new Set<string>();
+const loggedServiceWaitResolves = new Set<string>();
 
 function getServiceDeferred<T>(serviceName: string) {
   const deferred = serviceDeferreds.get(serviceName);
@@ -56,12 +60,36 @@ export function registerServiceReady<T>(
   }
 
   serviceRefs.set(serviceName, service);
+  if (!loggedServiceRegisters.has(serviceName)) {
+    loggedServiceRegisters.add(serviceName);
+    recordApprovalProbe('SERVICE_READY_REGISTER', {
+      serviceName,
+    });
+  }
   getServiceDeferred<T>(serviceName).resolve(service);
 }
 
 export function getServiceReady<T>(serviceName: ServiceReadyKey | string) {
-  return Promise.resolve(
-    (serviceRefs.get(serviceName) as T | undefined) ??
-      getServiceDeferred<T>(serviceName).promise,
-  );
+  const registeredService = serviceRefs.get(serviceName) as T | undefined;
+  if (registeredService) {
+    return Promise.resolve(registeredService);
+  }
+
+  if (!loggedServiceWaits.has(serviceName)) {
+    loggedServiceWaits.add(serviceName);
+    recordApprovalProbe('SERVICE_READY_WAIT', {
+      serviceName,
+    });
+  }
+
+  return getServiceDeferred<T>(serviceName).promise.then(service => {
+    if (!loggedServiceWaitResolves.has(serviceName)) {
+      loggedServiceWaitResolves.add(serviceName);
+      recordApprovalProbe('SERVICE_READY_WAIT_RESOLVED', {
+        serviceName,
+      });
+    }
+
+    return service;
+  });
 }

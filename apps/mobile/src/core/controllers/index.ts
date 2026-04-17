@@ -2,6 +2,11 @@ import { ProviderRequest } from './type';
 
 import { ethErrors } from 'eth-rpc-errors';
 import type KeyringService from '@rabby-wallet/service-keyring';
+import {
+  getApprovalProbeErrorMessage,
+  recordApprovalProbe,
+  shouldLogApprovalProbeMethod,
+} from '@/debug/approvalProbe';
 import type { DappService } from '../services/dappService';
 import type { PreferenceService } from '../services/preference';
 
@@ -39,6 +44,7 @@ export default async function provider<T = void>(
 
   const origin = req.session?.origin || req.origin;
   let account: Account | undefined = undefined;
+  const shouldLogMethod = shouldLogApprovalProbeMethod(method);
 
   if (origin) {
     if (origin === INTERNAL_REQUEST_ORIGIN) {
@@ -57,20 +63,75 @@ export default async function provider<T = void>(
 
   req.account = account;
 
+  if (shouldLogMethod) {
+    recordApprovalProbe('PROVIDER_EXECUTOR_CALL', {
+      method,
+      origin: origin || null,
+      isInternalOrigin: origin === INTERNAL_REQUEST_ORIGIN,
+      hasResolvedAccount: !!account,
+    });
+  }
+
   if (internalMethod[method]) {
-    return internalMethod[method](req);
+    const result = await internalMethod[method](req);
+
+    if (shouldLogMethod) {
+      recordApprovalProbe('PROVIDER_EXECUTOR_INTERNAL_METHOD_RESOLVED', {
+        method,
+        origin: origin || null,
+      });
+    }
+
+    return result;
   }
 
   if (!IGNORE_CHECK.includes(method)) {
     const hasVault = keyringService.hasVault();
     if (!hasVault) {
+      if (shouldLogMethod) {
+        recordApprovalProbe(
+          'PROVIDER_EXECUTOR_NO_VAULT',
+          {
+            method,
+            origin: origin || null,
+          },
+          { level: 'warn' },
+        );
+      }
       throw ethErrors.provider.userRejectedRequest({
         message: 'wallet must has at least one account',
       });
     }
   }
 
-  return rpcFlow(req) as any;
+  try {
+    const result = await rpcFlow(req);
+
+    if (shouldLogMethod) {
+      recordApprovalProbe('PROVIDER_EXECUTOR_RESOLVED', {
+        method,
+        origin: origin || null,
+      });
+    }
+
+    return result as T;
+  } catch (error) {
+    if (shouldLogMethod) {
+      recordApprovalProbe(
+        'PROVIDER_EXECUTOR_ERROR',
+        {
+          method,
+          origin: origin || null,
+          error: getApprovalProbeErrorMessage(error),
+        },
+        { level: 'warn' },
+      );
+    }
+
+    throw error;
+  }
 }
 
-registerProviderExecutor(provider);
+registerProviderExecutor(provider, {
+  source: 'controllers-index',
+});

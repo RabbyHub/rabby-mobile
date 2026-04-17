@@ -1,4 +1,9 @@
 import { ethErrors } from 'eth-rpc-errors';
+import {
+  getApprovalProbeErrorMessage,
+  recordApprovalProbe,
+  shouldLogApprovalProbeMethod,
+} from '@/debug/approvalProbe';
 // import {
 //   keyringService,
 //   notificationService,
@@ -64,6 +69,7 @@ const flowContext = flow
     const {
       data: { method },
     } = ctx.request;
+    const shouldLogMethod = shouldLogApprovalProbeMethod(method);
     ctx.mapMethod = underline2Camelcase(method);
     const providerController = await getProviderController();
 
@@ -71,6 +77,16 @@ const flowContext = flow
     // console.debug('[debug] flowContext:: before check method');
 
     if (Reflect.getMetadata('PRIVATE', providerController, ctx.mapMethod)) {
+      if (shouldLogMethod) {
+        recordApprovalProbe(
+          'RPC_FLOW_PRIVATE_METHOD_REJECTED',
+          {
+            method,
+            mapMethod: ctx.mapMethod,
+          },
+          { level: 'warn' },
+        );
+      }
       // Reject when dapp try to call private controller function
       throw ethErrors.rpc.methodNotFound({
         message: `method [${method}] doesn't has corresponding handler`,
@@ -80,9 +96,25 @@ const flowContext = flow
     if (!providerController[ctx.mapMethod]) {
       // TODO: make rpc whitelist
       if (method.startsWith('eth_') || method === 'net_version') {
+        if (shouldLogMethod) {
+          recordApprovalProbe('RPC_FLOW_FALLBACK_TO_ETH_RPC', {
+            method,
+            mapMethod: ctx.mapMethod,
+          });
+        }
         return providerController.ethRpc(ctx.request as any);
       }
 
+      if (shouldLogMethod) {
+        recordApprovalProbe(
+          'RPC_FLOW_HANDLER_NOT_FOUND',
+          {
+            method,
+            mapMethod: ctx.mapMethod,
+          },
+          { level: 'warn' },
+        );
+      }
       throw ethErrors.rpc.methodNotFound({
         message: `method [${method}] doesn't has corresponding handler`,
         data: ctx.request.data,
@@ -95,9 +127,11 @@ const flowContext = flow
     const {
       mapMethod,
       request: {
+        data: { method },
         session: { origin },
       },
     } = ctx;
+    const shouldLogMethod = shouldLogApprovalProbeMethod(method);
     const providerController = await getProviderController();
 
     // // leave here for debug
@@ -115,6 +149,16 @@ const flowContext = flow
 
       if (!isUnlock) {
         if (lockedOrigins.has(origin)) {
+          if (shouldLogMethod) {
+            recordApprovalProbe(
+              'RPC_FLOW_LOCK_ALREADY_PENDING',
+              {
+                method,
+                origin,
+              },
+              { level: 'warn' },
+            );
+          }
           throw ethErrors.rpc.resourceNotFound(
             'Already processing unlock. Please wait.',
           );
@@ -122,6 +166,12 @@ const flowContext = flow
         ctx.request.requestedApproval = true;
         lockedOrigins.add(origin);
         try {
+          if (shouldLogMethod) {
+            recordApprovalProbe('RPC_FLOW_LOCK_APPROVAL_REQUEST', {
+              method,
+              origin,
+            });
+          }
           await notificationService.requestApproval(
             { lock: true },
             { height: 628 },
@@ -129,6 +179,17 @@ const flowContext = flow
           lockedOrigins.delete(origin);
         } catch (e) {
           lockedOrigins.delete(origin);
+          if (shouldLogMethod) {
+            recordApprovalProbe(
+              'RPC_FLOW_LOCK_APPROVAL_ERROR',
+              {
+                method,
+                origin,
+                error: getApprovalProbeErrorMessage(e),
+              },
+              { level: 'warn' },
+            );
+          }
           throw e;
         }
       }
@@ -142,12 +203,14 @@ const flowContext = flow
     // check connect
     const {
       request: {
+        data: { method },
         session: { origin, name, icon, $mobileCtx },
       },
       mapMethod,
     } = ctx;
 
     const { isFromMobileInnerDapp } = $mobileCtx || {};
+    const shouldLogMethod = shouldLogApprovalProbeMethod(method);
     const providerController = await getProviderController();
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check connect');
@@ -174,7 +237,24 @@ const flowContext = flow
         ),
       ]);
       if (!dappService.hasPermission(origin)) {
+        if (shouldLogMethod) {
+          recordApprovalProbe('RPC_FLOW_CONNECT_REQUIRED', {
+            method,
+            origin,
+            isFromMobileInnerDapp: !!isFromMobileInnerDapp,
+          });
+        }
         if (connectOrigins.has(origin)) {
+          if (shouldLogMethod) {
+            recordApprovalProbe(
+              'RPC_FLOW_CONNECT_ALREADY_PENDING',
+              {
+                method,
+                origin,
+              },
+              { level: 'warn' },
+            );
+          }
           throw ethErrors.rpc.resourceNotFound(
             'Already processing connect. Please wait.',
           );
@@ -189,6 +269,14 @@ const flowContext = flow
           if (autoConnectInfo) {
             defaultAccount = autoConnectInfo.defaultAccount;
             defaultChain = autoConnectInfo.defaultChain || CHAINS_ENUM.ETH;
+            if (shouldLogMethod) {
+              recordApprovalProbe('RPC_FLOW_CONNECT_AUTO_CONNECT', {
+                method,
+                origin,
+                defaultChain,
+                hasDefaultAccount: !!defaultAccount,
+              });
+            }
           } else if (
             isFromMobileInnerDapp &&
             shouldAutoConnect(origin, ctx.request.data.method)
@@ -226,7 +314,21 @@ const flowContext = flow
 
               defaultChain = targetChain ? targetChain.enum : CHAINS_ENUM.ETH;
             }
+            if (shouldLogMethod) {
+              recordApprovalProbe('RPC_FLOW_CONNECT_AUTO_SELECT', {
+                method,
+                origin,
+                defaultChain,
+                hasDefaultAccount: !!defaultAccount,
+              });
+            }
           } else {
+            if (shouldLogMethod) {
+              recordApprovalProbe('RPC_FLOW_CONNECT_REQUEST_APPROVAL', {
+                method,
+                origin,
+              });
+            }
             const res = await notificationService.requestApproval(
               {
                 params: { origin, name, icon, $mobileCtx },
@@ -237,6 +339,14 @@ const flowContext = flow
             );
             defaultChain = res.defaultChain;
             defaultAccount = res.defaultAccount;
+            if (shouldLogMethod) {
+              recordApprovalProbe('RPC_FLOW_CONNECT_APPROVAL_RESOLVED', {
+                method,
+                origin,
+                defaultChain,
+                hasDefaultAccount: !!defaultAccount,
+              });
+            }
           }
           connectOrigins.delete(origin);
           await apisDapp.connect({
@@ -253,8 +363,27 @@ const flowContext = flow
           });
           ctx.request.account =
             defaultAccount || preferenceService.getFallbackAccount()!;
+          if (shouldLogMethod) {
+            recordApprovalProbe('RPC_FLOW_CONNECT_COMPLETED', {
+              method,
+              origin,
+              finalChain: defaultChain || CHAINS_ENUM.ETH,
+              hasAccount: !!ctx.request.account,
+            });
+          }
         } catch (e) {
           connectOrigins.delete(origin);
+          if (shouldLogMethod) {
+            recordApprovalProbe(
+              'RPC_FLOW_CONNECT_ERROR',
+              {
+                method,
+                origin,
+                error: getApprovalProbeErrorMessage(e),
+              },
+              { level: 'warn' },
+            );
+          }
           throw e;
         }
       }
@@ -272,6 +401,7 @@ const flowContext = flow
       },
       mapMethod,
     } = ctx;
+    const shouldLogMethod = shouldLogApprovalProbeMethod(method);
     const $mobileCtx = _$mobileCtx || params?.$mobileCtx;
     const isFromMobileInnerDapp = $mobileCtx?.isFromMobileInnerDapp;
     // // leave here for debug
@@ -318,6 +448,13 @@ const flowContext = flow
     }
     if (approvalType && (!condition || !(await condition(ctx.request)))) {
       ctx.request.requestedApproval = true;
+      if (shouldLogMethod) {
+        recordApprovalProbe('RPC_FLOW_APPROVAL_REQUIRED', {
+          method,
+          origin,
+          approvalType,
+        });
+      }
       if (approvalType === 'SignTx' && !('chainId' in params[0])) {
         const site = dappService.getConnectedDapp(origin);
         if (site) {
@@ -338,6 +475,14 @@ const flowContext = flow
           msgParams: ctx.request.data.params,
         }))
       ) {
+        if (shouldLogMethod) {
+          recordApprovalProbe('RPC_FLOW_REQUEST_APPROVAL', {
+            method,
+            origin,
+            approvalType,
+            windowHeight,
+          });
+        }
         ctx.approvalRes = await notificationService.requestApproval(
           {
             approvalComponent: approvalType,
@@ -353,6 +498,21 @@ const flowContext = flow
           },
           { height: windowHeight },
         );
+        if (shouldLogMethod) {
+          recordApprovalProbe('RPC_FLOW_REQUEST_APPROVAL_RESOLVED', {
+            method,
+            origin,
+            approvalType,
+            hasApprovalRes: !!ctx.approvalRes,
+            hasUiRequestComponent: !!ctx.approvalRes?.uiRequestComponent,
+          });
+        }
+      } else if (shouldLogMethod) {
+        recordApprovalProbe('RPC_FLOW_APPROVAL_SKIPPED_AUTO_PERSONAL_SIGN', {
+          method,
+          origin,
+          approvalType,
+        });
       }
 
       if (isSignApproval(approvalType)) {
@@ -377,6 +537,8 @@ const flowContext = flow
       ),
     ]);
     const { approvalRes, mapMethod, request } = ctx;
+    const method = request.data.method;
+    const shouldLogMethod = shouldLogApprovalProbeMethod(method);
     // process request
     const [approvalType] =
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
@@ -494,6 +656,15 @@ const flowContext = flow
     const requestDeferFn = createRequestDeferFn(approvalRes);
 
     notificationService.setCurrentRequestDeferFn(requestDeferFn);
+    if (shouldLogMethod) {
+      recordApprovalProbe('RPC_FLOW_REQUEST_DEFER_START', {
+        method,
+        origin,
+        approvalType,
+        hasUiRequestComponent: !!uiRequestComponent,
+        isAutoPersonalSign,
+      });
+    }
     const requestDefer = requestDeferFn();
     async function requestApprovalLoop({
       uiRequestComponent,
@@ -553,7 +724,35 @@ const flowContext = flow
     // // leave here for debug
     // console.debug('[debug] flowContext:: after process request', await requestDefer);
 
-    return requestDefer;
+    return requestDefer.then(
+      result => {
+        if (shouldLogMethod) {
+          recordApprovalProbe('RPC_FLOW_REQUEST_DEFER_RESOLVED', {
+            method,
+            origin,
+            approvalType,
+          });
+        }
+
+        return result;
+      },
+      error => {
+        if (shouldLogMethod) {
+          recordApprovalProbe(
+            'RPC_FLOW_REQUEST_DEFER_ERROR',
+            {
+              method,
+              origin,
+              approvalType,
+              error: getApprovalProbeErrorMessage(error),
+            },
+            { level: 'warn' },
+          );
+        }
+
+        throw error;
+      },
+    );
   })
   .callback();
 

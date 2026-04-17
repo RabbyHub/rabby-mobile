@@ -3,6 +3,10 @@ import { ethErrors } from 'eth-rpc-errors';
 import { v4 as uuidv4 } from 'uuid';
 import { EthereumProviderError } from 'eth-rpc-errors/dist/classes';
 import * as Sentry from '@sentry/react-native';
+import {
+  getApprovalProbeErrorMessage,
+  recordApprovalProbe,
+} from '@/debug/approvalProbe';
 
 // import stats from '@/stats';
 import BigNumber from 'bignumber.js';
@@ -204,6 +208,11 @@ export class NotificationService extends Events {
     }
 
     this.emit('resolve', data);
+    recordApprovalProbe('NOTIFICATION_RESOLVE_APPROVAL', {
+      approvalId: approval?.id || null,
+      approvalComponent: approval?.data?.approvalComponent || null,
+      queueLength: this.approvals.length,
+    });
   };
 
   rejectApproval = async (err?: string, stay = false, isInternal = false) => {
@@ -231,6 +240,14 @@ export class NotificationService extends Events {
       await this.clear(stay);
     }
     this.emit('reject', err);
+    recordApprovalProbe('NOTIFICATION_REJECT_APPROVAL', {
+      approvalId: approval?.id || null,
+      approvalComponent: approval?.data?.approvalComponent || null,
+      stay,
+      isInternal,
+      queueLength: this.approvals.length,
+      error: err || null,
+    });
   };
 
   requestApproval = async (
@@ -245,12 +262,32 @@ export class NotificationService extends Events {
         dapp?.isBlocked &&
         Date.now() - dapp.blockedTimestamp < 60 * 1000 * 1
       ) {
+        recordApprovalProbe(
+          'NOTIFICATION_REQUEST_APPROVAL_BLOCKED',
+          {
+            origin,
+            approvalComponent:
+              (inputData as Partial<RequestApprovalParamBase>)
+                ?.approvalComponent || null,
+          },
+          { level: 'warn' },
+        );
         throw ethErrors.provider.userRejectedRequest(
           'User rejected the request.',
         );
       }
     }
     const data = inputData as RequestApprovalParamBase;
+    recordApprovalProbe('NOTIFICATION_REQUEST_APPROVAL_ENTER', {
+      origin: origin || null,
+      approvalComponent:
+        data.approvalComponent || (inputData.lock ? 'lock' : null),
+      hasCurrentApproval: !!this.currentApproval,
+      queueLength: this.approvals.length,
+      notifyWindowId: this.notifyWindowId,
+      isLocked: this.isLocked,
+      isUnshift: !!data.isUnshift,
+    });
     const currentAccount =
       data.account || this.preferenceService.getFallbackAccount();
     const reportExplain = (signingTxId?: string) => {
@@ -312,6 +349,16 @@ export class NotificationService extends Events {
         !QUEUE_APPROVAL_COMPONENTS_WHITELIST.includes(data.approvalComponent)
       ) {
         if (this.currentApproval) {
+          recordApprovalProbe(
+            'NOTIFICATION_REQUEST_APPROVAL_REJECTED_BUSY',
+            {
+              origin: origin || null,
+              approvalComponent: data.approvalComponent,
+              currentApprovalComponent:
+                this.currentApproval.data.approvalComponent || null,
+            },
+            { level: 'warn' },
+          );
           throw ethErrors.provider.userRejectedRequest(
             'please request after current approval resolve',
           );
@@ -323,6 +370,16 @@ export class NotificationService extends Events {
             this.currentApproval.data.approvalComponent,
           )
         ) {
+          recordApprovalProbe(
+            'NOTIFICATION_REQUEST_APPROVAL_REJECTED_BUSY',
+            {
+              origin: origin || null,
+              approvalComponent: data.approvalComponent,
+              currentApprovalComponent:
+                this.currentApproval.data.approvalComponent || null,
+            },
+            { level: 'warn' },
+          );
           throw ethErrors.provider.userRejectedRequest(
             'please request after current approval resolve',
           );
@@ -339,9 +396,26 @@ export class NotificationService extends Events {
         }
       }
 
+      recordApprovalProbe('NOTIFICATION_REQUEST_APPROVAL_QUEUED', {
+        origin: origin || null,
+        approvalId: approval.id,
+        approvalComponent: data.approvalComponent || null,
+        queueLength: this.approvals.length,
+        notifyWindowId: this.notifyWindowId,
+      });
+
       if (this.notifyWindowId !== null) {
+        recordApprovalProbe('NOTIFICATION_PRESENT_EXISTING_WINDOW', {
+          approvalId: approval.id,
+          approvalComponent: data.approvalComponent || null,
+          notifyWindowId: this.notifyWindowId,
+        });
         apisAppWin.presentGlobalBottomSheetModal(this.notifyWindowId);
       } else {
+        recordApprovalProbe('NOTIFICATION_OPEN_WINDOW', {
+          approvalId: approval.id,
+          approvalComponent: data.approvalComponent || null,
+        });
         await this.openNotification(approval.winProps);
       }
     });
@@ -388,15 +462,43 @@ export class NotificationService extends Events {
   openNotification = async (winProps: any, ignoreLock = false) => {
     // Only use ignoreLock flag when approval exist but no notification window exist
     if (!ignoreLock) {
-      if (this.isLocked) return;
+      if (this.isLocked) {
+        recordApprovalProbe(
+          'NOTIFICATION_OPEN_SKIPPED_LOCKED',
+          {
+            notifyWindowId: this.notifyWindowId,
+          },
+          { level: 'warn' },
+        );
+        return;
+      }
       this.lock();
     }
     if (this.notifyWindowId !== null) {
+      recordApprovalProbe('NOTIFICATION_REPLACE_WINDOW', {
+        previousNotifyWindowId: this.notifyWindowId,
+      });
       await apisAppWin.removeGlobalBottomSheetModal(this.notifyWindowId);
       this.notifyWindowId = null;
     }
-    this.notifyWindowId =
-      apisAppWin.createGlobalBottomSheetModal(winProps) ?? null;
+    try {
+      this.notifyWindowId =
+        apisAppWin.createGlobalBottomSheetModal(winProps) ?? null;
+      recordApprovalProbe('NOTIFICATION_WINDOW_CREATED', {
+        notifyWindowId: this.notifyWindowId,
+        ignoreLock,
+      });
+    } catch (error) {
+      recordApprovalProbe(
+        'NOTIFICATION_WINDOW_CREATE_ERROR',
+        {
+          error: getApprovalProbeErrorMessage(error),
+          ignoreLock,
+        },
+        { level: 'error' },
+      );
+      throw error;
+    }
   };
 
   setCurrentRequestDeferFn = (fn: (isRetry?: boolean) => void) => {

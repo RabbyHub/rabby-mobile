@@ -85,7 +85,7 @@ export async function getAllAccountsToDisplay(): Promise<
         ]);
 
         if (accountInfoResult.status === 'fulfilled') {
-          accountInfo = accountInfoResult.value;
+          accountInfo = accountInfoResult.value || {};
         }
 
         return {
