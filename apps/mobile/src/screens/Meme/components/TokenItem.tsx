@@ -100,7 +100,7 @@ const TokenListItemComponent = ({
             size={46}
             chain={item.chain}
             chainSize={showChainLogo ? 18 : 0}
-            innerChainStyle={styles.chainLogo}
+            innerChainStyle={showChainLogo ? styles.chainLogo : undefined}
           />
           <View style={styles.tokenInfo}>
             {/* symbol */}

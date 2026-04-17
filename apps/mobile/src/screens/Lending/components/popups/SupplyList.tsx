@@ -451,9 +451,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     wrapperToken: {
       backgroundColor: wrapperTokenCardBgColor,
-      borderWidth: 1,
+      //borderWidth: 1,
       paddingHorizontal: 12,
-      borderColor: cardBgColor,
+      //borderColor: cardBgColor,
     },
     wrapperTokenArrow: {
       position: 'absolute',
