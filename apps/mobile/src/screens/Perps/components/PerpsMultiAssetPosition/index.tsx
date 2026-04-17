@@ -45,6 +45,8 @@ interface AssetPositionWithAccount {
   account: Account;
   assetPositions: AssetPosition;
   logoUrl: string;
+  quoteAsset: string;
+  displayName: string;
 }
 
 const AssetPositionItem = ({
@@ -112,7 +114,10 @@ const AssetPositionItem = ({
             <AssetAvatar logo={logoUrl} size={28} />
             <View style={styles.coinInfo}>
               <View style={styles.coinNameRow}>
-                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
+                <Text style={styles.coinName}>
+                  {formatPerpsCoin(item.displayName || coin)}
+                </Text>
+                <Text style={styles.quote}>{`/${item.quoteAsset}`}</Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {leverageType === 'cross'
@@ -342,10 +347,16 @@ export const PerpsMultiAssetPosition: React.FC = () => {
       }
       const assetPositions = clearinghouseState?.assetPositions || [];
       assetPositions.forEach(assetPosition => {
+        const quoteAsset =
+          marketDataMap[assetPosition.position.coin]?.quoteAsset || 'USDC';
         resList.push({
           account,
+          quoteAsset,
           assetPositions: assetPosition,
           logoUrl: marketDataMap[assetPosition.position.coin]?.logoUrl || '',
+          displayName:
+            marketDataMap[assetPosition.position.coin]?.displayName ||
+            assetPosition.position.coin,
         });
       });
     });
@@ -514,7 +525,6 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   coinNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
   coinName: {
     fontFamily: 'SF Pro Rounded',
@@ -522,6 +532,13 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  quote: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-info'],
   },
   crossText: {
     fontFamily: 'SF Pro Rounded',
@@ -535,6 +552,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     paddingHorizontal: 4,
     paddingVertical: 1,
     backgroundColor: colors2024['neutral-bg-5'],
+    marginLeft: 6,
   },
   tagRow: {
     flexDirection: 'row',

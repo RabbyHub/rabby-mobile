@@ -45,6 +45,7 @@ export const PerpsAddPositionPopup: React.FC<{
   visible?: boolean;
   coin: string;
   coinLogo: string;
+  availableBalance: number;
   activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
   currentAssetCtx: MarketData | null;
   direction: 'Long' | 'Short';
@@ -75,6 +76,7 @@ export const PerpsAddPositionPopup: React.FC<{
   marginMode,
   marginUsed,
   liquidationPx,
+  availableBalance,
   handlePressRiskTag,
   leverageRang,
   markPrice,
@@ -87,7 +89,6 @@ export const PerpsAddPositionPopup: React.FC<{
   handleAddPosition,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { availableBalance } = usePerpsAccount();
 
   const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
@@ -265,6 +266,8 @@ export const PerpsAddPositionPopup: React.FC<{
     }
   }, [visible]);
 
+  const displayName = currentAssetCtx?.displayName || coin;
+
   return (
     <AppBottomSheetModal
       ref={modalRef}
@@ -283,15 +286,16 @@ export const PerpsAddPositionPopup: React.FC<{
               {direction === 'Long'
                 ? t('page.perpsDetail.PerpsAddPositionPopup.addToLong')
                 : t('page.perpsDetail.PerpsAddPositionPopup.addToShort')}{' '}
-              {formatPerpsCoin(coin)}-USD
+              {formatPerpsCoin(displayName)}
             </Text>
           </View>
 
           <AssetPriceInfo
-            coin={coin}
+            coin={displayName}
             logoUrl={coinLogo || ''}
             activeAssetCtx={activeAssetCtx}
             currentAssetCtx={currentAssetCtx}
+            quoteAsset={currentAssetCtx?.quoteAsset}
           />
 
           {/* Coin Info */}
@@ -299,7 +303,9 @@ export const PerpsAddPositionPopup: React.FC<{
             <View style={styles.leftSection}>
               <View style={styles.coinInfoRow}>
                 <AssetAvatar logo={coinLogo} size={28} />
-                <Text style={styles.coinName}>{formatPerpsCoin(coin)}</Text>
+                <Text style={styles.coinName}>
+                  {formatPerpsCoin(displayName)}
+                </Text>
                 <View style={styles.crossTag}>
                   <Text style={styles.crossText}>
                     {marginMode === 'cross'

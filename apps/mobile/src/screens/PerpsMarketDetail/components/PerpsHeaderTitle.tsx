@@ -19,8 +19,16 @@ export const PerpsHeaderTitle: React.FC<{
   onSelectCoin: () => void;
   popupIsOpen: boolean;
   coin: string;
+  quoteCoin?: string;
   logoUrl?: string;
-}> = ({ logoUrl, coin, account, onSelectCoin, popupIsOpen }) => {
+}> = ({
+  logoUrl,
+  coin,
+  quoteCoin = 'USDC',
+  account,
+  onSelectCoin,
+  popupIsOpen,
+}) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { top } = useSafeAreaInsets();
@@ -40,7 +48,8 @@ export const PerpsHeaderTitle: React.FC<{
           <HeaderBackPressable />
           <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={24} />
           <TouchableOpacity onPress={onSelectCoin} style={styles.touchable}>
-            <Text style={styles.text}>{formatPerpsCoin(coin)} - USD</Text>
+            <Text style={styles.text}>{formatPerpsCoin(coin)}</Text>
+            <Text style={styles.quote}>/{quoteCoin}</Text>
             <IconCom
               width={20}
               height={20}
@@ -64,7 +73,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   touchable: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    // gap: 4,
     justifyContent: 'center',
   },
   headerLeft: {
@@ -114,11 +123,20 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
   },
   text: {
+    marginLeft: 4,
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '900',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  quote: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
+    color: colors2024['neutral-info'],
+    marginRight: 4,
   },
   reverseCaret: {
     transform: [{ rotate: '180deg' }],

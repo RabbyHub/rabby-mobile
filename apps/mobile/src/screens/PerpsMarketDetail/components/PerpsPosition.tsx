@@ -140,6 +140,8 @@ export const PerpsPosition: React.FC<{
     return null;
   }
 
+  const displayName = currentAssetCtx?.displayName || coin;
+
   return (
     <>
       <View style={styles.section}>
@@ -326,7 +328,7 @@ export const PerpsPosition: React.FC<{
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
                   handleActionApproveStatus={handleActionApproveStatus}
-                  coin={coin}
+                  coin={displayName}
                   actionType="tp"
                   type="hasPosition"
                   entryPrice={positionData?.entryPrice}
@@ -416,7 +418,7 @@ export const PerpsPosition: React.FC<{
               <View style={styles.tagWrapper}>
                 <PerpEditTpSlPriceTag
                   leverage={positionData?.leverage}
-                  coin={coin}
+                  coin={displayName}
                   actionType="sl"
                   handleActionApproveStatus={handleActionApproveStatus}
                   type="hasPosition"
@@ -535,7 +537,7 @@ export const PerpsPosition: React.FC<{
                 {splitNumberByStep(
                   Number(positionData?.positionValue || 0).toFixed(2),
                 )}{' '}
-                = {positionData?.size} {formatPerpsCoin(coin)}
+                = {positionData?.size} {formatPerpsCoin(displayName)}
               </Text>
             </View>
           </View>

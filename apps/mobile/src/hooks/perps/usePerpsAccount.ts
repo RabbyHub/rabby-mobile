@@ -11,6 +11,8 @@ export const usePerpsAccount = () => {
     crossMaintenanceMarginUsed,
     spotAccountValue,
     spotAvailableToTrade,
+    spotBalances,
+    spotBalancesMap,
   } = perpsStore(
     useShallow(s => ({
       userAbstraction: s.userAbstraction,
@@ -22,8 +24,12 @@ export const usePerpsAccount = () => {
 
       spotAccountValue: s.spotState.accountValue,
       spotAvailableToTrade: s.spotState.availableToTrade,
+      spotBalances: s.spotState.balances,
+      spotBalancesMap: s.spotState.balancesMap,
     })),
   );
+
+  console.log('userAbstraction', userAbstraction);
 
   const isUnifiedAccount = useMemo(() => {
     return userAbstraction === UserAbstractionResp.unifiedAccount;
@@ -47,5 +53,7 @@ export const usePerpsAccount = () => {
     availableBalance,
     crossMaintenanceMarginUsed,
     isUnifiedAccount,
+    spotBalances: isUnifiedAccount ? spotBalances || [] : [],
+    spotBalancesMap: isUnifiedAccount ? spotBalancesMap || {} : {},
   };
 };

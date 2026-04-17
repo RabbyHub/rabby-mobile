@@ -1,13 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcTradPerps } from '@/assets2024/icons/perps';
-import { Button } from '@/components2024/Button';
-import {
-  AccountHistoryItem,
-  PositionAndOpenOrder,
-} from '@/hooks/perps/usePerpsStore';
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
-import { GasAccountWrapperBg } from '@/screens/GasAccount/components/WrapperBg';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -22,22 +15,38 @@ import ImgLearnMore from '@/assets2024/icons/perps/ImgLearnMore.png';
 import RcIconLearnArrow from '@/assets2024/icons/perps/IconLearnArrow.svg';
 import RcIconPlusButton from '@/assets2024/icons/perps/IconPlusButton.svg';
 import RcIconAddFunds from '@/assets2024/icons/perps/IconAddFunds.svg';
+import RcIconUSDC from '@/assets2024/icons/perps/IconUSDC.svg';
+import RcIconUSDT from '@/assets2024/icons/perps/IconUSDT.svg';
+import RcIconUSDH from '@/assets2024/icons/perps/IconUSDH.svg';
+import RcIconUSDE from '@/assets2024/icons/perps/IconUSDE.svg';
+import RcIconCardArrow from '@/assets2024/icons/perps/IconCardArrow.svg';
 import { apisPerps } from '@/core/apis';
 
-export const PerpsAccountCard: React.FC<{
-  isLogin: boolean;
-  positionAndOpenOrders?: PositionAndOpenOrder[] | null;
-  localLoadingHistory: AccountHistoryItem[];
-}> = ({ isLogin, localLoadingHistory }) => {
+const COIN_ICON_MAP: Record<string, React.ReactNode> = {
+  USDC: <RcIconUSDC width={16} height={16} />,
+  USDT0: <RcIconUSDT width={16} height={16} />,
+  USDH: <RcIconUSDH width={16} height={16} />,
+  USDE: <RcIconUSDE width={16} height={16} />,
+};
+
+export const PerpsAccountCard: React.FC = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const [popupState, setPopupState] = usePerpsPopupState();
+  const [, setPopupState] = usePerpsPopupState();
 
-  const { availableBalance, accountValue } = usePerpsAccount();
+  const { availableBalance, accountValue, isUnifiedAccount, spotBalances } =
+    usePerpsAccount();
+  const [isBalanceExpanded, setIsBalanceExpanded] = React.useState(true);
+
+  const visibleBalances = React.useMemo(() => {
+    return spotBalances
+      .filter(b => Number(b.total) >= 0.1)
+      .sort((a, b) => Number(b.total) - Number(a.total));
+  }, [spotBalances]);
 
   const isNewUser = React.useMemo(() => {
-    return Number(availableBalance) === 0 && accountValue === 0 && isLogin;
-  }, [availableBalance, accountValue, isLogin]);
+    return Number(availableBalance) === 0 && accountValue === 0;
+  }, [availableBalance, accountValue]);
 
   const [hasClosedLearnMore, setHasClosedLearnMore] = React.useState(true);
   React.useEffect(() => {
@@ -61,9 +70,23 @@ export const PerpsAccountCard: React.FC<{
               <Text style={styles.balance}>
                 {formatUsdValue(Number(availableBalance || 0))}
               </Text>
-              <Text style={styles.availableBalance}>
-                {t('page.perps.PerpsCard.available')}
-              </Text>
+              <TouchableOpacity
+                disabled={!isUnifiedAccount}
+                onPress={() => setIsBalanceExpanded(prev => !prev)}
+                style={styles.availableToggle}>
+                <Text style={styles.availableBalance}>
+                  {t('page.perps.PerpsCard.available')}
+                </Text>
+                {isUnifiedAccount && (
+                  <RcIconCardArrow
+                    style={
+                      isBalanceExpanded
+                        ? { transform: [{ rotate: '180deg' }] }
+                        : undefined
+                    }
+                  />
+                )}
+              </TouchableOpacity>
             </View>
             {Number(availableBalance) === 0 ? (
               <TouchableOpacity
@@ -103,6 +126,39 @@ export const PerpsAccountCard: React.FC<{
               </View>
             )}
           </View>
+          {isUnifiedAccount && isBalanceExpanded && (
+            <LinearGradient
+              colors={['rgba(35, 192, 172, 0.20)', 'rgba(35, 192, 172, 0.00)']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.expandedBalances}>
+              <View style={styles.balanceChipRow}>
+                {visibleBalances.map((b, idx) => (
+                  <View
+                    key={b.coin}
+                    style={[
+                      styles.balanceChip,
+                      idx > 0 && styles.balanceChipWithBorder,
+                    ]}>
+                    {COIN_ICON_MAP[b.coin] || null}
+                    <Text style={styles.balanceChipText}>
+                      {formatUsdValue(Number(b.available))}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity
+                style={styles.toSwapBtn}
+                onPress={() => {
+                  setPopupState(prev => ({
+                    ...prev,
+                    isShowSwapPopup: true,
+                  }));
+                }}>
+                <Text style={styles.toSwapText}>To swap→</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          )}
         </View>
       </LinearGradient>
       {showLearnMore && (
@@ -288,7 +344,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     padding: 2, // gradient border width
   },
   balanceCardInner: {
-    height: 106,
+    minHeight: 106,
     borderRadius: 16,
     paddingVertical: 24,
     paddingHorizontal: 16,
@@ -326,7 +382,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: '#717380',
-    marginTop: 4,
+    // marginTop: 4,
   },
   actionBtns: {
     flexDirection: 'row',
@@ -353,5 +409,65 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     right: 16,
     top: 16,
+  },
+  availableToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 10,
+  },
+  expandArrow: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    color: '#717380',
+  },
+  expandedBalances: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  balanceChipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    flex: 1,
+    gap: 0,
+    maxWidth: '75%',
+  },
+  balanceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+  },
+  balanceChipWithBorder: {
+    marginLeft: 8,
+    paddingLeft: 8,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  toSwapBtn: {
+    position: 'absolute',
+    right: 12,
+    top: 8,
+  },
+  balanceChipText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+    color: '#F7FAFC',
+  },
+  toSwapText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#23C0AC',
   },
 }));

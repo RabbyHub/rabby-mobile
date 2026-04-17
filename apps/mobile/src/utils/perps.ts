@@ -2,10 +2,14 @@ import {
   AllDexsClearinghouseState,
   MarketData,
 } from '@/hooks/perps/usePerpsStore';
-import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
+import {
+  PERPS_MAX_NTL_VALUE,
+  PerpsQuoteAsset,
+  COLLATERAL_TOKEN_TO_QUOTE,
+  PerpTopTokenV3,
+} from '@/constant/perps';
 import {
   Meta,
-  AssetCtx,
   MarginTable,
   ClearinghouseState,
   SpotClearinghouseState,
@@ -18,7 +22,7 @@ import { perpsService } from '@/core/services';
 import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 
-const getPxDecimals = (markPx: string) => {
+export const getPxDecimals = (markPx: string) => {
   const parts = markPx.split('.');
   if (!parts[1]) {
     return 2;
@@ -46,102 +50,100 @@ export const getHyperliquidCoinLogoUrl = (coin: string) => {
   return `https://app.hyperliquid.xyz/coins/${iconKey}.svg`;
 };
 
+/**
+ * Determine quote asset from Meta.collateralToken.
+ */
+export const getQuoteAssetFromMeta = (meta: Meta): PerpsQuoteAsset => {
+  return COLLATERAL_TOKEN_TO_QUOTE[meta.collateralToken] ?? 'USDC';
+};
+
 export const formatMarkData = (
-  marketData: [Meta, AssetCtx[]],
-  topAssets: PerpTopToken[],
-  xyzMarketData: [Meta, AssetCtx[]],
+  allMetas: Meta[],
+  topAssets: PerpTopTokenV3[],
+  dexIdMap: Record<number, string>,
 ): MarketData[] => {
   try {
-    if (!Array.isArray(marketData) || marketData.length < 2) {
-      console.error(
-        'Failed to format market data: marketData is not an array or has less than 2 items',
-      );
+    if (!Array.isArray(allMetas) || allMetas.length === 0) {
+      console.error('Failed to format market data: allMetas is empty');
       return [];
     }
 
-    const meta = marketData[0];
-    const metrics = marketData[1];
-    if (!meta || !Array.isArray(meta.universe) || !Array.isArray(metrics)) {
-      console.error(
-        'Failed to format market data: meta or metrics is not an array',
-      );
-      return [];
-    }
+    // Build a lookup: dexId → { meta, marginTableMap, quoteAsset }
+    const dexLookup: Record<
+      string,
+      {
+        meta: Meta;
+        marginTableMap: Record<number, MarginTable>;
+        quoteAsset: PerpsQuoteAsset;
+      }
+    > = {};
 
-    const marginTableMap: Record<number, MarginTable> = {};
-    if (Array.isArray(meta.marginTables)) {
-      for (const entry of meta.marginTables) {
-        const [id, table] = entry || [];
-        if (id != null) {
-          marginTableMap[id] = table;
+    allMetas.forEach((meta, idx) => {
+      const dexId = dexIdMap[idx] ?? String(idx);
+      const marginTableMap: Record<number, MarginTable> = {};
+      if (Array.isArray(meta.marginTables)) {
+        for (const entry of meta.marginTables) {
+          const [id, table] = entry || [];
+          if (id != null) {
+            marginTableMap[id] = table;
+          }
         }
       }
-    }
-
-    const xyzMarginTableMap: Record<number, MarginTable> = {};
-    if (
-      xyzMarketData?.[0]?.marginTables &&
-      Array.isArray(xyzMarketData[0].marginTables)
-    ) {
-      for (const entry of xyzMarketData[0].marginTables) {
-        const [id, table] = entry || [];
-        if (id != null) {
-          xyzMarginTableMap[id] = table;
-        }
-      }
-    }
+      dexLookup[dexId] = {
+        meta,
+        marginTableMap,
+        quoteAsset: getQuoteAssetFromMeta(meta),
+      };
+    });
 
     const result: MarketData[] = topAssets
       .map(topAsset => {
         const index = topAsset.id;
-        const dexId = topAsset.dex_id;
-        const meta = dexId === 'xyz' ? xyzMarketData[0] : marketData[0];
-        const metrics = dexId === 'xyz' ? xyzMarketData[1] : marketData[1];
-        const tableMap = dexId === 'xyz' ? xyzMarginTableMap : marginTableMap;
+        const dexId = topAsset.dex_id ?? '';
+        const dexInfo = dexLookup[dexId] ?? dexLookup[''];
+        if (!dexInfo) {
+          return null;
+        }
+
+        const { meta, marginTableMap, quoteAsset } = dexInfo;
         const hlDataAsset = meta.universe[index];
-
-        if (!hlDataAsset) {
+        if (!hlDataAsset || hlDataAsset.isDelisted) {
           return null;
         }
 
-        if (hlDataAsset.isDelisted) {
-          return null;
-        }
-
-        const m = metrics[index];
-        const table = tableMap[hlDataAsset?.marginTableId];
+        const table = marginTableMap[hlDataAsset.marginTableId];
         const tiers = table?.marginTiers || [];
-        const firstTier =
-          Array.isArray(tiers) && tiers.length > 0 ? tiers[0] : undefined;
-        const nextTier =
-          Array.isArray(tiers) && tiers.length > 1 ? tiers[1] : undefined;
+        const firstTier = tiers[0];
+        const nextTier = tiers[1];
 
         const item: MarketData = {
           index,
-          dexId: topAsset.dex_id,
+          dexId: topAsset.dex_id ?? '',
           name: String(topAsset.name ?? ''),
-          // 取保证金表第一档的最大杠杆；若无表则回退 asset.maxLeverage
+          quoteAsset,
           maxLeverage: Number(
             firstTier?.maxLeverage ?? hlDataAsset?.maxLeverage,
           ),
+          displayName: topAsset.display_name || topAsset.name,
           minLeverage: 1,
-          // 第一档的最大名义值 = 下一档的 lowerBound；若不存在下一档则为兜底1000000
           maxUsdValueSize: String(nextTier?.lowerBound ?? PERPS_MAX_NTL_VALUE),
           szDecimals: Number(hlDataAsset.szDecimals ?? 0),
-          // 根据 markPx 推断价格精度
           onlyIsolated: hlDataAsset.onlyIsolated,
-          pxDecimals: getPxDecimals(m?.markPx ?? ''),
-          dayBaseVlm: String(m?.dayBaseVlm ?? '0'),
-          dayNtlVlm: String(m?.dayNtlVlm ?? '0'),
-          funding: String(m?.funding ?? '0'),
-          markPx: String(m?.markPx ?? ''),
-          midPx: String(m?.midPx ?? ''),
-          openInterest: String(m?.openInterest ?? '0'),
-          oraclePx: String(m?.oraclePx ?? ''),
-          premium: String(m?.premium ?? '0'),
-          prevDayPx: String(m?.prevDayPx ?? ''),
+          pxDecimals: 2, // Will be updated by WebSocket AssetCtx
+          dayBaseVlm: '0',
+          dayNtlVlm: '0',
+          funding: '0',
+          markPx: '',
+          midPx: '',
+          openInterest: '0',
+          oraclePx: '',
+          premium: '0',
+          prevDayPx: '',
           logoUrl:
             topAsset.full_logo_url || getHyperliquidCoinLogoUrl(topAsset.name),
+          category: topAsset.category || '',
+          brief: topAsset.brief || '',
+          description: topAsset.description || '',
         };
         return item;
       })
@@ -336,10 +338,22 @@ export const formatAllDexsClearinghouseState = (
 export const formatPerpsCoin = (coin: string) => {
   if (coin.includes(':')) {
     // is hip-3 coin
-    return coin.split(':')[1];
+    return coin.split(':')[1] || '';
   } else {
     return coin;
   }
+};
+
+/**
+ * Format a perps market name for display with its quote asset.
+ * Examples: 'BTC' + 'USDC' → 'BTC/USDC', 'xyz:TSLA' + 'USDC' → 'TSLA/USDC'
+ */
+export const formatPerpsDisplayName = (
+  coinName: string,
+  quoteAsset: string = 'USDC',
+): string => {
+  const baseCoin = formatPerpsCoin(coinName);
+  return `${baseCoin}/${quoteAsset}`;
 };
 
 export const findDefaultAccount = (
@@ -417,24 +431,52 @@ export const formatSpotState = (spotState: SpotClearinghouseState) => {
     return {
       accountValue: '0',
       availableToTrade: '0',
+      balances: [],
+      balancesMap: {},
     };
   }
-  const availableToTrade = new BigNumber(
-    spotState.balances?.[0]?.total || '0',
-  ).minus(spotState.balances?.[0]?.hold || '0');
-  return {
-    accountValue: spotState.balances?.[0]?.total || '0',
-    availableToTrade: availableToTrade.toString(),
-  };
-  // const token = spotState.balances.find((i) => i.token === USDC_TOKEN_ID);
-  // const availableToTrade = spotState.tokenToAvailableAfterMaintenance?.find(
-  //   (i) => i?.[0] === USDC_TOKEN_ID
-  // );
 
-  // return {
-  //   accountValue: token?.total || '0',
-  //   availableToTrade: availableToTrade?.[1] || '0',
-  // };
+  // Only extract the 4 stablecoins we support, filter by token ID
+  const STABLECOIN_TOKEN_IDS = new Set(
+    Object.keys(COLLATERAL_TOKEN_TO_QUOTE).map(Number),
+  );
+
+  const balances = spotState.balances
+    .filter(b => STABLECOIN_TOKEN_IDS.has(b.token))
+    .map(b => {
+      const available = new BigNumber(b.total || '0')
+        .minus(b.hold || '0')
+        .toString();
+      return {
+        coin: b.coin,
+        token: b.token,
+        total: b.total || '0',
+        hold: b.hold || '0',
+        available,
+      };
+    });
+
+  // Assumes all stablecoins at 1:1 USD parity (matches Hyperliquid internal accounting)
+  const totalAccountValue = balances
+    .reduce((sum, b) => sum.plus(b.total), new BigNumber(0))
+    .toString();
+
+  const totalAvailable = balances
+    .reduce((sum, b) => sum.plus(b.available), new BigNumber(0))
+    .toString();
+
+  // Key by coin name for quick lookup (e.g. balancesMap['USDT'])
+  const balancesMap: Record<string, (typeof balances)[number]> = {};
+  for (const b of balances) {
+    balancesMap[b.coin] = b;
+  }
+
+  return {
+    accountValue: totalAccountValue,
+    availableToTrade: totalAvailable,
+    balances,
+    balancesMap,
+  };
 };
 
 export const getStatsReportSide = (isBuy: boolean, isReduceOnly: boolean) => {

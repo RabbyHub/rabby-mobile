@@ -1,6 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue } from '@/utils/number';
+import { formatPerpsNumber, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { SWAP_REQUIRED_QUOTE_ASSETS, PerpsQuoteAsset } from '@/constant/perps';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
@@ -8,22 +9,35 @@ import { Text } from '@/components/Typography';
 
 export const PerpsDepositCard: React.FC<{
   availableBalance: number;
+  quoteAsset?: PerpsQuoteAsset;
   onDepositPress?(): void;
-}> = ({ availableBalance, onDepositPress }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  onSwapPress?(): void;
+}> = ({
+  availableBalance,
+  quoteAsset = 'USDC',
+  onDepositPress,
+  onSwapPress,
+}) => {
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+
+  const isSwapRequired = SWAP_REQUIRED_QUOTE_ASSETS.includes(quoteAsset);
+  const actionLabel = isSwapRequired
+    ? t('page.perps.PerpsDepositCard.swap')
+    : t('page.perps.PerpsDepositCard.deposit');
+  const handlePress = isSwapRequired ? onSwapPress : onDepositPress;
 
   return (
     <View style={styles.card}>
       <Text style={styles.label}>
         {t('page.perps.PerpsDepositCard.availableToTrade')}
-        <Text style={styles.balance}>{formatUsdValue(availableBalance)}</Text>
+        <Text style={styles.balance}>
+          {Number(formatPerpsNumber(availableBalance))} {quoteAsset}
+        </Text>
       </Text>
-      <TouchableOpacity onPress={onDepositPress}>
+      <TouchableOpacity onPress={handlePress}>
         <View style={styles.btn}>
-          <Text style={styles.btnText}>
-            {t('page.perps.PerpsDepositCard.deposit')}
-          </Text>
+          <Text style={styles.btnText}>{actionLabel}</Text>
         </View>
       </TouchableOpacity>
     </View>
@@ -49,6 +63,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 20,
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
+    flex: 1,
   },
   btn: {
     paddingVertical: 6,

@@ -1092,6 +1092,7 @@ const getStyle = createGetStyles2024(ctx => {
       ...(Platform.OS === 'ios' && {
         fontFamily: 'SF Pro Rounded', // avoid some android phone show number not in center
       }),
+      paddingLeft: 0,
       fontSize: 28,
       lineHeight: 36,
       fontWeight: '700',

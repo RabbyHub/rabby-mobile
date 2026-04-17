@@ -6,10 +6,14 @@ import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform } from 'react-native';
 import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { sleep } from '@/utils/async';
-import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
+import {
+  Abstraction,
+  OrderResponse,
+  UserAbstractionResp,
+} from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
 import { useShallow } from 'zustand/react/shallow';
-import { formatPerpsCoin } from '@/utils/perps';
+import { formatPerpsCoin, formatSpotState } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 
 export const usePerpsPosition = () => {
@@ -356,11 +360,97 @@ export const usePerpsPosition = () => {
     },
   );
 
+  const handleStableCoinOrder = useMemoizedFn(
+    async (params: {
+      coin: 'USDH' | 'USDT' | 'USDE';
+      isBuy: boolean;
+      size: string;
+      limitPx: string;
+    }) => {
+      try {
+        if (
+          params.coin !== 'USDH' &&
+          params.coin !== 'USDT' &&
+          params.coin !== 'USDE'
+        ) {
+          throw new Error('Invalid stablecoin');
+        }
+
+        const sdk = apisPerps.getPerpsSDK();
+        const res = await sdk.exchange?.stableCoinOrder({
+          coin: params.coin,
+          isBuy: params.isBuy,
+          size: params.size,
+          limitPx: params.limitPx,
+        });
+        const filled = res?.response?.data?.statuses[0]?.filled;
+        if (filled) {
+          fetchClearinghouseState();
+          showToast('Swap completed successfully', 'success');
+          return filled;
+        }
+        const errorMsg = res?.response?.data?.statuses[0]?.error;
+        showToast(errorMsg || 'Swap failed', 'error');
+        return null;
+      } catch (error: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+        if (isExpired) {
+          return null;
+        }
+        showToast(error?.message || 'Swap failed', 'error');
+        Sentry.captureException(
+          new Error(
+            'PERPS spot order error' +
+              'params: ' +
+              JSON.stringify(params) +
+              'error: ' +
+              JSON.stringify(error),
+          ),
+        );
+        return null;
+      }
+    },
+  );
+
+  const handleEnableUnifiedAccount = useMemoizedFn(async () => {
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      await sdk.exchange!.agentSetAbstraction(Abstraction.UNIFIED_ACCOUNT);
+
+      // Refresh account state
+      const [abstraction, spotState] = await Promise.all([
+        sdk.info.getUserAbstraction(),
+        sdk.info.getSpotClearingHouseState(),
+      ]);
+      if (spotState) {
+        perpsStore.setState({ spotState: formatSpotState(spotState) });
+      }
+      if (abstraction === UserAbstractionResp.unifiedAccount) {
+        perpsStore.setState({ userAbstraction: abstraction });
+      }
+
+      showToast('Unified Account enabled', 'success');
+      return true;
+    } catch (error: any) {
+      const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+      if (isExpired) {
+        return false;
+      }
+      showToast(error?.message || 'Failed to enable Unified Account', 'error');
+      Sentry.captureException(
+        new Error('PERPS enableUnifiedAccount error: ' + JSON.stringify(error)),
+      );
+      return false;
+    }
+  });
+
   return {
     handleOpenPosition,
     handleClosePosition,
     handleSetAutoClose,
     handleUpdateMargin,
     handleCancelOrder,
+    handleStableCoinOrder,
+    handleEnableUnifiedAccount,
   };
 };

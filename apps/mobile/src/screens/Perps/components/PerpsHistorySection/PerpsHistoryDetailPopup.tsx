@@ -9,7 +9,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
-import { splitNumberByStep } from '@/utils/number';
+import { formatPerpsNumber, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -18,6 +18,12 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Typography';
+import { SPOT_STABLE_COIN_NAME } from '../PerpsSpotSwapPopup';
+
+// Reverse map: '@166' → 'USDT', '@150' → 'USDE', '@230' → 'USDH'
+const SPOT_COIN_TO_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(SPOT_STABLE_COIN_NAME).map(([name, id]) => [id, name]),
+);
 
 export const PerpsHistoryDetailPopup: React.FC<{
   visible?: boolean;
@@ -40,7 +46,14 @@ export const PerpsHistoryDetailPopup: React.FC<{
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && closedPnl;
   const logoUrl = fill?.logoUrl;
 
+  // Stablecoin swap detection
+  const stableCoinName = coin ? SPOT_COIN_TO_NAME[coin] : '';
+  const isStableCoinTrade = Boolean(stableCoinName);
+
   const titleString = useMemo(() => {
+    if (isStableCoinTrade) {
+      return `${fill?.dir} ${stableCoinName}`;
+    }
     const isLiquidation = Boolean(fill?.liquidation);
     if (fill?.dir === 'Close Long') {
       if (orderTpOrSl === 'tp') {
@@ -73,7 +86,14 @@ export const PerpsHistoryDetailPopup: React.FC<{
       return t('page.perps.historyDetail.title.openShort');
     }
     return fill?.dir;
-  }, [fill?.dir, fill?.liquidation, orderTpOrSl, t]);
+  }, [
+    fill?.dir,
+    fill?.liquidation,
+    orderTpOrSl,
+    t,
+    isStableCoinTrade,
+    stableCoinName,
+  ]);
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -107,158 +127,228 @@ export const PerpsHistoryDetailPopup: React.FC<{
               <Text style={styles.title}>{titleString}</Text>
             </View>
             <View style={styles.list}>
-              <View style={styles.listItem}>
-                <View style={styles.listItemMain}>
-                  <Text style={styles.label}>
-                    {t('page.perps.historyDetail.perps')}
-                  </Text>
-                </View>
-                <View style={styles.coinContainer}>
-                  <AssetAvatar size={24} logo={logoUrl} />
-                  <Text style={styles.value}>{coin} - USD</Text>
-                </View>
-              </View>
-              {time ? (
-                <View style={styles.listItem}>
-                  <View style={styles.listItemMain}>
-                    <Text style={styles.label}>
-                      {t('page.perps.historyDetail.date')}
+              {isStableCoinTrade ? (
+                <>
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.action')}
+                      </Text>
+                    </View>
+                    <Text style={styles.value}>{dir}</Text>
+                  </View>
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.asset')}
+                      </Text>
+                    </View>
+                    <Text style={styles.value}>{stableCoinName}</Text>
+                  </View>
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.amount')}
+                      </Text>
+                    </View>
+                    <Text style={styles.value}>
+                      {sz} {stableCoinName}
                     </Text>
                   </View>
-                  <View>
-                    <Text style={styles.value}>{sinceTime(time / 1000)}</Text>
-                  </View>
-                </View>
-              ) : null}
-              {isClose ? (
-                <View style={styles.listItem}>
-                  <View style={styles.listItemMain}>
-                    <Text style={styles.label}>
-                      {t('page.perps.historyDetail.closedPnl')}
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.price')}
+                      </Text>
+                    </View>
+                    <Text style={styles.value}>
+                      ${formatPerpsNumber(px || 0, 4)} USDC
                     </Text>
                   </View>
-                  <View>
-                    <Text
-                      style={[
-                        styles.value,
-                        pnlValue > 0 ? styles.green : styles.red,
-                      ]}>
-                      {pnlValue > 0 ? '+' : '-'}$
-                      {splitNumberByStep(Math.abs(pnlValue).toFixed(2))}
-                    </Text>
-                  </View>
-                </View>
-              ) : null}
-              <View style={styles.listItem}>
-                <View style={styles.listItemMain}>
-                  <Text style={styles.label}>
-                    {t('page.perps.historyDetail.price')}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={styles.value}>
-                    ${splitNumberByStep(px || 0)}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.listItem}>
-                <TouchableOpacity
-                  onPress={() => {
-                    showTipsPopup({
-                      title: t('page.perps.historyDetail.size'),
-                      desc: t('page.perps.historyDetail.sizeTips'),
-                      buttonType: 'hyperliquid',
-                    });
-                  }}>
-                  <View style={styles.listItemMain}>
-                    <Text style={styles.label}>
-                      {t('page.perps.historyDetail.size')}
-                    </Text>
-                    <RcIconInfoCC
-                      width={18}
-                      height={18}
-                      color={colors2024['neutral-info']}
-                    />
-                  </View>
-                </TouchableOpacity>
-                <View>
-                  <Text style={styles.value}>
-                    ${splitNumberByStep(tradeValue.toFixed(2))} = {sz} {coin}
-                  </Text>
-                </View>
-              </View>
-              {fee ? (
-                <View style={styles.listItem}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      showTipsPopup({
-                        title: t('page.perps.historyDetail.feeTitle'),
-                        desc: (
-                          <View>
-                            <Text style={styles.feeDesc}>
-                              <Trans
-                                i18nKey="page.perps.historyDetail.feeDesc"
-                                components={{
-                                  1: <Text style={styles.feeBold} />,
-                                  2: <Text style={styles.feeBold} />,
-                                }}
-                              />
-                            </Text>
-                            <View style={styles.feeTable}>
-                              <View style={styles.feeRow}>
-                                <View style={styles.feeRowLeft}>
-                                  <RcIconHyper width={20} height={20} />
-                                  <Text style={styles.feeRowLabel}>
-                                    {t(
-                                      'page.perps.historyDetail.feeHyperliquid',
-                                    )}
-                                  </Text>
-                                </View>
-                                <Text style={styles.feeRowValue}>0.045%</Text>
-                              </View>
-                              <View style={styles.feeRow}>
-                                <View style={styles.feeRowLeft}>
-                                  <RcIconRabby width={20} height={20} />
-                                  <Text style={styles.feeRowLabel}>
-                                    {t('page.perps.historyDetail.feeRabby')}
-                                  </Text>
-                                </View>
-                                <Text style={styles.feeRowValue}>0.02%</Text>
-                              </View>
-                            </View>
-                          </View>
-                        ),
-                        buttonType: 'hyperliquid',
-                      });
-                    }}>
+                  <View style={styles.listItem}>
                     <View style={styles.listItemMain}>
                       <Text style={styles.label}>
                         {t('page.perps.historyDetail.fee')}
                       </Text>
-                      <RcIconInfoCC
-                        width={18}
-                        height={18}
-                        color={colors2024['neutral-info']}
-                      />
                     </View>
-                  </TouchableOpacity>
-                  <View>
                     <Text style={styles.value}>
-                      ${splitNumberByStep(Number(fee).toFixed(4))}
+                      ${formatPerpsNumber(fee || '0', 4)} {stableCoinName}
                     </Text>
                   </View>
-                </View>
-              ) : null}
-              <View style={styles.listItem}>
-                <View style={styles.listItemMain}>
-                  <Text style={styles.label}>
-                    {t('page.perps.historyDetail.provider')}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={styles.value}>Hyperliquid</Text>
-                </View>
-              </View>
+                  {time ? (
+                    <View style={styles.listItem}>
+                      <View style={styles.listItemMain}>
+                        <Text style={styles.label}>
+                          {t('page.perps.historyDetail.date')}
+                        </Text>
+                      </View>
+                      <Text style={styles.value}>{sinceTime(time / 1000)}</Text>
+                    </View>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.perps')}
+                      </Text>
+                    </View>
+                    <View style={styles.coinContainer}>
+                      <AssetAvatar size={24} logo={logoUrl} />
+                      <Text style={styles.value}>{coin} - USD</Text>
+                    </View>
+                  </View>
+                  {time ? (
+                    <View style={styles.listItem}>
+                      <View style={styles.listItemMain}>
+                        <Text style={styles.label}>
+                          {t('page.perps.historyDetail.date')}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text style={styles.value}>
+                          {sinceTime(time / 1000)}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
+                  {isClose ? (
+                    <View style={styles.listItem}>
+                      <View style={styles.listItemMain}>
+                        <Text style={styles.label}>
+                          {t('page.perps.historyDetail.closedPnl')}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text
+                          style={[
+                            styles.value,
+                            pnlValue > 0 ? styles.green : styles.red,
+                          ]}>
+                          {pnlValue > 0 ? '+' : '-'}$
+                          {splitNumberByStep(Math.abs(pnlValue).toFixed(2))}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.price')}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.value}>
+                        ${splitNumberByStep(px || 0)}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.listItem}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        showTipsPopup({
+                          title: t('page.perps.historyDetail.size'),
+                          desc: t('page.perps.historyDetail.sizeTips'),
+                          buttonType: 'hyperliquid',
+                        });
+                      }}>
+                      <View style={styles.listItemMain}>
+                        <Text style={styles.label}>
+                          {t('page.perps.historyDetail.size')}
+                        </Text>
+                        <RcIconInfoCC
+                          width={18}
+                          height={18}
+                          color={colors2024['neutral-info']}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                    <View>
+                      <Text style={styles.value}>
+                        ${splitNumberByStep(tradeValue.toFixed(2))} = {sz}{' '}
+                        {coin}
+                      </Text>
+                    </View>
+                  </View>
+                  {fee ? (
+                    <View style={styles.listItem}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          showTipsPopup({
+                            title: t('page.perps.historyDetail.feeTitle'),
+                            desc: (
+                              <View>
+                                <Text style={styles.feeDesc}>
+                                  <Trans
+                                    i18nKey="page.perps.historyDetail.feeDesc"
+                                    components={{
+                                      1: <Text style={styles.feeBold} />,
+                                      2: <Text style={styles.feeBold} />,
+                                    }}
+                                  />
+                                </Text>
+                                <View style={styles.feeTable}>
+                                  <View style={styles.feeRow}>
+                                    <View style={styles.feeRowLeft}>
+                                      <RcIconHyper width={20} height={20} />
+                                      <Text style={styles.feeRowLabel}>
+                                        {t(
+                                          'page.perps.historyDetail.feeHyperliquid',
+                                        )}
+                                      </Text>
+                                    </View>
+                                    <Text style={styles.feeRowValue}>
+                                      0.045%
+                                    </Text>
+                                  </View>
+                                  <View style={styles.feeRow}>
+                                    <View style={styles.feeRowLeft}>
+                                      <RcIconRabby width={20} height={20} />
+                                      <Text style={styles.feeRowLabel}>
+                                        {t('page.perps.historyDetail.feeRabby')}
+                                      </Text>
+                                    </View>
+                                    <Text style={styles.feeRowValue}>
+                                      0.02%
+                                    </Text>
+                                  </View>
+                                </View>
+                              </View>
+                            ),
+                            buttonType: 'hyperliquid',
+                          });
+                        }}>
+                        <View style={styles.listItemMain}>
+                          <Text style={styles.label}>
+                            {t('page.perps.historyDetail.fee')}
+                          </Text>
+                          <RcIconInfoCC
+                            width={18}
+                            height={18}
+                            color={colors2024['neutral-info']}
+                          />
+                        </View>
+                      </TouchableOpacity>
+                      <View>
+                        <Text style={styles.value}>
+                          ${splitNumberByStep(Number(fee).toFixed(4))}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
+                  <View style={styles.listItem}>
+                    <View style={styles.listItemMain}>
+                      <Text style={styles.label}>
+                        {t('page.perps.historyDetail.provider')}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.value}>Hyperliquid</Text>
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
 
             <Button

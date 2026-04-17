@@ -17,6 +17,7 @@ import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
 import { PerpsGuidePopup } from './components/PerpsGuidePopup';
 import { PerpsDepositPopup } from './components/PerpsDepositPopup';
 import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
+import { PerpsSpotSwapPopup } from './components/PerpsSpotSwapPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
@@ -83,7 +84,7 @@ export const PerpsOriginScreen = () => {
 
     favoriteMarkets,
   } = usePerpsState();
-  const { handleClosePosition } = usePerpsPosition();
+  const { handleClosePosition, handleStableCoinOrder } = usePerpsPosition();
   const { isUnifiedAccount } = usePerpsAccount();
 
   const [popupState, setPopupState] = usePerpsPopupState();
@@ -251,14 +252,10 @@ export const PerpsOriginScreen = () => {
   }, [selectedCoin, positionAndOpenOrders, marketDataMap]);
 
   // Render header component (account card and positions)
-  const renderListHeader = useCallback(() => {
+  const listHeader = useMemo(() => {
     return (
       <>
-        <PerpsAccountCard
-          localLoadingHistory={localLoadingHistory}
-          isLogin={isLogin}
-          positionAndOpenOrders={positionAndOpenOrders}
-        />
+        <PerpsAccountCard />
         <PerpsPositionSection
           handleShowRiskPopup={handleShowRiskPopup}
           handleCloseRiskPopup={handleCloseRiskPopup}
@@ -298,9 +295,7 @@ export const PerpsOriginScreen = () => {
       </>
     );
   }, [
-    localLoadingHistory,
     currentPerpsAccount,
-    isLogin,
     positionAndOpenOrders,
     marketDataMap,
     handleClosePosition,
@@ -358,7 +353,7 @@ export const PerpsOriginScreen = () => {
 
   return (
     <>
-      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
+      <NormalScreenContainer2024 type={'bg1'}>
         {!isLight && (
           <ImageBackground
             source={require('@/assets2024/icons/perps/ImgPerpsHomeBg.png')}
@@ -380,8 +375,8 @@ export const PerpsOriginScreen = () => {
               data={listData}
               renderItem={renderItem}
               keyExtractor={keyExtractor}
-              ListHeaderComponent={renderListHeader}
-              ItemSeparatorComponent={ItemSeparator}
+              ListHeaderComponent={listHeader}
+              // ItemSeparatorComponent={ItemSeparator}
               style={styles.container}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
@@ -392,8 +387,9 @@ export const PerpsOriginScreen = () => {
               }
               removeClippedSubviews={true}
               maxToRenderPerBatch={10}
-              initialNumToRender={10}
+              initialNumToRender={15}
               windowSize={5}
+              updateCellsBatchingPeriod={50}
               onEndReachedThreshold={0.5}
             />
 
@@ -526,8 +522,13 @@ export const PerpsOriginScreen = () => {
       <PerpsWithdrawPopup
         visible={popupState.isShowWithdrawPopup}
         marketDataMap={marketDataMap}
-        onWithdraw={async (amount, isHypeWithdraw) => {
-          await handleWithdraw(amount, isHypeWithdraw, isUnifiedAccount);
+        onWithdraw={async (amount, isHypeWithdraw, targetAsset) => {
+          await handleWithdraw(
+            amount,
+            isHypeWithdraw,
+            isUnifiedAccount,
+            targetAsset,
+          );
           setPopupState(prev => ({
             ...prev,
             isShowWithdrawPopup: false,
@@ -537,6 +538,25 @@ export const PerpsOriginScreen = () => {
           setPopupState(prev => ({
             ...prev,
             isShowWithdrawPopup: false,
+          }));
+        }}
+      />
+      <PerpsSpotSwapPopup
+        visible={popupState.isShowSwapPopup}
+        onClose={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowSwapPopup: false,
+          }));
+        }}
+        onSpotOrder={handleStableCoinOrder}
+        onSwapSuccess={() => {
+          // Balance refreshed via WebSocket subscription
+        }}
+        onDepositPress={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowDepositPopup: true,
           }));
         }}
       />

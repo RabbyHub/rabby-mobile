@@ -19,6 +19,7 @@ import {
 import { MarketData, perpsStore } from '@/hooks/perps/usePerpsStore';
 import { PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { PerpsMarketItem } from '../PerpsMarketSection/PerpsMarketItem';
+import { formatPerpsCoin, formatPerpsDisplayName } from '@/utils/perps';
 import { sortBy } from 'lodash';
 import { useShallow } from 'zustand/react/shallow';
 import { Text, TextInput } from '@/components/Typography';
@@ -86,9 +87,19 @@ export const PerpSearchListPopup: React.FC<{
       return list;
     }
 
+    const searchUpper = search.toUpperCase();
     return (
       list.filter(item => {
-        return item.name.toUpperCase().includes(search.toUpperCase());
+        const baseCoin = formatPerpsCoin(item.name).toUpperCase();
+        const fullPair = formatPerpsDisplayName(
+          item.displayName,
+          item.quoteAsset,
+        ).toUpperCase();
+        return (
+          baseCoin.includes(searchUpper) ||
+          fullPair.includes(searchUpper) ||
+          item.quoteAsset?.toUpperCase().includes(searchUpper)
+        );
       }) || []
     );
   }, [list, search]);
@@ -275,8 +286,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     content: {
       display: 'flex',
       flexDirection: 'column',
-      paddingHorizontal: 16,
-      gap: 8,
+      paddingHorizontal: 12,
+      // gap: 8,
     },
     absoluteContainer: {
       position: 'absolute',

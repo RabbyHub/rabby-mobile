@@ -38,6 +38,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     slTriggerPx: string;
     selectedMarginMode: 'cross' | 'isolated';
     estimatedLiquidationPrice: string | number;
+    quoteAsset?: string;
   };
 }> = ({ visible, onClose, info, onConfirm }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -108,7 +109,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
               <View style={styles.coinContainer}>
                 <AssetAvatar size={24} logo={coinLogo} />
-                <Text style={styles.value}>{formatPerpsCoin(coin)} - USD</Text>
+                <Text style={styles.value}>{formatPerpsCoin(coin)}</Text>
+                <Text style={styles.quote}>/{info.quoteAsset || 'USDC'}</Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -371,17 +373,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-info'],
     },
     value: {
+      marginLeft: 6,
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
     },
+    quote: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: colors2024['neutral-info'],
+    },
     coinContainer: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
+      // gap: 6,
     },
     tagContainer: {
       paddingVertical: 2,

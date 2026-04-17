@@ -21,6 +21,7 @@ import {
   formatMarkData,
   formatPositionPnl,
   formatSpotState,
+  getPxDecimals,
 } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
@@ -53,6 +54,8 @@ export interface MarketData {
   index: number;
   logoUrl: string;
   name: string;
+  displayName: string;
+  quoteAsset: 'USDC' | 'USDT' | 'USDH' | 'USDE'; // derived from Meta.collateralToken
   maxLeverage: number;
   minLeverage: number;
   maxUsdValueSize: string;
@@ -69,6 +72,9 @@ export interface MarketData {
   premium: string;
   prevDayPx: string;
   dexId: string;
+  category?: string;
+  brief?: string;
+  description?: string;
 }
 
 export type MarketDataMap = Record<string, MarketData>;
@@ -83,12 +89,22 @@ export interface AccountHistoryItem {
 
 export type AllDexsClearinghouseState = [string, ClearinghouseState][];
 
+export interface SpotBalance {
+  coin: string;
+  token: number;
+  total: string;
+  hold: string;
+  available: string;
+}
+
 export interface PerpsState {
   // positionAndOpenOrders: PositionAndOpenOrder[];
   currentClearinghouseState: ClearinghouseState | null;
   spotState: {
     accountValue: string;
     availableToTrade: string;
+    balances: SpotBalance[];
+    balancesMap: Record<string, SpotBalance>;
   };
   userAbstraction: UserAbstractionResp;
   openOrders: OpenOrder[];
@@ -134,6 +150,8 @@ export const initialState: PerpsState = {
   spotState: {
     accountValue: '0',
     availableToTrade: '0',
+    balances: [],
+    balancesMap: {},
   },
   userAbstraction: UserAbstractionResp.default,
   hasPermission: true,
@@ -313,30 +331,37 @@ const fetchMarketData = async () => {
   try {
     const fetchTopTokenList = async () => {
       try {
-        if (perpsTopTokenCache.length > 0) {
-          return perpsTopTokenCache;
-        }
-        const topAssets = await openapi.getPerpTopTokenList({
-          dex_id: 'all',
-        });
-        if (topAssets.length > 0) {
-          perpsTopTokenCache = topAssets;
-          return topAssets;
-        } else {
-          return DEFAULT_TOP_ASSET;
-        }
+        return DEFAULT_TOP_ASSET;
+        // if (perpsTopTokenCache.length > 0) {
+        //   return perpsTopTokenCache;
+        // }
+        // const topAssets = await openapi.getPerpTopTokenList({
+        //   dex_id: 'all',
+        // });
+        // if (topAssets.length > 0) {
+        //   perpsTopTokenCache = topAssets;
+        //   return topAssets;
+        // } else {
+        //   return DEFAULT_TOP_ASSET;
+        // }
       } catch (error) {
         console.error('Failed to fetch top assets:', error);
         return DEFAULT_TOP_ASSET;
       }
     };
 
-    const [topAssets, marketData, xyzMarketData] = await Promise.all([
+    const [topAssets, allMetas, perpDexs] = await Promise.all([
       fetchTopTokenList(),
-      sdk.info.metaAndAssetCtxs(),
-      sdk.info.metaAndAssetCtxs('xyz'),
+      sdk.info.getPerpsAllMetas(),
+      sdk.info.getPerpDexs(),
     ]);
-    setMarketData(formatMarkData(marketData, topAssets, xyzMarketData));
+
+    const dexIdMap: Record<number, string> = {};
+    perpDexs.forEach((dex, idx) => {
+      dexIdMap[idx] = dex?.name ?? '';
+    });
+
+    setMarketData(formatMarkData(allMetas, topAssets, dexIdMap));
   } catch (error) {
     console.error('Failed to fetch market data:', error);
   }
@@ -627,9 +652,16 @@ const updateMarketData = (payload: [string, AssetCtx[]][]) => {
       // other dex , example xyz is error
       const dexName = item.dexId ? item.dexId : 'hyperliquid';
       const assetCtx = marketByDexName[dexName];
+      const ctx = assetCtx?.[item.index];
+      if (!ctx) {
+        return item;
+      }
       return {
         ...item,
-        ...assetCtx?.[item.index],
+        ...ctx,
+        pxDecimals: ctx.markPx
+          ? getPxDecimals(String(ctx.markPx))
+          : item.pxDecimals,
       };
     });
     return {

@@ -4,12 +4,19 @@ import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import ArrowDownSVG from '@/assets/icons/common/arrow-down-cc.svg';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
   ARB_USDC_TOKEN_ITEM,
+  HYPE_USDC_TOKEN_ITEM,
   HYPE_EVM_BRIDGE_ADDRESS,
   HYPE_GAS_FEE_IN_HYPE,
+  HYPE_SEND_ASSET_TOKEN_MAP,
+  WITHDRAW_CHAIN_TOKENS,
   isHypeWithdrawToken,
+  ARB_USDC_TOKEN_SERVER_CHAIN,
+  HYPE_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
@@ -40,21 +47,37 @@ import { Keyboard, Platform, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { IS_ANDROID } from '@/core/native/utils';
 import { PerpsWithdrawSelectTokenPopup } from './PerpsWithdrawSelectTokenPopup';
+import { CHAINS_ENUM } from '@debank/common';
+import { findChainByEnum, findChainByServerID, getChain } from '@/utils/chain';
+
+type SelectChainType =
+  | typeof ARB_USDC_TOKEN_SERVER_CHAIN
+  | typeof HYPE_USDC_TOKEN_SERVER_CHAIN;
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
-  onWithdraw?(amount: string, isHypeWithdraw: boolean): void;
-  accountSummary?: AccountSummary | null;
+  onWithdraw?(
+    amount: string,
+    isHypeWithdraw: boolean,
+    targetAsset: keyof typeof HYPE_SEND_ASSET_TOKEN_MAP,
+  ): void;
   marketDataMap?: MarketDataMap;
-}> = ({ visible, onClose, onWithdraw, accountSummary, marketDataMap }) => {
+}> = ({ visible, onClose, onWithdraw, marketDataMap }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
 
-  const { availableBalance } = usePerpsAccount();
+  const [selectChainId, setSelectChainId] = useState<SelectChainType>(
+    ARB_USDC_TOKEN_SERVER_CHAIN,
+  );
+  const {
+    availableBalance: accountAvailableBalance,
+    isUnifiedAccount,
+    spotBalancesMap,
+  } = usePerpsAccount();
   const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
   const { t } = useTranslation();
 
@@ -66,7 +89,37 @@ export const PerpsWithdrawPopup: React.FC<{
     ARB_USDC_TOKEN_ITEM as ITokenItem,
   );
   const [tokenSelectVisible, setTokenSelectVisible] = useState(false);
-  const isHypeWithdraw = isHypeWithdrawToken(selectedToken);
+  const [chainSelectVisible, setChainSelectVisible] = useState(false);
+
+  // Tokens available for selected chain
+  const chainTokens = useMemo(() => {
+    const serverChain =
+      selectChainId === ARB_USDC_TOKEN_SERVER_CHAIN ? 'arb' : 'hyper';
+    return (WITHDRAW_CHAIN_TOKENS[serverChain] || []) as ITokenItem[];
+  }, [selectChainId]);
+  const isHypeWithdraw = selectChainId !== ARB_USDC_TOKEN_SERVER_CHAIN;
+
+  // Balance for the selected token
+  // Unified account: use spotBalancesMap per coin
+  // Non-unified: only USDC has balance (accountAvailableBalance), others are 0
+  const availableBalance = useMemo(() => {
+    const tokenSymbol = getTokenSymbol(selectedToken);
+    if (isUnifiedAccount) {
+      const spotBalance =
+        spotBalancesMap[tokenSymbol === 'USDT' ? 'USDT0' : tokenSymbol];
+      return Number(spotBalance?.available) || 0;
+    }
+    // Non-unified: only USDC
+    if (tokenSymbol === 'USDC') {
+      return accountAvailableBalance;
+    }
+    return 0;
+  }, [
+    isUnifiedAccount,
+    spotBalancesMap,
+    selectedToken,
+    accountAvailableBalance,
+  ]);
 
   // Fetch pre-transfer check for HyperEVM activation fee
   const { data: preTransferCheck } = useRequest(
@@ -126,7 +179,14 @@ export const PerpsWithdrawPopup: React.FC<{
             .decimalPlaces(6, BigNumber.ROUND_DOWN)
             .toFixed()
         : amount;
-      await onWithdraw?.(withdrawAmount, isHypeWithdraw);
+      const targetAsset = isHypeWithdraw
+        ? getTokenSymbol(selectedToken)
+        : 'USDC';
+      await onWithdraw?.(
+        withdrawAmount,
+        isHypeWithdraw,
+        targetAsset as keyof typeof HYPE_SEND_ASSET_TOKEN_MAP,
+      );
     },
     {
       manual: true,
@@ -201,6 +261,31 @@ export const PerpsWithdrawPopup: React.FC<{
             </Text>
           </View>
           <View style={styles.formItem}>
+            <Text style={styles.formItemLabel}>{'chain'}</Text>
+            <TouchableOpacity
+              style={[styles.chainContainer]}
+              onPress={() => setChainSelectVisible(true)}>
+              <View style={styles.left}>
+                <ChainIconImage
+                  size={24}
+                  chainServerId={selectChainId}
+                  isShowRPCStatus={true}
+                />
+                <Text style={[styles.chainName]}>
+                  {findChainByServerID(selectChainId)?.name}
+                </Text>
+              </View>
+              <View style={styles.iconContainer}>
+                <ArrowDownSVG
+                  width={16}
+                  height={16}
+                  style={styles.icon}
+                  color={colors2024['neutral-body']}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.formItem}>
             <View style={styles.formItemLabelRow}>
               <Text style={styles.formItemLabel}>
                 {t('page.perps.PerpsWithdrawPopup.amount')}
@@ -233,18 +318,18 @@ export const PerpsWithdrawPopup: React.FC<{
                   </Tip>
                 ) : null}
                 <Text style={styles.formItemDesc}>
+                  {t('page.perps.PerpsDepositPopup.balance')}:{' '}
                   {formatPerpsUsdValue(
                     effectiveBalance || 0,
                     BigNumber.ROUND_DOWN,
-                  )}{' '}
-                  {t('page.perps.PerpsWithdrawPopup.available')}
+                  )}
                 </Text>
               </View>
             </View>
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
-                  value={displayedAmount}
+                  value={amount}
                   onChangeText={setAmount}
                   keyboardType="numeric"
                   style={[
@@ -253,11 +338,9 @@ export const PerpsWithdrawPopup: React.FC<{
                       ? styles.inputError
                       : null,
                   ]}
-                  placeholder="$0"
+                  placeholderTextColor={colors2024['neutral-info']}
+                  placeholder="0"
                 />
-                <Text style={styles.tokenAmountHint}>
-                  {amount || '0'} {getTokenSymbol(selectedToken)}
-                </Text>
               </View>
               <View style={styles.divider} />
               <TouchableOpacity
@@ -359,8 +442,52 @@ export const PerpsWithdrawPopup: React.FC<{
         </BottomSheetView>
       </AppBottomSheetModal>
       <PerpsWithdrawSelectTokenPopup
+        visible={chainSelectVisible}
+        title="Select Chain"
+        tokens={[
+          {
+            ...ARB_USDC_TOKEN_ITEM,
+            display_symbol: 'Arbitrum',
+            id: 'arb',
+            symbol: 'Arbitrum',
+            name: 'Arbitrum',
+            optimized_symbol: 'Arbitrum',
+            logo_url: findChainByServerID(ARB_USDC_TOKEN_SERVER_CHAIN)?.logo,
+          } as ITokenItem,
+          {
+            ...HYPE_USDC_TOKEN_ITEM,
+            id: 'hyper-evm',
+            display_symbol: 'HyperEVM',
+            symbol: 'HyperEVM',
+            name: 'HyperEVM',
+            optimized_symbol: 'HyperEVM',
+            logo_url: findChainByServerID(HYPE_USDC_TOKEN_SERVER_CHAIN)?.logo,
+          } as ITokenItem,
+        ]}
+        onClose={() => setChainSelectVisible(false)}
+        onSelect={token => {
+          setSelectChainId(token.chain as SelectChainType);
+          // Auto-select first token of the chain
+          const tokens = WITHDRAW_CHAIN_TOKENS[token.chain] || [];
+          if (tokens.length > 0) {
+            setSelectedToken(tokens[0] as ITokenItem);
+          }
+          setAmount('');
+        }}
+      />
+      <PerpsWithdrawSelectTokenPopup
         visible={tokenSelectVisible}
+        tokens={chainTokens}
+        height={selectChainId === ARB_USDC_TOKEN_SERVER_CHAIN ? 220 : 460}
         onClose={() => setTokenSelectVisible(false)}
+        getBalance={token => {
+          const sym =
+            getTokenSymbol(token) === 'USDT' ? 'USDT0' : getTokenSymbol(token);
+          if (isUnifiedAccount) {
+            return Number(spotBalancesMap[sym]?.available) || 0;
+          }
+          return sym === 'USDC' ? accountAvailableBalance : 0;
+        }}
         onSelect={token => {
           setSelectedToken(token);
           setAmount('');
@@ -379,6 +506,42 @@ const getStyle = createGetStyles2024(ctx => {
       paddingTop: 10,
       display: 'flex',
       flexDirection: 'column',
+    },
+    chainContainer: {
+      borderRadius: 16,
+      marginTop: 12,
+      marginBottom: 30,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    left: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    chainName: {
+      color: ctx.colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontWeight: '700',
+      lineHeight: 20,
+      marginLeft: 9,
+    },
+    icon: {
+      // transform: [{ rotate: '90deg' }],
+    },
+    iconContainer: {
+      width: 26,
+      height: 26,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 100,
+      backgroundColor: ctx.isLight
+        ? 'rgba(0, 0, 0, 0.1)'
+        : ctx.colors2024['neutral-line'],
     },
     formItem: {
       flexShrink: 0,
@@ -405,7 +568,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontFamily: 'SF Pro Rounded',
     },
     inputContainer: {
-      height: 98,
+      height: 76,
       borderRadius: 16,
       paddingVertical: 20,
       paddingHorizontal: 20,
@@ -423,6 +586,7 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '700',
       color: ctx.colors2024['neutral-title-1'],
       flex: 1,
+      paddingLeft: 0,
       minHeight: 52,
       paddingTop: 0,
       paddingBottom: 0,

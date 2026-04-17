@@ -3,6 +3,7 @@ import {
   DELETE_AGENT_EMPTY_ADDRESS,
   HYPE_EVM_BRIDGE_ADDRESS,
   HYPE_SEND_ASSET_TOKEN,
+  HYPE_SEND_ASSET_TOKEN_MAP,
   PERPS_AGENT_NAME,
   PERPS_BUILD_FEE,
   PERPS_BUILD_FEE_RECEIVE_ADDRESS,
@@ -718,6 +719,7 @@ export const usePerpsState = () => {
       amount: number | string,
       isHypeWithdraw = false,
       isUnifiedAccount = false,
+      targetAsset: keyof typeof HYPE_SEND_ASSET_TOKEN_MAP = 'USDC',
     ): Promise<boolean> => {
       try {
         const sdk = apisPerps.getPerpsSDK();
@@ -739,7 +741,7 @@ export const usePerpsState = () => {
           ? sdk.exchange.prepareSendAsset({
               destination: HYPE_EVM_BRIDGE_ADDRESS,
               amount: amount.toString(),
-              token: HYPE_SEND_ASSET_TOKEN,
+              token: HYPE_SEND_ASSET_TOKEN_MAP[targetAsset],
               sourceDex: isUnifiedAccount ? 'spot' : '',
               destinationDex: 'spot',
             })

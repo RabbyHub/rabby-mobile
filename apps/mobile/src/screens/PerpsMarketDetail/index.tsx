@@ -5,10 +5,6 @@ import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  CancelOrderParams,
-  WsActiveAssetCtx,
-} from '@rabby-wallet/hyperliquid-sdk';
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
@@ -21,8 +17,10 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, AppStateStatus, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
+import { EnableUnifiedAccountPopup } from '../Perps/components/EnableUnifiedAccountPopup';
+import { PerpsSpotSwapPopup } from '../Perps/components/PerpsSpotSwapPopup';
 import BigNumber from 'bignumber.js';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
@@ -32,10 +30,11 @@ import { PerpsDepositCard } from './components/PerpsDepositCard';
 import { PerpsFooter } from './components/PerpsFooter';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
 import { PerpsInfo } from './components/PerpsInfo';
-import { PerpsIntro } from './components/PerpsIntro';
+import { PerpsAbout } from './components/PerpsAbout';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsPosition } from './components/PerpsPosition';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
+import { useActiveAssetSubscription } from './hooks/useActiveAssetSubscription';
 import { toast } from '@/components2024/Toast';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -152,9 +151,7 @@ export const PerpsMarketDetailScreen = () => {
     return marketDataMap[coin];
   }, [marketDataMap, coin]);
 
-  const [activeAssetCtx, setActiveAssetCtx] = React.useState<
-    WsActiveAssetCtx['ctx'] | null
-  >(null);
+  const { activeAssetCtx, activeAssetData } = useActiveAssetSubscription(coin);
 
   const [positionDirection, setPositionDirection] = React.useState<
     'Long' | 'Short'
@@ -245,6 +242,8 @@ export const PerpsMarketDetailScreen = () => {
     handleSetAutoClose,
     handleCancelOrder,
     handleUpdateMargin,
+    handleStableCoinOrder,
+    handleEnableUnifiedAccount,
   } = usePerpsPosition();
 
   const { handleDeposit } = usePerpsDeposit({
@@ -276,7 +275,26 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
-  const { accountValue, availableBalance } = usePerpsAccount();
+  const {
+    accountValue,
+    availableBalance: accountAvailableBalance,
+    isUnifiedAccount,
+  } = usePerpsAccount();
+
+  const availableBalance = useMemo(() => {
+    if (activeAssetData?.availableToTrade) {
+      const isShort = hasPosition && Number(currentPosition?.position.szi) < 0;
+
+      // type availableToTrade : [longAvailable, shortAvailable]
+      return Number(activeAssetData.availableToTrade[isShort ? 1 : 0]);
+    }
+    return Number(accountAvailableBalance) || 0;
+  }, [
+    activeAssetData?.availableToTrade,
+    accountAvailableBalance,
+    hasPosition,
+    currentPosition?.position.szi,
+  ]);
 
   const needDepositFirst = useMemo(() => {
     return Number(accountValue) === 0 && Number(availableBalance) === 0;
@@ -286,6 +304,10 @@ export const PerpsMarketDetailScreen = () => {
     return accountNeedApproveAgent || accountNeedApproveBuilderFee;
   }, [accountNeedApproveAgent, accountNeedApproveBuilderFee]);
 
+  const needEnableUnifiedAccount = useMemo(() => {
+    return !isUnifiedAccount && currentAssetCtx?.quoteAsset !== 'USDC';
+  }, [isUnifiedAccount, currentAssetCtx?.quoteAsset]);
+
   const canOpenPosition = useMemo(() => {
     return (
       hasPermission &&
@@ -293,6 +315,7 @@ export const PerpsMarketDetailScreen = () => {
       !hasPosition &&
       !needDepositFirst &&
       !accountNeedApprove &&
+      !needEnableUnifiedAccount &&
       showOpenPosition
     );
   }, [
@@ -302,63 +325,31 @@ export const PerpsMarketDetailScreen = () => {
     needDepositFirst,
     showOpenPosition,
     accountNeedApprove,
+    needEnableUnifiedAccount,
   ]);
 
   const [openPositionVisible, setOpenPositionVisible] = React.useState(
     fromSource === 'openPosition' && canOpenPosition,
   );
+  const [isShowSwapPopup, setIsShowSwapPopup] = useState(false);
+  const [isShowEnableUnifiedPopup, setIsShowEnableUnifiedPopup] =
+    useState(false);
 
-  const subscribeActiveAssetCtx = useMemoizedFn(() => {
-    const sdk = apisPerps.getPerpsSDK();
-    const { unsubscribe } = sdk.ws.subscribeToActiveAssetCtx(coin, data => {
-      if (coinNameRef.current !== data.coin) {
-        return;
-      }
-      setActiveAssetCtx(data.ctx);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  });
-
-  const unsubscribeActiveAssetRef = useRef<() => void>(() => {});
-
-  // Subscribe to real-time candle updates
-  useEffect(() => {
-    if (unsubscribeActiveAssetRef.current) {
-      unsubscribeActiveAssetRef.current();
+  const handleSwapPress = useCallback(() => {
+    if (!isUnifiedAccount) {
+      setIsShowEnableUnifiedPopup(true);
+      return;
     }
-    const unsubscribe = subscribeActiveAssetCtx();
-    unsubscribeActiveAssetRef.current = unsubscribe;
-    return () => {
-      unsubscribe?.();
-    };
-  }, [subscribeActiveAssetCtx, coin]);
+    setIsShowSwapPopup(true);
+  }, [isUnifiedAccount]);
 
-  // Re-subscribe activeAssetCtx when app returns to foreground
-  useEffect(() => {
-    let appStateRef = AppState.currentState;
-    const subscription = AppState.addEventListener(
-      'change',
-      (nextAppState: AppStateStatus) => {
-        if (
-          appStateRef.match(/inactive|background/) &&
-          nextAppState === 'active'
-        ) {
-          if (unsubscribeActiveAssetRef.current) {
-            unsubscribeActiveAssetRef.current();
-          }
-          const unsubscribe = subscribeActiveAssetCtx();
-          unsubscribeActiveAssetRef.current = unsubscribe;
-        }
-        appStateRef = nextAppState;
-      },
-    );
-    return () => subscription.remove();
-  }, [subscribeActiveAssetCtx]);
-
-  // Available balance for trading
+  const handleEnableUnifiedConfirm = useCallback(async () => {
+    const success = await handleEnableUnifiedAccount();
+    setIsShowEnableUnifiedPopup(false);
+    if (success) {
+      setIsShowSwapPopup(true);
+    }
+  }, [handleEnableUnifiedAccount]);
 
   const markPrice = useMemo(() => {
     return Number(activeAssetCtx?.markPx || currentAssetCtx?.markPx || 0);
@@ -419,7 +410,8 @@ export const PerpsMarketDetailScreen = () => {
       <PerpsHeaderTitle
         // account={currentPerpsAccount}
         popupIsOpen={showSearchListPopup}
-        coin={coin}
+        quoteCoin={currentAssetCtx?.quoteAsset}
+        coin={currentAssetCtx?.displayName || coin}
         logoUrl={currentAssetCtx?.logoUrl}
         onSelectCoin={() => {
           setShowSearchListPopup(true);
@@ -431,6 +423,8 @@ export const PerpsMarketDetailScreen = () => {
     showSearchListPopup,
     coin,
     currentAssetCtx?.logoUrl,
+    currentAssetCtx?.quoteAsset,
+    currentAssetCtx?.displayName,
     // currentPerpsAccount,
   ]);
 
@@ -445,6 +439,7 @@ export const PerpsMarketDetailScreen = () => {
   //   toast.error('Market not found');
   //   return null;
   // }
+  const displayName = currentAssetCtx?.displayName || coin;
 
   return (
     <>
@@ -468,12 +463,14 @@ export const PerpsMarketDetailScreen = () => {
             {isLogin && isInitialized && !hasPosition ? (
               <PerpsDepositCard
                 availableBalance={availableBalance}
+                quoteAsset={currentAssetCtx?.quoteAsset}
                 onDepositPress={() => {
                   setPopupState(prev => ({
                     ...prev,
                     isShowDepositPopup: true,
                   }));
                 }}
+                onSwapPress={handleSwapPress}
               />
             ) : null}
           </View>
@@ -510,6 +507,12 @@ export const PerpsMarketDetailScreen = () => {
               handleUpdateMargin={handleUpdateMargin}
             />
           )}
+          {!hasPosition && (
+            <PerpsAbout
+              coin={displayName}
+              description={currentAssetCtx?.description}
+            />
+          )}
           <PerpsInfo market={market} activeAssetCtx={activeAssetCtx} />
 
           <PerpsHistorySection
@@ -517,7 +520,12 @@ export const PerpsMarketDetailScreen = () => {
             marketDataMap={marketDataMap}
             historyList={singleCoinHistoryList}
           />
-          <PerpsIntro />
+          {hasPosition && (
+            <PerpsAbout
+              coin={displayName}
+              description={currentAssetCtx?.description}
+            />
+          )}
         </ScrollView>
         {isLogin ? (
           <PerpsFooter
@@ -614,6 +622,15 @@ export const PerpsMarketDetailScreen = () => {
         onCancel={() => setOpenPositionVisible(false)}
         setCurrentTpOrSl={setCurrentTpOrSl}
         handleOpenPosition={handleOpenPosition}
+        quoteAsset={currentAssetCtx?.quoteAsset}
+        onDepositPress={() => {
+          setOpenPositionVisible(false);
+          setPopupState(prev => ({ ...prev, isShowDepositPopup: true }));
+        }}
+        onSwapPress={() => {
+          setOpenPositionVisible(false);
+          handleSwapPress();
+        }}
         onConfirm={() => {
           setOpenPositionVisible(false);
           if (fromSource === 'openPosition') {
@@ -681,6 +698,7 @@ export const PerpsMarketDetailScreen = () => {
       {positionData ? (
         <PerpsAddPositionPopup
           visible={addPositionVisible}
+          availableBalance={Number(availableBalance || 0)}
           pnl={Number(positionData?.pnl || 0)}
           pnlPercent={Number(positionData?.pnlPercent || 0)}
           liquidationPx={Number(positionData?.liquidationPrice || 0)}
@@ -779,6 +797,24 @@ export const PerpsMarketDetailScreen = () => {
           setShowGuideEntryPopup(false);
           hasShownGuideRef.current = true;
           navigation.goBack();
+        }}
+      />
+      <EnableUnifiedAccountPopup
+        visible={isShowEnableUnifiedPopup}
+        onClose={() => setIsShowEnableUnifiedPopup(false)}
+        onConfirm={handleEnableUnifiedConfirm}
+      />
+      <PerpsSpotSwapPopup
+        visible={isShowSwapPopup}
+        disableSwitch={true}
+        targetAsset={currentAssetCtx?.quoteAsset || 'USDT'}
+        onClose={() => setIsShowSwapPopup(false)}
+        onSpotOrder={handleStableCoinOrder}
+        onSwapSuccess={() => {
+          // Balance refreshed via WebSocket subscription
+        }}
+        onDepositPress={() => {
+          setPopupState(prev => ({ ...prev, isShowDepositPopup: true }));
         }}
       />
     </>
