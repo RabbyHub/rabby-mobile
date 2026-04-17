@@ -9741,9 +9741,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.75-beta.1":
-  version: 0.0.75-beta.1
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.75-beta.1"
+"@rabby-wallet/rabby-swap@npm:0.0.75":
+  version: 0.0.75
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.75"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
@@ -9752,7 +9752,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/f5cbcd5bec3e423fe46826f15b02a5bb094bb910e6bfddd235d83211b5e7e814c3db824f9974d094befab77803fdb808a17642fc7abba82935705d6fee9a6090
+  checksum: 10/bbe19950c0af7080061c43e88e7a7418fc6d7cf806c65f55b05f025e3b464c449ea7b8f1d2b36539016f8ba4731300cf65115501bdaadfd25fe27a7bb51bab99
   languageName: node
   linkType: hard
 
@@ -37597,7 +37597,7 @@ __metadata:
     "@rabby-wallet/rabby-logger": "npm:0.2.1-alpha"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.75-beta.1"
+    "@rabby-wallet/rabby-swap": "npm:0.0.75"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
