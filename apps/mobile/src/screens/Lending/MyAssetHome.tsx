@@ -60,7 +60,7 @@ type MyAssetItem =
     };
 
 const MyAssetHome: React.FC = () => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { chainEnum, marketKey } = useSelectedMarket();
   const { reserves } = useLendingRemoteData();
@@ -160,13 +160,11 @@ const MyAssetHome: React.FC = () => {
         enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
+          backgroundColor: colors2024['neutral-bg-1'],
         },
       },
     });
-  }, [colors2024, isLight]);
+  }, [colors2024]);
 
   const handleOpenBorrowList = useCallback(() => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -176,16 +174,14 @@ const MyAssetHome: React.FC = () => {
         enableContentPanningGesture: false,
         rootViewType: 'View',
         handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
+          backgroundColor: colors2024['neutral-bg-1'],
         },
       },
       onCancel: () => {
         removeGlobalBottomSheetModal2024(modalId);
       },
     });
-  }, [colors2024, isLight]);
+  }, [colors2024]);
 
   const keyExtractor = useCallback(
     (item: MyAssetItem) => {
@@ -377,19 +373,17 @@ const MyAssetHome: React.FC = () => {
 
 export default MyAssetHome;
 
-const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   headerContainer: {
     //flexDirection: 'row',
     //gap: 16,
   },
   listContentContainer: {
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 16,
   },
   footer: {

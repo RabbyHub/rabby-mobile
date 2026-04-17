@@ -26,6 +26,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import WatchListHeader from '../../Watchlist/components/TokenHeader';
 import { marketRealtimePriceAtom } from '../atom';
 import { useSetAtom } from 'jotai';
+import { TAB_BAR_HEIGHT } from '..';
 
 const isAndroid = Platform.OS === 'android';
 const VIEWABILITY_CONFIG = {
@@ -220,15 +221,19 @@ export function MarketCategoryContent({
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: TokenMarketTokenItem }) => (
-      <TokenListItem
-        showChainLogo={categoryId !== 'meme'}
-        showFdvOnly={categoryId === 'hot'}
-        item={item}
-        onPress={handleOpenTokenDetail}
-      />
-    ),
-    [handleOpenTokenDetail, categoryId],
+    ({ item, index }: { item: TokenMarketTokenItem; index: number }) => {
+      const isFirstItem = index === 0;
+      return (
+        <TokenListItem
+          showChainLogo={categoryId !== 'meme'}
+          showFdvOnly={categoryId === 'hot'}
+          item={item}
+          onPress={handleOpenTokenDetail}
+          style={isFirstItem ? styles.firstItemPadding : undefined}
+        />
+      );
+    },
+    [handleOpenTokenDetail, categoryId, styles.firstItemPadding],
   );
 
   const keyExtractor = useCallback((item: TokenMarketTokenItem) => item.id, []);
@@ -328,6 +333,9 @@ export function MarketCategoryContent({
       volumeSort,
     ],
   );
+  const stickyHeaderIndices = useMemo(() => {
+    return [headerSpacerHeight ? 1 : 0];
+  }, [headerSpacerHeight]);
 
   return (
     <Tabs.FlatList
@@ -336,7 +344,7 @@ export function MarketCategoryContent({
       keyExtractor={keyExtractor}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={renderListHeaderComponent}
-      stickyHeaderIndices={[headerSpacerHeight ? 1 : 0]}
+      stickyHeaderIndices={stickyHeaderIndices}
       ListEmptyComponent={renderListEmptyComponent}
       ListFooterComponent={renderListFooterComponent}
       contentContainerStyle={styles.scrollView}
@@ -359,14 +367,15 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     height: isAndroid ? 46 : 44,
   },
   scrollView: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     flexGrow: 1,
+    paddingTop: 0,
+    marginTop: isAndroid ? TAB_BAR_HEIGHT : 0,
   },
   stickyHeader: {
-    paddingTop: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    paddingTop: 14,
+    paddingBottom: 4,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   bottomPadding: {
     height: 120,
@@ -381,5 +390,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     padding: 0,
     borderRadius: 16,
     marginTop: 8,
+  },
+  firstItemPadding: {
+    paddingTop: 8,
   },
 }));

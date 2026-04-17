@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import { Platform, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
@@ -38,52 +38,47 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
     return getTargetReserve(underlyingAsset);
   }, [getTargetReserve, underlyingAsset]);
 
-  const {
-    isSupplied,
-    apyText,
-    suppliedUsdText,
-    suppliedTokenText,
-    isIsolated,
-  } = useMemo(() => {
-    if (!reserve) {
-      return {
-        isSupplied: false,
-        apyText: '',
-        suppliedUsdText: '',
-        suppliedTokenText: '',
-        isIsolated: false,
-      };
-    }
-    const hasSupplied =
-      !!reserve.underlyingBalanceUSD && reserve.underlyingBalanceUSD !== '0';
-
-    const apy = formatApy(Number(reserve.reserve.supplyAPY || '0'));
-    const suppliedUsd = formatListNetWorth(
-      Number(reserve.underlyingBalanceUSD || '0'),
-    );
-
-    const tokenAmountNum = Number(reserve.underlyingBalance || '0');
-    let tokenAmount = '';
-    if (tokenAmountNum) {
-      if (tokenAmountNum >= 1) {
-        tokenAmount = tokenAmountNum.toFixed(4);
-      } else {
-        tokenAmount = tokenAmountNum.toPrecision(4);
+  const { apyText, suppliedUsdText, suppliedTokenText, isIsolated } =
+    useMemo(() => {
+      if (!reserve) {
+        return {
+          isSupplied: false,
+          apyText: '',
+          suppliedUsdText: '',
+          suppliedTokenText: '',
+          isIsolated: false,
+        };
       }
-    } else {
-      tokenAmount = '0';
-    }
+      const hasSupplied =
+        !!reserve.underlyingBalanceUSD && reserve.underlyingBalanceUSD !== '0';
 
-    return {
-      isSupplied: hasSupplied,
-      apyText: apy,
-      suppliedUsdText: suppliedUsd,
-      suppliedTokenText: `${formatTokenAmount(tokenAmount)} ${
-        reserve.reserve.symbol
-      }`,
-      isIsolated: reserve.reserve.isIsolated,
-    };
-  }, [reserve]);
+      const apy = formatApy(Number(reserve.reserve.supplyAPY || '0'));
+      const suppliedUsd = formatListNetWorth(
+        Number(reserve.underlyingBalanceUSD || '0'),
+      );
+
+      const tokenAmountNum = Number(reserve.underlyingBalance || '0');
+      let tokenAmount = '';
+      if (tokenAmountNum) {
+        if (tokenAmountNum >= 1) {
+          tokenAmount = tokenAmountNum.toFixed(4);
+        } else {
+          tokenAmount = tokenAmountNum.toPrecision(4);
+        }
+      } else {
+        tokenAmount = '0';
+      }
+
+      return {
+        isSupplied: hasSupplied,
+        apyText: apy,
+        suppliedUsdText: suppliedUsd,
+        suppliedTokenText: `${formatTokenAmount(tokenAmount)} ${
+          reserve.reserve.symbol
+        }`,
+        isIsolated: reserve.reserve.isIsolated,
+      };
+    }, [reserve]);
 
   const canBeEnabledAsCollateral = useMemo(() => {
     if (!reserve) {
@@ -238,10 +233,8 @@ const SupplyItem: React.FC<SupplyItemProps> = ({ underlyingAsset, style }) => {
 
 export default SupplyItem;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const cardBgColor = isLight
-    ? colors2024['neutral-bg-1']
-    : colors2024['neutral-bg-2'];
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const cardBgColor = colors2024['neutral-bg-2'];
   const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
 
   return {
@@ -251,22 +244,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 0,
       marginTop: 12,
       backgroundColor: cardBgColor,
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOpacity: 0.07,
-          shadowRadius: 16,
-          shadowOffset: {
-            width: 0,
-            height: 8,
-          },
-        },
-        android: {
-          elevation: 0,
-        },
-        default: {},
-      }),
       position: 'relative',
+      borderWidth: 1,
+      borderColor: colors2024['neutral-bg-1'],
     },
     wrapperToken: {
       backgroundColor: wrapperTokenCardBgColor,

@@ -306,7 +306,10 @@ export const LendingSupplyListContent: React.FC<
                 {data.reserve.symbol}
               </Text>
               {!!isWrapperToken && chainEnum && (
-                <Text style={styles.wrapperTokenText}>
+                <Text
+                  style={styles.wrapperTokenText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
                   {t('page.Lending.list.item.wrapperToken', {
                     name: wrapperToken[chainEnum]?.origin?.symbol,
                   })}
@@ -314,14 +317,18 @@ export const LendingSupplyListContent: React.FC<
               )}
             </View>
           </View>
-          <Text style={styles.tvl}>
-            {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
-          </Text>
-          <View style={styles.right}>
-            <Text style={styles.apy}>
-              {formatApy(Number(data.reserve.supplyAPY || '0'))}
+          {!isWrapperToken && (
+            <Text style={styles.tvl}>
+              {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
             </Text>
-          </View>
+          )}
+          {!isWrapperToken && (
+            <View style={styles.right}>
+              <Text style={styles.apy}>
+                {formatApy(Number(data.reserve.supplyAPY || '0'))}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       );
     },
@@ -403,20 +410,17 @@ const LendingSupplyList: React.FC<
 
 export default LendingSupplyList;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const cardBgColor = isLight
-    ? colors2024['neutral-bg-1']
-    : colors2024['neutral-bg-2'];
-  const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const wrapperTokenCardBgColor = colord(colors2024['neutral-line'])
+    .alpha(0.3)
+    .toRgbString();
 
   return {
     container: {
       flex: 1,
       paddingHorizontal: 16,
       width: '100%',
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
     },
     titleContainer: {
       paddingTop: 12,
@@ -440,28 +444,27 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     item: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 14,
+      paddingHorizontal: 4,
+      paddingVertical: 12,
       justifyContent: 'space-between',
-      backgroundColor: cardBgColor,
       borderRadius: 16,
-      marginTop: 8,
       overflow: 'visible',
     },
     wrapperToken: {
       backgroundColor: wrapperTokenCardBgColor,
-      borderWidth: 1,
-      borderColor: cardBgColor,
+      //borderWidth: 1,
+      paddingHorizontal: 12,
+      //borderColor: cardBgColor,
     },
     wrapperTokenArrow: {
       position: 'absolute',
       top: -14,
-      left: 30,
+      left: 20,
       zIndex: 1,
       ...makeTriangleStyle({
         dir: 'up',
         size: 7,
-        color: cardBgColor,
+        color: wrapperTokenCardBgColor,
         backgroundColor: 'transparent',
       }),
     },
@@ -490,12 +493,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '500',
-      textAlign: 'right',
+      textAlign: 'left',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
     symbolContainer: {
       gap: 2,
+      flexShrink: 1,
+      minWidth: 0,
     },
     wrapperTokenText: {
       fontSize: 12,
@@ -503,6 +508,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       color: colors2024['neutral-info'],
       fontFamily: 'SF Pro Rounded',
+      maxWidth: '100%',
     },
     symbol: {
       fontSize: 16,
@@ -512,6 +518,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
       maxWidth: 80,
       overflow: 'hidden',
+      textAlign: 'left',
     },
     yourSupplied: {
       fontSize: 16,
@@ -545,7 +552,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     listHeader: {
       paddingVertical: 2,
-      paddingHorizontal: 16,
+      paddingHorizontal: 8,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -577,7 +584,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['neutral-secondary'],
       width: 80,
       flex: 0,
-      textAlign: 'right',
+      textAlign: 'left',
+      marginLeft: 8,
     },
     headerApy: {
       fontSize: 14,
@@ -604,17 +612,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       zIndex: 1,
     },
     sectionHeader: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
       marginTop: 8,
+      marginBottom: 8,
       paddingHorizontal: 0,
       paddingLeft: 0,
     },
     buttonHeader: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-bg-2'],
+      backgroundColor: colors2024['neutral-bg-2'],
     },
     //headerContainer: {
     //  backgroundColor: isLight
