@@ -249,7 +249,8 @@ const ExpandableDescription = ({
               style={styles.moreButtonText}
               onPress={toggleExpanded}
               suppressHighlighting={true}>
-              {' Show more'}
+              {' '}
+              {t('page.tokenDetail.ShowMore')}
             </Text>
           )}
         </Text>
