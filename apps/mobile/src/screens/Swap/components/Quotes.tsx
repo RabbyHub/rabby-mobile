@@ -350,11 +350,9 @@ export const QuoteList = (props: QuotesProps) => {
       onDismiss={onClose}
       enableDismissOnClose
       {...makeBottomSheetProps({
-        linearGradientType: isLight ? 'bg0' : 'bg1',
         colors: colors2024,
-      })}
-      handleStyle={styles.bottomBg}
-      backgroundStyle={styles.bottomBg}>
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}>
       <View style={{ flex: 1, position: 'relative' }}>
         <TouchableOpacity onPress={refreshQuote} style={styles.refreshIconBtn}>
           <RcIconRefreshCC color={colors2024['neutral-body']} />
@@ -363,7 +361,7 @@ export const QuoteList = (props: QuotesProps) => {
           {t('page.bridge.the-following-bridge-route-are-found')}
         </Text>
         <Text style={styles.subtitleText}>
-          {t('page.bridge.best-subtitle')}
+          {t('page.bridge.swap-best-subtitle')}
         </Text>
 
         <BottomSheetScrollView style={styles.flex1}>
@@ -420,10 +418,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   headerText: {
+    marginTop: 14,
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
     color: colors2024['neutral-title-1'],
   },
   refreshText: {
