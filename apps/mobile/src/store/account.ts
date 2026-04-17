@@ -36,6 +36,7 @@ export interface AccountStoreState {
 }
 
 export const NEWLY_ADDED_ACCOUNT_DURATION = 10 * 60 * 1000;
+const ACCOUNT_STORE_SINGLETON_KEY = '__rabby_mobile_account_store__';
 
 class AccountStore extends BaseStore<AccountStoreState> {
   private hasStartedLifecycle = false;
@@ -99,26 +100,31 @@ class AccountStore extends BaseStore<AccountStoreState> {
     return this.fetchAccountsInParallel();
   };
 
-  fetchNewlyAddedAccounts = async () => {
-    const accounts = await AccountInfoEntity.getAccountsAddedIn(
-      NEWLY_ADDED_ACCOUNT_DURATION,
-    );
+  private readonly fetchNewlyAddedAccountsInParallel =
+    this.createAvoidParallelAsyncMethod(async () => {
+      const accounts = await AccountInfoEntity.getAccountsAddedIn(
+        NEWLY_ADDED_ACCOUNT_DURATION,
+      );
 
-    const nextValue = accounts.reduce((acc, item) => {
-      acc[item._db_id] = item;
-      return acc;
-    }, {} as AccountStoreState['newlyAddedAccounts']);
+      const nextValue = accounts.reduce((acc, item) => {
+        acc[item._db_id] = item;
+        return acc;
+      }, {} as AccountStoreState['newlyAddedAccounts']);
 
-    this.setState(prev => {
-      if (isEqual(prev.newlyAddedAccounts, nextValue)) {
-        return prev;
-      }
-      return {
-        newlyAddedAccounts: nextValue,
-      };
+      this.setState(prev => {
+        if (isEqual(prev.newlyAddedAccounts, nextValue)) {
+          return prev;
+        }
+        return {
+          newlyAddedAccounts: nextValue,
+        };
+      });
+
+      return accounts;
     });
 
-    return accounts;
+  fetchNewlyAddedAccounts = async () => {
+    return this.fetchNewlyAddedAccountsInParallel();
   };
 
   getIsNewlyAddedAccount = (account: KeyringAccount) => {
@@ -281,7 +287,29 @@ class AccountStore extends BaseStore<AccountStoreState> {
   };
 }
 
-export const accountStore = new AccountStore();
+function createAccountStore() {
+  if (!__DEV__) {
+    return new AccountStore();
+  }
+
+  const globalAccountStore = globalThis as typeof globalThis & {
+    [ACCOUNT_STORE_SINGLETON_KEY]?: AccountStore;
+  };
+
+  const existingAccountStore = globalAccountStore[ACCOUNT_STORE_SINGLETON_KEY];
+  if (existingAccountStore) {
+    return existingAccountStore;
+  }
+
+  // Fast Refresh can re-run this module while preserving live subscriptions.
+  // Reuse the same store instance in dev to avoid duplicate intervals/listeners.
+  const nextAccountStore = new AccountStore();
+  globalAccountStore[ACCOUNT_STORE_SINGLETON_KEY] = nextAccountStore;
+
+  return nextAccountStore;
+}
+
+export const accountStore = createAccountStore();
 
 export const useAccountStore = accountStore.useStore;
 
