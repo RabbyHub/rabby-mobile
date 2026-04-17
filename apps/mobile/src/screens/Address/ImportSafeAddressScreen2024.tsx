@@ -110,62 +110,65 @@ export const ImportSafeAddressScreen2024 = () => {
       footerBottomOffset={56}
       footerContainerStyle={{
         paddingHorizontal: 20,
+        paddingTop: 16,
       }}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          <View style={styles.topContent}>
-            <NextInput.TextArea
-              style={styles.textContainer}
-              inputStyle={styles.textArea}
-              tipText={''}
-              hasError={!!error}
-              fieldErrorTextStyle={styles.error}
-              containerStyle={Object.assign(
-                {},
-                error
-                  ? {}
-                  : {
-                      borderColor: 'transparent',
-                    },
-              )}
-              inputProps={{
-                placeholder: 'Input safe address',
-                value: input,
-                blurOnSubmit: true,
-                returnKeyType: 'done',
-                onChangeText: handleChange,
-              }}
-            />
-            <PasteButton
-              style={styles.pasteButton}
-              onPaste={text => {
-                handleChange(text);
-              }}
-            />
-            {loading ? (
-              <View style={styles.loading}>
-                <Spin
-                  style={styles.spin}
-                  color={colors2024['neutral-secondary']}
-                />
-                <Text style={styles.loadingText}>
-                  {t('page.importSafe.loading')}
-                </Text>
-              </View>
-            ) : (
-              <>
-                {error ? (
-                  <Text style={styles.errorMessage}>{error}</Text>
-                ) : (
-                  !!chainList?.length && (
-                    <GnosisScrollableChainList data={chainList} />
-                  )
+      <View style={styles.container}>
+        <View style={styles.topContent}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.centerAlign}>
+              <NextInput.TextArea
+                style={styles.textContainer}
+                inputStyle={styles.textArea}
+                tipText={''}
+                hasError={!!error}
+                fieldErrorTextStyle={styles.error}
+                containerStyle={Object.assign(
+                  {},
+                  error
+                    ? {}
+                    : {
+                        borderColor: 'transparent',
+                      },
                 )}
-              </>
-            )}
-          </View>
+                inputProps={{
+                  placeholder: 'Input safe address',
+                  value: input,
+                  blurOnSubmit: true,
+                  returnKeyType: 'done',
+                  onChangeText: handleChange,
+                }}
+              />
+              <PasteButton
+                style={styles.pasteButton}
+                onPaste={text => {
+                  handleChange(text);
+                }}
+              />
+            </View>
+          </TouchableWithoutFeedback>
+          {loading ? (
+            <View style={styles.loading}>
+              <Spin
+                style={styles.spin}
+                color={colors2024['neutral-secondary']}
+              />
+              <Text style={styles.loadingText}>
+                {t('page.importSafe.loading')}
+              </Text>
+            </View>
+          ) : (
+            <>
+              {error ? (
+                <Text style={styles.errorMessage}>{error}</Text>
+              ) : (
+                !!chainList?.length && (
+                  <GnosisScrollableChainList data={chainList} />
+                )
+              )}
+            </>
+          )}
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </FooterButtonScreenContainer>
   );
 };
@@ -182,10 +185,13 @@ const getStyles = createGetStyles2024(ctx => ({
     width: '100%',
     paddingHorizontal: 20,
   },
+  centerAlign: {
+    alignItems: 'center',
+  },
   topContent: {
     alignItems: 'center',
     width: '100%',
-    flexShrink: 0,
+    flex: 1,
   },
   errorMessage: {
     color: ctx.colors2024['red-default'],

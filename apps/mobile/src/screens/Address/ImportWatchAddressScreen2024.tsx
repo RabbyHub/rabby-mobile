@@ -26,6 +26,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { debounce } from 'lodash';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -189,6 +190,12 @@ export const ImportWatchAddressScreen2024 = () => {
     };
   }, [debouncedResolveEns, debouncedResolveEnsName]);
 
+  useEffect(() => {
+    if (!isValidHexAddress(input.toLowerCase() as `0x${string}`)) {
+      setEnsResult(null);
+    }
+  }, [input]);
+
   return (
     <FooterButtonScreenContainer
       as="View"
@@ -249,11 +256,11 @@ export const ImportWatchAddressScreen2024 = () => {
                 )}
               />
 
-              {!error && ensResult && input === ensResult.addr && (
+              {!error && ensResult && isSameAddress(input, ensResult.addr) && (
                 <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
               )}
 
-              {!error && ensResult && input !== ensResult.addr && (
+              {!error && ensResult && !isSameAddress(input, ensResult.addr) && (
                 <TouchableOpacity
                   style={styles.ensResultBox}
                   {...makeTestIDProps(E2E_ID.home.watchAddressEnsResult)}

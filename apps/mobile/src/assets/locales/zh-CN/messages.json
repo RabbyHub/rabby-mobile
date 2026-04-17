@@ -27,7 +27,8 @@
       "ConfrimAddress": "确认您的钱包",
       "ChooseBackup": "选择备份方法",
       "CreateWallet": "创建钱包",
-      "SetPassword": "设置密码"
+      "SetPassword": "设置密码",
+      "MoreImportMethods": "更多导入方式"
     }
   },
   "native": {
@@ -150,7 +151,7 @@
   "constant": {
     "IMPORTED_HD_KEYRING": "通过助记词导入",
     "KEYRING_TYPE_TEXT": {
-      "HdKeyring": "由 Seed Phrase 创建",
+      "HdKeyring": "由助记词创建",
       "SimpleKeyring": "通过私钥导入",
       "WatchAddressKeyring": "联系"
     },
@@ -906,12 +907,15 @@
       "cancel": "取消",
       "seed-phrase": "助记词",
       "enterPassphraseTitle": "输入密码短语以进行签名",
-      "delete-checklist-2": "我确认已备份私钥或助记词，并准备立即删除。",
+      "delete-checklist-2": "我确认已备份私钥 / 助记词，同意立即删除",
       "passphraseError": "密码无效",
       "quickAddressTitle_one": "{{count}} 地址",
       "quickAddressTitle_other": "{{count}} 个地址",
       "add-address": "添加钱包",
-      "delete-checklist-1": "我明白，如果我删除这个钱包，对应的私钥和助记词将被删除，Rabby 将无法恢复它们。"
+      "delete-checklist-1": "我明白，删除此钱包后，对应的私钥与助记词将被永久清除，Rabby 无法恢复",
+      "delete-private-key-title": "删除钱包与私钥",
+      "delete-seed-phrase-title": "删除钱包与助记词",
+      "delete-title": "删除钱包"
     },
     "bridge": {
       "Select": "选择",
@@ -940,7 +944,7 @@
       },
       "bridgeFrom": "跨链自",
       "best": "最优",
-      "best-subtitle": "综合考虑总成本（包括Gas费用）和速度提供最优报价",
+      "best-subtitle": "「最优」报价由预计总成本（含 Gas 费用）和交付速度综合决定。",
       "no-route-found": "未找到路线",
       "via-bridge": "通过 {{bridge}}",
       "history": "跨链历史",
@@ -1243,7 +1247,11 @@
         "safeTitle": "导入 Safe Wallet",
         "watch": "仅观察钱包",
         "watchOnlyTitle": "导入只读钱包",
-        "ImportCloud": "从{{cloud}}导入"
+        "ImportCloud": "从{{cloud}}导入",
+        "ImportFromExtensionOrCloud": "从插件或者{{cloud}}导入",
+        "moreWatchOnlyTitle": "导入观察钱包",
+        "moreWatchOnly": "观察钱包",
+        "moreSafeTitle": "导入Safe钱包"
       },
       "addAddress": {
         "hardwareWallet": "硬件钱包",
@@ -1251,7 +1259,9 @@
         "importAddress": "导入钱包",
         "createAddress": "创建钱包",
         "selectAddMethod": "选择添加方法",
-        "seedPhraseOrPrivateKey": "助记词或私钥"
+        "seedPhraseOrPrivateKey": "助记词或私钥",
+        "restoreRabbyWallet": "恢复Rabby钱包",
+        "moreOptions": "更多导入方式"
       },
       "rateModalTriggerOnHome": {
         "description": "你如何评价 Rabby Wallet？"
@@ -1669,7 +1679,7 @@
       "assets": "资产",
       "address-note": "地址备注",
       "remove-from-whitelist": "从白名单中移除",
-      "backup-private-key": "备份 Private Key",
+      "backup-private-key": "备份私钥",
       "address": "地址",
       "admins": "管理员们",
       "qr-code": "二维码",
@@ -1678,7 +1688,7 @@
         "addSafeAddress": "添加安全钱包"
       },
       "source": "来源",
-      "delete-desc-needpassword": "在删除之前，请牢记以下几点以了解如何保护您的资产。",
+      "delete-desc-needpassword": "删除前，请务必了解以下资产安全须知",
       "add-to-whitelist": "添加到白名单",
       "addressListScreen": {
         "edit": "编辑",
@@ -2032,8 +2042,8 @@
       "action": {
         "send": "发送",
         "pin": "Pin",
-        "Sell": "出售",
-        "Buy": "购买",
+        "Sell": "卖出",
+        "Buy": "买入",
         "unpin": "取消固定",
         "unfold": "展开",
         "excludeBalance": "从余额中排除",
@@ -2061,9 +2071,9 @@
       "Defi": "DeFi",
       "IssuerWebsite": "发行方网站",
       "OriginIssue": "在此区块链上原生发行",
-      "ListedBy": "列出者",
+      "ListedBy": "收录方",
       "NoListedSite": "暂无上市信息",
-      "IssuedBy": "签发者",
+      "IssuedBy": "发行方",
       "TokenName": "代币名称",
       "fdv": "FDV",
       "NoSupportedExchanges": "没有可用的受支持交易所",
@@ -2076,9 +2086,9 @@
       "HoldingValue": "持有价值",
       "Price": "价格",
       "ContentGeneratedByAI": "此内容由 AI 生成",
-      "ShowMore": "显示更多",
+      "ShowMore": "展开",
       "Introduction": "介绍",
-      "Fold": "折叠",
+      "Fold": "收起",
       "balance": "余额",
       "Mybalance": "代币余额",
       "guideToMarketData": "市场数据：",
@@ -2090,10 +2100,10 @@
       },
       "marketInfo": {
         "volume24h": "24小时交易量",
-        "marketCap": "市场总值",
-        "totalSupply": "总存款量",
-        "holders": "持有者",
-        "txns24h": "24h 交易次数",
+        "marketCap": "市值",
+        "totalSupply": "总量",
+        "holders": "持币地址数",
+        "txns24h": "24小时交易次数",
         "holderSections": {
           "tableHeader": {
             "address": "地址",
@@ -2110,12 +2120,12 @@
             "time": "时间",
             "all": "所有",
             "volume": "交易量",
-            "buy": "购买",
+            "buy": "买入",
             "address": "地址",
             "min": "分钟",
             "type": "类型",
-            "sell": "出售",
-            "qnt": "Qnt",
+            "sell": "卖出",
+            "qnt": "数量",
             "price": "价格",
             "value": "价值",
             "transactionCount": "交易数量"
@@ -2124,7 +2134,7 @@
         "empty": "无数据",
         "details": "详情",
         "summary": "摘要数据",
-        "activity": "活动",
+        "activity": "交易活动",
         "pool": {
           "tab": {
             "top5": "前 5 个池",
@@ -3239,7 +3249,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "恢复您的 Rabby 钱包",
-        "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。"
+        "subtitle": "欢迎回来！🎉  \n请选择一种方法快速恢复您的钱包。",
+        "subtitleInApp": "从下方选择一种快速导入您的钱包的方式"
       },
       "common": {
         "orYouCanCreateNewWallet": "没有钱包？立即<clickable>创建新钱包</clickable>"

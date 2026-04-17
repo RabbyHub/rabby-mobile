@@ -36,7 +36,8 @@
       "ConfrimAddress": "確認您的錢包",
       "SetPassword": "設定密碼",
       "ChooseBackup": "選擇備份方法",
-      "CreateWallet": "建立錢包"
+      "CreateWallet": "建立錢包",
+      "MoreImportMethods": "更多導入方式"
     }
   },
   "native": {
@@ -1102,7 +1103,7 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "表單已更改",
       "formChangedAmount": "金額已變更，可能是由於系統鍵盤的密碼自動填充。請檢查並重新輸入正確的金額。",
-      "best-subtitle": "考慮總成本（包括 Gas 費用）和提供最佳報價的速度"
+      "best-subtitle": "「最佳」報價由預計總成本（含 Gas 費用）與交付速度綜合決定。"
     },
     "signFooterBar": {
       "importedByLedger": "透過 Ledger 匯入",
@@ -1331,7 +1332,9 @@
         "createAddress": "創建錢包",
         "importAddress": "匯入錢包",
         "selectAddMethod": "選擇添加方法",
-        "seedPhraseOrPrivateKey": "助记词或私钥"
+        "seedPhraseOrPrivateKey": "助记词或私钥",
+        "restoreRabbyWallet": "恢復Rabby錢包",
+        "moreOptions": "更多導入方式"
       },
       "importAddress": {
         "seedPhrase": "匯入助記詞",
@@ -1347,7 +1350,11 @@
         "importTitle": "導入錢包",
         "safeTitle": "導入 Safe Wallet",
         "watch": "觀察型錢包",
-        "ImportCloud": "從 {{cloud}} 匯入"
+        "ImportCloud": "從 {{cloud}} 匯入",
+        "ImportFromExtensionOrCloud": "從擴展功能或{{cloud}}導入",
+        "moreWatchOnlyTitle": "導入觀察錢包",
+        "moreWatchOnly": "觀察錢包",
+        "moreSafeTitle": "導入Safe錢包"
       },
       "rateModalTriggerOnHome": {
         "description": "您如何評價 Rabby Wallet？"
@@ -3286,7 +3293,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "恢復您的 Rabby 錢包",
-        "subtitle": "歡迎回來！🎉  \n選擇一種方法來快速恢復您的錢包。"
+        "subtitle": "歡迎回來！🎉  \n選擇一種方法來快速恢復您的錢包。",
+        "subtitleInApp": "從下方選擇一種快速導入您的錢包的方式"
       },
       "common": {
         "orYouCanCreateNewWallet": "沒有錢包？立即<cw>創建新錢包</cw>"

@@ -37,6 +37,7 @@ import {
 import {
   storeApiExpSettingData,
   useBlockSubmitIfFormChangedOnAuth,
+  useDebugSwapHistorySkipLocalLookup,
   useExpScreenCapture,
   useIosForceDisableAlertForSensitiveScene,
   useMockBatchRevoke,
@@ -1211,6 +1212,51 @@ function DevSwitchSubmitFormGuard() {
   );
 }
 
+function DevSwitchSwapHistoryFallback() {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const {
+    debugSwapHistorySkipLocalLookup,
+    toggleDebugSwapHistorySkipLocalLookup,
+  } = useDebugSwapHistorySkipLocalLookup();
+
+  return (
+    <View style={styles.showCaseRowsContainer}>
+      <View style={styles.secondarySectionHeader}>
+        <Text
+          style={[
+            styles.secondarySectionTitle,
+            { fontSize: 24, marginLeft: 2 },
+          ]}>
+          Swap History API Fallback
+        </Text>
+      </View>
+
+      <View
+        style={[styles.secondarySectionContent, { flexDirection: 'column' }]}>
+        <TouchableOpacity
+          style={styles.switchRowWrapper}
+          onPress={() => {
+            toggleDebugSwapHistorySkipLocalLookup();
+          }}>
+          <AppSwitch2024
+            value={debugSwapHistorySkipLocalLookup}
+            onValueChange={toggleDebugSwapHistorySkipLocalLookup}
+          />
+          <Text style={styles.switchLabel}>
+            {debugSwapHistorySkipLocalLookup
+              ? 'Skip local DB lookup — always fetch from API (test fallback)'
+              : 'Normal: look up local DB first before calling API'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={[styles.metaLabel, { marginTop: 4 }]}>
+          Enable to verify getUserTxDetail fallback for txs older than 90 days.
+          Watch for /v1/user/tx requests in network proxy.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 async function importWalletConnectAddress({
   address,
   brandName,
@@ -1402,6 +1448,7 @@ function DevSwitches(): JSX.Element {
 
         <Text style={styles.areaTitle}>Swap / Bridge</Text>
         <DevSwitchSubmitFormGuard />
+        <DevSwitchSwapHistoryFallback />
       </ScrollView>
     </NormalScreenContainer>
   );

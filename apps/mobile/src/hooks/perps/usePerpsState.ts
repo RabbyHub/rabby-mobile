@@ -698,6 +698,11 @@ export const usePerpsState = () => {
     } catch (error: any) {
       console.error('Failed to login Perps account:', error);
       showToast(error.message || 'Login failed', 'error');
+      Sentry.captureException(
+        new Error(
+          `Failed to login Perps account, address: ${account.address} , account type: ${account.type} , error: ${error}`,
+        ),
+      );
     }
   });
 

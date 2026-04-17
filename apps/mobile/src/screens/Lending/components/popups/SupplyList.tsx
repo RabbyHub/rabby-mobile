@@ -36,7 +36,7 @@ import { isUnFoldToken } from '../../config/unfold';
 import { TokenRowSectionHeader } from '@/screens/Home/components/AssetRenderItems';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Text, TextInput } from '@/components/Typography';
-//import { colord } from 'colord';
+import { colord } from 'colord';
 
 const FOOT_HEIGHT = 86;
 
@@ -289,9 +289,9 @@ export const LendingSupplyListContent: React.FC<
         <TouchableOpacity
           style={[styles.item, isWrapperToken && styles.wrapperToken]}
           onPress={() => handlePressItem(data)}>
-          {/*{isWrapperToken && !search && (
+          {isWrapperToken && !search && (
             <View style={styles.wrapperTokenArrow} />
-          )}*/}
+          )}
           <View style={styles.left}>
             <TokenIcon
               tokenSymbol={data.reserve.symbol}
@@ -306,7 +306,10 @@ export const LendingSupplyListContent: React.FC<
                 {data.reserve.symbol}
               </Text>
               {!!isWrapperToken && chainEnum && (
-                <Text style={styles.wrapperTokenText}>
+                <Text
+                  style={styles.wrapperTokenText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
                   {t('page.Lending.list.item.wrapperToken', {
                     name: wrapperToken[chainEnum]?.origin?.symbol,
                   })}
@@ -314,18 +317,22 @@ export const LendingSupplyListContent: React.FC<
               )}
             </View>
           </View>
-          <Text style={styles.tvl}>
-            {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
-          </Text>
-          <View style={styles.right}>
-            <Text style={styles.apy}>
-              {formatApy(Number(data.reserve.supplyAPY || '0'))}
+          {!isWrapperToken && (
+            <Text style={styles.tvl}>
+              {formatUsdValueKMB(Number(data.reserve.totalLiquidityUSD || '0'))}
             </Text>
-          </View>
+          )}
+          {!isWrapperToken && (
+            <View style={styles.right}>
+              <Text style={styles.apy}>
+                {formatApy(Number(data.reserve.supplyAPY || '0'))}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       );
     },
-    [chainEnum, foldHideList, handlePressItem, styles, t],
+    [chainEnum, foldHideList, handlePressItem, search, styles, t],
   );
 
   const renderFooterComponent = useCallback(() => {
@@ -403,11 +410,10 @@ const LendingSupplyList: React.FC<
 
 export default LendingSupplyList;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const cardBgColor = isLight
-    ? colors2024['neutral-bg-1']
-    : colors2024['neutral-bg-2'];
-  //const wrapperTokenCardBgColor = colord(cardBgColor).alpha(0.5).toRgbString();
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const wrapperTokenCardBgColor = colord(colors2024['neutral-line'])
+    .alpha(0.3)
+    .toRgbString();
 
   return {
     container: {
@@ -445,19 +451,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       overflow: 'visible',
     },
     wrapperToken: {
-      //backgroundColor: wrapperTokenCardBgColor,
+      backgroundColor: wrapperTokenCardBgColor,
       //borderWidth: 1,
+      paddingHorizontal: 12,
       //borderColor: cardBgColor,
     },
     wrapperTokenArrow: {
       position: 'absolute',
       top: -14,
-      left: 30,
+      left: 20,
       zIndex: 1,
       ...makeTriangleStyle({
         dir: 'up',
         size: 7,
-        color: cardBgColor,
+        color: wrapperTokenCardBgColor,
         backgroundColor: 'transparent',
       }),
     },
@@ -492,6 +499,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
     symbolContainer: {
       gap: 2,
+      flexShrink: 1,
+      minWidth: 0,
     },
     wrapperTokenText: {
       fontSize: 12,
@@ -499,6 +508,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       color: colors2024['neutral-info'],
       fontFamily: 'SF Pro Rounded',
+      maxWidth: '100%',
     },
     symbol: {
       fontSize: 16,
