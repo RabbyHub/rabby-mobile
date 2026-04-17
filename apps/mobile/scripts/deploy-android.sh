@@ -38,8 +38,8 @@ deployment_local_dir="$script_dir/deployments/android"
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 prepare_android_build_artifacts() {
-  turbo_prepare_js_dependencies
-  turbo_prepare_ruby_bundle
+  turbo_prepare_js_dependencies || return $?
+  turbo_prepare_ruby_bundle || return $?
 
   if turbo_build_enabled; then
     android_build_artifacts_key=$(turbo_compute_android_build_artifacts_key)
@@ -108,6 +108,7 @@ build_appstore() {
       yarn link-assets &&
       yarn buildworker:prod:android
   fi
+
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     turbo_restore_gradle_state
