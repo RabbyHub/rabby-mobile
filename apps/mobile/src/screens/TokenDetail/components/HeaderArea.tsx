@@ -13,12 +13,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar } from '@/components';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import { useAssetsRefreshing } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import RcIconCopy from '@/assets2024/singleHome/copy.svg';
+import RcIconCopyCC from '@/assets2024/singleHome/copy-cc.svg';
 import { trigger } from 'react-native-haptic-feedback';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { findChain } from '@/utils/chain';
@@ -27,6 +26,7 @@ import { isLpToken } from '@/utils/lpToken';
 import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
+import { ellipsisAddress } from '@/utils/address';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -82,6 +82,11 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
     [isNativeToken, t, token.id],
   );
 
+  const displayCopy = useMemo(
+    () => showCopyIcon && !isNativeToken,
+    [isNativeToken, showCopyIcon],
+  );
+
   return (
     <View style={[styles.root, rootStyle]}>
       <View style={[styles.container, style]}>
@@ -94,24 +99,34 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             chainSize={chainSize}
             innerChainStyle={borderChain ? styles.chainLogo : undefined}
           />
-          <Text
-            style={[styles.tokenSymbol, titleStyle]}
-            numberOfLines={1}
-            ellipsizeMode="tail">
-            {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
-          </Text>
-          {isLpToken(token) && (
-            <View style={styles.lpTokenIconContainer}>
-              <LpTokenIcon protocolId={token.protocol_id || ''} />
+          <View style={styles.middleContainer}>
+            <View style={styles.titleContainer}>
+              <Text
+                style={[
+                  displayCopy ? styles.showCopySymbol : styles.tokenSymbol,
+                  titleStyle,
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {title || ellipsisOverflowedText(getTokenSymbol(token), 15)}
+              </Text>
+              {isLpToken(token) && (
+                <View style={styles.lpTokenIconContainer}>
+                  <LpTokenIcon protocolId={token.protocol_id || ''} />
+                </View>
+              )}
             </View>
-          )}
-          {showCopyIcon && !isNativeToken && (
-            <TouchableOpacity
-              style={styles.touchBox}
-              onPress={handleCopyAddress}>
-              <RcIconCopy style={styles.copy} />
-            </TouchableOpacity>
-          )}
+            {displayCopy && (
+              <TouchableOpacity
+                style={styles.touchBox}
+                onPress={handleCopyAddress}>
+                <Text style={styles.contractAddress}>
+                  {ellipsisAddress(token.id)}
+                </Text>
+                <RcIconCopyCC style={styles.copy} />
+              </TouchableOpacity>
+            )}
+          </View>
           {!disableRefresh && refreshing && <LoadingCircle />}
         </View>
       </View>
@@ -127,7 +142,7 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     width: screenWidth - 140,
     marginLeft: 0,
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
   },
   token: {
     display: 'flex',
@@ -183,11 +198,36 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   touchBox: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    gap: 2,
+  },
+  middleContainer: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   copy: {
-    width: 18,
-    height: 18,
+    width: 12,
+    height: 12,
+  },
+  contractAddress: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  showCopySymbol: {
+    flexShrink: 1,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    flexWrap: 'nowrap',
   },
 }));
