@@ -39,7 +39,7 @@ async function getOrCreateExtensionId(): Promise<string> {
   const persistedExtensionId = preferenceService.getPreference('extensionId');
   if (persistedExtensionId) {
     cachedExtensionId = persistedExtensionId;
-    return cachedExtensionId;
+    return persistedExtensionId;
   }
 
   cachedExtensionId = genExtensionId();

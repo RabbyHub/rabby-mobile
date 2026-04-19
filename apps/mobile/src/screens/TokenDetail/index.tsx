@@ -18,7 +18,6 @@ import {
   View,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { apisAddressBalance } from '@/hooks/useCurrentBalance';
 import { formatPrice } from '@/utils/number';
@@ -59,7 +58,6 @@ const TokenDetailContent = () => {
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const { token, account, tokenSelectType } = route.params || {};
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
-  const [reachTop, setReachTop] = React.useState(false);
 
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -67,7 +65,6 @@ const TokenDetailContent = () => {
   const { t } = useTranslation();
 
   const setIsFromBack = useSetAtom(isFromBackAtom);
-  const { safeOffBottom } = useSafeSizes();
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'TokenDetail',
@@ -313,14 +310,13 @@ const TokenDetailContent = () => {
 
   const handleReachTopStatusChange = React.useCallback(
     (status: boolean) => {
-      setReachTop(status);
       Animated.timing(fadeAnim, {
         toValue: status ? 1 : 0,
         duration: 10,
         useNativeDriver: true,
       }).start();
     },
-    [fadeAnim, setReachTop],
+    [fadeAnim],
   );
 
   if (!effectiveAccount?.address) {

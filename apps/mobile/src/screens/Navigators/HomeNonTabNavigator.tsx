@@ -54,9 +54,7 @@ export default function HomeNonTabNavigator() {
           ...headerPresets.withBgCard1_2024,
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
+            backgroundColor: colors2024['neutral-bg-1'],
           },
           headerTitleStyle: {
             fontSize: 20,

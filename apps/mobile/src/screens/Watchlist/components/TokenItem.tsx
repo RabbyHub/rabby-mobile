@@ -1,5 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Tip } from '@/components/Tip';
@@ -96,6 +103,7 @@ interface TokenListItemProps {
   onPress: (item: TokenDetailWithPriceCurve) => void;
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 }
 
 const TokenListItemComponent = ({
@@ -103,6 +111,7 @@ const TokenListItemComponent = ({
   onPress,
   leftSlot,
   rightSlot,
+  style,
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const uuid = `${item.chain}:${item.id}`;
@@ -121,7 +130,9 @@ const TokenListItemComponent = ({
   }, [item.asset, item.identity?.fdv]);
 
   return (
-    <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
+    <TouchableOpacity
+      style={[styles.tokenItem, style]}
+      onPress={() => onPress(item)}>
       {/* 左slot */}
       {leftSlot && <View style={styles.leftSlot}>{leftSlot}</View>}
       <View style={styles.tokenLeftSection}>
@@ -229,17 +240,11 @@ export const TokenItemSkeleton = () => {
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
     paddingVertical: 12,
-    paddingLeft: 12,
-    paddingRight: 14,
+    paddingHorizontal: 4,
     gap: 8,
-    marginBottom: 8,
     display: 'flex',
     flexDirection: 'row',
     alignContent: 'center',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 16,
   },
   tokenLeftSection: {
     justifyContent: 'center',

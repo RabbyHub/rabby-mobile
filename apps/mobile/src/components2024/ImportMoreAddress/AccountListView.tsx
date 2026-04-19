@@ -2,14 +2,12 @@ import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { Card } from '../Card';
 import { AccountListItem, ViewAccount } from './AccountListItem';
 import { PlaceholderView } from './PlaceholderView';
+import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
 
@@ -19,10 +17,14 @@ export interface Props {
   selectedAccounts: ViewAccount[];
   handleSelectIndex: (address: string, index: number) => void;
   loading?: boolean;
+  brandName: string;
+  seedPhraseIndex?: number;
 }
 
 export type { ViewAccount } from './AccountListItem';
 
+const FOOTER_PADDING = 36;
+const LOADING_PLACEHOLDER_HEIGHT = 60;
 const FooterComponent = () => <View style={{ height: 84 }} />;
 
 export const AccountListView: React.FC<Props> = ({
@@ -31,15 +33,30 @@ export const AccountListView: React.FC<Props> = ({
   selectedAccounts,
   handleSelectIndex,
   loading,
+  brandName,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
   return (
-    <Card style={styles.root}>
+    <View style={styles.root}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>
+          {t('page.manageAddress.seed-phrase')}
+        </Text>
+      </View>
       <FlatList
         style={styles.list}
+        contentContainerStyle={
+          selectedAccounts?.length
+            ? {
+                paddingBottom:
+                  FOOTER_PADDING + (loading ? LOADING_PLACEHOLDER_HEIGHT : 0),
+              }
+            : undefined
+        }
         data={accounts}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item: account }) => {
           const isImported = currentAccounts.some(a =>
             isSameAddress(a.address, account.address),
@@ -59,6 +76,7 @@ export const AccountListView: React.FC<Props> = ({
           return (
             <AccountListItem
               account={account}
+              brandName={brandName}
               key={account.address}
               isImported={isImported}
               isSelected={isSelected}
@@ -74,42 +92,35 @@ export const AccountListView: React.FC<Props> = ({
           ) : null
         }
       />
-    </Card>
+    </View>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     flex: 1,
-    marginHorizontal: 20,
-    paddingRight: 0,
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
+    marginHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingVertical: 16,
+    overflow: 'hidden',
+  },
+  header: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  headerText: {
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   list: {
     width: '100%',
+    paddingHorizontal: 12,
   },
-  info: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  nameText: {
-    fontSize: 20,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
-    color: colors2024['neutral-title-1'],
-    marginTop: 25,
-  },
-  loading: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 17,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 22,
-    color: colors2024['neutral-secondary'],
+  separator: {
+    height: 8,
   },
 }));

@@ -23,6 +23,7 @@ type ScreenshotSettings = {
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
   startupProbeEnabledOnNextLaunch: boolean;
+  debugSwapHistorySkipLocalLookup: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -40,6 +41,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     blockSubmitIfFormChangedOnAuth: __DEV__,
     toastOpenApiHttpErrorStatus: false,
     startupProbeEnabledOnNextLaunch: false,
+    debugSwapHistorySkipLocalLookup: false,
   },
 );
 
@@ -458,5 +460,29 @@ export function useMockBatchRevoke() {
   return {
     mockBatchRevokeSetting,
     setMockBatchRevoke,
+  };
+}
+
+export function useDebugSwapHistorySkipLocalLookup() {
+  const debugSwapHistorySkipLocalLookup = experimentalSettingsStore(
+    s => s.debugSwapHistorySkipLocalLookup,
+  );
+
+  const toggleDebugSwapHistorySkipLocalLookup = useCallback(
+    (nextVal?: boolean) => {
+      setExpSettingData(prev => ({
+        ...prev,
+        debugSwapHistorySkipLocalLookup:
+          typeof nextVal === 'boolean'
+            ? nextVal
+            : !prev.debugSwapHistorySkipLocalLookup,
+      }));
+    },
+    [],
+  );
+
+  return {
+    debugSwapHistorySkipLocalLookup,
+    toggleDebugSwapHistorySkipLocalLookup,
   };
 }

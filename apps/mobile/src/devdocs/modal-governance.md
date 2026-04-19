@@ -18,13 +18,13 @@ Android does not show the same severity in current repro paths.
   - Query API: `hasVisibleBlockingModal`, `getVisibleBlockingModalIds`.
   - Dev API:
     - `__dumpBlockingModalIds()`
-    - `__setModalDebugOverlayEnabled(true|false)`
+    - `__dumpModalGateDebugSnapshot()`
 - `src/components/Modal/TrackedModal.tsx`
   - Unified wrapper around RN `Modal`.
   - Automatically registers/unregisters visibility in `modalGate`.
-- `src/components/Modal/ModalDebugOverlay.tsx`
-  - Dev-only on-screen overlay for currently visible blocking modal ids.
-  - Mounted in `AppNavigation`.
+- `src/screens/Settings/components/FloatingDiagnosticsPanel.tsx`
+  - Dev-only floating diagnostics entry for autolock and currently visible blocking modal ids.
+  - Enabled from Regression Switches.
 
 ## Current Guardrail
 
@@ -76,14 +76,25 @@ Already on `TrackedModal` + registry:
 - security tip modal
 - biometrics stub modal
 - mini-sign direct transparent overlay
+- alias name edit modal
+- qr code modal
+- duplicate address modal
+- confirm set password modal
+- address discard confirm modal
+- sync extension no-new-addresses modal
+- gas account switch-login-address modal
+- gas account deposit-with-token alert modal
+- perps agents-limit modal
+- perps deposit-token modal
 - repro modal in dev switches
 
 Next wave:
 
-- perps modals
-- gas account modals
+- remaining perps modals
+- remaining gas account modals
 - settings dev modals
 - address/import related confirmation modals
+- receive / token detail / keystone related legacy modals
 
 ## Rules for New Code
 

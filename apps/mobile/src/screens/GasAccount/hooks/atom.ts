@@ -11,6 +11,7 @@ import {
   GasAccountServiceStore,
 } from '@/core/services/gasAccount';
 import { Account } from '@/core/services/preference';
+import { MMKVStorageStrategy, zustandByMMKV } from '@/core/storage/mmkv';
 import { zCreate } from '@/core/utils/reexports';
 import {
   makeAvoidParallelAsyncFunc,
@@ -146,7 +147,12 @@ export const gasAccountStore = zCreate<GasAccountZustandState>(() => ({
 
 type GasAccountDepositState = {
   bridgeSupportTokenList: GasAccountBridgeSupportTokenList;
+  // 缓存更新时间，用于 TTL 判断
   bridgeSupportUpdatedAt: number;
+};
+
+type GasAccountDepositRuntimeState = {
+  // 仅运行时 loading，不持久化
   bridgeSupportLoading: boolean;
 };
 
@@ -155,38 +161,49 @@ const EMPTY_GAS_ACCOUNT_BRIDGE_SUPPORT_TOKEN_LIST: GasAccountBridgeSupportTokenL
     hyperliquid_tokens: [],
     wallet_tokens: [],
   };
-const GAS_ACCOUNT_BRIDGE_SUPPORT_CACHE_TTL = 60 * 1000;
+const GAS_ACCOUNT_BRIDGE_SUPPORT_CACHE_TTL = 5 * 60 * 1000;
+const GAS_ACCOUNT_BRIDGE_SUPPORT_CACHE_KEY =
+  '@GasAccountBridgeSupportTokenList';
 const gasAccountDepositOpenapi =
   openapi as OpenApiWithGasAccountBridgeSupportTokenList;
 
-export const gasAccountDepositStore = zCreate<GasAccountDepositState>(() => ({
+const defaultGasAccountDepositState: GasAccountDepositState = {
   bridgeSupportTokenList: EMPTY_GAS_ACCOUNT_BRIDGE_SUPPORT_TOKEN_LIST,
   bridgeSupportUpdatedAt: 0,
-  bridgeSupportLoading: false,
-}));
+};
 
-const fetchGasAccountBridgeSupportTokenList = makeAvoidParallelAsyncFunc(
-  async (force = false) => {
-    const { bridgeSupportTokenList, bridgeSupportUpdatedAt } =
-      gasAccountDepositStore.getState();
-    const now = Date.now();
-    const isFresh =
-      bridgeSupportUpdatedAt > 0 &&
-      now - bridgeSupportUpdatedAt < GAS_ACCOUNT_BRIDGE_SUPPORT_CACHE_TTL;
+export const gasAccountDepositStore = zustandByMMKV<GasAccountDepositState>(
+  GAS_ACCOUNT_BRIDGE_SUPPORT_CACHE_KEY,
+  defaultGasAccountDepositState,
+  { storage: MMKVStorageStrategy.compatJson },
+);
 
-    if (!force && isFresh) {
-      return bridgeSupportTokenList;
-    }
+const gasAccountDepositRuntimeStore = zCreate<GasAccountDepositRuntimeState>(
+  () => ({
+    bridgeSupportLoading: false,
+  }),
+);
 
-    gasAccountDepositStore.setState({ bridgeSupportLoading: true });
+const hasBridgeSupportTokenCache = () =>
+  gasAccountDepositStore.getState().bridgeSupportUpdatedAt > 0;
+
+const normalizeBridgeSupportTokenList = (
+  result?: Partial<GasAccountBridgeSupportTokenList>,
+): GasAccountBridgeSupportTokenList => ({
+  hyperliquid_tokens: result?.hyperliquid_tokens || [],
+  wallet_tokens: result?.wallet_tokens || [],
+});
+
+const refreshGasAccountBridgeSupportTokenList = makeAvoidParallelAsyncFunc(
+  async () => {
+    gasAccountDepositRuntimeStore.setState({
+      bridgeSupportLoading: !hasBridgeSupportTokenCache(),
+    });
+
     try {
       const result =
-        (await gasAccountDepositOpenapi.getGasAccountBridgeSupportTokenList?.()) ??
-        EMPTY_GAS_ACCOUNT_BRIDGE_SUPPORT_TOKEN_LIST;
-      const normalized: GasAccountBridgeSupportTokenList = {
-        hyperliquid_tokens: result.hyperliquid_tokens || [],
-        wallet_tokens: result.wallet_tokens || [],
-      };
+        await gasAccountDepositOpenapi.getGasAccountBridgeSupportTokenList?.();
+      const normalized = normalizeBridgeSupportTokenList(result);
 
       gasAccountDepositStore.setState({
         bridgeSupportTokenList: normalized,
@@ -195,10 +212,39 @@ const fetchGasAccountBridgeSupportTokenList = makeAvoidParallelAsyncFunc(
 
       return normalized;
     } finally {
-      gasAccountDepositStore.setState({ bridgeSupportLoading: false });
+      gasAccountDepositRuntimeStore.setState({ bridgeSupportLoading: false });
     }
   },
 );
+
+const fetchGasAccountBridgeSupportTokenList = async () => {
+  const { bridgeSupportTokenList, bridgeSupportUpdatedAt } =
+    gasAccountDepositStore.getState();
+  const now = Date.now();
+  const hasCache = bridgeSupportUpdatedAt > 0;
+  const isFresh =
+    hasCache &&
+    now - bridgeSupportUpdatedAt < GAS_ACCOUNT_BRIDGE_SUPPORT_CACHE_TTL;
+
+  if (isFresh) {
+    return bridgeSupportTokenList;
+  }
+
+  if (hasCache) {
+    refreshGasAccountBridgeSupportTokenList().catch(error => {
+      console.error('refreshGasAccountBridgeSupportTokenList error', error);
+    });
+    return bridgeSupportTokenList;
+  }
+
+  return refreshGasAccountBridgeSupportTokenList();
+};
+
+if (gasAccountDepositRuntimeStore.getState().bridgeSupportLoading) {
+  gasAccountDepositRuntimeStore.setState({
+    bridgeSupportLoading: false,
+  });
+}
 
 export const cleanupGasAccountAfterDeletedAddress = async (address: string) => {
   const restAddresses = await keyringService.getAllAddresses();
@@ -685,8 +731,12 @@ export const useGasAccountBridgeSupportTokenList = () => {
   return gasAccountDepositStore(s => s.bridgeSupportTokenList);
 };
 
+export const useGasAccountBridgeSupportUpdatedAt = () => {
+  return gasAccountDepositStore(s => s.bridgeSupportUpdatedAt);
+};
+
 export const useGasAccountBridgeSupportLoading = () => {
-  return gasAccountDepositStore(s => s.bridgeSupportLoading);
+  return gasAccountDepositRuntimeStore(s => s.bridgeSupportLoading);
 };
 
 export const useGasAccountSwitchVisible = () => {

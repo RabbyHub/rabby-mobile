@@ -1447,6 +1447,5 @@ export const addressBalanceStore = new AddressBalanceStore();
 registerAccountBalanceSnapshotProvider({
   getAddressValueMap: () => addressBalanceStore.getAddressValueMap(),
 });
-
 export default addressBalanceStore;
 export { getCachedHomeTop10Addresses };

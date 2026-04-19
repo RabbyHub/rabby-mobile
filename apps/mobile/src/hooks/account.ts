@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useState,
   useSyncExternalStore,
 } from 'react';
 
@@ -51,14 +52,36 @@ export function useIsNewlyAddedAccount(account: KeyringAccount) {
   };
 }
 
+import { apiMnemonic } from '@/core/apis';
+
 /**
- * Gets the current backup reminder snapshot for an account.
- * @param dbId - The account's database ID
- * @returns Whether the account needs backup reminder
+ * Gets the base public key for an HD keyring account (seed phrase identifier).
+ * All addresses from the same seed phrase share the same basePublicKey.
+ * Returns null for non-HD accounts.
  */
-export function getBackupReminderSnapshot(dbId: string | undefined): boolean {
-  if (!dbId) return false;
-  return preferenceService.getNeedsBackupReminder(dbId);
+async function getBasePublicKeyForAccount(
+  account: KeyringAccount | null | undefined,
+): Promise<string | null> {
+  if (!account?.address) return null;
+  // Only HD keyring accounts have seed phrases that need backup
+  if (account.type !== KEYRING_TYPE.HdKeyring) return null;
+
+  try {
+    const info = await apiMnemonic.getMnemonicAddressInfo(account.address);
+    return info?.basePublicKey ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Gets the current backup reminder snapshot for a seed phrase.
+ * @param basePublicKey - The keyring's base public key (unique per seed phrase)
+ * @returns Whether the seed phrase needs backup reminder
+ */
+function getBackupReminderSnapshot(basePublicKey: string | null): boolean {
+  if (!basePublicKey) return false;
+  return preferenceService.getNeedsBackupReminder(basePublicKey);
 }
 
 /**
@@ -77,23 +100,34 @@ const subscribeBackupReminderStore = (listener: () => void) => {
 };
 
 /**
- * hook for checking if current account needs backup reminder.
- * Returns true only for accounts created via "Create New Wallet" that haven't been backed up yet.
- * Uses preferenceService (MMKV) for reliable persistence across app restarts.
+ * Hook for checking if current account needs backup reminder.
+ * Returns true only for accounts from a seed phrase that hasn't been backed up yet.
+ * Uses basePublicKey to track backup at the seed phrase level, not address level.
+ * This means if one address from a seed phrase is backed up, all addresses from
+ * that same seed phrase are considered backed up.
  */
 export function useBackupReminder(account: KeyringAccount | null | undefined) {
-  const dbId = useMemo(() => {
-    if (!account?.address) return '';
-    return EntityAccountBase.buildDBId({
-      address: account.address,
-      type: account.type,
-      brandName: account.brandName,
-    });
-  }, [account?.address, account?.type, account?.brandName]);
+  const [basePublicKey, setBasePublicKey] = useState<string | null>(null);
+
+  const address = account?.address;
+  const type = account?.type;
+  const brandName = account?.brandName;
+
+  useEffect(() => {
+    if (!address || !type) {
+      setBasePublicKey(null);
+      return;
+    }
+    getBasePublicKeyForAccount({
+      address,
+      type,
+      brandName: brandName ?? '',
+    }).then(setBasePublicKey);
+  }, [address, type, brandName]);
 
   const getSnapshot = useCallback(
-    () => getBackupReminderSnapshot(dbId),
-    [dbId],
+    () => getBackupReminderSnapshot(basePublicKey),
+    [basePublicKey],
   );
 
   const needsBackupReminder = useSyncExternalStore(
@@ -104,25 +138,28 @@ export function useBackupReminder(account: KeyringAccount | null | undefined) {
   return needsBackupReminder;
 }
 
+/**
+ * Sets backup reminder for an account's seed phrase.
+ * The reminder is tracked by basePublicKey, so all addresses from the same
+ * seed phrase will share the same backup reminder state.
+ */
 export async function setAccountNeedsBackupReminder(
   account: KeyringAccount,
   needsReminder: boolean,
 ) {
-  const dbId = EntityAccountBase.buildDBId({
-    address: account.address,
-    type: account.type,
-    brandName: account.brandName,
-  });
-  preferenceService.setNeedsBackupReminder(dbId, needsReminder);
+  const basePublicKey = await getBasePublicKeyForAccount(account);
+  if (!basePublicKey) return;
+  preferenceService.setNeedsBackupReminder(basePublicKey, needsReminder);
 }
 
+/**
+ * Clears backup reminder for an account's seed phrase.
+ * This clears the reminder for all addresses from the same seed phrase.
+ */
 export async function clearAccountBackupReminder(account: KeyringAccount) {
-  const dbId = EntityAccountBase.buildDBId({
-    address: account.address,
-    type: account.type,
-    brandName: account.brandName,
-  });
-  preferenceService.clearNeedsBackupReminder(dbId);
+  const basePublicKey = await getBasePublicKeyForAccount(account);
+  if (!basePublicKey) return;
+  preferenceService.clearNeedsBackupReminder(basePublicKey);
 }
 
 export function useDevNewlyAddedAccounts() {

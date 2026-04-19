@@ -32,7 +32,9 @@ type ImportRabbyWalletProps = NativeStackScreenProps<
   'ImportRabbyWallet'
 >;
 
-function ImportRabbyWallet(): JSX.Element {
+function ImportRabbyWallet({ route }: ImportRabbyWalletProps): JSX.Element {
+  const { flow } = route.params ?? {};
+  const isInAppFlow = flow === 'in_app';
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<ImportRabbyWalletProps['navigation']>();
@@ -100,7 +102,9 @@ function ImportRabbyWallet(): JSX.Element {
           contentContainerStyle={styles.scrollContent}>
           {/* Subtitle */}
           <Text style={styles.subtitle}>
-            {t('page.newUserOnboarding.restoreWallet.subtitle')}
+            {isInAppFlow
+              ? t('page.newUserOnboarding.restoreWallet.subtitleInApp')
+              : t('page.newUserOnboarding.restoreWallet.subtitle')}
           </Text>
 
           {/* Sync Rabby Extension Option */}
@@ -136,37 +140,41 @@ function ImportRabbyWallet(): JSX.Element {
             </View>
           </Card>
 
-          {/* Create New Wallet Link */}
-          <View style={styles.linkWrapper}>
-            <Text style={styles.linkText}>
-              <Trans
-                i18nKey="page.newUserOnboarding.common.orYouCanCreateNewWallet"
-                t={t}
-                components={{
-                  clickable: (
-                    <Text
-                      key="clickable"
-                      style={styles.linkTextHighlight}
-                      onPress={handleCreateNewWallet}
-                    />
-                  ),
-                }}
-              />
-            </Text>
-          </View>
+          {/* Create New Wallet Link - hidden for in_app flow */}
+          {!isInAppFlow && (
+            <View style={styles.linkWrapper}>
+              <Text style={styles.linkText}>
+                <Trans
+                  i18nKey="page.newUserOnboarding.common.orYouCanCreateNewWallet"
+                  t={t}
+                  components={{
+                    clickable: (
+                      <Text
+                        key="clickable"
+                        style={styles.linkTextHighlight}
+                        onPress={handleCreateNewWallet}
+                      />
+                    ),
+                  }}
+                />
+              </Text>
+            </View>
+          )}
         </ScrollView>
 
-        {/* Bottom Help */}
-        <Pressable style={styles.tipWrapper} onPress={handleHelp}>
-          <Text style={styles.tipText}>
-            {t('page.nextComponent.importAddress.tips.entry')}
-          </Text>
-          <HelpSVG
-            width={20}
-            height={20}
-            color={colors2024['neutral-secondary']}
-          />
-        </Pressable>
+        {/* Bottom Help - hidden for in_app flow */}
+        {!isInAppFlow && (
+          <Pressable style={styles.tipWrapper} onPress={handleHelp}>
+            <Text style={styles.tipText}>
+              {t('page.nextComponent.importAddress.tips.entry')}
+            </Text>
+            <HelpSVG
+              width={20}
+              height={20}
+              color={colors2024['neutral-secondary']}
+            />
+          </Pressable>
+        )}
       </View>
     </NormalScreenContainer>
   );

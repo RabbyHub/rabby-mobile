@@ -17,7 +17,6 @@ import { useThemeColors } from '@/hooks/theme';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { Button } from '@/components';
-import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { Text } from '@/components/Typography';
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -100,7 +99,8 @@ const getStyles = (colors: AppColorsVariants) =>
 export const SettingKeystone: React.FC<{
   onDone: () => void;
   brand: string;
-}> = ({ onDone, brand }) => {
+  onSwitchDevice?: () => void;
+}> = ({ onDone, brand, onSwitchDevice }) => {
   const { t } = useTranslation();
   const [, setLoading] = React.useState(false);
   const [hdPathOptions, setHdPathOptions] = React.useState<
@@ -188,8 +188,8 @@ export const SettingKeystone: React.FC<{
     await apiKeystone.removeAddressAndForgetDevice();
     setVisible(false);
     onDone();
-    redirectToAddAddressEntry();
-  }, [onDone]);
+    onSwitchDevice?.();
+  }, [onDone, onSwitchDevice]);
 
   return (
     <MainContainer

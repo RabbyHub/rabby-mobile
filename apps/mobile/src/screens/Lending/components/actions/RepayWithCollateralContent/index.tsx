@@ -100,6 +100,7 @@ interface RepayWithCollateralProps {
   repayToken: SwappableToken;
   defaultCollateralToken?: SwappableToken;
   onClose?: () => void;
+  source?: string;
 }
 
 const BOTTOM_SIZE = {
@@ -112,6 +113,7 @@ export default function RepayWithCollateral({
   repayToken,
   defaultCollateralToken,
   onClose,
+  source,
 }: RepayWithCollateralProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -845,6 +847,7 @@ export default function RepayWithCollateral({
           usd_value: usdValue,
           create_at: Date.now(),
           app_version: APP_VERSIONS.fromNative || '0',
+          ...(source ? { source } : {}),
         });
         toast.success(
           `${t('page.Lending.repayWithCollateral.action.title', {
@@ -875,6 +878,7 @@ export default function RepayWithCollateral({
       ctx?.gasFeeTooHigh,
       refresh,
       repayToken.usdPrice,
+      source,
     ],
   );
 

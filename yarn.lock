@@ -9550,7 +9550,7 @@ __metadata:
     "@metamask/json-rpc-engine": "npm:^7.3.0"
     "@metamask/utils": "npm:^8.2.0"
     "@rabby-wallet/gnosis-sdk": "npm:1.4.8"
-    "@rabby-wallet/rabby-api": "npm:0.9.58"
+    "@rabby-wallet/rabby-api": "npm:0.9.59"
     "@types/node": "npm:^20.14.8"
     "@typescript-eslint/eslint-plugin": "npm:^5.62.0"
     "@typescript-eslint/parser": "npm:^5.62.0"
@@ -9696,9 +9696,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.58":
-  version: 0.9.58
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.58"
+"@rabby-wallet/rabby-api@npm:0.9.59":
+  version: 0.9.59
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.59"
   dependencies:
     "@rabby-wallet/rabby-sign": "npm:0.4.0"
     axios: "npm:^0.27.2"
@@ -9709,24 +9709,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/d8079e1d1d7ca744dea7bb49c8ea08a94fcb3df14bbce1638001e85c227259ae3363b5e00b6d12b2775048c483199c0680bd288a9d48a5e492c6deb58c2c274a
-  languageName: node
-  linkType: hard
-
-"@rabby-wallet/rabby-api@npm:0.9.59-beta.0":
-  version: 0.9.59-beta.0
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.59-beta.0"
-  dependencies:
-    "@rabby-wallet/rabby-sign": "npm:0.4.0"
-    axios: "npm:^0.27.2"
-    axios-rate-limit: "npm:^1.3.0"
-    eth-rpc-errors: "npm:^4.0.3"
-    lodash: "npm:^4.17.21"
-    qss: "npm:^2.0.3"
-  peerDependencies:
-    "@debank/common": ^0.3.9
-    "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 10/bb20215375d08a0c488bc8cd33c0abdad92969788e2d4495146d4027436bc44affe0e15c4f460331dadc0bd3fc81a5269637959d4d8c1a3620a8e8c0e0968596
+  checksum: 10/6cda664a8bb84858a551bad52d1fa00d83a23e52313111bc06e048002107fc1a7242750e6a8c56468f5ebfc4b2062f5e795bab9793354b49c6bb3f32319f5220
   languageName: node
   linkType: hard
 
@@ -9768,9 +9751,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.74":
-  version: 0.0.74
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.74"
+"@rabby-wallet/rabby-swap@npm:0.0.75":
+  version: 0.0.75
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.75"
   dependencies:
     "@ethersproject/abi": "npm:^5.7.0"
     axios: "npm:^0.27.2"
@@ -9779,7 +9762,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 10/798c267e11d2da374c6082749faf626ce4df201b4ff57869579e5e81efad4ef95244cb0530a111693de5d7d670559beec83c17a0ceb986f426a1d719f509ecc8
+  checksum: 10/bbe19950c0af7080061c43e88e7a7418fc6d7cf806c65f55b05f025e3b464c449ea7b8f1d2b36539016f8ba4731300cf65115501bdaadfd25fe27a7bb51bab99
   languageName: node
   linkType: hard
 
@@ -9843,7 +9826,7 @@ __metadata:
   dependencies:
     "@rabby-wallet/base-utils": "workspace:^"
     "@rozenite/plugin-bridge": "npm:1.6.0"
-    "@rozenite/vite-plugin": "npm:1.6.0"
+    "@rozenite/vite-plugin": "patch:@rozenite/vite-plugin@npm%3A1.6.0#~/.yarn/patches/@rozenite-vite-plugin-npm-1.6.0-f6acc5490f.patch"
     "@tailwindcss/vite": "npm:^4.2.2"
     "@types/react": "npm:^19.1.4"
     "@types/react-dom": "npm:^19.1.5"
@@ -12275,6 +12258,20 @@ __metadata:
   peerDependencies:
     vite: ^7.3.1
   checksum: 10/fe9acd41c8d90c6510cbb466bae744d92b296eef789570cfedba66af62d4946f4e368266a4df1a4e1fabf47df5e3f80ff0aafe56efc74860d043b62948908552
+  languageName: node
+  linkType: hard
+
+"@rozenite/vite-plugin@patch:@rozenite/vite-plugin@npm%3A1.6.0#~/.yarn/patches/@rozenite-vite-plugin-npm-1.6.0-f6acc5490f.patch":
+  version: 1.6.0
+  resolution: "@rozenite/vite-plugin@patch:@rozenite/vite-plugin@npm%3A1.6.0#~/.yarn/patches/@rozenite-vite-plugin-npm-1.6.0-f6acc5490f.patch::version=1.6.0&hash=cd185c"
+  dependencies:
+    "@vitejs/plugin-react": "npm:^4.3.4"
+    ejs: "npm:^3.1.9"
+    vite-plugin-dts: "npm:~4.5.0"
+    vite-plugin-react-native-web: "npm:^2.1.1"
+  peerDependencies:
+    vite: ^7.3.1
+  checksum: 10/3af1ca5b2c91bc6688ba246a792ed6b933f2b88925a84cb6e0952666e22832a15776105bacd28e6e47189edabd7f1115a5a83ce5109e2a657416bb9376a4db39
   languageName: node
   linkType: hard
 
@@ -38112,11 +38109,11 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": "npm:0.1.14"
-    "@rabby-wallet/rabby-api": "npm:0.9.59-beta.0"
+    "@rabby-wallet/rabby-api": "npm:0.9.59"
     "@rabby-wallet/rabby-logger": "npm:0.3.0"
     "@rabby-wallet/rabby-security-engine": "npm:2.0.12"
     "@rabby-wallet/rabby-sign-bvm": "npm:0.1.1"
-    "@rabby-wallet/rabby-swap": "npm:0.0.74"
+    "@rabby-wallet/rabby-swap": "npm:0.0.75"
     "@rabby-wallet/rozenite-resource-flow-plugin": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"

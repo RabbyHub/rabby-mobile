@@ -441,15 +441,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         is_scam: false,
       });
 
-      // filter small tx out of 1 hour
-      const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
-      queryBuilder.andWhere(
-        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
-        {
-          oneHourAgo,
-          is_small_tx: false,
-        },
-      );
+      queryBuilder.andWhere('historyitem.is_small_tx = :is_small_tx', {
+        is_small_tx: false,
+      });
     }
 
     const res = await queryBuilder.getMany();
@@ -467,7 +461,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     await prepareAppDataSource();
     const currentTime = new Date().getTime();
     console.log('getUnreadHistoryCount exec');
-    const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
     const repo = this.getRepository();
     const queryBuilder = repo
       .createQueryBuilder('historyitem')
@@ -482,13 +475,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       .andWhere('historyitem.is_scam = :is_scam', {
         is_scam: false,
       })
-      .andWhere(
-        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
-        {
-          oneHourAgo,
-          is_small_tx: false,
-        },
-      )
+      .andWhere('historyitem.is_small_tx = :is_small_tx', {
+        is_small_tx: false,
+      })
       .orderBy('historyitem.time_at', 'DESC')
       .take(10);
     const res = await queryBuilder.getRawMany();
@@ -538,12 +527,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         is_scam: false,
       });
 
-      // filter small tx out of 1 hour
-      const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
       queryBuilder = queryBuilder.andWhere(
-        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
+        'historyitem.is_small_tx = :is_small_tx',
         {
-          oneHourAgo,
           is_small_tx: false,
         },
       );

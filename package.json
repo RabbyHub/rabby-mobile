@@ -28,6 +28,7 @@
     "lint:eslint": "eslint . --cache --ext js,ts",
     "lint:fix": "yarn lint:eslint --fix && yarn constraints --fix && yarn lint:misc --write && yarn",
     "lint:misc": "prettier '**/*.json' '!**/*.min.json' '**/*.md' '!**/CHANGELOG.md' '!**/CHANGELOG.old.md' '**/*.yml' '!.yarnrc.yml' '!merged-packages/**' --ignore-path .gitignore",
+    "perf:entry-tree": "yarn workspace rabby-mobile perf:entry-tree",
     "normalize": "yarn constraints",
     "prepack": "./scripts/prepack.sh",
     "prepare": "husky install",
@@ -118,7 +119,7 @@
     "@debank/common": "^0.3.54",
     "@exodus/patch-broken-hermes-typed-arrays": "^1.0.0-alpha.1",
     "@rabby-wallet/gnosis-sdk": "1.4.8",
-    "@rabby-wallet/rabby-api": "0.9.58",
+    "@rabby-wallet/rabby-api": "0.9.59",
     "human-standard-token-abi": "^2.0.0"
   },
   "devDependencies": {

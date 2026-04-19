@@ -29,7 +29,7 @@ function readMadgeRc() {
   const rcPath = path.join(APP_DIR, '.madgerc');
   try {
     return JSON.parse(fs.readFileSync(rcPath, 'utf8'));
-  } catch (error) {
+  } catch {
     return {};
   }
 }

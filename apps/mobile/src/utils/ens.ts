@@ -44,3 +44,24 @@ export const resolveEnsAddressByName = async (
     return null;
   }
 };
+
+export const resolveEnsNameByAddress = async (
+  address: string,
+): Promise<string | null> => {
+  const input = address?.trim();
+  if (!input) {
+    return null;
+  }
+
+  try {
+    const name = await ensClient.getEnsName({
+      address: input as `0x${string}`,
+    });
+    if (!name) {
+      return null;
+    }
+    return name;
+  } catch {
+    return null;
+  }
+};

@@ -24,7 +24,7 @@
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
-    "@rozenite/vite-plugin": "1.6.0",
+    "@rozenite/vite-plugin": "patch:@rozenite/vite-plugin@npm%3A1.6.0#~/.yarn/patches/@rozenite-vite-plugin-npm-1.6.0-f6acc5490f.patch",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "react": "19.1.4",
