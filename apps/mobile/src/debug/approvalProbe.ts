@@ -1,9 +1,11 @@
 import { APP_RUNTIME_ENV } from '@/constant/env';
 import { logger } from '@/utils/logger';
+import { getEffectiveFileLoggingEnabled } from '@/utils/logging/settings';
 
 type ApprovalProbeLevel = 'debug' | 'info' | 'warn' | 'error';
 
-const APPROVAL_PROBE_ENABLED = APP_RUNTIME_ENV !== 'production';
+const APPROVAL_PROBE_ENABLED =
+  APP_RUNTIME_ENV === 'development' || getEffectiveFileLoggingEnabled();
 
 const APPROVAL_PROBE_METHODS = new Set<string>([
   'eth_requestAccounts',
@@ -20,9 +22,15 @@ const APPROVAL_PROBE_METHODS = new Set<string>([
 ]);
 
 function getLoggerMethod(level: ApprovalProbeLevel) {
-  if (level === 'debug') return logger.debug.bind(logger);
-  if (level === 'warn') return logger.warn.bind(logger);
-  if (level === 'error') return logger.error.bind(logger);
+  if (level === 'debug') {
+    return logger.debug.bind(logger);
+  }
+  if (level === 'warn') {
+    return logger.warn.bind(logger);
+  }
+  if (level === 'error') {
+    return logger.error.bind(logger);
+  }
   return logger.info.bind(logger);
 }
 

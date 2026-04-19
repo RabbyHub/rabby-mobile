@@ -32,6 +32,7 @@ import {
   ActivityIndicator,
   AppState,
   Dimensions,
+  InteractionManager,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
@@ -620,15 +621,6 @@ export const HomeOverview = React.memo(() => {
 
   const { isEligible, checkAddressesEligibility } = useGasAccountEligibility();
 
-  useFocusEffect(
-    React.useCallback(() => {
-      if (!couldDoRefresh()) {
-        return;
-      }
-      checkAddressesEligibility();
-    }, [checkAddressesEligibility]),
-  );
-
   const MENU_ARR = useMemo(
     () =>
       [
@@ -757,23 +749,83 @@ export const HomeOverview = React.memo(() => {
       if (!couldDoRefresh()) {
         return;
       }
-      const forceFirstTime = isFirstTriggerRef.current;
+
+      const isFirstHomeFocus = isFirstTriggerRef.current;
       if (isFirstTriggerRef.current) {
         isFirstTriggerRef.current = false;
       }
-      triggerUpdate(forceFirstTime || undefined).then(balanceAccounts => {
-        // console.debug('[perf] MultiAddressHome triggerUpdate refreshed:: balanceAccounts', balanceAccounts);
+
+      let cancelled = false;
+      let deferredTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+      const applyBalanceRefresh = (
+        balanceAccounts: Awaited<ReturnType<typeof triggerUpdate>>,
+      ) => {
+        if (cancelled) {
+          return;
+        }
+
         scene24hBalanceStore.refresh24hAssets({
           balanceAccounts,
           reason: 'manual_refresh',
         });
         refreshDayCurve({ balanceAccounts, reason: 'manual_refresh' });
+      };
+
+      const balanceRefreshPromise = isFirstHomeFocus
+        ? addressBalanceStore.fetchTotalBalance('from_cache')
+        : triggerUpdate();
+
+      balanceRefreshPromise.then(applyBalanceRefresh).catch(error => {
+        console.error('HomeOverview::balanceRefresh::error', error);
       });
-      triggerUpdateAlert();
-      // // leave here to measure perf impact
-      // isNonPublicProductionEnv && apisLending.fetchLendingData({ persistOnly: true });
-      syncTop10History(myTop10Addresses, false);
-    }, [triggerUpdate, triggerUpdateAlert, myTop10Addresses]),
+
+      const deferredTask = InteractionManager.runAfterInteractions(() => {
+        deferredTimeoutId = setTimeout(
+          () => {
+            if (cancelled || !couldDoRefresh()) {
+              return;
+            }
+
+            if (isFirstHomeFocus) {
+              triggerUpdate(true)
+                .then(applyBalanceRefresh)
+                .catch(error => {
+                  console.error(
+                    'HomeOverview::backgroundRefresh::error',
+                    error,
+                  );
+                });
+            }
+
+            triggerUpdateAlert();
+            checkAddressesEligibility().catch(error => {
+              console.error(
+                'HomeOverview::checkAddressesEligibility::error',
+                error,
+              );
+            });
+            syncTop10History(myTop10Addresses, false).catch(error => {
+              console.error('HomeOverview::syncTop10History::error', error);
+            });
+          },
+          isFirstHomeFocus ? 250 : 0,
+        );
+      });
+
+      return () => {
+        cancelled = true;
+        deferredTask.cancel();
+        if (deferredTimeoutId !== null) {
+          clearTimeout(deferredTimeoutId);
+        }
+      };
+    }, [
+      checkAddressesEligibility,
+      triggerUpdate,
+      triggerUpdateAlert,
+      myTop10Addresses,
+    ]),
   );
 
   const onRefresh = useCallback(async () => {

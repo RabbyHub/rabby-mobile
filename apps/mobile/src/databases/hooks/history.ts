@@ -12,6 +12,14 @@ import { prepareAppDataSource } from '../imports';
 import { TxHistoryResult } from '@rabby-wallet/rabby-api/dist/types';
 
 const USE_REALTIME_API_DURATION = 24 * 5 * 60 * 60 * 1000; // use async history api if user not opened app in 5 days
+const HISTORY_SYNC_EXPIRE_TIME = 10 * 60 * 1000;
+
+type HistorySyncCheckResult = {
+  address: string;
+  shouldSync: boolean;
+  reason: 'force' | 'pending_tx' | 'expired' | 'fresh';
+  gap: number;
+};
 
 const waitQueueFinished = (q: PQueue) => {
   return new Promise(resolve => {
@@ -27,27 +35,30 @@ const isSyncingRef = {
   current: false,
 };
 
-const getIsNeedSyncData = (address: string) => {
+const getHistorySyncCheck = (address: string): HistorySyncCheckResult => {
   if (transactionHistoryService.getIsNeedFetchTxHistory(address)) {
     // some tx done need to update
-    console.debug('🔍syncTop10History some tx done so isNeedSyncData');
-    return true;
+    console.debug('🔍syncTop10History some tx done so isNeedSyncData', {
+      address: address.slice(-4),
+    });
+    return {
+      address,
+      shouldSync: true,
+      reason: 'pending_tx',
+      gap: 0,
+    };
   }
 
   const latestTime = historyTimeStore.getState()?.[address] || 0;
 
   const currentTime = Date.now();
   const gap = currentTime - latestTime;
-  const expireTime = 10 * 60 * 1000; // 10 min
-  console.log(
-    '🔍syncTop10History isNeedSyncData time gap',
+  return {
+    address,
+    shouldSync: gap > HISTORY_SYNC_EXPIRE_TIME,
+    reason: gap > HISTORY_SYNC_EXPIRE_TIME ? 'expired' : 'fresh',
     gap,
-    'isExpire:',
-    gap > expireTime,
-    'add:',
-    address.slice(-4),
-  );
-  return gap > expireTime;
+  };
 };
 
 const synHistoryInRealTimeApi = async (
@@ -248,8 +259,40 @@ export const syncTop10History = async (
     console.debug('🔍syncTop10History  isSyncing maybe error');
     return;
   }
+
+  const normalizedAddresses = Array.from(
+    new Set(top10Addresses.map(item => item.toLowerCase())),
+  );
+  const syncChecks = force
+    ? normalizedAddresses.map(address => ({
+        address,
+        shouldSync: true,
+        reason: 'force' as const,
+        gap: 0,
+      }))
+    : normalizedAddresses.map(getHistorySyncCheck);
+  const addressesToSync = syncChecks
+    .filter(item => item.shouldSync)
+    .map(item => item.address);
+
+  if (!addressesToSync.length) {
+    console.debug('🔍syncTop10History skip', {
+      totalAddresses: normalizedAddresses.length,
+      freshAddresses: syncChecks.filter(item => item.reason === 'fresh').length,
+    });
+    return;
+  }
   try {
-    console.log('🔍syncTop10History CUSTOM_LOGGER:=>: Fetching action');
+    console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: Fetching action', {
+      totalAddresses: normalizedAddresses.length,
+      syncAddresses: addressesToSync.length,
+      force: !!force,
+      pendingTxAddresses: syncChecks.filter(
+        item => item.reason === 'pending_tx',
+      ).length,
+      expiredAddresses: syncChecks.filter(item => item.reason === 'expired')
+        .length,
+    });
     isSyncingRef.current = true;
     await prepareAppDataSource();
     if (resetEntity) {
@@ -259,30 +302,26 @@ export const syncTop10History = async (
       interval: 2000,
       intervalCap: 5,
     });
-    for (const item of top10Addresses) {
-      const address = item.toLowerCase();
-      const isForceFetchFromApi = force || (await getIsNeedSyncData(address));
-      if (isForceFetchFromApi) {
-        const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
-        const isUseRealTimeApi =
-          latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
-        updateHistoryTimeSingleAddress(address);
-        console.debug(
-          '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',
-          address,
-        );
-        queue.add(async () => {
-          try {
-            await syncUserAllHistory(address, 0, 0, isUseRealTimeApi);
-          } catch (error) {
-            console.error(
-              `syncTop10History Error fetching data for ${address.slice(-4)}:`,
-              error,
-            );
-          }
-          await new Promise(resolve => setTimeout(resolve, 0));
-        });
-      }
+    for (const address of addressesToSync) {
+      const latestUpdateTime = historyTimeStore.getState()?.[address] || 0;
+      const isUseRealTimeApi =
+        latestUpdateTime > Date.now() - USE_REALTIME_API_DURATION;
+      updateHistoryTimeSingleAddress(address);
+      console.debug(
+        '🔍syncTop10History CUSTOM_LOGGER:=>: update sync address:',
+        address,
+      );
+      queue.add(async () => {
+        try {
+          await syncUserAllHistory(address, 0, 0, isUseRealTimeApi);
+        } catch (error) {
+          console.error(
+            `syncTop10History Error fetching data for ${address.slice(-4)}:`,
+            error,
+          );
+        }
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
     }
     if (queue.size > 0) {
       await waitQueueFinished(queue);

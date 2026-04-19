@@ -17,7 +17,9 @@ import { analytics, matomoLogScreenView } from './utils/analytics';
 
 import { AppStatusBar } from './components/AppStatusBar';
 import AutoLockView from './components/AutoLockView';
+import { BackgroundSecureBlurView } from './components/customized/BlurViews';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { useAppUnlocked } from './hooks/useLock';
 
@@ -26,6 +28,10 @@ import type {
   RootStackParamsList,
 } from './navigation-type';
 
+import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
+import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
+import { QrCodeModal } from './components2024/QrCodeModal/QrCodeModal';
+import { FloatingDiagnosticsPanel } from './screens/Settings/components/FloatingDiagnosticsPanel';
 // import { GlobalAccountSwitcherStub } from './components/AccountSwitcher/SheetModal';
 import { toast } from './components2024/Toast';
 import RNHelpers from './core/native/RNHelpers';
@@ -47,6 +53,9 @@ import MoreImportMethods from '@/screens/Address/MoreImportMethods';
 import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
+import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
+import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
+import { GlobalSignerPortal } from './components2024/MiniSignV2/components/GlobalSignerPortal';
 import { perfEvents } from './core/utils/perf';
 import { RefLikeObject } from './utils/type';
 import { useRendererDetect } from './components/Perf/PerfDetector';
@@ -56,25 +65,18 @@ import {
   recordStartupProbeOnce,
 } from './debug/startupProbe';
 import {
-  AliasNameEditModal,
-  ApprovalTokenDetailSheetModalStub,
-  BackgroundSecureBlurView,
   BottomSheetBrowser,
   BrowserFavoritePopup,
   BrowserManagePopup,
-  DuplicateAddressModal,
-  FloatingDiagnosticsPanel,
-  GlobalMiniApproval,
-  GlobalMiniSignTypedDataPortal,
-  GlobalSearchBottomSheet,
-  GlobalSecurityTipStubModal,
-  GlobalSignerPortal,
-  GlobalTipsPopup,
-  InnerDappWebViewPreloadEntry,
-  ModalsSubmitFeedbackByScreenshotStub,
-  QrCodeModal,
-  ToggleCollateralModal,
-} from '@/perfs/loadables/appNavigationGlobals';
+} from './screens/Browser/BottomSheetBrowser';
+import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/ScreenshotModal';
+import { GlobalTipsPopup } from './components2024/GlobalTipsPopup';
+import { GlobalMiniSignTypedDataPortal } from './components/Approval/components/MiniSignTypedData/GlobalMiniSignTypedDataPortal';
+import { GlobalSearchBottomSheet } from './screens/Search/components/SeachBottomSheet';
+import { ToggleCollateralModal } from './screens/Lending/modals/ToggleCollateralModal';
+import { InnerDappWebViewPreloadEntry } from './components/WebView/InnerDappWebViewPreloadEntry';
+import { logger } from '@/utils/logger';
+import { getEffectiveFileLoggingEnabled } from './utils/logging/settings';
 import {
   AddressNavigator,
   DappsNavigator,
@@ -82,10 +84,10 @@ import {
   SettingNavigator,
   SingleAddressNavigator,
   TestkitsNavigator,
-  TransactionNavigator,
 } from '@/perfs/loadables/navigators';
 import { HomeScreenNavigator } from '@/perfs/loadables/homeRootNavigator';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
+import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
@@ -136,6 +138,7 @@ function atHomeFirstTab() {
 }
 
 const PREVENT_GESTURE_BOOL = true;
+const SHOULD_LOG_ROUTE_CHANGE = __DEV__ || getEffectiveFileLoggingEnabled();
 
 function useDetermineExitAppOnPressBack() {
   React.useEffect(() => {
@@ -210,6 +213,13 @@ const onRouteChange = (
     currentRouteName,
     previousRouteName: previousRouteName ?? undefined,
   });
+
+  if (SHOULD_LOG_ROUTE_CHANGE) {
+    logger.debug('[route-change]', {
+      currentRouteName: currentRouteName ?? 'unknown',
+      previousRouteName: previousRouteName ?? 'unknown',
+    });
+  }
 
   recordStartupProbe('APP_ROUTE_CHANGE', {
     payload: {
@@ -313,13 +323,6 @@ export default function AppNavigation() {
           <DuplicateAddressModal />
           <AliasNameEditModal />
           <QrCodeModal />
-          <InnerDappWebViewPreloadEntry />
-          <BiometricsStubModal />
-          <ApprovalTokenDetailSheetModalStub />
-          <GlobalSearchBottomSheet />
-          <BottomSheetBrowser />
-          <BrowserManagePopup />
-          <BrowserFavoritePopup />
           <RootStack.Navigator
             screenOptions={{
               ...RootAnimOptions,
@@ -554,6 +557,13 @@ export default function AppNavigation() {
               />
             </RootStack.Group>
           </RootStack.Navigator>
+          <InnerDappWebViewPreloadEntry />
+          <BiometricsStubModal />
+          <ApprovalTokenDetailSheetModalStub />
+          <GlobalSearchBottomSheet />
+          <BottomSheetBrowser />
+          <BrowserManagePopup />
+          <BrowserFavoritePopup />
         </NavigationContainer>
       </NavigationIndependentTree>
       <ModalsSubmitFeedbackByScreenshotStub />

@@ -43,6 +43,20 @@ describe('openapi failure logging', () => {
         data: { err_code: 200 },
       }),
     ).toBe(false);
+
+    expect(
+      shouldLogOpenApiFailureResponse({
+        status: 200,
+        data: { error_code: 0 },
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldLogOpenApiFailureResponse({
+        status: 200,
+        data: { error_code: '0' },
+      }),
+    ).toBe(false);
   });
 
   it('only toasts for http 4xx and 5xx statuses', () => {

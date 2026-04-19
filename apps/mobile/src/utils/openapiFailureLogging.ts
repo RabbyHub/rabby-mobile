@@ -9,7 +9,6 @@ import {
 const REQUEST_LOG_META_KEY = '__rabbyOpenApiFailureMeta';
 const REQUEST_INSTRUMENTED_KEY = Symbol('rabbyOpenApiFailureLogging/request');
 const SERVICE_INSTRUMENTED_KEY = Symbol('rabbyOpenApiFailureLogging/service');
-const RESPONSE_WRAPPED_KEY = Symbol('rabbyOpenApiFailureLogging/response');
 
 const SENSITIVE_KEYWORDS = [
   'api-key',
@@ -256,11 +255,11 @@ export function shouldLogOpenApiFailureResponse(response: {
   }
 
   if (typeof apiCode === 'number') {
-    return apiCode !== 200;
+    return apiCode !== 0 && apiCode !== 200;
   }
 
   if (typeof apiCode === 'string') {
-    return apiCode !== '200';
+    return apiCode !== '0' && apiCode !== '200';
   }
 
   return false;
@@ -380,44 +379,6 @@ function logOpenApiFailure(args: {
   );
 }
 
-function wrapExistingResponseHandlers(
-  request: AxiosRequestLike,
-  source: OpenApiFailureSource,
-) {
-  request.interceptors.response.handlers?.forEach(handler => {
-    if (!handler?.fulfilled) {
-      return;
-    }
-
-    if (
-      (handler.fulfilled as unknown as Record<symbol, unknown>)[
-        RESPONSE_WRAPPED_KEY
-      ]
-    ) {
-      return;
-    }
-
-    const originalFulfilled = handler.fulfilled;
-    const wrappedFulfilled = (response: AxiosResponse) => {
-      if (shouldLogOpenApiFailureResponse(response)) {
-        logOpenApiFailure({
-          source,
-          config: response.config,
-          response,
-        });
-      }
-
-      return originalFulfilled(response);
-    };
-
-    (wrappedFulfilled as unknown as Record<symbol, unknown>)[
-      RESPONSE_WRAPPED_KEY
-    ] = true;
-
-    handler.fulfilled = wrappedFulfilled;
-  });
-}
-
 function attachFailureLoggingToRequest(
   request: AxiosRequestLike,
   source: OpenApiFailureSource,
@@ -428,8 +389,6 @@ function attachFailureLoggingToRequest(
 
   request[REQUEST_INSTRUMENTED_KEY] = true;
 
-  wrapExistingResponseHandlers(request, source);
-
   request.interceptors.request.use(config => {
     const nextConfig = config as InstrumentedRequestConfig;
     nextConfig[REQUEST_LOG_META_KEY] = {
@@ -439,22 +398,35 @@ function attachFailureLoggingToRequest(
     return nextConfig;
   });
 
-  request.interceptors.response.use(undefined, error => {
-    const axiosError = error as AxiosError;
-    const config = axiosError.config;
-    const response = axiosError.response;
+  request.interceptors.response.use(
+    response => {
+      if (shouldLogOpenApiFailureResponse(response)) {
+        logOpenApiFailure({
+          source,
+          config: response.config,
+          response,
+        });
+      }
 
-    if (config && (!response || shouldLogOpenApiFailureResponse(response))) {
-      logOpenApiFailure({
-        source,
-        config,
-        response,
-        error,
-      });
-    }
+      return response;
+    },
+    error => {
+      const axiosError = error as AxiosError;
+      const config = axiosError.config;
+      const response = axiosError.response;
 
-    return Promise.reject(error);
-  });
+      if (config && (!response || shouldLogOpenApiFailureResponse(response))) {
+        logOpenApiFailure({
+          source,
+          config,
+          response,
+          error,
+        });
+      }
+
+      return Promise.reject(error);
+    },
+  );
 }
 
 export function instrumentOpenApiFailureLogging(
