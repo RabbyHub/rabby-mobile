@@ -229,6 +229,71 @@ const onStateChange: React.ComponentProps<
 
 const routeNameRef: RefLikeObject<string | undefined | null> = { current: '' };
 
+type DeferredGlobalsSlot = 'navigation-pre' | 'navigation-post' | 'overlay';
+
+function useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked: boolean) {
+  const [hasUnlockedOnce, setHasUnlockedOnce] = React.useState(isAppUnlocked);
+
+  React.useEffect(() => {
+    if (isAppUnlocked) {
+      setHasUnlockedOnce(true);
+    }
+  }, [isAppUnlocked]);
+
+  return hasUnlockedOnce;
+}
+
+function AppNavigationDeferredGlobals({
+  slot,
+  enabled,
+}: {
+  slot: DeferredGlobalsSlot;
+  enabled: boolean;
+}) {
+  if (!enabled) {
+    return null;
+  }
+
+  if (slot === 'navigation-pre') {
+    return (
+      <>
+        <DuplicateAddressModal />
+        <AliasNameEditModal />
+        <QrCodeModal />
+      </>
+    );
+  }
+
+  if (slot === 'navigation-post') {
+    return (
+      <>
+        <InnerDappWebViewPreloadEntry />
+        <BiometricsStubModal />
+        <ApprovalTokenDetailSheetModalStub />
+        <GlobalSearchBottomSheet />
+        <BottomSheetBrowser />
+        <BrowserManagePopup />
+        <BrowserFavoritePopup />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <ModalsSubmitFeedbackByScreenshotStub />
+      <ToggleCollateralModal />
+
+      {/** @warning put all business stub components before this modal */}
+      <GlobalSecurityTipStubModal />
+      <FloatingDiagnosticsPanel />
+      <GlobalMiniApproval />
+      <GlobalMiniSignTypedDataPortal />
+      <GlobalTipsPopup />
+      <GlobalSignerPortal />
+    </>
+  );
+}
+
 export default function AppNavigation() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   const { binaryTheme: colorScheme } = useAppTheme({ isAppTop: true });
@@ -240,6 +305,8 @@ export default function AppNavigation() {
   const initialRouteName = isAppUnlocked
     ? RootNames.StackGetStarted
     : RootNames.Unlock;
+  const shouldRenderDeferredGlobals =
+    useRenderDeferredGlobalsAfterFirstUnlock(isAppUnlocked);
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
@@ -276,16 +343,10 @@ export default function AppNavigation() {
           onReady={onReady}
           onStateChange={onStateChange}
           theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <DuplicateAddressModal />
-          <AliasNameEditModal />
-          <QrCodeModal />
-          <InnerDappWebViewPreloadEntry />
-          <BiometricsStubModal />
-          <ApprovalTokenDetailSheetModalStub />
-          <GlobalSearchBottomSheet />
-          <BottomSheetBrowser />
-          <BrowserManagePopup />
-          <BrowserFavoritePopup />
+          <AppNavigationDeferredGlobals
+            slot="navigation-pre"
+            enabled={shouldRenderDeferredGlobals}
+          />
           <RootStack.Navigator
             screenOptions={{
               ...RootAnimOptions,
@@ -520,17 +581,17 @@ export default function AppNavigation() {
               />
             </RootStack.Group>
           </RootStack.Navigator>
+          <AppNavigationDeferredGlobals
+            slot="navigation-post"
+            enabled={shouldRenderDeferredGlobals}
+          />
         </NavigationContainer>
       </NavigationIndependentTree>
-      <ModalsSubmitFeedbackByScreenshotStub />
-      <ToggleCollateralModal />
-      <GlobalSecurityTipStubModal />
+      <AppNavigationDeferredGlobals
+        slot="overlay"
+        enabled={shouldRenderDeferredGlobals}
+      />
       <BackgroundSecureBlurView />
-      <FloatingDiagnosticsPanel />
-      <GlobalMiniApproval />
-      <GlobalMiniSignTypedDataPortal />
-      <GlobalTipsPopup />
-      <GlobalSignerPortal />
     </AutoLockView.ForAppNav>
   );
 }
