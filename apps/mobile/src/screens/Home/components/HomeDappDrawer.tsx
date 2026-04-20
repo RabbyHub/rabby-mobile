@@ -52,9 +52,14 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Text } from '@/components/Typography';
+import MarketScreen from '@/screens/Market';
+import { HomeDappDrawerContent } from './HomeDappDrawerContent';
 
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
+
+const DRAWER_GESTURE_ACTIVE_OFFSET_Y = 8;
+const DRAWER_GESTURE_FAIL_OFFSET_X = 12;
 
 const { pullPercent, isExpanded, translateY, swipeUpHintHeight } =
   homeDrawerAnimateMutable;
@@ -159,6 +164,20 @@ export const HomeDappDrawer: React.FC<{
   const drawerGesture = useMemo(
     () =>
       Gesture.Pan()
+        .activeOffsetY([
+          -DRAWER_GESTURE_ACTIVE_OFFSET_Y,
+          DRAWER_GESTURE_ACTIVE_OFFSET_Y,
+        ])
+        .failOffsetX([
+          -DRAWER_GESTURE_FAIL_OFFSET_X,
+          DRAWER_GESTURE_FAIL_OFFSET_X,
+        ])
+        .failOffsetY([
+          -DRAWER_GESTURE_FAIL_OFFSET_X,
+          DRAWER_GESTURE_FAIL_OFFSET_X,
+        ])
+        .maxPointers(1)
+        .shouldCancelWhenOutside(false)
         .onChange(event => {
           'worklet';
 
@@ -295,7 +314,8 @@ export const HomeDappDrawer: React.FC<{
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <GestureDetector gesture={drawerScrollableGesture}>
+                <HomeDappDrawerContent />
+                {/* <GestureDetector gesture={drawerScrollableGesture}>
                   <AnimatedFlatList
                     data={list}
                     style={[styles.list]}
@@ -368,7 +388,7 @@ export const HomeDappDrawer: React.FC<{
                       </View>
                     }
                   />
-                </GestureDetector>
+                </GestureDetector> */}
               </View>
             </View>
 
