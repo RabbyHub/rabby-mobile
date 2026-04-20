@@ -37,6 +37,11 @@ initialize_android_sentry_auto_upload_default() {
     return 0
   fi
 
+  if [ -z "${CI:-}" ]; then
+    export SENTRY_DISABLE_AUTO_UPLOAD=true
+    return 0
+  fi
+
   if fast_build_enabled; then
     export SENTRY_DISABLE_AUTO_UPLOAD=false
   fi
@@ -63,6 +68,11 @@ ios_fast_build_enabled_value() {
 
 initialize_ios_sentry_auto_upload_default() {
   if [ -n "${SENTRY_DISABLE_AUTO_UPLOAD+x}" ]; then
+    return 0
+  fi
+
+  if [ -z "${CI:-}" ]; then
+    export SENTRY_DISABLE_AUTO_UPLOAD=true
     return 0
   fi
 
