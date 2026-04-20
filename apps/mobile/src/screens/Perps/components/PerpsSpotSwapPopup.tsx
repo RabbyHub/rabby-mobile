@@ -271,7 +271,7 @@ export const PerpsSpotSwapPopup: React.FC<{
         await onSpotOrder({
           coin: fromCoin as 'USDE' | 'USDT' | 'USDH',
           isBuy: false,
-          size: amount,
+          size: new BigNumber(amount).toFixed(2, BigNumber.ROUND_DOWN),
           limitPx,
         });
       }

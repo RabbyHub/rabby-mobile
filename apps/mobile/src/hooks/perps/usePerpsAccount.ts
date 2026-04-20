@@ -29,8 +29,6 @@ export const usePerpsAccount = () => {
     })),
   );
 
-  console.log('userAbstraction', userAbstraction);
-
   const isUnifiedAccount = useMemo(() => {
     return userAbstraction === UserAbstractionResp.unifiedAccount;
   }, [userAbstraction]);
