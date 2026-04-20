@@ -13,6 +13,7 @@ import { removeCexId } from '@/utils/addressCexId';
 import { zCreate } from '@/core/utils/reexports';
 import { resolveValFromUpdater, UpdaterOrPartials } from '@/core/utils/store';
 import i18next from 'i18next';
+import { normalizeWhitelistAddresses } from '@/utils/whitelist';
 
 const { isSameAddress } = addressUtils;
 
@@ -47,8 +48,10 @@ const getWhitelist = async () => {
 };
 
 export const setWhitelist = async (addresses: string[]) => {
-  await whitelistService.setWhitelist(addresses);
-  gSetWhitelist(addresses);
+  const normalizedAddresses = normalizeWhitelistAddresses(addresses);
+
+  await whitelistService.setWhitelist(normalizedAddresses);
+  gSetWhitelist(normalizedAddresses);
 };
 
 function setEnable(val: boolean) {

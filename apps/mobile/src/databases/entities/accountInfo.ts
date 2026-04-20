@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { Entity, LessThan, MoreThan, UpdateDateColumn } from 'typeorm/browser';
 import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
+import { normalizeWhitelistAddresses } from '@/utils/whitelist';
 
 import { EntityAccountBase } from './base';
 import { prepareAppDataSource } from '../imports';
@@ -147,5 +148,41 @@ VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT ( "_db_id" )DO UPDATE SET "updated_at" = E
     const foundOne = await queryBuilder.getRawOne();
 
     return !!foundOne;
+  }
+
+  static async getCreatedAtByAddresses(addresses: string[]) {
+    const normalizedAddresses = normalizeWhitelistAddresses(addresses);
+    if (!normalizedAddresses.length) {
+      return {};
+    }
+
+    await prepareAppDataSource();
+
+    const queryBuilder = this.getRepository().createQueryBuilder(
+      ORM_TABLE_NAMES.account_info,
+    );
+
+    queryBuilder.where(
+      `${ORM_TABLE_NAMES.account_info}.address IN (:...addresses)`,
+      {
+        addresses: normalizedAddresses,
+      },
+    );
+
+    const matchedAccounts = await queryBuilder.getMany();
+
+    return matchedAccounts.reduce<Record<string, number>>((result, account) => {
+      const createdAt = account.created_at || account.updated_at || 0;
+      if (!createdAt) {
+        return result;
+      }
+
+      const prevCreatedAt = result[account.address];
+      if (prevCreatedAt == null || createdAt < prevCreatedAt) {
+        result[account.address] = createdAt;
+      }
+
+      return result;
+    }, {});
   }
 }

@@ -2,12 +2,17 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import createPersistStore from '@rabby-wallet/persist-store';
 import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import {
+  mergeWhitelistRecords,
+  normalizeWhitelistRecords,
+  type WhitelistRecord,
+} from '@/utils/whitelist';
 
 const { isSameAddress } = addressUtils;
 
 export type WhitelistStore = {
   enabled: boolean;
-  whitelists: string[];
+  whitelists: WhitelistRecord[];
 };
 
 export class WhitelistService {
@@ -33,9 +38,16 @@ export class WhitelistService {
     if (!this.store.enabled) {
       this.store.enabled = true;
     }
+    this.store.whitelists = normalizeWhitelistRecords(
+      this.store.whitelists as unknown as Array<string | WhitelistRecord>,
+    );
   }
 
   getWhitelist = () => {
+    return this.store.whitelists.map(item => item.address);
+  };
+
+  getWhitelistRecords = () => {
     return this.store.whitelists;
   };
 
@@ -48,15 +60,17 @@ export class WhitelistService {
   };
 
   setWhitelist = (addresses: string[]) => {
-    this.store.whitelists = addresses.map(address => address.toLowerCase());
+    this.store.whitelists = normalizeWhitelistRecords(addresses);
   };
 
   removeWhitelist = (address: string) => {
-    if (!this.store.whitelists.find(item => isSameAddress(item, address))) {
+    if (
+      !this.store.whitelists.find(item => isSameAddress(item.address, address))
+    ) {
       return;
     }
     this.store.whitelists = this.store.whitelists.filter(
-      item => !isSameAddress(item, address),
+      item => !isSameAddress(item.address, address),
     );
   };
 
@@ -64,10 +78,10 @@ export class WhitelistService {
     if (!address) {
       return;
     }
-    if (this.store.whitelists.find(item => isSameAddress(item, address))) {
-      return;
-    }
-    this.store.whitelists = [...this.store.whitelists, address.toLowerCase()];
+
+    this.store.whitelists = mergeWhitelistRecords(this.store.whitelists, [
+      address,
+    ]);
   };
 
   isWhitelistEnabled = () => {
@@ -75,6 +89,8 @@ export class WhitelistService {
   };
 
   isInWhiteList = (address: string) => {
-    return this.store.whitelists.some(item => isSameAddress(item, address));
+    return this.store.whitelists.some(item =>
+      isSameAddress(item.address, address),
+    );
   };
 }

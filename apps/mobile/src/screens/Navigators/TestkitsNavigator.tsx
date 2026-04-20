@@ -78,6 +78,12 @@ const DevDataSQLite = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevDataSQLite'),
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
+const DevDataWhitelist = registerAppScreen<
+  typeof import('@/screens/Testkits/DevDataWhitelist').default
+>({
+  loader: () => import('@/screens/Testkits/DevDataWhitelist'),
+  name: TESTKITS_PRELOAD_SCREENS.DevDataWhitelist,
+});
 const DevSwitches = !isNonPublicProductionEnv
   ? registerAppScreen<typeof import('@/screens/Testkits/DevSwitches').default>({
       loader: () => import('@/screens/Testkits/DevSwitches'),
@@ -165,6 +171,10 @@ export function TestkitsNavigator() {
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+      <Stack.Screen
+        name={RootNames.DevDataWhitelist}
+        component={DevDataWhitelist}
+      />
 
       <Stack.Screen
         name={RootNames.DevSwitches}
