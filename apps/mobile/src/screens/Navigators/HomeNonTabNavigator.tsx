@@ -2,14 +2,16 @@ import 'react-native-gesture-handler';
 import { makeHeadersPresets, RootNames } from '@/constant/layout';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { HomeNonTabNavigatorParamsList } from '@/navigation-type';
-import SearchScreen from '../Search';
-import WatchlistScreen from '../Watchlist';
 import { useStackScreenConfig } from '@/hooks/navigation';
+import {
+  MarketScreen,
+  MemeScreen,
+  SearchScreen,
+  WatchlistScreen,
+} from '@/perfs/loadables/homeNonTabNavigatorScreens';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import MemeScreen from '../Meme';
-import MarketScreen from '../Market';
 
 const HomeNonTabStack =
   createNativeStackNavigator<HomeNonTabNavigatorParamsList>();
@@ -52,7 +54,9 @@ export default function HomeNonTabNavigator() {
           ...headerPresets.withBgCard1_2024,
           headerTintColor: colors['neutral-title-1'],
           headerStyle: {
-            backgroundColor: colors2024['neutral-bg-1'],
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
           },
           headerTitleStyle: {
             fontSize: 20,

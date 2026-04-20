@@ -47,7 +47,6 @@ import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 import YesIcon from '@/assets2024/icons/common/check.svg';
 import i18next from 'i18next';
-import { RootNames } from '@/constant/layout';
 import { measureTime } from '@/core/utils/statics';
 import { stats } from '@/utils/stats';
 import DeviceInfo from 'react-native-device-info';
@@ -58,6 +57,7 @@ import { TextInput } from '@/components/Typography';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { startUnlockScreenBootstrapWarmups } from '@/setup-app-before-render';
+import { preloadTransactionHotNavigator } from '@/perfs/preloads';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -211,6 +211,12 @@ export default function UnlockScreen() {
   } = useBiometrics({ autoFetch: true });
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
+
+  React.useEffect(() => {
+    preloadTransactionHotNavigator().catch(error => {
+      console.error('preloadTransactionHotNavigator::error', error);
+    });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
