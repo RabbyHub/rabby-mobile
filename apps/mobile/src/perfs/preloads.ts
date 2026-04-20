@@ -8,6 +8,7 @@ export const PRELOAD_SCREENS = {
 
 export const PRELOAD_NAVIGATORS = {
   [RootNames.StackTransaction]: RootNames.StackTransaction,
+  [RootNames.SingleAddressStack]: RootNames.SingleAddressStack,
 };
 
 async function preloadNamedComponent(name?: string) {
@@ -31,8 +32,12 @@ export async function preloadTransactionHotNavigator() {
   await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.StackTransaction]);
 }
 
+export async function preloadSingleAddressNavigator() {
+  await preloadNamedComponent(PRELOAD_NAVIGATORS[RootNames.SingleAddressStack]);
+}
+
 export async function preloadHomeShortcutNavigators() {
-  await preloadSettingsScreen();
+  await Promise.all([preloadSettingsScreen(), preloadSingleAddressNavigator()]);
 }
 
 export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {

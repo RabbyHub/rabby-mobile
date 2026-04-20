@@ -43,6 +43,8 @@ import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
 import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
 import { ImportSecret } from '@/screens/Address/ImportSecret';
+import MoreImportMethods from '@/screens/Address/MoreImportMethods';
+import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import { perfEvents } from './core/utils/perf';
@@ -394,6 +396,28 @@ export default function AppNavigation() {
               options={mergeScreenOptions2024([
                 {
                   headerShown: true,
+                },
+              ])}
+            />
+            <RootStack.Screen
+              name={RootNames.MoreImportMethods}
+              component={MoreImportMethods}
+              options={mergeScreenOptions2024([
+                {
+                  headerShown: true,
+                  headerTitle: t('screens.addressStackTitle.MoreImportMethods'),
+                },
+              ])}
+            />
+            <RootStack.Screen
+              name={RootNames.SelectAddMethod}
+              component={SelectAddMethod}
+              options={mergeScreenOptions2024([
+                {
+                  headerShown: true,
+                  headerTitle: t(
+                    'page.nextComponent.addAddress.selectAddMethod',
+                  ),
                 },
               ])}
             />
