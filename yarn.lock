@@ -9729,6 +9729,7 @@ __metadata:
   checksum: 10/f67e670b69a126a54398fde58bb372a6a2318ed99bec7556199b86088c5b3cbf03090d9182380fadf0d243a21214608bf5cf5e70f80b0e0575f9703bf1ed4ccb
   languageName: node
   linkType: hard
+
 "@rabby-wallet/rabby-logger@npm:0.3.0":
   version: 0.3.0
   resolution: "@rabby-wallet/rabby-logger@npm:0.3.0"
