@@ -3,8 +3,9 @@ import createPersistStore from '@rabby-wallet/persist-store';
 import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import {
-  mergeWhitelistRecords,
+  addWhitelistRecord,
   normalizeWhitelistRecords,
+  syncWhitelistRecords,
   type WhitelistRecord,
 } from '@/utils/whitelist';
 
@@ -60,7 +61,10 @@ export class WhitelistService {
   };
 
   setWhitelist = (addresses: string[]) => {
-    this.store.whitelists = normalizeWhitelistRecords(addresses);
+    this.store.whitelists = syncWhitelistRecords(
+      this.store.whitelists,
+      addresses,
+    );
   };
 
   removeWhitelist = (address: string) => {
@@ -79,9 +83,7 @@ export class WhitelistService {
       return;
     }
 
-    this.store.whitelists = mergeWhitelistRecords(this.store.whitelists, [
-      address,
-    ]);
+    this.store.whitelists = addWhitelistRecord(this.store.whitelists, address);
   };
 
   isWhitelistEnabled = () => {

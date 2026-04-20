@@ -1,7 +1,9 @@
 import {
+  addWhitelistRecord,
   mergeWhitelistAddresses,
   normalizeWhitelistAddresses,
   normalizeWhitelistRecords,
+  syncWhitelistRecords,
   sortWhitelistRecords,
 } from './whitelist';
 
@@ -82,6 +84,59 @@ describe('whitelist utils', () => {
       '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
       '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       '0xcccccccccccccccccccccccccccccccccccccccc',
+    ]);
+  });
+
+  it('records addedAt when appending a new whitelist address', () => {
+    expect(
+      addWhitelistRecord(
+        [
+          {
+            address: '0x1111111111111111111111111111111111111111',
+          },
+        ],
+        '0x2222222222222222222222222222222222222222',
+        123,
+      ),
+    ).toEqual([
+      {
+        address: '0x1111111111111111111111111111111111111111',
+      },
+      {
+        address: '0x2222222222222222222222222222222222222222',
+        addedAt: 123,
+      },
+    ]);
+  });
+
+  it('preserves existing addedAt and stamps newly added records during sync', () => {
+    expect(
+      syncWhitelistRecords(
+        [
+          {
+            address: '0x1111111111111111111111111111111111111111',
+            addedAt: 111,
+          },
+          {
+            address: '0x3333333333333333333333333333333333333333',
+            addedAt: 333,
+          },
+        ],
+        [
+          '0x1111111111111111111111111111111111111111',
+          '0x2222222222222222222222222222222222222222',
+        ],
+        999,
+      ),
+    ).toEqual([
+      {
+        address: '0x1111111111111111111111111111111111111111',
+        addedAt: 111,
+      },
+      {
+        address: '0x2222222222222222222222222222222222222222',
+        addedAt: 999,
+      },
     ]);
   });
 });

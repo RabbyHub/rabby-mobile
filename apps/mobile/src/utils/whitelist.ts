@@ -82,6 +82,47 @@ export function mergeWhitelistRecords(
   return mergedRecords;
 }
 
+export function addWhitelistRecord(
+  currentRecords: WhitelistRecordLike[] = [],
+  address: string,
+  now = Date.now(),
+) {
+  const mergedRecords = mergeWhitelistRecords(currentRecords, [
+    {
+      address,
+      addedAt: now,
+    },
+  ]);
+
+  return mergedRecords.map(record =>
+    isSameAddress(record.address, address) && record.addedAt == null
+      ? {
+          ...record,
+          addedAt: now,
+        }
+      : record,
+  );
+}
+
+export function syncWhitelistRecords(
+  currentRecords: WhitelistRecordLike[] = [],
+  nextAddresses: string[] = [],
+  now = Date.now(),
+) {
+  const currentNormalized = normalizeWhitelistRecords(currentRecords);
+  const currentMap = currentNormalized.reduce<Record<string, WhitelistRecord>>(
+    (result, record) => {
+      result[record.address] = record;
+      return result;
+    },
+    {},
+  );
+
+  return normalizeWhitelistAddresses(nextAddresses).map(address => {
+    return currentMap[address] || { address, addedAt: now };
+  });
+}
+
 export function sortWhitelistRecords(
   records: WhitelistRecord[] = [],
   resolvedAddedAtByAddress: Record<string, number | null | undefined> = {},
