@@ -3558,7 +3558,9 @@
         "copiedPrivateKey": "Private key copied. The clipboard will clear in 1 minute.",
         "pasted_and_cleared": "Pasted and clipboard cleared"
       }
-    }
+    },
+    "from": "From",
+    "to": "To"
   },
   "background": {
     "error": {

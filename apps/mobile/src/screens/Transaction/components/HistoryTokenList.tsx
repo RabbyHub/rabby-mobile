@@ -52,12 +52,14 @@ const TokenItemInlist = ({
   isNft,
   isSend,
   hanldePress,
+  tokenPrice,
 }: {
   isSend?: boolean;
   amount: number;
   chain: string;
   isNft: boolean;
   token_id: string;
+  tokenPrice?: number;
   hanldePress: (singeToken: TokenItem | NFTItem, tokenIsNft: boolean) => void;
   token: TokenItem | NFTItem;
 }) => {
@@ -105,11 +107,19 @@ const TokenItemInlist = ({
             </Text>
           </View>
         </View>
-        <RcIconSingleArrow
-          width={20}
-          height={20}
-          color={colors2024['neutral-bg-2']}
-        />
+
+        <View style={styles.listItemExtra}>
+          <HistoryItemTokenPrice
+            singlePrice={tokenPrice ?? (token as TokenItem)?.price}
+            amount={amount}
+            style={styles.tokenPriceText}
+          />
+          <RcIconSingleArrow
+            width={20}
+            height={20}
+            color={colors2024['neutral-bg-2']}
+          />
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -173,7 +183,9 @@ export const HistoryTokenList = ({
         ? approve?.value
         : receives?.[0]?.amount || sends?.[0]?.amount;
       const singlePrice = (
-        isApprove ? approve?.price : receives?.[0]?.price || sends?.[0]?.price
+        isApprove
+          ? approve?.price ?? approve?.token?.price
+          : receives?.[0]?.price || sends?.[0]?.price
       ) as number;
       const isUnlimited =
         isApprove && singleAmount && new BigNumber(singleAmount).gte(10 ** 9);
@@ -241,57 +253,172 @@ export const HistoryTokenList = ({
 
     case HistoryItemCateType.Bridge:
     case HistoryItemCateType.Swap:
-      const sendAmount = sends?.[0]?.amount;
-      const recieveAmount = receives?.[0]?.amount;
-      const sendToken = sends?.[0]?.token;
-      const recieveToken = receives?.[0]?.token;
       return (
         <View style={[styles.doubleBox]}>
-          <TouchableOpacity
-            style={[styles.fromTokenBox]}
-            onPress={() => handlePress(sendToken, false)}>
-            <AssetAvatar
-              logo={sendToken?.logo_url}
-              size={42}
-              chain={sendToken?.chain}
-              chainSize={16}
-            />
-            <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
-              <Text
-                style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {formatTokenAmount(sendAmount)}{' '}
-                {getTokenSymbol(sendToken as TokenItem)}
-              </Text>
-              <RcIconRightCC
-                color={colors2024['neutral-title-1']}
-                width={18}
-                height={18}
-              />
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toTokenBox]}
-            onPress={() => handlePress(recieveToken, false)}>
-            <AssetAvatar
-              logo={recieveToken?.logo_url}
-              size={42}
-              chain={recieveToken?.chain}
-              chainSize={16}
-            />
-            <View style={[styles.colomnBox, isFail && styles.isFailBox]}>
-              <Text style={[styles.tokenAmountTextList]}>
-                {'+'} {formatTokenAmount(recieveAmount)}{' '}
-                {getTokenSymbol(recieveToken as TokenItem)}
-              </Text>
-              <RcIconRightCC
-                color={colors2024['green-default']}
-                width={18}
-                height={18}
-              />
-            </View>
-          </TouchableOpacity>
-          <View style={styles.iconSwitchArrow}>
-            <RcIconSwitchArrow />
+          <Text style={styles.swapTitle}>{t('global.from')}</Text>
+          <View style={[styles.swapBoxContainer, { marginBottom: 12 }]}>
+            {data.sends.map(item => {
+              const token = item.token as TokenItem;
+              const tokenIsNft = item.token_id?.length === 32;
+              return (
+                <TouchableOpacity
+                  onPress={() => handlePress(token, tokenIsNft)}>
+                  <View style={[styles.swapBox]}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}>
+                      {tokenIsNft ? (
+                        <Media
+                          failedPlaceholder={
+                            <IconDefaultNFT width={45} height={45} />
+                          }
+                          type="image_url"
+                          src={
+                            token?.content?.endsWith('.svg')
+                              ? ''
+                              : token?.content
+                          }
+                          thumbnail={
+                            token?.content?.endsWith('.svg')
+                              ? ''
+                              : token?.content
+                          }
+                          mediaStyle={styles.media}
+                          style={styles.media}
+                          playIconSize={12}
+                        />
+                      ) : (
+                        <AssetAvatar
+                          logo={(token as TokenItem)?.logo_url || ''}
+                          size={45}
+                        />
+                      )}
+                      <View
+                        style={[
+                          styles.singleColomnBox,
+                          isFail && styles.isFailBox,
+                        ]}>
+                        <Text
+                          numberOfLines={1}
+                          style={[
+                            styles.tokenAmountText,
+                            styles.isSendTextColor,
+                          ]}>
+                          - {formatTokenAmount(item.amount)}{' '}
+                          {tokenIsNft
+                            ? t('page.singleHome.sectionHeader.Nft')
+                            : ellipsisOverflowedText(
+                                getTokenSymbol(token as TokenItem),
+                                16,
+                              )}
+                        </Text>
+                        <HistoryItemTokenPrice
+                          singlePrice={item.price ?? token?.price}
+                          amount={item.amount}
+                          style={styles.tokenPriceText}
+                        />
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        width: 32,
+                      }}>
+                      <RcIconSingleArrow
+                        width={32}
+                        height={32}
+                        color={colors2024['neutral-bg-2']}
+                      />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={styles.swapTitle}>{t('global.to')}</Text>
+          <View style={styles.swapBoxContainer}>
+            {data.receives.map(item => {
+              const token = item.token as TokenItem;
+              const tokenIsNft = item.token_id?.length === 32;
+              return (
+                <TouchableOpacity
+                  onPress={() => handlePress(token, tokenIsNft)}>
+                  <View style={[styles.swapBox]}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}>
+                      {tokenIsNft ? (
+                        <Media
+                          failedPlaceholder={
+                            <IconDefaultNFT width={45} height={45} />
+                          }
+                          type="image_url"
+                          src={
+                            token?.content?.endsWith('.svg')
+                              ? ''
+                              : token?.content
+                          }
+                          thumbnail={
+                            token?.content?.endsWith('.svg')
+                              ? ''
+                              : token?.content
+                          }
+                          mediaStyle={styles.media}
+                          style={styles.media}
+                          playIconSize={12}
+                        />
+                      ) : (
+                        <AssetAvatar
+                          logo={(token as TokenItem)?.logo_url || ''}
+                          size={45}
+                        />
+                      )}
+                      <View
+                        style={[
+                          styles.singleColomnBox,
+                          isFail && styles.isFailBox,
+                        ]}>
+                        <Text
+                          numberOfLines={1}
+                          style={[styles.tokenAmountText]}>
+                          - {formatTokenAmount(item.amount)}{' '}
+                          {tokenIsNft
+                            ? t('page.singleHome.sectionHeader.Nft')
+                            : ellipsisOverflowedText(
+                                getTokenSymbol(token as TokenItem),
+                                16,
+                              )}
+                        </Text>
+                        <HistoryItemTokenPrice
+                          singlePrice={item.price ?? token?.price}
+                          amount={item.amount}
+                          style={styles.tokenPriceText}
+                        />
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        width: 32,
+                      }}>
+                      <RcIconSingleArrow
+                        width={32}
+                        height={32}
+                        color={colors2024['neutral-bg-2']}
+                      />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       );
@@ -305,24 +432,26 @@ export const HistoryTokenList = ({
       return (
         hasList && (
           <View style={[styles.mutliBox]}>
-            {sends?.map(({ token_id, amount, token: iToken }) => (
+            {sends?.map(({ token_id, amount, price, token: iToken }) => (
               <TokenItemInlist
                 key={token_id}
                 isSend={true}
                 chain={chain}
                 token_id={token_id}
                 amount={amount}
+                tokenPrice={price}
                 isNft={token_id?.length === 32}
                 token={iToken}
                 hanldePress={handlePress}
               />
             ))}
-            {receives?.map(({ token_id, amount, token: iToken }) => (
+            {receives?.map(({ token_id, amount, price, token: iToken }) => (
               <TokenItemInlist
                 key={token_id}
                 token_id={token_id}
                 chain={chain}
                 amount={amount}
+                tokenPrice={price}
                 isNft={token_id?.length === 32}
                 token={iToken}
                 hanldePress={handlePress}
@@ -393,10 +522,22 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   doubleBox: {
     justifyContent: 'center',
     alignContent: 'center',
-    flexDirection: 'row',
-    height: 110,
-    gap: 10,
+    flexDirection: 'column',
     position: 'relative',
+
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
+    borderRadius: 16,
+    padding: 12,
+  },
+  swapTitle: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    marginBottom: 8,
   },
   iconSwitchArrow: {
     backgroundColor: !isLight
@@ -413,7 +554,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginLeft: -22,
     marginTop: -22,
   },
-  fromTokenBox: {
+  swapTokenBox: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
@@ -446,6 +587,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 16,
+    flexDirection: 'row',
+  },
+  swapBoxContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  swapBox: {
+    width: '100%',
+    justifyContent: 'space-between',
+    alignContent: 'center',
     flexDirection: 'row',
   },
   mutliBox: {
@@ -488,5 +640,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 24,
     height: 24,
     zIndex: 1,
+  },
+  listItemExtra: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 }));
