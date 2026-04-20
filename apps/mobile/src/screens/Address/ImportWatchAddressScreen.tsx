@@ -9,7 +9,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { apisAddress } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { resolveEnsAddressByName } from '@/utils/ens';
+import { resolveEnsAddressByName, resolveEnsNameByAddress } from '@/utils/ens';
 import { navigateDeprecated } from '@/utils/navigation';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { isValidHexAddress } from '@metamask/utils';
@@ -76,13 +76,25 @@ export const ImportWatchAddressScreen = () => {
       ),
     [],
   );
+  const debouncedResolveEnsName = React.useMemo(
+    () =>
+      debounce(
+        async (value: string, callback: (name: string | null) => void) => {
+          const name = await resolveEnsNameByAddress(value);
+          callback(name);
+        },
+        300,
+      ),
+    [],
+  );
 
   const handleDone = async () => {
     if (!input) {
       setError(INPUT_ERROR.REQUIRED);
       return;
     }
-    if (!isValidHexAddress(input as any)) {
+    const normalizedInput = input.trim().toLowerCase();
+    if (!isValidHexAddress(normalizedInput as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
       return;
     }
@@ -128,9 +140,10 @@ export const ImportWatchAddressScreen = () => {
   }, [error, ensResult, input]);
 
   const onCodeScanned = (codes: Code[]) => {
-    if (codes[0].value && isValidHexAddress(codes[0].value as `0x${string}`)) {
+    const scanned = codes[0].value?.trim().toLowerCase();
+    if (scanned && isValidHexAddress(scanned as `0x${string}`)) {
       codeRef.current?.close();
-      setInput(codes[0].value);
+      setInput(scanned);
     }
   };
 
@@ -138,14 +151,26 @@ export const ImportWatchAddressScreen = () => {
     if (!input) {
       setError(undefined);
       setEnsResult(null);
+      debouncedResolveEnsName.cancel();
       return;
     }
-    if (isValidHexAddress(input as `0x${string}`)) {
+    const normalizedInput = input.trim().toLowerCase();
+    if (isValidHexAddress(normalizedInput as `0x${string}`)) {
       setError(undefined);
-      setEnsResult(null);
       debouncedResolveEns.cancel();
+      debouncedResolveEnsName(normalizedInput, name => {
+        if (!name) {
+          setEnsResult(null);
+          return;
+        }
+        setEnsResult({
+          addr: normalizedInput,
+          name,
+        });
+      });
       return;
     }
+    debouncedResolveEnsName.cancel();
     debouncedResolveEns(input, result => {
       if (result && result.addr) {
         setEnsResult(result);
@@ -155,13 +180,14 @@ export const ImportWatchAddressScreen = () => {
         setError(INPUT_ERROR.INVALID_ADDRESS);
       }
     });
-  }, [input, debouncedResolveEns]);
+  }, [input, debouncedResolveEns, debouncedResolveEnsName]);
 
   useEffect(() => {
     return () => {
       debouncedResolveEns.cancel();
+      debouncedResolveEnsName.cancel();
     };
-  }, [debouncedResolveEns]);
+  }, [debouncedResolveEns, debouncedResolveEnsName]);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>

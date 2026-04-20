@@ -52,7 +52,6 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
 
         setStep('backup_downloading');
         await new Promise(resolve => setTimeout(resolve, 500));
-        onDone();
 
         if (
           await shouldRedirect2SetPassword?.({
@@ -66,9 +65,11 @@ export const SeedPhraseRestoreFromCloud2024: React.FC<Props> = ({
           setConfirmCB(() =>
             apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr),
           );
+          onDone();
           return;
         }
         await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen2024(arr);
+        onDone();
       } catch (e) {
         console.log('backup error', e);
         setStep('backup_error');

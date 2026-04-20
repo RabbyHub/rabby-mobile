@@ -19,7 +19,6 @@ import { isNonPublicProductionEnv } from '@/constant';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
-import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
 
@@ -116,12 +115,6 @@ export interface PreferenceStore {
   addressAvatarMap: {
     [address: string]: string;
   };
-  balanceMap: {
-    [address: string]: EvmTotalBalanceResponse;
-  };
-  testnetBalanceMap: {
-    [address: string]: EvmTotalBalanceResponse;
-  };
   locale: string;
   lastTimeSendToken: Record<string, TokenItem>;
   pinAddresses: IPinAddress[];
@@ -197,8 +190,10 @@ export interface PreferenceStore {
   enabledTransactionNofification?: boolean;
 
   /**
-   * Map of account dbId to backup reminder state
-   * Stores accounts that need backup reminder (created via "Create New Wallet")
+   * Map of basePublicKey to backup reminder state
+   * Stores seed phrases that need backup reminder (created via "Create New Wallet")
+   * All addresses from the same seed phrase share the same basePublicKey,
+   * so backing up one address marks all addresses from that seed phrase as backed up.
    */
   needsBackupReminderMap: Record<string, boolean>;
 }
@@ -242,8 +237,6 @@ export class PreferenceService extends StoreServiceBase<
       APP_STORE_NAMES.preference,
       {
         currentAccount: undefined,
-        balanceMap: {},
-        testnetBalanceMap: {},
         locale: defaultLang,
         lastTimeSendToken: {},
         pinAddresses: [],
@@ -300,6 +293,13 @@ export class PreferenceService extends StoreServiceBase<
         },
       },
     );
+
+    if ('balanceMap' in this.store) {
+      delete this.store.balanceMap;
+    }
+    if ('testnetBalanceMap' in this.store) {
+      delete this.store.testnetBalanceMap;
+    }
 
     this.keyringService = options.keyringService;
     this.sessionService = options.sessionService;
@@ -381,36 +381,37 @@ export class PreferenceService extends StoreServiceBase<
   };
 
   /**
-   * Check if an account needs backup reminder
-   * @param dbId - The account's _db_id (format: "type:brandName:address")
+   * Check if a seed phrase needs backup reminder
+   * @param basePublicKey - The keyring's base public key (unique per seed phrase)
    */
-  getNeedsBackupReminder = (dbId: string): boolean => {
-    return this.store.needsBackupReminderMap[dbId] ?? false;
+  getNeedsBackupReminder = (basePublicKey: string): boolean => {
+    return this.store.needsBackupReminderMap[basePublicKey] ?? false;
   };
 
   /**
-   * Set backup reminder state for an account
-   * @param dbId - The account's _db_id
-   * @param needsReminder - Whether the account needs backup reminder
+   * Set backup reminder state for a seed phrase
+   * @param basePublicKey - The keyring's base public key
+   * @param needsReminder - Whether the seed phrase needs backup reminder
    */
-  setNeedsBackupReminder = (dbId: string, needsReminder: boolean) => {
+  setNeedsBackupReminder = (basePublicKey: string, needsReminder: boolean) => {
     this.store.needsBackupReminderMap = {
       ...this.store.needsBackupReminderMap,
-      [dbId]: needsReminder,
+      [basePublicKey]: needsReminder,
     };
-    appServiceEvents.emit('backupReminderChanged', dbId);
+    appServiceEvents.emit('backupReminderChanged', basePublicKey);
   };
 
   /**
-   * Clear backup reminder for an account (e.g., after successful backup)
-   * @param dbId - The account's _db_id
+   * Clear backup reminder for a seed phrase (e.g., after successful backup)
+   * This clears the reminder for all addresses from the same seed phrase.
+   * @param basePublicKey - The keyring's base public key
    */
-  clearNeedsBackupReminder = (dbId: string) => {
-    if (dbId in this.store.needsBackupReminderMap) {
+  clearNeedsBackupReminder = (basePublicKey: string) => {
+    if (basePublicKey in this.store.needsBackupReminderMap) {
       const map = { ...this.store.needsBackupReminderMap };
-      delete map[dbId];
+      delete map[basePublicKey];
       this.store.needsBackupReminderMap = map;
-      appServiceEvents.emit('backupReminderChanged', dbId);
+      appServiceEvents.emit('backupReminderChanged', basePublicKey);
     }
   };
 
@@ -617,50 +618,6 @@ export class PreferenceService extends StoreServiceBase<
     if (tempAccount) {
       this.setCurrentAccount(tempAccount);
     }
-  };
-
-  updateTestnetAddressBalance = (
-    address: string,
-    data: EvmTotalBalanceResponse,
-  ) => {
-    const testnetBalanceMap = this.store.testnetBalanceMap || {};
-    this.store.testnetBalanceMap = {
-      ...testnetBalanceMap,
-      [address.toLowerCase()]: data,
-    };
-  };
-
-  updateAddressBalance = (address: string, data: EvmTotalBalanceResponse) => {
-    const balanceMap = this.store.balanceMap || {};
-    this.store.balanceMap = {
-      ...balanceMap,
-      [address.toLowerCase()]: data,
-    };
-  };
-
-  removeTestnetAddressBalance = (address: string) => {
-    const key = address.toLowerCase();
-    if (key in this.store.testnetBalanceMap) {
-      const map = this.store.testnetBalanceMap;
-      delete map[key];
-      this.store.testnetBalanceMap = map;
-    }
-  };
-
-  removeAddressBalance = (address: string) => {
-    const key = address.toLowerCase();
-    if (key in this.store.balanceMap) {
-      const map = this.store.balanceMap;
-      delete map[key];
-      this.store.balanceMap = map;
-    }
-  };
-
-  getTestnetAddressBalance = (
-    address: string,
-  ): EvmTotalBalanceResponse | null => {
-    const balanceMap = this.store.testnetBalanceMap || {};
-    return balanceMap[address.toLowerCase()] || null;
   };
 
   getLocale = () => {

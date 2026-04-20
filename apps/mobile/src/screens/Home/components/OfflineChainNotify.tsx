@@ -1,9 +1,10 @@
 import { openapi } from '@/core/request';
 import { offlineChainService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
+import { useAccountStore } from '@/store/account';
 import { findChainByServerID } from '@/utils/chain';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { Image, View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
@@ -59,6 +60,7 @@ export const useMockClearOfflineChainTips = () => {
 
 export const useOfflineChain = () => {
   const closedTipsChains = closedTipsStore(s => s.closedTipsChains);
+  const accounts = useAccountStore(s => s.accounts);
   const { mockData } = useMockDataForHomeCenterArea();
   const { value: offlineList } = useAsync(async () => {
     // leave here for mock data
@@ -72,14 +74,16 @@ export const useOfflineChain = () => {
 
     return openapi.getOfflineChainList();
   }, [mockData.forceShowOffchainNotify]);
-
-  const balanceMap = balanceStore(s => s.balanceMap);
-  const chainUSDMap = balanceStore(s => s.chainUSDMap);
+  const balanceSnapshots = addressBalanceStore.useAddressesSnapshot(
+    useMemo(() => {
+      return accounts.map(account => account.address.toLowerCase());
+    }, [accounts]),
+  );
 
   const list = useMemo(() => {
-    const accountChainBalanceList = Object.keys(balanceMap).map(
-      addr => chainUSDMap[addr],
-    );
+    const accountChainBalanceList = balanceSnapshots.map(snapshot => {
+      return snapshot.value?.chainList || [];
+    });
 
     return offlineList
       ?.filter(e => {
@@ -91,13 +95,15 @@ export const useOfflineChain = () => {
           return false;
         }
 
-        if (mockData.forceShowOffchainNotify) return true;
+        if (mockData.forceShowOffchainNotify) {
+          return true;
+        }
         return accountChainBalanceList.some(chainBalance =>
           chainBalance?.some(chain => chain.id === e.id && chain.usd_value > 1),
         );
       })
       .sort((a, b) => a.offline_at - b.offline_at);
-  }, [balanceMap, chainUSDMap, offlineList, mockData.forceShowOffchainNotify]);
+  }, [balanceSnapshots, offlineList, mockData.forceShowOffchainNotify]);
 
   const displayWillClosedChain = useMemo(
     () => list?.filter(e => !closedTipsChains?.includes(e.id))?.[0],
@@ -121,22 +127,24 @@ export const useOfflineChain = () => {
 
 export const OfflineChainNotify = ({
   data,
+  style,
 }: {
   data: ReturnType<typeof useOfflineChain>;
-} & RNViewProps) => {
+  style?: RNViewProps['style'];
+}) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const {
     displayWillClosedChain,
-    setClosedTipsChain,
+    setClosedTipsChain: setClosedTipsChainForNotify,
     offlineChainInfo: chainInfo,
   } = data;
 
   const handleClose = useCallback(() => {
     if (displayWillClosedChain?.id) {
-      setClosedTipsChain(displayWillClosedChain?.id);
+      setClosedTipsChainForNotify(displayWillClosedChain?.id);
     }
-  }, [setClosedTipsChain, displayWillClosedChain]);
+  }, [displayWillClosedChain, setClosedTipsChainForNotify]);
 
   const showTips = useCallback(() => {
     if (!chainInfo || !displayWillClosedChain) {
@@ -188,10 +196,12 @@ export const OfflineChainNotify = ({
   ]);
 
   // delegate outer to place empty holder
-  if (!displayWillClosedChain || !chainInfo) return null;
+  if (!displayWillClosedChain || !chainInfo) {
+    return null;
+  }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Image
         source={{ uri: chainInfo.logo }}
         width={16}

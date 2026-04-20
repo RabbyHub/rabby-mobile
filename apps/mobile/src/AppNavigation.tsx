@@ -10,7 +10,7 @@ import { Appearance, BackHandler, ColorSchemeName } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { useAppTheme, useTheme2024, useThemeColors } from '@/hooks/theme';
 
-import { navigationRef, replace } from '@/utils/navigation';
+import { navigationRef } from '@/utils/navigation';
 import {
   DEFAULT_NAVBAR_FONT_SIZE,
   getScreenStatusBarConf,
@@ -62,15 +62,17 @@ import RNHelpers from './core/native/RNHelpers';
 import { IS_ANDROID, IS_IOS } from './core/native/utils';
 
 import {
-  UnlockScreen,
   FavoriteDappsScreen,
   NotFoundScreen,
   MyBundleScreen,
 } from '@/screens/index.lazy';
+import UnlockScreen from '@/screens/Unlock/Unlock';
 import SetupWallet from '@/screens/Address/SetupWallet';
 import SelectImportMethod from '@/screens/Address/SelectImportMethod';
 import ImportRabbyWallet from '@/screens/Address/ImportRabbyWallet';
 import { ImportSecret } from '@/screens/Address/ImportSecret';
+import MoreImportMethods from '@/screens/Address/MoreImportMethods';
+import SelectAddMethod from '@/screens/Address/SelectAddMethod';
 import Backup from '@/screens/Address/Backup';
 import {
   ScannerScreen,
@@ -262,27 +264,29 @@ export default function AppNavigation() {
 
   const colors = useThemeColors();
 
-  const { getIsAppUnlocked } = useAppUnlocked();
+  const { isAppUnlocked } = useAppUnlocked();
+  const initialRouteName = isAppUnlocked
+    ? RootNames.StackGetStarted
+    : RootNames.Unlock;
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
   >(() => {
-    let readyRootName = navigationRef.getCurrentRoute()?.name!;
-    if (!getIsAppUnlocked()) {
-      replace(RootNames.Unlock);
-      readyRootName = RootNames.Unlock;
-    }
-    perfEvents.emit('APP_NAVIGATION_READY', {
-      readyRootName,
-    });
-    onRouteChange(readyRootName);
+    const readyRootName = navigationRef.getCurrentRoute()?.name!;
 
-    analytics.logScreenView({
-      screen_name: readyRootName,
-      screen_class: readyRootName,
+    requestAnimationFrame(() => {
+      perfEvents.emit('APP_NAVIGATION_READY', {
+        readyRootName,
+      });
+      onRouteChange(readyRootName);
+
+      analytics.logScreenView({
+        screen_name: readyRootName,
+        screen_class: readyRootName,
+      });
+      matomoLogScreenView({ name: readyRootName });
     });
-    matomoLogScreenView({ name: readyRootName });
-  }, [getIsAppUnlocked]);
+  }, []);
 
   useDetermineExitAppOnPressBack();
 
@@ -324,7 +328,7 @@ export default function AppNavigation() {
               navigationBarColor: 'transparent',
               freezeOnBlur: false,
             }}
-            initialRouteName={RootNames.StackGetStarted}>
+            initialRouteName={initialRouteName}>
             <RootStack.Screen
               name={RootNames.StackGetStarted}
               component={GetStartedNavigator}
@@ -427,6 +431,28 @@ export default function AppNavigation() {
               options={mergeScreenOptions2024([
                 {
                   headerShown: true,
+                },
+              ])}
+            />
+            <RootStack.Screen
+              name={RootNames.MoreImportMethods}
+              component={MoreImportMethods}
+              options={mergeScreenOptions2024([
+                {
+                  headerShown: true,
+                  headerTitle: t('screens.addressStackTitle.MoreImportMethods'),
+                },
+              ])}
+            />
+            <RootStack.Screen
+              name={RootNames.SelectAddMethod}
+              component={SelectAddMethod}
+              options={mergeScreenOptions2024([
+                {
+                  headerShown: true,
+                  headerTitle: t(
+                    'page.nextComponent.addAddress.selectAddMethod',
+                  ),
                 },
               ])}
             />

@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react';
 import { Pressable, TouchableOpacity, View } from 'react-native';
 
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeTriangleStyle,
-} from '@/utils/styles';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
 import { estDaily, formatApy } from '../../utils/format';
@@ -282,12 +278,10 @@ const SummaryItem: React.FC<SummaryItemProps> = ({
 
 export default SummaryItem;
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     borderRadius: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-2'],
     paddingTop: 0,
     paddingBottom: 16,
   },

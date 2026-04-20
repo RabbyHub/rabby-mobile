@@ -22,7 +22,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { RNGHFlatList, RNGHScrollView } from '../reexports';
 import { useValueFromSharedValue } from '@/hooks/reanimated';
-import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import {
+  HOME_TOP_HEADER_SIZES,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+} from '@/constant/home';
 import { useMemo, useRef } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { triggerImpact } from '@/utils/common';
@@ -31,8 +34,6 @@ import { useMemoizedFn } from 'ahooks';
 export const pulldownRefreshSizes = {
   homeHeaderHeight: Math.min(HOME_TOP_HEADER_SIZES.scrollableListTopOffset, 56),
 };
-
-export const SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING = !IS_ANDROID;
 
 const scrHeight = Dimensions.get('screen').height;
 

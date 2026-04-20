@@ -30,15 +30,17 @@ import useProtocols, {
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
 import { useAccountInfo } from './hooks';
-import { useAccountsBalanceTrigger } from '@/hooks/useAccountsBalance';
-import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import addressBalanceStore from '@/store/balance';
+import {
+  HOME_TOP_HEADER_SIZES,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+} from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
 import { TabsFlatList } from '@/components/customized/react-native-collapsible-tab-view/FlatList';
 import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
-  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
@@ -67,7 +69,7 @@ export const ProtocolList = () => {
 
   const { isFocused } = useIsFocusedCurrentTab(TabName.defi);
   const getAccountByAddress = useFindAccountByAddress();
-  const { triggerUpdate } = useAccountsBalanceTrigger();
+  const { triggerUpdate } = addressBalanceStore.useAccountsBalanceTrigger();
 
   const multiProtocolsKey = useMemo(() => {
     return getMultiProtocolsCacheKey(myTop10Addresses, chain);

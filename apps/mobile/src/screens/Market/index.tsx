@@ -27,6 +27,7 @@ const isAndroid = Platform.OS === 'android';
 type MarketTabKey = 'watchlist' | string;
 const TAB_GAP = 8;
 const FIRST_TAB_GAP = 12;
+export const TAB_BAR_HEIGHT = 28;
 
 const marketTabAtom = atomByMMKV<MarketTabKey>(
   '@market.activeTab',
@@ -65,7 +66,7 @@ const VALID_MARKET_TABS = new Set<MarketTabKey>([
 ]);
 
 export default function MarketScreen() {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -181,6 +182,7 @@ export default function MarketScreen() {
         index={index}
         indexDecimal={indexDecimal}
         text=""
+        style={styles.tabLabel}
         containerStyle={styles.watchlistLabelContainer}
         icon={
           <RcIconFavorite
@@ -195,12 +197,12 @@ export default function MarketScreen() {
         }
       />
     ),
-    [colors2024, styles.watchlistLabelContainer],
+    [colors2024, styles.watchlistLabelContainer, styles.tabLabel],
   );
 
   return (
     <NormalScreenContainer2024
-      type={isLight ? 'bg0' : 'bg1'}
+      type="bg1"
       overwriteStyle={[
         styles.overwriteStyle,
         {
@@ -210,7 +212,7 @@ export default function MarketScreen() {
       ]}>
       <Tabs.Container
         renderTabBar={renderTabBar}
-        tabBarHeight={36}
+        tabBarHeight={TAB_BAR_HEIGHT}
         lazy
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}
@@ -229,6 +231,7 @@ export default function MarketScreen() {
             const renderCategoryLabel = ({ index, indexDecimal }) => (
               <CustomLabel
                 index={index}
+                style={styles.tabLabel}
                 containerStyle={styles.categoryLabelContainer}
                 indexDecimal={indexDecimal}
                 text={category.name}
@@ -257,10 +260,8 @@ export default function MarketScreen() {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
-  const bgColor = isLight
-    ? colors2024['neutral-bg-0']
-    : colors2024['neutral-bg-1'];
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const bgColor = colors2024['neutral-bg-1'];
   return {
     overwriteStyle: {
       position: 'relative',
@@ -282,7 +283,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderBottomColor: colors2024['neutral-bg-5'],
     },
     tabBar: {
-      height: 36,
+      height: TAB_BAR_HEIGHT,
       width: 'auto',
       flexShrink: 0,
       flex: 0,
@@ -298,7 +299,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       paddingLeft: 20,
       position: 'relative',
-      height: 36,
+      height: TAB_BAR_HEIGHT,
       backgroundColor: bgColor,
       overflow: 'hidden',
     },
@@ -311,14 +312,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flex: 1,
     },
     categoryLabelContainer: {
-      height: 36,
+      height: TAB_BAR_HEIGHT,
       justifyContent: 'center',
       alignItems: 'center',
     },
     watchlistLabelContainer: {
-      height: 36,
+      height: TAB_BAR_HEIGHT,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    tabLabel: {
+      marginTop: 0,
     },
   };
 });

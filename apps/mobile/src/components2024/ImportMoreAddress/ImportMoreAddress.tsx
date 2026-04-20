@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { startTransition, useEffect } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -10,10 +10,8 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 
-import { WalletIcon } from '../WalletIcon/WalletIcon';
 import { RootNames } from '@/constant/layout';
 import {
-  apiKeyring,
   apiKeystone,
   apiLedger,
   apiMnemonic,
@@ -21,7 +19,7 @@ import {
   apiTrezor,
 } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
-import { replaceToFirst } from '@/utils/navigation';
+import { replace } from '@/utils/navigation';
 
 import { toast } from '@/components2024/Toast';
 import { settingAtom } from '@/components/HDSetting/MainContainer';
@@ -30,8 +28,9 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 
 import { createGetStyles2024 } from '@/utils/styles';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { AccountListView, ViewAccount } from './AccountListView';
+import { LoadingSkeleton } from './LoadingSkeleton';
 import SettingSVG from '@/assets2024/icons/common/setting-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
@@ -41,8 +40,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { Button } from '../Button';
 import { resetNavigationOnTopOfHome } from '@/hooks/navigation';
 import i18next from 'i18next';
-import { KeyringEventAccount } from '@rabby-wallet/service-keyring';
-import { accountEvents } from '@/core/apis/account';
 import { Text } from '@/components/Typography';
 
 const { isSameAddress } = addressUtils;
@@ -64,76 +61,97 @@ export interface Props {
   onCancel: () => void;
 }
 
-async function onAddressImported(addresses: KeyringEventAccount[]) {
-  // accountEvents.emit('ACCOUNT_ADDED', {
-  //   accounts: addresses,
-  // });
-}
+const useGetAliasByAddress = () => {
+  const { accounts } = useAccounts();
+  const aliasMapRef = React.useRef<Map<string, string>>(new Map());
 
-export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
-  const { apiHD, hdType, hdBrandName, settingModalName } = React.useMemo(() => {
-    const ret = {
+  React.useEffect(() => {
+    const map = new Map<string, string>();
+    for (const a of accounts) {
+      if (a.aliasName && a.address) {
+        map.set(a.address.toLowerCase(), a.aliasName);
+      }
+    }
+    aliasMapRef.current = map;
+  }, [accounts]);
+
+  const getAliasByAddress = React.useCallback((address: string) => {
+    return aliasMapRef.current.get(address.toLowerCase());
+  }, []);
+
+  return getAliasByAddress;
+};
+
+const useHDConfig = (type: KEYRING_TYPE) =>
+  React.useMemo(() => {
+    const defaults = {
       apiHD: null,
       hdType: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
       hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
       settingModalName: MODAL_NAMES.SETTING_KEYSTONE,
     };
-    switch (params.type) {
-      case KEYRING_TYPE.LedgerKeyring: {
+    switch (type) {
+      case KEYRING_TYPE.LedgerKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: apiLedger,
           hdType: KEYRING_TYPE.LedgerKeyring,
           hdBrandName: KEYRING_CLASS.HARDWARE.LEDGER,
           settingModalName: MODAL_NAMES.SETTING_LEDGER,
         };
-      }
-      case KEYRING_TYPE.OneKeyKeyring: {
+      case KEYRING_TYPE.OneKeyKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: apiOneKey,
           hdType: KEYRING_TYPE.OneKeyKeyring,
           hdBrandName: KEYRING_CLASS.HARDWARE.ONEKEY,
           settingModalName: MODAL_NAMES.SETTING_ONEKEY,
         };
-      }
-      case KEYRING_TYPE.KeystoneKeyring: {
+      case KEYRING_TYPE.KeystoneKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: apiKeystone,
           hdType: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
           hdBrandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
           settingModalName: MODAL_NAMES.SETTING_KEYSTONE,
         };
-      }
-      case KEYRING_TYPE.TrezorKeyring: {
+      case KEYRING_TYPE.TrezorKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: apiTrezor,
           hdType: KEYRING_TYPE.TrezorKeyring,
           hdBrandName: KEYRING_CLASS.HARDWARE.TREZOR,
           settingModalName: MODAL_NAMES.SETTING_TREZOR,
         };
-      }
-      case KEYRING_TYPE.HdKeyring: {
+      case KEYRING_TYPE.HdKeyring:
         return {
-          ...ret,
+          ...defaults,
           apiHD: null,
           hdType: KEYRING_TYPE.HdKeyring,
           hdBrandName: KEYRING_CLASS.MNEMONIC,
           settingModalName: MODAL_NAMES.SETTING_HDKEYRING,
         };
-      }
+      default:
+        return defaults;
     }
+  }, [type]);
 
-    return ret;
-  }, [params]);
+function yieldToRN(): Promise<void> {
+  return new Promise(resolve => requestIdleCallback(() => resolve()));
+}
+
+export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
+  const { apiHD, hdType, hdBrandName, settingModalName } = useHDConfig(
+    params.type,
+  );
   const [accounts, setAccounts] = React.useState<ViewAccount[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [setting, setSetting] = useAtom(settingAtom);
-  const stoppedRef = React.useRef(true);
+  const getAliasByAddress = useGetAliasByAddress();
+
+  const abortLoadRef = React.useRef<(() => void) | null>(null);
   const exitRef = React.useRef(false);
-  const startNumberRef = React.useRef((setting?.startNumber || 1) - 1);
+  const startNumberRef = React.useRef(0); // Default to index 0, updated when setting changes
   const [currentAccounts, setCurrentAccounts] = React.useState<ViewAccount[]>(
     [],
   );
@@ -188,8 +206,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             [];
 
       if (res.length) {
-        // avoid blocking the UI thread
-        await new Promise(resolve => setTimeout(resolve, 1));
         const balances = await Promise.all(
           res.map(async a => {
             return {
@@ -198,67 +214,77 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             };
           }),
         );
-        if (stoppedRef.current) {
-          return;
-        }
-        setAccounts(prev => {
-          return [
-            ...prev,
-            ...balances.map((b, idx) => {
-              return {
-                address: b.address,
-                index: res[idx].index,
-                balance: b.balance,
-              };
-            }),
-          ];
+
+        return balances.map((b, idx) => {
+          return {
+            address: b.address,
+            index: res[idx].index,
+            balance: b.balance,
+            aliasName: getAliasByAddress(b.address),
+          };
         });
       }
     },
-    [apiHD, getMnemonicKeyring, params.type],
+    [apiHD, getMnemonicKeyring, params.type, getAliasByAddress],
   );
 
-  const handleLoadAddress = React.useCallback(async () => {
-    setLoading(true);
-    stoppedRef.current = false;
-    const start = startNumberRef.current;
-    let i = start;
-    // let unknownError = false;
+  const handleLoadAddress = React.useCallback(() => {
+    let isAborted = false;
+    const abort = () => {
+      isAborted = true;
+    };
 
-    try {
-      maxCountRef.current =
-        (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
+    const run = async () => {
+      setLoading(true);
+      const start = startNumberRef.current;
+      let i = start;
 
-      for (; i < start + maxCountRef.current; ) {
-        if (stoppedRef.current) {
-          break;
+      try {
+        await yieldToRN();
+        maxCountRef.current =
+          (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
+
+        for (; i < start + maxCountRef.current && !isAborted; ) {
+          await yieldToRN();
+          const nextAccounts = await loadAddress(i);
+          if (nextAccounts) {
+            startTransition(() => {
+              setAccounts(prev => {
+                return [...prev, ...nextAccounts];
+              });
+            });
+          }
+          i += stepCountRef.current;
         }
-        await loadAddress(i);
-        i += stepCountRef.current;
+      } catch (err: any) {
+        const errorCode = ledgerErrorHandler(err);
+        let errMessage = err.message;
+        if (errorCode === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
+          errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
+        } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
+          errMessage = t('page.newAddress.ledger.error.unknown');
+          if (__DEV__) exitRef.current = true;
+        }
+        if (errMessage) {
+          toast.show(errMessage);
+        }
       }
-    } catch (err: any) {
-      const errorCode = ledgerErrorHandler(err);
-      let errMessage = err.message;
-      if (errorCode === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
-        errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
-      } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
-        errMessage = t('page.newAddress.ledger.error.unknown');
-        // unknownError = true;
-        if (__DEV__) exitRef.current = true;
-      }
-      if (errMessage) {
-        toast.show(errMessage);
-      }
-    }
-    stoppedRef.current = true;
-    setLoading(false);
-    if (exitRef.current) {
-      return;
-    }
 
-    if (i !== start + maxCountRef.current) {
-      handleLoadAddress();
-    }
+      if (isAborted) return;
+
+      setLoading(false);
+
+      if (exitRef.current) {
+        return;
+      }
+
+      if (i !== start + maxCountRef.current) {
+        handleLoadAddress();
+      }
+    };
+
+    run();
+    return abort;
   }, [apiHD, loadAddress, t]);
 
   const handleSelectIndex = React.useCallback(
@@ -283,18 +309,36 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     [t],
   );
 
+  const handleSettingChange = React.useCallback(() => {
+    setAccounts([]);
+    setSelectedAccounts([]);
+    abortLoadRef.current?.();
+    abortLoadRef.current = handleLoadAddress();
+  }, [handleLoadAddress]);
+
+  // Init HD path settings - must run BEFORE startNumberRef sync effect
+  React.useEffect(() => {
+    const getDefaultPath = () => {
+      // OneKey only supports BIP44
+      if (params.type === KEYRING_TYPE.OneKeyKeyring) {
+        return LedgerHDPathType.BIP44;
+      }
+      // HdKeyring defaults to BIP44
+      if (params.type === KEYRING_TYPE.HdKeyring) {
+        return LedgerHDPathType.BIP44;
+      }
+      // Ledger, Trezor, Keystone default to LedgerLive (matches settingAtom default)
+      return LedgerHDPathType.LedgerLive;
+    };
+    // Reset startNumberRef to ensure it's in sync with atom (index 0 = address #1)
+    startNumberRef.current = 0;
+    setSetting({ hdPath: getDefaultPath(), startNumber: 1 });
+  }, [setSetting, params.type]);
+
+  // Sync startNumberRef when setting changes
   React.useEffect(() => {
     startNumberRef.current = (setting?.startNumber || 1) - 1;
   }, [setting?.startNumber]);
-
-  React.useEffect(() => {
-    setAccounts([]);
-    if (stoppedRef.current) {
-      handleLoadAddress();
-    } else {
-      stoppedRef.current = true;
-    }
-  }, [handleLoadAddress, setting]);
 
   React.useEffect(() => {
     if (params.type === KEYRING_TYPE.HdKeyring) {
@@ -305,6 +349,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             return {
               address,
               index: api?.getInfoByAddress(address)?.index ?? idx,
+              aliasName: getAliasByAddress(address),
             };
           });
           setCurrentAccounts(_accounts);
@@ -313,24 +358,31 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     } else {
       apiHD?.getCurrentAccounts().then(res => {
         if (res) {
-          setCurrentAccounts(res);
+          setCurrentAccounts(
+            res.map(a => ({
+              ...a,
+              aliasName: a.aliasName || getAliasByAddress(a.address),
+            })),
+          );
         }
       });
     }
-  }, [apiHD, getMnemonicKeyring, params.type]);
+  }, [apiHD, getMnemonicKeyring, params.type, getAliasByAddress]);
 
+  // initial load
+  React.useEffect(() => {
+    abortLoadRef.current = handleLoadAddress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // cleanup on unmount
   React.useEffect(() => {
     return () => {
       exitRef.current = true;
-      stoppedRef.current = true;
+      abortLoadRef.current?.();
+      setSetting(prev => ({ ...prev, startNumber: 1 }));
     };
-  }, []);
-
-  React.useEffect(() => {
-    if (params.type === KEYRING_TYPE.HdKeyring) {
-      setSetting({ hdPath: LedgerHDPathType.BIP44, startNumber: 1 });
-    }
-  }, [setSetting, params.type]);
+  }, [setSetting]);
 
   const importToastHiddenRef = React.useRef<() => void>(() => {});
 
@@ -383,13 +435,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       for (const acc of selectedAccounts) {
         await apiHD?.importAddress(acc.index - 1);
       }
-      await onAddressImported(
-        selectedAccounts.map(item => ({
-          address: item.address,
-          type: hdType,
-          brandName: hdBrandName,
-        })),
-      );
 
       resetNavigationOnTopOfHome(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
@@ -431,8 +476,19 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
       name: settingModalName!,
       brand: params.brandName,
       onDone: () => {
+        handleSettingChange();
         removeGlobalBottomSheetModal2024(id);
       },
+      ...(params.type === KEYRING_TYPE.KeystoneKeyring
+        ? {
+            onSwitchDevice: () => {
+              onCancel();
+              replace(RootNames.StackAddress, {
+                screen: RootNames.ImportHardwareAddress,
+              });
+            },
+          }
+        : {}),
       ...(params.type
         ? {
             keyringId: params.keyringId,
@@ -448,6 +504,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
     params.passphrase,
     params.type,
     settingModalName,
+    onCancel,
+    handleSettingChange,
   ]);
 
   return (
@@ -459,37 +517,31 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         <SettingSVG color={colors2024['neutral-secondary']} />
       </TouchableOpacity>
       <View style={styles.info}>
-        {params.account ? (
-          <>
-            <WalletIcon
-              type={params.type}
-              address={params.account.address}
-              width={91}
-              height={91}
-              borderRadius={25}
-            />
-            <Text style={styles.nameText}>{params.account.aliasName}</Text>
-          </>
-        ) : (
-          <Text style={styles.title}>Import more wallets</Text>
-        )}
+        <Text style={styles.title}>
+          {t('page.newAddress.seedPhrase.addMoreWalletTitle')}
+        </Text>
         <View style={styles.loading}>
           <Text style={styles.loadingText}>
             {!accounts.length
-              ? 'Generating wallets, please wait...'
-              : 'Select wallets to add'}
+              ? t('page.newAddress.generatingWallets')
+              : t('page.newAddress.selectAddressesToAdd')}
           </Text>
         </View>
       </View>
-      <AccountListView
-        accounts={accounts}
-        currentAccounts={currentAccounts}
-        selectedAccounts={selectedAccounts}
-        handleSelectIndex={handleSelectIndex}
-        loading={loading}
-      />
+      {!accounts.length && loading ? (
+        <LoadingSkeleton />
+      ) : (
+        <AccountListView
+          accounts={accounts}
+          currentAccounts={currentAccounts}
+          selectedAccounts={selectedAccounts}
+          handleSelectIndex={handleSelectIndex}
+          loading={loading}
+          brandName={params.brandName}
+        />
+      )}
       {selectedAccounts.length ? (
-        <View style={styles.footerButton}>
+        <View style={styles.footerContainer}>
           <Button
             type="primary"
             title={t('global.confirm')}
@@ -507,6 +559,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     height: '100%',
     position: 'relative',
+    backgroundColor: colors2024['neutral-bg-0'],
   },
   info: {
     padding: 20,
@@ -522,7 +575,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
@@ -545,11 +598,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     top: 0,
     zIndex: 1,
   },
-  footerButton: {
+  footerContainer: {
     position: 'absolute',
-    bottom: 54,
+    bottom: 0,
     left: 0,
     right: 0,
-    marginHorizontal: 24,
+    backgroundColor: colors2024['neutral-bg-1'],
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 35,
   },
 }));

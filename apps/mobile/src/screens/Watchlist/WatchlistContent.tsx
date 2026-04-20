@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import { Pressable, RefreshControl, View, ViewToken } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  RefreshControl,
+  View,
+  ViewToken,
+} from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { Button } from '@/components2024/Button';
@@ -33,10 +39,13 @@ import {
 } from './sort';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { marketRealtimePriceAtom } from '../Market/atom';
+import { TAB_BAR_HEIGHT } from '../Market';
 
+const isAndroid = Platform.OS === 'android';
 const VIEWABILITY_CONFIG = {
   itemVisiblePercentThreshold: 0,
 };
+const STICKY_HEADER_INDICES = [0];
 
 export function WatchlistContent({
   onVisibleUuidsChange,
@@ -202,10 +211,14 @@ export function WatchlistContent({
   ]);
 
   const renderItem = useCallback(
-    ({ item }: { item: TokenDetailWithPriceCurve }) => (
-      <TokenListItem item={item} onPress={handleOpenTokenDetail} />
+    ({ item, index }: { item: TokenDetailWithPriceCurve; index: number }) => (
+      <TokenListItem
+        item={item}
+        onPress={handleOpenTokenDetail}
+        style={index === 0 ? styles.firstItemPadding : undefined}
+      />
     ),
-    [handleOpenTokenDetail],
+    [handleOpenTokenDetail, styles.firstItemPadding],
   );
 
   const keyExtractor = useCallback(
@@ -240,6 +253,7 @@ export function WatchlistContent({
             }
             key={item.id}
             item={item}
+            style={styles.tokenItem}
             onPress={() => handleTokenSelect(`${item.chain}:${item.id}`)}
           />
         ))}
@@ -256,6 +270,7 @@ export function WatchlistContent({
       styles.bottomPadding,
       styles.topEmpty,
       watchlistLoading,
+      styles.tokenItem,
     ],
   );
 
@@ -351,7 +366,7 @@ export function WatchlistContent({
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
           ListHeaderComponent={renderListHeader}
-          stickyHeaderIndices={[0]}
+          stickyHeaderIndices={STICKY_HEADER_INDICES}
           ListEmptyComponent={renderListEmptyComponent}
           ListFooterComponent={renderListFooter}
           onViewableItemsChanged={onViewableItemsChanged}
@@ -399,14 +414,15 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     flex: 1,
   },
   scrollViewContent: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    marginTop: isAndroid ? TAB_BAR_HEIGHT : 0,
     flexGrow: 1,
   },
   stickyHeader: {
-    paddingTop: 8,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-0']
-      : colors2024['neutral-bg-1'],
+    paddingTop: 14,
+    paddingBottom: 4,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   centerEmpty: {
     marginTop: '50%',
@@ -445,5 +461,11 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   topEmpty: {
     marginTop: 26,
+  },
+  tokenItem: {
+    paddingHorizontal: 12,
+  },
+  firstItemPadding: {
+    paddingTop: 8,
   },
 }));

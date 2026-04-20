@@ -1,4 +1,4 @@
-appId: ${RABBY_ANDROID_E2E_PACKAGE}
+appId: ${RABBY_MAESTRO_APP_ID}
 name: Android home balance smoke
 tags:
   - android

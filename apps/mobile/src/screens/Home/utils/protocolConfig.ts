@@ -36,6 +36,19 @@ export const keyToMarketKey: Record<string, CustomMarket> = {
   xlayer_aave3: CustomMarket.proto_xlayer_v3,
 };
 
+export const isAave3Portfolio = (project_id?: string) => {
+  if (!project_id) {
+    return false;
+  }
+  return !!keyToMarketKey[project_id];
+};
+
+export const marketKeyToProtocolId = (marketKey?: CustomMarket) => {
+  return Object.keys(keyToMarketKey).find(
+    key => keyToMarketKey[key] === marketKey,
+  );
+};
+
 export type TonTokenManageAction = (
   account?: KeyringAccountWithAlias,
   tokenAddress?: string,
@@ -56,6 +69,7 @@ interface ProtocolConfigItemType {
     account?: KeyringAccountWithAlias | null,
   ) => boolean;
   onManage?: TonManageAction;
+  onTokenManage?: TonTokenManageAction;
 }
 
 export const useProtocolConfig = () => {
@@ -66,6 +80,30 @@ export const useProtocolConfig = () => {
 
   const generateAAVEConfig = useCallback(
     (key: string): ProtocolConfigItemType => {
+      const openLending = async (
+        account?: KeyringAccountWithAlias,
+        tokenAddress?: string,
+        direction?: 'supply' | 'borrow',
+        source?: string,
+      ) => {
+        const marketKey = keyToMarketKey[key];
+        if (account && marketKey) {
+          await switchSceneCurrentAccount('Lending', account);
+          setMarketKey(marketKey);
+        }
+
+        navigation.navigate(RootNames.StackTransaction, {
+          screen: RootNames.Lending,
+          params: {
+            dappId: 'aave',
+            account,
+            tokenAddress,
+            direction,
+            source,
+          },
+        });
+      };
+
       return {
         icon: AAVE3_ICON,
         bgColor1: 'rgba(147, 145, 247, 0.2)',
@@ -73,21 +111,9 @@ export const useProtocolConfig = () => {
         showManage: (item, _account) => {
           return item.name?.toLowerCase() === 'lending';
         },
-        onManage: async account => {
-          const marketKey = keyToMarketKey[key];
-          if (account && marketKey) {
-            await switchSceneCurrentAccount('Lending', account);
-            setMarketKey(marketKey);
-          }
-
-          navigation.navigate(RootNames.StackTransaction, {
-            screen: RootNames.Lending,
-            params: {
-              dappId: 'aave',
-              account,
-            },
-          });
-        },
+        onManage: account => openLending(account),
+        onTokenManage: (account, tokenAddress, direction) =>
+          openLending(account, tokenAddress, direction, 'Portfolio Defi'),
       };
     },
     [navigation, setMarketKey, switchSceneCurrentAccount],

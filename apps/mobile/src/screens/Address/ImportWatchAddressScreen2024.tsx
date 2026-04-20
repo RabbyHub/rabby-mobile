@@ -3,7 +3,7 @@ import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { apisAddress } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
-import { resolveEnsAddressByName } from '@/utils/ens';
+import { resolveEnsAddressByName, resolveEnsNameByAddress } from '@/utils/ens';
 import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { ellipsisAddress } from '@/utils/address';
 import { debounce } from 'lodash';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { E2E_ID } from '@/constant/e2e';
 import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
@@ -50,6 +51,7 @@ export const ImportWatchAddressScreen2024 = () => {
     addr: string;
     name: string;
   }>(null);
+  const latestInputRef = React.useRef<string>('');
 
   const { t } = useTranslation();
   const duplicateAddressModal = useDuplicateAddressModal();
@@ -68,6 +70,18 @@ export const ImportWatchAddressScreen2024 = () => {
       ),
     [],
   );
+  const debouncedResolveEnsName = React.useMemo(
+    () =>
+      debounce(
+        async (value: string, callback: (name: string | null) => void) => {
+          const name = await resolveEnsNameByAddress(value);
+          callback(name);
+        },
+        500,
+        { leading: false, trailing: true },
+      ),
+    [],
+  );
 
   const handleDone = async () => {
     if (!input) {
@@ -80,19 +94,20 @@ export const ImportWatchAddressScreen2024 = () => {
       address = ensResult.addr;
     }
 
-    if (!isValidHexAddress(address as any)) {
+    const normalizedAddress = address.trim().toLowerCase();
+    if (!isValidHexAddress(normalizedAddress as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
       return;
     }
     try {
       Keyboard.dismiss();
-      await apisAddress.addWatchAddress(address);
+      await apisAddress.addWatchAddress(normalizedAddress);
       replaceToFirst(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: KEYRING_TYPE.WatchAddressKeyring,
-          address: address,
-          alias: ellipsisAddress(address),
+          address: normalizedAddress,
+          alias: ellipsisAddress(normalizedAddress),
           brandName: KEYRING_CLASS.WATCH,
         },
       });
@@ -128,18 +143,36 @@ export const ImportWatchAddressScreen2024 = () => {
   }, [scanner]);
 
   useEffect(() => {
+    latestInputRef.current = input;
     if (!input) {
       setError(undefined);
       setEnsResult(null);
+      debouncedResolveEnsName.cancel();
       return;
     }
-    if (isValidHexAddress(input as `0x${string}`)) {
+    const normalizedInput = input.trim().toLowerCase();
+    if (isValidHexAddress(normalizedInput as `0x${string}`)) {
       setError(undefined);
-      setEnsResult(null);
       debouncedResolveEns.cancel();
+      debouncedResolveEnsName(normalizedInput, name => {
+        if (!name) {
+          setEnsResult(null);
+          return;
+        }
+        setEnsResult({
+          addr: normalizedInput,
+          name,
+        });
+      });
       return;
     }
+    const currentInput = input;
+    debouncedResolveEnsName.cancel();
     debouncedResolveEns(input, result => {
+      // Ignore stale results if input has changed
+      if (latestInputRef.current !== currentInput) {
+        return;
+      }
       if (result && result.addr) {
         setEnsResult(result);
         setError(undefined);
@@ -148,13 +181,20 @@ export const ImportWatchAddressScreen2024 = () => {
         setError(INPUT_ERROR.INVALID_ADDRESS);
       }
     });
-  }, [input, debouncedResolveEns]);
+  }, [input, debouncedResolveEns, debouncedResolveEnsName]);
 
   useEffect(() => {
     return () => {
       debouncedResolveEns.cancel();
+      debouncedResolveEnsName.cancel();
     };
-  }, [debouncedResolveEns]);
+  }, [debouncedResolveEns, debouncedResolveEnsName]);
+
+  useEffect(() => {
+    if (!isValidHexAddress(input.toLowerCase() as `0x${string}`)) {
+      setEnsResult(null);
+    }
+  }, [input]);
 
   return (
     <FooterButtonScreenContainer
@@ -168,7 +208,7 @@ export const ImportWatchAddressScreen2024 = () => {
       style={styles.screen}
       footerBottomOffset={56}
       footerContainerStyle={styles.footerContainer}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.container}>
           <View style={styles.topContent}>
             <WalletIcon
@@ -216,11 +256,11 @@ export const ImportWatchAddressScreen2024 = () => {
                 )}
               />
 
-              {!error && ensResult && input === ensResult.addr && (
+              {!error && ensResult && isSameAddress(input, ensResult.addr) && (
                 <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
               )}
 
-              {!error && ensResult && input !== ensResult.addr && (
+              {!error && ensResult && !isSameAddress(input, ensResult.addr) && (
                 <TouchableOpacity
                   style={styles.ensResultBox}
                   {...makeTestIDProps(E2E_ID.home.watchAddressEnsResult)}

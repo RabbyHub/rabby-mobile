@@ -27,7 +27,8 @@
       "CreateSelectOnCurrentSeed": "2. เพิ่มกระเป๋าเงิน",
       "CreateWallet": "สร้างกระเป๋าเงิน",
       "SetPassword": "ตั้งรหัสผ่าน",
-      "ChooseBackup": "เลือกวิธีการสำรองข้อมูล"
+      "ChooseBackup": "เลือกวิธีการสำรองข้อมูล",
+      "MoreImportMethods": "เพิ่มเติมวิธีการนำเข้า"
     }
   },
   "component": {
@@ -1188,7 +1189,8 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "ฟอร์มเปลี่ยนแล้ว",
       "formChangedAmount": "จำนวนได้เปลี่ยนแปลงอาจเป็นผลมาจากการกรอกอัตโนมัติรหัสผ่านจากแป้นพิมพ์ของระบบ กรุณาตรวจสอบและกรอกจำนวนที่ถูกต้องอีกครั้ง。",
-      "best-subtitle": "พิจารณาจากต้นทุนรวม (รวมค่า Gas) และความเร็วในการส่งมอบราคาที่ดีที่สุด"
+      "best-subtitle": "ข้อเสนอที่ดีที่สุดถูกกำหนดโดยการรวมกันของต้นทุนรวมโดยประมาณ (รวมค่า Gas) และความเร็วในการจัดส่ง",
+      "swap-best-subtitle": "คำเสนอราคาที่ดีที่สุดถูกกำหนดโดยต้นทุนรวมโดยประมาณที่ต่ำที่สุด รวมถึงอัตราแลกเปลี่ยนและค่าธรรมเนียม Gas"
     },
     "dashboard": {
       "home": {
@@ -1254,7 +1256,10 @@
       "quickAddressTitle_one": "{{count}} ที่อยู่",
       "quickAddressTitle_other": "{{count}} ที่อยู่",
       "add-address": "เพิ่มกระเป๋าเงิน",
-      "delete-checklist-1": "ฉันเข้าใจว่าหากฉันลบกระเป๋านี้ จริง ๆ แล้ว กุญแจส่วนตัวและประโยค Seed ที่เกี่ยวข้องจะถูกลบ และ Rabby จะไม่สามารถกู้คืนได้。"
+      "delete-checklist-1": "ฉันเข้าใจว่าหากฉันลบกระเป๋านี้ จริง ๆ แล้ว กุญแจส่วนตัวและประโยค Seed ที่เกี่ยวข้องจะถูกลบ และ Rabby จะไม่สามารถกู้คืนได้。",
+      "delete-private-key-title": "ลบกระเป๋าเงินและคีย์ส่วนตัว",
+      "delete-seed-phrase-title": "ลบกระเป๋าเงินและวลีเมล็ดกำเนิด",
+      "delete-title": "ลบกระเป๋าเงิน"
     },
     "swap": {
       "title": "Swap",
@@ -1327,7 +1332,9 @@
         "createAddress": "สร้างกระเป๋าเงิน",
         "importAddress": "นำเข้ากระเป๋าเงิน",
         "selectAddMethod": "เลือกวิธีการเพิ่ม",
-        "seedPhraseOrPrivateKey": "Seed phrase หรือ private key"
+        "seedPhraseOrPrivateKey": "Seed phrase หรือ private key",
+        "restoreRabbyWallet": "กู้คืน Rabby Wallet",
+        "moreOptions": "ตัวเลือกเพิ่มเติม"
       },
       "multiAddressHome": {
         "services": "บริการ",
@@ -1358,7 +1365,11 @@
         "importTitle": "นำเข้ากระเป๋าเงิน",
         "watch": "กระเป๋าเงินเฉพาะดู",
         "watchOnlyTitle": "นำเข้ากระเป๋าเงินเฉพาะดู",
-        "ImportCloud": "นำเข้าจาก {{cloud}}"
+        "ImportCloud": "นำเข้าจาก {{cloud}}",
+        "ImportFromExtensionOrCloud": "นำเข้าจากส่วนขยายหรือ {{cloud}}",
+        "moreWatchOnlyTitle": "นำเข้าที่อยู่ Watch-only",
+        "moreWatchOnly": "ที่อยู่ Watch-only",
+        "moreSafeTitle": "นำเข้าที่อยู่ Safe"
       },
       "createNewAddress": {
         "Continue": "ดำเนินการต่อ",
@@ -1725,7 +1736,8 @@
         "backupUploadToGDrive": "กำลังสำรองข้อมูลไปยัง Google Drive...",
         "backupUnlockDesc": "เก็บรหัสผ่านของคุณให้ปลอดภัยเพื่อกู้คืนข้อมูลสำรอง Rabby Wallet ไม่ได้จัดเก็บและไม่สามารถกู้คืนได้",
         "backupRestoreUnlockDesc": "ใช้รหัสผ่านเดียวกันที่คุณตั้งไว้เพื่อเข้ารหัสการสำรองข้อมูลของคุณ",
-        "backupErrorCloudNotAvailable": "iCloud ใช้งานไม่ได้"
+        "backupErrorCloudNotAvailable": "iCloud ใช้งานไม่ได้",
+        "addMoreWalletTitle": "เพิ่มกระเป๋าเงินเพิ่มเติม\nจากวลีนี้"
       },
       "hd": {
         "balance": "ยอดคงเหลือ",
@@ -1796,7 +1808,9 @@
         "ButtonGotIt": "ฉันเข้าใจแล้ว。"
       },
       "importing": "นำเข้า...",
-      "Done": "เสร็จเรียบร้อย"
+      "Done": "เสร็จเรียบร้อย",
+      "generatingWallets": "กำลังสร้างกระเป๋าเงิน กรุณารอสักครู่...",
+      "selectAddressesToAdd": "เลือกที่อยู่ที่ต้องการเพิ่ม"
     },
     "safeQueue": {
       "unknownProtocol": "Unknown protocol",
@@ -3372,7 +3386,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "กู้คืนกระเป๋าเงิน Rabby ของคุณ",
-        "subtitle": "ยินดีต้อนรับกลับมา! 🎉  \nเลือกวิธีการเพื่อกู้คืนกระเป๋าเงินของคุณอย่างรวดเร็ว"
+        "subtitle": "ยินดีต้อนรับกลับมา! 🎉  \nเลือกวิธีการเพื่อกู้คืนกระเป๋าเงินของคุณอย่างรวดเร็ว",
+        "subtitleInApp": "เลือกตัวเลือกด้านล่างเพื่อนำเข้ากระเป๋าเงินของคุณอย่างรวดเร็วจากส่วนขยาย Rabby หรือ iCloud"
       },
       "common": {
         "orYouCanCreateNewWallet": "หรือคุณสามารถ <clickable>สร้างกระเป๋าเงินใหม่</clickable> ได้"

@@ -6,7 +6,6 @@ import {
   View,
   ViewStyle,
   TouchableOpacity,
-  Clipboard,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -27,6 +26,7 @@ import LpTokenIcon from '@/screens/Home/components/LpTokenIcon';
 import { useTranslation } from 'react-i18next';
 import { Text } from '@/components/Typography';
 import { ellipsisAddress } from '@/utils/address';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -121,7 +121,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
                 style={styles.touchBox}
                 onPress={handleCopyAddress}>
                 <Text style={styles.contractAddress}>
-                  {ellipsisAddress(token.id, 4)}
+                  {ellipsisAddress(token.id)}
                 </Text>
                 <RcIconCopyCC style={styles.copy} />
               </TouchableOpacity>
@@ -216,8 +216,6 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    flexShrink: 1,
-    minWidth: 0,
   },
   copy: {
     width: 12,
@@ -232,7 +230,6 @@ const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   },
   showCopySymbol: {
     flexShrink: 1,
-    minWidth: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,

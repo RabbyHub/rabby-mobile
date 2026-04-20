@@ -7,7 +7,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '@/components/Typography';
 
 export const GasAccountDepositSelect: React.FC<{
@@ -16,48 +15,34 @@ export const GasAccountDepositSelect: React.FC<{
   disableL2Deposit?: boolean;
 }> = ({ onSelect, minDepositPrice, disableL2Deposit }) => {
   const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, isLight } = useTheme2024({
     getStyle: getStyles,
   });
-  const {
-    hasAvailableTokens,
-    isCheckingAvailability,
-    checkIsExpireAndUpdate,
-    refreshBridgeSupportTokenList,
-  } = useGasAccountDepositAvailableTokens(minDepositPrice, {
-    disableL2Deposit,
-  });
   const [showDisabledTip, setShowDisabledTip] = useState(false);
+  const { tokenDisabled } = useGasAccountDepositAvailableTokens(
+    minDepositPrice,
+    {
+      disableL2Deposit,
+    },
+  );
 
   useEffect(() => {
-    Promise.allSettled([
-      checkIsExpireAndUpdate(),
-      refreshBridgeSupportTokenList(),
-    ]);
-  }, [checkIsExpireAndUpdate, refreshBridgeSupportTokenList]);
-
-  useEffect(() => {
-    if (hasAvailableTokens || isCheckingAvailability) {
+    if (!tokenDisabled) {
       setShowDisabledTip(false);
     }
-  }, [hasAvailableTokens, isCheckingAvailability]);
-
-  const tokenDisabled = !isCheckingAvailability && !hasAvailableTokens;
+  }, [tokenDisabled]);
 
   const handlePressDepositToken = useCallback(() => {
     if (tokenDisabled) {
       setShowDisabledTip(true);
       return;
     }
+
     onSelect('token');
   }, [onSelect, tokenDisabled]);
 
   return (
-    <KeyboardAwareScrollView
-      enableOnAndroid
-      scrollEnabled={false}
-      keyboardOpeningTime={0}
-      contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <View style={styles.containerHorizontal}>
         <Text style={styles.title}>
           {t('page.gasAccount.depositPopup.gasDepositTitle')}
@@ -68,10 +53,7 @@ export const GasAccountDepositSelect: React.FC<{
         <Button
           type="primary"
           onPress={handlePressDepositToken}
-          titleStyle={[styles.btnTitle]}
-          buttonStyle={
-            tokenDisabled && { backgroundColor: colors2024['brand-disable'] }
-          }
+          titleStyle={styles.btnTitle}
           title={
             <Tip
               placement="top"
@@ -94,6 +76,9 @@ export const GasAccountDepositSelect: React.FC<{
                 </Text>
               </View>
             </Tip>
+          }
+          buttonStyle={
+            tokenDisabled ? styles.depositTokenDisabledBtn : undefined
           }
         />
 
@@ -125,14 +110,13 @@ export const GasAccountDepositSelect: React.FC<{
           }
         />
       </View>
-    </KeyboardAwareScrollView>
+    </View>
   );
 };
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     width: '100%',
-    flex: 1,
     paddingBottom: 48,
   },
   containerHorizontal: {
@@ -259,8 +243,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-InvertHighlight'],
     opacity: 0.6,
   },
-  tokenButtonTrigger: {
-    width: '100%',
+  depositTokenDisabledBtn: {
+    backgroundColor: colors2024['brand-disable'],
   },
   tipTooltipStyle: {
     shadowColor: 'rgba(0, 0, 0, 0.06)',

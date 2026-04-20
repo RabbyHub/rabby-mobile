@@ -27,7 +27,8 @@
       "CreateNewAddress": "1. Bestätigen Sie Ihre Wallet",
       "CreateWallet": "Wallet erstellen",
       "ChooseBackup": "Wählen Sie eine Sicherungsmethode",
-      "SetPassword": "Passwort festlegen"
+      "SetPassword": "Passwort festlegen",
+      "MoreImportMethods": "Weitere Importmethoden"
     }
   },
   "native": {
@@ -1258,7 +1259,10 @@
       "quickAddressTitle_one": "{{count}} Adresse",
       "quickAddressTitle_other": "{{count}} Adressen",
       "add-address": "Wallet hinzufügen",
-      "delete-checklist-1": "Ich verstehe, dass wenn ich diese Wallet lösche, der entsprechende private Schlüssel und der Seed-Phrase gelöscht werden, und Rabby diese NICHT wiederherstellen kann."
+      "delete-checklist-1": "Ich verstehe, dass wenn ich diese Wallet lösche, der entsprechende private Schlüssel und der Seed-Phrase gelöscht werden, und Rabby diese NICHT wiederherstellen kann.",
+      "delete-private-key-title": "Wallet und privaten Schlüssel löschen",
+      "delete-seed-phrase-title": "Wallet und Seed-Phrase löschen",
+      "delete-title": "Wallet löschen"
     },
     "swap": {
       "no-transaction-records": "Keine Transaktionsaufzeichnungen",
@@ -1384,7 +1388,8 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Formular geändert",
       "formChangedAmount": "Der Betrag hat sich geändert, möglicherweise aufgrund der automatischen Passwortausfüllung durch die Systemtastatur. Bitte überprüfen Sie den Betrag und geben Sie den richtigen Betrag erneut ein.",
-      "best-subtitle": "Den Gesamtpreis (einschließlich Gas-Gebühren) und die Geschwindigkeit der Bereitstellung des besten Angebots berücksichtigen"
+      "best-subtitle": "Das beste Angebot wird durch eine Kombination aus geschätzten Gesamtkosten (einschließlich Gas-Gebühren) und Lieferungsgeschwindigkeit bestimmt.",
+      "swap-best-subtitle": "Das beste Angebot wird durch die niedrigsten geschätzten Gesamtkosten bestimmt, einschließlich des Wechselkurses und der Gasgebühren."
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1408,7 +1413,9 @@
         "importAddress": "Wallet importieren",
         "createAddress": "Wallet erstellen",
         "selectAddMethod": "Methode hinzufügen auswählen",
-        "seedPhraseOrPrivateKey": "Seed-Phrase oder privater Schlüssel"
+        "seedPhraseOrPrivateKey": "Seed-Phrase oder privater Schlüssel",
+        "restoreRabbyWallet": "Rabby Wallet wiederherstellen",
+        "moreOptions": "Weitere Optionen"
       },
       "createNewAddress": {
         "Continue": "Fortfahren",
@@ -1450,7 +1457,11 @@
         "importTitle": "Wallet importieren",
         "watchOnlyTitle": "Importiere Watch-Only Wallet",
         "safeTitle": "Import Safe Wallet",
-        "ImportCloud": "Importieren von {{cloud}}"
+        "ImportCloud": "Importieren von {{cloud}}",
+        "ImportFromExtensionOrCloud": "Von Erweiterung oder {{cloud}} importieren",
+        "moreWatchOnlyTitle": "Nur-Lesen-Adresse importieren",
+        "moreWatchOnly": "Nur-Lesen-Adresse",
+        "moreSafeTitle": "Safe-Adresse importieren"
       },
       "rateModalTriggerOnHome": {
         "description": "Wie bewertest du Rabby Wallet?"
@@ -1732,7 +1743,8 @@
         "isItSafeToImportItInRabby": {
           "question": "Ist es sicher, es in Rabby zu importieren?",
           "answer": "Ja, es wird lokal auf Ihrem Telefon gespeichert und ist nur für Sie zugänglich."
-        }
+        },
+        "addMoreWalletTitle": "Weitere Wallets aus dieser Phrase hinzufügen"
       },
       "hd": {
         "balance": "Balance",
@@ -1803,7 +1815,9 @@
         "description3": "Teilen Sie niemals Ihren privaten Schlüssel – jeder, der Zugriff darauf hat, kann Ihre Mittel kontrollieren."
       },
       "importing": "Importieren...",
-      "Done": "Fertig"
+      "Done": "Fertig",
+      "generatingWallets": "Wallets werden erstellt, bitte warten...",
+      "selectAddressesToAdd": "Adressen zum Hinzufügen auswählen"
     },
     "addressDetail": {
       "address": "Adresse",
@@ -3489,7 +3503,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "subtitle": "Willkommen zurück! 🎉  \nWählen Sie eine Methode, um Ihre Wallet schnell wiederherzustellen.",
-        "title": "Stellen Sie Ihre Rabby Wallet wieder her"
+        "title": "Stellen Sie Ihre Rabby Wallet wieder her",
+        "subtitleInApp": "Wählen Sie unten eine Option, um Ihre Wallets schnell aus der Rabby-Erweiterung oder iCloud zu importieren."
       },
       "common": {
         "orYouCanCreateNewWallet": "Oder Sie können <clickable>ein neues Wallet erstellen</clickable>"
