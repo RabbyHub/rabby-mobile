@@ -33,6 +33,7 @@ import {
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
 import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
+import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { findChainByID } from '@/utils/chain';
 import { getProvider } from './provider';
 import { fetchIconSymbolAndName, IconSymbolInterface } from './utils/icon';
@@ -50,10 +51,14 @@ import { useShallow } from 'zustand/react/shallow';
 import { isValidAddress } from '@ethereumjs/util';
 import { nativeToWrapper } from './config/nativeToWrapper';
 
-const marketAtom = atomByMMKV('@lendingMarket', CustomMarket.proto_mainnet_v3, {
-  storage: MMKVStorageStrategy.compatString,
-  getOnInit: true,
-});
+const marketAtom = atomByMMKV(
+  APP_MMKV_WEAK_KEYS.LENDING_MARKET,
+  CustomMarket.proto_mainnet_v3,
+  {
+    storage: MMKVStorageStrategy.compatString,
+    getOnInit: true,
+  },
+);
 
 const getMarketInfo = (market?: CustomMarket) => {
   const marketData: MarketDataType | undefined =

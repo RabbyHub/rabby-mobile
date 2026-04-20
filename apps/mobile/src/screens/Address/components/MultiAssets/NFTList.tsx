@@ -28,7 +28,6 @@ import {
   pulldownRefreshSizes,
   RefreshPlaceholderIOS,
   setPulldownRefreshStage,
-  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
   usePulldownRefreshGesture,
   usePulldownRefreshStyles,
 } from '@/components/customized/ScrollViewLike/RefreshPlaceholderIOS';
@@ -57,7 +56,10 @@ import {
 import { isTabsSwiping, useAccountInfo } from './hooks';
 import nftListStore, { combinedNfts, useOnNftRefresh } from '@/store/nfts';
 import { useSelectedChainItem } from '@/screens/Home/useChainInfo';
-import { HOME_TOP_HEADER_SIZES } from '@/constant/home';
+import {
+  HOME_TOP_HEADER_SIZES,
+  SHOULD_SHOW_CUSTOM_INDICATOR_WHEN_LOADING,
+} from '@/constant/home';
 import { IS_ANDROID } from '@/core/native/utils';
 
 export const MemoizedNFTItemLoader = React.memo((props: RNViewProps) => {

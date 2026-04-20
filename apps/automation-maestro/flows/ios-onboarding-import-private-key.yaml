@@ -1,0 +1,9 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: iOS onboarding import private key
+tags:
+  - ios
+  - maestro
+  - onboarding
+---
+- runFlow: ios-onboarding-import-private-key-to-single-home.yaml
+- runFlow: ios-single-home-back-to-home.yaml

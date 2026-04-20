@@ -27,7 +27,8 @@
       "ConfrimAddress": "Confirmez votre portefeuille",
       "SetPassword": "Définir le mot de passe",
       "ChooseBackup": "Choisissez une méthode de sauvegarde",
-      "CreateWallet": "Créer un portefeuille"
+      "CreateWallet": "Créer un portefeuille",
+      "MoreImportMethods": "Plus de méthodes d'import"
     }
   },
   "constant": {
@@ -914,7 +915,10 @@
       "quickAddressTitle_one": "{{count}} Adresse",
       "quickAddressTitle_other": "{{count}} Adresses",
       "add-address": "Ajouter un portefeuille",
-      "delete-checklist-1": "Je comprends que si je supprime ce portefeuille, la clé privée correspondante et la phrase de départ seront supprimées, et Rabby ne pourra PAS les récupérer."
+      "delete-checklist-1": "Je comprends que si je supprime ce portefeuille, la clé privée correspondante et la phrase de départ seront supprimées, et Rabby ne pourra PAS les récupérer.",
+      "delete-private-key-title": "Supprimer le portefeuille et la clé privée",
+      "delete-seed-phrase-title": "Supprimer le portefeuille et la phrase de seed",
+      "delete-title": "Supprimer le portefeuille"
     },
     "home": {
       "services": {
@@ -1016,7 +1020,8 @@
       "gasXUsd": "Gas : {{gasUsd}}",
       "formChangedTitle": "Forme changée",
       "formChangedAmount": "Le montant a changé, probablement en raison du remplissage automatique du mot de passe par le clavier système. Veuillez vérifier et saisir à nouveau le montant correct.",
-      "best-subtitle": "En tenant compte du coût total (frais de Gas inclus) et de la rapidité de livraison du meilleur prix"
+      "best-subtitle": "Le meilleur devis est déterminé par une combinaison du coût total estimé (frais de Gas inclus) et de la vitesse de livraison.",
+      "swap-best-subtitle": "Le meilleur devis est déterminé par le coût total estimé le plus bas, incluant le taux de change et les frais de gaz."
     },
     "dashboard": {
       "hd": {
@@ -1091,7 +1096,9 @@
         "importAddress": "Importer le portefeuille",
         "createAddress": "Créer un portefeuille",
         "selectAddMethod": "Sélectionner Ajouter une méthode",
-        "seedPhraseOrPrivateKey": "Phrase de secours ou clé privée"
+        "seedPhraseOrPrivateKey": "Phrase de secours ou clé privée",
+        "restoreRabbyWallet": "Restaurer le portefeuille Rabby",
+        "moreOptions": "Plus d'options"
       },
       "createNewAddress": {
         "verificationFailed": "Échec de la vérification",
@@ -1133,7 +1140,11 @@
         "safeTitle": "Importer le portefeuille Safe",
         "watchOnlyTitle": "Importer un portefeuille en lecture seule",
         "importTitle": "Importer le portefeuille",
-        "ImportCloud": "Importer depuis {{cloud}}"
+        "ImportCloud": "Importer depuis {{cloud}}",
+        "ImportFromExtensionOrCloud": "Importer depuis l'extension ou {{cloud}}",
+        "moreWatchOnlyTitle": "Importer une adresse en lecture seule",
+        "moreWatchOnly": "Adresse en lecture seule",
+        "moreSafeTitle": "Importer une adresse Safe"
       },
       "rateModalTriggerOnHome": {
         "description": "Comment évaluez-vous Rabby Wallet ?"
@@ -1565,7 +1576,8 @@
         "backupRestoreUnlockDesc": "Utilisez le même mot de passe que vous avez défini pour chiffrer vos sauvegardes.",
         "chooseBackupMethodDesc": "Les sauvegardes vous permettent de restaurer votre portefeuille si vous supprimez l'application ou perdez votre appareil.",
         "backupRestoreImported": "Importé",
-        "googleDriveBackup": "Sauvegarde sur Google Drive"
+        "googleDriveBackup": "Sauvegarde sur Google Drive",
+        "addMoreWalletTitle": "Ajouter d'autres wallets depuis cette phrase"
       },
       "createNewAddress": "Créer un nouveau Wallet",
       "whatIsPrivateKey": {
@@ -1580,7 +1592,9 @@
         "title": "Qu'est-ce qu'une clé privée"
       },
       "importing": "Importation...",
-      "Done": "Fait"
+      "Done": "Fait",
+      "generatingWallets": "Génération des wallets, veuillez patienter...",
+      "selectAddressesToAdd": "Sélectionnez les adresses à ajouter"
     },
     "importSafe": {
       "error": {
@@ -3121,7 +3135,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "subtitle": "Bienvenue de nouveau ! 🎉  \nChoisissez une méthode pour restaurer rapidement votre wallet.",
-        "title": " restaurer votre portefeuille Rabby"
+        "title": " restaurer votre portefeuille Rabby",
+        "subtitleInApp": "Choisissez une option ci-dessous pour importer rapidement vos wallets depuis l'extension Rabby ou iCloud."
       },
       "common": {
         "orYouCanCreateNewWallet": "Ou vous pouvez <clickable>créer un nouveau wallet</clickable>"

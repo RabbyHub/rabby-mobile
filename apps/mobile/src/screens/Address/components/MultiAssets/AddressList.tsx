@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { View, TouchableOpacity, Pressable } from 'react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 import { AddressEntry } from './RenderRow/AddressEntry';
@@ -18,9 +18,9 @@ import { ManageSetting } from '../ManageSetting';
 import RcIconSettingCC from '@/assets2024/icons/common/IconSetting.svg';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
-import { useScene24hBalanceMulti24hBalance } from '@/hooks/useScene24hBalance';
+import { balance24hStore } from '@/store/balance24h';
 import { computeBalanceChange } from '@/core/apis/balance';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { Text } from '@/components/Typography';
 
 const SPACING_HEIGHT = 8;
@@ -43,12 +43,47 @@ const AddressList = ({
 
   const { myTop10Accounts, myTop10Records, notMatteredAccounts } =
     useAccountInfo();
-
-  const balanceMap = balanceStore(s => s.balanceMap);
-
-  const { multi24hBalance } = useScene24hBalanceMulti24hBalance('Home');
+  const top10Addresses = useMemo(() => {
+    return myTop10Accounts.map(item => item.address.toLowerCase());
+  }, [myTop10Accounts]);
+  const balanceSnapshots =
+    addressBalanceStore.useAddressesSnapshot(top10Addresses);
+  const balance24hSnapshots =
+    balance24hStore.useAddresses24hBalanceSnapshots(top10Addresses);
 
   const addressListData = useMemo(() => {
+    const balanceMap = balanceSnapshots.reduce(
+      (acc, snapshot) => {
+        if (snapshot.value) {
+          acc[snapshot.address] = snapshot.value;
+        }
+
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          totalBalance: number;
+          evmBalance: number;
+        }
+      >,
+    );
+    const multi24hBalance = balance24hSnapshots.reduce(
+      (acc, snapshot) => {
+        if (snapshot.value) {
+          acc[snapshot.address] = snapshot.value;
+        }
+
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          total_usd_value?: number;
+        }
+      >,
+    );
+
     return myTop10Accounts
       .map(item => {
         const account = balanceMap[item.address.toLowerCase()];
@@ -72,7 +107,7 @@ const AddressList = ({
         };
       })
       .sort((a, b) => b.balance - a.balance);
-  }, [balanceMap, myTop10Accounts, multi24hBalance]);
+  }, [balance24hSnapshots, balanceSnapshots, myTop10Accounts]);
 
   const renderItem = useCallback(
     ({ item }) => {

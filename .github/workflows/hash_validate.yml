@@ -27,9 +27,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: 'Setup Ruby & Fastlane'
         uses: heisenberg-2077/setup-ruby@master
         with:
@@ -89,9 +86,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: 'Setup Ruby & Fastlane'
         uses: heisenberg-2077/setup-ruby@master
         with:
@@ -138,9 +132,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Get Hashes from previous jobs
         run: |
           echo "Android Hash: ${{ needs.build-android.outputs.android_hash }}"
@@ -162,9 +153,10 @@ jobs:
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
 
         run: |
-          cd apps/mobile
+          YARN_PATH=$(sed -n 's/^yarnPath:[[:space:]]*//p' .yarnrc.yml | head -n 1)
+          node "$YARN_PATH" install --immutable
 
-          yarn install --immutable
+          cd apps/mobile
 
           HASH_A="${{ needs.build-android.outputs.android_hash }}"
           HASH_I="${{ needs.build-ios.outputs.ios_hash }}"

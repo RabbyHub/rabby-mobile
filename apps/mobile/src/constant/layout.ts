@@ -82,7 +82,6 @@ export const ScreenColors = {
 
 export const RootNames = {
   StackGetStarted: 'StackGetStarted',
-  GetStartedScreen2024: 'GetStartedScreen2024',
   CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
   StackHomeNonTab: 'StackHomeNonTab',
@@ -117,11 +116,11 @@ export const RootNames = {
 
   /* warning: testkits only ------ start */
   StackTestkits: 'StackTestkits',
-  NewUserGetStarted2024: 'NewUserGetStarted2024',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIAnimatedTextAndView: 'DevUIAnimatedTextAndView',
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
+  DevUIComponents2024ShowCase: 'DevUIComponents2024ShowCase',
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   DevUIToast: 'DevUIToast',
   DevUINotifications: 'DevUINotifications',
@@ -177,6 +176,8 @@ export const RootNames = {
   ImportWatchAddress2024: 'ImportWatchAddress2024',
   ImportSafeAddress: 'ImportSafeAddress',
   ImportSafeAddress2024: 'ImportSafeAddress2024',
+  SelectAddMethod: 'SelectAddMethod',
+  MoreImportMethods: 'MoreImportMethods',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
   CreateNewAddress: 'CreateNewAddress',
@@ -342,7 +343,6 @@ function makeScreenSpecConfig() {
 
       // StackGetStarted
       [RootNames.GetStarted]: bg1DefaultConf,
-      [RootNames.GetStartedScreen2024]: bg1DefaultConf,
       [RootNames.CreateSelectMethod]: bg1Default2024Conf,
       // StackRoot
       // StackHomeNonTab
@@ -373,11 +373,11 @@ function makeScreenSpecConfig() {
       [RootNames.ProviderControllerTester]: bg1Default2024Conf,
 
       // StackTestkits
-      [RootNames.NewUserGetStarted2024]: bg1DefaultConf,
       [RootNames.DevUIFontShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAnimatedTextAndView]: bg1Default2024Conf,
       [RootNames.DevUIFormShowCase]: bg1Default2024Conf,
       [RootNames.DevUIAccountShowCase]: bg1Default2024Conf,
+      [RootNames.DevUIComponents2024ShowCase]: bg1Default2024Conf,
       [RootNames.DevUIToast]: bg1Default2024Conf,
       [RootNames.DevUINotifications]: bg1Default2024Conf,
       [RootNames.DevUIScreenContainerShowCase]: bg1Default2024Conf,
@@ -428,6 +428,8 @@ function makeScreenSpecConfig() {
       [RootNames.ImportWatchAddress2024]: bg1Default2024Conf,
       [RootNames.ImportSafeAddress]: blueLightConf,
       [RootNames.ImportSafeAddress2024]: bg1Default2024Conf,
+      [RootNames.SelectAddMethod]: bg1Default2024Conf,
+      [RootNames.MoreImportMethods]: bg1Default2024Conf,
       [RootNames.AddressDetail]: bg1Default2024Conf,
       [RootNames.NftDetail]: bg1Default2024Conf,
       [RootNames.CreateNewAddress]: bg1Default2024Conf,

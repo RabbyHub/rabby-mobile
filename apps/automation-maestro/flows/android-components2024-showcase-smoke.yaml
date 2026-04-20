@@ -1,0 +1,137 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Android components2024 showcase smoke
+tags:
+  - android
+  - maestro
+  - settings
+  - playground
+  - components2024
+env:
+  HOME_SETTINGS_BUTTON_ID: e2e.home.settings.button
+  SETTINGS_UI_PLAYGROUND_ID: e2e.settings.ui-playground
+  PLAYGROUND_COMPONENTS2024_ENTRY_ID: e2e.playground.components2024.entry
+  PLAYGROUND_COMPONENTS2024_SCREEN_ID: e2e.playground.components2024.screen
+  PLAYGROUND_BUTTON_PRIMARY_ID: e2e.playground.components2024.button.primary
+  PLAYGROUND_BUTTON_LOADING_ID: e2e.playground.components2024.button.loading
+  PLAYGROUND_CHECKBOX_TOGGLE_ID: e2e.playground.components2024.checkbox.toggle
+  PLAYGROUND_RADIO_BETA_ID: e2e.playground.components2024.radio.beta
+  PLAYGROUND_RADIO_STATE_ID: e2e.playground.components2024.radio.state
+  PLAYGROUND_PILLS_ACTIVITY_ID: e2e.playground.components2024.pills.activity
+  PLAYGROUND_PILLS_STATE_ID: e2e.playground.components2024.pills.state
+  PLAYGROUND_SEARCH_INPUT_ID: e2e.playground.components2024.search.input
+  PLAYGROUND_SEARCH_STATE_ID: e2e.playground.components2024.search.state
+---
+- runFlow: android-ensure-home-ready.yaml
+
+- assertVisible:
+    id: ${HOME_SETTINGS_BUTTON_ID}
+
+- tapOn:
+    id: ${HOME_SETTINGS_BUTTON_ID}
+
+- scrollUntilVisible:
+    element:
+      id: ${SETTINGS_UI_PLAYGROUND_ID}
+    direction: DOWN
+    timeout: 20000
+
+- assertVisible:
+    id: ${SETTINGS_UI_PLAYGROUND_ID}
+
+- tapOn:
+    id: ${SETTINGS_UI_PLAYGROUND_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${PLAYGROUND_COMPONENTS2024_ENTRY_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${PLAYGROUND_COMPONENTS2024_ENTRY_ID}
+
+- tapOn:
+    id: ${PLAYGROUND_COMPONENTS2024_ENTRY_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${PLAYGROUND_COMPONENTS2024_SCREEN_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${PLAYGROUND_COMPONENTS2024_SCREEN_ID}
+
+- tapOn:
+    id: ${PLAYGROUND_BUTTON_PRIMARY_ID}
+
+- tapOn:
+    id: ${PLAYGROUND_BUTTON_PRIMARY_ID}
+
+- assertVisible: "Button presses: 2"
+
+- tapOn:
+    id: ${PLAYGROUND_BUTTON_LOADING_ID}
+
+- assertVisible: "Loading state: busy"
+
+- extendedWaitUntil:
+    visible: "Loading state: idle"
+    timeout: 5000
+
+- tapOn:
+    id: ${PLAYGROUND_CHECKBOX_TOGGLE_ID}
+
+- assertVisible: "Checkbox state: checked"
+
+- tapOn:
+    id: ${PLAYGROUND_RADIO_BETA_ID}
+
+- scrollUntilVisible:
+    element:
+      id: ${PLAYGROUND_RADIO_STATE_ID}
+    direction: DOWN
+    timeout: 10000
+
+- assertVisible: "Radio selection: beta"
+
+- scrollUntilVisible:
+    element:
+      id: ${PLAYGROUND_PILLS_ACTIVITY_ID}
+    direction: DOWN
+    timeout: 10000
+
+- tapOn:
+    id: ${PLAYGROUND_PILLS_ACTIVITY_ID}
+
+- scrollUntilVisible:
+    element:
+      id: ${PLAYGROUND_PILLS_STATE_ID}
+    direction: DOWN
+    timeout: 10000
+
+- assertVisible: "Pills selection: activity"
+
+- scrollUntilVisible:
+    element:
+      id: ${PLAYGROUND_SEARCH_INPUT_ID}
+    direction: DOWN
+    timeout: 10000
+
+- tapOn:
+    id: ${PLAYGROUND_SEARCH_INPUT_ID}
+
+- inputText: wallet
+
+- hideKeyboard:
+    optional: true
+
+- scrollUntilVisible:
+    element:
+      id: ${PLAYGROUND_SEARCH_STATE_ID}
+    direction: DOWN
+    timeout: 10000
+
+- assertVisible: "Search query: wallet"
+
+- tapOn: "Cancel"
+
+- assertVisible: "Search query: empty"

@@ -8,6 +8,7 @@ declare module '@env' {
     RABBY_MOBILE_KR_PWD: string;
     RABBY_MOBILE_BUILD_CHANNEL: string;
     RABBY_MOBILE_CODE: string;
+    RABBY_MOBILE_E2E_SILENT_LOGS?: string;
     DEV_CONSOLE_URL: string;
     DEV_SERVER_HOSTNAME?: string;
 
@@ -32,7 +33,42 @@ type RNViewProps = {
     typeof import('react-native').View
   >['style'];
   className?: string;
+  testID?: import('react').ComponentProps<
+    typeof import('react-native').View
+  >['testID'];
+  accessibilityLabel?: import('react').ComponentProps<
+    typeof import('react-native').View
+  >['accessibilityLabel'];
+  accessible?: import('react').ComponentProps<
+    typeof import('react-native').View
+  >['accessible'];
 };
+
+type RabbyDevToolsBridgeMethodName =
+  | 'ping'
+  | 'getHomePortfolioSnapshot'
+  | 'getSingleHomeSnapshot'
+  | 'openSendScreen'
+  | 'getSendScreenSnapshot'
+  | 'setSendAmount';
+
+interface RabbyDevToolsBridge {
+  listMethods(): RabbyDevToolsBridgeMethodName[];
+  hasMethod(name: string): boolean;
+  invoke(name: string, ...args: unknown[]): Promise<unknown>;
+  ping(): unknown;
+  getHomePortfolioSnapshot(): unknown;
+  getSingleHomeSnapshot(): unknown;
+  openSendScreen(input: unknown): unknown;
+  getSendScreenSnapshot(): unknown;
+  setSendAmount(amount: unknown): unknown;
+}
+
+declare var __RABBY_DEVTOOLS_BRIDGE__: RabbyDevToolsBridge | undefined;
+
+interface GlobalThis {
+  __RABBY_DEVTOOLS_BRIDGE__?: RabbyDevToolsBridge;
+}
 
 declare module '*.webview.injected.ts' {
   const content: string;

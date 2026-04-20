@@ -27,7 +27,8 @@
       "ConfrimAddress": "Confirma tu billetera",
       "CreateWallet": "Crear Wallet",
       "SetPassword": "Establecer contraseña",
-      "ChooseBackup": "Elige un método de respaldo"
+      "ChooseBackup": "Elige un método de respaldo",
+      "MoreImportMethods": "Más métodos de importación"
     }
   },
   "native": {
@@ -1207,7 +1208,10 @@
       "quickAddressTitle_one": "{{count}} Dirección",
       "quickAddressTitle_other": "{{count}} Direcciones",
       "add-address": "Añadir wallet",
-      "delete-checklist-1": "Entiendo que si elimino esta wallet, la clave privada y la frase semilla correspondientes serán eliminadas, y Rabby NO podrá recuperarlas."
+      "delete-checklist-1": "Entiendo que si elimino esta wallet, la clave privada y la frase semilla correspondientes serán eliminadas, y Rabby NO podrá recuperarlas.",
+      "delete-private-key-title": "Eliminar billetera y clave privada",
+      "delete-seed-phrase-title": "Eliminar billetera y frase semilla",
+      "delete-title": "Eliminar billetera"
     },
     "swap": {
       "chain": "Cadena",
@@ -1280,7 +1284,9 @@
         "createAddress": "Crear Wallet",
         "importAddress": "Importar Billetera",
         "selectAddMethod": "Seleccionar Método de Adición",
-        "seedPhraseOrPrivateKey": "Frase semilla o clave privada"
+        "seedPhraseOrPrivateKey": "Frase semilla o clave privada",
+        "restoreRabbyWallet": "Restaurar Rabby Wallet",
+        "moreOptions": "Más opciones"
       },
       "createNewAddress": {
         "Continue": "Continuar",
@@ -1322,7 +1328,11 @@
         "importTitle": "Importar Wallet",
         "watchOnlyTitle": "Importar billetera solo de visualización",
         "watch": "Cartera Solo de Observación",
-        "ImportCloud": "Importar desde {{cloud}}"
+        "ImportCloud": "Importar desde {{cloud}}",
+        "ImportFromExtensionOrCloud": "Importar desde extensión o {{cloud}}",
+        "moreWatchOnlyTitle": "Importar dirección de solo lectura",
+        "moreWatchOnly": "Dirección de solo lectura",
+        "moreSafeTitle": "Importar dirección Safe"
       },
       "multiAddressHome": {
         "services": "Servicios",
@@ -1435,7 +1445,8 @@
       "gasXUsd": "Gas: {{gasUsd}}",
       "formChangedTitle": "Formulario cambiado",
       "formChangedAmount": "La cantidad ha cambiado, posiblemente debido al llenado automático de la contraseña desde el teclado del sistema. Por favor, revisa y vuelve a ingresar la cantidad correcta.",
-      "best-subtitle": "Considerando el costo total (incluidas las tarifas de Gas) y la velocidad para ofrecer la mejor cotización"
+      "best-subtitle": "La mejor cotización se determina por una combinación del coste total estimado (incluidas las tarifas de Gas) y la velocidad de entrega.",
+      "swap-best-subtitle": "La mejor cotización se determina por el costo total estimado más bajo, incluyendo la tasa de cambio y las comisiones de gas."
     },
     "newAddress": {
       "Quick": "Rápido",
@@ -1541,7 +1552,8 @@
         "backupTips": "Asegúrate de que nadie más esté mirando tu pantalla cuando hagas una copia de seguridad de la seed phrase.",
         "backupRestoreUnlockDesc": "Utiliza la misma contraseña que estableciste para cifrar tus backups.",
         "backupUnlockDesc": "Mantén tu contraseña segura para restaurar copias de seguridad. Rabby Wallet no la almacena y no puede recuperarla.",
-        "maxAccountCount": "Máximo 50 direcciones cada vez"
+        "maxAccountCount": "Máximo 50 direcciones cada vez",
+        "addMoreWalletTitle": "Añadir más carteras\\ndesde esta frase"
       },
       "keystone": {
         "scan": {
@@ -1650,7 +1662,9 @@
         "title3": "Nunca lo compartas"
       },
       "importing": "Importando...",
-      "Done": "Hecho"
+      "Done": "Hecho",
+      "generatingWallets": "Generando carteras, por favor espera...",
+      "selectAddressesToAdd": "Selecciona las direcciones a añadir"
     },
     "switchChain": {
       "requestRabbyToSupport": "Solicitar a Rabby que ofrezca soporte",
@@ -3387,7 +3401,8 @@
     "newUserOnboarding": {
       "restoreWallet": {
         "title": "Restaura tu billetera Rabby",
-        "subtitle": "¡Bienvenido de nuevo! 🎉  \nElige un método para restaurar rápidamente tu wallet."
+        "subtitle": "¡Bienvenido de nuevo! 🎉  \nElige un método para restaurar rápidamente tu wallet.",
+        "subtitleInApp": "Elige una opción a continuación para importar rápidamente tus monederos desde la extensión de Rabby o iCloud."
       },
       "common": {
         "orYouCanCreateNewWallet": "O puedes <clickable>crear una nueva wallet</clickable>"

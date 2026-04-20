@@ -77,8 +77,15 @@ export type RootStackParamsList = {
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.SingleAddressStack]?: NavigatorScreenParams<SingleAddressNavigatorParamList>;
   [RootNames.SelectImportMethod]?: {};
-  [RootNames.ImportRabbyWallet]?: {};
-  [RootNames.ImportSecret]?: {};
+  [RootNames.ImportRabbyWallet]?: {
+    flow?: 'onboarding' | 'in_app';
+  };
+  [RootNames.ImportSecret]?: {
+    initialTab?: 'seedPhrase' | 'privateKey';
+    flow?: 'onboarding' | 'in_app';
+  };
+  [RootNames.SelectAddMethod]?: {};
+  [RootNames.MoreImportMethods]?: {};
   [RootNames.Backup]?: {
     address?: string;
     type?: string;
@@ -144,14 +151,13 @@ export type BrowserNavigatorParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
-  [RootNames.GetStartedScreen2024]?: {};
 };
 
 type TestKitsNavigatorParamsList = {
-  [RootNames.NewUserGetStarted2024]?: {};
   [RootNames.DevUIFontShowCase]?: {};
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
+  [RootNames.DevUIComponents2024ShowCase]?: {};
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
@@ -390,6 +396,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Lending]?: {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';
+    source?: string;
     account?: KeyringAccountWithAlias;
     dappId?: string;
   };

@@ -10,7 +10,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { TypeKeyringGroup } from '@/hooks/useWalletTypeData';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
-import { default as RcIconCreateSeed } from '@/assets2024/icons/common/IconAddCreate.svg';
+import AddAddressIcon from '@/assets2024/icons/common/add-address.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import IcRightArrow from '@/assets2024/icons/common/IcRightArrow.svg';
 import { useCallback, useMemo, useState } from 'react';
@@ -118,10 +118,10 @@ export const SeedPhraseGroup: React.FC<Props> = ({
               titleStyle={styles.buttonText}
               title={t('page.manageAddress.add-address')}
               icon={
-                <RcIconCreateSeed
-                  color={colors2024['blue-default']}
-                  width={20}
-                  height={20}
+                <AddAddressIcon
+                  color={colors2024['brand-default']}
+                  width={24}
+                  height={24}
                 />
               }
             />
@@ -228,14 +228,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   button: {
     backgroundColor: colors2024['brand-light-1'],
-    height: 42,
+    height: 48,
+    borderRadius: 12,
   },
   buttonText: {
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 22,
     textAlign: 'left',
   },
 }));

@@ -12,7 +12,7 @@ import {
   useAccounts,
 } from '@/hooks/account';
 import { useCreationWithShallowCompare } from '@/hooks/common/useMemozied';
-import balanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
@@ -136,8 +136,7 @@ export async function getShowReceiveAddressTip(options?: {
   if (!isAccountToShowReceiveTip(targetAccount)) return null;
 
   const evmBalance =
-    balanceStore.getState().balanceMap[targetAccount.address.toLowerCase()]
-      ?.evmBalance ??
+    addressBalanceStore.getAddressValue(targetAccount.address)?.evmBalance ??
     targetAccount.evmBalance ??
     0;
 

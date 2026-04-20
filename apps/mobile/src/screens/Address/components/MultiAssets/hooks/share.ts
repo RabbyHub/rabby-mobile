@@ -5,10 +5,9 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 
 import { useLoadAssets } from '@/screens/Search/useAssets';
 import { useAccountInfo } from '../hooks';
-import { useBalanceAccounts } from '@/hooks/useAccountsBalance';
 import { TabName } from '../TabsMultiAssets';
 import { useMyAccounts } from '@/hooks/account';
-import balanceStore from '@/store/balance';
+import addressBalanceStore, { balanceAccountsStore } from '@/store/balance';
 import { findAccountByPriority } from '@/utils/account';
 
 export const useIsFocusedCurrentTab = (tabName: TabName) => {
@@ -54,12 +53,16 @@ export const useCheckIsExpireAndUpdate = ({
 }) => {
   const initRef = useRef(false);
   const { myTop10Addresses } = useAccountInfo();
-  const { balanceAccounts } = useBalanceAccounts();
-  const batchGetTotalBalance = balanceStore(s => s.batchGetTotalBalance);
+  const balanceAccounts = balanceAccountsStore(s => s.balance);
   const { checkIsExpireAndUpdate } = useLoadAssets();
   const triggerUpdate = useCallback(
-    (force?: boolean) => batchGetTotalBalance(myTop10Addresses, force),
-    [batchGetTotalBalance, myTop10Addresses],
+    (force?: boolean) =>
+      addressBalanceStore.batchGetTotalBalance(myTop10Addresses, force, {
+        scene: 'AddressMultiAssets',
+        requester: 'useCheckIsExpireAndUpdate',
+        endpoint: 'openapi.getTotalBalanceV2',
+      }),
+    [myTop10Addresses],
   );
 
   useEffect(() => {

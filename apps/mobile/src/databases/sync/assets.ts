@@ -109,14 +109,15 @@ const updateSwapFailHistoryItem = (
 ) => {
   if (historyItem.status === 0) {
     const localSwapFailTransaction = swapFailHistoryList.find(
-      a => historyItem.txHash === a.maxGasTx.hash,
+      a => a.maxGasTx && historyItem.txHash === a.maxGasTx.hash,
     );
 
-    if (localSwapFailTransaction) {
+    if (localSwapFailTransaction?.maxGasTx) {
+      const { maxGasTx } = localSwapFailTransaction;
       const swapAction =
-        localSwapFailTransaction.maxGasTx.action?.actionData.swap ||
-        localSwapFailTransaction.maxGasTx.action?.actionData.wrapToken ||
-        localSwapFailTransaction.maxGasTx.action?.actionData.unWrapToken;
+        maxGasTx.action?.actionData.swap ||
+        maxGasTx.action?.actionData.wrapToken ||
+        maxGasTx.action?.actionData.unWrapToken;
 
       if (swapAction) {
         const sends = [
@@ -437,6 +438,8 @@ export async function syncBalance(
     taskFor: 'balance',
     batchSize: 100,
     concurrency: 1,
+    delayBetweenTasks: 0,
+    waitTaskDoneReturn: true,
   })
     .then(({ taskSignal, taskKey }) => {
       if (taskSignal.aborted) {

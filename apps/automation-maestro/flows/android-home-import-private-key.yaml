@@ -1,0 +1,101 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Android home import private key
+tags:
+  - android
+  - maestro
+  - home
+env:
+  HOME_ADD_ADDRESS_BUTTON_ID: e2e.home.add-address.button
+  HOME_ADD_ADDRESS_IMPORT_ID: e2e.home.add-address.import-address
+  IMPORT_METHOD_PRIVATE_KEY_ID: e2e.onboarding.import-method.private-key
+  PRIVATE_KEY_INPUT_ID: e2e.onboarding.private-key.input
+  PRIVATE_KEY_SUBMIT_ID: e2e.onboarding.private-key.submit
+  IMPORT_SUCCESS_PRIMARY_ID: e2e.onboarding.import-success.primary
+  SINGLE_HOME_BACK_ID: e2e.home.single-address.back
+---
+- runFlow: android-ensure-home-ready.yaml
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+
+- tapOn:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_ADD_ADDRESS_IMPORT_ID}
+    timeout: 10000
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_IMPORT_ID}
+
+- tapOn:
+    id: ${HOME_ADD_ADDRESS_IMPORT_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+
+- tapOn:
+    id: ${IMPORT_METHOD_PRIVATE_KEY_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${PRIVATE_KEY_INPUT_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${PRIVATE_KEY_INPUT_ID}
+
+- tapOn:
+    id: ${PRIVATE_KEY_INPUT_ID}
+
+- eraseText: 100
+
+- setClipboard: ${RABBY_MAESTRO_TEST_PRIVATE_KEY}
+
+- pasteText
+
+- hideKeyboard
+
+- runFlow: shared-dismiss-debug-warnings-overlay.yaml
+
+- assertVisible:
+    id: ${PRIVATE_KEY_SUBMIT_ID}
+
+- tapOn:
+    id: ${PRIVATE_KEY_SUBMIT_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${IMPORT_SUCCESS_PRIMARY_ID}
+    timeout: 20000
+
+- assertVisible:
+    id: ${IMPORT_SUCCESS_PRIMARY_ID}
+
+- tapOn:
+    id: ${IMPORT_SUCCESS_PRIMARY_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${SINGLE_HOME_BACK_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${SINGLE_HOME_BACK_ID}
+
+- tapOn:
+    id: ${SINGLE_HOME_BACK_ID}
+
+- extendedWaitUntil:
+    visible:
+      id: ${HOME_ADD_ADDRESS_BUTTON_ID}
+    timeout: 15000
+
+- assertVisible:
+    id: ${HOME_ADD_ADDRESS_BUTTON_ID}

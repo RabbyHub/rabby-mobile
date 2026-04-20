@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withSentryConfig } = require('@sentry/react-native/metro');
+const { withRozenite } = require('@rozenite/metro');
 const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
@@ -225,8 +226,22 @@ const config = {
   ],
 };
 
-module.exports = compose(
+const mergedConfig = compose(
   process.env.APP_ENV === 'hashing' ? withStableHash : withSentryConfig,
   wrapWithReanimatedMetroConfig,
   withPackageExportsDisabled,
 )(mergeConfig(defaultConfig, config));
+
+const rozeniteEnabled = process.env.WITH_ROZENITE === 'true';
+
+module.exports = rozeniteEnabled
+  ? withRozenite(mergedConfig, {
+      enabled: true,
+      include: [
+        '@rozenite/react-navigation-plugin',
+        '@rozenite/network-activity-plugin',
+        '@rozenite/storage-plugin',
+        '@rabby-wallet/rozenite-resource-flow-plugin',
+      ],
+    })
+  : mergedConfig;

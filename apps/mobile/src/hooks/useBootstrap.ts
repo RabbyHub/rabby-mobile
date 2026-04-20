@@ -133,13 +133,6 @@ export function useInitializeAppOnTop() {
     const onUnlock = async () => {
       apisSafe.syncAllGnosisNetworks();
       doInitializeApis();
-
-      // const accounts = await keyringService.getAllVisibleAccountsArray();
-      // if (!accounts?.length) {
-      //   replace(RootNames.StackGetStarted, {
-      //     screen: RootNames.GetStartedScreen2024,
-      //   });
-      // }
     };
     const sub = perfEvents.subscribe('USER_MANUALLY_UNLOCK', onUnlock);
 
@@ -285,7 +278,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
           console.debug(
             'useBootstrapApp:: splash screen hidden due to timeout',
           );
-        }, 1e3);
+        }, 3e3);
       });
   }, [rabbitCode]);
 }

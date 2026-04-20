@@ -7,6 +7,7 @@ const inputBuildChannel =
   process.env.buildchannel || process.env.RABBY_MOBILE_BUILD_CHANNEL;
 const resolvedBuildEnv = inputBuildEnv || 'production';
 const resolvedBuildChannel = inputBuildChannel || 'selfhost-reg';
+const shouldEnableRozenite = process.env.WITH_ROZENITE === 'true';
 const shouldStripConsole =
   inputBuildEnv === 'production' ||
   (!inputBuildEnv && ['appstore', 'selfhost'].includes(resolvedBuildChannel));
@@ -76,6 +77,7 @@ module.exports = {
         'process.env.RABBY_MOBILE_STRIP_CONSOLE': shouldStripConsole
           ? 'true'
           : 'false',
+        'process.env.WITH_ROZENITE': shouldEnableRozenite ? 'true' : 'false',
         'process.env.buildchannel': resolvedBuildChannel,
         'process.env.BUILD_GIT_INFO': JSON.stringify({
           BUILD_GIT_HASH: buildGitInfo.BUILD_GIT_HASH,

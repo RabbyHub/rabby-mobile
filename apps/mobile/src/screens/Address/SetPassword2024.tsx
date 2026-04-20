@@ -41,6 +41,8 @@ import { AddressNavigatorParamList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Text, TextInput } from '@/components/Typography';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -258,6 +260,7 @@ function MainListBlocks() {
 
   return (
     <TouchableWithoutFeedback
+      accessible={false}
       onPress={() => {
         Keyboard.dismiss();
         onTouchInputAway();
@@ -289,6 +292,7 @@ function MainListBlocks() {
                   inputMode: 'text',
                   returnKeyType: 'done',
                   placeholder: '',
+                  ...makeTestIDProps(E2E_ID.onboarding.setPasswordInput),
                   onChangeText(text) {
                     formik.setFieldValue('password', text, true);
                   },
@@ -322,6 +326,7 @@ function MainListBlocks() {
                   returnKeyType: 'done',
                   placeholder: '',
                   placeholderTextColor: colors2024['neutral-foot'],
+                  ...makeTestIDProps(E2E_ID.onboarding.setPasswordConfirmInput),
                   onChangeText(text) {
                     formik.setFieldValue('confirmPassword', text, true);
                   },
@@ -352,6 +357,12 @@ function MainListBlocks() {
               <View style={styles.valueView}>
                 <AppSwitch2024
                   value={formik.values.switch}
+                  {...makeTestIDProps(
+                    E2E_ID.onboarding.setPasswordBiometrics,
+                    formik.values.switch
+                      ? E2E_ID.onboarding.setPasswordBiometricsOn
+                      : E2E_ID.onboarding.setPasswordBiometricsOff,
+                  )}
                   onValueChange={async value => {
                     if (!couldSetupBiometrics) {
                       toast.show(
@@ -368,6 +379,7 @@ function MainListBlocks() {
             </View>
             <TouchableOpacity
               style={styles.agreementWrapper}
+              {...makeTestIDProps(E2E_ID.onboarding.setPasswordAgreement)}
               onPress={() => {
                 formik.setFieldValue('checked', !formik.values.checked, true);
               }}>
@@ -409,6 +421,7 @@ function MainListBlocks() {
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}
           onPress={handleContinue}
+          {...makeTestIDProps(E2E_ID.onboarding.setPasswordSubmit)}
         />
       </View>
     </TouchableWithoutFeedback>

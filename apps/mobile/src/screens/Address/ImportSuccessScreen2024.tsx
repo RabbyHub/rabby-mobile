@@ -37,7 +37,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import useBalanceStore from '@/store/balance';
+import addressBalanceStore from '@/store/balance';
 import { syncMultiAddressesHistory } from '@/databases/hooks/history';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import useTokenList from '@/store/tokens';
@@ -55,6 +55,8 @@ import {
   WalletSuccessCard,
   AddressItem,
 } from '@/components2024/WalletSuccessCard';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -203,7 +205,11 @@ export const ImportSuccessScreen2024 = () => {
       label: state?.brandName,
     });
 
-    useBalanceStore.getState().batchGetTotalBalance(addresses, true);
+    addressBalanceStore.batchGetTotalBalance(addresses, true, {
+      scene: 'ImportSuccess',
+      requester: 'ImportSuccessScreen2024',
+      endpoint: 'openapi.getTotalBalanceV2',
+    });
     if (
       state.type !== KEYRING_TYPE.WatchAddressKeyring &&
       state.type !== KEYRING_TYPE.GnosisKeyring
@@ -288,6 +294,7 @@ export const ImportSuccessScreen2024 = () => {
   };
 
   const handleBackupSeedPhrase = React.useCallback(() => {
+    saveFirstAddressAlias();
     Keyboard.dismiss();
     const firstAddr = importAddresses[0]?.address;
     navigation.replace(RootNames.Backup, {
@@ -295,7 +302,13 @@ export const ImportSuccessScreen2024 = () => {
       type: state?.type,
       brandName: state?.brandName,
     });
-  }, [navigation, importAddresses, state?.type, state?.brandName]);
+  }, [
+    navigation,
+    importAddresses,
+    state?.type,
+    state?.brandName,
+    saveFirstAddressAlias,
+  ]);
 
   const shouldShowBackupButton = !!state?.showBackup;
   const shouldShowImportMore =
@@ -368,6 +381,7 @@ export const ImportSuccessScreen2024 = () => {
               : t('global.Done')
           }
           onPress={handleDone}
+          {...makeTestIDProps(E2E_ID.onboarding.importSuccessPrimary)}
         />
 
         {shouldShowBackupButton && (

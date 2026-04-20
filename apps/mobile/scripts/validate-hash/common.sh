@@ -9,6 +9,18 @@ else
   TEE_TARGET="/dev/stderr"
 fi
 
+repo_yarn() {
+  local yarn_path
+  yarn_path=$(sed -n 's/^yarnPath:[[:space:]]*//p' "$REPO_ROOT/.yarnrc.yml" | head -n 1)
+
+  if [ -n "$yarn_path" ] && [ -f "$REPO_ROOT/$yarn_path" ]; then
+    node "$REPO_ROOT/$yarn_path" "$@"
+    return $?
+  fi
+
+  yarn "$@"
+}
+
 
 # 此函数将在脚本退出时被调用
 cleanup() {
@@ -133,8 +145,7 @@ setup_environment() {
 install_common_dependencies() {
   echo "⏳ 安装通用依赖 (yarn & bundle)"
   rm -rf node_modules
-  # 将输出重定向到 /dev/null，彻底丢弃
-  yarn install --immutable >/dev/null
+  repo_yarn install --immutable >/dev/null
   bundle install >/dev/null
   echo "✅ 通用依赖安装完毕"
 }

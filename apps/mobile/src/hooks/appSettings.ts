@@ -22,6 +22,7 @@ type ScreenshotSettings = {
   timeTipAboutSeedPhraseAndPrivateKey: 'copy' | 'pasted' | 'none';
   blockSubmitIfFormChangedOnAuth: boolean;
   toastOpenApiHttpErrorStatus: boolean;
+  debugSwapHistorySkipLocalLookup: boolean;
 };
 const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
   '@ExperimentalSettings',
@@ -38,6 +39,7 @@ const experimentalSettingsStore = zustandByMMKV<ScreenshotSettings>(
     timeTipAboutSeedPhraseAndPrivateKey: 'copy',
     blockSubmitIfFormChangedOnAuth: __DEV__,
     toastOpenApiHttpErrorStatus: false,
+    debugSwapHistorySkipLocalLookup: false,
   },
 );
 
@@ -45,7 +47,9 @@ export const storeApiExpSettingData = {
   set: setExpSettingData,
   get: getExpSettingData,
   getTimeTipAboutSeedPhraseAndPrivateKey: () => {
-    if (!__DEV__) return 'pasted';
+    if (!__DEV__) {
+      return 'pasted';
+    }
 
     return experimentalSettingsStore.getState()
       .timeTipAboutSeedPhraseAndPrivateKey;
@@ -420,5 +424,29 @@ export function useMockBatchRevoke() {
   return {
     mockBatchRevokeSetting,
     setMockBatchRevoke,
+  };
+}
+
+export function useDebugSwapHistorySkipLocalLookup() {
+  const debugSwapHistorySkipLocalLookup = experimentalSettingsStore(
+    s => s.debugSwapHistorySkipLocalLookup,
+  );
+
+  const toggleDebugSwapHistorySkipLocalLookup = useCallback(
+    (nextVal?: boolean) => {
+      setExpSettingData(prev => ({
+        ...prev,
+        debugSwapHistorySkipLocalLookup:
+          typeof nextVal === 'boolean'
+            ? nextVal
+            : !prev.debugSwapHistorySkipLocalLookup,
+      }));
+    },
+    [],
+  );
+
+  return {
+    debugSwapHistorySkipLocalLookup,
+    toggleDebugSwapHistorySkipLocalLookup,
   };
 }

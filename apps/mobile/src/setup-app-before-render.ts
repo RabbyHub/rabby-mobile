@@ -15,7 +15,6 @@ import {
 } from './hooks/useLock';
 import { startSyncDefaultRPCs } from './hooks/defaultRPCs';
 import { startSubscribePerpsOnAppState } from './hooks/perps/usePerpsStore';
-import { startSubscribeBalanceUpdated } from './hooks/useCurve';
 import { storeApiGasAccount } from './screens/GasAccount/hooks/atom';
 import { startSubscribeOnekeyDevices } from './core/apis/onekey';
 import { startSubscribeTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
@@ -40,13 +39,23 @@ import { trimNoLongerSupportsOnUnlock } from './components2024/NoLongerSupports/
 import { startCheckClearAction } from './utils/clipboard';
 import { startSubscribeOpenApiHttpErrorDebugToast } from './utils/openapiDebugToast';
 import tokenListStore from './store/tokens';
-import { startProcessScene24hBalanceEvents } from './hooks/useScene24hBalance';
-import { startProcessMultiCurveEvents } from './hooks/useMultiCurve';
+import {
+  balance24hStore,
+  hydrateCachedHome24hBalanceScene,
+  scene24hBalanceStore,
+} from './store/balance24h';
+import {
+  hydrateCachedHomeDayCurve,
+  initCurve24hStore,
+  startProcessMultiCurveEvents,
+} from './store/curve24h';
 import useProtocolListStore from './store/protocols';
 import { useAppChainStore } from './store/appchain';
-import balanceStore from './store/balance';
+import addressBalanceStore, {
+  ensureAccountBalanceSelectionLifecycle,
+  startProcessAccountBalanceEvents,
+} from './store/balance';
 import { apisAutoLock } from './core/apis';
-import { startProcessAccountBalanceEvents } from './hooks/useAccountsBalance';
 import { startWatchLayoutChange } from './hooks/useAppLayout';
 import { startCareAppNotificationPermissions } from './hooks/appNotification';
 import nftListStore from './store/nfts';
@@ -73,7 +82,6 @@ startSubscribeOnekeyDevices();
 startSubscribeTrezorConnectOnUrl();
 
 autoGoogleSignIfPreviousSignedOnBoot();
-startSubscribeBalanceUpdated();
 startSyncDefaultRPCs();
 runIIFEFunc(() => {
   storeApiGasAccount.fetchGasAccountInfo();
@@ -91,7 +99,8 @@ rateModalStartSyncNetworth();
 screenshotModalStartSyncNetworth();
 
 startProcessAccountBalanceEvents();
-startProcessScene24hBalanceEvents();
+scene24hBalanceStore.startProcessScene24hBalanceEvents();
+hydrateCachedHome24hBalanceScene();
 startProcessMultiCurveEvents();
 
 trimNoLongerSupportsOnUnlock();
@@ -102,25 +111,64 @@ startSubscribeOpenApiHttpErrorDebugToast();
 startCareAppNotificationPermissions();
 startSubscribeRemoteNotification();
 
-async function initStores() {
-  console.time('initStore');
+async function initPersistedStores() {
+  console.time('initPersistedStores');
   await useAppChainStore.getState().initStore();
-  await balanceStore.getState().initStore();
+  await Promise.all([
+    addressBalanceStore.initStore(),
+    balance24hStore.initStore(),
+    initCurve24hStore(),
+  ]);
+  hydrateCachedHome24hBalanceScene();
+  hydrateCachedHomeDayCurve();
+  console.timeEnd('initPersistedStores');
+}
+
+async function initUnlockedStores() {
+  console.time('initUnlockedStores');
   await tokenListStore.getState().initStore();
   await nftListStore.getState().initStore();
   await useProtocolListStore.getState().initStore();
-  console.timeEnd('initStore');
+  console.timeEnd('initUnlockedStores');
 }
 
-const initStoresStateRef = {
-  started: false,
+const initPersistedStoresStateRef = {
+  promise: null as Promise<void> | null,
+};
+export const startInitPersistedStores = async () => {
+  if (initPersistedStoresStateRef.promise) {
+    return initPersistedStoresStateRef.promise;
+  }
+  const promise = initPersistedStores();
+  initPersistedStoresStateRef.promise = promise;
+  await promise;
+};
+
+export async function startUnlockScreenBootstrapWarmups() {
+  const results = await Promise.allSettled([
+    startInitPersistedStores(),
+    ensureAccountBalanceSelectionLifecycle(),
+  ]);
+
+  results.forEach(result => {
+    if (result.status === 'rejected') {
+      console.error('startUnlockScreenBootstrapWarmups::error', result.reason);
+    }
+  });
+}
+
+const initUnlockedStoresStateRef = {
+  promise: null as Promise<void> | null,
 };
 const startInitStores = async () => {
-  if (initStoresStateRef.started) {
-    return;
+  await startInitPersistedStores();
+
+  if (initUnlockedStoresStateRef.promise) {
+    return initUnlockedStoresStateRef.promise;
   }
-  initStoresStateRef.started = true;
-  await initStores();
+  const promise = initUnlockedStores();
+  initUnlockedStoresStateRef.promise = promise;
+  await promise;
 };
 
 function startInitStoresOnUnlock() {

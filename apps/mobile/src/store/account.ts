@@ -3,6 +3,7 @@ import {
   fetchAllAccounts,
   KeyringAccountWithAlias,
 } from '@/core/apis/account';
+import { apiMnemonic } from '@/core/apis';
 import { getAllAccounts, removeAddress } from '@/core/apis/address';
 import { AccountInfoEntity } from '@/databases/entities/accountInfo';
 import { EntityAccountBase } from '@/databases/entities/base';
@@ -21,13 +22,15 @@ import { perfEvents } from '@/core/utils/perf';
 import { UpdaterOrPartials } from '@/core/utils/store';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KeyringAccount, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { updateHistoryTimeSingleAddress } from '@/hooks/historyTokenDict';
 import { checkAddedAccountsGasAccountIfNeeded } from '@/utils/autoLoginGasAccount';
 
 export interface AccountStoreState {
   accounts: KeyringAccountWithAlias[];
+  hasFetchedAccounts: boolean;
+  isFetchingAccounts: boolean;
   pinnedAddresses: IPinAddress[];
   currentAccount: KeyringAccountWithAlias | null;
   newlyAddedAccounts: Record<
@@ -43,14 +46,37 @@ class AccountStore extends BaseStore<AccountStoreState> {
 
   private readonly fetchAccountsInParallel =
     this.createAvoidParallelAsyncMethod(async () => {
-      const accounts = await fetchAllAccounts();
-      this.setAccounts(accounts);
-      return accounts;
+      this.setState(prev => {
+        if (prev.isFetchingAccounts) {
+          return prev;
+        }
+        return {
+          isFetchingAccounts: true,
+        };
+      });
+
+      try {
+        const accounts = await fetchAllAccounts();
+        this.setState({
+          accounts,
+          hasFetchedAccounts: true,
+          isFetchingAccounts: false,
+        });
+        return accounts;
+      } catch (error) {
+        this.setState({
+          hasFetchedAccounts: true,
+          isFetchingAccounts: false,
+        });
+        throw error;
+      }
     });
 
   constructor() {
     super({
       accounts: [],
+      hasFetchedAccounts: false,
+      isFetchingAccounts: false,
       pinnedAddresses: preferenceService.getPinAddresses(),
       currentAccount: null,
       newlyAddedAccounts: {},
@@ -195,13 +221,20 @@ class AccountStore extends BaseStore<AccountStoreState> {
       accountEvents.emit('ACCOUNT_REMOVED', {
         removedAccounts: [account],
       });
-      // Clean up backup reminder from preferenceService
-      const dbId = EntityAccountBase.buildDBId({
-        address: account.address,
-        type: account.type,
-        brandName: account.brandName,
-      });
-      preferenceService.clearNeedsBackupReminder(dbId);
+      // Clean up backup reminder from preferenceService using basePublicKey
+      // so all addresses from the same seed phrase are cleared together
+      if (account.type === KEYRING_TYPE.HdKeyring) {
+        try {
+          const info = await apiMnemonic.getMnemonicAddressInfo(
+            account.address,
+          );
+          if (info?.basePublicKey) {
+            preferenceService.clearNeedsBackupReminder(info.basePublicKey);
+          }
+        } catch {
+          // Silently ignore errors
+        }
+      }
 
       await AccountInfoEntity.deleteByAccount(account);
       await this.fetchNewlyAddedAccounts();
@@ -217,14 +250,26 @@ class AccountStore extends BaseStore<AccountStoreState> {
       'ACCOUNT_ADDED',
       async ({ accounts, needsBackupReminder }) => {
         // Store backup reminder in preferenceService (MMKV) for reliable persistence
+        // Use basePublicKey as the key so all addresses from the same seed phrase
+        // share the same backup reminder state
         if (needsBackupReminder) {
           for (const account of accounts) {
-            const dbId = EntityAccountBase.buildDBId({
-              address: account.address,
-              type: account.type,
-              brandName: account.brandName,
-            });
-            preferenceService.setNeedsBackupReminder(dbId, true);
+            // Only HD keyring accounts have seed phrases
+            if (account.type === KEYRING_TYPE.HdKeyring) {
+              try {
+                const info = await apiMnemonic.getMnemonicAddressInfo(
+                  account.address,
+                );
+                if (info?.basePublicKey) {
+                  preferenceService.setNeedsBackupReminder(
+                    info.basePublicKey,
+                    true,
+                  );
+                }
+              } catch {
+                // Silently ignore errors - account might not be from mnemonic
+              }
+            }
           }
         }
         checkAddedAccountsGasAccountIfNeeded(accounts).catch(error => {

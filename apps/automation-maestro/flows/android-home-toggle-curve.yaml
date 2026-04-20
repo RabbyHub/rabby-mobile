@@ -1,0 +1,15 @@
+appId: ${RABBY_MAESTRO_APP_ID}
+name: Android home toggle curve
+tags:
+  - android
+  - maestro
+  - home
+  - curve
+env:
+  HOME_PORTFOLIO_CURVE_TOGGLE_ID: e2e.home.portfolio.curve.toggle
+---
+- assertVisible:
+    id: ${HOME_PORTFOLIO_CURVE_TOGGLE_ID}
+
+- tapOn:
+    id: ${HOME_PORTFOLIO_CURVE_TOGGLE_ID}

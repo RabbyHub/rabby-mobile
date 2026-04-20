@@ -433,6 +433,11 @@ function markBalanceLoading(input: {
 function resetScreenState() {
   putScreenState({ ...DFLT_SEND_STATE });
   jotaiStore.set(sendTokenScreenChainTokenAtom, getDefaultChainToken());
+  jotaiStore.set(sendTokenFormValuesAtom, { ...DF_SEND_TOKEN_FORM });
+  jotaiStore.set(sendTokenExternalPatchAtom, prev => ({
+    nonce: prev.nonce,
+    patch: null,
+  }));
 }
 
 export function useSendTokenScreenState() {
@@ -441,6 +446,10 @@ export function useSendTokenScreenState() {
   return {
     sendTokenScreenState,
   };
+}
+
+export function getSendTokenScreenState() {
+  return jotaiStore.get(sendTokenScreenStateAtom);
 }
 
 export function makeSendTokenValidationSchema(options: {
@@ -511,6 +520,25 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
   messageDataForSendToEoa: '',
   messageDataForContractCall: '',
 };
+const sendTokenFormValuesAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
+const sendTokenExternalPatchAtom = atom<{
+  nonce: number;
+  patch: Partial<FormSendToken> | null;
+}>({
+  nonce: 0,
+  patch: null,
+});
+
+export function getSendTokenFormValues() {
+  return jotaiStore.get(sendTokenFormValuesAtom);
+}
+
+export function requestSendTokenFormPatch(patch: Partial<FormSendToken>) {
+  jotaiStore.set(sendTokenExternalPatchAtom, prev => ({
+    nonce: prev.nonce + 1,
+    patch: { ...patch },
+  }));
+}
 
 const getTokenRealtime = makeSWRKeyAsyncFunc(
   async (chainId: string, currentAddress: string, tokenId: string) => {
@@ -576,6 +604,12 @@ export function useSendTokenForm({
     ...DF_SEND_TOKEN_FORM,
     to: toAddress || '',
   });
+  const externalFormPatch = useAtomValue(sendTokenExternalPatchAtom);
+  const handledExternalFormPatchNonceRef = useRef(0);
+
+  useEffect(() => {
+    jotaiStore.set(sendTokenFormValuesAtom, formValues);
+  }, [formValues]);
 
   const { addressType } = useCheckAddressType(
     formValues.to,
@@ -894,6 +928,33 @@ export function useSendTokenForm({
       t,
     ],
   );
+
+  useEffect(() => {
+    if (!externalFormPatch.patch || !externalFormPatch.nonce) {
+      return;
+    }
+    if (externalFormPatch.nonce === handledExternalFormPatchNonceRef.current) {
+      return;
+    }
+
+    handledExternalFormPatchNonceRef.current = externalFormPatch.nonce;
+
+    const nextPatch: Partial<FormSendToken> = {
+      ...externalFormPatch.patch,
+      ...(externalFormPatch.patch.amount !== undefined
+        ? {
+            amount: formatSpeicalAmount(externalFormPatch.patch.amount),
+          }
+        : {}),
+    };
+
+    handleFormValuesChange(nextPatch, {
+      currentPartials: {
+        ...formik.values,
+        ...nextPatch,
+      },
+    });
+  }, [externalFormPatch, formik.values, handleFormValuesChange]);
 
   const directSignBtnRef = useRef<DirectSignBtnMethods>(null);
   const formValuesRef = useRef(
@@ -1928,7 +1989,7 @@ export function useSendTokenForm({
       canSubmit:
         isValidAddress(formValues.to) &&
         !screenState.balanceError &&
-        new BigNumber(formValues.amount).gte(0) &&
+        new BigNumber(formValues.amount || 0).gt(0) &&
         !screenState.isLoading,
 
       canDirectSign:

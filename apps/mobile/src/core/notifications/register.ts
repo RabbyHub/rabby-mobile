@@ -17,6 +17,7 @@ import { zCreate, zMutative } from '../utils/reexports';
 import { notificationEvents, parseRemoteData } from './data';
 import { getTopMyAccountsOnNotifications } from './utils';
 import { makeAvoidParallelAsyncFunc } from '../utils/concurrency';
+import { APP_MMKV_KEYS } from '../storage/mmkvConstants';
 
 const iosPush = {
   token: '',
@@ -33,7 +34,7 @@ const iosPush = {
 //   })
 // )
 
-const notificationStore = zMutativeByMMKV('notification', {
+const notificationStore = zMutativeByMMKV(APP_MMKV_KEYS.NOTIFICATION, {
   pushToken: '',
   // deviceId: ensureDeviceUUID(),
 });

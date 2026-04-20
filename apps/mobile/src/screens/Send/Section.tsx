@@ -26,6 +26,8 @@ import { BubbleWithText } from '@/screens/Swap/components/Slider';
 import { tokenAmountBn } from '../Swap/utils';
 import BigNumber from 'bignumber.js';
 import usePrevious from 'react-use/lib/usePrevious';
+import { E2E_ID } from '@/constant/e2e';
+import { makeTestIDProps } from '@/utils/makeTestIDProps';
 import { Text, TextInput } from '@/components/Typography';
 
 export function BalanceSection({
@@ -204,6 +206,9 @@ export function BalanceSection({
               new BigNumber(currentTokenBalance),
             )}
             inlinePrize
+            amountInputProps={makeTestIDProps(E2E_ID.send.amountInput)}
+            maxButtonProps={makeTestIDProps(E2E_ID.send.amountMax)}
+            tokenSelectProps={makeTestIDProps(E2E_ID.send.tokenSelector)}
           />
         )}
       </View>

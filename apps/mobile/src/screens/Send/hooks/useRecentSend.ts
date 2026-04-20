@@ -16,6 +16,7 @@ import { sortBy, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Hex, isValidHexAddress } from '@metamask/utils';
+import { jotaiStore } from '@/core/utils/reexports';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -223,6 +224,10 @@ export const fetchLocalSendPendingTx = (address: string) => {
 };
 
 const localPendingTxDataAtom = atom<SendTxHistoryItem | null>(null);
+
+export function getRecentSendPendingTxData() {
+  return jotaiStore.get(localPendingTxDataAtom);
+}
 
 export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
