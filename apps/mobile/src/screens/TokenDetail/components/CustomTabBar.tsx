@@ -1,6 +1,6 @@
 import { Indicator } from '@/components2024/CustomTabs/CustomIndicator';
 import { useCallback, useState } from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import {
   MaterialTabBar,
   MaterialTabBarProps,
@@ -8,6 +8,7 @@ import {
 } from 'react-native-collapsible-tab-view';
 import { ItemLayout } from 'react-native-collapsible-tab-view/lib/typescript/src/MaterialTabBar/types';
 import { AnimatedStyle } from 'react-native-reanimated';
+import { Text } from '@/components/Typography';
 
 const disableInnerIndicator = {
   height: 0,
@@ -53,6 +54,14 @@ export const DynamicCustomMaterialTabBar = (
   );
   const renderTabItem = useCallback(
     (_props: any) => (
+      // <TouchableOpacity
+      //   {..._props}
+      //   onLayout={event => handleTabItemLayout(_props.index, event)}
+      //   activeOpacity={1}
+      //   style={[_props.style, props.getTabItemStyle?.(_props.index)]}>
+      //   {_props.children}
+      //   <Text>{_props?.name}</Text>
+      // </TouchableOpacity>
       <MaterialTabItem
         {..._props}
         onLayout={event => handleTabItemLayout(_props.index, event)}

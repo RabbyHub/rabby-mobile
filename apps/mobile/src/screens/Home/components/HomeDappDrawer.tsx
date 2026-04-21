@@ -140,26 +140,20 @@ export const HomeDappDrawer: React.FC<{
     triggerImpact();
   }, [scrollableStatus, handleScrollBack]);
   const drawerScrollOffsetY = useSharedValue(0);
-  const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
 
-  const animatedProps = useAnimatedProps(() => ({
-    decelerationRate:
-      SCROLLABLE_DECELERATION_RATE_MAPPER[scrollableStatus.value],
-  }));
+  // const scrollHandler = useAnimatedScrollHandler({
+  //   onScroll: (event, context) => {
+  //     'worklet';
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event, context) => {
-      'worklet';
-
-      if (scrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
-        const lockPosition = 0;
-        scrollTo(scrollableRef, 0, lockPosition, false);
-        drawerScrollOffsetY.value = lockPosition;
-        return;
-      }
-      drawerScrollOffsetY.value = event.contentOffset.y;
-    },
-  });
+  //     if (scrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
+  //       const lockPosition = 0;
+  //       scrollTo(scrollableRef, 0, lockPosition, false);
+  //       drawerScrollOffsetY.value = lockPosition;
+  //       return;
+  //     }
+  //     drawerScrollOffsetY.value = event.contentOffset.y;
+  //   },
+  // });
 
   const drawerGesture = useMemo(
     () =>
@@ -314,7 +308,11 @@ export const HomeDappDrawer: React.FC<{
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <HomeDappDrawerContent />
+                <HomeDappDrawerContent
+                  drawerScrollableGesture={drawerScrollableGesture}
+                  drawerScrollOffsetY={drawerScrollOffsetY}
+                  scrollableStatus={scrollableStatus}
+                />
                 {/* <GestureDetector gesture={drawerScrollableGesture}>
                   <AnimatedFlatList
                     data={list}

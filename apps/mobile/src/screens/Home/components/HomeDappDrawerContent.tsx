@@ -32,10 +32,27 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
 import { DappInfo } from '@/core/services/dappService';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  useAnimatedProps,
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  scrollTo,
+} from 'react-native-reanimated';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { DappInfoPopup } from './HomeDappDrawerPopup';
+import {
+  GestureDetector,
+  NativeGesture,
+  PanGesture,
+} from 'react-native-gesture-handler';
+import {
+  getPullThreshold,
+  SCROLLABLE_DECELERATION_RATE_MAPPER,
+  SCROLLABLE_STATUS,
+  homeDrawerAnimateMutable,
+  getScrollContainerPb,
+} from '../hooks/useHomeDrawerAnimate';
 const AnimatedFlatList =
   Animated.createAnimatedComponent<FlatListProps<DappInfo>>(RNFlatList);
 
@@ -82,7 +99,11 @@ const VALID_MARKET_TABS = new Set<MarketTabKey>([
   ...MARKET_TABS.map(tab => tab.id),
 ]);
 
-export const HomeDappDrawerContent: React.FC = () => {
+export const HomeDappDrawerContent: React.FC<{
+  drawerScrollableGesture: NativeGesture;
+  drawerScrollOffsetY: Animated.SharedValue<number>;
+  scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
+}> = ({ drawerScrollableGesture, drawerScrollOffsetY, scrollableStatus }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { safeOffHeader } = useSafeSizes();
 
@@ -236,7 +257,7 @@ export const HomeDappDrawerContent: React.FC = () => {
         </TouchableOpacity>
       </View>
       <Tabs.Container
-        renderTabBar={renderTabBar}
+        // renderTabBar={renderTabBar}
         tabBarHeight={TAB_BAR_HEIGHT}
         lazy
         containerStyle={styles.container}
@@ -248,7 +269,11 @@ export const HomeDappDrawerContent: React.FC = () => {
         }}>
         <Tabs.Tab label={renderWatchlistLabel} name="watchlist">
           <View style={styles.content}>
-            <DappList />
+            <DappList
+              drawerScrollableGesture={drawerScrollableGesture}
+              drawerScrollOffsetY={drawerScrollOffsetY}
+              scrollableStatus={scrollableStatus}
+            />
           </View>
           {/* <Text>Watchlist Content</Text> */}
           {/* <WatchlistContent
@@ -274,7 +299,11 @@ export const HomeDappDrawerContent: React.FC = () => {
                 label={renderCategoryLabel}
                 name={category.id}>
                 <View style={styles.content}>
-                  <DappList />
+                  <DappList
+                    drawerScrollableGesture={drawerScrollableGesture}
+                    drawerScrollOffsetY={drawerScrollOffsetY}
+                    scrollableStatus={scrollableStatus}
+                  />
                   {/* <Text>hello</Text> */}
                   {/* <MarketCategoryContent
                     categoryId={category.id}
@@ -297,87 +326,114 @@ export const HomeDappDrawerContent: React.FC = () => {
   );
 };
 
-const DappList: React.FC = () => {
+const DappList: React.FC<{
+  drawerScrollableGesture: NativeGesture;
+  drawerScrollOffsetY: Animated.SharedValue<number>;
+  scrollableStatus: Animated.SharedValue<SCROLLABLE_STATUS>;
+}> = ({ drawerScrollableGesture, drawerScrollOffsetY, scrollableStatus }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { bookmarkList, removeBookmark } = useBrowserBookmark();
   const list = bookmarkList;
 
+  const scrollableRef = useAnimatedRef<Animated.FlatList<DappInfo>>();
+
+  const animatedProps = useAnimatedProps(() => ({
+    decelerationRate:
+      SCROLLABLE_DECELERATION_RATE_MAPPER[scrollableStatus.value],
+  }));
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, context) => {
+      'worklet';
+
+      if (scrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
+        const lockPosition = 0;
+        scrollTo(scrollableRef, 0, lockPosition, false);
+        drawerScrollOffsetY.value = lockPosition;
+        return;
+      }
+      drawerScrollOffsetY.value = event.contentOffset.y;
+    },
+  });
+
   return (
-    <AnimatedFlatList
-      data={list}
-      style={[styles.list]}
-      keyExtractor={item => item.url || item.origin}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={[
-        { flexGrow: 1 },
-        list.length ? null : { justifyContent: 'center' },
-      ]}
-      // ref={scrollableRef}
-      // onScroll={scrollHandler}
-      scrollEventThrottle={16}
-      // animatedProps={animatedProps}
-      renderItem={({ item }) => {
-        return (
-          <View style={styles.listItem}>
-            <TouchableOpacity>
-              <View style={styles.dappCard}>
-                <DappIcon
-                  source={
-                    item?.icon
-                      ? {
-                          uri: item.icon,
-                        }
-                      : undefined
-                  }
-                  origin={item.origin}
-                  style={styles.dappIcon}
-                />
-                <View style={styles.dappContent}>
-                  <Text style={[styles.dappTitle]} numberOfLines={1}>
-                    {item?.info?.name ||
-                      item.name ||
-                      item.origin.split('://')[1] ||
-                      item.origin}
-                  </Text>
-                  <Text style={styles.dappDesc} numberOfLines={1}>
-                    {item.info?.description || ''}
-                  </Text>
+    <GestureDetector gesture={drawerScrollableGesture}>
+      <AnimatedFlatList
+        data={list}
+        style={[styles.list]}
+        keyExtractor={item => item.url || item.origin}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          { flexGrow: 1 },
+          list.length ? null : { justifyContent: 'center' },
+        ]}
+        ref={scrollableRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        animatedProps={animatedProps}
+        renderItem={({ item }) => {
+          return (
+            <View style={styles.listItem}>
+              <TouchableOpacity>
+                <View style={styles.dappCard}>
+                  <DappIcon
+                    source={
+                      item?.icon
+                        ? {
+                            uri: item.icon,
+                          }
+                        : undefined
+                    }
+                    origin={item.origin}
+                    style={styles.dappIcon}
+                  />
+                  <View style={styles.dappContent}>
+                    <Text style={[styles.dappTitle]} numberOfLines={1}>
+                      {item?.info?.name ||
+                        item.name ||
+                        item.origin.split('://')[1] ||
+                        item.origin}
+                    </Text>
+                    <Text style={styles.dappDesc} numberOfLines={1}>
+                      {item.info?.description || ''}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-        );
-      }}
-      // ListEmptyComponent={
-      //   <View style={styles.empty}>
-      //     {isLight ? (
-      //       <RcIconEmpty style={styles.emptyIcon} />
-      //     ) : (
-      //       <RcIconEmptyDark style={styles.emptyIcon} />
-      //     )}
-      //     <Text style={styles.emptyText}>
-      //       {IS_ANDROID
-      //         ? t('page.home.DappDrawer.emptyAndroid')
-      //         : t('page.home.DappDrawer.empty')}
-      //     </Text>
-      //     <Button
-      //       title={t('page.home.DappDrawer.search')}
-      //       buttonStyle={styles.searchButton}
-      //       titleStyle={styles.searchButtonText}
-      //       onPress={() => {
-      //         setPartialBrowserState({
-      //           isShowBrowser: true,
-      //           isShowSearch: true,
-      //           searchText: '',
-      //           searchTabId: '',
-      //           trigger: 'home',
-      //         });
-      //       }}
-      //     />
-      //   </View>
-      // }
-    />
+              </TouchableOpacity>
+            </View>
+          );
+        }}
+        // ListEmptyComponent={
+        //   <View style={styles.empty}>
+        //     {isLight ? (
+        //       <RcIconEmpty style={styles.emptyIcon} />
+        //     ) : (
+        //       <RcIconEmptyDark style={styles.emptyIcon} />
+        //     )}
+        //     <Text style={styles.emptyText}>
+        //       {IS_ANDROID
+        //         ? t('page.home.DappDrawer.emptyAndroid')
+        //         : t('page.home.DappDrawer.empty')}
+        //     </Text>
+        //     <Button
+        //       title={t('page.home.DappDrawer.search')}
+        //       buttonStyle={styles.searchButton}
+        //       titleStyle={styles.searchButtonText}
+        //       onPress={() => {
+        //         setPartialBrowserState({
+        //           isShowBrowser: true,
+        //           isShowSearch: true,
+        //           searchText: '',
+        //           searchTabId: '',
+        //           trigger: 'home',
+        //         });
+        //       }}
+        //     />
+        //   </View>
+        // }
+      />
+    </GestureDetector>
   );
 };
 
