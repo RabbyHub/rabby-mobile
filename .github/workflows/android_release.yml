@@ -111,12 +111,8 @@ jobs:
 
       - name: Install & Build app
         run: |
-          yarn --version;
-          # yarn setup && yarn postinstall;
-          yarn install --immutable;
-          yarn postinstall;
           cd apps/mobile;
-          yarn postinstall;
+          RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
           bundle install;
 
           [ -z $buildchannel ] && export buildchannel=appstore;
