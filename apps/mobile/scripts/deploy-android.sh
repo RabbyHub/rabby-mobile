@@ -33,7 +33,7 @@ refresh_android_version_metadata() {
 }
 
 prepare_appstore_android_version_code() {
-  local package_name latest_version_code target_version_code bump_guard
+  local package_name latest_version_code target_version_code
 
   if ! resolve_google_play_service_account_json >/dev/null 2>&1; then
     echo "[deploy-android] skip Google Play versionCode auto-bump because no service account credentials are available."
@@ -59,17 +59,11 @@ prepare_appstore_android_version_code() {
   target_version_code=$((latest_version_code + 1))
   echo "[deploy-android] local Android versionCode $android_version_code is not ahead of Google Play latest $latest_version_code; bumping local build number to at least $target_version_code before appstore build."
 
-  bump_guard=0
-  while [ "$android_version_code" -lt "$target_version_code" ]; do
-    bump_guard=$((bump_guard + 1))
-    if [ "$bump_guard" -gt 20 ]; then
-      echo "[deploy-android] exceeded safe limit while bumping Android versionCode toward $target_version_code" >&2
-      return 1
-    fi
-
-    yarn android:buildversion || return 1
-    refresh_android_version_metadata
-  done
+  ./node_modules/.bin/react-native-version \
+    --never-amend \
+    --target android \
+    --set-build "$target_version_code" || return 1
+  refresh_android_version_metadata
 
   echo "[deploy-android] Android versionCode prepared for appstore build: $android_version_code"
 }
