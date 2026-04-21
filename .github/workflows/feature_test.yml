@@ -215,24 +215,7 @@ jobs:
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
-          nvm use;
-          yarn install --immutable;
-          if ! bundle check >/dev/null 2>&1; then
-            bundle install;
-          else
-            echo "Ruby bundle already satisfied";
-          fi
-
-          if [ -n "$INPUT_NEW_VERSION_NAME" ]; then
-            echo "Apply requested app version: $INPUT_NEW_VERSION_NAME";
-            node --eval "
-              const fs = require('fs');
-              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-              pkg.version = process.env.INPUT_NEW_VERSION_NAME;
-              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-            ";
-            yarn syncrnversion;
-          fi
+          bash ./scripts/ci/prepare-mobile-build.sh;
 
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
