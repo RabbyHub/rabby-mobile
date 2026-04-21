@@ -1,10 +1,13 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
+. $script_dir/libs/node-runtime.sh
 . $script_dir/turbo-build/_fns.sh --source-only
+
+ensure_mobile_node_runtime
 
 export buildchannel="appstore";
 export BUILD_TARGET_PLATFORM="ios";
