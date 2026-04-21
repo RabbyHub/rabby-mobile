@@ -119,6 +119,7 @@ jobs:
       - name: Install dependencies && Build app
         run: |
           cd apps/mobile;
+          nvm use;
           yarn install --immutable;
 
           if [ -n "$INPUT_NEW_VERSION_NAME" ]; then
