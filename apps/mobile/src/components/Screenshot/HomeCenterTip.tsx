@@ -24,7 +24,7 @@ export function TipFeedbackByScreenshot({ style }: RNViewProps) {
   return (
     <View style={[styles.container, style]}>
       <RcBgBug style={styles.iconBgBug} />
-      <View style={[styles.line, { marginBottom: 4 }]}>
+      <View style={styles.line}>
         <Text style={styles.title}>
           {IS_IOS ? (
             <Text style={styles.textBulb}>💡</Text>
@@ -55,9 +55,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginHorizontal: ScreenLayouts.homeHorizontalPadding,
 
       position: 'relative',
-      height: 76,
-      // paddingVertical: 16,
-      paddingHorizontal: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
       borderRadius: 12,
 
       flexDirection: 'column',
@@ -102,16 +101,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
     title: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: 700,
-      // lineHeight: 22,
+      lineHeight: 20,
       color: colors2024['neutral-title-1'],
     },
 
     description: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
-      fontWeight: 400,
+      fontWeight: 500,
       lineHeight: 18,
       color: colors2024['neutral-foot'],
     },

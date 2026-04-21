@@ -5,22 +5,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Dimensions,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Dimensions, Platform, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  createGetStyles2024,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 
 import addressBalanceStore from '@/store/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -45,7 +35,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { apiGlobalModal } from '@/components2024/GlobalBottomSheetModal/apiGlobalModal';
-import { RNGHTouchableOpacity } from '@/components/customized/reexports';
 import { computeBalanceChange } from '@/core/apis/balance';
 import { balance24hStore } from '@/store/balance24h';
 import { useHomePortfolioStore } from '../hooks/useHomePortfolioSummary';
@@ -352,13 +341,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginTop: 0,
       paddingVertical: 0,
       width: '100%',
-      // ...makeDebugBorder('orange'),
     },
     homecardWrapper: {
       position: 'relative',
       paddingTop: 0,
       backgroundColor: 'transparent',
-      // ...makeDebugBorder('yellow'),
       paddingVertical: 0,
       paddingHorizontal: SIZES.cardLayoutPaddingHorizontal,
       minHeight: SIZES.homecardMinHeight,
@@ -366,7 +353,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       justifyContent: 'center',
       width: '100%',
-      // ...makeDebugBorder('blue'),
     },
     localWebViewWrapper: {
       position: 'absolute',
@@ -375,7 +361,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       zIndex: IS_IOS ? 1 : -1,
-      // paddingVertical: 0,
       marginHorizontal:
         isLight && IS_IOS ? 0 : SIZES.cardLayoutPaddingHorizontal,
       borderRadius: SIZES.cardContentRadius,
@@ -403,11 +388,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderWidth: isLight ? curveCardBorderWidth : 0,
       borderColor: 'transparent',
       borderRadius: SIZES.cardContentRadius,
-      // ...makeDevOnlyStyle({
-      //   opacity: 0,
-      // }),
       minWidth: cardMinW,
-      // ...makeDebugBorder('yellow'),
       width: '100%',
       alignItems: 'center',
       position: 'relative',
@@ -473,15 +454,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
 
     multiChart: {
-      paddingTop: 24,
-      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingHorizontal: 16,
       width: '100%',
       minWidth: cardMinW,
-      // ...makeDebugBorder('purple'),
     },
 
     multiChartNoAccountsFollow: {
-      marginBottom: 24,
+      marginBottom: 20,
     },
 
     accountList: {

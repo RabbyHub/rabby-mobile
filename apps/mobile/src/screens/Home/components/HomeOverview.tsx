@@ -11,26 +11,17 @@ import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
 import RcIconMarketCC from '@/assets2024/icons/home/IconMarketCC.svg';
 
-import RcIconAsterCC from '@/assets2024/icons/home/IconAsterCC.svg';
-import RcIconLighterCC from '@/assets2024/icons/home/IconLighterCC.svg';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
+import { useAppLanguage } from '@/hooks/lang';
 import {
   createGetStyles2024,
   makeDebugBorder,
   makeDevOnlyStyle,
 } from '@/utils/styles';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
-  ActivityIndicator,
-  AppState,
   Dimensions,
   ScrollView,
   StyleSheet,
@@ -44,7 +35,6 @@ import Animated, {
   clamp,
   Extrapolate,
   interpolate,
-  makeMutable,
   runOnJS,
   runOnUI,
   scrollTo,
@@ -52,7 +42,6 @@ import Animated, {
   useAnimatedRef,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -526,22 +515,26 @@ const getStyle = createGetStyles2024(
       minWidth: 0,
       borderRadius: 16,
       flexShrink: 0,
-      padding: 16,
+      padding: 20,
+      paddingBottom: 16,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
       // height: 86,
-      gap: 8,
+      gap: 12,
       position: 'relative',
       // ...makeDebugBorder(),
     },
     gridText: {
       color: colors2024['neutral-title-1'],
-      fontWeight: '500',
+      fontWeight: '700',
       fontSize: 16,
       lineHeight: 20,
       textAlign: 'left',
       fontFamily: 'SF Pro Rounded',
+    },
+    gridTextZh: {
+      fontSize: 14,
     },
     titleWithNewTagRow: {
       flexDirection: 'row',
@@ -661,7 +654,6 @@ export const HomeOverview = React.memo(() => {
           key: MultiHomeFeatTitle.Lending,
           title: t('page.home.services.lending'),
           icon: RcIconLending,
-          color: colors2024['brand-default-icon'],
         },
         {
           key: MultiHomeFeatTitle.Points,
@@ -710,14 +702,7 @@ export const HomeOverview = React.memo(() => {
         isSuccess?: boolean;
         showGiftIcon?: boolean;
       }[],
-    [
-      t,
-      colors2024,
-      historyCount?.fail,
-      historyCount?.success,
-      alertInfo.total,
-      isEligible,
-    ],
+    [t, historyCount?.fail, historyCount?.success, alertInfo.total, isEligible],
   );
 
   useFetchCexInfo();
@@ -1107,9 +1092,11 @@ const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
   onPress,
   renderBadge,
 }) => {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
+  const { currentLanguage } = useAppLanguage();
+  const isZhLang = currentLanguage === 'zh-CN' || currentLanguage === 'zh-Hant';
   const { shouldShowNewTag, markVisited } = useHomeFeatureNewTag(el.key);
 
   const handlePress = useCallback(() => {
@@ -1133,13 +1120,19 @@ const HomeMenuItem: React.FC<HomeMenuItemProps> = ({
           <el.icon
             width={28}
             height={28}
-            color={el.color || colors2024['brand-default-icon']}
+            color={
+              el.color ||
+              (isLight ? colors2024['brand-default-icon'] : '#7084FF')
+            }
           />
         </View>
         <View style={styles.rightBadgeWrapper}>{renderBadge(el)}</View>
       </View>
       <View style={styles.titleWithNewTagRow}>
-        <Text style={styles.gridText} numberOfLines={1} ellipsizeMode="tail">
+        <Text
+          style={[styles.gridText, isZhLang && styles.gridTextZh]}
+          numberOfLines={1}
+          ellipsizeMode="tail">
           {el.title}
         </Text>
         {shouldShowNewTag ? (
