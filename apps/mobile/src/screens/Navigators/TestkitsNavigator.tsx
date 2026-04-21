@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
+import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { registerAppScreen } from '@/perfs/apis';
@@ -78,6 +79,12 @@ const DevDataSQLite = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevDataSQLite'),
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
+const DevDataKeychain = registerAppScreen<
+  typeof import('@/screens/Testkits/DevDataKeychain').default
+>({
+  loader: () => import('@/screens/Testkits/DevDataKeychain'),
+  name: TESTKITS_PRELOAD_SCREENS.DevDataKeychain,
+});
 const DevSwitches = !isNonPublicProductionEnv
   ? registerAppScreen<typeof import('@/screens/Testkits/DevSwitches').default>({
       loader: () => import('@/screens/Testkits/DevSwitches'),
@@ -111,7 +118,7 @@ const Stack = createNativeStackNavigator();
 // );
 
 export function TestkitsNavigator() {
-  // const { mergeScreenOptions } = useStackScreenConfig();
+  const { mergeScreenOptions2024 } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== TestkitsNavigator Render =========');
 
@@ -165,6 +172,17 @@ export function TestkitsNavigator() {
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
+      <Stack.Screen
+        name={RootNames.DevDataKeychain}
+        component={DevDataKeychain}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'Keychain Data',
+            title: 'Keychain Data',
+          },
+        ])}
+      />
 
       <Stack.Screen
         name={RootNames.DevSwitches}

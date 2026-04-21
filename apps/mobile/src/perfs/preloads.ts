@@ -25,6 +25,7 @@ export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.DevUIPermissions]: 'DevUIPermissions',
   [RootNames.DevUIBuiltInPages]: 'DevUIBuiltInPages',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
+  [RootNames.DevDataKeychain]: 'DevDataKeychain',
   [RootNames.DevSwitches]: 'DevSwitches',
   [RootNames.DevPerf]: 'DevPerf',
   [RootNames.DebugLogViewer]: 'DebugLogViewer',
