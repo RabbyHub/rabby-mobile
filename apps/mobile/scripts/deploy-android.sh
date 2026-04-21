@@ -148,6 +148,7 @@ done
 
 echo "[deploy-android] start build..."
 if [ $buildchannel == "appstore" ]; then
+  google_play_warn_if_version_code_not_ahead "$android_version_code" "" "Android appstore build preflight"
   version_bundle_suffix=".aab"
   staging_dir_suffix="-appstore"
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
