@@ -72,7 +72,7 @@ build_appstore() {
 
   if [ ! -z $CI ]; then
     cd $project_dir/ios || return 1
-    turbo_bundle_exec exec pod cache clean --all || return $?
+    turbo_bundle_pod cache clean --all || return $?
     cd $project_dir || return 1
   fi
 

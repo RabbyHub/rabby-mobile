@@ -437,6 +437,10 @@ turbo_bundle_exec() {
     bundle "$@"
 }
 
+turbo_bundle_pod() {
+  turbo_bundle_exec exec ruby -e 'load Gem.bin_path("cocoapods", "pod")' -- "$@"
+}
+
 turbo_log() {
   printf '[turbo-build] %s\n' "$*"
 }
@@ -617,7 +621,7 @@ turbo_compute_cocoapods_cache_key() {
     "platform=$(turbo_platform_fingerprint)" \
     "xcode=$(xcodebuild -version 2>/dev/null | tr '\n' '|')" \
     "ruby=$(ruby -v 2>/dev/null)" \
-    "cocoapods=$(turbo_bundle_exec exec pod --version 2>/dev/null || pod --version 2>/dev/null)" \
+    "cocoapods=$(turbo_bundle_pod --version 2>/dev/null || pod --version 2>/dev/null)" \
     "files=$files_hash" \
     | turbo_sha256 | awk '{print $1}'
 }
@@ -1220,10 +1224,10 @@ turbo_prepare_cocoapods() {
       return 0
     fi
 
-    (cd "$project_dir/ios" && turbo_bundle_exec exec pod install) || return $?
+    (cd "$project_dir/ios" && turbo_bundle_pod install) || return $?
     turbo_save_layer cocoapods "$cache_key" apps/mobile/ios/Pods
   else
-    (cd "$project_dir/ios" && bundle exec pod install --repo-update) || return $?
+    (cd "$project_dir/ios" && turbo_bundle_pod install --repo-update) || return $?
   fi
 }
 
