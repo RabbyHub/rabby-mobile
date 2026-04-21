@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Rabby i18n Device Console</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="hero">
+        <div class="hero-main">
+          <p class="eyebrow">Rabby Mobile</p>
+          <h1>i18n Device Console</h1>
+          <p class="subtitle">
+            Devices register their current i18n snapshot here. Product selects a
+            live device, searches keys by key or text content, edits a target
+            string, pushes the patch to that device, and exports the merged JSON.
+          </p>
+
+          <section class="device-tray">
+            <div class="panel-header">
+              <h2>Available Devices</h2>
+              <button id="reloadDevicesButton" class="ghost">Reload</button>
+            </div>
+            <div id="deviceList" class="device-list device-list-compact"></div>
+          </section>
+        </div>
+
+        <div class="hero-sidebar">
+          <div class="hero-stat">
+            <span class="hero-label">Devices</span>
+            <strong id="deviceCountValue">0</strong>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-label">Selected device</span>
+            <strong id="selectedDeviceValue">None</strong>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-label">Locale</span>
+            <strong id="selectedLocaleValue">-</strong>
+          </div>
+        </div>
+      </header>
+
+      <p id="statusMessage" class="status neutral">Loading devices...</p>
+
+      <main class="layout">
+        <section class="panel panel-results">
+          <div class="panel-header panel-header-stack">
+            <div>
+              <h2>Translation Search</h2>
+              <p class="helper" id="deviceHint">
+                Select a device to browse its uploaded i18n JSON.
+              </p>
+            </div>
+            <div class="toolbar">
+              <select id="localeSelect" class="select"></select>
+              <button id="exportJsonButton" class="secondary">Export JSON</button>
+            </div>
+          </div>
+
+          <div class="search-box">
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Search by key or current text content"
+            />
+          </div>
+
+          <div class="results-meta">
+            <div id="resultCount" class="helper">0 results</div>
+            <div class="toolbar">
+              <label class="inline-field">
+                <span>Per page</span>
+                <select id="pageSizeSelect" class="select select-compact">
+                  <option value="50">50</option>
+                  <option value="100" selected>100</option>
+                  <option value="200">200</option>
+                  <option value="500">500</option>
+                </select>
+              </label>
+              <button id="prevPageButton" class="ghost">Prev</button>
+              <div id="pageInfo" class="helper">Page 1 / 1</div>
+              <button id="nextPageButton" class="ghost">Next</button>
+            </div>
+          </div>
+          <div id="searchResults" class="result-list"></div>
+        </section>
+
+        <section class="panel panel-editor">
+          <div class="panel-header">
+            <h2>Edit Selected Key</h2>
+            <div class="toolbar">
+              <button id="clearPatchButton" class="ghost danger">Clear Patch</button>
+              <button id="savePatchButton" class="primary">Save Patch</button>
+            </div>
+          </div>
+
+          <div id="editorEmpty" class="empty-state">
+            Choose a search result to edit.
+          </div>
+
+          <div id="editorPanel" class="editor-panel hidden">
+            <label class="field">
+              <span>Key</span>
+              <input id="editorKey" type="text" readonly />
+            </label>
+
+            <label class="field">
+              <span>Base value from device snapshot</span>
+              <textarea id="editorBaseValue" rows="4" readonly></textarea>
+            </label>
+
+            <label class="field">
+              <span>Patched value to push</span>
+              <textarea id="editorPatchedValue" rows="6"></textarea>
+            </label>
+
+            <div class="hint-box">
+              <h3>How it works</h3>
+              <p>
+                Saving creates a patch for the selected device and locale only.
+                The server keeps the original uploaded JSON and exports the
+                merged result on demand.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

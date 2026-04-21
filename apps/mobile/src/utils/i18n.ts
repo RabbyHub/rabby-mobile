@@ -16,6 +16,10 @@ import id_ID from '@/assets/locales/id-ID/messages.json';
 import tr_TR from '@/assets/locales/tr-TR/messages.json';
 import codeConfig from '@/assets/locales/index.json';
 
+declare global {
+  var __RABBY_I18N__: typeof i18n | undefined;
+}
+
 export enum SupportedLang {
   'en-US' = 'en-US',
   'zh-CN' = 'zh-CN',
@@ -99,6 +103,9 @@ export function addResourceBundle(locale: SupportedLang) {
 }
 
 addResourceBundle('en-US' as SupportedLang);
+
+// Exposed for the Metro-injected live preview runtime.
+globalThis.__RABBY_I18N__ = i18n;
 
 i18n.on('languageChanged', function (lng: string) {
   addResourceBundle(filterSupportedLang(lng));

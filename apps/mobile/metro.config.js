@@ -4,6 +4,9 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { withSentryConfig } = require('@sentry/react-native/metro');
 const { withRozenite } = require('@rozenite/metro');
 const {
+  createI18nLivePreviewSerializer,
+} = require('./scripts/i18n-live-preview/metro-serializer');
+const {
   wrapWithReanimatedMetroConfig,
 } = require('react-native-reanimated/metro-config');
 
@@ -95,6 +98,22 @@ const withStableHash = config => {
           experimentalImportSupport: false,
           inlineRequires: false,
         },
+      }),
+    },
+  };
+};
+
+const withI18nLivePreview = config => {
+  if (!['1', 'true'].includes(process.env.I18N_LIVE_PREVIEW || '')) {
+    return config;
+  }
+
+  return {
+    ...config,
+    serializer: {
+      ...config.serializer,
+      customSerializer: createI18nLivePreviewSerializer({
+        upstreamSerializer: config.serializer?.customSerializer,
       }),
     },
   };
@@ -227,6 +246,7 @@ const config = {
 };
 
 const mergedConfig = compose(
+  withI18nLivePreview,
   process.env.APP_ENV === 'hashing' ? withStableHash : withSentryConfig,
   wrapWithReanimatedMetroConfig,
   withPackageExportsDisabled,
