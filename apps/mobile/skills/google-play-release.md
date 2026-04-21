@@ -54,11 +54,13 @@ The public upload flow is opinionated. Preserve these defaults unless there is a
 1. It targets the Google Play `internal` track.
 2. It tries to read the `.aab` `versionCode` before upload.
 3. It compares that `versionCode` with the highest version already visible on Play.
-4. If the local `versionCode` is not higher, it prints a warning but still attempts the upload.
-5. Before uploading, it best-effort tries to delete existing draft releases on the internal track.
-6. If draft cleanup fails, it warns and continues.
-7. It prints step logs during edit creation, upload, track update, and commit.
-8. In an interactive terminal, the upload step shows `curl` progress output.
+4. Before an appstore build, if Google Play credentials are available and the local Android `versionCode` is not higher, the repo now bumps the local Android build number with `yarn android:buildversion` until it is ahead.
+5. If Google Play cannot be queried, the build skips the auto-bump step and continues.
+6. Before uploading, it best-effort tries to delete existing draft releases on the internal track.
+7. If draft cleanup fails, it warns and continues.
+8. If upload fails because the `versionCode` has already been used, the public CI path can treat that as a handled result and notify Lark instead of crashing the whole release flow.
+9. It prints step logs during edit creation, upload, track update, and commit.
+10. In an interactive terminal, the upload step shows `curl` progress output.
 
 ## Default Release Name
 

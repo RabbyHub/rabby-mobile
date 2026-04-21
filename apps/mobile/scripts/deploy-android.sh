@@ -22,21 +22,69 @@ checkout_s3_pub_deployment_params;
 
 cd $project_dir;
 
-# prepare variables
-# TODO: read from gradle
-proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
-app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
-android_version_name=$(grep -m1 "versionName" ./android/app/build.gradle | cut -d'"' -f2)
-android_version_code=$(grep -m1 "versionCode" ./android/app/build.gradle | xargs | cut -c 13-)
+refresh_android_version_metadata() {
+  proj_version=$(node --eval="process.stdout.write(require('./package.json').version)")
+  app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)")
+  android_version_name=$(resolve_google_play_android_version_name)
+  android_version_code=$(resolve_google_play_android_version_code)
 
-BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
+  BUILD_DATE=$(date '+%Y%m%d_%H%M%S')
+  version_bundle_name="$BUILD_DATE-${android_version_name}.${android_version_code}"
+}
 
-version_bundle_name="$BUILD_DATE-${android_version_name}.${android_version_code}"
+prepare_appstore_android_version_code() {
+  local package_name latest_version_code target_version_code bump_guard
+
+  if ! resolve_google_play_service_account_json >/dev/null 2>&1; then
+    echo "[deploy-android] skip Google Play versionCode auto-bump because no service account credentials are available."
+    return 0
+  fi
+
+  package_name=$(resolve_google_play_package_name "") || {
+    echo "[deploy-android] skip Google Play versionCode auto-bump because package name could not be resolved."
+    return 0
+  }
+
+  latest_version_code=$(resolve_google_play_latest_version_code "$package_name" 2>/dev/null || true)
+  if [ -z "$latest_version_code" ]; then
+    echo "[deploy-android] skip Google Play versionCode auto-bump because latest Google Play versionCode could not be determined."
+    return 0
+  fi
+
+  if [ "$android_version_code" -gt "$latest_version_code" ]; then
+    echo "[deploy-android] Google Play versionCode preflight passed before build: local=$android_version_code latest=$latest_version_code"
+    return 0
+  fi
+
+  target_version_code=$((latest_version_code + 1))
+  echo "[deploy-android] local Android versionCode $android_version_code is not ahead of Google Play latest $latest_version_code; bumping local build number to at least $target_version_code before appstore build."
+
+  bump_guard=0
+  while [ "$android_version_code" -lt "$target_version_code" ]; do
+    bump_guard=$((bump_guard + 1))
+    if [ "$bump_guard" -gt 20 ]; then
+      echo "[deploy-android] exceeded safe limit while bumping Android versionCode toward $target_version_code" >&2
+      return 1
+    fi
+
+    yarn android:buildversion || return 1
+    refresh_android_version_metadata
+  done
+
+  echo "[deploy-android] Android versionCode prepared for appstore build: $android_version_code"
+}
+
+refresh_android_version_metadata
+
 version_bundle_suffix=""
 apk_name="rabby-mobile.apk"
 deployment_local_dir="$script_dir/deployments/android"
 
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
+
+if [ "$buildchannel" == "appstore" ]; then
+  prepare_appstore_android_version_code || exit $?
+fi
 
 prepare_android_build_artifacts() {
   turbo_prepare_js_dependencies || return $?
