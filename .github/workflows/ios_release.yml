@@ -42,6 +42,7 @@ env:
 jobs:
   setup:
     name: iOS-release-build
+    environment: Production
     strategy:
       matrix:
         include:
