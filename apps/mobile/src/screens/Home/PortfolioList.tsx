@@ -34,6 +34,7 @@ import useProtocols, {
   useProtocolListComputedStore,
 } from '@/store/protocols';
 import { useShallow } from 'zustand/react/shallow';
+import { useAppForeground } from '@/hooks/useAppForeground';
 
 const emptyCacheProtocolItem: ICacheProtocolItem = {
   fold: [],
@@ -43,7 +44,7 @@ const emptyCacheProtocolItem: ICacheProtocolItem = {
 const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 
 interface Props {
-  foregroundCheckNonce?: number;
+  onForeground?: () => void;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
@@ -51,7 +52,7 @@ const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
 export const PortfolioList = ({
-  foregroundCheckNonce,
+  onForeground,
   onRefresh,
   onReachTopStatusChange,
 }: Props) => {
@@ -195,11 +196,29 @@ export const PortfolioList = ({
     t,
   ]);
 
-  useEffect(() => {
-    if (isFocused && lowerAddress) {
-      updatePortfolio(lowerAddress);
+  const refreshPortfolioList = useCallback(() => {
+    if (!lowerAddress) {
+      return;
     }
-  }, [foregroundCheckNonce, isFocused, lowerAddress, updatePortfolio]);
+    updatePortfolio(lowerAddress);
+  }, [lowerAddress, updatePortfolio]);
+
+  useEffect(() => {
+    if (isFocused) {
+      refreshPortfolioList();
+    }
+  }, [isFocused, refreshPortfolioList]);
+
+  useAppForeground({
+    enabled: isFocused,
+    onForeground: () => {
+      if (loadingPortfolio || !isFocused || !lowerAddress) {
+        return;
+      }
+      onForeground?.();
+      refreshPortfolioList();
+    },
+  });
 
   useEffect(() => {
     if (!lowerAddress) {

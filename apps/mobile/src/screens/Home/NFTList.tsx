@@ -42,9 +42,10 @@ import { runOnJS } from 'react-native-reanimated';
 import { getItemId } from './utils/listRenderId';
 import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { Text } from '@/components/Typography';
+import { useAppForeground } from '@/hooks/useAppForeground';
 
 interface Props {
-  foregroundCheckNonce?: number;
+  onForeground?: () => void;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
@@ -52,7 +53,7 @@ const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
 const NFTListInner = ({
-  foregroundCheckNonce,
+  onForeground,
   onRefresh,
   onReachTopStatusChange,
 }: Props) => {
@@ -77,11 +78,26 @@ const NFTListInner = ({
     isLoading: loadingNft,
   } = useQueryNft(userAddr, false);
 
+  const refreshNftList = useCallback(() => {
+    reloadNftList?.();
+  }, [reloadNftList]);
+
   useEffect(() => {
     if (isFocused) {
-      reloadNftList?.();
+      refreshNftList();
     }
-  }, [foregroundCheckNonce, isFocused, reloadNftList, currentAccount?.address]);
+  }, [isFocused, refreshNftList]);
+
+  useAppForeground({
+    enabled: isFocused,
+    onForeground: () => {
+      if (loadingNft || !isFocused || !userAddr) {
+        return;
+      }
+      onForeground?.();
+      refreshNftList();
+    },
+  });
 
   const nftList = useMemo(() => {
     return _rawNftList.filter(item =>
