@@ -128,6 +128,14 @@ platform :ios do
 
   desc "Release for the iOS production"
   lane :appstore do
+      pilot_changelog = ENV["RABBY_MOBILE_PILOT_CHANGELOG"]
+      if pilot_changelog.to_s.strip.empty?
+        pilot_changelog = "Bug fixes and improvements."
+      end
+
+      pilot_wait_processing_interval = (ENV["RABBY_MOBILE_PILOT_WAIT_PROCESSING_INTERVAL"] || "30").to_i
+      pilot_wait_processing_timeout_duration = (ENV["RABBY_MOBILE_PILOT_WAIT_PROCESSING_TIMEOUT_DURATION"] || "1800").to_i
+
       prepare_apple_sign(type: 'appstore')
       gym(
         scheme: 'RabbyMobile',
@@ -156,7 +164,10 @@ platform :ios do
         apple_id: '6474381673',
         username: ENV["RABBY_MOBILE_PILOT_USERNAME"],
         ipa: "./ios/Package/appstore/RabbyMobile.ipa",
+        changelog: pilot_changelog,
         skip_waiting_for_build_processing: true,
+        wait_processing_interval: pilot_wait_processing_interval,
+        wait_processing_timeout_duration: pilot_wait_processing_timeout_duration,
         distribute_only: ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] || false,
       )
   end
