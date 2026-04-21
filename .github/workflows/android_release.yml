@@ -51,6 +51,7 @@ jobs:
       - mobile
       - Linux
     env:
+      NODE_OPTIONS: '--max_old_space_size=12288'
       RABBY_MOBILE_NM_USE_CACHE: 'true'
     steps:
       - uses: actions/checkout@v3
