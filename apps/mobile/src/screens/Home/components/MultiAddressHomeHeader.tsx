@@ -275,10 +275,10 @@ export function MultiAddressHomeHeader(
             colors={
               isLight
                 ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-                : ['rgba(0, 0, 0, 0.40)', 'rgba(0, 0, 0, 0.10)']
+                : ['rgba(0, 0, 0, 0.10)', '#232428']
             }
-            start={isLight ? { x: 0.25, y: 0.5 } : { x: 0.02, y: 1.04 }}
-            end={isLight ? { x: 0.75, y: 0.5 } : { x: 1, y: 0.1 }}
+            start={isLight ? { x: 0.25, y: 0.5 } : { x: 1, y: 0 }}
+            end={isLight ? { x: 0.75, y: 0.5 } : { x: 0, y: 0.14 }}
             style={[
               styles.curveCardGradientBg,
               isAnimRunning && styles.curveCardGradientBgWithAnim,
@@ -426,12 +426,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: SIZES.cardContentRadius,
       ...(!isLight && {
         borderWidth: 2,
-        borderColor: 'rgba(37, 38, 40, 1)',
+        borderColor: 'rgba(35, 36, 40, 1)',
       }),
     },
     curveCardGradientBgWithAnim: {
       ...(!isLight && {
-        borderColor: 'rgba(37, 38, 40, 0.1)',
+        borderColor: 'rgba(35, 36, 40, 0.1)',
       }),
     },
     shadowView: {
