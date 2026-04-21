@@ -81,7 +81,7 @@ platform :ios do
 
       if latest_build_number >= expected_build_number
         UI.success("Detected expected TestFlight build on App Store Connect: #{version}(#{latest_build_number})")
-        return latest_build_number
+        break latest_build_number
       end
 
       elapsed_seconds = (Time.now - started_at).to_i
