@@ -44,13 +44,18 @@ import { useSingleHomeAccount, useSingleHomeChain } from './hooks/singleHome';
 import { Text } from '@/components/Typography';
 
 interface Props {
+  foregroundCheckNonce?: number;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-const NFTListInner = ({ onRefresh, onReachTopStatusChange }: Props) => {
+const NFTListInner = ({
+  foregroundCheckNonce,
+  onRefresh,
+  onReachTopStatusChange,
+}: Props) => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle: getStyles,
   });
@@ -76,7 +81,7 @@ const NFTListInner = ({ onRefresh, onReachTopStatusChange }: Props) => {
     if (isFocused) {
       reloadNftList?.();
     }
-  }, [isFocused, reloadNftList, currentAccount?.address]);
+  }, [foregroundCheckNonce, isFocused, reloadNftList, currentAccount?.address]);
 
   const nftList = useMemo(() => {
     return _rawNftList.filter(item =>

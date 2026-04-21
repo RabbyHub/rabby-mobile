@@ -1,5 +1,11 @@
-import React, { useCallback, useMemo } from 'react';
-import { Dimensions } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { AppState, Dimensions } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -36,6 +42,8 @@ const renderHeader = () => null;
 
 export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const hasLeftForegroundRef = useRef(false);
+  const [foregroundCheckNonce, setForegroundCheckNonce] = useState(0);
 
   const { currentAccount } = useSingleHomeAccount();
   const currentAddress = currentAccount?.address ?? undefined;
@@ -76,6 +84,31 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { accountToShowReceiveTip } =
     useAccountHomeShowReceiveTip(currentAccount);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'inactive' || state === 'background') {
+        hasLeftForegroundRef.current = true;
+        return;
+      }
+
+      if (hasLeftForegroundRef.current && state === 'active') {
+        hasLeftForegroundRef.current = false;
+        setForegroundCheckNonce(nonce => nonce + 1);
+        if (currentAddress) {
+          apisAddressBalance.triggerUpdate({
+            address: currentAddress,
+            force: false,
+            fromScene: 'SingleAddressHome',
+          });
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [currentAddress]);
+
   if (!currentAccount) {
     return null;
   }
@@ -105,18 +138,21 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
       <Tabs.Tab label={renderLabel('Token')} name="tokens">
         <TokenList
           noAssetsOnAnyChain={noAssetsOnAnyChain}
+          foregroundCheckNonce={foregroundCheckNonce}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('DeFi')} name="defi">
         <PortfolioList
+          foregroundCheckNonce={foregroundCheckNonce}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />
       </Tabs.Tab>
       <Tabs.Tab label={renderLabel('NFT')} name="nft">
         <NFTList
+          foregroundCheckNonce={foregroundCheckNonce}
           onRefresh={handleRefresh}
           onReachTopStatusChange={onReachTopStatusChange}
         />

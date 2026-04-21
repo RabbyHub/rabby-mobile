@@ -68,6 +68,7 @@ type TokenListItem =
 
 interface Props {
   noAssetsOnAnyChain: boolean;
+  foregroundCheckNonce?: number;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
@@ -76,6 +77,7 @@ const SPACING_HEIGHT = 8;
 
 export const TokenList = ({
   noAssetsOnAnyChain,
+  foregroundCheckNonce,
   onRefresh,
   onReachTopStatusChange,
 }: Props) => {
@@ -159,7 +161,7 @@ export const TokenList = ({
       return;
     }
     getTokenList(currentAddress);
-  }, [currentAddress, getTokenList, isFocused]);
+  }, [currentAddress, foregroundCheckNonce, getTokenList, isFocused]);
 
   const { selectData } = useSingleHomeSelectData();
   const noAnyAssets = !selectData.rawNetWorth || noAssetsOnAnyChain;

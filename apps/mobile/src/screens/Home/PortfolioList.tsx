@@ -43,13 +43,18 @@ const emptyCacheProtocolItem: ICacheProtocolItem = {
 const MemoFullDefiRenderItem = memo(FullDefiRenderItem);
 
 interface Props {
+  foregroundCheckNonce?: number;
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
 }
 const FOOTER_HEIGHT = 220;
 const SPACING_HEIGHT = 8;
 
-export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
+export const PortfolioList = ({
+  foregroundCheckNonce,
+  onRefresh,
+  onReachTopStatusChange,
+}: Props) => {
   const { styles } = useTheme2024({
     getStyle: getStyles,
   });
@@ -194,7 +199,7 @@ export const PortfolioList = ({ onRefresh, onReachTopStatusChange }: Props) => {
     if (isFocused && lowerAddress) {
       updatePortfolio(lowerAddress);
     }
-  }, [isFocused, lowerAddress, updatePortfolio]);
+  }, [foregroundCheckNonce, isFocused, lowerAddress, updatePortfolio]);
 
   useEffect(() => {
     if (!lowerAddress) {
