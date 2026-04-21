@@ -69,6 +69,7 @@ platform :ios do
     version = opts[:version]
     api_key = opts[:api_key]
     baseline_build_number = opts[:baseline_build_number].to_i
+    expected_build_number = opts[:expected_build_number].to_i
     started_at = Time.now
 
     loop do
@@ -78,17 +79,17 @@ platform :ios do
         version: version
       )
 
-      if latest_build_number > baseline_build_number
-        UI.success("Detected new TestFlight build on App Store Connect: #{version}(#{latest_build_number})")
+      if latest_build_number >= expected_build_number
+        UI.success("Detected expected TestFlight build on App Store Connect: #{version}(#{latest_build_number})")
         return latest_build_number
       end
 
       elapsed_seconds = (Time.now - started_at).to_i
       if elapsed_seconds >= timeout_seconds
-        UI.user_error!("Upload did not produce a new TestFlight build within #{timeout_seconds}s. version=#{version} baseline_build_number=#{baseline_build_number} latest_build_number=#{latest_build_number}")
+        UI.user_error!("Upload did not produce the expected TestFlight build within #{timeout_seconds}s. version=#{version} baseline_build_number=#{baseline_build_number} expected_build_number=#{expected_build_number} latest_build_number=#{latest_build_number}")
       end
 
-      UI.message("Waiting for a new TestFlight build to appear on App Store Connect for version #{version}. baseline=#{baseline_build_number} latest=#{latest_build_number} elapsed=#{elapsed_seconds}s")
+      UI.message("Waiting for TestFlight build #{expected_build_number} to appear on App Store Connect for version #{version}. baseline=#{baseline_build_number} latest=#{latest_build_number} elapsed=#{elapsed_seconds}s")
       sleep(interval_seconds)
     end
   end
@@ -210,6 +211,8 @@ platform :ios do
         version: current_version
       )
       UI.message("Latest TestFlight build before upload for #{current_version}: #{baseline_build_number}")
+      next_build_number = baseline_build_number + 1
+      UI.message("Will build #{current_version}(#{next_build_number}) for upload")
 
       prepare_apple_sign(type: 'appstore')
       gym(
@@ -226,6 +229,7 @@ platform :ios do
         # suppress_xcode_output: false,
         skip_package_pkg: true,
         export_method: "app-store",
+        xcargs: "CURRENT_PROJECT_VERSION=#{next_build_number}",
         verbose: true,
         export_options: {
           method: "app-store",
@@ -247,7 +251,8 @@ platform :ios do
           api_key: asc_api_key,
           app_identifier: 'com.debank.rabby-mobile',
           version: current_version,
-          baseline_build_number: baseline_build_number
+          baseline_build_number: baseline_build_number,
+          expected_build_number: next_build_number
         )
       end
   end
