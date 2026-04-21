@@ -44,6 +44,7 @@ import {
   useDebugKeychainStorage,
   type CurrentKeychainVersion,
 } from '@/hooks/appSettings';
+import { useAppSecurityChain } from '@/hooks/global';
 import { useTheme2024 } from '@/hooks/theme';
 import { shareLocalFile } from '@/utils/shareLocalFile';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -217,6 +218,28 @@ type V9CurrentRewriteResult = {
   rewrittenAt: string;
 };
 
+type ExportableV9ReadCredentials = Omit<V9ReadCredentials, 'password'> & {
+  password: string | null;
+};
+
+type ExportableV9ReadResult = {
+  label: string;
+  credentials: false | ExportableV9ReadCredentials;
+};
+
+type ExportableRawReadState = {
+  result: ExportableV9ReadResult | null;
+  errorMessage: string | null;
+};
+
+type ExportableV9CurrentBusinessDecryptResult = {
+  label: string;
+  credentials: ExportableV9ReadCredentials;
+  decryptedPayload: {
+    password: string | null;
+  };
+};
+
 type KeychainVersionExportState = BusinessVersionState & {
   sourceLabel: string;
 };
@@ -226,6 +249,8 @@ type KeychainDebugExportPayload = {
   app: {
     platform: 'android' | 'ios';
     mode: 'development' | 'production';
+    rabbitCode: string | null;
+    includesSecretFields: boolean;
   };
   current: {
     effectiveVersion: CurrentKeychainVersion;
@@ -254,18 +279,18 @@ type KeychainDebugExportPayload = {
     defaultState: apisKeychainDebug.KeychainDebugState | null;
     probeState: apisKeychainDebug.KeychainDebugState | null;
     probeService: string;
-    probePassword: string;
-    currentReadResult: V9ReadResult | null;
+    probePassword: string | null;
+    currentReadResult: ExportableV9ReadResult | null;
     currentReadErrorMessage: string | null;
-    probeReadResult: V9ReadResult | null;
+    probeReadResult: ExportableV9ReadResult | null;
     probeReadErrorMessage: string | null;
-    currentReadStates: PromptPolicyState<RawReadState>;
-    probeReadStates: PromptPolicyState<RawReadState>;
-    currentBusinessDecryptResult: V9CurrentBusinessDecryptResult | null;
+    currentReadStates: PromptPolicyState<ExportableRawReadState>;
+    probeReadStates: PromptPolicyState<ExportableRawReadState>;
+    currentBusinessDecryptResult: ExportableV9CurrentBusinessDecryptResult | null;
     currentBusinessDecryptErrorMessage: string | null;
     currentRewriteResult: V9CurrentRewriteResult | null;
     currentRewriteErrorMessage: string | null;
-    lastReadResult: V9ReadResult | null;
+    lastReadResult: ExportableV9ReadResult | null;
     lastErrorMessage: string | null;
   };
   mockOldData: typeof LEGACY_SIMULATION;
@@ -325,6 +350,83 @@ function makePromptPolicyState<T>(
       apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
         .ALLOW_AUTHENTICATED_SESSION_REUSE,
     ),
+  };
+}
+
+function mapPromptPolicyState<T, R>(
+  state: PromptPolicyState<T>,
+  mapper: (value: T, policy: AndroidAuthPromptPolicy) => R,
+): PromptPolicyState<R> {
+  return {
+    [apisKeychain.ANDROID_AUTH_PROMPT_POLICIES.INTERACTIVE_FIRST]: mapper(
+      state[apisKeychain.ANDROID_AUTH_PROMPT_POLICIES.INTERACTIVE_FIRST],
+      apisKeychain.ANDROID_AUTH_PROMPT_POLICIES.INTERACTIVE_FIRST,
+    ),
+    [apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
+      .ALLOW_AUTHENTICATED_SESSION_REUSE]: mapper(
+      state[
+        apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
+          .ALLOW_AUTHENTICATED_SESSION_REUSE
+      ],
+      apisKeychain.ANDROID_AUTH_PROMPT_POLICIES
+        .ALLOW_AUTHENTICATED_SESSION_REUSE,
+    ),
+  };
+}
+
+function sanitizeReadResult(
+  result: V9ReadResult | null,
+  includeSecretFields: boolean,
+): ExportableV9ReadResult | null {
+  if (!result) {
+    return null;
+  }
+
+  if (!result.credentials) {
+    return result;
+  }
+
+  return {
+    ...result,
+    credentials: {
+      ...result.credentials,
+      password: includeSecretFields ? result.credentials.password : null,
+    },
+  };
+}
+
+function sanitizeBusinessVersionStateForExport(
+  sourceLabel: string,
+  state: BusinessVersionState,
+  includeSecretFields: boolean,
+): KeychainVersionExportState {
+  return {
+    ...state,
+    sourceLabel,
+    decryptStates: mapPromptPolicyState(state.decryptStates, decryptState => ({
+      ...decryptState,
+      plainPassword: includeSecretFields ? decryptState.plainPassword : null,
+    })),
+  };
+}
+
+function sanitizeCurrentBusinessDecryptResultForExport(
+  result: V9CurrentBusinessDecryptResult | null,
+  includeSecretFields: boolean,
+): ExportableV9CurrentBusinessDecryptResult | null {
+  if (!result) {
+    return null;
+  }
+
+  return {
+    ...result,
+    credentials: {
+      ...result.credentials,
+      password: includeSecretFields ? result.credentials.password : null,
+    },
+    decryptedPayload: {
+      password: includeSecretFields ? result.decryptedPayload.password : null,
+    },
   };
 }
 
@@ -1082,6 +1184,7 @@ export default function DevDataKeychain(): JSX.Element {
     getStyle: getStyles,
     isLight: true,
   });
+  const { rabbitCode } = useAppSecurityChain();
   const { height: windowHeight } = useWindowDimensions();
   const actionsSheetRef = useRef<AppBottomSheetModal>(null);
   const helpSheetRef = useRef<AppBottomSheetModal>(null);
@@ -1147,6 +1250,7 @@ export default function DevDataKeychain(): JSX.Element {
     isV9CurrentBusinessPasswordVisible,
     setIsV9CurrentBusinessPasswordVisible,
   ] = useState(false);
+  const [isRabbitCodeVisible, setIsRabbitCodeVisible] = useState(false);
   const [v9CurrentRewriteResult, setV9CurrentRewriteResult] =
     useState<V9CurrentRewriteResult | null>(null);
   const [v9CurrentRewriteErrorMessage, setV9CurrentRewriteErrorMessage] =
@@ -1984,6 +2088,8 @@ export default function DevDataKeychain(): JSX.Element {
   const maskedV9CurrentBusinessPassword = maskSecret(
     v9CurrentBusinessDecryptResult?.decryptedPayload.password,
   );
+  const maskedRabbitCode = maskSecret(rabbitCode);
+  const includeSecretFieldsInExport = __DEV__;
 
   const debugExportPayload = useMemo<KeychainDebugExportPayload>(
     () => ({
@@ -1991,6 +2097,8 @@ export default function DevDataKeychain(): JSX.Element {
       app: {
         platform: IS_ANDROID ? 'android' : 'ios',
         mode: __DEV__ ? 'development' : 'production',
+        rabbitCode: rabbitCode || null,
+        includesSecretFields: includeSecretFieldsInExport,
       },
       current: {
         effectiveVersion: currentKeychainVersion,
@@ -2004,44 +2112,64 @@ export default function DevDataKeychain(): JSX.Element {
         supportedStorageTypesByVersion,
       },
       versions: {
-        v8_2_0: {
-          sourceLabel: KEYCHAIN_VERSION_META['8.2.0-fork'].sourceLabel,
-          ...businessStates['8.2.0-fork'],
-        },
-        v9_0_0: {
-          sourceLabel: KEYCHAIN_VERSION_META['9.0.0'].sourceLabel,
-          ...businessStates['9.0.0'],
-        },
+        v8_2_0: sanitizeBusinessVersionStateForExport(
+          KEYCHAIN_VERSION_META['8.2.0-fork'].sourceLabel,
+          businessStates['8.2.0-fork'],
+          includeSecretFieldsInExport,
+        ),
+        v9_0_0: sanitizeBusinessVersionStateForExport(
+          KEYCHAIN_VERSION_META['9.0.0'].sourceLabel,
+          businessStates['9.0.0'],
+          includeSecretFieldsInExport,
+        ),
       },
       v9Raw: {
         defaultState: v9DefaultState,
         probeState: v9ProbeState,
         probeService: apisKeychainDebug.KEYCHAIN_PROBE_SERVICE,
-        probePassword: apisKeychainDebug.KEYCHAIN_PROBE_PASSWORD,
-        currentReadResult:
+        probePassword: includeSecretFieldsInExport
+          ? apisKeychainDebug.KEYCHAIN_PROBE_PASSWORD
+          : null,
+        currentReadResult: sanitizeReadResult(
           v9CurrentReadStates[apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY]
             .result,
+          includeSecretFieldsInExport,
+        ),
         currentReadErrorMessage:
           v9CurrentReadStates[apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY]
             .errorMessage,
-        probeReadResult:
+        probeReadResult: sanitizeReadResult(
           v9ProbeReadStates[apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY]
             .result,
+          includeSecretFieldsInExport,
+        ),
         probeReadErrorMessage:
           v9ProbeReadStates[apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY]
             .errorMessage,
-        currentReadStates: v9CurrentReadStates,
-        probeReadStates: v9ProbeReadStates,
-        currentBusinessDecryptResult: v9CurrentBusinessDecryptResult,
+        currentReadStates: mapPromptPolicyState(v9CurrentReadStates, state => ({
+          ...state,
+          result: sanitizeReadResult(state.result, includeSecretFieldsInExport),
+        })),
+        probeReadStates: mapPromptPolicyState(v9ProbeReadStates, state => ({
+          ...state,
+          result: sanitizeReadResult(state.result, includeSecretFieldsInExport),
+        })),
+        currentBusinessDecryptResult:
+          sanitizeCurrentBusinessDecryptResultForExport(
+            v9CurrentBusinessDecryptResult,
+            includeSecretFieldsInExport,
+          ),
         currentBusinessDecryptErrorMessage:
           v9CurrentBusinessDecryptErrorMessage,
         currentRewriteResult: v9CurrentRewriteResult,
         currentRewriteErrorMessage: v9CurrentRewriteErrorMessage,
-        lastReadResult:
+        lastReadResult: sanitizeReadResult(
           v9CurrentReadStates[apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY]
             .result ||
-          v9ProbeReadStates[apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY]
-            .result,
+            v9ProbeReadStates[apisKeychain.DEFAULT_ANDROID_AUTH_PROMPT_POLICY]
+              .result,
+          includeSecretFieldsInExport,
+        ),
         lastErrorMessage:
           v9CurrentRewriteErrorMessage ||
           v9CurrentBusinessDecryptErrorMessage ||
@@ -2059,6 +2187,8 @@ export default function DevDataKeychain(): JSX.Element {
       debugKeychainStorageByVersion,
       debugCurrentKeychainVersion,
       effectiveStorageByVersion,
+      includeSecretFieldsInExport,
+      rabbitCode,
       supportedStorageTypesByVersion,
       v9CurrentBusinessDecryptErrorMessage,
       v9CurrentBusinessDecryptResult,
@@ -3015,6 +3145,28 @@ export default function DevDataKeychain(): JSX.Element {
             value={apisKeychain.getCurrentKeychainSourceLabel()}
             selectable
           />
+          <View style={styles.statusRow}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.statusLabel}>RABBY_MOBILE_CODE</Text>
+              {rabbitCode ? (
+                <EyeToggleButton
+                  visible={isRabbitCodeVisible}
+                  onPress={() => {
+                    setIsRabbitCodeVisible(visible => !visible);
+                  }}
+                />
+              ) : null}
+            </View>
+            <Text
+              style={[styles.statusValue, styles.statusValueNoWrap]}
+              selectable={!!rabbitCode && isRabbitCodeVisible}>
+              {rabbitCode
+                ? isRabbitCodeVisible
+                  ? rabbitCode
+                  : maskedRabbitCode
+                : '-'}
+            </Text>
+          </View>
 
           <View style={styles.versionSelectorGroup}>
             {KEYCHAIN_VERSION_OPTIONS.map(option => (

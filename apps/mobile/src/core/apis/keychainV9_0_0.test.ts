@@ -1,7 +1,15 @@
 describe('core/apis/keychainV9_0_0', () => {
-  const setup = async (options?: { storage?: string; authType?: number }) => {
+  const setup = async (options?: {
+    storage?: string;
+    authType?: number;
+    salt?: string;
+  }) => {
     jest.resetModules();
-    const { storage = 'KeystoreRSAECB', authType = 1 } = options || {};
+    const {
+      storage = 'KeystoreRSAECB',
+      authType = 1,
+      salt = 'salt',
+    } = options || {};
 
     const mockEncrypt = jest.fn(
       async (_salt: string, payload: { password: string }) => {
@@ -119,21 +127,74 @@ describe('core/apis/keychainV9_0_0', () => {
         t: (key: string) => key,
       },
     }));
+    jest.doMock('@/utils/logger', () => ({
+      logger: {
+        info: jest.fn(),
+        warn: jest.fn(),
+      },
+    }));
 
     let module!: typeof import('./keychainV9_0_0');
     jest.isolateModules(() => {
       module = require('./keychainV9_0_0');
     });
-    module.makeSecureKeyChainInstance({ salt: 'salt' });
+    module.makeSecureKeyChainInstance({ salt });
 
     return {
       module,
+      mockEncrypt,
+      mockDecrypt,
       mockGetGenericPassword,
       mockSetGenericPassword,
       mockDebugGetGenericPasswordStateForOptions,
       mockSafeVerifyPasswordAndUpdateUnlockTime,
+      mockUpdateUnlockTime,
     };
   };
+
+  it('falls back to the default rabbit code and silently rewrites stored credentials', async () => {
+    const currentRabbitCode = 'CURRENT_RABBIT_CODE';
+    const {
+      module,
+      mockEncrypt,
+      mockDecrypt,
+      mockSetGenericPassword,
+      mockUpdateUnlockTime,
+    } = await setup({
+      salt: currentRabbitCode,
+      storage: 'keychain',
+    });
+
+    mockDecrypt.mockImplementation(async (salt: string) => {
+      if (salt === currentRabbitCode) {
+        throw new Error('decrypt failed with current rabbit code');
+      }
+
+      if (salt === 'RABBY_MOBILE_CODE_DEV') {
+        return { password: 'plain-password' };
+      }
+
+      throw new Error(`unexpected rabbit code: ${salt}`);
+    });
+
+    const onPlainPassword = jest.fn();
+    const result = await module.requestGenericPassword({
+      purpose: module.RequestGenericPurpose.DECRYPT_PWD,
+      onPlainPassword,
+    });
+
+    expect(mockDecrypt.mock.calls.map(call => call[0])).toEqual([
+      currentRabbitCode,
+      'RABBY_MOBILE_CODE_DEV',
+    ]);
+    expect(onPlainPassword).toHaveBeenCalledWith('plain-password');
+    expect(mockUpdateUnlockTime).toHaveBeenCalled();
+    expect(mockEncrypt).toHaveBeenCalledWith(currentRabbitCode, {
+      password: 'plain-password',
+    });
+    expect(mockSetGenericPassword).toHaveBeenCalledTimes(1);
+    expect(result?.actionSuccess).toBe(true);
+  });
 
   it('keeps automatic-upgrade reads on Android for legacy biometrics entries', async () => {
     const {

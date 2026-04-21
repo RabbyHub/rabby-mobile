@@ -20,7 +20,151 @@ prepare_env() {
   export project_dir=$script_dir
 }
 
+resolve_mobile_project_dir() {
+  if [ -n "$project_dir" ] && [ -d "$project_dir" ]; then
+    printf '%s\n' "$project_dir"
+    return 0
+  fi
+
+  if [ -n "$script_dir" ] && [ -d "$script_dir" ]; then
+    dirname "$script_dir"
+    return 0
+  fi
+
+  pwd
+}
+
+resolve_mobile_build_env() {
+  case "${CONFIGURATION:-}" in
+    Release)
+      echo "production"
+      return 0
+      ;;
+    Regression)
+      echo "regression"
+      return 0
+      ;;
+    Debug)
+      echo "debug"
+      return 0
+      ;;
+  esac
+
+  case "${RABBY_MOBILE_BUILD_ENV:-}" in
+    production|regression|debug)
+      echo "$RABBY_MOBILE_BUILD_ENV"
+      return 0
+      ;;
+  esac
+
+  case "${buildchannel:-}" in
+    appstore|selfhost)
+      echo "production"
+      return 0
+      ;;
+    selfhost-reg)
+      echo "regression"
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+list_candidate_env_files() {
+  local current_project_dir
+  current_project_dir=$(resolve_mobile_project_dir)
+  local build_env
+  build_env=$(resolve_mobile_build_env 2>/dev/null || true)
+
+  case "$build_env" in
+    production)
+      printf '%s\n' \
+        "$current_project_dir/.env.production" \
+        "$current_project_dir/.env"
+      ;;
+    regression)
+      printf '%s\n' \
+        "$current_project_dir/.env.regression" \
+        "$current_project_dir/.env.local" \
+        "$current_project_dir/.env"
+      ;;
+    debug)
+      printf '%s\n' \
+        "$current_project_dir/.env.local" \
+        "$current_project_dir/.env"
+      ;;
+    *)
+      printf '%s\n' \
+        "$current_project_dir/.env.local" \
+        "$current_project_dir/.env"
+      ;;
+  esac
+}
+
+read_env_var_from_file() {
+  local env_file="$1"
+  local env_key="$2"
+
+  [ -f "$env_file" ] || return 1
+
+  awk -v key="$env_key" '
+    /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
+    {
+      line = $0
+      sub(/\r$/, "", line)
+      pos = index(line, "=")
+      if (pos == 0) next
+
+      current_key = substr(line, 1, pos - 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", current_key)
+      if (current_key != key) next
+
+      value = substr(line, pos + 1)
+      sub(/[[:space:]]*#.*$/, "", value)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+
+      first = substr(value, 1, 1)
+      last = substr(value, length(value), 1)
+      if ((first == "\"" && last == "\"") || (first == "'"'"'" && last == "'"'"'")) {
+        value = substr(value, 2, length(value) - 2)
+      }
+
+      print value
+      exit
+    }
+  ' "$env_file"
+}
+
+load_env_var_from_candidate_files() {
+  local env_key="$1"
+  local current_value
+  eval "current_value=\${$env_key}"
+
+  if [ -n "$current_value" ]; then
+    return 0
+  fi
+
+  local env_file value
+  while IFS= read -r env_file; do
+    [ -f "$env_file" ] || continue
+    value=$(read_env_var_from_file "$env_file" "$env_key")
+    if [ -n "$value" ]; then
+      export "$env_key=$value"
+      echo "[RabbyMobileBuild] loaded $env_key from $env_file"
+      return 0
+    fi
+  done <<EOF
+$(list_candidate_env_files)
+EOF
+
+  return 1
+}
+
 check_build_params() {
+  load_env_var_from_candidate_files RABBY_MOBILE_KR_PWD
+  load_env_var_from_candidate_files RABBY_MOBILE_CODE
+
   if [ -z $RABBY_MOBILE_KR_PWD ]; then
     echo "RABBY_MOBILE_KR_PWD is not set"
     exit 1;
@@ -30,6 +174,43 @@ check_build_params() {
     echo "RABBY_MOBILE_CODE is not set"
     exit 1;
   fi
+}
+
+resolve_ios_info_plist_path() {
+  local target_path="$1"
+
+  if [ -z "$target_path" ]; then
+    echo "Usage: sh ./scripts/fns.sh print_ios_rabbit_code <path-to-.xcarchive-or-.app>" >&2
+    return 1
+  fi
+
+  if [ -d "$target_path" ] && [ "${target_path##*.}" = "app" ]; then
+    local app_info_plist="$target_path/Info.plist"
+    if [ -f "$app_info_plist" ]; then
+      printf '%s\n' "$app_info_plist"
+      return 0
+    fi
+  fi
+
+  if [ -d "$target_path" ] && [ "${target_path##*.}" = "xcarchive" ]; then
+    local archive_info_plist
+    archive_info_plist=$(find "$target_path/Products/Applications" -maxdepth 2 -path '*.app/Info.plist' | head -n 1)
+    if [ -n "$archive_info_plist" ] && [ -f "$archive_info_plist" ]; then
+      printf '%s\n' "$archive_info_plist"
+      return 0
+    fi
+  fi
+
+  echo "Could not resolve Info.plist from: $target_path" >&2
+  return 1
+}
+
+print_ios_rabbit_code() {
+  local target_path="$1"
+  local info_plist
+  info_plist=$(resolve_ios_info_plist_path "$target_path") || return 1
+
+  /usr/libexec/PlistBuddy -c 'Print :rabbit_code' "$info_plist"
 }
 
 check_s3_params() {
@@ -300,6 +481,10 @@ if [ ! -z $func_to_exec ]; then
       ;;
     "update_webview_assets")
       update_webview_assets
+      ;;
+    "print_ios_rabbit_code")
+      shift
+      print_ios_rabbit_code "$1"
       ;;
     *)
       echo "Invalid function to execute: $func_to_exec"

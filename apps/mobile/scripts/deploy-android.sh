@@ -15,6 +15,7 @@ export RABBY_MOBILE_ANDROID_FAST_BUILD="${RABBY_MOBILE_ANDROID_FAST_BUILD:-false
 FAST_BUILD_ENABLED=$(fast_build_enabled_value)
 UPLOAD_TEMPLATE_APK=${RABBY_MOBILE_UPLOAD_TEMPLATE_APK:-${FAST_BUILD_ENABLED}}
 export BUILD_TARGET_PLATFORM="android";
+export RABBY_MOBILE_BUILD_ENV="regression";
 check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;

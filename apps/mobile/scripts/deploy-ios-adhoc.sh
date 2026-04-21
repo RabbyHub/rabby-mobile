@@ -9,6 +9,7 @@ project_dir=$(dirname $script_dir)
 
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
+export RABBY_MOBILE_BUILD_ENV="regression";
 check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;

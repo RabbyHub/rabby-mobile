@@ -2,6 +2,8 @@ import { EncryptorAdapter } from '@rabby-wallet/service-keyring';
 import { NativeModules, Platform } from 'react-native';
 
 import i18n from '@/utils/i18n';
+import { DEFAULT_RABBY_MOBILE_CODE } from '@/constant/env';
+import { logger } from '@/utils/logger';
 
 import { keychainMMKV } from '../storage/mmkvInstances';
 import { KEYCHAIN_MMKV_KEYS } from '../storage/mmkvConstants';
@@ -376,6 +378,10 @@ export class SecureKeyChainInstance {
       encryptedPassword,
     ) as Promise<KeychainCompatibleUserCredentials>;
   }
+
+  getRabbitCode() {
+    return privates.get(this)?.salt || '';
+  }
 }
 
 export function getAuthenticationType() {
@@ -705,6 +711,80 @@ export function createBusinessKeychainApi({
     }
   }
 
+  async function decryptStoredPasswordWithRabbitCodeCandidates(
+    instance: SecureKeyChainInstance,
+    encryptedPassword: string,
+  ) {
+    const currentRabbitCode = instance.getRabbitCode();
+    const rabbitCodeCandidates = [
+      currentRabbitCode,
+      DEFAULT_RABBY_MOBILE_CODE,
+    ].filter(
+      (candidate, index, candidates): candidate is string =>
+        !!candidate && candidates.indexOf(candidate) === index,
+    );
+    let lastError: unknown = null;
+
+    for (const rabbitCodeCandidate of rabbitCodeCandidates) {
+      try {
+        const decrypted = (await appEncryptor.decrypt(
+          rabbitCodeCandidate,
+          encryptedPassword,
+        )) as KeychainCompatibleUserCredentials;
+
+        return {
+          decrypted,
+          usedFallbackRabbitCode: rabbitCodeCandidate !== currentRabbitCode,
+        };
+      } catch (error) {
+        lastError = error;
+
+        if (
+          rabbitCodeCandidate === currentRabbitCode &&
+          rabbitCodeCandidates.length > 1
+        ) {
+          logger.info(
+            '[keychain] current rabbitCode failed to decrypt stored credentials, trying fallback candidate',
+            {
+              sourceLabel,
+              candidateCount: rabbitCodeCandidates.length,
+            },
+          );
+        }
+      }
+    }
+
+    throw lastError;
+  }
+
+  async function silentlyUpgradeStoredPasswordPayload(plainPassword: string) {
+    const authType = getAuthenticationType();
+
+    if (authType === KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD) {
+      return;
+    }
+
+    try {
+      await setGenericPassword(plainPassword, authType);
+      logger.info(
+        '[keychain] rewrote stored credentials with the current rabbitCode after fallback decrypt',
+        {
+          sourceLabel,
+          authType,
+        },
+      );
+    } catch (error) {
+      logger.warn(
+        '[keychain] failed to rewrite stored credentials with the current rabbitCode',
+        {
+          sourceLabel,
+          authType,
+          error: getErrorMessage(error),
+        },
+      );
+    }
+  }
+
   async function requestGenericPassword<T extends RequestGenericPurpose>({
     purpose = RequestGenericPurpose.VERIFY as T,
     onPlainPassword,
@@ -734,7 +814,11 @@ export function createBusinessKeychainApi({
         const encryptedPassword = keychainObject.password;
         delete keychainObject.password;
 
-        const decrypted = await instance.decryptPassword(encryptedPassword);
+        const { decrypted, usedFallbackRabbitCode } =
+          await decryptStoredPasswordWithRabbitCodeCandidates(
+            instance,
+            encryptedPassword,
+          );
 
         switch (purpose) {
           case RequestGenericPurpose.VERIFY: {
@@ -743,12 +827,16 @@ export function createBusinessKeychainApi({
                 decrypted.password,
               );
             if (verifyResult.success) {
-              await upgradeLegacyAndroidBiometricsStorage(
-                decrypted.password,
-                typeof keychainObject.storage === 'string'
-                  ? keychainObject.storage
-                  : undefined,
-              );
+              if (usedFallbackRabbitCode) {
+                await silentlyUpgradeStoredPasswordPayload(decrypted.password);
+              } else {
+                await upgradeLegacyAndroidBiometricsStorage(
+                  decrypted.password,
+                  typeof keychainObject.storage === 'string'
+                    ? keychainObject.storage
+                    : undefined,
+                );
+              }
             }
 
             onRequestReturn(instance);
@@ -757,12 +845,16 @@ export function createBusinessKeychainApi({
           case RequestGenericPurpose.DECRYPT_PWD: {
             await onPlainPassword?.(decrypted.password);
             apisLock.updateUnlockTime();
-            await upgradeLegacyAndroidBiometricsStorage(
-              decrypted.password,
-              typeof keychainObject.storage === 'string'
-                ? keychainObject.storage
-                : undefined,
-            );
+            if (usedFallbackRabbitCode) {
+              await silentlyUpgradeStoredPasswordPayload(decrypted.password);
+            } else {
+              await upgradeLegacyAndroidBiometricsStorage(
+                decrypted.password,
+                typeof keychainObject.storage === 'string'
+                  ? keychainObject.storage
+                  : undefined,
+              );
+            }
             onRequestReturn(instance);
             return { ...keychainObject, actionSuccess: true };
           }
