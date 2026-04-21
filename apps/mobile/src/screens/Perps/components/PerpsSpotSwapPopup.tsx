@@ -253,10 +253,12 @@ export const PerpsSpotSwapPopup: React.FC<{
         // Buying toCoin with USDC: limitPx = midPrice * (1 + slippage)
         const limitPx = new BigNumber(activeMidPrice)
           .times(1 + STABLECOIN_SLIPPAGE)
-          .toFixed(4);
+          .decimalPlaces(4, BigNumber.ROUND_DOWN)
+          .toFixed();
         const size = new BigNumber(amount)
           .div(activeMidPrice)
-          .toFixed(2, BigNumber.ROUND_DOWN);
+          .decimalPlaces(2, BigNumber.ROUND_DOWN)
+          .toFixed();
         await onSpotOrder({
           coin: toCoin as 'USDE' | 'USDT' | 'USDH',
           isBuy: true,
@@ -267,11 +269,14 @@ export const PerpsSpotSwapPopup: React.FC<{
         // Selling fromCoin for USDC: limitPx = midPrice * (1 - slippage)
         const limitPx = new BigNumber(activeMidPrice)
           .times(1 - STABLECOIN_SLIPPAGE)
-          .toFixed(4);
+          .decimalPlaces(4, BigNumber.ROUND_DOWN)
+          .toFixed();
         await onSpotOrder({
           coin: fromCoin as 'USDE' | 'USDT' | 'USDH',
           isBuy: false,
-          size: new BigNumber(amount).toFixed(2, BigNumber.ROUND_DOWN),
+          size: new BigNumber(amount)
+            .decimalPlaces(2, BigNumber.ROUND_DOWN)
+            .toFixed(),
           limitPx,
         });
       }
