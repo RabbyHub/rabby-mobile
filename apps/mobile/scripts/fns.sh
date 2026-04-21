@@ -1039,6 +1039,41 @@ google_play_list_tracks_in_edit() {
     ''
 }
 
+google_play_list_bundles_in_edit() {
+  local package_name="$1"
+  local edit_id="$2"
+  google_play_api_json_request \
+    GET \
+    "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/$package_name/edits/$edit_id/bundles" \
+    ''
+}
+
+google_play_extract_highest_version_code_from_bundles_json() {
+  node --eval "
+    let raw = '';
+    process.stdin.on('data', chunk => { raw += chunk; });
+    process.stdin.on('end', () => {
+      const parsed = JSON.parse(raw);
+      const bundles = Array.isArray(parsed.bundles) ? parsed.bundles : [];
+      let highest = null;
+
+      for (const bundle of bundles) {
+        const numeric = Number(bundle && bundle.versionCode);
+        if (!Number.isFinite(numeric)) {
+          continue;
+        }
+        if (highest === null || numeric > highest) {
+          highest = numeric;
+        }
+      }
+
+      if (highest !== null) {
+        process.stdout.write(String(highest));
+      }
+    });
+  "
+}
+
 google_play_extract_highest_version_code_from_tracks_json() {
   node --eval "
     let raw = '';
@@ -1074,14 +1109,25 @@ google_play_extract_highest_version_code_from_tracks_json() {
 resolve_google_play_latest_version_code() {
   local package_name="$1"
 
-  local edit_response edit_id tracks_response status latest_version_code
+  local edit_response edit_id bundles_response bundles_status tracks_response tracks_status latest_version_code
   edit_response=$(google_play_create_edit "$package_name") || return 1
   edit_id=$(printf '%s' "$edit_response" | google_play_extract_json_field id) || return 1
 
-  status=0
-  tracks_response=$(google_play_list_tracks_in_edit "$package_name" "$edit_id") || status=$?
+  bundles_status=0
+  bundles_response=$(google_play_list_bundles_in_edit "$package_name" "$edit_id") || bundles_status=$?
+  if [ "$bundles_status" -eq 0 ]; then
+    latest_version_code=$(printf '%s' "$bundles_response" | google_play_extract_highest_version_code_from_bundles_json) || return 1
+    google_play_delete_edit "$package_name" "$edit_id" >/dev/null 2>&1 || true
+    if [ -n "$latest_version_code" ]; then
+      printf '%s\n' "$latest_version_code"
+      return 0
+    fi
+  fi
+
+  tracks_status=0
+  tracks_response=$(google_play_list_tracks_in_edit "$package_name" "$edit_id") || tracks_status=$?
   google_play_delete_edit "$package_name" "$edit_id" >/dev/null 2>&1 || true
-  [ "$status" -eq 0 ] || return "$status"
+  [ "$tracks_status" -eq 0 ] || return "$tracks_status"
 
   latest_version_code=$(printf '%s' "$tracks_response" | google_play_extract_highest_version_code_from_tracks_json) || return 1
   if [ -n "$latest_version_code" ]; then

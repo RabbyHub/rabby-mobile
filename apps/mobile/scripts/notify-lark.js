@@ -1,13 +1,7 @@
 #!/usr/bin/env node
 
 const Axios = require('axios');
-
-const {
-  getLarkToken,
-  makeSign,
-  generateQRCodeImageBuffer,
-  uploadImageToLark,
-} = require('./libs/lark');
+const { createHmac } = require('crypto');
 
 const chatURL =
   process.env.RABBY_MOBILE_LARK_CHAT_URL || process.env.LARK_CHAT_URL;
@@ -20,6 +14,24 @@ if (!chatSecret) {
   throw new Error('RABBY_MOBILE_LARK_CHAT_SECRET is not set');
 }
 
+function loadLarkHelpers() {
+  return require('./libs/lark');
+}
+
+function makeLarkSign(secret) {
+  const timestamp = Date.now();
+  const timeSec = Math.floor(timestamp / 1000);
+  const stringToSign = `${timeSec}\n${secret}`;
+  const Signature = createHmac('sha256', stringToSign)
+    .digest()
+    .toString('base64');
+
+  return {
+    timeSec,
+    Signature,
+  };
+}
+
 // sendMessage with axios
 async function sendMessage({
   platform = 'android',
@@ -30,7 +42,8 @@ async function sendMessage({
   gitRefURL = '',
   triggers = [],
 }) {
-  const { timeSec, Signature } = makeSign(chatSecret);
+  const { generateQRCodeImageBuffer, uploadImageToLark } = loadLarkHelpers();
+  const { timeSec, Signature } = makeLarkSign(chatSecret);
 
   // dedupe
   triggers = [...new Set(triggers)];
@@ -151,7 +164,7 @@ async function sendMessage({
 }
 
 async function sendTextMessage({ title, lines = [] }) {
-  const { timeSec, Signature } = makeSign(chatSecret);
+  const { timeSec, Signature } = makeLarkSign(chatSecret);
 
   const headers = {
     'Content-Type': 'application/json',
@@ -181,6 +194,7 @@ async function sendTextMessage({ title, lines = [] }) {
 const args = process.argv.slice(2);
 
 if (!process.env.CI && args[0] === 'get-token') {
+  const { getLarkToken } = loadLarkHelpers();
   getLarkToken().then(accessToken => {
     console.log(`[notify-lark] get-token accessToken: ${accessToken}`);
   });
