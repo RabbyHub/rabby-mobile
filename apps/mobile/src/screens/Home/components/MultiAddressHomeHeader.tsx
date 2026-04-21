@@ -277,8 +277,8 @@ export function MultiAddressHomeHeader(
                 ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
                 : ['rgba(0, 0, 0, 0.10)', '#232428']
             }
-            start={isLight ? { x: 0.25, y: 0.5 } : { x: 1, y: 0 }}
-            end={isLight ? { x: 0.75, y: 0.5 } : { x: 0, y: 0.14 }}
+            start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
+            end={isLight ? { x: 0.75, y: 0.5 } : { x: -0.14, y: 0.59 }}
             style={[
               styles.curveCardGradientBg,
               isAnimRunning && styles.curveCardGradientBgWithAnim,
