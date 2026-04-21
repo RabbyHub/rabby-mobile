@@ -76,6 +76,10 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { accountToShowReceiveTip } =
     useAccountHomeShowReceiveTip(currentAccount);
 
+  if (!currentAccount) {
+    return null;
+  }
+
   if (errorNotAssets) {
     return (
       <NetWorkError
@@ -86,9 +90,6 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
     );
   }
 
-  if (!currentAccount) {
-    return null;
-  }
   if (accountToShowReceiveTip) {
     return <ReceiveOnNoAssets account={accountToShowReceiveTip} />;
   }
