@@ -108,7 +108,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 100204
-        versionName "0.6.66"
+        versionName "0.6.67"
         missingDimensionStrategy "store", "play"
         externalNativeBuild {
           cmake {
