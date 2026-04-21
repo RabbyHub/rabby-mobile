@@ -26,16 +26,6 @@ import { ReceiveOnNoAssets } from './components/ReceiveOnNoAssets';
 import { useAccountHomeShowReceiveTip } from '../Address/components/MultiAssets/hooks';
 
 const ScreenWidth = Dimensions.get('window').width;
-export const icons = {
-  unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
-  unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
-  foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
-  foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png'),
-  pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
-  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
-  unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
-};
 
 interface Props {
   onReachTopStatusChange?: (status: boolean) => void;
@@ -59,7 +49,9 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
   const { hasNoData: hasNoCurveData } = useSingleHomeHasNoData();
 
   const handleRefresh = useCallback(async () => {
-    if (!currentAddress) return;
+    if (!currentAddress) {
+      return;
+    }
     apisAddressBalance.triggerUpdate({
       address: currentAddress,
       force: true,
@@ -94,7 +86,9 @@ export const AssetContainer: React.FC<Props> = ({ onReachTopStatusChange }) => {
     );
   }
 
-  if (!currentAccount) return null;
+  if (!currentAccount) {
+    return null;
+  }
   if (accountToShowReceiveTip) {
     return <ReceiveOnNoAssets account={accountToShowReceiveTip} />;
   }
