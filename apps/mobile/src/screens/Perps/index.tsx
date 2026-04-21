@@ -164,10 +164,7 @@ export const PerpsOriginScreen = () => {
   // Guide popup is now triggered by LearnMore card in PerpsAccountCard
 
   const onRefresh = useMemoizedFn(() => {
-    if (isLogin) {
-      refreshData();
-    }
-    fetchMarketData();
+    refreshData();
   });
 
   // Handle scroll event

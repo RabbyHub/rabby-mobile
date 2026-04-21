@@ -1,7 +1,7 @@
 import {
   AccountHistoryItem,
   MarketDataMap,
-  usePerpsStore,
+  perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -35,13 +35,10 @@ export const PerpsHistoryList: React.FC<{
   historyList: list,
   style,
 }) => {
-  console.log('PerpsHistoryList render', list?.[0], list?.[1]);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const {
-    state: { fillsOrderTpOrSl },
-  } = usePerpsStore();
+  const fillsOrderTpOrSl = perpsStore(s => s.fillsOrderTpOrSl);
 
   const [selectedFill, setSelectedFill] = useState<
     (WsFill & { logoUrl: string }) | null

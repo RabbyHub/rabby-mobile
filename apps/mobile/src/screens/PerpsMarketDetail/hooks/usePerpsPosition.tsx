@@ -1,6 +1,9 @@
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import { perpsStore, usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import {
+  perpsStore,
+  setAccountNeedApproveAgent,
+} from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
 import { Dimensions, Platform } from 'react-native';
@@ -8,21 +11,11 @@ import { PERPS_BUILDER_INFO } from '@/constant/perps';
 import { sleep } from '@/utils/async';
 import { OrderResponse } from '@rabby-wallet/hyperliquid-sdk';
 import { showToast } from '@/hooks/perps/showToast';
-import { useShallow } from 'zustand/react/shallow';
 import { formatPerpsCoin } from '@/utils/perps';
 import { Text } from '@/components/Typography';
 
 export const usePerpsPosition = () => {
-  const {
-    fetchPositionOpenOrders,
-    fetchClearinghouseState,
-    setAccountNeedApproveAgent,
-  } = usePerpsStore();
-  const { currentPerpsAccount } = perpsStore(
-    useShallow(s => ({
-      currentPerpsAccount: s.currentPerpsAccount,
-    })),
-  );
+  const currentPerpsAccount = perpsStore(s => s.currentPerpsAccount);
 
   const formatTriggerPx = (px?: string) => {
     // avoid '.15' input error from hy validator
@@ -103,7 +96,6 @@ export const usePerpsPosition = () => {
         });
         if (res?.status === 'ok') {
           showToast(actionText + ' successfully', 'success');
-          fetchClearinghouseState();
         } else {
           showToast(
             res?.response?.data?.error || actionText + ' error',
@@ -154,9 +146,6 @@ export const usePerpsPosition = () => {
         formattedSlTriggerPx &&
           (nextCurrentTpOrSl.slPrice = formattedSlTriggerPx);
         showToast(autoCloseText + ' set successfully', 'success');
-        setTimeout(() => {
-          fetchPositionOpenOrders();
-        }, 1000);
         return true;
       } catch (error: any) {
         const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
@@ -199,7 +188,6 @@ export const usePerpsPosition = () => {
 
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
-          fetchClearinghouseState();
           const { totalSz, avgPx } = filled;
           const msg = `Closed ${direction} ${formatPerpsCoin(
             coin,
@@ -311,8 +299,6 @@ export const usePerpsPosition = () => {
         const res = results[0];
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
-          fetchClearinghouseState();
-
           const { totalSz, avgPx } = filled;
           const msg = `Opened ${direction} ${formatPerpsCoin(
             coin,
@@ -381,7 +367,6 @@ export const usePerpsPosition = () => {
         });
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
-          fetchClearinghouseState();
           showToast('Swap completed successfully', 'success');
           return filled;
         }

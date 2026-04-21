@@ -5,12 +5,7 @@ import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ImageBackground,
-  LayoutChangeEvent,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ImageBackground, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { usePerpsPopupState } from '../hooks/usePerpsPopupState';
 import { usePerpsAccount } from '@/hooks/perps/usePerpsAccount';
@@ -41,54 +36,13 @@ export const PerpsAccountCard: React.FC = () => {
 
   const { availableBalance, accountValue, isUnifiedAccount, spotBalances } =
     usePerpsAccount();
-  const [isBalanceExpanded, setIsBalanceExpanded] = React.useState(true);
+  const [isBalanceExpanded, setIsBalanceExpanded] = React.useState(false);
 
   const visibleBalances = React.useMemo(() => {
     return spotBalances
-      .filter(b => Number(b.total) >= 0.1)
-      .sort((a, b) => Number(b.total) - Number(a.total));
+      .filter(b => Number(b.available) >= 0.1)
+      .sort((a, b) => Number(b.available) - Number(a.available));
   }, [spotBalances]);
-
-  const chipYRef = React.useRef<Record<number, number>>({});
-  const [rowStartIndices, setRowStartIndices] = React.useState<
-    Record<number, true>
-  >({ 0: true });
-
-  React.useEffect(() => {
-    chipYRef.current = {};
-    setRowStartIndices({ 0: true });
-  }, [visibleBalances.length]);
-
-  const handleChipLayout = React.useCallback(
-    (idx: number) => (e: LayoutChangeEvent) => {
-      chipYRef.current[idx] = e.nativeEvent.layout.y;
-      const yMap = chipYRef.current;
-      const indices = Object.keys(yMap)
-        .map(Number)
-        .sort((a, b) => a - b);
-      const next: Record<number, true> = {};
-      let lastY = -Infinity;
-      for (const i of indices) {
-        const y = yMap[i] ?? 0;
-        if (y !== lastY) {
-          next[i] = true;
-          lastY = y;
-        }
-      }
-      setRowStartIndices(prev => {
-        const prevKeys = Object.keys(prev);
-        const nextKeys = Object.keys(next);
-        if (
-          prevKeys.length === nextKeys.length &&
-          nextKeys.every(k => prev[Number(k)])
-        ) {
-          return prev;
-        }
-        return next;
-      });
-    },
-    [],
-  );
 
   const isNewUser = React.useMemo(() => {
     return Number(availableBalance) === 0 && accountValue === 0;
@@ -184,25 +138,14 @@ export const PerpsAccountCard: React.FC = () => {
                 end={{ x: 1, y: 0.5 }}
                 style={styles.expandedBalances}>
                 <View style={styles.balanceChipRow}>
-                  {visibleBalances.map((b, idx) => {
-                    const isRowStart = !!rowStartIndices[idx];
-                    return (
-                      <View
-                        key={b.coin}
-                        onLayout={handleChipLayout(idx)}
-                        style={styles.balanceChipWrap}>
-                        {!isRowStart && (
-                          <View style={styles.balanceChipDivider} />
-                        )}
-                        <View style={styles.balanceChip}>
-                          {COIN_ICON_MAP[b.coin] || null}
-                          <Text style={styles.balanceChipText}>
-                            {formatUsdValue(Number(b.available))}
-                          </Text>
-                        </View>
-                      </View>
-                    );
-                  })}
+                  {visibleBalances.map(b => (
+                    <View key={b.coin} style={styles.balanceChip}>
+                      {COIN_ICON_MAP[b.coin] || null}
+                      <Text style={styles.balanceChipText}>
+                        {formatUsdValue(Number(b.available))}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
                 <TouchableOpacity
                   style={styles.toSwapBtn}
@@ -212,7 +155,9 @@ export const PerpsAccountCard: React.FC = () => {
                       isShowSwapPopup: true,
                     }));
                   }}>
-                  <Text style={styles.toSwapText}>To swap→</Text>
+                  <Text style={styles.toSwapText}>
+                    {t('page.perps.PerpsSpotSwap.toSwapEntry')}
+                  </Text>
                 </TouchableOpacity>
               </LinearGradient>
             )}
@@ -274,47 +219,6 @@ export const PerpsAccountCard: React.FC = () => {
     </>
   );
 };
-
-// return (
-//   <GasAccountWrapperBg style={[styles.card, styles.loginCard]}>
-//     <View style={styles.loginCardContent}>
-//       <RcTradPerps style={styles.icon} />
-//       <Text style={styles.loginCardTitle}>
-//         {t('page.perps.PerpsCard.title')}
-//       </Text>
-//       <Text style={styles.loginCardDesc}>
-//         {t('page.perps.PerpsCard.loginDesc')}
-//       </Text>
-//     </View>
-//     <View style={styles.loginCardBtns}>
-//       <Button
-//         height={48}
-//         type="primary"
-//         onPress={() => {
-//           setPopupState(prev => ({
-//             ...prev,
-//             isShowLoginPopup: true,
-//           }));
-//         }}
-//         titleStyle={styles.btnTitle}
-//         title={t('page.perps.PerpsCard.loginBtn')}
-//       />
-//       <Button
-//         height={48}
-//         onPress={() => {
-//           setPopupState(prev => ({
-//             ...prev,
-//             isShowGuidePopup: true,
-//           }));
-//         }}
-//         buttonStyle={styles.learnBtn}
-//         titleStyle={styles.learnBtnTitle}
-//         title={t('page.perps.PerpsCard.learnBtn')}
-//       />
-//     </View>
-//   </GasAccountWrapperBg>
-// );
-// };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   card: {
@@ -494,16 +398,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     flexWrap: 'wrap',
     flex: 1,
-  },
-  balanceChipWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  balanceChipDivider: {
-    width: 1,
-    height: 12,
-    marginHorizontal: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    columnGap: 17,
+    rowGap: 4,
   },
   balanceChip: {
     flexDirection: 'row',

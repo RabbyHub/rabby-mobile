@@ -458,9 +458,13 @@ const handleSelectDefaultAccount = async (accounts: Account[]) => {
   }
 };
 
-const setAccountNeedApproveAgent = (payload: boolean) => {
+export const setAccountNeedApproveAgent = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, accountNeedApproveAgent: payload }));
 };
+
+// Module-level no-op placeholders; callers can import without subscribing to state
+export const fetchClearinghouseStateAction = async () => {};
+export const fetchPositionOpenOrdersAction = async () => {};
 
 const setAccountNeedApproveBuilderFee = (payload: boolean) => {
   setPerpsState(prev => ({ ...prev, accountNeedApproveBuilderFee: payload }));

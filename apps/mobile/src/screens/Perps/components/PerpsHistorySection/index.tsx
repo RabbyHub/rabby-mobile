@@ -1,7 +1,7 @@
 import {
   AccountHistoryItem,
   MarketDataMap,
-  usePerpsStore,
+  perpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -31,9 +31,7 @@ export const PerpsHistorySection: React.FC<{
     return (list || []).slice(0, 3);
   }, [list]);
 
-  const {
-    state: { fillsOrderTpOrSl },
-  } = usePerpsStore();
+  const fillsOrderTpOrSl = perpsStore(s => s.fillsOrderTpOrSl);
 
   const [selectedFill, setSelectedFill] = useState<
     (WsFill & { logoUrl: string }) | null

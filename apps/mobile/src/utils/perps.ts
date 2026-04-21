@@ -496,3 +496,7 @@ export const handleDisplayFundingPayments = (fundingPayments: string) => {
 
   return sign + '$' + bn.abs().toFixed(2);
 };
+
+// Hyperliquid spot balance keys: USDT is keyed as 'USDT0' on the spot side.
+export const getSpotBalanceKey = (asset: string): string =>
+  asset === 'USDT' ? 'USDT0' : asset;

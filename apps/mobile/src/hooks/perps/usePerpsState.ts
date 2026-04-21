@@ -61,9 +61,7 @@ export const usePerpsState = () => {
     setMarketData,
     setAccountNeedApproveAgent,
     setAccountNeedApproveBuilderFee,
-    // setCurrentPerpsAccount,
     setInitialized,
-    // setApproveSignatures,
     resetAccountState,
 
     // Effects
@@ -295,12 +293,9 @@ export const usePerpsState = () => {
   const handleSafeSetUnifiedAccount = useCallback(async () => {
     try {
       const sdk = apisPerps.getPerpsSDK();
-      const res = await sdk.exchange?.agentSetAbstraction(
-        Abstraction.UNIFIED_ACCOUNT,
-      );
-      console.log('handleSafeSetUnifiedAccount res', res);
+      await sdk.exchange?.agentSetAbstraction(Abstraction.UNIFIED_ACCOUNT);
     } catch (e) {
-      console.log('Failed to handleSafeSetUnifiedAccount:', e);
+      // silent: this is a best-effort post-approve sync
     }
   }, []);
 
@@ -333,7 +328,6 @@ export const usePerpsState = () => {
         handleSafeSetUnifiedAccount();
         handleSafeSetReference();
       }, 100);
-      // const [approveAgentRes, approveBuilderFeeRes] = results;
     },
     [handleSafeSetReference, handleSafeSetUnifiedAccount],
   );
@@ -413,7 +407,6 @@ export const usePerpsState = () => {
           });
         }
       } catch (e) {
-        // showToast(String(e), 'error');
         setAccountNeedApproveAgent(true);
         setAccountNeedApproveBuilderFee(true);
         Sentry.captureException(
@@ -472,7 +465,6 @@ export const usePerpsState = () => {
           return;
         }
 
-        console.log('handleActionApproveStatus signActions', signActions);
         await executeSignatures(signActions, currentPerpsAccount);
 
         try {
@@ -514,37 +506,6 @@ export const usePerpsState = () => {
 
     const initIsLogin = async () => {
       try {
-        // const noLoginAction = async () => {
-        //   apisPerps.setPerpsCurrentAccount(null);
-        //   fetchPerpPermission('');
-        //   await fetchMarketData();
-        //   setInitialized(true);
-        // };
-
-        // if (!currentAccount || !currentAccount.address) {
-        //   // 如果没有登录状态，则只获取市场数据即可
-        //   await noLoginAction();
-        //   return false;
-        // }
-        // const accountsList = await getAllMyAccount();
-        // const targetTypeAccount = accountsList.find(
-        //   acc =>
-        //     isSameAddress(acc.address, currentAccount.address) &&
-        //     acc.type === currentAccount.type,
-        // );
-
-        // if (!targetTypeAccount) {
-        //   // 地址列表没找到
-        //   await noLoginAction();
-        //   return false;
-        // }
-
-        // const res = await apisPerps.getPerpsAgentWallet(currentAccount.address);
-        // if (!res) {
-        //   // 没有找到store对应的 agent wallet
-        //   await noLoginAction();
-        //   return false;
-        // }
         const initAccount = perpsState.currentPerpsAccount;
         if (!initAccount) {
           return false;
@@ -668,7 +629,6 @@ export const usePerpsState = () => {
 
   const login = useMemoizedFn(async (account: Account) => {
     try {
-      // const { privateKey, publicKey } = await getOrCreateAgentWallet(account);
       const sdk = apisPerps.getPerpsSDK();
       const res = await apisPerps.getPerpsAgentWallet(account.address);
       const agentAddress = res?.preference?.agentAddress || '';
@@ -718,7 +678,6 @@ export const usePerpsState = () => {
 
   const logout = useMemoizedFn((address: string) => {
     apisPerpsStore.logout();
-    // apisPerps.destroyPerpsSDK();
     apisPerps.setPerpsCurrentAccount(null);
     apisPerps.setSendApproveAfterDeposit(address, []);
     deleteAgentCbRef.current = null;

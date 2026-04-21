@@ -73,6 +73,7 @@ export const PerpsMarketDetailScreen = () => {
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [popupState, setPopupState] = usePerpsPopupState();
+  const [isShowDepositPopup, setIsShowDepositPopup] = useState(false);
 
   const navigation = useRabbyAppNavigation();
 
@@ -275,11 +276,10 @@ export const PerpsMarketDetailScreen = () => {
     return !!currentPosition;
   }, [currentPosition]);
 
-  const {
-    accountValue,
-    availableBalance: accountAvailableBalance,
-    isUnifiedAccount,
-  } = usePerpsAccount();
+  const { accountValue, isUnifiedAccount, getAvailableByAsset } =
+    usePerpsAccount();
+
+  const quoteAsset = currentAssetCtx?.quoteAsset;
 
   const availableBalance = useMemo(() => {
     if (activeAssetData?.availableToTrade) {
@@ -288,10 +288,11 @@ export const PerpsMarketDetailScreen = () => {
       // type availableToTrade : [longAvailable, shortAvailable]
       return Number(activeAssetData.availableToTrade[isShort ? 1 : 0]);
     }
-    return Number(accountAvailableBalance) || 0;
+    return getAvailableByAsset(quoteAsset || 'USDC') || 0;
   }, [
     activeAssetData?.availableToTrade,
-    accountAvailableBalance,
+    quoteAsset,
+    getAvailableByAsset,
     hasPosition,
     currentPosition?.position.szi,
   ]);
@@ -411,7 +412,8 @@ export const PerpsMarketDetailScreen = () => {
         // account={currentPerpsAccount}
         popupIsOpen={showSearchListPopup}
         quoteCoin={currentAssetCtx?.quoteAsset}
-        coin={currentAssetCtx?.displayName || coin}
+        displayName={currentAssetCtx?.displayName || coin}
+        coin={coin}
         logoUrl={currentAssetCtx?.logoUrl}
         onSelectCoin={() => {
           setShowSearchListPopup(true);
@@ -462,13 +464,11 @@ export const PerpsMarketDetailScreen = () => {
             />
             {isLogin && isInitialized && !hasPosition ? (
               <PerpsDepositCard
+                accountValue={accountValue}
                 availableBalance={availableBalance}
                 quoteAsset={currentAssetCtx?.quoteAsset}
                 onDepositPress={() => {
-                  setPopupState(prev => ({
-                    ...prev,
-                    isShowDepositPopup: true,
-                  }));
+                  setIsShowDepositPopup(true);
                 }}
                 onSwapPress={handleSwapPress}
               />
@@ -556,12 +556,9 @@ export const PerpsMarketDetailScreen = () => {
 
       <PerpsDepositPopup
         account={currentPerpsAccount}
-        visible={popupState.isShowDepositPopup}
+        visible={isShowDepositPopup}
         onClose={() => {
-          setPopupState(prev => ({
-            ...prev,
-            isShowDepositPopup: false,
-          }));
+          setIsShowDepositPopup(false);
         }}
         onDeposit={async (txs, amount, cacheBridgeHistory, options) => {
           try {
@@ -615,7 +612,7 @@ export const PerpsMarketDetailScreen = () => {
         quoteAsset={currentAssetCtx?.quoteAsset}
         onDepositPress={() => {
           setOpenPositionVisible(false);
-          setPopupState(prev => ({ ...prev, isShowDepositPopup: true }));
+          setIsShowDepositPopup(true);
         }}
         onSwapPress={() => {
           setOpenPositionVisible(false);
@@ -804,7 +801,7 @@ export const PerpsMarketDetailScreen = () => {
           // Balance refreshed via WebSocket subscription
         }}
         onDepositPress={() => {
-          setPopupState(prev => ({ ...prev, isShowDepositPopup: true }));
+          setIsShowDepositPopup(true);
         }}
       />
     </>

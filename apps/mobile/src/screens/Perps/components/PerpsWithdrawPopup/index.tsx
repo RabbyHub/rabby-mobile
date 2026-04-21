@@ -279,10 +279,15 @@ export const PerpsWithdrawPopup: React.FC<{
             </Text>
           </View>
           <View style={styles.formItem}>
-            <Text style={styles.formItemLabel}>{'chain'}</Text>
+            <Text style={styles.formItemLabel}>
+              {t('page.perps.PerpsWithdrawPopup.chain')}
+            </Text>
             <TouchableOpacity
               style={[styles.chainContainer]}
-              onPress={() => setChainSelectVisible(true)}>
+              onPress={() => {
+                Keyboard.dismiss();
+                setChainSelectVisible(true);
+              }}>
               <View style={styles.left}>
                 <ChainIconImage
                   size={24}
@@ -363,7 +368,10 @@ export const PerpsWithdrawPopup: React.FC<{
               <View style={styles.divider} />
               <TouchableOpacity
                 style={styles.tokenContainer}
-                onPress={() => setTokenSelectVisible(true)}>
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setTokenSelectVisible(true);
+                }}>
                 <AssetAvatar
                   size={26}
                   chain={selectedToken?.chain}
@@ -404,7 +412,9 @@ export const PerpsWithdrawPopup: React.FC<{
                       .toFixed(),
                   );
                 }}>
-                <Text style={styles.quickAmountText}>Max</Text>
+                <Text style={styles.quickAmountText}>
+                  {t('page.perps.PerpsWithdrawPopup.max')}
+                </Text>
               </TouchableOpacity>
             </View>
             <View style={styles.errorContainer}>
@@ -461,6 +471,7 @@ export const PerpsWithdrawPopup: React.FC<{
       </AppBottomSheetModal>
       <PerpsWithdrawSelectChainPopup
         visible={chainSelectVisible}
+        title={t('page.perps.PerpsWithdrawPopup.selectChain')}
         options={chainOptions}
         onClose={() => setChainSelectVisible(false)}
         onSelect={option => {

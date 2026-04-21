@@ -1,7 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { perpsStore } from '@/hooks/perps/usePerpsStore';
+import { useShallow } from 'zustand/react/shallow';
 import { useTheme2024 } from '@/hooks/theme';
 import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -18,14 +19,25 @@ export const PerpsHistoryScreen = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
-  const { state } = usePerpsStore();
-
-  const { marketDataMap, userFills, localLoadingHistory, userAccountHistory } =
-    state || {};
+  const {
+    marketData,
+    marketDataMap,
+    userFills,
+    localLoadingHistory,
+    userAccountHistory,
+  } = perpsStore(
+    useShallow(s => ({
+      marketData: s.marketData,
+      marketDataMap: s.marketDataMap,
+      userFills: s.userFills,
+      localLoadingHistory: s.localLoadingHistory,
+      userAccountHistory: s.userAccountHistory,
+    })),
+  );
 
   const data = React.useMemo(() => {
-    return sortBy(state.marketData, item => -(item.dayNtlVlm || 0));
-  }, [state.marketData]);
+    return sortBy(marketData, item => -(item.dayNtlVlm || 0));
+  }, [marketData]);
 
   const route =
     useRoute<

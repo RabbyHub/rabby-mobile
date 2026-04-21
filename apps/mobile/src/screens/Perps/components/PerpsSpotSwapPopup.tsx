@@ -34,11 +34,16 @@ const COIN_ICONS: Record<string, (size: number) => React.ReactNode> = {
   USDE: (s: number) => <RcIconUSDE width={s} height={s} />,
 };
 
-const ALL_COINS = ['USDC', 'USDT', 'USDH', 'USDE'];
+type SpotStableCoin = 'USDT' | 'USDH' | 'USDE';
+
+const ALL_COINS: string[] = ['USDC', 'USDT', 'USDH', 'USDE'];
 const STABLECOIN_SLIPPAGE = 0.01;
 
+const isSpotStableCoin = (coin: string): coin is SpotStableCoin =>
+  coin === 'USDT' || coin === 'USDH' || coin === 'USDE';
+
 // Spot market coin identifiers for getAllMids (based on USDC)
-export const SPOT_STABLE_COIN_NAME: Record<string, string> = {
+export const SPOT_STABLE_COIN_NAME: Record<SpotStableCoin, string> = {
   USDE: '@150',
   USDT: '@166',
   USDH: '@230',
@@ -52,11 +57,11 @@ export const PerpsSpotSwapPopup: React.FC<{
   onSwapSuccess?(): void;
   onDepositPress?(): void;
   onSpotOrder?(params: {
-    coin: 'USDE' | 'USDT' | 'USDH';
+    coin: SpotStableCoin;
     isBuy: boolean;
     size: string;
     limitPx: string;
-  }): Promise<any>;
+  }): Promise<unknown>;
 }> = ({
   visible,
   targetAsset,
@@ -69,7 +74,7 @@ export const PerpsSpotSwapPopup: React.FC<{
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { spotBalancesMap } = usePerpsAccount();
+  const { spotBalancesMap, getSpotBalance } = usePerpsAccount();
   const [isLoading, setIsLoading] = useState(false);
 
   const [fromCoin, setFromCoin] = useState<string>('USDC');
@@ -85,11 +90,11 @@ export const PerpsSpotSwapPopup: React.FC<{
   // Sort coins by balance descending to pick defaults
   const sortedByBalance = useMemo(() => {
     return [...ALL_COINS].sort((a, b) => {
-      const balA = Number(spotBalancesMap[a]?.available) || 0;
-      const balB = Number(spotBalancesMap[b]?.available) || 0;
+      const balA = getSpotBalance(a);
+      const balB = getSpotBalance(b);
       return balB - balA;
     });
-  }, [spotBalancesMap]);
+  }, [getSpotBalance]);
 
   // Fetch mid prices when popup opens (with 30s TTL cache)
   const lastFetchTimeRef = useRef(0);
@@ -130,9 +135,7 @@ export const PerpsSpotSwapPopup: React.FC<{
         // From home page: pick by balance
         const top1 = sortedByBalance[0];
         const top2 = sortedByBalance[1];
-        const hasNonUsdcBalance =
-          top1 !== 'USDC' ||
-          (Number(spotBalancesMap[top1]?.available) || 0) > 0;
+        const hasNonUsdcBalance = top1 !== 'USDC' || getSpotBalance(top1) > 0;
 
         if (hasNonUsdcBalance && top1 && top2 && top1 !== top2) {
           setFromCoin(top1);
@@ -150,9 +153,8 @@ export const PerpsSpotSwapPopup: React.FC<{
   }, [visible, targetAsset]);
 
   const fromBalance = useMemo(() => {
-    const b = spotBalancesMap[fromCoin];
-    return b ? Number(b.available) || 0 : 0;
-  }, [fromCoin, spotBalancesMap]);
+    return getSpotBalance(fromCoin);
+  }, [fromCoin, getSpotBalance]);
 
   const toOptions = ALL_COINS;
 
@@ -204,10 +206,12 @@ export const PerpsSpotSwapPopup: React.FC<{
         error: t('page.perps.PerpsSpotSwap.invalidAmount'),
       };
     }
-    if (v < 10) {
+    if (v < 15) {
       return {
         isValid: false,
-        error: t('page.perps.PerpsSpotSwap.minimumAmount'),
+        error: t('page.perps.PerpsSpotSwap.minimumAmount', {
+          amount: 15,
+        }),
       };
     }
     if (v > fromBalance) {
@@ -249,30 +253,39 @@ export const PerpsSpotSwapPopup: React.FC<{
     try {
       setIsLoading(true);
       Keyboard.dismiss();
+      let result: unknown;
       if (fromCoin === 'USDC') {
+        if (!isSpotStableCoin(toCoin)) {
+          return;
+        }
         // Buying toCoin with USDC: limitPx = midPrice * (1 + slippage)
+        // ROUND_UP to honor at least the configured slippage tolerance
         const limitPx = new BigNumber(activeMidPrice)
           .times(1 + STABLECOIN_SLIPPAGE)
-          .decimalPlaces(4, BigNumber.ROUND_DOWN)
+          .decimalPlaces(4, BigNumber.ROUND_UP)
           .toFixed();
         const size = new BigNumber(amount)
           .div(activeMidPrice)
           .decimalPlaces(2, BigNumber.ROUND_DOWN)
           .toFixed();
-        await onSpotOrder({
-          coin: toCoin as 'USDE' | 'USDT' | 'USDH',
+        result = await onSpotOrder({
+          coin: toCoin,
           isBuy: true,
           size,
           limitPx,
         });
       } else {
+        if (!isSpotStableCoin(fromCoin)) {
+          return;
+        }
         // Selling fromCoin for USDC: limitPx = midPrice * (1 - slippage)
+        // ROUND_DOWN to honor at least the configured slippage tolerance
         const limitPx = new BigNumber(activeMidPrice)
           .times(1 - STABLECOIN_SLIPPAGE)
           .decimalPlaces(4, BigNumber.ROUND_DOWN)
           .toFixed();
-        await onSpotOrder({
-          coin: fromCoin as 'USDE' | 'USDT' | 'USDH',
+        result = await onSpotOrder({
+          coin: fromCoin,
           isBuy: false,
           size: new BigNumber(amount)
             .decimalPlaces(2, BigNumber.ROUND_DOWN)
@@ -280,10 +293,12 @@ export const PerpsSpotSwapPopup: React.FC<{
           limitPx,
         });
       }
-      onSwapSuccess?.();
-      onClose();
-    } catch (e) {
-      console.error('Spot swap failed:', e);
+      // onSpotOrder returns null/falsy on failure (toast already shown upstream);
+      // only close and fire onSwapSuccess on truthy result.
+      if (result) {
+        onSwapSuccess?.();
+        onClose();
+      }
     } finally {
       setIsLoading(false);
     }
@@ -339,10 +354,9 @@ export const PerpsSpotSwapPopup: React.FC<{
     onSelect: (c: string) => void,
   ) => (
     <View style={styles.dropdown}>
-      {ALL_COINS.map(coin => {
+      {sortedByBalance.map(coin => {
         const isDisabled = !selectableCoins.includes(coin);
-        const balance = spotBalancesMap[coin];
-        const balVal = balance ? Number(balance.available) || 0 : 0;
+        const balVal = getSpotBalance(coin);
         return (
           <TouchableOpacity
             key={coin}
@@ -388,7 +402,9 @@ export const PerpsSpotSwapPopup: React.FC<{
       keyboardBlurBehavior="restore">
       <BottomSheetView style={styles.container}>
         <Pressable onPress={closeAllDropdowns} style={{ flex: 1 }}>
-          <Text style={styles.title}>swap stablecoins</Text>
+          <Text style={styles.title}>
+            {t('page.perps.PerpsSpotSwap.title')}
+          </Text>
 
           {/* === Swap To === */}
           <View style={[styles.fieldSection, { zIndex: 2 }]}>
@@ -427,8 +443,12 @@ export const PerpsSpotSwapPopup: React.FC<{
                     {t('page.perps.PerpsSpotSwap.balance')}:{' '}
                     {new BigNumber(fromBalance).toFixed(2)}
                   </Text>
-                  {onDepositPress && (
-                    <TouchableOpacity onPress={onDepositPress}>
+                  {onDepositPress && fromCoin === 'USDC' && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        onDepositPress();
+                      }}>
                       <RcIconSwapDeposit width={16} height={16} />
                     </TouchableOpacity>
                   )}
@@ -439,7 +459,14 @@ export const PerpsSpotSwapPopup: React.FC<{
                 <View style={styles.inputWrapper}>
                   <BottomSheetTextInput
                     keyboardType="numeric"
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      {
+                        color: validation.error
+                          ? colors2024['red-default']
+                          : styles.input.color,
+                      },
+                    ]}
                     textAlignVertical="center"
                     placeholder="0"
                     placeholderTextColor={colors2024['neutral-info']}
@@ -485,7 +512,9 @@ export const PerpsSpotSwapPopup: React.FC<{
               <TouchableOpacity
                 style={styles.quickAmountBtn}
                 onPress={() => handleQuickAmount(1)}>
-                <Text style={styles.quickAmountText}>Max</Text>
+                <Text style={styles.quickAmountText}>
+                  {t('page.perps.PerpsSpotSwap.max')}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -493,20 +522,16 @@ export const PerpsSpotSwapPopup: React.FC<{
             <View style={styles.bottomInfo}>
               {Number(amount) > 0 && !validation.error ? (
                 <Text style={styles.estText}>
-                  Est.Receive:{estReceive} {toCoin}
+                  {t('page.perps.PerpsSpotSwap.estReceive', {
+                    amount: estReceive,
+                    coin: toCoin,
+                  })}
                 </Text>
               ) : validation.error ? (
                 <Text style={styles.errorText}>{validation.error}</Text>
               ) : null}
             </View>
           </View>
-
-          {/* Fee
-        {Number(amount) > 0 && (
-          <View style={styles.feeRow}>
-            <Text style={styles.feeText}>Fee: {fee}</Text>
-          </View>
-        )} */}
 
           <Button
             type="hyperliquid"

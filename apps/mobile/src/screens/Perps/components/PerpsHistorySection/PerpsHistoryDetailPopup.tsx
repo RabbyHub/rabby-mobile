@@ -162,7 +162,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                       </Text>
                     </View>
                     <Text style={styles.value}>
-                      ${formatPerpsNumber(px || 0, 4)} USDC
+                      {formatPerpsNumber(px || 0, 4)} USDC
                     </Text>
                   </View>
                   <View style={styles.listItem}>
@@ -172,7 +172,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                       </Text>
                     </View>
                     <Text style={styles.value}>
-                      ${formatPerpsNumber(fee || '0', 4)} {stableCoinName}
+                      {formatPerpsNumber(fee || '0', 4)} {stableCoinName}
                     </Text>
                   </View>
                   {time ? (

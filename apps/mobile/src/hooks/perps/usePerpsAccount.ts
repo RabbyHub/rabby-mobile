@@ -1,7 +1,8 @@
 import { UserAbstractionResp } from '@rabby-wallet/hyperliquid-sdk';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { perpsStore } from './usePerpsStore';
 import { useShallow } from 'zustand/react/shallow';
+import { getSpotBalanceKey } from '@/utils/perps';
 
 export const usePerpsAccount = () => {
   const {
@@ -46,6 +47,24 @@ export const usePerpsAccount = () => {
     );
   }, [isUnifiedAccount, spotAvailableToTrade, perpsWithdrawable]);
 
+  const getSpotBalance = useCallback(
+    (coin: string) => {
+      const balance = spotBalancesMap[getSpotBalanceKey(coin)];
+      return balance ? Number(balance.available) || 0 : 0;
+    },
+    [spotBalancesMap],
+  );
+
+  const getAvailableByAsset = useCallback(
+    (coin: string) => {
+      if (isUnifiedAccount) {
+        return getSpotBalance(coin);
+      }
+      return Number(perpsWithdrawable) || 0;
+    },
+    [isUnifiedAccount, getSpotBalance, perpsWithdrawable],
+  );
+
   return {
     accountValue,
     availableBalance,
@@ -53,5 +72,7 @@ export const usePerpsAccount = () => {
     isUnifiedAccount,
     spotBalances: isUnifiedAccount ? spotBalances || [] : [],
     spotBalancesMap: isUnifiedAccount ? spotBalancesMap || {} : {},
+    getSpotBalance,
+    getAvailableByAsset,
   };
 };

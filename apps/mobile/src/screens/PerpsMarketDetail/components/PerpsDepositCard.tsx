@@ -8,11 +8,13 @@ import { TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Typography';
 
 export const PerpsDepositCard: React.FC<{
+  accountValue: number;
   availableBalance: number;
   quoteAsset?: PerpsQuoteAsset;
   onDepositPress?(): void;
   onSwapPress?(): void;
 }> = ({
+  accountValue,
   availableBalance,
   quoteAsset = 'USDC',
   onDepositPress,
@@ -21,7 +23,8 @@ export const PerpsDepositCard: React.FC<{
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const isSwapRequired = SWAP_REQUIRED_QUOTE_ASSETS.includes(quoteAsset);
+  const isSwapRequired =
+    SWAP_REQUIRED_QUOTE_ASSETS.includes(quoteAsset) && !!accountValue;
   const actionLabel = isSwapRequired
     ? t('page.perps.PerpsDepositCard.swap')
     : t('page.perps.PerpsDepositCard.deposit');

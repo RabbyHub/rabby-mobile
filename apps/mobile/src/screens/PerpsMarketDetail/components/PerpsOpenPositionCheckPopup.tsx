@@ -205,7 +205,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {formatPerpsCoin(coin)}-USD{' '}
+                  {formatPerpsCoin(coin)}-{info.quoteAsset || 'USDC'}{' '}
                   {t('page.perpsDetail.PerpsOpenPositionCheckPopup.price')}
                 </Text>
               </View>

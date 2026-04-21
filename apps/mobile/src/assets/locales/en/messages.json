@@ -2560,7 +2560,10 @@
         "hypeFeeTip": "Fee : ~${{fee}}",
         "hypeActivationFeeTooltip": "A one-time activation fee of {{fee}} will be charged by Hyperliquid for first HyperEVM withdrawal.",
         "hypeGasFeeTooltip": "A fee of ~0.00002 HYPE will be charged to withdraw to the EVM",
-        "selectWithdrawToken": "Select token"
+        "selectWithdrawToken": "Select token",
+        "chain": "Chain",
+        "max": "Max",
+        "selectChain": "Select Chain"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Fee",
@@ -2669,14 +2672,17 @@
         "important": "Important"
       },
       "PerpsSpotSwap": {
-        "title": "Swap",
+        "title": "Swap Stablecoins",
         "from": "From",
         "to": "Swap To",
         "balance": "Balance",
         "swapBtn": "Swap",
+        "max": "Max",
+        "estReceive": "Est. Receive: {{amount}} {{coin}}",
+        "toSwapEntry": "To swap→",
         "insufficientBalance": "Insufficient balance",
         "invalidAmount": "Please input a valid amount",
-        "minimumAmount": "The minimum swap amount is 10"
+        "minimumAmount": "The minimum swap amount is {{amount}}"
       },
       "PerpMarginModePopup": {
         "crossRequiresUnified": "Cross margin for this trading pair requires a Unified Account. Would you like to enable it?"
