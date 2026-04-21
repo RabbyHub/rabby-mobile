@@ -74,11 +74,13 @@ export const TxChange = ({
   }, [tokenChangeData]);
 
   const calcUsdValue = useCallback((item: TokenChangeDataItem) => {
-    const { amount, price, token_id } = item;
+    const { amount, price: _price, token_id } = item;
     const isNft = token_id?.length === 32;
     if (isNft) {
       return '';
     }
+
+    const price = _price ?? (item.token as TokenItem)?.price;
 
     if (price) {
       return formatUsdValue(amount * price);

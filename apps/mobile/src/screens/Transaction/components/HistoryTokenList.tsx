@@ -198,6 +198,7 @@ export const HistoryTokenList = ({
       const isSend = type === HistoryItemCateType.Send;
       const isGasDeposit = type === HistoryItemCateType.GAS_DEPOSIT;
       const tokenIsNft = tokenId?.length === 32;
+
       return (
         <TouchableOpacity onPress={() => handlePress(singeToken!, tokenIsNft)}>
           <View style={[styles.singleBox]}>
@@ -231,7 +232,9 @@ export const HistoryTokenList = ({
                   <HistoryItemTokenPrice
                     tokenId={tokenId}
                     chainId={chain}
-                    singlePrice={singlePrice}
+                    singlePrice={
+                      singlePrice ?? (singeToken as TokenItem)?.price
+                    }
                     address={currentAccount?.address!}
                     amount={singleAmount!}
                     style={styles.tokenPriceText}
