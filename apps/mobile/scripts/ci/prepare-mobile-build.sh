@@ -79,6 +79,11 @@ main() {
   if [ -n "$requested_version" ]; then
     REQUESTED_VERSION="$requested_version" apply_requested_version "$requested_version"
   fi
+
+  if [ "${RABBY_MOBILE_RUN_POSTINSTALL:-false}" = "true" ]; then
+    echo "[prepare-mobile-build] run explicit postinstall"
+    yarn postinstall
+  fi
 }
 
 main "$@"

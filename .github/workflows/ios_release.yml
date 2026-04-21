@@ -119,9 +119,7 @@ jobs:
       - name: Install dependencies && Build app
         run: |
           cd apps/mobile;
-          bash ./scripts/ci/prepare-mobile-build.sh;
-
-          yarn postinstall;
+          RABBY_MOBILE_RUN_POSTINSTALL=true bash ./scripts/ci/prepare-mobile-build.sh;
 
           if [ "$INPUT_MOBILE_LOC" != "mobile-local" ]; then
             RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
