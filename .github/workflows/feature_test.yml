@@ -225,7 +225,12 @@ jobs:
 
           if [ -n "$INPUT_NEW_VERSION_NAME" ]; then
             echo "Apply requested app version: $INPUT_NEW_VERSION_NAME";
-            npm version "$INPUT_NEW_VERSION_NAME" --no-git-tag-version --allow-same-version;
+            node --eval "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              pkg.version = process.env.INPUT_NEW_VERSION_NAME;
+              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+            ";
             yarn syncrnversion;
           fi
 
