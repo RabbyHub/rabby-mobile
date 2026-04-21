@@ -23,6 +23,76 @@ def ios_adhoc_skip_build_archive?
 end
 
 platform :ios do
+  private_lane :load_app_store_connect_api_key_for_testflight do
+    key_id = ENV["RABBY_MOBILE_ASC_API_KEY_ID"]
+    issuer_id = ENV["RABBY_MOBILE_ASC_API_ISSUER_ID"]
+    key_content_base64 = ENV["RABBY_MOBILE_ASC_API_PRIVATE_KEY_BASE64"]
+    duration = (ENV["RABBY_MOBILE_ASC_API_TOKEN_DURATION"] || Spaceship::ConnectAPI::Token::DEFAULT_TOKEN_DURATION).to_i
+    in_house = ENV["RABBY_MOBILE_ASC_API_IN_HOUSE"] == 'true'
+
+    if key_id.to_s.empty?
+      UI.user_error!("Missing App Store Connect API key id: RABBY_MOBILE_ASC_API_KEY_ID")
+    end
+
+    if issuer_id.to_s.empty?
+      UI.user_error!("Missing App Store Connect API issuer id: RABBY_MOBILE_ASC_API_ISSUER_ID")
+    end
+
+    if key_content_base64.to_s.empty?
+      UI.user_error!("Missing App Store Connect API private key: RABBY_MOBILE_ASC_API_PRIVATE_KEY_BASE64")
+    end
+
+    app_store_connect_api_key(
+      key_id: key_id,
+      issuer_id: issuer_id,
+      key_content: key_content_base64,
+      is_key_content_base64: true,
+      duration: duration,
+      in_house: in_house
+    )
+  end
+
+  private_lane :latest_testflight_build_number_for_version do |opts|
+    latest_testflight_build_number(
+      api_key: opts[:api_key],
+      app_identifier: opts[:app_identifier],
+      version: opts[:version],
+      platform: 'ios',
+      initial_build_number: 0
+    ).to_i
+  end
+
+  private_lane :wait_for_uploaded_testflight_build do |opts|
+    timeout_seconds = (ENV['RABBY_MOBILE_ASC_UPLOAD_VERIFY_TIMEOUT_SECONDS'] || '1800').to_i
+    interval_seconds = (ENV['RABBY_MOBILE_ASC_UPLOAD_VERIFY_INTERVAL_SECONDS'] || '30').to_i
+    app_identifier = opts[:app_identifier]
+    version = opts[:version]
+    api_key = opts[:api_key]
+    baseline_build_number = opts[:baseline_build_number].to_i
+    started_at = Time.now
+
+    loop do
+      latest_build_number = latest_testflight_build_number_for_version(
+        api_key: api_key,
+        app_identifier: app_identifier,
+        version: version
+      )
+
+      if latest_build_number > baseline_build_number
+        UI.success("Detected new TestFlight build on App Store Connect: #{version}(#{latest_build_number})")
+        return latest_build_number
+      end
+
+      elapsed_seconds = (Time.now - started_at).to_i
+      if elapsed_seconds >= timeout_seconds
+        UI.user_error!("Upload did not produce a new TestFlight build within #{timeout_seconds}s. version=#{version} baseline_build_number=#{baseline_build_number} latest_build_number=#{latest_build_number}")
+      end
+
+      UI.message("Waiting for a new TestFlight build to appear on App Store Connect for version #{version}. baseline=#{baseline_build_number} latest=#{latest_build_number} elapsed=#{elapsed_seconds}s")
+      sleep(interval_seconds)
+    end
+  end
+
   private_lane :prepare_apple_sign do |opts|
     # setup_ci
 
@@ -128,6 +198,19 @@ platform :ios do
 
   desc "Release for the iOS production"
   lane :appstore do
+      asc_api_key = load_app_store_connect_api_key_for_testflight
+      current_version = get_version_number(
+        xcodeproj: './ios/RabbyMobile.xcodeproj',
+        target: 'RabbyMobile',
+        configuration: 'Release'
+      )
+      baseline_build_number = latest_testflight_build_number_for_version(
+        api_key: asc_api_key,
+        app_identifier: 'com.debank.rabby-mobile',
+        version: current_version
+      )
+      UI.message("Latest TestFlight build before upload for #{current_version}: #{baseline_build_number}")
+
       prepare_apple_sign(type: 'appstore')
       gym(
         scheme: 'RabbyMobile',
@@ -153,12 +236,20 @@ platform :ios do
           }
         })
       pilot(
+        api_key: asc_api_key,
         apple_id: '6474381673',
-        username: ENV["RABBY_MOBILE_PILOT_USERNAME"],
         ipa: "./ios/Package/appstore/RabbyMobile.ipa",
         skip_waiting_for_build_processing: true,
         distribute_only: ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] || false,
       )
+      unless ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] == 'true'
+        wait_for_uploaded_testflight_build(
+          api_key: asc_api_key,
+          app_identifier: 'com.debank.rabby-mobile',
+          version: current_version,
+          baseline_build_number: baseline_build_number
+        )
+      end
   end
 end
 
