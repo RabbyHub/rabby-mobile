@@ -23,6 +23,10 @@ on:
           - 'mobile'
           - 'mobile-local'
         default: 'mobile'
+      NEW_VERSION_NAME:
+        required: false
+        type: string
+        default: ''
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -116,6 +120,13 @@ jobs:
         run: |
           cd apps/mobile;
           yarn install --immutable;
+
+          if [ -n "$INPUT_NEW_VERSION_NAME" ]; then
+            echo "Apply requested app version: $INPUT_NEW_VERSION_NAME";
+            npm version "$INPUT_NEW_VERSION_NAME" --no-git-tag-version --allow-same-version;
+            yarn syncrnversion;
+          fi
+
           yarn postinstall;
 
           if [ "$INPUT_MOBILE_LOC" != "mobile-local" ]; then
@@ -154,6 +165,7 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+          INPUT_NEW_VERSION_NAME: ${{ inputs.NEW_VERSION_NAME }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3

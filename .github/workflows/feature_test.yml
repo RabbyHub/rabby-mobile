@@ -54,6 +54,10 @@ on:
         required: false
         type: boolean
         default: false
+      NEW_VERSION_NAME:
+        required: false
+        type: string
+        default: ''
 
 defaults:
   run:
@@ -219,6 +223,12 @@ jobs:
             echo "Ruby bundle already satisfied";
           fi
 
+          if [ -n "$INPUT_NEW_VERSION_NAME" ]; then
+            echo "Apply requested app version: $INPUT_NEW_VERSION_NAME";
+            npm version "$INPUT_NEW_VERSION_NAME" --no-git-tag-version --allow-same-version;
+            yarn syncrnversion;
+          fi
+
           OS_TYPE=$(uname -s);
           echo "OS_TYPE is $OS_TYPE";
 
@@ -286,6 +296,7 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+          INPUT_NEW_VERSION_NAME: ${{ inputs.NEW_VERSION_NAME }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3
