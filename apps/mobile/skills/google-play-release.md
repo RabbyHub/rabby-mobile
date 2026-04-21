@@ -38,6 +38,8 @@ Prefer the environment variable already used by this repo:
 RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64
 ```
 
+For GitHub Actions, configure that secret on the workflow environment used by `android_release` and keep the public workflow centered on `UPLOAD_TO_GOOGLE_PLAY_INTERNAL=true` plus `./scripts/google-play.sh upload-internal-track --draft`.
+
 The script also accepts one-off overrides such as:
 
 - `--service-account-file`

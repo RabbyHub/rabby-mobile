@@ -20,6 +20,11 @@ on:
         required: true
         type: boolean
         default: true
+      UPLOAD_TO_GOOGLE_PLAY_INTERNAL:
+        description: 'Upload the appstore AAB to Google Play internal track as a draft release'
+        required: true
+        type: boolean
+        default: false
   workflow_call:
     secrets:
       RABBY_MOBILE_ANDROID_KEY_STORE:
@@ -40,6 +45,7 @@ env:
 jobs:
   release-build:
     name: android-release-build
+    environment: Production
     runs-on:
       - self-hosted
       - mobile
@@ -114,7 +120,8 @@ jobs:
           bundle install;
 
           [ -z $buildchannel ] && export buildchannel=appstore;
-          REALLY_UPLOAD=true ./scripts/deploy-android.sh
+          [ -z "${REALLY_UPLOAD:-}" ] && export REALLY_UPLOAD=true;
+          ./scripts/deploy-android.sh
         env:
           FLATTEN_REFNAME: ${{ steps.actionvars.outputs.flatten_refname }}
           TRIGGER_DATE: ${{ steps.actionvars.outputs.trigger_date }}
@@ -131,6 +138,7 @@ jobs:
           RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+          RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
           buildchannel: ${{ inputs.buildchannel }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
@@ -141,6 +149,22 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+
+      - name: Upload appstore AAB to Google Play internal track
+        if: ${{ inputs.buildchannel == 'appstore' && inputs.REALLY_UPLOAD && inputs.UPLOAD_TO_GOOGLE_PLAY_INTERNAL }}
+        run: |
+          cd apps/mobile;
+
+          if [ -z "${RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64:-}" ]; then
+            echo "Missing Production secret: RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64" >&2
+            exit 1
+          fi
+
+          ./scripts/google-play.sh upload-internal-track \
+            --bundle-path ./android/app/build/outputs/bundle/release/app-release.aab \
+            --draft
+        env:
+          RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3
