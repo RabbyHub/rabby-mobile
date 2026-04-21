@@ -82,8 +82,18 @@ build_appstore() {
 
 if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   echo "[deploy-ios-appstore] start build..."
-  build_appstore;
+  build_appstore
+  build_status=$?
+  if [ $build_status -ne 0 ]; then
+    echo "[deploy-ios-appstore] build failed with status $build_status"
+    exit $build_status
+  fi
   echo "[deploy-ios-appstore] finish build."
+fi
+
+if [ ! -f $ouput_dir/RabbyMobile.ipa ]; then
+  echo "[deploy-ios-appstore] build failed: $ouput_dir/RabbyMobile.ipa was not created"
+  exit 1
 fi
 
 file_date=$(date -r $ouput_dir/RabbyMobile.ipa '+%Y%m%d_%H%M%S')
