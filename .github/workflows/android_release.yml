@@ -161,11 +161,48 @@ jobs:
             exit 1
           fi
 
+          version_name=$(. ./scripts/fns.sh --source-only && resolve_google_play_android_version_name)
+          bundle_version_code=$(. ./scripts/fns.sh --source-only && resolve_google_play_bundle_version_code ./android/app/build/outputs/bundle/release/app-release.aab)
+
+          set +e
           ./scripts/google-play.sh upload-internal-track \
             --bundle-path ./android/app/build/outputs/bundle/release/app-release.aab \
             --draft
+          upload_status=$?
+          set -e
+
+          if [ "$upload_status" -eq 0 ]; then
+            node ./scripts/notify-lark.js text \
+              "📦 [Android] Google Play internal upload succeeded" \
+              "Version: ${version_name} (${bundle_version_code})" \
+              "Track: internal" \
+              "Status: draft" \
+              "Actions Job: ${GIT_ACTIONS_JOB_URL}" \
+              "Git Commit: ${GIT_COMMIT_URL}" \
+              "Git Ref: ${GIT_REF_URL}" || true
+            exit 0
+          fi
+
+          if [ "$upload_status" -eq 42 ]; then
+            node ./scripts/notify-lark.js text \
+              "⚠️ [Android] Google Play internal upload skipped" \
+              "Version: ${version_name} (${bundle_version_code})" \
+              "Reason: versionCode already exists on Google Play" \
+              "Track: internal" \
+              "Actions Job: ${GIT_ACTIONS_JOB_URL}" \
+              "Git Commit: ${GIT_COMMIT_URL}" \
+              "Git Ref: ${GIT_REF_URL}" || true
+            exit 0
+          fi
+
+          exit "$upload_status"
         env:
           RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.RABBY_MOBILE_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
 
       # - name: Upload artifact
       #   uses: actions/upload-artifact@v3

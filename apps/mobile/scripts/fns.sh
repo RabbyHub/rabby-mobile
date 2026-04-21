@@ -451,6 +451,11 @@ google_play_emit_log() {
   printf '[RabbyMobileBuild] %s\n' "$*" >&2
 }
 
+google_play_error_is_version_code_conflict() {
+  local response_file="$1"
+  grep -Eq 'Version code [0-9]+ has already been used\.' "$response_file"
+}
+
 google_play_print_api_error_hint() {
   local response_file="$1"
 
@@ -1302,6 +1307,10 @@ google_play_upload_bundle_to_edit() {
       echo "Google Play bundle upload failed: $bundle_path (HTTP $http_code)" >&2
       cat "$response_file" >&2
       google_play_print_api_error_hint "$response_file"
+      if google_play_error_is_version_code_conflict "$response_file"; then
+        rm -f "$response_file"
+        return 42
+      fi
       rm -f "$response_file"
       return 1
       ;;
@@ -1455,8 +1464,9 @@ google_play_upload_bundle_to_internal_track() {
     google_play_emit_log "uploading Android App Bundle $bundle_path"
   fi
   upload_response=$(google_play_upload_bundle_to_edit "$package_name" "$edit_id" "$bundle_path") || {
+    local upload_status=$?
     google_play_delete_edit "$package_name" "$edit_id" >/dev/null 2>&1 || true
-    return 1
+    return "$upload_status"
   }
 
   version_code=$(printf '%s' "$upload_response" | google_play_extract_json_field versionCode) || {
