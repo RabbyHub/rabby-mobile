@@ -388,7 +388,7 @@ export const HistoryTokenList = ({
                         <Text
                           numberOfLines={1}
                           style={[styles.tokenAmountText]}>
-                          - {formatTokenAmount(item.amount)}{' '}
+                          + {formatTokenAmount(item.amount)}{' '}
                           {tokenIsNft
                             ? t('page.singleHome.sectionHeader.Nft')
                             : ellipsisOverflowedText(
