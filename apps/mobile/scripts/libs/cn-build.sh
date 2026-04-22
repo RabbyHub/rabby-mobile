@@ -1,5 +1,11 @@
 #!/bin/sh
 
+cn_build_source_trace() {
+  printf '[cn-build][trace] %s %s\n' "$(date '+%H:%M:%S')" "$*"
+}
+
+cn_build_source_trace "start"
+
 cn_build_enabled() {
   case "${RABBY_MOBILE_CN_BUILD:-false}" in
     true|1|yes|on)
@@ -21,6 +27,7 @@ cn_build_clear_proxy_env() {
 }
 
 cn_build_prepare_node_env() {
+  cn_build_source_trace "cn_build_prepare_node_env"
   cn_build_enabled || return 0
 
   cn_build_clear_proxy_env
@@ -56,6 +63,7 @@ cn_build_prepare_node_env() {
 }
 
 cn_build_lockfile_bundler_version() {
+  cn_build_source_trace "cn_build_lockfile_bundler_version"
   lockfile_path="$1/Gemfile.lock"
   if [ ! -f "$lockfile_path" ]; then
     return 0
@@ -65,6 +73,7 @@ cn_build_lockfile_bundler_version() {
 }
 
 cn_build_prepare_bundler() {
+  cn_build_source_trace "cn_build_prepare_bundler"
   cn_build_enabled || return 0
 
   bundle_work_dir="$1"
@@ -119,6 +128,7 @@ cn_build_prepare_bundler() {
 }
 
 cn_build_gradle_distribution_url() {
+  cn_build_source_trace "cn_build_gradle_distribution_url"
   wrapper_properties="$1"
   distribution_url=$(sed -n 's/^distributionUrl=//p' "$wrapper_properties" | head -n 1 | tr -d '\r')
   distribution_url=$(printf '%s' "$distribution_url" | sed 's#\\:#:#g')
@@ -128,6 +138,7 @@ cn_build_gradle_distribution_url() {
 }
 
 cn_build_prepare_gradle_wrapper() {
+  cn_build_source_trace "cn_build_prepare_gradle_wrapper"
   cn_build_enabled || return 0
 
   wrapper_properties="$1"
@@ -162,6 +173,7 @@ PY
 }
 
 cn_build_restore_gradle_wrapper() {
+  cn_build_source_trace "cn_build_restore_gradle_wrapper"
   cn_build_enabled || return 0
 
   wrapper_properties="$1"
@@ -173,8 +185,11 @@ cn_build_restore_gradle_wrapper() {
 }
 
 cn_build_prepare_ios_signing_env() {
+  cn_build_source_trace "cn_build_prepare_ios_signing_env"
   cn_build_enabled || return 0
 
   export RABBY_MOBILE_IOS_SKIP_MATCH="${RABBY_MOBILE_IOS_SKIP_MATCH:-true}"
   cn_build_log "will reuse local iOS signing assets and skip fastlane match"
 }
+
+cn_build_source_trace "file loaded"
