@@ -170,14 +170,16 @@ prepare_ios_build_artifacts() {
     ios_build_artifacts_key=$(turbo_compute_ios_build_artifacts_key)
   fi
 
-  if turbo_build_enabled && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then
+  if [ -n "${ios_build_artifacts_key:-}" ] && turbo_ios_build_artifacts_ready "$ios_build_artifacts_key"; then
     turbo_log "ios build artifacts already up to date"
     return 0
   fi
 
-  if turbo_build_enabled && turbo_ios_build_artifacts_present; then
+  if turbo_ios_build_artifacts_present; then
     turbo_log "reusing committed ios build artifacts from checkout"
-    turbo_mark_ios_build_artifacts_ready "$ios_build_artifacts_key"
+    if [ -n "${ios_build_artifacts_key:-}" ]; then
+      turbo_mark_ios_build_artifacts_ready "$ios_build_artifacts_key"
+    fi
     return 0
   fi
 
