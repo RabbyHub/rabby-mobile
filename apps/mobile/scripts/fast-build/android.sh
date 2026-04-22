@@ -31,7 +31,7 @@ prepare_android_payload_inputs() {
 
   echo "Preparing Android payload inputs..."
   require_node_v22_or_higher &&
-    yarn ../mobile-local-pages make-theme &&
+    node ../mobile-local-pages/scripts/make-theme.cjs &&
     yarn ../mobile-local-pages build --mode android &&
     yarn react-native-asset &&
     sh ./scripts/fns.sh reset_builtin_assets &&

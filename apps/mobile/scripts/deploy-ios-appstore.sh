@@ -50,7 +50,9 @@ build_appstore() {
   sh ./ios/patches/override-xcconfig-release.sh;
   turbo_prepare_js_dependencies || return $?
   require_node_v22_or_higher &&
-    yarn ../mobile-local-pages bundle:all &&
+    node ../mobile-local-pages/scripts/make-theme.cjs &&
+    yarn ../mobile-local-pages build --mode android &&
+    yarn ../mobile-local-pages build --mode ios &&
     yarn link-assets &&
     yarn buildworker:prod:ios &&
     yarn syncrnversion
