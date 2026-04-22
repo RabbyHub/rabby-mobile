@@ -7,10 +7,7 @@ const visibleAtom = atom({
   isShowDepositPopup: false,
   isShowWithdrawPopup: false,
   isShowDeleteAgentPopup: false,
-  isShowSearchListPopup: false,
   isShowSwapPopup: false,
-  searchListOpenFrom: 'searchPerps' as 'openPosition' | 'searchPerps',
-  searchListDirection: undefined as 'Long' | 'Short' | undefined,
 });
 
 export const usePerpsPopupState = () => {

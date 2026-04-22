@@ -11,14 +11,14 @@ import { FavoriteTag } from '@/components2024/Favorite';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { Text } from '@/components/Typography';
 import { PerpsDisplayCoinName } from '../PerpsDisplayCoinName';
+import { PerpsRankBadge } from './PerpsRankBadge';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
 const PerpsMarketItemComponent: React.FC<{
   item: MarketData;
-  isFavorite?: boolean;
-  hasPosition?: boolean;
+  rank?: number;
   onPress?(): void;
-}> = ({ item, onPress, hasPosition, isFavorite }) => {
+}> = ({ item, onPress, rank }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -30,16 +30,12 @@ const PerpsMarketItemComponent: React.FC<{
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.card}>
+        {rank != null && <PerpsRankBadge rank={rank} />}
         <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={46} />
         <View style={styles.content}>
           <View style={styles.row}>
             <View style={styles.nameContainer}>
               <PerpsDisplayCoinName item={item} />
-              {hasPosition && (
-                <View style={styles.positionContainer}>
-                  <Text style={styles.positionText}>1 Position</Text>
-                </View>
-              )}
             </View>
             <Text style={styles.price}>
               {`$${splitNumberByStep(item.markPx)}`}
@@ -63,14 +59,14 @@ const PerpsMarketItemComponent: React.FC<{
             </Text>
           </View>
         </View>
-        {isFavorite && (
+        {/* {isFavorite && (
           <RcIconFavorite
             width={13}
             height={12}
             style={styles.favoriteTag}
             color={colors2024['orange-default']}
           />
-        )}
+        )} */}
       </View>
     </TouchableOpacity>
   );
@@ -88,8 +84,7 @@ export const PerpsMarketItem = React.memo(
       prev.item.maxLeverage === next.item.maxLeverage &&
       prev.item.logoUrl === next.item.logoUrl &&
       prev.item.quoteAsset === next.item.quoteAsset &&
-      prev.isFavorite === next.isFavorite &&
-      prev.hasPosition === next.hasPosition
+      prev.rank === next.rank
     );
   },
 );

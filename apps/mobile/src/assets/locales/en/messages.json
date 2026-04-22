@@ -2627,6 +2627,19 @@
       "closeAll": "Close All",
       "explorePerps": "Explore Perps",
       "more": "More",
+      "categories": {
+        "favorite": "Favorite",
+        "topVolume": "Top Volume",
+        "stocks": "Stocks",
+        "commodities": "Commodities",
+        "indices": "Indices",
+        "fx": "FX"
+      },
+      "search": {
+        "headerTitle": "Search Perps",
+        "placeholder": "Search Perps",
+        "empty": "No results found"
+      },
       "history": {
         "title": "History",
         "closeLongTp": "Close Long Take Profit",

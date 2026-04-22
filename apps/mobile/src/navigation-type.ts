@@ -393,6 +393,18 @@ export type TransactionNavigatorParamList = {
     showOpenPosition?: boolean;
     direction?: 'Long' | 'Short';
   };
+  [RootNames.PerpsSearch]?: {
+    initialTab?:
+      | 'favorite'
+      | 'topVolume'
+      | 'stocks'
+      | 'commodities'
+      | 'indices'
+      | 'fx';
+    openFromSource?: 'openPosition' | 'searchPerps';
+    direction?: 'Long' | 'Short';
+    autoFocus?: boolean;
+  };
   [RootNames.Lending]?: {
     tokenAddress?: string;
     direction?: 'supply' | 'borrow';

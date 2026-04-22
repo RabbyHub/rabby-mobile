@@ -54,7 +54,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { openapi } from '@/core/request';
 
 import Toast from 'react-native-root-toast';
-import { PerpSearchListPopup } from '../Perps/components/PerpSearchListPopup';
+import { naviReplace } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 import { PerpsAddPositionPopup } from './components/PerpsAddPositionPopup';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { showToast } from '@/hooks/perps/showToast';
@@ -114,7 +115,6 @@ export const PerpsMarketDetailScreen = () => {
   const [showRiskPopup, setShowRiskPopup] = useState(false);
   const [selectedInterval, setSelectedInterval] =
     React.useState<CANDLE_MENU_KEY_V2>(CANDLE_MENU_KEY_V2.FIFTEEN_MINUTES);
-  const [showSearchListPopup, setShowSearchListPopup] = useState(false);
   const [showGuideEntryPopup, setShowGuideEntryPopup] = useState(false);
   const coinNameRef = useRef(coin);
   useEffect(() => {
@@ -412,19 +412,23 @@ export const PerpsMarketDetailScreen = () => {
     return (
       <PerpsHeaderTitle
         // account={currentPerpsAccount}
-        popupIsOpen={showSearchListPopup}
+        popupIsOpen={false}
         quoteCoin={currentAssetCtx?.quoteAsset}
         displayName={currentAssetCtx?.displayName || coin}
         coin={coin}
         logoUrl={currentAssetCtx?.logoUrl}
         onSelectCoin={() => {
-          setShowSearchListPopup(true);
+          naviReplace(RootNames.StackTransaction, {
+            screen: RootNames.PerpsSearch,
+            params: {
+              openFromSource: 'searchPerps',
+              initialTab: 'topVolume',
+            },
+          });
         }}
       />
     );
   }, [
-    setShowSearchListPopup,
-    showSearchListPopup,
     coin,
     currentAssetCtx?.logoUrl,
     currentAssetCtx?.quoteAsset,
@@ -754,40 +758,6 @@ export const PerpsMarketDetailScreen = () => {
         />
       ) : null}
 
-      <PerpSearchListPopup
-        openFromSource="searchPerps"
-        visible={showSearchListPopup}
-        onSelect={item => {
-          coinNameRef.current = item;
-          const positionItem = positionAndOpenOrders?.find(
-            asset => asset.position.coin.toLowerCase() === coin?.toLowerCase(),
-          );
-          const tpItem = positionItem?.openOrders?.find(
-            order =>
-              order.orderType === 'Take Profit Market' &&
-              order.isTrigger &&
-              order.isPositionTpsl &&
-              order.reduceOnly,
-          );
-          const slItem = positionItem?.openOrders?.find(
-            order =>
-              order.orderType === 'Stop Market' &&
-              order.isTrigger &&
-              order.isPositionTpsl &&
-              order.reduceOnly,
-          );
-          setCoin(item);
-          setCurrentTpOrSl({
-            tpPrice: tpItem?.triggerPx ?? undefined,
-            slPrice: slItem?.triggerPx ?? undefined,
-          });
-        }}
-        onCancel={() => {
-          setShowSearchListPopup(false);
-        }}
-        marketData={marketData}
-        positionAndOpenOrders={positionAndOpenOrders}
-      />
       <PerpsGuideEntryPopup
         visible={showGuideEntryPopup}
         onClose={() => {
