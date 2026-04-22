@@ -930,12 +930,17 @@ turbo_compute_ios_build_artifacts_key() {
 turbo_ios_build_artifacts_ready() {
   key="$1"
   stamp_file=$(turbo_ios_build_artifacts_stamp_file)
+  turbo_ios_build_artifacts_present || return 1
+
+  [ -f "$stamp_file" ] || return 1
+  [ "$(cat "$stamp_file" 2>/dev/null)" = "$key" ] || return 1
+}
+
+turbo_ios_build_artifacts_present() {
   ios_resources_dir="$project_dir/ios/RabbyMobile/Resources"
   local_pages_output_dir="$project_dir/assets/ios/builtin-pages"
   worker_bundle="$project_dir/assets/ios/threads/worker.thread.jsbundle"
 
-  [ -f "$stamp_file" ] || return 1
-  [ "$(cat "$stamp_file" 2>/dev/null)" = "$key" ] || return 1
   [ -f "$worker_bundle" ] || return 1
   turbo_dir_has_files "$ios_resources_dir" || return 1
   turbo_dir_has_files "$local_pages_output_dir" || return 1

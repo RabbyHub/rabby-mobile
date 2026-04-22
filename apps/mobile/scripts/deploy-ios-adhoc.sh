@@ -175,6 +175,12 @@ prepare_ios_build_artifacts() {
     return 0
   fi
 
+  if turbo_build_enabled && turbo_ios_build_artifacts_present; then
+    turbo_log "reusing committed ios build artifacts from checkout"
+    turbo_mark_ios_build_artifacts_ready "$ios_build_artifacts_key"
+    return 0
+  fi
+
   require_node_v22_or_higher &&
     node ../mobile-local-pages/scripts/make-theme.cjs &&
     yarn ../mobile-local-pages build --mode ios &&
