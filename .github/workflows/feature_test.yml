@@ -215,6 +215,7 @@ jobs:
           xcode-version: ${{ env.XCODE_VER }}
 
       - name: Install and build
+        timeout-minutes: 25
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;

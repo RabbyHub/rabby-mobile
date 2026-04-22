@@ -76,7 +76,8 @@ main() {
 
   echo "[prepare-mobile-build] node: $(node -v)"
   echo "[prepare-mobile-build] yarn: $(yarn --version)"
-  yarn install --immutable
+  echo "[prepare-mobile-build] yarn install mode: skip-build"
+  yarn install --immutable --mode=skip-build
 
   local requested_version="${INPUT_NEW_VERSION_NAME:-}"
   if [ -n "$requested_version" ]; then
