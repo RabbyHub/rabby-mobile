@@ -1865,7 +1865,6 @@
       },
       "depositNow": "Déposez maintenant",
       "switchAccount": "Changer de portefeuille",
-      "depositWith": "Dépôt avec",
       "depositFailed": "Le dépôt a échoué",
       "gasBalance": "Solde de Gaz",
       "lowBalance": "Vous n'avez pas assez de gas. Déposez du gas pour garantir que vos futures transactions se déroulent sans problème.",

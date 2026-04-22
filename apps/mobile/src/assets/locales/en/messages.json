@@ -1881,7 +1881,6 @@
     "gasAccount": {
       "deposit": "Deposit",
       "depositNow": "Deposit Now",
-      "depositWith": "Deposit with",
       "withdraw": "Withdraw",
       "noBalance": "No balance",
       "gasExceed": "GasAccount balance cannot exceed $1000",
@@ -2011,7 +2010,8 @@
       "gasBalance": "Gas Balance",
       "lowBalance": "You don't have enough gas. Deposit gas to ensure future transactions go smoothly.",
       "switchAccount": "Switch Wallet",
-      "depositFailed": "Deposit failed"
+      "depositFailed": "Deposit failed",
+      "depositWith": "Deposit via"
     },
     "tokenDetail": {
       "headerBalanceText": "Balance",

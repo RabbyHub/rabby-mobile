@@ -1721,7 +1721,6 @@
         "title": "すべてのチェーンでGas手数料を支払う",
         "subtitle": "ガスがない場合"
       },
-      "depositWith": "Deposit with",
       "depositNow": "今すぐ入金",
       "switchAccount": "ウォレットを切り替える",
       "depositFailed": "入金に失敗しました",
