@@ -75,8 +75,6 @@ jobs:
         include:
           - host: macOS
             machine_loc: ${{ inputs.macos_machine_location }}
-          - host: Linux
-            machine_loc: mobile
     runs-on:
       - self-hosted
       - ${{ matrix.host }}
