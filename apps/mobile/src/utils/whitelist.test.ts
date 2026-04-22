@@ -4,6 +4,7 @@ import {
   normalizeWhitelistAddresses,
   normalizeWhitelistRecords,
   syncWhitelistRecords,
+  sortWhitelistRecordsForSend,
   sortWhitelistRecords,
 } from './whitelist';
 
@@ -106,6 +107,38 @@ describe('whitelist utils', () => {
         address: '0x2222222222222222222222222222222222222222',
         addedAt: 123,
       },
+    ]);
+  });
+
+  it('sorts send whitelist with undated records first and dated records by ascending addedAt', () => {
+    expect(
+      sortWhitelistRecordsForSend(
+        [
+          {
+            address: '0xcccccccccccccccccccccccccccccccccccccccc',
+            addedAt: 300,
+          },
+          {
+            address: '0xdddddddddddddddddddddddddddddddddddddddd',
+          },
+          {
+            address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+            addedAt: 100,
+          },
+          {
+            address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          },
+        ],
+        {
+          '0xcccccccccccccccccccccccccccccccccccccccc': 300,
+          '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb': 100,
+        },
+      ).map(item => item.address),
+    ).toEqual([
+      '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      '0xdddddddddddddddddddddddddddddddddddddddd',
+      '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      '0xcccccccccccccccccccccccccccccccccccccccc',
     ]);
   });
 

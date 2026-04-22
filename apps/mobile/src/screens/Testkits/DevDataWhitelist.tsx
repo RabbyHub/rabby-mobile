@@ -20,7 +20,7 @@ import { PillsSwitch } from '@/components2024/PillSwitch';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { toast } from '@/components2024/Toast';
 import RNHelpers from '@/core/native/RNHelpers';
-import { contactService, whitelistService } from '@/core/services';
+import { contactService } from '@/core/services';
 import { appStorage } from '@/core/storage/mmkv';
 import { APP_MMKV_WEAK_KEYS } from '@/core/storage/mmkvConstants';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
@@ -179,7 +179,8 @@ function DevDataWhitelist(): JSX.Element {
     Record<string, number>
   >({});
   const { accounts, fetchAccounts } = useAccounts();
-  const { whitelist, whitelistEnabled, fetchWhitelist } = useWhitelist();
+  const { whitelist, whitelistRecords, whitelistEnabled, fetchWhitelist } =
+    useWhitelist();
   const panelMaxHeight = useMemo(
     () => Math.floor(windowHeight * 0.5),
     [windowHeight],
@@ -269,30 +270,34 @@ function DevDataWhitelist(): JSX.Element {
   );
 
   const whitelistItems = useMemo<WhitelistDebugItem[]>(() => {
-    return sortWhitelistRecords(
-      whitelistService.getWhitelistRecords(),
-      resolvedAddedAtByAddress,
-    ).map(record => {
-      const address = record.address;
-      const alias = contactService.getAliasByAddress(address)?.alias || '-';
-      const matchedAccounts = (
-        accountsByAddress[address.toLowerCase()] || []
-      ).map(account => account.brandName || account.type);
-      const addedAt =
-        record.addedAt ?? resolvedAddedAtByAddress[address] ?? null;
+    return sortWhitelistRecords(whitelistRecords, resolvedAddedAtByAddress).map(
+      record => {
+        const address = record.address;
+        const alias = contactService.getAliasByAddress(address)?.alias || '-';
+        const matchedAccounts = (
+          accountsByAddress[address.toLowerCase()] || []
+        ).map(account => account.brandName || account.type);
+        const addedAt =
+          record.addedAt ?? resolvedAddedAtByAddress[address] ?? null;
 
-      return {
-        address,
-        alias,
-        addedAt,
-        addedAtLabel: addedAt
-          ? dayjs(addedAt).format('YYYY/MM/DD HH:mm:ss')
-          : '-',
-        matchedAccounts,
-        displayAccount: getDisplayAccount(address, alias),
-      };
-    });
-  }, [accountsByAddress, getDisplayAccount, resolvedAddedAtByAddress]);
+        return {
+          address,
+          alias,
+          addedAt,
+          addedAtLabel: addedAt
+            ? dayjs(addedAt).format('YYYY/MM/DD HH:mm:ss')
+            : '-',
+          matchedAccounts,
+          displayAccount: getDisplayAccount(address, alias),
+        };
+      },
+    );
+  }, [
+    accountsByAddress,
+    getDisplayAccount,
+    resolvedAddedAtByAddress,
+    whitelistRecords,
+  ]);
 
   const addressBookItems = useMemo<AddressBookDebugItem[]>(() => {
     return [...aliasItems]
@@ -336,7 +341,7 @@ function DevDataWhitelist(): JSX.Element {
     {
       enabled: whitelistEnabled,
       addresses: whitelistItems.map(item => item.address),
-      storeRecords: whitelistService.getWhitelistRecords(),
+      storeRecords: whitelistRecords,
       resolvedAddedAtByAddress,
       items: whitelistItems.map(item => ({
         address: item.address,

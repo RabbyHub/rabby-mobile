@@ -153,3 +153,35 @@ export function sortWhitelistRecords(
     return left.address.localeCompare(right.address);
   });
 }
+
+export function sortWhitelistRecordsForSend(
+  records: WhitelistRecord[] = [],
+  resolvedAddedAtByAddress: Record<string, number | null | undefined> = {},
+) {
+  const normalizedRecords = normalizeWhitelistRecords(records);
+
+  return [...normalizedRecords].sort((left, right) => {
+    const leftAddedAt =
+      left.addedAt ?? resolvedAddedAtByAddress[left.address] ?? null;
+    const rightAddedAt =
+      right.addedAt ?? resolvedAddedAtByAddress[right.address] ?? null;
+
+    if (leftAddedAt == null && rightAddedAt == null) {
+      return left.address.localeCompare(right.address);
+    }
+
+    if (leftAddedAt == null) {
+      return -1;
+    }
+
+    if (rightAddedAt == null) {
+      return 1;
+    }
+
+    if (leftAddedAt !== rightAddedAt) {
+      return leftAddedAt - rightAddedAt;
+    }
+
+    return left.address.localeCompare(right.address);
+  });
+}
