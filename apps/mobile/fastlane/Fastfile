@@ -95,30 +95,34 @@ platform :ios do
   end
 
   private_lane :prepare_apple_sign do |opts|
-    # setup_ci
-
-    # # enforce configuration
-    # update_code_signing_settings(
-    #   use_automatic_signing: false,
-    #   targets: ['RabbyMobile'],
-    #   sdk: "iphoneos*",
-    #   path: './ios/RabbyMobile.xcodeproj',
-    #   profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
-    #   bundle_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
-    # )
-
     ENV['CONFIGURATION'] = opts[:type] == 'adhoc' ? 'Regression' : 'Release'
 
-    # Main App: RabbyMobile
-    match(
-      type: opts[:type],
-      app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
-      profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
-      readonly: true,
-      shallow_clone: true,
-      verbose: false,
-      force_for_new_devices: true,
-      clone_branch_directly: true)
+    if ENV['RABBY_MOBILE_IOS_SKIP_MATCH'] == 'true'
+      UI.message('Skipping fastlane match and reusing local signing assets.')
+    else
+      # setup_ci
+
+      # # enforce configuration
+      # update_code_signing_settings(
+      #   use_automatic_signing: false,
+      #   targets: ['RabbyMobile'],
+      #   sdk: "iphoneos*",
+      #   path: './ios/RabbyMobile.xcodeproj',
+      #   profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
+      #   bundle_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
+      # )
+
+      # Main App: RabbyMobile
+      match(
+        type: opts[:type],
+        app_identifier: opts[:type] == 'adhoc' ? 'com.debank.rabby-mobile-regression' : 'com.debank.rabby-mobile',
+        profile_name: opts[:type] == 'adhoc' ? 'RabbyMobileAdHocRegressionOpcode' : 'RabbyMobileAppStoreOpcode',
+        readonly: true,
+        shallow_clone: true,
+        verbose: false,
+        force_for_new_devices: true,
+        clone_branch_directly: true)
+    end
 
     # # App Extension: RabbyMobileNotification
     # match(

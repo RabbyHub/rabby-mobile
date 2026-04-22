@@ -10,6 +10,12 @@ project_dir=$(dirname $script_dir)
 . $script_dir/fns.sh --source-only
 . $script_dir/fast-build/_fns.sh --source-only
 . $script_dir/turbo-build/_fns.sh --source-only
+. $script_dir/libs/cn-build.sh --source-only
+
+cn_build_prepare_node_env
+cn_build_prepare_bundler "$project_dir" "$project_dir/.turbo-build/bundle-config"
+cn_build_prepare_gradle_wrapper "$project_dir/android/gradle/wrapper/gradle-wrapper.properties"
+trap 'cn_build_restore_gradle_wrapper "$project_dir/android/gradle/wrapper/gradle-wrapper.properties"' EXIT
 
 export RABBY_MOBILE_ANDROID_FAST_BUILD="${RABBY_MOBILE_ANDROID_FAST_BUILD:-false}"
 FAST_BUILD_ENABLED=$(fast_build_enabled_value)

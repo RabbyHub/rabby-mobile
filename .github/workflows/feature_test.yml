@@ -42,6 +42,10 @@ on:
         required: false
         type: boolean
         default: true
+      RABBY_MOBILE_CN_BUILD:
+        required: false
+        type: boolean
+        default: false
       __DANGEROUS_NO_VERIFY_SSL:
         required: false
         type: boolean
@@ -81,6 +85,7 @@ jobs:
       NODE_OPTIONS: '--max_old_space_size=12288'
       RABBY_MOBILE_POD_USE_CACHE: ${{ inputs.RABBY_MOBILE_POD_USE_CACHE }}
       RABBY_MOBILE_GRADLE_USE_CACHE: ${{ inputs.RABBY_MOBILE_GRADLE_USE_CACHE }}
+      RABBY_MOBILE_CN_BUILD: ${{ inputs.RABBY_MOBILE_CN_BUILD }}
       RABBY_MOBILE_IOS_FAST_BUILD: ${{ inputs.FAST_BUILD_ON_IOS }}
       SKIP_BUILD: ${{ inputs.__SKIP_BUILD }}
       RABBY_MOBILE_NM_USE_CACHE: ${{ inputs.RABBY_MOBILE_NM_USE_CACHE }}

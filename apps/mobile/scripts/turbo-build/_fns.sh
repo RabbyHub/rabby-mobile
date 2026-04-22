@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . $project_dir/scripts/build-cache/_fns.sh --source-only
+. $project_dir/scripts/libs/cn-build.sh --source-only
 
 turbo_build_enabled() {
   [ "${RABBY_MOBILE_TURBO_BUILD:-false}" = "true" ]
@@ -424,6 +425,8 @@ turbo_bundle_exec() {
   tb_path="$RABBY_MOBILE_TURBO_BUNDLE_PATH"
   tb_force_ruby_platform="$RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM"
   tb_work_dir=$(pwd -P)
+
+  cn_build_prepare_bundler "$tb_work_dir" "$tb_app_config"
 
   if [ -f "$project_dir/.ruby-version" ] && [ -s "$HOME/.rvm/scripts/rvm" ]; then
     turbo_bundle_with_project_ruby "$tb_work_dir" "$@"

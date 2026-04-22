@@ -17,10 +17,14 @@ buildscript {
         webkitVersion = "1.5.0"
     }
     repositories {
+        if (["1", "true", "yes", "on"].contains((System.getenv("RABBY_MOBILE_CN_BUILD") ?: "").toLowerCase())) {
+            maven { url "https://maven.aliyun.com/repository/google" }
+            maven { url "https://maven.aliyun.com/repository/public" }
+            maven { url "https://maven.aliyun.com/repository/central" }
+        }
+
         google()
         mavenCentral()
-        maven { url "https://maven.aliyun.com/repository/public" }
-        maven { url "https://maven.aliyun.com/repository/central" }
     }
     dependencies {
         classpath("com.android.tools.build:gradle")
@@ -38,8 +42,14 @@ apply plugin: "com.facebook.react.rootproject"
 
 allprojects {
     repositories {
+        if (["1", "true", "yes", "on"].contains((System.getenv("RABBY_MOBILE_CN_BUILD") ?: "").toLowerCase())) {
+            maven { url "https://maven.aliyun.com/repository/google" }
+            maven { url "https://maven.aliyun.com/repository/public" }
+            maven { url "https://maven.aliyun.com/repository/central" }
+        }
+
+        google()
         mavenCentral()
-        google()  // Google's Maven repository
         maven { url 'https://www.jitpack.io' }
     }
 }

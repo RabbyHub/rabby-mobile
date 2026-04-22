@@ -7,8 +7,12 @@ project_dir=$(dirname $script_dir)
 . $script_dir/fast-build/_fns.sh --source-only
 . $script_dir/libs/node-runtime.sh
 . $script_dir/turbo-build/_fns.sh --source-only
+. $script_dir/libs/cn-build.sh --source-only
 
 ensure_mobile_node_runtime
+cn_build_prepare_node_env
+cn_build_prepare_bundler "$project_dir" "$project_dir/.turbo-build/bundle-config"
+cn_build_prepare_ios_signing_env
 
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";

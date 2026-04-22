@@ -5,6 +5,8 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 project_dir="$(cd "$script_dir/../.." && pwd)"
 
+. "$project_dir/scripts/libs/cn-build.sh"
+
 ensure_node_runtime() {
   if command -v nvm >/dev/null 2>&1; then
     nvm use
@@ -70,6 +72,7 @@ apply_requested_version() {
 main() {
   cd "$project_dir"
   ensure_node_runtime
+  cn_build_prepare_node_env
 
   echo "[prepare-mobile-build] node: $(node -v)"
   echo "[prepare-mobile-build] yarn: $(yarn --version)"

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-fbscript_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+fbfns_path="${BASH_SOURCE[0]:-$0}"
+fbscript_dir="$( cd "$( dirname "$fbfns_path"  )" && pwd  )"
+. "$(dirname "$fbscript_dir")/libs/cn-build.sh" --source-only
 
 fast_build_enabled() {
   case "${RABBY_MOBILE_ANDROID_FAST_BUILD:-}" in
@@ -88,6 +90,8 @@ project_bundle_with_ruby() {
 
 project_bundle_exec() {
   pb_work_dir=$(pwd -P)
+
+  cn_build_prepare_bundler "$pb_work_dir"
 
   if [ -f "$project_dir/.ruby-version" ] && [ -s "$HOME/.rvm/scripts/rvm" ]; then
     project_bundle_with_ruby "$pb_work_dir" "$@"
