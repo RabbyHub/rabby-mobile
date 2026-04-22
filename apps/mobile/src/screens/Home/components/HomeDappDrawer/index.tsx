@@ -42,7 +42,7 @@ import {
   SCROLLABLE_STATUS,
   homeDrawerAnimateMutable,
   getScrollContainerPb,
-} from '../hooks/useHomeDrawerAnimate';
+} from '../../hooks/useHomeDrawerAnimate';
 import { triggerImpact } from '@/utils/common';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
@@ -158,18 +158,18 @@ export const HomeDappDrawer: React.FC<{
   const drawerGesture = useMemo(
     () =>
       Gesture.Pan()
-        .activeOffsetY([
-          -DRAWER_GESTURE_ACTIVE_OFFSET_Y,
-          DRAWER_GESTURE_ACTIVE_OFFSET_Y,
-        ])
-        .failOffsetX([
-          -DRAWER_GESTURE_FAIL_OFFSET_X,
-          DRAWER_GESTURE_FAIL_OFFSET_X,
-        ])
-        .failOffsetY([
-          -DRAWER_GESTURE_FAIL_OFFSET_X,
-          DRAWER_GESTURE_FAIL_OFFSET_X,
-        ])
+        // .activeOffsetY([
+        //   -DRAWER_GESTURE_ACTIVE_OFFSET_Y,
+        //   DRAWER_GESTURE_ACTIVE_OFFSET_Y,
+        // ])
+        // .failOffsetX([
+        //   -DRAWER_GESTURE_FAIL_OFFSET_X,
+        //   DRAWER_GESTURE_FAIL_OFFSET_X,
+        // ])
+        // .failOffsetY([
+        //   -DRAWER_GESTURE_FAIL_OFFSET_X,
+        //   DRAWER_GESTURE_FAIL_OFFSET_X,
+        // ])
         .maxPointers(1)
         .shouldCancelWhenOutside(false)
         .onChange(event => {
@@ -192,7 +192,7 @@ export const HomeDappDrawer: React.FC<{
           if (translateY.value > (height - getPullThreshold(height)) * -1) {
             translateY.value = withTiming(0, undefined, () => {
               scrollableStatus.value = SCROLLABLE_STATUS.UNLOCKED;
-              runOnJS(resetEditing)();
+              // runOnJS(resetEditing)();
             });
             handleScrollBack();
 
@@ -203,13 +203,7 @@ export const HomeDappDrawer: React.FC<{
             });
           }
         }),
-    [
-      drawerScrollOffsetY.value,
-      height,
-      resetEditing,
-      scrollableStatus,
-      handleScrollBack,
-    ],
+    [drawerScrollOffsetY.value, height, scrollableStatus, handleScrollBack],
   );
 
   const drawerScrollableGesture = useMemo(
@@ -295,7 +289,7 @@ export const HomeDappDrawer: React.FC<{
           <View style={styles.page}>
             <View style={styles.favoritesList}>
               <View style={styles.container}>
-                <View style={styles.header}>
+                {/* <View style={styles.header}>
                   <Text style={styles.title}>
                     {t('page.home.DappDrawer.favorite')}
                   </Text>
@@ -307,7 +301,7 @@ export const HomeDappDrawer: React.FC<{
                       {isEditing ? t('global.Done') : t('global.Edit')}
                     </Text>
                   </TouchableOpacity>
-                </View>
+                </View> */}
                 <HomeDappDrawerContent
                   drawerScrollableGesture={drawerScrollableGesture}
                   drawerScrollOffsetY={drawerScrollOffsetY}

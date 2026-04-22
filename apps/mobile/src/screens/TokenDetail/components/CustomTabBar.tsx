@@ -9,6 +9,7 @@ import {
 import { ItemLayout } from 'react-native-collapsible-tab-view/lib/typescript/src/MaterialTabBar/types';
 import { AnimatedStyle } from 'react-native-reanimated';
 import { Text } from '@/components/Typography';
+import { useMemoizedFn } from 'ahooks';
 
 const disableInnerIndicator = {
   height: 0,
@@ -52,27 +53,16 @@ export const DynamicCustomMaterialTabBar = (
     },
     [props.initPaddingLeft],
   );
-  const renderTabItem = useCallback(
-    (_props: any) => (
-      // <TouchableOpacity
-      //   {..._props}
-      //   onLayout={event => handleTabItemLayout(_props.index, event)}
-      //   activeOpacity={1}
-      //   style={[_props.style, props.getTabItemStyle?.(_props.index)]}>
-      //   {_props.children}
-      //   <Text>{_props?.name}</Text>
-      // </TouchableOpacity>
-      <MaterialTabItem
-        {..._props}
-        onLayout={event => handleTabItemLayout(_props.index, event)}
-        pressOpacity={1}
-        inactiveOpacity={1}
-        pressColor="transparent"
-        style={[_props.style, props.getTabItemStyle?.(_props.index)]}
-      />
-    ),
-    [handleTabItemLayout, props],
-  );
+  const renderTabItem = useMemoizedFn((_props: any) => (
+    <MaterialTabItem
+      {..._props}
+      onLayout={event => handleTabItemLayout(_props.index, event)}
+      pressOpacity={1}
+      inactiveOpacity={1}
+      pressColor="transparent"
+      style={[_props.style, props.getTabItemStyle?.(_props.index)]}
+    />
+  ));
   return (
     <View style={props.containerStyle}>
       <MaterialTabBar

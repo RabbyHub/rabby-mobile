@@ -6,7 +6,13 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { EVENT_SHOW_BROWSER_MANAGE, eventBus } from '@/utils/events';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useTransition,
+} from 'react';
 import {
   BackHandler,
   View,
@@ -20,12 +26,22 @@ import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { Button } from '@/components2024/Button';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { CheckBoxRect } from '@/components2024/CheckBox';
+import { useRequest } from 'ahooks';
+import { openapi } from '@/core/request';
+import { useTranslation } from 'react-i18next';
+import { useSyncDappsInfo } from '@/hooks/useSyncDappsInfo';
+import hotDappList from '@/constant/hot-dapp.json';
+import { uniq } from 'lodash';
+const categories = uniq(hotDappList.map(item => item.category));
 
 export const DappInfoPopup: React.FC<{
   dappInfo?: DappInfo;
   visible: boolean;
   onClose: () => void;
-}> = ({ visible, onClose, dappInfo }) => {
+  isRemind?: boolean;
+  onChangeRemind?: (value: boolean) => void;
+  onOpenDapp?: (url: string) => void;
+}> = ({ visible, onClose, dappInfo, isRemind, onChangeRemind, onOpenDapp }) => {
   const { safeOffScreenTop } = useSafeSizes();
 
   const { colors2024, styles } = useTheme2024({ getStyle });
@@ -37,6 +53,55 @@ export const DappInfoPopup: React.FC<{
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   console.log('render DappInfoPopup', visible, dappInfo);
+  const { t } = useTranslation();
+
+  const { data: level } = useRequest(
+    async () => {
+      if (!dappInfo?.origin) {
+        return;
+      }
+      const result = await openapi.getOriginPopularityLevel(dappInfo.origin);
+
+      const dict = {
+        high: t('page.connect.popularLevelHigh'),
+        medium: t('page.connect.popularLevelMedium'),
+        low: t('page.connect.popularLevelLow'),
+        very_low: t('page.connect.popularLevelVeryLow'),
+      };
+
+      return dict[result?.level || ''];
+    },
+    {
+      refreshDeps: [dappInfo?.origin],
+      cacheKey: `dapp-getOriginPopularityLevel-${dappInfo?.origin}`,
+      staleTime: 10 * 1000,
+    },
+  );
+
+  const { data: basicDappInfo = dappInfo?.info } = useRequest(
+    async () => {
+      if (!dappInfo?.origin) {
+        return;
+      }
+      const res = await openapi.getDappsInfo({
+        ids: [dappInfo?.origin.replace(/^https?:\/\//, '') || ''],
+      });
+      return res?.[0];
+    },
+    {
+      refreshDeps: [dappInfo?.origin],
+      cacheKey: `dapp-getDappsInfo-${dappInfo?.origin}`,
+      staleTime: 10 * 1000,
+    },
+  );
+
+  const category = useMemo(() => {
+    return dappInfo?.info?.tags?.find(tag => categories.includes(tag));
+  }, [dappInfo?.info?.tags]);
+
+  const collectionList = useMemo(() => {
+    return basicDappInfo?.collected_list || dappInfo?.info?.collected_list;
+  }, [basicDappInfo?.collected_list, dappInfo?.info?.collected_list]);
 
   useEffect(() => {
     if (visible) {
@@ -101,22 +166,20 @@ export const DappInfoPopup: React.FC<{
             <View style={styles.list}>
               <View style={styles.listItem}>
                 <Text style={styles.listLabel}>Listed by</Text>
-                {dappInfo.info?.collected_list?.length ? (
+                {collectionList?.length ? (
                   <View style={styles.listBy}>
-                    {dappInfo.info?.collected_list
-                      ?.slice(0, 3)
-                      .map((item, index) => (
-                        <Image
-                          key={index}
-                          source={{
-                            uri: item.logo_url,
-                          }}
-                          style={styles.listByIcon as any}
-                        />
-                      ))}
-                    {dappInfo.info?.collected_list?.length > 3 ? (
+                    {collectionList?.slice(0, 3).map((item, index) => (
+                      <Image
+                        key={index}
+                        source={{
+                          uri: item.logo_url,
+                        }}
+                        style={styles.listByIcon as any}
+                      />
+                    ))}
+                    {collectionList?.length > 3 ? (
                       <Text style={styles.listByMore}>
-                        +{dappInfo.info?.collected_list?.length - 3}
+                        +{collectionList?.length - 3}
                       </Text>
                     ) : null}
                   </View>
@@ -125,22 +188,23 @@ export const DappInfoPopup: React.FC<{
               <View style={styles.listItem}>
                 <Text style={styles.listLabel}>Site popularity</Text>
 
-                <Text style={styles.sitePopularity}>
-                  {dappInfo.info?.user_range}
-                </Text>
+                <Text style={styles.sitePopularity}>{level}</Text>
               </View>
               <View style={styles.listItem}>
                 <Text style={styles.listLabel}>Category</Text>
                 <View style={styles.tag}>
-                  <Text style={styles.tagText}>Perps // todo</Text>
+                  <Text style={styles.tagText}>{category}</Text>
                 </View>
               </View>
             </View>
             <View style={styles.footer}>
               <View style={styles.checkBoxContainer}>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    onChangeRemind?.(!isRemind);
+                  }}>
                   <View style={styles.checkBoxContent}>
-                    <CheckBoxRect />
+                    <CheckBoxRect checked={!isRemind} />
                     <Text style={styles.checkBoxText}>
                       Don’t remind anymore
                     </Text>
@@ -149,7 +213,24 @@ export const DappInfoPopup: React.FC<{
               </View>
               <Button
                 type="primary"
-                title={`Open ${dappInfo.info?.name || dappInfo.origin}`}
+                onPress={() => {
+                  onOpenDapp?.(dappInfo?.url || dappInfo?.origin);
+                }}
+                // title={`Open ${dappInfo.info?.name || dappInfo.origin}`}
+                title={({ titleStyle }) => {
+                  return (
+                    <Text
+                      style={[
+                        titleStyle,
+                        {
+                          paddingHorizontal: 8,
+                        },
+                      ]}
+                      numberOfLines={1}>
+                      {`Open ${dappInfo.info?.name || dappInfo.origin}`}
+                    </Text>
+                  );
+                }}
               />
             </View>
           </BottomSheetScrollView>
