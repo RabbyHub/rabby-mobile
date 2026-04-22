@@ -127,7 +127,7 @@ jobs:
           fi
           # security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS ~/Library/Keychains/login.keychain-db
           security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
-          ./scripts/deploy-ios-appstore.sh
+          bash ./scripts/deploy-ios-appstore.sh
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}

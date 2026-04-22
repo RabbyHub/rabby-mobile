@@ -244,7 +244,7 @@ jobs:
             security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
             # cd ios && bundle install && bundle exec pod install --deployment;
             # cd ../;
-            ./scripts/deploy-ios-adhoc.sh
+            bash ./scripts/deploy-ios-adhoc.sh
 
             # # cleanup packager
             # ps axo pid,command | grep -E 'launchPackager\.command' | grep -v grep | awk '{print $1}' | xargs kill -9; > /dev/null 2>&1
