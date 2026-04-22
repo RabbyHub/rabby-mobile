@@ -504,12 +504,8 @@ const getStyle = createGetStyles2024(
     },
 
     gridItem: {
-      borderWidth: 2,
-      borderColor: isLight
-        ? colors2024['neutral-InvertHighlight']
-        : 'transparent',
       backgroundColor: isLight
-        ? colord(colors2024['neutral-bg-1']).alpha(0.86).toRgbString()
+        ? colors2024['neutral-bg-1']
         : colors2024['neutral-bg-2'],
       width: '48%', // default
       minWidth: 0,
@@ -534,7 +530,7 @@ const getStyle = createGetStyles2024(
       fontFamily: 'SF Pro Rounded',
     },
     gridTextZh: {
-      fontSize: 14,
+      fontSize: 15,
     },
     titleWithNewTagRow: {
       flexDirection: 'row',
@@ -656,9 +652,10 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconLending,
         },
         {
-          key: MultiHomeFeatTitle.Points,
-          title: t('page.rabbyPoints.title'),
-          icon: RcIconPointsCC,
+          key: MultiHomeFeatTitle.GasAccount,
+          title: t('page.home.services.gasDeposit'),
+          icon: RcIconGasAccountCC,
+          showGiftIcon: isEligible,
         },
         {
           key: MultiHomeFeatTitle.History,
@@ -666,6 +663,11 @@ export const HomeOverview = React.memo(() => {
           icon: RcIconHistoryCC,
           badge: historyCount?.fail || historyCount?.success,
           isSuccess: !historyCount?.fail,
+        },
+        {
+          key: MultiHomeFeatTitle.Market,
+          title: t('page.home.services.market'),
+          icon: RcIconMarketCC,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
@@ -677,22 +679,15 @@ export const HomeOverview = React.memo(() => {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
         //   icon: RcIconDapps,
         // },
-
-        {
-          key: MultiHomeFeatTitle.Market,
-          title: t('page.home.services.market'),
-          icon: RcIconMarketCC,
-        },
-        {
-          key: MultiHomeFeatTitle.GasAccount,
-          title: t('page.home.services.gasDeposit'),
-          icon: RcIconGasAccountCC,
-          showGiftIcon: isEligible,
-        },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
         //   icon: RcIconEcosystem,
         // },
+        {
+          key: MultiHomeFeatTitle.Points,
+          title: t('page.rabbyPoints.title'),
+          icon: RcIconPointsCC,
+        },
       ].filter(Boolean) as {
         key: MultiHomeFeatTitle;
         title: string;

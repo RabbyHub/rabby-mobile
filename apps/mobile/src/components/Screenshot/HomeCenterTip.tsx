@@ -54,8 +54,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       marginHorizontal: ScreenLayouts.homeHorizontalPadding,
 
       position: 'relative',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
+      paddingVertical: 10,
+      paddingLeft: 16,
+      paddingRight: 10,
       borderRadius: 12,
 
       flexDirection: 'column',
@@ -72,15 +73,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
 
     closeIcon: {
-      width: 22,
-      height: 22,
+      width: 16,
+      height: 16,
       color: colors2024['neutral-title-1'],
     },
 
     line: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       // ...makeDebugBorder(),
     },
 
@@ -99,7 +100,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 16,
       fontWeight: 700,
-      lineHeight: 20,
       color: colors2024['neutral-title-1'],
     },
 

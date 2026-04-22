@@ -251,12 +251,7 @@ export function MultiAddressHomeHeader(
             }}
           />
         </View>
-        <RNLinearGradient
-          colors={
-            isLight
-              ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
-              : ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']
-          }
+        <View
           style={[
             styles.curveBoxChildMH,
             styles.curveBox,
@@ -274,7 +269,7 @@ export function MultiAddressHomeHeader(
             pointerEvents="none"
             colors={
               isLight
-                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.6)']
+                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, .54)']
                 : ['rgba(0, 0, 0, 0.10)', '#232428']
             }
             start={isLight ? { x: 0.25, y: 0.5 } : { x: 1.07, y: 0.42 }}
@@ -307,7 +302,7 @@ export function MultiAddressHomeHeader(
               />
             ) : null}
           </TouchableOpacity>
-        </RNLinearGradient>
+        </View>
       </BlurShadowView>
     </View>
   );
@@ -408,9 +403,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingVertical: SIZES.curveCardPy,
       paddingHorizontal: 0,
       borderWidth: 0,
-      borderColor: isLight
-        ? colors2024['neutral-bg-1']
-        : colors2024['neutral-line'],
       backgroundColor: 'transparent',
       // ...makeDebugBorder('purple'),
     },
@@ -424,15 +416,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       left: 0,
       right: 0,
       borderRadius: SIZES.cardContentRadius,
-      ...(!isLight && {
-        borderWidth: 2,
-        borderColor: 'rgba(35, 36, 40, 1)',
-      }),
+      borderWidth: 1,
+      borderColor: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(35, 36, 40, 1)',
     },
     curveCardGradientBgWithAnim: {
-      ...(!isLight && {
-        borderColor: 'rgba(35, 36, 40, 0.1)',
-      }),
+      borderColor: isLight ? 'rgba(255, 255, 255, .1)' : 'rgba(35, 36, 40, .1)',
     },
     shadowView: {
       ...Platform.select({

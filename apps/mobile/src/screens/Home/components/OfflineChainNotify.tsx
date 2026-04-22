@@ -240,8 +240,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     marginHorizontal: 15,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
     backgroundColor: colors2024['orange-light-1'],
     flexDirection: 'row',
     alignItems: 'center',
@@ -265,10 +265,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   text: {
     color: colors2024['orange-default'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
+    fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '700',
-    lineHeight: 18,
     paddingHorizontal: 4,
   },
 
