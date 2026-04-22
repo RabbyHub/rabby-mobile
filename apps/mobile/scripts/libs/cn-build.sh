@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cn_build_source_trace() {
-  printf '[cn-build][trace] %s %s\n' "$(date '+%H:%M:%S')" "$*"
+  printf '[cn-build][trace] %s %s\n' "$(date '+%H:%M:%S')" "$*" >&2
 }
 
 cn_build_source_trace "start"
