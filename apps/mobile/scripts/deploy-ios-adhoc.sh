@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
