@@ -72,6 +72,51 @@ cn_build_lockfile_bundler_version() {
   sed -n '/^BUNDLED WITH$/{n;p;}' "$lockfile_path" | xargs
 }
 
+cn_build_project_ruby_target() {
+  ruby_work_dir="$1"
+
+  if [ ! -f "$ruby_work_dir/.ruby-version" ]; then
+    return 1
+  fi
+
+  ruby_version=$(tr -d '\r\n' <"$ruby_work_dir/.ruby-version")
+  ruby_gemset=""
+  if [ -f "$ruby_work_dir/.ruby-gemset" ]; then
+    ruby_gemset=$(tr -d '\r\n' <"$ruby_work_dir/.ruby-gemset")
+  fi
+
+  if [ -z "$ruby_version" ]; then
+    return 1
+  fi
+
+  if [ -n "$ruby_gemset" ]; then
+    printf '%s@%s\n' "$ruby_version" "$ruby_gemset"
+  else
+    printf '%s\n' "$ruby_version"
+  fi
+}
+
+cn_build_rvm_do() {
+  rvm_work_dir="$1"
+  rvm_ruby_target="$2"
+  shift 2
+
+  bash -lc '
+    set -e
+    work_dir="$1"
+    ruby_target="$2"
+    shift 2
+
+    cd "$work_dir"
+    unset GEM_HOME GEM_PATH
+    export rvm_silence_path_mismatch_check_flag=1
+    . "$HOME/.rvm/scripts/rvm"
+    rvm use "$ruby_target" >/dev/null
+    hash -r
+    exec "$@"
+  ' bash "$rvm_work_dir" "$rvm_ruby_target" "$@"
+}
+
 cn_build_prepare_bundler() {
   cn_build_source_trace "cn_build_prepare_bundler"
   cn_build_enabled || return 0
@@ -85,43 +130,38 @@ cn_build_prepare_bundler() {
 
   if [ -n "$bundler_version" ]; then
     if [ -f "$bundle_work_dir/.ruby-version" ] && [ -s "$HOME/.rvm/scripts/rvm" ]; then
-      bash -lc '
-        set -e
-        work_dir="$1"
-        bundler_version="$2"
-        gem_source="$3"
+      ruby_target=$(cn_build_project_ruby_target "$bundle_work_dir")
 
-        cd "$work_dir"
-        unset GEM_HOME GEM_PATH BUNDLE_APP_CONFIG BUNDLE_PATH
-        . "$HOME/.rvm/scripts/rvm"
-        ruby_version="$(tr -d "\r\n" < .ruby-version)"
-        ruby_gemset=""
-        if [ -f .ruby-gemset ]; then
-          ruby_gemset="$(tr -d "\r\n" < .ruby-gemset)"
-        fi
-        ruby_target="$ruby_version"
-        if [ -n "$ruby_gemset" ]; then
-          ruby_target="${ruby_target}@${ruby_gemset}"
-        fi
-        rvm use "$ruby_target" >/dev/null
-
-        if ! bundle "_${bundler_version}_" --version >/dev/null 2>&1; then
+      if ! cn_build_rvm_do "$bundle_work_dir" "$ruby_target" gem list bundler -i -v "$bundler_version" >/dev/null 2>&1; then
+        cn_build_rvm_do "$bundle_work_dir" "$ruby_target" \
           gem install bundler -v "$bundler_version" --no-document --clear-sources --source "$gem_source" >/dev/null
-        fi
-      ' bash "$bundle_work_dir" "$bundler_version" "$gem_source"
+      fi
     elif ! bundle "_${bundler_version}_" --version >/dev/null 2>&1; then
       gem install bundler -v "$bundler_version" --no-document --clear-sources --source "$gem_source" >/dev/null
     fi
   fi
 
   if [ -n "$bundle_app_config" ]; then
-    env BUNDLE_APP_CONFIG="$bundle_app_config" \
-      bundle config set --local mirror.https://rubygems.org "$gem_source" >/dev/null
-  else
-    (
-      cd "$bundle_work_dir" &&
+    if [ -f "$bundle_work_dir/.ruby-version" ] && [ -s "$HOME/.rvm/scripts/rvm" ]; then
+      ruby_target=$(cn_build_project_ruby_target "$bundle_work_dir")
+      cn_build_rvm_do "$bundle_work_dir" "$ruby_target" \
+        env BUNDLE_APP_CONFIG="$bundle_app_config" \
+        ruby -S bundle config set --local mirror.https://rubygems.org "$gem_source" >/dev/null
+    else
+      env BUNDLE_APP_CONFIG="$bundle_app_config" \
         bundle config set --local mirror.https://rubygems.org "$gem_source" >/dev/null
-    )
+    fi
+  else
+    if [ -f "$bundle_work_dir/.ruby-version" ] && [ -s "$HOME/.rvm/scripts/rvm" ]; then
+      ruby_target=$(cn_build_project_ruby_target "$bundle_work_dir")
+      cn_build_rvm_do "$bundle_work_dir" "$ruby_target" \
+        ruby -S bundle config set --local mirror.https://rubygems.org "$gem_source" >/dev/null
+    else
+      (
+        cd "$bundle_work_dir" &&
+          bundle config set --local mirror.https://rubygems.org "$gem_source" >/dev/null
+      )
+    fi
   fi
 
   cn_build_log "using rubygems mirror $gem_source"

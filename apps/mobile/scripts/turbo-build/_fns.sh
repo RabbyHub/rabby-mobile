@@ -408,25 +408,12 @@ turbo_bundle_with_project_ruby() {
   tb_path="$RABBY_MOBILE_TURBO_BUNDLE_PATH"
   tb_force_ruby_platform="$RABBY_MOBILE_TURBO_BUNDLE_FORCE_RUBY_PLATFORM"
 
-  bash -lc '
-    set -e
-    work_dir="$1"
-    ruby_target="$2"
-    bundle_app_config="$3"
-    bundle_path="$4"
-    bundle_force_ruby_platform="$5"
-    shift 5
-
-    cd "$work_dir"
-    . "$HOME/.rvm/scripts/rvm"
-    rvm use "$ruby_target" >/dev/null
-
+  cn_build_rvm_do "$tb_work_dir" "$tb_ruby_target" \
     env \
-      BUNDLE_APP_CONFIG="$bundle_app_config" \
-      BUNDLE_PATH="$bundle_path" \
-      BUNDLE_FORCE_RUBY_PLATFORM="$bundle_force_ruby_platform" \
-      bundle "$@"
-  ' bash "$tb_work_dir" "$tb_ruby_target" "$tb_app_config" "$tb_path" "$tb_force_ruby_platform" "$@"
+    BUNDLE_APP_CONFIG="$tb_app_config" \
+    BUNDLE_PATH="$tb_path" \
+    BUNDLE_FORCE_RUBY_PLATFORM="$tb_force_ruby_platform" \
+    ruby -S bundle "$@"
 }
 
 turbo_bundle_exec() {

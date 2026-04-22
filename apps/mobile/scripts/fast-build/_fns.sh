@@ -74,18 +74,7 @@ project_bundle_with_ruby() {
   shift
   pb_ruby_target=$(project_ruby_target) || return 1
 
-  bash -lc '
-    set -e
-    work_dir="$1"
-    ruby_target="$2"
-    shift 2
-
-    cd "$work_dir"
-    . "$HOME/.rvm/scripts/rvm"
-    rvm use "$ruby_target" >/dev/null
-
-    bundle "$@"
-  ' bash "$pb_work_dir" "$pb_ruby_target" "$@"
+  cn_build_rvm_do "$pb_work_dir" "$pb_ruby_target" ruby -S bundle "$@"
 }
 
 project_bundle_exec() {
