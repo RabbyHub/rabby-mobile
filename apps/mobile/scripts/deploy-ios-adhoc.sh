@@ -175,7 +175,7 @@ prepare_ios_build_artifacts() {
     return 0
   fi
 
-  yarn check-nodeengines &&
+  require_node_v22_or_higher &&
     yarn ../mobile-local-pages make-theme &&
     yarn ../mobile-local-pages build --mode ios &&
     yarn react-native-asset &&

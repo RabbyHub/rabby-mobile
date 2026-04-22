@@ -30,7 +30,7 @@ prepare_android_payload_inputs() {
   fi
 
   echo "Preparing Android payload inputs..."
-  yarn check-nodeengines &&
+  require_node_v22_or_higher &&
     yarn ../mobile-local-pages make-theme &&
     yarn ../mobile-local-pages build --mode android &&
     yarn react-native-asset &&

@@ -27,7 +27,7 @@ prepare_ios_payload_inputs() {
   fi
 
   echo "Preparing iOS payload inputs..."
-  yarn check-nodeengines &&
+  require_node_v22_or_higher &&
     yarn ../mobile-local-pages make-theme &&
     yarn ../mobile-local-pages build --mode ios &&
     yarn react-native-asset &&

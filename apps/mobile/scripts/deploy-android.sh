@@ -59,7 +59,7 @@ prepare_android_build_artifacts() {
     fi
   fi
 
-  yarn check-nodeengines &&
+  require_node_v22_or_higher &&
     yarn ../mobile-local-pages make-theme &&
     yarn ../mobile-local-pages build --mode android &&
     yarn react-native-asset &&
@@ -112,7 +112,7 @@ build_appstore() {
     prepare_android_build_artifacts || return $?
   else
     yarn &&
-      yarn check-nodeengines &&
+      require_node_v22_or_higher &&
       yarn ../mobile-local-pages bundle:all &&
       yarn link-assets &&
       yarn buildworker:prod:android

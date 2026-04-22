@@ -34,6 +34,29 @@ resolve_mobile_project_dir() {
   pwd
 }
 
+require_node_v22_or_higher() {
+  local node_version node_major
+  node_version=$(node -v 2>/dev/null) || {
+    echo "Error: Node.js is required but was not found in PATH"
+    return 1
+  }
+
+  node_major=${node_version#v}
+  node_major=${node_major%%.*}
+
+  case "$node_major" in
+    ''|*[!0-9]*)
+      echo "Error: Unable to parse Node.js version: $node_version"
+      return 1
+      ;;
+  esac
+
+  if [ "$node_major" -lt 22 ]; then
+    echo "Error: Node.js v22 or higher is required. Current version: $node_version"
+    return 1
+  fi
+}
+
 resolve_mobile_build_env() {
   case "${CONFIGURATION:-}" in
     Release)
