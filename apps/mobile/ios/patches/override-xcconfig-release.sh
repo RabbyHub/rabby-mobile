@@ -59,3 +59,5 @@ cat > "$localAppConfigPath" <<EOF
 
 RABBY_MOBILE_CODE = ${RABBY_MOBILE_CODE}
 EOF
+
+echo "[RabbyMobileBuild] wrote AppConfig override: $localAppConfigPath"

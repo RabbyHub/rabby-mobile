@@ -94,8 +94,15 @@ done
 build_adhoc() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   cd $project_dir;
-  sh ./ios/patches/override-xcconfig-release.sh;
+  deploy_ios_trace "override-xcconfig-release start"
+  bash ./ios/patches/override-xcconfig-release.sh;
+  override_status=$?
+  deploy_ios_trace "override-xcconfig-release status=$override_status"
+  if [ $override_status -ne 0 ]; then
+    return $override_status
+  fi
   export ios_archive_path="$project_dir/ios/Package/adhoc/RabbyMobile.xcarchive"
+  deploy_ios_trace "ios_archive_path=$ios_archive_path"
 
   deploy_ios_trace "prepare_ios_build_artifacts"
   prepare_ios_build_artifacts;
