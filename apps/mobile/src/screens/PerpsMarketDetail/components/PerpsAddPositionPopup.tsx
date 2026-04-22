@@ -371,7 +371,7 @@ export const PerpsAddPositionPopup: React.FC<{
             <View style={styles.amountValueRow}>
               <View style={styles.amountValueContainer}>
                 <Text style={styles.amountValue}>
-                  ${splitNumberByStep(availableBalance.toFixed(2))}
+                  {splitNumberByStep(availableBalance.toFixed(2))}
                 </Text>
                 <View style={styles.availableRow}>
                   <Text style={styles.totalLabel}>
@@ -401,8 +401,8 @@ export const PerpsAddPositionPopup: React.FC<{
                     : null,
                 ]}
                 placeholderTextColor={colors2024['neutral-info']}
-                placeholder="$0"
-                value={Number(margin) > 0 ? displayedValue : ''}
+                placeholder="0"
+                value={Number(margin) > 0 ? margin : ''}
                 onChangeText={setMargin}
               />
             </View>
@@ -434,7 +434,7 @@ export const PerpsAddPositionPopup: React.FC<{
                     Number(tradeSize) * markPrice,
                     BigNumber.ROUND_DOWN,
                   )}{' '}
-                  = {tradeSize} {coin}
+                  = {tradeSize} {formatPerpsCoin(displayName)}
                 </Text>
               </View>
             </View>
@@ -464,7 +464,7 @@ export const PerpsAddPositionPopup: React.FC<{
                     Number(totalSize) * markPrice,
                     BigNumber.ROUND_DOWN,
                   )}{' '}
-                  = {totalSize} {coin}
+                  = {totalSize} {formatPerpsCoin(displayName)}
                 </Text>
               </View>
             </View>

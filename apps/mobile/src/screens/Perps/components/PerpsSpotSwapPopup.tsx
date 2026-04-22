@@ -136,16 +136,21 @@ export const PerpsSpotSwapPopup: React.FC<{
         setFromCoin('USDC');
         setToCoin(targetAsset);
       } else {
-        // From home page: pick by balance
+        // USDC is the only hub — either from=USDC (buy) or to=USDC (sell).
         const top1 = sortedByBalance[0];
         const top2 = sortedByBalance[1];
-        const hasNonUsdcBalance = top1 !== 'USDC' || getSpotBalance(top1) > 0;
+        const top1Balance = top1 ? getSpotBalance(top1) : 0;
 
-        if (hasNonUsdcBalance && top1 && top2 && top1 !== top2) {
-          setFromCoin(top1);
+        if (top1 === 'USDC' && top1Balance > 0 && top2) {
+          // USDC has highest balance → default to buying the 2nd-highest coin
+          setFromCoin('USDC');
           setToCoin(top2);
+        } else if (top1 && top1 !== 'USDC' && top1Balance > 0) {
+          // A non-USDC stablecoin has highest balance → default to selling it for USDC
+          setFromCoin(top1);
+          setToCoin('USDC');
         } else {
-          // Only USDC balance or no balance at all
+          // No balance → default
           setFromCoin('USDC');
           setToCoin('USDT');
         }

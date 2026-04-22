@@ -714,7 +714,8 @@ export const usePerpsState = () => {
           throw new Error(`Invalid target asset, targetAsset: ${targetAsset}`);
         }
 
-        const time = Date.now();
+        // 100ms for front of prepareWithdraw time
+        const time = Date.now() - 100;
         const useMiniApprovalSign =
           currentPerpsAccount.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
           currentPerpsAccount.type === KEYRING_CLASS.HARDWARE.LEDGER;
@@ -798,7 +799,6 @@ export const usePerpsState = () => {
           ],
           false,
         );
-        fetchClearinghouseState();
         return true;
       } catch (error: any) {
         console.error('Failed to withdraw:', error);

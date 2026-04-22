@@ -50,6 +50,7 @@ import { showToast } from '@/hooks/perps/showToast';
 import { stats } from '@/utils/stats';
 import { APP_VERSIONS } from '@/constant';
 import { Text, TextInput } from '@/components/Typography';
+import { formatPerpsNumber } from '../../../../../../packages/biz-utils/src/isomorphic/biz-number';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -577,10 +578,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                         color: colors2024['red-default'],
                       },
                     ]}>
-                    {formatPerpsUsdValue(
-                      availableBalance,
-                      BigNumber.ROUND_DOWN,
-                    )}
+                    {formatPerpsNumber(availableBalance, BigNumber.ROUND_DOWN)}
                   </Text>
                   <View
                     style={{
@@ -627,8 +625,8 @@ export const PerpsOpenPositionPopup: React.FC<{
                       : null,
                   ]}
                   placeholderTextColor={colors2024['neutral-info']}
-                  placeholder="$0"
-                  value={Number(margin) > 0 ? displayedValue : ''}
+                  placeholder="0"
+                  value={Number(margin) > 0 ? margin : ''}
                   onChangeText={setMargin}
                 />
               </View>

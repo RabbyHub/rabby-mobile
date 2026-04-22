@@ -19,6 +19,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Typography';
 import { SPOT_STABLE_COIN_NAME } from '../PerpsSpotSwapPopup';
+import { formatPerpsCoin } from '@/utils/perps';
 
 // Reverse map: '@166' → 'USDT', '@150' → 'USDE', '@230' → 'USDH'
 const SPOT_COIN_TO_NAME: Record<string, string> = Object.fromEntries(
@@ -196,7 +197,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     </View>
                     <View style={styles.coinContainer}>
                       <AssetAvatar size={24} logo={logoUrl} />
-                      <Text style={styles.value}>{coin} - USD</Text>
+                      <Text style={styles.value}>
+                        {formatPerpsCoin(coin || '')} - USD
+                      </Text>
                     </View>
                   </View>
                   {time ? (
@@ -267,7 +270,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     <View>
                       <Text style={styles.value}>
                         ${splitNumberByStep(tradeValue.toFixed(2))} = {sz}{' '}
-                        {coin}
+                        {formatPerpsCoin(coin || '')}
                       </Text>
                     </View>
                   </View>

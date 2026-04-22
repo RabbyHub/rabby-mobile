@@ -50,7 +50,7 @@ export const PerpsHeaderTitle: React.FC<{
           <HeaderBackPressable />
           <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={24} />
           <TouchableOpacity onPress={onSelectCoin} style={styles.touchable}>
-            <Text style={styles.text}>{displayName}</Text>
+            <Text style={styles.text}>{formatPerpsCoin(displayName)}</Text>
             <Text style={styles.quote}>/{quoteCoin}</Text>
             <IconCom
               width={20}
