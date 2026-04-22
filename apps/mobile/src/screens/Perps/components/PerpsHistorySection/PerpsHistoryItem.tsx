@@ -86,6 +86,7 @@ const PerpsHistoryItemComponent: React.FC<PerpsHistoryItemProps> = ({
   }, [fill?.dir, fill?.liquidation, orderTpOrSl, t, staleCoinName]);
 
   const itemData = marketData[coin];
+  const quoteAsset = itemData?.quoteAsset || 'USDC';
   const logoUrl = itemData?.logoUrl;
   const pxDecimals = itemData?.pxDecimals;
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && _closedPnl;
@@ -142,7 +143,8 @@ const PerpsHistoryItemComponent: React.FC<PerpsHistoryItemProps> = ({
               <Text style={styles.coin}>{t('page.swap.Completed')}</Text>
             ) : (
               <Text style={styles.coin}>
-                {formatPerpsCoin(coin)}-USD @${Number(px).toFixed(pxDecimals)}
+                {formatPerpsCoin(coin)}-{quoteAsset} @$
+                {Number(px).toFixed(pxDecimals)}
               </Text>
             )}
           </View>

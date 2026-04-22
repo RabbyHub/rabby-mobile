@@ -19,6 +19,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
 import { Text } from '@/components/Typography';
+import { showToast } from '@/hooks/perps/showToast';
 
 export const PerpsHistorySection: React.FC<{
   marketDataMap: MarketDataMap;
@@ -35,7 +36,7 @@ export const PerpsHistorySection: React.FC<{
   const fillsOrderTpOrSl = perpsStore(s => s.fillsOrderTpOrSl);
 
   const [selectedFill, setSelectedFill] = useState<
-    (WsFill & { logoUrl: string }) | null
+    (WsFill & { logoUrl: string; quoteAsset: string }) | null
   >(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedTransfer, setSelectedTransfer] =
@@ -47,7 +48,9 @@ export const PerpsHistorySection: React.FC<{
     const obj = {
       ...fill,
       logoUrl: marketDataMap[fill.coin]?.logoUrl || '',
+      quoteAsset: marketDataMap[fill.coin]?.quoteAsset || 'USDC',
     };
+    showToast(obj.quoteAsset as string);
     setSelectedFill(obj);
     setDetailVisible(true);
   });

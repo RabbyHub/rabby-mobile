@@ -29,7 +29,7 @@ const SPOT_COIN_TO_NAME: Record<string, string> = Object.fromEntries(
 export const PerpsHistoryDetailPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
-  fill: (WsFill & { logoUrl: string }) | null;
+  fill: (WsFill & { logoUrl: string; quoteAsset: string }) | null;
   orderTpOrSl?: 'tp' | 'sl';
 }> = ({ visible, onClose, fill, orderTpOrSl }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -41,7 +41,17 @@ export const PerpsHistoryDetailPopup: React.FC<{
   const { t } = useTranslation();
   const { showTipsPopup } = useTipsPopup();
 
-  const { coin, side, sz, px, closedPnl, time, fee, dir } = fill || {};
+  const {
+    coin,
+    side,
+    sz,
+    px,
+    closedPnl,
+    time,
+    fee,
+    dir,
+    quoteAsset = 'USDC',
+  } = fill || {};
   const tradeValue = Number(sz) * Number(px);
   const pnlValue = Number(closedPnl) - Number(fee);
   const isClose = (dir === 'Close Long' || dir === 'Close Short') && closedPnl;
@@ -198,7 +208,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     <View style={styles.coinContainer}>
                       <AssetAvatar size={24} logo={logoUrl} />
                       <Text style={styles.value}>
-                        {formatPerpsCoin(coin || '')} - USD
+                        {formatPerpsCoin(coin || '')} - {quoteAsset}
                       </Text>
                     </View>
                   </View>

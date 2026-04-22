@@ -42,7 +42,7 @@ export const PerpsHistoryList: React.FC<{
   const fillsOrderTpOrSl = perpsStore(s => s.fillsOrderTpOrSl);
 
   const [selectedFill, setSelectedFill] = useState<
-    (WsFill & { logoUrl: string }) | null
+    (WsFill & { logoUrl: string; quoteAsset: string }) | null
   >(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedTransfer, setSelectedTransfer] =
@@ -53,6 +53,7 @@ export const PerpsHistoryList: React.FC<{
     const obj = {
       ...fill,
       logoUrl: marketDataMap[fill.coin]?.logoUrl || '',
+      quoteAsset: marketDataMap[fill.coin]?.quoteAsset || 'USDC',
     };
     setSelectedFill(obj);
     setDetailVisible(true);

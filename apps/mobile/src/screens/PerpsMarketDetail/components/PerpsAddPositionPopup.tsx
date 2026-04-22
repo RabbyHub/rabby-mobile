@@ -364,9 +364,12 @@ export const PerpsAddPositionPopup: React.FC<{
 
           <View style={styles.amountSection}>
             <View style={styles.amountHeader}>
-              <Text style={styles.amountLabel}>
-                {t('page.perpsDetail.PerpsClosePositionPopup.amount')}
-              </Text>
+              <View style={styles.marginQuoteLabel}>
+                <Text style={styles.marginLabel}>
+                  {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
+                </Text>
+                <Text style={styles.marginQuoteLabelText}>({quoteAsset})</Text>
+              </View>
             </View>
             <View style={styles.amountValueRow}>
               <View style={styles.amountValueContainer}>
@@ -377,19 +380,19 @@ export const PerpsAddPositionPopup: React.FC<{
                   <Text style={styles.totalLabel}>
                     {t('page.perpsDetail.PerpsEditMarginPopup.available')}
                   </Text>
-                  {marginValidation.error === 'insufficient_balance' &&
-                    availableBalance < 0.1 && (
-                      <TouchableOpacity
-                        onPress={
-                          quoteAsset === 'USDC' ? onDepositPress : onSwapPress
-                        }>
-                        <Text style={styles.entryLink}>
-                          {quoteAsset === 'USDC'
-                            ? t('page.perps.PerpsSpotSwap.toDepositEntry')
-                            : t('page.perps.PerpsSpotSwap.toSwapEntry')}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
+                  {(marginValidation.error === 'insufficient_balance' ||
+                    availableBalance < 0.1) && (
+                    <TouchableOpacity
+                      onPress={
+                        quoteAsset === 'USDC' ? onDepositPress : onSwapPress
+                      }>
+                      <Text style={styles.entryLink}>
+                        {quoteAsset === 'USDC'
+                          ? t('page.perps.PerpsSpotSwap.toDepositEntry')
+                          : t('page.perps.PerpsSpotSwap.toSwapEntry')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
               <BottomSheetTextInput
@@ -640,7 +643,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 4,
+      // marginBottom: 4,
+    },
+    marginQuoteLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    marginLabel: {
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '800',
+      // marginBottom: 4,
+      color: '#50D2C1',
+      fontFamily: 'SF Pro Rounded',
+    },
+    marginQuoteLabelText: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+      // marginBottom: 4,
+      color: '#50D2C1',
+      fontFamily: 'SF Pro Rounded',
     },
     amountLabel: {
       fontFamily: 'SF Pro Rounded',
