@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. "$( cd "$( dirname "$0"  )" && pwd )/_fns.sh" --source-only
+
 UNIX_TYPE=$(uname -s)
 RABBY_HOST_OS=`uname`
 
@@ -300,6 +302,10 @@ if [ ! -z $func_to_exec ]; then
       ;;
     "update_webview_assets")
       update_webview_assets
+      ;;
+    "check_publish_tag")
+      shift
+      check_publish_tag "$@"
       ;;
     *)
       echo "Invalid function to execute: $func_to_exec"
