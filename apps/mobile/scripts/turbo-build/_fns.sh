@@ -1,7 +1,16 @@
 #!/bin/sh
 
+turbo_source_trace() {
+  printf '[turbo-build][trace] %s %s\n' "$(date '+%H:%M:%S')" "$*"
+}
+
+turbo_source_trace "start"
+turbo_source_trace "source build-cache helpers"
 . $project_dir/scripts/build-cache/_fns.sh --source-only
+turbo_source_trace "sourced build-cache helpers"
+turbo_source_trace "source cn-build helpers"
 . $project_dir/scripts/libs/cn-build.sh --source-only
+turbo_source_trace "sourced cn-build helpers"
 
 turbo_build_enabled() {
   [ "${RABBY_MOBILE_TURBO_BUILD:-false}" = "true" ]
@@ -1241,3 +1250,5 @@ turbo_restore_gradle_state() {
 turbo_save_gradle_state() {
   build_cache_save_android_gradle_state
 }
+
+turbo_source_trace "file loaded"

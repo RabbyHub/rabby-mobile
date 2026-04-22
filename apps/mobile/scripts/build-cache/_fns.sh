@@ -1,5 +1,11 @@
 #!/bin/sh
 
+build_cache_source_trace() {
+  printf '[build-cache][trace] %s %s\n' "$(date '+%H:%M:%S')" "$*"
+}
+
+build_cache_source_trace "start"
+
 build_cache_enabled() {
   [ "${RABBY_MOBILE_TURBO_BUILD:-false}" = "true" ]
 }
@@ -657,3 +663,5 @@ build_cache_save_android_gradle_state() {
   build_cache_log "gradle-home cache already materialized in local mirror"
   build_cache_save_android_gradle_state_to_remote "$cache_key"
 }
+
+build_cache_source_trace "file loaded"
