@@ -1136,10 +1136,10 @@ turbo_prepare_workspace_build() {
   fi
 
   if ! turbo_workspace_build_ready; then
-    turbo_log "workspace package outputs missing or stale, running yarn build"
+    turbo_log "workspace package outputs missing or stale, running direct TypeScript build"
     (
       cd "$RABBY_MOBILE_REPO_ROOT" &&
-        yarn build
+        node ./node_modules/typescript/bin/tsc --build tsconfig.build.json --verbose
     ) || return $?
   else
     turbo_log "workspace package outputs already available"
