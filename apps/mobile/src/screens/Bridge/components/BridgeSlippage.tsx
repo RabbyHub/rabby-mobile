@@ -150,23 +150,27 @@ export const BridgeSlippage = (props: SlippageProps) => {
     }
     if (recommendValue) {
       return (
-        <Trans
-          i18nKey="page.swap.recommend-slippage"
-          value={{
-            slippage: new BigNumber(recommendValue || 0).times(100).toString(),
-          }}
-          t={t}>
-          To prevent front-running, we recommend a slippage of{' '}
-          <Text onPress={setRecommendValue}>
-            {{
-              //@ts-expect-error  No overload matches this call.
+        <Text>
+          <Trans
+            i18nKey="page.swap.recommend-slippage"
+            value={{
               slippage: new BigNumber(recommendValue || 0)
                 .times(100)
                 .toString(),
             }}
-          </Text>
-          %
-        </Trans>
+            t={t}>
+            To prevent front-running, we recommend a slippage of{' '}
+            <Text onPress={setRecommendValue}>
+              {{
+                //@ts-expect-error  No overload matches this call.
+                slippage: new BigNumber(recommendValue || 0)
+                  .times(100)
+                  .toString(),
+              }}
+            </Text>
+            %
+          </Trans>
+        </Text>
       );
     }
 
@@ -211,13 +215,7 @@ export const BridgeSlippage = (props: SlippageProps) => {
         <Text style={styles.text}>{t('page.swap.slippage-tolerance')}</Text>
         <View style={styles.valueContainer}>
           {type === 'swap' && autoSlippage && loading ? (
-            <CustomSkeleton
-              style={{
-                width: 131,
-                height: 24,
-                borderRadius: 100,
-              }}
-            />
+            <CustomSkeleton style={styles.autoSlippageSkeleton} />
           ) : (
             <>
               <Text style={[styles.value, !!tips && styles.warning]}>
@@ -328,6 +326,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  autoSlippageSkeleton: {
+    width: 131,
+    height: 24,
+    borderRadius: 100,
   },
   value: {
     fontSize: 16,
