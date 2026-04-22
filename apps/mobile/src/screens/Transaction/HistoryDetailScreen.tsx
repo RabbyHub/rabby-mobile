@@ -87,7 +87,8 @@ export const TxStatusItem = ({
 
   if (isPending) {
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
         <Animated.View
           style={{
             transform: [{ rotate: spin }],
@@ -109,7 +110,8 @@ export const TxStatusItem = ({
 
   return status === 1 ? (
     !withText && !showSuccess ? null : (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
         <RcIconSuccess width={18} height={18} />
         {withText && (
           <Text style={styles.statuItemText}>
@@ -119,7 +121,7 @@ export const TxStatusItem = ({
       </View>
     )
   ) : (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
       <RcIconFail width={18} height={18} />
       {withText && (
         <Text
