@@ -102,6 +102,7 @@ export const useGasAccountDepositAvailableTokens = (
   );
   const hasAvailableTokens = availableTokens.length > 0;
   const hasTokenSnapshot = tokens.length > 0;
+  const isCheckingAvailability = isLoading && !hasAvailableTokens;
   const tokenDisabled =
     bridgeSupportUpdatedAt > 0 &&
     hasTokenSnapshot &&
@@ -111,7 +112,7 @@ export const useGasAccountDepositAvailableTokens = (
   return {
     availableTokens,
     hasAvailableTokens,
-    isCheckingAvailability: isLoading,
+    isCheckingAvailability,
     tokenDisabled,
     checkIsExpireAndUpdate,
     refreshBridgeSupportTokenList:
