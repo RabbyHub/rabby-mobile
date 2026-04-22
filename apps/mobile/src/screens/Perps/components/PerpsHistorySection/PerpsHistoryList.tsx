@@ -20,6 +20,7 @@ import { PerpsHistoryAccountItem } from './PerpsHistoryAccountItem';
 import { PerpsHistoryDetailPopup } from './PerpsHistoryDetailPopup';
 import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { PerpsHistoryItem } from './PerpsHistoryItem';
+import { PerpsHistoryTransferPopup } from './PerpsHistoryTransferPopup';
 import { Text } from '@/components/Typography';
 
 export const PerpsHistoryList: React.FC<{
@@ -44,6 +45,9 @@ export const PerpsHistoryList: React.FC<{
     (WsFill & { logoUrl: string }) | null
   >(null);
   const [detailVisible, setDetailVisible] = useState(false);
+  const [selectedTransfer, setSelectedTransfer] =
+    useState<AccountHistoryItem | null>(null);
+  const [transferVisible, setTransferVisible] = useState(false);
 
   const handleItemClick = useMemoizedFn((fill: WsFill) => {
     const obj = {
@@ -54,15 +58,25 @@ export const PerpsHistoryList: React.FC<{
     setDetailVisible(true);
   });
 
+  const handleTransferClick = useMemoizedFn((item: AccountHistoryItem) => {
+    setSelectedTransfer(item);
+    setTransferVisible(true);
+  });
+
   const handleCloseDetail = () => {
     setDetailVisible(false);
     setSelectedFill(null);
   };
 
+  const handleCloseTransfer = () => {
+    setTransferVisible(false);
+    setSelectedTransfer(null);
+  };
+
   const renderItem = useMemoizedFn<ListRenderItem<AccountHistoryItem | WsFill>>(
     ({ item }) => {
       return 'usdValue' in item ? (
-        <PerpsHistoryAccountItem data={item} />
+        <PerpsHistoryAccountItem data={item} onPress={handleTransferClick} />
       ) : (
         <PerpsHistoryItem
           fill={item}
@@ -102,6 +116,11 @@ export const PerpsHistoryList: React.FC<{
         }
         fill={selectedFill}
         onClose={handleCloseDetail}
+      />
+      <PerpsHistoryTransferPopup
+        visible={transferVisible}
+        item={selectedTransfer}
+        onClose={handleCloseTransfer}
       />
     </>
   );

@@ -1,11 +1,15 @@
-import { RcIconDepositCC, RcIconWithdrawCC } from '@/assets2024/icons/perps';
+import {
+  RcIconDepositCC,
+  RcIconTransferCC,
+  RcIconWithdrawCC,
+} from '@/assets2024/icons/perps';
 import { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import React, { memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, View } from 'react-native';
+import { Animated, TouchableOpacity, View } from 'react-native';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import { Easing } from 'react-native-reanimated';
 import { formatPerpsUsdValue } from '@/utils/number';
@@ -13,16 +17,20 @@ import { Text } from '@/components/Typography';
 
 interface HistoryAccountItemProps {
   data: AccountHistoryItem;
+  onPress?: (item: AccountHistoryItem) => void;
 }
 
 const PerpsHistoryAccountItemComponent: React.FC<HistoryAccountItemProps> = ({
   data,
+  onPress,
 }) => {
-  const { time, type, status, usdValue } = data;
+  const { time, type, status, usdValue, destinationDex } = data;
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const isRealDeposit = type === 'deposit' || type === 'receive';
+  const isTransfer = type === 'transfer';
+  const isTransferToSpot = isTransfer && destinationDex === 'spot';
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -39,30 +47,51 @@ const PerpsHistoryAccountItemComponent: React.FC<HistoryAccountItemProps> = ({
     ).start();
   }, [spinValue]);
 
-  return (
+  const renderIcon = () => {
+    if (isTransfer) {
+      return (
+        <RcIconTransferCC
+          color={colors2024['neutral-body']}
+          bgColor={colors2024['neutral-bg-5']}
+          width={46}
+          height={46}
+        />
+      );
+    }
+    if (isRealDeposit) {
+      return (
+        <RcIconDepositCC
+          color={colors2024['neutral-body']}
+          bgColor={colors2024['neutral-bg-5']}
+          width={46}
+          height={46}
+        />
+      );
+    }
+    return (
+      <RcIconWithdrawCC
+        color={colors2024['neutral-body']}
+        bgColor={colors2024['neutral-bg-5']}
+        width={46}
+        height={46}
+      />
+    );
+  };
+
+  const titleText = isTransfer
+    ? isTransferToSpot
+      ? t('page.perps.history.transferToSpot')
+      : t('page.perps.history.transferToPerps')
+    : isRealDeposit
+    ? t('page.perps.history.deposit')
+    : t('page.perps.history.withdraw');
+
+  const content = (
     <View style={styles.card}>
       <View style={styles.leftContent}>
-        {isRealDeposit ? (
-          <RcIconDepositCC
-            color={colors2024['neutral-body']}
-            bgColor={colors2024['neutral-bg-5']}
-            width={46}
-            height={46}
-          />
-        ) : (
-          <RcIconWithdrawCC
-            color={colors2024['neutral-body']}
-            bgColor={colors2024['neutral-bg-5']}
-            width={46}
-            height={46}
-          />
-        )}
+        {renderIcon()}
         <View style={styles.textContainer}>
-          <Text style={styles.title}>
-            {isRealDeposit
-              ? t('page.perps.history.deposit')
-              : t('page.perps.history.withdraw')}
-          </Text>
+          <Text style={styles.title}>{titleText}</Text>
           {status === 'pending' ? (
             <View style={styles.pendingContainer}>
               <Text style={styles.pendingStatus}>
@@ -86,14 +115,16 @@ const PerpsHistoryAccountItemComponent: React.FC<HistoryAccountItemProps> = ({
       <View style={styles.rightContent}>
         {status === 'success' ? (
           <>
-            <Text
-              style={[
-                styles.amount,
-                isRealDeposit ? styles.greenText : styles.redText,
-              ]}>
-              {isRealDeposit ? '+' : '-'}
-              {`${formatPerpsUsdValue(usdValue)}`}
-            </Text>
+            {!isTransfer && (
+              <Text
+                style={[
+                  styles.amount,
+                  isRealDeposit ? styles.greenText : styles.redText,
+                ]}>
+                {isRealDeposit ? '+' : '-'}
+                {`${formatPerpsUsdValue(usdValue)}`}
+              </Text>
+            )}
             <Text style={styles.timeText}>{sinceTime(time / 1000)}</Text>
           </>
         ) : (
@@ -109,6 +140,15 @@ const PerpsHistoryAccountItemComponent: React.FC<HistoryAccountItemProps> = ({
       </View>
     </View>
   );
+
+  if (isTransfer && onPress) {
+    return (
+      <TouchableOpacity activeOpacity={0.8} onPress={() => onPress(data)}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+  return content;
 };
 
 export const PerpsHistoryAccountItem = memo(PerpsHistoryAccountItemComponent);

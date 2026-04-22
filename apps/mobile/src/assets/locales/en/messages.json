@@ -2644,7 +2644,17 @@
           "pending": "Pending"
         },
         "deposit": "Deposit",
-        "withdraw": "Withdraw"
+        "withdraw": "Withdraw",
+        "transferToSpot": "Transfer to Spot",
+        "transferToPerps": "Transfer to Perps",
+        "transferDetailTitle": "Transfer",
+        "transferActionToSpot": "Transfer (from Perps to Spot)",
+        "transferActionToPerps": "Transfer (from Spot to Perps)",
+        "transferGotIt": "I Got it",
+        "action": "Action",
+        "asset": "Asset",
+        "value": "Value",
+        "date": "Date"
       },
       "PerpsSelectTokenPopup": {
         "token": "Token",

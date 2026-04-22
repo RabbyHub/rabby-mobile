@@ -18,6 +18,7 @@ import {
   DEFAULT_TOP_ASSET,
   HYPE_EVM_BRIDGE_ADDRESS,
   HYPE_EVM_BRIDGE_ADDRESS_MAP,
+  HYPE_CORE_DEPOSIT_WALLET,
 } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import {
@@ -86,7 +87,8 @@ export type MarketDataMap = Record<string, MarketData>;
 export interface AccountHistoryItem {
   time: number;
   hash: string;
-  type: 'deposit' | 'withdraw' | 'receive';
+  destinationDex?: string;
+  type: 'deposit' | 'withdraw' | 'receive' | 'transfer';
   status: 'pending' | 'success' | 'failed';
   usdValue: string;
 }
@@ -547,7 +549,8 @@ const mapLedgerUpdatesToHistory = (
         };
       }
 
-      const { destination, usdcValue } = item.delta as any;
+      const { destination, usdcValue, user, destinationDex } =
+        item.delta as any;
       const isWithdrawSend = Object.values(
         HYPE_EVM_BRIDGE_ADDRESS_MAP,
       ).includes(destination);
@@ -565,13 +568,24 @@ const mapLedgerUpdatesToHistory = (
         currentAddress &&
         isSameAddress(destination, currentAddress)
       ) {
-        return {
-          time: item.time,
-          hash: item.hash,
-          type: 'receive' as const,
-          status: 'success' as const,
-          usdValue: usdcValue.toString(),
-        };
+        if (user === HYPE_CORE_DEPOSIT_WALLET) {
+          return {
+            time: item.time,
+            hash: item.hash,
+            type: 'receive' as const,
+            status: 'success' as const,
+            usdValue: usdcValue.toString(),
+          };
+        } else {
+          return {
+            time: item.time,
+            hash: item.hash,
+            destinationDex,
+            type: 'transfer' as const,
+            status: 'success' as const,
+            usdValue: usdcValue.toString(),
+          };
+        }
       }
 
       const type =

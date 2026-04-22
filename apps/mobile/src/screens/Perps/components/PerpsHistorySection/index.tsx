@@ -14,6 +14,7 @@ import { PerpsHistoryAccountItem } from './PerpsHistoryAccountItem';
 import { PerpsHistoryDetailPopup } from './PerpsHistoryDetailPopup';
 import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { PerpsHistoryItem } from './PerpsHistoryItem';
+import { PerpsHistoryTransferPopup } from './PerpsHistoryTransferPopup';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
@@ -37,6 +38,9 @@ export const PerpsHistorySection: React.FC<{
     (WsFill & { logoUrl: string }) | null
   >(null);
   const [detailVisible, setDetailVisible] = useState(false);
+  const [selectedTransfer, setSelectedTransfer] =
+    useState<AccountHistoryItem | null>(null);
+  const [transferVisible, setTransferVisible] = useState(false);
   const navigation = useRabbyAppNavigation();
 
   const handleItemClick = useMemoizedFn((fill: WsFill) => {
@@ -48,9 +52,19 @@ export const PerpsHistorySection: React.FC<{
     setDetailVisible(true);
   });
 
+  const handleTransferClick = useMemoizedFn((item: AccountHistoryItem) => {
+    setSelectedTransfer(item);
+    setTransferVisible(true);
+  });
+
   const handleCloseDetail = () => {
     setDetailVisible(false);
     setSelectedFill(null);
+  };
+
+  const handleCloseTransfer = () => {
+    setTransferVisible(false);
+    setSelectedTransfer(null);
   };
 
   return (
@@ -84,7 +98,11 @@ export const PerpsHistorySection: React.FC<{
             <>
               {displayedList.map(item => {
                 return 'usdValue' in item ? (
-                  <PerpsHistoryAccountItem data={item} key={item.hash} />
+                  <PerpsHistoryAccountItem
+                    data={item}
+                    key={item.hash}
+                    onPress={handleTransferClick}
+                  />
                 ) : (
                   <PerpsHistoryItem
                     fill={item}
@@ -111,6 +129,11 @@ export const PerpsHistorySection: React.FC<{
         }
         fill={selectedFill}
         onClose={handleCloseDetail}
+      />
+      <PerpsHistoryTransferPopup
+        visible={transferVisible}
+        item={selectedTransfer}
+        onClose={handleCloseTransfer}
       />
     </>
   );
