@@ -1,7 +1,9 @@
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
+import { useStackScreenConfig } from '@/hooks/navigation';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import DevCapabilityFile from '@/screens/Testkits/DevCapabilityFile';
 
 import { registerAppScreen } from '@/perfs/apis';
 import { TESTKITS_PRELOAD_SCREENS } from '@/perfs/preloads';
@@ -111,7 +113,7 @@ const Stack = createNativeStackNavigator();
 // );
 
 export function TestkitsNavigator() {
-  // const { mergeScreenOptions } = useStackScreenConfig();
+  const { mergeScreenOptions2024 } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== TestkitsNavigator Render =========');
 
@@ -162,6 +164,17 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIPermissions}
         component={DevUIPermissions}
+      />
+      <Stack.Screen
+        name={RootNames.DevCapabilityFile}
+        component={DevCapabilityFile}
+        options={mergeScreenOptions2024([
+          {
+            headerShown: true,
+            headerTitle: 'File Capability',
+            title: 'File Capability',
+          },
+        ])}
       />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />

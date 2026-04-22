@@ -18,15 +18,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-public class RNHelpersModule extends EventEmitterPackageSpec /* implements LifecycleEventListener */ {
+public class RNHelpersModule extends SimplePackageSpec {
   public static final String NAME = "RNHelpers";
   private final ReactApplicationContext reactContext;
 
   public RNHelpersModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
-
-    // reactContext.addLifecycleEventListener(this);
   }
 
   @Override

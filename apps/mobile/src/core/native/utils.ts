@@ -6,8 +6,12 @@ import {
   Platform,
   UIManager,
 } from 'react-native';
-
-const isTurboModuleEnabled = global.__turboModuleProxy != null;
+import type {
+  NativeAccessibleVisualMediaList,
+  NativeAccessibleVisualMediaQueryOptions,
+  NativeFileCapabilityRequestOptions,
+  NativeFileCapabilitySnapshot,
+} from './fileCapability';
 
 interface NativeModulesStatic {
   ReactNativeSecurity: /* NativeModule &  */ {
@@ -44,6 +48,15 @@ interface NativeModulesStatic {
     //  * @description try to set a directory's files(including files in subdirectories) to not be backed up by iCloud
     //  */
     // iosExcludeDirectoryFromBackup?(directoryPath: string): Promise<boolean>;
+  };
+  RNFileHelpers: NativeModule & {
+    getFileCapabilitySnapshot?(): Promise<NativeFileCapabilitySnapshot>;
+    requestVisualMediaAccess?(
+      options?: NativeFileCapabilityRequestOptions,
+    ): Promise<NativeFileCapabilitySnapshot>;
+    listAccessibleVisualMedia?(
+      options?: NativeAccessibleVisualMediaQueryOptions,
+    ): Promise<NativeAccessibleVisualMediaList>;
   };
   RNThread: NativeModule & {
     startThread(

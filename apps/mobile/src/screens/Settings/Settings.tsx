@@ -108,6 +108,9 @@ import DevUIPlaygroundModal, {
 import DevDataPlayground, {
   useDevDataPlaygroundModalVisible,
 } from './sheetModals/DevDataPlayground';
+import DevCapabilityPlaygroundModal, {
+  useDevCapabilityPlaygroundModalVisible,
+} from './sheetModals/DevCapabilityPlayground';
 import CurrentLanguageSelectorModal, {
   useCurrentLanguageModalVisible,
 } from './sheetModals/LanguageSelector';
@@ -706,6 +709,8 @@ function DevSettingsBlocks() {
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
+  const { setDevCapabilityPlaygroundModalVisible } =
+    useDevCapabilityPlaygroundModalVisible();
 
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setDevServerSettingsModalVisible } = useDevServerModalVisible();
@@ -803,6 +808,13 @@ function DevSettingsBlocks() {
               icon: RcCode,
               onPress: () => {
                 setDataPlaygroundModalVisible(true);
+              },
+            },
+            {
+              label: 'Capability Playground',
+              icon: RcCode,
+              onPress: () => {
+                setDevCapabilityPlaygroundModalVisible(true);
               },
             },
             {
@@ -974,6 +986,7 @@ function DevSettingsBlocks() {
       <WalletLockTestItemModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
+      <DevCapabilityPlaygroundModal />
       <DevModalDevServer />
       <OpenApiPopup
         visible={isShowOpenApiPopup}
