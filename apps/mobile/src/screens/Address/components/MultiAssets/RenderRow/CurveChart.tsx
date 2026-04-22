@@ -38,7 +38,7 @@ const CHART_HORIZONTAL_INSET = 66;
 
 const MAX_NETWORTH_FS = 38;
 const MIN_NETWORTH_FS = 34;
-const NETWORTH_FIT_LEN = 9;
+const NETWORTH_FIT_LEN = 8;
 
 const svIsFoldMultiChart = makeMutable(true);
 
@@ -495,7 +495,6 @@ const getStyle = createGetStyles2024(
         : colors2024['neutral-bg-2'],
     },
     netWorth: {
-      fontSize: 38,
       lineHeight: 46,
       fontWeight: '800',
       color: colors2024['neutral-title-1'],
