@@ -10,6 +10,7 @@ import {
   FlatListProps,
   Platform,
   FlatList as RNFlatList,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -32,11 +33,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import CustomLabel from '@/screens/TokenDetail/components/CustomLabel';
 import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
-import {
-  GestureDetector,
-  NativeGesture,
-  TouchableOpacity,
-} from 'react-native-gesture-handler';
+import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import Animated, {
   scrollTo,
   useAnimatedProps,
