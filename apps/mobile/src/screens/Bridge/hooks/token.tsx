@@ -4,7 +4,14 @@ import { formatSpeicalAmount, formatUsdValue } from '@/utils/number';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { BridgeQuote, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 // import { useAsyncFn, useDebounce } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
@@ -850,6 +857,23 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     ]);
 
   const [pending, setPending] = useState(false);
+
+  useLayoutEffect(() => {
+    fetchIdRef.current += 1;
+    setQuotesList([]);
+    setRecommendFromToken(undefined);
+    setSelectedBridgeQuote(undefined);
+    setPending(false);
+  }, [
+    userAddress,
+    fromToken?.id,
+    toToken?.id,
+    fromChain,
+    toChain,
+    amount,
+    slippageObj.slippage,
+    setSelectedBridgeQuote,
+  ]);
 
   useEffect(() => {
     if (
