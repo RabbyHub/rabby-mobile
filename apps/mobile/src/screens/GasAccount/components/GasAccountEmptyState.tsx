@@ -3,7 +3,7 @@ import { Text } from '@/components/Typography';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { ReactElement } from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { ScrollView, StyleProp, View, ViewStyle } from 'react-native';
 import { GasAccountBenefitsCard } from './GasAccountBenefitsCard';
 import { GasAccountWarning } from './GasAccountWarning';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,8 +32,13 @@ export const GasAccountEmptyState: React.FC<{
 
   return (
     <View style={[styles.container, style]}>
-      <GasAccountWarning style={styles.warning} message={warningMessage} />
-      <GasAccountBenefitsCard style={styles.card} />
+      <ScrollView
+        style={styles.contentScroll}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}>
+        <GasAccountWarning style={styles.warning} message={warningMessage} />
+        <GasAccountBenefitsCard style={styles.card} />
+      </ScrollView>
       <Button
         type={primaryType || 'primary'}
         onPress={onPrimaryPress}
@@ -60,7 +65,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     width: '100%',
     paddingHorizontal: 16,
+  },
+  contentScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  contentContainer: {
+    flexGrow: 1,
     gap: 12,
+    paddingBottom: 12,
   },
   warning: {
     marginHorizontal: 0,
@@ -72,7 +85,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     height: 56,
     borderRadius: 16,
-    marginTop: 'auto',
+    backgroundColor: 'pink',
   },
   primaryButtonText: {
     color: colors2024['neutral-InvertHighlight'],
