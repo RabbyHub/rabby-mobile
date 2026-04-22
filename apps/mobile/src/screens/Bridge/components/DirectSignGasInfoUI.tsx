@@ -74,14 +74,29 @@ export const DirectSignGasInfoUI = ({
 }: DirectSignGasInfoUIProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const triggerRef = useRef<View>(null);
+  const lastValidLayoutRef = useRef<TriggerLayout>(EMPTY_LAYOUT);
   const lastHandledAutoOpenSignalRef = useRef(0);
-  const pendingOpenRef = useRef(false);
   const [visible, setVisible] = useState(false);
   const [layout, setLayout] = useState<TriggerLayout>(EMPTY_LAYOUT);
 
+  const updateLayout = useCallback((nextLayout: TriggerLayout) => {
+    lastValidLayoutRef.current = nextLayout;
+    setLayout(prev => {
+      if (
+        prev.x === nextLayout.x &&
+        prev.y === nextLayout.y &&
+        prev.width === nextLayout.width &&
+        prev.height === nextLayout.height
+      ) {
+        return prev;
+      }
+
+      return nextLayout;
+    });
+  }, []);
+
   const setModalVisible = useCallback(
     (next: boolean) => {
-      pendingOpenRef.current = false;
       setVisible(next);
       onOpenChange?.(next);
     },
@@ -89,12 +104,11 @@ export const DirectSignGasInfoUI = ({
   );
 
   const closeModal = useCallback(() => {
-    pendingOpenRef.current = false;
     setVisible(false);
     onOpenChange?.(false);
   }, [onOpenChange]);
 
-  const measureTrigger = useCallback(() => {
+  const measureTriggerOnce = useCallback(() => {
     return new Promise<TriggerLayout | null>(resolve => {
       const trigger = triggerRef.current;
 
@@ -108,7 +122,6 @@ export const DirectSignGasInfoUI = ({
           const nextLayout = { x, y, width, height };
 
           if (isValidTriggerLayout(nextLayout)) {
-            setLayout(nextLayout);
             resolve(nextLayout);
             return;
           }
@@ -119,35 +132,41 @@ export const DirectSignGasInfoUI = ({
     });
   }, []);
 
-  const openModal = useCallback(async () => {
-    pendingOpenRef.current = true;
-    const measuredLayout = await measureTrigger();
-    if (pendingOpenRef.current && isValidTriggerLayout(measuredLayout)) {
-      setModalVisible(true);
-    }
-  }, [measureTrigger, setModalVisible]);
+  const getFallbackLayout = useCallback(
+    () =>
+      isValidTriggerLayout(lastValidLayoutRef.current)
+        ? lastValidLayoutRef.current
+        : null,
+    [],
+  );
 
-  const refreshTriggerLayout = useCallback(async () => {
-    await measureTrigger();
-    requestAnimationFrame(() => {
-      measureTrigger();
-    });
-  }, [measureTrigger]);
+  const measureTrigger = useCallback(async () => {
+    const firstMeasuredLayout = await measureTriggerOnce();
+    if (isValidTriggerLayout(firstMeasuredLayout)) {
+      updateLayout(firstMeasuredLayout);
+      return firstMeasuredLayout;
+    }
+
+    const retryMeasuredLayout = await measureTriggerOnce();
+    if (isValidTriggerLayout(retryMeasuredLayout)) {
+      updateLayout(retryMeasuredLayout);
+      return retryMeasuredLayout;
+    }
+
+    return getFallbackLayout();
+  }, [getFallbackLayout, measureTriggerOnce, updateLayout]);
+
+  const openModal = useCallback(() => {
+    setModalVisible(true);
+  }, [setModalVisible]);
 
   const handleTriggerPress = useCallback(() => {
     openModal();
   }, [openModal]);
 
-  const handleTriggerLayout = useCallback(async () => {
-    const measuredLayout = await measureTrigger();
-    if (
-      !visible &&
-      pendingOpenRef.current &&
-      isValidTriggerLayout(measuredLayout)
-    ) {
-      setModalVisible(true);
-    }
-  }, [measureTrigger, setModalVisible, visible]);
+  const handleTriggerLayout = useCallback(() => {
+    void measureTrigger();
+  }, [measureTrigger]);
 
   useEffect(() => {
     if (
@@ -167,20 +186,6 @@ export const DirectSignGasInfoUI = ({
       task.cancel();
     };
   }, [autoOpenSignal, openModal, visible]);
-
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
-    const task = InteractionManager.runAfterInteractions(() => {
-      refreshTriggerLayout();
-    });
-
-    return () => {
-      task.cancel();
-    };
-  }, [refreshTriggerLayout, visible]);
 
   return (
     <View style={style}>
