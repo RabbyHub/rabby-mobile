@@ -1,31 +1,60 @@
 #!/bin/bash
 
+deploy_ios_trace() {
+  printf '[deploy-ios-adhoc][trace] %s %s\n' "$(date '+%H:%M:%S')" "$*"
+}
+
+deploy_ios_trace "script start"
+
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
+deploy_ios_trace "resolved directories"
 
 . $script_dir/fns.sh --source-only
+deploy_ios_trace "sourced fns.sh"
 . $script_dir/fast-build/_fns.sh --source-only
+deploy_ios_trace "sourced fast-build helpers"
 . $script_dir/libs/node-runtime.sh
+deploy_ios_trace "sourced node-runtime helpers"
 . $script_dir/turbo-build/_fns.sh --source-only
+deploy_ios_trace "sourced turbo-build helpers"
 . $script_dir/libs/cn-build.sh --source-only
+deploy_ios_trace "sourced cn-build helpers"
 
+deploy_ios_trace "ensure_mobile_node_runtime"
 ensure_mobile_node_runtime
+deploy_ios_trace "ensure_mobile_node_runtime done"
+deploy_ios_trace "cn_build_prepare_node_env"
 cn_build_prepare_node_env
+deploy_ios_trace "cn_build_prepare_node_env done"
+deploy_ios_trace "cn_build_prepare_bundler"
 cn_build_prepare_bundler "$project_dir" "$project_dir/.turbo-build/bundle-config"
+deploy_ios_trace "cn_build_prepare_bundler done"
+deploy_ios_trace "cn_build_prepare_ios_signing_env"
 cn_build_prepare_ios_signing_env
+deploy_ios_trace "cn_build_prepare_ios_signing_env done"
 
 export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
 export RABBY_MOBILE_BUILD_ENV="regression";
+deploy_ios_trace "check_build_params"
 check_build_params;
+deploy_ios_trace "check_build_params done"
+deploy_ios_trace "check_s3_params"
 check_s3_params;
+deploy_ios_trace "check_s3_params done"
+deploy_ios_trace "checkout_s3_pub_deployment_params"
 checkout_s3_pub_deployment_params;
+deploy_ios_trace "checkout_s3_pub_deployment_params done"
 
 # make plist file
 cd $project_dir;
+deploy_ios_trace "read package version"
 proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
+deploy_ios_trace "read app display name"
 app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
 cd $script_dir;
+deploy_ios_trace "loaded package metadata"
 
 ouput_dir=$project_dir/ios/Package/adhoc
 deployment_local_dir="$script_dir/deployments/ios-adhoc"
@@ -34,7 +63,9 @@ rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 mkdir -p "$script_dir/deployments/tmp"
 
+deploy_ios_trace "xcodebuild showBuildSettings"
 xcodebuild -project $project_dir/ios/RabbyMobile.xcodeproj -target "RabbyMobile" -showBuildSettings -json | plutil -convert xml1 - -o $script_dir/deployments/tmp/RabbyMobileAdHoc.plist
+deploy_ios_trace "xcodebuild showBuildSettings done"
 
 ios_version_name=$(/usr/libexec/PlistBuddy -c "Print:CFBundleShortVersionString" $project_dir/ios/RabbyMobile/Info.plist)
 ios_version_code=$(/usr/libexec/PlistBuddy -c "Print:0:buildSettings:CURRENT_PROJECT_VERSION" $script_dir/deployments/tmp/RabbyMobileAdHoc.plist)
@@ -66,16 +97,20 @@ build_adhoc() {
   sh ./ios/patches/override-xcconfig-release.sh;
   export ios_archive_path="$project_dir/ios/Package/adhoc/RabbyMobile.xcarchive"
 
+  deploy_ios_trace "prepare_ios_build_artifacts"
   prepare_ios_build_artifacts;
   prepare_status=$?
+  deploy_ios_trace "prepare_ios_build_artifacts status=$prepare_status"
 
   if [ $prepare_status -ne 0 ]; then
     return $prepare_status
   fi
 
   if ios_fast_build_enabled; then
+    deploy_ios_trace "prepare_ios_ruby_bundle for fast-build"
     prepare_ios_ruby_bundle;
     ruby_status=$?
+    deploy_ios_trace "prepare_ios_ruby_bundle status=$ruby_status"
 
     if [ $ruby_status -ne 0 ]; then
       return $ruby_status
@@ -93,8 +128,10 @@ build_adhoc() {
     echo "[deploy-ios-adhoc] iOS fast-build failed with status $fast_build_status, will fall back to full archive build."
   fi
 
+  deploy_ios_trace "prepare_ios_native_deps"
   prepare_ios_native_deps;
   deps_status=$?
+  deploy_ios_trace "prepare_ios_native_deps status=$deps_status"
 
   if [ $deps_status -ne 0 ]; then
     return $deps_status
@@ -103,8 +140,10 @@ build_adhoc() {
   if turbo_build_enabled; then
     turbo_prepare_ios_derived_data;
   fi
+  deploy_ios_trace "fastlane ios adhoc"
   turbo_bundle_exec exec fastlane ios adhoc;
   build_status=$?
+  deploy_ios_trace "fastlane ios adhoc status=$build_status"
 
   if [ $build_status -eq 0 ] && ios_fast_build_enabled && [ -d "$ios_archive_path" ]; then
     sh $script_dir/fast-build/ios.sh save-template "$ios_archive_path"
